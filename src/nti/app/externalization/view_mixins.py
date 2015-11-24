@@ -41,7 +41,6 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.interfaces import StandardInternalFields
 from nti.externalization.externalization import to_standard_external_last_modified_time
 
 from nti.links.links import Link
@@ -538,7 +537,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			raise hexc.HTTPUnprocessableEntity(_('Unsupported/missing Class'))
 		return containedObject
 
-	def updateContentObject(self, contentObject, externalValue, set_id=False, 
+	def updateContentObject(self, contentObject, externalValue, set_id=False,
 							notify=True, pre_hook=None):
 		# We want to be sure to only change values on the actual content object,
 		# not things in its traversal lineage

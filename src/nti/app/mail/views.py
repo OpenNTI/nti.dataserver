@@ -28,7 +28,6 @@ from nti.common.string import TRUE_VALUES
 
 from nti.contentfragments.html import sanitize_user_html
 
-from nti.contentfragments.interfaces import IHTMLContentFragment
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.dataserver.users.interfaces import IAvatarURL

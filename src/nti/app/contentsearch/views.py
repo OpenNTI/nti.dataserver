@@ -93,12 +93,14 @@ class BaseView(AbstractAuthenticatedView):
 class BaseSearchView(BaseView, BatchingUtilsMixin):
 
 	def _batch_results(self, results, batch_size, batch_start):
-		if 	batch_size is None or batch_start is None or \
-			not ISearchResults.providedBy(results):
+		if 		batch_size is None \
+			or 	batch_start is None \
+			or	not ISearchResults.providedBy(results):
 			response = (results, results, None)
+		elif batch_start >= len(results):
+			response = ((), results, None)
 		else:
 			new_results = results.clone(hits=False)
-			batch_start = len(results)-1 if batch_start >= len(results) else batch_start
 			batch_hits = Batch(results.Hits, batch_start, batch_size)
 			new_results.Hits = batch_hits  # Set hits
 			response = (new_results, results, batch_hits)
@@ -113,8 +115,8 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 		now = time.time()
 		# execute search
 		result = self._do_search(query=query, store=result)
-		
-		# page if required	
+
+		# page if required
 		batch_size, batch_start = self._get_batch_size_start()
 		result, original, batch = self._batch_results(result, batch_size, batch_start)
 		elapsed = time.time() - now
@@ -122,19 +124,19 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 		# notify
 		entity = Entity.get_entity(query.username)
 		notify(SearchCompletedEvent(entity, original, elapsed))
-				
+
 		# externalize to add links
 		result = to_external_object(result)
 		if batch is not None:
 			total_pages = len(original) // batch_size + 1
 			result['BatchPage'] = batch_start // batch_size + 1
 			result['ItemCount'] = len(result.get(ITEMS, ()))
-			prev_batch_start, next_batch_start = self._batch_start_tuple(batch_start, 
+			prev_batch_start, next_batch_start = self._batch_start_tuple(batch_start,
 																		 batch_size)
 			# check last page
-			if total_pages == result['BatchPage']: 
+			if total_pages == result['BatchPage']:
 				next_batch_start = None
-			self._create_batch_links(self.request, result, 
+			self._create_batch_links(self.request, result,
 									 next_batch_start, prev_batch_start)
 		return result
 
@@ -144,10 +146,10 @@ class SearchView(BaseSearchView):
 	max_cache_time = 60
 	max_cache_size = 50
 	use_memcache = True
-	
+
 	DATA_BASE_KEY = "/search/%s/results/data"
 	QUERY_BASE_KEY = "/search/%s/results/query"
-	
+
 	@Lazy
 	def memcache(self):
 		client = component.queryUtility(IMemcacheClient) if self.use_memcache else None
@@ -156,7 +158,7 @@ class SearchView(BaseSearchView):
 	@Lazy
 	def _data_key(self):
 		return self.DATA_BASE_KEY % self.remoteUser.username
-	
+
 	@Lazy
 	def _query_key(self):
 		return self.QUERY_BASE_KEY % self.remoteUser.username
