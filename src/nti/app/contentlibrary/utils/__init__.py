@@ -11,9 +11,16 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from nti.contentlibrary.interfaces import IContentUnit
+from nti.contentlibrary.interfaces import IContentPackage
+from nti.contentlibrary.interfaces import IGlobalContentPackage
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
 from nti.contentlibrary.indexed_data import get_catalog
 
-from nti.contentlibrary.interfaces import IContentUnit
+from nti.contenttypes.courses.utils import get_course_packages
+from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -25,11 +32,14 @@ PAGE_INFO_MT_JSON = PAGE_INFO_MT + '+json'
 def get_content_units(ntiids=()):
 	result = []
 	for ntiid in ntiids or ():
-		context = find_object_with_ntiid(ntiid)
-		if not IContentUnit.providedBy(context):
-			context = IContentUnit(context, None)
-		if context is not None:
-			result.append(context)
+		obj = find_object_with_ntiid(ntiid)
+		if ICourseCatalogEntry.providedBy(obj) or ICourseInstance.providedBy(obj):
+			pacakges = get_course_packages(obj)
+			result.extend(pacakges or ())
+		elif not IContentUnit.providedBy(obj):
+			obj = IContentUnit(obj, None)
+		if obj is not None:
+			result.append(obj)
 	return result
 
 def get_item_content_units(item, sort=False):
@@ -90,10 +100,6 @@ def find_page_info_view_helper(request, page_ntiid_or_content_unit):
 	# invoke
 	result = request.invoke_subrequest(subrequest)
 	return result
-
-from nti.contentlibrary.interfaces import IContentPackage
-from nti.contentlibrary.interfaces import IGlobalContentPackage
-from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 def yield_sync_content_packages(ntiids=(), include_global=False):
 	library = component.getUtility(IContentPackageLibrary)
