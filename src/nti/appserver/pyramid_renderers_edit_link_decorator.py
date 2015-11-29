@@ -93,8 +93,8 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return link
 
 	@Lazy
-	def no_acl_decoration(self):
-		result = getattr(self.request, 'no_acl_decoration', False)
+	def _acl_decoration(self):
+		result = getattr(self.request, '_acl_decoration', True)
 		return result
 
 	def _preflight_context(self, context):
@@ -109,9 +109,9 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return is_writable(context, request=self.request)
 
 	def _predicate(self, context, result):
-		return (not self.no_acl_decoration
-				and AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
-				and self._preflight_context(context))
+		return 		self._acl_decoration \
+				and AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result) \
+				and self._preflight_context(context)
 
 	def _do_decorate_external(self, context, mapping):
 		# make sure there is no edit link already
