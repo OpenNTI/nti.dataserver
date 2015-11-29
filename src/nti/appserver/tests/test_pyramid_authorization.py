@@ -77,7 +77,7 @@ class TestPyramidAuthorization(ConfiguringTestBase):  # Not shared, we muck with
 		# Ensure we provided what we think we provided
 		assert_that(auth_acl.ACL(Child().__parent__, is_(Provider(None).__acl__)))
 
-		assert_that(Child(), self.has_permission('edit'))
+		assert_that(Child(), bool(self.has_permission('edit')))
 
 	def test_caching(self):
 
