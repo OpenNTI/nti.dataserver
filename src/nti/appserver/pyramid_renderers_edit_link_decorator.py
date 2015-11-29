@@ -94,7 +94,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	@Lazy
 	def _acl_decoration(self):
-		result = getattr(self.request, '_acl_decoration', True)
+		result = getattr(self.request, 'acl_decoration', True)
 		return result
 
 	def _preflight_context(self, context):
