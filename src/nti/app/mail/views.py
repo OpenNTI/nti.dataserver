@@ -191,7 +191,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 			mailer.queue_simple_html_text_email(
 								'member_email',
 								subject=subject,
-								sender=reply_addr,
+								reply_to=reply_addr,
 								recipients=[to_addr],
 								template_args=user_args,
 								request=self.request,

@@ -113,7 +113,7 @@ def create_simple_html_text_email(base_template,
 								  request=None,
 								  recipients=(),
 								  template_args=None,
-								  sender=None,
+								  reply_to=None,
 								  attachments=(),
 								  package=None,
 								  cc=(),
@@ -225,10 +225,12 @@ def create_simple_html_text_email(base_template,
 					   recipients=recipients,
 					   body=text_body,
 					   html=html_body,
-					   sender=sender,
 					   cc=cc,
 					   bcc=bcc,
 					   attachments=attachments )
+
+	if reply_to:
+		message.extra_headers[ 'Reply-To' ] = reply_to
 
 	return message
 
@@ -285,16 +287,15 @@ def _compute_from(*args, **kwargs):
 
 def _get_from_address( pyramid_mail_message, recipients, request ):
 	"""
-	Get a valid `From`/`Sender`/`Return-Path` address. This field is required and must be
-	from a verified email address (e.g. @nextthought.com).
+	Get a valid `From`/`Sender`/`Return-Path` address. This field is required and
+	must be from a verified email address (e.g. @nextthought.com).
 	"""
 	pyramidmailer = component.queryUtility( IMailer )
 	if request is None:
 		request = get_current_request()
 
 	fromaddr = getattr( pyramid_mail_message, 'sender', None )
-	if fromaddr and not fromaddr.endswith( '@nextthought.com' ):
-		fromaddr = None
+
 	if not fromaddr:
 		# Can we get a site policy for the current site?
 		# It would be the unnamed IComponents
@@ -318,7 +319,6 @@ def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
 	"""
 	assert pyramid_mail_message is not None
 
-	reply_to = getattr( pyramid_mail_message, 'sender', None )
 	fromaddr = _get_from_address( pyramid_mail_message, recipients, request )
 
 	pyramid_mail_message.sender = fromaddr
@@ -332,8 +332,6 @@ def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
 	# If this did work, we could leave the From address alone.
 	#pyramid_mail_message.extra_headers['Sender'] = fromaddr
 	#pyramid_mail_message.extra_headers['Return-Path'] = fromaddr
-	if reply_to:
-		pyramid_mail_message.extra_headers['Reply-To'] = reply_to
 	message = pyramid_mail_message.to_message()
 	return message
 
