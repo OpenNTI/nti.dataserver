@@ -78,6 +78,15 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		return obj
 	append = add
 
+	def remove(self, obj):
+		name = get_context_name(obj)
+		if not name:
+			return False
+		if name in self:
+			del self[name]
+			return True
+		return False
+
 	def rename(self, old, new):
 		item = self._delitemf(old, event=False)
 		self._setitemf(new, item)
