@@ -283,19 +283,18 @@ def _compute_from(*args, **kwargs):
 
 	return verp.verp_from_recipients(*args, **kwargs)
 
-def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
+def _get_from_address( pyramid_mail_message, recipients, request ):
 	"""
-	Preps a pyramid message for sending, including adjusting its sender if needed.
-
-	:return:
+	Get a valid `From`/`Sender`/`Return-Path` address. This field is required and must be
+	from a verified email address (e.g. @nextthought.com).
 	"""
-	assert pyramid_mail_message is not None
 	pyramidmailer = component.queryUtility( IMailer )
 	if request is None:
 		request = get_current_request()
 
-
 	fromaddr = getattr( pyramid_mail_message, 'sender', None )
+	if fromaddr and not fromaddr.endswith( '@nextthought.com' ):
+		fromaddr = None
 	if not fromaddr:
 		# Can we get a site policy for the current site?
 		# It would be the unnamed IComponents
@@ -308,9 +307,21 @@ def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
 	if not fromaddr:
 		raise RuntimeError("No one to send mail from")
 
-	fromaddr = _compute_from(fromaddr, recipients, request)
+	result = _compute_from(fromaddr, recipients, request)
+	return result
 
-	pyramid_mail_message.sender = fromaddr # required
+def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
+	"""
+	Preps a pyramid message for sending, including adjusting its sender if needed.
+
+	:return:
+	"""
+	assert pyramid_mail_message is not None
+
+	reply_to = getattr( pyramid_mail_message, 'sender', None )
+	fromaddr = _get_from_address( pyramid_mail_message, recipients, request )
+
+	pyramid_mail_message.sender = fromaddr
 	# Sadly, as of 2014-05-22, Amazon SES (and some other SMTP relays, actually, if I understand
 	# correctly) don't support setting Sender or Return-Path. They get ignored.
 	# (At least for SES, this is because it need to set the Return-Path value
@@ -321,6 +332,8 @@ def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
 	# If this did work, we could leave the From address alone.
 	#pyramid_mail_message.extra_headers['Sender'] = fromaddr
 	#pyramid_mail_message.extra_headers['Return-Path'] = fromaddr
+	if reply_to:
+		pyramid_mail_message.extra_headers['Reply-To'] = reply_to
 	message = pyramid_mail_message.to_message()
 	return message
 

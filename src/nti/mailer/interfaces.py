@@ -145,7 +145,7 @@ class IVERP(interface.Interface):
 	making it possible to do `VERP
 	<https://en.wikipedia.org/wiki/Variable_envelope_return_path>`_,
 	meaning we can directly identify the account we sent to (or even
-	type of email) in case of a bounce This requires using 'labels'
+	type of email) in case of a bounce. This requires using 'labels'
 	and modifying the sending address: foo+label@domain.com. Note that
 	SES makes no mention of the Sender header, instead putting the
 	labels directly in the From line (which is what, for example,
