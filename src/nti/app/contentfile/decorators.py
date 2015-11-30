@@ -32,26 +32,27 @@ NTIID = StandardExternalFields.NTIID
 @interface.implementer(IExternalMappingDecorator)
 class _ContentFileDecorator(object):
 
-    __metaclass__ = SingletonDecorator
+	__metaclass__ = SingletonDecorator
 
-    def decorateExternalMapping(self, item, ext_dict):
-        target = to_external_ntiid_oid(item, add_to_connection=True)
-        if target:
-            for element, key in ('view', 'url'), ('download', 'download_url'):
-                contentType = getattr(item, 'contentType', None)
-                link = Link(target=target,
-                            target_mime_type=contentType,
-                            elements=(element,),
-                            rel="data")
-                interface.alsoProvides(link, ILinkExternalHrefOnly)
-                ext_dict[key] = to_external_object(link)
-            # make sure we add OID/NTIID fields to signal this file
-            # can mark as an internal ref if it's going to be updated
-            if OID not in ext_dict:
-                ext_dict[OID] = target
-            if NTIID not in ext_dict:
-                ext_dict[NTIID] = target
-        else:
-            ext_dict['url'] = None
-            ext_dict['download_url'] = None
-        ext_dict['value'] = ext_dict['url']
+	def decorateExternalMapping(self, item, ext_dict):
+		target = to_external_ntiid_oid(item, add_to_connection=True)
+		if target:
+			for element, key in ('view', 'url'), ('download', 'download_url'):
+				name = '@@' + element
+				contentType = getattr(item, 'contentType', None)
+				link = Link(target=target,
+							target_mime_type=contentType,
+							elements=(name,),
+							rel="data")
+				interface.alsoProvides(link, ILinkExternalHrefOnly)
+				ext_dict[key] = to_external_object(link)
+			# make sure we add OID/NTIID fields to signal this file
+			# can mark as an internal ref if it's going to be updated
+			if OID not in ext_dict:
+				ext_dict[OID] = target
+			if NTIID not in ext_dict:
+				ext_dict[NTIID] = target
+		else:
+			ext_dict['url'] = None
+			ext_dict['download_url'] = None
+		ext_dict['value'] = ext_dict['url']
