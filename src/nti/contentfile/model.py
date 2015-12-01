@@ -23,23 +23,23 @@ from .interfaces import IContentImage
 from .interfaces import IContentBlobFile
 from .interfaces import IContentBlobImage
 
-class BaseMixin(object):
+class BaseContentMixin(object):
 	creator = None
 	__name__ = alias('name')
+BaseMixin = BaseContentMixin #BWC
 
 @interface.implementer(IContentFile)
-class ContentFile(BaseMixin, NamedFile):
+class ContentFile(NamedFile, BaseContentMixin):
 	pass
 
 @interface.implementer(IContentBlobFile)
-class ContentBlobFile(BaseMixin, NamedBlobFile):
+class ContentBlobFile(NamedBlobFile, BaseContentMixin):
 	pass
 
 @interface.implementer(IContentImage)
-class ContentImage(BaseMixin, NamedImage):
+class ContentImage(NamedImage, BaseContentMixin):
 	pass
 
 @interface.implementer(IContentBlobImage)
-class ContentBlobImage(BaseMixin, NamedBlobImage):
+class ContentBlobImage(NamedBlobImage, BaseContentMixin):
 	pass
-
