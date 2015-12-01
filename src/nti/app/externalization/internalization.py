@@ -69,7 +69,7 @@ def _handle_content_type(reader, input_data, request, content_type):
 		# We return a dict with the form data
 		result = dict()
 		data = request.POST
-		for key, value in list(data.values()):  # mutating
+		for key, value in list(data.items()):  # mutating
 			if (	isinstance(value, (cgi.FieldStorage, cgi.MiniFieldStorage))
 				or  (hasattr(value, 'type') and hasattr(value, 'file')) ):
 				pass # ignore
