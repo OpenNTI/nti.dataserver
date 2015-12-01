@@ -14,16 +14,11 @@ from zope import interface
 
 from plone.namedfile.interfaces import IFile
 
-from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
-
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.externalization import to_external_object
-from nti.externalization.externalization import to_external_ntiid_oid
-
-from nti.links.links import Link
+from .view_mixins import to_external_oid_and_link
 
 OID = StandardExternalFields.OID
 NTIID = StandardExternalFields.NTIID
@@ -35,23 +30,17 @@ class _ContentFileDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping(self, item, ext_dict):
-		target = to_external_ntiid_oid(item, add_to_connection=True)
-		if target:
+		oid, link = to_external_oid_and_link(item, name=None, render=True)
+		if oid:
 			for element, key in ('view', 'url'), ('download', 'download_url'):
-				name = '@@' + element
-				contentType = getattr(item, 'contentType', None)
-				link = Link(target=target,
-							target_mime_type=contentType,
-							elements=(name,),
-							rel="data")
-				interface.alsoProvides(link, ILinkExternalHrefOnly)
-				ext_dict[key] = to_external_object(link)
-			# make sure we add OID/NTIID fields to signal this file
+				href = link + '/@@' + element
+				ext_dict[key] = href
+			# XXX: make sure we add OID/NTIID fields to signal this file
 			# can mark as an internal ref if it's going to be updated
 			if OID not in ext_dict:
-				ext_dict[OID] = target
+				ext_dict[OID] = oid
 			if NTIID not in ext_dict:
-				ext_dict[NTIID] = target
+				ext_dict[NTIID] = oid
 		else:
 			ext_dict['url'] = None
 			ext_dict['download_url'] = None

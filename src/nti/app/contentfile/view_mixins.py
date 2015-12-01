@@ -23,12 +23,20 @@ from plone.namedfile.interfaces import IFile as IPloneFile
 
 from nti.app.base.abstract_views import get_source
 
+from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
+
+from nti.externalization.externalization import to_external_object
+from nti.externalization.externalization import to_external_ntiid_oid
+
 from nti.namedfile.file import get_file_name as get_context_name
 
 from nti.namedfile.interfaces import IFile
 from nti.namedfile.interfaces import IFileConstraints
 
 from nti.dataserver.interfaces import IInternalFileRef
+
+from nti.links.links import Link
+from nti.links.externalization import render_link
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -125,3 +133,24 @@ class ContentFileUploadMixin(object):
 	def validate_sources(self, context=None, sources=()):
 		result = validate_sources(context, *sources)
 		return result
+
+def to_external_oid_and_link(item, name='view', rel='data', render=True):
+	target = to_external_ntiid_oid(item, add_to_connection=True)
+	if target:
+		elements = ('@@' + name,) if name else ()
+		contentType = getattr(item, 'contentType', None)
+		link = Link(target=target,
+					target_mime_type=contentType,
+					elements=elements,
+					rel=rel)
+		interface.alsoProvides(link, ILinkExternalHrefOnly)
+		if render:
+			external = render_link(link)
+		else:
+			external = to_external_object(link)
+		return (target, external)
+	return (None, None)
+
+def to_external_href(item):
+	_, external = to_external_oid_and_link(item, render=True, name='view')
+	return external 
