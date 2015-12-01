@@ -13,6 +13,7 @@ from . import MessageFactory as _
 
 logger = __import__('logging').getLogger(__name__)
 
+import cgi
 import sys
 import collections
 
@@ -61,34 +62,21 @@ def class_name_from_content_type(request):
 	content_type = content_type or ''
 	return nti_mimetype_class(content_type)
 
-def read_body_as_external_object(request, input_data=None,
-								 expected_type=collections.Mapping):
-	"""
-	Returns the object specified by the external data. The request input stream is
-	input stream is parsed, and the return value is verified to be of `expected_type`
-
-	:param input_data: If given, this is read instead of the request's body.
-
-	:raises hexc.HTTPBadRequest: If there is an error parsing/transforming the
-			client request.
-	"""
-	ext_format = 'json'
-	value = input_data if input_data is not None else request.body
-	content_type = getattr(request, 'content_type', '')
-	if (content_type.endswith('plist')
-		or content_type == 'application/xml'
-		or request.GET.get('format') == 'plist'):  # pragma: no cover
-		ext_format = 'plist'
-
-	__traceback_info__ = ext_format, value
-	reader = component.queryUtility(IExternalRepresentationReader, name=ext_format)
-	if reader is None:  # pragma: no cover
-		# We're officially dropping support for plist values.
-		# primarily due to the lack of support for null values, and
-		# unsure about encoding issues
-		raise hexc.HTTPUnsupportedMediaType('XML no longer supported.')
-
-	try:
+def _handle_content_type(reader, input_data, request, content_type):
+	if content_type == 'multipart/form-data' and request.POST:
+		# We parse the form-data and parse out all the non FieldStorage fields
+		# which we leave in the original request for later processing
+		# We return a dict with the form data
+		result = dict()
+		data = request.POST
+		for key, value in list(data.values()):  # mutating
+			if (	isinstance(value, (cgi.FieldStorage, cgi.MiniFieldStorage))
+				or  (hasattr(value, 'type') and hasattr(value, 'file')) ):
+				pass # ignore
+			else:
+				result[key] = data[key]
+				del data[key]
+	else:
 		# We need all string values to be unicode objects. simplejson (the usual implementation
 		# we get from anyjson) is different from the built-in json and returns strings
 		# that can be represented as ascii as str objects if the input was a bytestring.
@@ -103,16 +91,45 @@ def read_body_as_external_object(request, input_data=None,
 		# 				   for k, v
 		# 				   in pairs) )
 		try:
-			value = unicode(value, request.charset)
+			value = unicode(input_data, request.charset)
 		except UnicodeError:
 			# Try the most common web encoding
-			value = unicode(value, 'iso-8859-1')
+			value = unicode(input_data, 'iso-8859-1')
+		result = reader.load(value)
 
-		value = reader.load(value)
+	return result
 
+def read_body_as_external_object(request, input_data=None,
+								 expected_type=collections.Mapping):
+	"""
+	Returns the object specified by the external data. The request input stream is
+	input stream is parsed, and the return value is verified to be of `expected_type`
+
+	:param input_data: If given, this is read instead of the request's body.
+
+	:raises hexc.HTTPBadRequest: If there is an error parsing/transforming the
+			client request.
+	"""
+	ext_format = 'json'
+	value = input_data if input_data is not None else request.body
+	content_type = getattr(request, 'content_type', None) or u''
+	if (	content_type.endswith('plist') 
+		or	content_type == 'application/xml' 
+		or	request.GET.get('format') == 'plist'):  # pragma: no cover
+		ext_format = 'plist'
+
+	__traceback_info__ = ext_format, value
+	reader = component.queryUtility(IExternalRepresentationReader, name=ext_format)
+	if reader is None:  # pragma: no cover
+		# We're officially dropping support for plist values.
+		# primarily due to the lack of support for null values, and
+		# unsure about encoding issues
+		raise hexc.HTTPUnsupportedMediaType('XML no longer supported.')
+
+	try:
+		value = _handle_content_type(reader, value, request, content_type)
 		if not isinstance(value, expected_type):
 			raise TypeError(type(value))
-
 		return value
 	except hexc.HTTPException:  # pragma: no cover
 		raise
