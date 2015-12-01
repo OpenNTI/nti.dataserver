@@ -50,9 +50,6 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.externalization import to_external_object
 
-from nti.links import Link
-from nti.links.externalization import render_link
-
 from nti.namedfile.file import name_finder
 from nti.namedfile.file import safe_filename
 from nti.namedfile.interfaces import INamedFile
@@ -70,15 +67,7 @@ MIMETYPE = StandardExternalFields.MIMETYPE
 class DirContentsView(AbstractAuthenticatedView):
 
 	def ext_obj(self, item):
-		decorate = INamed.providedBy(item)
-		result = to_external_object(item, decorate=decorate)
-		if decorate:
-			try:
-				link = Link(item)
-				href = render_link(link)['href']
-				result['href'] = result['url'] = href + '/@@view'
-			except (KeyError, ValueError, AssertionError):
-				pass  # Nope
+		result = to_external_object(item)
 		return result
 
 	def __call__(self):
