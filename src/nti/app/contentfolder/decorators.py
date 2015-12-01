@@ -18,6 +18,8 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.appserver.pyramid_authorization import has_permission
 
+from nti.common.property import Lazy
+
 from nti.contentfolder.interfaces import INamedContainer, IRootFolder
 
 from nti.dataserver.authorization import ACT_READ 
@@ -36,8 +38,13 @@ LINKS = StandardExternalFields.LINKS
 @interface.implementer(IExternalObjectDecorator)
 class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
+	@Lazy
+	def _acl_decoration(self):
+		result = getattr(self.request, 'acl_decoration', True)
+		return result
+
 	def _predicate(self, context, result):
-		return self._is_authenticated
+		return self._acl_decoration and self._is_authenticated
 
 	def _create_link(self, context, rel, name=None):
 		elements = () if not name else (name,)
@@ -67,9 +74,15 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 @interface.implementer(IExternalObjectDecorator)
 class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
+	@Lazy
+	def _acl_decoration(self):
+		result = getattr(self.request, 'acl_decoration', True)
+		return result
+
 	def _predicate(self, context, result):
 		parent = getattr(context, '__parent__', None)
 		return 		parent is not None \
+				and self._acl_decoration \
 				and self._is_authenticated \
 				and INamedContainer.providedBy(parent) \
 				and has_permission(ACT_UPDATE, context, self.request)
