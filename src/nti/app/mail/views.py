@@ -51,6 +51,15 @@ AVATAR_BG_COLORS = [ "#5E35B1","#3949AB","#1E88E5","#039BE5",
 
 class AbstractMemberEmailView(AbstractAuthenticatedView,
 							ModeledContentUploadRequestUtilsMixin):
+	"""
+	An abstract view used to email one or members of an entity. The
+	``iter_members`` function defines which members are emailed.
+	Subclasses may also define ``predicate`` or ``reply_addr_for_recipient``
+	to define specific member email behavior.
+
+	This view accepts an ``IEmail`` body, of which the body
+	may be fully formed HTML.
+	"""
 
 	# By default, we only email to internal users
 	EMAIL_EXTERNALLY_DEFAULT = False
@@ -83,7 +92,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 
 	@property
 	def sender_avatar_initials(self):
-		# Logic copied from digest_email.py
+		# XXX: Logic copied from digest_email.py
 		named = IFriendlyNamed( self.sender )
 		human_name = None
 		if named and named.realname:
@@ -122,15 +131,34 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 	def __accept_user(self, user):
 		# Only email externally if configured to do so. Otherwise, only
 		# email NT users.
-		# TODO This would be useful as a utility.
-		# TODO Only verified emails?
+		# TODO: We have NextThoughtOnlyMailer as well, but we want to
+		# *not* email externally when on TEST sites (like we do with
+		# the test endpoint for notables). It would be nice to unify
+		# this logic somewhere. Perhaps we never email externally
+		# except in production envs.
+		# TODO: Only verified emails?
 		if not self.email_externally:
 			email = getattr(IEmailAddressable(user, None), 'email', None)
 			return 	email	\
 				and (	email == 'jamadden@ou.edu' \
 					or	email == 'jzuech3@gmail.com' \
-					or 	email.endswith('@nextthought.com' ))
+					or 	email.endswith('@nextthought.com'))
 		return True
+
+	@property
+	def _context_display_name(self):
+		"""
+		Subclasses should implement this to define a context
+		display name property in the email template.
+		"""
+		raise NotImplementedError()
+
+	def _default_subject(self):
+		"""
+		Subclasses should implement this to define a default subject
+		if none is provided.
+		"""
+		raise NotImplementedError()
 
 	def predicate(self):
 		"""
@@ -144,6 +172,13 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		by recipient.
 		"""
 		return self._no_reply_addr
+
+	def iter_members(self):
+		"""
+		Subclasses must override this to define the members who will
+		receive an email.
+		"""
+		raise NotImplementedError()
 
 	def readInput(self):
 		email_json = super(AbstractMemberEmailView,self).readInput()
