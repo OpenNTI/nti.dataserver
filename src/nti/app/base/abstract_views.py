@@ -141,6 +141,9 @@ class AbstractAuthenticatedView(AbstractView, AuthenticatedViewMixin):
 
 class SourceProxy(ProxyBase):
 
+	length = property(lambda s: s.__dict__.get('_v_length'),
+					  lambda s, v: s.__dict__.__setitem__('_v_length', v))
+
 	contentType = property(
 					lambda s: s.__dict__.get('_v_content_type'),
 					lambda s, v: s.__dict__.__setitem__('_v_content_type', v))
@@ -152,7 +155,7 @@ class SourceProxy(ProxyBase):
 	def __new__(cls, base, *args, **kwargs):
 		return ProxyBase.__new__(cls, base)
 
-	def __init__(self, base, filename=None, content_type=None):
+	def __init__(self, base, filename=None, content_type=None, length=None):
 		ProxyBase.__init__(self, base)
 		self.filename = filename
 		self.contentType = content_type
@@ -163,11 +166,12 @@ def process_source(source, content_type='application/json'):
 		source.seek(0)
 		source = SourceProxy(source, content_type=content_type)
 	elif source is not None:
+		length = getattr(source, 'length', None)
 		filename = getattr(source, 'filename', None)
-		content_type = getattr(source, 'type', None) or getattr(source, 'contentType', None)
+		contentType = getattr(source, 'type', None) or getattr(source, 'contentType', None) 
 		source = source.file
 		source.seek(0)
-		source = SourceProxy(source, filename, content_type)
+		source = SourceProxy(source, filename, contentType, length)
 	return source
 
 def get_source(request, *keys):
