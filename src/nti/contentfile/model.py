@@ -18,8 +18,6 @@ from nti.namedfile.file import NamedImage
 from nti.namedfile.file import NamedBlobFile
 from nti.namedfile.file import NamedBlobImage
 
-from nti.schema.fieldproperty import createDirectFieldProperties
-
 from .interfaces import IContentFile
 from .interfaces import IContentImage
 from .interfaces import IContentBlobFile
@@ -31,20 +29,17 @@ class BaseMixin(object):
 
 @interface.implementer(IContentFile)
 class ContentFile(BaseMixin, NamedFile):
-	createDirectFieldProperties(IContentFile)
-	mimeType = mime_type = b'application/vnd.nextthought.contentfile'
+	pass
 
 @interface.implementer(IContentBlobFile)
 class ContentBlobFile(BaseMixin, NamedBlobFile):
-	createDirectFieldProperties(IContentBlobFile)
-	mimeType = mime_type = b'application/vnd.nextthought.contentblobfile'
+	pass
 
 @interface.implementer(IContentImage)
 class ContentImage(BaseMixin, NamedImage):
-	createDirectFieldProperties(IContentImage)
-	mimeType = mime_type = b'application/vnd.nextthought.contentimage'
+	pass
 
 @interface.implementer(IContentBlobImage)
 class ContentBlobImage(BaseMixin, NamedBlobImage):
-	createDirectFieldProperties(IContentBlobImage)
-	mimeType = mime_type = b'application/vnd.nextthought.contentblobimage'
+	pass
+

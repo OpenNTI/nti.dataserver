@@ -62,9 +62,9 @@ def BaseFactory(ext_obj, file_factory, image_factory=None):
 	factory = file_factory
 	image_factory = image_factory or file_factory
 	url = ext_obj.get('url') or ext_obj.get('value')
-	contentType = 	ext_obj.get('FileMimeType') or \
-					ext_obj.get('contentType') or \
-					ext_obj.get('content_type')
+	contentType = (		ext_obj.get('FileMimeType')
+					or 	ext_obj.get('contentType') 
+					or 	ext_obj.get('content_type') )
 	if url and url.startswith(b'data:'):
 		ext_obj['url'] = DataURL(url)
 		ext_obj.pop('value', None)

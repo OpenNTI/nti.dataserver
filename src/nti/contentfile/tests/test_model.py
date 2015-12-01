@@ -17,9 +17,11 @@ from hamcrest import assert_that
 from hamcrest import has_property
 does_not = is_not
 
-from nti.testing.matchers import validly_provides
+from nti.testing.matchers import verifiably_provides
 
 import unittest
+
+from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.contentfile.model import ContentFile
 
@@ -39,7 +41,8 @@ class TestModel(unittest.TestCase):
 	layer = SharedConfiguringTestLayer
 
 	def test_interface(self):
-		assert_that(ContentFile(name="cc"), validly_provides(IContentFile))
+		assert_that(ContentFile(name="cc", contentType='xx'),
+				    verifiably_provides(IContentFile))
 
 	def test_file(self):
 		ext_obj = {
@@ -50,10 +53,12 @@ class TestModel(unittest.TestCase):
 
 		factory = find_factory_for(ext_obj)
 		assert_that(factory, is_not(none()))
-
+		
 		internal = factory()
 		update_from_external_object(internal, ext_obj, require_updater=True)
-
+		
+		assert_that(IContentTypeAware.providedBy(internal), is_(True))
+		
 		# value changed to URI
 		assert_that(ext_obj, has_key('url'))
 		assert_that(ext_obj, does_not(has_key('value')))
