@@ -27,25 +27,24 @@ from .interfaces import IContentBlobImage
 
 class BaseMixin(object):
 	creator = None
-	parameters = {}
 	__name__ = alias('name')
 
 @interface.implementer(IContentFile)
 class ContentFile(BaseMixin, NamedFile):
 	createDirectFieldProperties(IContentFile)
-	mimeType = mime_tye = b'application/vnd.nextthought.contentfile'
+	mimeType = mime_type = b'application/vnd.nextthought.contentfile'
 
 @interface.implementer(IContentBlobFile)
 class ContentBlobFile(BaseMixin, NamedBlobFile):
 	createDirectFieldProperties(IContentBlobFile)
-	mimeType = mime_tye = b'application/vnd.nextthought.contentblobfile'
+	mimeType = mime_type = b'application/vnd.nextthought.contentblobfile'
 
 @interface.implementer(IContentImage)
 class ContentImage(BaseMixin, NamedImage):
 	createDirectFieldProperties(IContentImage)
-	mimeType = mime_tye = b'application/vnd.nextthought.contentimage'
+	mimeType = mime_type = b'application/vnd.nextthought.contentimage'
 
 @interface.implementer(IContentBlobImage)
 class ContentBlobImage(BaseMixin, NamedBlobImage):
 	createDirectFieldProperties(IContentBlobImage)
-	mimeType = mime_tye = b'application/vnd.nextthought.contentblobimage'
+	mimeType = mime_type = b'application/vnd.nextthought.contentblobimage'
