@@ -13,7 +13,7 @@ from zope import interface
 
 from zope.container.interfaces import IContained
 
-from nti.dataserver_core.interfaces import ICreated
+from nti.coremetadata.interfaces import ICreated
 
 from nti.schema.field import Object
 from nti.schema.field import TextLine
