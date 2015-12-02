@@ -26,6 +26,8 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.dataserver.authorization import ACT_CONTENT_EDIT
 
+from nti.dataserver.interfaces import ICalendarPublishable
+
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
@@ -62,7 +64,9 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 		return context.is_published()
 
 	def _do_decorate_external_link(self, context, mapping, extra_elements=()):
-		if _expose_links( context, self.request ):
+		# ICalendarPublishables have their own publish link decorator.
+		if 		_expose_links( context, self.request ) \
+			and not ICalendarPublishable.providedBy( context ):
 			super(PublishLinkDecorator, self)._do_decorate_external_link(context, mapping)
 
 	def _do_decorate_external(self, context, mapping):
