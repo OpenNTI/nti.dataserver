@@ -62,6 +62,14 @@ def class_name_from_content_type(request):
 	content_type = content_type or ''
 	return nti_mimetype_class(content_type)
 
+def _handle_unicode(value, request):
+	try:
+		value = unicode(value, request.charset)
+	except UnicodeError:
+		# Try the most common web encoding
+		value = unicode(value, 'iso-8859-1')
+	return value
+
 def _handle_content_type(reader, input_data, request, content_type):
 	if content_type == 'multipart/form-data' and request.POST:
 		# We parse the form-data and parse out all the non FieldStorage fields
@@ -74,7 +82,7 @@ def _handle_content_type(reader, input_data, request, content_type):
 				or  (hasattr(value, 'type') and hasattr(value, 'file')) ):
 				pass # ignore
 			else:
-				result[key] = data[key]
+				result[_handle_unicode(key, request)] = data[key]
 				del data[key]
 	else:
 		# We need all string values to be unicode objects. simplejson (the usual implementation
@@ -90,11 +98,7 @@ def _handle_content_type(reader, input_data, request, content_type):
 		# 	return dict( ( (k, (unicode(v, request.charset) if isinstance(v, str) else v))
 		# 				   for k, v
 		# 				   in pairs) )
-		try:
-			value = unicode(input_data, request.charset)
-		except UnicodeError:
-			# Try the most common web encoding
-			value = unicode(input_data, 'iso-8859-1')
+		value = _handle_unicode(input_data, request)
 		result = reader.load(value)
 
 	return result
