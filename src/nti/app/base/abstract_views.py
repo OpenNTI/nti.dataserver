@@ -170,7 +170,7 @@ class SourceProxy(ProxyBase):
 	def mode(self):
 		return "rb"
 
-def process_source(source):
+def process_source(source, default_content_type=u'application/octet-stream'):
 	if isinstance(source, six.string_types):
 		source = StringIO(source)
 		source.seek(0)
@@ -179,8 +179,8 @@ def process_source(source):
 		length = getattr(source, 'length', None)
 		filename = getattr(source, 'filename', None)
 		contentType = ( 	getattr(source, 'type', None)
-						or	getattr(source, 'contentType', None)
-						or	u'application/octet-stream' )  # default
+						or	getattr(source, 'contentType', None) )
+		contentType = contentType or default_content_type
 		source = source.file
 		source.seek(0)
 		source = SourceProxy(source, filename, contentType, length)
@@ -196,12 +196,12 @@ def get_source(request, *keys):
 	source = process_source(source)
 	return source
 
-def get_all_sources(request):
+def get_all_sources(request, default_content_type=u'application/octet-stream'):
 	result = CaseInsensitiveDict()
 	values = CaseInsensitiveDict(request.POST)
 	for name, source in values.items():
 		try:
-			source = process_source(source)
+			source = process_source(source, default_content_type)
 		except AttributeError:
 			continue
 		result[name] = source

@@ -38,6 +38,7 @@ from nti.contentfile.model import ContentFile
 from nti.contentfile.model import ContentImage
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
+from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfolder.model import ContentFolder
 
@@ -64,7 +65,7 @@ MIMETYPE = StandardExternalFields.MIMETYPE
 			   context=INamedContainer,
 			   permission=nauth.ACT_READ,
 			   request_method='GET')
-class DirContentsView(AbstractAuthenticatedView):
+class ContainerContentsView(AbstractAuthenticatedView):
 
 	def ext_obj(self, item):
 		result = to_external_object(item)
@@ -120,68 +121,37 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 	@Lazy
 	def use_blobs(self):
 		return self.context.use_blobs
-
-	def readInput(self, value=None):
-		if self.request.body:
-			data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+	
+	def get_namedfile(self, source, name, filename=None):
+		filename = getattr(source, 'filename', None)
+		contentType = getattr(source, 'contentType', None)
+		if contentType:
+			factory = ContentBlobFile if self.use_blobs else ContentFile
 		else:
-			data = None
+			contentType, _, _ = getImageInfo(source)
+			source.seek(0)  # reset
+			if contentType: # is image
+				factory = ContentBlobImage if self.use_blobs else ContentImage
+			else:
+				factory = ContentBlobFile if self.use_blobs else ContentFile
 
-		if isinstance(data, six.string_types):
-			data = safe_filename(name_finder(data))
-			data = {
-				'name': data,
-				'filename': data,
-				MIMETYPE: ContentFile.mimeType
-			}
-		elif isinstance(data, Mapping) and MIMETYPE not in data:
-			mtype = ContentBlobFile.mimeType if self.use_blobs else ContentFile.mimeType
-			data[MIMETYPE] = mtype
-
-		if data and not isinstance(data, (list, tuple)):
-			data = [data, ]
-		return data
+		result = factory()
+		result.name = name
+		result.data = source.read()
+		result.filename = filename or name
+		result.contentType = contentType or u'application/octet-stream'
+		return result
 
 	def _do_call(self):
 		result = LocatedExternalDict()
 		result[ITEMS] = items = []
-
-		# parse incoming data
-		data = self.readInput()
-		creator = self.remoteUser
-		sources = get_all_sources(self.request)
-		for ext_obj in data or ():
-			target = self.readCreateUpdateContentObject(creator, externalValue=ext_obj)
-			if not INamedFile.providedBy(target):
-				raise hexc.HTTPUnprocessableEntity(_("Invalid content in upload."))
-			name = target.name
-			filename = target.filename or u''
-			if name in sources or filename in sources:
-				source = sources.pop(name, None) or sources.pop(filename, None)
-				target.name = safe_filename(name_finder(name))  # always get a good name
-				transfer(source, target)
-				items.append(target)
-
-		# parse multipart data
-		use_blobs = self.use_blobs
+		creator = self.remoteUser.username
+		sources = get_all_sources(self.request, None)
 		for name, source in sources.items():
 			name = safe_filename(name_finder(name))
-			content_type, width, height = getImageInfo(source)
-			source.seek(0)  # reset
-			if content_type:  # it's an image
-				factory = ContentBlobImage if use_blobs else ContentImage
-				logger.info("Parsed image (%s,%s,%s,%s)",
-							content_type, name, width, height)
-			else:
-				content_type = source.contentType
-				factory = ContentBlobFile if use_blobs else ContentFile
-
-			target = factory()
-			target.name = name
-			target.filename = name
-			target.creator = creator
-			target.contentType = content_type
+			target = self.get_namedfile(source, name)
 			transfer(source, target)
+			target.creator = creator
 			items.append(target)
 
 		for item in items:
@@ -190,6 +160,17 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 
 		self.request.response.status_int = 201
 		result['ItemCount'] = result['Total'] = len(items)
+		return result
+
+@view_config(context=IContentBaseFile)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_READ,
+			   request_method='GET')
+class ContentFileGetView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		result = to_external_object(self.request.context)
 		return result
 
 @view_config(context=INamedFile)
@@ -209,7 +190,7 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 			raise hexc.HTTPForbidden()
 
 		del theObject.__parent__[theObject.__name__]
-		return theObject
+		return hexc.HTTPNoContent()
 
 @view_config(name='clear')
 @view_defaults(route_name='objects.generic.traversal',
@@ -221,13 +202,13 @@ class ClearContainerView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		self.context.clear()
-		raise hexc.HTTPNoContent()
+		return hexc.HTTPNoContent()
 
 @view_config(context=INamedFile)
 @view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
-			   permission=nauth.ACT_DELETE,
+			   permission=nauth.ACT_UPDATE,
 			   request_method='POST',
 			   name='rename')
 class RenameView(AbstractAuthenticatedView,
@@ -261,16 +242,20 @@ class RenameView(AbstractAuthenticatedView,
 			raise hexc.HTTPUnprocessableEntity(_("File already exists."))
 
 		# get content type
-		content_type = data.get('contentType') or data.get('content_type')
+		contentType = data.get('contentType') or data.get('content_type')
 		
 		# replace name
 		old = theObject.name 
 		theObject.name = name
+		
+		# for files only
 		if INamed.providedBy(theObject):
 			theObject.filename = name
-			if content_type: # replace if provided
-				theObject.contentType = content_type
+			if contentType: # replace if provided
+				theObject.contentType = contentType
 			
 		# replace in folder
 		parent.rename(old, name)
-		return theObject
+		# XXX: externalize first
+		result = to_external_object(theObject)
+		return result
