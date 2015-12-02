@@ -18,6 +18,9 @@ except ImportError:
 	from StringIO import StringIO
 
 from zope import component
+from zope import interface
+
+from zope.cachedescriptors.property import readproperty
 
 from zope.intid.interfaces import IIntIds
 
@@ -29,6 +32,8 @@ from nti.common.property import Lazy
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.interfaces import IDataserver
+
+from .interfaces import IMultipartSource
 
 def _check_creator(remote_user, obj):
 	result = False
@@ -139,8 +144,9 @@ class AbstractAuthenticatedView(AbstractView, AuthenticatedViewMixin):
 	Base class for views that expect authentication to be required.
 	"""
 
+@interface.implementer(IMultipartSource)
 class SourceProxy(ProxyBase):
-
+	
 	length = property(lambda s: s.__dict__.get('_v_length'),
 					  lambda s, v: s.__dict__.__setitem__('_v_length', v))
 
@@ -155,10 +161,14 @@ class SourceProxy(ProxyBase):
 	def __new__(cls, base, *args, **kwargs):
 		return ProxyBase.__new__(cls, base)
 
-	def __init__(self, base, filename=None, content_type=None, length=None):
+	def __init__(self, base, filename=None, contentType=None, length=None):
 		ProxyBase.__init__(self, base)
 		self.filename = filename
-		self.contentType = content_type
+		self.contentType = contentType
+		
+	@readproperty
+	def mode(self):
+		return "rb"
 
 def process_source(source):
 	if isinstance(source, six.string_types):
@@ -168,8 +178,9 @@ def process_source(source):
 	elif source is not None:
 		length = getattr(source, 'length', None)
 		filename = getattr(source, 'filename', None)
-		contentType = getattr(source, 'type', None) or getattr(source, 'contentType', None)
-		contentType = contentType or u'application/octet-stream' # default
+		contentType = ( 	getattr(source, 'type', None)
+						or	getattr(source, 'contentType', None)
+						or	u'application/octet-stream' )  # default
 		source = source.file
 		source.seek(0)
 		source = SourceProxy(source, filename, contentType, length)
