@@ -44,7 +44,11 @@ def is_named_source(context):
 	return IFile.providedBy(context)
 
 def validate_sources(context=None, sources=()):
-	for source in sources:
+	"""
+	Validate the specified sources using the :class:`.IFileConstraints`
+	derived from the context
+	"""
+	for source in sources or ():
 		ctx = context if context is not None else source
 		validator = IFileConstraints(ctx, None)
 		if validator is None:
@@ -66,6 +70,10 @@ def validate_sources(context=None, sources=()):
 			raise ConstraintNotSatisfied(filename, 'filename')
 
 def transfer(source, target):
+	"""
+	Transfer the data and possibly the contentType and filename
+	from the source to the target
+	"""
 	target.data = source.read()
 	try:
 		if not target.contentType and source.contentType:
@@ -77,6 +85,11 @@ def transfer(source, target):
 	return target
 
 def read_multipart_sources(request, sources=()):
+	"""
+	return a list of data sources from the specified multipart request
+	
+	:param sources: Iterable of :class:`.IFile' objects
+	"""
 	result = []
 	for data in sources or ():
 		name = get_context_name(data)
@@ -85,12 +98,17 @@ def read_multipart_sources(request, sources=()):
 			if source is None:
 				msg = 'Could not find data for file %s' % data.name
 				raise hexc.HTTPUnprocessableEntity(msg)
-
 			data = transfer(source, data)
 			result.append(data)
 	return result
 
 def get_content_files(context, attr="body"):
+	"""
+	return a list of :class:`.IFile' objects from the specified context
+	
+	:param context: Source object
+	:param attr attribute name to check in context (optional)
+	"""
 	result = OrderedDict()
 	sources = getattr(context, attr, None) if attr else context
 	for data in sources or ():
@@ -100,6 +118,14 @@ def get_content_files(context, attr="body"):
 	return result
 
 def transfer_internal_content_data(context, attr="body"):
+	"""
+	Transfer data from the database stored :class:`.IFile' objects 
+	to the corresponding :class:`.IFile' objects in the context
+	object.
+	
+	This function may be called when clients sent internal reference
+	:class:`.IFile' objects when updating the context object
+	"""
 	result = []
 	files = get_content_files(context, attr)
 	for target in files.values():
@@ -115,8 +141,8 @@ def transfer_internal_content_data(context, attr="body"):
 		source = find_object_with_ntiid(ref) if ref else None
 		if IPloneFile.providedBy(source) and target != source:
 			target.data = source.data
-			target.filename = source.filename or source.filename
-			target.contentType = source.contentType or source.contentType
+			target.filename = source.filename or target.filename
+			target.contentType = source.contentType or target.contentType
 			interface.noLongerProvides(target, IInternalFileRef)
 			result.append(target)
 	return result
@@ -135,6 +161,9 @@ class ContentFileUploadMixin(object):
 		return result
 
 def to_external_oid_and_link(item, name='view', rel='data', render=True):
+	"""
+	return the OID and the link ( or OID href ) of the specified item
+	"""
 	target = to_external_ntiid_oid(item, add_to_connection=True)
 	if target:
 		elements = ('@@' + name,) if name else ()
