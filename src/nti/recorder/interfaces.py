@@ -16,6 +16,7 @@ from zope.container.interfaces import IContained
 from nti.dataserver_core.interfaces import ICreated
 
 from nti.schema.field import Object
+from nti.schema.field import TextLine
 from nti.schema.field import ValidTextLine
 from nti.schema.field import IndexedIterable
 
@@ -33,7 +34,7 @@ class ITransactionRecord(IContained, ICreated):
 	principal = ValidTextLine(title="The principal id", required=True)
 
 	attributes = IndexedIterable(title="The modifed attributes",
-				 	 			 value_type=ValidTextLine(title="The attribute name"),
+				 	 			 value_type=TextLine(title="The attribute name"),
 								 min_length=0,
 								 unique=True)
 
