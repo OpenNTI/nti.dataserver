@@ -15,7 +15,6 @@ from hamcrest import assert_that
 from hamcrest import has_property
 does_not = is_not
 
-import fudge
 import unittest
 
 from zope import interface
@@ -28,9 +27,8 @@ from nti.coremetadata.interfaces import IRecordable
 
 from nti.recorder.record import get_transactions
 
-from nti.recorder.subscribers import record_trax
-
 from nti.recorder.utils import decompress
+from nti.recorder.utils import record_trax
 
 from nti.recorder.tests import SharedConfiguringTestLayer
 
@@ -42,17 +40,17 @@ class TestSubscriber(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
 
-	@fudge.patch('nti.recorder.subscribers.principal')
-	def test_record_trax(self, mock_p):
-		fake = fudge.Fake().has_attr(id="ichigo")
-		mock_p.is_callable().returns(fake)
-
+	def test_record_trax(self):
 		recordable = Recordable()
 		assert_that(recordable, has_property('locked', is_(False)))
 
-		record = record_trax(recordable, ext_value={"a":"b"})
+		record = record_trax(recordable, principal="ichigo", 
+							 descriptions=('a',), ext_value={"a":"b"})
+
 		assert_that(record, is_not(none()))
+		assert_that(record, has_property('attributes', is_(('a',))))
 		assert_that(record, has_property('principal', is_("ichigo")))
+		assert_that(record, has_property('type', is_("update")))
 		assert_that(record, has_property('external_value', is_not(none())))
 
 		ext_value = decompress(record.external_value)
@@ -64,3 +62,7 @@ class TestSubscriber(unittest.TestCase):
 		# we have history
 		records = get_transactions(recordable)
 		assert_that(records, has_length(1))
+		
+		record = record_trax(recordable, principal='aizen', type_='xyz')
+		assert_that(record, is_not(none()))
+		assert_that(record, has_property('type', is_('xyz')))
