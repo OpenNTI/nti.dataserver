@@ -25,7 +25,7 @@ from .record import remove_transaction_history
 
 from .interfaces import ITransactionRecordHistory
 
-from .utils import record_trax
+from .utils import record_transaction
 
 @component.adapter(IRecordable, IObjectModifiedFromExternalEvent)
 def _record_modification(obj, event):
@@ -33,10 +33,10 @@ def _record_modification(obj, event):
 	if queryInteraction() is None or IConnection(obj, None) is None:
 		return
 	history = ITransactionRecordHistory(obj)
-	record_trax(recordable=obj, 
-				descriptions=event.descriptions,
-				ext_value=event.external_value,
-				history=history)
+	record_transaction(recordable=obj, 
+					   descriptions=event.descriptions,
+					   ext_value=event.external_value,
+					   history=history)
 
 @component.adapter(IRecordable, IObjectRemovedEvent)
 def _recordable_removed(obj, event):

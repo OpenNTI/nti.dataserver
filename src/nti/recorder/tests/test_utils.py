@@ -28,7 +28,7 @@ from nti.coremetadata.interfaces import IRecordable
 from nti.recorder.record import get_transactions
 
 from nti.recorder.utils import decompress
-from nti.recorder.utils import record_trax
+from nti.recorder.utils import record_transaction
 
 from nti.recorder.tests import SharedConfiguringTestLayer
 
@@ -44,8 +44,8 @@ class TestSubscriber(unittest.TestCase):
 		recordable = Recordable()
 		assert_that(recordable, has_property('locked', is_(False)))
 
-		record = record_trax(recordable, principal="ichigo", 
-							 descriptions=('a',), ext_value={"a":"b"})
+		record = record_transaction(recordable, principal="ichigo", 
+							 		descriptions=('a',), ext_value={"a":"b"})
 
 		assert_that(record, is_not(none()))
 		assert_that(record, has_property('attributes', is_(('a',))))
@@ -63,6 +63,6 @@ class TestSubscriber(unittest.TestCase):
 		records = get_transactions(recordable)
 		assert_that(records, has_length(1))
 		
-		record = record_trax(recordable, principal='aizen', type_='xyz')
+		record = record_transaction(recordable, principal='aizen', type_='xyz')
 		assert_that(record, is_not(none()))
 		assert_that(record, has_property('type', is_('xyz')))

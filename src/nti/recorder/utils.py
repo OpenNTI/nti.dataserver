@@ -45,8 +45,8 @@ def current_principal():
 		return None
 principal = current_principal
 
-def record_trax(recordable, principal=None, descriptions=(),
-				ext_value=None, type_=TRX_TYPE_UPDATE, history=None):
+def record_transaction(recordable, principal=None, descriptions=(),
+				       ext_value=None, type_=TRX_TYPE_UPDATE, history=None):
 
 	if history is None:
 		history = ITransactionRecordHistory(recordable)
@@ -79,3 +79,4 @@ def record_trax(recordable, principal=None, descriptions=(),
 
 	recordable.locked = True
 	return record
+record_trax = record_transaction
