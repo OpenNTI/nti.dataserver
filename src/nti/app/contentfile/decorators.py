@@ -45,3 +45,4 @@ class _ContentFileDecorator(object):
 			ext_dict['url'] = None
 			ext_dict['download_url'] = None
 		ext_dict['value'] = ext_dict['url']
+		ext_dict.pop('parameters', None)
