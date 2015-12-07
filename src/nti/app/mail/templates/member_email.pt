@@ -11,7 +11,6 @@
 			background-color: #89be3c;
 			width: 100%;
 			height: 5px;
-			margin-left: -30px;
 			padding-right: 40px;
 			}
 			#logo-bar {
@@ -19,11 +18,13 @@
 			margin-bottom: 30px;
 			}
 			body {
-			margin-left: 30px;
 			margin-right: 0px;
 			font-family: Arial, sans-serif;
 			font-size: 14pt;
 			color: #757474;
+			}
+			table, th, td {
+		    border-collapse: collapse;
 			}
 			.avatar_initials {
 			    position: absolute;
@@ -54,26 +55,52 @@
 			font-weight: bold;
 			color: #999;
 			}
+			@media screen and (max-width: 600px){
+				#wrapper{
+						width:440px !important;
+						margin-left:auto !important;
+						margin-right:auto;
+				}
+				#wrapper-top{
+						width:440px !important;
+						margin-left:auto !important;
+						margin-right:auto;
+				}
+				body{
+					margin-left: 0px;
+				}
+				th,td {
+			   	 padding: 0px;
+				}
+				img.frame{
+					width:300px;
+				}
+				#banner{width:100% !important;
+				}
+				table, th, td {
+		    		border-collapse: collapse;
+				}
+			}
 		</style>
 	</head>
 	<body>
 		<div metal:use-macro="macro:header">
 		<div id="green-bar"></div>
 		<div id="logo-bar">
-			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="100%" height="25"
 			alt="NextThought Logo" />
 		</div>
 		</div>
 
 		<table cellspacing="0" cellpadding="0" border="0"
-			style="color: #333; background: #EEF0F1; padding: 0; margin:
-			0; width: 100%; font: 15px/1.25em 'Helvetica Neue', Arial,
+			style="color: #333; background: #EEF0F1; padding: 0; margin-left: 0px; margin:0;
+			width: 100%; font: 15px/1.25em 'Helvetica Neue', Arial,
 			Helvetica;">
 			<tbody>
 				<tr width="100%">
 					<td valign="top" align="left">
 						<!-- White background -->
-						<table style="border: none; background:#fff; padding: 0 18px; margin: 50px auto; width: 500px;">
+						<table style="border: none; background:#fff; padding: 0 18px; width: 90%;">
 							<tbody>
 							<tr width="100%">
 								<td width="100%" style="border-collapse:collapse; margin-left: 0px; padding:15px">
