@@ -57,6 +57,7 @@ from nti.namedfile.interfaces import INamedFile
 
 ITEMS = StandardExternalFields.ITEMS
 MIMETYPE = StandardExternalFields.MIMETYPE
+LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 
 @view_config(name="ls")
 @view_config(name="contents")
@@ -171,6 +172,7 @@ class ContentFileGetView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		result = to_external_object(self.request.context)
+		result.lastModified = self.request.context.lastModified
 		return result
 
 @view_config(context=INamedFile)
