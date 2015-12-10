@@ -248,6 +248,9 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 				send_count += 1
 				self.send_email( member, subject, body, email )
 
+		# Now copy to author
+		subject = '[COPY] %s' % subject
+		self.send_email( self.sender, subject, body, email )
 		logger.info( '%s sent %s emails to "%s"',
 					self.remoteUser, send_count, self._context_display_name)
 		return hexc.HTTPNoContent()
