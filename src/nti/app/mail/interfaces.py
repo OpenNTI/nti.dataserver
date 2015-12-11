@@ -24,6 +24,9 @@ class IEmail(interface.Interface):
 	"""
 	A generic email object.
 	"""
+	Copy = Bool(title="Whether the email author will receive a copy.",
+				default=False)
+
 	NoReply = Bool(title="Whether the email will have a NoReply reply address",
 				default=False)
 
