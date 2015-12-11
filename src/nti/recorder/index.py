@@ -23,7 +23,6 @@ from nti.coremetadata.interfaces import IRecordable
 from nti.traversal.traversal import find_interface
 
 from nti.zope_catalog.catalog import Catalog
-from nti.zope_catalog.catalog import ResultSet
 
 from nti.zope_catalog.interfaces import IMetadataCatalog
 
@@ -187,10 +186,12 @@ def get_recordables(objects=True, catalog=None, intids=None):
 	locked_index = catalog[IX_LOCKED]
 	locked_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
 
+	intids = component.queryUtility(IIntIds) if intids is None else intids
 	uids = catalog.family.IF.union(locked_ids, recordable_ids)
-	if objects:
-		intids = component.getUtility(IIntIds) if intids is None else intids
-		result = ResultSet(uids, intids)
-	else:
-		result = uids
-	return result
+	for uid in uids or ():
+		if intids is None: # tests
+			yield uid
+		else:
+			obj = intids.queryObject(uid)
+			if IRecordable.providedBy(obj):
+				yield obj if objects else uid

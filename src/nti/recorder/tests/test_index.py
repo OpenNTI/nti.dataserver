@@ -37,6 +37,6 @@ class TestAdapters(unittest.TestCase):
 		recordable = Recordable()
 		catalog = create_recorder_catalog(family=BTrees.family64)
 		catalog.super_index_doc(1, recordable)
-		uids = get_recordables(objects=False, catalog=catalog)
+		uids = list(get_recordables(objects=False, catalog=catalog))
 		assert_that(uids, has_length(1))
 		assert_that(1, is_in(uids))
