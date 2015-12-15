@@ -90,7 +90,8 @@ class CalendarPublishStateDecorator(object):
 		if _expose_links( context, request ):
 			_links = result.setdefault(LINKS, [])
 			for rel in (VIEW_PUBLISH, VIEW_UNPUBLISH):
-				link = Link(context, rel=rel, elements=(rel,))
+				el = '@@%s' % rel
+				link = Link(context, rel=rel, elements=(el,))
 				interface.alsoProvides(link, ILocation)
 				link.__name__ = ''
 				link.__parent__ = context
