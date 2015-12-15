@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 import time
+from collections import defaultdict
 
 from zope import component
 
@@ -35,6 +36,7 @@ from nti.contentlibrary.indexed_data import get_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contenttypes.presentation import PACKAGE_CONTAINER_INTERFACES
+from nti.contenttypes.presentation.interfaces import IPresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.dataserver import authorization as nauth
@@ -50,15 +52,13 @@ from nti.site.site import get_component_hierarchy_names
 
 from ..utils import yield_content_packages
 
-from ..subscribers import can_be_removed
-from ..subscribers import clear_package_assets
-from ..subscribers import clear_content_package_assets
-from ..subscribers import clear_namespace_last_modified
 from ..subscribers import update_indices_when_content_changes
 
 from . import iface_of_thing
 
 ITEMS = StandardExternalFields.ITEMS
+NTIID = StandardExternalFields.NTIID
+MIMETYPE = StandardExternalFields.MIMETYPE
 
 def _get_package_ntiids(values):
 	ntiids = values.get('ntiid') or values.get('ntiids')
@@ -117,41 +117,6 @@ class GetPackagePresentationAssetsView(AbstractAuthenticatedView,
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   permission=nauth.ACT_NTI_ADMIN,
-			   name='ResetPackagePresentationAssets')
-class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
-										 ModeledContentUploadRequestUtilsMixin):
-
-	def readInput(self, value=None):
-		return _read_input(self.request)
-
-	def _do_call(self, result):
-		total = 0
-		values = self.readInput()
-		ntiids = _get_package_ntiids(values)
-		force = _is_true(values.get('force'))
-		packages = list(yield_content_packages(ntiids))
-
-		result = LocatedExternalDict()
-		for package in packages:
-			total += len(clear_content_package_assets(package, force=force))
-		result['Total'] = total
-		return result
-
-	def __call__(self):
-		now = time.time()
-		result = LocatedExternalDict()
-		endInteraction()
-		try:
-			self._do_call(result)
-		finally:
-			restoreInteraction()
-			result['TimeElapsed'] = time.time() - now
-		return result
-
-@view_config(context=IDataserverFolder)
-@view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   permission=nauth.ACT_NTI_ADMIN,
 			   name='RemovePackageInaccessibleAssets')
 class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 										  ModeledContentUploadRequestUtilsMixin):
@@ -159,12 +124,15 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 	def readInput(self, value=None):
 		return _read_input(self.request)
 
-	def _unregister(self, sites_names, provided, name):
-		result = False
-		sites_names = list(sites_names)
+	def _reverse(self, site_names):
+		sites_names = list(site_names)
 		sites_names.reverse()
+		return site_names
+
+	def _unregister(self, site_names, provided, name):
+		result = False
 		hostsites = component.getUtility(IEtcNamespace, name='hostsites')
-		for site_name in sites_names:
+		for site_name in self._reverse(site_names):
 			try:
 				folder = hostsites[site_name]
 				registry = folder.getSiteManager()
@@ -181,131 +149,118 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 				yield ntiid, asset
 
 	def _contained_assets(self):
-		result = []
+		result = defaultdict(list)
+		containers = defaultdict(list)
 		def recur(unit):
 			for child in unit.children or ():
 				recur(child)
-			container = IPresentationAssetContainer(unit, None) or {}
+			container = IPresentationAssetContainer(unit)
 			for key, value in container.items():
 				provided = iface_of_thing(value)
 				if provided in PACKAGE_CONTAINER_INTERFACES:
-					result.append((container, key, value))
+					result[key].append(value)
+					containers[key].append(container)
 		for pacakge in yield_content_packages():
 			recur(pacakge)
-		return result
+		return result, containers
+
+	def _pop(self, container, ntiid):
+		if ntiid in container:
+			del container[ntiid]
 
 	def _do_call(self, result):
 		registry = get_registry()
 		catalog = get_library_catalog()
-		sites = get_component_hierarchy_names()
 		intids = component.getUtility(IIntIds)
-
+		sites = get_component_hierarchy_names()
+				
+		contained = 0
 		registered = 0
 		items = result[ITEMS] = []
-		references = catalog.get_references(sites=sites,
-											provided=PACKAGE_CONTAINER_INTERFACES)
+		master, storages = self._contained_assets()
 
+		# clean containers by removing those assets that either
+		# don't have an intid or cannot be found in the registry
+		for ntiid, assets in list(master.items()):  # mutating
+			provided = None
+			containers = storages[ntiid]
+			# check every object in the storage containers to look for
+			# invalid objects
+			for idx, asset in enumerate(assets):
+				uid = intids.queryId(asset)
+				provided = iface_of_thing(asset)
+				if uid is None:
+					self._pop(containers[idx], ntiid)
+					remove_transaction_history(asset)
+
+			# check registration
+			if component.queryUtility(provided, name=ntiid) is None:
+				# unindex and remove from containers
+				for idx, asset in enumerate(assets):
+					uid = intids.queryId(asset)
+					if uid is not None:
+						catalog.unindex(uid)
+						intids.unregister(asset)
+					self._pop(containers[idx], ntiid)
+					remove_transaction_history(asset)
+				# update master list
+				master.pop(ntiid, None)
+				storages.pop(ntiid, None)
+			else:
+				contained += 1
+
+		# unregister those utilities that cannot be found
+		# in the course containers
 		for ntiid, asset in self._registered_assets(registry):
 			uid = intids.queryId(asset)
 			provided = iface_of_thing(asset)
-			if uid is None:
-				items.append(repr((provided.__name__, ntiid)))
-				self._unregister(sites, provided=provided, name=ntiid)
-			elif uid not in references:
-				items.append(repr((provided.__name__, ntiid, uid)))
-				self._unregister(sites, provided=provided, name=ntiid)
-				intids.unregister(asset)
-			registered += 1
-
-		contained = set()
-		for container, ntiid, asset in self._contained_assets():
-			uid = intids.queryId(asset)
-			provided = iface_of_thing(asset)
-			if 	uid is None or uid not in references or \
-				component.queryUtility(provided, name=ntiid) is None:
-				container.pop(ntiid, None)
+			if uid is None or ntiid not in master:
+				remove_transaction_history(asset)
 				self._unregister(sites, provided=provided, name=ntiid)
 				if uid is not None:
 					catalog.unindex(uid)
 					intids.unregister(asset)
-				remove_transaction_history(asset)
-			contained.add(ntiid)
+				items.append({
+					'IntId':uid,
+					NTIID:ntiid,
+					MIMETYPE:asset.mimeType,
+				})
+			else:
+				registered += 1
 
-		result['TotalRemoved'] = len(items)
-		result['TotalRegisteredAssets'] = registered
-		result['TotalContainedAssets'] = len(contained)
-		result['TotalCatalogedAssets'] = len(references)
-		return result
-
-	def __call__(self):
-		now = time.time()
-		result = LocatedExternalDict()
-		endInteraction()
-		try:
-			self._do_call(result)
-		finally:
-			restoreInteraction()
-			result['TimeElapsed'] = time.time() - now
-		return result
-
-@view_config(context=IDataserverFolder)
-@view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   permission=nauth.ACT_NTI_ADMIN,
-			   name='RemoveAllPackagesPresentationAssets')
-class RemoveAllPackagesPresentationAssetsView(RemovePackageInaccessibleAssetsView):
-
-	def _do_call(self, result):
-		values = self.readInput()
-		registry = get_registry()
-		catalog = get_library_catalog()
-		force = _is_true(values.get('force'))
-		sites = get_component_hierarchy_names()
-		intids = component.getUtility(IIntIds)
-
-		registered = 0
-		references = set()
-		result_set = catalog.search_objects(sites=sites,
-											provided=PACKAGE_CONTAINER_INTERFACES)
-		for uid, asset in result_set.iter_pairs():
-			if can_be_removed(asset, force=force):
+		# unindex invalid entries in catalog
+		references = catalog.get_references(sites=sites,
+										 	provided=PACKAGE_CONTAINER_INTERFACES)
+		for uid in references or ():
+			asset = intids.queryObject(uid)
+			if asset is None or not IPresentationAsset.providedBy(asset):
 				catalog.unindex(uid)
-				references.add(uid)
+			else:
+				ntiid = asset.ntiid
+				provided = iface_of_thing(asset)
+				if component.queryUtility(provided, name=ntiid) is None:
+					catalog.unindex(uid)
+					intids.unregister(asset)
+					remove_transaction_history(asset)
+					items.append({
+						'IntId':uid,
+						NTIID:ntiid,
+						MIMETYPE:asset.mimeType,
+					})
 
-		for ntiid, asset in self._registered_assets(registry):
-			if not can_be_removed(asset, force=force):
-				continue
-			# remove trax
-			remove_transaction_history(asset)
-			# unregister utility
-			provided = iface_of_thing(asset)
-			self._unregister(sites, provided=provided, name=ntiid)
-			# unregister fron intid
-			uid = intids.queryId(asset)
-			if uid is not None:
-				intids.unregister(asset)
-			# ground if possible
-			if hasattr('asset', '__parent__'):
-				asset.__parent__ = None
-			registered += 1
-
-		for package in yield_content_packages():
-			clear_package_assets(package)
-			clear_namespace_last_modified(package, catalog)
-
+		items.sort(key=lambda x:x[NTIID])
+		result['TotalContainedAssets'] = contained
 		result['TotalRegisteredAssets'] = registered
-		result['TotalCatalogedAssets'] = len(references)
+		result['Total'] = result['ItemCount'] = len(items)
 		return result
 
 	def __call__(self):
-		now = time.time()
 		result = LocatedExternalDict()
 		endInteraction()
 		try:
 			self._do_call(result)
 		finally:
 			restoreInteraction()
-			result['TimeElapsed'] = time.time() - now
 		return result
 
 @view_config(context=IDataserverFolder)
