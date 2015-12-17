@@ -48,6 +48,8 @@ principal = current_principal
 def record_transaction(recordable, principal=None, descriptions=(),
 				       ext_value=None, type_=TRX_TYPE_UPDATE, history=None):
 
+	__traceback_info__ = recordable, principal, ext_value
+	
 	if history is None:
 		history = ITransactionRecordHistory(recordable)
 
