@@ -132,6 +132,22 @@ def background_file_view(request):
 	result = _image_file_view(request, IBackgroundURL, 'backgroundURL')
 	return result
 
+
+class FilenameRespectingDownload(download.Download):
+	"""
+	A File Download view that uses 'filename' from plone.namedfile.INamedFile
+	if present rather than __name__.  Because zope file, which we monkey patch
+	plone.namedfile to extend, is an ILocation, __name__ must be unique and therefore
+	doesn't always map to the originally provided filename.  A good example of
+	this is course assets that sluggify the incoming filename and use that for the
+	__name__.  For downloads we prefer to provide the original name in 'filename' over '__name__'
+	"""
+	def __call__(self):
+		filename = getattr(self.context, 'filename', None)
+		for k, v in download.getHeaders(self.context, contentDisposition="attachment", downloadName=filename):
+			self.request.response.setHeader(k, v)
+		return download.DownloadResult(self.context)
+
 @view_config(route_name='objects.generic.traversal',
 			 context=IFile,
 			 permission=nauth.ACT_READ,
@@ -149,7 +165,7 @@ def file_download_view(request):
 
 	Some ACL in the parent hierarchy must make this readable.
 	"""
-	return _do_view(request, download.Download)
+	return _do_view(request, FilenameRespectingDownload)
 
 @view_config(route_name='objects.generic.traversal',
 			 context=IFileResource,
