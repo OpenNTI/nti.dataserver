@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Views for :mod:`zope.file` objects, and likewise :class:`zope.browserresource.interfaces.IFileResource`
+Views for :mod:`zope.file` objects, and likewise
+:class:`zope.browserresource.interfaces.IFileResource`
 
 .. $Id$
 """
@@ -140,11 +141,14 @@ class FilenameRespectingDownload(download.Download):
 	plone.namedfile to extend, is an ILocation, __name__ must be unique and therefore
 	doesn't always map to the originally provided filename.  A good example of
 	this is course assets that sluggify the incoming filename and use that for the
-	__name__.  For downloads we prefer to provide the original name in 'filename' over '__name__'
+	__name__.  For downloads we prefer to provide the original name in 'filename'
+	over '__name__'
 	"""
 	def __call__(self):
 		filename = getattr(self.context, 'filename', None)
-		for k, v in download.getHeaders(self.context, contentDisposition="attachment", downloadName=filename):
+		for k, v in download.getHeaders(self.context,
+										contentDisposition="attachment",
+										downloadName=filename):
 			self.request.response.setHeader(k, v)
 		return download.DownloadResult(self.context)
 
