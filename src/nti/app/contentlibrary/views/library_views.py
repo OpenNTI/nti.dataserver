@@ -359,6 +359,10 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 	"""
 	Handle the caching and 403 response communication for
 	LibraryPath views.
+
+	This caching may not hold anymore, since items may be
+	published/visible at an editor's call. But with a max
+	age set, it may not be a big deal.
 	"""
 	# Max age of 5 minutes, then they need to check with us.
 	max_age = 300
