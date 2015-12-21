@@ -22,3 +22,8 @@ class IMultipartSource(IFileReader):
                            default=u'application/octet-stream' )
 
     filename = TextLine(title="source file name", required=False)
+
+    def getSize():
+        """
+        return the length of this source
+        """
