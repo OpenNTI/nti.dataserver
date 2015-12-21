@@ -288,6 +288,8 @@ class ILibrarySynchronizationResults(IGenericSynchronizationResults):
 
 class IContentPackageSyncResults(IGenericSynchronizationResults):
 
+	SiteName = ValidTextLine(title="The site name", required=False)
+
 	ContentPackageNTIID = ValidTextLine(title="The ContentPackage NTIID", required=False)
 
 	AssetsUpdated =  UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
