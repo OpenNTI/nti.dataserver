@@ -21,18 +21,19 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 from .interfaces import ISynchronizationParams
 from .interfaces import ISynchronizationResults
+from .interfaces import IContentPackageSyncResults
 from .interfaces import ILibrarySynchronizationResults
 
-CONTENT_REMOVAL_ERROR_CODE 	  = 001
-MISSING_NTIID_ERROR_CODE 	  = 010
+CONTENT_REMOVAL_ERROR_CODE 	 = 001
+MISSING_NTIID_ERROR_CODE 	 = 010
 DUPLICATE_PACAKGES_ERROR_CODE = 100
 UNMATCHED_ROOT_NTTID_ERROR_CODE = 105
 MISSING_PACAKGE_REFERENCE_ERROR_CODE = 110
 
 class SynchronizationException(Exception):
-	
+
 	code = None
-	
+
 	def __str__(self, *args, **kwargs):
 		result = Exception.__str__(self, *args, **kwargs)
 		if self.code is not None:
@@ -41,7 +42,7 @@ class SynchronizationException(Exception):
 
 class ContentRemovalException(SynchronizationException):
 	code = CONTENT_REMOVAL_ERROR_CODE
-	
+
 class MissingContentBundleNTIIDException(SynchronizationException):
 	code = MISSING_NTIID_ERROR_CODE
 
@@ -53,7 +54,7 @@ class UnmatchedRootNTIIDException(SynchronizationException):
 
 class MissingContentPacakgeReferenceException(SynchronizationException):
 	code = MISSING_PACAKGE_REFERENCE_ERROR_CODE
-	
+
 @WithRepr
 @interface.implementer(ISynchronizationParams)
 class SynchronizationParams(SchemaConfigured):
@@ -96,4 +97,18 @@ class SynchronizationResults(SchemaConfigured, Contained):
 		self.Items = [] if self.Items is None else self.Items
 		item.__parent__ = self
 		self.Items.append(item)
+	append = add
+
+@WithRepr
+@interface.implementer(IContentPackageSyncResults)
+class ContentPackageSyncResults(object):
+	createDirectFieldProperties(IContentPackageSyncResults)
+
+	def add(self, item, locked=False):
+		assert item is not None
+		ntiid = getattr(item, 'ntiid', item)
+		name = 'AssetsSyncLocked' if locked else 'AssetsUpdated'
+		if getattr(self, name, None) is None:
+			setattr(self, name, set())
+		getattr(self, name).add(ntiid)
 	append = add

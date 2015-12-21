@@ -40,7 +40,7 @@ from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
 from nti.ntiids.schema import ValidNTIID
 
-from nti.schema.field import Int
+from nti.schema.field import Int, ValidTextLine
 from nti.schema.field import Bool
 from nti.schema.field import List
 from nti.schema.field import Number
@@ -286,6 +286,24 @@ class ILibrarySynchronizationResults(IGenericSynchronizationResults):
 				   value_type=TextLine(title="The NTIID"),
 				   required=False)
 
+class IContentPackageSyncResults(IGenericSynchronizationResults):
+
+	ContentPackageNTIID = ValidTextLine(title="The ContentPackage NTIID", required=False)
+
+	AssetsUpdated =  UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
+									title="The updated asset NTIIDs",
+									default=None, required=False)
+
+	AssetsSyncLocked = UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
+									  title="The locked asset NTIIDs",
+									  default=None, required=False)
+
+	def add(item, locked=False):
+		"""
+		Add a sync result
+		"""
+	append = add # alias
+	
 class ISynchronizationResults(interface.Interface):
 
 	Items = IndexedIterable(title="An iterable of sync results",
