@@ -17,8 +17,6 @@ import warnings
 
 from repoze.lru import LRUCache
 
-import zope.intid
-
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -26,6 +24,8 @@ from zope import lifecycleevent
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.event import notify
+
+from zope.intid import IIntIds
 
 from ZODB.POSException import POSError
 from ZODB.interfaces import IConnection, IBroken
@@ -127,7 +127,7 @@ def _register_units(content_unit):
 	"""
 	Recursively register content units.
 	"""
-	intids = component.queryUtility(zope.intid.IIntIds)
+	intids = component.queryUtility(IIntIds)
 	if intids is None:
 		return
 
@@ -148,7 +148,7 @@ def _unregister_units(content_unit):
 	"""
 	Recursively unregister content units.
 	"""
-	intids = component.queryUtility(zope.intid.IIntIds)
+	intids = component.queryUtility(IIntIds)
 	if intids is None:
 		return
 
@@ -327,7 +327,7 @@ class AbstractContentPackageLibrary(object):
 			# ZODB site access, we can have issues. Also not we're not
 			# randomizing because we expect to be preloaded.
 			for old in removed:
-				notify(ContentPackageRemovedEvent(old, params))
+				notify(ContentPackageRemovedEvent(old, params, results))
 				_unregister_units(old)
 				old.__parent__ = None
 				lib_sync_results.removed(old.ntiid) # register
@@ -724,7 +724,7 @@ class _PathCacheContentUnitWeakRef(object):
 		self._intid = None
 
 		try:
-			intids = component.getUtility(zope.intid.IIntIds)
+			intids = component.getUtility(IIntIds)
 			self._intid = intids.getId(contentunit)
 		except (IntIdMissingError, ComponentLookupError):
 			# For non-persistant cases (or unit tests), store the object itself.
@@ -735,6 +735,6 @@ class _PathCacheContentUnitWeakRef(object):
 		if self._obj is not None:
 			result = self._obj
 		else:
-			intids = component.getUtility(zope.intid.IIntIds)
+			intids = component.getUtility(IIntIds)
 			result = intids.getObject(self._intid)
 		return result
