@@ -169,12 +169,20 @@ class SourceProxy(ProxyBase):
 	@readproperty
 	def mode(self):
 		return "rb"
+	
+	@property
+	def size(self):
+		return self.length
+
+	def getSize(self):
+		return self.size
 
 def process_source(source, default_content_type=u'application/octet-stream'):
 	if isinstance(source, six.string_types):
+		length = len(source)
 		source = StringIO(source)
 		source.seek(0)
-		source = SourceProxy(source, content_type='application/json')
+		source = SourceProxy(source, content_type='application/json', length=length)
 	elif source is not None:
 		length = getattr(source, 'length', None)
 		filename = getattr(source, 'filename', None)
