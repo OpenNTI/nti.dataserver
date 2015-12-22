@@ -374,10 +374,10 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 
 	def _get_library_path_last_mod(self):
 		result = 0
-		for library_last_mod in component.subscribers( (self.remoteUser,),
-										ILibraryPathLastModifiedProvider ):
+		for library_last_mod in component.subscribers((self.remoteUser,),
+										ILibraryPathLastModifiedProvider):
 			if library_last_mod is not None:
-				result = max( library_last_mod, result )
+				result = max(library_last_mod, result)
 		return result
 
 	def _get_library_last_mod(self):
@@ -392,11 +392,11 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 		return result or None
 
 	def do_caching(self, obj):
-		setattr( obj, 'lastModified', self.last_mod )
-		interface.alsoProvides( obj, IExternalCollection )
-		controller = IPreRenderResponseCacheController( obj )
+		setattr(obj, 'lastModified', self.last_mod)
+		interface.alsoProvides(obj, IExternalCollection)
+		controller = IPreRenderResponseCacheController(obj)
 		controller.max_age = self.max_age
-		controller( obj, {'request': self.request} )
+		controller(obj, {'request': self.request})
 
 	def pre_caching(self):
 		cache_controller = PreResponseLibraryPathCacheController()
@@ -635,7 +635,7 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
-		# FIXME We need to validate user access to our endpoint
+		# FIXME: We need to validate user access to our endpoint
 		# object here, instead of assuming content package access
 		# is enough (versus asset visbility).
 		if 		ITopic.providedBy(obj) \
