@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from collections import Mapping
 from collections import OrderedDict
 
 from zope import interface
@@ -48,6 +49,9 @@ def validate_sources(context=None, sources=()):
 	Validate the specified sources using the :class:`.IFileConstraints`
 	derived from the context
 	"""
+	if isinstance( sources, Mapping ):
+		sources = sources.values()
+
 	for source in sources or ():
 		ctx = context if context is not None else source
 		validator = IFileConstraints(ctx, None)
@@ -87,7 +91,7 @@ def transfer(source, target):
 def read_multipart_sources(request, sources=()):
 	"""
 	return a list of data sources from the specified multipart request
-	
+
 	:param sources: Iterable of :class:`.IFile' objects
 	"""
 	result = []
@@ -105,7 +109,7 @@ def read_multipart_sources(request, sources=()):
 def get_content_files(context, attr="body"):
 	"""
 	return a list of :class:`.IFile' objects from the specified context
-	
+
 	:param context: Source object
 	:param attr attribute name to check in context (optional)
 	"""
@@ -119,10 +123,10 @@ def get_content_files(context, attr="body"):
 
 def transfer_internal_content_data(context, attr="body"):
 	"""
-	Transfer data from the database stored :class:`.IFile' objects 
+	Transfer data from the database stored :class:`.IFile' objects
 	to the corresponding :class:`.IFile' objects in the context
 	object.
-	
+
 	This function may be called when clients sent internal reference
 	:class:`.IFile' objects when updating the context object
 	"""
@@ -182,4 +186,4 @@ def to_external_oid_and_link(item, name='view', rel='data', render=True):
 
 def to_external_href(item):
 	_, external = to_external_oid_and_link(item, render=True, name='view')
-	return external 
+	return external

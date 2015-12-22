@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import six
 try:
 	from cStringIO import StringIO
@@ -146,7 +147,7 @@ class AbstractAuthenticatedView(AbstractView, AuthenticatedViewMixin):
 
 @interface.implementer(IMultipartSource)
 class SourceProxy(ProxyBase):
-	
+
 	length = property(lambda s: s.__dict__.get('_v_length'),
 					  lambda s, v: s.__dict__.__setitem__('_v_length', v))
 
@@ -165,17 +166,21 @@ class SourceProxy(ProxyBase):
 		ProxyBase.__init__(self, base)
 		self.filename = filename
 		self.contentType = contentType
-		
+		self.length = length
+
 	@readproperty
 	def mode(self):
 		return "rb"
-	
+
 	@property
 	def size(self):
 		return self.length
 
 	def getSize(self):
 		return self.size
+
+def _get_file_size( source ):
+	return os.fstat( source.file.fileno() ).st_size
 
 def process_source(source, default_content_type=u'application/octet-stream'):
 	if isinstance(source, six.string_types):
@@ -185,6 +190,8 @@ def process_source(source, default_content_type=u'application/octet-stream'):
 		source = SourceProxy(source, content_type='application/json', length=length)
 	elif source is not None:
 		length = getattr(source, 'length', None)
+		if not length or length == -1:
+			length = _get_file_size( source )
 		filename = getattr(source, 'filename', None)
 		contentType = ( 	getattr(source, 'type', None)
 						or	getattr(source, 'contentType', None) )
