@@ -122,7 +122,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 	@Lazy
 	def use_blobs(self):
 		return self.context.use_blobs
-	
+
 	def get_namedfile(self, source, name, filename=None):
 		filename = getattr(source, 'filename', None)
 		contentType = getattr(source, 'contentType', None)
@@ -245,17 +245,17 @@ class RenameView(AbstractAuthenticatedView,
 
 		# get content type
 		contentType = data.get('contentType') or data.get('content_type')
-		
+
 		# replace name
-		old = theObject.name 
+		old = theObject.name
 		theObject.name = name
-		
+
 		# for files only
 		if INamed.providedBy(theObject):
 			theObject.filename = name
 			if contentType: # replace if provided
 				theObject.contentType = contentType
-			
+
 		# replace in folder
 		parent.rename(old, name)
 		# XXX: externalize first

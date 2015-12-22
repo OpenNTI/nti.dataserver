@@ -180,7 +180,12 @@ class SourceProxy(ProxyBase):
 		return self.size
 
 def _get_file_size( source ):
-	return os.fstat( source.file.fileno() ).st_size
+	result = None
+	try:
+		result = os.fstat( source.file.fileno() ).st_size
+	except AttributeError:
+		pass
+	return result
 
 def process_source(source, default_content_type=u'application/octet-stream'):
 	if isinstance(source, six.string_types):
