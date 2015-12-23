@@ -15,6 +15,8 @@ from collections import defaultdict
 
 from zope import component
 
+from zope.component.hooks import site as current_site
+
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
@@ -48,7 +50,11 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.recorder.record import remove_transaction_history
 
 from nti.site.utils import unregisterUtility
+from nti.site.interfaces import IHostPolicyFolder
+from nti.site.site import get_site_for_site_names
 from nti.site.site import get_component_hierarchy_names
+
+from nti.traversal.traversal import find_interface
 
 from ..utils import yield_content_packages
 
@@ -129,18 +135,26 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 		sites_names.reverse()
 		return site_names
 
-	def _unregister(self, site_names, provided, name):
-		result = False
+	def _component_registry(self, site_names, asset, provided, name):
 		hostsites = component.getUtility(IEtcNamespace, name='hostsites')
-		for site_name in self._reverse(site_names):
+		for site_name in self._reverse(site_names):  # higher sites first
 			try:
 				folder = hostsites[site_name]
 				registry = folder.getSiteManager()
-				result = unregisterUtility(registry,
-										   provided=provided,
-										   name=name) or result
+				if registry.queryUtility(provided, name=name) == asset:
+					return registry
 			except KeyError:
 				pass
+		return None
+
+	def _unregister(self, asset, site_names, provided, name):
+		registry = self._component_registry(site_names, asset, provided, name)
+		if registry is not None:
+			result = unregisterUtility(registry,
+									   provided=provided,
+									   name=name)
+		else:
+			registry = False
 		return result
 
 	def _registered_assets(self, registry):
@@ -173,7 +187,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 		catalog = get_library_catalog()
 		intids = component.getUtility(IIntIds)
 		sites = get_component_hierarchy_names()
-				
+
 		contained = 0
 		registered = 0
 		items = result[ITEMS] = []
@@ -216,7 +230,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 			provided = iface_of_thing(asset)
 			if uid is None or ntiid not in master:
 				remove_transaction_history(asset)
-				self._unregister(sites, provided=provided, name=ntiid)
+				self._unregister(sites, asset, provided=provided, name=ntiid)
 				if uid is not None:
 					catalog.unindex(uid)
 					intids.unregister(asset)
@@ -276,12 +290,14 @@ class SyncPackagePresentationAssetsView(AbstractAuthenticatedView,
 
 	def _do_call(self, result):
 		values = self.readInput()
-		ntiids = _get_package_ntiids(values)
-		packages = list(yield_content_packages(ntiids))
 		items = result[ITEMS] = []
-		for package in packages:
-			items.append(package.ntiid)
-			update_indices_when_content_changes(package)
+		ntiids = _get_package_ntiids(values)
+		for package in yield_content_packages(ntiids):
+			folder = find_interface(package, IHostPolicyFolder, strict=False)
+			site = get_site_for_site_names((folder.__name__,))
+			with current_site(site):
+				items.append(package.ntiid)
+				update_indices_when_content_changes(package)
 		return result
 
 	def __call__(self):
