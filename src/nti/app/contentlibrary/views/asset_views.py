@@ -147,7 +147,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 				pass
 		return None
 
-	def _unregister(self, asset, site_names, provided, name):
+	def _unregister(self, site_names, asset, provided, name):
 		registry = self._component_registry(site_names, asset, provided, name)
 		if registry is not None:
 			result = unregisterUtility(registry,
