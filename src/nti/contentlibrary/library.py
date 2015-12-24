@@ -351,9 +351,9 @@ class AbstractContentPackageLibrary(object):
 			for new in added:
 				new.__parent__ = self
 				lifecycleevent.created(new)
-				notify(ContentPackageAddedEvent(new, params))
-				_register_units(new)
 				lib_sync_results.added(new.ntiid) # register
+				notify(ContentPackageAddedEvent(new, params, results))
+				_register_units(new)
 
 			# after updating remove parent reference for old objects
 			for _, old in changed:
