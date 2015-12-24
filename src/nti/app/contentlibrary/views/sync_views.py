@@ -139,7 +139,6 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		# retries cause syncs to take much longer to perform.
 		now = time.time()
 		result = LocatedExternalDict()
-		result['Started'] = now
 		endInteraction()
 		try:
 			params, results = synchronize(sleep=self._SLEEP,
@@ -150,7 +149,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 			result['Results'] = results
 		finally:
 			restoreInteraction()
-			result['Elapsed'] = time.time() - now
+			result['SyncTime'] = time.time() - now
 		return result
 
 	def __call__(self):

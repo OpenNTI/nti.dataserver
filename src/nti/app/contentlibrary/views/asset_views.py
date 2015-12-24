@@ -17,12 +17,12 @@ from zope import component
 
 from zope.component.hooks import site as current_site
 
+from zope.intid import IIntIds
+
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
 from zope.traversing.interfaces import IEtcNamespace
-
-from zope.intid import IIntIds
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults

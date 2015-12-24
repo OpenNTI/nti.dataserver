@@ -100,7 +100,8 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	# Traverse down to the pages collection and use it to create the info.
 	# This way we get the correct link structure
 
-	remote_user = get_remote_user(request, dataserver=request.registry.getUtility(IDataserver))
+	remote_user = get_remote_user(request, 
+								  dataserver=request.registry.getUtility(IDataserver))
 	if not remote_user:
 		raise hexc.HTTPForbidden()
 
@@ -126,8 +127,8 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	return info
 
 @view_config(name='')
-@view_config(name='pageinfo+json')
 @view_config(name='link+json')
+@view_config(name='pageinfo+json')
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context='nti.contentlibrary.interfaces.IContentUnit',
