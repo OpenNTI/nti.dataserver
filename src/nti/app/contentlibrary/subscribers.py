@@ -13,6 +13,8 @@ import simplejson
 
 from zope import component
 
+from zope.component.hooks import getSite
+
 from zope.intid import IIntIds
 
 from ZODB.interfaces import IConnection
@@ -24,8 +26,11 @@ from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IContentPackageSyncResults
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 from nti.contentlibrary.interfaces import IContentPackageLibraryDidSyncEvent
+
+from nti.contentlibrary.synchronize import ContentPackageSyncResults 
 
 from nti.contenttypes.presentation import iface_of_asset
 
@@ -388,13 +393,31 @@ clear_namespace_last_modified = _clear_last_modified
 
 # update events
 
-def update_indices_when_content_changes(content_package):
+def _new_sync_results(content_package):
+	result = ContentPackageSyncResults(Site=getattr(getSite(), '__name__', None),
+									   ContentPackageNTIID=content_package.ntiid)
+	return result
+
+def _get_sync_results(content_package, event):
+	all_results = getattr(event, "results", None)
+	if not all_results or not IContentPackageSyncResults.providedBy(all_results[-1]):
+		result = _new_sync_results(content_package)
+		if all_results is not None:
+			all_results.append(result)
+		return result
+	else:
+		return all_results[-1]
+
+def update_indices_when_content_changes(content_package, sync_results=None):
+	if sync_results is None:
+		sync_results = _new_sync_results(content_package)
 	_clear_assets(content_package)
 	for name, item_iface, func in INDICES:
 		_update_index_when_content_changes(content_package, name, item_iface, func)
 
 def _update_indices_when_content_changes(content_package, event):
-	update_indices_when_content_changes(content_package)
+	sync_results = _get_sync_results(content_package, event)
+	update_indices_when_content_changes(content_package, sync_results)
 
 # clear events
 
