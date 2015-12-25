@@ -18,6 +18,7 @@ from zope.dublincore import interfaces as dub_interfaces
 
 from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
+from zope.interface.common.sequence import IFiniteSequence
 
 from zope.lifecycleevent import ObjectAddedEvent
 from zope.lifecycleevent import ObjectRemovedEvent
@@ -288,7 +289,7 @@ class ILibrarySynchronizationResults(IGenericSynchronizationResults):
 
 class IContentPackageSyncResults(IGenericSynchronizationResults):
 
-	SiteName = ValidTextLine(title="The site name", required=False)
+	Site = ValidTextLine(title="The site name", required=False)
 
 	ContentPackageNTIID = ValidTextLine(title="The ContentPackage NTIID", required=False)
 
@@ -306,7 +307,7 @@ class IContentPackageSyncResults(IGenericSynchronizationResults):
 		"""
 	append = add # alias
 	
-class ISynchronizationResults(interface.Interface):
+class ISynchronizationResults(IFiniteSequence):
 
 	Items = IndexedIterable(title="An iterable of sync results",
 							value_type=Object(IGenericSynchronizationResults),

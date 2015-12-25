@@ -92,6 +92,18 @@ class SynchronizationResults(SchemaConfigured, Contained):
 	def __init__(self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
+	def __getitem__(self, index):
+		return self.Items[index]
+
+	def __setitem__(self, index, value):
+		self.Items[index] = value
+	
+	def __len__(self):
+		return len(self.Items or ())
+
+	def __iter__(self):
+		return iter(self.Items or ())
+
 	def add(self, item):
 		assert item is not None
 		self.Items = [] if self.Items is None else self.Items
@@ -101,8 +113,13 @@ class SynchronizationResults(SchemaConfigured, Contained):
 
 @WithRepr
 @interface.implementer(IContentPackageSyncResults)
-class ContentPackageSyncResults(object):
+class ContentPackageSyncResults(SchemaConfigured, Contained):
 	createDirectFieldProperties(IContentPackageSyncResults)
+
+	SiteName = alias('Site')
+
+	def __init__(self, *args, **kwargs):
+		SchemaConfigured.__init__(self, *args, **kwargs)
 
 	def add(self, item, locked=False):
 		assert item is not None
