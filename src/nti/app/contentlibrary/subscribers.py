@@ -192,8 +192,14 @@ def _removed_registered(provided, name, intids=None, registry=None,
 		registered = None  # set to None since it was not removed
 	return registered
 
-def _remove_from_registry(containers=None, namespace=None, provided=None,
-						  registry=None, intids=None, catalog=None, force=False):
+def _remove_from_registry(containers=None, 
+						  namespace=None, 
+						  provided=None,
+						  registry=None, 
+						  intids=None, 
+						  catalog=None, 
+						  force=False,
+						  sync_results=None):
 	"""
 	For our type, get our indexed objects so we can remove from both the
 	registry and the index.
@@ -219,6 +225,8 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 										  registry=registry)
 			if removed is not None:
 				result.append(removed)
+			elif sync_results is not None:
+				sync_results.add(ntiid, locked=True)
 	return result
 
 def _get_container_tree(container_id):
@@ -281,7 +289,7 @@ def _store_asset(content_package, container_id, ntiid, item):
 		return True
 	return False
 
-def _index_items(content_package, index, item_iface, removed, catalog, registry):
+def _index_items(content_package, index, item_iface, catalog, registry):
 	result = 0
 	for container_id, indexed_ids in index['Containers'].items():
 		for indexed_id in indexed_ids:
@@ -292,13 +300,20 @@ def _index_items(content_package, index, item_iface, removed, catalog, registry)
 									  container_id, catalog)
 	return result
 
-def _update_index_when_content_changes(content_package, index_filename,
-									   item_iface, object_creator, catalog=None):
+def _update_index_when_content_changes(content_package, 
+									   index_filename,
+									   item_iface, 
+									   object_creator, 
+									   catalog=None,
+									   sync_results=None):
 	catalog = get_library_catalog() if catalog is None else catalog
 	sibling_key = content_package.does_sibling_entry_exist(index_filename)
 	if not sibling_key:
 		# Nothing to do
 		return
+
+	if sync_results is None:
+		sync_results = _new_sync_results(content_package)
 
 	if catalog is not None:  # may be None in test mode
 		sk_lastModified = sibling_key.lastModified
@@ -325,7 +340,8 @@ def _update_index_when_content_changes(content_package, index_filename,
 									provided=item_iface,
 									registry=registry,
 									catalog=catalog,
-									intids=intids)
+									intids=intids,
+									sync_results=sync_results)
 
 	# These are structured as follows:
 	# {
@@ -342,13 +358,15 @@ def _update_index_when_content_changes(content_package, index_filename,
 							  				 provided=INTISlide,
 							  				 registry=registry,
 							 				 catalog=catalog,
-							  			 	 intids=intids))
+							  			 	 intids=intids,
+							  			 	 sync_results=sync_results))
 
 		removed.extend(_remove_from_registry(namespace=content_package.ntiid,
 							  				 provided=INTISlideVideo,
 							 				 registry=registry,
 							  				 catalog=catalog,
-							  				 intids=intids))
+							  				 intids=intids,
+							  				 sync_results=sync_results))
 
 		added = _load_and_register_slidedeck_json(index_text,
 										  		  registry=registry,
@@ -365,22 +383,31 @@ def _update_index_when_content_changes(content_package, index_filename,
 	# keep transaction history
 	_copy_remove_transactions(removed, registry=registry)
 
+	# update sync results
+	for item in added or ():
+		sync_results.add(item, locked=False)
+
 	# Index our contained items; ignoring the global library.
 	index_item_count = 0
 	if registry != component.getGlobalSiteManager():
 		index_item_count = _index_items(content_package, index, item_iface,
-										removed, catalog, registry)
+										catalog, registry)
 
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
 				sibling_key, registered_count, index_item_count, removed_count)
 
-def _clear_assets(content_package):
+def _clear_assets(content_package, force=False):
 	def recur(unit):
 		for child in unit.children or ():
 			recur(child)
-		container = IPresentationAssetContainer(unit, None)
-		if container is not None:
+		container = IPresentationAssetContainer(unit)
+		if force:
 			container.clear()
+		else:
+			for key, value in list(container.items()): # mutating
+				if can_be_removed(value, force):
+					del container[key]
+
 	recur(content_package)
 clear_package_assets = _clear_assets
 
@@ -413,7 +440,11 @@ def update_indices_when_content_changes(content_package, sync_results=None):
 		sync_results = _new_sync_results(content_package)
 	_clear_assets(content_package)
 	for name, item_iface, func in INDICES:
-		_update_index_when_content_changes(content_package, name, item_iface, func)
+		_update_index_when_content_changes(content_package,
+										   index_filename=name, 
+										   object_creator=func,
+										   item_iface=item_iface, 
+										   sync_results=sync_results)
 
 def _update_indices_when_content_changes(content_package, event):
 	sync_results = _get_sync_results(content_package, event)
@@ -428,7 +459,7 @@ def _clear_when_removed(content_package, force=True, process_global=False):
 	"""
 	result = []
 	catalog = get_library_catalog()
-	_clear_assets(content_package)
+	_clear_assets(content_package, force)
 
 	# Remove indexes for our contained items; ignoring the global library.
 	# Not sure if this will work when we have shared items
