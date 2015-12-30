@@ -449,6 +449,7 @@ def update_indices_when_content_changes(content_package, sync_results=None):
 										   object_creator=func,
 										   item_iface=item_iface,
 										   sync_results=sync_results)
+	return sync_results
 
 @component.adapter(IContentPackage, IObjectModifiedEvent)
 def _update_indices_when_content_changes(content_package, event):

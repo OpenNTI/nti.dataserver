@@ -39,7 +39,7 @@ from nti.externalization.externalization import to_external_object
 
 from ._permissioned import _PermissionedContentPackageMixin
 
-class _PermissionedContentPackageLibrary(ProxyBase, 
+class _PermissionedContentPackageLibrary(ProxyBase,
 										 _PermissionedContentPackageMixin):
 	"""
 	A wrapper around the global library that implements
@@ -122,6 +122,7 @@ class LibraryWorkspace(object):
 
 	__parent__ = None
 	__name__ = 'Library'
+
 	name = alias('__name__')
 
 	def __init__(self, lib):

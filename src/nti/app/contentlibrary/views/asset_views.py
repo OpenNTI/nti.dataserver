@@ -294,8 +294,7 @@ class SyncPackagePresentationAssetsView(AbstractAuthenticatedView,
 		ntiids = _get_package_ntiids(values)
 		for package in yield_content_packages(ntiids):
 			folder = find_interface(package, IHostPolicyFolder, strict=False)
-			site = get_site_for_site_names((folder.__name__,))
-			with current_site(site):
+			with current_site(get_site_for_site_names((folder.__name__,))):
 				items.append(package.ntiid)
 				update_indices_when_content_changes(package)
 		return result

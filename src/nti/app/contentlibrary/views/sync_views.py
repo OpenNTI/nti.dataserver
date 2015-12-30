@@ -119,10 +119,10 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		acquired = lock.acquire(blocking=False)
 		if acquired:
 			return lock
-		raise_json_error(self.request, 
-						 hexc.HTTPUnprocessableEntity, 
+		raise_json_error(self.request,
+						 hexc.HTTPUnprocessableEntity,
 						 {'message': 'Sync already in progress',
-						  'code':'Exception'}, 
+						  'code':'Exception'},
 						 None)
 
 	def _do_call(self):
@@ -130,8 +130,13 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		site = values.get('site')
 		allowRemoval = values.get('allowRemoval') or u''
 		allowRemoval = allowRemoval.lower() in TRUE_VALUES
-		packages = values.get('packages') or values.get('package') or ()
-		packages = set(packages.split()) if isinstance(packages, string_types) else packages
+		# things to sync
+		for name in ('ntiids', 'ntiid', 'packages', 'package'):
+			ntiids = values.get(name)
+			if ntiids:
+				break
+		ntiids = set(ntiids.split()) if isinstance(ntiids, string_types) else ntiids
+
 		# Unfortunately, zope.dublincore includes a global subscriber registration
 		# (zope.dublincore.creatorannotator.CreatorAnnotator)
 		# that will update the `creators` property of IZopeDublinCore to include
@@ -153,22 +158,22 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		try:
 			params, results = synchronize(sleep=self._SLEEP,
 										  site=site,
-										  packages=packages,
+										  ntiids=ntiids or (),
 										  allowRemoval=allowRemoval)
 			result['Params'] = params
 			result['Results'] = results
 		except (StandardError, Exception) as e:
-			transaction.doom() # cancel changes
-	
+			transaction.doom()  # cancel changes
+
 			exc_type, exc_value, exc_traceback = sys.exc_info()
 			result['code'] = e.__class__.__name__
 			result['message'] = str(e)
-			result['traceback'] = repr(traceback.format_exception(exc_type, 
+			result['traceback'] = repr(traceback.format_exception(exc_type,
 																  exc_value,
 																  exc_traceback))
-			raise_json_error(self.request, 
-							 hexc.HTTPUnprocessableEntity, 
-							 result, 
+			raise_json_error(self.request,
+							 hexc.HTTPUnprocessableEntity,
+							 result,
 							 exc_traceback)
 		finally:
 			restoreInteraction()

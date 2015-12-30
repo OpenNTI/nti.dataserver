@@ -35,7 +35,6 @@ def _sync_content_packages(args):
 def _process_args(args):
 	library = component.getUtility(IContentPackageLibrary)
 	library.syncContentPackages()
-	
 	set_site(args.site)
 
 	if not args.list:

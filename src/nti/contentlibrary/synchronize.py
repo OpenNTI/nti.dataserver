@@ -60,6 +60,7 @@ class MissingContentPacakgeReferenceException(SynchronizationException):
 class SynchronizationParams(SchemaConfigured):
 	createDirectFieldProperties(ISynchronizationParams)
 
+	packages = alias('ntiids')
 	allowDrops = alias('allowRemoval')
 
 @WithRepr

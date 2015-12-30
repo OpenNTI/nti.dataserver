@@ -101,11 +101,11 @@ def find_page_info_view_helper(request, page_ntiid_or_content_unit):
 	result = request.invoke_subrequest(subrequest)
 	return result
 
-def yield_sync_content_packages(ntiids=(), include_global=False):
+def yield_sync_content_packages(ntiids=()):
 	library = component.getUtility(IContentPackageLibrary)
 	if not ntiids:
 		for package in library.contentPackages:
-			if not IGlobalContentPackage.providedBy(package) or include_global:
+			if not IGlobalContentPackage.providedBy(package):
 				yield package
 	else:
 		for ntiid in ntiids:
@@ -113,6 +113,6 @@ def yield_sync_content_packages(ntiids=(), include_global=False):
 			package = IContentPackage(obj, None)
 			if package is None:
 				logger.error("Could not find package with NTIID %s", ntiid)
-			elif not IGlobalContentPackage.providedBy(package) or include_global:
+			elif not IGlobalContentPackage.providedBy(package):
 				yield package
 yield_content_packages = yield_sync_content_packages

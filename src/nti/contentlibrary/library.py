@@ -234,7 +234,7 @@ class AbstractContentPackageLibrary(object):
 		Fires created, added, modified, or removed events for each
 		content package, as appropriate.
 		"""
-		packages = params.packages if params is not None else ()
+		packages = params.ntiids if params is not None else ()
 		results = SynchronizationResults() if results is None else results
 		notify(ContentPackageLibraryWillSyncEvent(self, params))
 
