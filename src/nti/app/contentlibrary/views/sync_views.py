@@ -14,8 +14,9 @@ logger = __import__('logging').getLogger(__name__)
 import sys
 import time
 import traceback
-
 from six import string_types
+
+import transaction
 
 from zope import component
 
@@ -28,6 +29,8 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -151,12 +154,18 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 			result['Params'] = params
 			result['Results'] = results
 		except (StandardError, Exception) as e:
+			transaction.doom() # cancel changes
+	
 			exc_type, exc_value, exc_traceback = sys.exc_info()
 			result['code'] = e.__class__.__name__
 			result['message'] = str(e)
 			result['traceback'] = repr(traceback.format_exception(exc_type, 
 																  exc_value,
 																  exc_traceback))
+			raise_json_error(self.request, 
+							 hexc.HTTPUnprocessableEntity, 
+							 result, 
+							 exc_traceback)
 		finally:
 			restoreInteraction()
 			result['SyncTime'] = time.time() - now
