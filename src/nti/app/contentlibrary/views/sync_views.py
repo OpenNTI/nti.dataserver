@@ -11,7 +11,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import sys
 import time
+import traceback
+
 from six import string_types
 
 from zope import component
@@ -147,6 +150,13 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 										  allowRemoval=allowRemoval)
 			result['Params'] = params
 			result['Results'] = results
+		except (StandardError, Exception) as e:
+			exc_type, exc_value, exc_traceback = sys.exc_info()
+			result['code'] = e.__class__.__name__
+			result['message'] = str(e)
+			result['traceback'] = repr(traceback.format_exception(exc_type, 
+																  exc_value,
+																  exc_traceback))
 		finally:
 			restoreInteraction()
 			result['SyncTime'] = time.time() - now
