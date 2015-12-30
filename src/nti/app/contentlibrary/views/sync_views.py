@@ -119,7 +119,11 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		acquired = lock.acquire(blocking=False)
 		if acquired:
 			return lock
-		raise hexc.HTTPUnprocessableEntity('Sync already in progress')
+		raise_json_error(self.request, 
+						 hexc.HTTPUnprocessableEntity, 
+						 {'message': 'Sync already in progress',
+						  'code':'Exception'}, 
+						 None)
 
 	def _do_call(self):
 		values = self.readInput()
