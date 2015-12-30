@@ -17,6 +17,9 @@ from zope.component.hooks import getSite
 
 from zope.intid import IIntIds
 
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+
 from ZODB.interfaces import IConnection
 
 from nti.coremetadata.interfaces import IRecordable
@@ -24,13 +27,14 @@ from nti.coremetadata.interfaces import IRecordable
 from nti.contentlibrary.indexed_data import get_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
+from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageSyncResults
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 from nti.contentlibrary.interfaces import IContentPackageLibraryDidSyncEvent
 
-from nti.contentlibrary.synchronize import ContentPackageSyncResults 
+from nti.contentlibrary.synchronize import ContentPackageSyncResults
 
 from nti.contenttypes.presentation import iface_of_asset
 
@@ -65,7 +69,7 @@ from .interfaces import IContentBoard
 
 ITEMS = StandardExternalFields.ITEMS
 
-INDICES = (	('audio_index.json', INTIAudio, create_ntiaudio_from_external),
+INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
 			('video_index.json', INTIVideo, create_ntivideo_from_external),
 			('timeline_index.json', INTITimeline, create_timelime_from_external),
 			('slidedeck_index.json', INTISlideDeck, create_object_from_external),
@@ -192,12 +196,12 @@ def _removed_registered(provided, name, intids=None, registry=None,
 		registered = None  # set to None since it was not removed
 	return registered
 
-def _remove_from_registry(containers=None, 
-						  namespace=None, 
+def _remove_from_registry(containers=None,
+						  namespace=None,
 						  provided=None,
-						  registry=None, 
-						  intids=None, 
-						  catalog=None, 
+						  registry=None,
+						  intids=None,
+						  catalog=None,
 						  force=False,
 						  sync_results=None):
 	"""
@@ -300,10 +304,10 @@ def _index_items(content_package, index, item_iface, catalog, registry):
 									  container_id, catalog)
 	return result
 
-def _update_index_when_content_changes(content_package, 
+def _update_index_when_content_changes(content_package,
 									   index_filename,
-									   item_iface, 
-									   object_creator, 
+									   item_iface,
+									   object_creator,
 									   catalog=None,
 									   sync_results=None):
 	catalog = get_library_catalog() if catalog is None else catalog
@@ -404,7 +408,7 @@ def _clear_assets(content_package, force=False):
 		if force:
 			container.clear()
 		else:
-			for key, value in list(container.items()): # mutating
+			for key, value in list(container.items()):  # mutating
 				if can_be_removed(value, force):
 					del container[key]
 
@@ -441,11 +445,12 @@ def update_indices_when_content_changes(content_package, sync_results=None):
 	_clear_assets(content_package)
 	for name, item_iface, func in INDICES:
 		_update_index_when_content_changes(content_package,
-										   index_filename=name, 
+										   index_filename=name,
 										   object_creator=func,
-										   item_iface=item_iface, 
+										   item_iface=item_iface,
 										   sync_results=sync_results)
 
+@component.adapter(IContentPackage, IObjectModifiedEvent)
 def _update_indices_when_content_changes(content_package, event):
 	sync_results = _get_sync_results(content_package, event)
 	update_indices_when_content_changes(content_package, sync_results)
@@ -494,6 +499,7 @@ def _clear_when_removed(content_package, force=True, process_global=False):
 	return result
 clear_content_package_assets = _clear_when_removed
 
+@component.adapter(IContentPackage, IObjectRemovedEvent)
 def _clear_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)
 
