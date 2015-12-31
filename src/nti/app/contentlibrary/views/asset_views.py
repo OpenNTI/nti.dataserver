@@ -128,9 +128,9 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 		return _read_input(self.request)
 
 	def _registered_assets(self, registry):
-		for iface in PACKAGE_CONTAINER_INTERFACES:
-			for ntiid, asset in list(registry.getUtilitiesFor(iface)):
-				yield ntiid, asset
+		for provided in PACKAGE_CONTAINER_INTERFACES:
+			for ntiid, asset in list(registry.getUtilitiesFor(provided)):
+				yield ntiid, asset, provided
 
 	def _unit_assets(self, pacakge):
 		result = []
@@ -176,14 +176,14 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 			# sites to check
 			sites[site.__name__] = site
 
+		seen = set()
 		# unregister those utilities that cannot be found
 		# in the pacakge containers
 		for site in sites.values():
 			with current_site(site):
 				registry = get_registry()
-				for ntiid, asset in self._registered_assets(registry):
+				for ntiid, asset, provided in self._registered_assets(registry):
 					uid = intids.queryId(asset)
-					provided = iface_of_thing(asset)
 					if uid is None or ntiid not in master:
 						remove_transaction_history(asset)
 						unregisterUtility(registry,
@@ -192,12 +192,13 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 						if uid is not None:
 							catalog.unindex(uid)
 							intids.unregister(asset)
-
-						items.append({
-							'IntId':uid,
-							NTIID:ntiid,
-							MIMETYPE:asset.mimeType,
-						})
+						if ntiid not in seen:
+							seen.add(ntiid)
+							items.append({
+								'IntId':uid,
+								NTIID:ntiid,
+								MIMETYPE:asset.mimeType,
+							})
 					else:
 						registered += 1
 
@@ -215,11 +216,13 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 					catalog.unindex(uid)
 					intids.unregister(asset)
 					remove_transaction_history(asset)
-					items.append({
-						'IntId':uid,
-						NTIID:ntiid,
-						MIMETYPE:asset.mimeType,
-					})
+					if ntiid not in seen:
+						seen.add(ntiid)
+						items.append({
+							'IntId':uid,
+							NTIID:ntiid,
+							MIMETYPE:asset.mimeType,
+						})
 
 		items.sort(key=lambda x:x[NTIID])
 		result['TotalContainedAssets'] = len(master)
