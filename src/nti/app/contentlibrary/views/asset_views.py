@@ -22,8 +22,6 @@ from zope.intid import IIntIds
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
-from zope.traversing.interfaces import IEtcNamespace
-
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
@@ -94,7 +92,6 @@ def _read_input(request):
 class GetPackagePresentationAssetsView(AbstractAuthenticatedView,
 									   ModeledContentUploadRequestUtilsMixin):
 
-
 	def __call__(self):
 		params = CaseInsensitiveDict(self.request.params)
 		ntiids = _get_package_ntiids(params)
@@ -130,41 +127,13 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 	def readInput(self, value=None):
 		return _read_input(self.request)
 
-	def _reverse(self, site_names):
-		sites_names = list(site_names)
-		sites_names.reverse()
-		return site_names
-
-	def _component_registry(self, site_names, asset, provided, name):
-		hostsites = component.getUtility(IEtcNamespace, name='hostsites')
-		for site_name in self._reverse(site_names):  # higher sites first
-			try:
-				folder = hostsites[site_name]
-				registry = folder.getSiteManager()
-				if registry.queryUtility(provided, name=name) == asset:
-					return registry
-			except KeyError:
-				pass
-		return None
-
-	def _unregister(self, site_names, asset, provided, name):
-		registry = self._component_registry(site_names, asset, provided, name)
-		if registry is not None:
-			result = unregisterUtility(registry,
-									   provided=provided,
-									   name=name)
-		else:
-			registry = False
-		return result
-
 	def _registered_assets(self, registry):
 		for iface in PACKAGE_CONTAINER_INTERFACES:
 			for ntiid, asset in list(registry.getUtilitiesFor(iface)):
 				yield ntiid, asset
 
-	def _contained_assets(self):
-		result = defaultdict(list)
-		containers = defaultdict(list)
+	def _unit_assets(self, pacakge):
+		result = []
 		def recur(unit):
 			for child in unit.children or ():
 				recur(child)
@@ -172,75 +141,65 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 			for key, value in container.items():
 				provided = iface_of_thing(value)
 				if provided in PACKAGE_CONTAINER_INTERFACES:
-					result[key].append(value)
-					containers[key].append(container)
-		for pacakge in yield_content_packages():
-			recur(pacakge)
-		return result, containers
-
-	def _pop(self, container, ntiid):
-		if ntiid in container:
-			del container[ntiid]
+					result.append((key, value, container))
+		recur(pacakge)
+		return result
 
 	def _do_call(self, result):
-		registry = get_registry()
-		catalog = get_library_catalog()
-		intids = component.getUtility(IIntIds)
-		sites = get_component_hierarchy_names()
-
-		contained = 0
 		registered = 0
 		items = result[ITEMS] = []
-		master, storages = self._contained_assets()
+
+		sites = dict()
+		master = defaultdict(list)
+		catalog = get_library_catalog()
+		intids = component.getUtility(IIntIds)
 
 		# clean containers by removing those assets that either
 		# don't have an intid or cannot be found in the registry
-		for ntiid, assets in list(master.items()):  # mutating
-			provided = None
-			containers = storages[ntiid]
-			# check every object in the storage containers to look for
-			# invalid objects
-			for idx, asset in enumerate(assets):
+		for pacakge in yield_content_packages():
+			# check every object in the pacakge
+			folder = find_interface(pacakge, IHostPolicyFolder, strict=False)
+			site = get_site_for_site_names((folder.__name__,))
+			for ntiid, asset, container in self._unit_assets(pacakge):
 				uid = intids.queryId(asset)
 				provided = iface_of_thing(asset)
 				if uid is None:
-					self._pop(containers[idx], ntiid)
+					container.pop(ntiid, None)
 					remove_transaction_history(asset)
-
-			# check registration
-			if component.queryUtility(provided, name=ntiid) is None:
-				# unindex and remove from containers
-				for idx, asset in enumerate(assets):
-					uid = intids.queryId(asset)
-					if uid is not None:
-						catalog.unindex(uid)
-						intids.unregister(asset)
-					self._pop(containers[idx], ntiid)
-					remove_transaction_history(asset)
-				# update master list
-				master.pop(ntiid, None)
-				storages.pop(ntiid, None)
-			else:
-				contained += 1
-
-		# unregister those utilities that cannot be found
-		# in the course containers
-		for ntiid, asset in self._registered_assets(registry):
-			uid = intids.queryId(asset)
-			provided = iface_of_thing(asset)
-			if uid is None or ntiid not in master:
-				remove_transaction_history(asset)
-				self._unregister(sites, asset, provided=provided, name=ntiid)
-				if uid is not None:
+				elif component.queryUtility(provided, name=ntiid) is None:
 					catalog.unindex(uid)
 					intids.unregister(asset)
-				items.append({
-					'IntId':uid,
-					NTIID:ntiid,
-					MIMETYPE:asset.mimeType,
-				})
-			else:
-				registered += 1
+					container.pop(ntiid, None)
+					remove_transaction_history(asset)
+				else:
+					master[ntiid].append(asset)
+			# sites to check
+			sites[site.__name__] = site
+
+		# unregister those utilities that cannot be found
+		# in the pacakge containers
+		for site in sites.values():
+			with current_site(site):
+				registry = get_registry()
+				for ntiid, asset in self._registered_assets(registry):
+					uid = intids.queryId(asset)
+					provided = iface_of_thing(asset)
+					if uid is None or ntiid not in master:
+						remove_transaction_history(asset)
+						unregisterUtility(registry,
+										  name=ntiid,
+									   	  provided=provided)
+						if uid is not None:
+							catalog.unindex(uid)
+							intids.unregister(asset)
+
+						items.append({
+							'IntId':uid,
+							NTIID:ntiid,
+							MIMETYPE:asset.mimeType,
+						})
+					else:
+						registered += 1
 
 		# unindex invalid entries in catalog
 		references = catalog.get_references(sites=sites,
@@ -263,7 +222,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 					})
 
 		items.sort(key=lambda x:x[NTIID])
-		result['TotalContainedAssets'] = contained
+		result['TotalContainedAssets'] = len(master)
 		result['TotalRegisteredAssets'] = registered
 		result['Total'] = result['ItemCount'] = len(items)
 		return result
