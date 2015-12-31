@@ -173,7 +173,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 			result['Params'] = params
 			result['Results'] = results
 		except (StandardError, Exception) as e:
-			logger.exception("Failed to Sync")
+			logger.exception("Failed to Sync %s", self._txn_id())
 
 			transaction.doom()  # cancel changes
 
