@@ -136,6 +136,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 			if ntiids:
 				break
 		ntiids = set(ntiids.split()) if isinstance(ntiids, string_types) else ntiids
+		ntiids = list(ntiids) if ntiids else ()
 
 		# Unfortunately, zope.dublincore includes a global subscriber registration
 		# (zope.dublincore.creatorannotator.CreatorAnnotator)
