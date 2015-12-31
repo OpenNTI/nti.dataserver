@@ -17,6 +17,11 @@ import traceback
 from six import string_types
 
 import transaction
+try:
+	from transaction._compat import get_thread_ident
+except ImportError:
+	def get_thread_ident():
+		return id(transaction.get())
 
 from zope import component
 
@@ -121,9 +126,12 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 			return lock
 		raise_json_error(self.request,
 						 hexc.HTTPLocked,
-						 {'message': 'Sync already in progress',
-						  'code':'Exception'},
+						 {'Message': 'Sync already in progress',
+						  'Code':'Exception'},
 						 None)
+
+	def _txn_id(self):
+		return "txn.%s" % get_thread_ident()
 
 	def _do_call(self):
 		values = self.readInput()
@@ -155,6 +163,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		# retries cause syncs to take much longer to perform.
 		now = time.time()
 		result = LocatedExternalDict()
+		result['Transaction'] = self._txn_id()
 		endInteraction()
 		try:
 			params, results = synchronize(sleep=self._SLEEP,
@@ -169,9 +178,9 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 			transaction.doom()  # cancel changes
 
 			exc_type, exc_value, exc_traceback = sys.exc_info()
-			result['code'] = e.__class__.__name__
-			result['message'] = str(e)
-			result['traceback'] = repr(traceback.format_exception(exc_type,
+			result['Code'] = e.__class__.__name__
+			result['Message'] = str(e)
+			result['Traceback'] = repr(traceback.format_exception(exc_type,
 																  exc_value,
 																  exc_traceback))
 			raise_json_error(self.request,
@@ -188,7 +197,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		# With 'with', we deadlock while attempting to re-acquire the lock.
 		lock = self.lock
 		try:
-			logger.info('Starting sync')
+			logger.info('Starting sync %s', self._txn_id())
 			return self._do_call()
 		finally:
 			lock.release()
