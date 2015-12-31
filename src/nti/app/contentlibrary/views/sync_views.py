@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Administration views.
+Sync views.
 
 .. $Id$
 """
@@ -126,8 +126,8 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 			return lock
 		raise_json_error(self.request,
 						 hexc.HTTPLocked,
-						 {'Message': 'Sync already in progress',
-						  'Code':'Exception'},
+						 {'message': 'Sync already in progress',
+						  'code':'Exception'},
 						 None)
 
 	def _txn_id(self):
@@ -172,15 +172,16 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 										  allowRemoval=allowRemoval)
 			result['Params'] = params
 			result['Results'] = results
+			result['SyncTime'] = time.time() - now
 		except (StandardError, Exception) as e:
 			logger.exception("Failed to Sync %s", self._txn_id())
 
 			transaction.doom()  # cancel changes
 
 			exc_type, exc_value, exc_traceback = sys.exc_info()
-			result['Code'] = e.__class__.__name__
-			result['Message'] = str(e)
-			result['Traceback'] = repr(traceback.format_exception(exc_type,
+			result['code'] = e.__class__.__name__
+			result['message'] = str(e)
+			result['traceback'] = repr(traceback.format_exception(exc_type,
 																  exc_value,
 																  exc_traceback))
 			raise_json_error(self.request,
@@ -189,7 +190,6 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 							 exc_traceback)
 		finally:
 			restoreInteraction()
-			result['SyncTime'] = time.time() - now
 		return result
 
 	def __call__(self):
