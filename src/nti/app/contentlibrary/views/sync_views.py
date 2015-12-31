@@ -120,7 +120,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		if acquired:
 			return lock
 		raise_json_error(self.request,
-						 hexc.HTTPUnprocessableEntity,
+						 hexc.HTTPLocked,
 						 {'message': 'Sync already in progress',
 						  'code':'Exception'},
 						 None)
