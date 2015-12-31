@@ -37,19 +37,20 @@ def main():
 
 	site = args.site
 	removal = args.removal
-	ntiids = tuple(args.ntiids) if args.ntiids else ()
+	ntiids = set(args.ntiids) if args.ntiids else ()
+	ntiids = map(unicode, ntiids)
 	if not site and ntiids:
 		raise IOError("Must specify a site")
 
 	conf_packages = ('nti.appserver',)
 	context = create_context(env_dir, with_library=True)
 	run_with_dataserver(environment_dir=env_dir,
-						 xmlconfig_packages=conf_packages,
-						 verbose=args.verbose,
-						 context=context,
-						 function=lambda: synchronize(site=site,
-													  ntiids=ntiids,
-													  allowRemoval=removal))
+						xmlconfig_packages=conf_packages,
+						verbose=args.verbose,
+						context=context,
+						function=lambda: synchronize(site=site,
+													 ntiids=ntiids,
+													 allowRemoval=removal))
 
 	sys.exit(0)
 
