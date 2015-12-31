@@ -22,6 +22,8 @@ from zope.intid import IIntIds
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
+from zope.traversing.interfaces import IEtcNamespace
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
@@ -32,7 +34,6 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.common.string import TRUE_VALUES
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.contentlibrary.indexed_data import get_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contenttypes.presentation import PACKAGE_CONTAINER_INTERFACES
@@ -145,11 +146,18 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 		recur(pacakge)
 		return result
 
+	def _site_registry(self, site_name):
+		hostsites = component.getUtility(IEtcNamespace, name='hostsites')
+		folder = hostsites[site_name]
+		registry = folder.getSiteManager()
+		return registry
+
 	def _do_call(self, result):
 		registered = 0
 		items = result[ITEMS] = []
 
-		sites = dict()
+		seen = set()
+		sites = set()
 		master = defaultdict(list)
 		catalog = get_library_catalog()
 		intids = component.getUtility(IIntIds)
@@ -159,7 +167,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 		for pacakge in yield_content_packages():
 			# check every object in the pacakge
 			folder = find_interface(pacakge, IHostPolicyFolder, strict=False)
-			site = get_site_for_site_names((folder.__name__,))
+			sites.add(folder.__name__)
 			for ntiid, asset, container in self._unit_assets(pacakge):
 				uid = intids.queryId(asset)
 				provided = iface_of_thing(asset)
@@ -173,34 +181,29 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 					remove_transaction_history(asset)
 				else:
 					master[ntiid].append(asset)
-			# sites to check
-			sites[site.__name__] = site
 
-		seen = set()
-		# unregister those utilities that cannot be found
-		# in the pacakge containers
-		for site in sites.values():
-			with current_site(site):
-				registry = get_registry()
-				for ntiid, asset, provided in self._registered_assets(registry):
-					uid = intids.queryId(asset)
-					if uid is None or ntiid not in master:
-						remove_transaction_history(asset)
-						unregisterUtility(registry,
-										  name=ntiid,
-									   	  provided=provided)
-						if uid is not None:
-							catalog.unindex(uid)
-							intids.unregister(asset)
-						if ntiid not in seen:
-							seen.add(ntiid)
-							items.append({
-								'IntId':uid,
-								NTIID:ntiid,
-								MIMETYPE:asset.mimeType,
-							})
-					else:
-						registered += 1
+		# unregister those utilities that cannot be found in the pacakge containers
+		for site in sites:
+			registry = self._site_registry(site)
+			for ntiid, asset, provided in self._registered_assets(registry):
+				uid = intids.queryId(asset)
+				if uid is None or ntiid not in master:
+					remove_transaction_history(asset)
+					unregisterUtility(registry,
+									  name=ntiid,
+								   	  provided=provided)
+					if uid is not None:
+						catalog.unindex(uid)
+						intids.unregister(asset)
+					if ntiid not in seen:
+						seen.add(ntiid)
+						items.append({
+							'IntId':uid,
+							NTIID:ntiid,
+							MIMETYPE:asset.mimeType,
+						})
+				else:
+					registered += 1
 
 		# unindex invalid entries in catalog
 		references = catalog.get_references(sites=sites,
