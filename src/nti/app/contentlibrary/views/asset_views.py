@@ -272,5 +272,5 @@ class SyncPackagePresentationAssetsView(AbstractAuthenticatedView,
 			self._do_call(result)
 		finally:
 			restoreInteraction()
-			result['TimeElapsed'] = time.time() - now
+			result['SyncTime'] = time.time() - now
 		return result
