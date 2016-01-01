@@ -21,6 +21,7 @@ from zope.schema.interfaces import ConstraintNotSatisfied
 from pyramid import httpexceptions as hexc
 
 from plone.namedfile.interfaces import IFile as IPloneFile
+from plone.namedfile.interfaces import INamed as IPloneNamed
 
 from nti.app.base.abstract_views import get_source
 
@@ -29,6 +30,7 @@ from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
 from nti.externalization.externalization import to_external_object
 from nti.externalization.externalization import to_external_ntiid_oid
 
+from nti.namedfile.file import NamedFileMixin
 from nti.namedfile.file import get_file_name as get_context_name
 
 from nti.namedfile.interfaces import IFile
@@ -49,7 +51,7 @@ def validate_sources(context=None, sources=()):
 	Validate the specified sources using the :class:`.IFileConstraints`
 	derived from the context
 	"""
-	if isinstance( sources, Mapping ):
+	if isinstance(sources, Mapping):
 		sources = sources.values()
 
 	for source in sources or ():
@@ -164,6 +166,18 @@ class ContentFileUploadMixin(object):
 		result = validate_sources(context, *sources)
 		return result
 
+def _to_external_link_impl(target, elements, contentType=None, rel='data', render=True):
+	link = Link(target=target,
+				target_mime_type=contentType,
+				elements=elements,
+				rel=rel)
+	interface.alsoProvides(link, ILinkExternalHrefOnly)
+	if render:
+		external = render_link(link)
+	else:
+		external = to_external_object(link)
+	return external
+
 def to_external_oid_and_link(item, name='view', rel='data', render=True):
 	"""
 	return the OID and the link ( or OID href ) of the specified item
@@ -172,18 +186,33 @@ def to_external_oid_and_link(item, name='view', rel='data', render=True):
 	if target:
 		elements = ('@@' + name,) if name else ()
 		contentType = getattr(item, 'contentType', None)
-		link = Link(target=target,
-					target_mime_type=contentType,
-					elements=elements,
-					rel=rel)
-		interface.alsoProvides(link, ILinkExternalHrefOnly)
-		if render:
-			external = render_link(link)
-		else:
-			external = to_external_object(link)
+		external = _to_external_link_impl(target,
+										  elements,
+										  rel=rel,
+										  render=render,
+										  contentType=contentType)
 		return (target, external)
 	return (None, None)
 
 def to_external_href(item):
 	_, external = to_external_oid_and_link(item, render=True, name='view')
 	return external
+to_external_view_href = to_external_href
+
+def _download_file_name(context):
+	result = None
+	if IPloneNamed.providedBy(context):
+		result = NamedFileMixin.nameFinder(context.filename) or context.filename
+	return result or getattr(context, 'name', None)
+
+def to_external_download_href(item):
+	contentType = getattr(item, 'contentType', None)
+	target = to_external_ntiid_oid(item, add_to_connection=True)
+	if target:
+		name = _download_file_name(item)
+		elements = ('download', name or 'file.dat')
+		external = _to_external_link_impl(target,
+										  elements,
+										  contentType=contentType)
+		return external
+	return None
