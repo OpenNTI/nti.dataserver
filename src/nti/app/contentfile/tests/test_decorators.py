@@ -17,15 +17,17 @@ from hamcrest import ends_with
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import starts_with
+from hamcrest import has_property
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from nti.externalization.tests import externalizes
 
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests import mock_dataserver
 
 GIF_DATAURL = b'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 
@@ -51,13 +53,20 @@ class TestDecorators(ApplicationLayerTest):
 												  has_entry('url', none()),
 												  has_key('CreatedTime'),
 												  has_key('Last Modified'))))
-		
-	@WithMockDSTrans
+
+	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_external_href(self):
-		ext_obj = self.ext_obj
-		internal = find_factory_for(ext_obj)()
-		update_from_external_object(internal, ext_obj, require_updater=True)
-		self.ds.root['name'] = internal
-		href = to_external_download_href(internal)
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			ext_obj = self.ext_obj
+			internal = find_factory_for(ext_obj)()
+			update_from_external_object(internal, ext_obj, require_updater=True)
+			self.ds.root['name'] = internal
+			href = to_external_download_href(internal)
+
 		assert_that(href, starts_with('/dataserver2/Objects/'))
 		assert_that(href, ends_with('/download/ichigo.gif'))
+
+		res = self.testapp.get(href, status=200)
+		assert_that(res, has_property('content_length', is_(61)))
+		assert_that(res, has_property('content_type', is_('image/gif')))
