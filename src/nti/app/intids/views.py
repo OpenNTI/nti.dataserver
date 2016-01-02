@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
@@ -27,8 +27,7 @@ from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.zodb import isBroken
 
-@view_config(name='IntidResolver')
-@view_config(name='intid_resolver')
+@view_config(name='IntIdResolver')
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   request_method='GET',
@@ -54,7 +53,6 @@ class IntIdResolverView(AbstractAuthenticatedView):
 		return result
 
 @view_config(name='UnregisterMissingObjects')
-@view_config(name='unregister_missing_objects')
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   request_method='POST',
