@@ -197,6 +197,7 @@ def _removed_registered(provided, name, intids=None, registry=None,
 					provided.__name__, name)
 		registered = None  # set to None since it was not removed
 	return registered
+removed_registered = _removed_registered
 
 def _remove_from_registry(containers=None,
 						  namespace=None,

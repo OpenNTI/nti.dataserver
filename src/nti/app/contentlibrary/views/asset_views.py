@@ -56,6 +56,9 @@ from nti.traversal.traversal import find_interface
 
 from ..utils import yield_content_packages
 
+from ..subscribers import can_be_removed
+from ..subscribers import removed_registered
+from ..subscribers import clear_content_package_assets
 from ..subscribers import update_indices_when_content_changes
 
 from . import iface_of_thing
@@ -120,6 +123,77 @@ class GetPackagePresentationAssetsView(AbstractAuthenticatedView,
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   permission=nauth.ACT_NTI_ADMIN,
+			   name='ResetPackagePresentationAssets')
+class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
+										 ModeledContentUploadRequestUtilsMixin):
+
+	def readInput(self, value=None):
+		return _read_input(self.request)
+
+	def _unit_assets(self, package):
+		result = []
+		def recur(unit):
+			for child in unit.children or ():
+				recur(child)
+			container = IPresentationAssetContainer(unit)
+			for key, value in container.items():
+				provided = iface_of_thing(value)
+				if provided in PACKAGE_CONTAINER_INTERFACES:
+					result.append((key, value, container))
+		recur(package)
+		return result
+
+	def _do_call(self, result):
+		total = 0
+		values = self.readInput()
+		ntiids = _get_package_ntiids(values)
+		force = _is_true(values.get('force'))
+
+		result = LocatedExternalDict()
+		items = result[ITEMS] = {}
+		for package in yield_content_packages(ntiids):
+			seen = ()
+			removed = []
+			folder = find_interface(package, IHostPolicyFolder, strict=False)
+			site = get_site_for_site_names((folder.__name__,))
+			with current_site(site):
+				registry = component.getSiteManager()
+				# remove using catalog
+				removed.extend(clear_content_package_assets(package, force=force))
+				# remove anything left in containters
+				for ntiid, item, container in self._unit_assets(package):
+					if can_be_removed(item, force=force):
+						container.pop(ntiid, None)
+					if ntiid not in seen:
+						seen.add(ntiid)
+						provided = iface_of_thing(item)
+						if removed_registered(provided,
+										  	  ntiid,
+										  	  force=force,
+										   	  registry=registry) is not None:
+							removed.append(item)
+							remove_transaction_history(item)
+				# record output
+				items[package.ntiid] = removed
+				total += len(removed)
+		result['Total'] = total
+		return result
+
+	def __call__(self):
+		now = time.time()
+		result = LocatedExternalDict()
+		endInteraction()
+		try:
+			self._do_call(result)
+		finally:
+			restoreInteraction()
+			result['SyncTime'] = time.time() - now
+		return result
+
+@view_config(context=IDataserverFolder)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_NTI_ADMIN,
 			   name='RemovePackageInaccessibleAssets')
 class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 										  ModeledContentUploadRequestUtilsMixin):
@@ -132,7 +206,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 			for ntiid, asset in list(registry.getUtilitiesFor(provided)):
 				yield ntiid, asset, provided
 
-	def _unit_assets(self, pacakge):
+	def _unit_assets(self, package):
 		result = []
 		def recur(unit):
 			for child in unit.children or ():
@@ -142,7 +216,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 				provided = iface_of_thing(value)
 				if provided in PACKAGE_CONTAINER_INTERFACES:
 					result.append((key, value, container))
-		recur(pacakge)
+		recur(package)
 		return result
 
 	def _site_registry(self, site_name):
@@ -163,11 +237,11 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 
 		# clean containers by removing those assets that either
 		# don't have an intid or cannot be found in the registry
-		for pacakge in yield_content_packages():
-			# check every object in the pacakge
-			folder = find_interface(pacakge, IHostPolicyFolder, strict=False)
+		for package in yield_content_packages():
+			# check every object in the package
+			folder = find_interface(package, IHostPolicyFolder, strict=False)
 			sites.add(folder.__name__)
-			for ntiid, asset, container in self._unit_assets(pacakge):
+			for ntiid, asset, container in self._unit_assets(package):
 				uid = intids.queryId(asset)
 				provided = iface_of_thing(asset)
 				if uid is None:
@@ -181,7 +255,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 				else:
 					master.add(ntiid)
 
-		# unregister those utilities that cannot be found in the pacakge containers
+		# unregister those utilities that cannot be found in the package containers
 		for site in sites:
 			registry = self._site_registry(site)
 			for ntiid, asset, provided in self._registered_assets(registry):
