@@ -92,7 +92,7 @@ def intid_register(item, registry, intids=None, connection=None):
 	connection = get_connection(registry) if connection is None else connection
 	if connection is not None:
 		connection.add(item)
-		intids.register(item, event=False)
+		intids.register(item, event=True)
 		return True
 	return False
 
