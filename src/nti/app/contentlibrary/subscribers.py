@@ -15,11 +15,7 @@ from zope import component
 
 from zope.component.hooks import getSite
 
-from zope.event import notify
-
 from zope.intid.interfaces import IIntIds
-from zope.intid.interfaces import IntIdAddedEvent
-from zope.intid.interfaces import IntIdRemovedEvent
 
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -59,6 +55,9 @@ from nti.contenttypes.presentation.utils import create_relatedwork_from_external
 
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.intid.common import addIntId
+from nti.intid.common import removeIntId
+
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
 from nti.recorder.record import copy_transaction_history
@@ -91,13 +90,11 @@ def get_connection(registry=None):
 		result = IConnection(registry, None)
 		return result
 
-def intid_register(item, registry, intids=None, connection=None):
-	intids = component.getUtility(IIntIds) if intids is None else intids
+def intid_register(item, registry, connection=None):
 	connection = get_connection(registry) if connection is None else connection
 	if connection is not None:
 		connection.add(item)
-		intids.register(item, event=False)
-		notify(IntIdAddedEvent(item, None))
+		addIntId(item)
 		return True
 	return False
 
@@ -111,7 +108,7 @@ def _register_utility(item, provided, ntiid, registry=None, intids=None, connect
 			if intids.queryId(registered) is None:  # remove if invalid
 				unregisterUtility(registry, provided=provided, name=ntiid)
 			registerUtility(registry, item, provided=provided, name=ntiid)
-			intid_register(item, registry, intids, connection)
+			intid_register(item, registry, connection=connection)
 			return (True, item)
 		return (False, registered)
 	return (False, None)
@@ -194,8 +191,7 @@ def _removed_registered(provided, name, intids=None, registry=None,
 		if not unregisterUtility(registry, provided=provided, name=name):
 			logger.warn("Could not unregister (%s,%s) during sync, continuing...",
 						provided.__name__, name)
-		notify(IntIdRemovedEvent(registered, None))
-		intids.unregister(registered, event=False)
+		removeIntId(registered)
 	elif registered is not None:
 		logger.warn("Object (%s,%s) is locked cannot be removed during sync",
 					provided.__name__, name)
