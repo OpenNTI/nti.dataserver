@@ -12,11 +12,14 @@ logger = __import__('logging').getLogger(__name__)
 import simplejson
 
 from zope import component
-from zope import lifecycleevent
 
 from zope.component.hooks import getSite
 
-from zope.intid import IIntIds
+from zope.event import notify
+
+from zope.intid.interfaces import IIntIds
+from zope.intid.interfaces import IntIdAddedEvent
+from zope.intid.interfaces import IntIdRemovedEvent
 
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -93,7 +96,8 @@ def intid_register(item, registry, intids=None, connection=None):
 	connection = get_connection(registry) if connection is None else connection
 	if connection is not None:
 		connection.add(item)
-		lifecycleevent.added(item)
+		intids.register(item, event=False)
+		notify(IntIdAddedEvent(item, None))
 		return True
 	return False
 
@@ -190,7 +194,8 @@ def _removed_registered(provided, name, intids=None, registry=None,
 		if not unregisterUtility(registry, provided=provided, name=name):
 			logger.warn("Could not unregister (%s,%s) during sync, continuing...",
 						provided.__name__, name)
-		lifecycleevent.removed(registered)
+		notify(IntIdRemovedEvent(registered, None))
+		intids.unregister(registered, event=False)
 	elif registered is not None:
 		logger.warn("Object (%s,%s) is locked cannot be removed during sync",
 					provided.__name__, name)
