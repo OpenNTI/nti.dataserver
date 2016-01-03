@@ -194,16 +194,19 @@ def to_external_oid_and_link(item, name='view', rel='data', render=True):
 		return (target, external)
 	return (None, None)
 
-def to_external_href(item):
-	_, external = to_external_oid_and_link(item, render=True, name='view')
-	return external
-to_external_view_href = to_external_href
-
 def download_file_name(context):
 	result = None
 	if IPloneNamed.providedBy(context):
 		result = NamedFileMixin.nameFinder(context.filename) or context.filename
 	return result or getattr(context, 'name', None)
+
+def to_external_href(item, add_name=False):
+	_, external = to_external_oid_and_link(item, render=True, name='view')
+	if add_name:
+		name = download_file_name(item) or 'file.dat'
+		external += '/%s' % name
+	return external
+to_external_view_href = to_external_href
 
 def to_external_download_href(item):
 	contentType = getattr(item, 'contentType', None)
