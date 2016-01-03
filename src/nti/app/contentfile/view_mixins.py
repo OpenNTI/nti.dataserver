@@ -199,7 +199,7 @@ def to_external_href(item):
 	return external
 to_external_view_href = to_external_href
 
-def _download_file_name(context):
+def download_file_name(context):
 	result = None
 	if IPloneNamed.providedBy(context):
 		result = NamedFileMixin.nameFinder(context.filename) or context.filename
@@ -209,7 +209,7 @@ def to_external_download_href(item):
 	contentType = getattr(item, 'contentType', None)
 	target = to_external_ntiid_oid(item, add_to_connection=True)
 	if target:
-		name = _download_file_name(item)
+		name = download_file_name(item)
 		elements = ('download', name or 'file.dat')
 		external = _to_external_link_impl(target,
 										  elements,
