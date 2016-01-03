@@ -26,10 +26,7 @@ from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ZODB.POSException import POSKeyError
 
-try:
-	from plone.namedfile import NamedImage
-except ImportError:  # pypy? Doesn't make sense
-	NamedImage = None
+from plone.namedfile import NamedImage
 
 from nti.app.externalization.view_mixins import UploadRequestUtilsMixin
 
@@ -89,6 +86,7 @@ def file_view(request):
 
 	Some ACL in the parent hierarchy must make this readable.
 	"""
+	from IPython.core.debugger import Tracer; Tracer()()
 	return _do_view(request, download.Display)
 
 from nti.dataserver.users.interfaces import IAvatarURL
@@ -132,7 +130,6 @@ def avatar_file_view(request):
 def background_file_view(request):
 	result = _image_file_view(request, IBackgroundURL, 'backgroundURL')
 	return result
-
 
 class FilenameRespectingDownload(download.Download):
 	"""
