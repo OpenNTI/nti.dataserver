@@ -81,4 +81,4 @@ def record_transaction(recordable, principal=None, descriptions=(),
 
 	recordable.locked = True
 	return record
-record_trax = record_transaction
+recordTransaction = record_trax = record_transaction

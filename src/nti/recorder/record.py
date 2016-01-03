@@ -84,6 +84,7 @@ def has_transactions(obj):
 	except AttributeError:
 		pass
 	return result
+hasTransactions = has_transactions
 
 def get_transactions(obj, sort=False, descending=True):
 	result = []
@@ -97,6 +98,7 @@ def get_transactions(obj, sort=False, descending=True):
 	except AttributeError:
 		pass
 	return result
+getTransactions = get_transactions
 
 def remove_history(obj):
 	try:
@@ -107,7 +109,7 @@ def remove_history(obj):
 	except AttributeError:
 		pass
 	return 0
-remove_transaction_history = remove_history
+removeTransactionHistory = remove_transaction_history = remove_history
 
 def append_records(target, records=()):
 	if ITransactionRecord.providedBy(records):
@@ -115,7 +117,7 @@ def append_records(target, records=()):
 	history = ITransactionRecordHistory(target)
 	history.extend(records)
 	return len(records)
-append_transactions = append_records
+appendTransactions = append_transactions = append_records
 
 def copy_history(source, target, clear=True):
 	try:
@@ -131,9 +133,10 @@ def copy_history(source, target, clear=True):
 	except AttributeError:
 		pass
 	return 0
-copy_transaction_history = copy_history
+copyTransactionHistory = copy_transaction_history = copy_history
 
 def copy_records(target, records=()):
 	history = ITransactionRecordHistory(target)
 	history.extend(records)
 	return len(records)
+copyRecords = copy_records

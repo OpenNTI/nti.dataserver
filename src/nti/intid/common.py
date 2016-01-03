@@ -46,7 +46,7 @@ def intid_register(ob, event=None):
 	# Notify the catalogs that this object was added.
 	notify(zope_intid_interfaces.IntIdAddedEvent(ob, event, idmap))
 	notify(nti_intid_interfaces.IntIdAddedEvent(ob, event, idmap))
-addIntId = intid_register
+addIntId = add_intid = intid_register
 
 def intid_unregister(ob, event=None):
 	"""
@@ -80,4 +80,4 @@ def intid_unregister(ob, event=None):
 			utility.unregister(ob)
 		except KeyError:
 			pass
-removeIntId = intid_unregister
+removeIntId = remove_intid = intid_unregister
