@@ -149,7 +149,6 @@ class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
 		ntiids = _get_package_ntiids(values)
 		force = _is_true(values.get('force'))
 
-		result = LocatedExternalDict()
 		items = result[ITEMS] = {}
 		for package in yield_content_packages(ntiids):
 			seen = ()
