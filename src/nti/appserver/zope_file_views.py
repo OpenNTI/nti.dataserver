@@ -86,7 +86,6 @@ def file_view(request):
 
 	Some ACL in the parent hierarchy must make this readable.
 	"""
-	from IPython.core.debugger import Tracer; Tracer()()
 	return _do_view(request, download.Display)
 
 from nti.dataserver.users.interfaces import IAvatarURL
