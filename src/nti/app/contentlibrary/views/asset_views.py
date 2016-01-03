@@ -45,6 +45,8 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.intid.common import removeIntId
+
 from nti.recorder.record import remove_transaction_history
 
 from nti.site.utils import unregisterUtility
@@ -248,7 +250,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 					remove_transaction_history(asset)
 				elif component.queryUtility(provided, name=ntiid) is None:
 					catalog.unindex(uid)
-					intids.unregister(asset)
+					removeIntId(asset)
 					container.pop(ntiid, None)
 					remove_transaction_history(asset)
 				else:
@@ -266,7 +268,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 								   	  provided=provided)
 					if uid is not None:
 						catalog.unindex(uid)
-						intids.unregister(asset)
+						removeIntId(asset)
 					if ntiid not in seen:
 						seen.add(ntiid)
 						items.append({
@@ -289,7 +291,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 				provided = iface_of_thing(asset)
 				if component.queryUtility(provided, name=ntiid) is None:
 					catalog.unindex(uid)
-					intids.unregister(asset)
+					removeIntId(asset)
 					remove_transaction_history(asset)
 					if ntiid not in seen:
 						seen.add(ntiid)
