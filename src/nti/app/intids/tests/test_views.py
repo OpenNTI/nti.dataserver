@@ -26,7 +26,7 @@ class TestViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_unregister_missing_objects(self):
-		path = '/dataserver2/@@unregister_missing_objects'
+		path = '/dataserver2/@@UnregisterMissingObjects'
 		res = self.testapp.post_json(path, status=200)
 		assert_that(res.json_body, has_entry('Broken', has_length(0)))
 		assert_that(res.json_body, has_entry('Missing', has_length(0)))
@@ -40,6 +40,6 @@ class TestViews(ApplicationLayerTest):
 			user = self._get_user()
 			intids = component.getUtility(zope.intid.IIntIds)
 			uid = intids.getId(user)
-		path = '/dataserver2/@@intid_resolver/%s' % uid
+		path = '/dataserver2/@@IntIdResolver/%s' % uid
 		res = self.testapp.get(path, status=200)
 		assert_that(res.json_body, has_entry('Class', 'User'))
