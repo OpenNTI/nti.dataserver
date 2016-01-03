@@ -4,19 +4,28 @@ from __future__ import print_function
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-from hamcrest import (assert_that, is_, none, starts_with,
-					  has_entry, has_length, has_item, has_key,
-					  contains_string, all_of, has_entries)
-from hamcrest import greater_than
-from hamcrest import not_none
-from hamcrest.library import has_property
-from hamcrest import greater_than_or_equal_to
-from hamcrest import less_than
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import all_of
 from hamcrest import is_not
+from hamcrest import has_key
 from hamcrest import contains
+from hamcrest import has_item
+from hamcrest import not_none
+from hamcrest import has_entry
 from hamcrest import has_value
+from hamcrest import less_than
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_entries
+from hamcrest import starts_with
+from hamcrest import greater_than
+from hamcrest import has_property
 from hamcrest import same_instance
+from hamcrest import contains_string
+from hamcrest import greater_than_or_equal_to
 does_not = is_not
+
 from nose.tools import assert_raises
 from nti.testing.time import time_monotonically_increases
 from nti.testing.matchers import is_empty
@@ -249,7 +258,7 @@ class TestApplication(ApplicationLayerTest):
 		res = testapp.get( '/dataserver2',
 						   extra_environ=self._make_extra_environ( HTTP_ORIGIN=b'http://mathcounts.nextthought.com' ),
 						   status=200 )
-		assert_that(res.json_body['CapabilityList'], has_length(3))
+		assert_that(res.json_body['CapabilityList'], has_length(4))
 
 
 	@WithSharedApplicationMockDS

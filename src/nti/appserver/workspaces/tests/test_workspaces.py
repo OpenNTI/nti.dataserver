@@ -14,7 +14,6 @@ from hamcrest import is_not
 from hamcrest import all_of
 from hamcrest import has_item
 from hamcrest import has_entry
-
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
@@ -245,7 +244,7 @@ class TestUserService(ApplicationLayerTest):
 
 		ext_object = toExternalObject( service )
 
-		assert_that(ext_object, has_entry('CapabilityList', has_length(3)))
+		assert_that(ext_object, has_entry('CapabilityList', has_length(4)))
 		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.forums.dflforums')))
 		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.forums.communityforums')))
 		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.customization.can_change_password')))
@@ -318,7 +317,6 @@ class TestUserService(ApplicationLayerTest):
 		vocab = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( user )
 		terms = [x.token for x in vocab]
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( terms ) ) )
-
 
 import os
 import shutil
