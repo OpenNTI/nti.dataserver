@@ -138,7 +138,7 @@ class TestUserExportViews(ApplicationLayerTest):
 											  u'realname':u'aizen sosuke',
 											  u'alias':u'kyoka suigetsu'})
 
-		path = '/dataserver2/@@export_users'
+		path = '/dataserver2/@@ExportUsers'
 		params = {"usernames":'ichigo@nt.com,aizen@nt.com'}
 		res = self.testapp.get(path, params, status=200)
 		assert_that(res.json_body, has_entry('Total', is_(2)))
@@ -164,9 +164,9 @@ class TestUserExportViews(ApplicationLayerTest):
 			note = user.addContainedObject(note)
 			oid = to_external_ntiid_oid(note)
 
-		path = '/dataserver2/@@object_resolver/' + quote(oid)
+		path = '/dataserver2/@@ObjectResolver/' + quote(oid)
 		res = self.testapp.get(path, status=200)
-		assert_that(res.json_body, has_entry('Class', is_('Note')))
+		assert_that(res.json_body, has_entry('Object', has_entry('Class', is_('Note'))))
 
-		path = '/dataserver2/@@object_resolver/foo'
+		path = '/dataserver2/@@ObjectResolver/foo'
 		res = self.testapp.get(path, status=404)
