@@ -100,7 +100,7 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	# Traverse down to the pages collection and use it to create the info.
 	# This way we get the correct link structure
 
-	remote_user = get_remote_user(request, 
+	remote_user = get_remote_user(request,
 								  dataserver=request.registry.getUtility(IDataserver))
 	if not remote_user:
 		raise hexc.HTTPForbidden()

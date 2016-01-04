@@ -72,7 +72,8 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	def _do_decorate_external(self, context, mapping):
 		super(PublishLinkDecorator, self)._do_decorate_external(context, mapping)
 		# Everyone gets the status
-		mapping['PublicationState'] = _get_publish_state( context )
+		if 'PublicationState' not in mapping:
+			mapping['PublicationState'] = _get_publish_state( context )
 
 
 @interface.implementer(IExternalMappingDecorator)
