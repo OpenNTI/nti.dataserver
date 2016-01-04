@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from urllib import quote
+
 from collections import Mapping
 from collections import OrderedDict
 
@@ -231,7 +233,7 @@ def to_external_href(item, add_name=False):
 	_, external = to_external_oid_and_link(item, render=True, name='view')
 	if add_name:
 		name = download_file_name(item) or 'file.dat'
-		external += '/%s' % name
+		external += '/%s' % quote(name)
 	return external
 to_external_view_href = to_external_href
 
@@ -240,7 +242,8 @@ def to_external_download_href(item):
 	target = to_external_ntiid_oid(item, add_to_connection=True)
 	if target:
 		name = download_file_name(item)
-		elements = ('download', name or 'file.dat')
+		name = quote(name) if name else 'file.dat'
+		elements = ('download', name)
 		external = _to_external_link_impl(target,
 										  elements,
 										  contentType=contentType)
