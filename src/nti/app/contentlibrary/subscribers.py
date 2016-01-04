@@ -307,6 +307,17 @@ def _index_items(content_package, index, item_iface, catalog, registry):
 									  container_id, catalog)
 	return result
 
+def _clear_assets_by_interface(content_package, iface, force=True):
+	def recur(unit):
+		for child in unit.children or ():
+			recur(child)
+		container = IPresentationAssetContainer(unit)
+		for key, value in list(container.items()):  # mutating
+			provided = iface_of_asset(value)
+			if provided == iface and can_be_removed(value, force):
+				del container[key]
+	recur(content_package)
+	
 def _update_index_when_content_changes(content_package,
 									   index_filename,
 									   item_iface,
@@ -337,6 +348,9 @@ def _update_index_when_content_changes(content_package,
 
 	if isinstance(index_text, bytes):
 		index_text = index_text.decode('utf-8')
+
+	# remove assets with the specified interface
+	_clear_assets_by_interface(content_package, item_iface)
 
 	index = simplejson.loads(index_text)
 	registry = get_registry()
@@ -445,7 +459,7 @@ def _get_sync_results(content_package, event):
 def update_indices_when_content_changes(content_package, sync_results=None):
 	if sync_results is None:
 		sync_results = _new_sync_results(content_package)
-	_clear_assets(content_package)
+
 	for name, item_iface, func in INDICES:
 		_update_index_when_content_changes(content_package,
 										   index_filename=name,
