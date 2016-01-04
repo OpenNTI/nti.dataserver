@@ -16,14 +16,14 @@ from zope import interface
 
 from zope.file.upload import nameFinder
 
-from zope.schema.interfaces import ConstraintNotSatisfied
-
 from pyramid import httpexceptions as hexc
+from pyramid.threadlocal import get_current_request
 
 from plone.namedfile.interfaces import IFile as IPloneFile
 from plone.namedfile.interfaces import INamed as IPloneNamed
 
 from nti.app.base.abstract_views import get_source
+from nti.app.externalization.error import raise_json_error
 
 from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
 
@@ -63,17 +63,38 @@ def validate_sources(context=None, sources=()):
 		try:
 			size = getattr(source, 'size', None) or source.getSize()
 			if size is not None and not validator.is_file_size_allowed(size):
-				raise ConstraintNotSatisfied(size, 'max_file_size')
+				raise_json_error(get_current_request(),
+								 hexc.HTTPUnprocessableEntity,
+								 {
+								 	u'provided_bytes': size,
+								 	u'max_bytes': validator.max_file_size,
+									u'message': 'The uploaded file is to large.',
+								 },
+								 None)
 		except AttributeError:
 			pass
 
 		contentType = getattr(source, 'contentType', None)
 		if contentType and not validator.is_mime_type_allowed(contentType):
-			raise ConstraintNotSatisfied(contentType, 'mime_type')
+			raise_json_error(get_current_request(),
+							 hexc.HTTPUnprocessableEntity,
+							 {
+							 	u'provided_mime_type': contentType,
+								u'allowed_mime_types': validator.allowed_mime_types,
+								u'message': 'Invalid content/MimeType type.',
+							 },
+							 None)
 
 		filename = getattr(source, 'filename', None)
 		if filename and not validator.is_filename_allowed(filename):
-			raise ConstraintNotSatisfied(filename, 'filename')
+			raise_json_error(get_current_request(),
+							 hexc.HTTPUnprocessableEntity,
+							 {
+							 	u'provided_filename': filename,
+								u'allowed_extensions': validator.allowed_extensions,
+								u'message': 'Invalid file name.',
+							 },
+							 None)
 
 def transfer(source, target):
 	"""
