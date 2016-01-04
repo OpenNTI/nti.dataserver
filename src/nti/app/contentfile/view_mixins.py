@@ -69,6 +69,7 @@ def validate_sources(context=None, sources=()):
 								 	u'provided_bytes': size,
 								 	u'max_bytes': validator.max_file_size,
 									u'message': 'The uploaded file is to large.',
+									u'code': 'MaxFileSizeUploadLimitError'
 								 },
 								 None)
 		except AttributeError:
@@ -82,6 +83,7 @@ def validate_sources(context=None, sources=()):
 							 	u'provided_mime_type': contentType,
 								u'allowed_mime_types': validator.allowed_mime_types,
 								u'message': 'Invalid content/MimeType type.',
+								u'code': 'InvalidFileMimeType'
 							 },
 							 None)
 
@@ -93,6 +95,7 @@ def validate_sources(context=None, sources=()):
 							 	u'provided_filename': filename,
 								u'allowed_extensions': validator.allowed_extensions,
 								u'message': 'Invalid file name.',
+								u'code': 'InvalidFileExtension'
 							 },
 							 None)
 
