@@ -265,6 +265,10 @@ def _index_item(item, content_package, container_id, catalog):
 			result += 1
 			catalog.index(video, container_ntiids=extended,
 				  		  namespace=content_package.ntiid, sites=sites)
+			
+	# set lineage
+	item.__parent__ = content_package
+
 	return result
 
 def _copy_remove_transactions(items, registry=None):
@@ -283,18 +287,16 @@ def _store_asset(content_package, container_id, ntiid, item):
 	except KeyError:
 		unit = content_package
 
-	container = IPresentationAssetContainer(unit, None)
-	if container is not None:
-		container[ntiid] = item
-		# check for slide decks
-		if INTISlideDeck.providedBy(item):
-			for slide in item.Slides or ():
-				container[slide.ntiid] = slide
+	container = IPresentationAssetContainer(unit)
+	container[ntiid] = item
+	# check for slide decks
+	if INTISlideDeck.providedBy(item):
+		for slide in item.Slides or ():
+			container[slide.ntiid] = slide
 
-			for video in item.Videos or ():
-				container[video.ntiid] = video
-		return True
-	return False
+		for video in item.Videos or ():
+			container[video.ntiid] = video
+	return True
 
 def _index_items(content_package, index, item_iface, catalog, registry):
 	result = 0
