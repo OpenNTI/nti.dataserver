@@ -307,7 +307,7 @@ def _index_items(content_package, index, item_iface, catalog, registry):
 									  container_id, catalog)
 	return result
 
-def _clear_assets_by_interface(content_package, iface, force=True):
+def _clear_assets_by_interface(content_package, iface, force=False):
 	def recur(unit):
 		for child in unit.children or ():
 			recur(child)
