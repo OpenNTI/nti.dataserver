@@ -68,7 +68,7 @@ def validate_sources(context=None, sources=()):
 								 {
 								 	u'provided_bytes': size,
 								 	u'max_bytes': validator.max_file_size,
-									u'message': 'The uploaded file is to large.',
+									u'message': 'The uploaded file is too large.',
 									u'code': 'MaxFileSizeUploadLimitError'
 								 },
 								 None)
