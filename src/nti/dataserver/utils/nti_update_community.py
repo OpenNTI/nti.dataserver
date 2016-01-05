@@ -122,6 +122,7 @@ def process_args(args=None):
 														  args.joinable,
 														  no_profile,
 														  args.verbose))
+
 def main(args=None):
 	process_args(args)
 	sys.exit(0)
