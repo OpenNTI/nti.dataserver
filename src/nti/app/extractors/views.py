@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Views related to fetching various metadata
+Views related to fetching extracting metadata
 
 .. $Id: views.py$
 """
@@ -11,11 +11,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
+
 from pyramid import httpexceptions as hexc
 from pyramid.view import view_config, view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
-from nti.app.renderers.caching import uncached_in_response
+
+from nti.appserver.interfaces import INamedLinkView
 
 from nti.contentprocessing.metadata_extractors import get_metadata_from_http_url
 
@@ -28,11 +31,11 @@ import gevent
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 context=IDataserverFolder,
-			 name='QueryMetaData',
+			 name='URLMetaDataExtractor',
 			 #Global content admins only for now, can open up to authed users
 			 permission=nauth.ACT_CONTENT_EDIT,
 			 request_method='GET')
-class URLMetaDataView(AbstractAuthenticatedView):
+class _URLMetaDataExtractor(AbstractAuthenticatedView):
 
 	def __call__(self):
 		url = self.request.params.get('url', None)
@@ -54,3 +57,5 @@ class URLMetaDataView(AbstractAuthenticatedView):
 		if result is not None:
 			return result
 		return
+
+interface.directlyProvides(_URLMetaDataExtractor, INamedLinkView)

@@ -85,6 +85,7 @@
 	<include package="nti.app.intids" file="pyramid.zcml" />
 	<include package="nti.app.notabledata" file="pyramid.zcml" />
 	<include package="nti.app.pushnotifications" file="pyramid.zcml" />
+	<include package="nti.app.extractors" file="pyramid.zcml" />
 
 	<!-- Plugin packages -->
 	<include package="z3c.autoinclude" file="meta.zcml" />

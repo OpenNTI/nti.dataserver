@@ -504,6 +504,7 @@
 	<include package="nti.app.contentsearch" />
 	<include package="nti.app.authentication" />
 	<include package="nti.app.pushnotifications" />
+	<include package="nti.app.extractors" />
 
 	<!-- Plugin packages -->
 	<include package="z3c.autoinclude" file="meta.zcml" />
