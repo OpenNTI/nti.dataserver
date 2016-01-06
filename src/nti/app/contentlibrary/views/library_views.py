@@ -499,8 +499,6 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 			# we start at the end.
 			units.reverse()
 			for unit in units:
-				if IContentPackage.providedBy(unit):
-					continue
 				try:
 					unit_res = find_page_info_view_helper(self.request, unit)
 					results.append(unit_res.json_body)
