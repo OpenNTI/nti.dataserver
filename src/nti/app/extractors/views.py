@@ -3,7 +3,7 @@
 """
 Views related to fetching extracting metadata
 
-.. $Id: views.py$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
