@@ -121,7 +121,7 @@ def render_externalizable(data, system):
 	# use the URL that was requested.
 	if 	isinstance( body, collections.MutableMapping ) and \
 		not INoHrefInResponse.providedBy(data):
-		
+
 		if 'href' not in body or not nti_traversal.is_valid_resource_path( body['href'] ):
 			if request.method == 'GET':
 				# safe assumption, send back what we had
@@ -140,8 +140,8 @@ def render_externalizable(data, system):
 				# was manipulated, so go with the lesser of two evils
 				# that mostly works.
 				try:
-					context = (to_external_ntiid_oid( data ) 
-								if not IShouldHaveTraversablePath.providedBy( data ) 
+					context = (to_external_ntiid_oid( data )
+								if not IShouldHaveTraversablePath.providedBy( data )
 								else data)
 					link = Link(context)
 					body['href'] = render_link( link )['href']
