@@ -496,6 +496,7 @@
 	<include package="nti.app.users" />
 	<include package="nti.app.recorder" />
 	<include package="nti.app.bulkemail" />
+	<include package="nti.app.extractors" />
 	<include package="nti.app.publishing" />
 	<include package="nti.app.invitations" />
 	<include package="nti.app.notabledata" />
@@ -504,7 +505,6 @@
 	<include package="nti.app.contentsearch" />
 	<include package="nti.app.authentication" />
 	<include package="nti.app.pushnotifications" />
-	<include package="nti.app.extractors" />
 
 	<!-- Plugin packages -->
 	<include package="z3c.autoinclude" file="meta.zcml" />
