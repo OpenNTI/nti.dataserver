@@ -35,6 +35,8 @@ from nti.dataserver.interfaces import IDataserverFolder
 			 permission=nauth.ACT_CONTENT_EDIT)
 class _URLMetaDataExtractor(AbstractAuthenticatedView):
 
+	max_age = 3600 #one hour
+
 	def __call__(self):
 		url = self.request.params.get('url', None)
 		if not url:
@@ -52,6 +54,7 @@ class _URLMetaDataExtractor(AbstractAuthenticatedView):
 			except:
 				raise hexc.HTTPBadGateway()
 
+		self.request.response.cache_control.max_age = self.max_age
 		if result is not None:
 			return result
 		return
