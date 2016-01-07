@@ -293,6 +293,14 @@ class IContentPackageSyncResults(IGenericSynchronizationResults):
 
 	ContentPackageNTIID = ValidTextLine(title="The ContentPackage NTIID", required=False)
 
+	AssessmentsUpdated =  UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
+										 title="The updated assessment NTIIDs",
+										 default=None, required=False)
+
+	AssessmentsSyncLocked = UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
+									  	   title="The locked assessment NTIIDs",
+									  	   default=None, required=False)
+	
 	AssetsUpdated =  UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
 									title="The updated asset NTIIDs",
 									default=None, required=False)
@@ -301,12 +309,16 @@ class IContentPackageSyncResults(IGenericSynchronizationResults):
 									  title="The locked asset NTIIDs",
 									  default=None, required=False)
 
-	def add(item, locked=False):
+	def add_assessment(item, locked=False):
 		"""
-		Add a sync result
+		Add an assessment sync result
 		"""
-	append = add # alias
-	
+
+	def add_asset(item, locked=False):
+		"""
+		Add an asset sync result
+		"""
+
 class ISynchronizationResults(IFiniteSequence):
 
 	Items = IndexedIterable(title="An iterable of sync results",

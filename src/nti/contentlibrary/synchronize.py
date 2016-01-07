@@ -122,11 +122,18 @@ class ContentPackageSyncResults(SchemaConfigured, Contained):
 	def __init__(self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
-	def add(self, item, locked=False):
+	def add_assessment(self, item, locked=False):
+		assert item is not None
+		ntiid = getattr(item, 'ntiid', item)
+		name = 'AssessmentsSyncLocked' if locked else 'AssessmentsUpdated'
+		if getattr(self, name, None) is None:
+			setattr(self, name, set())
+		getattr(self, name).add(ntiid)
+
+	def add_asset(self, item, locked=False):
 		assert item is not None
 		ntiid = getattr(item, 'ntiid', item)
 		name = 'AssetsSyncLocked' if locked else 'AssetsUpdated'
 		if getattr(self, name, None) is None:
 			setattr(self, name, set())
 		getattr(self, name).add(ntiid)
-	append = add

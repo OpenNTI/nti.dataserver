@@ -234,7 +234,7 @@ def _remove_from_registry(containers=None,
 			if removed is not None:
 				result.append(removed)
 			elif sync_results is not None:
-				sync_results.add(ntiid, locked=True)
+				sync_results.add_asset(ntiid, locked=True)
 	return result
 
 def _get_container_tree(container_id):
@@ -409,7 +409,7 @@ def _update_index_when_content_changes(content_package,
 
 	# update sync results
 	for item in added or ():
-		sync_results.add(item, locked=False)
+		sync_results.add_asset(item, locked=False)
 
 	# Index our contained items; ignoring the global library.
 	index_item_count = 0
