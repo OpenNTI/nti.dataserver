@@ -92,7 +92,7 @@ class TIDIndex(AttributeValueIndex):
 class TypeIndex(AttributeValueIndex):
 	default_field_name = 'type'
 	default_interface = ITransactionRecord
-	
+
 class CreatedTimeRawIndex(RawIntegerValueIndex):
 	pass
 
@@ -171,27 +171,54 @@ def install_recorder_catalog(site_manager_container, intids=None):
 		intids.register(index)
 	return catalog
 
-def get_recordables(objects=True, catalog=None, intids=None):
+def _yield_ids(doc_ids, intids, objects=True):
+	for uid in doc_ids or ():
+		if intids is None:  # tests
+			yield uid
+		else:
+			obj = intids.queryObject(uid)
+			if IRecordable.providedBy(obj):
+				yield obj if objects else uid
+
+def get_locked(objects=True, catalog=None, intids=None):
 	"""
-	return the the recordables in the catalog
+	return the the locked objects in the catalog
+	"""
+	if catalog is None:
+		catalog = component.getUtility(IMetadataCatalog, name=CATALOG_NAME)
+
+	locked_index = catalog[IX_LOCKED]
+	intids = component.queryUtility(IIntIds) if intids is None else intids
+	locked_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
+
+	return _yield_ids(locked_ids, intids, objects)
+
+def get_targets(objects=True, catalog=None, intids=None):
+	"""
+	return the the target objects in the catalog
 	"""
 	if catalog is None:
 		catalog = component.getUtility(IMetadataCatalog, name=CATALOG_NAME)
 
 	# ids in transactions
 	target_index = catalog[IX_TARGET_INTID]
+	intids = component.queryUtility(IIntIds) if intids is None else intids
 	recordable_ids = catalog.family.IF.LFSet(target_index.values_to_documents.keys())
 
-	# locked status
-	locked_index = catalog[IX_LOCKED]
-	locked_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
+	return _yield_ids(recordable_ids, intids, objects)
 
+def get_recordables(objects=True, catalog=None, intids=None):
+	"""
+	return the the recordables in the catalog
+	"""
+
+	if catalog is None:
+		catalog = component.getUtility(IMetadataCatalog, name=CATALOG_NAME)
+
+	seen = set()
 	intids = component.queryUtility(IIntIds) if intids is None else intids
-	uids = catalog.family.IF.union(locked_ids, recordable_ids)
-	for uid in uids or ():
-		if intids is None: # tests
-			yield uid
-		else:
-			obj = intids.queryObject(uid)
-			if IRecordable.providedBy(obj):
-				yield obj if objects else uid
+
+	seen.update(get_locked(False, catalog, intids))
+	seen.update(get_targets(False, catalog, intids))
+
+	return _yield_ids(seen, intids, objects)
