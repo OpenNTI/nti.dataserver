@@ -14,6 +14,7 @@ from zope import interface
 from zope.container.interfaces import IContained
 
 from nti.coremetadata.interfaces import ICreated
+from nti.coremetadata.interfaces import ILastModified
 
 from nti.schema.field import Object
 from nti.schema.field import TextLine
@@ -25,7 +26,7 @@ TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
 TRX_TYPE_CREATE = 'create'
 TRX_TYPE_UPDATE = 'update'
 
-class ITransactionRecord(IContained, ICreated):
+class ITransactionRecord(IContained, ICreated, ILastModified):
 	tid = ValidTextLine(title="The transaction/serial id", required=False)
 
 	type = ValidTextLine(title="The transaction type", 

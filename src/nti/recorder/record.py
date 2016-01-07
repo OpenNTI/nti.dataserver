@@ -51,6 +51,8 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 	serial = alias('tid')
 	username = alias('principal')
 
+	parameters = {} # IContentTypeAware
+
 	def __init__(self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 		PersistentCreatedModDateTrackingObject.__init__(self)
