@@ -800,9 +800,20 @@ class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEn
 
 	_add_default_deny_to_acl_from_file = True
 
+	@Lazy
+	def __acl__(self):
+		acl = super(_DelimitedHierarchyContentPackageACLProvider, self).__acl__
+		# Make sure our content admin comes first.
+		admin_ace = ace_allowing(authorization.ROLE_CONTENT_ADMIN,
+								authorization.ACT_READ,
+						 		self)
+		acl.insert( 0, admin_ace )
+		return acl
+
 	def _acl_from_string(self, context, acl_string, provenance=None):
 		acl = super(_DelimitedHierarchyContentPackageACLProvider, self)._acl_from_string(context, acl_string, provenance=provenance)
-		return _supplement_acl_with_content_role(self, context, acl)
+		acl = _supplement_acl_with_content_role(self, context, acl)
+		return acl
 
 @interface.implementer(IACLProvider)
 @component.adapter(IDelimitedHierarchyContentUnit)
