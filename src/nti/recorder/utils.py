@@ -24,6 +24,7 @@ except ImportError:
 	def get_thread_ident():
 		return id(transaction.get())
 
+from .interfaces import TRX_TYPE_CREATE
 from .interfaces import TRX_TYPE_UPDATE
 from .interfaces import ITransactionRecordHistory
 
@@ -52,11 +53,18 @@ def current_principal():
 		return None
 principal = current_principal
 
+def is_created(obj):
+	history = ITransactionRecordHistory(obj, None)
+	if history is not None:
+		records = history.query(record_type=TRX_TYPE_CREATE)
+		return bool(records)
+	return False
+
 def record_transaction(recordable, principal=None, descriptions=(),
-				       ext_value=None, type_=TRX_TYPE_UPDATE, history=None):
+					   ext_value=None, type_=TRX_TYPE_UPDATE, history=None):
 
 	__traceback_info__ = recordable, principal, ext_value
-	
+
 	if history is None:
 		history = ITransactionRecordHistory(recordable)
 
@@ -76,7 +84,7 @@ def record_transaction(recordable, principal=None, descriptions=(),
 			attributes.add(a)
 
 	principal = current_principal() if principal is None else principal
-	username = (	getattr(principal, 'id', None)
+	username = (getattr(principal, 'id', None)
 				or	getattr(principal, 'usernane', None)
 				or	principal)
 	ext_value = compress(ext_value) if ext_value is not None else None
