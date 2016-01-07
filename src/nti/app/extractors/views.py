@@ -12,9 +12,11 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import gevent
+import requests
 
 from zope import interface
 
+from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
@@ -60,3 +62,28 @@ class _URLMetaDataExtractor(AbstractAuthenticatedView):
 		return
 
 interface.directlyProvides(_URLMetaDataExtractor, INamedLinkView)
+ 
+@view_config(route_name='objects.generic.traversal',
+			 request_method='GET',
+			 context=IDataserverFolder,
+			 name='safeimage',
+			 permission=nauth.ACT_CONTENT_EDIT)
+class _URLMetaDataSafeImageProxy(AbstractAuthenticatedView):
+
+	def __call__(self):
+		url = self.request.params.get('url', None)
+		if not url:
+			raise hexc.HTTPUnprocessableEntity('URL not provided')
+
+		#XXX: Probably need to proxy through some request headers
+		r = requests.get(url, stream=True)
+
+		headers = dict(r.headers)
+
+		#We want to specify Transfer-Encoding and omit the Content-Length
+		#but when we do that we get ChunkedEncodingErrors on the client
+		#headers[str('Transfer-Encoding')] = str('chunked')
+		#if 'Content-Length' in headers:
+		#	headers.pop('Content-Length')
+
+		return Response(app_iter=r.iter_content(chunk_size=1024), headers=headers)
