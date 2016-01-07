@@ -164,9 +164,9 @@ class SourceProxy(ProxyBase):
 
 	def __init__(self, base, filename=None, contentType=None, length=None):
 		ProxyBase.__init__(self, base)
+		self.length = length
 		self.filename = filename
 		self.contentType = contentType
-		self.length = length
 
 	@readproperty
 	def mode(self):
@@ -179,10 +179,10 @@ class SourceProxy(ProxyBase):
 	def getSize(self):
 		return self.size
 
-def _get_file_size( source ):
+def _get_file_size(source):
 	result = None
 	try:
-		result = os.fstat( source.file.fileno() ).st_size
+		result = os.fstat(source.file.fileno()).st_size
 	except AttributeError:
 		pass
 	return result
@@ -192,14 +192,14 @@ def process_source(source, default_content_type=u'application/octet-stream'):
 		length = len(source)
 		source = StringIO(source)
 		source.seek(0)
-		source = SourceProxy(source, content_type='application/json', length=length)
+		source = SourceProxy(source, contentType='application/json', length=length)
 	elif source is not None:
 		length = getattr(source, 'length', None)
 		if not length or length == -1:
-			length = _get_file_size( source )
+			length = _get_file_size(source)
 		filename = getattr(source, 'filename', None)
-		contentType = ( 	getattr(source, 'type', None)
-						or	getattr(source, 'contentType', None) )
+		contentType = (		getattr(source, 'type', None) 
+					   or	getattr(source, 'contentType', None))
 		contentType = contentType or default_content_type
 		source = source.file
 		source.seek(0)
