@@ -441,10 +441,14 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 	Typical return:
 		[ [ <TopLevelContext>,
 			<Heirarchical Node>,
-			<Heirarchical Node>,
+			<Presentation Asset>,
 			<PageInfo>* ],
 			...
 		]
+
+	For authored content, that will not exist in a content package,
+	we should simply return the TopLevelContext and outline paths,
+	which should be enough for client navigation.
 	"""
 	def _get_path_for_package(self, package, obj, target_ntiid):
 		"""
@@ -464,8 +468,6 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 			# show up as embedded in the package. If we might
 			# have multiple units here, we could take the longest
 			# pathToNtiid from the library to get the leaf node.
-			if IContentPackage.providedBy(container):
-				continue
 			try:
 				container = package[container]
 				if container is not None:
@@ -554,7 +556,7 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 					result_list.extend(path_list)
 				return result_list
 
-	def _get_context_packages(self, context):
+	def _get_content_packages_for_context(self, context):
 		try:
 			packages = context.ContentPackageBundle.ContentPackages
 		except AttributeError:
@@ -567,31 +569,55 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 					packages = ()
 		return packages
 
+	def _get_content_packages_for_obj(self, obj):
+		results = None
+		package = find_interface( obj, IContentPackage, strict=False )
+		if package is not None:
+			results = (package,)
+
+		if not results:
+			catalog = get_catalog()
+			containers = catalog.get_containers(obj) or ()
+			results = []
+			for container_id in containers:
+				container = find_object_with_ntiid( container_id )
+				if IContentPackage.providedBy( container ):
+					results.append( container )
+		return results
+
+	def _get_context_packages(self, container_packages, context):
+		# We used to blindly return our content packages
+		# for our context, but now, we need to make sure
+		# our target is actually in a package (e.g. authored
+		# through the API).
+		context_packages = self._get_content_packages_for_context( context )
+		results = []
+		# If we have no container packages, return empty.
+		for package in container_packages:
+			if package in context_packages:
+				results.append( package )
+		return results
+
 	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
 		hierarchy_contexts = get_hierarchy_context(obj, self.remoteUser)
+		content_packages = self._get_content_packages_for_obj( obj )
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
 		for hierarchy_context in hierarchy_contexts:
 			# Bail if our top-level context is not readable
 			top_level_context = hierarchy_context[0]
-			if not is_readable(top_level_context):
+			if not is_readable( top_level_context ):
 				continue
-
-			# We have a hit
-			result_list = [ top_level_context ]
-
-			packages = self._get_context_packages(top_level_context)
+			result_list = list( hierarchy_context )
+			packages = self._get_context_packages(content_packages, top_level_context)
 
 			for package in packages:
 				path_list = self._get_path_for_package(package, obj, target_ntiid)
-				if path_list:
-					if is_readable(package):
-						if len(hierarchy_context) > 1:
-							result_list.extend(hierarchy_context[1:])
-						path_list = self._externalize_children(path_list)
-						result_list.extend(path_list)
-			result.append(result_list)
+				if path_list and is_readable(package):
+					path_list = self._externalize_children(path_list)
+					result_list.extend(path_list)
+			result.append( result_list )
 
 		# If we have nothing yet, it could mean our object
 		# is in legacy content. So we have to look through the library.
