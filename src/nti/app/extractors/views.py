@@ -16,8 +16,8 @@ import requests
 
 from zope import interface
 
-from pyramid.response import Response
 from pyramid.view import view_config
+from pyramid.response import Response
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -37,7 +37,7 @@ from nti.dataserver.interfaces import IDataserverFolder
 			 permission=nauth.ACT_CONTENT_EDIT)
 class _URLMetaDataExtractor(AbstractAuthenticatedView):
 
-	max_age = 3600 #one hour
+	max_age = 3600  # one hour
 
 	def __call__(self):
 		url = self.request.params.get('url', None)
@@ -62,7 +62,7 @@ class _URLMetaDataExtractor(AbstractAuthenticatedView):
 		return
 
 interface.directlyProvides(_URLMetaDataExtractor, INamedLinkView)
- 
+
 @view_config(route_name='objects.generic.traversal',
 			 request_method='GET',
 			 context=IDataserverFolder,
@@ -75,15 +75,14 @@ class _URLMetaDataSafeImageProxy(AbstractAuthenticatedView):
 		if not url:
 			raise hexc.HTTPUnprocessableEntity('URL not provided')
 
-		#XXX: Probably need to proxy through some request headers
+		# XXX: Probably need to proxy through some request headers
 		r = requests.get(url, stream=True)
-
 		headers = dict(r.headers)
 
-		#We want to specify Transfer-Encoding and omit the Content-Length
-		#but when we do that we get ChunkedEncodingErrors on the client
-		#headers[str('Transfer-Encoding')] = str('chunked')
-		#if 'Content-Length' in headers:
+		# We want to specify Transfer-Encoding and omit the Content-Length
+		# but when we do that we get ChunkedEncodingErrors on the client
+		# headers[str('Transfer-Encoding')] = str('chunked')
+		# if 'Content-Length' in headers:
 		#	headers.pop('Content-Length')
-
-		return Response(app_iter=r.iter_content(chunk_size=1024), headers=headers)
+		result = Response(app_iter=r.iter_content(chunk_size=1024), headers=headers)
+		return result
