@@ -67,6 +67,9 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
+from nti.recorder.interfaces import TRX_TYPE_CREATE
+from nti.recorder.interfaces import ITransactionRecordHistory
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
@@ -556,7 +559,23 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 					result_list.extend(path_list)
 				return result_list
 
-	def _get_content_packages_for_context(self, context):
+	def _is_content_asset(self, obj):
+		# We used to blindly return our content packages
+		# for our context, but now, we need to make sure
+		# our target is actually in a package (e.g. versus
+		# authored through the API).
+		records = None
+		history = ITransactionRecordHistory( obj, None )
+		if history is not None:
+			records = history.query( record_type=TRX_TYPE_CREATE )
+		return not records
+
+	def _get_content_packages(self, obj, context):
+		# If we're not a content asset, we will not be found in our
+		# course units.
+		if not self._is_content_asset( obj ):
+			return ()
+
 		try:
 			packages = context.ContentPackageBundle.ContentPackages
 		except AttributeError:
@@ -569,39 +588,9 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 					packages = ()
 		return packages
 
-	def _get_content_packages_for_obj(self, obj):
-		results = None
-		package = find_interface( obj, IContentPackage, strict=False )
-		if package is not None:
-			results = (package,)
-
-		if not results:
-			catalog = get_catalog()
-			containers = catalog.get_containers(obj) or ()
-			results = []
-			for container_id in containers:
-				container = find_object_with_ntiid( container_id )
-				if IContentPackage.providedBy( container ):
-					results.append( container )
-		return results
-
-	def _get_context_packages(self, container_packages, context):
-		# We used to blindly return our content packages
-		# for our context, but now, we need to make sure
-		# our target is actually in a package (e.g. authored
-		# through the API).
-		context_packages = self._get_content_packages_for_context( context )
-		results = []
-		# If we have no container packages, return empty.
-		for package in container_packages:
-			if package in context_packages:
-				results.append( package )
-		return results
-
 	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
 		hierarchy_contexts = get_hierarchy_context(obj, self.remoteUser)
-		content_packages = self._get_content_packages_for_obj( obj )
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
 		for hierarchy_context in hierarchy_contexts:
@@ -610,7 +599,7 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 			if not is_readable( top_level_context ):
 				continue
 			result_list = list( hierarchy_context )
-			packages = self._get_context_packages(content_packages, top_level_context)
+			packages = self._get_content_packages( obj, top_level_context )
 
 			for package in packages:
 				path_list = self._get_path_for_package(package, obj, target_ntiid)
