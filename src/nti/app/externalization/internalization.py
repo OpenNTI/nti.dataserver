@@ -70,7 +70,7 @@ def _handle_unicode(value, request):
 		value = unicode(value, 'iso-8859-1')
 	return value
 
-def read_input_data(input_data, reader=None, ext_format='json'):
+def read_input_data(input_data, request, reader=None, ext_format='json'):
 	if reader is None:
 		reader = component.getUtility(IExternalRepresentationReader, name=ext_format)
 	__traceback_info__ = input_data
@@ -106,7 +106,7 @@ def _handle_content_type(reader, input_data, request, content_type):
 		# 	return dict( ( (k, (unicode(v, request.charset) if isinstance(v, str) else v))
 		# 				   for k, v
 		# 				   in pairs) )
-		result = read_input_data(input_data, reader)
+		result = read_input_data(input_data, request, reader)
 
 	return result
 
