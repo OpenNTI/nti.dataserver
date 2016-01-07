@@ -70,6 +70,14 @@ def _handle_unicode(value, request):
 		value = unicode(value, 'iso-8859-1')
 	return value
 
+def read_input_data(input_data, reader=None, ext_format='json'):
+	if reader is None:
+		reader = component.getUtility(IExternalRepresentationReader, name=ext_format)
+	__traceback_info__ = input_data
+	value = _handle_unicode(input_data, request)
+	result = reader.load(value)
+	return result
+
 def _handle_content_type(reader, input_data, request, content_type):
 	if content_type == 'multipart/form-data' and request.POST:
 		# We parse the form-data and parse out all the non FieldStorage fields
@@ -98,8 +106,7 @@ def _handle_content_type(reader, input_data, request, content_type):
 		# 	return dict( ( (k, (unicode(v, request.charset) if isinstance(v, str) else v))
 		# 				   for k, v
 		# 				   in pairs) )
-		value = _handle_unicode(input_data, request)
-		result = reader.load(value)
+		result = read_input_data(input_data, reader)
 
 	return result
 
