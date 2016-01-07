@@ -29,8 +29,8 @@ TRX_TYPE_UPDATE = 'update'
 class ITransactionRecord(IContained, ICreated, ILastModified):
 	tid = ValidTextLine(title="The transaction/serial id", required=False)
 
-	type = ValidTextLine(title="The transaction type", 
-						 required=False, 
+	type = ValidTextLine(title="The transaction type",
+						 required=False,
 						 default=TRX_TYPE_UPDATE)
 
 	principal = ValidTextLine(title="The principal id", required=True)
@@ -40,11 +40,11 @@ class ITransactionRecord(IContained, ICreated, ILastModified):
 								 min_length=0,
 								 unique=True)
 
-	external_value = Object(interface.Interface, 
-							title="External value", 
+	external_value = Object(interface.Interface,
+							title="External value",
 							required=False)
 	external_value.setTaggedValue('_ext_excluded_out', True)
-	
+
 	key = interface.Attribute('record key')
 	key.setTaggedValue('_ext_excluded_out', True)
 
@@ -61,6 +61,12 @@ class ITransactionRecordHistory(IContained):
 
 	def clear(event=True):
 		pass
-	
+
 	def records():
 		pass
+
+	def query(self, tid=None, principal=None, record_type=None):
+		"""
+		Query the transaction history for record(s) matching
+		the given filters.
+		"""

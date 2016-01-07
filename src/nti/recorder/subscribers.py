@@ -33,7 +33,7 @@ def _record_modification(obj, event):
 	if queryInteraction() is None or IConnection(obj, None) is None:
 		return
 	history = ITransactionRecordHistory(obj)
-	record_transaction(recordable=obj, 
+	record_transaction(recordable=obj,
 					   descriptions=event.descriptions,
 					   ext_value=event.external_value,
 					   history=history)
