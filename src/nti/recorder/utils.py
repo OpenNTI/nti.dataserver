@@ -17,6 +17,13 @@ from zope import lifecycleevent
 from zope.security.interfaces import NoInteraction
 from zope.security.management import getInteraction
 
+import transaction
+try:
+	from transaction._compat import get_thread_ident
+except ImportError:
+	def get_thread_ident():
+		return id(transaction.get())
+
 from .interfaces import TRX_TYPE_UPDATE
 from .interfaces import ITransactionRecordHistory
 
@@ -54,7 +61,7 @@ def record_transaction(recordable, principal=None, descriptions=(),
 		history = ITransactionRecordHistory(recordable)
 
 	tid = getattr(recordable, '_p_serial', None)
-	tid = unicode(serial_repr(tid)) if tid else None
+	tid = unicode(serial_repr(tid)) if tid else unicode(get_thread_ident())
 
 	if descriptions is not None and not isinstance(descriptions, (tuple, list, set)):
 		descriptions = (descriptions,)
