@@ -182,7 +182,7 @@ def _yield_ids(doc_ids, intids, objects=True):
 
 def get_locked(objects=True, catalog=None, intids=None):
 	"""
-	return the the locked objects in the catalog
+	return the objects/docids in the locked index
 	"""
 	if catalog is None:
 		catalog = component.getUtility(IMetadataCatalog, name=CATALOG_NAME)
@@ -194,7 +194,7 @@ def get_locked(objects=True, catalog=None, intids=None):
 
 def get_targets(objects=True, catalog=None, intids=None):
 	"""
-	return the the target objects in the catalog
+	return the objects/docids in the target index
 	"""
 	if catalog is None:
 		catalog = component.getUtility(IMetadataCatalog, name=CATALOG_NAME)
@@ -207,7 +207,7 @@ def get_targets(objects=True, catalog=None, intids=None):
 
 def get_recordables(objects=True, catalog=None, intids=None):
 	"""
-	return the the recordables in the catalog
+	return the recordable objects/docids in the catalog
 	"""
 
 	if catalog is None:
