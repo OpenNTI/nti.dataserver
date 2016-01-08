@@ -30,7 +30,6 @@
 
 		<p>
 			Verification Code: <strong tal:content="options/token">token</strong>
-			Verify your email address <a tal:attributes="href options/href">here</a>.
 		</p>
 
 		<p>
