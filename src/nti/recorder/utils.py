@@ -60,7 +60,7 @@ def is_created(obj):
 		return bool(records)
 	return False
 
-def txn_id(self):
+def txn_id():
 	return unicode("txn.%s" % get_thread_ident())
 
 def record_transaction(recordable, principal=None, descriptions=(),
