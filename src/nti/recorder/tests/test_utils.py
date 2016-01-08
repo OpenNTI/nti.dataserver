@@ -27,6 +27,7 @@ from nti.coremetadata.interfaces import IRecordable
 
 from nti.recorder.record import get_transactions
 
+from nti.recorder.utils import txn_id
 from nti.recorder.utils import decompress
 from nti.recorder.utils import record_transaction
 
@@ -66,3 +67,4 @@ class TestSubscriber(unittest.TestCase):
 		record = record_transaction(recordable, principal='aizen', type_='xyz')
 		assert_that(record, is_not(none()))
 		assert_that(record, has_property('type', is_('xyz')))
+		assert_that(record, has_property('tid', is_(txn_id())))
