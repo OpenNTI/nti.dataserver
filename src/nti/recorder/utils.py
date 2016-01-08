@@ -60,6 +60,9 @@ def is_created(obj):
 		return bool(records)
 	return False
 
+def txn_id(self):
+	return unicode("txn.%s" % get_thread_ident())
+
 def record_transaction(recordable, principal=None, descriptions=(),
 					   ext_value=None, type_=TRX_TYPE_UPDATE, history=None):
 
@@ -69,7 +72,8 @@ def record_transaction(recordable, principal=None, descriptions=(),
 		history = ITransactionRecordHistory(recordable)
 
 	tid = getattr(recordable, '_p_serial', None)
-	tid = unicode(serial_repr(tid)) if tid else unicode(get_thread_ident())
+	tid = unicode(serial_repr(tid)) if tid else txn_id()
+	tid = txn_id() if tid == u'0x00' else tid # new object
 
 	if descriptions is not None and not isinstance(descriptions, (tuple, list, set)):
 		descriptions = (descriptions,)
