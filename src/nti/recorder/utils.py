@@ -33,11 +33,15 @@ from .record import TransactionRecord
 from ZODB.utils import serial_repr
 
 def compress(obj):
-	bio = BytesIO()
-	pickle.dump(obj, bio)
-	bio.seek(0)
-	result = zlib.compress(bio.read())
-	return result
+	try:
+		bio = BytesIO()
+		pickle.dump(obj, bio)
+		bio.seek(0)
+		result = zlib.compress(bio.read())
+		return result
+	except Exception:  # seen in tests
+		logger.exception("Cannot pickle/compress external object")
+		return None
 
 def decompress(source):
 	data = zlib.decompress(source)
@@ -73,7 +77,7 @@ def record_transaction(recordable, principal=None, descriptions=(),
 
 	tid = getattr(recordable, '_p_serial', None)
 	tid = unicode(serial_repr(tid)) if tid else txn_id()
-	tid = txn_id() if tid == u'0x00' else tid # new object
+	tid = txn_id() if tid == u'0x00' else tid  # new object
 
 	if descriptions is not None and not isinstance(descriptions, (tuple, list, set)):
 		descriptions = (descriptions,)
