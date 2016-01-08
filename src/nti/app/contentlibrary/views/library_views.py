@@ -458,8 +458,8 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 		For a given package, return the path to the target ntiid.
 		"""
 		unit = find_interface(obj, IContentUnit, strict=False)
-		if unit is not None:
-			# Found a unit in our lineage, easy.
+		if unit is not None and not IContentPackage.providedBy( unit ):
+			# Found a non-content package unit in our lineage.
 			return [unit]
 
 		# Try catalog.
@@ -473,7 +473,9 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 			# pathToNtiid from the library to get the leaf node.
 			try:
 				container = package[container]
-				if container is not None:
+				if container is not None and container != package:
+					# In alpha, some packages can access themselves (?
+					# package[package.ntiid] == package -> True
 					return [container]
 			except (KeyError, AttributeError):
 				pass
@@ -527,8 +529,8 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 			# This should hit most UGD on lessons.
 			result = library.pathToNTIID(container_id)
 			if not result:
-				# Now we try embedded, and the first
-				# of the results.
+				# Now we try embedded, and the first of the results.
+				# We
 				result = library.pathsToEmbeddedNTIID(container_id)
 				result = result[0] if result else result
 		return result
