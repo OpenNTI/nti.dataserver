@@ -519,20 +519,26 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 		results.reverse()
 		return results
 
+	def _do_get_legacy_path_to_id(self, library, container_id):
+		# This should hit most UGD on lessons.
+		result = library.pathToNTIID(container_id)
+		if not result:
+			# Now we try embedded, and the first of the results.
+			# We
+			result = library.pathsToEmbeddedNTIID(container_id)
+			result = result[0] if result else result
+		return result
+
 	def _get_legacy_path_to_id(self, container_id):
 		# In the worst case, we may have to go through the
 		# library twice, looking for children and then
 		# embedded. With caching, this may not be too horrible.
+		# TODO: This will not find items contained by other items
+		# (e.g. videos, slides, etc).
 		library = component.queryUtility(IContentPackageLibrary)
 		result = None
 		if library:
-			# This should hit most UGD on lessons.
-			result = library.pathToNTIID(container_id)
-			if not result:
-				# Now we try embedded, and the first of the results.
-				# We
-				result = library.pathsToEmbeddedNTIID(container_id)
-				result = result[0] if result else result
+			result = self._do_get_legacy_path_to_id( library, container_id )
 		return result
 
 	def _get_legacy_results(self, obj, target_ntiid):
@@ -541,7 +547,7 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 		only return the first available result. So we make
 		sure we only return a single result for now.
 		"""
-		legacy_path = self._get_legacy_path_to_id(target_ntiid)
+		legacy_path = self._get_legacy_path_to_id( target_ntiid )
 		if legacy_path:
 			package = legacy_path[0]
 			top_level_contexts = get_top_level_contexts_for_user(package, self.remoteUser)
