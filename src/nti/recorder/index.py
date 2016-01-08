@@ -189,9 +189,8 @@ def get_locked(objects=True, catalog=None, intids=None):
 
 	locked_index = catalog[IX_LOCKED]
 	intids = component.queryUtility(IIntIds) if intids is None else intids
-	locked_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
-
-	return _yield_ids(locked_ids, intids, objects)
+	doc_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
+	return _yield_ids(doc_ids, intids, objects) if objects else doc_ids
 
 def get_targets(objects=True, catalog=None, intids=None):
 	"""
@@ -203,9 +202,8 @@ def get_targets(objects=True, catalog=None, intids=None):
 	# ids in transactions
 	target_index = catalog[IX_TARGET_INTID]
 	intids = component.queryUtility(IIntIds) if intids is None else intids
-	recordable_ids = catalog.family.IF.LFSet(target_index.values_to_documents.keys())
-
-	return _yield_ids(recordable_ids, intids, objects)
+	doc_ids = catalog.family.IF.LFSet(target_index.values_to_documents.keys())
+	return _yield_ids(doc_ids, intids, objects) if objects else doc_ids
 
 def get_recordables(objects=True, catalog=None, intids=None):
 	"""
@@ -214,11 +212,9 @@ def get_recordables(objects=True, catalog=None, intids=None):
 
 	if catalog is None:
 		catalog = component.getUtility(IMetadataCatalog, name=CATALOG_NAME)
-
-	seen = set()
 	intids = component.queryUtility(IIntIds) if intids is None else intids
 
-	seen.update(get_locked(False, catalog, intids))
-	seen.update(get_targets(False, catalog, intids))
-
-	return _yield_ids(seen, intids, objects)
+	doc_ids = set()
+	doc_ids.update(get_locked(False, catalog, intids))
+	doc_ids.update(get_targets(False, catalog, intids))
+	return _yield_ids(doc_ids, intids, objects) if objects else doc_ids
