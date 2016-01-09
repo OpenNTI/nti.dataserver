@@ -41,8 +41,9 @@ def do_evolve(context):
 		if IX_TARGET_INTID in catalog:
 			index = catalog[IX_TARGET_INTID]
 			intids.unregister(index)
-			locate(index, None, None)
 			del catalog[IX_TARGET_INTID]
+			locate(index, None, None)
+			index.clear()
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):
