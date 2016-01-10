@@ -112,6 +112,13 @@ def _patch_connection():
 			except Exception:
 				logger.exception("Failed to debug lock problem")
 
+		def decode(self, value):
+			# PyMySQL 0.7 `pymysql.Binary()` returns `bytearray` on Python 2.
+			# The underlying umysql driver doesn't handle bytearray it expects str
+			if isinstance(value, bytearray):
+				value = str(value)
+			return value
+				
 		def query(self, sql, args=()):
 			__traceback_info__ = args
 			if isinstance(args, dict):
@@ -121,6 +128,9 @@ def _patch_connection():
 				sql = sql % args
 				# and delete the now useless args
 				args = ()
+			if isinstance(args, (list, tuple)) and args:
+				args = map(self.decode, args)
+
 			try:
 				super(Connection, self).query(sql, args=args)
 				self.__debug_lock(sql)
