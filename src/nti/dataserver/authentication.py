@@ -129,12 +129,14 @@ def effective_principals( username,
 			result.add( domain )
 			result.add( IPrincipal( domain ) )
 
+	# Make hashable before we cache
+	result = frozenset( result )
 	if request is not None:
 		if not hasattr(request, '_v_nti_ds_authentication_eff_prin_cache'):
 			request._v_nti_ds_authentication_eff_prin_cache = dict()
 		request._v_nti_ds_authentication_eff_prin_cache[key] = result
 
-	return frozenset( result )
+	return result
 
 @interface.implementer(IAuthenticationPolicy)
 class _FixedUserAuthenticationPolicy(object):
