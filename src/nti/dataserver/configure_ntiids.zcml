@@ -7,6 +7,7 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
 
 	<!-- NTIID Resolvers -->
 	<utility factory=".ntiids._OIDResolver" name="OID" />
@@ -21,6 +22,7 @@
 	<utility factory=".ntiids._TranscriptResolver" name="Transcript" />
 
 	<utility factory=".ntiids._UGDResolver" name="Note" />
+
 	<!-- Legacy quizzes are stored under specific users -->
 	<utility factory=".ntiids._UGDResolver" name="Quiz" />
 
