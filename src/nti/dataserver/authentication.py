@@ -134,7 +134,7 @@ def effective_principals( username,
 			request._v_nti_ds_authentication_eff_prin_cache = dict()
 		request._v_nti_ds_authentication_eff_prin_cache[key] = result
 
-	return result
+	return frozenset( result )
 
 @interface.implementer(IAuthenticationPolicy)
 class _FixedUserAuthenticationPolicy(object):
