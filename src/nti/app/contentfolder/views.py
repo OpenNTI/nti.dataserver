@@ -88,17 +88,27 @@ class ContainerContentsView(AbstractAuthenticatedView):
 class TreeView(AbstractAuthenticatedView):
 
 	def recur(self, container, result):
+		files = 0
+		folders = 0
 		for name, value in list(container.items()): # snapshot
 			if INamedContainer.providedBy(value):
+				folders += 1
 				data = LocatedExternalList()
 				result.append({name:data})
-				self.recur(value, data)
+				c1, c2 = self.recur(value, data)
+				files += c2
+				folders += c1
 			else:
 				result.append(name)
+				files += 1
+		return folders, files
 
 	def __call__(self):
-		result = LocatedExternalList()
-		self.recur(self.context, result)
+		result = LocatedExternalDict()
+		items = result[ITEMS] = LocatedExternalList()
+		folders, files = self.recur(self.context, items)
+		result['Files'] = files
+		result['Folders'] = folders
 		return result
 	
 @view_config(context=INamedContainer)

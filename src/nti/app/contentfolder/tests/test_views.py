@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
+from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
@@ -70,7 +71,12 @@ class TestContentFolderViews(ApplicationLayerTest):
 
 		res = self.testapp.get('/dataserver2/ofs/root/@@tree', status=200)
 		assert_that(res.json_body,
-					is_([u'aizen.txt', {u'bleach': [u'rukia.txt', u'zaraki.txt']}, u'ichigo.txt']))
+					has_entry('Items', 
+							 is_([u'aizen.txt', {u'bleach': [u'rukia.txt', u'zaraki.txt']}, u'ichigo.txt'])))
+		
+		assert_that(res.json_body,
+					has_entries('Folders', 1,
+								'Files', 4))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_delete(self):
