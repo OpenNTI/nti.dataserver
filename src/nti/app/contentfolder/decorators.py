@@ -22,7 +22,7 @@ from nti.common.property import Lazy
 
 from nti.contentfolder.interfaces import INamedContainer, IRootFolder
 
-from nti.dataserver.authorization import ACT_READ 
+from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.externalization.interfaces import StandardExternalFields
@@ -34,7 +34,7 @@ from nti.namedfile.interfaces import INamedFile
 
 LINKS = StandardExternalFields.LINKS
 
-def _create_link(context, rel, name=None,  method=None):
+def _create_link(context, rel, name=None, method=None):
 	elements = () if not name else (name,)
 	link = Link(context, rel=rel, elements=elements, method=method)
 	interface.alsoProvides(link, ILocation)
@@ -68,8 +68,10 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			_links.append(_create_link(context, "mkdir", "@@mkdir"))
 			_links.append(_create_link(context, "clear", "@@clear"))
 			_links.append(_create_link(context, "upload", "@@upload"))
-			if not IRootFolder.providedBy(context):
-				_links.append(_create_link(context, "rename", "@@rename"))
+
+		# non root folders
+		if not IRootFolder.providedBy(context) and has_permission(ACT_UPDATE, context, request):
+			_links.append(_create_link(context, "rename", "@@rename"))
 
 @component.adapter(INamedFile)
 @interface.implementer(IExternalObjectDecorator)
