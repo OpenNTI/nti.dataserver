@@ -48,6 +48,7 @@ from nti.contentfolder.interfaces import INamedContainer
 from nti.dataserver import authorization as nauth
 
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.externalization import to_external_object
 
@@ -78,6 +79,28 @@ class ContainerContentsView(AbstractAuthenticatedView):
 		result['Total'] = result['ItemCount'] = len(items)
 		return result
 
+@view_config(name="tree")
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=INamedContainer,
+			   permission=nauth.ACT_READ,
+			   request_method='GET')
+class TreeView(AbstractAuthenticatedView):
+
+	def recur(self, container, result):
+		for name, value in list(container.items()): # snapshot
+			if INamedContainer.providedBy(value):
+				data = LocatedExternalList()
+				result.append({name:data})
+				self.recur(value, data)
+			else:
+				result.append(name)
+
+	def __call__(self):
+		result = LocatedExternalList()
+		self.recur(self.context, result)
+		return result
+	
 @view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
@@ -149,8 +172,9 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		creator = self.remoteUser.username
 		sources = get_all_sources(self.request, None)
 		for name, source in sources.items():
-			name = safe_filename(name_finder(name))
-			target = self.get_namedfile(source, name)
+			filename = getattr(source, 'filename', None)
+			file_key = safe_filename(name_finder(name))
+			target = self.get_namedfile(source, file_key, filename)
 			transfer(source, target)
 			target.creator = creator
 			items.append(target)

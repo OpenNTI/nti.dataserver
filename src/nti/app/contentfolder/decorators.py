@@ -60,6 +60,7 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 		# read based ops
 		if has_permission(ACT_READ, context, request):
+			_links.append(_create_link(context, "tree", "@@tree"))
 			_links.append(_create_link(context, "contents", "@@contents"))
 
 		# update based ops

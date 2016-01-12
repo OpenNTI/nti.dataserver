@@ -50,7 +50,28 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(2),
 								'Items', has_length(2)))
-		
+
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_tree(self):
+		self.testapp.post('/dataserver2/ofs/root/@@upload',
+						 upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo'), 
+										('aizen.txt', 'aizen.txt', b'aizen') ],
+						 status=201)
+
+		data = {'name': 'bleach'}
+		self.testapp.post_json('/dataserver2/ofs/root/@@mkdir',
+							   data,
+							   status=201)
+
+		self.testapp.post('/dataserver2/ofs/root/bleach/@@upload',
+						 upload_files=[ ('rukia.txt', 'rukia.txt', b'rukia'), 
+										('zaraki.txt', 'zaraki.txt', b'zaraki') ],
+						 status=201)
+
+		res = self.testapp.get('/dataserver2/ofs/root/@@tree', status=200)
+		assert_that(res.json_body,
+					is_([u'aizen.txt', {u'bleach': [u'rukia.txt', u'zaraki.txt']}, u'ichigo.txt']))
+
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_delete(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',

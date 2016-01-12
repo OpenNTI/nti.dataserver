@@ -28,21 +28,21 @@ from nti.dataserver.authorization_acl import acl_from_aces
 @component.adapter(IContentFolder)
 @interface.implementer(IACLProvider)
 class ContentFolderACLProvider(object):
-    """
-    Provides the basic ACL for a content folder.
-    """
+	"""
+	Provides the basic ACL for a content folder.
+	"""
 
-    def __init__(self, context):
-        self.context = context
+	def __init__(self, context):
+		self.context = context
 
-    @property
-    def __parent__(self):
-        # See comments in nti.dataserver.authorization_acl:has_permission
-        return self.context.__parent__
+	@property
+	def __parent__(self):
+		# See comments in nti.dataserver.authorization_acl:has_permission
+		return self.context.__parent__
 
-    @Lazy
-    def __acl__(self):
-        aces = [ ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, self),
-                 ace_allowing(ROLE_CONTENT_EDITOR, ALL_PERMISSIONS, type(self))]
-        result = acl_from_aces(aces)
-        return result
+	@Lazy
+	def __acl__(self):
+		aces = [ ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, self),
+				 ace_allowing(ROLE_CONTENT_EDITOR, ALL_PERMISSIONS, type(self))]
+		result = acl_from_aces(aces)
+		return result
