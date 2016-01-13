@@ -252,7 +252,7 @@ class ContainedObjectCatalog(Persistent):
 									   ntiid=ntiid,
 									   sites=sites,
 									   container_all_of=container_all_of)
-			result = ResultSet(refs, intids , True)
+			result = ResultSet(refs, intids)
 		else:
 			result = ()
 		return result
