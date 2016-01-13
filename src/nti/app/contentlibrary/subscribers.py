@@ -22,6 +22,8 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from ZODB.interfaces import IConnection
 
+from nti.app.contentlibrary.interfaces import IContentBoard
+
 from nti.coremetadata.interfaces import IRecordable
 
 from nti.contentlibrary.indexed_data import get_registry
@@ -68,11 +70,9 @@ from nti.site.utils import unregisterUtility
 from nti.site.interfaces import IHostPolicySiteManager
 from nti.site.site import get_component_hierarchy_names
 
-from .interfaces import IContentBoard
-
 ITEMS = StandardExternalFields.ITEMS
 
-INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
+INDICES = (('audio_index.json', INTIAudio, create_ntiaudio_from_external),
 			('video_index.json', INTIVideo, create_ntivideo_from_external),
 			('timeline_index.json', INTITimeline, create_timelime_from_external),
 			('slidedeck_index.json', INTISlideDeck, create_object_from_external),
@@ -121,24 +121,35 @@ def _was_utility_registered(item, item_iface, ntiid, registry=None,
 								  connection=connection)
 	return result
 
-def _load_and_register_items(item_iterface, items, registry=None, connection=None,
+def _load_and_register_items(item_iterface,
+							 items,
+							 registry=None,
+							 connection=None,
+							 content_package=None,
 							 external_object_creator=create_object_from_external):
 	result = []
 	registry = get_registry(registry)
 	for ntiid, data in items.items():
 		internal = external_object_creator(data, notify=False)
+		internal.__parent__ = content_package  # set lineage
 		if _was_utility_registered(internal, item_iterface, ntiid,
 								   registry=registry, connection=connection):
 			result.append(internal)
 	return result
 
-def _load_and_register_json(item_iterface, jtext, registry=None, connection=None,
+def _load_and_register_json(item_iterface,
+							jtext,
+							registry=None,
+							connection=None,
+							content_package=None,
 							external_object_creator=create_object_from_external):
 	index = simplejson.loads(prepare_json_text(jtext))
 	items = index.get(ITEMS) or {}
-	result = _load_and_register_items(item_iterface, items,
+	result = _load_and_register_items(item_iterface,
+									  items,
 									  registry=registry,
 									  connection=connection,
+									  content_package=content_package,
 									  external_object_creator=external_object_creator)
 	return result
 
@@ -153,7 +164,10 @@ def _canonicalize(items, item_iface, registry):
 			items[idx] = registered  # replaced w/ registered
 	return recorded
 
-def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
+def _load_and_register_slidedeck_json(jtext,
+									  registry=None,
+									  connection=None,
+									  content_package=None,
 									  object_creator=create_object_from_external):
 	result = []
 	registry = get_registry(registry)
@@ -161,6 +175,7 @@ def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 	items = index.get(ITEMS) or {}
 	for ntiid, data in items.items():
 		internal = object_creator(data, notify=False)
+		internal.__parent__ = content_package  # set lineage
 		if 	INTISlide.providedBy(internal) and \
 			_was_utility_registered(internal, INTISlide, ntiid, registry, connection):
 			result.append(internal)
@@ -192,7 +207,7 @@ def _removed_registered(provided, name, intids=None, registry=None,
 			logger.warn("Could not unregister (%s,%s) during sync, continuing...",
 						provided.__name__, name)
 		removeIntId(registered)
-		registered.__parent__ = None # ground
+		registered.__parent__ = None  # ground
 	elif registered is not None:
 		logger.warn("Object (%s,%s) is locked cannot be removed during sync",
 					provided.__name__, name)
@@ -266,9 +281,6 @@ def _index_item(item, content_package, container_id, catalog):
 			result += 1
 			catalog.index(video, container_ntiids=extended,
 				  		  namespace=content_package.ntiid, sites=sites)
-			
-	# set lineage
-	item.__parent__ = content_package
 
 	return result
 
@@ -320,7 +332,7 @@ def _clear_assets_by_interface(content_package, iface, force=False):
 			if provided.isOrExtends(iface) and can_be_removed(value, force):
 				del container[key]
 	recur(content_package)
-	
+
 def _update_index_when_content_changes(content_package,
 									   index_filename,
 									   item_iface,
@@ -395,11 +407,14 @@ def _update_index_when_content_changes(content_package,
 		added = _load_and_register_slidedeck_json(index_text,
 										  		  registry=registry,
 										  		  connection=connection,
-										 		  object_creator=object_creator)
+										 		  object_creator=object_creator,
+										 		  content_package=content_package)
 	elif object_creator is not None:
-		added = _load_and_register_json(item_iface, index_text,
+		added = _load_and_register_json(item_iface,
+										index_text,
 										registry=registry,
 										connection=connection,
+										content_package=content_package,
 										external_object_creator=object_creator)
 	registered_count = len(added)
 	removed_count = len(removed)
