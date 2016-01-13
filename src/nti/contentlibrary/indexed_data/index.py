@@ -29,6 +29,11 @@ from nti.common.time import bit64_int_to_time
 from nti.common.time import time_to_64bit_int
 from nti.common.proxy import removeAllProxies
 
+from nti.contentlibrary.indexed_data import CATALOG_INDEX_NAME
+
+from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
+from nti.contentlibrary.indexed_data.interfaces import IContainedObjectCatalog
+
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.zope_catalog.catalog import ResultSet
@@ -36,11 +41,6 @@ from nti.zope_catalog.catalog import ResultSet
 from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
-
-from .interfaces import IContainedTypeAdapter
-from .interfaces import IContainedObjectCatalog
-
-from . import CATALOG_INDEX_NAME
 
 def to_iterable(value):
 	if isinstance(value, (list, tuple, set)):
@@ -252,19 +252,18 @@ class ContainedObjectCatalog(Persistent):
 									   ntiid=ntiid,
 									   sites=sites,
 									   container_all_of=container_all_of)
-			result = ResultSet(refs, intids)
+			result = ResultSet(refs, intids , True)
 		else:
 			result = ()
 		return result
 
-	def index(self, item, container_ntiids=None, namespace=None,
-			  sites=None, intids=None):
+	def index(self, item, container_ntiids=None, namespace=None, sites=None, intids=None):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			return False
 
 		if namespace is not None:  # TODO: do we need this check?
-			namespace =	getattr(namespace, '__name__', namespace)
+			namespace = 	getattr(namespace, '__name__', namespace)
 
 		for index, value in ((self._type_index, item),
 							 (self._site_index, sites),
