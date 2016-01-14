@@ -16,9 +16,10 @@ from collections import Mapping
 
 from zope import lifecycleevent
 
+from pyramid import httpexceptions as hexc
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
-from pyramid import httpexceptions as hexc
 
 from plone.namedfile.file import getImageInfo
 from plone.namedfile.interfaces import INamed

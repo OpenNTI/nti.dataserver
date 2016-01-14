@@ -70,7 +70,8 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			_links.append(_create_link(context, "upload", "@@upload"))
 
 		# non root folders
-		if not IRootFolder.providedBy(context) and has_permission(ACT_UPDATE, context, request):
+		if 	not IRootFolder.providedBy(context) \
+			and has_permission(ACT_UPDATE, context, request):
 			_links.append(_create_link(context, "rename", "@@rename"))
 
 @component.adapter(INamedFile)
