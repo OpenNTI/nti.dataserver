@@ -16,9 +16,11 @@ import requests
 
 from zope import interface
 
-from pyramid.view import view_config
-from pyramid.response import Response
 from pyramid import httpexceptions as hexc
+
+from pyramid.response import Response
+
+from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -63,9 +65,10 @@ class _URLMetaDataExtractor(AbstractAuthenticatedView):
 
 interface.directlyProvides(_URLMetaDataExtractor, INamedLinkView)
 
-_HOP_BY_HOP_HEADERS = ['te', 'transfer-encoding', 'keep-alive',  'proxy-authorization', 'proxy-authentication', 'trailer', 'upgrade', 'connection']
+_HOP_BY_HOP_HEADERS = ['te', 'transfer-encoding', 'keep-alive', 'proxy-authorization',
+					   'proxy-authentication', 'trailer', 'upgrade', 'connection']
 
-def _is_hop_by_hop(header, connection = None):
+def _is_hop_by_hop(header, connection=None):
 	return header in _HOP_BY_HOP_HEADERS or header in connection
 
 
@@ -86,13 +89,14 @@ class _URLMetaDataSafeImageProxy(AbstractAuthenticatedView):
 
 		for header in headers:
 			lower_case_header = header.lower()
-			if not _is_hop_by_hop(lower_case_header, connection = connection) and lower_case_header not in strip:
+			if 	not _is_hop_by_hop(lower_case_header, connection=connection) \
+				and lower_case_header not in strip:
 				safe_headers[header] = headers.get(header)
 
 		return safe_headers
 
 	def _via_header(self, via=None):
-		via_value = via_value = (via +', '+ self._via) if via else self._via
+		via_value = (via + ', ' + self._via) if via else self._via
 		return str(via_value)
 
 	def __call__(self):
@@ -100,17 +104,19 @@ class _URLMetaDataSafeImageProxy(AbstractAuthenticatedView):
 		if not url:
 			raise hexc.HTTPUnprocessableEntity('URL not provided')
 
-		#It's actually quite difficult to be a proper proxy. We have to take special
-		#care with hop-by-hop headers as well as a miriad of other things
-		#https://www.mnot.net/blog/2011/07/11/what_proxies_must_do
+		# It's actually quite difficult to be a proper proxy. We have to take special
+		# care with hop-by-hop headers as well as a miriad of other things
+		# https://www.mnot.net/blog/2011/07/11/what_proxies_must_do
 		via = self.request.headers.get('via')
 
-		proxied_headers = self._proxiable_headers(self.request.headers, strip=self._stripped_request_headers)
+		proxied_headers = self._proxiable_headers(self.request.headers, 
+												  strip=self._stripped_request_headers)
 		proxied_headers['Via'] = self._via_header(via)
 
 		r = requests.get(url, headers=proxied_headers, stream=True)
 		headers = self._proxiable_headers(r.headers)
 		headers['Via'] = self._via_header(r.headers.get('via', None))
 
-		result = Response(status=r.status_code, app_iter=r.iter_content(chunk_size=1024), headers=headers)
+		result = Response(status=r.status_code, 
+						  app_iter=r.iter_content(chunk_size=1024), headers=headers)
 		return result
