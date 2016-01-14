@@ -579,7 +579,7 @@ class ForbiddenContextException( Exception ):
 	of content, but could possibly gain access.
 	"""
 
-	def __init__(self, joinable_contexts ):
+	def __init__(self, joinable_contexts=None ):
 		self.joinable_contexts = joinable_contexts
 
 
