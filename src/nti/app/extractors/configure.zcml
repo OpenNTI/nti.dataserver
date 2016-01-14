@@ -18,4 +18,9 @@
 						 nti.contentprocessing.interfaces.IImageMetadata"
 		modules="nti.contentprocessing.metadata_extractors" />
 
+	<subscriber factory=".decorators._ImageMetadataSafeProxyDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.contentprocessing.interfaces.IImageMetadata
+					 pyramid.interfaces.IRequest" />
+
 </configure>
