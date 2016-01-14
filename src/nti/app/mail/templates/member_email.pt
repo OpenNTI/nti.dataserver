@@ -11,7 +11,6 @@
 			background-color: #89be3c;
 			width: 100%;
 			height: 5px;
-			padding-right: 40px;
 			}
 			#logo-bar {
 			margin-top: 20px;
@@ -55,6 +54,7 @@
 			font-weight: bold;
 			color: #999;
 			}
+			<!-- http://stackoverflow.com/questions/12539697/iphone-5-css-media-query -->
 			@media screen and (max-width: 600px){
 				#wrapper{
 						width:440px !important;
@@ -100,12 +100,12 @@
 				<tr width="100%">
 					<td valign="top" align="left">
 						<!-- White background -->
-						<table style="border: none; background:#fff; padding: 0 18px; width: 90%;">
+						<table style="border: none; background:#fff; padding: 0 18px; width: 100%; margin-left: 0px;">
 							<tbody>
 							<tr width="100%">
 								<td width="100%" style="border-collapse:collapse; margin-left: 0px; padding:15px">
 									<!-- Table with data -->
-									<table style="border-collapse:collapse; margin-left: 0px; align: center; width: 490px">
+									<table style="border-collapse:collapse; margin-left: 0px; align: center; width: 100%">
 										<tr width="100%">
 											<td valign="top" align="left" style="border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
 																				border-bottom: 1px solid #EFEFEF;
@@ -167,14 +167,14 @@
 							<tr width="100%" style="color: #333; background: #EEF0F1; padding: 0; margin: 0;
 													width: 100%; font: 15px/1.25em 'Helvetica Neue', Arial,Helvetica;">
 								<td valign="top" align="left">
-									<p class="footer" style="font-size: smaller">
+									<p class="footer" style="font-size: smaller; margin-left: 0px; margin-right: 0px;">
 										<span>This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.</span>
 										<br />
 										If you feel this email was sent in error, or this account was created
 										without your consent, you may email
-										<a href="mailto:janux@ou.edu"
-											tal:attributes="href options/support_email"
-											tal:content="options/support_email">janux@ou.edu</a>.
+										<a href="mailto:support@nextthought.com"
+											tal:attributes="href string:mailto:${options/support_email|default}"
+											tal:content="options/support_email">support@nextthought.com</a>.
 									</p>
 								</td>
 							</tr>

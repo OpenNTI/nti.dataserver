@@ -11,7 +11,6 @@
 			background-color: #89be3c;
 			width: 100%;
 			height: 5px;
-			padding-right: 40px;
 			}
 			#logo-bar {
 			margin-top: 20px;
@@ -119,7 +118,7 @@
 	</head>
 	<body class="normal-text">
 		<div metal:define-macro="header">
-			<div id="green-bar" style="background-color: #89be3c; width: 100%; height: 5px; padding-right: 40px;"></div>
+			<div id="green-bar" class="green-bar"></div>
 			<div id="logo-bar">
 				<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
 					 alt="NextThought Logo" />
