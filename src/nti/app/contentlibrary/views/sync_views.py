@@ -130,6 +130,12 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 						  'code':'Exception'},
 						 None)
 
+	def release(self, lock):
+		try:
+			lock.release()
+		except Exception:
+			logger.exception("Error while releasing Sync lock")
+
 	def _txn_id(self):
 		return "txn.%s" % get_thread_ident()
 
@@ -200,4 +206,4 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 			logger.info('Starting sync %s', self._txn_id())
 			return self._do_call()
 		finally:
-			lock.release()
+			self.release(lock)
