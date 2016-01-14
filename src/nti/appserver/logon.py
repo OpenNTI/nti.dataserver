@@ -99,28 +99,28 @@ from .link_providers import unique_link_providers
 
 from .pyramid_authorization import has_permission
 
-# Link relationship indicating a welcome page
-# Fetching the href of this link returns either a content page
-# or PageInfo structure. The client is expected to DELETE
-# this link once the user has viewed it.
+#: Link relationship indicating a welcome page
+#: Fetching the href of this link returns either a content page
+#: or PageInfo structure. The client is expected to DELETE
+#: this link once the user has viewed it.
 REL_INITIAL_WELCOME_PAGE = "content.initial_welcome_page"
 
-# Link relationship indicating a welcome page
-# The client is expected to make this relationship
-# available to the end user at all times. It is NOT a deletable
-# link.
+#: Link relationship indicating a welcome page
+#: The client is expected to make this relationship
+#: available to the end user at all times. It is NOT a deletable
+#: link.
 REL_PERMANENT_WELCOME_PAGE = 'content.permanent_welcome_page'
 
-# Link relationship indicating the Terms-of-service page
-# Fetching the href of this link returns either a content page
-# or PageInfo structure. The client is expected to DELETE
-# this link once the user has viewed it and accepted it.
+#: Link relationship indicating the Terms-of-service page
+#: Fetching the href of this link returns either a content page
+#: or PageInfo structure. The client is expected to DELETE
+#: this link once the user has viewed it and accepted it.
 REL_INITIAL_TOS_PAGE = "content.initial_tos_page"
 
-# Link relationship indicating a the Terms-of-service page
-# The client is expected to make this relationship
-# available to the end user at all times for review. It is NOT a deletable
-# link.
+#: Link relationship indicating a the Terms-of-service page
+#: The client is expected to make this relationship
+#: available to the end user at all times for review. It is NOT a deletable
+#: link.
 REL_PERMANENT_TOS_PAGE = 'content.permanent_tos_page'
 
 TOS_URL = 'https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
@@ -315,7 +315,12 @@ def ping(request):
 	links.extend(_links_for_authenticated_users(request))
 	links.extend(_links_for_unauthenticated_users(request))
 	links.sort()  # for tests
-	return _Pong(links)
+
+	username = request.authenticated_userid
+	result = _Pong(links)
+	if username:
+		result['AuthenticatedUsername'] = username
+	return result
 
 @interface.implementer(ILogonPong,
 						ext_interfaces.IExternalObject,
@@ -385,7 +390,12 @@ def handshake(request):
 	links.extend(_links_for_authenticated_users(request))
 	links.extend(_links_for_unauthenticated_users(request))
 	links.sort()
-	return _Handshake(links)
+
+	username = request.authenticated_userid
+	result = _Handshake(links)
+	if username:
+		result['AuthenticatedUsername'] = username
+	return result
 
 @interface.implementer(app_interfaces.ILogonLinkProvider)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
@@ -838,12 +848,12 @@ def _openid_login(context, request, openid=None, params=None):
 		del post[openid_field]
 
 	nrequest = pyramid.request.Request.blank(request.route_url(ROUTE_OPENID_RESPONSE, _query=params),
-											  environ=nenviron,
-											  # In theory, if we're constructing the URL correctly, this is enough
-											  # to carry through HTTPS info
-											  base_url=request.host_url,
-											  headers=request.headers,
-											  POST=post)
+											 environ=nenviron,
+											 # In theory, if we're constructing the URL correctly, this is enough
+											 # to carry through HTTPS info
+											 base_url=request.host_url,
+											 headers=request.headers,
+											 POST=post)
 	nrequest.registry = request.registry
 	nrequest.possible_site_names = getattr(request, 'possible_site_names', ())
 	nrequest = _PyramidOpenidRequestProxy(nrequest)
@@ -892,7 +902,6 @@ def _openid_response(context, request):
 			error = request.params.get('openid.error', None)
 		if not error:
 			if openid_mode == 'cancel':  # Hmm. Take a guess
-				# TODO: Localize
 				error = _("The request was canceled by the remote server.")
 		response = _create_failure_response(request, error=error)
 	else:
@@ -1114,11 +1123,11 @@ def facebook_oauth2(request):
 	app_secret = request.registry.settings.get('facebook.app.secret')
 
 	auth = requests.get('https://graph.facebook.com/oauth/access_token',
-						 params={'client_id': app_id,
-								 'redirect_uri': our_uri,
-								 'client_secret': app_secret,
-								 'code': code},
-						 timeout=_REQUEST_TIMEOUT)
+						params={'client_id': app_id,
+								'redirect_uri': our_uri,
+								'client_secret': app_secret,
+								'code': code},
+						timeout=_REQUEST_TIMEOUT)
 
 	try:
 		auth.raise_for_status()
@@ -1308,7 +1317,7 @@ def google_oauth2(request):
 											error=_('Could not find id token.'))
 
 		# id_token = data['id_token'] #TODO:Validate id token
-		access_token  = data['access_token']
+		access_token = data['access_token']
 		logger.debug("Getting user profile")
 		userinfo_url = config.get('userinfo_endpoint', DEFAULT_USERINFO_URL)
 		response = requests.get(userinfo_url, params={"access_token":access_token})
@@ -1324,18 +1333,18 @@ def google_oauth2(request):
 			lastName = profile.get('family_name', 'unspecified')
 			email_verified = profile.get('email_verified', 'false')
 
-			user = _deal_with_external_account(	request,
-												username=username,
-												fname=firstName,
-												lname=lastName,
-												email=username,
-												idurl=None,
-												iface=None,
-												user_factory=User.create_user)
+			user = _deal_with_external_account(request,
+											   username=username,
+											   fname=firstName,
+											   lname=lastName,
+											   email=username,
+											   idurl=None,
+											   iface=None,
+											   user_factory=User.create_user)
 			interface.alsoProvides(user, IGoogleUser)
 			notify(GoogleUserCreatedEvent(user))
 			if is_true(email_verified):
-				force_email_verification(user) # trusted source
+				force_email_verification(user)  # trusted source
 			request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
 
 		response = _create_success_response(request,
