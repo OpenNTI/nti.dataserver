@@ -34,5 +34,8 @@ class _ImageMetadataSafeProxyDecorator(AbstractAuthenticatedRequestAwareDecorato
 	def _do_decorate_external(self, context, external):
 		links = external.setdefault(LINKS, [])
 		root = self.request.route_path('objects.generic.traversal', traverse=())
-		safeimage_link = Link(root, elements=('safeimage',), rel='safeimage', params={'url': context.url})
+		safeimage_link = Link(root,
+							  elements=('safeimage',),
+							  rel='safeimage',
+							  params={'url': context.url})
 		links.append(safeimage_link)
