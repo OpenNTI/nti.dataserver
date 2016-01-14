@@ -187,6 +187,10 @@ def _load_and_register_slidedeck_json(jtext,
 			result.extend(_canonicalize(internal.Videos, INTISlideVideo, registry))
 			if _was_utility_registered(internal, INTISlideDeck, ntiid, registry, connection):
 				result.append(internal)
+			# CS: 20160114 Slide and SlideVideos are unique for slides, 
+			# so we can reparent those items
+			for item in internal.Items or ():
+				item.__parent__ = internal
 	return result
 
 def _can_be_removed(registered, force=False):
