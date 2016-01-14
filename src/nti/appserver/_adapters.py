@@ -14,11 +14,20 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope.catalog.interfaces import ICatalog
+
+from zope.intid.interfaces import IIntIds
+
 from zope.location.interfaces import LocationError
 
 from zope.traversing.interfaces import ITraversable
 
 from ZODB.interfaces import IBroken
+
+from nti.appserver.interfaces import IUserSearchPolicy
+from nti.appserver.interfaces import IIntIdUserSearchPolicy
+from nti.appserver.interfaces import IExternalFieldResource
+from nti.appserver.interfaces import IExternalFieldTraversable
 
 from nti.common.property import alias
 
@@ -34,6 +43,10 @@ from nti.dataserver.interfaces import ITitledDescribedContent
 from nti.dataserver.interfaces import IShareableModeledContent
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
+from nti.dataserver.users import index as user_index
+
+from nti.dataserver.users.entity import Entity
+
 from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
 from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
@@ -45,11 +58,6 @@ from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import IExternalObjectDecorator
 
 from nti.schema.interfaces import find_most_derived_interface
-
-from .interfaces import IUserSearchPolicy
-from .interfaces import IIntIdUserSearchPolicy
-from .interfaces import IExternalFieldResource
-from .interfaces import IExternalFieldTraversable
 
 @interface.implementer(IExternalObject)
 @component.adapter(IEnclosedContent)
@@ -109,12 +117,12 @@ class _AbstractExternalFieldTraverser(object):
 	paths as well as new paths.
 	"""
 
+	_allowed_fields = ()
+	_unwrapped_fields = ()
+
 	def __init__(self, context, request=None):
 		self.context = context
 		self.request = request
-
-	_allowed_fields = ()
-	_unwrapped_fields = ()
 
 	def __getitem__(self, key):
 		if key not in self._allowed_fields:
@@ -251,13 +259,6 @@ class _UserRealnameStripper(object):
 		for k in _REALNAME_FIELDS:
 			if k in external:
 				external[k] = None
-
-from zope.intid.interfaces import IIntIds
-
-from zope.catalog.interfaces import ICatalog
-
-from nti.dataserver.users.entity import Entity
-from nti.dataserver.users import index as user_index
 
 def _make_min_max_btree_range(search_term):
 	min_inclusive = search_term  # start here
