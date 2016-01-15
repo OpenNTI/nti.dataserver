@@ -56,7 +56,7 @@ from nti.externalization.interfaces import LocatedExternalDict
 SYNC_LOCK_NAME = '/var/libraries/Lock/sync'
 
 #: The amount of time for which we will hold the lock during sync
-LOCK_TIMEOUT = 60 * 30  # 30 minutes
+LOCK_TIMEOUT = 60 * 45  # 45 minutes
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
