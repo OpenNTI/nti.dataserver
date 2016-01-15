@@ -133,10 +133,8 @@ def verp_from_recipients( fromaddr, recipients,
 						  default_key=None):
 
 	realname, addr = rfc822.parseaddr(realname_from_recipients(fromaddr, recipients, request=request))
-	if '+' in addr:
-		raise ValueError("Addr should not already have a label", fromaddr)
 
-	# We could special case the common case of recpients of length
+	# We could special case the common case of recipients of length
 	# one if it is a string: that typically means we're sending to the current
 	# principal (though not necessarily so we'd have to check email match).
 	# However, instead, I just want to change everything to send something
@@ -160,6 +158,9 @@ def verp_from_recipients( fromaddr, recipients,
 		principal_ids = _sign(signer, principal_ids)
 
 		local, domain = addr.split('@')
+		# Note: we may have a local address that already has a label '+'.
+		# The principal ids with '+' should now be url quoted away. This
+		# ensures we want the last '+' on parsing.
 		addr = local + '+' + principal_ids + '@' + domain
 
 	return rfc822.dump_address_pair( (realname, addr) )
@@ -176,7 +177,8 @@ def principal_ids_from_verp(fromaddr,
 
 	signer = __make_signer(default_key)
 
-	signed_and_encoded = addr.split(b'+', 1)[1].split(b'@')[0]
+	# Split on our last '+' to allow user defined labels.
+	signed_and_encoded = addr.rsplit(b'+', 1)[1].split(b'@')[0]
 	encoded_pids, sig = signed_and_encoded.rsplit(signer.sep, 1)
 	decoded_pids = urllib.unquote(encoded_pids)
 
