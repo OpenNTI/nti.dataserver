@@ -21,15 +21,17 @@ from zope.container.contained import Contained
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
+from nti.app.contentlibrary import PAGE_INFO_MT_JSON
+
+from nti.app.contentlibrary.views.library_views import find_page_info_view_helper
+
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.dataserver import authorization as nauth
 
 from nti.ntiids.interfaces import INTIIDResolver
 
-from .library_views import find_page_info_view_helper
-
-from .. import PAGE_INFO_MT_JSON
+# re-export
 PAGE_INFO_MT_JSON = PAGE_INFO_MT_JSON
 
 # See also assessment_views, especially for notes on Accept header handling.

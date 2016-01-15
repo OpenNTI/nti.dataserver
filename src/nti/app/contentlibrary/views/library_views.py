@@ -21,16 +21,24 @@ from zope.location.interfaces import ILocationInfo
 from pyramid import traversal
 from pyramid import httpexceptions as hexc
 
-from pyramid.view import view_config, view_defaults
+from pyramid.view import view_config
+from pyramid.view import view_defaults
 
 from nti.app.authentication import get_remote_user
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.contentlibrary import LIBRARY_PATH_GET_VIEW
+
+from nti.app.contentlibrary.utils import PAGE_INFO_MT
+from nti.app.contentlibrary.utils import PAGE_INFO_MT_JSON
+from nti.app.contentlibrary.utils import find_page_info_view_helper
+
+from nti.app.renderers.caching import AbstractReliableLastModifiedCacheController
+
 from nti.app.renderers.interfaces import IExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.interfaces import IResponseCacheController
-from nti.app.renderers.caching import AbstractReliableLastModifiedCacheController
 
 from nti.appserver.context_providers import get_hierarchy_context
 from nti.appserver.context_providers import get_top_level_contexts
@@ -57,15 +65,15 @@ from nti.contentlibrary.interfaces import IContentUnitHrefMapper
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IHighlight
-from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import IDataserverFolder
-
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+
+from nti.dataserver.interfaces import IHighlight
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.recorder.interfaces import TRX_TYPE_CREATE
 from nti.recorder.interfaces import ITransactionRecordHistory
@@ -86,12 +94,6 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.traversal.traversal import find_interface
-
-from ..utils import PAGE_INFO_MT
-from ..utils import PAGE_INFO_MT_JSON
-from ..utils import find_page_info_view_helper
-
-from .. import LIBRARY_PATH_GET_VIEW
 
 ITEMS = StandardExternalFields.ITEMS
 
