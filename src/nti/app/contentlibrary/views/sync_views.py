@@ -35,6 +35,8 @@ from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.contentlibrary.synchronize import synchronize
+
 from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -50,9 +52,11 @@ from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 
 from nti.externalization.interfaces import LocatedExternalDict
 
-from ..synchronize import synchronize
-
+#: Redis sync lock name
 SYNC_LOCK_NAME = '/var/libraries/Lock/sync'
+
+#: The amount of time for which we will hold the lock during sync
+LOCK_TIMEOUT = 60 * 30  # 30 minutes
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
@@ -69,6 +73,35 @@ class _RemoveSyncLock(AbstractAuthenticatedView):
 	def __call__(self):
 		self.redis.delete(SYNC_LOCK_NAME)
 		return hexc.HTTPNoContent()
+
+@view_config(permission=ACT_SYNC_LIBRARY)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   name='IsSyncInProgress')
+class _IsSyncInProgress(AbstractAuthenticatedView):
+
+	@Lazy
+	def redis(self):
+		return component.getUtility(IRedisClient)
+
+	def lock(self):
+		lock = self.redis.lock(SYNC_LOCK_NAME, LOCK_TIMEOUT, blocking_timeout=1)
+		acquired = lock.acquire(blocking=False)
+		return (lock, acquired)
+
+	def release(self, lock, acquired):
+		try:
+			if acquired:
+				lock.release()
+		except Exception:
+			pass
+
+	def __call__(self):
+		lock, acquired = self.lock()
+		self.release(lock, acquired)
+		return not acquired
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
@@ -99,10 +132,6 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 	# disabling it.
 	_SLEEP = True
 
-	# The amount of time for which we will hold the lock during
-	# sync
-	lock_timeout = 60 * 30  # 30 minutes
-
 	def readInput(self, value=None):
 		result = CaseInsensitiveDict()
 		if self.request:
@@ -120,7 +149,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 	@Lazy
 	def lock(self):
 		# Fail fast if we cannot acquire the lock.
-		lock = self.redis.lock(SYNC_LOCK_NAME, self.lock_timeout)
+		lock = self.redis.lock(SYNC_LOCK_NAME, LOCK_TIMEOUT)
 		acquired = lock.acquire(blocking=False)
 		if acquired:
 			return lock
