@@ -66,11 +66,23 @@ class _AbstractValidationViewBase(TestBaseMixin):
 		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
 			self.the_view( self.request )
 
-
 		assert_that( exc.exception.json_body, has_entry( 'field', 'realname' ) )
 		assert_that( exc.exception.json_body, has_entry( 'code', 'RealnameInvalid' ) )
 		assert_that( exc.exception.json_body, has_entry( 'value', '123 456_' ) )
 		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'The first or last name you have entered is not valid.' ) ) )
+
+		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
+													 'password': 'pass123word',
+													 'realname': u'ichigo kuro\U0001f383saki',
+													 'email': 'foo@bar.com',} )
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			self.the_view( self.request )
+
+		assert_that( exc.exception.json_body, has_entry( 'field', 'realname' ) )
+		assert_that( exc.exception.json_body, has_entry( 'code', u'FieldContainsCensoredSequence' ) )
+		assert_that( exc.exception.json_body, has_entry( 'value', u'ichigo kuro\U0001f383saki') )
+		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'Last name contains a censored sequence.' ) ) )
 
 	@WithMockDSTrans
 	def test_create_invalid_invitation_code(self):
