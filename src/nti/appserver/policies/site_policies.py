@@ -645,7 +645,7 @@ class AbstractSitePolicyEventListener(object):
 								   'realname',
 								   names.realname)
 		elif has_emoji_chars(human_name.first):
-			raise FieldContainsCensoredSequence(_("Fist name contains a censored sequence."),
+			raise FieldContainsCensoredSequence(_("First name contains a censored sequence."),
 												'realname', names.realname)
 
 		if not human_name.last:
