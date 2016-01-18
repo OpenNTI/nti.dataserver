@@ -105,14 +105,12 @@ class _IsSyncInProgressView(AbstractAuthenticatedView):
 		self.release(lock, acquired)
 		return not acquired
 
-@view_config(name='LastSyncTime')
-@view_config(name='LastSynchronized')
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   request_method='GET',
 			   context=IDataserverFolder,
-			   name='IsSyncInProgress')
+			   name='LastSyncTime')
 class _LastSyncTimeView(AbstractAuthenticatedView):
 
 	def __call__(self):
