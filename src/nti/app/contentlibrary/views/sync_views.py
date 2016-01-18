@@ -28,6 +28,8 @@ from zope import component
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
+from zope.traversing.interfaces import IEtcNamespace
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -52,10 +54,10 @@ from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 
 from nti.externalization.interfaces import LocatedExternalDict
 
-#: Redis sync lock name
+# : Redis sync lock name
 SYNC_LOCK_NAME = '/var/libraries/Lock/sync'
 
-#: The amount of time for which we will hold the lock during sync
+# : The amount of time for which we will hold the lock during sync
 LOCK_TIMEOUT = 60 * 60  # 60 minutes
 
 @view_config(permission=ACT_SYNC_LIBRARY)
@@ -64,7 +66,7 @@ LOCK_TIMEOUT = 60 * 60  # 60 minutes
 			   request_method='POST',
 			   context=IDataserverFolder,
 			   name='RemoveSyncLock')
-class _RemoveSyncLock(AbstractAuthenticatedView):
+class _RemoveSyncLockView(AbstractAuthenticatedView):
 
 	@Lazy
 	def redis(self):
@@ -80,7 +82,7 @@ class _RemoveSyncLock(AbstractAuthenticatedView):
 			   request_method='GET',
 			   context=IDataserverFolder,
 			   name='IsSyncInProgress')
-class _IsSyncInProgress(AbstractAuthenticatedView):
+class _IsSyncInProgressView(AbstractAuthenticatedView):
 
 	@Lazy
 	def redis(self):
@@ -102,6 +104,20 @@ class _IsSyncInProgress(AbstractAuthenticatedView):
 		lock, acquired = self.lock()
 		self.release(lock, acquired)
 		return not acquired
+
+@view_config(name='LastSyncTime')
+@view_config(name='LastSynchronized')
+@view_config(permission=ACT_SYNC_LIBRARY)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   name='IsSyncInProgress')
+class _LastSyncTimeView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		hostsites = component.getUtility(IEtcNamespace, name='hostsites')
+		return getattr(hostsites, 'lastSynchronized', 0)
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
