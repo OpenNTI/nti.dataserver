@@ -16,37 +16,12 @@ from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
-from nti.contentlibrary.indexed_data import get_catalog
-
-from nti.contenttypes.courses.utils import get_course_packages
-from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
-
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 PAGE_INFO_MT = nti_mimetype_with_class('pageinfo')
 PAGE_INFO_MT_JSON = PAGE_INFO_MT + '+json'
-
-def get_content_units(ntiids=()):
-	result = []
-	for ntiid in ntiids or ():
-		obj = find_object_with_ntiid(ntiid)
-		if ICourseCatalogEntry.providedBy(obj) or ICourseInstance.providedBy(obj):
-			pacakges = get_course_packages(obj)
-			result.extend(pacakges or ())
-		elif not IContentUnit.providedBy(obj):
-			obj = IContentUnit(obj, None)
-		if obj is not None:
-			result.append(obj)
-	return result
-
-def get_item_content_units(item, sort=False):
-	catalog = get_catalog()
-	entries = catalog.get_containers(item)
-	result = get_content_units(entries) if entries else ()
-	return result
 
 def _encode(s):
 	return s.encode('utf-8') if isinstance(s, unicode) else s
