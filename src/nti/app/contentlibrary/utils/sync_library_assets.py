@@ -15,15 +15,15 @@ import argparse
 
 from zope import component
 
+from nti.app.contentlibrary.subscribers import update_indices_when_content_changes
+
+from nti.app.contentlibrary.utils import yield_sync_content_packages as yield_packages
+
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.utils.base_script import set_site
 from nti.dataserver.utils.base_script import create_context
-
-from nti.app.contentlibrary.subscribers import update_indices_when_content_changes
-
-from nti.app.contentlibrary.utils import yield_sync_content_packages as yield_packages
 
 def _sync_content_package(pacakge):
 	update_indices_when_content_changes(pacakge)
