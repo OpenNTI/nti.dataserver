@@ -675,7 +675,7 @@ class GlobalContentPackageLibrary(AbstractContentPackageLibrary):
 			if not IGlobalContentPackage.providedBy(package):
 				interface.alsoProvides(package, IGlobalContentPackage)
 		return result
-	
+
 class _EmptyEnumeration(AbstractContentPackageEnumeration):
 
 	def enumerateContentPackages(self):
@@ -700,7 +700,7 @@ class PersistentContentPackageLibrary(Persistent,
 			return super(PersistentContentPackageLibrary, self).__repr__()
 		except ConnectionStateError:
 			return object.__repr__(self)
-		
+
 from zope.interface.interfaces import ComponentLookupError
 
 from nti.intid.interfaces import IntIdMissingError
