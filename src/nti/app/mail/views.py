@@ -249,7 +249,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 				self.send_email( member, subject, body, email )
 
 		# Now copy to author
-		if email.Copy:
+		if email.Copy and self.__accept_user( self.sender ):
 			subject = '[COPY] %s' % subject
 			self.send_email( self.sender, subject, body, email )
 
