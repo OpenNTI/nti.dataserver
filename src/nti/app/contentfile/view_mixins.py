@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 from urllib import quote
 
 from collections import Mapping
@@ -232,11 +233,22 @@ def download_file_name(context):
 		result = NamedFileMixin.nameFinder(context.filename) or context.filename
 	return result or getattr(context, 'name', None)
 
+def safe_download_file_name(name):
+	if not name:
+		result = 'file.dat'
+	else:
+		ext = os.path.splitext(name)[1]
+		try:
+			result = quote(name)
+		except KeyError:
+			result =  'file' + ext
+	return result
+
 def to_external_href(item, add_name=False):
 	_, external = to_external_oid_and_link(item, render=True, name='view')
 	if add_name:
 		name = download_file_name(item) or 'file.dat'
-		external += '/%s' % quote(name)
+		external += '/%s' % safe_download_file_name(name)
 	return external
 to_external_view_href = to_external_href
 
