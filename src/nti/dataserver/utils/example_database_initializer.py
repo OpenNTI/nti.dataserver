@@ -64,7 +64,7 @@ class ExampleDatabaseInitializer(object):
 		:return: An iterable of two-tuples of (userid, realname). email will be used
 			as userid
 		"""
-		USERS = [ ('admin@@nextthought.com', 'Admin'),
+		USERS = [ ('admin@nextthought.com', 'Admin'),
 				  ('rusczyk@artofproblemsolving.com', 'Richard Rusczyk'),  # Aops
 				  ('patrick@artofproblemsolving.com', 'Dave Patrick') ]
 
@@ -217,7 +217,9 @@ class ExampleDatabaseInitializer(object):
 			args = {'username':uname, 'password':password, 'dataserver':mock_dataserver}
 			ext_value = {}
 			ext_value['realname'] = user_tuple[1]
-			ext_value['email'] = unicode(uname) if len(user_tuple) < 3 else user_tuple[2]
+			email = unicode(uname) if len(user_tuple) < 3 else user_tuple[2]
+			if '@' in email:
+				ext_value['email'] = email
 			ext_value['alias'] = user_tuple[1].split()[0] \
 								 if not is_test_user else user_tuple[1]
 			args['external_value'] = ext_value
