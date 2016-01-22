@@ -47,7 +47,7 @@ from nti.intid.common import removeIntId
 
 from nti.recorder.record import remove_transaction_history
 
-from nti.site.hostpolicy import get_site
+from nti.site.hostpolicy import get_host_site
 
 from nti.site.interfaces import IHostPolicyFolder
 
@@ -157,7 +157,7 @@ class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
 			seen = ()
 			removed = []
 			folder = find_interface(package, IHostPolicyFolder, strict=False)
-			with current_site(get_site(folder.__name__)):
+			with current_site(get_host_site(folder.__name__)):
 				registry = folder.getSiteManager()
 				# remove using catalog
 				removed.extend(clear_content_package_assets(package, force=force))
@@ -221,7 +221,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 		return result
 
 	def _site_registry(self, site_name):
-		folder = get_site(site_name)
+		folder = get_host_site(site_name)
 		registry = folder.getSiteManager()
 		return registry
 
@@ -333,7 +333,7 @@ class SyncPackagePresentationAssetsView(AbstractAuthenticatedView,
 		ntiids = _get_package_ntiids(values)
 		for package in yield_content_packages(ntiids):
 			folder = find_interface(package, IHostPolicyFolder, strict=False)
-			with current_site(get_site(folder.__name__)):
+			with current_site(get_host_site(folder.__name__)):
 				items.append(package.ntiid)
 				update_indices_when_content_changes(package)
 		return result
