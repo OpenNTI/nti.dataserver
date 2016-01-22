@@ -46,5 +46,5 @@ class TestEvolve30(mock_dataserver.DataserverLayerTest):
 			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 			ent_catalog = component.getUtility(ICatalog, name='nti.dataserver.++etc++entity-catalog')
 
-			results = list(ent_catalog.searchResults( email=('Jason.madden','jason.madden') ))
+			results = list(ent_catalog.searchResults( email=('Jason.madden','jason.madden@nextthought.com') ))
 			assert_that( results, contains( jason ) )
