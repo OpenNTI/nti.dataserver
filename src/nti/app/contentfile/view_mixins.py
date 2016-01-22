@@ -239,8 +239,10 @@ def safe_download_file_name(name):
 	else:
 		ext = os.path.splitext(name)[1]
 		try:
+			# XXX: Another option is to UTF-8 encode the name and quote it
+			# quote(name.encode('utf-8'))
 			result = quote(name)
-		except KeyError:
+		except Exception:
 			result =  'file' + ext
 	return result
 
