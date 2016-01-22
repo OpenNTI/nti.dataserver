@@ -32,14 +32,16 @@ from nti.app.contentfile.view_mixins import transfer
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.common.property import Lazy
 from nti.common.maps import CaseInsensitiveDict
+
+from nti.common.property import Lazy
+
+from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfile.model import ContentFile
 from nti.contentfile.model import ContentImage
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
-from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfolder.model import ContentFolder
 
@@ -48,10 +50,11 @@ from nti.contentfolder.interfaces import INamedContainer
 
 from nti.dataserver import authorization as nauth
 
+from nti.externalization.externalization import to_external_object
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.externalization import to_external_object
 
 from nti.namedfile.file import name_finder
 from nti.namedfile.file import safe_filename

@@ -25,6 +25,9 @@ from plone.namedfile.interfaces import IFile as IPloneFile
 from plone.namedfile.interfaces import INamed as IPloneNamed
 
 from nti.app.base.abstract_views import get_source
+
+from nti.app.contentfile import MessageFactory as _
+
 from nti.app.externalization.error import raise_json_error
 
 from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
@@ -70,7 +73,7 @@ def validate_sources(context=None, sources=()):
 								 {
 								 	u'provided_bytes': size,
 								 	u'max_bytes': validator.max_file_size,
-									u'message': 'The uploaded file is too large.',
+									u'message': _('The uploaded file is too large.'),
 									u'code': 'MaxFileSizeUploadLimitError',
 									u'field': 'size'
 								 },
@@ -85,7 +88,7 @@ def validate_sources(context=None, sources=()):
 							 {
 							 	u'provided_mime_type': contentType,
 								u'allowed_mime_types': validator.allowed_mime_types,
-								u'message': 'Invalid content/MimeType type.',
+								u'message': _('Invalid content/MimeType type.'),
 								u'code': 'InvalidFileMimeType',
 								u'field': 'contentType'
 							 },
@@ -98,7 +101,7 @@ def validate_sources(context=None, sources=()):
 							 {
 							 	u'provided_filename': filename,
 								u'allowed_extensions': validator.allowed_extensions,
-								u'message': 'Invalid file name.',
+								u'message': _('Invalid file name.'),
 								u'code': 'InvalidFileExtension',
 								u'field': 'filename'
 							 },
