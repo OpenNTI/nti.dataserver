@@ -47,8 +47,8 @@ class TestEvolve35(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
 			ExampleDatabaseInitializer(max_test_users=5,skip_passwords=True).install( context )
 
 			ds_folder = context.connection.root()['nti.dataserver']
-			jason = ds_folder['users']['jason.madden@nextthought.com']
-			jeff = ds_folder['users']['jeff.muehring@nextthought.com']
+			jason = ds_folder['users']['jason.madden']
+			jeff = ds_folder['users']['jeff.muehring']
 			# Give me some data to migrate over
 
 			jason._sources_not_accepted = OOTreeSet()
@@ -81,8 +81,8 @@ class TestEvolve35(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
 
 		with mock_db_trans( ) as conn:
 			ds_folder = context.connection.root()['nti.dataserver']
-			jason = ds_folder['users']['jason.madden@nextthought.com']
-			jeff = ds_folder['users']['jeff.muehring@nextthought.com']
+			jason = ds_folder['users']['jason.madden']
+			jeff = ds_folder['users']['jeff.muehring']
 			everyone = ds_folder['users']['Everyone']
 
 			assert_that( list(jason.entities_followed), is_( [jeff] ) )

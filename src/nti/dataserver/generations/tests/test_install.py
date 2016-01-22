@@ -71,10 +71,10 @@ class TestInstall(mock_dataserver.DataserverLayerTest):
 			ds_folder = context.connection.root()['nti.dataserver']
 
 			with site(ds_folder):
-				jason =  ds_folder['users']['jason.madden@nextthought.com']
+				jason =  ds_folder['users']['jason.madden']
 				ent_catalog = component.getUtility(ICatalog, name='nti.dataserver.++etc++entity-catalog')
 
-				results = list(ent_catalog.searchResults( email=('Jason.madden@nextthought.com','jason.madden@nextthought.com') ))
+				results = list(ent_catalog.searchResults( email=('Jason.madden','jason.madden@nextthought.com') ))
 				assert_that( results, contains( jason ) )
 
 				results = list(ent_catalog.searchResults( realname=('JASON MADDEN','JASON MADDEN') ))
@@ -100,9 +100,9 @@ class TestInstall(mock_dataserver.DataserverLayerTest):
 
 
 				# Now deleting him clears him out of the catalog
-				del ds_folder['users']['jason.madden@nextthought.com']
+				del ds_folder['users']['jason.madden']
 				results = list(ent_catalog.searchResults( topics='opt_in_email_communication' ) )
 				assert_that( results, has_length( 0 ) )
 
-				results = list(ent_catalog.searchResults( email=('Jason.madden@nextthought.com','jason.madden@nextthought.com') ))
+				results = list(ent_catalog.searchResults( email=('Jason.madden@nextthought.com','jason.madden') ))
 				assert_that( results, has_length( 0 ) )

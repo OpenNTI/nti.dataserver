@@ -45,7 +45,7 @@ class TestEvolve24(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
 			#install( context )
 			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 
 			# Give me some data to migrate over
 			note = Note()
@@ -64,7 +64,7 @@ class TestEvolve24(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
 
 		with mock_db_trans( ) as conn:
 			ds_folder = context.connection.root()['nti.dataserver']
-			jason = ds_folder['users']['jason.madden@nextthought.com']
+			jason = ds_folder['users']['jason.madden']
 			note = jason.getContainedObject( "foo:bar", note_id )
 
 			assert_that( note, has_property( 'body', contains( has_property( 'shapeList', contains( instance_of( NonpersistentCanvasCircleShape ) ) ) ) ) )

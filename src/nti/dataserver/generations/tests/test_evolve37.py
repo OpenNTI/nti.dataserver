@@ -50,7 +50,7 @@ class TestEvolve37(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
 			ExampleDatabaseInitializer(max_test_users=5,skip_passwords=True).install( context )
 
 			ds_folder = context.connection.root()['nti.dataserver']
-			jason = ds_folder['users']['jason.madden@nextthought.com']
+			jason = ds_folder['users']['jason.madden']
 			jason.friendsLists._SampleContainer__data.clear()
 			jason.friendsLists._BTreeContainer__len.set( 0 )
 
@@ -64,6 +64,6 @@ class TestEvolve37(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
 
 		with mock_db_trans( ) as conn:
 			ds_folder = context.connection.root()['nti.dataserver']
-			jason = ds_folder['users']['jason.madden@nextthought.com']
+			jason = ds_folder['users']['jason.madden']
 
 			assert_that( jason.friendsLists, has_length( 0 ) )

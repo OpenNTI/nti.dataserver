@@ -43,8 +43,8 @@ class TestEvolve30(mock_dataserver.DataserverLayerTest):
 
 
 		with mock_db_trans( ) as conn:
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 			ent_catalog = component.getUtility(ICatalog, name='nti.dataserver.++etc++entity-catalog')
 
-			results = list(ent_catalog.searchResults( email=('Jason.madden@nextthought.com','jason.madden@nextthought.com') ))
+			results = list(ent_catalog.searchResults( email=('Jason.madden','jason.madden') ))
 			assert_that( results, contains( jason ) )

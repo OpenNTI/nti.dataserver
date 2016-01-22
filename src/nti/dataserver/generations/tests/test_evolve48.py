@@ -53,7 +53,7 @@ class TestEvolve48(mock_dataserver.DataserverLayerTest):
 
 			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
-			greg = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='greg.higgins@nextthought.com' )
+			greg = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='greg.higgins' )
 			root_note = Note()
 			root_note.body = ['body']
 			root_note.creator = greg
@@ -61,7 +61,7 @@ class TestEvolve48(mock_dataserver.DataserverLayerTest):
 			greg.addContainedObject( root_note )
 			root_note_id = root_note.id
 
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 
 			note = Note()
 			note.inReplyTo = root_note
@@ -95,7 +95,7 @@ class TestEvolve48(mock_dataserver.DataserverLayerTest):
 
 
 		with mock_db_trans( ) as conn:
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 			note = jason.getContainedObject( "foo:bar", note_id )
 
 			catalog = component.getUtility(ICatalog, name=CATALOG_NAME)

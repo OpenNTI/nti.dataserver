@@ -33,7 +33,7 @@ class TestEvolve33(mock_dataserver.DataserverLayerTest):
 
 			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 
 			note = Note()
 			canvas = Canvas()
@@ -58,7 +58,7 @@ class TestEvolve33(mock_dataserver.DataserverLayerTest):
 
 		with mock_db_trans( ) as conn:
 			ds_folder = context.connection.root()['nti.dataserver']
-			jason = ds_folder['users']['jason.madden@nextthought.com']
+			jason = ds_folder['users']['jason.madden']
 			note = jason.getContainedObject( "foo:bar", note_id )
 			canvas = note.body[0]
 			assert_that( canvas, has_property( 'viewportRatio', 1.0 ) )
