@@ -118,7 +118,7 @@ def _patch_connection():
 			if isinstance(value, bytearray):
 				value = str(value)
 			return value
-				
+
 		def query(self, sql, args=()):
 			__traceback_info__ = args
 			if isinstance(args, dict):
