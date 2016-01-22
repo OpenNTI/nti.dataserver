@@ -155,7 +155,7 @@
 										</tr>
 										<tr width="100%">
 											<td valign="top" align="left" style="padding-left: 0px;">
-												<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;
+												<div style="font: 16px/2em 'Helvetica Neue',Arial,Helvetica; color:#a3a3a4;
 															white-space: pre-wrap; word-wrap: break-word; word-break: break-word;"
 													tal:content="structure options/body">
 													Email content.
