@@ -21,8 +21,6 @@ from zope.intid import IIntIds
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
-from zope.traversing.interfaces import IEtcNamespace
-
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
@@ -49,10 +47,13 @@ from nti.intid.common import removeIntId
 
 from nti.recorder.record import remove_transaction_history
 
-from nti.site.utils import unregisterUtility
+from nti.site.hostpolicy import get_site
+
 from nti.site.interfaces import IHostPolicyFolder
-from nti.site.site import get_site_for_site_names
+
 from nti.site.site import get_component_hierarchy_names
+
+from nti.site.utils import unregisterUtility
 
 from nti.traversal.traversal import find_interface
 
@@ -156,9 +157,8 @@ class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
 			seen = ()
 			removed = []
 			folder = find_interface(package, IHostPolicyFolder, strict=False)
-			site = get_site_for_site_names((folder.__name__,))
-			with current_site(site):
-				registry = component.getSiteManager()
+			with current_site(get_site(folder.__name__)):
+				registry = folder.getSiteManager()
 				# remove using catalog
 				removed.extend(clear_content_package_assets(package, force=force))
 				# remove anything left in containters
@@ -221,8 +221,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 		return result
 
 	def _site_registry(self, site_name):
-		hostsites = component.getUtility(IEtcNamespace, name='hostsites')
-		folder = hostsites[site_name]
+		folder = get_site(site_name)
 		registry = folder.getSiteManager()
 		return registry
 
@@ -334,7 +333,7 @@ class SyncPackagePresentationAssetsView(AbstractAuthenticatedView,
 		ntiids = _get_package_ntiids(values)
 		for package in yield_content_packages(ntiids):
 			folder = find_interface(package, IHostPolicyFolder, strict=False)
-			with current_site(get_site_for_site_names((folder.__name__,))):
+			with current_site(get_site(folder.__name__)):
 				items.append(package.ntiid)
 				update_indices_when_content_changes(package)
 		return result
