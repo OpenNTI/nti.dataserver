@@ -61,7 +61,6 @@ ITEMS = StandardExternalFields.ITEMS
 MIMETYPE = StandardExternalFields.MIMETYPE
 LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 
-@view_config(name="ls")
 @view_config(name="contents")
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',

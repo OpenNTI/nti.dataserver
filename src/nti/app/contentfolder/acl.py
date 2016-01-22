@@ -16,14 +16,14 @@ from nti.common.property import Lazy
 
 from nti.contentfolder.interfaces import IContentFolder
 
-from nti.dataserver.interfaces import IACLProvider
-from nti.dataserver.interfaces import ALL_PERMISSIONS
-
 from nti.dataserver.authorization import ROLE_ADMIN
 from nti.dataserver.authorization import ROLE_CONTENT_ADMIN
 
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import acl_from_aces
+
+from nti.dataserver.interfaces import IACLProvider
+from nti.dataserver.interfaces import ALL_PERMISSIONS
 
 @component.adapter(IContentFolder)
 @interface.implementer(IACLProvider)
