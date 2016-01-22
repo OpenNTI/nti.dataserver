@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from .interfaces import IIdentifiedUserTokenAuthenticator
+from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
 
 from nti.dataserver.users import User
 

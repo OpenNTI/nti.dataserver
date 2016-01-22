@@ -11,17 +11,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.authentication.interfaces import ILoginPassword
 
 from zope.pluggableauth.factories import PrincipalInfo
 from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
-from nti.dataserver.users import User
+from nti.app.authentication.interfaces import ILogonWhitelist
 
-from .interfaces import ILogonWhitelist
+from nti.dataserver.users import User
 
 @interface.implementer(IAuthenticatorPlugin)
 class DataserverUsersAuthenticatorPlugin(object):
@@ -58,7 +58,7 @@ class DataserverUsersAuthenticatorPlugin(object):
 			return self.principalInfo(login)
 
 	def principalInfo(self, pid):
-		user = User.get_user( pid )
+		user = User.get_user(pid)
 		if user is not None:
 			# TODO: Better title and description
 			return PrincipalInfo(pid, pid, pid, pid)
