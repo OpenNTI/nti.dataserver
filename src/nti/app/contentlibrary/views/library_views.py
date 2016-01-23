@@ -419,6 +419,7 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 		except ForbiddenContextException as e:
 			# It appears we only have top-level-context objects,
 			# return a 403 so the client can react appropriately.
+			# TODO: Replace this with our new @@forbidden_related_context view?
 			response = hexc.HTTPForbidden()
 			result = LocatedExternalDict()
 			result[ITEMS] = e.joinable_contexts

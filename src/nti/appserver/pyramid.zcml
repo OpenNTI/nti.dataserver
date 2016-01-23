@@ -79,6 +79,9 @@
 	<!-- Exception views -->
 	<pyramid:scan package=".excviews" />
 
+	<!-- Related Context Views -->
+	<pyramid:scan package=".dataserver_pyramid_views" />
+
 	<!-- Additional -->
 	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
 	<include package="nti.app.users" file="pyramid.zcml" />
