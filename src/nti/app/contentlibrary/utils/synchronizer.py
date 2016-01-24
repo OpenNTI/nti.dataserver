@@ -59,7 +59,7 @@ def main():
 						context=context,
 						function=lambda: _process_args(site=site,
 													   ntiids=ntiids,
-													   allowRemoval=removal))
+													   removal=removal))
 
 	sys.exit(0)
 
