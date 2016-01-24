@@ -33,15 +33,15 @@ class TestEvolve28(mock_dataserver.DataserverLayerTest):
 			context = fudge.Fake().has_attr( connection=conn )
 
 			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 
 			pilots = jason.getFriendsList( 'Pilots' )
 			delattr( pilots, '_friends_wref_set' )
 			friends = []
 			setattr( pilots, '_friends', friends )
 			# A mix of resolved and unresolved
-			friends.append( 'luke.skywalker@nextthought.com' )
-			friends.append(persistent.wref.WeakRef( pilots.get_entity( 'amelia.earhart@nextthought.com' ) ) )
+			friends.append( 'luke.skywalker' )
+			friends.append(persistent.wref.WeakRef( pilots.get_entity( 'amelia.earhart' ) ) )
 
 		with mock_db_trans(  ) as conn:
 			context = fudge.Fake().has_attr( connection=conn )
@@ -49,8 +49,8 @@ class TestEvolve28(mock_dataserver.DataserverLayerTest):
 
 
 		with mock_db_trans( ) as conn:
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 			pilots = jason.getFriendsList( 'Pilots' )
 
-			assert_that( sorted(list(pilots)), contains( pilots.get_entity( 'amelia.earhart@nextthought.com' ),
-														 pilots.get_entity( 'luke.skywalker@nextthought.com' ) ) )
+			assert_that( sorted(list(pilots)), contains( pilots.get_entity( 'amelia.earhart' ),
+														 pilots.get_entity( 'luke.skywalker' ) ) )

@@ -21,7 +21,7 @@ from hamcrest import only_contains
 from nti.dataserver.contenttypes.note import Note
 from nti.dataserver.contenttypes.file import ModeledContentFile
 
-from nti.dataserver_core.interfaces import IContentFile
+from nti.dataserver_core.interfaces import IModeledContentFile
 
 from nti.externalization.externalization import to_external_object
 
@@ -64,11 +64,10 @@ class TestFile(DataserverLayerTest):
 												  has_key('filename'),
 												  has_key('name'))))
 
-
 	def test_validation_file(self):
 		c = ModeledContentFile()
-		assert_that(c, validly_provides(IContentFile))
-		assert_that(c, verifiably_provides(IContentFile))
+		assert_that(c, validly_provides(IModeledContentFile))
+		assert_that(c, verifiably_provides(IModeledContentFile))
 
 	@WithMockDS
 	def test_external_body_with_file(self):

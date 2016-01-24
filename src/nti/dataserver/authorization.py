@@ -94,23 +94,22 @@ from BTrees.OOBTree import OOSet
 
 from nti.common.property import alias
 
+from nti.dataserver.interfaces import system_user
+from nti.dataserver.interfaces import SYSTEM_USER_ID
+from nti.dataserver.interfaces import SYSTEM_USER_NAME
+from nti.dataserver.interfaces import EVERYONE_GROUP_NAME
+from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
+
+from nti.dataserver.interfaces import IRole
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IGroup
+from nti.dataserver.interfaces import IPrincipal
+from nti.dataserver.interfaces import IMutableGroupMember
+from nti.dataserver.interfaces import IGroupAwarePrincipal
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.externalization.interfaces import IExternalObject
-
-from .interfaces import system_user
-from .interfaces import SYSTEM_USER_ID
-from .interfaces import SYSTEM_USER_NAME
-from .interfaces import EVERYONE_GROUP_NAME
-from .interfaces import AUTHENTICATED_GROUP_NAME
-
-from .interfaces import IRole
-from .interfaces import IUser
-from .interfaces import IGroup
-from .interfaces import IPrincipal
-from .interfaces import IMutableGroupMember
-from .interfaces import IGroupAwarePrincipal
-from .interfaces import IDynamicSharingTargetFriendsList
 
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:
@@ -123,10 +122,10 @@ if not '__repr__' in Permission.__dict__:
 if not '__eq__' in Permission.__dict__:
 	Permission.__eq__ = lambda x, y: x.id == getattr(y, 'id', Permission)
 
-# zope basic
+#: zope basic
 ACT_READ = Permission('zope.View')
 
-# These are also registered in configure.zcml
+#: These are also registered in configure.zcml
 ACT_CREATE = Permission('nti.actions.create')
 ACT_DELETE = Permission('nti.actions.delete')
 ACT_UPDATE = Permission('nti.actions.update')
@@ -134,14 +133,14 @@ ACT_SEARCH = Permission('nti.actions.search')
 ACT_MODERATE = Permission('nti.actions.moderate')
 ACT_IMPERSONATE = Permission('nti.actions.impersonate')
 
-# admin
+#: admin
 ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
 ACT_NTI_ADMIN = ACT_COPPA_ADMIN  # alias
 
-# sync lib
+#: sync lib
 ACT_SYNC_LIBRARY = Permission('nti.actions.contentlibrary.sync_library')
 
-# content edit
+#: content edit
 ACT_CONTENT_EDIT = Permission('nti.actions.contentedit')
 
 @interface.implementer(IMutableGroupMember)
@@ -164,7 +163,6 @@ class _PersistentGroupMember(Persistent,
 		We store strings in this set, and adapt them to
 		IGroups during iteration.
 		"""
-
 		groups = OOSet()
 		self._p_changed = True
 		if self._p_jar:
@@ -330,6 +328,11 @@ ROLE_MODERATOR = _StringRole(ROLE_MODERATOR_NAME)
 #: content-edit-like rights in certain areas
 ROLE_CONTENT_EDITOR_NAME = ROLE_PREFIX + 'nti.content.editor'
 ROLE_CONTENT_EDITOR = _StringRole(ROLE_CONTENT_EDITOR_NAME)
+
+#: Name of the high-permission group that is expected to have certain
+#: content-edit-like rights globally.
+ROLE_CONTENT_ADMIN_NAME = 'nti.roles.contentlibrary.admin'
+ROLE_CONTENT_ADMIN = _StringRole(ROLE_CONTENT_ADMIN_NAME)
 
 # TODO: Everyone and Authenticated can go away
 # through the use of the principal registry

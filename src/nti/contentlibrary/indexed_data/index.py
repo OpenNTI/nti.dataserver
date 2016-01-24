@@ -29,6 +29,11 @@ from nti.common.time import bit64_int_to_time
 from nti.common.time import time_to_64bit_int
 from nti.common.proxy import removeAllProxies
 
+from nti.contentlibrary.indexed_data import CATALOG_INDEX_NAME
+
+from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
+from nti.contentlibrary.indexed_data.interfaces import IContainedObjectCatalog
+
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.zope_catalog.catalog import ResultSet
@@ -36,11 +41,6 @@ from nti.zope_catalog.catalog import ResultSet
 from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
-
-from .interfaces import IContainedTypeAdapter
-from .interfaces import IContainedObjectCatalog
-
-from . import CATALOG_INDEX_NAME
 
 def to_iterable(value):
 	if isinstance(value, (list, tuple, set)):
@@ -88,7 +88,7 @@ class ValidatingSiteName(object):
 
 	__slots__ = (b'site',)
 
-	def __init__(self, obj, default=None):	
+	def __init__(self, obj, default=None):
 		if IHostPolicyFolder.providedBy(obj):
 			self.site = obj.__name__
 		else:
@@ -181,16 +181,15 @@ class ContainedObjectCatalog(Persistent):
 			pass
 
 	def _doc_id(self, item, intids=None):
-		intids = component.queryUtility(IIntIds) if intids is None else intids
 		if not isinstance(item, int):
 			item = removeAllProxies(item)
+			intids = component.queryUtility(IIntIds) if intids is None else intids
 			doc_id = intids.queryId(item) if intids is not None else None
 		else:
 			doc_id = item
 		return doc_id
 
 	def get_containers(self, item, intids=None):
-		intids = component.queryUtility(IIntIds) if intids is None else intids
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			result = set()
@@ -198,6 +197,14 @@ class ContainedObjectCatalog(Persistent):
 			result = self._container_index.documents_to_values.get(doc_id)
 			result = set(result or ())
 		return result
+
+	def update_containers(self, item, containers=(), intids=None):
+		doc_id = self._doc_id(item, intids)
+		if doc_id is not None and containers:
+			containers = to_iterable(containers)
+			result = self._container_index.index_doc(doc_id, containers)
+		return result
+	update_container = update_containers
 
 	def remove_containers(self, item, containers, intids=None):
 		doc_id = self._doc_id(item, intids)
@@ -255,14 +262,16 @@ class ContainedObjectCatalog(Persistent):
 		if doc_id is None:
 			return False
 
-		if namespace is not None: # TODO: do we need this check?
-			namespace =	getattr(namespace, '__name__', namespace)
+		if namespace is not None:  # TODO: do we need this check?
+			namespace = 	getattr(namespace, '__name__', namespace)
 
 		for index, value in ((self._type_index, item),
 							 (self._site_index, sites),
 							 (self._ntiid_index, item),
 							 (self._namespace_index, namespace),
 							 (self._container_index, container_ntiids)):
+			# XXX: we want to make sure we don't index None in order to
+			# to keep the index data value(s)
 			if value is not None:
 				index.index_doc(doc_id, value)
 		return True

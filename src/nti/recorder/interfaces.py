@@ -13,35 +13,38 @@ from zope import interface
 
 from zope.container.interfaces import IContained
 
-from nti.dataserver_core.interfaces import ICreated
+from nti.coremetadata.interfaces import ICreated
+from nti.coremetadata.interfaces import ILastModified
 
 from nti.schema.field import Object
+from nti.schema.field import TextLine
 from nti.schema.field import ValidTextLine
 from nti.schema.field import IndexedIterable
 
 TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
 
+TRX_TYPE_CREATE = 'create'
 TRX_TYPE_UPDATE = 'update'
 
-class ITransactionRecord(IContained, ICreated):
+class ITransactionRecord(IContained, ICreated, ILastModified):
 	tid = ValidTextLine(title="The transaction/serial id", required=False)
 
-	type = ValidTextLine(title="The transaction type", 
-						 required=False, 
+	type = ValidTextLine(title="The transaction type",
+						 required=False,
 						 default=TRX_TYPE_UPDATE)
 
 	principal = ValidTextLine(title="The principal id", required=True)
 
 	attributes = IndexedIterable(title="The modifed attributes",
-				 	 			 value_type=ValidTextLine(title="The attribute name"),
+				 	 			 value_type=TextLine(title="The attribute name"),
 								 min_length=0,
 								 unique=True)
 
-	external_value = Object(interface.Interface, 
-							title="External value", 
+	external_value = Object(interface.Interface,
+							title="External value",
 							required=False)
 	external_value.setTaggedValue('_ext_excluded_out', True)
-	
+
 	key = interface.Attribute('record key')
 	key.setTaggedValue('_ext_excluded_out', True)
 
@@ -58,6 +61,12 @@ class ITransactionRecordHistory(IContained):
 
 	def clear(event=True):
 		pass
-	
+
 	def records():
 		pass
+
+	def query(self, tid=None, principal=None, record_type=None):
+		"""
+		Query the transaction history for record(s) matching
+		the given filters.
+		"""

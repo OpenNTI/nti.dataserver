@@ -28,10 +28,13 @@ class ModeledContentFile(ThreadableMixin,
 				 		 UserContentRoot,
 				  		 ContentBlobFile):
 
+	parameters = None
+
 	def __init__(self, *args, **kwargs):
 		ThreadableMixin.__init__(self)
 		UserContentRoot.__init__(self)
 		ContentBlobFile.__init__(self, *args, **kwargs)
+		self.parameters = {}
 
 @component.adapter(IModeledContentFile)
 class _ModeledContentFileObjectIO(ContentBlobFileObjectIO):

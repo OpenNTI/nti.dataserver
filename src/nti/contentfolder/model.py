@@ -17,18 +17,17 @@ from nti.common.property import alias
 
 from nti.coremetadata.interfaces import SYSTEM_USER_ID
 
-from nti.namedfile.file import get_file_name
-
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
+
+from nti.contentfolder.interfaces import IRootFolder
+from nti.contentfolder.interfaces import IContentFolder
+from nti.contentfolder.interfaces import INamedContainer
+
+from nti.namedfile.file import get_file_name
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from .interfaces import IRootFolder
-from .interfaces import IContentFolder
-from .interfaces import INamedContainer
-
 def checkValidId(uid):
-
 	if not uid or not isinstance(uid, six.string_types):
 		raise ValueError('Empty or invalid id specified', uid)
 
@@ -47,7 +46,6 @@ def get_context_name(context):
 
 @interface.implementer(IContentFolder)
 class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
-
 	createDirectFieldProperties(IContentFolder)
 
 	__parent__ = None
@@ -78,13 +76,25 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		return obj
 	append = add
 
+	def remove(self, obj):
+		name = get_context_name(obj)
+		if not name:
+			return False
+		if name in self:
+			del self[name]
+			return True
+		return False
+
+	def rename(self, old, new):
+		item = self._delitemf(old, event=False)
+		self._setitemf(new, item)
+
 @interface.implementer(IRootFolder)
 class RootFolder(ContentFolder):
 	createDirectFieldProperties(IRootFolder)
 
 	__external_can_create__ = False
 
-	parameters = {}
 	creator = SYSTEM_USER_ID
 	mimeType = mime_type = str('application/vnd.nextthought.contentrootfolder')
 

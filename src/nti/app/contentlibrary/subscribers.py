@@ -13,19 +13,30 @@ import simplejson
 
 from zope import component
 
-from zope.intid import IIntIds
+from zope.component.hooks import getSite
+
+from zope.intid.interfaces import IIntIds
+
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from ZODB.interfaces import IConnection
+
+from nti.app.contentlibrary.interfaces import IContentBoard
 
 from nti.coremetadata.interfaces import IRecordable
 
 from nti.contentlibrary.indexed_data import get_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
+from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IContentPackageSyncResults
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 from nti.contentlibrary.interfaces import IContentPackageLibraryDidSyncEvent
+
+from nti.contentlibrary.synchronize import ContentPackageSyncResults
 
 from nti.contenttypes.presentation import iface_of_asset
 
@@ -46,6 +57,9 @@ from nti.contenttypes.presentation.utils import create_relatedwork_from_external
 
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.intid.common import addIntId
+from nti.intid.common import removeIntId
+
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
 from nti.recorder.record import copy_transaction_history
@@ -56,11 +70,9 @@ from nti.site.utils import unregisterUtility
 from nti.site.interfaces import IHostPolicySiteManager
 from nti.site.site import get_component_hierarchy_names
 
-from .interfaces import IContentBoard
-
 ITEMS = StandardExternalFields.ITEMS
 
-INDICES = (	('audio_index.json', INTIAudio, create_ntiaudio_from_external),
+INDICES = (('audio_index.json', INTIAudio, create_ntiaudio_from_external),
 			('video_index.json', INTIVideo, create_ntivideo_from_external),
 			('timeline_index.json', INTITimeline, create_timelime_from_external),
 			('slidedeck_index.json', INTISlideDeck, create_object_from_external),
@@ -78,12 +90,11 @@ def get_connection(registry=None):
 		result = IConnection(registry, None)
 		return result
 
-def intid_register(item, registry, intids=None, connection=None):
-	intids = component.getUtility(IIntIds) if intids is None else intids
+def intid_register(item, registry, connection=None):
 	connection = get_connection(registry) if connection is None else connection
 	if connection is not None:
 		connection.add(item)
-		intids.register(item, event=False)
+		addIntId(item)
 		return True
 	return False
 
@@ -97,7 +108,7 @@ def _register_utility(item, provided, ntiid, registry=None, intids=None, connect
 			if intids.queryId(registered) is None:  # remove if invalid
 				unregisterUtility(registry, provided=provided, name=ntiid)
 			registerUtility(registry, item, provided=provided, name=ntiid)
-			intid_register(item, registry, intids, connection)
+			intid_register(item, registry, connection=connection)
 			return (True, item)
 		return (False, registered)
 	return (False, None)
@@ -110,25 +121,35 @@ def _was_utility_registered(item, item_iface, ntiid, registry=None,
 								  connection=connection)
 	return result
 
-def _load_and_register_items(item_iterface, items, registry=None, connection=None,
+def _load_and_register_items(item_iterface,
+							 items,
+							 registry=None,
+							 connection=None,
+							 content_package=None,
 							 external_object_creator=create_object_from_external):
 	result = []
 	registry = get_registry(registry)
 	for ntiid, data in items.items():
 		internal = external_object_creator(data, notify=False)
+		internal.__parent__ = content_package  # set lineage
 		if _was_utility_registered(internal, item_iterface, ntiid,
 								   registry=registry, connection=connection):
 			result.append(internal)
-			internal.publish() # by default
 	return result
 
-def _load_and_register_json(item_iterface, jtext, registry=None, connection=None,
+def _load_and_register_json(item_iterface,
+							jtext,
+							registry=None,
+							connection=None,
+							content_package=None,
 							external_object_creator=create_object_from_external):
 	index = simplejson.loads(prepare_json_text(jtext))
 	items = index.get(ITEMS) or {}
-	result = _load_and_register_items(item_iterface, items,
+	result = _load_and_register_items(item_iterface,
+									  items,
 									  registry=registry,
 									  connection=connection,
+									  content_package=content_package,
 									  external_object_creator=external_object_creator)
 	return result
 
@@ -143,7 +164,10 @@ def _canonicalize(items, item_iface, registry):
 			items[idx] = registered  # replaced w/ registered
 	return recorded
 
-def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
+def _load_and_register_slidedeck_json(jtext,
+									  registry=None,
+									  connection=None,
+									  content_package=None,
 									  object_creator=create_object_from_external):
 	result = []
 	registry = get_registry(registry)
@@ -151,20 +175,22 @@ def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 	items = index.get(ITEMS) or {}
 	for ntiid, data in items.items():
 		internal = object_creator(data, notify=False)
+		internal.__parent__ = content_package  # set lineage
 		if 	INTISlide.providedBy(internal) and \
 			_was_utility_registered(internal, INTISlide, ntiid, registry, connection):
 			result.append(internal)
-			internal.publish() # by default
 		elif INTISlideVideo.providedBy(internal) and \
 			 _was_utility_registered(internal, INTISlideVideo, ntiid, registry, connection):
 			result.append(internal)
-			internal.publish() # by default
 		elif INTISlideDeck.providedBy(internal):
 			result.extend(_canonicalize(internal.Slides, INTISlide, registry))
 			result.extend(_canonicalize(internal.Videos, INTISlideVideo, registry))
 			if _was_utility_registered(internal, INTISlideDeck, ntiid, registry, connection):
 				result.append(internal)
-				internal.publish() # by default
+			# CS: 20160114 Slide and SlideVideos are unique for slides, 
+			# so we can reparent those items
+			for item in internal.Items or ():
+				item.__parent__ = internal
 	return result
 
 def _can_be_removed(registered, force=False):
@@ -184,15 +210,23 @@ def _removed_registered(provided, name, intids=None, registry=None,
 		if not unregisterUtility(registry, provided=provided, name=name):
 			logger.warn("Could not unregister (%s,%s) during sync, continuing...",
 						provided.__name__, name)
-		intids.unregister(registered, event=False)
+		removeIntId(registered)
+		registered.__parent__ = None  # ground
 	elif registered is not None:
 		logger.warn("Object (%s,%s) is locked cannot be removed during sync",
 					provided.__name__, name)
 		registered = None  # set to None since it was not removed
 	return registered
+removed_registered = _removed_registered
 
-def _remove_from_registry(containers=None, namespace=None, provided=None,
-						  registry=None, intids=None, catalog=None, force=False):
+def _remove_from_registry(containers=None,
+						  namespace=None,
+						  provided=None,
+						  registry=None,
+						  intids=None,
+						  catalog=None,
+						  force=False,
+						  sync_results=None):
 	"""
 	For our type, get our indexed objects so we can remove from both the
 	registry and the index.
@@ -218,6 +252,8 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 										  registry=registry)
 			if removed is not None:
 				result.append(removed)
+			elif sync_results is not None:
+				sync_results.add_asset(ntiid, locked=True)
 	return result
 
 def _get_container_tree(container_id):
@@ -239,15 +275,17 @@ def _index_item(item, content_package, container_id, catalog):
 				  namespace=content_package.ntiid, sites=sites)
 	# check for slide decks
 	if INTISlideDeck.providedBy(item):
+		extended = tuple(lineage_ntiids or ()) + (item.ntiid,)
 		for slide in item.Slides or ():
 			result += 1
-			catalog.index(slide, container_ntiids=lineage_ntiids,
+			catalog.index(slide, container_ntiids=extended,
 				  		  namespace=content_package.ntiid, sites=sites)
 
 		for video in item.Videos or ():
 			result += 1
-			catalog.index(video, container_ntiids=lineage_ntiids,
+			catalog.index(video, container_ntiids=extended,
 				  		  namespace=content_package.ntiid, sites=sites)
+
 	return result
 
 def _copy_remove_transactions(items, registry=None):
@@ -266,20 +304,18 @@ def _store_asset(content_package, container_id, ntiid, item):
 	except KeyError:
 		unit = content_package
 
-	container = IPresentationAssetContainer(unit, None)
-	if container is not None:
-		container[ntiid] = item
-		# check for slide decks
-		if INTISlideDeck.providedBy(item):
-			for slide in item.Slides or ():
-				container[slide.ntiid] = slide
+	container = IPresentationAssetContainer(unit)
+	container[ntiid] = item
+	# check for slide decks
+	if INTISlideDeck.providedBy(item):
+		for slide in item.Slides or ():
+			container[slide.ntiid] = slide
 
-			for video in item.Videos or ():
-				container[video.ntiid] = video
-		return True
-	return False
+		for video in item.Videos or ():
+			container[video.ntiid] = video
+	return True
 
-def _index_items(content_package, index, item_iface, removed, catalog, registry):
+def _index_items(content_package, index, item_iface, catalog, registry):
 	result = 0
 	for container_id, indexed_ids in index['Containers'].items():
 		for indexed_id in indexed_ids:
@@ -290,13 +326,31 @@ def _index_items(content_package, index, item_iface, removed, catalog, registry)
 									  container_id, catalog)
 	return result
 
-def _update_index_when_content_changes(content_package, index_filename,
-									   item_iface, object_creator, catalog=None):
+def _clear_assets_by_interface(content_package, iface, force=False):
+	def recur(unit):
+		for child in unit.children or ():
+			recur(child)
+		container = IPresentationAssetContainer(unit)
+		for key, value in list(container.items()):  # mutating
+			provided = iface_of_asset(value)
+			if provided.isOrExtends(iface) and can_be_removed(value, force):
+				del container[key]
+	recur(content_package)
+
+def _update_index_when_content_changes(content_package,
+									   index_filename,
+									   item_iface,
+									   object_creator,
+									   catalog=None,
+									   sync_results=None):
 	catalog = get_library_catalog() if catalog is None else catalog
 	sibling_key = content_package.does_sibling_entry_exist(index_filename)
 	if not sibling_key:
 		# Nothing to do
 		return
+
+	if sync_results is None:
+		sync_results = _new_sync_results(content_package)
 
 	if catalog is not None:  # may be None in test mode
 		sk_lastModified = sibling_key.lastModified
@@ -314,6 +368,9 @@ def _update_index_when_content_changes(content_package, index_filename,
 	if isinstance(index_text, bytes):
 		index_text = index_text.decode('utf-8')
 
+	# remove assets with the specified interface
+	_clear_assets_by_interface(content_package, item_iface)
+
 	index = simplejson.loads(index_text)
 	registry = get_registry()
 	connection = get_connection(registry)
@@ -323,7 +380,8 @@ def _update_index_when_content_changes(content_package, index_filename,
 									provided=item_iface,
 									registry=registry,
 									catalog=catalog,
-									intids=intids)
+									intids=intids,
+									sync_results=sync_results)
 
 	# These are structured as follows:
 	# {
@@ -340,22 +398,27 @@ def _update_index_when_content_changes(content_package, index_filename,
 							  				 provided=INTISlide,
 							  				 registry=registry,
 							 				 catalog=catalog,
-							  			 	 intids=intids))
+							  			 	 intids=intids,
+							  			 	 sync_results=sync_results))
 
 		removed.extend(_remove_from_registry(namespace=content_package.ntiid,
 							  				 provided=INTISlideVideo,
 							 				 registry=registry,
 							  				 catalog=catalog,
-							  				 intids=intids))
+							  				 intids=intids,
+							  				 sync_results=sync_results))
 
 		added = _load_and_register_slidedeck_json(index_text,
 										  		  registry=registry,
 										  		  connection=connection,
-										 		  object_creator=object_creator)
+										 		  object_creator=object_creator,
+										 		  content_package=content_package)
 	elif object_creator is not None:
-		added = _load_and_register_json(item_iface, index_text,
+		added = _load_and_register_json(item_iface,
+										index_text,
 										registry=registry,
 										connection=connection,
+										content_package=content_package,
 										external_object_creator=object_creator)
 	registered_count = len(added)
 	removed_count = len(removed)
@@ -363,22 +426,31 @@ def _update_index_when_content_changes(content_package, index_filename,
 	# keep transaction history
 	_copy_remove_transactions(removed, registry=registry)
 
+	# update sync results
+	for item in added or ():
+		sync_results.add_asset(item, locked=False)
+
 	# Index our contained items; ignoring the global library.
 	index_item_count = 0
 	if registry != component.getGlobalSiteManager():
 		index_item_count = _index_items(content_package, index, item_iface,
-										removed, catalog, registry)
+										catalog, registry)
 
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
 				sibling_key, registered_count, index_item_count, removed_count)
 
-def _clear_assets(content_package):
+def _clear_assets(content_package, force=False):
 	def recur(unit):
 		for child in unit.children or ():
 			recur(child)
-		container = IPresentationAssetContainer(unit, None)
-		if container is not None:
+		container = IPresentationAssetContainer(unit)
+		if force:
 			container.clear()
+		else:
+			for key, value in list(container.items()):  # mutating
+				if can_be_removed(value, force):
+					del container[key]
+
 	recur(content_package)
 clear_package_assets = _clear_assets
 
@@ -391,13 +463,40 @@ clear_namespace_last_modified = _clear_last_modified
 
 # update events
 
-def update_indices_when_content_changes(content_package):
-	_clear_assets(content_package)
-	for name, item_iface, func in INDICES:
-		_update_index_when_content_changes(content_package, name, item_iface, func)
+def _new_sync_results(content_package):
+	result = ContentPackageSyncResults(Site=getattr(getSite(), '__name__', None),
+									   ContentPackageNTIID=content_package.ntiid)
+	return result
 
+def _get_sync_results(content_package, event):
+	all_results = getattr(event, "results", None)
+	if not all_results or not IContentPackageSyncResults.providedBy(all_results[-1]):
+		result = _new_sync_results(content_package)
+		if all_results is not None:
+			all_results.append(result)
+	elif all_results[-1].ContentPackageNTIID != content_package.ntiid:
+		result = _new_sync_results(content_package)
+		all_results.append(result)
+	else:
+		result = all_results[-1]
+	return result
+
+def update_indices_when_content_changes(content_package, sync_results=None):
+	if sync_results is None:
+		sync_results = _new_sync_results(content_package)
+
+	for name, item_iface, func in INDICES:
+		_update_index_when_content_changes(content_package,
+										   index_filename=name,
+										   object_creator=func,
+										   item_iface=item_iface,
+										   sync_results=sync_results)
+	return sync_results
+
+@component.adapter(IContentPackage, IObjectModifiedEvent)
 def _update_indices_when_content_changes(content_package, event):
-	update_indices_when_content_changes(content_package)
+	sync_results = _get_sync_results(content_package, event)
+	update_indices_when_content_changes(content_package, sync_results)
 
 # clear events
 
@@ -408,7 +507,7 @@ def _clear_when_removed(content_package, force=True, process_global=False):
 	"""
 	result = []
 	catalog = get_library_catalog()
-	_clear_assets(content_package)
+	_clear_assets(content_package, force)
 
 	# Remove indexes for our contained items; ignoring the global library.
 	# Not sure if this will work when we have shared items
@@ -443,6 +542,7 @@ def _clear_when_removed(content_package, force=True, process_global=False):
 	return result
 clear_content_package_assets = _clear_when_removed
 
+@component.adapter(IContentPackage, IObjectRemovedEvent)
 def _clear_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)
 

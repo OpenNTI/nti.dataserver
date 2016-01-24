@@ -30,7 +30,7 @@ import gunicorn.http.wsgi
 import gunicorn.workers.ggevent as ggevent
 from gunicorn.app.pasterapp import PasterServerApplication
 
-if gunicorn.version_info != (19,3,0):
+if gunicorn.version_info not in ((19, 3, 0), (19, 4, 5)):
 	raise ImportError("Unknown gunicorn version")
 
 from gevent import getcurrent
@@ -44,7 +44,7 @@ from gevent import getcurrent
 from gunicorn import glogging
 glogging_Logger_atoms = glogging.Logger.atoms
 def _glogging_atoms(self, resp, req, environ, request_time):
-	atoms = glogging_Logger_atoms(self,resp,req,environ,request_time)
+	atoms = glogging_Logger_atoms(self, resp, req, environ, request_time)
 	atoms['u'] = environ.get('REMOTE_USER', '-')
 	atoms['G'] = "[%d:%d]" % (id(getcurrent()), os.getpid())
 	return atoms
@@ -82,8 +82,8 @@ class _PhonyRequest(object):
 	query = None
 	method = None
 	body = None
-	version = (1,0)
-	proxy_protocol_info = None # added in 0.15.0
+	version = (1, 0)
+	proxy_protocol_info = None  # added in 0.15.0
 
 	def get_input_headers(self):
 		raise Exception("Not implemented for phony request")
@@ -98,7 +98,7 @@ class _NonParsingRequest(Request):
 	def unread(cls, buf):
 		pass
 
-class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandler):
+class _PyWSGIWebSocketHandler(WebSocketServer.handler_class, ggevent.PyWSGIHandler):
 	"""
 	Our handler class combines pywsgi's custom logging and environment setup with
 	websocket request upgrading. Order of inheritance matters.
@@ -120,11 +120,11 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 		self.requestline = requestline
 		if self.__request.proxy_protocol(requestline):
 			self.requestline = self.read_requestline()
-		return super(_PyWSGIWebSocketHandler,self).read_request(self.requestline)
+		return super(_PyWSGIWebSocketHandler, self).read_request(self.requestline)
 
 	def get_environ(self):
 		# Start with what gevent creates
-		environ = super(_PyWSGIWebSocketHandler,self).get_environ()
+		environ = super(_PyWSGIWebSocketHandler, self).get_environ()
 		# and then merge in anything that gunicorn wants to do instead
 		request = _PhonyRequest()
 		request.typestr = self.command
@@ -135,7 +135,7 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 		request.path = environ['PATH_INFO']
 		request.body = environ['wsgi.input']
 		if environ.get('SERVER_PROTOCOL') == 'HTTP/1.1':
-			request.version = (1,1)
+			request.version = (1, 1)
 
 		for header in self.headers.headers:
 			# If we're not careful to split with a byte string here, we can
@@ -144,11 +144,11 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 			# without url encoding them, in the value of the Referer field (specifically
 			# seen when it includes a fragment in the URI, which is also explicitly against
 			# section 14.36 of HTTP 1.1. Stupid IE).
-			k, v = header.split( b':', 1)
+			k, v = header.split(b':', 1)
 			k = k.upper()
 			v = v.strip()
 
-			request.headers.append( (k, v) )
+			request.headers.append((k, v))
 		# The request arrived on self.socket, which is also environ['gunicorn.sock']. This
 		# is the "listener" argument as well that's needed for deriving the "HOST" value, if not present
 		_, gunicorn_env = gunicorn.http.wsgi.create(request,
@@ -156,8 +156,8 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 													self.client_address,
 													self.socket.getsockname(),
 													self.server.worker.cfg)
-		gunicorn_env.update( gunicorn.http.wsgi.proxy_environ(self.__request) )
-		environ.update( gunicorn_env )
+		gunicorn_env.update(gunicorn.http.wsgi.proxy_environ(self.__request))
+		environ.update(gunicorn_env)
 
 		return environ
 
@@ -166,7 +166,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	Our application worker.
 	"""
 
-	#: Our custom server requires a custom handler.
+	# : Our custom server requires a custom handler.
 	wsgi_handler = _PyWSGIWebSocketHandler
 
 	app = None
@@ -176,7 +176,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	PREFERRED_MAX_CONNECTIONS = 100
 
 	@classmethod
-	def setup(cls): # pragma: no cover
+	def setup(cls):  # pragma: no cover
 		"""
 		We cannot patch the entire system to work with gevent due to
 		issues with ZODB (but see application.py). Instead, we patch
@@ -190,10 +190,10 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		from nti.monkey import webob_cookie_escaping_patch_on_import
 		webob_cookie_escaping_patch_on_import.patch()
 
-	def __init__( self, *args, **kwargs ):
+	def __init__(self, *args, **kwargs):
 		# These objects are instantiated by the master process (arbiter)
 		# in the parent process, pre-fork, once for every worker
-		super(GeventApplicationWorker,self).__init__( *args, **kwargs )
+		super(GeventApplicationWorker, self).__init__(*args, **kwargs)
 		# Now we have access to self.cfg and the rest
 
 	def init_process(self, _call_super=True):
@@ -240,7 +240,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		worker_connections = self.cfg.settings['worker_connections']
 		if (worker_connections.value == worker_connections.default
 			and worker_connections.value >= self.PREFERRED_MAX_CONNECTIONS):
-			worker_connections.set( self.PREFERRED_MAX_CONNECTIONS )
+			worker_connections.set(self.PREFERRED_MAX_CONNECTIONS)
 			self.worker_connections = self.PREFERRED_MAX_CONNECTIONS
 
 		# Change/update the logging format.
@@ -254,32 +254,32 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# microsecond value is between 0 and one whole second; we need to properly set
 		# formatting field width to account for this)
 		# (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
-		self.cfg.settings['access_log_format'].set( str(self.cfg.access_log_format) + b" %(G)s %(T)s.%(D)06ds" )
+		self.cfg.settings['access_log_format'].set(str(self.cfg.access_log_format) + b" %(G)s %(T)s.%(D)06ds")
 		# Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
 		# Then the default propagation settings mean we get two copies of access logging.
 		# make that stop.
-		gun_logger = logging.getLogger( 'gunicorn.access' )
-		if gun_logger.handlers: # pragma: no cover
+		gun_logger = logging.getLogger('gunicorn.access')
+		if gun_logger.handlers:  # pragma: no cover
 			gun_logger.propagate = False
 
-		self.server_class = _ServerFactory( self )
+		self.server_class = _ServerFactory(self)
 
-		if False: # pragma: no cover
+		if False:  # pragma: no cover
 			def print_stacks():
 				from nti.appserver._util import dump_stacks
 				import sys
 				while True:
-					gevent.sleep( 15.0 )
-					print( '\n'.join( dump_stacks() ), file=sys.stderr )
+					gevent.sleep(15.0)
+					print('\n'.join(dump_stacks()), file=sys.stderr)
 
-			gevent.spawn( print_stacks )
+			gevent.spawn(print_stacks)
 
 		# Everything must be complete and ready to go before we call into
 		# the super, it in turn calls run()
 		# TODO: Errors here get silently swallowed and gunicorn just cycles the worker
 		# (But at least as of 0.17.2 they are now reported? Check this.)
-		if _call_super: # pragma: no cover
-			super(GeventApplicationWorker,self).init_process()
+		if _call_super:  # pragma: no cover
+			super(GeventApplicationWorker, self).init_process()
 
 class _ServerFactory(object):
 	"""
@@ -289,21 +289,21 @@ class _ServerFactory(object):
 	Serves as the 'server_class' value.
 	"""
 
-	def __init__( self, worker ):
+	def __init__(self, worker):
 		self.worker = worker
 
-	def __call__( self,
+	def __call__(self,
 				  listen_on_socket,
 				  application=None,
 				  spawn=None,
 				  log=None,
 				  handler_class=None,
 				  environ=None):
-		app_server = WebSocketServer( listen_on_socket,
-									  application,
-									  handler_class=handler_class or GeventApplicationWorker.wsgi_handler,
-									  environ=environ)
-		app_server.worker = self.worker # See _PyWSGIWebSocketHandler.get_environ # FIXME: Eliminate this
+		app_server = WebSocketServer(listen_on_socket,
+									 application,
+									 handler_class=handler_class or GeventApplicationWorker.wsgi_handler,
+									 environ=environ)
+		app_server.worker = self.worker  # See _PyWSGIWebSocketHandler.get_environ # FIXME: Eliminate this
 
 		# The worker will provide a Pool based on the
 		# worker_connections setting
@@ -322,14 +322,14 @@ class _ServerFactory(object):
 					return self._formatinfo()
 
 				try:
-					return getattr( prequest, '_worker_greenlet_cached_thread_name' )
+					return getattr(prequest, '_worker_greenlet_cached_thread_name')
 				except AttributeError:
 					pass
 				cache = False
 				try:
 					uid = prequest.unauthenticated_userid
 					cache = True
-				except (LookupError,AttributeError): # pragma: no cover
+				except (LookupError, AttributeError):  # pragma: no cover
 					# In some cases, pyramid tries to turn this into an authenticated
 					# user id, and if it's too early, we won't be able to use the dataserver
 					# (InappropriateSiteError)
@@ -341,9 +341,9 @@ class _ServerFactory(object):
 					# this is the `lookup` attribute on a _LocalAdapterRegistry
 					uid = prequest.remote_user
 
-				result = "%s:%s" % (prequest.path, uid or '' )
+				result = "%s:%s" % (prequest.path, uid or '')
 				if cache:
-					setattr( prequest, '_worker_greenlet_cached_thread_name', result )
+					setattr(prequest, '_worker_greenlet_cached_thread_name', result)
 
 				return result
 
@@ -365,6 +365,7 @@ class _ServerFactory(object):
 # Manage the forking events
 from zope import interface
 from zope import component
+
 from zope.event import notify
 
 from nti.processlifetime import ProcessDidFork
@@ -375,28 +376,28 @@ class _IGunicornWillFork(IProcessWillFork):
 	An event specific to gunicorn forking.
 	"""
 
-	arbiter = interface.Attribute( "The master arbiter" )
-	worker = interface.Attribute( "The new worker that will run in the child" )
+	arbiter = interface.Attribute("The master arbiter")
+	worker = interface.Attribute("The new worker that will run in the child")
 
 class _IGunicornDidForkWillExec(interface.Interface):
 	"""
 	An event specific to gunicorn sigusr2 handling.
 	"""
-	arbiter = interface.Attribute( "The current master arbiter; will be going away" )
+	arbiter = interface.Attribute("The current master arbiter; will be going away")
 
 _master_storages = {}
 
 @interface.implementer(_IGunicornWillFork)
 class _GunicornWillFork(ProcessWillFork):
 
-	def __init__( self, arbiter, worker ):
+	def __init__(self, arbiter, worker):
 		self.arbiter = arbiter
 		self.worker = worker
 
 @interface.implementer(_IGunicornDidForkWillExec)
 class _GunicornDidForkWillExec(object):
 
-	def __init__( self, arbiter ):
+	def __init__(self, arbiter):
 		self.arbiter = arbiter
 
 _fork_count = 1
@@ -445,7 +446,7 @@ def _cache_objects(db, pred=id):
 		try:
 			for v in k.values():
 				_act(v, seen)
-		except (AttributeError,LookupError):
+		except (AttributeError, LookupError):
 			pass
 
 	seen = set()
@@ -458,9 +459,9 @@ def _cache_objects(db, pred=id):
 	conn.close()
 
 @component.adapter(_IGunicornWillFork)
-def _process_will_fork_listener( event ):
+def _process_will_fork_listener(event):
 	from nti.dataserver import interfaces as nti_interfaces
-	ds = component.queryUtility( nti_interfaces.IDataserver )
+	ds = component.queryUtility(nti_interfaces.IDataserver)
 	if ds:
 		if False:
 			try:
@@ -492,6 +493,7 @@ def _replace_storage_on_open(event):
 		event.database.storage = _master_storages[event.database.database_name]
 
 from zope.processlifetime import IDatabaseOpenedWithRoot
+
 @component.adapter(IDatabaseOpenedWithRoot)
 def _cache_conn_objects(event):
 
@@ -503,9 +505,9 @@ def _cache_conn_objects(event):
 		logger.info("Done caching objects in pid %s", os.getpid())
 
 @component.adapter(_IGunicornDidForkWillExec)
-def _process_did_fork_will_exec( event ):
+def _process_did_fork_will_exec(event):
 	# First, kill the DS for good measure
-	_process_will_fork_listener( event )
+	_process_will_fork_listener(event)
 	# Now, run component cleanup, etc, for good measure
 	# First, ensure all cleanup hooks are in place.
 	# This was probably needed due to https://github.com/zopefoundation/zope.component/pull/1
@@ -515,16 +517,16 @@ def _process_did_fork_will_exec( event ):
 	from zope.testing import cleanup
 	cleanup.cleanUp()
 
-def _pre_fork( arbiter, worker ):
+def _pre_fork(arbiter, worker):
 	# We may or may not have the ZCA configuration, depending on prefork.
 	# So things that MUST always happen, regardless, need to be here, not
 	# in a listener
 	global _fork_count
 	_fork_count += 1
 	os.environ['DATASERVER_ZEO_CLIENT_NAME'] = 'gunicorn_' + str(_fork_count)
-	notify( _GunicornWillFork( arbiter, worker ) )
+	notify(_GunicornWillFork(arbiter, worker))
 
-def _post_fork( arbiter, worker ):
+def _post_fork(arbiter, worker):
 	# Patch up the thread pool and DNS if needed due to a bug in the fork watcher
 	# that should have done this already; see
 	# https://github.com/SiteSupport/gevent/issues/154
@@ -536,7 +538,7 @@ def _post_fork( arbiter, worker ):
 	# We used to do this in init_worker, but that is too late for RelStorage connections
 	# (opened by the dataservers DidFork listener)
 	hub = gevent.hub.get_hub()
-	if hub._threadpool is not None and hub._threadpool._size: # same condition it uses
+	if hub._threadpool is not None and hub._threadpool._size:  # same condition it uses
 		hub._threadpool._on_fork()
 
 	# See also
@@ -553,21 +555,21 @@ def _post_fork( arbiter, worker ):
 	import gc
 	def handle_info(signum, frame):
 		stacks = dump_stacks()
-		print( '\n'.join(stacks), file=sys.stderr )
-		print( '\nGC Enabled:', gc.isenabled() )
+		print('\n'.join(stacks), file=sys.stderr)
+		print('\nGC Enabled:', gc.isenabled())
 		caches = dump_database_cache(gc=True)
-		print( '\n'.join(caches), file=sys.stderr )
+		print('\n'.join(caches), file=sys.stderr)
 		if callable(prev_handler):
 			prev_handler(signum, frame)
 
-	prev_handler = signal.signal( signal.SIGPROF, handle_info )
-	notify( ProcessDidFork() )
+	prev_handler = signal.signal(signal.SIGPROF, handle_info)
+	notify(ProcessDidFork())
 
-def _pre_exec( arbiter ):
+def _pre_exec(arbiter):
 	# Called during sigusr2 handling from arbiter.reexec(),
 	# just after forking (and in the child process)
 	# but before exec'ing the new master
-	notify( _GunicornDidForkWillExec( arbiter ) )
+	notify(_GunicornDidForkWillExec(arbiter))
 
 class _PasterServerApplication(PasterServerApplication):
 	"""
@@ -589,19 +591,19 @@ class _PasterServerApplication(PasterServerApplication):
 	# It seems like there's an opportunity to simplify some things;
 	# auto-gen config files should help facilitate that.
 
-	def __init__( self, app, gcfg=None, host="127.0.0.1", port=None, *args, **kwargs):
+	def __init__(self, app, gcfg=None, host="127.0.0.1", port=None, *args, **kwargs):
 
-		super(_PasterServerApplication, self).__init__( app, gcfg=gcfg, host=host,
-														port=port, *args, **kwargs )
-		self.cfg.set( 'pre_fork', _pre_fork )
-		self.cfg.set( 'post_fork', _post_fork )
-		self.cfg.set( 'pre_exec', _pre_exec )
+		super(_PasterServerApplication, self).__init__(app, gcfg=gcfg, host=host,
+													   port=port, *args, **kwargs)
+		self.cfg.set('pre_fork', _pre_fork)
+		self.cfg.set('post_fork', _post_fork)
+		self.cfg.set('pre_exec', _pre_exec)
 		if self.cfg.pidfile is None:
 			# Give us a pidfile in the $DATASERVER_DIR var directory
-			ds_dir = os.environ.get( 'DATASERVER_DIR' )
+			ds_dir = os.environ.get('DATASERVER_DIR')
 			if ds_dir:
-				pidfile = os.path.join( ds_dir, 'var', 'gunicorn.pid' )
-				self.cfg.set( 'pidfile',  pidfile )
+				pidfile = os.path.join(ds_dir, 'var', 'gunicorn.pid')
+				self.cfg.set('pidfile', pidfile)
 
 	def reload(self):
 		# In super, reload calls load_config, which is only
@@ -619,8 +621,8 @@ class _PasterServerApplication(PasterServerApplication):
 		# Therefor, the easiest thing to do when asked to reload is to
 		# simply discard self.app, knowing that it will be asked for
 		# again and in turn do the loading of the dataserver files.
-		self.app = None # Our copy
-		self.callable = None # base.Application's copy
+		self.app = None  # Our copy
+		self.callable = None  # base.Application's copy
 		# Reset the component registry because we're about
 		# to reconfigure it; otherwise we get Configuration errors
 		from zope.testing import cleanup

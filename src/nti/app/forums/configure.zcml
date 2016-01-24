@@ -231,12 +231,6 @@
 				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForumComment
 					 contentratings.interfaces.IObjectRatedEvent"/>
 
-	<!-- Publishing workflow -->
-	<subscriber factory=".decorators.PublishLinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.IPublishableTopic
-					 pyramid.interfaces.IRequest"/>
-
 	<!-- Feeds -->
 	<adapter factory="nti.appserver._table_utils.HeadlineTopicContentProvider"
 			 provides="zope.contentprovider.interfaces.IContentProvider"
@@ -249,7 +243,7 @@
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost
 				 *
 				 nti.appserver.ugd_feed_views.AbstractFeedView"/>
-	
+
 	<!-- Adapters -->
 	<adapter factory=".adapters._PostFileConstraints"
 			 provides=".interfaces.IPostFileConstraints"

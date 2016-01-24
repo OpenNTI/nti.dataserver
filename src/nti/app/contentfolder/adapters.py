@@ -22,7 +22,7 @@ from nti.contentfolder.model import RootFolder
 @interface.implementer(IPathAdapter)
 class OFSPathAdapter(Contained):
 	"""
-	Test adapter
+	XXX: Adapter to be used only in unit tests. 
 	"""
 
 	__name__ = "ofs"

@@ -10,15 +10,11 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
+from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 does_not = is_not
-
-import fudge
-from StringIO import StringIO
-
-from nti.app.base.abstract_views import SourceProxy
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
@@ -42,60 +38,52 @@ class TestContentFolderViews(ApplicationLayerTest):
 								'Items', has_length(1)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	@fudge.patch('nti.app.contentfolder.views.get_all_sources')
-	def test_upload_multipart(self, mock_gas):
-		data = {'ichigo': SourceProxy(StringIO('ichigo')),
-				'aizen': SourceProxy(StringIO('aizen')) }
-		mock_gas.is_callable().with_args().returns(data)
-		res = self.testapp.post_json('/dataserver2/ofs/root/@@upload',
-									 status=201)
-		assert_that(res.json_body,
-					has_entries('ItemCount', is_(2),
-								'Items', has_length(2)))
-
-		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)
-		assert_that(res.json_body,
-					has_entries('ItemCount', is_(2),
-								'Items', has_length(2)))
-
-	@WithSharedApplicationMockDS(users=True, testapp=True)
-	@fudge.patch('nti.app.contentfolder.views.get_all_sources')
-	def test_upload_multipart_namedfile(self, mock_gas):
-		multipart = {'ichigo': SourceProxy(StringIO('ichigo'))}
-		mock_gas.is_callable().with_args().returns(multipart)
-		
-		data = {
-			'MimeType': 'application/vnd.nextthought.contentfile',
-			'filename': r'/Users/ichigo/ichigo.gif',
-			'name':'ichigo'
-		}
-		res = self.testapp.post_json('/dataserver2/ofs/root/@@upload',
-									 data,
-									 status=201)
-		assert_that(res.json_body,
-					has_entries('ItemCount', is_(1),
-								'Items', has_length(1)))
-
-		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)
-		assert_that(res.json_body,
-					has_entries('ItemCount', is_(1),
-								'Items', has_length(1)))
-		
-	@WithSharedApplicationMockDS(users=True, testapp=True)
-	@fudge.patch('nti.app.contentfolder.views.get_all_sources')
-	def test_delete(self, mock_gas):
-		multipart = {'ichigo': SourceProxy(StringIO('ichigo'))}
-		mock_gas.is_callable().with_args().returns(multipart)
-		
-		data = {
-			'MimeType': 'application/vnd.nextthought.contentfile',
-			'filename': r'/Users/ichigo/ichigo.gif',
-			'name':'ichigo'
-		}
-		self.testapp.post_json('/dataserver2/ofs/root/@@upload',
-								data,
+	def test_upload_multipart(self):
+		res = self.testapp.post('/dataserver2/ofs/root/@@upload',
+								upload_files=[ 	('ichigo', 'ichigo.txt', b'ichigo'), 
+												('aizen', 'aizen.txt', b'aizen') ],
 								status=201)
-		self.testapp.delete('/dataserver2/ofs/root/ichigo', status=200)
+		assert_that(res.json_body,
+					has_entries('ItemCount', is_(2),
+								'Items', has_length(2)))
+
+		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)
+		assert_that(res.json_body,
+					has_entries('ItemCount', is_(2),
+								'Items', has_length(2)))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_tree(self):
+		self.testapp.post('/dataserver2/ofs/root/@@upload',
+						 upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo'), 
+										('aizen.txt', 'aizen.txt', b'aizen') ],
+						 status=201)
+
+		data = {'name': 'bleach'}
+		self.testapp.post_json('/dataserver2/ofs/root/@@mkdir',
+							   data,
+							   status=201)
+
+		self.testapp.post('/dataserver2/ofs/root/bleach/@@upload',
+						 upload_files=[ ('rukia.txt', 'rukia.txt', b'rukia'), 
+										('zaraki.txt', 'zaraki.txt', b'zaraki') ],
+						 status=201)
+
+		res = self.testapp.get('/dataserver2/ofs/root/@@tree', status=200)
+		assert_that(res.json_body,
+					has_entry('Items', 
+							 is_([u'aizen.txt', {u'bleach': [u'rukia.txt', u'zaraki.txt']}, u'ichigo.txt'])))
+		
+		assert_that(res.json_body,
+					has_entries('Folders', 1,
+								'Files', 4))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_delete(self):
+		self.testapp.post('/dataserver2/ofs/root/@@upload',
+						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
+						  status=201)
+		self.testapp.delete('/dataserver2/ofs/root/ichigo', status=204)
 		
 		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)
 		assert_that(res.json_body,
@@ -105,13 +93,11 @@ class TestContentFolderViews(ApplicationLayerTest):
 		self.testapp.delete('/dataserver2/ofs/root', status=403)
 		
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	@fudge.patch('nti.app.contentfolder.views.get_all_sources')
-	def test_clear(self, mock_gas):
-		data = {'ichigo': SourceProxy(StringIO('ichigo')),
-				'aizen': SourceProxy(StringIO('aizen')) }
-		mock_gas.is_callable().with_args().returns(data)
-		res = self.testapp.post_json('/dataserver2/ofs/root/@@upload',
-									 status=201)
+	def test_clear(self):
+		res = self.testapp.post('/dataserver2/ofs/root/@@upload',
+								upload_files=[ 	('ichigo', 'ichigo.txt', b'ichigo'), 
+												('aizen', 'aizen.txt', b'aizen') ],
+								status=201)
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(2)))
 
@@ -121,3 +107,15 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(0),
 								'Items', has_length(0)))
+		
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_rename(self):
+		self.testapp.post('/dataserver2/ofs/root/@@upload',
+						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
+						  status=201)
+		self.testapp.post_json('/dataserver2/ofs/root/ichigo/@@rename', {'name':'aizen'},
+								status=200)
+		self.testapp.get('/dataserver2/ofs/root/ichigo', status=404)
+		self.testapp.get('/dataserver2/ofs/root/aizen', status=200)
+		
+		self.testapp.post_json('/dataserver2/ofs/root/@@rename', {'name':'xxx'}, status=403)

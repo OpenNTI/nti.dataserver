@@ -5,7 +5,6 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -16,13 +15,13 @@ from nti.appserver.ugd_edit_views import ContainerContextUGDPostView
 
 from nti.contentlibrary.interfaces import IContentPackageBundle
 
-from nti.dataserver import authorization as nauth
+from nti.dataserver.authorization import ACT_READ
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 request_method='POST',
 			 context=IContentPackageBundle,
-			 permission=nauth.ACT_READ,
+			 permission=ACT_READ,
 			 name='Pages')
 class ContentBundlePagesView(ContainerContextUGDPostView):
 	"""

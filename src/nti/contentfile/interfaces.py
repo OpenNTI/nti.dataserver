@@ -11,8 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope.location.interfaces import IContained
 
-from zope.mimetype.interfaces import IContentTypeAware
-
 from nti.namedfile.interfaces import IFile
 from nti.namedfile.interfaces import INamedFile
 from nti.namedfile.interfaces import INamedImage
@@ -21,17 +19,18 @@ from nti.namedfile.interfaces import INamedBlobImage
 
 from nti.schema.field import ValidTextLine
 
-class IBaseFile(IFile, IContained, IContentTypeAware):
+class IContentBaseFile(IFile, IContained):
     name = ValidTextLine(title="Identifier for the file", required=True)
-    
-class IContentFile(INamedFile, IBaseFile):
+IBaseFile = IContentBaseFile #BWC
+
+class IContentFile(INamedFile, IContentBaseFile):
     pass
 
-class IContentImage(INamedImage, IBaseFile):
+class IContentImage(INamedImage, IContentBaseFile):
     pass
 
-class IContentBlobFile(INamedBlobFile, IBaseFile):
+class IContentBlobFile(INamedBlobFile, IContentBaseFile):
     pass
 
-class IContentBlobImage(INamedBlobImage, IBaseFile):
+class IContentBlobImage(INamedBlobImage, IContentBaseFile):
     pass

@@ -15,6 +15,7 @@ from zope import interface
 from nti.common.representation import WithRepr
 
 from nti.schema.field import Bool
+from nti.schema.field import ValidText
 from nti.schema.field import ValidTextLine as TextLine
 from nti.schema.field import SchemaConfigured
 
@@ -24,12 +25,15 @@ class IEmail(interface.Interface):
 	"""
 	A generic email object.
 	"""
+	Copy = Bool(title="Whether the email author will receive a copy.",
+				default=False)
+
 	NoReply = Bool(title="Whether the email will have a NoReply reply address",
 				default=False)
 
 	Subject = TextLine(title="The subect line of the email.", required=False)
 
-	Body = TextLine(title="The body of the message.", required=True)
+	Body = ValidText(title="The body of the message.", required=True)
 
 @interface.implementer( IEmail )
 @WithRepr

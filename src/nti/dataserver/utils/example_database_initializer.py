@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zc import intid as zc_intid
-
 from zope import component
 from zope import interface
 
@@ -21,8 +19,13 @@ from zope.component.hooks import site, getSite
 import zope.generations.generations
 from zope.generations import interfaces as gen_interfaces
 
+from zc import intid as zc_intid
+
+from nti.dataserver.users import User
+from nti.dataserver.users import Community
+from nti.dataserver.users import FriendsList
+
 from nti.dataserver.users.interfaces import IRecreatableUser
-from nti.dataserver.users import User, Community, FriendsList
 
 def exampleDatabaseInitializerSubscriber(event):
 	"""
@@ -61,28 +64,26 @@ class ExampleDatabaseInitializer(object):
 		:return: An iterable of two-tuples of (userid, realname). email will be used
 			as userid
 		"""
-		USERS = [ ('rusczyk@artofproblemsolving.com', 'Richard Rusczyk'),  # Aops
-				  ('patrick@artofproblemsolving.com', 'Dave Patrick'),
-				  ('ethan.berman@nextthought.com', 'Ethan Berman')]
+		USERS = [ ('admin@nextthought.com', 'Admin'),
+				  ('rusczyk@artofproblemsolving.com', 'Richard Rusczyk'),  # Aops
+				  ('patrick@artofproblemsolving.com', 'Dave Patrick') ]
 
 		# Add the ok people
-		for uid in ('aaron.eskam', 'andrew.ligon', 'carlos.sanchez', 'chris.hansen',
-					'chris.utz', 'greg.higgins', 'grey.allman', 'jason.madden',
+		for uid in ('aaron.eskam', 'andrew.ligon', 'carlos.sanchez',
+					'chris.utz', 'greg.higgins', 'jason.madden',
 					'jeff.muehring', 'jonathan.grimes', 'josh.zuech', 'julie.zhu',
 					'kaley.white', 'ken.parker', 'pacifique.mahoro', 'peggy.sabatini',
-					'ray.hatfield', 'sean.jones', 'steve.johnson', 'trina.muehring',
-					'troy.daley', 'vitalik.buterin', 'mario.rosas', 'zachary.roux',
-					'rob.reynolds'):
-			USERS.append((uid + '@nextthought.com',
-						   uid.replace('.', ' ').title(),
-						   uid + '@nextthought.com'))
+					'ray.hatfield', 'sean.jones',
+					'troy.daley', 'vitalik.buterin', 'zachary.roux',
+					'rob.reynolds', 'ethan.berman'):
+			USERS.append((uid, uid.replace('.', ' ').title(), uid + '@nextthought.com'))
 
 		# Add test users
 		max_test_users = self.max_test_users
 		for x in range(1, max_test_users):
 			uid = 'test.user.%s' % x
 			name = 'TestUser-%s' % x
-			USERS.append((uid + '@nextthought.com', name))
+			USERS.append((uid, name))
 
 		# Some busey people
 		USERS.append(('philip@buseygroup.com', 'Philip Busey Jr'))
@@ -96,15 +97,14 @@ class ExampleDatabaseInitializer(object):
 		for uid in ('luke.skywalker', 'amelia.earhart', 'charles.lindbergh',
 					('darth.vader', 'Lord Vader'), ('jeanluc.picard', 'Captain Picard'),
 					('obiwan.kenobi', 'General Kenobi')):
-			uname = uid + '@nextthought.com' \
-					if isinstance(uid, basestring) else uid[0] + '@nextthought.com'
+			uname = uid if isinstance(uid, basestring) else uid[0]
 			rname = uid.replace('.', ' ').title() \
 					if isinstance(uid, basestring) else uid[1]
 			USERS.append((uname, rname))
 
 		# Demo accounts
-		USERS.append(('jessica.janko@nextthought.com', 'Jessica Janko'))
-		USERS.append(('suzie.stewart@nextthought.com', 'Suzie Stewart'))
+		USERS.append(('jessica.janko', 'Jessica Janko'))
+		USERS.append(('suzie.stewart', 'Suzie Stewart'))
 
 		return USERS
 
@@ -129,32 +129,31 @@ class ExampleDatabaseInitializer(object):
 		return (aopsCommunity, ntiCommunity, mathcountsCommunity, testUsersCommunity)
 
 	def _add_friendslists_to_user(self, for_user):
-		if for_user.username != 'jason.madden@nextthought.com':
+		if for_user.username != 'jason.madden':
 			return
 
 		fl = FriendsList('Pilots')
 		fl.creator = for_user
-		fl.addFriend('luke.skywalker@nextthought.com')
-		fl.addFriend('amelia.earhart@nextthought.com')
-		fl.addFriend('charles.lindbergh@nextthought.com')
+		fl.addFriend('luke.skywalker')
+		fl.addFriend('amelia.earhart')
+		fl.addFriend('charles.lindbergh')
 		fl.containerId = 'FriendsLists'
 		for_user.addContainedObject(fl)
 
 		fl = FriendsList('CommandAndControl')
 		fl.creator = for_user
-		fl.addFriend('darth.vader@nextthought.com')
-		fl.addFriend('jeanluc.picard@nextthought.com')
-		fl.addFriend('obiwan.kenobi@nextthought.com')
+		fl.addFriend('darth.vader')
+		fl.addFriend('jeanluc.picard')
+		fl.addFriend('obiwan.kenobi')
 		fl.containerId = 'FriendsLists'
 		for_user.addContainedObject(fl)
 
 		fl = FriendsList('NTI_OK')
 		fl.creator = for_user
-		fl.addFriend('chris.utz@nextthought.com')
-		fl.addFriend('carlos.sanchez@nextthought.com')
-		fl.addFriend('grey.allman@nextthought.com')
-		fl.addFriend('jeff.muehring@nextthought.com')
-		fl.addFriend('ken.parker@nextthought.com')
+		fl.addFriend('chris.utz')
+		fl.addFriend('carlos.sanchez')
+		fl.addFriend('jeff.muehring')
+		fl.addFriend('ken.parker')
 		fl.containerId = 'FriendsLists'
 		for_user.addContainedObject(fl)
 
@@ -218,7 +217,9 @@ class ExampleDatabaseInitializer(object):
 			args = {'username':uname, 'password':password, 'dataserver':mock_dataserver}
 			ext_value = {}
 			ext_value['realname'] = user_tuple[1]
-			ext_value['email'] = unicode(uname) if len(user_tuple) < 3 else user_tuple[2]
+			email = unicode(uname) if len(user_tuple) < 3 else user_tuple[2]
+			if '@' in email:
+				ext_value['email'] = email
 			ext_value['alias'] = user_tuple[1].split()[0] \
 								 if not is_test_user else user_tuple[1]
 			args['external_value'] = ext_value

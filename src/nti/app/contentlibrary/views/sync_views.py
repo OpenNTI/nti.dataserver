@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Administration views.
+Sync views.
 
 .. $Id$
 """
@@ -11,13 +11,24 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import sys
 import time
+import traceback
 from six import string_types
+
+import transaction
+try:
+	from transaction._compat import get_thread_ident
+except ImportError:
+	def get_thread_ident():
+		return id(transaction.get())
 
 from zope import component
 
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
+
+from zope.traversing.interfaces import IEtcNamespace
 
 from pyramid import httpexceptions as hexc
 
@@ -25,6 +36,10 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.contentlibrary.synchronize import synchronize
+
+from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -39,9 +54,11 @@ from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 
 from nti.externalization.interfaces import LocatedExternalDict
 
-from ..synchronize import synchronize
-
+# : Redis sync lock name
 SYNC_LOCK_NAME = '/var/libraries/Lock/sync'
+
+# : The amount of time for which we will hold the lock during sync
+LOCK_TIMEOUT = 60 * 60  # 60 minutes
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
@@ -49,7 +66,7 @@ SYNC_LOCK_NAME = '/var/libraries/Lock/sync'
 			   request_method='POST',
 			   context=IDataserverFolder,
 			   name='RemoveSyncLock')
-class _RemoveSyncLock(AbstractAuthenticatedView):
+class _RemoveSyncLockView(AbstractAuthenticatedView):
 
 	@Lazy
 	def redis(self):
@@ -58,6 +75,47 @@ class _RemoveSyncLock(AbstractAuthenticatedView):
 	def __call__(self):
 		self.redis.delete(SYNC_LOCK_NAME)
 		return hexc.HTTPNoContent()
+
+@view_config(permission=ACT_SYNC_LIBRARY)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   name='IsSyncInProgress')
+class _IsSyncInProgressView(AbstractAuthenticatedView):
+
+	@Lazy
+	def redis(self):
+		return component.getUtility(IRedisClient)
+
+	def lock(self):
+		lock = self.redis.lock(SYNC_LOCK_NAME, LOCK_TIMEOUT, blocking_timeout=1)
+		acquired = lock.acquire(blocking=False)
+		return (lock, acquired)
+
+	def release(self, lock, acquired):
+		try:
+			if acquired:
+				lock.release()
+		except Exception:
+			pass
+
+	def __call__(self):
+		lock, acquired = self.lock()
+		self.release(lock, acquired)
+		return not acquired
+
+@view_config(permission=ACT_SYNC_LIBRARY)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   name='LastSyncTime')
+class _LastSyncTimeView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		hostsites = component.getUtility(IEtcNamespace, name='hostsites')
+		return getattr(hostsites, 'lastSynchronized', 0)
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
@@ -88,10 +146,6 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 	# disabling it.
 	_SLEEP = True
 
-	# The amount of time for which we will hold the lock during
-	# sync
-	lock_timeout = 60 * 30  # 30 minutes
-
 	def readInput(self, value=None):
 		result = CaseInsensitiveDict()
 		if self.request:
@@ -109,19 +163,38 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 	@Lazy
 	def lock(self):
 		# Fail fast if we cannot acquire the lock.
-		lock = self.redis.lock(SYNC_LOCK_NAME, self.lock_timeout)
+		lock = self.redis.lock(SYNC_LOCK_NAME, LOCK_TIMEOUT)
 		acquired = lock.acquire(blocking=False)
 		if acquired:
 			return lock
-		raise hexc.HTTPUnprocessableEntity('Sync already in progress')
+		raise_json_error(self.request,
+						 hexc.HTTPLocked,
+						 {'message': 'Sync already in progress',
+						  'code':'Exception'},
+						 None)
+
+	def release(self, lock):
+		try:
+			lock.release()
+		except Exception:
+			logger.exception("Error while releasing Sync lock")
+
+	def _txn_id(self):
+		return "txn.%s" % get_thread_ident()
 
 	def _do_call(self):
 		values = self.readInput()
 		site = values.get('site')
 		allowRemoval = values.get('allowRemoval') or u''
 		allowRemoval = allowRemoval.lower() in TRUE_VALUES
-		packages = values.get('packages') or values.get('package') or ()
-		packages = set(packages.split()) if isinstance(packages, string_types) else packages
+		# things to sync
+		for name in ('ntiids', 'ntiid', 'packages', 'package'):
+			ntiids = values.get(name)
+			if ntiids:
+				break
+		ntiids = set(ntiids.split()) if isinstance(ntiids, string_types) else ntiids
+		ntiids = list(ntiids) if ntiids else ()
+
 		# Unfortunately, zope.dublincore includes a global subscriber registration
 		# (zope.dublincore.creatorannotator.CreatorAnnotator)
 		# that will update the `creators` property of IZopeDublinCore to include
@@ -139,18 +212,33 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		# retries cause syncs to take much longer to perform.
 		now = time.time()
 		result = LocatedExternalDict()
-		result['Started'] = now
+		result['Transaction'] = self._txn_id()
 		endInteraction()
 		try:
 			params, results = synchronize(sleep=self._SLEEP,
 										  site=site,
-										  packages=packages,
+										  ntiids=ntiids or (),
 										  allowRemoval=allowRemoval)
 			result['Params'] = params
 			result['Results'] = results
+			result['SyncTime'] = time.time() - now
+		except (StandardError, Exception) as e:
+			logger.exception("Failed to Sync %s", self._txn_id())
+
+			transaction.doom()  # cancel changes
+
+			exc_type, exc_value, exc_traceback = sys.exc_info()
+			result['code'] = e.__class__.__name__
+			result['message'] = str(e)
+			result['traceback'] = repr(traceback.format_exception(exc_type,
+																  exc_value,
+																  exc_traceback))
+			raise_json_error(self.request,
+							 hexc.HTTPUnprocessableEntity,
+							 result,
+							 exc_traceback)
 		finally:
 			restoreInteraction()
-			result['Elapsed'] = time.time() - now
 		return result
 
 	def __call__(self):
@@ -158,7 +246,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		# With 'with', we deadlock while attempting to re-acquire the lock.
 		lock = self.lock
 		try:
-			logger.info('Starting sync')
+			logger.info('Starting sync %s', self._txn_id())
 			return self._do_call()
 		finally:
-			lock.release()
+			self.release(lock)

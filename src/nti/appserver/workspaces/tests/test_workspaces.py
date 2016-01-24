@@ -14,7 +14,6 @@ from hamcrest import is_not
 from hamcrest import all_of
 from hamcrest import has_item
 from hamcrest import has_entry
-
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
@@ -245,7 +244,7 @@ class TestUserService(ApplicationLayerTest):
 
 		ext_object = toExternalObject( service )
 
-		assert_that(ext_object, has_entry('CapabilityList', has_length(3)))
+		assert_that(ext_object, has_entry('CapabilityList', has_length(4)))
 		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.forums.dflforums')))
 		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.forums.communityforums')))
 		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.customization.can_change_password')))
@@ -319,7 +318,6 @@ class TestUserService(ApplicationLayerTest):
 		terms = [x.token for x in vocab]
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( terms ) ) )
 
-
 import os
 import shutil
 import tempfile
@@ -358,9 +356,10 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
 			def effective_principals( self, request ):
-				return [nti_interfaces.IPrincipal(x) for x in [	self.authenticated_userid(request),
-																nti_interfaces.AUTHENTICATED_GROUP_NAME,
-																nti_interfaces.EVERYONE_GROUP_NAME]]
+				result = [nti_interfaces.IPrincipal(x) for x in [	self.authenticated_userid(request),
+																	nti_interfaces.AUTHENTICATED_GROUP_NAME,
+																	nti_interfaces.EVERYONE_GROUP_NAME]]
+				return frozenset( result )
 
 		self.policy = Policy()
 		component.provideUtility( self.policy )

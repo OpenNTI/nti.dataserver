@@ -53,18 +53,15 @@ from nti.contentlibrary.indexed_data import NTI_SLIDE_VIDEO_TYPE
 from nti.contentlibrary.indexed_data import NTI_RELATED_WORK_TYPE
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
+from nti.contenttypes.presentation import iface_of_asset
 from nti.contenttypes.presentation.interfaces import INTIAudio
 from nti.contenttypes.presentation.interfaces import INTIVideo
 from nti.contenttypes.presentation.interfaces import INTISlide
 from nti.contenttypes.presentation.interfaces import INTITimeline
 from nti.contenttypes.presentation.interfaces import INTISlideDeck
 from nti.contenttypes.presentation.interfaces import INTISlideVideo
-from nti.contenttypes.presentation.interfaces import INTIDiscussionRef
 from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
 from nti.contenttypes.presentation.interfaces import IPresentationAsset
-from nti.contenttypes.presentation.interfaces import INTILessonOverview
-from nti.contenttypes.presentation.interfaces import INTICourseOverviewGroup
-from nti.contenttypes.presentation.interfaces import INTICourseOverviewSpacer
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
@@ -129,30 +126,10 @@ def _slidevideo_to_contained_type(context):
 def _related_to_contained_type(context):
 	return _Type(NTI_RELATED_WORK_TYPE)
 
-@component.adapter(INTIDiscussionRef)
-@interface.implementer(IContainedTypeAdapter)
-def _discussionref_to_contained_type(context):
-	return _Type('INTIDiscussionRef')
-
-@component.adapter(INTILessonOverview)
-@interface.implementer(IContainedTypeAdapter)
-def _lessonoverview_to_contained_type(context):
-	return _Type('INTILessonOverview')
-
-@component.adapter(INTICourseOverviewGroup)
-@interface.implementer(IContainedTypeAdapter)
-def _courseoverview_to_contained_type(context):
-	return _Type('INTICourseOverviewGroup')
-
-@component.adapter(INTICourseOverviewSpacer)
-@interface.implementer(IContainedTypeAdapter)
-def _courseoverviewspacer_to_contained_type(context):
-	return _Type('INTICourseOverviewSpacer')
-
 @component.adapter(IPresentationAsset)
 @interface.implementer(IContainedTypeAdapter)
 def _asset_to_contained_type(context):
-	provided = find_most_derived_interface(context, IPresentationAsset)
+	provided = iface_of_asset(context)
 	return _Type(provided.__name__)
 
 @component.adapter(IQAssignment)

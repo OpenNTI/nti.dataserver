@@ -14,17 +14,25 @@ from zope import component
 
 from zope.location.location import LocationProxy
 
+from zope.security.management import queryInteraction
+
+from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractView
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.appserver import httpexceptions as hexc
+from nti.appserver.context_providers import get_joinable_contexts
+from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.workspaces.interfaces import IService
 from nti.appserver.workspaces.interfaces import ICollection
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
 
 class _ServiceGetView(AbstractAuthenticatedView):
 
@@ -40,7 +48,7 @@ class _ServiceGetView(AbstractAuthenticatedView):
 			   permission=nauth.ACT_READ,
 			   renderer='rest',
 			   request_method='GET')
-class _GenericGetView(AbstractView):
+class GenericGetView(AbstractView):
 
 	def __call__(self):
 		# TODO: We sometimes want to change the interface that we return
@@ -77,9 +85,9 @@ class _GenericGetView(AbstractView):
 			# TODO: This can probably mostly go away now?
 			if result is resource:
 				# Must be careful not to modify the persistent object
-				result = LocationProxy(	result,
-										getattr(result, '__parent__', None),
-										getattr(result, '__name__', None))
+				result = LocationProxy(result,
+									   getattr(result, '__parent__', None),
+									   getattr(result, '__name__', None))
 
 			if getattr(resource, '__parent__', None) is not None:
 				result.__parent__ = resource.__parent__
@@ -97,8 +105,7 @@ class _GenericGetView(AbstractView):
 				 hasattr(self.request.context, '__parent__'):
 				result.__parent__ = self.request.context.__parent__
 		return result
-
-GenericGetView = _GenericGetView
+_GenericGetView = GenericGetView #BWC
 
 class _EmptyContainerGetView(AbstractView):
 
@@ -107,3 +114,24 @@ class _EmptyContainerGetView(AbstractView):
 
 def _method_not_allowed(request):
 	raise hexc.HTTPMethodNotAllowed()
+
+
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 request_method='GET',
+			 name='forbidden_related_context')
+def _forbidden_related_context(context, request):
+	# Reject anonymous access...and for BWC with old behaviour,
+	# reject if you can rightfully access the context
+	if not request.authenticated_userid or is_readable(context):
+		raise hexc.HTTPForbidden()
+
+	result = LocatedExternalDict()
+	result.__name__ = request.view_name
+	result.__parent__ = context
+	
+	results = get_joinable_contexts(context)
+	if results:
+		result[StandardExternalFields.ITEMS] = results
+	return result
+

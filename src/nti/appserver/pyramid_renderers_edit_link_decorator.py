@@ -43,9 +43,7 @@ IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy
 class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	"""
 	Adds the ``edit`` link relationship to objects that are persistent
-	(because we have to be able to generate a URL and we need the OID)
-	or guaranteed to have a traversable path, and which are writable
-	by the current user.
+	(because we have to be able to generate a URL and we need the OID).
 
 	Subclasses may override :meth:`_has_permission` if this definition
 	needs changed.
@@ -95,30 +93,30 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return link
 
 	@Lazy
-	def _no_acl_decoration_in_request(self):
-		request = self.request
-		result = getattr(request, 'no_acl_decoration', False)
+	def _acl_decoration(self):
+		result = getattr(self.request, 'acl_decoration', True)
 		return result
 
 	def _preflight_context(self, context):
 		"""
-		We must either have a persistent object, or one with a traversable path
+		We must either have a persistent object.
+		XXX: We used to allow edits on non-persistent objects with traversable
+		paths.
 		"""
-		return 	getattr(context, '_p_jar', None) or \
-				(self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
+		return getattr(context, '_p_jar', None)
 
 	def _has_permission(self, context):
 		return is_writable(context, request=self.request)
 
 	def _predicate(self, context, result):
-		return (not self._no_acl_decoration_in_request
-				and AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
-				and self._preflight_context(context))
+		return 		self._acl_decoration \
+				and AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result) \
+				and self._preflight_context(context)
 
 	def _do_decorate_external(self, context, mapping):
 		# make sure there is no edit link already
 		# permission check is relatively expensive
-		
+
 		links = mapping.setdefault(LINKS, [])
 		needs_edit = True
 		for l in links:

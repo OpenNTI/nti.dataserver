@@ -42,7 +42,7 @@ class TestEvolve27(mock_dataserver.DataserverLayerTest):
 
 			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 
 			note = Note()
 			note.body = ["stuff in the body"]
@@ -53,7 +53,7 @@ class TestEvolve27(mock_dataserver.DataserverLayerTest):
 			change = activitystream_change.Change( activitystream_change.Change.CREATED, note )
 			change.__dict__['creator'] = jason
 
-			jeff = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jeff.muehring@nextthought.com' )
+			jeff = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jeff.muehring' )
 			jeff._addToStream( change )
 
 		with mock_db_trans(  ) as conn:
@@ -62,8 +62,8 @@ class TestEvolve27(mock_dataserver.DataserverLayerTest):
 
 		# OK, at this point it should be a weak reference in the change object.
 		with mock_db_trans( ) as conn:
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
-			jeff = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jeff.muehring@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
+			jeff = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jeff.muehring' )
 
 
 			change = jeff.getContainedStream( 'foo:bar' )[0]

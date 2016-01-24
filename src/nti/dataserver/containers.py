@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 
 from zope.container.contained import contained
-
 from zope.container.interfaces import IContained
 
 from ZODB.interfaces import IConnection

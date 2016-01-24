@@ -17,4 +17,9 @@
 		root_interfaces=".interfaces.IContentFolder"
 		modules=".model" />
 
+	<!-- Decorators -->
+	<subscriber factory=".decorators.ContentFolderDecorator"
+				for=".interfaces.IContentFolder"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
 </configure>

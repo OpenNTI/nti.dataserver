@@ -17,8 +17,6 @@ import warnings
 
 from repoze.lru import LRUCache
 
-import zope.intid
-
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -26,6 +24,8 @@ from zope import lifecycleevent
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.event import notify
+
+from zope.intid import IIntIds
 
 from ZODB.POSException import POSError
 from ZODB.interfaces import IConnection, IBroken
@@ -127,7 +127,7 @@ def _register_units(content_unit):
 	"""
 	Recursively register content units.
 	"""
-	intids = component.queryUtility(zope.intid.IIntIds)
+	intids = component.queryUtility(IIntIds)
 	if intids is None:
 		return
 
@@ -148,7 +148,7 @@ def _unregister_units(content_unit):
 	"""
 	Recursively unregister content units.
 	"""
-	intids = component.queryUtility(zope.intid.IIntIds)
+	intids = component.queryUtility(IIntIds)
 	if intids is None:
 		return
 
@@ -234,7 +234,7 @@ class AbstractContentPackageLibrary(object):
 		Fires created, added, modified, or removed events for each
 		content package, as appropriate.
 		"""
-		packages = params.packages if params is not None else ()
+		packages = params.ntiids if params is not None else ()
 		results = SynchronizationResults() if results is None else results
 		notify(ContentPackageLibraryWillSyncEvent(self, params))
 
@@ -327,7 +327,7 @@ class AbstractContentPackageLibrary(object):
 			# ZODB site access, we can have issues. Also not we're not
 			# randomizing because we expect to be preloaded.
 			for old in removed:
-				notify(ContentPackageRemovedEvent(old, params))
+				notify(ContentPackageRemovedEvent(old, params, results))
 				_unregister_units(old)
 				old.__parent__ = None
 				lib_sync_results.removed(old.ntiid) # register
@@ -351,9 +351,9 @@ class AbstractContentPackageLibrary(object):
 			for new in added:
 				new.__parent__ = self
 				lifecycleevent.created(new)
-				notify(ContentPackageAddedEvent(new, params))
-				_register_units(new)
 				lib_sync_results.added(new.ntiid) # register
+				notify(ContentPackageAddedEvent(new, params, results))
+				_register_units(new)
 
 			# after updating remove parent reference for old objects
 			for _, old in changed:
@@ -675,7 +675,7 @@ class GlobalContentPackageLibrary(AbstractContentPackageLibrary):
 			if not IGlobalContentPackage.providedBy(package):
 				interface.alsoProvides(package, IGlobalContentPackage)
 		return result
-	
+
 class _EmptyEnumeration(AbstractContentPackageEnumeration):
 
 	def enumerateContentPackages(self):
@@ -700,7 +700,7 @@ class PersistentContentPackageLibrary(Persistent,
 			return super(PersistentContentPackageLibrary, self).__repr__()
 		except ConnectionStateError:
 			return object.__repr__(self)
-		
+
 from zope.interface.interfaces import ComponentLookupError
 
 from nti.intid.interfaces import IntIdMissingError
@@ -724,7 +724,7 @@ class _PathCacheContentUnitWeakRef(object):
 		self._intid = None
 
 		try:
-			intids = component.getUtility(zope.intid.IIntIds)
+			intids = component.getUtility(IIntIds)
 			self._intid = intids.getId(contentunit)
 		except (IntIdMissingError, ComponentLookupError):
 			# For non-persistant cases (or unit tests), store the object itself.
@@ -735,6 +735,6 @@ class _PathCacheContentUnitWeakRef(object):
 		if self._obj is not None:
 			result = self._obj
 		else:
-			intids = component.getUtility(zope.intid.IIntIds)
+			intids = component.getUtility(IIntIds)
 			result = intids.getObject(self._intid)
 		return result

@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Basic components for the application. This consists of non-domain-specific
-components. Typically no actual views will
+Basic components for the application. This consists of non-domain-specific components.
 
 .. $Id$
 """

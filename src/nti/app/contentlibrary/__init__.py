@@ -9,7 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from .utils import PAGE_INFO_MT
-from .utils import PAGE_INFO_MT_JSON
+from nti.app.contentlibrary.utils import PAGE_INFO_MT
+from nti.app.contentlibrary.utils import PAGE_INFO_MT_JSON
 
+#: Library Path (GET) View
 LIBRARY_PATH_GET_VIEW = 'LibraryPath'

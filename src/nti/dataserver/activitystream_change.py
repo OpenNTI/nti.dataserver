@@ -13,8 +13,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from operator import setitem
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.interface.declarations import ObjectSpecificationDescriptor
 
 from zope.security.interfaces import IPrincipal
@@ -22,6 +23,19 @@ from zope.security.interfaces import IPrincipal
 from ZODB.POSException import POSError
 
 from nti.dataserver.authorization_acl import ACL
+
+from nti.dataserver.interfaces import SC_SHARED
+from nti.dataserver.interfaces import SC_CREATED
+from nti.dataserver.interfaces import SC_CIRCLED
+from nti.dataserver.interfaces import SC_DELETED
+from nti.dataserver.interfaces import SC_MODIFIED
+from nti.dataserver.interfaces import SC_CHANGE_TYPE_MAP
+
+from nti.dataserver.interfaces import IContained
+from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import IStreamChangeEvent
+from nti.dataserver.interfaces import INeverStoredInSharedStream
+from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
@@ -35,26 +49,14 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.wref import interfaces as wref_interfaces
 
-from .interfaces import SC_SHARED
-from .interfaces import SC_CREATED
-from .interfaces import SC_CIRCLED
-from .interfaces import SC_DELETED
-from .interfaces import SC_MODIFIED
-from .interfaces import SC_CHANGE_TYPE_MAP
-
-from .interfaces import IContained
-from .interfaces import IZContained
-from .interfaces import IStreamChangeEvent
-from .interfaces import INeverStoredInSharedStream
-from .interfaces import IUseNTIIDAsExternalUsername
-
-def _weak_ref_to( obj ):
+def _weak_ref_to(obj):
 	try:
 		return wref_interfaces.IWeakRef(obj)
 	except TypeError:
-		return obj # For the sake of old tests, we allow things that cannot be weakly ref'd.
+		return obj  # For the sake of old tests, we allow things that cannot be weakly ref'd.
 
 class _DynamicChangeTypeProvidedBy(ObjectSpecificationDescriptor):
+
 	def __get__(self, inst, cls):
 		result = ObjectSpecificationDescriptor.__get__(self, inst, cls)
 
@@ -83,12 +85,12 @@ class Change(PersistentCreatedModDateTrackingObject):
 	"""
 
 	mime_type = mimeType = nti_mimetype_with_class(b'Change')
-	parameters = {} # immutable
+	parameters = {}  # immutable
 
-	SHARED   = SC_SHARED
-	CREATED  = SC_CREATED
-	CIRCLED  = SC_CIRCLED
-	DELETED  = SC_DELETED
+	SHARED = SC_SHARED
+	CREATED = SC_CREATED
+	CIRCLED = SC_CIRCLED
+	DELETED = SC_DELETED
 	MODIFIED = SC_MODIFIED
 
 	#: If set to `True` (not the default) then when this object
@@ -111,12 +113,12 @@ class Change(PersistentCreatedModDateTrackingObject):
 
 	object_is_shareable = \
 		property(lambda self: self.__dict__.get('_v_object_is_shareable', None),
-				 lambda self, val: setitem( self.__dict__, str('_v_object_is_shareable'), val ) )
+				 lambda self, val: setitem(self.__dict__, str('_v_object_is_shareable'), val))
 
 	# FIXME: So badly wrong at this level
 	send_change_notice = \
-		property(lambda self: self.__dict__.get('_v_send_change_notice', True), # default to true
-				 lambda self, val: setitem( self.__dict__, str('_v_send_change_notice'), val ) )
+		property(lambda self: self.__dict__.get('_v_send_change_notice', True),  # default to true
+				 lambda self, val: setitem(self.__dict__, str('_v_send_change_notice'), val))
 
 	__name__ = None
 	__parent__ = None
@@ -125,26 +127,26 @@ class Change(PersistentCreatedModDateTrackingObject):
 	# IContained. We do that conditionally if the object we're wrapping
 	# has these things
 	id = None
-	containerId = None
 	type = None
+	containerId = None
 
 	__providedBy__ = _DynamicChangeTypeProvidedBy()
 
-	def __init__( self, changeType, obj ):
-		super(Change,self).__init__()
+	def __init__(self, changeType, obj):
+		super(Change, self).__init__()
 		self.type = changeType
 		# We keep a weak reference to the object, but
 		# we actually store the container information so that it's
 		# useful after the object goes away
-		self.objectReference = _weak_ref_to( obj )
+		self.objectReference = _weak_ref_to(obj)
 
 		for k in ('id', 'containerId', '__name__', '__parent__'):
-			v = getattr( obj, k, None )
+			v = getattr(obj, k, None)
 			if v is not None:
-				setattr( self, str(k), v ) # ensure native string in dict
+				setattr(self, str(k), v)  # ensure native string in dict
 
 		if self.id and self.containerId:
-			interface.alsoProvides( self, IContained )
+			interface.alsoProvides(self, IContained)
 		# We don't copy the object's modification date,
 		# we have our own
 		self.updateLastMod()
@@ -159,16 +161,16 @@ class Change(PersistentCreatedModDateTrackingObject):
 			copy.__dict__[k] = v
 		return copy
 
-	def _get_creator( self ):
+	def _get_creator(self):
 		creator = self.__dict__.get('creator')
 		if creator and callable(creator):
-			creator = creator() # unwrap weak refs. Older or test objects may not have weak refs
+			creator = creator()  # unwrap weak refs. Older or test objects may not have weak refs
 		return creator
-	def _set_creator( self, new_creator ):
+	def _set_creator(self, new_creator):
 		if new_creator:
-			new_creator = _weak_ref_to( new_creator )
-		self.__dict__[str('creator')] = new_creator # ensure native string in dict
-	creator = property(_get_creator,_set_creator)
+			new_creator = _weak_ref_to(new_creator)
+		self.__dict__[str('creator')] = new_creator  # ensure native string in dict
+	creator = property(_get_creator, _set_creator)
 
 	@property
 	def object(self):
@@ -182,10 +184,10 @@ class Change(PersistentCreatedModDateTrackingObject):
 
 	def __acl__(self):
 		if not self.__copy_object_acl__:
-			return () # No opinion
+			return ()  # No opinion
 		o = self.object
 		if o is None:
-			return () # Gone
+			return ()  # Gone
 		return ACL(o, ())
 
 	def values(self):
@@ -195,7 +197,7 @@ class Change(PersistentCreatedModDateTrackingObject):
 		"""
 		yield self.object
 
-	def _get_sharedWith( self ):
+	def _get_sharedWith(self):
 		sharedWith = self.__dict__.get('sharedWith')
 		if not sharedWith:
 			sharedWith = getattr(self.object, 'sharedWith', None)
@@ -203,7 +205,7 @@ class Change(PersistentCreatedModDateTrackingObject):
 	def _set_sharedWith(self, sharedWith):
 		if sharedWith:
 			self.__dict__[str('sharedWith')] = sharedWith
-	sharedWith = property(_get_sharedWith,_set_sharedWith)
+	sharedWith = property(_get_sharedWith, _set_sharedWith)
 
 	def hasSharedWith(self):
 		return 'sharedWith' in self.__dict__
@@ -231,7 +233,7 @@ class Change(PersistentCreatedModDateTrackingObject):
 		if self.object_is_shareable is not None:
 			return self.object_is_shareable
 
-		result = not INeverStoredInSharedStream.providedBy( self.object )
+		result = not INeverStoredInSharedStream.providedBy(self.object)
 		# We assume this won't change for the lifetime of the object
 		self.object_is_shareable = result
 		return result
@@ -241,13 +243,13 @@ class Change(PersistentCreatedModDateTrackingObject):
 			return "%s('%s',%s)" % (self.__class__.__name__, self.type,
 									self.object.__class__.__name__)
 		except (POSError, AttributeError):
-			return object.__repr__( self )
+			return object.__repr__(self)
 
 @interface.implementer(IExternalObject)
 @component.adapter(IStreamChangeEvent)
 class _ChangeExternalObject(object):
 
-	def __init__( self, change ):
+	def __init__(self, change):
 		self.change = change
 
 	def toExternalObject(self, **kwargs):
@@ -258,8 +260,8 @@ class _ChangeExternalObject(object):
 			wrapping = change.externalObjectTransformationHook(wrapping)
 
 		result = LocatedExternalDict()
-		result.__parent__ = getattr( wrapping, '__parent__', getattr( change, '__parent__', None ) )
-		result.__name__ = getattr( wrapping, '__name__', getattr( change, '__name__', None ) )
+		result.__parent__ = getattr(wrapping, '__parent__', getattr(change, '__parent__', None))
+		result.__name__ = getattr(wrapping, '__name__', getattr(change, '__name__', None))
 		result[StandardExternalFields.CLASS] = 'Change'
 		result[StandardExternalFields.MIMETYPE] = Change.mimeType
 
@@ -269,7 +271,7 @@ class _ChangeExternalObject(object):
 		if change_creator:
 			if IUseNTIIDAsExternalUsername.providedBy(change_creator):
 				result[StandardExternalFields.CREATOR] = change_creator.NTIID
-			elif hasattr( change_creator, 'username'):
+			elif hasattr(change_creator, 'username'):
 				result[StandardExternalFields.CREATOR] = change_creator.username
 			else:
 				result[StandardExternalFields.CREATOR] = change_creator
@@ -277,9 +279,9 @@ class _ChangeExternalObject(object):
 		result['ChangeType'] = change.type
 		result[StandardExternalFields.ID] = change.id or None
 		# OIDs must be unique
-		result[StandardExternalFields.OID] = toExternalOID( change )
+		result[StandardExternalFields.OID] = toExternalOID(change)
 		result['Item'] = None
 		if wrapping is not None:
 			name = ('summary' if change.useSummaryExternalObject else '')
-			result['Item'] = toExternalObject( wrapping, name=name, **kwargs )
+			result['Item'] = toExternalObject(wrapping, name=name, **kwargs)
 		return result

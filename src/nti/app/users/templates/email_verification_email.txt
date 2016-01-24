@@ -4,8 +4,12 @@ In order to support your account, please verify your email address.
 Verifying your email helps keep your account secure and ensures timely
 delivery of email notifications.
 
-To verify your email address, please click on the following link:
+To verify your email address, please use the following url:
 ${href}.
+
+Alternatively, you can enter this verification code on your profile page.
+
+Verification Code: ${token}
 
 Thank you for helping us maintain the security of your account.
 

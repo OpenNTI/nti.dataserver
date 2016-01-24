@@ -45,9 +45,11 @@ def do_evolve(context):
 		for recordable in recordables:
 			try:
 				anno = recordable.__annotations__
-				old = anno.pop(TRX_RECORD_HISTORY_KEY, None)
-				if not old:
+				old = anno.get(TRX_RECORD_HISTORY_KEY, None)
+				if not old or not hasattr(old, '_records'):
 					continue
+				# remove old storage
+				anno.pop(TRX_RECORD_HISTORY_KEY, None)
 				locate(old, None, None)
 				copy_records(recordable, old._records)
 			except AttributeError:

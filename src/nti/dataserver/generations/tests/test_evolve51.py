@@ -52,14 +52,14 @@ class TestEvolve51(mock_dataserver.DataserverLayerTest):
 
 			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
-			greg = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='greg.higgins@nextthought.com' )
+			greg = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='greg.higgins' )
 			root_note = Note()
 			root_note.body = ['body']
 			root_note.creator = greg
 			root_note.containerId = 'other:container'
 			greg.addContainedObject( root_note )
 
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 
 			note = Note()
 			note.inReplyTo = root_note
@@ -82,22 +82,22 @@ class TestEvolve51(mock_dataserver.DataserverLayerTest):
 
 
 		with mock_db_trans( ) as conn:
-			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden' )
 			note = jason.getContainedObject( "foo:bar", note_id )
 
 			catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 
 			# Verify queries still work
 			for query in ( {'repliesToCreator': {'any_of':
-												 ('greg.higgins@nextthought.com',)}},
+												 ('greg.higgins',)}},
 						   {'containerId': {'any_of':
 											('foo:bar',)}},
 						   {'creator': {'any_of':
-										('jason.madden@nextthought.com',),},
+										('jason.madden',),},
 							'mimeType': {'any_of':
 										 ('application/vnd.nextthought.note',)}},
 						   {'sharedWith': {'all_of':
-										   ('greg.higgins@nextthought.com',)}},
+										   ('greg.higgins',)}},
 						   {'topics': 'deletedObjectPlaceholder'}):
 				__traceback_info__ = query
 				results = list(catalog.searchResults(**query))

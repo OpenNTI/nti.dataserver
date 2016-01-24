@@ -81,6 +81,7 @@
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.ISynchronizationParams
 						 .interfaces.ISynchronizationResults
+						 .interfaces.IContentPackageSyncResults
 						 .interfaces.ILibrarySynchronizationResults"
 		modules=".synchronize" />
 

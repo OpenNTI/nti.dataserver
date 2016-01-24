@@ -55,7 +55,7 @@ class TransactionRecordContainer(BTreeContainer):
 		del self._SampleContainer__data[key]
 		l.change(-1)
 		return item
-		
+
 	def clear(self, event=True):
 		keys = list(self.keys())
 		for key in keys:
@@ -65,6 +65,15 @@ class TransactionRecordContainer(BTreeContainer):
 				self._delitemf(key)
 		return len(keys)
 	reset = clear
+
+	def query(self, tid=None, principal=None, record_type=None):
+		results = []
+		for record in self.records():
+			if 		(not tid or tid == record.tid) \
+				and (not principal or principal == record.principal) \
+				and (not record_type or record_type == record.type):
+				results.append( record )
+		return results
 
 _TransactionRecordHistoryFactory = an_factory(TransactionRecordContainer,
 											  TRX_RECORD_HISTORY_KEY)

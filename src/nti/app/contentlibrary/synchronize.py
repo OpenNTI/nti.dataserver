@@ -32,17 +32,13 @@ from nti.contentlibrary.subscribers import install_site_content_library
 from nti.site.hostpolicy import run_job_in_all_host_sites
 from nti.site.hostpolicy import synchronize_host_policies
 
-def synchronize(sleep=None, allowRemoval=True, site=None, packages=()):
-	
-	params = SynchronizationParams()
-	params.allowRemoval = allowRemoval
-	params.packages = packages or ()
-	
+def synchronize(sleep=None, allowRemoval=True, site=None, ntiids=()):
 	results = SynchronizationResults()
+	params = SynchronizationParams(ntiids=ntiids or (), allowRemoval=allowRemoval)
 
 	# notify
 	notify(AllContentPackageLibrariesWillSyncEvent(params))
-	
+
 	# First, synchronize the policies, make sure everything is all nice and installed.
 	synchronize_host_policies()
 
@@ -70,7 +66,7 @@ def synchronize(sleep=None, allowRemoval=True, site=None, packages=()):
 		seen.add(site_lib)
 		if site and site_name != site:
 			return
-		
+
 		if sleep:
 			gevent.sleep()
 
@@ -87,10 +83,10 @@ def synchronize(sleep=None, allowRemoval=True, site=None, packages=()):
 	# mark sync time
 	hostsites = component.getUtility(IEtcNamespace, name='hostsites')
 	hostsites.lastSynchronized = time.time()
-	
+
 	# clean up
 	gc.collect()
-	
+
 	# notify
 	notify(AllContentPackageLibrariesDidSyncEvent(params, results))
 	return params, results

@@ -49,7 +49,7 @@ class TestEvolve26(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
 			ExampleDatabaseInitializer(max_test_users=0,skip_passwords=True).install( context )
 
 			ds_folder = context.connection.root()['nti.dataserver']
-			jason = ds_folder['users']['jason.madden@nextthought.com']
+			jason = ds_folder['users']['jason.madden']
 			jason.streamCache.__name__ = None
 			jason.streamCache.__parent__ = None
 
@@ -60,11 +60,11 @@ class TestEvolve26(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
 
 		with mock_db_trans( ) as conn:
 			ds_folder = context.connection.root()['nti.dataserver']
-			jason = ds_folder['users']['jason.madden@nextthought.com']
+			jason = ds_folder['users']['jason.madden']
 
 			assert_that( jason.streamCache, has_property( '__name__', 'streamCache' ) )
 
 			# Lazy objects weren't created
-			jeff = ds_folder['users']['jeff.muehring@nextthought.com']
+			jeff = ds_folder['users']['jeff.muehring']
 			jeff._p_activate()
 			assert_that( jeff.__dict__, does_not( has_key( 'streamCache' ) ) )

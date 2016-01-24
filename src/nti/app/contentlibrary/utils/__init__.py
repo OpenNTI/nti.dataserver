@@ -11,9 +11,10 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.contentlibrary.indexed_data import get_catalog
-
 from nti.contentlibrary.interfaces import IContentUnit
+from nti.contentlibrary.interfaces import IContentPackage
+from nti.contentlibrary.interfaces import IGlobalContentPackage
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -21,22 +22,6 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 
 PAGE_INFO_MT = nti_mimetype_with_class('pageinfo')
 PAGE_INFO_MT_JSON = PAGE_INFO_MT + '+json'
-
-def get_content_units(ntiids=()):
-	result = []
-	for ntiid in ntiids or ():
-		context = find_object_with_ntiid(ntiid)
-		if not IContentUnit.providedBy(context):
-			context = IContentUnit(context, None)
-		if context is not None:
-			result.append(context)
-	return result
-
-def get_item_content_units(item, sort=False):
-	catalog = get_catalog()
-	entries = catalog.get_containers(item)
-	result = get_content_units(entries) if entries else ()
-	return result
 
 def _encode(s):
 	return s.encode('utf-8') if isinstance(s, unicode) else s
@@ -91,15 +76,11 @@ def find_page_info_view_helper(request, page_ntiid_or_content_unit):
 	result = request.invoke_subrequest(subrequest)
 	return result
 
-from nti.contentlibrary.interfaces import IContentPackage
-from nti.contentlibrary.interfaces import IGlobalContentPackage
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
-def yield_sync_content_packages(ntiids=(), include_global=False):
+def yield_sync_content_packages(ntiids=()):
 	library = component.getUtility(IContentPackageLibrary)
 	if not ntiids:
 		for package in library.contentPackages:
-			if not IGlobalContentPackage.providedBy(package) or include_global:
+			if not IGlobalContentPackage.providedBy(package):
 				yield package
 	else:
 		for ntiid in ntiids:
@@ -107,6 +88,6 @@ def yield_sync_content_packages(ntiids=(), include_global=False):
 			package = IContentPackage(obj, None)
 			if package is None:
 				logger.error("Could not find package with NTIID %s", ntiid)
-			elif not IGlobalContentPackage.providedBy(package) or include_global:
+			elif not IGlobalContentPackage.providedBy(package):
 				yield package
 yield_content_packages = yield_sync_content_packages

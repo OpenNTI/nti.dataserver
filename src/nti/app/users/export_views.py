@@ -31,6 +31,7 @@ from nti.chatserver.interfaces import IUserTranscriptStorage
 from nti.common.proxy import removeAllProxies
 from nti.common.maps import CaseInsensitiveDict
 
+from nti.dataserver.interfaces import IACE
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IDataserverFolder
@@ -123,11 +124,12 @@ def get_user_objects(user, mime_types=(), broken=False):
 		for transcript in storage.transcripts:
 			yield transcript
 
-@view_config(route_name='objects.generic.traversal',
-			 name='export_user_objects',
-			 request_method='GET',
-			 context=IDataserverFolder,
-			 permission=nauth.ACT_NTI_ADMIN)
+@view_config(name='ExportUserObjects')
+@view_config(name='export_user_objects')
+@view_defaults(route_name='objects.generic.traversal',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   permission=nauth.ACT_NTI_ADMIN)
 class ExportUserObjectsView(AbstractAuthenticatedView):
 
 	def __call__(self):
@@ -159,11 +161,12 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 		result['Total'] = total
 		return result
 
-@view_config(route_name='objects.generic.traversal',
-			 name='export_objects_sharedwith',
-			 request_method='GET',
-			 context=IDataserverFolder,
-			 permission=nauth.ACT_NTI_ADMIN)
+@view_config(name='ExportObjectsSharedwith')
+@view_config(name='export_objects_sharedwith')
+@view_defaults(route_name='objects.generic.traversal',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   permission=nauth.ACT_NTI_ADMIN)
 class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 
 	def __call__(self):
@@ -208,11 +211,11 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 		result['Total'] = len(items)
 		return result
 
-@view_config(route_name='objects.generic.traversal',
-			 name='delete_user_objects',
-			 renderer='rest',
-			 request_method='POST',
-			 permission=nauth.ACT_NTI_ADMIN)
+@view_config(name='DeleteUserObjects')
+@view_config(name='delete_user_objects')
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_NTI_ADMIN)
 class DeleteUserObjects(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
 	def __call__(self):
@@ -300,8 +303,12 @@ class ObjectResolverView(AbstractAuthenticatedView):
 			if not acl:
 				provider = IACLProvider(resource, None)
 				acl = provider.__acl__ if provider is not None else None
+
 			for ace in acl or ():
-				aces.append(ace.to_external_string())
+				if IACE.providedBy(ace):
+					aces.append(ace.to_external_string())
+				else:
+					aces.append(str(ace))
 			if aces:  # found something
 				break
 		return result

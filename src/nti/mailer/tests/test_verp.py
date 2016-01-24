@@ -25,24 +25,25 @@ from .._verp import principal_ids_from_verp
 from .._verp import verp_from_recipients
 from ..interfaces import EmailAddresablePrincipal
 
-
 class TestVerp(unittest.TestCase):
 
 	def test_pids_from_verp_email(self):
 		fromaddr = b'no-reply+kaley.white%40nextthought.com.WBf3Ow@nextthought.com'
-
 		pids = principal_ids_from_verp(fromaddr, default_key='alpha.nextthought.com')
-
 		assert_that( pids, contains('kaley.white@nextthought.com'))
 
-		# outdated values
-		#fromaddr = b'no-reply+TGV4aVpvbGwuLWJOUlNZVS1ZV3FEanFvUi10dGRkLV82R01z@nextthought.com'
-		#pids = principal_ids_from_verp(fromaddr, default_key='mathcounts.nextthought.com')
-		#assert_that( pids, contains('LexiZoll'))
+		# With label
+		fromaddr = b'no-reply+label+label2+kaley.white%40nextthought.com.WBf3Ow@nextthought.com'
+		pids = principal_ids_from_verp(fromaddr, default_key='alpha.nextthought.com')
+		assert_that( pids, contains('kaley.white@nextthought.com'))
+
+		# With '+' in principal
+		fromaddr = b'no-reply+label+foo%2B%2B%2B.khcBPA@nextthought.com'
+		pids = principal_ids_from_verp(fromaddr, default_key='alpha.nextthought.com')
+		assert_that( pids, contains('foo+++'))
 
 		pids = principal_ids_from_verp(fromaddr)
 		assert_that( pids, is_(()))
-
 
 	@fudge.patch('nti.mailer._verp.find_site_policy',
 				 'nti.mailer._verp._get_signer_secret')
@@ -62,6 +63,17 @@ class TestVerp(unittest.TestCase):
 									 default_key='alpha.nextthought.com')
 
 		assert_that( addr, is_('"Janux" <no-reply+foo.pRjtUA@nextthought.com>') )
+
+		pids = principal_ids_from_verp(addr, default_key='alpha.nextthought.com')
+		assert_that( pids, contains(prin.id))
+
+		# Test with label already; principal with '+' chars.
+		prin.id = 'foo+++'
+		addr = verp_from_recipients( 'no-reply+label+label2@nextthought.com',
+									 (prin,),
+									 default_key='alpha.nextthought.com')
+
+		assert_that( addr, is_('"Janux" <no-reply+label+label2+foo%2B%2B%2B.FxikUQ@nextthought.com>') )
 
 		pids = principal_ids_from_verp(addr, default_key='alpha.nextthought.com')
 		assert_that( pids, contains(prin.id))

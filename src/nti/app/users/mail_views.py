@@ -53,6 +53,8 @@ from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
 from nti.dataserver.users.utils import reindex_email_verification
 
+from nti.externalization.externalization import to_external_object
+
 from .utils import get_email_verification_time
 from .utils import safe_send_email_verification
 from .utils import generate_mail_verification_pair
@@ -124,6 +126,12 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 
 		policy = component.getUtility(ISitePolicyUserEventListener)
 		support_email = getattr( policy, 'SUPPORT_EMAIL', 'support@nextthought.com' )
+		profile = IUserProfile(user)
+		user_ext = to_external_object(user)
+		informal_username = user_ext.get('NonI18NFirstName', profile.realname) or user.username
+
+		template_args['profile'] = profile
+		template_args['informal_username'] = informal_username
 		template_args['support_email'] = support_email
 		template_args['error_message'] = None
 		template_args['site_name'] = guess_site_display_name(self.request)

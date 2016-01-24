@@ -29,6 +29,9 @@ class TestPatch(unittest.TestCase):
 		class Schema(object):
 			def prepare(self): pass
 
+			def get_database_name(self, cursor):
+				return ''
+
 		class Locker(object):
 			def hold_commit_lock( self, cursor, ensure_current=True ):
 				pass
@@ -40,10 +43,18 @@ class TestPatch(unittest.TestCase):
 			def add_transaction( self, cursor, tid_int, user, desc, ext ):
 				pass
 
+		class ConnManager(object):
+			def open_for_load(self):
+				return None, None
+
+			def close(self, conn, cursor):
+				pass
+
 		adapter = Adapter()
 		adapter.schema = Schema()
 		adapter.txncontrol = TxnControl()
 		adapter.locker = Locker()
+		adapter.connmanager = ConnManager()
 
 		storage = RelStorage( adapter )
 		storage._transaction = object()

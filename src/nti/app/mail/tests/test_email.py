@@ -24,7 +24,9 @@ def _write_to_file(name, output):
 class TestEmailVerificationTemplate(ApplicationLayerTest):
 
 	def test_render(self):
-		body = 'This is the body of the email. I need everyone to come to class this week! Thank you.'
+		body = """This is the body of the email. <br /> <br />
+				I need everyone to come to class this week! <br />Thank you.
+				"""
 		body = sanitize_user_html( body )
 		args = {'body': body,
 				'email_to': 'jzuech3@gmail.com',
@@ -44,4 +46,4 @@ class TestEmailVerificationTemplate(ApplicationLayerTest):
 						 request=self.request,
 						 package=package)
 		_write_to_file('member_email.html', result)
-		assert_that(result, not_none())
+		assert_that( result, not_none() )

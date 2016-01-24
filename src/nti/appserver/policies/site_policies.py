@@ -17,8 +17,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.appserver import MessageFactory as _
-
 import urllib
 import datetime
 import nameparser
@@ -47,9 +45,18 @@ from pyramid.threadlocal import get_current_request
 
 from nti.app.users.utils import generate_verification_email_url
 
-from nti.appserver import interfaces as app_interfaces
+from nti.appserver import MessageFactory as _
 
-from nti.mailer.interfaces import ITemplatedMailer
+from nti.appserver.interfaces import IUserLogonEvent
+from nti.appserver.interfaces import IUserCapabilityFilter
+from nti.appserver.interfaces import IUserCreatedWithRequestEvent
+
+from nti.appserver.interfaces import UserUpgradedEvent
+
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
+
+from nti.common.string import has_emoji_chars
 
 from nti.contentfragments import censor
 from nti.contentfragments.interfaces import ICensoredContentPolicy
@@ -64,7 +71,7 @@ from nti.dataserver.interfaces import username_is_reserved
 from nti.dataserver.interfaces import ICoppaUserWithAgreement
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
-	
+
 from nti.dataserver.shards import AbstractShardPlacer
 
 from nti.dataserver.users import Entity
@@ -80,17 +87,18 @@ from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 from nti.dataserver.users.interfaces import IWillUpdateNewEntityEvent
 from nti.dataserver.users.interfaces import UsernameContainsIllegalChar
 
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import to_external_object
+
 from nti.externalization.interfaces import IExternalObjectDecorator
+
+from nti.externalization.singleton import SingletonDecorator
+
+from nti.mailer.interfaces import ITemplatedMailer
 
 from nti.schema.interfaces import InvalidValue
 from nti.schema.interfaces import find_most_derived_interface
 
 from nti.site.interfaces import ITransactionSiteNames
-
-from .interfaces import ISitePolicyUserEventListener
-from .interfaces import ICommunitySitePolicyUserEventListener
 
 import zope.deferredimport
 zope.deferredimport.initialize()
@@ -137,10 +145,10 @@ def get_possible_site_names(request=None, include_default=False):
 
 @interface.implementer(ITransactionSiteNames)
 class _TransactionSiteNames(object):
-	
+
 	def __call__(self, *args, **kwargs):
 		return get_possible_site_names(*args, **kwargs)
-		
+
 def _find_site_components(request, include_default=False, site_names=None):
 	site_names = site_names or get_possible_site_names(request=request,
 													   include_default=include_default)
@@ -428,11 +436,11 @@ def dispatch_user_will_update_to_site_policy(user, event):
 def dispatch_user_will_create_to_site_policy(user, event):
 	_dispatch_to_policy(user, event, 'user_will_create')
 
-@component.adapter(IUser, app_interfaces.IUserCreatedWithRequestEvent)
+@component.adapter(IUser, IUserCreatedWithRequestEvent)
 def dispatch_user_created_with_request_to_site_policy(user, event):
 	_dispatch_to_policy(user, event, 'user_created_with_request')
 
-@component.adapter(IUser, app_interfaces.IUserLogonEvent)
+@component.adapter(IUser, IUserLogonEvent)
 def dispatch_user_logon_to_site_policy(user, event):
 	_dispatch_to_policy(user, event, 'user_did_logon')
 
@@ -497,17 +505,17 @@ class AbstractSitePolicyEventListener(object):
 	Basics of a site policy.
 	"""
 
-	# : An email address used to send emails to users
-	# : such as account creation, both on behalf of this
-	# : object as well as from other places. Optional.
+	#: An email address used to send emails to users
+	#: such as account creation, both on behalf of this
+	#: object as well as from other places. Optional.
 	DEFAULT_EMAIL_SENDER = None
 
-	# : The asset spec for a template having both text and
-	# : HTML versions. If the asset spec is a bare name
-	# : like "foobar", it is assumed to be located in the
-	# : ``templates`` directory in the package this object
-	# : is located in. Otherwise, it can be a complete spec
-	# : such as "the.package:other_dir/foobar"
+	#: The asset spec for a template having both text and
+	#: HTML versions. If the asset spec is a bare name
+	#: like "foobar", it is assumed to be located in the
+	#: ``templates`` directory in the package this object
+	#: is located in. Otherwise, it can be a complete spec
+	#: such as "the.package:other_dir/foobar"
 	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = None
 	NEW_USER_CREATED_EMAIL_SUBJECT = None
 	NEW_USER_CREATED_BCC = None
@@ -520,8 +528,8 @@ class AbstractSitePolicyEventListener(object):
 	USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME = 'username_recovery_email'
 	USERNAME_RECOVERY_EMAIL_SUBJECT = "Username Reminder"
 
-	# : If defined, this will be send in the ``nti.landing_page``
-	# : cookie when a user logs on. Must be a byte string.
+	#: If defined, this will be send in the ``nti.landing_page``
+	#: cookie when a user logs on. Must be a byte string.
 	LANDING_PAGE_NTIID = None
 
 	BRAND = 'NextThought'
@@ -636,10 +644,17 @@ class AbstractSitePolicyEventListener(object):
 			raise MissingFirstName(_("Please provide your first name."),
 								   'realname',
 								   names.realname)
+		elif has_emoji_chars(human_name.first):
+			raise FieldContainsCensoredSequence(_("First name contains a censored sequence."),
+												'realname', names.realname)
+
 		if not human_name.last:
 			raise MissingLastName(_("Please provide your last name."),
 								  'realname',
 								  names.realname)
+		elif has_emoji_chars(human_name.last):
+			raise FieldContainsCensoredSequence(_("Last name contains a censored sequence."),
+												'realname', names.realname)
 
 		human_name.capitalize()
 		names.realname = unicode(human_name)
@@ -744,10 +759,9 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
 	PLACEHOLDER_REALNAME = 'com.nextthought.account_creation_user WithALastName'
 
-
 	def upgrade_user(self, user):
 		if not self.IF_WOUT_AGREEMENT.providedBy(user):
-			logger.debug("No need to upgrade user %s that doesn't provide %s", 
+			logger.debug("No need to upgrade user %s that doesn't provide %s",
 						 user, self.IF_WOUT_AGREEMENT)
 			request = get_current_request()
 			if request is not None and getattr(request, 'session', None) is not None:
@@ -774,10 +788,12 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 
 		# user.transitionTime = time.time()
 
-		notify(app_interfaces.UserUpgradedEvent(user,
-												restricted_interface=self.IF_WOUT_AGREEMENT, restricted_profile=orig_profile,
-												upgraded_interface=self.IF_WITH_AGREEMENT, upgraded_profile=new_profile,
-												request=get_current_request()))
+		notify(UserUpgradedEvent(user,
+								 restricted_interface=self.IF_WOUT_AGREEMENT, 
+								 restricted_profile=orig_profile,
+								 upgraded_interface=self.IF_WITH_AGREEMENT, 
+								 upgraded_profile=new_profile,
+								 request=get_current_request()))
 		return True
 		# TODO: If the new profile required some values the old one didn't, then what?
 		# Prime example: email, not required for kids, yes required for adults.
@@ -813,6 +829,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		names = IFriendlyNamed(user)
 		# Force the alias to be the same as the username
 		names.alias = user.username
+
 		# Match the format of, e.g, WrongTypeError: message, field/type, value
 		# the view likes this
 
@@ -830,7 +847,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 					'Username', user.username, value=user.username, field='Username')
 
 		if '@' in user.username:
-			raise UsernameCannotContainAt(user.username, 
+			raise UsernameCannotContainAt(user.username,
 										  user.ALLOWED_USERNAME_CHARS).new_instance_restricting_chars('@')
 
 		# This much is handled in the will_update_event
@@ -899,7 +916,7 @@ zope.deferredimport.deprecatedFrom(
 	"MathcountsCoppaUserWithoutAgreementUserProfile",
 	"MathcountsCoppaUserWithAgreementUserProfile")
 
-@interface.implementer(app_interfaces.IUserCapabilityFilter)
+@interface.implementer(IUserCapabilityFilter)
 @component.adapter(ICoppaUserWithoutAgreement)
 class NoAvatarUploadCapabilityFilter(object):
 	"""
@@ -914,7 +931,7 @@ class NoAvatarUploadCapabilityFilter(object):
 		result.discard('nti.platform.customization.avatar_upload')
 		return result
 
-@interface.implementer(app_interfaces.IUserCapabilityFilter)
+@interface.implementer(IUserCapabilityFilter)
 @component.adapter(ICoppaUserWithoutAgreement)
 class NoDFLCapabilityFilter(NoAvatarUploadCapabilityFilter):
 	"""
@@ -926,7 +943,7 @@ class NoDFLCapabilityFilter(NoAvatarUploadCapabilityFilter):
 		result.discard('nti.platform.p2p.dynamicfriendslists')
 		return result
 
-@interface.implementer(app_interfaces.IUserCapabilityFilter)
+@interface.implementer(IUserCapabilityFilter)
 @component.adapter(ICoppaUserWithoutAgreement)
 class NoChatAvatarDFLCapabilityFilter(NoDFLCapabilityFilter):
 	"""
@@ -952,7 +969,6 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 		"""
 		This policy places newly created users in the community defined by the fields
 		of this object (creating it if it doesn't exist).
-
 		"""
 		super(AdultCommunitySitePolicyEventListener, self).user_created(user, event)
 		self._join_community_user_created(user, event)
@@ -961,7 +977,6 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 zope.deferredimport.deprecatedFrom(
 	"Code should not access this directly; move your tests to the columbia site package."
 	" The only valid use is existing ZODB objects",
-
 	"nti.app.sites.columbia.interfaces",
 	"IColumbiaBusinessUserProfile")
 

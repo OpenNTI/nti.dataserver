@@ -63,7 +63,6 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 		addr = 'dummy.email+' + local + '@nextthought.com'
 		return rfc822.dump_address_pair( (realname, addr) )
 
-
 	def create_simple_html_text_email(self,
 									  base_template,
 									  subject='',

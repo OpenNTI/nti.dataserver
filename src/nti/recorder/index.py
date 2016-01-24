@@ -14,7 +14,7 @@ from zope import interface
 
 from zope.deprecation import deprecated
 
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
@@ -23,7 +23,6 @@ from nti.coremetadata.interfaces import IRecordable
 from nti.traversal.traversal import find_interface
 
 from nti.zope_catalog.catalog import Catalog
-from nti.zope_catalog.catalog import ResultSet
 
 from nti.zope_catalog.interfaces import IMetadataCatalog
 
@@ -48,10 +47,13 @@ IX_LOCKED = 'locked'
 IX_ATTRIBUTES = 'attributes'
 IX_CREATEDTIME = 'createdTime'
 IX_USERNAME = IX_PRINCIPAL = 'principal'
-IX_RECORDABLE = IX_TARGET_INTID = 'targetIntId'
 
 deprecated('SiteIndex', 'No longer used')
 class SiteIndex(RawSetIndex):
+	pass
+
+deprecated('TargetIntIDIndex', 'No longer used')
+class TargetIntIDIndex(IntegerAttributeIndex):
 	pass
 
 class PrincipalRawIndex(RawValueIndex):
@@ -81,11 +83,6 @@ class ValidatingTargetIntID(object):
 	def __reduce__(self):
 		raise TypeError()
 
-class TargetIntIDIndex(IntegerAttributeIndex):
-	field_callable = None  # XXX: Avoid migration
-	field_name = default_field_name = 'intid'
-	interface = default_interface = ValidatingTargetIntID
-
 class TIDIndex(AttributeValueIndex):
 	default_field_name = 'tid'
 	default_interface = ITransactionRecord
@@ -93,7 +90,7 @@ class TIDIndex(AttributeValueIndex):
 class TypeIndex(AttributeValueIndex):
 	default_field_name = 'type'
 	default_interface = ITransactionRecord
-	
+
 class CreatedTimeRawIndex(RawIntegerValueIndex):
 	pass
 
@@ -146,8 +143,7 @@ def create_recorder_catalog(catalog=None, family=None):
 						(IX_LOCKED, LockedIndex),
 						(IX_PRINCIPAL, PrincipalIndex),
 						(IX_CREATEDTIME, CreatedTimeIndex),
-						(IX_ATTRIBUTES, AttributeSetIndex),
-						(IX_TARGET_INTID, TargetIntIDIndex)):
+						(IX_ATTRIBUTES, AttributeSetIndex)):
 		index = clazz(family=family)
 		locate(index, catalog, name)
 		catalog[name] = index
@@ -172,25 +168,25 @@ def install_recorder_catalog(site_manager_container, intids=None):
 		intids.register(index)
 	return catalog
 
+def _yield_ids(doc_ids, intids, objects=True):
+	for uid in doc_ids or ():
+		if intids is None:  # tests
+			yield uid
+		else:
+			obj = intids.queryObject(uid)
+			if IRecordable.providedBy(obj):
+				yield obj if objects else uid
+
 def get_recordables(objects=True, catalog=None, intids=None):
 	"""
-	return the the recordables in the catalog
+	return the recordable objects/docids in the catalog
 	"""
+
 	if catalog is None:
 		catalog = component.getUtility(IMetadataCatalog, name=CATALOG_NAME)
+	intids = component.queryUtility(IIntIds) if intids is None else intids
 
-	# ids in transactions
-	target_index = catalog[IX_TARGET_INTID]
-	recordable_ids = catalog.family.IF.LFSet(target_index.values_to_documents.keys())
-
-	# locked status
 	locked_index = catalog[IX_LOCKED]
-	locked_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
-
-	uids = catalog.family.IF.union(locked_ids, recordable_ids)
-	if objects:
-		intids = component.getUtility(IIntIds) if intids is None else intids
-		result = ResultSet(uids, intids)
-	else:
-		result = uids
-	return result
+	intids = component.queryUtility(IIntIds) if intids is None else intids
+	doc_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
+	return _yield_ids(doc_ids, intids, objects)

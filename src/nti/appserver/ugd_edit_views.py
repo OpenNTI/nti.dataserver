@@ -53,20 +53,25 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 
 	# Therefore our context is a container, and we should respond created.
 
+	def doReadCreateUpdateContentObject(self, creator, search_owner=True, externalValue=None):
+		return super(UGDPostView, self).readCreateUpdateContentObject(creator,
+																	  search_owner=search_owner,
+																	  externalValue=externalValue)
+
 	def readCreateUpdateContentObject(self, creator, search_owner=True, externalValue=None):
 		if not self.request.POST:
-			note, owner = super(UGDPostView, self).readCreateUpdateContentObject(creator,
-																				 search_owner=search_owner,
-																				 externalValue=externalValue)
+			result = self.doReadCreateUpdateContentObject(creator,
+														  search_owner=search_owner,
+														  externalValue=externalValue)
 		else:
 			externalValue = get_source(self.request, 'json', 'input', 'source', 'content')
 			if not externalValue:
 				raise hexc.HTTPUnprocessableEntity("No source was specified")
 			externalValue = self.readInput(value=externalValue.read())
-			note, owner = super(UGDPostView, self).readCreateUpdateContentObject(creator,
-																				 search_owner=search_owner,
-																				 externalValue=externalValue)
-		return note, owner
+			result = self.doReadCreateUpdateContentObject(creator,
+														  search_owner=search_owner,
+														  externalValue=externalValue)
+		return result
 
 	def _transform_incoming_object(self, containedObject):
 		try:
@@ -212,7 +217,8 @@ class UGDDeleteView(AbstractAuthenticatedView,
 			return `None` (note, not a false value), then a :class:`.HTTPNotFound`
 			error will be raised.
 		"""
-		return theObject.creator.deleteContainedObject(theObject.containerId, theObject.id)
+		result = theObject.creator.deleteContainedObject(theObject.containerId, theObject.id)
+		return result
 
 class UGDPutView(AbstractAuthenticatedView,
 				 ModeledContentUploadRequestUtilsMixin,

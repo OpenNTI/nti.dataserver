@@ -18,6 +18,7 @@ from zope.dublincore import interfaces as dub_interfaces
 
 from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
+from zope.interface.common.sequence import IFiniteSequence
 
 from zope.lifecycleevent import ObjectAddedEvent
 from zope.lifecycleevent import ObjectRemovedEvent
@@ -40,7 +41,7 @@ from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
 from nti.ntiids.schema import ValidNTIID
 
-from nti.schema.field import Int
+from nti.schema.field import Int, ValidTextLine
 from nti.schema.field import Bool
 from nti.schema.field import List
 from nti.schema.field import Number
@@ -257,11 +258,11 @@ class IContentPackageLibrary(ILastModified,
 
 class ISynchronizationParams(interface.Interface):
 
-	packages = IndexedIterable(title="An iterable of NTIIDs of packages to sync",
-							   value_type=TextLine(title="The NTIID"),
-							   unique=True,
-							   default=(),
-							   required=False)
+	ntiids = IndexedIterable(title="An iterable of NTIIDs of 'things' to sync",
+							 value_type=TextLine(title="The NTIID"),
+							 unique=True,
+							 default=(),
+							 required=False)
 
 	allowRemoval = Bool(title="Allow content drops/removal",
 					  	default=False,
@@ -286,7 +287,39 @@ class ILibrarySynchronizationResults(IGenericSynchronizationResults):
 				   value_type=TextLine(title="The NTIID"),
 				   required=False)
 
-class ISynchronizationResults(interface.Interface):
+class IContentPackageSyncResults(IGenericSynchronizationResults):
+
+	Site = ValidTextLine(title="The site name", required=False)
+
+	ContentPackageNTIID = ValidTextLine(title="The ContentPackage NTIID", required=False)
+
+	AssessmentsUpdated =  UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
+										 title="The updated assessment NTIIDs",
+										 default=None, required=False)
+
+	AssessmentsSyncLocked = UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
+									  	   title="The locked assessment NTIIDs",
+									  	   default=None, required=False)
+	
+	AssetsUpdated =  UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
+									title="The updated asset NTIIDs",
+									default=None, required=False)
+
+	AssetsSyncLocked = UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
+									  title="The locked asset NTIIDs",
+									  default=None, required=False)
+
+	def add_assessment(item, locked=False):
+		"""
+		Add an assessment sync result
+		"""
+
+	def add_asset(item, locked=False):
+		"""
+		Add an asset sync result
+		"""
+
+class ISynchronizationResults(IFiniteSequence):
 
 	Items = IndexedIterable(title="An iterable of sync results",
 							value_type=Object(IGenericSynchronizationResults),

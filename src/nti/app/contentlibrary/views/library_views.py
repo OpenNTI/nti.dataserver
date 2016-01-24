@@ -21,22 +21,30 @@ from zope.location.interfaces import ILocationInfo
 from pyramid import traversal
 from pyramid import httpexceptions as hexc
 
-from pyramid.view import view_config, view_defaults
+from pyramid.view import view_config
+from pyramid.view import view_defaults
 
 from nti.app.authentication import get_remote_user
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.contentlibrary import LIBRARY_PATH_GET_VIEW
+
+from nti.app.contentlibrary.utils import PAGE_INFO_MT
+from nti.app.contentlibrary.utils import PAGE_INFO_MT_JSON
+from nti.app.contentlibrary.utils import find_page_info_view_helper
+
+from nti.app.renderers.caching import AbstractReliableLastModifiedCacheController
+
 from nti.app.renderers.interfaces import IExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.interfaces import IResponseCacheController
-from nti.app.renderers.caching import AbstractReliableLastModifiedCacheController
 
 from nti.appserver.context_providers import get_hierarchy_context
 from nti.appserver.context_providers import get_top_level_contexts
 from nti.appserver.context_providers import get_top_level_contexts_for_user
 
-from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
+from nti.appserver.dataserver_pyramid_views import GenericGetView
 
 from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import IHierarchicalContextProvider
@@ -57,15 +65,18 @@ from nti.contentlibrary.interfaces import IContentUnitHrefMapper
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IHighlight
-from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import IDataserverFolder
-
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+
+from nti.dataserver.interfaces import IHighlight
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IDataserverFolder
+
+from nti.recorder.interfaces import TRX_TYPE_CREATE
+from nti.recorder.interfaces import ITransactionRecordHistory
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import LocatedExternalList
@@ -84,12 +95,6 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.traversal.traversal import find_interface
 
-from ..utils import PAGE_INFO_MT
-from ..utils import PAGE_INFO_MT_JSON
-from ..utils import find_page_info_view_helper
-
-from .. import LIBRARY_PATH_GET_VIEW
-
 ITEMS = StandardExternalFields.ITEMS
 
 def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
@@ -100,7 +105,8 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	# Traverse down to the pages collection and use it to create the info.
 	# This way we get the correct link structure
 
-	remote_user = get_remote_user(request, dataserver=request.registry.getUtility(IDataserver))
+	remote_user = get_remote_user(request,
+								  dataserver=request.registry.getUtility(IDataserver))
 	if not remote_user:
 		raise hexc.HTTPForbidden()
 
@@ -126,8 +132,8 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	return info
 
 @view_config(name='')
-@view_config(name='pageinfo+json')
 @view_config(name='link+json')
+@view_config(name='pageinfo+json')
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context='nti.contentlibrary.interfaces.IContentUnit',
@@ -359,6 +365,10 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 	"""
 	Handle the caching and 403 response communication for
 	LibraryPath views.
+
+	This caching may not hold anymore, since items may be
+	published/visible at an editor's call. But with a max
+	age set, it may not be a big deal.
 	"""
 	# Max age of 5 minutes, then they need to check with us.
 	max_age = 300
@@ -370,10 +380,10 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 
 	def _get_library_path_last_mod(self):
 		result = 0
-		for library_last_mod in component.subscribers( (self.remoteUser,),
-										ILibraryPathLastModifiedProvider ):
+		for library_last_mod in component.subscribers((self.remoteUser,),
+										ILibraryPathLastModifiedProvider):
 			if library_last_mod is not None:
-				result = max( library_last_mod, result )
+				result = max(library_last_mod, result)
 		return result
 
 	def _get_library_last_mod(self):
@@ -388,11 +398,11 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 		return result or None
 
 	def do_caching(self, obj):
-		setattr( obj, 'lastModified', self.last_mod )
-		interface.alsoProvides( obj, IExternalCollection )
-		controller = IPreRenderResponseCacheController( obj )
+		setattr(obj, 'lastModified', self.last_mod)
+		interface.alsoProvides(obj, IExternalCollection)
+		controller = IPreRenderResponseCacheController(obj)
 		controller.max_age = self.max_age
-		controller( obj, {'request': self.request} )
+		controller(obj, {'request': self.request})
 
 	def pre_caching(self):
 		cache_controller = PreResponseLibraryPathCacheController()
@@ -409,6 +419,7 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 		except ForbiddenContextException as e:
 			# It appears we only have top-level-context objects,
 			# return a 403 so the client can react appropriately.
+			# TODO: Replace this with our new @@forbidden_related_context view?
 			response = hexc.HTTPForbidden()
 			result = LocatedExternalDict()
 			result[ITEMS] = e.joinable_contexts
@@ -436,18 +447,22 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 	Typical return:
 		[ [ <TopLevelContext>,
 			<Heirarchical Node>,
-			<Heirarchical Node>,
+			<Presentation Asset>,
 			<PageInfo>* ],
 			...
 		]
+
+	For authored content, that will not exist in a content package,
+	we should simply return the TopLevelContext and outline paths,
+	which should be enough for client navigation.
 	"""
 	def _get_path_for_package(self, package, obj, target_ntiid):
 		"""
 		For a given package, return the path to the target ntiid.
 		"""
 		unit = find_interface(obj, IContentUnit, strict=False)
-		if unit is not None:
-			# Found a unit in our lineage, easy.
+		if unit is not None and not IContentPackage.providedBy( unit ):
+			# Found a non-content package unit in our lineage.
 			return [unit]
 
 		# Try catalog.
@@ -459,11 +474,11 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 			# show up as embedded in the package. If we might
 			# have multiple units here, we could take the longest
 			# pathToNtiid from the library to get the leaf node.
-			if IContentPackage.providedBy(container):
-				continue
 			try:
 				container = package[container]
-				if container is not None:
+				if container is not None and container != package:
+					# In alpha, some packages can access themselves (?
+					# package[package.ntiid] == package -> True
 					return [container]
 			except (KeyError, AttributeError):
 				pass
@@ -494,8 +509,6 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 			# we start at the end.
 			units.reverse()
 			for unit in units:
-				if IContentPackage.providedBy(unit):
-					continue
 				try:
 					unit_res = find_page_info_view_helper(self.request, unit)
 					results.append(unit_res.json_body)
@@ -509,20 +522,26 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 		results.reverse()
 		return results
 
+	def _do_get_legacy_path_to_id(self, library, container_id):
+		# This should hit most UGD on lessons.
+		result = library.pathToNTIID(container_id)
+		if not result:
+			# Now we try embedded, and the first of the results.
+			# We
+			result = library.pathsToEmbeddedNTIID(container_id)
+			result = result[0] if result else result
+		return result
+
 	def _get_legacy_path_to_id(self, container_id):
 		# In the worst case, we may have to go through the
 		# library twice, looking for children and then
 		# embedded. With caching, this may not be too horrible.
+		# TODO: This will not find items contained by other items
+		# (e.g. videos, slides, etc).
 		library = component.queryUtility(IContentPackageLibrary)
 		result = None
 		if library:
-			# This should hit most UGD on lessons.
-			result = library.pathToNTIID(container_id)
-			if not result:
-				# Now we try embedded, and the first
-				# of the results.
-				result = library.pathsToEmbeddedNTIID(container_id)
-				result = result[0] if result else result
+			result = self._do_get_legacy_path_to_id( library, container_id )
 		return result
 
 	def _get_legacy_results(self, obj, target_ntiid):
@@ -531,7 +550,7 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 		only return the first available result. So we make
 		sure we only return a single result for now.
 		"""
-		legacy_path = self._get_legacy_path_to_id(target_ntiid)
+		legacy_path = self._get_legacy_path_to_id( target_ntiid )
 		if legacy_path:
 			package = legacy_path[0]
 			top_level_contexts = get_top_level_contexts_for_user(package, self.remoteUser)
@@ -551,7 +570,23 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 					result_list.extend(path_list)
 				return result_list
 
-	def _get_context_packages(self, context):
+	def _is_content_asset(self, obj):
+		# We used to blindly return our content packages
+		# for our context, but now, we need to make sure
+		# our target is actually in a package (e.g. versus
+		# authored through the API).
+		records = None
+		history = ITransactionRecordHistory( obj, None )
+		if history is not None:
+			records = history.query( record_type=TRX_TYPE_CREATE )
+		return not records
+
+	def _get_content_packages(self, obj, context):
+		# If we're not a content asset, we will not be found in our
+		# course units.
+		if not self._is_content_asset( obj ):
+			return ()
+
 		try:
 			packages = context.ContentPackageBundle.ContentPackages
 		except AttributeError:
@@ -572,23 +607,17 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 		for hierarchy_context in hierarchy_contexts:
 			# Bail if our top-level context is not readable
 			top_level_context = hierarchy_context[0]
-			if not is_readable(top_level_context):
+			if not is_readable( top_level_context ):
 				continue
-
-			# We have a hit
-			result_list = [ top_level_context ]
-
-			packages = self._get_context_packages(top_level_context)
+			result_list = list( hierarchy_context )
+			packages = self._get_content_packages( obj, top_level_context )
 
 			for package in packages:
 				path_list = self._get_path_for_package(package, obj, target_ntiid)
-				if path_list:
-					if is_readable(package):
-						if len(hierarchy_context) > 1:
-							result_list.extend(hierarchy_context[1:])
-						path_list = self._externalize_children(path_list)
-						result_list.extend(path_list)
-			result.append(result_list)
+				if path_list and is_readable(package):
+					path_list = self._externalize_children(path_list)
+					result_list.extend(path_list)
+			result.append( result_list )
 
 		# If we have nothing yet, it could mean our object
 		# is in legacy content. So we have to look through the library.
@@ -631,7 +660,7 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
-		# FIXME We need to validate user access to our endpoint
+		# FIXME: We need to validate user access to our endpoint
 		# object here, instead of assuming content package access
 		# is enough (versus asset visbility).
 		if 		ITopic.providedBy(obj) \

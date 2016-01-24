@@ -18,32 +18,41 @@ from datetime import datetime
 from zope import component
 from zope import lifecycleevent
 
-from zope.intid import IIntIds
+from zope.interface.common.idatetime import IDateTime
+
+from zope.intid.interfaces import IIntIds
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
-from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.coremetadata.interfaces import IRecordable
+from nti.coremetadata.interfaces import IRecordableContainer
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
-
-from nti.recorder.index import IX_PRINCIPAL
-from nti.recorder.index import IX_CREATEDTIME
-
-from nti.recorder import get_recorder_catalog
-from nti.recorder.record import get_transactions
-from nti.recorder.record import remove_transaction_history
+from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.authorization import ACT_NTI_ADMIN
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.recorder.index import IX_LOCKED
+from nti.recorder.index import IX_PRINCIPAL
+from nti.recorder.index import IX_CREATEDTIME
+from nti.recorder.index import get_recordables
+
+from nti.recorder import get_recorder_catalog
+from nti.recorder.interfaces import ITransactionRecord
+
+from nti.recorder.record import get_transactions
+from nti.recorder.record import remove_transaction_history
+
+from nti.zope_catalog.catalog import ResultSet
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -57,9 +66,58 @@ class RemoveTransactionHistoryView(AbstractAuthenticatedView):
 	def __call__(self):
 		result = LocatedExternalDict()
 		self.context.locked = False
+		if IRecordableContainer.providedBy(self.context):
+			self.context.child_order_locked = False
 		result[ITEMS] = get_transactions(self.context, sort=True)
 		remove_transaction_history(self.context)
 		lifecycleevent.modified(self.context)
+		return result
+
+@view_config(permission=ACT_NTI_ADMIN)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=IDataserverFolder,
+			   name='RemoveAllTransactionHistory')
+class RemoveAllTransactionHistoryView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		count = 0
+		records = 0
+		result = LocatedExternalDict()
+		recordables = get_recordables()
+		for recordable in recordables:
+			if recordable.locked or getattr(recordable, 'child_order_locked', False):
+				count += 1
+				recordable.locked = False
+				if IRecordableContainer.providedBy(recordable):
+					recordable.child_order_locked = False
+				records += remove_transaction_history(recordable)
+				lifecycleevent.modified(recordable)
+		result['Recordables'] = count
+		result['RecordsRemoved'] = records
+		return result
+
+@view_config(permission=ACT_NTI_ADMIN)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=IDataserverFolder,
+			   name='GetLockedObjects')
+class GetLockedObjectsView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		result = LocatedExternalDict()
+		items = result[ITEMS] = []
+		self.request.acl_decoration = False
+		intids = component.getUtility(IIntIds)
+		catalog = get_recorder_catalog()
+		query = {
+			IX_LOCKED:{'any_of':(True,)}
+		}
+		doc_ids = catalog.apply(query)
+		for context in ResultSet(doc_ids or (), intids, True):
+			if IRecordable.providedBy(context) and context.locked:
+				items.append(context)
+		result['ItemCount'] = result['Total'] = len(items)
 		return result
 
 def _make_min_max_btree_range(search_term):
@@ -77,7 +135,7 @@ def username_search(search_term):
 def parse_datetime(t):
 	if isinstance(t, six.string_types):
 		try:
-			t = isodate.parse_date(t)
+			t = IDateTime(t)
 		except Exception:
 			t = isodate.parse_datetime(t)
 	if isinstance(t, (date, datetime)):
@@ -90,7 +148,7 @@ def parse_datetime(t):
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   request_method='GET',
-			   context=IDataserver,
+			   context=IDataserverFolder,
 			   name='UserTransactionHistory')
 class UserTransactionHistoryView(AbstractAuthenticatedView):
 
@@ -104,30 +162,34 @@ class UserTransactionHistoryView(AbstractAuthenticatedView):
 		elif usernames:
 			usernames = usernames.split(",")
 
-		if not usernames:
-			raise hexc.HTTPUnprocessableEntity("Must provide a username")
-
-		startTime = values.get('startTime') or values.get('startDate')
-		startTime = parse_datetime(startTime) if startTime is not None else None
 		endTime = values.get('endTime') or values.get('endDate')
+		startTime = values.get('startTime') or values.get('startDate')
 		endTime = parse_datetime(endTime) if endTime is not None else None
+		startTime = parse_datetime(startTime) if startTime is not None else None
 
 		intids = component.getUtility(IIntIds)
 		result = LocatedExternalDict()
 		items = result[ITEMS] = {}
 		catalog = get_recorder_catalog()
 		query = {
-			IX_PRINCIPAL:{'any_of':usernames},
-			IX_CREATEDTIME:{'between':(startTime, endTime)},
+			IX_CREATEDTIME:{'between':(startTime, endTime)}
 		}
-		for uid in catalog.apply(query) or ():
-			context = intids.queryObject(uid)
-			if context is None:
-				continue
-			username = context.principal
-			items.setdefault(username, [])
-			items[username].append(context)
+		if usernames:
+			query[IX_PRINCIPAL] = {'any_of':usernames}
 
+		total = 0
+		doc_ids = catalog.apply(query)
+		for context in ResultSet(doc_ids or (), intids, True):
+			if ITransactionRecord.providedBy(context):
+				total += 1
+				username = context.principal
+				items.setdefault(username, [])
+				items[username].append(context)
+
+		# add total
+		result['Total'] = result['ItemCount'] = total
+
+		# sorted by createdTime
 		for values in items.values():
 			values.sort(key=lambda x: x.createdTime)
 		return result
