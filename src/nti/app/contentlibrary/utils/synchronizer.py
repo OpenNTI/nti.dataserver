@@ -13,10 +13,19 @@ import os
 import sys
 import argparse
 
+from zope import component
+
+from nti.app.contentlibrary.synchronize import synchronize
+
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.utils.base_script import create_context
 
-from ..synchronize import synchronize
+def _process_args(site, ntiids, removal):
+	library = component.getUtility(IContentPackageLibrary)
+	library.syncContentPackages()
+	return synchronize(site=site, ntiids=ntiids, allowRemoval=removal)
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Synchronize all libraries")
@@ -48,9 +57,9 @@ def main():
 						xmlconfig_packages=conf_packages,
 						verbose=args.verbose,
 						context=context,
-						function=lambda: synchronize(site=site,
-													 ntiids=ntiids,
-													 allowRemoval=removal))
+						function=lambda: _process_args(site=site,
+													   ntiids=ntiids,
+													   allowRemoval=removal))
 
 	sys.exit(0)
 
