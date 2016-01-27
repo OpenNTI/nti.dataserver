@@ -14,13 +14,13 @@ generation = 23
 
 from nti.dataserver.users import interfaces as user_interfaces
 
-def evolve( context ):
+def evolve(context):
 	"""
 	Evolve generation 22 to generation 23 by tweaking a name.
 	"""
 	conn = context.connection
 	dataserver_folder = conn.root()['nti.dataserver']
 	users_folder = dataserver_folder['users']
-	if users_folder.get( 'MathCounts' ):
+	if users_folder.get('MathCounts'):
 		mc = users_folder['MathCounts']
-		user_interfaces.IFriendlyNamed( mc ).alias = 'MATHCOUNTS'
+		user_interfaces.IFriendlyNamed(mc).alias = 'MATHCOUNTS'

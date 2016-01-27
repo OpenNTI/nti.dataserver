@@ -14,10 +14,11 @@ generation = 24
 
 from collections import Iterable
 
-from zope.generations.utility import findObjectsMatching
-
 from zope import component
+
 from zope.component.hooks import site, setHooks
+
+from zope.generations.utility import findObjectsMatching
 
 from persistent import Persistent
 
@@ -27,18 +28,18 @@ from nti.dataserver.contenttypes import Canvas
 def _build_map():
 	result = {}
 	for k, v in contenttypes.__dict__.items():
-		if k.startswith( 'Canvas' ) and k.endswith( 'Shape'):
+		if k.startswith('Canvas') and k.endswith('Shape'):
 			result[v] = contenttypes.__dict__['Nonpersistent' + k]
 	return result
 
 PERSISTENT_TO_NONPERSISTENT = _build_map()
 
-def migrate( note ):
+def migrate(note):
 	for item in note.body:
-		if isinstance( item, Canvas ):
+		if isinstance(item, Canvas):
 			for i, shape in enumerate(item.shapeList):
 				# If we find a persistent shape
-				if isinstance( shape, Persistent ):
+				if isinstance(shape, Persistent):
 					# Make the same kind of non-persistent object
 					new_shape = PERSISTENT_TO_NONPERSISTENT[type(shape)]()
 					# and copy everything out of its dict. We know
@@ -61,9 +62,9 @@ def needs_migrate(x):
 	Notes, the most common thing, but also the MessageInfo objects stored under
 	annotations of users.
 	"""
-	return isinstance( getattr( x, 'body', None ), Iterable) and not getattr( x, '_v_migrated', False )
+	return isinstance(getattr(x, 'body', None), Iterable) and not getattr(x, '_v_migrated', False)
 
-def evolve( context ):
+def evolve(context):
 	"""
 	Evolve generation 23 to generation 24 by making all CanvasShape objects
 	non-persistent.
@@ -71,12 +72,12 @@ def evolve( context ):
 
 	setHooks()
 	ds_folder = context.connection.root()['nti.dataserver']
-	with site( ds_folder ):
+	with site(ds_folder):
 		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
 
 		users = ds_folder['users']
 		for user in users.values():
-			for note in findObjectsMatching( user,
+			for note in findObjectsMatching(user,
 											 needs_migrate):
 				__traceback_info__ = user, note
-				migrate( note )
+				migrate(note)
