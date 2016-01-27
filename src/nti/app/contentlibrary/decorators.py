@@ -16,6 +16,8 @@ from zope.location.interfaces import ILocation
 
 from pyramid.interfaces import IRequest
 
+from nti.app.contentlibrary import LIBRARY_PATH_GET_VIEW
+
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver.interfaces import IContentUnitInfo
@@ -39,8 +41,6 @@ from nti.links.links import Link
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 from nti.ntiids.ntiids import is_valid_ntiid_string
-
-from . import LIBRARY_PATH_GET_VIEW
 
 LINKS = StandardExternalFields.LINKS
 
@@ -128,7 +128,7 @@ class _UGDLibraryPathLinkDecorator(object):
 		if external_ntiid is None:
 			# Non-persistent content unit perhaps.
 			# Just add library path to our note.
-			external_ntiid = to_external_ntiid_oid( context )
+			external_ntiid = to_external_ntiid_oid(context)
 
 		if external_ntiid is not None:
 			path = '/dataserver2/%s' % LIBRARY_PATH_GET_VIEW
@@ -154,9 +154,9 @@ class _PostLibraryPathLinkDecorator(object):
 		# the 'physical' path may not quite be traversable at this
 		# point. Not sure why that would be, but the ILocation parents
 		# had a root above dataserver.
-		target_ntiid = to_external_ntiid_oid( context )
+		target_ntiid = to_external_ntiid_oid(context)
 		if target_ntiid is None:
-			logger.warn( "Failed to get ntiid; not adding LibraryPath link for %s", context )
+			logger.warn("Failed to get ntiid; not adding LibraryPath link for %s", context)
 			return
 
 		_links = result.setdefault(LINKS, [])
@@ -175,7 +175,9 @@ class _BaseBoardLibraryPathLinkDecorator(object):
 
 	def decorateExternalMapping(self, context, result):
 		_links = result.setdefault(LINKS, [])
-		link = Link(context, rel=LIBRARY_PATH_GET_VIEW, elements=(LIBRARY_PATH_GET_VIEW,))
+		link = Link(context,
+					rel=LIBRARY_PATH_GET_VIEW,
+					elements=(LIBRARY_PATH_GET_VIEW,))
 		interface.alsoProvides(link, ILocation)
 		link.__name__ = ''
 		link.__parent__ = context
