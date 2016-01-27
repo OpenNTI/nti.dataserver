@@ -18,7 +18,11 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
+from zope.mimetype.interfaces import IContentTypeAware
+
 from nti.coremetadata.interfaces import IRecordable
+
+from nti.recorder.interfaces import ITransactionRecord
 
 from nti.traversal.traversal import find_interface
 
@@ -37,13 +41,12 @@ from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
 from nti.zope_catalog.string import StringTokenNormalizer
 from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
 
-from .interfaces import ITransactionRecord
-
 CATALOG_NAME = 'nti.dataserver.++etc++recorder-catalog'
 
 IX_TID = 'tid'
 IX_TYPE = 'type'
 IX_LOCKED = 'locked'
+IX_MIMETYPE = 'mimeType'
 IX_ATTRIBUTES = 'attributes'
 IX_CREATEDTIME = 'createdTime'
 IX_USERNAME = IX_PRINCIPAL = 'principal'
@@ -55,6 +58,10 @@ class SiteIndex(RawSetIndex):
 deprecated('TargetIntIDIndex', 'No longer used')
 class TargetIntIDIndex(IntegerAttributeIndex):
 	pass
+
+class MimeTypeIndex(AttributeValueIndex):
+	default_field_name = 'mimeType'
+	default_interface = IContentTypeAware
 
 class PrincipalRawIndex(RawValueIndex):
 	pass
@@ -141,6 +148,7 @@ def create_recorder_catalog(catalog=None, family=None):
 	for name, clazz in ((IX_TID, TIDIndex),
 						(IX_TYPE, TypeIndex),
 						(IX_LOCKED, LockedIndex),
+						(IX_MIMETYPE, MimeTypeIndex),
 						(IX_PRINCIPAL, PrincipalIndex),
 						(IX_CREATEDTIME, CreatedTimeIndex),
 						(IX_ATTRIBUTES, AttributeSetIndex)):
