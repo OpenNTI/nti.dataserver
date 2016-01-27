@@ -59,9 +59,27 @@ deprecated('TargetIntIDIndex', 'No longer used')
 class TargetIntIDIndex(IntegerAttributeIndex):
 	pass
 
+class ValidatingMimeType(object):
+
+	__slots__ = (b'mimeType',)
+
+	def __init__(self, obj, default=None):
+		if ITransactionRecord.providedBy(obj):
+			source = find_interface(obj, IRecordable, strict=False)
+		elif IRecordable.providedBy(obj):
+			source = obj
+		else:
+			source = None
+		if source is not None:
+			source = IContentTypeAware(source, source)
+			self.mimeType = 	getattr(source, 'mimeType', None) \
+							or  getattr(source, 'mime_type', None)
+	def __reduce__(self):
+		raise TypeError()
+
 class MimeTypeIndex(AttributeValueIndex):
 	default_field_name = 'mimeType'
-	default_interface = IContentTypeAware
+	default_interface = ValidatingMimeType
 
 class PrincipalRawIndex(RawValueIndex):
 	pass
