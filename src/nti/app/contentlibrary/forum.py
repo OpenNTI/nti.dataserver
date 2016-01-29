@@ -17,8 +17,6 @@ from zope import component
 
 from zope.cachedescriptors.property import cachedIn
 
-from zope.security.interfaces import IPrincipal
-
 # Board
 
 from nti.app.contentlibrary.interfaces import IContentBoard
@@ -31,8 +29,6 @@ from nti.dataserver.contenttypes.forums.board import GeneralBoard
 from nti.dataserver.contenttypes.forums.board import AnnotatableBoardAdapter
 
 from nti.dataserver.interfaces import system_user 
-from nti.dataserver.interfaces import IACLProvider
-from nti.dataserver.interfaces import ACE_ACT_ALLOW
 
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -121,17 +117,8 @@ class ContentHeadlineTopic(GeneralHeadlineTopic):
 		# the permissioning of the content bundles themselves
 		# auth = IPrincipal( AUTHENTICATED_GROUP_NAME )
 		# interface.alsoProvides(auth, IEntity)
-		principals = set()
-		provider = IACLProvider(self, None)
-		acl = getattr(provider, '__acl__', None) or getattr(self, '__acl__', None)
-		for ace in acl or ():
-			if ace.action is ACE_ACT_ALLOW:
-				principals.add(IPrincipal(ace.actor).id)
-		if not principals:
-			principals.add('Everyone')
-		result = {users.Entity.get_entity(x) for x in principals}
-		result.discard(None)
-		return tuple(result)
+		result = (users.Entity.get_entity('Everyone'),)
+		return result
 
 	@property
 	def flattenedSharingTargetNames(self):
