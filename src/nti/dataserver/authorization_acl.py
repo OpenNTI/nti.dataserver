@@ -310,8 +310,8 @@ def has_permission(permission, context, username, **kwargs):
 	if not policy:
 		return psecDenied("No IAuthorizationPolicy installed")
 	return policy.permits(to_check,
-						   authentication.effective_principals(username, **kwargs),
-						   permission)
+						  authentication.effective_principals(username, **kwargs),
+						  permission)
 
 def is_writable(context, username, **kwargs):
 	"""

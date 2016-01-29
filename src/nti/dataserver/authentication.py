@@ -67,7 +67,8 @@ def effective_principals( username,
 						  registry=component,
 						  authenticated=True,
 						  user_factory=_user_factory,
-						  request=None ):
+						  request=None,
+						  everyone=True):
 	"""
 	Find and return the principals for the given username. This will include
 	the username itself (obviously), plus a principal for Everyone, plus
@@ -114,10 +115,11 @@ def effective_principals( username,
 		# NTIID principal in our effective principals.
 		result.add( IPrincipal(user.NTIID) )
 
-	# Add the authenticated and everyone groups
-	result.add( 'Everyone' )
-	result.add( IPrincipal( 'Everyone' ) )
-	result.add( IPrincipal( EVERYONE_GROUP_NAME ) )
+	if everyone:
+		# Add the authenticated and everyone groups
+		result.add( 'Everyone' )
+		result.add( IPrincipal( 'Everyone' ) )
+		result.add( IPrincipal( EVERYONE_GROUP_NAME ) )
 
 	if authenticated:
 		result.add( IPrincipal( AUTHENTICATED_GROUP_NAME ) )
