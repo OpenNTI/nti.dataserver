@@ -253,6 +253,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 			subject = '[COPY] %s' % subject
 			self.send_email( self.sender, subject, body, email )
 
-		logger.info( '%s sent %s emails to "%s"',
-					self.remoteUser, send_count, self._context_display_name)
+		logger.info( '%s sent %s emails to "%s" (reply=%s) (sender_reply=%s)',
+					self.remoteUser, send_count, self._context_display_name,
+					email.NoReply, self._sender_reply_addr)
 		return hexc.HTTPNoContent()
