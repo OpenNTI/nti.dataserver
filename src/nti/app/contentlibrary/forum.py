@@ -96,8 +96,6 @@ class ContentForum(GeneralForum):
 
 from nti.app.contentlibrary.interfaces import IContentHeadlineTopic
 
-from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
-
 from nti.dataserver import users
 
 from nti.dataserver.contenttypes.forums.topic import GeneralHeadlineTopic
@@ -118,8 +116,7 @@ class ContentHeadlineTopic(GeneralHeadlineTopic):
 		# the permissioning of the content bundles themselves
 		# auth = IPrincipal( AUTHENTICATED_GROUP_NAME )
 		# interface.alsoProvides(auth, IEntity)
-		site = component.queryUtility(ICommunitySitePolicyUserEventListener)
-		community_name = getattr(site, 'COM_USERNAME', None) or 'Everyone'
+		community_name = 'Everyone'
 		community = users.Entity.get_entity(community_name)
 		return (community,) if community is not None else ()
 
