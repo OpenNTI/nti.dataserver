@@ -11,11 +11,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from pyramid.threadlocal import get_current_request
-
 from zope import interface
 
 from zope.location.interfaces import ILocation
+
+from pyramid.threadlocal import get_current_request
 
 from nti.app.publishing import VIEW_PUBLISH
 from nti.app.publishing import VIEW_UNPUBLISH
@@ -42,9 +42,9 @@ def _acl_decoration(request):
 	return result
 	
 def _expose_links(context, request):
-	return 		_acl_decoration(request) \
-			and	getattr(context, '_p_jar', None) \
-			and has_permission(ACT_CONTENT_EDIT, context, request)
+	return (	_acl_decoration(request)
+			and	getattr(context, '_p_jar', None)
+			and has_permission(ACT_CONTENT_EDIT, context, request))
 
 def _get_publish_state(obj):
 	return 'DefaultPublished' if obj.is_published() else None
@@ -101,6 +101,6 @@ class CalendarPublishStateDecorator(object):
 				link.__name__ = ''
 				link.__parent__ = context
 				_links.append(link)
-		result['PublicationState'] = _get_publish_state(context)
-		result['publishBeginning'] = context.publishBeginning
 		result['publishEnding'] = context.publishEnding
+		result['publishBeginning'] = context.publishBeginning
+		result['PublicationState'] = _get_publish_state(context)
