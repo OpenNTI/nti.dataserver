@@ -460,7 +460,6 @@ setup(
 			'ropemode >= 0.2',	# IDE helper for rope
 			'jedi',
 			'ropemacs',
-			'traitlets',
 			'snakefood', # dependency graphs
 			'sphinx',	# Narrative docs
 			'sphinxcontrib-programoutput >= 0.8',
