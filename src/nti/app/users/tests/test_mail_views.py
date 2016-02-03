@@ -109,7 +109,7 @@ class TestMailViews(ApplicationLayerTest):
 
 		# Munge the signature such that the verification fails
 		# We only validate the signature, so mangle that.
-		href.replace( 'signature=', 'signature=baddata' )
+		href = href.replace( 'signature=', 'signature=baddata' )
 
 		extra_environ = self._make_extra_environ(user=username)
 		result = self.testapp.get(href, extra_environ=extra_environ, status=200)
