@@ -141,6 +141,12 @@ class ContentHeadlineTopic(GeneralHeadlineTopic):
 			res = IDefaultPublished.providedBy(self)
 		return res
 
+	def publish(self):
+		return super(ContentHeadlineTopic, self).publish()
+
+	def unpublish(self):
+		return super(ContentHeadlineTopic, self).unpublish()
+
 # Posts
 
 from nti.app.contentlibrary.interfaces import IContentCommentPost
