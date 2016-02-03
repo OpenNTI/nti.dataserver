@@ -24,11 +24,13 @@ except ImportError:
 	def get_thread_ident():
 		return id(transaction.get())
 
-from .interfaces import TRX_TYPE_CREATE
-from .interfaces import TRX_TYPE_UPDATE
-from .interfaces import ITransactionRecordHistory
+from nti.externalization.externalization import isSyntheticKey
 
-from .record import TransactionRecord
+from nti.recorder.interfaces import TRX_TYPE_CREATE
+from nti.recorder.interfaces import TRX_TYPE_UPDATE
+from nti.recorder.interfaces import ITransactionRecordHistory
+
+from nti.recorder.record import TransactionRecord
 
 from ZODB.utils import serial_repr
 
@@ -67,6 +69,29 @@ def is_created(obj):
 def txn_id():
 	return unicode("txn.%s" % get_thread_ident())
 
+def _get_attributes( descriptions ):
+	if descriptions is not None and not isinstance(descriptions, (tuple, list, set)):
+		descriptions = (descriptions,)
+
+	result = set()
+
+	def _accum( vals ):
+		# Exclude synthetic keys, including mimetype.
+		for val in vals:
+			if 		val \
+				and not isSyntheticKey( val ) \
+				and val.lower() != 'mimetype':
+				result.add( val )
+
+	for a in descriptions or ():
+		if hasattr(a, 'attributes'):
+			_accum( a.attributes or () )
+		elif isinstance(a, (tuple, list, set)):
+			_accum( a )
+		else:
+			_accum( (a,) )
+	return result
+
 def record_transaction(recordable, principal=None, descriptions=(),
 					   ext_value=None, type_=TRX_TYPE_UPDATE, history=None):
 
@@ -79,17 +104,7 @@ def record_transaction(recordable, principal=None, descriptions=(),
 	tid = unicode(serial_repr(tid)) if tid else txn_id()
 	tid = txn_id() if tid == u'0x00' else tid  # new object
 
-	if descriptions is not None and not isinstance(descriptions, (tuple, list, set)):
-		descriptions = (descriptions,)
-
-	attributes = set()
-	for a in descriptions or ():
-		if hasattr(a, 'attributes'):
-			attributes.update(a.attributes or ())
-		elif isinstance(a, (tuple, list, set)):
-			attributes.update(a)
-		else:
-			attributes.add(a)
+	attributes = _get_attributes( descriptions )
 
 	principal = current_principal() if principal is None else principal
 	username = (getattr(principal, 'id', None)
