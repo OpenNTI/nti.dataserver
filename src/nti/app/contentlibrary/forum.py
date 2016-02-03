@@ -106,8 +106,11 @@ from nti.dataserver.interfaces import IDefaultPublished
 class ContentHeadlineTopic(GeneralHeadlineTopic):
 
 	__external_can_create__ = True
+	
 	mimeType = 'application/vnd.nextthought.forums.contentheadlinetopic'
 
+	publicationSharingTargets = ('Everyone',)
+	
 	@property
 	def sharingTargetsWhenPublished(self):
 		# Instead of returning the default set from super, which would return
@@ -117,8 +120,12 @@ class ContentHeadlineTopic(GeneralHeadlineTopic):
 		# the permissioning of the content bundles themselves
 		# auth = IPrincipal( AUTHENTICATED_GROUP_NAME )
 		# interface.alsoProvides(auth, IEntity)
-		result = (users.Entity.get_entity('Everyone'),)
-		return result
+		result = []
+		for name in self.publicationSharingTargets:
+			entity = users.Entity.get_entity(name)
+			if entity is not None:
+				result.append(entity)
+		return tuple(result)
 
 	@property
 	def flattenedSharingTargetNames(self):
