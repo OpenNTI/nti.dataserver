@@ -117,7 +117,7 @@ class IRedisClient(IExternalService):
 	separated by the ``/`` character.
 	"""
 
-class IMemcacheClient(IExternalService):
+class IMemcachedClient(IExternalService):
 	"""
 	A very poor abstraction of a :class:`memcache.Client` client.
 	In general, this should only be used in the lowest low level code and
@@ -131,13 +131,20 @@ class IMemcacheClient(IExternalService):
 	"""
 
 	def get(key):
-		"Return the unpickled value, or None"
+		"""
+		Return the unpickled value, or None
+		"""
 
 	def set(key, value, time=0):
-		"Pickle the value and store it, returning True on success."
+		"""
+		Pickle the value and store it, returning True on success.
+		"""
 
 	def delete(key):
-		"Remove the key from the cache."
+		"""
+		Remove the key from the cache.
+		"""
+IMemcacheClient = IMemcachedClient
 
 # BWC exports
 from nti.site.interfaces import IHostSitesFolder
