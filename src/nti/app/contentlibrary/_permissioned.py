@@ -33,9 +33,10 @@ from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 from nti.dataserver.interfaces import IMemcacheClient
 
+#: Default memcached expiration time in secs
 EXP_TIME = 86400
 
-def _memcache_client():
+def _memcached_client():
 	return component.queryUtility(IMemcacheClient)
 
 def _encode_keys(*keys):
@@ -86,7 +87,7 @@ def _on_operation_on_scope_membership(record, event):
 	principal = record.Principal
 	if principal != None:
 		pid = IPrincipal(principal).id
-		_set_user_ticket(pid, _memcache_client())
+		_set_user_ticket(pid, _memcached_client())
 
 @component.adapter(ICourseInstanceEnrollmentRecord, IObjectAddedEvent)
 def _on_enroll_record(record, event):
@@ -100,7 +101,7 @@ class _PermissionedContentPackageMixin(object):
 
 	@Lazy
 	def _client(self):
-		return _memcache_client()
+		return _memcached_client()
 
 	def _test_and_cache(self, content_package):
 		# test readability
