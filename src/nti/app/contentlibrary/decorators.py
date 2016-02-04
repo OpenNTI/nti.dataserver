@@ -25,15 +25,16 @@ from nti.appserver.interfaces import IContentUnitInfo
 from nti.contentlibrary.interfaces import IContentPackageBundle
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
-from nti.dataserver.interfaces import IHighlight
-
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.dataserver.interfaces import IHighlight
+
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.externalization.singleton import SingletonDecorator
 
 from nti.externalization.externalization import to_external_ntiid_oid
 

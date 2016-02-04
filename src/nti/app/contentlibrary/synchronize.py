@@ -15,6 +15,7 @@ import time
 import gevent
 
 from zope import component
+
 from zope.event import notify
 
 from zope.traversing.interfaces import IEtcNamespace
@@ -24,10 +25,10 @@ from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
 from nti.contentlibrary.interfaces import AllContentPackageLibrariesDidSyncEvent
 from nti.contentlibrary.interfaces import AllContentPackageLibrariesWillSyncEvent
 
+from nti.contentlibrary.subscribers import install_site_content_library
+
 from nti.contentlibrary.synchronize import SynchronizationParams
 from nti.contentlibrary.synchronize import SynchronizationResults
-
-from nti.contentlibrary.subscribers import install_site_content_library
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
 from nti.site.hostpolicy import synchronize_host_policies
