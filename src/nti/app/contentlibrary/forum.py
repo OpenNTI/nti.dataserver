@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from itertools import chain
+
 from zope import schema
 from zope import interface
 from zope import component
@@ -28,11 +30,16 @@ from nti.dataserver.contenttypes.forums import MessageFactory as _
 from nti.dataserver.contenttypes.forums.board import GeneralBoard
 from nti.dataserver.contenttypes.forums.board import AnnotatableBoardAdapter
 
-from nti.dataserver.interfaces import system_user 
+from nti.dataserver.interfaces import system_user , ICommunity
 
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.ntiids.ntiids import TYPE_OID
+
+from nti.site.interfaces import IHostPolicyFolder
+from nti.site.site import get_component_hierarchy_names
+
+from nti.traversal.traversal import find_interface
 
 @interface.implementer(IContentBoard)
 class ContentBoard(GeneralBoard):
@@ -109,7 +116,8 @@ class ContentHeadlineTopic(GeneralHeadlineTopic):
 	
 	mimeType = 'application/vnd.nextthought.forums.contentheadlinetopic'
 
-	publicationSharingTargets = ('Everyone',)
+	DEFAULT_SHARING_TARGETS = ('Everyone',)
+	publicationSharingTargets = DEFAULT_SHARING_TARGETS
 	
 	@property
 	def sharingTargetsWhenPublished(self):
@@ -142,9 +150,23 @@ class ContentHeadlineTopic(GeneralHeadlineTopic):
 		return res
 
 	def publish(self):
+		folder = find_interface(self, IHostPolicyFolder, strict=False)
+		if folder is not None:
+			# find a community in site hierarchy
+			names = chain((folder.__name__,), get_component_hierarchy_names())
+			for name in names:
+				comm = users.Entity.get_entity(name or u'')
+				if ICommunity.providedBy(comm): # we have community
+					self.publicationSharingTargets = (name,)
+					break
+			else:
+				self.publicationSharingTargets = () # no community
+		else: # global
+			self.publicationSharingTargets = self.DEFAULT_SHARING_TARGETS
 		return super(ContentHeadlineTopic, self).publish()
 
 	def unpublish(self):
+		self.publicationSharingTargets = self.DEFAULT_SHARING_TARGETS  # restore
 		return super(ContentHeadlineTopic, self).unpublish()
 
 # Posts
