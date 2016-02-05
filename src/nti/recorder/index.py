@@ -28,6 +28,8 @@ from nti.traversal.traversal import find_interface
 
 from nti.zope_catalog.catalog import Catalog
 
+from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
+
 from nti.zope_catalog.interfaces import IMetadataCatalog
 
 from nti.zope_catalog.index import AttributeSetIndex
@@ -39,16 +41,28 @@ from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
 
 from nti.zope_catalog.string import StringTokenNormalizer
-from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
 
 CATALOG_NAME = 'nti.dataserver.++etc++recorder-catalog'
 
+#: Transaction ID index
 IX_TID = 'tid'
+
+#: Transaction type index
 IX_TYPE = 'type'
+
+#: Recordable object locked attribute index
 IX_LOCKED = 'locked'
+
+#: Recordable object MimeType
 IX_MIMETYPE = 'mimeType'
+
+#: Transaction attribute
 IX_ATTRIBUTES = 'attributes'
+
+#: Transaction time
 IX_CREATEDTIME = 'createdTime'
+
+#: Transaction principal
 IX_USERNAME = IX_PRINCIPAL = 'principal'
 
 deprecated('SiteIndex', 'No longer used')

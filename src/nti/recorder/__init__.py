@@ -11,15 +11,15 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from nti.recorder.index import CATALOG_NAME
+
+from nti.recorder.interfaces import TRX_RECORD_HISTORY_KEY
+
+from nti.recorder.record import get_transactions
+from nti.recorder.record import has_transactions
+from nti.recorder.record import remove_transaction_history
+
 from nti.zope_catalog.interfaces import IMetadataCatalog
-
-from .index import CATALOG_NAME
-
-from .interfaces import TRX_RECORD_HISTORY_KEY
-
-from .record import get_transactions
-from .record import has_transactions
-from .record import remove_transaction_history
 
 def get_recorder_catalog():
 	return component.queryUtility(IMetadataCatalog, name=CATALOG_NAME)

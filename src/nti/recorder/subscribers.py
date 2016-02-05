@@ -21,11 +21,11 @@ from nti.coremetadata.interfaces import IRecordable
 
 from nti.externalization.interfaces import IObjectModifiedFromExternalEvent
 
-from .record import remove_transaction_history
+from nti.recorder.interfaces import ITransactionRecordHistory
 
-from .interfaces import ITransactionRecordHistory
+from nti.recorder.record import remove_transaction_history
 
-from .utils import record_transaction
+from nti.recorder.utils import record_transaction
 
 @component.adapter(IRecordable, IObjectModifiedFromExternalEvent)
 def _record_modification(obj, event):
