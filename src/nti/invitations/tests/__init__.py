@@ -12,16 +12,13 @@ from nti.testing.layers import GCLayerMixin
 from nti.testing.layers import ZopeComponentLayer
 from nti.testing.layers import ConfiguringLayerMixin
 
-from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
-
 import zope.testing.cleanup
 
 class SharedConfiguringTestLayer(ZopeComponentLayer,
                                  GCLayerMixin,
-                                 ConfiguringLayerMixin,
-                                 DSInjectorMixin):
+                                 ConfiguringLayerMixin):
 
-    set_up_packages = ('nti.dataserver', 'nti.invitations')
+    set_up_packages = ('nti.invitations',)
 
     @classmethod
     def setUp(cls):
@@ -35,7 +32,6 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
     @classmethod
     def testSetUp(cls, test=None):
         test = test or find_test()
-        cls.setUpTestDS(test)
 
     @classmethod
     def testTearDown(cls):

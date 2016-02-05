@@ -34,9 +34,10 @@ from zope.interface.interfaces import ObjectEvent, IObjectEvent
 
 from zope.schema import ValidationError
 
+from nti.coremetadata.interfaces import ICreated
+from nti.coremetadata.interfaces import ILastModified
+
 from nti.dataserver_core.interfaces import IUser
-from nti.dataserver_core.interfaces import ICreated
-from nti.dataserver_core.interfaces import ILastModified
 
 class IInvitation(IContained,
 				  ICreated,

@@ -17,8 +17,8 @@ from zope import interface
 from zope.configuration.fields import Tokens
 from zope.configuration.fields import TextLine
 
-from .interfaces import IInvitations
-from .invitation import JoinCommunityInvitation
+from nti.invitations.interfaces import IInvitations
+from nti.invitations.invitation import JoinCommunityInvitation
 
 class IRegisterJoinCommunityInvitationDirective(interface.Interface):
 	"""
