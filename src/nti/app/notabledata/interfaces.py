@@ -60,10 +60,14 @@ class IUserNotableData(IIterable):
 	"""
 
 	def __len__():
-		"The length of this object is the number of notable objects that can be viewed."
+		"""
+		The length of this object is the number of notable objects that can be viewed.
+		"""
 
 	def __nonzero__():
-		"The boolean value of this object is whether any notable objects exist"
+		"""
+		The boolean value of this object is whether any notable objects exist
+		"""
 
 	def get_notable_intids(min_created_time=None,
 						   max_created_time=None):

@@ -9,9 +9,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from .interfaces import IUserNotableDataStorage
+from nti.app.notabledata.interfaces import IUserNotableDataStorage
 
 def store_circled_event_notable(change, event):
 	owner = change.__parent__
 	storage = IUserNotableDataStorage(owner)
-	storage.store_object( change, safe=True, take_ownership=False )
+	storage.store_object(change, safe=True, take_ownership=False)

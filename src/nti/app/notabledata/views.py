@@ -11,18 +11,23 @@ logger = __import__('logging').getLogger(__name__)
 
 import time
 
-from zope import interface
 from zope import component
+from zope import interface
+
+from pyramid.httpexceptions import HTTPBadRequest
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
-from pyramid.httpexceptions import HTTPBadRequest
-
-from nti.appserver.interfaces import INamedLinkView
-from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.app.notabledata.adapters import IUserNotableData
+
+from nti.app.renderers.interfaces import IUGDExternalCollection
+
+from nti.appserver.interfaces import INamedLinkView
 
 from nti.appserver.ugd_query_views import _UGDView
 
@@ -31,8 +36,6 @@ from nti.dataserver.authorization import ACT_READ
 from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
-
-from .adapters import IUserNotableData
 
 _NOTABLE_NAME = 'RUGDByOthersThatIMightBeInterestedIn'
 
@@ -77,7 +80,7 @@ class _NotableRecursiveUGDView(_UGDView):
 	_DEFAULT_BATCH_SIZE = 100
 	_DEFAULT_BATCH_START = 0
 
-	def __call__( self ):
+	def __call__(self):
 		request = self.request
 		self.check_cross_user()
 		# pre-flight the batch
@@ -86,19 +89,19 @@ class _NotableRecursiveUGDView(_UGDView):
 		batch_before = None
 		if self.request.params.get('batchBefore'):
 			try:
-				batch_before = float(self.request.params.get( 'batchBefore' ))
-			except ValueError: # pragma no cover
+				batch_before = float(self.request.params.get('batchBefore'))
+			except ValueError:  # pragma no cover
 				raise HTTPBadRequest()
 
-		user_notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
-													   IUserNotableData )
+		user_notable_data = component.getMultiAdapter((self.remoteUser, self.request),
+													   IUserNotableData)
 
 		result = LocatedExternalDict()
 		result['Last Modified'] = result.lastModified = 0
 		result.__parent__ = self.request.context
 		result.__name__ = self.ntiid
-		result.mimeType = nti_mimetype_with_class( None )
-		interface.alsoProvides( result, IUGDExternalCollection )
+		result.mimeType = nti_mimetype_with_class(None)
+		interface.alsoProvides(result, IUGDExternalCollection)
 
 		safely_viewable_intids = user_notable_data.get_notable_intids()
 
@@ -110,14 +113,14 @@ class _NotableRecursiveUGDView(_UGDView):
 			user_notable_data.sort_notable_intids(safely_viewable_intids,
 												  field_name='lastModified',
 												  limit=2,
-												  reverse=True) ))
+												  reverse=True)))
 		if most_recently_modified_object:
 			result['Last Modified'] = result.lastModified = most_recently_modified_object[0].lastModified
 
 		descending_sort = request.params.get('sortOrder') != 'ascending'
-		sorted_intids = user_notable_data.sort_notable_intids( 	safely_viewable_intids,
-															   	limit=limit,
-															   	reverse=descending_sort )
+		sorted_intids = user_notable_data.sort_notable_intids(safely_viewable_intids,
+															  limit=limit,
+															  reverse=descending_sort)
 		items = user_notable_data.iter_notable_intids(sorted_intids)
 
 		# It is usually faster and simpler to handle batch_before ourselves,
@@ -166,7 +169,7 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 		# these views registered.
 		path = request.path
 
-		links.append( Link( path,
+		links.append(Link(path,
 							rel='lastViewed',
 							elements=('lastViewed',),
 							method='PUT'))
@@ -177,13 +180,13 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 		# Note that we don't use the user in the traversal path,
 		# we use the user that's actually making the call.
 		# This is why we can get away with just the READ permission.
-		user_notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
-													   IUserNotableData )
+		user_notable_data = component.getMultiAdapter((self.remoteUser, self.request),
+													   IUserNotableData)
 		return user_notable_data
 
 	@view_config(request_method='PUT')
 	def __call__(self):
-		return super(_NotableUGDLastViewed,self).__call__()
+		return super(_NotableUGDLastViewed, self).__call__()
 
 	def _do_call(self):
 		user_notable_data = self._notable_data
