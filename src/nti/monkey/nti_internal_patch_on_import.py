@@ -13,13 +13,14 @@ from nti.common.deprecated import moved
 
 def patch():
 	# deprecated core/fragments pkgs
-	moved("nti.dataserver.core", "nti.dataserver_core")
-	moved("nti.dataserver.core.interfaces", "nti.dataserver_core.interfaces")
-	moved("nti.dataserver.fragments", "nti.dataserver_fragments")
-	moved("nti.dataserver.fragments.interfaces", "nti.dataserver_fragments.interfaces")
+	moved(str("nti.dataserver.core"), str("nti.dataserver_core"))
+	moved(str("nti.dataserver.core.interfaces"), str("nti.dataserver_core.interfaces"))
+	
+	moved(str("nti.dataserver.fragments"), str("nti.dataserver_fragments"))
+	moved(str("nti.dataserver.fragments.interfaces"), str("nti.dataserver_fragments.interfaces"))
 
 	# deleted session_consumer module
-	moved("nti.dataserver.session_consumer", "nti.socketio.session_consumer")
+	moved(str("nti.dataserver.session_consumer"), str("nti.socketio.session_consumer"))
 	
 	# content search invalid package
-	moved("nti.contentsearch._repoze_adpater", "nti.contentsearch._repoze_adapter") 
+	moved(str("nti.contentsearch._repoze_adpater"), str("nti.contentsearch._repoze_adapter"))
