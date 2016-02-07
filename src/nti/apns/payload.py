@@ -12,16 +12,19 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 from zope.schema.fieldproperty import createFieldProperties
+
+from nti.apns.interfaces import INotificationPayload
 
 from nti.schema.schema import SchemaConfigured
 
-from . import interfaces as apns_interfaces
-
-@interface.implementer(apns_interfaces.INotificationPayload)
+@interface.implementer(INotificationPayload)
 class APNSPayload(SchemaConfigured):
-	""" Represents the payload of a APNs remote notification. """
+	"""
+	Represents the payload of a APNs remote notification.
+	"""
 
 	DEFAULT_SOUND = 'default'
 
-	createFieldProperties(apns_interfaces.INotificationPayload)
+	createFieldProperties(INotificationPayload)

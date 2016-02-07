@@ -11,29 +11,33 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-try:
-	import gevent
-	from gevent import socket
-	from gevent import ssl
-except ImportError: # pypy?
-	gevent = None
-	import socket
-	import ssl
-
 import os
 import time
 import struct
 import anyjson as json
 
+try:
+	import gevent
+	from gevent import socket
+	from gevent import ssl
+except ImportError:
+	gevent = None
+	import socket
+	import ssl
+
 from zope import schema
 from zope import interface
+
 from zope.event import notify
 
-from pkg_resources import resource_filename
+from nti.apns.interfaces import APNSDeviceFeedback
+from nti.apns.interfaces import IDeviceFeedbackEvent
+from nti.apns.interfaces import INotificationPayload
+from nti.apns.interfaces import INotificationService
 
-from . import interfaces as apns_interfaces
+resource_filename = __import__('pkg_resources').resource_filename
 
-_DEVICEID_FIELD = apns_interfaces.IDeviceFeedbackEvent['deviceId']
+_DEVICEID_FIELD = IDeviceFeedbackEvent['deviceId']
 
 SERVER_PROD = 'gateway.push.apple.com'
 SERVER_SAND = 'gateway.sandbox.push.apple.com'
@@ -48,7 +52,7 @@ FEEDBACK_SAND = 'feedback.sandbox.push.apple.com'
 FPORT_SAND = 2196
 FPORT_PROD = 2196
 
-MAX_PAYLOAD_SIZE = 256 # bytes
+MAX_PAYLOAD_SIZE = 256  # bytes
 
 def to_payload_dictionary_string(payload):
 	"""
@@ -59,26 +63,26 @@ def to_payload_dictionary_string(payload):
 	"""
 
 	aps = {k : getattr(payload, k)
-		   for k in ('alert','sound','badge')
+		   for k in ('alert', 'sound', 'badge')
 		   if getattr(payload, k, None) is not None}
 
 	topLevel = {'aps': aps}
 	if payload.userInfo:
 		topLevel['nti'] = payload.userInfo
-	result = json.dumps( topLevel )
+	result = json.dumps(topLevel)
 	if len(result) > MAX_PAYLOAD_SIZE:
 		# Hmm.
-		logger.warning( 'Payload data too big, stripping extra' )
+		logger.warning('Payload data too big, stripping extra')
 		if 'nti' in topLevel:
 			del topLevel['nti']
-			result = json.dumps( topLevel )
+			result = json.dumps(topLevel)
 
 	# Make sure it's ASCII bytes
-	if not isinstance( result, str ):
-		result = result.encode( 'utf-8' )
+	if not isinstance(result, str):
+		result = result.encode('utf-8')
 
 	if len(result) > MAX_PAYLOAD_SIZE:
-		raise ValueError( "Payload too big" )
+		raise ValueError("Payload too big")
 	return result
 
 def to_packet_bytes(payload, deviceId):
@@ -95,29 +99,29 @@ def to_packet_bytes(payload, deviceId):
 
 	.. _enhanced binary format: http://developer.apple.com/library/ios/#DOCUMENTATION/NetworkingInternet/Conceptual/RemoteNotificationsPG/CommunicatingWIthAPS/CommunicatingWIthAPS.html#//apple_ref/doc/uid/TP40008194-CH101-SW4
 	"""
-	_DEVICEID_FIELD.validate( deviceId )
-	errors = schema.getValidationErrors( apns_interfaces.INotificationPayload, payload )
+	_DEVICEID_FIELD.validate(deviceId)
+	errors = schema.getValidationErrors(INotificationPayload, payload)
 	if errors:
 		__traceback_info__ = errors
 		raise errors[0][1]
 	# Create a packet in the 'enhanced' format
 	command = 1
-	identifier = id(payload) % 4294967295 # fit into 4 bytes
+	identifier = id(payload) % 4294967295  # fit into 4 bytes
 	expiry = int(time.time()) + DEFAULT_LIFETIME
 
 
-	payloadBytes = to_payload_dictionary_string( payload )
+	payloadBytes = to_payload_dictionary_string(payload)
 
 	# 1 byte command, 4 byte id, 4 byte expiry, 2 byte len, 32 byte devid, 2 byte len, payload
-	packet = struct.pack( b'!bIih32sh',
+	packet = struct.pack(b'!bIih32sh',
 						  command, identifier, expiry,
 						  _DEVICEID_FIELD.max_length, deviceId,
-						  len(payloadBytes) )
+						  len(payloadBytes))
 	packet += payloadBytes
 
 	return packet, identifier
 
-def _close( connection ):
+def _close(connection):
 	try:
 		connection.close()
 	except Exception:
@@ -125,7 +129,7 @@ def _close( connection ):
 
 from repoze.lru import LRUCache
 
-@interface.implementer( apns_interfaces.INotificationService )
+@interface.implementer(INotificationService)
 class APNS(object):
 	"""
 	Encapsulates a connection to APNS for sending push notifications.
@@ -137,8 +141,8 @@ class APNS(object):
 	_feedback_greenlet = None
 	_apns_error_greenlet = None
 
-	def __init__( self, host=SERVER_SAND, port=PORT_SAND, certFile=None,
-				  feedbackHost=FEEDBACK_SAND, feedbackPort=FPORT_SAND ):
+	def __init__(self, host=SERVER_SAND, port=PORT_SAND, certFile=None,
+				  feedbackHost=FEEDBACK_SAND, feedbackPort=FPORT_SAND):
 		if host == SERVER_SAND and port == PORT_SAND and 'APNS_PROD' in os.environ:
 			host = SERVER_PROD
 			port = PORT_PROD
@@ -151,13 +155,11 @@ class APNS(object):
 			localCert = 'NextThoughtPOCCertDev.pem'
 			if 'APNS_PROD' in os.environ:
 				localCert = 'NextThoughtPOCCertProd.pem'
-			self.certFile = resource_filename(__name__, localCert )
+			self.certFile = resource_filename(__name__, localCert)
 		self.connection = None
 		self.selecting = None
 		self.blacklisted_devices = set()
-		self.recent_notifications = LRUCache( 100 )
-
-
+		self.recent_notifications = LRUCache(100)
 
 	def _read_apns_errors(self, connection):
 		def read_apns_errors():
@@ -167,95 +169,98 @@ class APNS(object):
 			# before we are forcibly disconnected anyway,
 			# so no need to loop
 			try:
-				response = connection.recv( 8 )
+				response = connection.recv(8)
 				if response:
-					cmd, status, ident = struct.unpack( b'!bBI', response )
-					logger.info( "Disconnected from APNS because we sent bad data: %s %s %s",
-								 cmd, status, ident )
-					if status == 8: # Invalid token. So this will keep happening until we remove the token. (Apple docs, table 5-1)
-						if self.recent_notifications.get( ident ):
-							deviceId, payload = self.recent_notifications.get( ident )
-							self.blacklisted_devices.add( deviceId )
+					cmd, status, ident = struct.unpack(b'!bBI', response)
+					logger.info("Disconnected from APNS because we sent bad data: %s %s %s",
+								 cmd, status, ident)
+					if status == 8:  # Invalid token. So this will keep happening until we remove the token. (Apple docs, table 5-1)
+						if self.recent_notifications.get(ident):
+							deviceId, payload = self.recent_notifications.get(ident)
+							self.blacklisted_devices.add(deviceId)
 							# Then try to clean it up
 							try:
-								fb = apns_interfaces.APNSDeviceFeedback(0, deviceId)
-								notify( fb )
+								fb = APNSDeviceFeedback(0, deviceId)
+								notify(fb)
 							except Exception:
-								logger.exception( "Failed to remove invalid device id %s sending %s", deviceId.encode( 'hex'), payload )
+								logger.exception("Failed to remove invalid device id %s sending %s", deviceId.encode('hex'), payload)
 			except (IOError, struct.error):
-				logger.debug( "Error stream from APNS disconnected", exc_info=True )
+				logger.debug("Error stream from APNS disconnected", exc_info=True)
 			except Exception:
-				logger.exception( "Unexpected exception reading from APNS." )
+				logger.exception("Unexpected exception reading from APNS.")
 			finally:
-				_close( connection )
+				_close(connection)
 				if self.connection is connection:
 					self._apns_error_greenlet = None
 					self.connection = None
 
-		self._apns_error_greenlet = gevent.spawn( read_apns_errors )
+		self._apns_error_greenlet = gevent.spawn(read_apns_errors)
 
-	def _read_feedback( self ):
+	def _read_feedback(self):
 		"""
 		Spawns a greenlet and connects to the feedback
 		server, reading all invalid devices and broadcasting that
 		information.
 		"""
 
-		sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-		connection = ssl.wrap_socket( sock, certfile=self.certFile )
-		connection.connect( (self.feedbackHost,self.feedbackPort) )
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		connection = ssl.wrap_socket(sock, certfile=self.certFile)
+		connection.connect((self.feedbackHost, self.feedbackPort))
 
-		def read_feedback( ):
+		def read_feedback():
 			try:
 				while True:
 					try:
 						buf = connection.recv(38)
 						if buf:
-							unpacked = struct.unpack( '!lh32s' )
-							fb = apns_interfaces.APNSDeviceFeedback( unpacked(0), unpacked(2) )
-							notify( fb )
+							unpacked = struct.unpack('!lh32s')
+							fb = APNSDeviceFeedback(unpacked(0), unpacked(2))
+							notify(fb)
 						else:
-							logger.debug( "No data to read from feedback service" )
+							logger.debug("No data to read from feedback service")
 							break
-					except (IOError,struct.error):
-						logger.exception( "Failed to read feedback." )
+					except (IOError, struct.error):
+						logger.exception("Failed to read feedback.")
 						break
 			finally:
-				_close( connection )
+				_close(connection)
 				self._feedback_greenlet = None
 
 
-		self._feedback_greenlet = gevent.spawn( read_feedback )
-
+		self._feedback_greenlet = gevent.spawn(read_feedback)
 
 	def _makeConnection(self):
-		""" Creates or returns a connection. """
+		"""
+		Creates or returns a connection.
+		"""
 		if self.connection is None:
 			try:
-				sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-				connection = ssl.wrap_socket( sock, certfile=self.certFile )
-				connection.connect( (self.host,self.port) )
+				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				connection = ssl.wrap_socket(sock, certfile=self.certFile)
+				connection.connect((self.host, self.port))
 
-				self._read_apns_errors( connection )
+				self._read_apns_errors(connection)
 				self.connection = connection
 				if self._feedback_greenlet is None:
 					self._read_feedback()
 			except ssl.SSLError:
-				logger.exception( "Failed to connect to APNS; will not try again" )
+				logger.exception("Failed to connect to APNS; will not try again")
 				self._makeConnection = lambda *args: None
-			except (IOError,TypeError):
+			except (IOError, TypeError):
 				# TypeError: must be _socket.socket, not closedsocket
-				logger.exception( "Failed to connect to APNS" )
+				logger.exception("Failed to connect to APNS")
 				self.connection = None
 		return self.connection
 
-	def sendNotification( self, deviceId, payload ):
-		""" Directs a notification with the ``payload`` to the given
+	def sendNotification(self, deviceId, payload):
+		"""
+		Directs a notification with the ``payload`` to the given
 		``deviceId``. The notification may be sent now or it
-		may be batched up and sent later. ``payload`` is an :class:`APNSPayload` object."""
+		may be batched up and sent later. ``payload`` is an :class:`APNSPayload` object.
+		"""
 
 		if deviceId in self.blacklisted_devices:
-			logger.debug( "Refusing to talk to blacklisted device %s", deviceId.encode('hex') )
+			logger.debug("Refusing to talk to blacklisted device %s", deviceId.encode('hex'))
 			return
 
 		# For now, we send immediately
@@ -263,24 +268,23 @@ class APNS(object):
 		if not connection:
 			return
 
-		packet, ident = to_packet_bytes( payload, deviceId )
-		self.recent_notifications.put( ident, (deviceId, payload) )
+		packet, ident = to_packet_bytes(payload, deviceId)
+		self.recent_notifications.put(ident, (deviceId, payload))
 
 		try:
-			connection.sendall( packet )
+			connection.sendall(packet)
 		except IOError:
-			logger.warning( "Failed to send data", exc_info=True )
+			logger.warning("Failed to send data", exc_info=True)
 			# If we actually close this connection now, then we probably won't
 			# be able to read our response code, which we need to get the bad device
-			#_close( connection ) # Which will trigger the reading greenlet to die quietly
+			# _close( connection ) # Which will trigger the reading greenlet to die quietly
 			if self.connection is connection:
 				self.connection = None
 
 		return packet
 
-
-	def close( self ):
-		_close( self.connection )
+	def close(self):
+		_close(self.connection)
 		self.connection = None
 		for greenlet in self._feedback_greenlet, self._apns_error_greenlet:
 			if greenlet is not None:
