@@ -1110,12 +1110,14 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		self.testapp = fixture.testapp
 		testapp2 = fixture.testapp2
 
-		publish_res, _ = self._POST_and_publish_topic_entry()
+		self._POST_and_publish_topic_entry()
 
+		# Default published shares with everyone, which our user cannot see.
+		# If the topic is in a host site, that ends up in the sharedWith and
+		# visible from searches, but this test only validates a global library
+		# content topic, which will not be visible from a search.
 		search_res = self.search_user_rugd(self.forum_headline_unique, testapp=testapp2, username=fixture.user2_username)
-		assert_that(search_res.json_body, has_entry('Hit Count', 1))
-		assert_that(search_res.json_body, has_entry('Items', has_length(1)))
-		assert_that(search_res.json_body['Items'][0], has_entry('ID', publish_res.json_body['ID']))
+		assert_that(search_res.json_body, has_entry('Hit Count', 0))
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases

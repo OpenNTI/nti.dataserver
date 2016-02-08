@@ -113,12 +113,12 @@ from nti.dataserver.interfaces import IDefaultPublished
 class ContentHeadlineTopic(GeneralHeadlineTopic):
 
 	__external_can_create__ = True
-	
+
 	mimeType = 'application/vnd.nextthought.forums.contentheadlinetopic'
 
 	DEFAULT_SHARING_TARGETS = ('Everyone',)
 	publicationSharingTargets = DEFAULT_SHARING_TARGETS
-	
+
 	@property
 	def sharingTargetsWhenPublished(self):
 		# Instead of returning the default set from super, which would return
