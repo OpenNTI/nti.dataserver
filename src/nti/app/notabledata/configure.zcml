@@ -5,8 +5,8 @@
 			xmlns:zcml="http://namespaces.zope.org/zcml">
 
 	<include package="zope.component" file="meta.zcml" />
-	<include package="zope.component" />
 	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
 	<include package="zope.security" />
 
 	<adapter factory=".adapters.UserNotableData" />
@@ -18,8 +18,7 @@
 					 nti.intid.interfaces.IIntIdAddedEvent" />
 
 	<subscriber factory=".decorators._StreamChangeNotableDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				/>
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
 	<!-- Notables -->
 	<subscriber factory=".notables.BlogNotableFilter"

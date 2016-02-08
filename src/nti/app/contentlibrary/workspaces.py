@@ -22,6 +22,8 @@ from zope.proxy.decorator import ProxyBase
 
 from pyramid.threadlocal import get_current_request
 
+from nti.app.contentlibrary._permissioned import _PermissionedContentPackageMixin
+
 from nti.appserver.workspaces.interfaces import IWorkspace
 from nti.appserver.workspaces.interfaces import ICollection
 from nti.appserver.workspaces.interfaces import IUserService
@@ -33,11 +35,10 @@ from nti.common.property import CachedProperty
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
-from nti.externalization.interfaces import IExternalObject
-from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_external_object
 
-from ._permissioned import _PermissionedContentPackageMixin
+from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import LocatedExternalDict
 
 class _PermissionedContentPackageLibrary(ProxyBase,
 										 _PermissionedContentPackageMixin):

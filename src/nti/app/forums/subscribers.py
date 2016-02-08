@@ -12,20 +12,22 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
-
-from pyramid.traversal import find_interface
-
-from nti.dataserver.interfaces import IUser
-from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
 
 from nti.dataserver.activitystream_change import Change
 
-### Online notifications.
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
+
+from nti.dataserver.interfaces import IUser
+
+from nti.traversal.traversal import find_interface
+
+# Online notifications.
 
 @component.adapter(IPersonalBlogComment, IObjectAddedEvent)
-def notify_online_author_of_blog_comment( comment, event ):
+def notify_online_author_of_blog_comment(comment, event):
 	"""
 	When a comment is added to a blog post, notify the blog's
 	author.
@@ -33,11 +35,11 @@ def notify_online_author_of_blog_comment( comment, event ):
 
 	# First, find the author of the blog entry. It will be the parent, the only
 	# user in the lineage
-	blog_author = find_interface( comment, IUser )
-	_notify_online_author_of_comment( comment, blog_author )
+	blog_author = find_interface(comment, IUser, strict=False)
+	_notify_online_author_of_comment(comment, blog_author)
 
 @component.adapter(IGeneralForumComment, IObjectAddedEvent)
-def notify_online_author_of_topic_comment( comment, event ):
+def notify_online_author_of_topic_comment(comment, event):
 	"""
 	When a comment is added to a community forum topic,
 	notify the forum topic's author.
@@ -49,11 +51,11 @@ def notify_online_author_of_topic_comment( comment, event ):
 	"""
 
 	topic_author = comment.__parent__.creator
-	_notify_online_author_of_comment( comment, topic_author )
+	_notify_online_author_of_comment(comment, topic_author)
 
-def _notify_online_author_of_comment( comment, topic_author ):
+def _notify_online_author_of_comment(comment, topic_author):
 	if topic_author == comment.creator:
-		return # not for yourself
+		return  # not for yourself
 
 	# Now, construct the (artificial) change notification.
 	change = Change(Change.CREATED, comment)
@@ -73,24 +75,24 @@ def _notify_online_author_of_comment( comment, topic_author ):
 
 	# Also do the same for of the dynamic types it is shared with,
 	# thus sharing the same change object
-	#_send_stream_event_to_targets( change, comment.sharingTargets )
+	# _send_stream_event_to_targets( change, comment.sharingTargets )
 
-### Favoriting.
-## TODO: Under heavy construction
-###
+# Favoriting.
+# TODO: Under heavy construction
 
 from nti.dataserver import users
+
 from nti.dataserver.liking import FAVR_CAT_NAME
 
-def temp_store_favorite_object( modified_object, event ):
+def temp_store_favorite_object(modified_object, event):
 	if event.category != FAVR_CAT_NAME:
 		return
 
-	user = users.User.get_user( event.rating.userid )
+	user = users.User.get_user(event.rating.userid)
 	if not user:
 		return
 	if bool(event.rating):
 		# ok, add it to the shared objects so that it can be seen
-		user._addSharedObject( modified_object )
+		user._addSharedObject(modified_object)
 	else:
-		user._removeSharedObject( modified_object )
+		user._removeSharedObject(modified_object)

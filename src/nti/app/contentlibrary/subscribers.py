@@ -65,10 +65,12 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.recorder.record import copy_transaction_history
 from nti.recorder.record import remove_transaction_history
 
+from nti.site.interfaces import IHostPolicySiteManager
+
+from nti.site.site import get_component_hierarchy_names
+
 from nti.site.utils import registerUtility
 from nti.site.utils import unregisterUtility
-from nti.site.interfaces import IHostPolicySiteManager
-from nti.site.site import get_component_hierarchy_names
 
 ITEMS = StandardExternalFields.ITEMS
 

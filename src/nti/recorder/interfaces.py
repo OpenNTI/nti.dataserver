@@ -23,7 +23,10 @@ from nti.schema.field import IndexedIterable
 
 TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
 
+#: Created Transaction type
 TRX_TYPE_CREATE = 'create'
+
+#: Updated Transaction type
 TRX_TYPE_UPDATE = 'update'
 
 class ITransactionRecord(IContained, ICreated, ILastModified):

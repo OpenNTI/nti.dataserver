@@ -10,10 +10,10 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope.schema.fieldproperty import createFieldProperties
 
 from zope.schema import Int
 from zope.schema import Dict
+from zope.schema.fieldproperty import createFieldProperties
 
 from nti.schema.field import ValidBytes as Bytes
 from nti.schema.field import ValidTextLine as TextLine
@@ -23,10 +23,10 @@ class IDeviceFeedback(interface.Interface):
 	Feedback about an invalid device received from APNS.
 	"""
 
-	timestamp = Int( title="The timestamp of the notification?" )
-	deviceId = Bytes( title="The raw bytes of the device being de-registered.",
+	timestamp = Int(title="The timestamp of the notification?")
+	deviceId = Bytes(title="The raw bytes of the device being de-registered.",
 					  min_length=32,
-					  max_length=32) # Not BytesLine, it may have a newline
+					  max_length=32)  # Not BytesLine, it may have a newline
 
 class IDeviceFeedbackEvent(IDeviceFeedback):
 	"""
@@ -35,18 +35,19 @@ class IDeviceFeedbackEvent(IDeviceFeedback):
 
 @interface.implementer(IDeviceFeedbackEvent)
 class APNSDeviceFeedback(object):
-	""" Represents feedback about a device from APNS. """
+	""" 
+	Represents feedback about a device from APNS. 
+	"""
 
 	createFieldProperties(IDeviceFeedbackEvent)
 
-	def __init__( self, timestamp, deviceId ):
-		super(APNSDeviceFeedback,self).__init__()
+	def __init__(self, timestamp, deviceId):
+		super(APNSDeviceFeedback, self).__init__()
 		self.timestamp = timestamp
 		self.deviceId = deviceId
 
-	def __repr__( self ):
+	def __repr__(self):
 		return "APNSDeviceFeedback(%s,%s)" % (self.timestamp, self.deviceId.encode('hex'))
-
 
 class INotificationPayload(interface.Interface):
 	"""
@@ -57,8 +58,7 @@ class INotificationPayload(interface.Interface):
 	Apple `documents the payload`_ values.
 
 	.. _documents the payload: http://developer.apple.com/library/ios/#DOCUMENTATION/NetworkingInternet/Conceptual/RemoteNotificationsPG/ApplePushService/ApplePushService.html#//apple_ref/doc/uid/TP40008194-CH100-SW1
-	""" # Idiotic apple links. I have no confidence that will actually work tomorrow. I mean, look at it
-
+	"""  # Idiotic apple links. I have no confidence that will actually work tomorrow. I mean, look at it
 
 	alert = TextLine(
 		title="A short, localized string giving the text to display.",
@@ -68,9 +68,11 @@ class INotificationPayload(interface.Interface):
 			Note that although the APNS service technically support a dictionary for this property, allowing for app-side
 			localization, that is not currently supported by this API.""",
 		required=False)
+
 	badge = Int(
 		title="The integer to badge the icon with or ``None``",
-		required=False )
+		required=False)
+
 	sound = TextLine(
 		title="A string naming the sound to play",
 		description="Either the string ``default``, meaning the default sound, or the name of a sound in the application bundle.",
@@ -96,19 +98,20 @@ class INotificationPayload(interface.Interface):
 			For example, a custom payload value might be a
 			conversation identifier for use by an instant-message
 			client application or a timestamp identifying when the
-			provider sent the notification."""	)
+			provider sent the notification.""")
 
 class INotificationService(interface.Interface):
 	"""
 	The interface to sending notifications.
 	"""
 
-	def sendNotification( deviceId, payload ):
+	def sendNotification(deviceId, payload):
 		"""
 		Asks for the device identified with the raw `deviceId` bytes to receive the
 		data in the :class:`INotificationPayload` payload.
 		"""
 
-#	def reset(): pass
+# 	def reset(): pass
 
-	def close(): pass
+	def close(): 
+		pass

@@ -309,9 +309,12 @@ def has_permission(permission, context, username, **kwargs):
 	policy = component.queryUtility(IAuthorizationPolicy)
 	if not policy:
 		return psecDenied("No IAuthorizationPolicy installed")
-	return policy.permits(to_check,
-						   authentication.effective_principals(username, **kwargs),
-						   permission)
+
+	principals = kwargs.get('principals', None)
+	if not principals:
+		principals = authentication.effective_principals(username, **kwargs)
+	result = policy.permits(to_check, principals, permission)
+	return result
 
 def is_writable(context, username, **kwargs):
 	"""
@@ -721,8 +724,8 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 		self.context = context
 
 	_acl_sibling_entry_name = '.nti_acl'
-	#: If defined by a subclass, this will be checked
-	#: when `_acl_sibling_entry_name` does not exist.
+	# : If defined by a subclass, this will be checked
+	# : when `_acl_sibling_entry_name` does not exist.
 	_acl_sibling_fallback_name = None
 	_default_allow = True
 	_add_default_deny_to_acl_from_file = False
@@ -805,9 +808,9 @@ class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEn
 		acl = super(_DelimitedHierarchyContentPackageACLProvider, self).__acl__
 		# Make sure our content admin comes first.
 		admin_ace = ace_allowing(authorization.ROLE_CONTENT_ADMIN,
-								authorization.ACT_READ,
-						 		self)
-		acl.insert( 0, admin_ace )
+								 authorization.ACT_READ,
+						 		 self)
+		acl.insert(0, admin_ace)
 		return acl
 
 	def _acl_from_string(self, context, acl_string, provenance=None):

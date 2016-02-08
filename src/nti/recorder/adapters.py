@@ -18,10 +18,10 @@ from zope.container.btree import BTreeContainer
 
 from nti.coremetadata.interfaces import IRecordable
 
-from .interfaces import ITransactionRecord
-from .interfaces import ITransactionRecordHistory
+from nti.recorder import TRX_RECORD_HISTORY_KEY
 
-from . import TRX_RECORD_HISTORY_KEY
+from nti.recorder.interfaces import ITransactionRecord
+from nti.recorder.interfaces import ITransactionRecordHistory
 
 @component.adapter(IRecordable)
 @interface.implementer(ITransactionRecordHistory)

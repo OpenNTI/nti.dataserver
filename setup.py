@@ -423,7 +423,7 @@ setup(
 		 # Plug to make zope.schema's vocabulary registry ZCA
 		 # based and thus actually useful
 		'zope.vocabularyregistry',
-		'zopyx.txng3.ext' if not IS_PYPY else '',  # extensions don't build, but we have a branch
+		'zopyx.txng3.ext',
 		 # Data analysis
 		 # pandas,
 		 # scikit-learn,

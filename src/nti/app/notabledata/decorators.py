@@ -16,15 +16,15 @@ from zope.intid.interfaces import IIntIds
 
 from pyramid.interfaces import IRequest
 
+from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
+
 from nti.dataserver.interfaces import IStreamChangeEvent
 from nti.dataserver.interfaces import get_notable_filter
 
 from nti.externalization.interfaces import IExternalObjectDecorator
 
-from ..renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
-
-@interface.implementer(IExternalObjectDecorator) # Because the stream externalizer doesn't call Mapping Decorator
-@component.adapter(IStreamChangeEvent,IRequest)
+@interface.implementer(IExternalObjectDecorator)  # Because the stream externalizer doesn't call Mapping Decorator
+@component.adapter(IStreamChangeEvent, IRequest)
 class _StreamChangeNotableDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	# We expect to be used at externalization time, after everything has
 	# calmed down so its safe to cache intids. however, we do need
@@ -39,13 +39,14 @@ class _StreamChangeNotableDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		# cache has been invalidated).  As expected, when we do have a cache,
 		# it is about 100x faster than running our object through the algorithm.
 		result = False
-		intids = component.getUtility( IIntIds )
+		intids = component.getUtility(IIntIds)
 		# Check if this object is persistent first
-		if intids.queryId( context ) or intids.queryId( context.object ):
-			# TODO We may have to pass the request to INotableFilter
-			is_notable_ctx = get_notable_filter( context )
-			is_notable_obj = get_notable_filter( context.object )
-			result = is_notable_ctx( self.remoteUser ) or is_notable_obj(self.remoteUser)
+		if 		intids.queryId(context) is not None \
+			or	intids.queryId(context.object) is not None:
+			# TODO: We may have to pass the request to INotableFilter
+			is_notable_ctx = get_notable_filter(context)
+			is_notable_obj = get_notable_filter(context.object)
+			result = is_notable_ctx(self.remoteUser) or is_notable_obj(self.remoteUser)
 		return result
 
 	def _predicate(self, context, result):

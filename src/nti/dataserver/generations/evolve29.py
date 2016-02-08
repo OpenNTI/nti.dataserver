@@ -13,5 +13,5 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 29
 
-from .evolve28 import evolve
+from nti.dataserver.generations.evolve28 import evolve
 evolve = evolve

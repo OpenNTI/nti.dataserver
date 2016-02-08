@@ -9,6 +9,8 @@ Dataserver interfaces
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import six
 import sys
 
@@ -38,6 +40,7 @@ from nti.common.property import alias
 from nti.contentfragments.schema import PlainText
 
 from nti.contentrange import interfaces as rng_interfaces
+
 from nti.contentrange.contentrange import ContentRangeDescription
 
 from nti.schema.field import Dict
@@ -104,7 +107,9 @@ IIdentity = IIdentity
 IDataserver = IDataserver
 
 class IDataserverClosedEvent(interface.interfaces.IObjectEvent):
-	"Fired when a dataserver is closed"
+	"""
+	Fired when a dataserver is closed
+	"""
 
 class IRedisClient(IExternalService):
 	"""
@@ -117,7 +122,7 @@ class IRedisClient(IExternalService):
 	separated by the ``/`` character.
 	"""
 
-class IMemcacheClient(IExternalService):
+class IMemcachedClient(IExternalService):
 	"""
 	A very poor abstraction of a :class:`memcache.Client` client.
 	In general, this should only be used in the lowest low level code and
@@ -131,13 +136,20 @@ class IMemcacheClient(IExternalService):
 	"""
 
 	def get(key):
-		"Return the unpickled value, or None"
+		"""
+		Return the unpickled value, or None
+		"""
 
 	def set(key, value, time=0):
-		"Pickle the value and store it, returning True on success."
+		"""
+		Pickle the value and store it, returning True on success.
+		"""
 
 	def delete(key):
-		"Remove the key from the cache."
+		"""
+		Remove the key from the cache.
+		"""
+IMemcacheClient = IMemcachedClient # BWC
 
 # BWC exports
 from nti.site.interfaces import IHostSitesFolder
@@ -991,6 +1003,7 @@ class IObjectSharingModifiedEvent(IObjectModifiedEvent):
 	An event broadcast when we know that the sharing settings of
 	an object have been changed.
 	"""
+
 	oldSharingTargets = UniqueIterable(
 		title="A set of entities this object is directly shared with, before the change (non-recursive, non-flattened)",
 		value_type=Object(IEntity, title="An entity shared with"),
@@ -1427,6 +1440,11 @@ class IUserBlacklistedStorage(interface.Interface):
 		"""
 
 class IInteractionQuerier(interface.Interface):
+	"""
+	Marker interface for a utility to query a security interaction.
+	
+	We include this utility for testing purposes
+	"""
 
 	def queryInteraction():
 		"""

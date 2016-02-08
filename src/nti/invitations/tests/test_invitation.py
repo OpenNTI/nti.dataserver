@@ -11,6 +11,8 @@ from hamcrest import contains
 from hamcrest import assert_that
 from hamcrest import has_property
 
+from nti.testing.matchers import verifiably_provides
+
 import unittest
 
 from zope.component import eventtesting
@@ -19,8 +21,6 @@ from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationAcceptedEvent
 
 from nti.invitations.invitation import PersistentInvitation
-
-from nti.testing.matchers import verifiably_provides
 
 from nti.invitations.tests import SharedConfiguringTestLayer
 

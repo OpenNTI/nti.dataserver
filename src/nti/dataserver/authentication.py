@@ -18,6 +18,9 @@ from zope import interface
 
 from zope.security.interfaces import IPrincipal
 
+from nti.dataserver.interfaces import EVERYONE_GROUP_NAME
+from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
+
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IGroupMember
 from nti.dataserver.interfaces import IAuthenticationPolicy
@@ -25,14 +28,11 @@ from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 
-from nti.dataserver.interfaces import EVERYONE_GROUP_NAME
-from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
-
 def _dynamic_memberships_that_participate_in_security(user, as_principals=True):
 	# Add principals for all the communities that the user is in
 	# These are valid ACL targets because they are in the same namespace
 	# as users (so no need to prefix with community_ or something like that)
-	for community in getattr( user, 'dynamic_memberships', ()): # Mostly tests pass in a non-User user_factory
+	for community in getattr(user, 'dynamic_memberships', ()):  # Mostly tests pass in a non-User user_factory
 		# Make sure it's a valid community
 		if 	IDynamicSharingTargetFriendsList.providedBy(community) or \
 			(ICommunity.providedBy(community) and \
@@ -48,26 +48,28 @@ def _dynamic_memberships_that_participate_in_security(user, as_principals=True):
 	# which is used as an ACL optimization
 
 	# Now add DFLs we own (must be DFL? see _xxx_extra_intids_of_memberships).
-	friends_lists = getattr( user, 'friendsLists', {} )
+	friends_lists = getattr(user, 'friendsLists', {})
 	for friends_list in friends_lists.values():
-		if IDynamicSharingTargetFriendsList.providedBy( friends_list ):
+		if IDynamicSharingTargetFriendsList.providedBy(friends_list):
 			yield IPrincipal(friends_list) if as_principals else friends_list
 
-def _user_factory( username ):
+def _user_factory(username):
 	# To avoid circular imports (sharing imports us, users imports us, we import users). sigh.
 	from nti.dataserver.users import User
-	return User.get_user( username )
+	return User.get_user(username)
 
 # We will cache effective principals on the current request
 # XXX TODO: This isn't very clean and is a poor
 # separation of concerns
 from pyramid.threadlocal import get_current_request
 
-def effective_principals( username,
-						  registry=component,
-						  authenticated=True,
-						  user_factory=_user_factory,
-						  request=None ):
+def effective_principals(username,
+						 registry=component,
+						 authenticated=True,
+						 user_factory=_user_factory,
+						 request=None,
+						 everyone=True,
+						 skip_cache=False):
 	"""
 	Find and return the principals for the given username. This will include
 	the username itself (obviously), plus a principal for Everyone, plus
@@ -86,51 +88,53 @@ def effective_principals( username,
 	if not username:
 		return ()
 
-	user = username if hasattr(username,'username') else user_factory( username )
-	username = user.username if hasattr(user, 'username') else username # canonicalize
+	user = username if hasattr(username, 'username') else user_factory(username)
+	username = user.username if hasattr(user, 'username') else username  # canonicalize
 
 	request = get_current_request() if request is None else request
 
 	key = (username, authenticated)
-	if key in getattr(request, '_v_nti_ds_authentication_eff_prin_cache', ()):
+	if (	key in getattr(request, '_v_nti_ds_authentication_eff_prin_cache', ())
+		and not skip_cache):
 		return request._v_nti_ds_authentication_eff_prin_cache[key]
 
 	result = set()
 	# Query all the available groups for this user,
 	# primary groups (unnamed adapter) and other groups (named adapters)
-	for _, adapter in registry.getAdapters( (user,), IGroupMember ):
-		result.update( adapter.groups )
-	result.update( _dynamic_memberships_that_participate_in_security( user ) )
+	for _, adapter in registry.getAdapters((user,), IGroupMember):
+		result.update(adapter.groups)
+	result.update(_dynamic_memberships_that_participate_in_security(user))
 
 	# These last three will be duplicates of string-only versions
 	# Ensure that the user (and their NTIID) is in there as a IPrincipal.
-	result.add( IPrincipal(username) )
-	if hasattr( user, 'NTIID' ):
+	result.add(IPrincipal(username))
+	if hasattr(user, 'NTIID'):
 		# JZ - 11.2015 - Some persisted principal objects have
 		# unique principal names with NTIID fields, which will not
 		# hash equally with non-ntiid principals. Unique usernames
 		# should not have principals with NTIIDs (fixed in r73647).
 		# To simplify, and since this is cheap, make sure we have an
 		# NTIID principal in our effective principals.
-		result.add( IPrincipal(user.NTIID) )
+		result.add(IPrincipal(user.NTIID))
 
-	# Add the authenticated and everyone groups
-	result.add( 'Everyone' )
-	result.add( IPrincipal( 'Everyone' ) )
-	result.add( IPrincipal( EVERYONE_GROUP_NAME ) )
+	if everyone:
+		# Add the authenticated and everyone groups
+		result.add('Everyone')
+		result.add(IPrincipal('Everyone'))
+		result.add(IPrincipal(EVERYONE_GROUP_NAME))
 
 	if authenticated:
-		result.add( IPrincipal( AUTHENTICATED_GROUP_NAME ) )
+		result.add(IPrincipal(AUTHENTICATED_GROUP_NAME))
 	if '@' in username:
 		# Make the domain portion of the username available as a group
 		# TODO: Prefix this, like we do with roles?
-		domain = username.split( '@', 1 )[-1]
+		domain = username.split('@', 1)[-1]
 		if domain:
-			result.add( domain )
-			result.add( IPrincipal( domain ) )
+			result.add(domain)
+			result.add(IPrincipal(domain))
 
 	# Make hashable before we cache
-	result = frozenset( result )
+	result = frozenset(result)
 	if request is not None:
 		if not hasattr(request, '_v_nti_ds_authentication_eff_prin_cache'):
 			request._v_nti_ds_authentication_eff_prin_cache = dict()
@@ -145,16 +149,16 @@ class _FixedUserAuthenticationPolicy(object):
 	We implement only the minimum required.
 	"""
 
-	def __init__( self, username ):
+	def __init__(self, username):
 		self.auth_user = username
 
-	def authenticated_userid( self, request ):
+	def authenticated_userid(self, request):
 		return self.auth_user
 
-	def effective_principals( self, request ):
-		return effective_principals( self.auth_user )
+	def effective_principals(self, request):
+		return effective_principals(self.auth_user)
 
-	def _other(self,*args,**kwargs):
+	def _other(self, *args, **kwargs):
 		raise NotImplementedError()
 	remember = _other
 	unauthenticated_userid = _other
@@ -168,8 +172,9 @@ except ImportError:
 	_LocalBase = threading.local
 
 class _ThreadLocalManager(_LocalBase):
+
 	def __init__(self, default=None):
-		_LocalBase.__init__( self )
+		_LocalBase.__init__(self)
 		self.stack = []
 		self.default = default
 
@@ -181,7 +186,9 @@ class _ThreadLocalManager(_LocalBase):
 			return self.stack.pop()
 
 	def get(self):
-		"Return the top of the stack, or the default value."
+		"""
+		Return the top of the stack, or the default value.
+		"""
 		try:
 			return self.stack[-1]
 		except IndexError:
@@ -192,13 +199,13 @@ class _delegating_descriptor(object):
 	A property-like descriptor that uses the thread-local objects of the given
 	instance and returns the value from the top-object on that stack.
 	"""
-	def __init__( self, name ):
+	def __init__(self, name):
 		self.name = name
 
-	def __get__( self, inst, owner ):
+	def __get__(self, inst, owner):
 		if inst is None:
 			return self
-		return getattr( inst._locals.get(), self.name )
+		return getattr(inst._locals.get(), self.name)
 
 from zope.security import management
 from zope.security.interfaces import IParticipation
@@ -209,9 +216,9 @@ from zope.security.management import queryInteraction
 @interface.implementer(IParticipation)
 class _Participation(object):
 
-	__slots__ = b'interaction', b'principal' # XXX: Py3
+	__slots__ = b'interaction', b'principal'  # XXX: Py3
 
-	def __init__( self, principal ):
+	def __init__(self, principal):
 		self.interaction = None
 		self.principal = principal
 
@@ -224,14 +231,14 @@ class DelegatingImpersonatedAuthenticationPolicy(object):
 	and popped from this stack.
 	"""
 
-	def __init__( self, base_policy ):
-		self._locals = _ThreadLocalManager( default=base_policy )
+	def __init__(self, base_policy):
+		self._locals = _ThreadLocalManager(default=base_policy)
 
-	def impersonating_userid( self, userid ):
+	def impersonating_userid(self, userid):
 
 		@contextlib.contextmanager
 		def impersonating():
-			self._locals.push( _FixedUserAuthenticationPolicy( userid ) )
+			self._locals.push(_FixedUserAuthenticationPolicy(userid))
 			# Cannot use restoreInteraction() because we may be nested
 			interaction = queryInteraction()
 			endInteraction()
@@ -248,4 +255,4 @@ class DelegatingImpersonatedAuthenticationPolicy(object):
 # All the attributes declared on the authentication policy interface
 # should delegate
 for _x in IAuthenticationPolicy:
-	setattr( DelegatingImpersonatedAuthenticationPolicy, _x, _delegating_descriptor( _x ) )
+	setattr(DelegatingImpersonatedAuthenticationPolicy, _x, _delegating_descriptor(_x))

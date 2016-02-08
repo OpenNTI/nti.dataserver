@@ -18,11 +18,17 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
+from zope.mimetype.interfaces import IContentTypeAware
+
 from nti.coremetadata.interfaces import IRecordable
+
+from nti.recorder.interfaces import ITransactionRecord
 
 from nti.traversal.traversal import find_interface
 
 from nti.zope_catalog.catalog import Catalog
+
+from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
 
 from nti.zope_catalog.interfaces import IMetadataCatalog
 
@@ -35,17 +41,28 @@ from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
 
 from nti.zope_catalog.string import StringTokenNormalizer
-from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
-
-from .interfaces import ITransactionRecord
 
 CATALOG_NAME = 'nti.dataserver.++etc++recorder-catalog'
 
+#: Transaction ID index
 IX_TID = 'tid'
+
+#: Transaction type index
 IX_TYPE = 'type'
+
+#: Recordable object locked attribute index
 IX_LOCKED = 'locked'
+
+#: Recordable object MimeType
+IX_MIMETYPE = 'mimeType'
+
+#: Transaction attribute
 IX_ATTRIBUTES = 'attributes'
+
+#: Transaction time
 IX_CREATEDTIME = 'createdTime'
+
+#: Transaction principal
 IX_USERNAME = IX_PRINCIPAL = 'principal'
 
 deprecated('SiteIndex', 'No longer used')
@@ -55,6 +72,28 @@ class SiteIndex(RawSetIndex):
 deprecated('TargetIntIDIndex', 'No longer used')
 class TargetIntIDIndex(IntegerAttributeIndex):
 	pass
+
+class ValidatingMimeType(object):
+
+	__slots__ = (b'mimeType',)
+
+	def __init__(self, obj, default=None):
+		if ITransactionRecord.providedBy(obj):
+			source = find_interface(obj, IRecordable, strict=False)
+		elif IRecordable.providedBy(obj):
+			source = obj
+		else:
+			source = None
+		if source is not None:
+			source = IContentTypeAware(source, source)
+			self.mimeType = 	getattr(source, 'mimeType', None) \
+							or  getattr(source, 'mime_type', None)
+	def __reduce__(self):
+		raise TypeError()
+
+class MimeTypeIndex(AttributeValueIndex):
+	default_field_name = 'mimeType'
+	default_interface = ValidatingMimeType
 
 class PrincipalRawIndex(RawValueIndex):
 	pass
@@ -141,6 +180,7 @@ def create_recorder_catalog(catalog=None, family=None):
 	for name, clazz in ((IX_TID, TIDIndex),
 						(IX_TYPE, TypeIndex),
 						(IX_LOCKED, LockedIndex),
+						(IX_MIMETYPE, MimeTypeIndex),
 						(IX_PRINCIPAL, PrincipalIndex),
 						(IX_CREATEDTIME, CreatedTimeIndex),
 						(IX_ATTRIBUTES, AttributeSetIndex)):

@@ -13,11 +13,13 @@ from zope import component
 
 from zope.intid.interfaces import IIntIds
 
-from pyramid.view import view_config
-from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
+from pyramid.view import view_config
+from pyramid.view import view_defaults
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.dataserver import authorization as nauth
@@ -55,7 +57,6 @@ class IntIdResolverView(AbstractAuthenticatedView):
 @view_config(name='UnregisterMissingObjects')
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
-			   request_method='POST',
 			   context=IDataserverFolder,
 			   permission=nauth.ACT_NTI_ADMIN)
 class UnregisterMissingObjectsView(AbstractAuthenticatedView,

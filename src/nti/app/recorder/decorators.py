@@ -31,13 +31,14 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.links.links import Link
 
-from nti.recorder.utils import decompress
 from nti.recorder.interfaces import ITransactionRecord
+
+from nti.recorder.utils import decompress
 
 from nti.traversal.traversal import find_interface
 
-INTID = u'IntId'
 CLASS = StandardExternalFields.CLASS
+INTID = StandardExternalFields.INTID
 LINKS = StandardExternalFields.LINKS
 NTIID = StandardExternalFields.NTIID
 MIMETYPE = StandardExternalFields.MIMETYPE
@@ -61,11 +62,14 @@ class _TransactionRecordDecorator(AbstractAuthenticatedRequestAwareDecorator):
 					recordable.__class__.__name__
 			mimeType = 	getattr(recordable, 'mimeType', None) or \
 						getattr(recordable, 'mime_type', None)
+			title = getattr(recordable, 'title', None) or \
+					getattr(recordable, 'label', None)
 			result['Recordable'] = {
 				CLASS: clazz,
 				NTIID: ntiid,
 				MIMETYPE: mimeType,
-				INTID: intids.queryId(recordable)
+				INTID: intids.queryId(recordable),
+				'Title': title
 			}
 
 @component.adapter(IRecordable)
@@ -82,10 +86,10 @@ class _RecordableDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		"""
 		Only persistent objects for users that have permission.
 		"""
-		return 		self._acl_decoration \
- 				and bool(self.authenticated_userid) \
- 				and getattr(context, '_p_jar', None) is not None \
-				and has_permission(ACT_UPDATE, context, self.request)
+		return (	self._acl_decoration
+ 				and bool(self.authenticated_userid)
+ 				and getattr(context, '_p_jar', None) is not None
+				and has_permission(ACT_UPDATE, context, self.request))
 
 	def _do_decorate_external(self, context, result):
 		added = []

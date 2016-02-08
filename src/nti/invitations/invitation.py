@@ -24,11 +24,11 @@ from nti.dataserver_core.interfaces import SYSTEM_USER_NAME
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
-from nti.zodb.persistentproperty import PersistentPropertyHolder
+from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IInvitationEntityFinder
+from nti.invitations.interfaces import InvitationAcceptedEvent
 
-from .interfaces import IInvitation
-from .interfaces import IInvitationEntityFinder
-from .interfaces import InvitationAcceptedEvent
+from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 @interface.implementer(IInvitation, IAttributeAnnotatable)
 class BaseInvitation(CreatedModDateTrackingObject, Contained):

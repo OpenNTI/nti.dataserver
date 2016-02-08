@@ -11,7 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.dataserver.contenttypes.forums import MessageFactory as _
+from itertools import chain
 
 from zope import schema
 from zope import interface
@@ -21,17 +21,25 @@ from zope.cachedescriptors.property import cachedIn
 
 # Board
 
+from nti.app.contentlibrary.interfaces import IContentBoard
+
 from nti.contentlibrary.interfaces import IContentPackageBundle
 
-from nti.dataserver.interfaces import system_user
+from nti.dataserver.contenttypes.forums import MessageFactory as _
+
 from nti.dataserver.contenttypes.forums.board import GeneralBoard
 from nti.dataserver.contenttypes.forums.board import AnnotatableBoardAdapter
+
+from nti.dataserver.interfaces import system_user , ICommunity
 
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.ntiids.ntiids import TYPE_OID
 
-from .interfaces import IContentBoard
+from nti.site.interfaces import IHostPolicyFolder
+from nti.site.site import get_component_hierarchy_names
+
+from nti.traversal.traversal import find_interface
 
 @interface.implementer(IContentBoard)
 class ContentBoard(GeneralBoard):
@@ -73,9 +81,9 @@ def ContentBoardAdapter(context):
 
 # Forum
 
-from nti.dataserver.contenttypes.forums.forum import GeneralForum
+from nti.app.contentlibrary.interfaces import IContentForum
 
-from .interfaces import IContentForum
+from nti.dataserver.contenttypes.forums.forum import GeneralForum
 
 @interface.implementer(IContentForum)
 class ContentForum(GeneralForum):
@@ -93,27 +101,39 @@ class ContentForum(GeneralForum):
 
 # Topic
 
+from nti.app.contentlibrary.interfaces import IContentHeadlineTopic
+
 from nti.dataserver import users
-from nti.dataserver.interfaces import IDefaultPublished
+
 from nti.dataserver.contenttypes.forums.topic import GeneralHeadlineTopic
 
-from .interfaces import IContentHeadlineTopic
+from nti.dataserver.interfaces import IDefaultPublished
 
 @interface.implementer(IContentHeadlineTopic)
 class ContentHeadlineTopic(GeneralHeadlineTopic):
+
 	__external_can_create__ = True
+
 	mimeType = 'application/vnd.nextthought.forums.contentheadlinetopic'
+
+	DEFAULT_SHARING_TARGETS = ('Everyone',)
+	publicationSharingTargets = DEFAULT_SHARING_TARGETS
 
 	@property
 	def sharingTargetsWhenPublished(self):
 		# Instead of returning the default set from super, which would return
 		# the dynamic memberships of the *creator* of this object, we
-		# make it visible to the world
+		# make it visible to the site community or the world
 		# XXX NOTE: This will change as I continue to flesh out
 		# the permissioning of the content bundles themselves
 		# auth = IPrincipal( AUTHENTICATED_GROUP_NAME )
 		# interface.alsoProvides(auth, IEntity)
-		return (users.Entity.get_entity('Everyone'),)
+		result = []
+		for name in self.publicationSharingTargets:
+			entity = users.Entity.get_entity(name)
+			if entity is not None:
+				result.append(entity)
+		return tuple(result)
 
 	@property
 	def flattenedSharingTargetNames(self):
@@ -129,13 +149,33 @@ class ContentHeadlineTopic(GeneralHeadlineTopic):
 			res = IDefaultPublished.providedBy(self)
 		return res
 
+	def publish(self):
+		folder = find_interface(self, IHostPolicyFolder, strict=False)
+		if folder is not None:
+			# find a community in site hierarchy
+			names = chain((folder.__name__,), get_component_hierarchy_names())
+			for name in names:
+				comm = users.Entity.get_entity(name or u'')
+				if ICommunity.providedBy(comm): # we have community
+					self.publicationSharingTargets = (name,)
+					break
+			else:
+				self.publicationSharingTargets = () # no community
+		else: # global
+			self.publicationSharingTargets = self.DEFAULT_SHARING_TARGETS
+		return super(ContentHeadlineTopic, self).publish()
+
+	def unpublish(self):
+		self.publicationSharingTargets = self.DEFAULT_SHARING_TARGETS  # restore
+		return super(ContentHeadlineTopic, self).unpublish()
+
 # Posts
+
+from nti.app.contentlibrary.interfaces import IContentCommentPost
+from nti.app.contentlibrary.interfaces import IContentHeadlinePost
 
 from nti.dataserver.contenttypes.forums.post import GeneralHeadlinePost
 from nti.dataserver.contenttypes.forums.post import GeneralForumComment
-
-from .interfaces import IContentCommentPost
-from .interfaces import IContentHeadlinePost
 
 @interface.implementer(IContentHeadlinePost)
 class ContentHeadlinePost(GeneralHeadlinePost):
@@ -152,13 +192,14 @@ class ContentCommentPost(GeneralForumComment):
 
 # ACLs
 
+from nti.dataserver.authorization import ACT_READ
+
+from nti.dataserver.authorization_acl import ace_allowing
+
 from nti.dataserver.contenttypes.forums.acl import _CommunityForumACLProvider
 from nti.dataserver.contenttypes.forums.acl import _CommunityBoardACLProvider
 
-from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
-
-from nti.dataserver.authorization import ACT_READ
 
 @component.adapter(IContentBoard)
 class _ContentBoardACLProvider(_CommunityBoardACLProvider):
@@ -185,9 +226,10 @@ class _ContentForumACLProvider(_CommunityForumACLProvider):
 
 # Forum decorators
 
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.externalization.singleton import SingletonDecorator
 
 from nti.links.links import Link
 

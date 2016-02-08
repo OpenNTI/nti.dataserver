@@ -15,34 +15,36 @@ generation = 25
 import base64
 from collections import Iterable
 
-from zope.generations.utility import findObjectsMatching
 
 from zope import component
+
 from zope.component.hooks import site, setHooks
+
+from zope.generations.utility import findObjectsMatching
 
 from persistent.list import PersistentList
 
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes.canvas import _CanvasUrlShape
 
-from . import evolve24
+from nti.dataserver.generations import evolve24
 
-def migrate( note ):
-	evolve24.migrate( note ) # Be sure they are non-persistent
+def migrate(note):
+	evolve24.migrate(note)  # Be sure they are non-persistent
 	for j, item in enumerate(note.body):
-		if isinstance( item, Canvas ):
+		if isinstance(item, Canvas):
 
 			if item.__parent__ is None:
 				item.__parent__ = note
-				item.__name__ = unicode( j )
+				item.__name__ = unicode(j)
 
 			for i, shape in enumerate(item.shapeList):
 				if shape.__parent__ is None:
 					shape.__parent__ = item
-					shape.__name__ = unicode( i )
+					shape.__name__ = unicode(i)
 
 				# If we find a url shape
-				if isinstance( shape, _CanvasUrlShape ):
+				if isinstance(shape, _CanvasUrlShape):
 					try:
 						shape._p_activate()
 					except AttributeError: pass
@@ -50,14 +52,14 @@ def migrate( note ):
 					if '_head' in state:
 						# Something like: data:image/gif;base64
 						item._p_changed = True
-						head = state.pop( '_head' )
-						raw_tail = state.pop( '_raw_tail' )
+						head = state.pop('_head')
+						raw_tail = state.pop('_raw_tail')
 
-						data_url = head + ',' + base64.b64encode( raw_tail )
+						data_url = head + ',' + base64.b64encode(raw_tail)
 						shape.url = data_url
 
-				if not isinstance( item.shapeList, PersistentList ):
-					item.shapeList = PersistentList( item.shapeList )
+				if not isinstance(item.shapeList, PersistentList):
+					item.shapeList = PersistentList(item.shapeList)
 
 
 	note._v_migrated = True
@@ -68,9 +70,9 @@ def needs_migrate(x):
 	Notes, the most common thing, but also the MessageInfo objects stored under
 	annotations of users.
 	"""
-	return isinstance( getattr( x, 'body', None ), Iterable) and not getattr( x, '_v_migrated', False )
+	return isinstance(getattr(x, 'body', None), Iterable) and not getattr(x, '_v_migrated', False)
 
-def evolve( context ):
+def evolve(context):
 	"""
 	Evolve generation 24 to generation 25 by making all CanvasUrlShape objects
 	have blob data, and setting the parent relationships between canvas objects, shapes,
@@ -79,12 +81,11 @@ def evolve( context ):
 
 	setHooks()
 	ds_folder = context.connection.root()['nti.dataserver']
-	with site( ds_folder ):
+	with site(ds_folder):
 		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
 
 		users = ds_folder['users']
 		for user in users.values():
-			for note in findObjectsMatching( user,
-											 needs_migrate):
+			for note in findObjectsMatching(user, needs_migrate):
 				__traceback_info__ = user, note
-				migrate( note )
+				migrate(note)

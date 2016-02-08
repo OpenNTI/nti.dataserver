@@ -18,30 +18,35 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 from zope.container.contained import contained
 from zope.container.contained import Contained
 
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
 
 from zope.location.interfaces import ISublocations
 
-import persistent
+from persistent import Persistent
 
-from nti.containers import containers
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.externalization import integer_strings
 
-from .interfaces import IInvitation
-from .interfaces import IInvitations
-from .interfaces import InvitationCodeError
+from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IInvitations
+from nti.invitations.interfaces import InvitationCodeError
+
+def get_invitation_code(invitation):
+	iid = component.getUtility(IIntIds).register(invitation)
+	result = integer_strings.to_external_string(iid)
+	return result
 
 @interface.implementer(IInvitations,
 					   IAttributeAnnotatable,
 					   ISublocations)
-class PersistentInvitations(persistent.Persistent, Contained):
+class PersistentInvitations(Persistent, Contained):
 	"""
 	Basic implementation of invitation storage.
 	"""
 
 	def __init__(self):
-		self._invitations = containers.CheckingLastModifiedBTreeContainer()
+		self._invitations = CheckingLastModifiedBTreeContainer()
 		contained(self._invitations, self, '_invitations')
 
 	def sublocations(self):
@@ -59,8 +64,8 @@ class PersistentInvitations(persistent.Persistent, Contained):
 
 	def registerInvitation(self, invitation):
 		if not invitation.code:
-			iid = component.getUtility(IIntIds).register(invitation)
-			invitation.code = integer_strings.to_external_string(iid)
+			code = get_invitation_code(invitation)
+			invitation.code = code
 		# The container implementation raises KeyError if the key is already used
 		self._invitations[invitation.code] = invitation
 
@@ -85,7 +90,6 @@ class ZcmlInvitations(PersistentInvitations):
 	def registerInvitation(self, invitation):
 		if not invitation.code:
 			raise KeyError('Invitation must already have a code.')
-
 		super(ZcmlInvitations, self).registerInvitation(invitation)
 
 def accept_invitations(user, invitation_codes):

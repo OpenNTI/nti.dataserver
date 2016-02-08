@@ -19,18 +19,17 @@ from zope.lifecycleevent import IObjectModifiedEvent
 
 from zope.security.management import queryInteraction
 
-from nti.intid.interfaces import IIntIdAddedEvent
-from nti.intid.interfaces import IIntIdRemovedEvent
-
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IContained
 from nti.dataserver.interfaces import TargetedStreamChangeEvent
 from nti.dataserver.interfaces import IObjectSharingModifiedEvent
 from nti.dataserver.interfaces import ISharingTargetEntityIterable
 
+from nti.intid.interfaces import IIntIdAddedEvent
 from nti.intid.interfaces import IntIdMissingError
+from nti.intid.interfaces import IIntIdRemovedEvent
 
-from .activitystream_change import Change
+from nti.dataserver.activitystream_change import Change
 
 def _enqueue_change_to_target(target, change, accum=None):
 	"""
@@ -82,7 +81,7 @@ def _enqueue_change_to_target(target, change, accum=None):
 
 from zope import interface
 
-from .interfaces import IInteractionQuerier
+from nti.dataserver.interfaces import IInteractionQuerier
 
 @interface.implementer(IInteractionQuerier)
 class TestInteractionQuerier(object):
@@ -103,8 +102,8 @@ def hasQueryInteraction():
 def _stream_preflight(contained):
 	# Make sure we don't broadcast changes for system created
 	# objects or when interaction is disabled.
-	if 	not IEntity.providedBy(getattr(contained, 'creator', None)) \
-		or not hasQueryInteraction():
+	if (	not IEntity.providedBy(getattr(contained, 'creator', None))
+		or	not hasQueryInteraction() ):
 		return None
 	try:
 		return getattr(contained, 'sharingTargets')
@@ -142,8 +141,9 @@ def stream_didAddIntIdForContainedObject(contained, event):
 	for target in creation_targets:
 		_enqueue_change_to_target(target, event, accum)
 
-from nti.dataserver.interfaces import INotModifiedInStreamWhenContainerModified
 from zope.container.interfaces import IContainerModifiedEvent
+
+from nti.dataserver.interfaces import INotModifiedInStreamWhenContainerModified
 
 @component.adapter(IContained, IObjectModifiedEvent)
 def stream_didModifyObject(contained, event):

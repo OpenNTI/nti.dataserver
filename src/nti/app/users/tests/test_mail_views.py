@@ -52,7 +52,6 @@ class TestMailViewFunctions(mock_dataserver.DataserverLayerTest):
 			assert_that(data, has_entry('username', is_('ichigo')))
 			assert_that(data, has_entry('email', is_('ichigo@bleach.org')))
 
-
 class TestMailViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
@@ -106,16 +105,17 @@ class TestMailViews(ApplicationLayerTest):
 		# Our default user cannot validate someone else
 		result = self.testapp.get(href, status=200)
 		assert_that(result.body, contains_string('html'))
-		assert_that(result.body, contains_string('We\'re Sorry.'))
+		assert_that(result.body, contains_string("We're Sorry."))
 
 		# Munge the signature such that the verification fails
-		href += 'baddata'
+		# We only validate the signature, so mangle that.
+		href = href.replace( 'signature=', 'signature=baddata' )
 
 		extra_environ = self._make_extra_environ(user=username)
 		result = self.testapp.get(href, extra_environ=extra_environ, status=200)
 
 		assert_that(result.body, contains_string('html'))
-		assert_that(result.body, contains_string('We\'re Sorry.'))
+		assert_that(result.body, contains_string("We're Sorry."))
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.get_user(username)

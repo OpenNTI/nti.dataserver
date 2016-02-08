@@ -1,31 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-
-from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import contains_string
 from nose.tools import assert_raises
 
-from zope import interface
 import unittest
 
-from ..payload import APNSPayload
-from ..connection import to_packet_bytes
+from zope import interface
+
+from nti.apns.connection import to_packet_bytes
+
+from nti.apns.payload import APNSPayload
 
 class TestConnection(unittest.TestCase):
 
@@ -36,18 +30,18 @@ class TestConnection(unittest.TestCase):
 
 		# We refuse to send invalid payloads or device ids
 		with assert_raises(interface.Invalid):
-			to_packet_bytes( APNSPayload(), deviceid )
+			to_packet_bytes(APNSPayload(), deviceid)
 
 		with assert_raises(interface.Invalid) as ex:
-			to_packet_bytes( payload, b'tooshort' )
+			to_packet_bytes(payload, b'tooshort')
 
-		assert_that( ex.exception, has_property( 'field', has_property( '__name__', 'deviceId' ) ) )
+		assert_that(ex.exception, has_property('field', has_property('__name__', 'deviceId')))
 
-		packet, _ = to_packet_bytes( payload, deviceid )
-		assert_that( packet, is_( bytes ) )
-		assert_that( packet[0], is_( b'\x01' ) )
+		packet, _ = to_packet_bytes(payload, deviceid)
+		assert_that(packet, is_(bytes))
+		assert_that(packet[0], is_(b'\x01'))
 
 		payload.userInfo = {'foo': 'bar'}
-		packet, _ = to_packet_bytes( payload, deviceid )
+		packet, _ = to_packet_bytes(payload, deviceid)
 
-		assert_that( packet, contains_string( b'foo' ) )
+		assert_that(packet, contains_string(b'foo'))

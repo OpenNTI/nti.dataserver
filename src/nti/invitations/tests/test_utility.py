@@ -15,20 +15,16 @@ from hamcrest import has_property
 
 from nti.testing.matchers import verifiably_provides
 
+import fudge
 import unittest
 
-from zope import component
 from zope import interface
 
 from zope.keyreference.interfaces import IKeyReference
 
-from zope.intid import IIntIds
-
 from nti.invitations import utility
 from nti.invitations import interfaces
 from nti.invitations import invitation
-
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.invitations.tests import SharedConfiguringTestLayer
 
@@ -40,13 +36,10 @@ class TestUtility(unittest.TestCase):
 		assert_that(utility.PersistentInvitations(), 
 					verifiably_provides(interfaces.IInvitations))
 
-	@WithMockDSTrans
-	def test_add_remove_invitation(self):
-
+	@fudge.patch('nti.invitations.utility.get_invitation_code')
+	def test_add_remove_invitation(self, mock_gic):
+		mock_gic.is_callable().returns('xyx')
 		invites = utility.PersistentInvitations()
-		ids = component.getUtility(IIntIds)
-		ids.register(invites)
-		ids._p_jar.add(invites)
 
 		invite = invitation.PersistentInvitation()
 		invite.code = 'my code'

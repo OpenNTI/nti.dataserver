@@ -18,7 +18,10 @@ from zope import component
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.app.mail.interfaces import IEmail
 
 from nti.appserver.interfaces import IApplicationSettings
 
@@ -38,8 +41,6 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable
-
-from .interfaces import IEmail
 
 def _is_true(t):
 	result = bool(t and str(t).lower() in TRUE_VALUES)
@@ -119,7 +120,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 	@property
 	def sender_display_name(self):
 		names = IFriendlyNamed(self.sender)
-		return names.alias or names.realname
+		return names.alias or names.realname or self.sender.username
 
 	@property
 	def email_externally(self):
@@ -152,6 +153,13 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		display name property in the email template.
 		"""
 		raise NotImplementedError()
+
+	@property
+	def _context_logged_info(self):
+		"""
+		Subclasses should implement this to log context.
+		"""
+		return ''
 
 	def _default_subject(self):
 		"""
@@ -253,6 +261,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 			subject = '[COPY] %s' % subject
 			self.send_email( self.sender, subject, body, email )
 
-		logger.info( '%s sent %s emails to "%s"',
-					self.remoteUser, send_count, self._context_display_name)
+		logger.info( '%s sent %s emails to %s (NoReply=%s) (sender_reply=%s)',
+					self.remoteUser, send_count, self._context_logged_info,
+					email.NoReply, self._sender_reply_addr)
 		return hexc.HTTPNoContent()

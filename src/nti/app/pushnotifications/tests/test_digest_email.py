@@ -70,6 +70,12 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 	layer = ExLibraryApplicationTestLayer
 
+	def _flush_pipe(self):
+		# Flush our queue from notables created in other layers.
+		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
+		res = res.form.submit( name='subFormTable.buttons.start' ).follow()
+		gevent.joinall(bulk_email_views._BulkEmailView._greenlets)
+
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_application_get(self, fake_connect):
@@ -222,6 +228,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		 .provides( 'send_raw_email' ).calls(check_send)
 		 .expects('get_send_quota').returns( SEND_QUOTA ))
 
+		self._flush_pipe()
 		self._create_notable_data()
 
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
