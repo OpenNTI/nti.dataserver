@@ -38,8 +38,9 @@ from nti.app.users import VERIFY_USER_EMAIL_VIEW
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
-from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
+
+from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IEmailAddressable
 
