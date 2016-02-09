@@ -505,7 +505,7 @@ class _AccountProfileSchemafier(JsonSchemafier):
 	def _iter_names_and_descriptions(self):
 		"""We tack the user fields on first."""
 		return itertools.chain(IUser.namesAndDescriptions(all=False),
-								super(_AccountProfileSchemafier, self)._iter_names_and_descriptions())
+							   super(_AccountProfileSchemafier, self)._iter_names_and_descriptions())
 
 	def make_schema(self):
 		ext_schema = super(_AccountProfileSchemafier, self).make_schema()
