@@ -45,10 +45,10 @@ from nti.common.sets import discard as _discard
 # FIXME: Break this dependency
 from nti.dataserver import authorization_acl as auth_acl
 
-from nti.dataserver import users
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
+
+from nti.dataserver.users import User
 
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
@@ -144,7 +144,7 @@ class _ChatHandler(object):
 			assert len(args) == 2
 			self.chatserver = args[0]
 			self.session = args[1]
-			self.session_user = users.User.get_user(self.session.owner)
+			self.session_user = User.get_user(self.session.owner)
 
 	def __reduce__(self):
 		raise TypeError()
@@ -347,7 +347,7 @@ def ChatHandlerFactory(socketio_protocol, chatserver=None):
 	session = socketio_protocol.session if hasattr(socketio_protocol, 'session') else socketio_protocol
 	if session:
 		chatserver = component.queryUtility(IChatserver) if not chatserver else chatserver
-		user = users.User.get_user(session.owner)
+		user = User.get_user(session.owner)
 	if session and chatserver and user:
 		handler = component.queryMultiAdapter((user, session, chatserver),
 											   IChatEventHandler)
