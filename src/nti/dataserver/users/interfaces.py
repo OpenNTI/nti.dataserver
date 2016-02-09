@@ -695,25 +695,6 @@ class IRecreatableUser(Interface):
 	that create and destroy users.
 	"""
 
-class ISendEmailConfirmationEvent(IObjectEvent):
-	"""
-	A event to send a email confirmation email
-	"""
-
-	user = interface.Attribute("User to send the confirmation email to.")
-	request = interface.Attribute("A request object")
-
-@interface.implementer(ISendEmailConfirmationEvent)
-class SendEmailConfirmationEvent(ObjectEvent):
-
-	def __init__(self, obj, request=None):
-		super(SendEmailConfirmationEvent, self).__init__(obj)
-		self.request = request
-
-	@property
-	def user(self):
-		return self.object
-
 def validateAccept(value):
 	if not value == True:
 		return False

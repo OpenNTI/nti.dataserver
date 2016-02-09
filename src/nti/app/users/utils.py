@@ -42,7 +42,6 @@ from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IEmailAddressable
-from nti.dataserver.users.interfaces import ISendEmailConfirmationEvent
 
 from nti.externalization.externalization import to_external_object
 
@@ -232,13 +231,3 @@ def safe_send_email_verification(user, profile, email, request=None, check=True)
 	except Exception:
 		logger.exception("Cannot send email confirmation to %s.", user)
 		return False
-
-@component.adapter(IUser, ISendEmailConfirmationEvent)
-def _send_email_confirmation(record, event):
-	user = event.user
-	profile = IUserProfile(user, None)
-	email = getattr(profile, 'email', None)
-	request = event.request or get_current_request()
-	if profile is not None:
-		safe_send_email_verification(user, profile, email,
-									 request=request, check=False)
