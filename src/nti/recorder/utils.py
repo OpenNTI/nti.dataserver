@@ -36,6 +36,7 @@ from nti.recorder.record import TransactionRecord
 from ZODB.utils import serial_repr
 
 def compress(obj):
+	__traceback_info__ = obj
 	try:
 		bio = BytesIO()
 		pickle.dump(obj, bio)
