@@ -13,11 +13,12 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from nti.chatserver.interfaces import ACT_ENTER
+
+from nti.chatserver.interfaces import IMeeting
+
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
-
-from .interfaces import IMeeting
-from .interfaces import ACT_ENTER
 
 @component.adapter(IMeeting)
 class _MeetingACLProvider(AbstractCreatedAndSharedACLProvider):

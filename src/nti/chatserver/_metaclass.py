@@ -16,7 +16,7 @@ from collections import Iterable
 
 from zope import component
 
-from .interfaces import IChatserver
+from nti.chatserver.interfaces import IChatserver
 
 def _send_event(chatserver, names, evt_name, *args):
 	"""

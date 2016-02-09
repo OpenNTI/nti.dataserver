@@ -13,37 +13,40 @@ logger = __import__('logging').getLogger(__name__)
 
 import time
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.component.factory import Factory
+
+from nti.chatserver.interfaces import IPresenceInfo
+from nti.chatserver.interfaces import IUnattachedPresenceInfo
 
 from nti.common.property import alias
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.coremetadata.interfaces import ILastModified
 
 from nti.externalization.datastructures import InterfaceObjectIO
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 
-from .interfaces import IPresenceInfo
-from .interfaces import IUnattachedPresenceInfo
-
 @interface.implementer(IPresenceInfo)
-class PresenceInfo(SchemaConfigured): # NOT persistent
+class PresenceInfo(SchemaConfigured):  # NOT persistent
 	createDirectFieldProperties(IUnattachedPresenceInfo)
 	createDirectFieldProperties(IPresenceInfo)
-	createDirectFieldProperties(nti_interfaces.ILastModified)
-	createdTime = alias('lastModified') # overwrite
+	createDirectFieldProperties(ILastModified)
+
+	createdTime = alias('lastModified')  # overwrite
 
 	__external_can_create__ = True
-	mimeType = nti_mimetype_with_class( 'presenceinfo' )
+	mimeType = nti_mimetype_with_class('presenceinfo')
 
-	def __init__( self, *args, **kwargs ):
+	def __init__(self, *args, **kwargs):
 		self.lastModified = time.time()
-		super(PresenceInfo,self).__init__( *args, **kwargs )
+		super(PresenceInfo, self).__init__(*args, **kwargs)
 
 	def isAvailable(self):
 		return self.type == 'available'
@@ -61,7 +64,7 @@ class PresenceInfoInternalObjectIO(InterfaceObjectIO):
 	"""
 	_ext_iface_upper_bound = IPresenceInfo
 
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		super(PresenceInfoInternalObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )
-		if 'Last Modified' in parsed:
-			self._ext_self.lastModified = parsed['Last Modified']
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		super(PresenceInfoInternalObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
+		if StandardExternalFields.LAST_MODIFIED in parsed:
+			self._ext_self.lastModified = parsed[StandardExternalFields.LAST_MODIFIED]

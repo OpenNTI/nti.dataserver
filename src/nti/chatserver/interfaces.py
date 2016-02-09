@@ -11,17 +11,27 @@ __docformat__ = "restructuredtext en"
 
 import six
 
-from zope import interface
 from zope import component
-from zope.interface import Interface
+from zope import interface
+
+from zope.interface.interfaces import IObjectEvent
+
+from zope.interface.interfaces import ObjectEvent
+
 from zope.security.permission import Permission
-from zope.interface import interfaces as z_interfaces
 
 from nti.contentfragments.schema import PlainTextLine
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import ILastModified
+from nti.dataserver.interfaces import IModeledContent
+from nti.dataserver.interfaces import IShareableModeledContent
 
-from nti.socketio import interfaces as sio_interfaces
+from nti.dataserver.interfaces import UserNotificationEvent
+from nti.dataserver.interfaces import CompoundModeledContentBody
+
+from nti.socketio.interfaces import ISocketEventHandler
 
 from nti.schema.field import Set
 from nti.schema.field import Bool
@@ -32,12 +42,12 @@ from nti.schema.field import Variant
 from nti.schema.field import UniqueIterable
 from nti.schema.field import DecodingValidTextLine
 from nti.schema.field import ValidChoice as Choice
-TextLine = DecodingValidTextLine # alias
+TextLine = DecodingValidTextLine  # alias
 
-class IChatserver(Interface):
+class IChatserver(interface.Interface):
 	pass
 
-class IChatEventHandler(sio_interfaces.ISocketEventHandler):
+class IChatEventHandler(ISocketEventHandler):
 	"""
 	Marker interface for objects designed specifically as chat
 	event handlers. These will typically be registered as a multi-adapter
@@ -51,29 +61,29 @@ ACT_ADD_OCCUPANT = Permission('nti.chatserver.actions.add_occupant')
 CHANNEL_DEFAULT = 'DEFAULT'
 CHANNEL_WHISPER = 'WHISPER'
 CHANNEL_CONTENT = 'CONTENT'
-CHANNEL_POLL    = 'POLL'
-CHANNEL_META    = 'META'
-CHANNEL_STATE   = 'STATE'
+CHANNEL_POLL = 'POLL'
+CHANNEL_META = 'META'
+CHANNEL_STATE = 'STATE'
 CHANNELS = (CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_CONTENT, CHANNEL_POLL, CHANNEL_META, CHANNEL_STATE)
 
 STATUS_INITIAL = 'st_INITIAL'
 STATUS_PENDING = 'st_PENDING'
-STATUS_POSTED  = 'st_POSTED'
+STATUS_POSTED = 'st_POSTED'
 STATUS_SHADOWED = 'st_SHADOWED'
-STATUSES = (STATUS_INITIAL,STATUS_PENDING,STATUS_POSTED,STATUS_SHADOWED)
+STATUSES = (STATUS_INITIAL, STATUS_PENDING, STATUS_POSTED, STATUS_SHADOWED)
 
-class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
+class IMeeting(IModeledContent, IZContained):
 	"""
 	Provides the storage structure for a meeting.
 
-    Policy decisions about whether and how to post messages, add/remove occupants
+	Policy decisions about whether and how to post messages, add/remove occupants
 	are delegated to a :class:`IMeetingPolicy` object, which is not expected
 	to be persistent and which is created on demand.
 	"""
 
-	creator = DecodingValidTextLine( title="Meeting creator", description="User that started the meeting" )
+	creator = DecodingValidTextLine(title="Meeting creator", description="User that started the meeting")
 
-	RoomId = DecodingValidTextLine( title="Meeting identifier", description="Meeting identifier" )
+	RoomId = DecodingValidTextLine(title="Meeting identifier", description="Meeting identifier")
 
 	CreatedTime = Float(title="Meeting creation time", description="Meeting creation time")
 
@@ -96,8 +106,8 @@ class IMeetingShouldChangeModerationStateEvent(interface.interfaces.IObjectEvent
 @interface.implementer(IMeetingShouldChangeModerationStateEvent)
 class MeetingShouldChangeModerationStateEvent(interface.interfaces.ObjectEvent):
 
-	def __init__( self, o, flag ):
-		super(MeetingShouldChangeModerationStateEvent,self).__init__( o )
+	def __init__(self, o, flag):
+		super(MeetingShouldChangeModerationStateEvent, self).__init__(o)
 		self.moderated = flag
 
 class IMeetingPolicy(interface.Interface):
@@ -107,7 +117,7 @@ class IMeetingPolicy(interface.Interface):
 	to connected sockets.
 	"""
 
-	def post_message( msg_info ):
+	def post_message(msg_info):
 		"""
 		:param msg_info: An :class:`IMessageInfo` object.
 		:return: A value that can be interpreted as a boolean, indicating success of posting
@@ -115,58 +125,58 @@ class IMeetingPolicy(interface.Interface):
 			number by which the general message count of the room should be incremented (currently only one).
 		"""
 
-	def add_moderator( mod_name ):
+	def add_moderator(mod_name):
 		"""
 		Add a moderator to the room.
 		If a moderator was added, emits an event across the sockets of all connected
 		users.
 		"""
 
-	def approve_message( msg_id ):
+	def approve_message(msg_id):
 		"""
 		Optional; raises an error if not supported.
 		"""
 
-	def shadow_user( username ):
+	def shadow_user(username):
 		"""
 		Cause future messages to the user specified by `username` to be copied
 		to the moderators of this room.
 		:return: Boolean value indicating whether the username was shadowed.
 		"""
 
-	moderated_by_usernames = interface.Attribute( "Iterable of names moderating this meeting." )
+	moderated_by_usernames = interface.Attribute("Iterable of names moderating this meeting.")
 
-class IMessageInfo(nti_interfaces.IShareableModeledContent, nti_interfaces.IZContained):
+class IMessageInfo(IShareableModeledContent, IZContained):
 	# We have to be IShareableModeledContent if we want the same ACL provider to work for us
 	# as works for Notes
 	channel = Choice(
 		title="The channel the message was sent to.",
-		values=CHANNELS )
+		values=CHANNELS)
 
 	Status = Choice(
 		title="The status of the message. Set by the server.",
-		values=STATUSES )
+		values=STATUSES)
 
-	Creator = DecodingValidTextLine( title="Message creator", description="User that send this message" )
+	Creator = DecodingValidTextLine(title="Message creator", description="User that send this message")
 
 	body = Variant((Dict(key_type=TextLine()),  # , value_type=schema.TextLine() ),
-					nti_interfaces.CompoundModeledContentBody()),
+					CompoundModeledContentBody()),
 					description="The body is either a dictionary of string keys and values, or a Note body")
 
 	recipients = UniqueIterable(
 		title="The names of all the recipients of the message.",
 		description="""The actual recipients of the message, whether or not they are
 			named in the message itself. Includes people who just get the transcript.""",
-		value_type=TextLine() )
+		value_type=TextLine())
 
 
-class IMessageInfoEvent(z_interfaces.IObjectEvent):
+class IMessageInfoEvent(IObjectEvent):
 	"""
 	An event having to do with an :class:`IMessageInfo`.
 	"""
 
-@interface.implementer( IMessageInfoEvent )
-class MessageInfoEvent(z_interfaces.ObjectEvent):
+@interface.implementer(IMessageInfoEvent)
+class MessageInfoEvent(ObjectEvent):
 	pass
 
 class IMessageInfoPostedToRoomEvent(IMessageInfoEvent):
@@ -181,20 +191,20 @@ class IMessageInfoPostedToRoomEvent(IMessageInfoEvent):
 		value_type=TextLine())
 
 	room = Object(IMeeting,
-		title="The room that the message was posted to" )
+		title="The room that the message was posted to")
 
 
-@interface.implementer( IMessageInfoPostedToRoomEvent )
+@interface.implementer(IMessageInfoPostedToRoomEvent)
 class MessageInfoPostedToRoomEvent(MessageInfoEvent):
 
-	def __init__( self, obj, recipients, room ):
-		super(MessageInfoPostedToRoomEvent,self).__init__( obj )
+	def __init__(self, obj, recipients, room):
+		super(MessageInfoPostedToRoomEvent, self).__init__(obj)
 		self.recipients = recipients
 		self.room = room
 
-class IMeetingContainer(Interface):
+class IMeetingContainer(interface.Interface):
 
-	def create_meeting_from_dict( chatserver, meeting_dict, constructor ):
+	def create_meeting_from_dict(chatserver, meeting_dict, constructor):
 		"""
 		Called to create (or return) a meeting instance within this container.
 		Typically, security will be based on the creator being allowed
@@ -205,7 +215,7 @@ class IMeetingContainer(Interface):
 			(username, sid) tuples.
 		"""
 
-	def meeting_became_empty( chatserver, meeting ):
+	def meeting_became_empty(chatserver, meeting):
 		"""
 		Called to notify that all occupants have left the meeting. The
 		meeting will be declared inactive and deleted from
@@ -214,7 +224,7 @@ class IMeetingContainer(Interface):
 		"""
 
 
-	def enter_active_meeting( chatserver, meeting_dict ):
+	def enter_active_meeting(chatserver, meeting_dict):
 		"""
 		Called when someone wants to enter an active room (if there is one).
 		Typically, security will be based on the creator being allowed to occupy the
@@ -225,7 +235,7 @@ class IMeetingContainer(Interface):
 		:return: The active room, if successfully entered, otherwise None.
 		"""
 
-	def create_or_enter_meeting( chatserver, meeting_dict, constructor ):
+	def create_or_enter_meeting(chatserver, meeting_dict, constructor):
 		"""
 		The combination of :meth:`create_or_enter_meeting` with :meth:`enter_active_meeting`.
 		If an active meeting exists and the ``Creator`` is allowed to occupy it,
@@ -235,7 +245,7 @@ class IMeetingContainer(Interface):
 			param will say whether it was already active (False) or freshly created (True).
 		"""
 
-class IMeetingStorage(Interface):
+class IMeetingStorage(interface.Interface):
 	"""
 	An object for the storage of meetings. The general
 	contract is that meetings will be added to this object when
@@ -277,7 +287,7 @@ class IMeetingStorage(Interface):
 		raises KeyError. May be ignored.
 		"""
 
-class IMessageInfoStorage(Interface):
+class IMessageInfoStorage(interface.Interface):
 	"""
 	Something that can persistently store chat messages that are
 	being sent.
@@ -285,7 +295,7 @@ class IMessageInfoStorage(Interface):
 	to users and hang the messages off of the user.
 	"""
 
-	def add_message( msg_info ):
+	def add_message(msg_info):
 		"""
 		Cause the message to be stored. Typically, this will
 		be done using a :class:`zope.container.interfaces.IContainer`
@@ -297,19 +307,19 @@ class IMessageInfoStorage(Interface):
 		Remove the specifed message info
 		"""
 
-class IUserTranscriptStorage(Interface):
+class IUserTranscriptStorage(interface.Interface):
 	"""
 	An object that knows how to store transcripts for users
 	in a meeting.
 	"""
-	
+
 	meetings = interface.Attribute("Return all Meetings objects")
-	
+
 	transcripts = interface.Attribute("Return all Transcript objects")
-			
+
 	transcript_summaries = interface.Attribute("Return all Transcript summary objects")
-	
-	def transcript_for_meeting(meeting_id): 
+
+	def transcript_for_meeting(meeting_id):
 		pass
 
 	def add_message(meeting, msg):
@@ -319,36 +329,36 @@ class IUserTranscriptStorage(Interface):
 		pass
 
 # Presence
-class IUnattachedPresenceInfo(Interface):
+class IUnattachedPresenceInfo(interface.Interface):
 	"""
 	Basic description of what goes into generic presence info.
 	"""
 
-	type = Choice( title="What kind of presence this describes",
+	type = Choice(title="What kind of presence this describes",
 				   values=('available', 'unavailable'),
 				   default='available',
 				   required=True)
 
-	show = Choice( title="A hint of how the UI should present the user",
+	show = Choice(title="A hint of how the UI should present the user",
 				   values=('away', 'chat', 'dnd', 'xa'),
 				   default='chat',
-				   required=False )
+				   required=False)
 
-	status = PlainTextLine( title="Optional plain text status information",
+	status = PlainTextLine(title="Optional plain text status information",
 							required=False,
-							max_length=140 )
+							max_length=140)
 
-class IPresenceInfo(IUnattachedPresenceInfo,nti_interfaces.ILastModified):
+class IPresenceInfo(IUnattachedPresenceInfo, ILastModified):
 	"""
 	A description of the chat presence for a particular user.
 	"""
-	username = TextLine( title="The global username to which this presence applies.",
+	username = TextLine(title="The global username to which this presence applies.",
 						 description="If set when reading from external, may be ignored and replaced with canonical value.",
-						 required=False )
+						 required=False)
 	def isAvailable():
 		"""Does the presence represent a user who is available for chat/chat APIs?"""
 
-class IContacts(Interface):
+class IContacts(interface.Interface):
 	"""
 	Something that can report on the "friends" or "buddy list" or "contact list"
 	of a particular entity. This may or may not be persistent and editable
@@ -356,25 +366,25 @@ class IContacts(Interface):
 	to be used by adapting the entity to this interface.
 	"""
 
-	__parent__ = Object( nti_interfaces.IUser, title="The owner of this contact list" )
+	__parent__ = Object(IUser, title="The owner of this contact list")
 
-	contactNamesSubscribedToMyPresenceUpdates = UniqueIterable( title="The usernames of buddies that should get updates when the owner's presence changes",
-																description="Probably computed as a property",
-																value_type=TextLine(title="A username" ) )
-
-	contactNamesISubscribeToPresenceUpdates =  UniqueIterable( title="The usernames of buddies that the owner wants presence updates for",
+	contactNamesSubscribedToMyPresenceUpdates = UniqueIterable(title="The usernames of buddies that should get updates when the owner's presence changes",
 															   description="Probably computed as a property",
-															   value_type=TextLine(title="A username" ) )
-from zope.interface.interfaces import IObjectEvent
-from zope.interface.interfaces import ObjectEvent
+															   value_type=TextLine(title="A username"))
+
+	contactNamesISubscribeToPresenceUpdates = UniqueIterable(title="The usernames of buddies that the owner wants presence updates for",
+															 description="Probably computed as a property",
+															 value_type=TextLine(title="A username"))
+
+
 class IContactsModifiedEvent(IObjectEvent):
 	"""
 	Fired when the contacts for a user are modified.
 	Specific subinterfaces should be listened to.
 	"""
 
-	object = Object( nti_interfaces.IUser, title="The user who's contacts changed." )
-	contacts = Object( IContacts, title="The contacts of the user" )
+	object = Object(IUser, title="The user who's contacts changed.")
+	contacts = Object(IContacts, title="The contacts of the user")
 
 class IContactISubscribeToAddedToContactsEvent(IContactsModifiedEvent):
 	"""
@@ -382,13 +392,13 @@ class IContactISubscribeToAddedToContactsEvent(IContactsModifiedEvent):
 	about is added to my contacts.
 	"""
 
-	contact = Object( nti_interfaces.IUser, title="The user that I now want updates about." )
+	contact = Object(IUser, title="The user that I now want updates about.")
 
 @interface.implementer(IContactsModifiedEvent)
 class ContactsModifiedEvent(ObjectEvent):
 
-	def __init__( self, user ):
-		super(ContactsModifiedEvent,self).__init__( user )
+	def __init__(self, user):
+		super(ContactsModifiedEvent, self).__init__(user)
 
 	@property
 	def contacts(self):
@@ -397,11 +407,11 @@ class ContactsModifiedEvent(ObjectEvent):
 @interface.implementer(IContactISubscribeToAddedToContactsEvent)
 class ContactISubscribeToAddedToContactsEvent(ContactsModifiedEvent):
 
-	def __init__( self, contact_owner, contact_added ):
-		super(ContactISubscribeToAddedToContactsEvent,self).__init__( contact_owner )
+	def __init__(self, contact_owner, contact_added):
+		super(ContactISubscribeToAddedToContactsEvent, self).__init__(contact_owner)
 		self.contact = contact_added
 
-class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent):
+class PresenceChangedUserNotificationEvent(UserNotificationEvent):
 	"""
 	Pre-defined type of user notification for a presence change event of an
 	individual user.
@@ -410,12 +420,12 @@ class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent)
 	proper argument dictionary.
 	"""
 
-	P_ONLINE  = "Online"
+	P_ONLINE = "Online"
 	P_OFFLINE = "Offline"
 
 	__name__ = 'chat_setPresenceOfUsersTo'
 
-	def __init__( self, targets, sender, new_presence ):
+	def __init__(self, targets, sender, new_presence):
 		"""
 		:param string sender: The username whose presence is changing.
 		:param string new_presence: One of the constants from this class designating
@@ -426,13 +436,13 @@ class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent)
 		else:
 			ptype = 'unavailable'
 
-		info = component.createObject( 'PresenceInfo', type=ptype, username=sender )
+		info = component.createObject('PresenceInfo', type=ptype, username=sender)
 		# Could also use getFactoriesFor to work with IPresenceInfo instead of a name...
 		args = {sender: info}
 
-		super(PresenceChangedUserNotificationEvent,self).__init__( self.__name__,
+		super(PresenceChangedUserNotificationEvent, self).__init__(self.__name__,
 																   targets,
-																   args )
+																   args)
 
 class IUserRoomEvent(IObjectEvent):
 	object = TextLine(title="The user/username")

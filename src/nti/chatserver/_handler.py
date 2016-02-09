@@ -30,15 +30,25 @@ from zope.interface.common import mapping as imapping
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
+from nti.chatserver._metaclass import _ChatObjectMeta
+
+from nti.chatserver.interfaces import IContacts
+from nti.chatserver.interfaces import IChatserver
+from nti.chatserver.interfaces import ACT_MODERATE
+from nti.chatserver.interfaces import IPresenceInfo
+from nti.chatserver.interfaces import IChatEventHandler
+from nti.chatserver.interfaces import UserExitRoomEvent
+from nti.chatserver.interfaces import UserEnterRoomEvent
+
 from nti.common.sets import discard as _discard
 
 # FIXME: Break this dependency
+from nti.dataserver import authorization_acl as auth_acl
+
 from nti.dataserver import users
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
-
-from nti.dataserver import authorization_acl as auth_acl
 
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
@@ -48,16 +58,6 @@ from nti.socketio.interfaces import SocketEventHandlerClientError
 
 from nti.zodb.interfaces import ITokenBucket
 from nti.zodb.tokenbucket import PersistentTokenBucket
-
-from ._metaclass import _ChatObjectMeta
-
-from .interfaces import IContacts
-from .interfaces import IChatserver
-from .interfaces import ACT_MODERATE
-from .interfaces import IPresenceInfo
-from .interfaces import IChatEventHandler
-from .interfaces import UserExitRoomEvent
-from .interfaces import UserEnterRoomEvent
 
 EVT_EXITED_ROOM = 'chat_exitedRoom'
 EVT_POST_MESSOGE = 'chat_postMessage'
