@@ -155,11 +155,11 @@ def set_email_verification_count(user, count=None):
 	count = 0 if count is None else int(math.fabs(count))
 	annotes = IAnnotations(user)
 	annotes[_EMAIL_VERIFICATION_COUNT_KEY] = count
-	
+
 def incr_email_verification_count(user):
 	count = get_email_verification_count(user)
 	set_email_verification_count(user, count+1)
-	
+
 def _get_package(policy, template='email_verification_email'):
 	base_package = 'nti.app.users'
 	package = getattr(policy, 'PACKAGE', None)
@@ -239,6 +239,6 @@ def _send_email_confirmation(record, event):
 	profile = IUserProfile(user, None)
 	email = getattr(profile, 'email', None)
 	request = event.request or get_current_request()
-	if profile is None:
+	if profile is not None:
 		safe_send_email_verification(user, profile, email,
 									 request=request, check=False)
