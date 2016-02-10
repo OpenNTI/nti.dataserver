@@ -45,7 +45,7 @@ class TestSubscriber(unittest.TestCase):
 		recordable = Recordable()
 		assert_that(recordable, has_property('locked', is_(False)))
 
-		record = record_transaction(recordable, principal="ichigo", 
+		record = record_transaction(recordable, principal="ichigo",
 							 		descriptions=('a',), ext_value={"a":"b"})
 
 		assert_that(record, is_not(none()))
@@ -63,8 +63,20 @@ class TestSubscriber(unittest.TestCase):
 		# we have history
 		records = get_transactions(recordable)
 		assert_that(records, has_length(1))
-		
-		record = record_transaction(recordable, principal='aizen', type_='xyz')
+
+		# No useful attributes means we will not record tx.
+		record = record_transaction(recordable, principal='aizen', type_='xyz',
+								descriptions=('MimeType',))
+		assert_that(record, none())
+
+		records = get_transactions(recordable)
+		assert_that(records, has_length(1))
+
+		record = record_transaction(recordable, principal='aizen', type_='xyz',
+									descriptions=('test_attribute',))
 		assert_that(record, is_not(none()))
 		assert_that(record, has_property('type', is_('xyz')))
 		assert_that(record, has_property('tid', is_(txn_id())))
+
+		records = get_transactions(recordable)
+		assert_that(records, has_length(2))

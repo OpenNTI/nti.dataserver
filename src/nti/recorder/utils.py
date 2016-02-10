@@ -98,6 +98,10 @@ def record_transaction(recordable, principal=None, descriptions=(),
 					   ext_value=None, type_=TRX_TYPE_UPDATE, history=None):
 
 	__traceback_info__ = recordable, principal, ext_value
+	attributes = _get_attributes( descriptions )
+	if not attributes:
+		# Take care not to record anything that's not an actual edit.
+		return
 
 	if history is None:
 		history = ITransactionRecordHistory(recordable)
@@ -105,8 +109,6 @@ def record_transaction(recordable, principal=None, descriptions=(),
 	tid = getattr(recordable, '_p_serial', None)
 	tid = unicode(serial_repr(tid)) if tid else txn_id()
 	tid = txn_id() if tid == u'0x00' else tid  # new object
-
-	attributes = _get_attributes( descriptions )
 
 	principal = current_principal() if principal is None else principal
 	username = (getattr(principal, 'id', None)
