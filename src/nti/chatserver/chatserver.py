@@ -27,24 +27,27 @@ from zc import intid as zc_intid
 
 from persistent.mapping import PersistentMapping
 
+from nti.chatserver.interfaces import ACT_ENTER
+from nti.chatserver.interfaces import ACT_ADD_OCCUPANT
+
+from nti.chatserver.interfaces import IMeeting
+from nti.chatserver.interfaces import IChatserver
+from nti.chatserver.interfaces import IMeetingStorage
+
+from nti.chatserver.meeting import _Meeting
+
+from nti.dataserver.authentication import effective_principals
+
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IRedisClient
 from nti.dataserver.interfaces import IAuthorizationPolicy
-from nti.dataserver.authentication import effective_principals
 
-from nti.externalization.internalization import update_from_external_object
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
-from nti.ntiids import ntiids
+from nti.externalization.internalization import update_from_external_object
 
-from .meeting import _Meeting
-
-from .interfaces import ACT_ENTER
-from .interfaces import ACT_ADD_OCCUPANT
-
-from .interfaces import IMeeting
-from .interfaces import IChatserver
-from .interfaces import IMeetingStorage
+from nti.ntiids.ntiids import TYPE_UUID
+from nti.ntiids.ntiids import make_ntiid
 
 ####
 # A note on the object model:
@@ -84,9 +87,9 @@ class TestingMappingMeetingStorage(object):
 	def add_room(self, room):
 		assert IMeeting.providedBy(room)
 
-		room.id = ntiids.make_ntiid(provider=room.creator,
-									nttype=ntiids.TYPE_UUID,
-									specific=uuid.uuid4().hex)
+		room.id = make_ntiid(provider=room.creator,
+							 nttype=TYPE_UUID,
+							 specific=uuid.uuid4().hex)
 		ids = component.queryUtility(zc_intid.IIntIds)
 		if ids is not None:
 			ids.register(room)
@@ -105,9 +108,9 @@ class Chatserver(object):
 
 
 	def __init__(self,
-				  user_sessions,
-				  meeting_storage=None,
-				  meeting_container_storage=None):
+				 user_sessions,
+				 meeting_storage=None,
+				 meeting_container_storage=None):
 		"""
 		Create a chatserver.
 
@@ -276,7 +279,7 @@ class Chatserver(object):
 					# We got back an already active room that we should enter.
 					# Check for our session and make sure we're in the room (just like enter_meeting_in_container)
 					logger.debug('Container %s found an existing room %s and forced us into it %s',
-								  container, room, room_info_dict)
+								 container, room, room_info_dict)
 					for orig_occupant in orig_occupants:
 						if isinstance(orig_occupant, tuple) and orig_occupant[0] == room_info_dict['Creator']:
 							room.add_occupant_name(orig_occupant[0])
@@ -373,7 +376,7 @@ class Chatserver(object):
 			# by the occupant, and persistent rooms (that have their own
 			# occupancy rules)
 			logger.debug("%s not re-entering inactive/gone/previously-exited/persistent room %s/%s",
-						  occupant_name, room, room_id)
+						 occupant_name, room, room_id)
 			return None
 
 		# TODO: We could centralize this type of checking with a convenience utility somewhere.

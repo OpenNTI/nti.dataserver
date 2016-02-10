@@ -30,15 +30,25 @@ from zope.interface.common import mapping as imapping
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
+from nti.chatserver._metaclass import _ChatObjectMeta
+
+from nti.chatserver.interfaces import IContacts
+from nti.chatserver.interfaces import IChatserver
+from nti.chatserver.interfaces import ACT_MODERATE
+from nti.chatserver.interfaces import IPresenceInfo
+from nti.chatserver.interfaces import IChatEventHandler
+from nti.chatserver.interfaces import UserExitRoomEvent
+from nti.chatserver.interfaces import UserEnterRoomEvent
+
 from nti.common.sets import discard as _discard
 
 # FIXME: Break this dependency
-from nti.dataserver import users
+from nti.dataserver import authorization_acl as auth_acl
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 
-from nti.dataserver import authorization_acl as auth_acl
+from nti.dataserver.users import User
 
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
@@ -48,16 +58,6 @@ from nti.socketio.interfaces import SocketEventHandlerClientError
 
 from nti.zodb.interfaces import ITokenBucket
 from nti.zodb.tokenbucket import PersistentTokenBucket
-
-from ._metaclass import _ChatObjectMeta
-
-from .interfaces import IContacts
-from .interfaces import IChatserver
-from .interfaces import ACT_MODERATE
-from .interfaces import IPresenceInfo
-from .interfaces import IChatEventHandler
-from .interfaces import UserExitRoomEvent
-from .interfaces import UserEnterRoomEvent
 
 EVT_EXITED_ROOM = 'chat_exitedRoom'
 EVT_POST_MESSOGE = 'chat_postMessage'
@@ -144,7 +144,7 @@ class _ChatHandler(object):
 			assert len(args) == 2
 			self.chatserver = args[0]
 			self.session = args[1]
-			self.session_user = users.User.get_user(self.session.owner)
+			self.session_user = User.get_user(self.session.owner)
 
 	def __reduce__(self):
 		raise TypeError()
@@ -347,7 +347,7 @@ def ChatHandlerFactory(socketio_protocol, chatserver=None):
 	session = socketio_protocol.session if hasattr(socketio_protocol, 'session') else socketio_protocol
 	if session:
 		chatserver = component.queryUtility(IChatserver) if not chatserver else chatserver
-		user = users.User.get_user(session.owner)
+		user = User.get_user(session.owner)
 	if session and chatserver and user:
 		handler = component.queryMultiAdapter((user, session, chatserver),
 											   IChatEventHandler)

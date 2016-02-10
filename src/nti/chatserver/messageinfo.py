@@ -13,8 +13,8 @@ import time
 import uuid
 import datetime
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.deprecation import deprecate
 
@@ -23,14 +23,22 @@ from zope.dublincore import interfaces as dc_interfaces
 from persistent import Persistent
 from persistent.list import PersistentList
 
+from nti.chatserver.interfaces import STATUS_INITIAL
+from nti.chatserver.interfaces import CHANNEL_DEFAULT
+
+from nti.chatserver.interfaces import IMessageInfo
+
+from nti.common.property import alias 
+from nti.common.property import read_alias
 from nti.common.proxy import removeAllProxies
-from nti.common.property import alias, read_alias
 
-from nti.dataserver import sharing
-from nti.dataserver.users import entity
-
-from nti.dataserver.contenttypes import threadable
 from nti.dataserver.contenttypes.base import _make_getitem
+from nti.dataserver.contenttypes.threadable import ThreadableMixin
+from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
+
+from nti.dataserver.sharing import AbstractReadableSharedMixin
+
+from nti.dataserver.users import entity
 
 from nti.dataserver_core.schema import MessageInfoBodyFieldProperty
 
@@ -38,13 +46,8 @@ from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 from nti.externalization.internalization import register_legacy_search_module
-from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
 from nti.mimetype import mimetype
-
-from .interfaces import IMessageInfo
-from .interfaces import STATUS_INITIAL
-from .interfaces import CHANNEL_DEFAULT
 
 _BodyFieldProperty = MessageInfoBodyFieldProperty
 
@@ -52,9 +55,9 @@ _BodyFieldProperty = MessageInfoBodyFieldProperty
 # and the other content types.
 # We manually re-implement IDCTimes (should extend CreatedModDateTrackingObject)
 @interface.implementer(IMessageInfo, dc_interfaces.IDCTimes)
-class MessageInfo( sharing.AbstractReadableSharedMixin,
-				   threadable.ThreadableMixin,
-				   Persistent ):
+class MessageInfo(AbstractReadableSharedMixin,
+				  ThreadableMixin,
+				  Persistent):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
@@ -68,15 +71,15 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 	# the transcript should go to. Set by policy.
 	sharedWith = ()
 	channel = CHANNEL_DEFAULT
-	body = _BodyFieldProperty( IMessageInfo['body'] )
+	body = _BodyFieldProperty(IMessageInfo['body'])
 	recipients = ()
-	Creator = None # aka Sender. Forcibly set by the handler
+	Creator = None  # aka Sender. Forcibly set by the handler
 	containerId = None
 
-	def __init__( self ):
-		super(MessageInfo,self).__init__()
+	def __init__(self):
+		super(MessageInfo, self).__init__()
 		self.ID = unicode(uuid.uuid4().hex)
-		self._v_sender_sid = None # volatile. The session id of the sender.
+		self._v_sender_sid = None  # volatile. The session id of the sender.
 		self.LastModified = time.time()
 		self.CreatedTime = self.LastModified
 		self.Status = STATUS_INITIAL
@@ -90,100 +93,100 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 	def sharingTargets(self):
 		result = set()
 		for x in self.sharedWith:
-			x = entity.Entity.get_entity( x )
+			x = entity.Entity.get_entity(x)
 			if x:
-				result.add( x )
-
+				result.add(x)
 		return result
+
 	# From IWritableSharable
 	def clearSharingTargets(self):
 		self.sharedWith = MessageInfo.sharedWith
 
 	# We don't really do sharing with entities, just usernames. So the entity-based
 	# methods are not implemented
-	def addSharingTarget(self, target ):
+	def addSharingTarget(self, target):
 		raise NotImplementedError()
 
-	def updateSharingTargets( self, replacements ):
+	def updateSharingTargets(self, replacements):
 		raise NotImplementedError()
 
-	def setSharedWithUsernames( self, usernames ):
+	def setSharedWithUsernames(self, usernames):
 		self.sharedWith = usernames
 
 	id = read_alias('ID')
-	MessageId = read_alias('ID') # bwc
+	MessageId = read_alias('ID')  # bwc
 	__name__ = alias('ID')
 
 	createdTime = alias('CreatedTime')
 	lastModified = alias('LastModified')
-	Timestamp = alias('LastModified') # bwc
+	Timestamp = alias('LastModified')  # bwc
 
 	# IDCTimes
-	created = property( lambda self: datetime.datetime.fromtimestamp( self.createdTime ),
-						lambda self, dt: setattr( self, 'createdTime', time.mktime( dt.timetuple() ) ) )
+	created = property(lambda self: datetime.datetime.fromtimestamp(self.createdTime),
+						lambda self, dt: setattr(self, 'createdTime', time.mktime(dt.timetuple())))
 
-	modified = property( lambda self: datetime.datetime.fromtimestamp( self.lastModified ),
-						lambda self, dt: self.updateLastModIfGreater( time.mktime( dt.timetuple() ) ) )
+	modified = property(lambda self: datetime.datetime.fromtimestamp(self.lastModified),
+						lambda self, dt: self.updateLastModIfGreater(time.mktime(dt.timetuple())))
 
-	def updateLastModIfGreater( self, t ): # copied from ModDateTrackingObject
+	def updateLastModIfGreater(self, t):  # copied from ModDateTrackingObject
 		"Only if the given time is (not None and) greater than this object's is this object's time changed."
 		if t is not None and t > self.lastModified:
 			self.lastModified = t
 		return self.lastModified
 
-	def updateLastMod( self ):
+	def updateLastMod(self):
 		pass
 
-	def get_sender_sid( self ):
+	def get_sender_sid(self):
 		"""
 		When this message first arrives, this will
 		be the session id of the session that sent
 		the message. After that, it will be None.
 		"""
-		return getattr( self, '_v_sender_sid', None )
-	def set_sender_sid( self, sid ):
-		setattr( self, '_v_sender_sid', sid )
+		return getattr(self, '_v_sender_sid', None)
+	def set_sender_sid(self, sid):
+		setattr(self, '_v_sender_sid', sid)
 
-	sender_sid = property( get_sender_sid, set_sender_sid )
+	sender_sid = property(get_sender_sid, set_sender_sid)
 
 	@property
-	def rooms( self ):
+	def rooms(self):
 		return [self.containerId]
 
-	Body = alias( 'body' )
+	Body = alias('body')
 
 	@property
 	def recipients_without_sender(self):
 		"""
 		All the recipients of this message, excluding the Sender.
 		"""
-		recip = set( self.recipients )
-		recip.discard( self.Sender )
+		recip = set(self.recipients)
+		recip.discard(self.Sender)
 		return recip
 
 	@property
-	def recipients_with_sender( self ):
+	def recipients_with_sender(self):
 		"""
 		All the recipients of this message, including the Sender.
 		"""
-		recip = set( self.recipients )
-		recip.add( self.Sender )
+		recip = set(self.recipients)
+		recip.add(self.Sender)
 		return recip
 
-	def is_default_channel( self ):
+	def is_default_channel(self):
 		return self.channel is None or self.channel == CHANNEL_DEFAULT
 
-	__getitem__ = _make_getitem( 'body' )
+	__getitem__ = _make_getitem('body')
 
 	__ext_ignore_toExternalObject__ = True
 	@deprecate("Prefer to use nti.externalization directly.")
-	def toExternalObject( self ):
-		return to_external_object( self )
+	def toExternalObject(self):
+		return to_external_object(self)
 
 	__ext_ignore_updateFromExternalObject__ = True
 	@deprecate("Prefer to use nti.externalization directly.")
-	def updateFromExternalObject( self, ext_object, context=None ):
-		return update_from_external_object( self, ext_object, context=context )
+	def updateFromExternalObject(self, ext_object, context=None):
+		return update_from_external_object(self, ext_object, context=context)
 
 @component.adapter(IMessageInfo)
 class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, InterfaceObjectIO):
@@ -195,8 +198,8 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, InterfaceObject
 							'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
 
 
-	def __init__( self, context ):
-		super(MessageInfoInternalObjectIO,self).__init__(context)
+	def __init__(self, context):
+		super(MessageInfoInternalObjectIO, self).__init__(context)
 
 	context = alias('_ext_self')
 
@@ -212,8 +215,8 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, InterfaceObject
 		# See also nti.dataserver.contenttypes.base
 		return removeAllProxies(self.context)
 
-	def toExternalObject( self, mergeFrom=None, **kwargs ):
-		result = super(MessageInfoInternalObjectIO,self).toExternalObject( mergeFrom=mergeFrom, **kwargs )
+	def toExternalObject(self, mergeFrom=None, **kwargs):
+		result = super(MessageInfoInternalObjectIO, self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
 		msg = self.context
 		if msg.body is not None:
 			# alias for old code.
@@ -222,12 +225,11 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, InterfaceObject
 		assert 'recipients' in result
 		return result
 
-
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		if 'Body' in parsed and 'body' not in parsed:
 			parsed['body'] = parsed['Body']
 
-		super(MessageInfoInternalObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )
+		super(MessageInfoInternalObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
 		msg = self.context
 
 		# make recipients be stored as a persistent list.
@@ -235,6 +237,6 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, InterfaceObject
 		# into the database multiple times, by avoiding extra copies (like when we transcript)
 		# This also results in us copying incoming recipients
 		if msg.recipients and 'recipients' in parsed:
-			msg.recipients = PersistentList( msg.recipients )
+			msg.recipients = PersistentList(msg.recipients)
 
 register_legacy_search_module('nti.chatserver.messageinfo')

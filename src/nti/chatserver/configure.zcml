@@ -18,6 +18,7 @@
 	<include package="nti.externalization" />
 
 	<ext:registerMimeFactories module=".messageinfo" />
+
 	<adapter factory=".messageinfo.MessageInfoInternalObjectIO" />
 
 	<ext:registerMimeFactories module=".presenceinfo" />
@@ -30,6 +31,7 @@
 	<adapter factory="._meeting_post_policy.MeetingPostPolicy"
 			 for=".interfaces.IMeeting"
 			 provides=".interfaces.IMeetingPolicy" />
+
 	<ext:registerMimeFactories module=".meeting" />
 
 	<subscriber handler="._meeting_post_policy.meeting_should_change_moderation_state" />
@@ -50,6 +52,7 @@
 			 for="nti.socketio.interfaces.ISocketSession" />
 
 	<adapter factory=".contacts.DefaultComputedContacts" />
+
 	<subscriber handler=".contacts.default_computed_contacts_change_when_follower_added" />
 
 	<!-- ACL/ACE permissions -->
@@ -58,9 +61,11 @@
 	<permission
 			id="nti.chatserver.actions.moderate"
 			title="Moderate a chatroom" />
+
 	<permission
 			id="nti.chatserver.actions.enter"
 			title="Enter an existing chatroom" />
+
 	<permission
 			id="nti.chatserver.actions.add_occupant"
 			title="Enter an existing chatroom" />

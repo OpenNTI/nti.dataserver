@@ -20,7 +20,6 @@ from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IWillUpdateEntityEvent
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
-from nti.dataserver.users.interfaces import ISendEmailConfirmationEvent
 
 from nti.dataserver.users.utils import reindex_email_verification
 
@@ -35,14 +34,6 @@ def _new_user_is_not_blacklisted(user, event):
 	user_blacklist = component.getUtility(IUserBlacklistedStorage)
 	if user_blacklist.is_user_blacklisted(user):
 		raise BlacklistedUsernameError(user.username)
-
-@component.adapter(IUser, ISendEmailConfirmationEvent)
-def _send_email_confirmation(user, event):
-	profile = IUserProfile(user, None)
-	email = getattr(profile, 'email', None)
-	request = event.request or get_current_request()
-	if profile is not None and email:
-		safe_send_email_verification(user, profile, email, request)
 
 @component.adapter(IUser, IWillUpdateEntityEvent)
 def _user_modified_from_external_event(user, event):

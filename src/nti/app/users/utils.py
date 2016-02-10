@@ -9,18 +9,15 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import os
 import math
 import time
 import hashlib
-import isodate
 from urllib import urlencode
 from urlparse import urljoin
 from datetime import datetime
 
-import zope.intid
+import isodate
 
 from zope import component
 
@@ -30,25 +27,26 @@ from zope.dottedname import resolve as dottedname
 
 from zope.i18n import translate
 
-from zope.security.interfaces import IPrincipal
+from zope.intid.interfaces import IIntIds
 
-from pyramid.threadlocal import get_current_request
+from zope.security.interfaces import IPrincipal
 
 from itsdangerous import JSONWebSignatureSerializer as SignatureSerializer
 
+from nti.app.users import MessageFactory as _
+from nti.app.users import VERIFY_USER_EMAIL_VIEW
+
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
-from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
+
+from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IEmailAddressable
-from nti.dataserver.users.interfaces import ISendEmailConfirmationEvent
 
 from nti.externalization.externalization import to_external_object
 
 from nti.mailer.interfaces import ITemplatedMailer
-
-from . import VERIFY_USER_EMAIL_VIEW
 
 _EMAIL_VERIFICATION_TIME_KEY = 'nti.app.users._EMAIL_VERIFICATION_TIME_KEY'
 _EMAIL_VERIFICATION_COUNT_KEY = 'nti.app.users._EMAIL_VERIFICATION_COUNT_KEY'
@@ -73,7 +71,7 @@ def generate_mail_verification_pair(user, email=None, secret_key=None):
 		raise ValueError("User not found")
 	username = user.username.lower()
 
-	intids = component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(IIntIds)
 	profile = IUserProfile(user, None)
 	email = email or getattr(profile, 'email', None)
 	if not email:
@@ -94,7 +92,7 @@ def get_verification_signature_data(user, signature, params=None,
 		raise ValueError("User not found")
 	username = user.username.lower()
 
-	intids = component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(IIntIds)
 	profile = IUserProfile(user)
 	email = email or getattr(profile, 'email', None)
 	if not email:
@@ -127,12 +125,12 @@ def generate_verification_email_url(user, request=None, host_url=None,
 	except AttributeError:
 		host_url = None
 
-	signature, token = generate_mail_verification_pair(	user=user, email=email,
+	signature, token = generate_mail_verification_pair(user=user, email=email,
 														secret_key=secret_key)
 	params = urlencode({'username': user.username.lower(),
 						'signature': signature})
 
-	href = '%s/%s?%s' % (ds2, '@@'+VERIFY_USER_EMAIL_VIEW, params)
+	href = '%s/%s?%s' % (ds2, '@@' + VERIFY_USER_EMAIL_VIEW, params)
 	result = urljoin(host_url, href) if host_url else href
 	return result, token
 
@@ -155,11 +153,11 @@ def set_email_verification_count(user, count=None):
 	count = 0 if count is None else int(math.fabs(count))
 	annotes = IAnnotations(user)
 	annotes[_EMAIL_VERIFICATION_COUNT_KEY] = count
-	
+
 def incr_email_verification_count(user):
 	count = get_email_verification_count(user)
-	set_email_verification_count(user, count+1)
-	
+	set_email_verification_count(user, count + 1)
+
 def _get_package(policy, template='email_verification_email'):
 	base_package = 'nti.app.users'
 	package = getattr(policy, 'PACKAGE', None)
@@ -221,7 +219,7 @@ def send_email_verification(user, profile, email, request=None, check=True):
 	incr_email_verification_count(user)
 
 def safe_send_email_verification(user, profile, email, request=None, check=True):
-	iids = component.getUtility(zope.intid.IIntIds)
+	iids = component.getUtility(IIntIds)
 	if iids.queryId(user) is None:
 		logger.debug("Not sending email verification during account creation of %s", user)
 		return
@@ -232,13 +230,3 @@ def safe_send_email_verification(user, profile, email, request=None, check=True)
 	except Exception:
 		logger.exception("Cannot send email confirmation to %s.", user)
 		return False
-
-@component.adapter(IUser, ISendEmailConfirmationEvent)
-def _send_email_confirmation(record, event):
-	user = event.user
-	profile = IUserProfile(user, None)
-	email = getattr(profile, 'email', None)
-	request = event.request or get_current_request()
-	if profile is None:
-		safe_send_email_verification(user, profile, email,
-									 request=request, check=False)

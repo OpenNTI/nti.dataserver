@@ -15,25 +15,32 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import sys
 import itertools
 import transaction
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.event import notify
 
-import zope.schema.interfaces
+from zope.schema.interfaces import RequiredMissing
+from zope.schema.interfaces import ValidationError
 
-import z3c.password.interfaces
+from z3c.password.interfaces import InvalidPassword
+from z3c.password.interfaces import IPasswordUtility
 
 from pyramid.view import view_config
 
-import nti.appserver.httpexceptions as hexc
+from nti.app.externalization import internalization as obj_io
 
-from nti.appserver.policies import site_policies
+from nti.app.externalization.error import handle_validation_error
+from nti.app.externalization.error import raise_json_error as _raise_error
+from nti.app.externalization.error import handle_possible_validation_error
+
+from nti.appserver import MessageFactory as _
+from nti.appserver import httpexceptions as hexc
+
 from nti.appserver._util import logon_user_with_request
 
 from nti.appserver.interfaces import IUserUpgradedEvent
@@ -42,17 +49,14 @@ from nti.appserver.interfaces import UserCreatedWithRequestEvent
 from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.link_providers.interfaces import IFlagLinkRemovedEvent
 
-from nti.app.externalization import internalization as obj_io
+from nti.appserver.policies.site_policies import find_site_policy
+from nti.appserver.policies.site_policies import GenericKidSitePolicyEventListener
 
-from nti.app.externalization.error import handle_validation_error
-from nti.app.externalization.error import raise_json_error as _raise_error
-from nti.app.externalization.error import handle_possible_validation_error
+from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
-
-from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IAvatarChoices
@@ -88,7 +92,7 @@ REL_CREATE_ACCOUNT = "account.create"
 REL_PREFLIGHT_CREATE_ACCOUNT = "account.preflight.create"
 
 #: See :func:`account_profile_schema_view`
-REL_ACCOUNT_PROFILE_SCHEMA = "account.profile" # bad name for BWC
+REL_ACCOUNT_PROFILE_SCHEMA = "account.profile"  # bad name for BWC
 
 #: The link relationship type that means that the user profile is in need
 #: of an update, possibly because the applicable fields have changed
@@ -98,14 +102,14 @@ REL_ACCOUNT_PROFILE_SCHEMA = "account.profile" # bad name for BWC
 #: be obtained from the :func:`account_profile_schema_view`
 REL_ACCOUNT_PROFILE_UPGRADE = "account.profile.needs.updated"
 
-_PLACEHOLDER_USERNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_USERNAME
-_PLACEHOLDER_REALNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME
+_PLACEHOLDER_USERNAME = GenericKidSitePolicyEventListener.PLACEHOLDER_USERNAME
+_PLACEHOLDER_REALNAME = GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME
 
 def _create_user(request, externalValue, preflight_only=False, require_password=True,
 				 user_factory=User.create_user):
 
 	try:
-		desired_userid = externalValue['Username'] # May throw KeyError
+		desired_userid = externalValue['Username']  # May throw KeyError
 		# Require the password to be present. We will check it with the policy
 		# below.
 		# TODO: See comments in the user about needing to use site policies vs the default
@@ -116,14 +120,14 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 			# None for an account without a password (an openid account), but that's not
 			# helpful here
 			if pwd is None:
-				raise KeyError( 'password' )
+				raise KeyError('password')
 	except KeyError:
 		exc_info = sys.exc_info()
-		_raise_error( request, hexc.HTTPUnprocessableEntity,
-					  {'field': exc_info[1].args[0],
-					   'message': _('Missing data'),
-					   'code': 'RequiredMissing'},
-					  exc_info[2] )
+		_raise_error(request, hexc.HTTPUnprocessableEntity,
+					 {	'field': exc_info[1].args[0],
+					 	'message': _('Missing data'),
+						'code': 'RequiredMissing'},
+					 exc_info[2])
 
 	try:
 		# Now create the user, firing Created and Added events as appropriate.
@@ -135,83 +139,83 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 		# is currently not being applied by the site policy until after
 		# the user object has been updated (if it's based on interface). When we
 		# need different values, that falls over.
-		new_user = user_factory( username=desired_userid,
+		new_user = user_factory(username=desired_userid,
 								 external_value=externalValue,
-								 preflight_only=preflight_only ) # May throw validation error
+								 preflight_only=preflight_only)  # May throw validation error
 		return new_user
 	except BlankHumanNameError as e:
 		exc_info = sys.exc_info()
-		_raise_error( request,
-					  hexc.HTTPUnprocessableEntity,
-					  { 'message': _("Please provide your first and last names." ),
+		_raise_error(request,
+					 hexc.HTTPUnprocessableEntity,
+					 { 	'message': _("Please provide your first and last names."),
 						'field': 'realname',
 						'code': e.__class__.__name__ },
-					  exc_info[2] )
-	except zope.schema.interfaces.RequiredMissing as e:
-		handle_validation_error( request, e )
-	except z3c.password.interfaces.InvalidPassword as e:
+					 exc_info[2])
+	except RequiredMissing as e:
+		handle_validation_error(request, e)
+	except InvalidPassword as e:
 		# Turns out that even though these are ValidationError, we have to handle
 		# them specially because the library doesn't follow the usual pattern
 		exc_info = sys.exc_info()
-		_raise_error( request,
-					  hexc.HTTPUnprocessableEntity,
-					  {'message': str(e),
-					   'field': 'password',
-					   'code': e.__class__.__name__,
-					   'value': getattr(e, 'value', None)},
-					  exc_info[2] )
+		_raise_error(request,
+					 hexc.HTTPUnprocessableEntity,
+					 {	'message': str(e),
+					  	'field': 'password',
+						'code': e.__class__.__name__,
+						'value': getattr(e, 'value', None)},
+					  exc_info[2])
 	except EmailAddressInvalid as e:
 		exc_info = sys.exc_info()
 		if e.value == desired_userid:
 			# Given a choice, identify this on the username, since
 			# we are forcing them to be the same
-			_raise_error( request, hexc.HTTPUnprocessableEntity,
-						  {'field': 'Username',
-						   'fields': ['Username', 'email'],
-						   'message': str(e),
-						   'code': e.__class__.__name__},
-						exc_info[2] )
-		handle_validation_error( request, e )
+			_raise_error(request, hexc.HTTPUnprocessableEntity,
+						 {	'field': 'Username',
+						 	'fields': ['Username', 'email'],
+						 	'message': str(e),
+							'code': e.__class__.__name__},
+						exc_info[2])
+		handle_validation_error(request, e)
 	except InvitationValidationError as e:
 		e.field = 'invitation_codes'
-		handle_validation_error( request, e )
+		handle_validation_error(request, e)
 	except BlacklistedUsernameError as e:
 		exc_info = sys.exc_info()
-		_raise_error( request,
-					  hexc.HTTPUnprocessableEntity,
-					  {'field': 'Username',
-					   'message': _('That username is not available. Please choose another.'),
-					   'code': 'BlacklistedUsernameError'},
-					   exc_info[2] )
+		_raise_error(request,
+					 hexc.HTTPUnprocessableEntity,
+					 {	'field': 'Username',
+					 	'message': _('That username is not available. Please choose another.'),
+					 	'code': 'BlacklistedUsernameError'},
+					 exc_info[2])
 	except InvalidValue as e:
 		if e.value is _PLACEHOLDER_USERNAME:
 			# Not quite sure what the conflict actually was, but at least we know
 			# they haven't provided a username value, so make it look like that
 			exc_info = sys.exc_info()
-			_raise_error( request, hexc.HTTPUnprocessableEntity,
-						  {'field': 'Username',
-						   'fields': ['Username', 'realname'],
-						   'message': UsernameCannotBeBlank.i18n_message,
-						   'code': 'UsernameCannotBeBlank'},
-						  exc_info[2] )
+			_raise_error(request, hexc.HTTPUnprocessableEntity,
+						 {	'field': 'Username',
+						 	'fields': ['Username', 'realname'],
+						 	'message': UsernameCannotBeBlank.i18n_message,
+						 	'code': 'UsernameCannotBeBlank'},
+						 exc_info[2])
 		if 	e.value == desired_userid and e.value and \
-			externalValue.get( 'realname' ) is _PLACEHOLDER_REALNAME:
+			externalValue.get('realname') is _PLACEHOLDER_REALNAME:
 			# This is an extreme corner case. You have to work really hard
 			# to trigger this conflict
 			exc_info = sys.exc_info()
-			_raise_error( request,
-						  hexc.HTTPUnprocessableEntity,
-						  { 'message': _("Please provide your first and last names." ),
+			_raise_error(request,
+						 hexc.HTTPUnprocessableEntity,
+						 {	'message': _("Please provide your first and last names."),
 							'field': 'realname',
 							'fields': ['Username', 'realname'],
-							'code': getattr(BlankHumanNameError,'__name__', None) },
-						   exc_info[2] )
-		policy, _site = site_policies.find_site_policy( request=request )
+							'code': getattr(BlankHumanNameError, '__name__', None) },
+						 exc_info[2])
+		policy, _site = find_site_policy(request=request)
 		if policy:
-			e = policy.map_validation_exception( externalValue, e )
-		handle_validation_error( request, e )
-	except zope.schema.interfaces.ValidationError as e:
-		handle_validation_error( request, e )
+			e = policy.map_validation_exception(externalValue, e)
+		handle_validation_error(request, e)
+	except ValidationError as e:
+		handle_validation_error(request, e)
 	except IntIdMissingError as e:
 		# Hmm. This is a serious type of KeyError, one unexpected
 		# it deserves a 500
@@ -219,16 +223,16 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 	except KeyError as e:
 		# Sadly, key errors can be several things, not necessarily just
 		# usernames. It's hard to tell them apart though
-		logger.debug( "Got key error %s creating user (preflight? %s)", e, preflight_only )
+		logger.debug("Got key error %s creating user (preflight? %s)", e, preflight_only)
 		exc_info = sys.exc_info()
-		_raise_error( request,
-					  hexc.HTTPConflict,
-					  {'field': 'Username',
-					   'message': _('That username is not available. Please choose another.'),
-					   'code': 'DuplicateUsernameError'},
-					   exc_info[2] )
+		_raise_error(request,
+					 hexc.HTTPConflict,
+					 {	'field': 'Username',
+					 	'message': _('That username is not available. Please choose another.'),
+					 	'code': 'DuplicateUsernameError'},
+					 exc_info[2])
 	except Exception as e:
-		handle_possible_validation_error( request, e )
+		handle_possible_validation_error(request, e)
 
 from zope.container.contained import Contained
 
@@ -251,7 +255,7 @@ class AccountCreatePathAdapter(Contained):
 
 	@property
 	def __acl__(self):
-		return acl_from_aces( ace_allowing_all(self) )
+		return acl_from_aces(ace_allowing_all(self))
 
 class DenyAccountCreatePathAdapter(AccountCreatePathAdapter):
 	"""
@@ -260,7 +264,7 @@ class DenyAccountCreatePathAdapter(AccountCreatePathAdapter):
 
 	@property
 	def __acl__(self):
-		return acl_from_aces( ace_denying_all(self) )
+		return acl_from_aces(ace_denying_all(self))
 
 @view_config(route_name='objects.generic.traversal',
 			 context=AccountCreatePathAdapter,
@@ -295,11 +299,11 @@ def account_create_view(request):
 	"""
 
 	if request.authenticated_userid:
-		raise hexc.HTTPForbidden( _("Cannot create new account while logged on." ))
+		raise hexc.HTTPForbidden(_("Cannot create new account while logged on."))
 
 	# TODO: We are hardcoding the factory. Should we do that?
 	externalValue = obj_io.read_body_as_external_object(request)
-	new_user = _create_user( request, externalValue )
+	new_user = _create_user(request, externalValue)
 
 	# Yay, we created one. Respond with the Created code, and location.
 	request.response.status_int = 201
@@ -309,10 +313,10 @@ def account_create_view(request):
 	assert new_user.__parent__
 	assert new_user.__name__
 
-	request.response.location = request.resource_url( new_user )
-	logger.debug( "Notifying of creation of new user %s", new_user )
-	notify(UserCreatedWithRequestEvent( new_user, request ) )
-	logon_user_with_request( new_user, request, request.response )
+	request.response.location = request.resource_url(new_user)
+	logger.debug("Notifying of creation of new user %s", new_user)
+	notify(UserCreatedWithRequestEvent(new_user, request))
+	logon_user_with_request(new_user, request, request.response)
 
 	# Ensure the user is rendered his full profile;
 	# the ordinary detection of user == authenticated_user won't work
@@ -335,7 +339,7 @@ class AccountCreatePreflightPathAdapter(Contained):
 
 	@property
 	def __acl__(self):
-		return acl_from_aces( ace_allowing_all(self) )
+		return acl_from_aces(ace_allowing_all(self))
 
 class DenyAccountCreatePreflightPathAdapter(AccountCreatePreflightPathAdapter):
 	"""
@@ -344,8 +348,7 @@ class DenyAccountCreatePreflightPathAdapter(AccountCreatePreflightPathAdapter):
 
 	@property
 	def __acl__(self):
-		return acl_from_aces( ace_denying_all(self) )
-
+		return acl_from_aces(ace_denying_all(self))
 
 @view_config(route_name='objects.generic.traversal',
 			 context=AccountCreatePreflightPathAdapter,
@@ -378,7 +381,7 @@ def account_preflight_view(request):
 	"""
 
 	if request.authenticated_userid:
-		raise hexc.HTTPForbidden( _("Cannot create new account while logged on." ))
+		raise hexc.HTTPForbidden(_("Cannot create new account while logged on."))
 
 	externalValue = obj_io.read_body_as_external_object(request)
 
@@ -394,15 +397,15 @@ def account_preflight_view(request):
 			externalValue[k] = v
 
 	if not externalValue['password']:
-		externalValue['password'] = component.getUtility( z3c.password.interfaces.IPasswordUtility ).generate()
+		externalValue['password'] = component.getUtility(IPasswordUtility).generate()
 
 	if '@' in externalValue['Username'] and externalValue['email'] == placeholder_data['email']:
 		# We do have one policy on adult sites that wants usernames and email to match if the username
 		# is an email.
 		externalValue['email'] = externalValue['Username']
 
-	preflight_user = _create_user( request, externalValue, preflight_only=True )
-	ext_schema = _AccountCreationProfileSchemafier( preflight_user, readonly_override=False ).make_schema()
+	preflight_user = _create_user(request, externalValue, preflight_only=True)
+	ext_schema = _AccountCreationProfileSchemafier(preflight_user, readonly_override=False).make_schema()
 
 	request.response.status_int = 200
 
@@ -412,7 +415,7 @@ def account_preflight_view(request):
 
 	provided_username = externalValue['Username'] != placeholder_data['Username']
 	if provided_username:
-		avatar_choices = _get_avatar_choices_for_username( externalValue['Username'], request )
+		avatar_choices = _get_avatar_choices_for_username(externalValue['Username'], request)
 
 	# Make sure there are /no/ side effects of this
 	transaction.abort()
@@ -441,8 +444,8 @@ def account_profile_schema_view(request):
 	request.response.status = 200
 
 	return {'Username': request.context.username,
-			'AvatarURLChoices': _get_avatar_choices_for_username( request.context.username, request ),
-			'ProfileSchema': _AccountProfileSchemafier( request.context ).make_schema() }
+			'AvatarURLChoices': _get_avatar_choices_for_username(request.context.username, request),
+			'ProfileSchema': _AccountProfileSchemafier(request.context).make_schema() }
 
 @component.adapter(IUser, IWillCreateNewEntityEvent)
 def accept_invitations_on_user_creation(user, event):
@@ -454,10 +457,9 @@ def accept_invitations_on_user_creation(user, event):
 	if not event.ext_value:
 		return
 
-	invite_codes = event.ext_value.get( 'invitation_codes' )
+	invite_codes = event.ext_value.get('invitation_codes')
 	if invite_codes:
-		accept_invitations( user, invite_codes )
-
+		accept_invitations(user, invite_codes)
 
 @component.adapter(IUser, IUserUpgradedEvent)
 def request_profile_update_on_user_upgrade(user, event):
@@ -467,21 +469,21 @@ def request_profile_update_on_user_upgrade(user, event):
 	update. At this time, require the profile to be valid, and allow bypassing some of the
 	normal restrictions on what can be changed in the profile.
 	"""
-	flag_link_provider.add_link( user, REL_ACCOUNT_PROFILE_UPGRADE )
+	flag_link_provider.add_link(user, REL_ACCOUNT_PROFILE_UPGRADE)
 	# Apply the marker interface, which vanishes when the user's profile
 	# is updated
-	interface.alsoProvides( user, IRequireProfileUpdate )
+	interface.alsoProvides(user, IRequireProfileUpdate)
 
 @component.adapter(IRequireProfileUpdate, IFlagLinkRemovedEvent)
-def link_removed_on_user(user,event):
+def link_removed_on_user(user, event):
 	if event.link_name == REL_ACCOUNT_PROFILE_UPGRADE:
 		# If they clear the flag without resetting the profile, take that
 		# ability off. (This is idempotent)
-		interface.noLongerProvides( user, IRequireProfileUpdate )
+		interface.noLongerProvides(user, IRequireProfileUpdate)
 
-def _get_avatar_choices_for_username( username, request ):
+def _get_avatar_choices_for_username(username, request):
 	avatar_choices = ()
-	avatar_choices_factory = component.queryAdapter( username, IAvatarChoices )
+	avatar_choices_factory = component.queryAdapter(username, IAvatarChoices)
 	if avatar_choices_factory:
 		avatar_choices = avatar_choices_factory.get_choices()
 	return avatar_choices
@@ -490,24 +492,23 @@ from nti.schema.jsonschema import JsonSchemafier
 
 class _AccountProfileSchemafier(JsonSchemafier):
 
-	def __init__( self, user, readonly_override=None ):
+	def __init__(self, user, readonly_override=None):
 		self.user = user
-		profile_iface = IUserProfileSchemaProvider( user ).getSchema()
-		profile = profile_iface( user )
+		profile_iface = IUserProfileSchemaProvider(user).getSchema()
+		profile = profile_iface(user)
 		profile_schema = find_most_derived_interface(
 									profile, profile_iface,
-									possibilities=interface.providedBy(profile) )
-		super(_AccountProfileSchemafier,self).__init__( profile_schema,
+									possibilities=interface.providedBy(profile))
+		super(_AccountProfileSchemafier, self).__init__(profile_schema,
 														readonly_override=readonly_override)
 
-	def _iter_names_and_descriptions( self ):
+	def _iter_names_and_descriptions(self):
 		"""We tack the user fields on first."""
-		return itertools.chain( IUser.namesAndDescriptions(all=False),
-								super(_AccountProfileSchemafier,self)._iter_names_and_descriptions() )
+		return itertools.chain(IUser.namesAndDescriptions(all=False),
+							   super(_AccountProfileSchemafier, self)._iter_names_and_descriptions())
 
-
-	def make_schema( self ):
-		ext_schema = super(_AccountProfileSchemafier,self).make_schema()
+	def make_schema(self):
+		ext_schema = super(_AccountProfileSchemafier, self).make_schema()
 
 		# Flip the internal/external name of the Username field. Probably some other
 		# stuff gets this wrong?
@@ -518,7 +519,7 @@ class _AccountProfileSchemafier(JsonSchemafier):
 		# Ensure password is marked required (it's defined at the wrong level to tag it)
 		ext_schema['password']['required'] = True
 
-		if IImmutableFriendlyNamed.providedBy( self.user ) and self.readonly_override is None:
+		if IImmutableFriendlyNamed.providedBy(self.user) and self.readonly_override is None:
 			# This interface isn't actually in the inheritance tree, so it
 			# wouldn't be used to determine the readonly status
 			ext_schema['alias']['readonly'] = True
@@ -528,7 +529,7 @@ class _AccountProfileSchemafier(JsonSchemafier):
 
 class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
 
-	def make_schema( self ):
+	def make_schema(self):
 		"""
 		Given a user profile schema, as produced by :func:`_make_schema`,
 		update it to include things that are not part of the profile schema itself but
@@ -537,7 +538,7 @@ class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
 		:return: An updated schema.
 		"""
 
-		result = super(_AccountCreationProfileSchemafier,self).make_schema()
+		result = super(_AccountCreationProfileSchemafier, self).make_schema()
 
 		# In the past, the 'readonly' status of the Username field was always set to False;
 		# now that it's set to true to reflect reality, i'm not sure how the login app
@@ -548,7 +549,7 @@ class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
 			for x in ('about', 'About'):
 				result.pop(x, None)
 
-		if not ICoppaUserWithoutAgreement.providedBy( self.user ):
+		if not ICoppaUserWithoutAgreement.providedBy(self.user):
 			# Business rule on 12/12/12: don't provide invitation codes to coppa users
 			item_schema = { 'name': 'invitation_codes',
 							'required': False,

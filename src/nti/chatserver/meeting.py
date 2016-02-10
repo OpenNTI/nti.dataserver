@@ -24,23 +24,25 @@ import BTrees.OOBTree
 
 from persistent import Persistent
 
+from nti.chatserver._metaclass import _ChatObjectMeta
+
+from nti.chatserver.interfaces import IMeeting
+from nti.chatserver.interfaces import IChatserver
+from nti.chatserver.interfaces import IMeetingPolicy
+from nti.chatserver.interfaces import MeetingShouldChangeModerationStateEvent
+
 from nti.common.property import alias
 from nti.common.property import read_alias
 
 # TODO: Break this dep
-from nti.dataserver.contenttypes import threadable
+from nti.dataserver.contenttypes.threadable import ThreadableMixin
+from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
-from nti.externalization import datastructures
+from nti.externalization.datastructures import ExternalizableInstanceDict
+
 from nti.externalization.representation import make_repr
 
 from nti.zodb.minmax import MergingCounter
-
-from ._metaclass import _ChatObjectMeta
-
-from .interfaces import IMeeting
-from .interfaces import IChatserver
-from .interfaces import IMeetingPolicy
-from .interfaces import MeetingShouldChangeModerationStateEvent
 
 ####
 # A note on the object model:
@@ -92,10 +94,10 @@ def _discard(s, k):
 _bwc_renames = { 'nti.chatserver.meeting _ModeratedMeetingState': 'nti.chatserver._meeting_post_policy _ModeratedMeetingState' }
 
 @interface.implementer(IMeeting)
-class _Meeting(threadable.ThreadableMixin,
-			   threadable.ThreadableExternalizableMixin,
+class _Meeting(ThreadableMixin,
+			   ThreadableExternalizableMixin,
 			   Persistent,
-			   datastructures.ExternalizableInstanceDict):
+			   ExternalizableInstanceDict):
 	"""
 	Class to handle distributing messages to clients. 
 	"""

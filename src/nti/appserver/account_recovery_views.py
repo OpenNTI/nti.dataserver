@@ -255,14 +255,20 @@ def find_users_with_email( email, dataserver, username=None, match_info=False ):
 
 	return [x[0] for x in matches] if not match_info else list(matches)
 
-
-def _is_one_hour_or_more_old( token_time ):
+def _is_link_expired( token_time ):
 
 	now = datetime.datetime.utcnow()
-	delta = datetime.timedelta( hours=-1 )
-	hour_ago = now + delta
-
-	return token_time < hour_ago
+	# JZ - 2.2016 - 4 hour trial run (was 1 hour).
+	delta = datetime.timedelta( hours=-4 )
+	start_boundary = now + delta
+	result = token_time < start_boundary
+	if result:
+		age = now - token_time
+		logger.info( 'Password recovery link expired (days=%s) (hours=%s) (minutes=%s)',
+					 age.days,
+					 age.seconds / 3600 % 24,
+					 age.seconds / 60 % 60 )
+	return result
 
 @view_config(route_name=REL_RESET_PASSCODE,
 			 request_method='POST',
@@ -303,7 +309,7 @@ def reset_passcode_view(request):
 	value = (None, None)
 	annotations = an_interfaces.IAnnotations( user ) if user else {}
 	value = annotations.get( _KEY_PASSCODE_RESET, value )
-	if value[0] != token or _is_one_hour_or_more_old( value[1] ):
+	if value[0] != token or _is_link_expired( value[1] ):
 		# expired, no user, bad token
 		raise_json_error( request, hexc.HTTPNotFound,
 						  {'code': 'InvalidOrMissingOrExpiredResetToken',
