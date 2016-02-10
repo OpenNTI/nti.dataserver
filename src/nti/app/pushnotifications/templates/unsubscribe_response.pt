@@ -13,7 +13,7 @@
 	<body>
 		<div metal:use-macro="macro:header">
 		</div>
-		
+
 		<h1 tal:condition="not: options/error_message">
 		You have been unsubscribed.
 		</h1>
@@ -26,7 +26,7 @@
 		</p>
 		<p tal:condition="options/error_message">
 		We were unable to unsubscribe your account from email notifications at this time.  Please try again later and if the problem persists contact <a href="mailto:support@nextthought.com"
-				tal:attributes="href options/support_email"
+				tal:attributes="href string:mailto:${options/support_email|default}"
 				tal:content="options/support_email">support@nextthought.com</a>.
 		</p>
 	</body>
