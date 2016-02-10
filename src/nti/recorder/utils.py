@@ -99,7 +99,7 @@ def record_transaction(recordable, principal=None, descriptions=(),
 
 	__traceback_info__ = recordable, principal, ext_value
 	attributes = _get_attributes( descriptions )
-	if not attributes:
+	if not attributes and type_ == TRX_TYPE_UPDATE:
 		# Take care not to record anything that's not an actual edit.
 		return
 

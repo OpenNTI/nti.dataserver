@@ -64,8 +64,8 @@ class TestSubscriber(unittest.TestCase):
 		records = get_transactions(recordable)
 		assert_that(records, has_length(1))
 
-		# No useful attributes means we will not record tx.
-		record = record_transaction(recordable, principal='aizen', type_='xyz',
+		# No useful attributes in an update means we will not record tx.
+		record = record_transaction(recordable, principal='aizen',
 								descriptions=('MimeType',))
 		assert_that(record, none())
 
