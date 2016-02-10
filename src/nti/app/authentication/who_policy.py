@@ -18,12 +18,16 @@ logger = __import__('logging').getLogger(__name__)
 
 import time
 
+from zope import component
 from zope import interface
+from zope.authentication import interfaces
 
 from pyramid.interfaces import IAuthenticationPolicy
+from pyramid.security import Everyone
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 from nti.dataserver.authentication import effective_principals
+from .who_authenticators import _is_anonymous_identity
 
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
@@ -47,12 +51,15 @@ class _GroupsCallback(object):
 		if CACHE_KEY in identity:
 			return identity[CACHE_KEY]
 
+		if _is_anonymous_identity( identity ):
+			return ( component.getUtility( interfaces.IUnauthenticatedPrincipal ), )
+
 		username = None
 		if 'repoze.who.userid' in identity: # already identified by AuthTktCookie or _NTIUsersAuthenticatorPlugin
 			username = identity['repoze.who.userid']
 
 		result = effective_principals( username,
-									   registry=request.registry,
+									   registry=request.registry,	
 									   authenticated=True,
 									   request=request )
 
@@ -204,3 +211,22 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 			fake_identity['identifier'] = api.name_registry[self._identifier_id]
 		identity.update(fake_identity)
 		return api.remember(identity)
+
+	def _get_groups(self, identity, request):
+		# We are playing a bit fast and loose oretending that an unauthenticated
+		# request has an identity and has been authenticated.  Normally that isn't
+		# the case and as a result our superclass automatically adds Authenticated 
+		# to the list returned from the groups callback.  To work around this only
+		# call supers implmeentation with identity is not our special anonymous
+		# identity.  If identity is our special anonymous identity call the groups
+		# callback and only extend it by adding Everyone
+		if not _is_anonymous_identity( identity ):
+			return super(AuthenticationPolicy, self)._get_groups( identity, request )
+		else:
+			dynamic = self._callback(identity, request)
+			if dynamic is not None:
+				groups = list(dynamic)
+				groups.append(Everyone)
+				return groups
+			return [Everyone]
+

@@ -1410,6 +1410,7 @@ class TestApplicationLibraryBase(ApplicationLayerTest):
 	_check_content_link = True
 	_stream_type = 'Stream'
 	child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='HTML' )
+	child_ordinal = 0
 
 	def _setup_library(self, content_root='/prealgebra/', lastModified=None):
 		test_self = self
@@ -1417,6 +1418,7 @@ class TestApplicationLibraryBase(ApplicationLayerTest):
 		class NID(object):
 			ntiid = test_self.child_ntiid
 			href = 'sect_0002.html'
+			ordinal = test_self.child_ordinal
 			__parent__ = None
 			__name__ = 'The name'
 			lastModified = 1
@@ -1448,7 +1450,8 @@ class TestApplicationLibraryBase(ApplicationLayerTest):
 		class LibEnt(object):
 			interface.implements( lib_interfaces.IContentPackage )
 			root = content_root
-			ntiid = None
+			ntiid = test_self.child_ntiid
+			ordinal = test_self.child_ordinal
 			__parent__ = None
 
 

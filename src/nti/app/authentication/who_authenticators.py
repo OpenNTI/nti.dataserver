@@ -20,6 +20,9 @@ from repoze.who.interfaces import IIdentifier
 from repoze.who.interfaces import IAuthenticator
 
 from .interfaces import IIdentifiedUserTokenAuthenticator
+from .who_classifiers import CLASS_TV_APP
+
+ANONYMOUS_USERNAME = ''
 
 @interface.implementer(IAuthenticator)
 class DataserverGlobalUsersAuthenticatorPlugin(object):
@@ -96,7 +99,39 @@ class KnownUrlTokenBasedAuthenticator(object):
 		environ[b'AUTH_TYPE'] = b'token'
 		return component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
 
+# returns whether or not the provided identity is our 
+# specially constructed anonymous identity. Note:
+# normally an anonymous request wouldn't have an associated
+# identity with it but in order to do this on a classification
+# by classification basis we are playing a bit fast and loose. -cutz
+def _is_anonymous_identity( identity ):
+	if identity is None:
+		return False
+	return 'anonymous' in identity and identity['anonymous']
+
 @interface.implementer(IAuthenticator,IIdentifier)
+class AnonymousAccessAuthenticator(object):
+	"""
+	A :mod:`repoze.who` plugin that acts in the role of identifier
+	and authenticator for anonymous (unauthenticated) requests
+	"""
+
+	classifications = {IAuthenticator: [CLASS_TV_APP],
+						  IIdentifier: [CLASS_TV_APP]}
+
+	def authenticate(self, environ, identity ):
+		return ANONYMOUS_USERNAME if _is_anonymous_identity(identity) else None
+
+	def identify(self, environ):
+		return {'anonymous': True}
+
+	def forget(self, environ, identity): # pragma: no cover
+		return []
+	def remember(self, environ, identity): # pragma: no cover
+		return []
+
+
+@interface.implementer(IAuthenticator, IIdentifier)
 class FixedUserAuthenticatorPlugin(object): # pragma: no cover # For use with redbot testing
 
 	username = 'pacifique.mahoro@nextthought.com'

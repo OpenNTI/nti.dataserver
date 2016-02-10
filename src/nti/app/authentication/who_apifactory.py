@@ -23,6 +23,7 @@ from nti.appserver.interfaces import IApplicationSettings
 
 from nti.dataserver.users import User
 
+from .who_authenticators import AnonymousAccessAuthenticator
 from .who_authenticators import KnownUrlTokenBasedAuthenticator
 from .who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
 
@@ -90,6 +91,9 @@ def create_who_apifactory( secure_cookies=True,
 	token_tkt = KnownUrlTokenBasedAuthenticator( cookie_secret,
 												 allowed_views=token_allowed_views )
 
+	# An identifier and authenticator for anonymous access
+	anonymous = AnonymousAccessAuthenticator()
+
 	# For browsers (NOT application browsers), we want to do authentication via a
 	# redirect to the login app.
 	try:
@@ -110,13 +114,15 @@ def create_who_apifactory( secure_cookies=True,
 	identifiers = [('auth_tkt', auth_tkt),
 				   ('basicauth-interactive', basicauth_interactive),
 				   ('basicauth', basicauth),
-				   ('token_tkt', token_tkt)]
+				   ('token_tkt', token_tkt),
+				   ('anonymous', anonymous)]
 	# Confirmation/authentication can come from the cookie (encryption)
 	# Or possibly HTTP Basic auth, or in special cases, from the
 	# token query param
 	authenticators = [('auth_tkt', auth_tkt),
 					  ('htpasswd', DataserverGlobalUsersAuthenticatorPlugin()),
-					  ('token_tkt', token_tkt)]
+					  ('token_tkt', token_tkt),
+					  ('anonymous', anonymous)]
 	# Order matters when multiple plugins accept the classification
 	# of the request; the first plugin that returns a result from
 	# its challenge() method stops iteration.

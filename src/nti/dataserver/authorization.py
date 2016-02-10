@@ -495,3 +495,10 @@ class _Participation(object):
 @interface.implementer(IParticipation)
 def _participation_for_user(remote_user):
 	return _Participation(_UserGroupAwarePrincipal(remote_user))
+
+@component.adapter(IPrincipal)
+@interface.implementer(IParticipation)
+def _participation_for_zope_principal(remote_user):
+	return _Participation(remote_user)
+
+# IACLProvider implementations live in authorization_acl
