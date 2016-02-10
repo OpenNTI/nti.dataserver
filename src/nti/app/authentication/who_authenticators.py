@@ -100,7 +100,7 @@ class KnownUrlTokenBasedAuthenticator(object):
 		environ[b'AUTH_TYPE'] = b'token'
 		return component.getAdapter(self.secret, IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
 
-# returns whether or not the provided identity is our
+# Returns whether or not the provided identity is our
 # specially constructed anonymous identity. Note:
 # normally an anonymous request wouldn't have an associated
 # identity with it but in order to do this on a classification
