@@ -11,14 +11,15 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from pyramid.interfaces import IRequest
 
 from zc.displayname.adapters import convertName
-from zc.displayname.interfaces import IDisplayNameGenerator
 from zc.displayname.adapters import DefaultDisplayNameGenerator
+
+from zc.displayname.interfaces import IDisplayNameGenerator
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
@@ -30,7 +31,7 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
 @interface.implementer(IDisplayNameGenerator)
-@component.adapter(IUser,IRequest)
+@component.adapter(IUser, IRequest)
 class UserDisplayNameGenerator(object):
 	"""
 	Get the display name for a user.
@@ -69,4 +70,4 @@ class TitledContentDisplayNameGenerator(DefaultDisplayNameGenerator):
 		default = DefaultDisplayNameGenerator.__call__(self, maxlength=maxlength)
 		if is_valid_ntiid_string(default):
 			# Snap, got the ugly name. We never want to display that.
-			return ''
+			return u''

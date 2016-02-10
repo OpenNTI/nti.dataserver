@@ -11,20 +11,21 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 from zope import interface
 
-from pyramid.interfaces import IRendererFactory
 from pyramid.httpexceptions import HTTPForbidden
+
+from pyramid.interfaces import IRendererFactory
 
 from repoze.who.interfaces import IRequestClassifier
 
 from nti.app.authentication.who_classifiers import CLASS_BROWSER
 
-from .interfaces import IResponseRenderer
-from .interfaces import IResponseCacheController
-from .interfaces import IPreRenderResponseCacheController
+from nti.app.renderers import MessageFactory as _
+
+from nti.app.renderers.interfaces import IResponseRenderer
+from nti.app.renderers.interfaces import IResponseCacheController
+from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 
 @interface.provider(IRendererFactory)
 @interface.implementer(IResponseRenderer)
@@ -41,14 +42,14 @@ class AbstractCachingRenderer(object):
 		if response.status_int == 204:
 			# No Content response is like 304 and has no body. We still
 			# respect outgoing headers, though
-			raise Exception( "You should return an HTTPNoContent response" )
+			raise Exception("You should return an HTTPNoContent response")
 
 		if data is None:
 			# This cannot happen
-			raise Exception( "Can only get here with a body" )
+			raise Exception("Can only get here with a body")
 
 		try:
-			IPreRenderResponseCacheController(data)( data, system ) # optional
+			IPreRenderResponseCacheController(data)(data, system)  # optional
 		except TypeError:
 			pass
 
@@ -60,7 +61,7 @@ class AbstractCachingRenderer(object):
 
 		system['nti.rendered'] = body
 
-		IResponseCacheController( data )( data, system )
+		IResponseCacheController(data)(data, system)
 		return body
 
 	def _render_to_browser(self, data, system):
@@ -82,10 +83,10 @@ class DefaultRenderer(AbstractCachingRenderer):
 	:class:`.IResponseRenderer`, and :class:`.IResponseCacheController`
 	"""
 
-	def __init__( self, info ):
+	def __init__(self, info):
 		pass
 
-	def _render_to_browser( self, data, system ):
+	def _render_to_browser(self, data, system):
 		# render to browser
 		body = _("Rendering to a browser not supported yet")
 		# This is mostly to catch application tests that are
@@ -93,6 +94,6 @@ class DefaultRenderer(AbstractCachingRenderer):
 		raise HTTPForbidden(body)
 
 	def _render_to_non_browser(self, data, system):
-		renderer = IResponseRenderer( data )
-		body = renderer( data, system )
+		renderer = IResponseRenderer(data)
+		body = renderer(data, system)
 		return body
