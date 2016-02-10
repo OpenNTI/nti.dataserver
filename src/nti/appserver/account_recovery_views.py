@@ -266,8 +266,8 @@ def _is_link_expired( token_time ):
 		age = now - token_time
 		logger.info( 'Password recovery link expired (days=%s) (hours=%s) (minutes=%s)',
 					 age.days,
-					 age.seconds / 3600 % 24,
-					 age.seconds / 60 % 60 )
+					 int( age.seconds / 3600 % 24 ),
+					 int( age.seconds / 60 % 60 ) )
 	return result
 
 @view_config(route_name=REL_RESET_PASSCODE,
