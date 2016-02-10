@@ -9,15 +9,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from pyramid.interfaces import IRequest
+
 from pyramid_who.classifiers import forbidden_challenger
+
+from repoze.who.classifiers import default_request_classifier
 
 from repoze.who.interfaces import IChallengeDecider
 from repoze.who.interfaces import IRequestClassifier
-from repoze.who.classifiers import default_request_classifier
 
 #: A request classification that is meant to indicate a browser
 #: or browser-like environment being used programattically, i.e.,
@@ -35,10 +37,10 @@ CLASS_TV_APP = 'application-tvos'
 
 #: A group of classifications that are meant to indicate a browser
 #: or browser-like environment being interacted with programatically
-APP_CLASSES = (CLASS_BROWSER_APP, CLASS_TV_APP, )
+APP_CLASSES = (CLASS_BROWSER_APP, CLASS_TV_APP,)
 
 @interface.provider(IRequestClassifier)
-def application_request_classifier( environ ):
+def application_request_classifier(environ):
 	"""
 	Extends the default classification scheme to try to detect
 	requests in which the browser is being used by an application and we don't
@@ -47,7 +49,7 @@ def application_request_classifier( environ ):
 	If the request represents an application, then :const:`CLASS_BROWSER_APP`
 	is returned, otherwise, the response may be ``browser``.
 	"""
-	result = default_request_classifier( environ )
+	result = default_request_classifier(environ)
 
 	if result == CLASS_BROWSER:
 		# Recall that WSGI values are specified as Python's native
@@ -62,14 +64,14 @@ def application_request_classifier( environ ):
 
 		# OK, but is it an programmatic browser request where we'd like to
 		# change up the auth rules?
-		if b'ntitvos' in ua: #Trumps other rules so we check it first
+		if b'ntitvos' in ua:  # Trumps other rules so we check it first
 			result = CLASS_TV_APP
-		elif environ.get( 'HTTP_X_REQUESTED_WITH', '' ).lower() == b'xmlhttprequest':
+		elif environ.get('HTTP_X_REQUESTED_WITH', '').lower() == b'xmlhttprequest':
 			# An easy Yes!
 			result = CLASS_BROWSER_APP
 		elif environ.get('paste.testing') is True:
 			# From unit tests, we want to behave like an application
-			result = environ.get('nti.paste.testing.classification', CLASS_BROWSER_APP )
+			result = environ.get('nti.paste.testing.classification', CLASS_BROWSER_APP)
 		elif environ.get('HTTP_X_NTI_CLASSIFICATION') and environ['REMOTE_ADDR'] == b'127.0.0.1':
 			# Local overrides for testing
 			result = environ.get('HTTP_X_NTI_CLASSIFICATION')
@@ -113,11 +115,11 @@ def application_request_classifier_for_request(request):
 	return application_request_classifier
 
 @interface.provider(IChallengeDecider)
-def forbidden_or_missing_challenge_decider( environ, status, headers ):
+def forbidden_or_missing_challenge_decider(environ, status, headers):
 	"""
 	We want to offer an auth challenge (e.g., a 401 response) if
 	Pyramid thinks we need one (by default, a 403 response) and if we
 	have no credentials at all. (If we have credentials, then the
 	correct response is a 403, not a challenge.)
 	"""
-	return 'repoze.who.identity' not in environ and forbidden_challenger( environ, status, headers )
+	return 'repoze.who.identity' not in environ and forbidden_challenger(environ, status, headers)

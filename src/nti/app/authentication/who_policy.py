@@ -23,11 +23,14 @@ from zope import interface
 from zope.authentication import interfaces
 
 from pyramid.interfaces import IAuthenticationPolicy
+
 from pyramid.security import Everyone
+
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
+from nti.app.authentication.who_authenticators import is_anonymous_identity
+
 from nti.dataserver.authentication import effective_principals
-from .who_authenticators import _is_anonymous_identity
 
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
@@ -38,7 +41,7 @@ class _GroupsCallback(object):
 	"""
 	__slots__ = ()
 
-	def __call__( self, identity, request ):
+	def __call__(self, identity, request):
 		"""
 		Callback method for :mod:`pyramid_who`. We are guaranteed to
 		only be called when an :class:`.IAuthenticator` has matched;
@@ -51,17 +54,17 @@ class _GroupsCallback(object):
 		if CACHE_KEY in identity:
 			return identity[CACHE_KEY]
 
-		if _is_anonymous_identity( identity ):
-			return ( component.getUtility( interfaces.IUnauthenticatedPrincipal ), )
+		if is_anonymous_identity(identity):
+			return (component.getUtility(interfaces.IUnauthenticatedPrincipal),)
 
 		username = None
 		if 'repoze.who.userid' in identity: # already identified by AuthTktCookie or _NTIUsersAuthenticatorPlugin
 			username = identity['repoze.who.userid']
 
-		result = effective_principals( username,
-									   registry=request.registry,	
-									   authenticated=True,
-									   request=request )
+		result = effective_principals(username,
+									  registry=request.registry,
+									  authenticated=True,
+									  request=request)
 
 		identity[CACHE_KEY] = result
 		return result
@@ -69,9 +72,9 @@ class _GroupsCallback(object):
 @interface.implementer(IAuthenticationPolicy)
 class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 
-	def __init__( self, identifier_id,  #pylint: disable=I0011,W0231
-				  cookie_timeout=ONE_WEEK,
-				  api_factory=None ):
+	def __init__(self, identifier_id,  # pylint: disable=I0011,W0231
+				 cookie_timeout=ONE_WEEK,
+				 api_factory=None):
 		"""
 		:param identifier_id: The name of the fallback identifier to use
 			if we are asked to remember something but haven't
@@ -96,13 +99,13 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 	# overriding each method, sadly.
 
 	def unauthenticated_userid(self, request):
-		res = super(AuthenticationPolicy,self).unauthenticated_userid(request)
+		res = super(AuthenticationPolicy, self).unauthenticated_userid(request)
 		if res:
 			self.__do_reissue(request)
 		return res
 
 	def authenticated_userid(self, request):
-		res = super(AuthenticationPolicy,self).authenticated_userid(request)
+		res = super(AuthenticationPolicy, self).authenticated_userid(request)
 		if res:
 			self.__do_reissue(request)
 		return res
@@ -114,10 +117,10 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 		# now) because we know the auth policy loops over ACLs checking for
 		# membership in effective principals. If that changes, we'll have to
 		# revert and return lists again.
-		res = super(AuthenticationPolicy,self).effective_principals(request)
+		res = super(AuthenticationPolicy, self).effective_principals(request)
 		if res and len(res) > 1:
 			self.__do_reissue(request)
-		return frozenset( res )
+		return frozenset(res)
 
 	def __do_reissue(self, request):
 		if hasattr(request, '_authtkt_reissued'):
@@ -154,21 +157,19 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 			if hasattr(request, '_authtkt_reissue_revoked'):
 				return
 			for k, v in headers:
-				response.headerlist.append( (k, v) )
+				response.headerlist.append((k, v))
 		request.add_response_callback(reissue)
 		request._authtkt_reissued = True
 
-
 	def forget(self, request):
 		request._authtkt_reissue_revoked = True
-		return super(AuthenticationPolicy,self).forget(request)
+		return super(AuthenticationPolicy, self).forget(request)
 
 	def remember(self, request, principal, **kw):
 		res = self.__do_remember(request, principal, **kw)
 		# Match what pyramid's AuthTkt policy does
 		if hasattr(request, '_authtkt_reissued'):
 			request._authtkt_reissue_revoked = True
-
 		return res
 
 	def __do_remember(self, request, principal, **kw):
@@ -204,24 +205,24 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 			'max_age': str(self._cookie_timeout),
 			'tokens': request.environ.get('REMOTE_USER_TOKENS', ()),
 			'userdata': request.environ.get('REMOTE_USER_DATA', b'')
-			}
-		if (principal != identity.get('repoze.who.userid') # start from scratch for a changed user
-			or 'identifier' not in identity # also from scratch, remembering unconditionally, usually from app code
-			or 'AUTH_TYPE' not in request.environ): # also from scratch (typically basic auth)
+		}
+		if (principal != identity.get('repoze.who.userid')  # start from scratch for a changed user
+			or 'identifier' not in identity  # also from scratch, remembering unconditionally, usually from app code
+			or 'AUTH_TYPE' not in request.environ):  # also from scratch (typically basic auth)
 			fake_identity['identifier'] = api.name_registry[self._identifier_id]
 		identity.update(fake_identity)
 		return api.remember(identity)
 
 	def _get_groups(self, identity, request):
-		# We are playing a bit fast and loose oretending that an unauthenticated
+		# We are playing a bit fast and loose pretending that an unauthenticated
 		# request has an identity and has been authenticated.  Normally that isn't
-		# the case and as a result our superclass automatically adds Authenticated 
+		# the case and as a result our superclass automatically adds Authenticated
 		# to the list returned from the groups callback.  To work around this only
 		# call supers implmeentation with identity is not our special anonymous
 		# identity.  If identity is our special anonymous identity call the groups
 		# callback and only extend it by adding Everyone
-		if not _is_anonymous_identity( identity ):
-			return super(AuthenticationPolicy, self)._get_groups( identity, request )
+		if not is_anonymous_identity(identity):
+			return super(AuthenticationPolicy, self)._get_groups(identity, request)
 		else:
 			dynamic = self._callback(identity, request)
 			if dynamic is not None:
@@ -229,4 +230,3 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 				groups.append(Everyone)
 				return groups
 			return [Everyone]
-

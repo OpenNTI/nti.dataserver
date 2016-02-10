@@ -19,31 +19,31 @@ from zope import component
 from repoze.who.api import APIFactory
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 
+from nti.app.authentication.interfaces import ILogonWhitelist
+
+from nti.app.authentication.who_authenticators import AnonymousAccessAuthenticator
+from nti.app.authentication.who_authenticators import KnownUrlTokenBasedAuthenticator
+from nti.app.authentication.who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
+
+from nti.app.authentication.who_basicauth import BasicAuthPlugin
+from nti.app.authentication.who_basicauth import ApplicationBasicAuthPlugin
+
+from nti.app.authentication.who_classifiers import application_request_classifier
+from nti.app.authentication.who_classifiers import forbidden_or_missing_challenge_decider
+
+from nti.app.authentication.who_redirector import BrowserRedirectorPlugin
+
 from nti.appserver.interfaces import IApplicationSettings
 
 from nti.dataserver.users import User
 
-from .who_authenticators import AnonymousAccessAuthenticator
-from .who_authenticators import KnownUrlTokenBasedAuthenticator
-from .who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
-
-from .who_classifiers import application_request_classifier
-from .who_classifiers import forbidden_or_missing_challenge_decider
-
-from .who_basicauth import BasicAuthPlugin
-from .who_basicauth import ApplicationBasicAuthPlugin
-
-from .who_redirector import BrowserRedirectorPlugin
-
-from .interfaces import ILogonWhitelist
-
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
 
-def create_who_apifactory( secure_cookies=True,
-						   cookie_secret='$Id$',
-						   cookie_timeout=ONE_WEEK,
-						   token_allowed_views=('feed.rss', 'feed.atom')):
+def create_who_apifactory(secure_cookies=True,
+						  cookie_secret='$Id$',
+						  cookie_timeout=ONE_WEEK,
+						  token_allowed_views=('feed.rss', 'feed.atom')):
 	"""
 	:param bool secure_cookies: If ``True`` (the default), then any cookies
 		we create will only be sent over SSL and will additionally have the 'HttpOnly'
@@ -88,8 +88,8 @@ def create_who_apifactory( secure_cookies=True,
 	# Create a last-resort identifier and authenticator that
 	# can be used only for certain views, here, our
 	# known RSS/Atom views. This is clearly not very configurable.
-	token_tkt = KnownUrlTokenBasedAuthenticator( cookie_secret,
-												 allowed_views=token_allowed_views )
+	token_tkt = KnownUrlTokenBasedAuthenticator(cookie_secret,
+												allowed_views=token_allowed_views)
 
 	# An identifier and authenticator for anonymous access
 	anonymous = AnonymousAccessAuthenticator()
@@ -137,7 +137,7 @@ def create_who_apifactory( secure_cookies=True,
 							 mdproviders,
 							 application_request_classifier,
 							 forbidden_or_missing_challenge_decider,
-							 b'REMOTE_USER', # environment remote user key
-							 None ) # No logger, leads to infinite loops
+							 b'REMOTE_USER',  # environment remote user key
+							 None)  # No logger, leads to infinite loops
 	api_factory.default_identifier_name = 'auth_tkt'
 	return api_factory

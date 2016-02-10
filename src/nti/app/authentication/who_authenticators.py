@@ -11,28 +11,29 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
 from repoze.who.interfaces import IIdentifier
 from repoze.who.interfaces import IAuthenticator
 
-from .interfaces import IIdentifiedUserTokenAuthenticator
-from .who_classifiers import CLASS_TV_APP
+from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
+
+from nti.app.authentication.who_classifiers import CLASS_TV_APP
 
 ANONYMOUS_USERNAME = ''
 
 @interface.implementer(IAuthenticator)
 class DataserverGlobalUsersAuthenticatorPlugin(object):
 
-	def authenticate( self, environ, identity ):
+	def authenticate(self, environ, identity):
 		try:
 			plugin = component.getUtility(IAuthenticatorPlugin,
 										  name="Dataserver Global User Authenticator")
 			return plugin.authenticateCredentials(identity).id
-		except (KeyError,AttributeError,LookupError): # pragma: no cover
+		except (KeyError, AttributeError, LookupError):  # pragma: no cover
 			return None
 
 @interface.implementer(IAuthenticator,
@@ -58,7 +59,7 @@ class KnownUrlTokenBasedAuthenticator(object):
 	from paste.request import parse_dict_querystring
 	parse_dict_querystring = staticmethod(parse_dict_querystring)
 
-	def __init__( self, secret, allowed_views=() ):
+	def __init__(self, secret, allowed_views=()):
 		"""
 		Creates a combo :class:`.IIdentifier` and :class:`.IAuthenticator`
 		using an auth-tkt like token.
@@ -71,7 +72,7 @@ class KnownUrlTokenBasedAuthenticator(object):
 		self.secret = secret
 		self.allowed_views = allowed_views
 
-	def identify( self, environ ):
+	def identify(self, environ):
 		# Obviously if there is no token we can't identify
 		if b'QUERY_STRING' not in environ or b'token' not in environ[b'QUERY_STRING']:
 			return
@@ -80,16 +81,16 @@ class KnownUrlTokenBasedAuthenticator(object):
 		if not any((environ['PATH_INFO'].endswith(view) for view in self.allowed_views)):
 			return
 
-		query_dict = self.parse_dict_querystring( environ )
+		query_dict = self.parse_dict_querystring(environ)
 		token = query_dict['token']
-		identity =  component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).getIdentityFromToken(token)
+		identity = component.getAdapter(self.secret, IIdentifiedUserTokenAuthenticator).getIdentityFromToken(token)
 		if identity is not None:
 			environ['IDENTITY_TYPE'] = 'token'
 		return identity
 
-	def forget(self, environ, identity): # pragma: no cover
+	def forget(self, environ, identity):  # pragma: no cover
 		return []
-	def remember(self, environ, identity): # pragma: no cover
+	def remember(self, environ, identity):  # pragma: no cover
 		return []
 
 	def authenticate(self, environ, identity):
@@ -97,51 +98,53 @@ class KnownUrlTokenBasedAuthenticator(object):
 			return
 
 		environ[b'AUTH_TYPE'] = b'token'
-		return component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
+		return component.getAdapter(self.secret, IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
 
-# returns whether or not the provided identity is our 
+# returns whether or not the provided identity is our
 # specially constructed anonymous identity. Note:
 # normally an anonymous request wouldn't have an associated
 # identity with it but in order to do this on a classification
 # by classification basis we are playing a bit fast and loose. -cutz
-def _is_anonymous_identity( identity ):
+def is_anonymous_identity(identity):
 	if identity is None:
 		return False
 	return 'anonymous' in identity and identity['anonymous']
+_is_anonymous_identity = is_anonymous_identity
 
-@interface.implementer(IAuthenticator,IIdentifier)
+@interface.implementer(IAuthenticator, IIdentifier)
 class AnonymousAccessAuthenticator(object):
 	"""
 	A :mod:`repoze.who` plugin that acts in the role of identifier
 	and authenticator for anonymous (unauthenticated) requests
 	"""
 
-	classifications = {IAuthenticator: [CLASS_TV_APP],
-						  IIdentifier: [CLASS_TV_APP]}
+	classifications = {	IAuthenticator: [CLASS_TV_APP],
+						IIdentifier: [CLASS_TV_APP]}
 
-	def authenticate(self, environ, identity ):
-		return ANONYMOUS_USERNAME if _is_anonymous_identity(identity) else None
+	def authenticate(self, environ, identity):
+		return ANONYMOUS_USERNAME if is_anonymous_identity(identity) else None
 
 	def identify(self, environ):
 		return {'anonymous': True}
 
-	def forget(self, environ, identity): # pragma: no cover
-		return []
-	def remember(self, environ, identity): # pragma: no cover
+	def forget(self, environ, identity):  # pragma: no cover
 		return []
 
+	def remember(self, environ, identity):  # pragma: no cover
+		return []
 
 @interface.implementer(IAuthenticator, IIdentifier)
-class FixedUserAuthenticatorPlugin(object): # pragma: no cover # For use with redbot testing
+class FixedUserAuthenticatorPlugin(object):  # pragma: no cover # For use with redbot testing
 
 	username = 'pacifique.mahoro@nextthought.com'
-	def authenticate(self, environ, identity ):
+
+	def authenticate(self, environ, identity):
 		return self.username
 
 	def identify(self, environ):
 		return {'login': self.username}
 
-	def remember( self, *args ):
+	def remember(self, *args):
 		return ()
 
 	def forget(self, *args):
