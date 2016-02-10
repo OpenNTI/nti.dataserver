@@ -34,10 +34,12 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from zope.security.interfaces import IParticipation
-from zope.authentication import interfaces
+from zope.authentication.interfaces import IUnauthenticatedPrincipal
 
-from zope.security.management import newInteraction, endInteraction
+from zope.security.interfaces import IParticipation
+
+from zope.security.management import endInteraction
+from zope.security.management import newInteraction
 
 from nti.dataserver import users
 from nti.dataserver.interfaces import IDataserver
@@ -54,7 +56,7 @@ class _interaction_tween(object):
 		user = None
 
 		if not uid:
-			user = component.getUtility( interfaces.IUnauthenticatedPrincipal )
+			user = component.getUtility(IUnauthenticatedPrincipal)
 		else:
 			dataserver = component.getUtility(IDataserver)
 			# We must have a user at this point...
