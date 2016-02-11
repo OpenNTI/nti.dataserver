@@ -133,7 +133,6 @@ def _load_and_register_items(item_iterface,
 	registry = get_registry(registry)
 	for ntiid, data in items.items():
 		internal = external_object_creator(data, notify=False)
-		internal.__parent__ = content_package  # set lineage
 		if _was_utility_registered(internal, item_iterface, ntiid,
 								   registry=registry, connection=connection):
 			result.append(internal)
@@ -177,7 +176,6 @@ def _load_and_register_slidedeck_json(jtext,
 	items = index.get(ITEMS) or {}
 	for ntiid, data in items.items():
 		internal = object_creator(data, notify=False)
-		internal.__parent__ = content_package  # set lineage
 		if 	INTISlide.providedBy(internal) and \
 			_was_utility_registered(internal, INTISlide, ntiid, registry, connection):
 			result.append(internal)
@@ -305,6 +303,9 @@ def _store_asset(content_package, container_id, ntiid, item):
 		unit = content_package[container_id]
 	except KeyError:
 		unit = content_package
+
+	if item.__parent__ is None:
+		item.__parent__ = unit  # set lineage
 
 	container = IPresentationAssetContainer(unit)
 	container[ntiid] = item
