@@ -91,6 +91,9 @@ class ValidatingSiteName(object):
 	def __init__(self, obj, default=None):
 		if IHostPolicyFolder.providedBy(obj):
 			self.site = obj.__name__
+		elif isinstance(obj, six.string_types):
+			# TODO: Validate?
+			self.site = unicode(obj)
 		else:
 			self.site = getSite().__name__
 
