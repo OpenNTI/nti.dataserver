@@ -221,6 +221,8 @@ class ExampleDatabaseInitializer(object):
 			email = unicode(uname) if len(user_tuple) < 3 else user_tuple[2]
 			if '@' in email:
 				ext_value['email'] = email
+			else:
+				ext_value['email'] = email + '@nti.com'
 			ext_value['alias'] = user_tuple[1].split()[0] \
 								 if not is_test_user else user_tuple[1]
 			args['external_value'] = ext_value
