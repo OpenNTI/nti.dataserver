@@ -194,8 +194,8 @@ def _load_and_register_slidedeck_json(jtext,
 	return result
 
 def _can_be_removed(registered, force=False):
-	result = registered is not None and \
-			 (force or not IRecordable.providedBy(registered) or not registered.locked)
+	result = 	registered is not None \
+			and (force or not IRecordable.providedBy(registered) or not registered.locked)
 	return result
 can_be_removed = _can_be_removed
 
@@ -219,8 +219,7 @@ def _removed_registered(provided, name, intids=None, registry=None,
 	return registered
 removed_registered = _removed_registered
 
-def _remove_from_registry(containers=None,
-						  namespace=None,
+def _remove_from_registry(namespace=None,
 						  provided=None,
 						  registry=None,
 						  intids=None,
@@ -239,8 +238,8 @@ def _remove_from_registry(containers=None,
 	else:
 		sites = get_component_hierarchy_names()
 		intids = component.getUtility(IIntIds) if intids is None else intids
-		for item in catalog.search_objects(intids=intids, provided=provided,
-										   container_ntiids=containers,
+		for item in catalog.search_objects(intids=intids,
+										   provided=provided,
 										   namespace=namespace,
 										   sites=sites):
 			ntiid = item.ntiid
