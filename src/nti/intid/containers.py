@@ -12,8 +12,13 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
+
+from collections import Sized
+from collections import Mapping
+from collections import Iterable
+from collections import Container
+
 from UserDict import DictMixin
-from collections import Iterable, Container, Sized, Mapping
 
 from zope import component
 from zope import interface
@@ -23,18 +28,19 @@ from zope.cachedescriptors.property import CachedProperty
 
 from zope.container.contained import Contained
 
-from zope.location import interfaces as loc_interfaces
+from zope.location.interfaces import ILocation
 
 from ZODB import loglevels
 
-from zc import intid as zc_intid
+from zc.intid import IIntIds
 
 import BTrees
 from BTrees.Length import Length
 
-import persistent
+from persistent import Persistent
 
 from nti.common import sets
+
 from nti.common.time import ZERO_64BIT_INT
 from nti.common.time import time_to_64bit_int
 from nti.common.time import bit64_int_to_time
@@ -44,7 +50,7 @@ from nti.externalization.representation import make_repr
 # Make pylint not complain about "badly implemented container", "Abstract class not referenced"
 # pylint: disable=R0924,R0921
 
-@interface.implementer(loc_interfaces.ILocation)
+@interface.implementer(ILocation)
 class _AbstractIntidResolvingFacade(object):
 	"""
 	Base class to support facades that resolve intids.
@@ -82,7 +88,7 @@ class IntidResolvingIterable(_AbstractIntidResolvingFacade, Iterable, Container,
 
 	def __iter__(self, allow_missing=None):
 		allow_missing = allow_missing or self._allow_missing
-		intids = self._intids if self._intids is not None else component.getUtility(zc_intid.IIntIds)
+		intids = self._intids if self._intids is not None else component.getUtility(IIntIds)
 		for iid in self.context:
 			__traceback_info__ = iid, self.__parent__, self.__name__
 			try:
@@ -172,7 +178,7 @@ class _LengthIntidResolvingMappingFacade(IntidResolvingMappingFacade):
 
 _marker = object()
 
-class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Container, Sized):
+class IntidContainedStorage(Persistent, Contained, Iterable, Container, Sized):
 	"""
 	An object that implements something like the interface of
 	:class:`nti.dataserver.datastructures.ContainedStorage`, but in a
@@ -190,7 +196,7 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 		if family is not None:
 			self.family = family
 		else:
-			intids = component.queryUtility(zc_intid.IIntIds)
+			intids = component.queryUtility(IIntIds)
 			if intids is not None:
 				self.family = intids.family
 
@@ -258,7 +264,7 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 		return self._get_intid_for_object_from_utility(contained)
 
 	def _get_intid_for_object_from_utility(self, contained):
-		return component.getUtility(zc_intid.IIntIds).getId(contained)
+		return component.getUtility(IIntIds).getId(contained)
 
 	def addContainedObjectToContainer(self, contained, containerId=''):
 		"""

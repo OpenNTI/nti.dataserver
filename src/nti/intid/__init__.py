@@ -8,3 +8,6 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+from nti.intid.interfaces import IntIdAddedEvent as NTIIntIdAddedEvent
+from nti.intid.interfaces import IntIdRemovedEvent as NTIIntIdRemovedEvent

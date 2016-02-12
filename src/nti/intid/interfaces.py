@@ -11,11 +11,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope.container.interfaces import IContained
+
 from zope.interface import Interface
 from zope.interface import Attribute
 from zope.interface import implementer
-
-from zope.container.interfaces import IContained
 
 from zc.intid import IIntIds
 from zc.intid import IIntIdsSubclass

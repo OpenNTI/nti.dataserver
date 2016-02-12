@@ -25,12 +25,16 @@ from zc.intid.utility import AddedEvent
 from zc.intid.utility import RemovedEvent
 from zc.intid.utility import IntIds as _ZCIntIds
 
-from nti.utils._compat import aq_base
+from nti.intid.interfaces import IIntIds
+from nti.intid.interfaces import IntIdMissingError
+from nti.intid.interfaces import ObjectMissingError
+from nti.intid.interfaces import IntIdAlreadyInUseError
 
-from .interfaces import IIntIds
-from .interfaces import IntIdMissingError
-from .interfaces import ObjectMissingError
-from .interfaces import IntIdAlreadyInUseError
+try:
+	from Acquisition import aq_base
+except ImportError:
+	def aq_base(o):
+		return o
 
 unwrap = removeSecurityProxy
 
@@ -49,7 +53,7 @@ class IntIds(_ZCIntIds):
 	# it is important to be sure that the ID is not acquired
 	# from a parent. Hence, all the methods use aq_base to unwrap
 	# the object.
-	# Removing all proxies in general is more tricky; sometimes a 
+	# Removing all proxies in general is more tricky; sometimes a
 	# zope.container.contained.ContainedProxy is really what we want to register.
 	# Fortunately, most proxies pass attributes on through to the underlying
 	# object, in which case queryId will take either the proxy or the wrapped object;
@@ -114,14 +118,14 @@ class IntIds(_ZCIntIds):
 	def forceUnregister(self, uid, ob=None, notify=False, removeAttribute=True):
 		if not uid in self.refs:
 			raise KeyError(uid)
-		
+
 		if ob is not None:
 			unwrapped = unwrap(aq_base(ob))
 			if self.refs[uid] is not unwrapped:
 				raise KeyError(ob)
-	
+
 		del self.refs[uid]
-		
+
 		if 	ob is not None and removeAttribute and \
 			getattr(ob, self.attribute, None) is not None:
 			setattr(ob, self.attribute, None)
@@ -129,7 +133,7 @@ class IntIds(_ZCIntIds):
 		if notify and ob is not None:
 			zope_event.notify(RemovedEvent(ob, self, uid))
 
-	def __repr__( self ):
+	def __repr__(self):
 		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__,
 									   self.__class__.__name__,
 									   self.attribute,

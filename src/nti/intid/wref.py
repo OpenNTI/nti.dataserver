@@ -23,9 +23,10 @@ from zope import interface
 
 from zc.intid import IIntIds
 
-from nti.externalization import integer_strings
+from nti.externalization.integer_strings import to_external_string
 
-from nti.ntiids import ntiids
+from nti.ntiids.ntiids import TYPE_MISSING
+from nti.ntiids.ntiids import make_ntiid
 
 from nti.wref.interfaces import ICachingWeakRef
 from nti.wref.interfaces import IWeakRefToMissing
@@ -113,9 +114,9 @@ class _AbstractWeakRef(object):
 		# of that. We do some trivial manipulation on it to make it less
 		# obvious what it is, and less likely to come into the system when
 		# we don't want it to
-		eid = integer_strings.to_external_string(eid)
+		eid = to_external_string(eid)
 		# base64 might be nice, but that doesn't play well with ntiids
-		return ntiids.make_ntiid(nttype=ntiids.TYPE_MISSING, specific=eid)
+		return make_ntiid(nttype=TYPE_MISSING, specific=eid)
 
 @interface.implementer(IWeakRefToMissing, ICachingWeakRef)
 class WeakRef(_AbstractWeakRef):

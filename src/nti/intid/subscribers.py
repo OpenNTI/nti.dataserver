@@ -72,10 +72,10 @@ from zope.location.interfaces import ILocation
 
 from zope.intid import interfaces as zope_intid_interfaces
 
-from .common import intid_register
-from .common import intid_unregister
+from nti.intid.common import intid_register
+from nti.intid.common import intid_unregister
 
-from . import interfaces as nti_intid_interfaces
+from nti.intid import interfaces as nti_intid_interfaces
 
 @component.adapter(ILocation, IObjectAddedEvent)
 def addIntIdSubscriber(ob, event):

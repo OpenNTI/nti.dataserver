@@ -9,20 +9,22 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope.component import getAllUtilitiesRegisteredFor
+from zope import component
 
 from zope.event import notify
 
-from zope.intid import interfaces as zope_intid_interfaces
+from zope.intid.interfaces import IntIdAddedEvent as ZOPEIntIdAddedEvent
+from zope.intid.interfaces import IntIdRemovedEvent as ZOPEIntIdRemovedEvent
 
 from zope.keyreference.interfaces import IKeyReference
 
 from zc.intid import IIntIds
 
-from . import interfaces as nti_intid_interfaces
+from nti.intid.interfaces import IntIdAddedEvent as NTIIntIdAddedEvent
+from nti.intid.interfaces import IntIdRemovedEvent as NTIIntIdRemovedEvent
 
 def _utilities_and_key(ob):
-	utilities = tuple(getAllUtilitiesRegisteredFor(IIntIds))
+	utilities = tuple(component.getAllUtilitiesRegisteredFor(IIntIds))
 	return utilities, IKeyReference(ob, None) if utilities else None  # Don't even bother trying to adapt if no utilities
 
 def intid_register(ob, event=None):
@@ -44,8 +46,8 @@ def intid_register(ob, event=None):
 		idmap[utility] = utility.register(ob)
 
 	# Notify the catalogs that this object was added.
-	notify(zope_intid_interfaces.IntIdAddedEvent(ob, event, idmap))
-	notify(nti_intid_interfaces.IntIdAddedEvent(ob, event, idmap))
+	notify(ZOPEIntIdAddedEvent(ob, event, idmap))
+	notify(NTIIntIdAddedEvent(ob, event, idmap))
 addIntId = add_intid = intid_register
 
 def intid_unregister(ob, event=None):
@@ -74,8 +76,8 @@ def intid_unregister(ob, event=None):
 	for utility in utilities:
 		if not fired_event and utility.queryId(ob) is not None:
 			fired_event = True
-			notify(nti_intid_interfaces.IntIdRemovedEvent(ob, event))
-			notify(zope_intid_interfaces.IntIdRemovedEvent(ob, event))
+			notify(NTIIntIdRemovedEvent(ob, event))
+			notify(ZOPEIntIdRemovedEvent(ob, event))
 		try:
 			utility.unregister(ob)
 		except KeyError:
