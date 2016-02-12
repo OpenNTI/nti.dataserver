@@ -5,11 +5,13 @@ Interfaces for the dictionary/glossary component.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
+
 from zope.interface.common.mapping import IReadMapping
 
 class IDictionaryTermData(IReadMapping):
@@ -37,7 +39,7 @@ class IDictionaryTermDataStorage(interface.Interface):
 	Stores words and phrases for a dictionary.
 	"""
 
-	def lookup( key, exact=False ):
+	def lookup(key, exact=False):
 		"""
 		Lookup the information about the given word or phrase.
 		:return: The :class:`IDictionaryTermData` found for the key
@@ -49,7 +51,7 @@ class IJsonDictionaryTermDataStorage(interface.Interface):
 	Stores dictionary entries as JSON-encoded strings.
 	"""
 
-	def lookup( key, exact=False):
+	def lookup(key, exact=False):
 		"""
 		Find the JSON string for the term.
 
@@ -72,10 +74,10 @@ class IDictionaryTerm(interface.Interface):
 	A dictionary term that is defined and possibly has additional information associated with it.
 	"""
 
-	word = schema.TextLine( title="The defined term",
-							description="Not necessarily a word, could also be a phrase." )
+	word = schema.TextLine(title="The defined term",
+						   description="Not necessarily a word, could also be a phrase.")
 
-	def toXMLString( encoding='UTF-8' ):
+	def toXMLString(encoding='UTF-8'):
 		"""
 		Write a representation of this object to XML, suitable for use XSLT.
 
@@ -83,12 +85,12 @@ class IDictionaryTerm(interface.Interface):
 			If ``None``, then the returned string will be a unicode object.
 		"""
 
-	def addInfo( info ):
+	def addInfo(info):
 		"""
 		Adds a detail object providing information about this term.
 		"""
 
-	def __iter__( ):
+	def __iter__():
 		"""
 		Iterates across the info objects added to this term.
 		"""

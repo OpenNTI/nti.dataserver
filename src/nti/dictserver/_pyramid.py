@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -11,8 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import datetime
 
-from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
+
+from pyramid.view import view_config
 
 import nti.dictserver as dictserver
 
@@ -39,5 +41,4 @@ def lookup( request ):
 	request.response.body = info.toXMLString()
 	request.response.content_type = 'text/xml'
 	request.response.status_int = 200
-
 	return request.response
