@@ -17,8 +17,8 @@ does_not = is_not
 
 import BTrees
 
-from ..containers import IntidResolvingMappingFacade
-from ..containers import IntidContainedStorage
+from nti.intid.containers import IntidContainedStorage
+from nti.intid.containers import IntidResolvingMappingFacade
 
 import nti.testing.base
 

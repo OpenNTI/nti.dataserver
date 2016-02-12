@@ -43,7 +43,7 @@ class ConnectionStub(object):
 	next = 1
 
 	database_name = 'ConnectionStub'
-	
+
 	def db(self):
 		return self
 
@@ -56,11 +56,11 @@ class ConnectionStub(object):
 		pass
 
 class TestUtility(AbstractTestBase):
-	
+
 	def setUp(self):
 		super(TestUtility, self).setUp()
 		eventtesting.setUp()
-		
+
 	def test_interface(self):
 		assert_that(IntIds("_ds_id"), verifiably_provides(IIntIds))
 
@@ -80,7 +80,7 @@ class TestUtility(AbstractTestBase):
 		count = 1 if event else 0
 		assert_that(calling(u.getId).with_args(obj), raises(KeyError))
 		assert_that(calling(u.getId).with_args(P()), raises(KeyError))
-		
+
 		assert_that(u.queryId(obj), is_(none()))
 		assert_that(u.queryId(obj, 42), is_(42))
 		assert_that(u.queryId(P(), 42), is_(42))
@@ -93,7 +93,7 @@ class TestUtility(AbstractTestBase):
 		assert_that(u.getId(obj), is_(uid))
 		assert_that(u.queryId(obj), is_(uid))
 		assert_that(eventtesting.getEvents(IIdAddedEvent), has_length(count))
-		
+
 		uid2 = u.register(obj, event=event)
 		assert_that(uid, is_(uid2))
 
@@ -104,6 +104,6 @@ class TestUtility(AbstractTestBase):
 
 	def test_event(self):
 		self._test_ops(True)
-		
+
 	def test_no_event(self):
 		self._test_ops(False)
