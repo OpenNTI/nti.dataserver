@@ -208,8 +208,9 @@ class ExampleDatabaseInitializer(object):
 			# from IPython.core.debugger import Tracer;  Tracer()()
 			uname = user_tuple[0]
 			is_test_user = uname.startswith('test.user.')
-			password = 'temp001' \
-						if is_test_user else user_tuple[1].replace(' ', '.').lower()
+			password = user_tuple[1].replace(' ', '.').lower()
+			if is_test_user or len(password) < 6:
+				password = 'temp001'
 			if self.skip_passwords:
 				# this can speed up creation a lot, the encrpytion is slow. This matters for test cases.
 				password = None
