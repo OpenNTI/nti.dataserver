@@ -33,11 +33,11 @@ def _sync_content_packages(args):
 		_sync_content_package(package)
 
 def _process_args(args):
-	library = component.getUtility(IContentPackageLibrary)
-	library.syncContentPackages()
 	set_site(args.site)
 
 	if not args.list:
+		library = component.getUtility(IContentPackageLibrary)
+		library.syncContentPackages()
 		_sync_content_packages(args)
 	else:
 		print()
