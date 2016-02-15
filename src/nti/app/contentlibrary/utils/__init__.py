@@ -16,9 +16,9 @@ from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
-from nti.ntiids.ntiids import find_object_with_ntiid
-
 from nti.mimetype.mimetype import nti_mimetype_with_class
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 PAGE_INFO_MT = nti_mimetype_with_class('pageinfo')
 PAGE_INFO_MT_JSON = PAGE_INFO_MT + '+json'
@@ -45,7 +45,7 @@ def find_page_info_view_helper(request, page_ntiid_or_content_unit):
 	while content_unit and '#' in getattr(content_unit, 'href', ''):
 		content_unit = getattr(content_unit, '__parent__', None)
 
-	page_ntiid = ''
+	page_ntiid = u''
 	if content_unit:
 		page_ntiid = content_unit.ntiid
 	elif isinstance(page_ntiid_or_content_unit, basestring):
