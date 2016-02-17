@@ -111,6 +111,7 @@ def _register_utility(item, provided, ntiid, registry=None, intids=None, connect
 				unregisterUtility(registry, provided=provided, name=ntiid)
 			registerUtility(registry, item, provided=provided, name=ntiid)
 			intid_register(item, registry, connection=connection)
+			logger.debug("(%s,%s) has been registered", provided.__name__, ntiid)
 			return (True, item)
 		return (False, registered)
 	return (False, None)
@@ -193,9 +194,11 @@ def _load_and_register_slidedeck_json(jtext,
 				item.__parent__ = internal
 	return result
 
+def _is_obj_locked(node):
+	return IRecordable.providedBy(node) and node.isLocked()
+
 def _can_be_removed(registered, force=False):
-	result = 	registered is not None \
-			and (force or not IRecordable.providedBy(registered) or not registered.locked)
+	result = registered is not None and (force or not _is_obj_locked(registered))
 	return result
 can_be_removed = _can_be_removed
 
@@ -208,8 +211,10 @@ def _removed_registered(provided, name, intids=None, registry=None,
 		catalog = get_library_catalog() if catalog is None else catalog
 		catalog.unindex(registered, intids=intids)
 		if not unregisterUtility(registry, provided=provided, name=name):
-			logger.warn("Could not unregister (%s,%s) during sync, continuing...",
-						provided.__name__, name)
+			logger.error("Could not unregister (%s,%s) during sync, continuing...",
+						 provided.__name__, name)
+		else:
+			logger.debug("(%s,%s) has been unregistered", provided.__name__, name)
 		removeIntId(registered)
 		registered.__parent__ = None  # ground
 	elif registered is not None:
