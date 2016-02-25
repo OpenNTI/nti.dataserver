@@ -21,6 +21,8 @@ from repoze.who.classifiers import default_request_classifier
 from repoze.who.interfaces import IChallengeDecider
 from repoze.who.interfaces import IRequestClassifier
 
+from nti.app.authentication import is_anonymous_identity
+
 #: A request classification that is meant to indicate a browser
 #: or browser-like environment being used programattically, i.e.,
 #: a web-app request, as opposed to a pure, interactive human user
@@ -122,4 +124,6 @@ def forbidden_or_missing_challenge_decider(environ, status, headers):
 	have no credentials at all. (If we have credentials, then the
 	correct response is a 403, not a challenge.)
 	"""
-	return 'repoze.who.identity' not in environ and forbidden_challenger(environ, status, headers)
+	identity = environ.get('repoze.who.identity')
+
+	return (not identity or is_anonymous_identity(identity)) and forbidden_challenger(environ, status, headers)

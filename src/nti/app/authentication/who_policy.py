@@ -28,7 +28,7 @@ from pyramid.security import Everyone
 
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
-from nti.app.authentication.who_authenticators import is_anonymous_identity
+from nti.app.authentication import is_anonymous_identity
 
 from nti.dataserver.authentication import effective_principals
 

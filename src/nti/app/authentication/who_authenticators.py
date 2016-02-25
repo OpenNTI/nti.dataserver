@@ -21,6 +21,7 @@ from repoze.who.interfaces import IAuthenticator
 
 from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
 
+from nti.app.authentication import is_anonymous_identity
 from nti.app.authentication.who_classifiers import CLASS_TV_APP
 
 ANONYMOUS_USERNAME = ''
@@ -99,17 +100,6 @@ class KnownUrlTokenBasedAuthenticator(object):
 
 		environ[b'AUTH_TYPE'] = b'token'
 		return component.getAdapter(self.secret, IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
-
-# Returns whether or not the provided identity is our
-# specially constructed anonymous identity. Note:
-# normally an anonymous request wouldn't have an associated
-# identity with it but in order to do this on a classification
-# by classification basis we are playing a bit fast and loose. -cutz
-def is_anonymous_identity(identity):
-	if identity is None:
-		return False
-	return 'anonymous' in identity and identity['anonymous']
-_is_anonymous_identity = is_anonymous_identity
 
 @interface.implementer(IAuthenticator, IIdentifier)
 class AnonymousAccessAuthenticator(object):

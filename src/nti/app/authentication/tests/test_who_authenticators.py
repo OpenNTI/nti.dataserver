@@ -17,8 +17,8 @@ import unittest
 
 from nti.app.authentication.user_token import DefaultIdentifiedUserTokenAuthenticator
 
+from nti.app.authentication import is_anonymous_identity
 from nti.app.authentication.who_authenticators import ANONYMOUS_USERNAME
-from nti.app.authentication.who_authenticators import is_anonymous_identity
 from nti.app.authentication.who_authenticators import AnonymousAccessAuthenticator
 from nti.app.authentication.who_authenticators import KnownUrlTokenBasedAuthenticator
 
