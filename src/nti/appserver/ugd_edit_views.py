@@ -105,6 +105,10 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 
 	def _do_call(self):
 		creator = self.remoteUser
+
+		if not creator:
+			raise hexc.HTTPForbidden()
+
 		containedObject, owner = self.readCreateUpdateContentObject(creator, search_owner=True)
 		containedObject = self._transform_incoming_object(containedObject)
 
