@@ -37,7 +37,7 @@
 				 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
 
 		<!-- On the MC site, NO ONE can upload avatars  -->
-		<adapter factory=".user_policies.MathCountsCapabilityFilter"
+		<subscriber factory=".user_policies.MathCountsCapabilityFilter"
 				 for="nti.dataserver.interfaces.IUser"
 				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
 
@@ -50,13 +50,13 @@
 			 (That's why these need to be subscribers.)
 			 see nti.appserver.tests.test_application:TestApplication.test_external_coppa_capabilities_mathcounts
 		-->
-		<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
+		<subscriber factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
 			 	 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
 			 	 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
-		<adapter factory=".user_policies.MathCountsCapabilityFilter"
+		<subscriber factory=".user_policies.MathCountsCapabilityFilter"
 				 for="nti.dataserver.interfaces.ICoppaUser"
 				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
-		<adapter factory=".user_policies.MathCountsCapabilityFilter"
+		<subscriber factory=".user_policies.MathCountsCapabilityFilter"
 				 for="nti.dataserver.interfaces.ICoppaUserWithAgreement"
 				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
 

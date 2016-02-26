@@ -302,22 +302,15 @@ class UserServiceExternalizer(ServiceExternalizer):
 
 	def toExternalObject(self, **kwargs):
 		result = super(UserServiceExternalizer,self).toExternalObject(**kwargs)
+
 		# TODO: This is almost hardcoded. Needs replaced with something dynamic.
 		# Querying the utilities for the user, which would be registered for specific
 		# IUser types or something...
-
 		registry = vocabulary.getVocabularyRegistry()
 		cap_vocab = registry.get(self.context.user, CAPABILITY_VOCAB_NAME)
 		capabilities = {term.value for term in cap_vocab}
 
-		# FIXME: This should probably be subscriber, not adapter, so that
-		# the logic doesn't have to be centralized in one place and can be additive (actually subtractive)
-		# Or vice-versa, when this becomes dynamic
-
-		cap_filter = component.queryAdapter(self.context.user, IUserCapabilityFilter )
-		if cap_filter:
-			capabilities = cap_filter.filterCapabilities( capabilities )
-
+		# Now filter out capabilities.
 		for cap_filter in component.subscribers((self.context.user,),
 												IUserCapabilityFilter):
 			capabilities = cap_filter.filterCapabilities( capabilities )

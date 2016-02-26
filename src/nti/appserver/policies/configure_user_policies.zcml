@@ -34,7 +34,7 @@
 			 zcml:condition="have devmode" />
 
 	<!-- Filter capabilities -->
-	<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
+	<subscriber factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
 			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
 			 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
 
