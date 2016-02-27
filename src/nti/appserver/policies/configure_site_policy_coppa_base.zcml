@@ -42,25 +42,6 @@
 				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
 
 		<!--
-			 One would think that the strict filter for COPPA users without agreements is
-			 inherited in this site (from configure_user_policies).
-			 But it isn't. The above registration cancels it out.
-			 A less-precise registration in a child site overrides a
-			 more precise registration from a parent site.
-			 (That's why these need to be subscribers.)
-			 see nti.appserver.tests.test_application:TestApplication.test_external_coppa_capabilities_mathcounts
-		-->
-		<subscriber factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
-			 	 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
-			 	 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
-		<subscriber factory=".user_policies.MathCountsCapabilityFilter"
-				 for="nti.dataserver.interfaces.ICoppaUser"
-				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
-		<subscriber factory=".user_policies.MathCountsCapabilityFilter"
-				 for="nti.dataserver.interfaces.ICoppaUserWithAgreement"
-				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
-
-		<!--
 			The policy for censoring things from regular, non-coppa
 			users by default isn't enabled. If desired, it can be added in a
 			site configuration.

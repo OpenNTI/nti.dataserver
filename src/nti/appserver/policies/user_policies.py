@@ -124,9 +124,11 @@ class CoppaUserWithoutAgreementCapabilityFilter(site_policies.NoAvatarUploadCapa
 	"""
 
 	def filterCapabilities(self, capabilities):
-		capabilities = super(CoppaUserWithoutAgreementCapabilityFilter, self).filterCapabilities(capabilities)
+		capabilities = super(CoppaUserWithoutAgreementCapabilityFilter, self) \
+												.filterCapabilities(capabilities)
 		for cap in set(capabilities):
-			if cap.startswith('nti.platform.p2p.') or cap.startswith('nti.platform.blogging.'):
+			if 		cap.startswith('nti.platform.p2p.') \
+				or  cap.startswith('nti.platform.blogging.'):
 				capabilities.discard(cap)
 		return capabilities
 
@@ -144,7 +146,8 @@ class MathCountsCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
 			from .interfaces import IMathcountsCoppaUserWithoutAgreement # pylint
 		except ImportError:
 			raise
-		if not self.context or IMathcountsCoppaUserWithoutAgreement.providedBy(self.context):
+		if 		not self.context \
+			or 	IMathcountsCoppaUserWithoutAgreement.providedBy(self.context):
 			result.discard(u'nti.platform.p2p.dynamicfriendslists')
 		return result
 
