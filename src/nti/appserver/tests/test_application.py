@@ -23,6 +23,7 @@ from hamcrest import greater_than
 from hamcrest import has_property
 from hamcrest import same_instance
 from hamcrest import contains_string
+from hamcrest import contains_inanyorder
 from hamcrest import greater_than_or_equal_to
 does_not = is_not
 
@@ -245,21 +246,24 @@ class TestApplication(ApplicationLayerTest):
 		res.charset = 'utf-8'
 		assert_that( res, has_property( 'text', is_not( is_empty() ) ) )
 
-
-
 	@WithSharedApplicationMockDS
 	def test_external_coppa_capabilities_mathcounts(self):
 		# See also test_workspaces
 		testapp = TestApp(self.app)
 		with mock_dataserver.mock_db_trans( self.ds ):
-			user = self._create_user()
+			user = self._create_user( 'coppa_user' )
 			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 
-		res = testapp.get( '/dataserver2',
-						   extra_environ=self._make_extra_environ( HTTP_ORIGIN=b'http://mathcounts.nextthought.com' ),
-						   status=200 )
-		assert_that(res.json_body['CapabilityList'], has_length(4))
+		mc_environ = self._make_extra_environ( user='coppa_user',
+											HTTP_ORIGIN=b'http://mathcounts.nextthought.com' )
 
+		res = testapp.get( '/dataserver2',  extra_environ=mc_environ, status=200 )
+		assert_that(res.json_body, has_entry('CapabilityList', has_length(3)))
+		assert_that(res.json_body, has_entry('CapabilityList',
+											contains_inanyorder(
+													u'nti.platform.forums.dflforums',
+													u'nti.platform.forums.communityforums',
+													u'nti.platform.customization.can_change_password')))
 
 	@WithSharedApplicationMockDS
 	def test_options_request( self ):

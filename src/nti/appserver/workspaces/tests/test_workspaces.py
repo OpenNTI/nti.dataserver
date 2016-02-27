@@ -17,8 +17,17 @@ from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
+from hamcrest import contains_inanyorder
 from hamcrest import greater_than_or_equal_to
 does_not = is_not
+
+import os
+import shutil
+import tempfile
+import transaction
+import pyramid.interfaces
+
+from persistent import Persistent
 
 from zope import component
 from zope import interface
@@ -30,11 +39,11 @@ from zope.schema import interfaces as sch_interfaces
 
 from zc import intid as zc_intid
 
-from persistent import Persistent
-
-import transaction
+from nti.appserver import pyramid_authorization
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
+from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as DynamicLibrary
 
 from nti.dataserver import  users
 from nti.dataserver import interfaces as nti_interfaces
@@ -44,14 +53,15 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids import ntiids
 
-from .. import FriendsListContainerCollection
-from .. import UserEnumerationWorkspace as UEW
-from .. import ContainerEnumerationWorkspace as CEW
-from .. import HomogeneousTypedContainerCollection as HTCW
-from .. import UserService, _UserPagesCollection as UserPagesCollection
+from nti.appserver.workspaces import FriendsListContainerCollection
+from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
+from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
+from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
+from nti.appserver.workspaces import UserService
+from nti.appserver.workspaces import _UserPagesCollection as UserPagesCollection
 
-from ..interfaces import IWorkspace
-from ..interfaces import ICollection
+from nti.appserver.workspaces.interfaces import IWorkspace
+from nti.appserver.workspaces.interfaces import ICollection
 
 from nti.appserver import tests
 
@@ -62,6 +72,12 @@ from nti.dataserver.tests import mock_dataserver
 # registrations to generate links.
 # TODO: Break this dep.
 from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.layers import NewRequestLayerTest
+
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
+from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
 
 class TestContainerEnumerationWorkspace(ApplicationLayerTest):
 
@@ -238,16 +254,18 @@ class TestUserService(ApplicationLayerTest):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_external_coppa_capabilities(self):
-		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
+		user = users.User.create_user( dataserver=self.ds, username='coppa_user' )
 		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 		service = UserService( user )
 
 		ext_object = toExternalObject( service )
 
-		assert_that(ext_object, has_entry('CapabilityList', has_length(4)))
-		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.forums.dflforums')))
-		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.forums.communityforums')))
-		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.customization.can_change_password')))
+		assert_that(ext_object, has_entry('CapabilityList', has_length(3)))
+		assert_that(ext_object, has_entry('CapabilityList',
+											contains_inanyorder(
+													u'nti.platform.forums.dflforums',
+													u'nti.platform.forums.communityforums',
+													u'nti.platform.customization.can_change_password')))
 
 	@mock_dataserver.WithMockDSTrans
 	def test_external(self):
@@ -317,18 +335,6 @@ class TestUserService(ApplicationLayerTest):
 		vocab = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( user )
 		terms = [x.token for x in vocab]
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( terms ) ) )
-
-import os
-import shutil
-import tempfile
-
-import pyramid.interfaces
-
-from nti.appserver import pyramid_authorization
-
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as DynamicLibrary
-
-from nti.app.testing.layers import NewRequestLayerTest
 
 class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 
@@ -423,10 +429,6 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 
 		external = toExternalObject( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
-
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-
-from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
 
 class TestFriendsListContainerCollection(DataserverLayerTest, tests.TestBaseMixin):
 
