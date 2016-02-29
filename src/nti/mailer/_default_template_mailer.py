@@ -278,7 +278,7 @@ def _send_pyramid_mailer_mail(message, recipients=None, request=None):
 # TODO: Break these dependencies
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
-from .interfaces import IVERP
+from nti.mailer.interfaces import IVERP
 
 def _compute_from(*args, **kwargs):
 	verp = component.queryUtility(IVERP)
