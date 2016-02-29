@@ -55,7 +55,7 @@ class _NotableRecursiveUGDView(_UGDView):
 	as lastModified/descending (newest first) (although you can set ``sortOrder``
 	to ``ascending``).
 
-	An addition to the usual ``batchStart`` and ``batchSize`` parameters, you may also
+	In addition to the usual ``batchStart`` and ``batchSize`` parameters, you may also
 	use:
 
 	batchBefore

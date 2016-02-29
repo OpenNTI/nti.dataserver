@@ -1533,6 +1533,67 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 						.format('batchBeforeOID', batch_prev_oid)
 		assert_that(batch_prev, is_(batch_prev_href))
 
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_batch_after_timestamp(self):
+		"""
+		Test batchAfter, filtering by timestamp.
+		"""
+		batch_param_name = 'batchAfter'
+		ntiids = []
+		external_oids = []
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user(self.extra_environ_default_user)
+
+			for i in range(20):
+				top_n = contenttypes.Note()
+				top_n.applicableRange = contentrange.ContentRangeDescription()
+				top_n.containerId = u'tag:nti:foo'
+				top_n.body = ("Top" + str(i),)
+				user.addContainedObject(top_n)
+				top_n.created = datetime.utcfromtimestamp( i )
+				top_n.lastModified = i
+				ntiids.append(top_n.id)
+				quoted_ntiid = urllib2.quote(to_external_ntiid_oid(top_n))
+				external_oids.append(quoted_ntiid)
+			top_n_containerid = top_n.containerId
+
+		ntiids.reverse()
+		# Newest to oldest...
+		external_oids.reverse()
+
+		# batchAfter None, which will just return our batch with appropriate links
+		ugd_res = self.fetch_user_ugd(top_n_containerid, params={ batch_param_name: '',
+																'batchSize': 5,
+																'batchStart': 10})
+		assert_that(ugd_res.json_body['Items'], has_length(5))
+		assert_that(ugd_res.json_body['TotalItemCount'], is_(20))
+
+		# Now, ask for a batch after the tenth item. Match the sort-order (lastMod, descending)
+		ugd_res = self.fetch_user_ugd(top_n_containerid, params={batch_param_name: 10,
+																 'batchSize': 10 })
+		assert_that(ugd_res.json_body['Items'], has_length(9))
+		assert_that(ugd_res.json_body['TotalItemCount'], is_(20))
+
+		# Batching after the first object
+		ugd_res = self.fetch_user_ugd(top_n_containerid, params={batch_param_name: 1,
+																 'batchSize': 3 })
+		assert_that(ugd_res.json_body['Items'], has_length(3))
+		assert_that(ugd_res.json_body['TotalItemCount'], is_(20))
+		# We exclude our first object, but get only the latest three items.
+		expected_ntiids = ntiids[:3]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that(ugd_res.json_body['Items'], contains(*matchers))
+
+		# Batching after the first object, all items
+		ugd_res = self.fetch_user_ugd(top_n_containerid, params={batch_param_name: 1,
+																 'batchSize': 20 })
+		assert_that(ugd_res.json_body['Items'], has_length(18))
+		assert_that(ugd_res.json_body['TotalItemCount'], is_(20))
+		# We exclude the first two objects
+		expected_ntiids = ntiids[:18]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that(ugd_res.json_body['Items'], contains(*matchers))
+
 from nti.testing.matchers import is_true, is_false
 
 from nti.appserver.ugd_query_views import _MimeFilter, _ChangeMimeFilter

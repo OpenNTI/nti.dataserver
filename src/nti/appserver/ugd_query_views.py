@@ -778,11 +778,77 @@ class _UGDView(AbstractAuthenticatedView,
 			# Otherwise, fall back to batchStart links
 			super( _UGDView, self )._set_batch_links( result, result_list, next_batch_start, prev_batch_start )
 
+	def _get_batch_times(self):
+		# XXX: This could move to the mixin.
+		batch_before_time = self.request.params.get( 'batchBefore', '' )
+		batch_after_time = self.request.params.get( 'batchAfter', '' )
+		if batch_before_time:
+			try:
+				batch_before_time = int( batch_before_time )
+			except ValueError:
+				raise hexc.HTTPBadRequest("Batch before param not an integer")
+		if batch_after_time:
+			try:
+				batch_after_time = int( batch_after_time )
+			except ValueError:
+				raise hexc.HTTPBadRequest("Batch after param not an integer")
+		if batch_before_time <= 0 or batch_after_time < 0:
+			raise hexc.HTTPBadRequest("Batch out of range")
+		return batch_before_time, batch_after_time
+
+	def _do_timestamp_filtering(self, items):
+		batch_before_time, batch_after_time = self._get_batch_times()
+		did_filter = False
+
+		# Mutually exclusive.
+		# XXX: Our FilteredItemCount val is not reflected by this.
+		if batch_before_time:
+			did_filter = True
+			items = (x for x in items if x[1].createdTime < batch_before_time)
+		elif batch_after_time:
+			did_filter = True
+			items = (x for x in items if x[1].createdTime > batch_after_time)
+		return items, did_filter
+
+	def __do_batch(self, merged, number_items_needed):
+		"""
+		Do whatever batch support we need, whether batching by timestamp
+		or batching around a given OID.
+		"""
+		merged, did_filter = self._do_timestamp_filtering( merged )
+
+		# Mutually exclusive.
+		if not did_filter:
+			batch_size, batch_start = self._get_batch_size_start()
+			batch_object = 	self.request.params.get( 'batchAround', '' ) \
+						or 	self.request.params.get( 'batchContaining', '' ) \
+						or 	self.request.params.get( 'batchAfterOID', '' ) \
+						or 	self.request.params.get( 'batchBeforeOID', '' )
+
+			if 		batch_object \
+				and batch_size is not None:
+
+				test = lambda key_value: self.__get_key( key_value[1] ) == batch_object
+
+				# This will return a natural batch based on batchSize.
+				batch_containing = bool( self.request.params.get( 'batchContaining', '' ) )
+				# Or, they are asking for the batch after (or before) a given item.
+				batch_after = bool( self.request.params.get( 'batchAfterOID', '' ) )
+				batch_before = bool( self.request.params.get( 'batchBeforeOID', '' ) )
+				merged = self._batch_on_item(merged, test,
+											 batch_containing=batch_containing,
+											 batch_after=batch_after,
+											 batch_before=batch_before )
+				number_items_needed = None
+		return merged, number_items_needed
+
 	def _sort_filter_batch_objects( self, objects ):
 		"""
 		Sort, filter, and batch (page) the objects collections,
-		returning a result dictionary. This method sorts by
-		``lastModified`` by default, but everything else comes from
+		returning a result dictionary. The batch-filtering params (e.g.
+		batchAfter, batchBefore, batchAfterOID, etc) are mutually exclusive, but they
+		do work with the batch size limiting params, like batchStart and batchSize.
+		This method sorts by ``lastModified`` by default, but everything else comes from
 		the following query parameters:
 
 		sortOn
@@ -866,6 +932,18 @@ class _UGDView(AbstractAuthenticatedView,
 			by sending a single NTIID. The behaviour of specifying
 			non-existant or non-accessible usernames is undefined (but
 			probably not good).
+
+		batchAfter
+			If given, this is the timestamp (floating point number in fractional
+			unix seconds, as returned in ``Last Modified``) of the *oldest*
+			object to consider returning (exclusive).
+			(Note: the next/previous link relations do not currently take this into account.)
+
+		batchBefore
+			If given, this is the timestamp (floating point number in fractional
+			unix seconds, as returned in ``Last Modified``) of the *youngest*
+			object to consider returning (exclusive).
+			(Note: the next/previous link relations do not currently take this into account.)
 
 		batchSize
 			Integer giving the page size. Must be greater than zero.
@@ -961,7 +1039,7 @@ class _UGDView(AbstractAuthenticatedView,
 		# otherwise it is faster to combine once and then sort. (TODO: Prove this algorithmically)
 		if total_item_count < len(iterables) * 4 or total_item_count < 5000: # XXX Magic number
 			iterables = [itertools.chain(*iterables)]
-		#  This assumes we are going to want to page
+		# This assumes we are going to want to page
 		# These are reified.
 		heap_key = lambda x: (sort_key_function(x), x)
 		sortable_iterables = [itertools.imap(heap_key, x) for x in iterables]
@@ -1005,29 +1083,9 @@ class _UGDView(AbstractAuthenticatedView,
 		else:
 			merged = ()
 
+		merged, number_items_needed = self.__do_batch( merged, number_items_needed )
+		# These may have changed, pull them right before we need them
 		batch_size, batch_start = self._get_batch_size_start()
-		batch_object = 	self.request.params.get( 'batchAround', '' ) \
-					or 	self.request.params.get( 'batchContaining', '' ) \
-					or 	self.request.params.get( 'batchAfterOID', '' ) \
-					or 	self.request.params.get( 'batchBeforeOID', '' )
-
-		if 		batch_object \
-			and batch_size is not None:
-
-			test = lambda key_value: self.__get_key( key_value[1] ) == batch_object
-
-			# This will return a natural batch based on batchSize.
-			batch_containing = bool( self.request.params.get( 'batchContaining', '' ) )
-			# Or, they are asking for the batch after (or before) a given item.
-			batch_after = bool( self.request.params.get( 'batchAfterOID', '' ) )
-			batch_before = bool( self.request.params.get( 'batchBeforeOID', '' ) )
-			merged = self._batch_on_item(merged, test,
-										 batch_containing=batch_containing,
-										 batch_after=batch_after,
-										 batch_before=batch_before )
-			batch_size, batch_start = self._get_batch_size_start()
-			number_items_needed = None
-
 		self._batch_tuple_iterable(result, merged, number_items_needed, batch_size, batch_start)
 		return result
 
@@ -1175,10 +1233,10 @@ class RecursiveUGDView(_UGDView):
 		return containers
 
 	def _filter_inaccessible_object(self, obj):
-		# XXX HACK FOR "ACL" community topics. Make sure the object
+		# XXX: HACK FOR "ACL" community topics. Make sure the object
 		# can be read (along w/ its parent) before being returned.
 		# Note that this completely discards what at ACL is supposed to mean
-		# XXX cf forums.views
+		# XXX: cf forums.views
 		# TODO: Remove hack
 		if 	IStreamChangeEvent.providedBy(obj) and \
 			(ICommunityHeadlineTopic.providedBy(obj.object) or \
@@ -1250,7 +1308,7 @@ class RecursiveUGDView(_UGDView):
 			# Throw the previous not found exception.
 			raise exc_info[0], exc_info[1], exc_info[2]
 
-_RecursiveUGDView = RecursiveUGDView # BWC 
+_RecursiveUGDView = RecursiveUGDView # BWC
 
 class _ChangeMimeFilter(_MimeFilter):
 
