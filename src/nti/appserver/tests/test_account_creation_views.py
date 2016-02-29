@@ -270,7 +270,7 @@ class _AbstractNotDevmodeViewBase(TestBaseMixin):
 	def test_create_birthdate_must_be_four_years_ago( self ):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		today = datetime.date.today()
-		three_years_ago = today.replace( year=today.year - 3 )
+		three_years_ago = today - datetime.timedelta(days=3*365)
 		self.request.body = to_json_representation( {
 													 'Username': 'jamadden',
 													 'realname': 'Jason Madden',
@@ -426,7 +426,7 @@ class TestCreateViewNotDevmode(unittest.TestCase,_AbstractNotDevmodeViewBase):
 		assert_that( e.exception.json_body, has_entry( 'code', 'DuplicateUsernameError' ) )
 
 class TestCreateView(unittest.TestCase,_AbstractValidationViewBase):
-	
+
 	layer = NewRequestSharedConfiguringTestLayer
 
 	def setUp( self ):
@@ -562,9 +562,9 @@ class _AbstractApplicationCreateUserTest(AppTestBaseMixin):
 from nti.appserver.tests.test_application import NonDevmodeButAnySiteApplicationTestLayer
 
 class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest, NonDevmodeApplicationLayerTest):
-	
+
 	layer = NonDevmodeButAnySiteApplicationTestLayer
-	
+
 	@WithSharedApplicationMockDS
 	def test_create_user( self ):
 		super(TestApplicationCreateUserNonDevmode,self).test_create_user()
@@ -657,19 +657,19 @@ def main(email=None, uname=None, cname=None):
 	For manually testing email/SMTP/qp on the command line.
 	"""
 	import sys
-	
+
 	_contact_email = email or sys.argv[1]
 	_username = uname or sys.argv[2]
 	child_name = cname or sys.argv[3]
 
 	from zope import interface
-	
+
 	from zope.annotation.interfaces import IAttributeAnnotatable
-	
+
 	from zope.security.interfaces import IPrincipal
-	
+
 	from nti.mailer.interfaces import IEmailAddressable
-	
+
 	@interface.implementer(user_interfaces.IUserProfile,
 						   IPrincipal,
 						   IAttributeAnnotatable,
@@ -685,10 +685,10 @@ def main(email=None, uname=None, cname=None):
 		request = True
 
 	import nti.dataserver.utils
-	
+
 	from pyramid.testing import setUp as psetUp
 	from pyramid.testing import DummyRequest
-	
+
 	nti.dataserver.utils._configure( set_up_packages=('nti.appserver',) )
 	request = DummyRequest()
 	config = psetUp(registry=component.getGlobalSiteManager(),request=request,hook_zca=False)
@@ -698,17 +698,17 @@ def main(email=None, uname=None, cname=None):
 	import pyramid_mailer
 	from pyramid_mailer.interfaces import IMailer
 	component.provideUtility( pyramid_mailer.Mailer.from_settings(
-				 {'mail.queue_path': '/tmp/ds_maildir', 
+				 {'mail.queue_path': '/tmp/ds_maildir',
 				  'mail.default_sender': 'no-reply@nextthought.com' } ), IMailer )
 
 	import nti.app.pyramid_zope.z3c_zpt
 	from pyramid.interfaces import IRendererFactory
-	
+
 	component.provideUtility( nti.app.pyramid_zope.z3c_zpt.renderer_factory, IRendererFactory, name='.pt' )
-	
+
 	import pyramid_chameleon.text
 	component.provideUtility( pyramid_chameleon.text.renderer_factory, IRendererFactory, name=".txt")
-	
+
 	import nti.appserver.policies.user_policies
 	nti.appserver.policies.user_policies.send_consent_request_on_new_coppa_account(FakeUser(), FakeEvent)
 

@@ -16,6 +16,7 @@ from hamcrest import is_not as does_not
 
 import simplejson
 from datetime import date
+from datetime import timedelta
 
 from zope import interface
 
@@ -193,7 +194,7 @@ class TestApplicationCoppaUpgradeViews(ApplicationLayerTest):
 		environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
 
 		today = date.today()
-		d = date(today.year - 5, today.month, today.day)
+		d = today - timedelta( days=365 * 5 )
 
 		data = to_json_representation({'Username': 'sjohnson@nextthought.com',
 									   'birthdate': d.isoformat(),
