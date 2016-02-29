@@ -468,7 +468,13 @@ def _is_x_or_more_years_ago(birthdate, years_ago=13):
 		return False
 
 	today = datetime.date.today()
-	x_years_ago = datetime.date.today().replace(year=today.year - years_ago)
+	try:
+		x_years_ago = today.replace(year=today.year - years_ago)
+	except ValueError:
+		# Leap year
+		x_years_ago = today.replace(year=today.year - years_ago,
+									month=today.month + 1,
+									day=1)
 	return birthdate < x_years_ago
 
 _is_thirteen_or_more_years_ago = _is_x_or_more_years_ago
@@ -789,9 +795,9 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		# user.transitionTime = time.time()
 
 		notify(UserUpgradedEvent(user,
-								 restricted_interface=self.IF_WOUT_AGREEMENT, 
+								 restricted_interface=self.IF_WOUT_AGREEMENT,
 								 restricted_profile=orig_profile,
-								 upgraded_interface=self.IF_WITH_AGREEMENT, 
+								 upgraded_interface=self.IF_WITH_AGREEMENT,
 								 upgraded_profile=new_profile,
 								 request=get_current_request()))
 		return True
