@@ -15,16 +15,16 @@ import rfc822
 
 import itsdangerous
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.security.interfaces import IPrincipal
 
 # TODO: break this dep
 from nti.appserver.policies.site_policies import find_site_policy
 
-from .interfaces import IVERP
-from .interfaces import IEmailAddressable
+from nti.mailer.interfaces import IVERP
+from nti.mailer.interfaces import IEmailAddressable
 
 def _get_signer_secret(default_secret="$Id$"):
 
@@ -52,8 +52,8 @@ class _InsecureAdlerCRC32Digest(object):
 
 	# These aren't documented and are reverse engineered
 
-	digest_size = 4 # size of the output
-	block_size = 64 # ???
+	digest_size = 4  # size of the output
+	block_size = 64  # ???
 
 	def __init__(self, init=b''):
 		self.val = init
@@ -80,14 +80,14 @@ def _make_signer(default_key='$Id$',
 								 digest_method=digest_method)
 	return signer
 
-def _find_default_realname( request=None ):
+def _find_default_realname(request=None):
 	"""
 	Called when the given fromaddr does not have a realname portion.
 	We would prefer to use whatever is in the site policy, if there
 	is one, otherwise we have a hardcoded default.
 	"""
 	realname = None
-	policy, policy_name = find_site_policy( request=request )
+	policy, policy_name = find_site_policy(request=request)
 	if policy is not None and policy_name and getattr(policy, 'DEFAULT_EMAIL_SENDER', None):
 		realname, _ = rfc822.parseaddr(policy.DEFAULT_EMAIL_SENDER)
 		if realname is not None:
@@ -123,14 +123,14 @@ def realname_from_recipients(fromaddr, recipients, request=None):
 	if not realname and not addr:
 		raise ValueError("Invalid fromaddr", fromaddr)
 	if not realname:
-		realname = _find_default_realname( request=request )
+		realname = _find_default_realname(request=request)
 
-	return rfc822.dump_address_pair( (realname, addr) )
+	return rfc822.dump_address_pair((realname, addr))
 
-
-def verp_from_recipients( fromaddr, recipients,
-						  request=None,
-						  default_key=None):
+def verp_from_recipients(fromaddr, 
+						 recipients,
+						 request=None,
+						 default_key=None):
 
 	realname, addr = rfc822.parseaddr(realname_from_recipients(fromaddr, recipients, request=request))
 
@@ -141,7 +141,7 @@ def verp_from_recipients( fromaddr, recipients,
 	# adaptable to IEmailAddressable instead.
 
 	adaptable_to_email_addressable = [x for x in recipients
-									  if IEmailAddressable(x,None) is not None]
+									  if IEmailAddressable(x, None) is not None]
 	principals = {IPrincipal(x, None) for x in adaptable_to_email_addressable}
 	principals.discard(None)
 
@@ -163,7 +163,7 @@ def verp_from_recipients( fromaddr, recipients,
 		# ensures we want the last '+' on parsing.
 		addr = local + '+' + principal_ids + '@' + domain
 
-	return rfc822.dump_address_pair( (realname, addr) )
+	return rfc822.dump_address_pair((realname, addr))
 
 def principal_ids_from_verp(fromaddr,
 							request=None,

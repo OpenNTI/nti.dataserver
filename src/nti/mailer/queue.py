@@ -15,16 +15,17 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 import smtplib
+
 from email.message import Message
 
 import boto.ses
 from boto.ses.exceptions import SESAddressBlacklistedError
 
-from nti.common.property import Lazy
-
 from repoze.sendmail.interfaces import IMailer
 from repoze.sendmail.encoding import encode_message
 from repoze.sendmail.queue import ConsoleApp as _ConsoleApp
+
+from nti.common.property import Lazy
 
 @interface.implementer(IMailer)
 class SESMailer(object):
@@ -32,7 +33,6 @@ class SESMailer(object):
 	This object does not handle throttling or quata actions;
 	see also :mod:`nti.app.bulkemail.process`.
 	"""
-
 
 	def __init__(self):
 		pass
@@ -89,7 +89,6 @@ class ConsoleApp(_ConsoleApp):
 		self._process_args(argv[1:])
 		self.mailer = SESMailer()
 		getattr(self.mailer, 'sesconn')
-
 
 def run_console(): #pragma NO COVERAGE
 	logging.basicConfig(format='%(asctime)s %(message)s')

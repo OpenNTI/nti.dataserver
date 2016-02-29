@@ -18,10 +18,11 @@ from zope import component
 from zope import interface
 
 from pyramid.compat import is_nonstr_iter
+
 from pyramid.threadlocal import get_current_request
 
-from .interfaces import ITemplatedMailer
-from .interfaces import IEmailAddressable
+from nti.mailer.interfaces import ITemplatedMailer
+from nti.mailer.interfaces import IEmailAddressable
 
 @interface.implementer(ITemplatedMailer)
 class _BaseFilteredMailer(object):
@@ -61,7 +62,7 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 		# email address
 		local, _ = addr.split('@')
 		addr = 'dummy.email+' + local + '@nextthought.com'
-		return rfc822.dump_address_pair( (realname, addr) )
+		return rfc822.dump_address_pair((realname, addr))
 
 	def create_simple_html_text_email(self,
 									  base_template,
@@ -120,7 +121,7 @@ class ImpersonatedMailer(NextThoughtOnlyMailer):
 									  text_template_extension='.txt',
 									  **kwargs):
 		_request = request
-		if _request is None or not hasattr(_request, 'environ'): # In case we're zope proxied?
+		if _request is None or not hasattr(_request, 'environ'):  # In case we're zope proxied?
 			_request = get_current_request()
 
 		environ = getattr(_request, 'environ', ())
@@ -131,7 +132,7 @@ class ImpersonatedMailer(NextThoughtOnlyMailer):
 			# Hmm, maybe we want to redirect to the impersonating user?
 			# That would couple us pretty tightly to the DS though right now
 			# since we don't have an principal directory utility
-			mailer = super(ImpersonatedMailer,self).create_simple_html_text_email
+			mailer = super(ImpersonatedMailer, self).create_simple_html_text_email
 		else:
 			# Not impersonating, no need to filter
 			mailer = self._default_mailer.create_simple_html_text_email

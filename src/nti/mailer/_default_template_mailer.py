@@ -20,30 +20,33 @@ from zope.dottedname import resolve as dottedname
 
 from premailer import transform
 
-from pyramid.renderers import render
-from pyramid.path import caller_package
 from pyramid.compat import is_nonstr_iter
+
+from pyramid.path import caller_package
+
+from pyramid.renderers import render
 from pyramid.renderers import get_renderer
+
 from pyramid.threadlocal import get_current_request
 
 from pyramid_mailer.message import Message
 
-from .interfaces import IMailer
-from .interfaces import IMailDelivery
-from .interfaces import ITemplatedMailer
-from .interfaces import IEmailAddressable
+from nti.mailer.interfaces import IMailer
+from nti.mailer.interfaces import IMailDelivery
+from nti.mailer.interfaces import ITemplatedMailer
+from nti.mailer.interfaces import IEmailAddressable
 
 def _get_renderer_spec_and_package(base_template,
 								   extension,
 								   package=None,
 								   level=3):
-	if isinstance(package,basestring):
+	if isinstance(package, basestring):
 		package = dottedname.resolve(package)
 
 	# Did they give us a package, either in the name or as an argument?
 	# If not, we need to get the right package
 	if ':' not in base_template and package is None:
-		package = caller_package(level) # 2 would be our caller, aka this module.
+		package = caller_package(level)  # 2 would be our caller, aka this module.
 	# Do we need to look in a subdirectory?
 	if ':' not in base_template and '/' not in base_template:
 		base_template = 'templates/' + base_template
@@ -74,12 +77,12 @@ def _get_renderer(base_template,
 	about the call tree.
 	"""
 
-	template, package = _get_renderer_spec_and_package( base_template,
-														extension,
-														package=package,
-														level=level+1 )
+	template, package = _get_renderer_spec_and_package(base_template,
+													   extension,
+													   package=package,
+													   level=level + 1)
 
-	return get_renderer( template, package=package )
+	return get_renderer(template, package=package)
 
 def do_html_text_templates_exist(base_template,
 								 text_template_extension='.txt',
@@ -90,8 +93,8 @@ def do_html_text_templates_exist(base_template,
 	if they do.
 	"""
 	try:
-		_get_renderer( base_template, '.pt', package=package, level=_level )
-		_get_renderer( base_template, text_template_extension, package=package, level=_level )
+		_get_renderer(base_template, '.pt', package=package, level=_level)
+		_get_renderer(base_template, text_template_extension, package=package, level=_level)
 	except ValueError:
 		# Pyramid raises this if the template doesn't exist
 		return False
@@ -103,7 +106,7 @@ def _as_recipient_list(recipients):
 		recipients = recipients if is_nonstr_iter(recipients) else [recipients]
 		# Convert any IEmailAddressable into their email, and strip
 		# empty strings
-		recipients = [getattr(IEmailAddressable(x,x), 'email', x)
+		recipients = [getattr(IEmailAddressable(x, x), 'email', x)
 					  for x in recipients]
 		recipients = [x for x in recipients if isinstance(x, string_types) and x]
 	return recipients
@@ -137,11 +140,11 @@ def create_simple_html_text_email(base_template,
 	recipients = _as_recipient_list(recipients)
 
 	if not recipients:
-		logger.debug( "Refusing to attempt to send email with no recipients" )
+		logger.debug("Refusing to attempt to send email with no recipients")
 		return
 	if not subject:
 		# TODO: Should the subject already be localized or should we do that?
-		logger.debug( "Refusing to attempt to send email with no subject" )
+		logger.debug("Refusing to attempt to send email with no subject")
 		return
 
 	if request is None:
@@ -160,28 +163,28 @@ def create_simple_html_text_email(base_template,
 		if request:
 			result[the_context_name] = request.context
 		if template_args:
-			result.update( template_args )
+			result.update(template_args)
 
 		if the_context_name == 'nti_context' and 'context' in template_args:
 			result[the_context_name] = template_args['context']
 			del result['context']
 		return result
 
-	def do_render( pkg ):
-		specs_and_packages = [_get_renderer_spec_and_package( base_template,
-															  extension,
-															  package=pkg,
-															  level=_level + 1) + (extension,)
+	def do_render(pkg):
+		specs_and_packages = [_get_renderer_spec_and_package(base_template,
+															 extension,
+															 package=pkg,
+															 level=_level + 1) + (extension,)
 								for extension in ('.pt', text_template_extension)]
 
-		return [render( spec,
-						make_args(extension),
-						request=request,
-						package=pkg)
-						for spec, pkg, extension in specs_and_packages]
+		return [render(spec,
+					   make_args(extension),
+					   request=request,
+					   package=pkg)
+					   for spec, pkg, extension in specs_and_packages]
 
 	try:
-		html_body, text_body = do_render( package )
+		html_body, text_body = do_render(package)
 	except ValueError as e:
 		# This is just to handle the case where the
 		# site specifies a package, but wants to use
@@ -189,10 +192,10 @@ def create_simple_html_text_email(base_template,
 		if package is None:
 			raise e
 		# Ok, let's try to find the package.
-		html_body, text_body = do_render( None )
+		html_body, text_body = do_render(None)
 
 	# Some clients (e.g. gmail) do not handle CSS well unless it's inlined.
-	html_body = transform( html_body )
+	html_body = transform(html_body)
 
 	# PageTemplates (Chameleon and Z3c.pt) produce Unicode strings.
 	# Under python2, at least, the text templates (Chameleon alone) produces byte objects,
@@ -213,21 +216,21 @@ def create_simple_html_text_email(base_template,
 	# output...whether we do it like this, or simply pass in the unicode
 	# strings, we get quoted-printable. We would pass Attachments if we
 	# wanted to specify the charset (see above)
-	#message = Message( subject=subject,
-	#				   recipients=recipients,
-	#				   body=Attachment(data=text_body, disposition='inline',
-	#								   content_type='text/plain',
-	#								   transfer_encoding='quoted-printable'),
-	#				   html=Attachment(data=html_body, disposition='inline',
-	#								   content_type='text/html',
-	#								   transfer_encoding='quoted-printable') )
-	message = Message( subject=subject,
+	# message = Message( subject=subject,
+	# 				   recipients=recipients,
+	# 				   body=Attachment(data=text_body, disposition='inline',
+	# 								   content_type='text/plain',
+	# 								   transfer_encoding='quoted-printable'),
+	# 				   html=Attachment(data=html_body, disposition='inline',
+	# 								   content_type='text/html',
+	# 								   transfer_encoding='quoted-printable') )
+	message = Message(subject=subject,
 					   recipients=recipients,
 					   body=text_body,
 					   html=html_body,
 					   cc=cc,
 					   bcc=bcc,
-					   attachments=attachments )
+					   attachments=attachments)
 
 	if reply_to:
 		message.extra_headers[ 'Reply-To' ] = reply_to
@@ -251,11 +254,11 @@ def queue_simple_html_text_email(*args, **kwargs):
 	kwargs = dict(kwargs)
 	if '_level' not in kwargs:
 		kwargs['_level'] = 4
-	return _send_pyramid_mailer_mail( create_simple_html_text_email( *args, **kwargs ),
-									  recipients=kwargs.get('recipients'),
-									  request=kwargs.get('request'))
+	return _send_pyramid_mailer_mail(create_simple_html_text_email(*args, **kwargs),
+									 recipients=kwargs.get('recipients'),
+									 request=kwargs.get('request'))
 
-def _send_pyramid_mailer_mail( message, recipients=None, request=None ):
+def _send_pyramid_mailer_mail(message, recipients=None, request=None):
 	"""
 	Given a :class:`pyramid_mailer.message.Message`, transactionally deliver
 	it to the queue.
@@ -269,7 +272,7 @@ def _send_pyramid_mailer_mail( message, recipients=None, request=None ):
 	# of repoze.sendmail.interfaces.IMailDelivery, one for queue and one
 	# for immediate, and those objects do the real work and also have a consistent
 	# interfaces. It's easy to change the pyramid_mail message into a email message
-	_send_mail( pyramid_mail_message=message, recipients=recipients, request=request )
+	_send_mail(pyramid_mail_message=message, recipients=recipients, request=request)
 	return message
 
 # TODO: Break these dependencies
@@ -285,16 +288,16 @@ def _compute_from(*args, **kwargs):
 
 	return verp.verp_from_recipients(*args, **kwargs)
 
-def _get_from_address( pyramid_mail_message, recipients, request ):
+def _get_from_address(pyramid_mail_message, recipients, request):
 	"""
 	Get a valid `From`/`Sender`/`Return-Path` address. This field is required and
 	must be from a verified email address (e.g. @nextthought.com).
 	"""
-	pyramidmailer = component.queryUtility( IMailer )
+	pyramidmailer = component.queryUtility(IMailer)
 	if request is None:
 		request = get_current_request()
 
-	fromaddr = getattr( pyramid_mail_message, 'sender', None )
+	fromaddr = getattr(pyramid_mail_message, 'sender', None)
 
 	if not fromaddr:
 		# Can we get a site policy for the current site?
@@ -303,7 +306,7 @@ def _get_from_address( pyramid_mail_message, recipients, request ):
 		if policy:
 			fromaddr = getattr(policy, 'DEFAULT_EMAIL_SENDER', None)
 	if not fromaddr:
-		fromaddr = getattr( pyramidmailer, 'default_sender', None )
+		fromaddr = getattr(pyramidmailer, 'default_sender', None)
 
 	if not fromaddr:
 		raise RuntimeError("No one to send mail from")
@@ -311,7 +314,7 @@ def _get_from_address( pyramid_mail_message, recipients, request ):
 	result = _compute_from(fromaddr, recipients, request)
 	return result
 
-def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
+def _pyramid_message_to_message(pyramid_mail_message, recipients, request):
 	"""
 	Preps a pyramid message for sending, including adjusting its sender if needed.
 
@@ -319,7 +322,7 @@ def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
 	"""
 	assert pyramid_mail_message is not None
 
-	fromaddr = _get_from_address( pyramid_mail_message, recipients, request )
+	fromaddr = _get_from_address(pyramid_mail_message, recipients, request)
 
 	pyramid_mail_message.sender = fromaddr
 	# Sadly, as of 2014-05-22, Amazon SES (and some other SMTP relays, actually, if I understand
@@ -327,31 +330,31 @@ def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
 	# (At least for SES, this is because it need to set the Return-Path value
 	# to something it controls in order to handle stateful retry logic, and delivery
 	# to correct bounce queue, etc:
-	#      Return-Path: <000001462444a009-cfdcd8ed-008e-4bee-9ea7-30a47b615e64-000000@amazonses.com>
+	#	  Return-Path: <000001462444a009-cfdcd8ed-008e-4bee-9ea7-30a47b615e64-000000@amazonses.com>
 	# )
 	# If this did work, we could leave the From address alone.
-	#pyramid_mail_message.extra_headers['Sender'] = fromaddr
-	#pyramid_mail_message.extra_headers['Return-Path'] = fromaddr
+	# pyramid_mail_message.extra_headers['Sender'] = fromaddr
+	# pyramid_mail_message.extra_headers['Return-Path'] = fromaddr
 	message = pyramid_mail_message.to_message()
 	return message
 
-def _send_mail( pyramid_mail_message=None, recipients=(), request=None ):
+def _send_mail(pyramid_mail_message=None, recipients=(), request=None):
 	"""
 	Sends a message transactionally.
 	"""
 	assert pyramid_mail_message is not None
-	pyramidmailer = component.queryUtility( IMailer )
+	pyramidmailer = component.queryUtility(IMailer)
 
 	message = _pyramid_message_to_message(pyramid_mail_message, recipients, request)
 
-	delivery = component.queryUtility( IMailDelivery ) or getattr( pyramidmailer, 'queue_delivery', None )
+	delivery = component.queryUtility(IMailDelivery) or getattr(pyramidmailer, 'queue_delivery', None)
 	if delivery:
-		delivery.send( pyramid_mail_message.sender,
+		delivery.send(pyramid_mail_message.sender,
 					   pyramid_mail_message.send_to,
-					   message )
+					   message)
 	elif pyramidmailer and pyramid_mail_message:
-		pyramidmailer.send_to_queue( pyramid_mail_message )
+		pyramidmailer.send_to_queue(pyramid_mail_message)
 	else:
-		raise RuntimeError( "No way to deliver message" )
+		raise RuntimeError("No way to deliver message")
 
 interface.moduleProvides(ITemplatedMailer)

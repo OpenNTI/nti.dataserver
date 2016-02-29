@@ -12,7 +12,10 @@ but the relevant parts are re-exported from this package.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope import interface
+
 from zope.security.interfaces import IPrincipal
 
 from pyramid_mailer.interfaces import IMailer
@@ -167,7 +170,6 @@ class IVERP(interface.Interface):
 		:return: The ``fromaddr``, guaranteed to be in \"Realname <to@example.com>\"
 			format.
 		"""
-
 
 	def verp_from_recipients(fromaddr, recipients, request=None):
 		"""
