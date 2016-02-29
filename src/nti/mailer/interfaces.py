@@ -202,3 +202,11 @@ class IVERP(interface.Interface):
 		returning a sequence of positively-identified principal IDs for the current
 		environment, if any.
 		"""
+
+class IMailerPolicy(interface.Interface):
+	"""
+	Mailer policy utility
+	"""
+
+	DEFAULT_EMAIL_SENDER = interface.Attribute('DEFAULT_EMAIL_SENDER',
+											   'Optional email sender')

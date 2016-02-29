@@ -275,10 +275,8 @@ def _send_pyramid_mailer_mail(message, recipients=None, request=None):
 	_send_mail(pyramid_mail_message=message, recipients=recipients, request=request)
 	return message
 
-# TODO: Break these dependencies
-from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
-
 from nti.mailer.interfaces import IVERP
+from nti.mailer.interfaces import IMailerPolicy
 
 def _compute_from(*args, **kwargs):
 	verp = component.queryUtility(IVERP)
@@ -302,7 +300,7 @@ def _get_from_address(pyramid_mail_message, recipients, request):
 	if not fromaddr:
 		# Can we get a site policy for the current site?
 		# It would be the unnamed IComponents
-		policy = component.queryUtility(ISitePolicyUserEventListener)
+		policy = component.queryUtility(IMailerPolicy)
 		if policy:
 			fromaddr = getattr(policy, 'DEFAULT_EMAIL_SENDER', None)
 	if not fromaddr:

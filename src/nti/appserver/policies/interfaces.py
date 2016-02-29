@@ -12,14 +12,13 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-class ISitePolicyUserEventListener(interface.Interface):
+from nti.mailer.interfaces import IMailerPolicy
+
+class ISitePolicyUserEventListener(IMailerPolicy):
 	"""
 	Register instances of these as utilities by the name of the site
 	they should apply to.
 	"""
-
-	DEFAULT_EMAIL_SENDER = interface.Attribute('DEFAULT_EMAIL_SENDER',
-											   'Optional site-specific email sender')
 
 	DISPLAY_NAME = interface.Attribute('DISPLAY_NAME',
 									   'Optional human-readable name for the site.'
