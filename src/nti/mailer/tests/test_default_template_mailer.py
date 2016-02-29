@@ -1,37 +1,31 @@
-#!/Sr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-
-from hamcrest import assert_that
-from hamcrest import contains_string
-from hamcrest import not_none
 from hamcrest import is_
+from hamcrest import not_none
+from hamcrest import assert_that
 from hamcrest import has_property
-
-from nti.app.testing.layers  import AppLayerTest
-from .._default_template_mailer import create_simple_html_text_email
-from .._default_template_mailer import _pyramid_message_to_message
-
-from ..interfaces import IEmailAddressable
-from ..interfaces import EmailAddresablePrincipal
-from zope.security.interfaces import IPrincipal
+from hamcrest import contains_string
 
 from zope import interface
+
 from zope.publisher.interfaces.browser import IBrowserRequest
 
+from zope.security.interfaces import IPrincipal
+
+from nti.mailer._default_template_mailer import _pyramid_message_to_message
+from nti.mailer._default_template_mailer import create_simple_html_text_email
+
+from nti.mailer.interfaces import IEmailAddressable
+from nti.mailer.interfaces import EmailAddresablePrincipal
+
+from nti.app.testing.layers  import AppLayerTest
 
 @interface.implementer(IBrowserRequest)
 class Request(object):
@@ -45,8 +39,6 @@ class Request(object):
 	def get(self, key, default=None):
 		return default
 
-
-
 class TestEmail(AppLayerTest):
 
 	def test_create_mail_message_with_non_ascii_name_and_string_bcc(self):
@@ -56,7 +48,6 @@ class TestEmail(AppLayerTest):
 		class Profile(object):
 			# Note the umlaut e
 			realname = 'Suzë Schwartz'
-
 
 		user = User()
 		profile = Profile()
@@ -74,27 +65,27 @@ class TestEmail(AppLayerTest):
 														'href': token_url },
 											package='nti.appserver',
 											request=request)
-		assert_that( msg, is_( not_none() ))
+		assert_that(msg, is_(not_none()))
 
 		base_msg = _pyramid_message_to_message(msg, ['jason.madden@nextthought.com'], None)
 
 		base_msg_string = str(base_msg)
 		# quoted-prinatble encoding of iso-8859-1 value of umlaut-e
-		assert_that( base_msg_string, contains_string('Hi=20Suz=EB=20Schwartz') )
+		assert_that(base_msg_string, contains_string('Hi=20Suz=EB=20Schwartz'))
 
 		# Because we can't get to IPrincial, no VERP info
-		assert_that( msg.sender, is_('"NextThought" <no-reply@nextthought.com>') )
+		assert_that(msg.sender, is_('"NextThought" <no-reply@nextthought.com>'))
 
 		#
-		assert_that( msg, has_property('bcc', ['foo@bar.com']))
-
+		assert_that(msg, has_property('bcc', ['foo@bar.com']))
 
 	def test_create_email_with_verp(self):
+
 		@interface.implementer(IPrincipal, IEmailAddressable)
 		class User(object):
 			username = 'the_user'
 			id = 'the_user'
-			email = 'thomas.stockdale@nextthought.com' # this address encodes badly to simple base64
+			email = 'thomas.stockdale@nextthought.com'  # this address encodes badly to simple base64
 
 		class Profile(object):
 			realname = 'Suzë Schwartz'
@@ -114,20 +105,20 @@ class TestEmail(AppLayerTest):
 														'href': token_url },
 											package='nti.appserver',
 											request=request)
-		assert_that( msg, is_( not_none() ))
-		#import pyramid_mailer
-		#from pyramid_mailer.interfaces import IMailer
-		#from zope import component
-		#mailer = pyramid_mailer.Mailer.from_settings( {'mail.queue_path': '/tmp/ds_maildir', 'mail.default_sender': 'no-reply@nextthought.com' } )
-		#component.provideUtility( mailer, IMailer )
-		#component.provideUtility(mailer.queue_delivery)
-		#from .._default_template_mailer import _send_mail
-		#_send_mail(msg, [user], None)
-		#import transaction
-		#transaction.commit()
+		assert_that(msg, is_(not_none()))
+		# import pyramid_mailer
+		# from pyramid_mailer.interfaces import IMailer
+		# from zope import component
+		# mailer = pyramid_mailer.Mailer.from_settings( {'mail.queue_path': '/tmp/ds_maildir', 'mail.default_sender': 'no-reply@nextthought.com' } )
+		# component.provideUtility( mailer, IMailer )
+		# component.provideUtility(mailer.queue_delivery)
+		# from .._default_template_mailer import _send_mail
+		# _send_mail(msg, [user], None)
+		# import transaction
+		# transaction.commit()
 
 		_pyramid_message_to_message(msg, [user], None)
 
 		# we can get to IPrincipal, so we have VERP
 		# The first part will be predictable, the rest won't
-		assert_that( msg.sender, contains_string('"NextThought" <no-reply+') )
+		assert_that(msg.sender, contains_string('"NextThought" <no-reply+'))
