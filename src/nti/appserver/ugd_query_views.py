@@ -32,6 +32,8 @@ from nti.app.renderers.interfaces import IUGDExternalCollection
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.appserver import httpexceptions as hexc
+from nti.appserver import MessageFactory as _
+
 from nti.appserver.pyramid_authorization import is_readable
 
 from nti.appserver.interfaces import INamedLinkView
@@ -786,14 +788,16 @@ class _UGDView(AbstractAuthenticatedView,
 			try:
 				batch_before_time = int( batch_before_time )
 			except ValueError:
-				raise hexc.HTTPBadRequest("Batch before param not an integer")
+				raise hexc.HTTPBadRequest(_("Batch before param not an integer"))
 		if batch_after_time:
 			try:
 				batch_after_time = int( batch_after_time )
 			except ValueError:
-				raise hexc.HTTPBadRequest("Batch after param not an integer")
-		if batch_before_time <= 0 or batch_after_time < 0:
-			raise hexc.HTTPBadRequest("Batch out of range")
+				raise hexc.HTTPBadRequest(_("Batch after param not an integer"))
+
+		if 		(batch_before_time and batch_before_time <= 0) \
+			or 	(batch_after_time and batch_after_time < 0):
+			raise hexc.HTTPBadRequest(_("Batch out of range"))
 		return batch_before_time, batch_after_time
 
 	def _do_timestamp_filtering(self, items):
@@ -1132,7 +1136,7 @@ class RecursiveUGDView(_UGDView):
 		"""
 		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
 		if catalog is None:
-			raise hexc.HTTPNotFound("No catalog")
+			raise hexc.HTTPNotFound(_("No catalog"))
 
 		result = LocatedExternalDict()
 		interface.alsoProvides(result,self.result_iface)

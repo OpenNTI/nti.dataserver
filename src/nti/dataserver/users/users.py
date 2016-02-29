@@ -246,7 +246,7 @@ class User(Principal):
 	go through the User class, which takes care of posting appropriate
 	notifications to queues. For updates to contained objects,
 	the methods beginUpdates() and endUpdates() must surround the updates. Objects
-	retreived from getObject() will be monitored for changes during this period
+	retrieved from getObject() will be monitored for changes during this period
 	and notifications posted at the end. Mutations to non-persistent data structurs
 	may not be caught by this and so such objects should be explicitly marked
 	as changed using setPersistentStateChanged().
