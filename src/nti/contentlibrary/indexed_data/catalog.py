@@ -30,3 +30,18 @@ class ValidatingSiteName(object):
 class SiteIndex(ValueIndex):
 	default_field_name = 'site'
 	default_interface = ValidatingSiteName
+
+class ValidatingNamespace(object):
+
+	__slots__ = (b'namespace',)
+
+	def __init__(self, obj, default=None):
+		pass
+
+	def __reduce__(self):
+		raise TypeError()
+
+class NamespaceIndex(ValueIndex):
+	default_field_name = 'namespace'
+	default_interface = ValidatingNamespace
+	
