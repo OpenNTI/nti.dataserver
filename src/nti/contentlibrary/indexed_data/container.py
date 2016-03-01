@@ -14,30 +14,30 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
 
 from nti.common.property import Lazy
+
+from nti.contentlibrary.indexed_data import NTI_AUDIO_TYPE
+from nti.contentlibrary.indexed_data import NTI_VIDEO_TYPE
+from nti.contentlibrary.indexed_data import NTI_TIMELINE_TYPE
+from nti.contentlibrary.indexed_data import NTI_SLIDE_DECK_TYPE
+from nti.contentlibrary.indexed_data import NTI_RELATED_WORK_REF_TYPE
+
+from nti.contentlibrary.indexed_data import get_library_catalog
+
+from nti.contentlibrary.indexed_data.interfaces import IIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import ITimelineIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import ISlideDeckIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import IRelatedContentIndexedDataContainer
 
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 from nti.site.site import get_component_hierarchy_names
 
 from nti.zope_catalog.catalog import ResultSet
-
-from .interfaces import IIndexedDataContainer
-from .interfaces import IAudioIndexedDataContainer
-from .interfaces import IVideoIndexedDataContainer
-from .interfaces import ITimelineIndexedDataContainer
-from .interfaces import ISlideDeckIndexedDataContainer
-from .interfaces import IRelatedContentIndexedDataContainer
-
-from . import get_catalog
-
-from . import NTI_AUDIO_TYPE
-from . import NTI_VIDEO_TYPE
-from . import NTI_TIMELINE_TYPE
-from . import NTI_SLIDE_DECK_TYPE
-from . import NTI_RELATED_WORK_REF_TYPE
 
 @interface.implementer(IIndexedDataContainer)
 class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
@@ -50,12 +50,13 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 
 	def __init__(self, unit, sites=None):
 		self.sites = sites or get_component_hierarchy_names()
-		self.ntiid = getattr(unit, 'ntiid', None) \
-		or getattr(unit, 'NTIID', None) or u''
+		self.ntiid = 	getattr(unit, 'ntiid', None) \
+					 or getattr(unit, 'NTIID', None) \
+					 or u''
 
 	@Lazy
 	def catalog(self):
-		return get_catalog()
+		return get_library_catalog()
 
 	@Lazy
 	def intids(self):
