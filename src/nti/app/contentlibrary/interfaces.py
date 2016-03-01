@@ -14,6 +14,8 @@ __docformat__ = "restructuredtext en"
 from zope.container.constraints import contains
 from zope.container.constraints import containers
 
+from zope.securitypolicy.interfaces import IRolePermissionManager
+
 # Content-specific boards and forums
 # We define these as a distinct set of classes/interfaces/mimetypes/ntiids
 # so that things like analytics and notable data can distinguish them.
@@ -84,3 +86,13 @@ class IContentUnitPreferences(ILocation,
 	# impossible to validate this schema.
 	sharedWith = List( value_type=Object(IUnicode),
 					   title="List of usernames to share with" )
+
+class IContentPackageRolePermissionManager(IRolePermissionManager):
+	"""
+	A role permission manager for ``IContentPackage``.
+	"""
+
+	def initialize():
+		"""
+		Initialize our role manager to default status.
+		"""

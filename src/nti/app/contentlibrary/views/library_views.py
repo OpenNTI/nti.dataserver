@@ -565,7 +565,8 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 					hierarchy_context = _get_hierarchy_context_for_context(
 														obj, top_level_context)
 					if len(hierarchy_context) > 1:
-						result_list.extend(hierarchy_context[1:])
+						# Drop returned top level context
+						result_list.extend( hierarchy_context[1:] )
 					path_list = self._externalize_children(legacy_path)
 					result_list.extend(path_list)
 				return result_list
@@ -661,8 +662,8 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
 		# FIXME: We need to validate user access to our endpoint
-		# object here, instead of assuming content package access
-		# is enough (versus asset visbility).
+		# object in our adapter, instead of assuming content package access
+		# is enough (versus asset visibility).
 		if 		ITopic.providedBy(obj) \
 			or 	IPost.providedBy(obj) \
 			or 	IForum.providedBy(obj):

@@ -29,7 +29,7 @@
 	<!-- permissions cache -->
 	<subscriber handler="._permissioned._on_enroll_record" />
 	<subscriber handler="._permissioned._on_unenroll_record" />
-				
+
 	<!--
 		 The user has a named path adapter to get his personal library.
 		 Currently this is implicitly the Main library but in the future
@@ -163,6 +163,9 @@
 			 for="nti.contentlibrary.interfaces.IContentUnit"
 			 provides="nti.contenttypes.presentation.interfaces.IPresentationAssetContainer" />
 
+	<adapter factory=".subscribers.ContentPackageRolePermissionManager"
+				provides=".interfaces.IContentPackageRolePermissionManager" />
+
 	<!-- Top-level/hierarchy -->
 	<adapter factory=".adapters._content_unit_to_bundle" />
 
@@ -198,10 +201,14 @@
 				for="nti.contentlibrary.interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectAddedEvent" />
 
+	<subscriber handler=".subscribers._initialize_package_roles" />
+
 	<!-- mutation -->
 	<subscriber handler=".subscribers._update_indices_when_content_changes"
 				for="nti.contentlibrary.interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectModifiedEvent" />
+
+	<subscriber handler=".subscribers._update_package_roles" />
 
 	<!-- removal -->
 	<subscriber handler=".subscribers._clear_index_when_content_removed"
@@ -212,5 +219,5 @@
 	<subscriber	factory=".filters._LibraryContentObjectFilter"
 				provides="nti.appserver.interfaces.ICreatableObjectFilter"
 				for="nti.dataserver.interfaces.IUser" />
-				
+
 </configure>

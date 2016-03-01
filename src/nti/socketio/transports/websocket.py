@@ -158,7 +158,7 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 			# no more often than half of what's needed to keep the session "alive"
 			# to cut down on database activity
 			# This is tightly coupled to session implementation and lifetime
-			if self.message == b"2::" \
+			if 	  self.message == b"2::" \
 			  and self.connected \
 			  and self.last_heartbeat_time >= (time.time() - self.HEARTBEAT_LIFETIME):
 				continue
@@ -167,7 +167,7 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 				break
 
 			# Try for up to 2 seconds to receive this message. If it fails,
-			# drop it and wait for the next one. That's better than dieing altogether, right?
+			# drop it and wait for the next one. That's better than dying altogether, right?
 			try:
 				self.run_loop &= run_job_in_site( self._do_read, retries=20, sleep=0.1, site_names=self.session_originating_site_names )
 			except transaction.interfaces.TransientError:

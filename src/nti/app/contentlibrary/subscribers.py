@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import simplejson
 
+from zope import interface
 from zope import component
 
 from zope.component.hooks import getSite
@@ -20,9 +21,12 @@ from zope.intid.interfaces import IIntIds
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
+from zope.securitypolicy.rolepermission import AnnotationRolePermissionManager
+
 from ZODB.interfaces import IConnection
 
 from nti.app.contentlibrary.interfaces import IContentBoard
+from nti.app.contentlibrary.interfaces import IContentPackageRolePermissionManager
 
 from nti.coremetadata.interfaces import IRecordable
 
@@ -32,7 +36,9 @@ from nti.contentlibrary.indexed_data import get_library_catalog
 from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IContentPackageAddedEvent
 from nti.contentlibrary.interfaces import IContentPackageSyncResults
+from nti.contentlibrary.interfaces import IContentPackageReplacedEvent
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 from nti.contentlibrary.interfaces import IContentPackageLibraryDidSyncEvent
 
@@ -54,6 +60,11 @@ from nti.contenttypes.presentation.utils import create_ntiaudio_from_external
 from nti.contenttypes.presentation.utils import create_ntivideo_from_external
 from nti.contenttypes.presentation.utils import create_timelime_from_external
 from nti.contenttypes.presentation.utils import create_relatedwork_from_external
+
+from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ACT_UPDATE
+from nti.dataserver.authorization import ACT_CONTENT_EDIT
+from nti.dataserver.authorization import ROLE_CONTENT_ADMIN
 
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -188,7 +199,7 @@ def _load_and_register_slidedeck_json(jtext,
 			result.extend(_canonicalize(internal.Videos, INTISlideVideo, registry))
 			if _was_utility_registered(internal, INTISlideDeck, ntiid, registry, connection):
 				result.append(internal)
-			# CS: 20160114 Slide and SlideVideos are unique for slides, 
+			# CS: 20160114 Slide and SlideVideos are unique for slides,
 			# so we can reparent those items
 			for item in internal.Items or ():
 				item.__parent__ = internal
@@ -552,6 +563,30 @@ clear_content_package_assets = _clear_when_removed
 @component.adapter(IContentPackage, IObjectRemovedEvent)
 def _clear_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)
+
+
+@component.adapter(IContentPackage)
+@interface.implementer(IContentPackageRolePermissionManager)
+class ContentPackageRolePermissionManager(AnnotationRolePermissionManager):
+
+	def initialize(self):
+		if not self.map or not self.map._byrow:
+			# Initialize with perms for our global content admin.
+			for perm in ( ACT_READ, ACT_CONTENT_EDIT, ACT_UPDATE ):
+				self.grantPermissionToRole( perm.id, ROLE_CONTENT_ADMIN.id )
+
+def _initialize_content_package_roles( package ):
+	package_role_manager = IContentPackageRolePermissionManager( package )
+	if package_role_manager is not None:
+		package_role_manager.initialize()
+
+@component.adapter(IContentPackage, IContentPackageAddedEvent)
+def _initialize_package_roles(content_package, event):
+	_initialize_content_package_roles( content_package )
+
+@component.adapter(IContentPackage, IContentPackageReplacedEvent)
+def _update_package_roles(content_package, event):
+	_initialize_content_package_roles( content_package )
 
 # forum events
 
