@@ -45,11 +45,17 @@ from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
 from nti.contentlibrary.indexed_data import get_library_catalog
 
+from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
+
+from nti.contenttypes.courses.interfaces import ICourseInstance
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.contenttypes.presentation import iface_of_asset
 
 from nti.contenttypes.presentation.interfaces import IPresentationAsset
+from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
+from nti.contenttypes.presentation.interfaces import IPackagePresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
@@ -67,10 +73,7 @@ from nti.schema.interfaces import find_most_derived_interface
 
 from nti.traversal.traversal import find_interface
 
-@interface.implementer(IPrincipal)
-@component.adapter(IContentPackageBundle)
-def bundle_to_principal(library):
-	return system_user
+# Type
 
 class _Type(object):
 
@@ -116,6 +119,39 @@ def _assessment_to_contained_type(context):
 	provided = find_most_derived_interface(context, IQAssessment)
 	return _Type(provided.__name__)
 
+# Namespace
+
+class _Namespace(object):
+
+	__slots__ = (b'namespace',)
+
+	def __init__(self, namespace):
+		self.namespace = namespace
+		
+@interface.implementer(INamespaceAdapter)
+@component.adapter(ICoursePresentationAsset)
+def _course_asset_to_namespace(context):
+	course = find_interface(context, ICourseInstance, strict=False)
+	entry = ICourseCatalogEntry(course, None)
+	if entry != None:
+		return _Namespace(entry.ntiid)
+	return None
+
+@interface.implementer(INamespaceAdapter)
+@component.adapter(IPackagePresentationAsset)
+def _package_asset_to_namespace(context):
+	package = find_interface(context, IContentPackage, strict=False)
+	if package != None:
+		return _Namespace(package.ntiid)
+	return None
+
+# Bundles
+
+@interface.implementer(IPrincipal)
+@component.adapter(IContentPackageBundle)
+def bundle_to_principal(library):
+	return system_user
+
 def _content_unit_to_bundles(unit):
 	result = []
 	package = find_interface(unit, IContentPackage, strict=False)
@@ -126,11 +162,13 @@ def _content_unit_to_bundles(unit):
 			result.append(bundle)
 	return result
 
-@interface.implementer(IContentPackageBundle)
 @component.adapter(IContentUnit)
+@interface.implementer(IContentPackageBundle)
 def _content_unit_to_bundle(unit):
 	bundles = _content_unit_to_bundles(unit)
 	return bundles[0] if bundles else None
+
+# Context providers
 
 def _get_bundles_from_container(obj):
 	results = set()
@@ -144,15 +182,15 @@ def _get_bundles_from_container(obj):
 				results.add(bundle)
 	return results
 
-@interface.implementer(IHierarchicalContextProvider)
 @component.adapter(interface.Interface, IUser)
+@interface.implementer(IHierarchicalContextProvider)
 def _hierarchy_from_obj(obj, user):
 	container_bundles = _get_bundles_from_container(obj)
 	results = [(bundle,) for bundle in container_bundles]
 	return results
 
-@interface.implementer(ITopLevelContainerContextProvider)
 @component.adapter(IContentUnit, IUser)
+@interface.implementer(ITopLevelContainerContextProvider)
 def _bundles_from_unit(obj, user):
 	# We could tweak the adapter above to return
 	# all possible bundles, or use the container index.
@@ -213,6 +251,8 @@ def _bundles_from_container_object(obj):
 		if is_readable(bundle):
 			results.add(bundle)
 	return results
+
+# Containers
 
 @interface.implementer(IPresentationAssetContainer, IContained, IMapping)
 class _PresentationAssetContainer(PersistentMapping,
