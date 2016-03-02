@@ -40,7 +40,26 @@ from nti.containers.containers import AcquireObjectsOnReadMixin
 from nti.containers.containers import AbstractNTIIDSafeNameChooser
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
-from nti.dataserver.users import Entity
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IACLEnabled
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralTopic
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
+from nti.dataserver.contenttypes.forums.interfaces import IDFLHeadlineTopic
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopic
+
+from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_DFL_TOPIC
+from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_GENERAL_TOPIC
+from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_COMMUNITY_TOPIC
+from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_PERSONAL_BLOG_ENTRY
+
+from nti.dataserver.contenttypes.forums import _CreatedNamedNTIIDMixin
+from nti.dataserver.contenttypes.forums import _containerIds_from_parent
 
 from nti.dataserver.interfaces import ACE_ACT_ALLOW
 
@@ -58,6 +77,8 @@ from nti.dataserver.sharing import AbstractDefaultPublishableSharedWithMixin
 
 from nti.dataserver_core.mixins import ZContainedMixin
 
+from nti.dataserver.users import Entity
+
 from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.schema.fieldproperty import AcquisitionFieldProperty
 
@@ -66,27 +87,6 @@ from nti.traversal.traversal import find_interface
 from nti.utils._compat import Implicit
 
 from nti.wref.interfaces import IWeakRef
-
-from .interfaces import IPost
-from .interfaces import IBoard
-from .interfaces import ITopic
-from .interfaces import IACLEnabled
-from .interfaces import IGeneralForum
-from .interfaces import IGeneralTopic
-from .interfaces import IPersonalBlog
-from .interfaces import IHeadlineTopic
-from .interfaces import IDFLHeadlineTopic
-from .interfaces import IPersonalBlogEntry
-from .interfaces import IGeneralHeadlineTopic
-from .interfaces import ICommunityHeadlineTopic
-
-from .interfaces import NTIID_TYPE_DFL_TOPIC
-from .interfaces import NTIID_TYPE_GENERAL_TOPIC
-from .interfaces import NTIID_TYPE_COMMUNITY_TOPIC
-from .interfaces import NTIID_TYPE_PERSONAL_BLOG_ENTRY
-
-from . import _CreatedNamedNTIIDMixin
-from . import _containerIds_from_parent
 
 class _AbstractUnsharedTopic(AcquireObjectsOnReadMixin,
 							 CheckingLastModifiedBTreeContainer,
@@ -256,6 +256,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		if result is None:
 			# for new objects (e.g. new style courses)
 			# find a creator that is a comunity in the lineage
+			__traceback_info__ = self
 			lineage = ILocationInfo(self).getParents()
 			lineage.insert(0, self)
 			for item in lineage:
@@ -267,9 +268,11 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 
 	@readproperty
 	def _ntiid_creator_username(self):
-		" The community, not the user "
+		"""
+		The community, not the user
+		"""
 		community = self._community
-		if community:
+		if community is not None:
 			return community.username
 
 	@property

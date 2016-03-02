@@ -20,7 +20,9 @@ from zope import schema
 from zope import interface
 
 from zope.container.constraints import contains, containers  # If passing strings, they require bytes, NOT unicode, or they fail
-from zope.container.interfaces import IContentContainer, IContained
+
+from zope.container.interfaces import IContained
+from zope.container.interfaces import IContentContainer
 
 from zope.dublincore.interfaces import IDCTimes
 
