@@ -24,24 +24,30 @@ from pyramid.threadlocal import get_current_request
 
 from persistent.interfaces import IPersistent
 
-from contentratings.rating import NPRating
 from contentratings.category import BASE_KEY
+
 from contentratings.events import ObjectRatedEvent
-from contentratings.storage import UserRatingStorage
 
 from contentratings.interfaces import IUserRating
 from contentratings.interfaces import IObjectRatedEvent
 
+from contentratings.rating import NPRating
+
+from contentratings.storage import UserRatingStorage
+
 from nti.common._compat import patch_acquisition
 patch_acquisition()
+del patch_acquisition
 
 from nti.dataserver.interfaces import IRatable
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IMemcacheClient
 
-from nti.externalization.oids import to_external_oid
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.externalization.oids import to_external_oid
+
+from nti.externalization.singleton import SingletonDecorator
 
 RATING_CAT_NAME = u'rating'
 
@@ -179,8 +185,8 @@ def rates_object(context, username):
 		result = NPRating(float(result), username)
 	return result
 
-@interface.implementer(IExternalMappingDecorator)
 @component.adapter(IRatable)
+@interface.implementer(IExternalMappingDecorator)
 class RatingDecorator(object):
 
 	__metaclass__ = SingletonDecorator

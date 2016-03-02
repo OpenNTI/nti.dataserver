@@ -21,16 +21,19 @@ from zope.keyreference.interfaces import IKeyReference
 from zope.lifecycleevent import IObjectRemovedEvent
 
 from ZODB.interfaces import IConnection
+
 from ZODB.POSException import POSKeyError
 
 import BTrees
 
 import persistent
 
-from nti.common.sets import discard
 from nti.common.property import Lazy
 
+from nti.common.sets import discard
+
 from nti.dataserver import users
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ISessionServiceStorage
 
