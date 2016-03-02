@@ -12,20 +12,22 @@ from hamcrest import is_not
 from hamcrest import assert_that
 
 from zope.component import eventtesting
+
 from zope.interface.interfaces import IRegistered
 
 from nti.contentlibrary.interfaces import IContentPackageLibraryModifiedOnSyncEvent
 
-from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.contentlibrary.tests import ContentLibraryApplicationTestLayer
+
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
-from nti.app.contentlibrary.tests import ContentLibraryApplicationTestLayer
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 class TestApplicationAdminViews(ApplicationLayerTest):
 
 	layer = ContentLibraryApplicationTestLayer
 
-	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_sync_all_libraries(self):
 		href = '/dataserver2/@@SyncAllLibraries'
 
@@ -40,7 +42,7 @@ class TestApplicationAdminViews(ApplicationLayerTest):
 		# packages installed at test time for this to work.
 
 		regs = eventtesting.getEvents(IRegistered)
-		assert_that( regs, is_not(empty()))
+		assert_that(regs, is_not(empty()))
 
 		syncd = eventtesting.getEvents(IContentPackageLibraryModifiedOnSyncEvent)
-		assert_that( syncd, is_not(empty()))
+		assert_that(syncd, is_not(empty()))

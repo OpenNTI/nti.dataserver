@@ -17,21 +17,24 @@ from nti.contenttypes.presentation import ALL_PRESENTATION_ASSETS_INTERFACES
 
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
-from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.contentlibrary.tests import ContentLibraryApplicationTestLayer
+
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
-from nti.app.contentlibrary.tests import ContentLibraryApplicationTestLayer
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 class TestAdapters(ApplicationLayerTest):
 
 	layer = ContentLibraryApplicationTestLayer
 
-	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_adapters(self):
+
 		class Foo():
 			pass
+
 		for iface in ALL_PRESENTATION_ASSETS_INTERFACES:
-			obj = Foo() 
+			obj = Foo()
 			interface.alsoProvides(obj, iface)
 			adapted = IContainedTypeAdapter(obj, None)
 			if adapted is not None:
