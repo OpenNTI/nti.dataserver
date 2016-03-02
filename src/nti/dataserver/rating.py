@@ -32,6 +32,9 @@ from contentratings.storage import UserRatingStorage
 from contentratings.interfaces import IUserRating
 from contentratings.interfaces import IObjectRatedEvent
 
+from nti.common._compat import patch_acquisition
+patch_acquisition()
+
 from nti.dataserver.interfaces import IRatable
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IMemcacheClient
@@ -39,9 +42,6 @@ from nti.dataserver.interfaces import IMemcacheClient
 from nti.externalization.oids import to_external_oid
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
-
-from nti.utils._compat import patch_acquisition
-patch_acquisition()
 
 RATING_CAT_NAME = u'rating'
 
