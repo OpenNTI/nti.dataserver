@@ -20,6 +20,23 @@ from zope.lifecycleevent import IObjectModifiedEvent
 
 from zope.schema.fieldproperty import FieldProperty
 
+from nti.dataserver.contenttypes.forums import _containerIds_from_parent
+
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralPost
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IDFLHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
+
+from nti.dataserver.contenttypes.note import BodyFieldProperty
+
+from nti.dataserver.contenttypes.threadable import ThreadableMixin
+
 from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 
 from nti.dataserver_core.mixins import ZContainedMixin
@@ -29,23 +46,6 @@ from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 from nti.utils._compat import Implicit
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
-
-from ..note import BodyFieldProperty
-
-from ..threadable import ThreadableMixin
-
-from .interfaces import IPost
-from .interfaces import ICommentPost
-from .interfaces import IGeneralPost
-from .interfaces import IHeadlinePost
-from .interfaces import IDFLHeadlinePost
-from .interfaces import IGeneralForumComment
-from .interfaces import IGeneralHeadlinePost
-from .interfaces import IPersonalBlogComment
-from .interfaces import ICommunityHeadlinePost
-from .interfaces import IPersonalBlogEntryPost
-
-from . import _containerIds_from_parent
 
 @interface.implementer(IPost, IAttributeAnnotatable)
 class Post(ZContainedMixin,
@@ -64,10 +64,10 @@ class Post(ZContainedMixin,
 
 	id, containerId = _containerIds_from_parent()
 
-	def __eq__( self, other ):
+	def __eq__(self, other):
 		try:
 			return other == (self.id, self.__parent__, self.title, self.body, self.creator)
-		except AttributeError: # pragma: no cover
+		except AttributeError:  # pragma: no cover
 			# XXX: FIXME: This shouldn't be possible. And yet:
 			#  Module nti.appserver.pyramid_authorization:105 in _lineage_that_ensures_acls
 			#  >>  acl = cache.get( location )
@@ -77,15 +77,15 @@ class Post(ZContainedMixin,
 			logger.exception("Unexpected attribute error comparing a post")
 			return NotImplemented
 
-	def __hash__( self ):
-		return hash( (self.id, self.containerId, self.title, tuple(self.body or ()), self.creator) )
+	def __hash__(self):
+		return hash((self.id, self.containerId, self.title, tuple(self.body or ()), self.creator))
 
 @interface.implementer(IHeadlinePost)
 class HeadlinePost(Post):
 	pass
 
 @component.adapter(IHeadlinePost, IObjectModifiedEvent)
-def _update_forum_when_headline_modified( modified_object, event ):
+def _update_forum_when_headline_modified(modified_object, event):
 	"""
 	When a headline post, contained inside a topic contained inside a forum
 	is modified, the modification needs to percolate all the way up to the forum
@@ -93,7 +93,7 @@ def _update_forum_when_headline_modified( modified_object, event ):
 	Generic listeners handle everything except the grandparent level (the forum).
 	"""
 	try:
-		modified_object.__parent__.__parent__.updateLastModIfGreater( modified_object.lastModified )
+		modified_object.__parent__.__parent__.updateLastModIfGreater(modified_object.lastModified)
 	except AttributeError:
 		pass
 
