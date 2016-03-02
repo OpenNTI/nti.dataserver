@@ -31,12 +31,8 @@ from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
 from nti.appserver.pyramid_authorization import is_readable
 
-from nti.assessment.interfaces import IQPoll
-from nti.assessment.interfaces import IQSurvey
-from nti.assessment.interfaces import IQuestion
-from nti.assessment.interfaces import IQuestionSet
-from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssessment
+from nti.assessment.interfaces import IQSubmittable
 
 from nti.contentlibrary.interfaces import IContentUnit
 from nti.contentlibrary.interfaces import IContentPackage
@@ -45,6 +41,7 @@ from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
 from nti.contentlibrary.indexed_data import get_library_catalog
 
+from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
@@ -88,35 +85,16 @@ def _asset_to_contained_type(context):
 	provided = iface_of_asset(context)
 	return _Type(provided.__name__)
 
-@component.adapter(IQAssignment)
-@interface.implementer(IContainedTypeAdapter)
-def _assignment_to_contained_type(context):
-	return _Type('IQAssignment')
-
-@component.adapter(IQuestionSet)
-@interface.implementer(IContainedTypeAdapter)
-def _questionset_to_contained_type(context):
-	return _Type('IQuestionSet')
-
-@component.adapter(IQuestion)
-@interface.implementer(IContainedTypeAdapter)
-def _question_to_contained_type(context):
-	return _Type('IQuestion')
-
-@component.adapter(IQSurvey)
-@interface.implementer(IContainedTypeAdapter)
-def _survey_to_contained_type(context):
-	return _Type('IQSurvey')
-
-@component.adapter(IQPoll)
-@interface.implementer(IContainedTypeAdapter)
-def _poll_to_contained_type(context):
-	return _Type('IQPoll')
-
 @component.adapter(IQAssessment)
 @interface.implementer(IContainedTypeAdapter)
 def _assessment_to_contained_type(context):
 	provided = find_most_derived_interface(context, IQAssessment)
+	return _Type(provided.__name__)
+
+@component.adapter(IQSubmittable)
+@interface.implementer(IContainedTypeAdapter)
+def _submittable_to_contained_type(context):
+	provided = find_most_derived_interface(context, IQSubmittable)
 	return _Type(provided.__name__)
 
 # Namespace
@@ -137,13 +115,50 @@ def _course_asset_to_namespace(context):
 		return _Namespace(entry.ntiid)
 	return None
 
-@interface.implementer(INamespaceAdapter)
-@component.adapter(IPackagePresentationAsset)
-def _package_asset_to_namespace(context):
+def _package_lineage_to_namespace(context):
 	package = find_interface(context, IContentPackage, strict=False)
 	if package != None:
 		return _Namespace(package.ntiid)
 	return None
+
+@interface.implementer(INamespaceAdapter)
+@component.adapter(IPackagePresentationAsset)
+def _package_asset_to_namespace(context):
+	return _package_lineage_to_namespace(context)
+
+@component.adapter(IQAssessment)
+@interface.implementer(INamespaceAdapter)
+def _assessment_to_namespace(context):
+	return _package_lineage_to_namespace(context)
+
+@component.adapter(IQSubmittable)
+@interface.implementer(INamespaceAdapter)
+def _submittable_to_namespace(context):
+	return _package_lineage_to_namespace(context)
+
+# Namespace
+
+class _NTIID(object):
+
+	__slots__ = (b'ntiid',)
+
+	def __init__(self, ntiid):
+		self.ntiid = ntiid
+		
+@interface.implementer(INTIIDAdapter)
+@component.adapter(IPresentationAsset)
+def _asset_to_ntiid(context):
+	return _NTIID(context.ntiid)
+
+@component.adapter(IQAssessment)
+@interface.implementer(INTIIDAdapter)
+def _assessment_to_ntiid(context):
+	return _NTIID(context.ntiid)
+
+@component.adapter(IQSubmittable)
+@interface.implementer(INTIIDAdapter)
+def _submittable_to_ntiid(context):
+	return _NTIID(context.ntiid)
 
 # Bundles
 

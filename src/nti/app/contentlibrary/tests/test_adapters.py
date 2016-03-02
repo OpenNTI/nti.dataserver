@@ -13,6 +13,8 @@ from hamcrest import has_property
 
 from zope import interface
 
+from nti.assessment.interfaces import ASSESSMENT_INTERFACES
+
 from nti.contenttypes.presentation import ALL_PRESENTATION_ASSETS_INTERFACES
 
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
@@ -28,10 +30,17 @@ class TestAdapters(ApplicationLayerTest):
 	layer = ContentLibraryApplicationTestLayer
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def test_adapters(self):
+	def test_type_adapters(self):
 
 		class Foo():
 			pass
+
+		for iface in ASSESSMENT_INTERFACES:
+			obj = Foo()
+			interface.alsoProvides(obj, iface)
+			adapted = IContainedTypeAdapter(obj, None)
+			if adapted is not None:
+				assert_that(adapted, has_property('type', is_(iface.__name__)))
 
 		for iface in ALL_PRESENTATION_ASSETS_INTERFACES:
 			obj = Foo()

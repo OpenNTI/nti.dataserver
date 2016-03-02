@@ -96,3 +96,9 @@ class INamespaceAdapter(interface.Interface):
 	Adapts contained objects to their str namespace.
 	"""
 	namespace = interface.Attribute("namespace string")
+
+class INTIIDAdapter(interface.Interface):
+	"""
+	Adapts contained objects to their str NTIID.
+	"""
+	ntiid = interface.Attribute("NTIID string")

@@ -9,6 +9,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
+from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
+from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
+
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
@@ -31,17 +35,14 @@ class SiteIndex(ValueIndex):
 	default_field_name = 'site'
 	default_interface = ValidatingSiteName
 
-class ValidatingNamespace(object):
-
-	__slots__ = (b'namespace',)
-
-	def __init__(self, obj, default=None):
-		pass
-
-	def __reduce__(self):
-		raise TypeError()
-
+class TypeIndex(ValueIndex):
+	default_field_name = 'type'
+	default_interface = IContainedTypeAdapter
+	
 class NamespaceIndex(ValueIndex):
 	default_field_name = 'namespace'
-	default_interface = ValidatingNamespace
-	
+	default_interface = INamespaceAdapter
+
+class NTIIDIndex(ValueIndex):
+	default_field_name = 'ntiid'
+	default_interface = INTIIDAdapter
