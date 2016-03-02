@@ -45,8 +45,7 @@ from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+from nti.contenttypes.courses.interfaces import ICourseOutlineNode
 
 from nti.contenttypes.presentation import iface_of_asset
 
@@ -109,10 +108,10 @@ class _Namespace(object):
 @interface.implementer(INamespaceAdapter)
 @component.adapter(ICoursePresentationAsset)
 def _course_asset_to_namespace(context):
-	course = find_interface(context, ICourseInstance, strict=False)
-	entry = ICourseCatalogEntry(course, None)
-	if entry != None:
-		return _Namespace(entry.ntiid)
+	node = find_interface(context, ICourseOutlineNode, strict=False)
+	source = getattr(node, 'src', None)
+	if source:
+		return _Namespace(source)
 	return None
 
 def _package_lineage_to_namespace(context):
