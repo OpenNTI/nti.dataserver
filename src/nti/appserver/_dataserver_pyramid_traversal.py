@@ -38,12 +38,18 @@ from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.context_providers import get_joinable_contexts
 
+from nti.appserver import interfaces
+
 from nti.appserver.pyramid_authorization import is_readable
 
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
-from nti.common.property import alias
+from nti.common._compat import aq_base
+from nti.common._compat import IAcquirer
+
 from nti.common.iterables import is_nonstr_iter
+
+from nti.common.property import alias
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
@@ -65,10 +71,6 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.externalization import to_external_object
 
 from nti.ntiids import ntiids
-
-from nti.utils._compat import aq_base, IAcquirer
-
-from . import interfaces
 
 ITEMS = StandardExternalFields.ITEMS
 

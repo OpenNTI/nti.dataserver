@@ -89,3 +89,10 @@ class IContainedTypeAdapter(interface.Interface):
 	"""
 	Adapts contained objects to their str type.
 	"""
+	type = interface.Attribute("type string")
+
+class INamespaceAdapter(interface.Interface):
+	"""
+	Adapts contained objects to their str namespace.
+	"""
+	namespace = interface.Attribute("namespace string")

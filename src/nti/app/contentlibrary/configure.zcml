@@ -143,21 +143,15 @@
 				zcml:condition="installed nti.app.products.courseware"/>
 
 	<!-- Type adapters -->
+
+	<adapter factory=".adapters._asset_to_contained_type" />
+
 	<adapter factory=".adapters._poll_to_contained_type" />
 	<adapter factory=".adapters._survey_to_contained_type" />
 	<adapter factory=".adapters._question_to_contained_type" />
 	<adapter factory=".adapters._assessment_to_contained_type" />
 	<adapter factory=".adapters._assignment_to_contained_type" />
 	<adapter factory=".adapters._questionset_to_contained_type" />
-
-	<adapter factory=".adapters._asset_to_contained_type" />
-	<adapter factory=".adapters._audio_to_contained_type" />
-	<adapter factory=".adapters._slide_to_contained_type" />
-	<adapter factory=".adapters._video_to_contained_type" />
-	<adapter factory=".adapters._related_to_contained_type" />
-	<adapter factory=".adapters._timeline_to_contained_type" />
-	<adapter factory=".adapters._slidedeck_to_contained_type" />
-	<adapter factory=".adapters._slidevideo_to_contained_type" />
 
 	<adapter factory=".adapters.presentation_asset_items_factory"
 			 for="nti.contentlibrary.interfaces.IContentUnit"

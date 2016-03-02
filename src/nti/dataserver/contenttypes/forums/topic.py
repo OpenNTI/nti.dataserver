@@ -32,6 +32,8 @@ from zope.schema.fieldproperty import FieldProperty
 
 from zope.security.interfaces import IPrincipal
 
+from nti.common._compat import Implicit
+
 from nti.common.property import Lazy
 from nti.common.property import readproperty
 from nti.common.property import CachedProperty
@@ -83,8 +85,6 @@ from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.schema.fieldproperty import AcquisitionFieldProperty
 
 from nti.traversal.traversal import find_interface
-
-from nti.utils._compat import Implicit
 
 from nti.wref.interfaces import IWeakRef
 

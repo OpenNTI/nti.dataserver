@@ -22,18 +22,18 @@ from boto.ses.exceptions import SESDailyQuotaExceededError
 from boto.ses.exceptions import SESAddressBlacklistedError
 from boto.ses.exceptions import SESMaxSendingRateExceededError
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.publisher.interfaces.browser import IBrowserRequest
+
+from nti.common._compat import sleep
 
 from nti.common.property import Lazy
 
 from nti.dataserver.interfaces import IRedisClient
 
 from nti.mailer.interfaces import ITemplatedMailer
-
-from nti.utils._compat import sleep
 
 from nti.zodb.tokenbucket import PersistentTokenBucket
 

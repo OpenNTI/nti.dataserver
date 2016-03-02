@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 from zope import schema
 from zope import component
 from zope import interface
@@ -23,9 +21,26 @@ from zope.container.interfaces import INameChooser
 
 from ZODB.interfaces import IConnection
 
+from nti.common._compat import Base
+
 from nti.containers.containers import AcquireObjectsOnReadMixin
 from nti.containers.containers import AbstractNTIIDSafeNameChooser
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
+
+from nti.dataserver.contenttypes.forums import MessageFactory as _
+
+from nti.dataserver.contenttypes.forums import _CreatedNamedNTIIDMixin
+from nti.dataserver.contenttypes.forums import _CreatedIntIdNTIIDMixin
+
+from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_DFL_BOARD
+from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_COMMUNITY_BOARD
+
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
+from nti.dataserver.contenttypes.forums.interfaces import IDFLForum
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralBoard
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
 
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -33,20 +48,6 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
-
-from nti.utils._compat import Base
-
-from .interfaces import IBoard
-from .interfaces import IDFLBoard
-from .interfaces import IDFLForum
-from .interfaces import IGeneralBoard
-from .interfaces import ICommunityBoard
-from .interfaces import ICommunityForum
-from .interfaces import NTIID_TYPE_DFL_BOARD
-from .interfaces import NTIID_TYPE_COMMUNITY_BOARD
-
-from . import _CreatedNamedNTIIDMixin
-from . import _CreatedIntIdNTIIDMixin
 
 DEFAULT_BOARD_NAME = 'DiscussionBoard'
 
@@ -121,8 +122,8 @@ def AnnotatableBoardAdapter(context, board_impl_class, board_iface):
 	"""
 	return _adapt_fixed_board(context, board_impl_class, board_iface)
 
-@interface.implementer(ICommunityBoard)
 @component.adapter(ICommunity)
+@interface.implementer(ICommunityBoard)
 def GeneralBoardCommunityAdapter(community):
 	"""
 	For the moment, we will say that all communities have a single board, in the same

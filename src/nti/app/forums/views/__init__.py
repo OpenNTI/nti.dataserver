@@ -17,7 +17,7 @@ from zope import component
 
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
-from nti.utils._compat import aq_base
+from nti.common._compat import aq_base
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is

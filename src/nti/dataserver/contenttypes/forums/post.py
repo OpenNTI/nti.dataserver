@@ -20,6 +20,8 @@ from zope.lifecycleevent import IObjectModifiedEvent
 
 from zope.schema.fieldproperty import FieldProperty
 
+from nti.common._compat import Implicit
+
 from nti.dataserver.contenttypes.forums import _containerIds_from_parent
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
@@ -42,8 +44,6 @@ from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
-
-from nti.utils._compat import Implicit
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 
@@ -111,7 +111,7 @@ class CommentPost(Post, ThreadableMixin):
 # We have to do something special to override the default value set in the
 # class we inherit from. cf topic.PersonalBlogEntry
 # TODO: Still not sure this is really correct
-from . import _AcquiredSharingTargetsProperty
+from nti.dataserver.contenttypes.forums import _AcquiredSharingTargetsProperty
 
 @interface.implementer(IGeneralHeadlinePost)
 class GeneralHeadlinePost(GeneralPost, HeadlinePost):

@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import datetime
 
 from zope import schema
@@ -26,6 +24,8 @@ from zope.intid.interfaces import IIntIdAddedEvent
 
 from ZODB.interfaces import IConnection
 
+from nti.common._compat import Implicit
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IRedisClient
@@ -33,6 +33,29 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.containers.containers import AcquireObjectsOnReadMixin
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
+
+from nti.dataserver.contenttypes.forums import MessageFactory as _
+
+from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_DFL_FORUM
+from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_GENERAL_FORUM
+from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_PERSONAL_BLOG
+from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_COMMUNITY_FORUM
+
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import IForum
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
+from nti.dataserver.contenttypes.forums.interfaces import IDFLForum
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
+from nti.dataserver.contenttypes.forums.interfaces import IACLCommunityForum
+
+from nti.dataserver.contenttypes.forums import _containerIds_from_parent
+from nti.dataserver.contenttypes.forums import _CreatedIntIdNTIIDMixin as _SingleInstanceIntIdMixin
+from nti.dataserver.contenttypes.forums import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
 
 from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 
@@ -43,29 +66,6 @@ from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.transactions import transactions
 
 from nti.traversal.traversal import find_interface
-
-from nti.utils._compat import Implicit
-
-from .interfaces import IPost
-from .interfaces import IBoard
-from .interfaces import IForum
-from .interfaces import ITopic
-from .interfaces import IDFLBoard
-from .interfaces import IDFLForum
-from .interfaces import IGeneralForum
-from .interfaces import IPersonalBlog
-from .interfaces import ICommunityBoard
-from .interfaces import ICommunityForum
-from .interfaces import IACLCommunityForum
-
-from .interfaces import NTIID_TYPE_DFL_FORUM
-from .interfaces import NTIID_TYPE_GENERAL_FORUM
-from .interfaces import NTIID_TYPE_PERSONAL_BLOG
-from .interfaces import NTIID_TYPE_COMMUNITY_FORUM
-
-from . import _containerIds_from_parent
-from . import _CreatedIntIdNTIIDMixin as _SingleInstanceIntIdMixin
-from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
 
 _NEWEST_TTL = datetime.timedelta(days=7)
 

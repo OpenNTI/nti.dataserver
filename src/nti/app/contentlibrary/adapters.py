@@ -43,24 +43,12 @@ from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IContentPackageBundle
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
-from nti.contentlibrary.indexed_data import get_catalog
-from nti.contentlibrary.indexed_data import NTI_AUDIO_TYPE
-from nti.contentlibrary.indexed_data import NTI_VIDEO_TYPE
-from nti.contentlibrary.indexed_data import NTI_SLIDE_TYPE
-from nti.contentlibrary.indexed_data import NTI_TIMELINE_TYPE
-from nti.contentlibrary.indexed_data import NTI_SLIDE_DECK_TYPE
-from nti.contentlibrary.indexed_data import NTI_SLIDE_VIDEO_TYPE
-from nti.contentlibrary.indexed_data import NTI_RELATED_WORK_TYPE
+from nti.contentlibrary.indexed_data import get_library_catalog
+
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
 from nti.contenttypes.presentation import iface_of_asset
-from nti.contenttypes.presentation.interfaces import INTIAudio
-from nti.contenttypes.presentation.interfaces import INTIVideo
-from nti.contenttypes.presentation.interfaces import INTISlide
-from nti.contenttypes.presentation.interfaces import INTITimeline
-from nti.contenttypes.presentation.interfaces import INTISlideDeck
-from nti.contenttypes.presentation.interfaces import INTISlideVideo
-from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
+
 from nti.contenttypes.presentation.interfaces import IPresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
@@ -90,41 +78,6 @@ class _Type(object):
 
 	def __init__(self, type_):
 		self.type = type_
-
-@component.adapter(INTIAudio)
-@interface.implementer(IContainedTypeAdapter)
-def _audio_to_contained_type(context):
-	return _Type(NTI_AUDIO_TYPE)
-
-@component.adapter(INTIVideo)
-@interface.implementer(IContainedTypeAdapter)
-def _video_to_contained_type(context):
-	return _Type(NTI_VIDEO_TYPE)
-
-@component.adapter(INTISlide)
-@interface.implementer(IContainedTypeAdapter)
-def _slide_to_contained_type(context):
-	return _Type(NTI_SLIDE_TYPE)
-
-@component.adapter(INTITimeline)
-@interface.implementer(IContainedTypeAdapter)
-def _timeline_to_contained_type(context):
-	return _Type(NTI_TIMELINE_TYPE)
-
-@component.adapter(INTISlideDeck)
-@interface.implementer(IContainedTypeAdapter)
-def _slidedeck_to_contained_type(context):
-	return _Type(NTI_SLIDE_DECK_TYPE)
-
-@component.adapter(INTISlideVideo)
-@interface.implementer(IContainedTypeAdapter)
-def _slidevideo_to_contained_type(context):
-	return _Type(NTI_SLIDE_VIDEO_TYPE)
-
-@component.adapter(INTIRelatedWorkRef)
-@interface.implementer(IContainedTypeAdapter)
-def _related_to_contained_type(context):
-	return _Type(NTI_RELATED_WORK_TYPE)
 
 @component.adapter(IPresentationAsset)
 @interface.implementer(IContainedTypeAdapter)
@@ -180,8 +133,8 @@ def _content_unit_to_bundle(unit):
 	return bundles[0] if bundles else None
 
 def _get_bundles_from_container(obj):
-	catalog = get_catalog()
 	results = set()
+	catalog = get_library_catalog()
 	if catalog:
 		containers = catalog.get_containers(obj)
 		for container in containers:
@@ -214,22 +167,22 @@ def _bundles_from_unit(obj, user):
 		result = (package,)
 	return result
 
-@interface.implementer(ITopLevelContainerContextProvider)
 @component.adapter(IPost)
+@interface.implementer(ITopLevelContainerContextProvider)
 def _bundles_from_post(obj):
 	bundle = find_interface(obj, IContentPackageBundle, strict=False)
 	if bundle is not None:
 		return (bundle,)
 
-@interface.implementer(ITopLevelContainerContextProvider)
 @component.adapter(ITopic)
+@interface.implementer(ITopLevelContainerContextProvider)
 def _bundles_from_topic(obj):
 	bundle = find_interface(obj, IContentPackageBundle, strict=False)
 	if bundle is not None:
 		return (bundle,)
 
-@interface.implementer(ITopLevelContainerContextProvider)
 @component.adapter(IForum)
+@interface.implementer(ITopLevelContainerContextProvider)
 def _bundles_from_forum(obj):
 	bundle = find_interface(obj, IContentPackageBundle, strict=False)
 	if bundle is not None:
@@ -246,8 +199,8 @@ def _get_top_level_contexts(obj):
 		pass
 	return results
 
-@interface.implementer(IJoinableContextProvider)
 @component.adapter(interface.Interface)
+@interface.implementer(IJoinableContextProvider)
 def _bundles_from_container_object(obj):
 	"""
 	Using the container index, look for catalog entries that contain

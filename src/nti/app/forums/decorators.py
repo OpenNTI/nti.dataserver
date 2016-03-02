@@ -19,6 +19,9 @@ from zope.container.interfaces import ILocation
 from pyramid.threadlocal import get_current_request
 
 from nti.app.authentication import get_remote_user
+
+from nti.app.forums import VIEW_CONTENTS
+
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver._util import link_belongs_to_user
@@ -26,29 +29,29 @@ from nti.appserver._util import link_belongs_to_user
 from nti.appserver.pyramid_authorization import can_create
 from nti.appserver.pyramid_authorization import is_readable
 
+from nti.common._compat import aq_base
+
+from nti.dataserver.contenttypes.forums.board import DEFAULT_BOARD_NAME
+
+from nti.dataserver.contenttypes.forums.forum import DEFAULT_PERSONAL_BLOG_NAME
+
+from nti.dataserver.contenttypes.forums.interfaces import IForum
+from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.contenttypes.forums.interfaces import IForum
-from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
-
-from nti.dataserver.contenttypes.forums.board import DEFAULT_BOARD_NAME
-from nti.dataserver.contenttypes.forums.forum import DEFAULT_PERSONAL_BLOG_NAME
-
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
+from nti.externalization.singleton import SingletonDecorator
+
 from nti.links.links import Link
-
-from nti.utils._compat import aq_base
-
-from . import VIEW_CONTENTS
 
 LINKS = StandardExternalFields.LINKS
 
@@ -59,7 +62,7 @@ class BlogLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	def _do_decorate_external(self, context, mapping):
 		the_links = mapping.setdefault(LINKS, [])
 		blog = context.containers.getContainer(DEFAULT_PERSONAL_BLOG_NAME)
-		if context == self.remoteUser or ( blog is not None and is_readable(blog)):
+		if context == self.remoteUser or (blog is not None and is_readable(blog)):
 			link = Link(context,
 						rel=DEFAULT_PERSONAL_BLOG_NAME,
 						elements=(DEFAULT_PERSONAL_BLOG_NAME,))
@@ -255,7 +258,6 @@ class SecurityAwareBoardForumCountDecorator(object):
 		will have to be done about this. We rationalize its existence
 		now by assuming our other scalability problems are worse and we'll
 		have to fix them all eventually; this won't be an issue in the short term.
-
 	"""
 
 	__metaclass__ = SingletonDecorator

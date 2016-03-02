@@ -28,6 +28,8 @@ from zope.dublincore.interfaces import IDCTimes
 
 from zope.schema import Int
 
+from nti.common._compat import IAcquirer
+
 from nti.dataserver.interfaces import ACE_ACT_DENY
 from nti.dataserver.interfaces import ACE_ACT_ALLOW
 
@@ -49,11 +51,13 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.interfaces import ExtendedCompoundModeledContentBody
 from nti.dataserver.interfaces import INotModifiedInStreamWhenContainerModified
 
-from nti.schema.field import Object, Number, Variant, ValidTextLine, ListOrTuple
+from nti.schema.field import Number
+from nti.schema.field import Object
+from nti.schema.field import Variant
+from nti.schema.field import ListOrTuple
+from nti.schema.field import ValidTextLine
 
-from nti.utils._compat import IAcquirer
-
-# ## NTIID values
+# NTIID values
 
 #: The type of NTIID used for a :class:`IBoard` object
 NTIID_TYPE_BOARD = 'Board'

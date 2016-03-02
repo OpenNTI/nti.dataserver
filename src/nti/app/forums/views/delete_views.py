@@ -12,15 +12,16 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope.event import notify
 from zope import lifecycleevent
+
+from zope.event import notify
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults  # NOTE: Only usable on classes
 
-from nti.utils._compat import aq_base
-
 from nti.appserver.ugd_edit_views import UGDDeleteView
+
+from nti.common._compat import aq_base
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder

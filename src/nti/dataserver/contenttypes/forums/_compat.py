@@ -15,8 +15,8 @@ import zope.deferredimport
 zope.deferredimport.initialize()
 
 zope.deferredimport.deprecatedFrom(
-	"Moved to nti.utils._compat",
-	"nti.utils._compat",
+	"Moved to nti.common._compat",
+	"nti.common._compat",
 	"IAcquirer",
 	"Implicit",
 	"Base",
