@@ -16,7 +16,7 @@ from zope import component
 
 from zope.component.hooks import site as current_site
 
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
 
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
@@ -25,19 +25,32 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.contentlibrary.subscribers import can_be_removed
+from nti.app.contentlibrary.subscribers import removed_registered
+from nti.app.contentlibrary.subscribers import clear_content_package_assets
+from nti.app.contentlibrary.subscribers import update_indices_when_content_changes
+
+from nti.app.contentlibrary.utils import yield_content_packages
+
+from nti.app.contentlibrary.views import iface_of_thing
+
 from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.common.string import TRUE_VALUES
 from nti.common.maps import CaseInsensitiveDict
+
+from nti.common.string import TRUE_VALUES
 
 from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contenttypes.presentation import PACKAGE_CONTAINER_INTERFACES
+
 from nti.contenttypes.presentation.interfaces import IPresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.dataserver import authorization as nauth
+
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -56,15 +69,6 @@ from nti.site.site import get_component_hierarchy_names
 from nti.site.utils import unregisterUtility
 
 from nti.traversal.traversal import find_interface
-
-from ..utils import yield_content_packages
-
-from ..subscribers import can_be_removed
-from ..subscribers import removed_registered
-from ..subscribers import clear_content_package_assets
-from ..subscribers import update_indices_when_content_changes
-
-from . import iface_of_thing
 
 ITEMS = StandardExternalFields.ITEMS
 NTIID = StandardExternalFields.NTIID

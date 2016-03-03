@@ -11,8 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import simplejson
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.component.hooks import getSite
 
@@ -564,6 +564,7 @@ clear_content_package_assets = _clear_when_removed
 def _clear_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)
 
+# role events
 
 @component.adapter(IContentPackage)
 @interface.implementer(IContentPackageRolePermissionManager)
@@ -572,21 +573,21 @@ class ContentPackageRolePermissionManager(AnnotationRolePermissionManager):
 	def initialize(self):
 		if not self.map or not self.map._byrow:
 			# Initialize with perms for our global content admin.
-			for perm in ( ACT_READ, ACT_CONTENT_EDIT, ACT_UPDATE ):
-				self.grantPermissionToRole( perm.id, ROLE_CONTENT_ADMIN.id )
+			for perm in (ACT_READ, ACT_CONTENT_EDIT, ACT_UPDATE):
+				self.grantPermissionToRole(perm.id, ROLE_CONTENT_ADMIN.id)
 
-def _initialize_content_package_roles( package ):
-	package_role_manager = IContentPackageRolePermissionManager( package )
+def _initialize_content_package_roles(package):
+	package_role_manager = IContentPackageRolePermissionManager(package)
 	if package_role_manager is not None:
 		package_role_manager.initialize()
 
 @component.adapter(IContentPackage, IContentPackageAddedEvent)
 def _initialize_package_roles(content_package, event):
-	_initialize_content_package_roles( content_package )
+	_initialize_content_package_roles(content_package)
 
 @component.adapter(IContentPackage, IContentPackageReplacedEvent)
 def _update_package_roles(content_package, event):
-	_initialize_content_package_roles( content_package )
+	_initialize_content_package_roles(content_package)
 
 # forum events
 

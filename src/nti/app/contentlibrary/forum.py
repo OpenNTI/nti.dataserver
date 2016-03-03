@@ -14,8 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from itertools import chain
 
 from zope import schema
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.cachedescriptors.property import cachedIn
 
@@ -30,13 +30,15 @@ from nti.dataserver.contenttypes.forums import MessageFactory as _
 from nti.dataserver.contenttypes.forums.board import GeneralBoard
 from nti.dataserver.contenttypes.forums.board import AnnotatableBoardAdapter
 
-from nti.dataserver.interfaces import system_user , ICommunity
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import system_user
 
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.ntiids.ntiids import TYPE_OID
 
 from nti.site.interfaces import IHostPolicyFolder
+
 from nti.site.site import get_component_hierarchy_names
 
 from nti.traversal.traversal import find_interface
