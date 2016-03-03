@@ -9,16 +9,25 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope.catalog.interfaces import ICatalog
+
+from zope.intid.interfaces import IIntIds
+
 from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
+from nti.contentlibrary.indexed_data.interfaces import IContainersAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
 
+from nti.zope_catalog.catalog import Catalog
+
 from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
+
+CATALOG_INDEX_NAME = '++etc++contentlibrary.catalog'
 
 def to_iterable(value):
 	if isinstance(value, (list, tuple, set)):
@@ -83,3 +92,26 @@ class NamespaceIndex(ValueIndex):
 class NTIIDIndex(ValueIndex):
 	default_field_name = 'ntiid'
 	default_interface = INTIIDAdapter
+
+class ContainersIndex(RetainSetIndex):
+	default_field_name = 'containers'
+	default_interface = IContainersAdapter
+
+class LibraryCatalog(Catalog):
+	pass
+
+def install_library_catalog(site_manager_container, intids=None):
+	lsm = site_manager_container.getSiteManager()
+	intids = lsm.getUtility(IIntIds) if intids is None else intids
+	catalog = lsm.queryUtility(ICatalog, name=CATALOG_INDEX_NAME)
+	if catalog is not None:
+		return catalog
+
+	catalog = lsm.queryUtility(ICatalog, name=CATALOG_INDEX_NAME)
+	if catalog is None:
+		catalog = LibraryCatalog()
+		catalog.__name__ = CATALOG_INDEX_NAME
+		catalog.__parent__ = site_manager_container
+		intids.register(catalog)
+		lsm.registerUtility(catalog, provided=ICatalog, name=CATALOG_INDEX_NAME)
+	return catalog
