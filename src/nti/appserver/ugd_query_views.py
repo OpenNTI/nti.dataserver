@@ -268,6 +268,12 @@ def _reference_list_length( x ):
 	except AttributeError:
 		return -1 # distinguish no refs vs no data
 
+def _post_count( x ):
+	try:
+		return x.PostCount
+	except AttributeError:
+		return -1 # distinguish no refs vs no data
+
 def _reference_list_objects( x ):
 	try:
 		return x.referents
@@ -350,6 +356,17 @@ def _toplevel_filter( x ):
 	except AttributeError:
 		return True # No getInReplyTo means it cannot be a reply, means its toplevel
 
+def _referenced_by_count(x):
+	"""
+	We now allow topic PostCounts to be returned here, if necessary. Since ITopics
+	may be mixed in with IThreadables.
+	"""
+	# XXX: Additional work will likely be needed for recursive like count.
+	result = _reference_list_length(x)
+	if result == -1:
+		result = _post_count(x)
+	return result
+
 SORT_KEYS = {
 	# LastModified and createdTime are sorted on the same values we would provide
 	# externally, which might involve an attribute /or/ adapting to IDCTimes.
@@ -357,7 +374,7 @@ SORT_KEYS = {
 	'lastModified': functools.partial( to_standard_external_last_modified_time, default=0 ),
 	'createdTime' : functools.partial( to_standard_external_created_time, default=0),
 	'LikeCount': liking_like_count,
-	'ReferencedByCount':  _reference_list_length,
+	'ReferencedByCount':  _referenced_by_count,
 	'RecursiveLikeCount':  _reference_list_recursive_like_count,
 }
 SORT_KEYS['CreatedTime'] = SORT_KEYS['createdTime'] # Despite documentation, some clients send this value
