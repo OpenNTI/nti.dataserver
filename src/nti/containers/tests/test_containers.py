@@ -26,9 +26,11 @@ import unittest
 from zope import interface
 from zope import lifecycleevent
 
-from zope.component.eventtesting import getEvents, clearEvents
+from zope.component.eventtesting import getEvents
+from zope.component.eventtesting import clearEvents 
 
 from zope.container.contained import Contained as ZContained
+
 from zope.container.interfaces import INameChooser
 
 from nti.containers.containers import IdGeneratorNameChooser

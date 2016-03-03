@@ -44,6 +44,7 @@ from zope.container.constraints import checkObject
 from zope.location.interfaces import ISublocations
 
 from zope.site.interfaces import IFolder
+
 from zope.site.site import SiteManagerContainer
 
 from ZODB.interfaces import IBroken
