@@ -18,6 +18,10 @@ from zope import interface
 
 from zope.security.interfaces import IPrincipal
 
+from zope.securitypolicy.interfaces import Allow
+
+from zope.securitypolicy.principalrole import principalRoleManager
+
 from nti.dataserver.interfaces import EVERYONE_GROUP_NAME
 from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
 
@@ -132,6 +136,14 @@ def effective_principals(username,
 		if domain:
 			result.add(domain)
 			result.add(IPrincipal(domain))
+
+	# XXX: Hack to put the global content admin role in effective principals.
+	# Ideally, we give these roles access directly on whatever object they
+	# need permission on.
+	roles = principalRoleManager.getRolesForPrincipal( username )
+	for role, access in roles or ():
+		if role == "nti.roles.contentlibrary.admin" and access == Allow:
+			result.add( IPrincipal( role ))
 
 	# Make hashable before we cache
 	result = frozenset(result)
