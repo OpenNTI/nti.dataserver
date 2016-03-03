@@ -311,7 +311,6 @@ class UserServiceExternalizer(ServiceExternalizer):
 		capabilities = {term.value for term in cap_vocab}
 
 		# Now filter out capabilities.
-		from IPython.core.debugger import Tracer;Tracer()()
 		for cap_filter in component.subscribers((self.context.user,),
 												IUserCapabilityFilter):
 			capabilities = cap_filter.filterCapabilities( capabilities )
