@@ -19,11 +19,11 @@ from nti.testing.matchers import validly_provides
 
 import unittest
 
-from nti.contentfolder.model import RootFolder
-from nti.contentfolder.model import ContentFolder
-
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import IContentFolder
+
+from nti.contentfolder.model import RootFolder
+from nti.contentfolder.model import ContentFolder
 
 from nti.externalization.externalization import to_external_object
 

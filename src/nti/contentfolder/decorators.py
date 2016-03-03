@@ -14,8 +14,9 @@ from zope import interface
 
 from nti.contentfolder.interfaces import IContentFolder
 
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import IExternalObjectDecorator
+
+from nti.externalization.singleton import SingletonDecorator
 
 @component.adapter(IContentFolder)
 @interface.implementer(IExternalObjectDecorator)

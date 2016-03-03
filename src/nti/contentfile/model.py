@@ -13,15 +13,15 @@ from zope import interface
 
 from nti.common.property import alias
 
+from nti.contentfile.interfaces import IContentFile
+from nti.contentfile.interfaces import IContentImage
+from nti.contentfile.interfaces import IContentBlobFile
+from nti.contentfile.interfaces import IContentBlobImage
+
 from nti.namedfile.file import NamedFile
 from nti.namedfile.file import NamedImage
 from nti.namedfile.file import NamedBlobFile
 from nti.namedfile.file import NamedBlobImage
-
-from .interfaces import IContentFile
-from .interfaces import IContentImage
-from .interfaces import IContentBlobFile
-from .interfaces import IContentBlobImage
 
 class BaseContentMixin(object):
 	creator = None

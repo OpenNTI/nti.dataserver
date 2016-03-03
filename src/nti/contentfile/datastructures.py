@@ -13,17 +13,17 @@ from zope import component
 
 from nti.common.dataurl import DataURL
 
+from nti.contentfile.interfaces import IContentFile
+from nti.contentfile.interfaces import IContentImage
+from nti.contentfile.interfaces import IContentBlobFile
+from nti.contentfile.interfaces import IContentBlobImage
+
+from nti.contentfile.model import ContentFile
+from nti.contentfile.model import ContentImage
+from nti.contentfile.model import ContentBlobFile
+from nti.contentfile.model import ContentBlobImage
+
 from nti.namedfile.datastructures import NamedFileObjectIO
-
-from .model import ContentFile
-from .model import ContentImage
-from .model import ContentBlobFile
-from .model import ContentBlobImage
-
-from .interfaces import IContentFile
-from .interfaces import IContentImage
-from .interfaces import IContentBlobFile
-from .interfaces import IContentBlobImage
 
 @component.adapter(IContentFile)
 class ContentFileObjectIO(NamedFileObjectIO):
