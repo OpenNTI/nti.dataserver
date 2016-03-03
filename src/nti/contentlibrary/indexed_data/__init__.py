@@ -19,10 +19,10 @@ import time
 
 from zope import component
 
-from ..interfaces import IContentPackageLibrary
-from ..interfaces import IGlobalContentPackageLibrary
+from nti.contentlibrary.indexed_data.interfaces import IContainedObjectCatalog
 
-from .interfaces import IContainedObjectCatalog
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IGlobalContentPackageLibrary
 
 # catalog
 CATALOG_INDEX_NAME = '++etc++contentlibrary.container_index'
@@ -32,17 +32,7 @@ def get_library_catalog():
 	return result
 get_catalog = get_library_catalog
 
-# types
-NTI_AUDIO_TYPE = 'INTIAudio'
-NTI_VIDEO_TYPE = 'INTIVideo'
-NTI_SLIDE_TYPE = 'INTISlide'
-NTI_TIMELINE_TYPE = 'INTITimeline'
-NTI_SLIDE_DECK_TYPE = 'INTISlideDeck'
-NTI_SLIDE_VIDEO_TYPE = 'INTISlideVideo'
-NTI_RELATED_WORK_TYPE = NTI_RELATED_WORK_REF_TYPE = 'INTIRelatedWorkRef'
-
-# registry
-def get_registry(registry=None):
+def get_site_registry(registry=None):
 	if registry is None:
 		library = component.queryUtility(IContentPackageLibrary)
 		if IGlobalContentPackageLibrary.providedBy(library):
@@ -50,4 +40,4 @@ def get_registry(registry=None):
 		else:
 			registry = component.getSiteManager()
 	return registry
-registry = get_registry
+registry = get_registry = get_site_registry

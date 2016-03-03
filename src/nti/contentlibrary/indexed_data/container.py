@@ -18,12 +18,6 @@ from zope.intid.interfaces import IIntIds
 
 from nti.common.property import Lazy
 
-from nti.contentlibrary.indexed_data import NTI_AUDIO_TYPE
-from nti.contentlibrary.indexed_data import NTI_VIDEO_TYPE
-from nti.contentlibrary.indexed_data import NTI_TIMELINE_TYPE
-from nti.contentlibrary.indexed_data import NTI_SLIDE_DECK_TYPE
-from nti.contentlibrary.indexed_data import NTI_RELATED_WORK_REF_TYPE
-
 from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contentlibrary.indexed_data.interfaces import IIndexedDataContainer
@@ -34,6 +28,12 @@ from nti.contentlibrary.indexed_data.interfaces import ISlideDeckIndexedDataCont
 from nti.contentlibrary.indexed_data.interfaces import IRelatedContentIndexedDataContainer
 
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
+
+from nti.contenttypes.presentation.interfaces import INTIAudio
+from nti.contenttypes.presentation.interfaces import INTIVideo
+from nti.contenttypes.presentation.interfaces import INTITimeline
+from nti.contenttypes.presentation.interfaces import INTISlideDeck
+from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
 
 from nti.site.site import get_component_hierarchy_names
 
@@ -118,23 +118,23 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 
 @interface.implementer(IAudioIndexedDataContainer)
 class AudioIndexedDataContainer(IndexedDataContainer):
-	type = NTI_AUDIO_TYPE
+	type = INTIAudio.__name__
 
 @interface.implementer(IVideoIndexedDataContainer)
 class VideoIndexedDataContainer(IndexedDataContainer):
-	type = NTI_VIDEO_TYPE
+	type = INTIVideo.__name__
 
 @interface.implementer(IRelatedContentIndexedDataContainer)
 class RelatedContentIndexedDataContainer(IndexedDataContainer):
-	type = NTI_RELATED_WORK_REF_TYPE
+	type = INTIRelatedWorkRef.__name__
 
 @interface.implementer(ITimelineIndexedDataContainer)
 class TimelineIndexedDataContainer(IndexedDataContainer):
-	type = NTI_TIMELINE_TYPE
+	type = INTITimeline.__name__
 
 @interface.implementer(ISlideDeckIndexedDataContainer)
 class SlideDeckIndexedDataContainer(IndexedDataContainer):
-	type = NTI_SLIDE_DECK_TYPE
+	type = INTISlideDeck.__name__
 
 from zope.deprecation import deprecated
 
