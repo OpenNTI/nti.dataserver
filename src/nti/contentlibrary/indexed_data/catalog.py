@@ -17,7 +17,44 @@ from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
 
+from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
+
+def to_iterable(value):
+	if isinstance(value, (list, tuple, set)):
+		result = value
+	else:
+		result = (value,) if value is not None else ()
+	result = tuple(getattr(x, '__name__', x) for x in result)
+	return result
+
+class RetainSetIndex(RawSetIndex):
+	"""
+	A set index that retains the old values.
+	"""
+
+	def to_iterable(self, value=None):
+		result = to_iterable(value)
+		return result
+
+	def index_doc(self, doc_id, value):
+		value = {v for v in self.to_iterable(value) if v is not None}
+		old = self.documents_to_values.get(doc_id) or set()
+		if value.difference(old):
+			value.update(old or ())
+			result = super(RetainSetIndex, self).index_doc(doc_id, value)
+			return result
+
+	def remove(self, doc_id, value):
+		old = set(self.documents_to_values.get(doc_id) or ())
+		if not old:
+			return
+		for v in to_iterable(value):
+			old.discard(v)
+		if old:
+			super(RetainSetIndex, self).index_doc(doc_id, old)
+		else:
+			super(RetainSetIndex, self).unindex_doc(doc_id)
 
 class ValidatingSiteName(object):
 
