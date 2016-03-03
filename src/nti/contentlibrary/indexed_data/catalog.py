@@ -9,9 +9,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
+
 from zope.catalog.interfaces import ICatalog
 
 from zope.intid.interfaces import IIntIds
+
+from zope.location import locate
+
+from nti.common._compat import integer_types
+
+from nti.common.proxy import removeAllProxies
 
 from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
@@ -29,6 +37,8 @@ from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
 
 CATALOG_INDEX_NAME = '++etc++contentlibrary.catalog'
 
+IX_CONTAINERS = 'containers'
+
 def to_iterable(value):
 	if isinstance(value, (list, tuple, set)):
 		result = value
@@ -37,6 +47,15 @@ def to_iterable(value):
 	result = tuple(getattr(x, '__name__', x) for x in result)
 	return result
 
+def get_uid(item, intids=None):
+	if not isinstance(item, integer_types):
+		item = removeAllProxies(item)
+		intids = component.getUtility(IIntIds) if intids is None else intids
+		result = intids.queryId(item)
+	else:
+		result = item
+	return result
+	
 class RetainSetIndex(RawSetIndex):
 	"""
 	A set index that retains the old values.
@@ -98,7 +117,32 @@ class ContainersIndex(RetainSetIndex):
 	default_interface = IContainersAdapter
 
 class LibraryCatalog(Catalog):
-	pass
+
+	@property
+	def container_index(self):
+		return self[IX_CONTAINERS]
+
+	def get_containers(self, item, intids=None):
+		doc_id = get_uid(item, intids)
+		if doc_id is not None:
+			result = self.container_index.documents_to_values.get(doc_id)
+			return set(result or ())
+		return set()
+
+	def update_containers(self, item, containers=(), intids=None):
+		doc_id = get_uid(item, intids)
+		if doc_id is not None and containers:
+			containers = to_iterable(containers)
+			result = self.container_index.index_doc(doc_id, containers)
+			return result
+		return None
+
+	def remove_containers(self, item, containers, intids=None):
+		doc_id = get_uid(item, intids)
+		if doc_id is not None:
+			self.container_index.remove(doc_id, containers)
+			return True
+		return False
 
 def install_library_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
@@ -107,11 +151,15 @@ def install_library_catalog(site_manager_container, intids=None):
 	if catalog is not None:
 		return catalog
 
-	catalog = lsm.queryUtility(ICatalog, name=CATALOG_INDEX_NAME)
-	if catalog is None:
-		catalog = LibraryCatalog()
-		catalog.__name__ = CATALOG_INDEX_NAME
-		catalog.__parent__ = site_manager_container
-		intids.register(catalog)
-		lsm.registerUtility(catalog, provided=ICatalog, name=CATALOG_INDEX_NAME)
+	catalog = LibraryCatalog()
+	catalog.__name__ = CATALOG_INDEX_NAME
+	catalog.__parent__ = site_manager_container
+	intids.register(catalog)
+	lsm.registerUtility(catalog, provided=ICatalog, name=CATALOG_INDEX_NAME)
+	
+	for name, clazz in ((IX_CONTAINERS, ContainersIndex),):
+		index = clazz(family=intids.family)
+		intids.register(index)
+		locate(index, catalog, name)
+		catalog[name] = index
 	return catalog
