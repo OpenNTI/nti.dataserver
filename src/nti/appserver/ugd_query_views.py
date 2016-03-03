@@ -1224,6 +1224,7 @@ class RecursiveUGDView(_UGDView):
 				sites = get_component_hierarchy_names()
 				objects = catalog.search_objects(container_ntiids=containers,
 												 sites=sites,
+												 container_all_of=False,
 									   			 provided=(INTIVideo, INTIAudio,
 															IQPoll, IQSurvey))
 				for obj in objects:
