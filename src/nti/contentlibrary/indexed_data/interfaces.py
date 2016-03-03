@@ -102,3 +102,9 @@ class INTIIDAdapter(interface.Interface):
 	Adapts contained objects to their str NTIID.
 	"""
 	ntiid = interface.Attribute("NTIID string")
+
+class IContainersAdapter(interface.Interface):
+	"""
+	Adapts contained objects to their str containers NTIIDs.
+	"""
+	containers = interface.Attribute("NTIID strings")

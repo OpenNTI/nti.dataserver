@@ -22,6 +22,8 @@ from zope.security.interfaces import IPrincipal
 
 from persistent.mapping import PersistentMapping
 
+from pyramid.location import lineage
+
 from nti.appserver.context_providers import get_top_level_contexts
 
 from nti.appserver.interfaces import IJoinableContextProvider
@@ -43,9 +45,12 @@ from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
+from nti.contentlibrary.indexed_data.interfaces import IContainersAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
+from nti.contenttypes.courses.interfaces import ICourseInstance
 from nti.contenttypes.courses.interfaces import ICourseOutlineNode
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.contenttypes.presentation import iface_of_asset
 
@@ -53,6 +58,8 @@ from nti.contenttypes.presentation.interfaces import IPresentationAsset
 from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
 from nti.contenttypes.presentation.interfaces import IPackagePresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
+
+from nti.contenttypes.courses.utils import get_course_subinstances
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
@@ -158,6 +165,66 @@ def _assessment_to_ntiid(context):
 @interface.implementer(INTIIDAdapter)
 def _submittable_to_ntiid(context):
 	return _NTIID(context.ntiid)
+
+# Containers
+
+class _Containers(object):
+
+	__slots__ = (b'containers',)
+
+	def __init__(self, containers):
+		self.containers = containers
+
+def _package_lineage_to_containers(context):
+	result = set()
+	for location in lineage(context):
+		if IContentUnit.providedBy(location):
+			result.add(location.ntiid)
+		if IContentPackage.providedBy(location):
+			break
+	result.discard(None)
+	return _Containers(tuple(result))
+
+@interface.implementer(IContainersAdapter)
+@component.adapter(IPackagePresentationAsset)
+def _pacakge_asset_to_containers(context):
+	result = _package_lineage_to_containers(context)
+	return result
+
+@interface.implementer(IContainersAdapter)
+@component.adapter(ICoursePresentationAsset)
+def _course_asset_to_containers(context):
+	course = None
+	result = set()
+	for location in lineage(context):
+		if IPresentationAsset.providedBy(location):
+			result.add(location.ntiid)
+		if ICourseInstance.providedBy(location):
+			course = location
+			entry = ICourseCatalogEntry(course, None)
+			result.add(getattr(entry, 'ntiid', None))
+			break
+
+	# include NTIIDs of sections
+	for instance in get_course_subinstances(course):
+		entry = ICourseCatalogEntry(instance, None)
+		result.add(getattr(entry, 'ntiid', None))
+		
+	result.discard(None)
+	result.discard(context.ntiid)
+	return _Containers(tuple(result))
+
+@component.adapter(IQAssessment)
+@interface.implementer(IContainersAdapter)
+def _assessment_to_containers(context):
+	result = _package_lineage_to_containers(context)
+	return result
+
+@component.adapter(IQSubmittable)
+@interface.implementer(IContainersAdapter)
+def _submittable_to_containers(context):
+	result = _package_lineage_to_containers(context)
+	return result
 
 # Bundles
 
