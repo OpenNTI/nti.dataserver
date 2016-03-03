@@ -324,13 +324,11 @@ def _store_asset(content_package, container_id, ntiid, item):
 
 	container = IPresentationAssetContainer(unit)
 	container[ntiid] = item
-	# check for slide decks
-	if INTISlideDeck.providedBy(item):
-		for slide in item.Slides or ():
-			container[slide.ntiid] = slide
 
-		for video in item.Videos or ():
-			container[video.ntiid] = video
+	if INTISlideDeck.providedBy(item):
+		for x in item.Items or ():
+			container[x.ntiid] = x
+
 	return True
 
 def _index_items(content_package, index, item_iface, catalog, registry):
