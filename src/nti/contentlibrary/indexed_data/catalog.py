@@ -31,12 +31,17 @@ from nti.site.interfaces import IHostPolicyFolder
 from nti.traversal.traversal import find_interface
 
 from nti.zope_catalog.catalog import Catalog
+from nti.zope_catalog.catalog import ResultSet
 
 from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
 
 CATALOG_INDEX_NAME = '++etc++contentlibrary.catalog'
 
+IX_SITE = 'site'
+IX_TYPE = 'type'
+IX_NTIID = 'ntiid'
+IX_NAMESPACE = 'namespace'
 IX_CONTAINERS = 'containers'
 
 def to_iterable(value):
@@ -144,6 +149,58 @@ class LibraryCatalog(Catalog):
 			return True
 		return False
 
+	def remove_all_containers(self, item, intids=None):
+		doc_id = get_uid(item, intids)
+		if doc_id is not None:
+			self.container_index.unindex_doc(doc_id)
+			return True
+		return False
+
+	def get_references(self,
+					   ntiid=None,
+					   sites=None,
+					   provided=None,
+					   namespace=None,
+					   container_ntiids=None,
+					   container_all_of=True):
+		query =  {}
+		container_query = 'all_of' if container_all_of else 'any_of'
+
+		# prepare query
+		for index, value, index_query in ((IX_SITE, sites, 'any_of'),
+										  (IX_NTIID, ntiid, 'any_of'),
+										  (IX_TYPE, provided, 'any_of'),
+										  (IX_NAMESPACE, namespace, 'any_of'),
+							  			  (IX_CONTAINERS, container_ntiids, container_query)):
+			if value is not None:
+				value = to_iterable(value)
+				apply[index] = {index_query: value}
+		
+		# query catalog
+		result = self.apply(query)
+		return result if result is not None else self.family.IF.LFSet()
+
+	def search_objects(self,
+					   ntiid=None,
+					   sites=None,
+					   provided=None,
+					   namespace=None,
+					   container_ntiids=None,
+					   container_all_of=True,
+					   intids=None):
+		intids = component.queryUtility(IIntIds) if intids is None else intids
+		if intids is not None:
+			refs = self.get_references(ntiid=ntiid,
+									   sites=sites,
+									   provided=provided,
+									   namespace=namespace,
+									   container_ntiids=container_ntiids,
+									   container_all_of=container_all_of)
+			result = ResultSet(refs, intids)
+		else:
+			result = ()
+		return result
+
 def install_library_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
 	intids = lsm.getUtility(IIntIds) if intids is None else intids
@@ -157,7 +214,11 @@ def install_library_catalog(site_manager_container, intids=None):
 	intids.register(catalog)
 	lsm.registerUtility(catalog, provided=ICatalog, name=CATALOG_INDEX_NAME)
 	
-	for name, clazz in ((IX_CONTAINERS, ContainersIndex),):
+	for name, clazz in ( (IX_SITE, SiteIndex),
+						 (IX_TYPE, TypeIndex),
+						 (IX_NTIID, NTIIDIndex),
+						 (IX_NAMESPACE, NamespaceIndex),
+						 (IX_CONTAINERS, ContainersIndex),):
 		index = clazz(family=intids.family)
 		intids.register(index)
 		locate(index, catalog, name)
