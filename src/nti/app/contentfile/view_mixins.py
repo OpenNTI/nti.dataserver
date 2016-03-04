@@ -20,6 +20,7 @@ from zope import interface
 from zope.file.upload import nameFinder
 
 from pyramid import httpexceptions as hexc
+
 from pyramid.threadlocal import get_current_request
 
 from plone.namedfile.interfaces import IFile as IPloneFile
@@ -44,8 +45,9 @@ from nti.namedfile.interfaces import IFileConstraints
 
 from nti.dataserver.interfaces import IInternalFileRef
 
-from nti.links.links import Link
 from nti.links.externalization import render_link
+
+from nti.links.links import Link
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
