@@ -20,7 +20,8 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.common.property import Lazy
 
-from nti.contentfolder.interfaces import INamedContainer, IRootFolder
+from nti.contentfolder.interfaces import IRootFolder
+from nti.contentfolder.interfaces import INamedContainer
 
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_UPDATE
