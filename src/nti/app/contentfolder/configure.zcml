@@ -27,7 +27,7 @@
 	<configure zcml:condition="have testmode">
 		<adapter name="ofs"
 				 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
-				 factory=".adapters.OFSPathAdapter"
+				 factory="._adapters.OFSPathAdapter"
 				 provides="zope.traversing.interfaces.IPathAdapter" />
 	</configure>
 

@@ -268,7 +268,7 @@ class RenameView(AbstractAuthenticatedView,
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
 		if IRootFolder.providedBy(self.context):
-			raise hexc.HTTPForbidden(_("Cannot rename root folder"))
+			raise hexc.HTTPForbidden(_("Cannot rename root folder."))
 
 		data = self.readInput()
 		name = data.get('name')
@@ -291,8 +291,7 @@ class RenameView(AbstractAuthenticatedView,
 		# for files only
 		if INamed.providedBy(theObject):
 			theObject.filename = name
-			if contentType: # replace if provided
-				theObject.contentType = contentType
+			theObject.contentType = contentType or theObject.contentType
 
 		# replace in folder
 		parent.rename(old, name)
