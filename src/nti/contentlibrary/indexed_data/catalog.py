@@ -9,6 +9,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+import time
+
 from zope import component
 
 from zope.catalog.interfaces import ICatalog
@@ -17,9 +20,14 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
+import BTrees
+
 from nti.common._compat import integer_types
 
 from nti.common.proxy import removeAllProxies
+
+from nti.common.time import bit64_int_to_time
+from nti.common.time import time_to_64bit_int
 
 from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
@@ -123,6 +131,43 @@ class ContainersIndex(RetainSetIndex):
 
 class LibraryCatalog(Catalog):
 
+	family = BTrees.family64
+
+	def __init__(self, family=None):
+		super(LibraryCatalog, self).__init__(family=family)
+		self.last_modified = self.family.OI.BTree()
+
+	def clear(self):
+		super(LibraryCatalog, self).clear()
+		for index in self.values():
+			index.clear()
+		self.last_modified.clear()
+	reset = clear
+
+	# last modified
+
+	def get_last_modified(self, namespace):
+		try:
+			return bit64_int_to_time(self.last_modified[namespace])
+		except KeyError:
+			return 0
+	getLastModified = get_last_modified
+
+	def set_last_modified(self, namespace, t=None):
+		assert isinstance(namespace, six.string_types)
+		t = time.time() if t is None else t
+		self.last_modified[namespace] = time_to_64bit_int(t)
+	setLastModified = set_last_modified
+	
+	def remove_last_modified(self, namespace):
+		try:
+			del self.last_modified[namespace]
+		except KeyError:
+			pass
+	removeLastModified = remove_last_modified
+	
+	# containers
+	
 	@property
 	def container_index(self):
 		return self[IX_CONTAINERS]
@@ -155,6 +200,8 @@ class LibraryCatalog(Catalog):
 			self.container_index.unindex_doc(doc_id)
 			return True
 		return False
+
+	# search
 
 	def get_references(self,
 					   ntiid=None,
