@@ -210,8 +210,11 @@ if version_info[0] >= 1 and 'ZEO' not in sys.modules:
 
 	# As of 2012-10-06, patching sys/std[out/err/in] hangs gunicorn, so be sure it's false
 	# (this is marked experimental in 1.0rc1)
-	
-	gevent.monkey.patch_all(subprocess=True, sys=False, Event=False, os=False)
+
+	# 2015-03, the above issues with os seems to no longer apply.
+	# 2015-03, we used to patch subprocess also (default False), but gunicorn actually ends up
+	# patching it anyways. So it should be safe to remove. In 1.1, it's true by default.
+	gevent.monkey.patch_all()
 
 	# NOTE: There is an incompatibility with patching 'thread' and the 'multiprocessing' module:
 	# The problem is that multiprocessing.queues.Queue uses a half-duplex multiprocessing.Pipe,
