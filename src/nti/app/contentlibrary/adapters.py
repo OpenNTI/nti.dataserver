@@ -16,6 +16,8 @@ from zope import interface
 
 from zope.interface.common.mapping import IMapping
 
+from zope.intid.interfaces import IIntIds
+
 from zope.location.interfaces import IContained
 
 from zope.security.interfaces import IPrincipal
@@ -59,6 +61,10 @@ from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
 from nti.contenttypes.presentation.interfaces import IPackagePresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
+from nti.contenttypes.courses.index import IX_PACKAGES
+from nti.contenttypes.courses.index import IX_SITE as IX_COURSES_SITE
+
+from nti.contenttypes.courses.utils import get_courses_catalog
 from nti.contenttypes.courses.utils import get_course_subinstances
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
@@ -73,6 +79,8 @@ from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.schema.interfaces import find_most_derived_interface
+
+from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
 
@@ -111,7 +119,7 @@ class _Namespace(object):
 
 	def __init__(self, namespace):
 		self.namespace = namespace
-		
+
 @interface.implementer(INamespaceAdapter)
 @component.adapter(ICoursePresentationAsset)
 def _course_asset_to_namespace(context):
@@ -150,7 +158,7 @@ class _NTIID(object):
 
 	def __init__(self, ntiid):
 		self.ntiid = ntiid
-		
+
 @interface.implementer(INTIIDAdapter)
 @component.adapter(IPresentationAsset)
 def _asset_to_ntiid(context):
@@ -189,6 +197,22 @@ def _package_lineage_to_containers(context):
 @component.adapter(IPackagePresentationAsset)
 def _pacakge_asset_to_containers(context):
 	result = _package_lineage_to_containers(context)
+	package = find_interface(context, IContentPackage, strict=False)
+	folder = find_interface(context, IHostPolicyFolder, strict=False)
+	if package is not None and folder != None:
+		catalog = get_courses_catalog()
+		containers = set(result.containers)
+		intids = component.getUtility(IIntIds)
+		query = {
+			IX_PACKAGES: {'any_of':(package.ntiid,) },
+			IX_COURSES_SITE: {'any_of':(folder.__name__,)}
+		}
+		for uid in catalog.apply(query) or ():
+			course = intids.queryObject(uid)
+			entry = ICourseCatalogEntry(course, None)
+			if entry != None:
+				containers.add(entry.ntiid)
+		result = _Containers(tuple(containers))
 	return result
 
 @interface.implementer(IContainersAdapter)
@@ -209,7 +233,7 @@ def _course_asset_to_containers(context):
 	for instance in get_course_subinstances(course):
 		entry = ICourseCatalogEntry(instance, None)
 		result.add(getattr(entry, 'ntiid', None))
-		
+
 	result.discard(None)
 	result.discard(context.ntiid)
 	return _Containers(tuple(result))
@@ -282,7 +306,7 @@ def _bundles_from_unit(obj, user):
 	else:
 		# Content package
 		# TODO same in hierarchy
-		package = IContentPackage( obj, None )
+		package = IContentPackage(obj, None)
 		result = (package,)
 	return result
 
@@ -310,7 +334,7 @@ def _bundles_from_forum(obj):
 def _get_top_level_contexts(obj):
 	results = set()
 	try:
-		top_level_contexts = get_top_level_contexts( obj )
+		top_level_contexts = get_top_level_contexts(obj)
 		for top_level_context in top_level_contexts:
 			if IContentPackageBundle.providedBy(top_level_context):
 				results.add(top_level_context)
