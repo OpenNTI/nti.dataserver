@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import six
 from collections import Mapping
 
@@ -29,6 +27,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.contentfile.view_mixins import transfer
 
+from nti.app.contentfolder import MessageFactory as _
+
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -43,10 +43,10 @@ from nti.contentfile.model import ContentImage
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
 
-from nti.contentfolder.model import ContentFolder
-
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import INamedContainer
+
+from nti.contentfolder.model import ContentFolder
 
 from nti.dataserver import authorization as nauth
 
@@ -58,6 +58,7 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.namedfile.file import name_finder
 from nti.namedfile.file import safe_filename
+
 from nti.namedfile.interfaces import INamedFile
 
 ITEMS = StandardExternalFields.ITEMS
