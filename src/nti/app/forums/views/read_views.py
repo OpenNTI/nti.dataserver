@@ -18,6 +18,8 @@ import operator
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+from nti.app.forums import VIEW_CONTENTS
+
 from nti.app.renderers.interfaces import IETagCachedUGDExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.interfaces import ILongerCachedUGDExternalCollection
@@ -54,20 +56,17 @@ frm_ext = frm_ext
 
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
-from .. import VIEW_CONTENTS
-
-_view_defaults = dict(  route_name='objects.generic.traversal',
-						renderer='rest' )
+_view_defaults = dict(route_name='objects.generic.traversal',
+						renderer='rest')
 _c_view_defaults = _view_defaults.copy()
-_c_view_defaults.update( permission=nauth.ACT_CREATE,
-						 request_method='POST' )
+_c_view_defaults.update(permission=nauth.ACT_CREATE,
+						 request_method='POST')
 _r_view_defaults = _view_defaults.copy()
-_r_view_defaults.update( permission=nauth.ACT_READ,
-						 request_method='GET' )
+_r_view_defaults.update(permission=nauth.ACT_READ,
+						 request_method='GET')
 _d_view_defaults = _view_defaults.copy()
-_d_view_defaults.update( permission=nauth.ACT_DELETE,
-						 request_method='DELETE' )
-
+_d_view_defaults.update(permission=nauth.ACT_DELETE,
+						 request_method='DELETE')
 
 @view_config(context=frm_interfaces.IHeadlineTopic)
 @view_config(context=frm_interfaces.IForum)
@@ -81,31 +80,31 @@ _d_view_defaults.update( permission=nauth.ACT_DELETE,
 @view_config(context=frm_interfaces.IGeneralHeadlinePost)  # need to re-list
 @view_config(context=frm_interfaces.IGeneralForumComment)  # need to re-list
 @view_config(context=frm_interfaces.IPost)
-@view_defaults( **_r_view_defaults )
+@view_defaults(**_r_view_defaults)
 class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 	def __call__(self):
 		result = super(ForumGetView, self).__call__()
 		if result is not None:
 			pass
-			#current = result
-			#readable = True
+			# current = result
+			# readable = True
 			# XXX FIXME: WTF are we doing here?
 			# This is completely bypassing the ACL model
 			# which *ALREADY* takes the parents into account.
 			# JAM: Commenting out, this breaks any generalization.
-			#while readable and current is not None and not IEntity.providedBy(current):
-			#	readable = is_readable(current)
-			#	current = getattr(current, '__parent__', None)
-			#if not readable:
-			#	raise hexc.HTTPForbidden()
+			# while readable and current is not None and not IEntity.providedBy(current):
+			# 	readable = is_readable(current)
+			# 	current = getattr(current, '__parent__', None)
+			# if not readable:
+			# 	raise hexc.HTTPForbidden()
 		return result
 
 @view_config(context=frm_interfaces.IBoard)
 @view_config(context=frm_interfaces.IGeneralHeadlineTopic)
 @view_config(context=frm_interfaces.IPersonalBlogEntry)
-@view_defaults( name=VIEW_CONTENTS,
-				**_r_view_defaults )
+@view_defaults(name=VIEW_CONTENTS,
+				**_r_view_defaults)
 class ForumsContainerContentsGetView(UGDQueryView):
 	"""
 	The ``/contents`` view for the forum objects we are using.
@@ -115,16 +114,16 @@ class ForumsContainerContentsGetView(UGDQueryView):
 	"""
 
 
-	def __init__( self, request ):
+	def __init__(self, request):
 		self.request = request
-		super(ForumsContainerContentsGetView,self).__init__(request,
-															the_user=self,
-															the_ntiid=self.request.context.__name__ )
+		super(ForumsContainerContentsGetView, self).__init__(request,
+															 the_user=self,
+															 the_ntiid=self.request.context.__name__)
 
 		# The user/community is really the 'owner' of the data
-		self.user = find_interface(  self.request.context, IEntity )
+		self.user = find_interface(self.request.context, IEntity)
 
-		if frm_interfaces.IBoard.providedBy( self.request.context ):
+		if frm_interfaces.IBoard.providedBy(self.request.context):
 			self.result_iface = ILongerCachedUGDExternalCollection
 
 		# If we were invoked with a subpath, then it must be the tokenized
@@ -142,10 +141,10 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		# XXX It seems that the "parent" objects can be cached at the application level, meaning
 		# that the application never sees the updated contents URLs, making it impossible
 		# to HTTP cache them.
-		if False and frm_interfaces.IHeadlineTopic.providedBy( request.context ) and self.request.subpath:
+		if False and frm_interfaces.IHeadlineTopic.providedBy(request.context) and self.request.subpath:
 			self.result_iface = IETagCachedUGDExternalCollection
 
-	def __call__( self ):
+	def __call__(self):
 		try:
 			# See if we are something that maintains reliable modification dates
 			# including our children.
@@ -158,7 +157,7 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		except TypeError:
 			pass
 
-		return super(ForumsContainerContentsGetView,self).__call__()
+		return super(ForumsContainerContentsGetView, self).__call__()
 
 	def _is_readable(self, x):
 		result = True
@@ -171,23 +170,23 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		predicate = _combine_predicate(self._is_readable, predicate, Operator.intersection)
 		return predicate
 
-	def getObjectsForId( self, *args ):
+	def getObjectsForId(self, *args):
 		return (self.request.context,)
 
-@view_config( context=frm_interfaces.IDefaultForumBoard )
-@view_defaults( name=VIEW_CONTENTS,
-				**_r_view_defaults )
+@view_config(context=frm_interfaces.IDefaultForumBoard)
+@view_defaults(name=VIEW_CONTENTS,
+				**_r_view_defaults)
 class DefaultForumBoardContentsGetView(ForumsContainerContentsGetView):
 
-	def __init__( self, request ):
+	def __init__(self, request):
 		# Make sure that if it's going to have a default, it does
 		try:
 			request.context.createDefaultForum()
-		except (TypeError,AttributeError):
+		except (TypeError, AttributeError):
 			pass
-		super(DefaultForumBoardContentsGetView,self).__init__( request )
+		super(DefaultForumBoardContentsGetView, self).__init__(request)
 
-	def _update_last_modified_after_sort(self, objects, result ):
+	def _update_last_modified_after_sort(self, objects, result):
 		# We need to somehow take the modification date of the children
 		# into account since we aren't tracking that directly (it doesn't
 		# propagate upward). TODO: This should be cached somewhere
@@ -195,13 +194,12 @@ class DefaultForumBoardContentsGetView(ForumsContainerContentsGetView):
 		forumLastMod = max((x.lastModified for x in board.itervalues() if is_readable(x, self.request)))
 		lastMod = max(result.lastModified, forumLastMod)
 		result.lastModified = lastMod
-		super(DefaultForumBoardContentsGetView,self)._update_last_modified_after_sort( objects, result )
+		super(DefaultForumBoardContentsGetView, self)._update_last_modified_after_sort(objects, result)
 
 @view_config(context=frm_interfaces.IForum)
 @view_config(context=frm_interfaces.IGeneralForum)
 @view_config(context=frm_interfaces.IPersonalBlog)
-@view_defaults( name=VIEW_CONTENTS,
-				**_r_view_defaults )
+@view_defaults(name=VIEW_CONTENTS, **_r_view_defaults)
 class ForumContentsGetView(ForumsContainerContentsGetView):
 	"""
 	Adds support for sorting by ``NewestDescendantCreatedTime`` of the
@@ -227,7 +225,7 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 	def _make_heapq_NewestDescendantCreatedTime_descending_key(self, plain_key):
 		def _negate_tuples(x):
 			tpl = plain_key(x)
-			return (-tpl[0],-tpl[1])
+			return (-tpl[0], -tpl[1])
 		return _negate_tuples
 	_make_heapq_PostCount_descending_key = _make_heapq_NewestDescendantCreatedTime_descending_key
 
@@ -236,9 +234,9 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 		x = topic.headline
 		# get content
 		content = []
-		for iface, name, default, method in ( (ITagsResolver, 'tags', (), content.extend),
-											  (ITitleResolver, 'title', u'', content.append),
-											  (IContentResolver, 'content', u'', content.append) ):
+		for iface, name, default, method in ((ITagsResolver, 'tags', (), content.extend),
+											 (ITitleResolver, 'title', u'', content.append),
+											 (IContentResolver, 'content', u'', content.append)):
 			resolver = iface(x, None)
 			value = getattr(resolver, name, None) or default
 			method(value)
@@ -266,8 +264,8 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 			predicate = _combine_predicate(filter_searchTerm, predicate)
 		return predicate
 
-	def __call__( self ):
-		result = super(ForumContentsGetView,self).__call__()
+	def __call__(self):
+		result = super(ForumContentsGetView, self).__call__()
 
 		if self.request.context:
 			# Sigh. Loading all the objects.
@@ -275,30 +273,29 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 			# is weird.
 			# NOTE: Using the key= argument fails because it masks AttributeErrors and results in
 			# heterogenous comparisons
-			newest_time = max( (getattr(x, 'NewestDescendantCreatedTime', 0) for x in self.request.context.values()) )
-			newest_time = max( result.lastModified, newest_time )
+			newest_time = max((getattr(x, 'NewestDescendantCreatedTime', 0) for x in self.request.context.values()))
+			newest_time = max(result.lastModified, newest_time)
 			result.lastModified = newest_time
 			result['Last Modified'] = newest_time
 		return result
 
-@view_config( context=frm_interfaces.IHeadlineTopic,
-			  name='feed.atom' )
-@view_config( context=frm_interfaces.IHeadlineTopic,
-			  name='feed.rss' )
-@view_config( context=frm_interfaces.IForum,
-			  name='feed.atom' )
-@view_config( context=frm_interfaces.IForum,
-			  name='feed.rss' )
-@view_defaults( http_cache=datetime.timedelta(hours=1),
-				**_r_view_defaults )
+@view_config(context=frm_interfaces.IHeadlineTopic,
+			 name='feed.atom')
+@view_config(context=frm_interfaces.IHeadlineTopic,
+			 name='feed.rss')
+@view_config(context=frm_interfaces.IForum,
+			 name='feed.atom')
+@view_config(context=frm_interfaces.IForum,
+			 name='feed.rss')
+@view_defaults(http_cache=datetime.timedelta(hours=1), **_r_view_defaults)
 class ForumContentsFeedView(AbstractFeedView):
 	_data_callable_factory = ForumContentsGetView
 
-	def _feed_title( self ):
+	def _feed_title(self):
 		return self.request.context.title
 
-	def _object_and_creator( self, ipost_or_itopic ):
+	def _object_and_creator(self, ipost_or_itopic):
 		title = ipost_or_itopic.title
 		# The object to render is either the 'story' (blog text) or the post itself
-		data_object = ipost_or_itopic.headline if frm_interfaces.IHeadlineTopic.providedBy( ipost_or_itopic ) else ipost_or_itopic
+		data_object = ipost_or_itopic.headline if frm_interfaces.IHeadlineTopic.providedBy(ipost_or_itopic) else ipost_or_itopic
 		return data_object, ipost_or_itopic.creator, title, ipost_or_itopic.tags

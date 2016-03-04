@@ -17,7 +17,7 @@ from zope import lifecycleevent
 from zope.event import notify
 
 from pyramid.view import view_config
-from pyramid.view import view_defaults  # NOTE: Only usable on classes
+from pyramid.view import view_defaults
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
 

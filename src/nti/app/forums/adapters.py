@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 from zope import component
 from zope import interface
 
@@ -23,11 +21,12 @@ from zc.displayname.interfaces import IDisplayNameGenerator
 
 from pyramid.interfaces import IRequest
 
+from nti.app.forums import MessageFactory as _
+from nti.app.forums.interfaces import IPostFileConstraints
+
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.namedfile.file import FileConstraints
-
-from .interfaces import IPostFileConstraints
 
 @interface.implementer_only(IDisplayNameGenerator)
 @component.adapter(IPersonalBlog, IRequest)
@@ -39,12 +38,12 @@ class _PersonalBlogDisplayNameGenerator(BrowserView):
 
 	def __call__(self):
 		user = self.context.__parent__
-		user_display_name = component.getMultiAdapter( (user, self.request),
-													   IDisplayNameGenerator)
+		user_display_name = component.getMultiAdapter((user, self.request),
+													  IDisplayNameGenerator)
 		user_display_name = user_display_name()
 
 		result = _("${username}'s Thoughts",
-				   mapping={'username': user_display_name} )
+				   mapping={'username': user_display_name})
 
 		result = convertName(result, self.request, None)
 		return result
@@ -52,4 +51,4 @@ class _PersonalBlogDisplayNameGenerator(BrowserView):
 @interface.implementer(IPostFileConstraints)
 class _PostFileConstraints(FileConstraints):
 	max_files = 1
-	max_file_size = 20000000 # 20 MB
+	max_file_size = 20000000  # 20 MB

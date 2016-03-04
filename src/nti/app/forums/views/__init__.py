@@ -46,8 +46,8 @@ def match_title_of_post_to_blog( post, event ):
 	When the main story of a story topic (blog post) is modified, match the titles
 	"""
 
-	if 	IHeadlineTopic.providedBy( post.__parent__ ) and \
-		aq_base(post) is aq_base(post.__parent__.headline) and \
-		post.title != post.__parent__.title:
+	if 		IHeadlineTopic.providedBy( post.__parent__ ) \
+		and aq_base(post) is aq_base(post.__parent__.headline) \
+		and post.title != post.__parent__.title:
 		post.__parent__.title = post.title
 	return

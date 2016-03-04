@@ -31,6 +31,8 @@ from nti.app.contentfile import read_multipart_sources
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.app.forums.interfaces import IPostFileConstraints
+
 from nti.appserver import httpexceptions as hexc
 
 # TODO: FIXME: This solves an order-of-imports issue, where
@@ -43,8 +45,6 @@ frm_ext = frm_ext
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 
 from nti.externalization.interfaces import StandardExternalFields
-
-from ..interfaces import IPostFileConstraints
 
 class PostUploadMixin(AuthenticatedViewMixin,
 					  ModeledContentUploadRequestUtilsMixin):

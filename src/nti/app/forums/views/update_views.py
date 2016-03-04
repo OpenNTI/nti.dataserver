@@ -11,9 +11,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from pyramid import httpexceptions as hexc
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
-from pyramid import httpexceptions as hexc
+
+from nti.app.contentfile import get_content_files
+
+from nti.app.forums.views.view_mixins import validate_attachments
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
@@ -37,18 +42,14 @@ from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopic
 
-from ...contentfile import get_content_files
-
-from .view_mixins import validate_attachments
-
-_view_defaults = dict(route_name='objects.generic.traversal', renderer='rest' )
+_view_defaults = dict(route_name='objects.generic.traversal', renderer='rest')
 
 @view_config(context=IGeneralForum)
-@view_defaults( permission=nauth.ACT_UPDATE,
+@view_defaults(permission=nauth.ACT_UPDATE,
 				request_method='PUT',
 				**_view_defaults)
 class ForumObjectPutView(UGDPutView):
-	""" 
+	"""
 	Editing an existing forum etc
 	"""
 
@@ -65,11 +66,11 @@ class ForumObjectPutView(UGDPutView):
 @view_config(context=IGeneralForumComment)
 @view_config(context=IGeneralHeadlinePost)
 @view_config(context=IPersonalBlogEntryPost)
-@view_defaults( permission=nauth.ACT_UPDATE,
-				request_method='PUT',
-				**_view_defaults)
+@view_defaults(permission=nauth.ACT_UPDATE,
+			   request_method='PUT',
+			   **_view_defaults)
 class PostObjectPutView(UGDPutView):
-	""" 
+	"""
 	Editing an existing post, comments etc
 	"""
 
@@ -86,13 +87,13 @@ class PostObjectPutView(UGDPutView):
 		if sources:
 			validate_attachments(contentObject, sources.values())
 		return result
-	
-@view_config(context=IDFLHeadlineTopic) 
+
+@view_config(context=IDFLHeadlineTopic)
 @view_config(context=IGeneralHeadlineTopic)
-@view_config(context=ICommunityHeadlineTopic) # Needed?
-@view_defaults( permission=nauth.ACT_UPDATE,
-				request_method='PUT',
-				**_view_defaults)
+@view_config(context=ICommunityHeadlineTopic)  # Needed?
+@view_defaults(permission=nauth.ACT_UPDATE,
+			   request_method='PUT',
+			   **_view_defaults)
 class CommunityTopicPutDisabled(object):
 	"""
 	Restricts PUT on topics to return 403. In pyramid 1.5 this otherwise

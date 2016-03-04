@@ -14,6 +14,12 @@ logger = __import__('logging').getLogger(__name__)
 from pyramid.view import view_config
 from pyramid.view import view_defaults  # NOTE: Only usable on classes
 
+from nti.app.forums import VIEW_CONTENTS
+
+from nti.app.forums.views.view_mixins import AbstractBoardPostView
+from nti.app.forums.views.view_mixins import _AbstractForumPostView
+from nti.app.forums.views.view_mixins import _AbstractTopicPostView
+
 from nti.dataserver import authorization as nauth
 
 # TODO: FIXME: This solves an order-of-imports issue, where
@@ -24,12 +30,6 @@ from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
-
-from .. import VIEW_CONTENTS
-
-from .view_mixins import AbstractBoardPostView
-from .view_mixins import _AbstractForumPostView
-from .view_mixins import _AbstractTopicPostView
 
 _view_defaults = dict(  route_name='objects.generic.traversal',
 						renderer='rest' )
