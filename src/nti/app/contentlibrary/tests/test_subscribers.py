@@ -104,7 +104,8 @@ class TestSubscribers(ApplicationLayerTest):
 		for provided, count in ((INTIVideo, 1),
 								(INTIRelatedWorkRef, 2),
 								(INTISlideDeck, 1),
-								(INTITimeline, 1)):
+								(INTITimeline, 1),
+								(INTISlideVideo, 1)):
 			results = catalog.search_objects(provided=provided)
 			assert_that(results, has_length(count))
 
