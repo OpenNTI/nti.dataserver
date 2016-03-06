@@ -19,7 +19,7 @@ from zope import component
 
 from zope.component.persistentregistry import PersistentComponents as Components
 
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
 
 from persistent import Persistent
 
@@ -31,9 +31,9 @@ from nti.app.contentlibrary.subscribers import _load_and_register_slidedeck_json
 from nti.contentlibrary.indexed_data import get_catalog
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.contenttypes.presentation import ALL_PRESENTATION_ASSETS_INTERFACES
 from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
 
+from nti.contenttypes.presentation.interfaces import INTIAudio
 from nti.contenttypes.presentation.interfaces import INTIVideo
 from nti.contenttypes.presentation.interfaces import INTISlide
 from nti.contenttypes.presentation.interfaces import INTITimeline
@@ -51,16 +51,12 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-def iface_of_thing(item):
-	for iface in ALL_PRESENTATION_ASSETS_INTERFACES:
-		if iface.providedBy(item):
-			return iface
-	return None
-
 def _index_items(namespace, *registered):
 	catalog = get_catalog()
 	intids = component.queryUtility(IIntIds)
 	for item in registered:
+		mock_dataserver.current_transaction.add(item)
+		intids.register(item)
 		catalog.index(item, intids=intids, namespace=namespace)
 	return catalog
 
@@ -76,43 +72,43 @@ class TestSubscribers(ApplicationLayerTest):
 
 	def tearDown(self):
 		component.getGlobalSiteManager().unregisterUtility(self.library, IContentPackageLibrary)
-	
+
 	@property
 	def sites(self):
 		return ('dataserver2',)
-	
+
 	@WithMockDSTrans
-	@fudge.patch('nti.app.contentlibrary.subscribers.get_registry')
+	@fudge.patch('nti.app.contentlibrary.subscribers.get_site_registry')
 	@fudge.patch('nti.app.contentlibrary.subscribers.get_component_hierarchy_names')
 	def test_indexing(self, mock_registry, mock_sites):
 		registry = PersistentComponents()
 		mock_dataserver.current_transaction.add(registry)
 		mock_registry.is_callable().returns(registry)
 		mock_sites.is_callable().returns(None)
-		
+
 		unit_ntiid = 'tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.lesson1'
 		self.library.syncContentPackages()
 		content_package = self.library.contentPackages[0]
 		catalog = get_catalog()
 		results = catalog.search_objects(container_ntiids=(unit_ntiid,))
 		assert_that(results, has_length(5))
-		last_mod_namespace = _get_file_last_mod_namespace( content_package, 'video_index.json' )
-		last_mod = catalog.get_last_modified( last_mod_namespace )
-		assert_that( last_mod, not_none() )
+		last_mod_namespace = _get_file_last_mod_namespace(content_package, 'video_index.json')
+		last_mod = catalog.get_last_modified(last_mod_namespace)
+		assert_that(last_mod, not_none())
 
 		# Namespace
 		results = catalog.search_objects(namespace=content_package.ntiid)
 		assert_that(results, has_length(6))
 
 		# Type
-		for provided, count in (('INTIVideo', 1),
-								('INTIRelatedWorkRef', 2),
-								('INTISlideDeck', 1),
-								('INTITimeline', 1)):
+		for provided, count in ((INTIVideo, 1),
+								(INTIRelatedWorkRef, 2),
+								(INTISlideDeck, 1),
+								(INTITimeline, 1)):
 			results = catalog.search_objects(provided=provided)
 			assert_that(results, has_length(count))
 
-		results = catalog.search_objects(provided='audio')
+		results = catalog.search_objects(provided=INTIAudio)
 		assert_that(results, has_length(0))
 
 		# Containers
@@ -147,7 +143,7 @@ class TestSubscribers(ApplicationLayerTest):
 		# Clear everything
 		_clear_when_removed(content_package, force=True, process_global=True)
 
-		for provided in ('video', 'relatedwork', 'slidedeck', 'timeline', 'audio'):
+		for provided in (INTIVideo, INTIRelatedWorkRef, INTISlideDeck, INTITimeline, INTIAudio):
 			results = catalog.search_objects(provided=provided)
 			assert_that(results, has_length(0))
 
@@ -179,8 +175,8 @@ class TestSubscribers(ApplicationLayerTest):
 		assert_that(list(registry.registeredUtilities()), has_length(count))
 
 		catalog = _index_items('xxx', *result)
-		result = catalog.get_references(namespace='xxx', 
-									    provided=iface.__name__)
+		result = catalog.get_references(namespace='xxx',
+										provided=iface)
 		assert_that(result, has_length(count))
 
 	@WithMockDSTrans
@@ -217,17 +213,17 @@ class TestSubscribers(ApplicationLayerTest):
 
 		result = _load_and_register_slidedeck_json(source, registry=registry)
 		assert_that(result, has_length(742))
-		
+
 		catalog = _index_items('xxx', *result)
-		
-		result = catalog.get_references(namespace='xxx', 
-									    provided=INTISlideDeck)
+
+		result = catalog.get_references(namespace='xxx',
+										provided=INTISlideDeck)
 		assert_that(result, has_length(57))
 
 		result = catalog.get_references(namespace='xxx',
-									    provided=INTISlideVideo.__name__, )
+										provided=INTISlideVideo,)
 		assert_that(result, has_length(57))
 
-		result = catalog.get_references(namespace='xxx', 
-									    provided=INTISlide)
+		result = catalog.get_references(namespace='xxx',
+										provided=INTISlide)
 		assert_that(result, has_length(628))

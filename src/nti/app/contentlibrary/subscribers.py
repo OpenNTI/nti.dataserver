@@ -30,7 +30,7 @@ from nti.app.contentlibrary.interfaces import IContentPackageRolePermissionManag
 
 from nti.coremetadata.interfaces import IRecordable
 
-from nti.contentlibrary.indexed_data import get_registry
+from nti.contentlibrary.indexed_data import get_site_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contentlibrary.interfaces import IContentPackage
@@ -96,62 +96,52 @@ def prepare_json_text(s):
 	return result
 
 def get_connection(registry=None):
-	registry = get_registry(registry)
+	registry = get_site_registry(registry)
 	if registry == component.getGlobalSiteManager():
 		return None
 	else:
 		result = IConnection(registry, None)
 		return result
 
-def intid_register(item, registry, connection=None):
-	connection = get_connection(registry) if connection is None else connection
-	if connection is not None:
+def intid_register(item, intids, connection):
+	if connection is not None and intids.queryId(item) is None:
 		connection.add(item)
 		addIntId(item)
 		return True
 	return False
 
-def _register_utility(item, provided, ntiid, registry=None, intids=None, connection=None):
-	intids = component.getUtility(IIntIds) if intids is None else intids
+def _register_utility(item, provided, ntiid, registry=None):
 	if provided.providedBy(item):
-		registry = get_registry(registry)
+		registry = get_site_registry(registry)
 		registered = registry.queryUtility(provided, name=ntiid)
 		if registered is None:
 			assert is_valid_ntiid_string(ntiid), "Invalid NTIID %s" % ntiid
 			registerUtility(registry, item, provided=provided, name=ntiid)
-			intid_register(item, registry, connection=connection)
 			logger.debug("(%s,%s) has been registered", provided.__name__, ntiid)
 			return (True, item)
 		return (False, registered)
 	return (False, None)
 
-def _was_utility_registered(item, item_iface, ntiid, registry=None,
-							connection=None, intids=None,):
-	result, _ = _register_utility(item, item_iface, ntiid,
-								  registry=registry,
-								  intids=intids,
-								  connection=connection)
+def _was_utility_registered(item, item_iface, ntiid, registry=None):
+	result, _ = _register_utility(item, item_iface, ntiid, registry=registry)
 	return result
 
 def _load_and_register_items(item_iterface,
 							 items,
 							 registry=None,
-							 connection=None,
 							 content_package=None,
 							 external_object_creator=create_object_from_external):
 	result = []
-	registry = get_registry(registry)
+	registry = get_site_registry(registry)
 	for ntiid, data in items.items():
 		internal = external_object_creator(data, notify=False)
-		if _was_utility_registered(internal, item_iterface, ntiid,
-								   registry=registry, connection=connection):
+		if _was_utility_registered(internal, item_iterface, ntiid, registry=registry):
 			result.append(internal)
 	return result
 
 def _load_and_register_json(item_iterface,
 							jtext,
 							registry=None,
-							connection=None,
 							content_package=None,
 							external_object_creator=create_object_from_external):
 	index = simplejson.loads(prepare_json_text(jtext))
@@ -159,7 +149,6 @@ def _load_and_register_json(item_iterface,
 	result = _load_and_register_items(item_iterface,
 									  items,
 									  registry=registry,
-									  connection=connection,
 									  content_package=content_package,
 									  external_object_creator=external_object_creator)
 	return result
@@ -177,25 +166,24 @@ def _canonicalize(items, item_iface, registry):
 
 def _load_and_register_slidedeck_json(jtext,
 									  registry=None,
-									  connection=None,
 									  content_package=None,
 									  object_creator=create_object_from_external):
 	result = []
-	registry = get_registry(registry)
+	registry = get_site_registry(registry)
 	index = simplejson.loads(prepare_json_text(jtext))
 	items = index.get(ITEMS) or {}
 	for ntiid, data in items.items():
 		internal = object_creator(data, notify=False)
 		if 	INTISlide.providedBy(internal) and \
-			_was_utility_registered(internal, INTISlide, ntiid, registry, connection):
+			_was_utility_registered(internal, INTISlide, ntiid, registry):
 			result.append(internal)
 		elif INTISlideVideo.providedBy(internal) and \
-			 _was_utility_registered(internal, INTISlideVideo, ntiid, registry, connection):
+			 _was_utility_registered(internal, INTISlideVideo, ntiid, registry):
 			result.append(internal)
 		elif INTISlideDeck.providedBy(internal):
 			result.extend(_canonicalize(internal.Slides, INTISlide, registry))
 			result.extend(_canonicalize(internal.Videos, INTISlideVideo, registry))
-			if _was_utility_registered(internal, INTISlideDeck, ntiid, registry, connection):
+			if _was_utility_registered(internal, INTISlideDeck, ntiid, registry):
 				result.append(internal)
 			# CS: 20160114 Slide and SlideVideos are unique for slides,
 			# so we can reparent those items
@@ -213,7 +201,7 @@ can_be_removed = _can_be_removed
 
 def _removed_registered(provided, name, intids=None, registry=None,
 						catalog=None, force=False):
-	registry = get_registry(registry)
+	registry = get_site_registry(registry)
 	registered = registry.queryUtility(provided, name=name)
 	intids = component.getUtility(IIntIds) if intids is None else intids
 	if _can_be_removed(registered, force=force):
@@ -245,7 +233,7 @@ def _remove_from_registry(namespace=None,
 	registry and the index.
 	"""
 	result = []
-	registry = get_registry(registry)
+	registry = get_site_registry(registry)
 	catalog = get_library_catalog() if catalog is None else catalog
 	if catalog is None:  # may be None in test mode
 		return result
@@ -278,8 +266,9 @@ def _get_container_tree(container_id):
 def _get_file_last_mod_namespace(unit, filename):
 	return '%s.%s.LastModified' % (unit.ntiid, filename)
 
-def _index_item(item, content_package, container_id, catalog):
+def _index_item(item, content_package, container_id, catalog, intids, connection):
 	result = 1
+	intid_register(item, intids, connection)
 	sites = get_component_hierarchy_names()
 	lineage_ntiids = _get_container_tree(container_id)
 	lineage_ntiids = None if not lineage_ntiids else lineage_ntiids
@@ -289,20 +278,16 @@ def _index_item(item, content_package, container_id, catalog):
 	# check for slide decks
 	if INTISlideDeck.providedBy(item):
 		extended = tuple(lineage_ntiids or ()) + (item.ntiid,)
-		for slide in item.Slides or ():
+		for x in item.Items or ():
 			result += 1
-			catalog.index(slide, container_ntiids=extended,
-				  		  namespace=content_package.ntiid, sites=sites)
-
-		for video in item.Videos or ():
-			result += 1
-			catalog.index(video, container_ntiids=extended,
+			intid_register(x, intids, connection)
+			catalog.index(x, container_ntiids=extended,
 				  		  namespace=content_package.ntiid, sites=sites)
 
 	return result
 
 def _copy_remove_transactions(items, registry=None):
-	registry = get_registry(registry)
+	registry = get_site_registry(registry)
 	for item in items or ():
 		provided = iface_of_asset(item)
 		obj = registry.queryUtility(provided, name=item.ntiid)
@@ -329,15 +314,24 @@ def _store_asset(content_package, container_id, ntiid, item):
 
 	return True
 
-def _index_items(content_package, index, item_iface, catalog, registry):
+def _index_items(content_package, index, item_iface, catalog, registry, 
+				 intids=None, connection=None):
 	result = 0
 	for container_id, indexed_ids in index['Containers'].items():
 		for indexed_id in indexed_ids:
 			obj = registry.queryUtility(item_iface, name=indexed_id)
 			if obj is not None:
-				_store_asset(content_package, container_id, indexed_id, obj)
-				result += _index_item(obj, content_package,
-									  container_id, catalog)
+				_store_asset(content_package, 
+							 container_id, 
+							 indexed_id,
+							 obj)
+
+				result += _index_item(obj, 
+									  content_package,
+									  container_id,
+									  catalog=catalog,
+									  intids=intids,
+									  connection=connection)
 	return result
 
 def _clear_assets_by_interface(content_package, iface, force=False):
@@ -386,7 +380,7 @@ def _update_index_when_content_changes(content_package,
 	_clear_assets_by_interface(content_package, item_iface)
 
 	index = simplejson.loads(index_text)
-	registry = get_registry()
+	registry = get_site_registry()
 	connection = get_connection(registry)
 	intids = component.getUtility(IIntIds)
 
@@ -424,21 +418,16 @@ def _update_index_when_content_changes(content_package,
 
 		added = _load_and_register_slidedeck_json(index_text,
 										  		  registry=registry,
-										  		  connection=connection,
 										 		  object_creator=object_creator,
 										 		  content_package=content_package)
 	elif object_creator is not None:
 		added = _load_and_register_json(item_iface,
 										index_text,
 										registry=registry,
-										connection=connection,
 										content_package=content_package,
 										external_object_creator=object_creator)
 	registered_count = len(added)
 	removed_count = len(removed)
-
-	# keep transaction history
-	_copy_remove_transactions(removed, registry=registry)
 
 	# update sync results
 	for item in added or ():
@@ -447,9 +436,16 @@ def _update_index_when_content_changes(content_package,
 	# Index our contained items; ignoring the global library.
 	index_item_count = 0
 	if registry != component.getGlobalSiteManager():
-		index_item_count = _index_items(content_package, index, item_iface,
-										catalog, registry)
-
+		index_item_count = _index_items(content_package,
+										index, 
+										item_iface,
+										catalog, 
+										registry,
+										intids=intids,
+										connection=connection)
+		# keep transaction history
+		_copy_remove_transactions(removed, registry=registry)
+	
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
 				sibling_key, registered_count, index_item_count, removed_count)
 
@@ -536,6 +532,7 @@ def _clear_when_removed(content_package, force=True, process_global=False):
 							  			catalog=catalog,
 							  			force=force)
 		result.extend(removed)
+
 	removed = _remove_from_registry(namespace=content_package.ntiid,
 						  			provided=INTISlide,
 						  			catalog=catalog,
