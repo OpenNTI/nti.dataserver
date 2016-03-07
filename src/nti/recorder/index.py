@@ -30,8 +30,6 @@ from nti.zope_catalog.catalog import Catalog
 
 from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
 
-from nti.zope_catalog.interfaces import IMetadataCatalog
-
 from nti.zope_catalog.index import AttributeSetIndex
 from nti.zope_catalog.index import AttributeValueIndex
 from nti.zope_catalog.index import NormalizationWrapper
@@ -39,6 +37,8 @@ from nti.zope_catalog.index import IntegerAttributeIndex
 from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
+
+from nti.zope_catalog.interfaces import IMetadataCatalog
 
 from nti.zope_catalog.string import StringTokenNormalizer
 
