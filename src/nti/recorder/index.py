@@ -201,7 +201,7 @@ def install_recorder_catalog(site_manager_container, intids=None):
 	intids.register(catalog)
 	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
 
-	catalog = create_recorder_catalog(catalog=catalog)
+	catalog = create_recorder_catalog(catalog=catalog, family=intids.family)
 	for index in catalog.values():
 		intids.register(index)
 	return catalog
