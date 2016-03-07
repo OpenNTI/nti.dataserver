@@ -155,7 +155,7 @@ class ValidatingLocked(object):
 		else:
 			source = None
 		if source is not None:
-			self.locked = source.locked
+			self.locked = source.isLocked()
 
 	def __reduce__(self):
 		raise TypeError()
