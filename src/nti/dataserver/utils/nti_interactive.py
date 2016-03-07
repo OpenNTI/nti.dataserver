@@ -19,8 +19,7 @@ import argparse
 from IPython.core.debugger import Tracer
 
 from nti.dataserver.utils import interactive_setup
-
-from .base_script import create_context
+from nti.dataserver.utils.base_script import create_context
 
 def process_args(args=None):
 	arg_parser = argparse.ArgumentParser(description="Interactive dataserver use")
@@ -53,24 +52,25 @@ def process_args(args=None):
 	with_library = args.library
 	features = args.features or ()
 
-	if plugins: 
+	if plugins:
 		features = ()
 		packages = "nti.appserver"
 		context = create_context(env_dir, features)
 	else:
+		context = None
 		packages = set(args.packages or ())
-		packages.add('nti.dataserver') # always include dataserver
-		
-	db, conn, root = interactive_setup(	context=context,
-										config_features=features,
-					  					with_library=with_library,
-										root=os.path.expanduser(env_dir),
-					 					xmlconfig_packages=list(packages))	
+		packages.add('nti.dataserver')  # always include dataserver
+
+	db, conn, root = interactive_setup(context=context,
+									   config_features=features,
+					  				   with_library=with_library,
+									   root=os.path.expanduser(env_dir),
+					 				   xmlconfig_packages=list(packages))
 	if args.verbose:
 		print(db, conn, root)
 
 	Tracer()()
-	
+
 def main(args=None):
 	process_args(args)
 	sys.exit(0)
