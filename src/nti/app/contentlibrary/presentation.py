@@ -25,7 +25,7 @@ from nti.contenttypes.presentation.interfaces import IPackagePresentationAsset
 def _on_course_overview_registered(group, event):
 	parent = group.__parent__
 	catalog = get_library_catalog()
-	extended = (group.ntiid,) + ( (parent.ntiid) if parent != None else ())
+	extended = (group.ntiid,) + ( (parent.ntiid) if parent is not None else ())
 	for item in group:
 		if IPackagePresentationAsset.providedBy(item):
 			catalog.update_containers(item, extended)

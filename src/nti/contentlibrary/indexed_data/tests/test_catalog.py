@@ -33,6 +33,9 @@ class TestCatalog(ContentlibraryLayerTest):
 		catalog.update_containers(1, ('z',))
 		assert_that(catalog.get_containers(1), has_length(3))
 		
+		catalog.update_containers(1, ('z',))
+		assert_that(catalog.get_containers(1), has_length(3))
+		
 		catalog.remove_containers(1, ('x','y'))
 		assert_that(catalog.get_containers(1), has_length(1))
 		
