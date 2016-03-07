@@ -402,6 +402,7 @@ def _update_index_when_content_changes(content_package,
 	added = ()
 	if item_iface == INTISlideDeck:
 		# Also remove our other slide types
+		_clear_assets_by_interface(content_package, INTISlide)
 		removed.extend(_remove_from_registry(namespace=content_package.ntiid,
 							  				 provided=INTISlide,
 							  				 registry=registry,
@@ -409,6 +410,7 @@ def _update_index_when_content_changes(content_package,
 							  			 	 intids=intids,
 							  			 	 sync_results=sync_results))
 
+		_clear_assets_by_interface(content_package, INTISlideVideo)
 		removed.extend(_remove_from_registry(namespace=content_package.ntiid,
 							  				 provided=INTISlideVideo,
 							 				 registry=registry,
