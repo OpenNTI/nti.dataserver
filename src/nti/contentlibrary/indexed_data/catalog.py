@@ -20,6 +20,8 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
+from zc.catalog.index import SetIndex as ZC_SetIndex
+
 import BTrees
 
 from nti.common._compat import integer_types
@@ -41,7 +43,7 @@ from nti.traversal.traversal import find_interface
 from nti.zope_catalog.catalog import Catalog
 from nti.zope_catalog.catalog import ResultSet
 
-from nti.zope_catalog.index import SetIndex as RawSetIndex
+from nti.zope_catalog.index import AttributeSetIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
 
 CATALOG_INDEX_NAME = '++etc++contentlibrary.catalog'
@@ -69,7 +71,7 @@ def get_uid(item, intids=None):
 		result = item
 	return result
 	
-class RetainSetIndex(RawSetIndex):
+class RetainSetIndex(AttributeSetIndex):
 	"""
 	A set index that retains the old values.
 	"""
@@ -78,22 +80,44 @@ class RetainSetIndex(RawSetIndex):
 		result = to_iterable(value)
 		return result
 
-	def index_doc(self, doc_id, value):
+	def do_index_doc(self, doc_id, value):
+		# only index if there is a difference between new and stored values
 		value = {v for v in self.to_iterable(value) if v is not None}
 		old = self.documents_to_values.get(doc_id) or set()
 		if value.difference(old):
 			value.update(old or ())
-			result = super(RetainSetIndex, self).index_doc(doc_id, value)
+			# call zc.catalog.index.SetIndex which does the actual
+			# value indexation
+			result = ZC_SetIndex.index_doc(self, doc_id, value)
 			return result
+	index_containers = do_index_doc
+	
+	def index_doc(self, doc_id, value):
+		if self.interface is not None:
+			value = self.interface(value, None)
+			if value is None:
+				return None
+	
+		value = getattr(value, self.field_name, None)
+		if value is not None and self.field_callable:
+			# do not eat the exception raised below
+			value = value()
 
-	def remove(self, doc_id, value):
+		# Do not unindex if value is None in order to
+		# retain indexed values
+		if value is not None:
+			return self.do_index_doc(doc_id, value)
+
+	def remove(self, doc_id, containers):
 		old = set(self.documents_to_values.get(doc_id) or ())
 		if not old:
 			return
-		for v in to_iterable(value):
+		for v in to_iterable(containers):
 			old.discard(v)
 		if old:
-			super(RetainSetIndex, self).index_doc(doc_id, old)
+			# call zc.catalog.index.SetIndex which does the actual
+			# value indexation
+			ZC_SetIndex.index_doc(self, doc_id, old)
 		else:
 			super(RetainSetIndex, self).unindex_doc(doc_id)
 
@@ -126,8 +150,9 @@ class NTIIDIndex(ValueIndex):
 	default_interface = INTIIDAdapter
 
 class ContainersIndex(RetainSetIndex):
-	default_field_name = 'containers'
-	default_interface = IContainersAdapter
+	field_callable = None
+	field_name = default_field_name = 'containers'
+	interface = default_interface = IContainersAdapter
 
 class LibraryCatalog(Catalog):
 
@@ -166,6 +191,12 @@ class LibraryCatalog(Catalog):
 			pass
 	removeLastModified = remove_last_modified
 	
+	def index_doc(self, docid, texts):
+		Catalog.index_doc(self, docid, texts)
+		
+	def unindex_doc(self, docid):
+		Catalog.unindex_doc(self, docid)
+
 	# containers
 	
 	@property
@@ -183,7 +214,7 @@ class LibraryCatalog(Catalog):
 		doc_id = get_uid(item, intids)
 		if doc_id is not None and containers:
 			containers = to_iterable(containers)
-			result = self.container_index.index_doc(doc_id, containers)
+			result = self.container_index.do_index_doc(doc_id, containers)
 			return result
 		return None
 
