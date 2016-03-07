@@ -14,11 +14,8 @@ from nti.contentlibrary.indexed_data.index import ContainedObjectCatalog
 
 from nti.contentlibrary.tests import ContentlibraryLayerTest
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-
 class TestIndex(ContentlibraryLayerTest):
 
-	@WithMockDSTrans
 	def test_catalog(self):
 		catalog = ContainedObjectCatalog()
 		catalog.index(1, container_ntiids='x')
