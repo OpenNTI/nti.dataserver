@@ -131,7 +131,7 @@ def _course_asset_to_namespace(context):
 
 def _package_lineage_to_namespace(context):
 	package = find_interface(context, IContentPackage, strict=False)
-	if package != None:
+	if package is not None:
 		return _Namespace(package.ntiid)
 	return None
 
