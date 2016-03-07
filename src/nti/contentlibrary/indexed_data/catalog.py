@@ -252,7 +252,7 @@ class LibraryCatalog(Catalog):
 							  			  (IX_CONTAINERS, container_ntiids, container_query)):
 			if value is not None:
 				value = to_iterable(value)
-				apply[index] = {index_query: value}
+				query[index] = {index_query: value}
 		
 		# query catalog
 		result = self.apply(query)
@@ -279,6 +279,18 @@ class LibraryCatalog(Catalog):
 			result = ()
 		return result
 
+def create_library_catalog(catalog=None, family=None):
+	catalog = LibraryCatalog() if catalog is None else catalog	
+	for name, clazz in ( (IX_SITE, SiteIndex),
+						 (IX_TYPE, TypeIndex),
+						 (IX_NTIID, NTIIDIndex),
+						 (IX_NAMESPACE, NamespaceIndex),
+						 (IX_CONTAINERS, ContainersIndex),):
+		index = clazz(family=family)
+		locate(index, catalog, name)
+		catalog[name] = index
+	return catalog
+
 def install_library_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
 	intids = lsm.getUtility(IIntIds) if intids is None else intids
@@ -287,18 +299,11 @@ def install_library_catalog(site_manager_container, intids=None):
 		return catalog
 
 	catalog = LibraryCatalog()
-	catalog.__name__ = CATALOG_INDEX_NAME
-	catalog.__parent__ = site_manager_container
+	locate(catalog, site_manager_container, CATALOG_INDEX_NAME)
 	intids.register(catalog)
 	lsm.registerUtility(catalog, provided=ICatalog, name=CATALOG_INDEX_NAME)
 	
-	for name, clazz in ( (IX_SITE, SiteIndex),
-						 (IX_TYPE, TypeIndex),
-						 (IX_NTIID, NTIIDIndex),
-						 (IX_NAMESPACE, NamespaceIndex),
-						 (IX_CONTAINERS, ContainersIndex),):
-		index = clazz(family=intids.family)
+	catalog = create_library_catalog(catalog=catalog, family=intids.family)
+	for index in catalog.values():
 		intids.register(index)
-		locate(index, catalog, name)
-		catalog[name] = index
 	return catalog
