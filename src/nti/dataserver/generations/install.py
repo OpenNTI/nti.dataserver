@@ -23,33 +23,37 @@ class _DataserverSchemaManager(SchemaManager):
 	A schema manager that we can register as a utility in ZCML.
 	"""
 	def __init__(self):
-		super(_DataserverSchemaManager, self).__init__(	generation=generation,
-														minimum_generation=generation,
-														package_name='nti.dataserver.generations')
+		super(_DataserverSchemaManager, self).__init__(generation=generation,
+													   minimum_generation=generation,
+													   package_name='nti.dataserver.generations')
 
 def evolve(context):
 	result = install_main(context)
 	install_chat(context)
 	return result
 
-from zope import interface
 from zope import component
+from zope import interface
 from zope import lifecycleevent
 
 from zope.component.hooks import site
 from zope.component.interfaces import ISite
 
+import zope.intid
+
 from zope.site import LocalSiteManager
+
 from zope.site.folder import Folder, rootFolder
 
 import zc.intid
-import zope.intid
 
 import z3c.password.interfaces
 
 import BTrees
 
 from nti.containers import containers as container
+
+from nti.contentlibrary.indexed_data import index as container_index
 
 from nti.dataserver import users
 from nti.dataserver import flagging
@@ -69,11 +73,9 @@ from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.users import index as user_index
 from nti.dataserver.users.users import UserBlacklistedStorage
 
-from nti.contentlibrary.indexed_data import index as container_index
+from nti.intid import utility as intid_utility
 
 from nti.recorder.index import install_recorder_catalog
-
-from nti.intid import utility as intid_utility
 
 def install_chat(context):
 	pass
@@ -257,6 +259,7 @@ def install_shard(root_conn, new_shard_name):
 
 	shard_conn = root_conn.get_connection(new_shard_name)
 	shard_root = shard_conn.root()
+
 	# TODO: Within this, how much of the site structure do we need/want to mirror?
 	# Right now, I'm making the new dataserver_folder a child of the main root folder and giving it
 	# a shard name. But I'm not setting up any site managers
@@ -266,6 +269,7 @@ def install_shard(root_conn, new_shard_name):
 	interface.alsoProvides(dataserver_folder, IDataserverFolder)
 	shard_conn.add(dataserver_folder)  # Put it in the right DB
 	shard_root['nti.dataserver'] = dataserver_folder
+
 	# make it a child of the root folder (TODO: Yes? This gets some cross-db stuff into the root
 	# folder, which may not be good. We deliberately avoided that for the 'shards' key)
 	root_folder[new_shard_name] = dataserver_folder
