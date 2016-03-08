@@ -187,7 +187,7 @@ def _load_and_register_slidedeck_json(jtext,
 				result.append(internal)
 			# CS: 20160114 Slide and SlideVideos are unique for slides,
 			# so we can reparent those items
-			for item in internal.Items or ():
+			for item in internal.Items:
 				item.__parent__ = internal
 	return result
 
@@ -314,9 +314,11 @@ def _store_asset(content_package, container_id, ntiid, item):
 
 	if INTISlideDeck.providedBy(item):
 		for slide in item.Slides or ():
+			slide.__parent__ = item
 			container[slide.ntiid] = slide
 
 		for video in item.Videos or ():
+			video.__parent__ = item
 			container[video.ntiid] = video
 
 	return True
