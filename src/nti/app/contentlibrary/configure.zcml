@@ -162,9 +162,13 @@
 	<!-- Containers adapters -->
 	<adapter factory=".adapters._assessment_to_containers" />
 	<adapter factory=".adapters._submittable_to_containers" />
+	
 	<adapter factory=".adapters._course_asset_to_containers" />
+	
+	<adapter factory=".adapters._slide_asset_to_containers" />
 	<adapter factory=".adapters._pacakge_asset_to_containers" />
-
+	<adapter factory=".adapters._slidevideo_asset_to_containers" />
+	
 	<adapter factory=".adapters.presentation_asset_items_factory"
 			 for="nti.contentlibrary.interfaces.IContentUnit"
 			 provides="nti.contenttypes.presentation.interfaces.IPresentationAssetContainer" />

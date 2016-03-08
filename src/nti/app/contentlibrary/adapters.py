@@ -56,7 +56,8 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.contenttypes.presentation import iface_of_asset
 
-from nti.contenttypes.presentation.interfaces import IPresentationAsset
+from nti.contenttypes.presentation.interfaces import IPresentationAsset,\
+	INTISlide, INTISlideVideo
 from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
 from nti.contenttypes.presentation.interfaces import IPackagePresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
@@ -213,6 +214,22 @@ def _pacakge_asset_to_containers(context):
 			if entry != None:
 				containers.add(entry.ntiid)
 		result = _Containers(tuple(containers))
+	return result
+
+@component.adapter(INTISlide)
+@interface.implementer(IContainersAdapter)
+def _slide_asset_to_containers(context):
+	result = _pacakge_asset_to_containers(context)
+	if context.__parent__ is not None and context.__parent__.ntiid:
+		containers = set(result.containers)
+		containers.add(context.__parent__.ntiid)
+		result = _Containers(tuple(containers))
+	return result
+
+@component.adapter(INTISlideVideo)
+@interface.implementer(IContainersAdapter)
+def _slidevideo_asset_to_containers(context):
+	result = _slide_asset_to_containers(context)
 	return result
 
 @interface.implementer(IContainersAdapter)
