@@ -214,22 +214,14 @@ def _pacakge_asset_to_containers(context):
 			if entry != None:
 				containers.add(entry.ntiid)
 		result = _Containers(tuple(containers))
-	return result
-
-@component.adapter(INTISlide)
-@interface.implementer(IContainersAdapter)
-def _slide_asset_to_containers(context):
-	result = _pacakge_asset_to_containers(context)
-	if context.__parent__ is not None and context.__parent__.ntiid:
+	
+	# check for slides and slidevideos
+	if		(INTISlide.providedBy(context) or INTISlideVideo.providedBy(context)) \
+		and context.__parent__ is not None \
+		and context.__parent__.ntiid:
 		containers = set(result.containers)
 		containers.add(context.__parent__.ntiid)
 		result = _Containers(tuple(containers))
-	return result
-
-@component.adapter(INTISlideVideo)
-@interface.implementer(IContainersAdapter)
-def _slidevideo_asset_to_containers(context):
-	result = _slide_asset_to_containers(context)
 	return result
 
 @interface.implementer(IContainersAdapter)
