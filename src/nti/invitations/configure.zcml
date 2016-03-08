@@ -10,4 +10,6 @@
 	
 	<include package="." file="meta.zcml" />
 
+	<utility factory=".invitation.InvitationAssociationActor" />
+
 </configure>

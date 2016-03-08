@@ -27,6 +27,7 @@ from nti.dublincore.datastructures import CreatedModDateTrackingObject
 from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationEntityFinder
 from nti.invitations.interfaces import InvitationAcceptedEvent
+from nti.invitations.interfaces import IInvitationAssociationActor
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
@@ -55,6 +56,21 @@ class ZcmlInvitation(BaseInvitation):
 	and isn't automatically adaptable to IKeyReference.
 	"""
 
+@interface.implementer(IInvitationAssociationActor)
+class InvitationAssociationActor(object):
+	
+	def accept(self, user, entity):
+		if ICommunity.providedBy(entity):
+			logger.info("Accepting invitation to join community %s", entity)
+			user.record_dynamic_membership(entity)
+			user.follow(entity)
+		elif IFriendsList.providedBy(entity):
+			logger.info("Accepting invitation to join DFL %s", entity)
+			entity.addFriend(user)
+		else:
+			logger.warn("Don't know how to accept invitation to join entity %s",
+						entity)
+
 class JoinEntitiesInvitation(ZcmlInvitation):
 	"""
 	Simple first pass at a pre-configured invitation to join existing
@@ -74,22 +90,14 @@ class JoinEntitiesInvitation(ZcmlInvitation):
 			entity = finder.find(entity_name)
 			if entity is None:
 				logger.warn("Unable to accept invitation to join non-existent entity %s",
-							 entity_name)
+							entity_name)
 				continue
 			yield entity
 
 	def accept(self, user):
+		actor = component.getUtility(IInvitationAssociationActor)
 		for entity in self._iter_entities():
-			if ICommunity.providedBy(entity):
-				logger.info("Accepting invitation to join community %s", entity)
-				user.record_dynamic_membership(entity)
-				user.follow(entity)
-			elif IFriendsList.providedBy(entity):
-				logger.info("Accepting invitation to join DFL %s", entity)
-				entity.addFriend(user)
-			else:
-				logger.warn("Don't know how to accept invitation to join entity %s",
-							entity)
+			actor.accept(user, entity)
 		super(JoinEntitiesInvitation, self).accept(user)
 
 JoinCommunityInvitation = JoinEntitiesInvitation
