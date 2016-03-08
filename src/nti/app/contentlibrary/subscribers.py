@@ -278,7 +278,7 @@ def _index_item(item, content_package, container_id, catalog, intids, connection
 	# check for slide decks
 	if INTISlideDeck.providedBy(item):
 		extended = tuple(lineage_ntiids or ()) + (item.ntiid,)
-		for x in item.Items or ():
+		for x in item.Items:
 			result += 1
 			intid_register(x, intids, connection)
 			catalog.index(x, container_ntiids=extended,
@@ -309,7 +309,7 @@ def _store_asset(content_package, container_id, ntiid, item):
 	container[ntiid] = item
 
 	if INTISlideDeck.providedBy(item):
-		for x in item.Items or ():
+		for x in item.Items:
 			container[x.ntiid] = x
 
 	return True
@@ -319,7 +319,13 @@ def _index_items(content_package, index, item_iface, catalog, registry,
 	result = 0
 	for container_id, indexed_ids in index['Containers'].items():
 		for indexed_id in indexed_ids:
+			# find asset
 			obj = registry.queryUtility(item_iface, name=indexed_id)
+			if obj is None and INTISlideDeck.isOrExtends(item_iface):
+				obj = 	registry.queryUtility(INTISlide, name=indexed_id) \
+					 or	registry.queryUtility(INTISlideVideo, name=indexed_id)
+			
+			# if found index it
 			if obj is not None:
 				_store_asset(content_package, 
 							 container_id, 
