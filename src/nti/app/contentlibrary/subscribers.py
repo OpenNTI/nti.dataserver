@@ -278,10 +278,14 @@ def _index_item(item, content_package, container_id, catalog, intids, connection
 	# check for slide decks
 	if INTISlideDeck.providedBy(item):
 		extended = tuple(lineage_ntiids or ()) + (item.ntiid,)
-		for x in item.Items:
+		for slide in item.Slides or ():
 			result += 1
-			intid_register(x, intids, connection)
-			catalog.index(x, container_ntiids=extended,
+			catalog.index(slide, container_ntiids=extended,
+				  		  namespace=content_package.ntiid, sites=sites)
+
+		for video in item.Videos or ():
+			result += 1
+			catalog.index(video, container_ntiids=extended,
 				  		  namespace=content_package.ntiid, sites=sites)
 
 	return result
@@ -309,8 +313,11 @@ def _store_asset(content_package, container_id, ntiid, item):
 	container[ntiid] = item
 
 	if INTISlideDeck.providedBy(item):
-		for x in item.Items:
-			container[x.ntiid] = x
+		for slide in item.Slides or ():
+			container[slide.ntiid] = slide
+
+		for video in item.Videos or ():
+			container[video.ntiid] = video
 
 	return True
 
