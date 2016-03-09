@@ -9,8 +9,6 @@ Support functions for reading objects.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from . import MessageFactory as _
-
 logger = __import__('logging').getLogger(__name__)
 
 import cgi
@@ -21,6 +19,9 @@ from zope import component
 
 from pyramid import httpexceptions as hexc
 
+from nti.app.externalization import MessageFactory as _
+from nti.app.externalization.error import handle_possible_validation_error
+
 from nti.dataserver.interfaces import IDataserver
 
 from nti.externalization.internalization import find_factory_for
@@ -29,8 +30,6 @@ from nti.externalization.internalization import update_from_external_object
 from nti.externalization.interfaces import IExternalRepresentationReader
 
 from nti.mimetype.mimetype import nti_mimetype_class
-
-from .error import handle_possible_validation_error
 
 def create_modeled_content_object(dataserver, owner, datatype, externalValue, creator):
 	"""
