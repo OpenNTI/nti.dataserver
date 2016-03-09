@@ -37,8 +37,10 @@ class IRegisterJoinCommunityInvitationDirective(interface.Interface):
 		)
 
 def _register(code, entities):
-	invitations = component.getUtility(IInvitations)
-	invitations.registerInvitation(JoinCommunityInvitation(code, entities))
+	invitations = component.queryUtility(IInvitations)
+	if invitations is not None:
+		invitations.registerInvitation(JoinCommunityInvitation(code, entities))
+		logger.info("Join community invitation %s has been registered", code)
 
 def registerJoinCommunityInvitation(_context, code, entities):
 	"""
