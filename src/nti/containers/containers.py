@@ -415,9 +415,8 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 
 		self._checkKey(key)
 		self._checkValue(value)
-		self._checkSame(key, value)
-
-		self._setitemf(key, value)
+		if not self._checkSame(key, value):
+			self._setitemf(key, value)
 		# TODO: Should I enforce anything with the __parent__ and __name__ of
 		# the value? For example, parent is not None and __name__ == key?
 		# We're probably more generally useful without those constraints,
@@ -445,9 +444,6 @@ class NOOwnershipLastModifiedBTreeContainer(EventlessLastModifiedBTreeContainer)
 			else:
 				value = ContainedProxy(value)
 		return value
-	
-	def _parent(self, value):
-		return self if value.__parent__ is None else value.__parent__
 
 	def __setitem__(self, key, value):
 		self._checkKey(key)
@@ -455,14 +451,13 @@ class NOOwnershipLastModifiedBTreeContainer(EventlessLastModifiedBTreeContainer)
 		if not self._checkSame(key, value):
 			value = self._transform(value)
 			self._setitemf(key, value)
-			lifecycleevent.added(value, self._parent(value), key)
+			lifecycleevent.added(value, self, key)
 			notifyContainerModified(self)
 
 	def __delitem__(self, key):
 		value = self[key]
-		parent = self._parent(value)
 		EventlessLastModifiedBTreeContainer.__delitem__(self, key)
-		lifecycleevent.removed(value, parent, key)
+		lifecycleevent.removed(value, self, key)
 		notifyContainerModified(self)
 
 # Case insensitive containers
