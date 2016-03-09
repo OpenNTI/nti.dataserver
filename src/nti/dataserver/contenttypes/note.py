@@ -22,6 +22,12 @@ from zope.schema.fieldproperty import FieldProperty
 
 from plone.namedfile.interfaces import IFile
 
+from nti.dataserver.contenttypes.base import _make_getitem
+
+from nti.dataserver.contenttypes.highlight import Highlight
+
+from nti.dataserver.contenttypes.threadable import ThreadableMixin
+
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IMedia
 from nti.dataserver.interfaces import ICanvas
@@ -35,12 +41,6 @@ from nti.dataserver_core.schema import BodyFieldProperty
 from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from .base import _make_getitem
-
-from .highlight import Highlight
-
-from .threadable import ThreadableMixin
 
 # Ownership (containment) and censoring are already taken care of by the
 # event listeners on IBeforeSequenceAssignedEvent
@@ -101,8 +101,9 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin, HighlightInternalObjec
 			body = [body]
 
 		for i, item in enumerate(body):
-			if not (ICanvas.providedBy(item) or IMedia.providedBy(item) or \
-					IFile.providedBy(item)):
+			if not (	ICanvas.providedBy(item) 
+					or	IMedia.providedBy(item)
+					or	IFile.providedBy(item)):
 				continue
 
 			ext_val = getattr(item, '_v_updated_from_external_source', {})
@@ -116,8 +117,14 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin, HighlightInternalObjec
 			# Ok, so we found one of my children. Update it in place. Don't notify for it,
 			# so that it doesn't falsely get in a stream or whatever
 			__traceback_info__ = i, item, ext_val, existing_object, note
-			update_from_external_object(existing_object, ext_val, context=context, notify=False)
-			existing_object.updateLastMod()
+			update_from_external_object(existing_object, 
+										ext_val,
+										context=context,
+										 notify=False)
+			try:
+				existing_object.updateLastMod()
+			except AttributeError:
+				pass
 			body[i] = existing_object
 			assert body[i].__parent__ is note
 			self._x = existing_object
