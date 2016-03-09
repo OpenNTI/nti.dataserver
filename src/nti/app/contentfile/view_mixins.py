@@ -129,7 +129,7 @@ def read_multipart_sources(request, sources=()):
 	"""
 	return a list of data sources from the specified multipart request
 
-	:param sources: Iterable of :class:`.IFile' objects
+	:param sources: Iterable of :class:`.IPloneFile' objects
 	"""
 	result = []
 	for data in sources or ():
@@ -145,7 +145,7 @@ def read_multipart_sources(request, sources=()):
 
 def get_content_files(context, attr="body"):
 	"""
-	return a list of :class:`.IFile' objects from the specified context
+	return a list of :class:`.IPloneFile' objects from the specified context
 
 	:param context: Source object
 	:param attr attribute name to check in context (optional)
@@ -160,12 +160,12 @@ def get_content_files(context, attr="body"):
 
 def transfer_internal_content_data(context, attr="body"):
 	"""
-	Transfer data from the database stored :class:`.IFile' objects
-	to the corresponding :class:`.IFile' objects in the context
+	Transfer data from the database stored :class:`.IPloneFile' objects
+	to the corresponding :class:`.IPloneFile' objects in the context
 	object.
 
-	This function may be called when clients sent internal reference
-	:class:`.IFile' objects when updating the context object
+	This function may be called when clients send internal reference
+	:class:`.IPloneFile' objects when updating the context object
 	"""
 	result = []
 	files = get_content_files(context, attr)
@@ -173,7 +173,7 @@ def transfer_internal_content_data(context, attr="body"):
 		# not internal ref
 		if not IInternalFileRef.providedBy(target):
 			continue
-		elif target.data:  # has data
+		elif target.getSize():  # has data
 			interface.noLongerProvides(target, IInternalFileRef)
 			continue
 
@@ -187,19 +187,6 @@ def transfer_internal_content_data(context, attr="body"):
 			interface.noLongerProvides(target, IInternalFileRef)
 			result.append(target)
 	return result
-
-class ContentFileUploadMixin(object):
-
-	def get_source(self, request, *args):
-		return get_source(request, *args)
-
-	def read_multipart_sources(self, request, sources=()):
-		result = read_multipart_sources(request, sources)
-		return result
-
-	def validate_sources(self, context=None, sources=()):
-		result = validate_sources(context, *sources)
-		return result
 
 def _to_external_link_impl(target, elements, contentType=None, rel='data', render=True):
 	link = Link(target=target,
