@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import is_not
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
@@ -33,9 +34,12 @@ from zope.container.contained import Contained as ZContained
 
 from zope.container.interfaces import INameChooser
 
+from zope.location.interfaces import IContained
+
 from nti.containers.containers import IdGeneratorNameChooser
 from nti.containers.containers import LastModifiedBTreeContainer
 from nti.containers.containers import EventlessLastModifiedBTreeContainer
+from nti.containers.containers import NOOwnershipLastModifiedBTreeContainer
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.coremetadata.interfaces import ILastModified
@@ -203,3 +207,58 @@ class TestContainers(unittest.TestCase):
 		assert_that(c.get('key'), is_(none()))
 		assert_that(getEvents(), has_length(0))
 		assert_that(c, has_length(0))
+		
+	def test_noownership_container(self):
+
+		marker = object()
+		@interface.implementer(IContained)
+		class Foo(object):
+			__parent__ = marker
+			__name__ = None
+
+		c = NOOwnershipLastModifiedBTreeContainer()
+		clearEvents()
+
+		value = Foo()
+		value2 = Foo()
+		c['key'] = value
+		assert_that(c['key'], is_(same_instance(value)))
+		assert_that(getEvents(), has_length(2))
+		assert_that(c, has_length(1))
+		assert_that(value, has_property('__parent__', is_(marker)))
+
+		# We cannot add duplicates
+		with assert_raises(KeyError):
+			c['key'] = value2
+
+		# We cannot add None values or non-unicode keys
+		with assert_raises(TypeError):
+			c['key2'] = None
+
+		with assert_raises(TypeError):
+			c[None] = value
+
+		with assert_raises(TypeError):
+			c[b'\xf0\x00\x00\x00'] = value
+
+		# After all that, nothing has changed
+		assert_that(c['key'], is_(same_instance(value)))
+		assert_that(getEvents(), has_length(2))
+		assert_that(c, has_length(1))
+
+		clearEvents()
+		c['key'] = value
+		assert_that(getEvents(), has_length(0))
+		assert_that(c, has_length(1))
+		
+		clearEvents()
+		del c['key']
+		assert_that(c.get('key'), is_(none()))
+		assert_that(getEvents(), has_length(2))
+		assert_that(c, has_length(0))
+		
+		clearEvents()
+		c['key'] = object()
+		assert_that(c.get('key'), is_not(none()))
+		assert_that(getEvents(), has_length(2))
+		assert_that(c, has_length(1))

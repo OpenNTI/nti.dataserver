@@ -33,14 +33,18 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.container.btree import BTreeContainer
 
-from zope.container.contained import uncontained
 from zope.container.contained import NameChooser
+from zope.container.contained import uncontained
+from zope.container.contained import ContainedProxy
+from zope.container.contained import notifyContainerModified
 
 from zope.container.interfaces import INameChooser
 from zope.container.interfaces import IBTreeContainer
 
 from zope.container.constraints import checkObject
 
+from zope.location.interfaces import ILocation
+from zope.location.interfaces import IContained
 from zope.location.interfaces import ISublocations
 
 from zope.site.interfaces import IFolder
@@ -244,8 +248,9 @@ try:
 				# there's no good reason to acquire from the wrapper
 				# that is this object.
 				base_self = aq_base(self)
-				if base_self is self \
-				  or getattr(base_self, '__parent__', None) is getattr(self, '__parent__', None):
+				base_self_parent = getattr(base_self, '__parent__', None)
+				if	 base_self is self \
+				  or base_self_parent is getattr(self, '__parent__', None):
 					result = result.__of__(base_self)
 
 			return result
@@ -267,6 +272,7 @@ except ImportError:
 		"""
 		No-op because Acquisition is not installed.
 		"""
+# Last modified based containers
 
 @interface.implementer(ILastModified, IAttributeAnnotatable)
 class LastModifiedBTreeContainer(DCTimesLastModifiedMixin,
@@ -378,8 +384,7 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	have their ``__name__`` and ``__parent__`` set by a real container.
 	"""
 
-	def __setitem__(self, key, value):
-		__traceback_info__ = key, value
+	def _checkKey(self, key):
 		# Containers don't allow None; keys must be unicode
 		if isinstance(key, str):
 			try:
@@ -388,9 +393,12 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 				raise TypeError('Key could not be converted to unicode')
 		elif not isinstance(key, unicode):
 			raise TypeError("Key must be unicode")
+
+	def _checkValue(self, value):
 		if value is None:
 			raise TypeError('Value must not be None')
-
+	
+	def _checkSame(self, key, value):
 		# Super's _setitemf changes the length, so only do this if
 		# it's not here already. To comply with the containers interface,
 		# we cannot add duplicates
@@ -398,8 +406,17 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		if old is not None:
 			if old is value:
 				# no op
-				return
+				return True
 			raise KeyError(key)
+		return False
+
+	def __setitem__(self, key, value):
+		__traceback_info__ = key, value
+
+		self._checkKey(key)
+		self._checkValue(value)
+		self._checkSame(key, value)
+
 		self._setitemf(key, value)
 		# TODO: Should I enforce anything with the __parent__ and __name__ of
 		# the value? For example, parent is not None and __name__ == key?
@@ -412,6 +429,43 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		l = self._BTreeContainer__len
 		del self._SampleContainer__data[key]
 		l.change(-1)
+
+class NOOwnershipLastModifiedBTreeContainer(EventlessLastModifiedBTreeContainer):
+	"""
+	A BTreeContainer that only broadcast added, removed and container modified events
+	but does not take ownership of the objects
+	"""
+	
+	def _transform(self, value):
+		if value is None:
+			raise TypeError('Value must not be None')
+		if not IContained.providedBy(value):
+			if ILocation.providedBy(value):
+				interface.alsoProvides(value, IContained)
+			else:
+				value = ContainedProxy(value)
+		return value
+	
+	def _parent(self, value):
+		return self if value.__parent__ is None else value.__parent__
+
+	def __setitem__(self, key, value):
+		self._checkKey(key)
+		self._checkValue(value)
+		if not self._checkSame(key, value):
+			value = self._transform(value)
+			self._setitemf(key, value)
+			lifecycleevent.added(value, self._parent(value), key)
+			notifyContainerModified(self)
+
+	def __delitem__(self, key):
+		value = self[key]
+		parent = self._parent(value)
+		EventlessLastModifiedBTreeContainer.__delitem__(self, key)
+		lifecycleevent.removed(value, parent, key)
+		notifyContainerModified(self)
+
+# Case insensitive containers
 
 @functools.total_ordering
 class _CaseInsensitiveKey(object):
