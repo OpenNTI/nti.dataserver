@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import time
 
 import transaction
@@ -29,6 +27,10 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.appserver import MessageFactory as _
+from nti.appserver import httpexceptions as hexc
+from nti.appserver.interfaces import INewObjectTransformer
+
 from nti.dataserver.interfaces import IContained
 from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import IContainerContext
@@ -40,13 +42,11 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 
-from .interfaces import INewObjectTransformer
+def _id(x): 
+	return x
 
-from . import httpexceptions as hexc
-
-def _id(x): return x
-
-class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
+class UGDPostView(AbstractAuthenticatedView,
+				  ModeledContentUploadRequestUtilsMixin):
 	"""
 	HTTP says POST creates a NEW entity under the Request-URI
 	"""
@@ -64,7 +64,10 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 														  search_owner=search_owner,
 														  externalValue=externalValue)
 		else:
-			externalValue = get_source(self.request, 'json', 'input', 'source', 'content')
+			# XXX: iPad app post objects as a multipart/form-data using one of
+			# the specified request fields
+			externalValue = get_source(self.request,
+									   'json', 'input', 'source', 'content')
 			if not externalValue:
 				raise hexc.HTTPUnprocessableEntity("No source was specified")
 			externalValue = self.readInput(value=externalValue.read())
@@ -92,7 +95,7 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 		# If we transformed, copy the container and creator
 		if transformedObject is not containedObject:
 			transformedObject.creator = containedObject.creator
-			if 	getattr(containedObject, StandardInternalFields.CONTAINER_ID, None) \
+			if 		getattr(containedObject, StandardInternalFields.CONTAINER_ID, None) \
 				and not getattr(transformedObject, StandardInternalFields.CONTAINER_ID, None):
 				transformedObject.containerId = containedObject.containerId
 				# TODO: JAM: I really don't like doing this. Straighten out the
@@ -151,8 +154,8 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 		# the owner's Objects tree.
 		# TODO: Shouldn't this be the external OID NTIID ?
 		self.request.response.location = self.request.resource_url(owner,
-																	'Objects',
-																	toExternalOID(containedObject))
+																   'Objects',
+																   toExternalOID(containedObject))
 
 		containerId = getattr(containedObject, StandardInternalFields.CONTAINER_ID, None)
 		# I think this log message should be info not debug.  It exists to provide statistics not to debug.
