@@ -198,6 +198,8 @@ class TestContainers(unittest.TestCase):
 		with assert_raises(TypeError):
 			c[b'\xf0\x00\x00\x00'] = value
 
+		assert_that(c._checkSame('key', value), is_(True))
+
 		# After all that, nothing has changed
 		assert_that(c['key'], is_(same_instance(value)))
 		assert_that(getEvents(), has_length(0))
