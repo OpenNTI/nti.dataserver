@@ -14,14 +14,15 @@ from zope import interface
 
 from zope.location.interfaces import IContained
 
-from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.datastructures import ContentBlobFileObjectIO
 
-from ..interfaces import IModeledContentFile
+from nti.contentfile.model import ContentBlobFile
 
-from .base import UserContentRoot
+from nti.dataserver.contenttypes.base import UserContentRoot
 
-from .threadable import ThreadableMixin
+from nti.dataserver.contenttypes.threadable import ThreadableMixin
+
+from nti.dataserver.interfaces import IModeledContentFile
 
 @interface.implementer(IModeledContentFile, IContained)
 class ModeledContentFile(ThreadableMixin,
