@@ -85,13 +85,13 @@ class ISearchQuery(interface.Interface):
 							 required=False)
 
 	origin = ValidTextLine(title="The raw NTIID where the search was invoked", required=False)
-	
+
 	sortOrder = ValidTextLine(title="descending or ascending  to sort order",
 										 default='descending', required=False)
 
-	surround = Int(title="Hightlight surround chars", required=False, default=50, min=1)
+	surround = Int(title="Highlight surround chars", required=False, default=50, min=1)
 
-	maxchars = Int(title="Hightlight max chars", required=False, default=300, min=1)
+	maxchars = Int(title="Highlight max chars", required=False, default=300, min=1)
 
 	prefix = Int(title="Suggestion prefix", required=False, min=1)
 
@@ -149,13 +149,13 @@ class ISearchQueryParser(interface.Interface):
 class ISearchPackageResolver(interface.Interface):
 	"""
 	Interface for registered subscribers that returns
-	a list of pkgs ntiids for the specied user and 
+	a list of pkgs ntiids for the specied user and
 	source ntiid
 	"""
-	
+
 	def resolve(user, ntiid):
 		pass
-		
+
 class ISearcher(interface.Interface):
 
 	def search(query, *args, **kwargs):
@@ -595,7 +595,7 @@ class IModeledContentResolver(IPostContentResolver,
 							  IHighlightContentResolver,
 							  INoteContentResolver):
 	pass
-	
+
 # highlights
 
 class ISearchFragment(interface.Interface):

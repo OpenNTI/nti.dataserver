@@ -1442,7 +1442,7 @@ class IUserBlacklistedStorage(interface.Interface):
 class IInteractionQuerier(interface.Interface):
 	"""
 	Marker interface for a utility to query a security interaction.
-	
+
 	We include this utility for testing purposes
 	"""
 

@@ -623,3 +623,8 @@ class ILibraryPathLastModifiedProvider(interface.Interface):
 	Subscriber that returns last modified input for
 	LibraryPath requests.
 	"""
+
+class IFileViewedEvent(interface.Interface):
+	"""
+	Event that broadcasts when a file is viewed or downloaded.
+	"""

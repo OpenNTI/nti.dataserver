@@ -12,9 +12,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
+from zope import interface
 
 from zope.browserresource.interfaces import IFileResource
+
+from zope.event import notify
 
 from zope.file import download
 from zope.file.interfaces import IFile
@@ -32,14 +34,27 @@ from nti.app.externalization.view_mixins import UploadRequestUtilsMixin
 
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 
+from nti.appserver import MessageFactory as _
+from nti.appserver import httpexceptions as hexc
+
+from nti.appserver.interfaces import IFileViewedEvent
+
 from nti.common import dataurl
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
 
-from . import httpexceptions as hexc
+@interface.implementer(IFileViewedEvent)
+class FileViewedEvent(object):
 
-def _do_view(request, view):
+	def __init__(self, request, context):
+		self.request = request
+		self.context = context
+
+def _do_view(request, view, event=False):
+	# Notify here, if necessary, before we may raise.
+	if event:
+		notify( FileViewedEvent( request, request.context ) )
 	# Best we can do is try to get good cache headers. Check this before
 	# opening a blob; if etags match it raises NotModified
 	controller = IPreRenderResponseCacheController(request.context)
@@ -86,7 +101,8 @@ def file_view(request):
 
 	Some ACL in the parent hierarchy must make this readable.
 	"""
-	return _do_view(request, download.Display)
+	result = _do_view(request, download.Display, event=True)
+	return result
 
 from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IBackgroundURL
@@ -165,7 +181,8 @@ def file_download_view(request):
 
 	Some ACL in the parent hierarchy must make this readable.
 	"""
-	return _do_view(request, FilenameRespectingDownload)
+	result = _do_view(request, FilenameRespectingDownload, event=True)
+	return result
 
 @view_config(route_name='objects.generic.traversal',
 			 context=IFileResource,
