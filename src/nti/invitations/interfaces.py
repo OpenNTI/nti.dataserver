@@ -145,6 +145,11 @@ class InvitationExpiredError(InvitationValidationError):
 	__doc__ = _('The invitation code has expired.')
 	i18n_message = __doc__
 
+class IJoinEntitiesInvitation(IInvitation):
+	"""
+	Marker interface for a invitation to join entities
+	"""
+
 class IInvitationActor(interface.Interface):
 	"""
 	An interface for a utility to act on an invitation

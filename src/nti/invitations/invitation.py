@@ -28,6 +28,7 @@ from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationActor
 from nti.invitations.interfaces import IInvitationEntityFinder
 from nti.invitations.interfaces import InvitationAcceptedEvent
+from nti.invitations.interfaces import IJoinEntitiesInvitation
 from nti.invitations.interfaces import IInvitationAssociationActor
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
@@ -75,6 +76,7 @@ class InvitationAssociationActor(object):
 			logger.warn("Don't know how to accept invitation to join entity %s",
 						entity)
 
+@interface.implementer(IJoinEntitiesInvitation)
 class JoinEntitiesInvitation(ActorZcmlInvitation):
 	"""
 	Simple first pass at a pre-configured invitation to join existing
