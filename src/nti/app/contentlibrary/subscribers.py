@@ -185,10 +185,6 @@ def _load_and_register_slidedeck_json(jtext,
 			result.extend(_canonicalize(internal.Videos, INTISlideVideo, registry))
 			if _was_utility_registered(internal, INTISlideDeck, ntiid, registry):
 				result.append(internal)
-			# CS: 20160114 Slide and SlideVideos are unique for slides,
-			# so we can reparent those items
-			for item in internal.Items:
-				item.__parent__ = internal
 	return result
 
 def _is_obj_locked(node):
@@ -310,9 +306,10 @@ def _store_asset(content_package, container_id, ntiid, item):
 		item.__parent__ = unit  # set lineage
 
 	container = IPresentationAssetContainer(unit)
-	container[ntiid] = item
-
+	
 	if INTISlideDeck.providedBy(item):
+		# CS: 20160114 Slide and SlideVideos are unique for slides,
+		# so we can reparent those items
 		for slide in item.Slides or ():
 			slide.__parent__ = item
 			container[slide.ntiid] = slide
@@ -321,6 +318,7 @@ def _store_asset(content_package, container_id, ntiid, item):
 			video.__parent__ = item
 			container[video.ntiid] = video
 
+	container[ntiid] = item
 	return True
 
 def _index_items(content_package, index, item_iface, catalog, registry, 
