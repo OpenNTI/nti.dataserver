@@ -451,6 +451,7 @@ class NOOwnershipLastModifiedBTreeContainer(EventlessLastModifiedBTreeContainer)
 		if not self._checkSame(key, value):
 			value = self._transform(value)
 			self._setitemf(key, value)
+			# pass self as container so object can get a connection if available
 			lifecycleevent.added(value, self, key)
 			notifyContainerModified(self)
 
