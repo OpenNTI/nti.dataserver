@@ -427,11 +427,11 @@ class ModeledContentUploadRequestUtilsMixin(object):
 	inputClass = dict
 	content_predicate = id
 
-	# : Subclasses can define this as a tuple of types to
-	# : catch that we can't be sure are client or server errors.
-	# : We catch TypeError and LookupError (which includes KeyError)
-	# : by default, often they're a failed
-	# : interface adaptation, but that could be because of bad input
+	#: Subclasses can define this as a tuple of types to
+	#: catch that we can't be sure are client or server errors.
+	#: We catch TypeError and LookupError (which includes KeyError)
+	#: by default, often they're a failed
+	#: interface adaptation, but that could be because of bad input
 	_EXTRA_INPUT_ERRORS = (TypeError, LookupError)
 
 	def __call__(self):
@@ -521,15 +521,17 @@ class ModeledContentUploadRequestUtilsMixin(object):
 											 externalValue,
 											 creator)
 
-	def createAndCheckContentObject(self, owner, datatype, externalValue, creator, predicate=None):
+	def createAndCheckContentObject(self, owner, datatype, externalValue, 
+									creator, predicate=None):
 		if predicate is None:
 			predicate = self.content_predicate
 		containedObject = self.createContentObject(owner, datatype,
 												   externalValue, creator)
 		if containedObject is None or not predicate(containedObject):
 			transaction.doom()
-			logger.debug("Failing to POST: input of unsupported/missing Class: %s %s => %s %s",
-						  datatype, externalValue, containedObject, predicate)
+			logger.debug(
+				"Failing to POST: input of unsupported/missing Class: %s %s => %s %s",
+				datatype, externalValue, containedObject, predicate)
 			raise hexc.HTTPUnprocessableEntity(_('Unsupported/missing Class'))
 		return containedObject
 
