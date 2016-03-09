@@ -25,6 +25,7 @@ from nti.dataserver_core.interfaces import SYSTEM_USER_NAME
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
 from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IInvitationActor
 from nti.invitations.interfaces import IInvitationEntityFinder
 from nti.invitations.interfaces import InvitationAcceptedEvent
 from nti.invitations.interfaces import IInvitationAssociationActor
@@ -56,6 +57,9 @@ class ZcmlInvitation(BaseInvitation):
 	and isn't automatically adaptable to IKeyReference.
 	"""
 
+class ActorZcmlInvitation(ZcmlInvitation):
+	actor_interface = IInvitationActor
+
 @interface.implementer(IInvitationAssociationActor)
 class InvitationAssociationActor(object):
 	
@@ -71,33 +75,34 @@ class InvitationAssociationActor(object):
 			logger.warn("Don't know how to accept invitation to join entity %s",
 						entity)
 
-class JoinEntitiesInvitation(ZcmlInvitation):
+class JoinEntitiesInvitation(ActorZcmlInvitation):
 	"""
 	Simple first pass at a pre-configured invitation to join existing
 	entities. Intended to be configured with ZCML and not stored persistently.
 	"""
 
 	creator = SYSTEM_USER_NAME
+	actor_interface = IInvitationAssociationActor
 
 	def __init__(self, code, entities):
 		super(JoinEntitiesInvitation, self).__init__()
 		self.code = code
 		self.entities = entities
 
-	def _iter_entities(self):
+	def transform(self, entity):
 		finder = component.getUtility(IInvitationEntityFinder)
-		for entity_name in self.entities:
-			entity = finder.find(entity_name)
-			if entity is None:
-				logger.warn("Unable to accept invitation to join non-existent entity %s",
-							entity_name)
-				continue
-			yield entity
+		result = finder.find(entity)
+		if result is None:
+			logger.warn("Unable to accept invitation to join non-existent entity %s",
+						entity)
+		return result
 
 	def accept(self, user):
-		actor = component.getUtility(IInvitationAssociationActor)
-		for entity in self._iter_entities():
-			actor.accept(user, entity)
+		actor = component.getUtility(self.actor_interface)
+		for entity in self.entities:
+			entity = self.transform(entity)
+			if entity is not None:
+				actor.accept(user, entity)
 		super(JoinEntitiesInvitation, self).accept(user)
 
 JoinCommunityInvitation = JoinEntitiesInvitation
