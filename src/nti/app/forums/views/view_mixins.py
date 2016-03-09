@@ -108,9 +108,9 @@ class PostUploadMixin(AuthenticatedViewMixin,
 
 		return topic_factory_name, topic_factory, topic_type
 
-def validate_attachments(self, context=None, sources=()):
+def validate_attachments(user=None, context=None, sources=()):
 	sources = sources or ()
-	validate_sources(context, sources)
+	validate_sources(user, context, sources)
 	constraints = IPostFileConstraints(context, None)
 	if constraints is not None and len(sources) > constraints.max_files:
 		raise ConstraintNotSatisfied(len(sources), 'max_files')
@@ -140,7 +140,7 @@ class _AbstractForumPostView(PostUploadMixin,
 		if sources and self.request and self.request.POST:
 			read_multipart_sources(self.request, sources.values())
 		if sources:
-			validate_attachments(context, sources.values())
+			validate_attachments(self.remoteUser, context, sources.values())
 		return context, externalValue
 
 	def _do_call(self):

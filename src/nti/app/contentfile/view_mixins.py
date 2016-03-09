@@ -15,6 +15,7 @@ from urllib import quote
 from collections import Mapping
 from collections import OrderedDict
 
+from zope import component
 from zope import interface
 
 from zope.file.upload import nameFinder
@@ -54,7 +55,13 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 def is_named_source(context):
 	return IFile.providedBy(context)
 
-def validate_sources(context=None, sources=()):
+def file_contraints(context, user=None, constraint=IFileConstraints):
+	result = component.queryMultiAdapter((user, context), constraint)
+	if result is None:
+		result = constraint(context, None)
+	return result
+
+def validate_sources(user=None, context=None, sources=(), constraint=IFileConstraints):
 	"""
 	Validate the specified sources using the :class:`.IFileConstraints`
 	derived from the context
@@ -64,7 +71,7 @@ def validate_sources(context=None, sources=()):
 
 	for source in sources or ():
 		ctx = context if context is not None else source
-		validator = IFileConstraints(ctx, None)
+		validator = file_contraints(ctx, user, constraint)
 		if validator is None:
 			continue
 
@@ -232,7 +239,7 @@ def safe_download_file_name(name):
 			# quote(name.encode('utf-8'))
 			result = quote(name)
 		except Exception:
-			result =  'file' + ext
+			result = 'file' + ext
 	return result
 
 def to_external_href(item, add_name=False):

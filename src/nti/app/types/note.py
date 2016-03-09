@@ -64,12 +64,12 @@ class NotePutView(UGDPutView):
 												notify=notify)
 		sources = get_content_files(contentObject)
 		if sources:
-			validate_attachments(contentObject, sources.values())
+			validate_attachments(self.remoteUser, contentObject, sources.values())
 		return result
 
-def validate_attachments(context=None, sources=()):
+def validate_attachments(user, context=None, sources=()):
 	sources = sources or ()
-	validate_sources(context, sources)
+	validate_sources(user, context, sources)
 	constraints = INoteFileConstraints(context, None)
 	if constraints is not None and len(sources) > constraints.max_files:
 		raise ConstraintNotSatisfied(len(sources), 'max_files')
