@@ -123,9 +123,9 @@ def transfer(source, target):
 	from the source to the target
 	"""
 	# copy data
-	if hasattr('source', 'read'):
+	if hasattr(source, 'read'):
 		target.data = source.read() 
-	elif hasattr('source', 'data'): 
+	elif hasattr(source, 'data'): 
 		target.data = source.data
 
 	# copy contentType if available
