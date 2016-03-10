@@ -31,8 +31,9 @@ from nti.appserver.interfaces import INewObjectTransformer
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
-from nti.dataserver.interfaces import INote
 from nti.dataserver import authorization as nauth
+
+from nti.dataserver.interfaces import INote
 
 from nti.namedfile.file import FileConstraints
 
