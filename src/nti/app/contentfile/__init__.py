@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
+from nti.app.contentfile.view_mixins import file_contraints
 from nti.app.contentfile.view_mixins import validate_sources
 from nti.app.contentfile.view_mixins import to_external_href
 from nti.app.contentfile.view_mixins import get_content_files
