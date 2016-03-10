@@ -7,6 +7,7 @@ User-generated data CRUD functions.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.app.contenttypes.presentation.decorators import is_legacy_uas
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -24,11 +25,14 @@ from zope.container.interfaces import InvalidContainerType
 from nti.app.base.abstract_views import get_source
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.internalization import read_body_as_external_object
+
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.appserver import MessageFactory as _
 from nti.appserver import httpexceptions as hexc
+
 from nti.appserver.interfaces import INewObjectTransformer
 
 from nti.dataserver.interfaces import IContained
@@ -44,6 +48,16 @@ from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 
 def _id(x): 
 	return x
+
+LEGACY_UAS = ("NTIFoundation DataLoader NextThought",)
+
+def is_legacy_uas(request, legacy_uas=LEGACY_UAS):
+	user_agent = request.environ.get(b'HTTP_USER_AGENT', '')
+	if user_agent:
+		for lua in legacy_uas:
+			if user_agent.startswith(lua):
+				return True
+	return False
 
 class UGDPostView(AbstractAuthenticatedView,
 				  ModeledContentUploadRequestUtilsMixin):
@@ -64,16 +78,22 @@ class UGDPostView(AbstractAuthenticatedView,
 														  search_owner=search_owner,
 														  externalValue=externalValue)
 		else:
-			# XXX: iPad app post objects as a multipart/form-data using one of
-			# the specified request fields
-			externalValue = get_source(self.request,
-									   'json', 'input', 'source', 'content')
+			if is_legacy_uas(self.request) and not externalValue:
+				# XXX: iPad app post objects as a multipart/form-data using one of
+				# the specified request fields
+				externalValue = get_source(self.request,
+										   'json', 'input', 'source', 'content')
+
 			if not externalValue:
-				raise hexc.HTTPUnprocessableEntity("No source was specified")
-			externalValue = self.readInput(value=externalValue.read())
+				# read fields in multipart data
+				externalValue = read_body_as_external_object(self.equest)
+			
+			if not externalValue:
+				raise hexc.HTTPUnprocessableEntity("No input source was specified")
+			
 			result = self.doReadCreateUpdateContentObject(creator,
-														  search_owner=search_owner,
-														  externalValue=externalValue)
+													  	  search_owner=search_owner,
+													      externalValue=externalValue)
 		return result
 
 	def _transform_incoming_object(self, containedObject):
