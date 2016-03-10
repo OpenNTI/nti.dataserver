@@ -9,8 +9,6 @@ Utilities relating to views.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from . import MessageFactory as _
-
 logger = __import__('logging').getLogger(__name__)
 
 import sys
@@ -33,24 +31,27 @@ from pyramid import httpexceptions as hexc
 
 import webob.datetime_utils
 
+from nti.app.externalization import MessageFactory as _
+
+from nti.app.externalization.error import handle_validation_error
+from nti.app.externalization.error import handle_possible_validation_error
+
+from nti.app.externalization.internalization import read_body_as_external_object
+from nti.app.externalization.internalization import create_modeled_content_object
+from nti.app.externalization.internalization import update_object_from_external_object
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
-from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.externalization import to_standard_external_last_modified_time
+
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.links.links import Link
 
 from nti.mimetype import mimetype
 
 from nti.zodb import isBroken
-
-from .error import handle_validation_error
-from .error import handle_possible_validation_error
-
-from .internalization import read_body_as_external_object
-from .internalization import create_modeled_content_object
-from .internalization import update_object_from_external_object
 
 ID = StandardExternalFields.ID
 CLASS = StandardExternalFields.CLASS
@@ -175,7 +176,9 @@ class BatchingUtilsMixin(object):
 		result = (x is not None and not isBroken(x))
 		return result
 
-	def _batch_items_iterable(self, result, items,
+	def _batch_items_iterable(self,
+							  result,
+							  items,
 							  number_items_needed=_marker,
 							  batch_size=_marker,
 							  batch_start=_marker,
@@ -232,9 +235,11 @@ class BatchingUtilsMixin(object):
 					break
 
 		result['BatchPage'] = batch_start // batch_size + 1
-		batched_results = self.__batch_result_list(result, result_list,
-												 batch_start, batch_size,
-												 number_items_needed)
+		batched_results = self.__batch_result_list(result,
+												   result_list,
+												   batch_start, 
+												   batch_size,
+												   number_items_needed)
 		result[ITEMS] = batched_results
 		result['ItemCount'] = len(batched_results)
 		return result
@@ -521,7 +526,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 											 externalValue,
 											 creator)
 
-	def createAndCheckContentObject(self, owner, datatype, externalValue, 
+	def createAndCheckContentObject(self, owner, datatype, externalValue,
 									creator, predicate=None):
 		if predicate is None:
 			predicate = self.content_predicate
@@ -590,7 +595,10 @@ class ModeledContentUploadRequestUtilsMixin(object):
 
 		owner = owner_root if owner_root else creator
 
-		containedObject = self.createAndCheckContentObject(owner, datatype, externalValue, creator)
+		containedObject = self.createAndCheckContentObject(owner,
+														   datatype, 
+														   externalValue,
+														   creator)
 		containedObject.creator = creator
 
 		# The process of updating may need to index and create KeyReferences
