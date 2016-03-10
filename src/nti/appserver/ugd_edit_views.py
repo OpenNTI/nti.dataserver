@@ -7,7 +7,6 @@ User-generated data CRUD functions.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.app.contenttypes.presentation.decorators import is_legacy_uas
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -49,16 +48,6 @@ from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 def _id(x): 
 	return x
 
-LEGACY_UAS = ("NTIFoundation DataLoader NextThought",)
-
-def is_legacy_uas(request, legacy_uas=LEGACY_UAS):
-	user_agent = request.environ.get(b'HTTP_USER_AGENT', '')
-	if user_agent:
-		for lua in legacy_uas:
-			if user_agent.startswith(lua):
-				return True
-	return False
-
 class UGDPostView(AbstractAuthenticatedView,
 				  ModeledContentUploadRequestUtilsMixin):
 	"""
@@ -78,11 +67,10 @@ class UGDPostView(AbstractAuthenticatedView,
 														  search_owner=search_owner,
 														  externalValue=externalValue)
 		else:
-			if is_legacy_uas(self.request) and not externalValue:
-				# XXX: iPad app post objects as a multipart/form-data using one of
-				# the specified request fields
-				externalValue = get_source(self.request,
-										   'json', 'input', 'source', 'content')
+			if not externalValue:
+				# XXX: iPad app post objects as a multipart/form-data using
+				# the 'json' field
+				externalValue = get_source(self.request, 'json')
 
 			if not externalValue:
 				# read fields in multipart data
