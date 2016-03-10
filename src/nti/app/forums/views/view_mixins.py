@@ -110,11 +110,19 @@ class PostUploadMixin(AuthenticatedViewMixin,
 
 def validate_attachments(user=None, context=None, sources=()):
 	sources = sources or ()
-	validate_sources(user, context, sources)
+	
+	# check source contraints
+	validate_sources(user, context, sources, constraint=IPostFileConstraints)
+	
+	# check max files to upload
 	constraints = IPostFileConstraints(context, None)
 	if constraints is not None and len(sources) > constraints.max_files:
 		raise ConstraintNotSatisfied(len(sources), 'max_files')
 		
+	# take ownership
+	for source in sources:
+		source.__parent__ = context
+
 class _AbstractForumPostView(PostUploadMixin,
 							 AbstractAuthenticatedView):
 	"""
