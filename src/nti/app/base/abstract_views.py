@@ -213,16 +213,14 @@ def get_source(request, *keys):
 		source = values.get(key)
 		if source is not None:
 			break
-	source = process_source(source)
+	if source is not None:
+		source = process_source(source)
 	return source
 
 def get_all_sources(request, default_content_type=u'application/octet-stream'):
 	result = CaseInsensitiveDict()
 	values = CaseInsensitiveDict(request.POST)
 	for name, source in values.items():
-		try:
-			source = process_source(source, default_content_type)
-		except AttributeError:
-			continue
+		source = process_source(source, default_content_type)
 		result[name] = source
 	return result

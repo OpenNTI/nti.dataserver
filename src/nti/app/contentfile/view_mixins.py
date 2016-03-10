@@ -122,14 +122,22 @@ def transfer(source, target):
 	Transfer the data and possibly the contentType and filename
 	from the source to the target
 	"""
-	target.data = source.read()
-	try:
-		if not target.contentType and source.contentType:
-			target.contentType = source.contentType
-		if not target.filename and source.filename:
-			target.filename = nameFinder(source)
-	except AttributeError:
-		pass
+	# copy data
+	if hasattr('source', 'read'):
+		target.data = source.read() 
+	elif hasattr('source', 'data'): 
+		target.data = source.data
+
+	# copy contentType if available
+	if		not getattr(target, 'contentType', None) \
+		and getattr(source, 'contentType', None):
+		target.contentType = source.contentType
+
+	# copy filename if available
+	if 		not getattr(target, 'filename', None) \
+		and getattr(source, 'filename', None):
+		target.filename = nameFinder(source)
+
 	return target
 
 def read_multipart_sources(request, sources=()):
@@ -165,7 +173,7 @@ def get_content_files(context, attr="body"):
 			result[name] = data
 	return result
 
-def transfer_internal_content_data(context, attr="body"):
+def transfer_internal_content_data(context, attr="body", request=None, ownership=True):
 	"""
 	Transfer data from the database stored :class:`.IPloneFile' objects
 	to the corresponding :class:`.IPloneFile' objects in the context
@@ -175,24 +183,42 @@ def transfer_internal_content_data(context, attr="body"):
 	:class:`.IPloneFile' objects when updating the context object
 	"""
 	result = []
-	files = get_content_files(context, attr)
+	files = get_content_files(context, attr=attr)
 	for target in files.values():
-		# not internal ref
+		
+		# not an internal ref
 		if not IInternalFileRef.providedBy(target):
+			# if it has no data check in the multipart upload for a source
+			if not target.getSize() and request is not None and request.POST:
+				name = get_context_name(target)
+				source = get_source(request, name or u'')
+				if source is not None:
+					transfer(source, target)
+			# add it result
+			result.append(target)
 			continue
-		elif target.getSize():  # has data
+		elif target.getSize():  # has data (new upload)
+			result.append(target)
 			interface.noLongerProvides(target, IInternalFileRef)
 			continue
 
-		# find the original source reference
-		ref = getattr(target, 'reference', None)
-		source = find_object_with_ntiid(ref) if ref else None
-		if IPloneFile.providedBy(source) and target != source:
-			target.data = source.data
-			target.filename = source.filename or target.filename
-			target.contentType = source.contentType or target.contentType
-			interface.noLongerProvides(target, IInternalFileRef)
-			result.append(target)
+		# it it's an internal find the original source reference and 
+		# copy its data.
+		if IInternalFileRef.providedBy(target):
+			source = find_object_with_ntiid(target.reference)
+			if IPloneFile.providedBy(source) and target != source:
+				# copy file data
+				target.data = source.data
+				target.filename = source.filename or target.filename
+				target.contentType = source.contentType or target.contentType
+				# remove internal reference
+				interface.noLongerProvides(target, IInternalFileRef)
+				result.append(target)
+				
+	if ownership: # take ownership
+		for target in result:
+			target.__parent__ = context
+
 	return result
 
 def _to_external_link_impl(target, elements, contentType=None, rel='data', render=True):
