@@ -117,7 +117,7 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
 							 },
 							 None)
 
-def transfer(source, target):
+def transfer_data(source, target):
 	"""
 	Transfer the data and possibly the contentType and filename
 	from the source to the target
@@ -139,6 +139,7 @@ def transfer(source, target):
 		target.filename = nameFinder(source)
 
 	return target
+transfer = transfer_data
 
 def read_multipart_sources(request, sources=()):
 	"""
@@ -154,7 +155,7 @@ def read_multipart_sources(request, sources=()):
 			if source is None:
 				msg = 'Could not find data for file %s' % data.name
 				raise hexc.HTTPUnprocessableEntity(msg)
-			data = transfer(source, data)
+			data = transfer_data(source, data)
 			result.append(data)
 	return result
 
@@ -193,7 +194,7 @@ def transfer_internal_content_data(context, attr="body", request=None, ownership
 				name = get_context_name(target)
 				source = get_source(request, name or u'')
 				if source is not None:
-					transfer(source, target)
+					transfer_data(source, target)
 			# add it result
 			result.append(target)
 			continue
