@@ -20,19 +20,21 @@ from pyramid.view import view_config
 from pyramid.interfaces import IRequest
 from pyramid.interfaces import IExceptionResponse
 
-from nti.appserver.ugd_edit_views import UGDPutView
+from nti.app.contentfile import file_contraints
+from nti.app.contentfile import validate_sources
+from nti.app.contentfile import get_content_files
+from nti.app.contentfile import read_multipart_sources
+
+from nti.app.types.interfaces import INoteFileConstraints
+
 from nti.appserver.interfaces import INewObjectTransformer
+
+from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.dataserver.interfaces import INote
 from nti.dataserver import authorization as nauth
 
 from nti.namedfile.file import FileConstraints
-
-from ..contentfile import validate_sources
-from ..contentfile import get_content_files
-from ..contentfile import read_multipart_sources
-
-from .interfaces import INoteFileConstraints
 
 @component.adapter(IRequest, INote)
 @interface.implementer(INewObjectTransformer)
@@ -58,7 +60,8 @@ def _submission_transformer(request, context):
 class NotePutView(UGDPutView):
 
 	def updateContentObject(self, contentObject, externalValue, set_id=False, notify=True):
-		result = UGDPutView.updateContentObject(self, contentObject,
+		result = UGDPutView.updateContentObject(self, 
+												contentObject=contentObject,
 												externalValue=externalValue,
 												set_id=set_id,
 												notify=notify)
@@ -70,7 +73,7 @@ class NotePutView(UGDPutView):
 def validate_attachments(user, context=None, sources=()):
 	sources = sources or ()
 	validate_sources(user, context, sources)
-	constraints = INoteFileConstraints(context, None)
+	constraints = file_contraints(context, user, INoteFileConstraints)
 	if constraints is not None and len(sources) > constraints.max_files:
 		raise ConstraintNotSatisfied(len(sources), 'max_files')
 
