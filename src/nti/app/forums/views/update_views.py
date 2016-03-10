@@ -16,7 +16,7 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
-from nti.app.contentfile import get_content_files
+from nti.app.contentfile import transfer_internal_content_data
 
 from nti.app.forums.views.view_mixins import validate_attachments
 
@@ -79,13 +79,16 @@ class PostObjectPutView(UGDPutView):
 		return externalValue
 
 	def updateContentObject(self, contentObject, externalValue, set_id=False, notify=True):
-		result = UGDPutView.updateContentObject(self, contentObject,
+		result = UGDPutView.updateContentObject(self, 
+												contentObject=contentObject,
 												externalValue=externalValue,
 												set_id=set_id,
 												notify=notify)
-		sources = get_content_files(contentObject)
+		sources = transfer_internal_content_data(contentObject, 
+												 request=self.request,
+												 ownership=False)
 		if sources:
-			validate_attachments(contentObject, sources.values())
+			validate_attachments(self.remoteUser, contentObject, sources)
 		return result
 
 @view_config(context=IDFLHeadlineTopic)
