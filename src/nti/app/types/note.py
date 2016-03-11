@@ -96,4 +96,5 @@ def validate_attachments(user, context, sources=()):
 @interface.implementer(INoteFileConstraints)
 class _NoteFileConstraints(FileConstraints):
 	max_files = 5
-	max_file_size = 10000000 # 10 MB
+	max_file_size = 10485760 # 10 MB
+					
