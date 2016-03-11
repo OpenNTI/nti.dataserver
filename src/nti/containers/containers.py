@@ -399,9 +399,6 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 			raise TypeError('Value must not be None')
 	
 	def _checkSame(self, key, value):
-		# Super's _setitemf changes the length, so only do this if
-		# it's not here already. To comply with the containers interface,
-		# we cannot add duplicates
 		old = self.get(key)
 		if old is not None:
 			if old is value:
@@ -416,6 +413,9 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		self._checkKey(key)
 		self._checkValue(value)
 		if not self._checkSame(key, value):
+			# Super's _setitemf changes the length, so only do this if
+			# it's not here already. To comply with the containers interface,
+			# we cannot add duplicates
 			self._setitemf(key, value)
 		# TODO: Should I enforce anything with the __parent__ and __name__ of
 		# the value? For example, parent is not None and __name__ == key?
@@ -436,8 +436,6 @@ class NOOwnershipLastModifiedBTreeContainer(EventlessLastModifiedBTreeContainer)
 	"""
 	
 	def _transform(self, value):
-		if value is None:
-			raise TypeError('Value must not be None')
 		if not IContained.providedBy(value):
 			if ILocation.providedBy(value):
 				interface.alsoProvides(value, IContained)
@@ -451,7 +449,7 @@ class NOOwnershipLastModifiedBTreeContainer(EventlessLastModifiedBTreeContainer)
 		if not self._checkSame(key, value):
 			value = self._transform(value)
 			self._setitemf(key, value)
-			# pass self as container so object can get a connection if available
+			# pass self as container so value object can get a connection if available
 			lifecycleevent.added(value, self, key)
 			notifyContainerModified(self)
 
