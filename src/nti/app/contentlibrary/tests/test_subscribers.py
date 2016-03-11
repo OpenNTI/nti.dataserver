@@ -92,6 +92,13 @@ class TestSubscribers(ApplicationLayerTest):
 		catalog = get_catalog()
 		results = catalog.search_objects(container_ntiids=(unit_ntiid,))
 		assert_that(results, has_length(5))
+		assert_that((x.ntiid for x in results),
+									contains_inanyorder(
+										u'tag:nextthought.com,2011-10:NTI-NTIVideo-CourseTestContent.ntivideo.video1',
+		 								u'tag:nextthought.com,2011-10:OU-JSON:Timeline-CourseTestContent.timeline.heading_west',
+		 		 						u'tag:nextthought.com,2011-10:OU-NTISlideDeck-CourseTestContent.nsd.pres:Nested_Conditionals',
+		 		 		 				u'tag:nextthought.com,2011-10:NTI-RelatedWorkRef-CourseTestContent.relatedworkref.0',
+		 		 		 				u'tag:nextthought.com,2011-10:OU-NTISlideVideo-CourseTestContent.nsd.pres:Nested_Conditionals'))
 		last_mod_namespace = _get_file_last_mod_namespace(content_package, 'video_index.json')
 		last_mod = catalog.get_last_modified(last_mod_namespace)
 		assert_that(last_mod, not_none())

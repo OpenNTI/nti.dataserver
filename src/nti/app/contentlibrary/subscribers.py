@@ -276,11 +276,13 @@ def _index_item(item, content_package, container_id, catalog, intids, connection
 		extended = tuple(lineage_ntiids or ()) + (item.ntiid,)
 		for slide in item.Slides or ():
 			result += 1
+			intid_register(slide, intids, connection)
 			catalog.index(slide, container_ntiids=extended,
 				  		  namespace=content_package.ntiid, sites=sites)
 
 		for video in item.Videos or ():
 			result += 1
+			intid_register(video, intids, connection)
 			catalog.index(video, container_ntiids=extended,
 				  		  namespace=content_package.ntiid, sites=sites)
 
@@ -306,7 +308,7 @@ def _store_asset(content_package, container_id, ntiid, item):
 		item.__parent__ = unit  # set lineage
 
 	container = IPresentationAssetContainer(unit)
-	
+
 	if INTISlideDeck.providedBy(item):
 		# CS: 20160114 Slide and SlideVideos are unique for slides,
 		# so we can reparent those items
@@ -321,7 +323,7 @@ def _store_asset(content_package, container_id, ntiid, item):
 	container[ntiid] = item
 	return True
 
-def _index_items(content_package, index, item_iface, catalog, registry, 
+def _index_items(content_package, index, item_iface, catalog, registry,
 				 intids=None, connection=None):
 	result = 0
 	for container_id, indexed_ids in index['Containers'].items():
@@ -331,15 +333,15 @@ def _index_items(content_package, index, item_iface, catalog, registry,
 			if obj is None and INTISlideDeck.isOrExtends(item_iface):
 				obj = 	registry.queryUtility(INTISlide, name=indexed_id) \
 					 or	registry.queryUtility(INTISlideVideo, name=indexed_id)
-			
+
 			# if found index it
 			if obj is not None:
-				_store_asset(content_package, 
-							 container_id, 
+				_store_asset(content_package,
+							 container_id,
 							 indexed_id,
 							 obj)
 
-				result += _index_item(obj, 
+				result += _index_item(obj,
 									  content_package,
 									  container_id,
 									  catalog=catalog,
@@ -452,15 +454,15 @@ def _update_index_when_content_changes(content_package,
 	index_item_count = 0
 	if registry != component.getGlobalSiteManager():
 		index_item_count = _index_items(content_package,
-										index, 
+										index,
 										item_iface,
-										catalog, 
+										catalog,
 										registry,
 										intids=intids,
 										connection=connection)
 		# keep transaction history
 		_copy_remove_transactions(removed, registry=registry)
-	
+
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
 				sibling_key, registered_count, index_item_count, removed_count)
 
