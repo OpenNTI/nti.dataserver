@@ -429,6 +429,14 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		del self._SampleContainer__data[key]
 		l.change(-1)
 
+	def pop(self, key, default=None):
+		try:
+			result = self[key]
+			del self[key]
+		except KeyError:
+			result = default
+		return result
+
 class NOOwnershipLastModifiedBTreeContainer(EventlessLastModifiedBTreeContainer):
 	"""
 	A BTreeContainer that only broadcast added, removed and container modified events
