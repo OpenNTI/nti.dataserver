@@ -25,7 +25,7 @@ from plone.namedfile.interfaces import INamed
 from nti.app.base.abstract_views import get_all_sources
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.app.contentfile.view_mixins import transfer
+from nti.app.contentfile.view_mixins import transfer_data
 
 from nti.app.contentfolder import MessageFactory as _
 
@@ -124,7 +124,8 @@ class TreeView(AbstractAuthenticatedView):
 class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
 	content_predicate = INamedContainer.providedBy
-
+	default_folder_mime_type = ContentFolder.mimeType
+	
 	def readInput(self, value=None):
 		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
 		if isinstance(data, six.string_types):
@@ -132,10 +133,10 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 				'name': data,
 				'title': data,
 				'description': data,
-				MIMETYPE: ContentFolder.mimeType
+				MIMETYPE: self.default_folder_mime_type
 			}
 		elif isinstance(data, Mapping) and MIMETYPE not in data:
-			data[MIMETYPE] = ContentFolder.mimeType
+			data[MIMETYPE] = self.default_folder_mime_type
 		return data
 
 	def _do_call(self):
@@ -160,8 +161,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 	def use_blobs(self):
 		return self.context.use_blobs
 
-	def get_namedfile(self, source, name, filename=None):
-		filename = getattr(source, 'filename', None)
+	def factory(self, source):
 		contentType = getattr(source, 'contentType', None)
 		if contentType:
 			factory = ContentBlobFile if self.use_blobs else ContentFile
@@ -172,6 +172,12 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 				factory = ContentBlobImage if self.use_blobs else ContentImage
 			else:
 				factory = ContentBlobFile if self.use_blobs else ContentFile
+		return factory
+
+	def get_namedfile(self, source, name, filename=None):
+		factory = self.factory(source)
+		filename = getattr(source, 'filename', None)
+		contentType = getattr(source, 'contentType', None)
 
 		result = factory()
 		result.name = name
@@ -189,7 +195,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			filename = getattr(source, 'filename', None)
 			file_key = safe_filename(name_finder(name))
 			target = self.get_namedfile(source, file_key, filename)
-			transfer(source, target)
+			transfer_data(source, target)
 			target.creator = creator
 			items.append(target)
 
@@ -295,6 +301,7 @@ class RenameView(AbstractAuthenticatedView,
 
 		# replace in folder
 		parent.rename(old, name)
+
 		# XXX: externalize first
 		result = to_external_object(theObject)
 		return result

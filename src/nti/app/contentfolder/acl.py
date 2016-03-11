@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope.security.interfaces import IPrincipal
+
 from nti.common.property import Lazy
 
 from nti.contentfolder.interfaces import IContentFolder
@@ -45,4 +47,7 @@ class ContentFolderACLProvider(object):
 		aces = [ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, self),
 				ace_allowing(ROLE_CONTENT_ADMIN, ALL_PERMISSIONS, type(self))]
 		result = acl_from_aces(aces)
+		creator = IPrincipal(self.context.creator, None)
+		if creator is not None:
+			aces.append(ace_allowing(creator, ALL_PERMISSIONS, self))
 		return result

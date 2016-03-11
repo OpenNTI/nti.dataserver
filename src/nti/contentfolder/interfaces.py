@@ -19,6 +19,7 @@ from zope.dublincore.interfaces import IDCDescriptiveProperties
 
 from plone.namedfile.interfaces import INamed as IPloneNamed
 
+from nti.coremetadata.interfaces import ICreated 
 from nti.coremetadata.interfaces import ILastModified
 
 from nti.schema.field import Bool
@@ -27,7 +28,8 @@ from nti.schema.field import ValidTextLine
 class INamedContainer(IContained,
 					  IDCDescriptiveProperties,
 					  IContentContainer,
-					  ILastModified):
+					  ILastModified,
+					  ICreated):
 	name = ValidTextLine(title="Folder name", required=True)
 
 	# dublin core
