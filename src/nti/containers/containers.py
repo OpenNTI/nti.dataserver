@@ -422,15 +422,8 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		# We're probably more generally useful without those constraints,
 		# but more specifically useful in certain scenarios with those constraints.
 
-	def _delitemf(self, key):
-		# Just like the super implementation, but without
-		# firing the 'uncontained' event
-		l = self._BTreeContainer__len
-		del self._SampleContainer__data[key]
-		l.change(-1)
-
 	def __delitem__(self, key):
-		self._delitemf(key)
+		self._delitemf(key, event=False)
 
 	def pop(self, key, default=None):
 		try:
@@ -466,7 +459,7 @@ class NOOwnershipLastModifiedBTreeContainer(EventlessLastModifiedBTreeContainer)
 
 	def __delitem__(self, key):
 		value = self[key]
-		self._delitemf(key)
+		self._delitemf(key, event=False)
 		lifecycleevent.removed(value, self, key)
 		notifyContainerModified(self)
 
