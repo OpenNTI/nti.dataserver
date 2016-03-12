@@ -16,25 +16,20 @@ does_not = is_not
 import BTrees
 import unittest
 
-from zope import interface
-
-from nti.coremetadata.interfaces import IRecordable
+from nti.coremetadata.mixins import RecordableMixin
 
 from nti.recorder.index import get_recordables
 from nti.recorder.index import create_recorder_catalog
 
 from nti.recorder.tests import SharedConfiguringTestLayer
 
-@interface.implementer(IRecordable)
-class Recordable(object):
-	locked=True
-
 class TestAdapters(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
 
 	def test_get_recordables(self):
-		recordable = Recordable()
+		recordable = RecordableMixin()
+		recordable.locked = True
 		catalog = create_recorder_catalog(family=BTrees.family64)
 		catalog.super_index_doc(1, recordable)
 		uids = list(get_recordables(objects=False, catalog=catalog))
