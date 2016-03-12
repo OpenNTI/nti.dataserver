@@ -7,7 +7,12 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="zope.security" />
+	
+	<include package="nti.contentfile" />
 
+	<!-- ACL -->
+	<adapter factory=".acl.ContentBaseFileACLProvider" />
+	
 	<subscriber factory=".decorators._ContentFileDecorator"
 				for="plone.namedfile.interfaces.IFile"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
