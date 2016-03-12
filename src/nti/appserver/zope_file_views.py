@@ -23,8 +23,9 @@ from zope.file.interfaces import IFile
 
 from zope.publisher.interfaces.browser import IBrowserRequest
 
-from pyramid.view import view_config
 from pyramid.security import NO_PERMISSION_REQUIRED
+
+from pyramid.view import view_config
 
 from ZODB.POSException import POSKeyError
 
@@ -54,7 +55,7 @@ class FileViewedEvent(object):
 def _do_view(request, view, event=False):
 	# Notify here, if necessary, before we may raise.
 	if event:
-		notify( FileViewedEvent( request, request.context ) )
+		notify(FileViewedEvent(request, request.context))
 	# Best we can do is try to get good cache headers. Check this before
 	# opening a blob; if etags match it raises NotModified
 	controller = IPreRenderResponseCacheController(request.context)

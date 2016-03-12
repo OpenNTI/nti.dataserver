@@ -48,7 +48,7 @@ class Currency(object):
 	# and a method, or it can access any property we provide
 
 	def _format_currency(self, decimal, currency=None, request=None):
-		# TODO We most likely will not have a thread-local request
+		# TODO: We most likely will not have a thread-local request
 		request = request or get_current_request()
 		if request is None:
 			# Use a USD default
