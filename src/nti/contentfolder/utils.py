@@ -13,6 +13,20 @@ from nti.contentfolder.interfaces import IRootFolder
 
 from nti.traversal.traversal import find_interface
 
+class TraversalException(Exception):
+
+    def __init__(self, msg, context=None, segment=None, path=None):
+        super(TraversalException, self).__init__(msg)
+        self.path = path
+        self.context = context
+        self.segment = segment
+
+class NotDirectoryException(TraversalException):
+    pass
+
+class NotSuchFileException(TraversalException):
+    pass
+        
 def traverse(current, path=None):
     root = find_interface(current, IRootFolder, strict=False)
     if not path or path == u'/':
@@ -38,8 +52,10 @@ def traverse(current, path=None):
         try:
             current = current[segment]
         except KeyError:
-            raise ValueError("%s not such file or directory", segment)
+            raise NotSuchFileException("Not such file or directory.", 
+                                        current, segment, path)
         except TypeError:
-            raise ValueError("%s not a directory", segment)
+            raise NotDirectoryException("Not a directory.", 
+                                        current, segment, path)
 
     return current

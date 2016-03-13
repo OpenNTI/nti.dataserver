@@ -19,6 +19,7 @@ from nti.contentfolder.model import RootFolder
 from nti.contentfolder.model import ContentFolder
 
 from nti.contentfolder.utils import traverse
+from nti.contentfolder.utils import TraversalException
 
 from nti.namedfile.file import NamedFile
 
@@ -40,16 +41,16 @@ class TestUtils(unittest.TestCase):
 		assert_that(traverse(root, 'home'), has_property('name', 'home'))
 		assert_that(traverse(root, '/home'), has_property('name', 'home'))
 		
-		with assert_raises(ValueError):
+		with assert_raises(TraversalException):
 			traverse(root, '/home/xxx')
 
-		with assert_raises(ValueError):
+		with assert_raises(TraversalException):
 			traverse(root, '/home/users/uuu')
 		
 		pdf = traverse(root, '/home/users/ichigo/bankai/info.pdf')
 		assert_that(pdf, has_property('name', 'info.pdf'))
 		
-		with assert_raises(ValueError):
+		with assert_raises(TraversalException):
 			traverse(root, '/home/users/ichigo/bankai/info.pdf/xyz')
 			
 		ichigo = traverse(root, '/home/.././home/users/./ichigo')

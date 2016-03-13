@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+import sys
 from collections import Mapping
 
 from zope import lifecycleevent
@@ -29,6 +30,8 @@ from nti.app.contentfile.view_mixins import transfer_data
 
 from nti.app.contentfolder import MessageFactory as _
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -47,6 +50,10 @@ from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import INamedContainer
 
 from nti.contentfolder.model import ContentFolder
+
+from nti.contentfolder.utils import traverse
+from nti.contentfolder.utils import TraversalException
+from nti.contentfolder.utils import NotSuchFileException
 
 from nti.dataserver import authorization as nauth
 
@@ -273,6 +280,7 @@ class RenameView(AbstractAuthenticatedView,
 		theObject = self.context
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
+		
 		if IRootFolder.providedBy(self.context):
 			raise hexc.HTTPForbidden(_("Cannot rename root folder."))
 
@@ -303,5 +311,74 @@ class RenameView(AbstractAuthenticatedView,
 		parent.rename(old, name)
 
 		# XXX: externalize first
+		result = to_external_object(theObject)
+		return result
+
+@view_config(context=INamedFile)
+@view_config(context=INamedContainer)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_UPDATE,
+			   request_method='POST',
+			   name='move')
+class MoveView(AbstractAuthenticatedView,
+			   ModeledContentEditRequestUtilsMixin,
+			   ModeledContentUploadRequestUtilsMixin):
+
+	def readInput(self, value=None):
+		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		if isinstance(data, six.string_types):
+			data = {'path': data}
+		assert isinstance(data, Mapping)
+		return CaseInsensitiveDict(data)
+
+	def __call__(self):
+		theObject = self.context
+		self._check_object_exists(theObject)
+		self._check_object_unmodified_since(theObject)
+		
+		if IRootFolder.providedBy(theObject):
+			raise hexc.HTTPForbidden(_("Cannot move root folder."))
+
+		data = self.readInput()
+		path = data.get('path')
+		if not path:
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid path."))
+
+		current = theObject
+		if not path.startswith(u'/'):
+			current = current.__parent__ if INamedFile.providedBy(current) else current
+
+		try:
+			target_name = theObject.name
+			target = traverse(current, path)
+		except (TraversalException) as e:
+			if not isinstance(e, NotSuchFileException) or e.path:
+				exc_info = sys.exc_info()
+				raise_json_error(
+						self.request,
+						hexc.HTTPUnprocessableEntity,
+						{ 	'message': _(str(e)),
+							'path': path,
+							'segment': e.segment,
+							'code': e.__class__.__name__ },
+						exc_info[2])
+			else:
+				target = e.context
+				target_name = e.segment
+
+		# remove from current
+		current.remove(theObject)
+
+		if INamedContainer.providedBy(target):
+			theObject.name = target_name
+			target.add(theObject)
+		else:
+			parent = target.__parent__
+			theObject.name = target.name
+			parent.add(theObject)
+
+		# XXX: externalize first
+		self.request.response.status_int = 201
 		result = to_external_object(theObject)
 		return result

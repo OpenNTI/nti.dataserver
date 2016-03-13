@@ -73,6 +73,7 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		# non root folders
 		if 	not IRootFolder.providedBy(context) \
 			and has_permission(ACT_UPDATE, context, request):
+			_links.append(_create_link(context, "move", "@@move"))
 			_links.append(_create_link(context, "rename", "@@rename"))
 
 @component.adapter(INamedFile)
@@ -95,4 +96,5 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	def _do_decorate_external(self, context, result):
 		_links = result.setdefault(LINKS, [])
 		_links.append(_create_link(context, rel="delete", method='DELETE'))
+		_links.append(_create_link(context, rel="move", name="@@move", method="POST"))
 		_links.append(_create_link(context, rel="rename", name="@@rename", method='POST'))
