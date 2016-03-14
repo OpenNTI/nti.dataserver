@@ -25,16 +25,36 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.event import notify
 
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
+
+from ZODB.interfaces import IBroken
+from ZODB.interfaces import IConnection
 
 from ZODB.POSException import POSError
-from ZODB.interfaces import IConnection, IBroken
 from ZODB.POSException import ConnectionStateError
 
 from persistent import Persistent
 
 from nti.common.property import alias
 from nti.common.property import CachedProperty
+
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IPersistentContentUnit
+from nti.contentlibrary.interfaces import ContentPackageAddedEvent
+from nti.contentlibrary.interfaces import ContentPackageRemovedEvent
+from nti.contentlibrary.interfaces import IContentPackageEnumeration
+from nti.contentlibrary.interfaces import ContentPackageReplacedEvent
+from nti.contentlibrary.interfaces import ContentPackageUnmodifiedEvent
+from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
+from nti.contentlibrary.interfaces import ContentPackageLibraryDidSyncEvent
+from nti.contentlibrary.interfaces import ContentPackageLibraryWillSyncEvent
+from nti.contentlibrary.interfaces import ContentPackageLibraryModifiedOnSyncEvent
+from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackageEnumeration
+
+from nti.contentlibrary.synchronize import SynchronizationResults
+from nti.contentlibrary.synchronize import ContentRemovalException
+from nti.contentlibrary.synchronize import UnmatchedRootNTIIDException
+from nti.contentlibrary.synchronize import LibrarySynchronizationResults
 
 from nti.externalization.persistence import NoPickle
 
@@ -43,24 +63,6 @@ from nti.intid.interfaces import ObjectMissingError
 from nti.ntiids.ntiids import ROOT as NTI_ROOT
 
 from nti.site.localutility import queryNextUtility
-
-from .interfaces import IContentPackageLibrary
-from .interfaces import IPersistentContentUnit
-from .interfaces import ContentPackageAddedEvent
-from .interfaces import ContentPackageRemovedEvent
-from .interfaces import IContentPackageEnumeration
-from .interfaces import ContentPackageReplacedEvent
-from .interfaces import ContentPackageUnmodifiedEvent
-from .interfaces import ISyncableContentPackageLibrary
-from .interfaces import ContentPackageLibraryDidSyncEvent
-from .interfaces import ContentPackageLibraryWillSyncEvent
-from .interfaces import ContentPackageLibraryModifiedOnSyncEvent
-from .interfaces import IDelimitedHierarchyContentPackageEnumeration
-
-from .synchronize import SynchronizationResults
-from .synchronize import ContentRemovalException
-from .synchronize import UnmatchedRootNTIIDException
-from .synchronize import LibrarySynchronizationResults
 
 @interface.implementer(IContentPackageEnumeration)
 class AbstractContentPackageEnumeration(object):
@@ -133,7 +135,8 @@ def _register_units(content_unit):
 
 	def _register(obj):
 		try:
-			if IBroken.providedBy(obj) or not IPersistentContentUnit.providedBy(obj):
+			if 		IBroken.providedBy(obj) or \
+				not IPersistentContentUnit.providedBy(obj):
 				return
 			intid = intids.queryId(obj)
 			if intid is None:
@@ -155,7 +158,8 @@ def _unregister_units(content_unit):
 	def _unregister(obj):
 		intid = None
 		try:
-			if IBroken.providedBy(obj) or not IPersistentContentUnit.providedBy(obj):
+			if 	IBroken.providedBy(obj) or \
+				not IPersistentContentUnit.providedBy(obj):
 				return
 			intid = intids.queryId(obj)
 			if intid is not None:
@@ -330,7 +334,7 @@ class AbstractContentPackageLibrary(object):
 				notify(ContentPackageRemovedEvent(old, params, results))
 				_unregister_units(old)
 				old.__parent__ = None
-				lib_sync_results.removed(old.ntiid) # register
+				lib_sync_results.removed(old.ntiid)  # register
 
 			for new, old in changed:
 				# check ntiid changes
@@ -344,16 +348,16 @@ class AbstractContentPackageLibrary(object):
 				# lifecycleevent.added on 'new' objects as modified events subscribers
 				# are expected to handle any change
 				_register_units(new)
-				lib_sync_results.modified(new.ntiid) # register
+				lib_sync_results.modified(new.ntiid)  # register
 				# Note that this is the special event that shows both objects.
 				notify(ContentPackageReplacedEvent(new, old, params, results))
 
 			for new in added:
 				new.__parent__ = self
 				lifecycleevent.created(new)
-				lib_sync_results.added(new.ntiid) # register
+				_register_units(new)  # get intids
+				lib_sync_results.added(new.ntiid)  # register
 				notify(ContentPackageAddedEvent(new, params, results))
-				_register_units(new)
 
 			# after updating remove parent reference for old objects
 			for _, old in changed:
@@ -606,7 +610,7 @@ class AbstractContentPackageLibrary(object):
 		if path:
 			parent = path[-1]
 			def rec(toc, accum):
-				accum.extend( toc.embeddedContainerNTIIDs )
+				accum.extend(toc.embeddedContainerNTIIDs)
 				for child in toc.children:
 					rec(child, accum)
 				accum.append(toc.ntiid)
@@ -658,7 +662,7 @@ def __pathToPropertyValue(unit, prop, value):
 			return childPath
 	return None
 
-from .interfaces import IGlobalContentPackage
+from nti.contentlibrary.interfaces import IGlobalContentPackage
 
 @interface.implementer(IAttributeAnnotatable)
 @NoPickle
