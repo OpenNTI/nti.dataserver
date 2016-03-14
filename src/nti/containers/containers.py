@@ -439,6 +439,13 @@ class NOOwnershipLastModifiedBTreeContainer(EventlessLastModifiedBTreeContainer)
 	but does not take ownership of the objects
 	"""
 	
+	def clear(self, event=True):
+		for k in list(self.keys()):
+			if event:
+				del self[k]
+			else:
+				self._delitemf(k, event=False)
+
 	def _transform(self, value):
 		if not IContained.providedBy(value):
 			if ILocation.providedBy(value):
