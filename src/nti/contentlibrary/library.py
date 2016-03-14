@@ -125,7 +125,7 @@ class AbstractDelimitedHiercharchyContentPackageEnumeration(AbstractContentPacka
 			return ()
 		return root.enumerateChildren()
 
-def _register_content_units(content_unit):
+def _register_content_units(context, content_unit):
 	"""
 	Recursively register content units.
 	"""
@@ -134,6 +134,7 @@ def _register_content_units(content_unit):
 		return
 
 	def _register(obj):
+		_add_2_connection(context, obj)
 		try:
 			if 		IBroken.providedBy(obj) or \
 				not IPersistentContentUnit.providedBy(obj):
@@ -172,7 +173,7 @@ def _unregister_content_units(content_unit):
 
 def _add_2_connection(context, obj):
 	connection = IConnection(context, None)
-	if connection is not None:
+	if connection is not None and not getattr(obj, '_p_jar', None):
 		connection.add(obj)
 		return True
 	return False
@@ -349,21 +350,18 @@ class AbstractContentPackageLibrary(object):
 					raise UnmatchedRootNTIIDException(
 							"Pacakge NTIID changed from %s to %s" % (old.ntiid, new.ntiid))
 				new.__parent__ = self
-				# new is a created object
-				_add_2_connection(self , new)
 				# XXX CS/JZ, 2-04-15 DO NEITHER call lifecycleevent.created nor
 				# lifecycleevent.added on 'new' objects as modified events subscribers
 				# are expected to handle any change
-				_register_content_units(new)
+				_register_content_units(self, new)
 				lib_sync_results.modified(new.ntiid)  # register
 				# Note that this is the special event that shows both objects.
 				notify(ContentPackageReplacedEvent(new, old, params, results))
 
 			for new in added:
 				new.__parent__ = self
-				_add_2_connection(self , new)
+				_register_content_units(self, new)  # get intids
 				lifecycleevent.created(new)
-				_register_content_units(new)  # get intids
 				lib_sync_results.added(new.ntiid)  # register
 				notify(ContentPackageAddedEvent(new, params, results))
 
