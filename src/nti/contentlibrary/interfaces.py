@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 
-from zope.annotation.interfaces import IAnnotatable
+from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.container.constraints import contains  # If passing strings, they require bytes, NOT unicode, or they fail
 from zope.container.interfaces import IContentContainer
@@ -633,7 +633,7 @@ class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
 
 class IContentUnit(IZContained,
 				   IDCOptionalDescriptiveProperties,
-				   IAnnotatable):
+				   IAttributeAnnotatable):
 	"""
 	One identified unit of content.
 
@@ -954,7 +954,7 @@ class IContentPackageBundle(IDisplayableContent,
 							ILastModified,
 							IShouldHaveTraversablePath,
 							dub_interfaces.IDCTimes,
-							IAnnotatable):
+							IAttributeAnnotatable):
 	"""
 	A (typically persistent) object representing a collection
 	of one or more content packages, presented as a viewable unit
