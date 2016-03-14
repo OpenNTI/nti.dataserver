@@ -173,7 +173,7 @@ def _unregister_content_units(content_unit):
 
 def _add_2_connection(context, obj):
 	connection = IConnection(context, None)
-	if connection is not None and not getattr(obj, '_p_jar', None):
+	if connection is not None and not IConnection(obj, None):
 		connection.add(obj)
 		return True
 	return False
