@@ -932,8 +932,8 @@ from nti.dataserver_core.interfaces import IContent
 IContent = IContent
 
 # BWC exports
-from nti.dataserver_core.interfaces import IBodyContentType
-IBodyContentType = IBodyContentType
+from nti.dataserver_core.interfaces import IModeledContentBody
+IModeledContentBody = IModeledContentBody
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
@@ -1076,18 +1076,10 @@ class ITranscriptContainer(INamedContainer):
 from nti.dataserver_core.interfaces import ICanvas
 from nti.dataserver_core.interfaces import ICanvasShape
 from nti.dataserver_core.interfaces import ICanvasURLShape
-from nti.dataserver_core.interfaces import ICanvasPathShape
-from nti.dataserver_core.interfaces import ICanvasTextShape
-from nti.dataserver_core.interfaces import ICanvasCircleShape
-from nti.dataserver_core.interfaces import ICanvasPolygonShape
 
 ICanvas = ICanvas
 ICanvasShape = ICanvasShape
 ICanvasURLShape = ICanvasURLShape
-ICanvasPathShape = ICanvasPathShape
-ICanvasTextShape = ICanvasTextShape
-ICanvasCircleShape = ICanvasCircleShape
-ICanvasPolygonShape = ICanvasPolygonShape
 
 # BWC exports
 from nti.dataserver_core.interfaces import IMedia
@@ -1265,7 +1257,7 @@ class ObjectFlaggedEvent(interface.interfaces.ObjectEvent):
 class ObjectUnflaggedEvent(interface.interfaces.ObjectEvent):
 	pass
 
-class INote(IHighlight, IThreadable, ITitledContent, IBodyContentType):
+class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody):
 	"""
 	A user-created note attached to other content.
 	"""

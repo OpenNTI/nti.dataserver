@@ -10,6 +10,11 @@
 
 	<include package="nti.contentfolder" />
 
+	<adapter name="cf.io"
+			 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
+			 factory=".CFIOPathAdapter"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+
 	<!-- ACL -->
 	<adapter factory=".acl.ContentFolderACLProvider" />
 		

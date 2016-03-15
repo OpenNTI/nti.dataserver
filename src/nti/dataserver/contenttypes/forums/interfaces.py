@@ -43,8 +43,8 @@ from nti.dataserver.interfaces import IMutedInStream
 from nti.dataserver.interfaces import ITitledContent
 from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import IReadableShared
-from nti.dataserver.interfaces import IBodyContentType
 from nti.dataserver.interfaces import IUserTaggedContent
+from nti.dataserver.interfaces import IModeledContentBody
 from nti.dataserver.interfaces import ITitledDescribedContent
 from nti.dataserver.interfaces import INeverStoredInSharedStream
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
@@ -133,11 +133,11 @@ class IUseOIDForNTIID(interface.Interface):
 class IPost(IContained,
 			IAcquirer,
 			IDCTimes,
+			ITitledContent,
 			IModeledContent,
 			IReadableShared,
-			ITitledContent,
-			IBodyContentType,
 			IUserTaggedContent,
+			IModeledContentBody,
 			INeverStoredInSharedStream):
 	"""
 	A post within a topic.

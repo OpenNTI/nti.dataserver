@@ -5,6 +5,8 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.dataserver.interfaces import IDataserverFolder
+from nti.externalization.oids import to_external_ntiid_oid
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -28,7 +30,7 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.contentfile.view_mixins import transfer_data
 
-from nti.app.contentfolder import MessageFactory as _
+from nti.app.contentfolder import MessageFactory as _, CF_IO
 
 from nti.app.externalization.error import raise_json_error
 
@@ -382,3 +384,42 @@ class MoveView(AbstractAuthenticatedView,
 		self.request.response.status_int = 201
 		result = to_external_object(theObject)
 		return result
+
+@view_config(context=IDataserverFolder)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_READ,
+			   request_method='GET',
+			   name=CF_IO)
+class CFIOView(AbstractAuthenticatedView):
+	
+	def _encode(self, s):
+		return s.encode('utf-8') if isinstance(s, unicode) else s
+
+	def __call__(self):
+		request = self.request
+		uid = request.subpath[0] if request.subpath else ''
+		if uid is None:
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid URL"))
+
+		ntiid = to_external_ntiid_oid(self.ntiid)
+		path = b'/dataserver2/Objects/' + self._encode(page_ntiid)
+		if request.query_string:
+			path += '?' + _encode(request.query_string)
+	
+		# set subrequest
+		subrequest = request.blank(path)
+		subrequest.method = b'GET'
+		subrequest.possible_site_names = request.possible_site_names
+		# prepare environ
+		subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
+		subrequest.environ[b'repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
+		for k in request.environ:
+			if k.startswith('paste.') or k.startswith('HTTP_'):
+				if k not in subrequest.environ:
+					subrequest.environ[k] = request.environ[k]
+
+		# invoke
+		result = request.invoke_subrequest(subrequest)
+		return result
+
