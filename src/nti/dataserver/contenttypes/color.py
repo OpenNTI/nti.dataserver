@@ -72,15 +72,15 @@ def _update_from_rgba(arr, string, alpha=1.0):
 		string = string.strip()[5:-1].split(',')
 		string = ' '.join(string)
 	rgba = string.split(' ')
-	if len(rgba) == 3: 
+	if len(rgba) == 3:
 		rgba = list(rgba)
 		rgba.append(alpha)
-		
+
 	r, g, b, a = map(float, rgba)
 	assert 0.0 <= r <= 1.0
 	assert 0.0 <= g <= 1.0
 	assert 0.0 <= b <= 1.0
-	
+
 	arr[0], arr[1], arr[2] = r, g, b
 	assert 0.0 <= a <= 1.0
 
@@ -141,7 +141,7 @@ def createColorProperty(color_name, r=1.0, g=1.0, b=1.0, opacity=1.0):
 
 	prop_rgba = property(as_rgba)
 
-	prop_opac = property(lambda self: getter(self)[3] )
+	prop_opac = property(lambda self: getter(self)[3])
 
 	frame.f_locals[array_name] = (r, g, b, opacity)
 	frame.f_locals[prop_name] = prop
@@ -165,7 +165,7 @@ def updateColorFromExternalValue(self, color_name, parsed):
 	arr = list(getattr(self, array_name))
 	orig = list(arr)
 
-	if rgba_string: # this takes precedence
+	if rgba_string:  # this takes precedence
 		_update_from_rgba(arr, rgba_string)
 		parsed.pop(prop_name, None)
 		parsed.pop(prop_opac_name, None)

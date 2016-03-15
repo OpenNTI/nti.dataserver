@@ -26,8 +26,15 @@ from persistent.list import PersistentList
 
 from nti.contentfragments.interfaces import IUnicodeContentFragment
 
+from nti.dataserver.contenttypes.base import _make_getitem
+from nti.dataserver.contenttypes.base import UserContentRoot
+
+from nti.dataserver.contenttypes.threadable import ThreadableMixin
+
 from nti.dataserver.interfaces import ICanvas
 from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import ICanvasShape
+from nti.dataserver.interfaces import ICanvasURLShape
 from nti.dataserver.interfaces import ILinkExternalHrefOnly
 
 from nti.externalization.oids import to_external_ntiid_oid
@@ -36,9 +43,6 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.datastructures import ExternalizableInstanceDict
 
 from nti.mimetype import mimetype
-
-from .threadable import ThreadableMixin
-from .base import UserContentRoot, _make_getitem
 
 #####
 # Whiteboard shapes
@@ -95,11 +99,13 @@ class Canvas(ThreadableMixin, UserContentRoot):
 		"""
 		return True
 
-from .base import UserContentRootInternalObjectIO
-from .threadable import ThreadableExternalizableMixin
+from nti.dataserver.contenttypes.base import UserContentRootInternalObjectIO
+
+from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
 @component.adapter(ICanvas)
-class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInternalObjectIO):
+class CanvasInternalObjectIO(ThreadableExternalizableMixin, 
+							 UserContentRootInternalObjectIO):
 
 	# TODO: We're not trying to resolve any incoming external
 	# things. Figure out how we want to do incremental changes
@@ -111,6 +117,7 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInter
 
 	# We write shapes ourself for speed. The list is often long and only
 	# contains _CanvasShape "objects". Note that this means they cannot be decorated
+
 	_excluded_out_ivars_ = UserContentRootInternalObjectIO._excluded_out_ivars_.union(('shapeList', 'viewportRatio'))
 
 	def updateFromExternalObject(self, ext_parsed, **kwargs):
@@ -123,7 +130,9 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInter
 
 		super(CanvasInternalObjectIO, self).updateFromExternalObject(ext_parsed, **kwargs)
 
-		if isinstance(viewportRatio, numbers.Real) and viewportRatio > 0 and viewportRatio != canvas.viewportRatio:
+		if 		isinstance(viewportRatio, numbers.Real) \
+			and viewportRatio > 0 \
+			and viewportRatio != canvas.viewportRatio:
 			canvas.viewportRatio = viewportRatio
 
 		if shapeList is not self:
@@ -204,8 +213,14 @@ class CanvasAffineTransform(object):
 		Note that we externalize ourself directly, without going through the superclass
 		at all, for speed. We would only delete most of the stuff it added anyway.
 		"""
-		result = LocatedExternalDict(a=self.a, b=self.b, c=self.c, d=self.d, tx=self.tx, ty=self.ty,
-									 Class=self.__class__.__name__, MimeType=self.mime_type)
+		result = LocatedExternalDict(a=self.a,
+									 b=self.b, 
+									 c=self.c, 
+									 d=self.d, 
+									 tx=self.tx, 
+									 ty=self.ty,
+									 Class=self.__class__.__name__, 
+									 MimeType=self.mime_type)
 		return result
 
 	def toArray(self):
@@ -223,10 +238,10 @@ class CanvasAffineTransform(object):
 	def __hash__(self):
 		return hash( tuple([getattr(self,x) for x in self.__slots__]) )
 
-from .color import createColorProperty
-from .color import updateColorFromExternalValue
+from nti.dataserver.contenttypes.color import createColorProperty
+from nti.dataserver.contenttypes.color import updateColorFromExternalValue
 
-@interface.implementer(IExternalObject, IZContained)
+@interface.implementer(ICanvasShape, IExternalObject)
 class _CanvasShape(ExternalizableInstanceDict):
 
 	__parent__ = None
@@ -377,6 +392,7 @@ from nti.links import links
 
 from nti.zodb import urlproperty
 
+@interface.implementer(ICanvasURLShape)
 class _CanvasUrlShape(_CanvasShape):
 
 	# We take responsibility for writing the URL ourself
@@ -394,9 +410,10 @@ class _CanvasUrlShape(_CanvasShape):
 	def updateFromExternalObject(self, *args, **kwargs):
 		super(_CanvasUrlShape, self).updateFromExternalObject(*args, **kwargs)
 
-
-	url = urlproperty.UrlProperty(data_name=_DATA_NAME, url_attr_name='url', file_attr_name='_file',
-								   use_dict=True)
+	url = urlproperty.UrlProperty(data_name=_DATA_NAME, 
+								  url_attr_name='url', 
+								  file_attr_name='_file',
+								  use_dict=True)
 
 	__getitem__ = url.make_getitem()
 
