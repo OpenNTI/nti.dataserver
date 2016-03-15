@@ -11,6 +11,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
+import errno
+
 from pyramid.view import view_config
 
 from zope import component
@@ -253,7 +256,13 @@ class _CompilingSCSSView(_StaticView):
 		if os.path.isfile(_scss_file) and os.stat(_scss_file).st_size:
 			# TODO: Remove CSS if this file goes away/to zero bytes?
 			if not os.path.isdir(_css_dir):
-				os.mkdir(_css_dir)
+				try:
+					os.mkdir(_css_dir)
+				except OSError as e:
+					if e.errno == errno.EEXIST:
+						logger.warning( "Error creating directory %s. Directory already exists.  Running unit tests concurrently?", _css_dir )
+					else:
+						raise
 
 			if 	not os.path.isfile(_css_file) or \
 				os.stat(_scss_file).st_mtime > os.stat(_css_file).st_mtime:
