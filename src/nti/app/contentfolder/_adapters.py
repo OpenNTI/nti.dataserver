@@ -22,7 +22,7 @@ from nti.contentfolder.model import RootFolder
 @interface.implementer(IPathAdapter)
 class OFSPathAdapter(Contained):
 	"""
-	XXX: Adapter to be used only in unit tests. 
+	XXX: Adapter to be used only in unit tests.
 	"""
 
 	__name__ = "ofs"
@@ -42,3 +42,4 @@ class OFSPathAdapter(Contained):
 				IConnection(self.context).add(result)
 			return result
 		raise KeyError(key)
+

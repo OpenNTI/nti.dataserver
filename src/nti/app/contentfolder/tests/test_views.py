@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.app.contentfolder.utils import get_cf_io_href
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -14,11 +15,18 @@ from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
+from hamcrest import has_property
 does_not = is_not
+
+from zope import component
+
+from nti.dataserver.interfaces import IDataserver
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.dataserver.tests import mock_dataserver
 
 class TestContentFolderViews(ApplicationLayerTest):
 
@@ -142,3 +150,18 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(1),
 								'Items', has_length(1)))
+		
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_cfio(self):
+		self.testapp.post('/dataserver2/ofs/root/@@upload',
+						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
+						  status=201)
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			ds = component.getUtility(IDataserver)
+			ichigo = ds.root._ofs_root['ichigo'] # only in test
+			href = get_cf_io_href(ichigo)
+			assert_that(href, is_not(none()))
+			res = self.testapp.get(href, status=200)
+			assert_that(res, has_property('app_iter', has_length(1)))
+			assert_that(res, has_property('app_iter', is_(['ichigo'])))

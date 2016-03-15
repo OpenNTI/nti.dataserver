@@ -5,8 +5,6 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.dataserver.interfaces import IDataserverFolder
-from nti.externalization.oids import to_external_ntiid_oid
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,7 +13,10 @@ import six
 import sys
 from collections import Mapping
 
+from zope import component
 from zope import lifecycleevent
+
+from zope.intid.interfaces import IIntIds
 
 from pyramid import httpexceptions as hexc
 
@@ -28,9 +29,9 @@ from plone.namedfile.interfaces import INamed
 from nti.app.base.abstract_views import get_all_sources
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.app.contentfile.view_mixins import transfer_data
+from nti.app.contentfolder import MessageFactory as _
 
-from nti.app.contentfolder import MessageFactory as _, CF_IO
+from nti.app.contentfolder import CFIO
 
 from nti.app.externalization.error import raise_json_error
 
@@ -58,12 +59,17 @@ from nti.contentfolder.utils import TraversalException
 from nti.contentfolder.utils import NotSuchFileException
 
 from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.externalization import to_external_object
+
+from nti.externalization.integer_strings import from_external_string
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.namedfile.file import name_finder
 from nti.namedfile.file import safe_filename
@@ -187,7 +193,8 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		factory = self.factory(source)
 		filename = getattr(source, 'filename', None)
 		contentType = getattr(source, 'contentType', None)
-
+		
+		# transfer data
 		result = factory()
 		result.name = name
 		result.data = source.read()
@@ -204,7 +211,6 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			filename = getattr(source, 'filename', None)
 			file_key = safe_filename(name_finder(name))
 			target = self.get_namedfile(source, file_key, filename)
-			transfer_data(source, target)
 			target.creator = creator
 			items.append(target)
 
@@ -385,12 +391,12 @@ class MoveView(AbstractAuthenticatedView,
 		result = to_external_object(theObject)
 		return result
 
-@view_config(context=IDataserverFolder)
+@view_config(name=CFIO)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
-			   permission=nauth.ACT_READ,
 			   request_method='GET',
-			   name=CF_IO)
+			   context=IDataserverFolder,
+			   permission=nauth.ACT_NTI_ADMIN)
 class CFIOView(AbstractAuthenticatedView):
 	
 	def _encode(self, s):
@@ -402,10 +408,16 @@ class CFIOView(AbstractAuthenticatedView):
 		if uid is None:
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid URL"))
 
-		ntiid = to_external_ntiid_oid(self.ntiid)
-		path = b'/dataserver2/Objects/' + self._encode(page_ntiid)
+		intids = component.getUtility(IIntIds)
+		uid = from_external_string(uid)
+		context = intids.queryObject(uid)
+		if not IContentBaseFile.providedBy(context):
+			raise hexc.HTTPNotFound()
+		
+		ntiid = to_external_ntiid_oid(context)
+		path = b'/dataserver2/Objects/%s/@@view' % self._encode(ntiid)
 		if request.query_string:
-			path += '?' + _encode(request.query_string)
+			path += '?' + self._encode(request.query_string)
 	
 		# set subrequest
 		subrequest = request.blank(path)
@@ -422,4 +434,3 @@ class CFIOView(AbstractAuthenticatedView):
 		# invoke
 		result = request.invoke_subrequest(subrequest)
 		return result
-
