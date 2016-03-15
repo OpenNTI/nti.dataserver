@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 from urllib import quote
+from urllib import unquote
+from urlparse import urlparse
 
 from collections import Mapping
 from collections import OrderedDict
@@ -50,6 +52,7 @@ from nti.links.externalization import render_link
 
 from nti.links.links import Link
 
+from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 def is_named_source(context):
@@ -289,3 +292,20 @@ def to_external_download_href(item):
 										  contentType=contentType)
 		return external
 	return None
+
+def get_file_from_oid_external_link(link):
+	result = None
+	try:
+		if link.endswith('view') or link.endswith('download'):
+			path = urlparse(link).path
+			path = os.path.split(path)[0]
+		else:
+			path = link
+		ntiid = unquote(os.path.split(path)[1] or u'')  # last part of path
+		if is_valid_ntiid_string(ntiid):
+			result = find_object_with_ntiid(ntiid)
+			if not IPloneNamed.providedBy(result):
+				result = None
+	except Exception:
+		logger.exception("Error while getting file from %s", link)
+	return result
