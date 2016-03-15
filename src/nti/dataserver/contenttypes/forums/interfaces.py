@@ -43,8 +43,8 @@ from nti.dataserver.interfaces import IMutedInStream
 from nti.dataserver.interfaces import ITitledContent
 from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import IReadableShared
+from nti.dataserver.interfaces import IBodyContentType
 from nti.dataserver.interfaces import IUserTaggedContent
-from nti.dataserver.interfaces import IModeledContentBody
 from nti.dataserver.interfaces import ITitledDescribedContent
 from nti.dataserver.interfaces import INeverStoredInSharedStream
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
@@ -136,9 +136,9 @@ class IPost(IContained,
 			IModeledContent,
 			IReadableShared,
 			ITitledContent,
+			IBodyContentType,
 			IUserTaggedContent,
-			INeverStoredInSharedStream,
-			IModeledContentBody):
+			INeverStoredInSharedStream):
 	"""
 	A post within a topic.
 

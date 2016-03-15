@@ -932,8 +932,8 @@ from nti.dataserver_core.interfaces import IContent
 IContent = IContent
 
 # BWC exports
-from nti.dataserver_core.interfaces import IModeledContentBody
-IModeledContentBody = IModeledContentBody
+from nti.dataserver_core.interfaces import IBodyContentType
+IBodyContentType = IBodyContentType
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
@@ -1265,7 +1265,7 @@ class ObjectFlaggedEvent(interface.interfaces.ObjectEvent):
 class ObjectUnflaggedEvent(interface.interfaces.ObjectEvent):
 	pass
 
-class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody):
+class INote(IHighlight, IThreadable, ITitledContent, IBodyContentType):
 	"""
 	A user-created note attached to other content.
 	"""
