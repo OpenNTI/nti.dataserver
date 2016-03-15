@@ -931,6 +931,10 @@ CompoundModeledContentBody = CompoundModeledContentBody
 from nti.dataserver_core.interfaces import IContent
 IContent = IContent
 
+# BWC exports
+from nti.dataserver_core.interfaces import IModeledContentBody
+IModeledContentBody = IModeledContentBody
+
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
 class ITitledDescribedContent(ITitledContent, IDCDescriptiveProperties):
@@ -1069,22 +1073,35 @@ class ITranscriptContainer(INamedContainer):
 	contains(ITranscript)
 
 # BWC exports
-from nti.dataserver_core.interfaces import IMedia
 from nti.dataserver_core.interfaces import ICanvas
 from nti.dataserver_core.interfaces import ICanvasShape
+from nti.dataserver_core.interfaces import ICanvasURLShape
+from nti.dataserver_core.interfaces import ICanvasPathShape
+from nti.dataserver_core.interfaces import ICanvasTextShape
+from nti.dataserver_core.interfaces import ICanvasCircleShape
+from nti.dataserver_core.interfaces import ICanvasPolygonShape
+
+ICanvas = ICanvas
+ICanvasShape = ICanvasShape
+ICanvasURLShape = ICanvasURLShape
+ICanvasPathShape = ICanvasPathShape
+ICanvasTextShape = ICanvasTextShape
+ICanvasCircleShape = ICanvasCircleShape
+ICanvasPolygonShape = ICanvasPolygonShape
+
+# BWC exports
+from nti.dataserver_core.interfaces import IMedia
 from nti.dataserver_core.interfaces import IEmbeddedAudio
 from nti.dataserver_core.interfaces import IEmbeddedMedia
 from nti.dataserver_core.interfaces import IEmbeddedVideo
-from nti.dataserver_core.interfaces import ICanvasURLShape
-from nti.dataserver_core.interfaces import IModeledContentFile
 
 IMedia = IMedia
-ICanvas = ICanvas
-ICanvasShape = ICanvasShape
 IEmbeddedAudio = IEmbeddedAudio
 IEmbeddedMedia = IEmbeddedMedia
 IEmbeddedVideo = IEmbeddedVideo
-ICanvasURLShape = ICanvasURLShape
+
+# BWC exports
+from nti.dataserver_core.interfaces import IModeledContentFile
 IModeledContentFile = IModeledContentFile
 
 # BWC exports
@@ -1248,7 +1265,7 @@ class ObjectFlaggedEvent(interface.interfaces.ObjectEvent):
 class ObjectUnflaggedEvent(interface.interfaces.ObjectEvent):
 	pass
 
-class INote(IHighlight, IThreadable, ITitledContent):
+class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody):
 	"""
 	A user-created note attached to other content.
 	"""

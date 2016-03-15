@@ -35,12 +35,18 @@ from nti.dataserver.interfaces import ICanvas
 from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import ICanvasShape
 from nti.dataserver.interfaces import ICanvasURLShape
+from nti.dataserver.interfaces import ICanvasPathShape
+from nti.dataserver.interfaces import ICanvasTextShape
+from nti.dataserver.interfaces import ICanvasCircleShape
+from nti.dataserver.interfaces import ICanvasPolygonShape
 from nti.dataserver.interfaces import ILinkExternalHrefOnly
 
-from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
+
 from nti.externalization.datastructures import ExternalizableInstanceDict
+
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.mimetype import mimetype
 
@@ -348,9 +354,11 @@ class _CanvasShape(ExternalizableInstanceDict):
 	def __hash__(self):
 		return hash(self.transform)
 
+@interface.implementer(ICanvasCircleShape)
 class _CanvasCircleShape(_CanvasShape):
 	pass
 
+@interface.implementer(ICanvasPolygonShape)
 class _CanvasPolygonShape(_CanvasShape):
 
 	_ext_primitive_out_ivars_ = _CanvasShape._ext_primitive_out_ivars_.union({'sides'})
@@ -372,10 +380,10 @@ class _CanvasPolygonShape(_CanvasShape):
 	def __hash__(self):
 		return super(_CanvasPolygonShape,self).__hash__() + self.sides
 
+@interface.implementer(ICanvasTextShape)
 class _CanvasTextShape(_CanvasShape):
 
 	_ext_primitive_out_ivars_ = _CanvasShape._ext_primitive_out_ivars_.union({'text'})
-
 
 	def __init__(self, text=''):
 		super(_CanvasTextShape, self).__init__()
@@ -471,6 +479,7 @@ class _CanvasUrlShape(_CanvasShape):
 	def __repr__(self):
 		return '<%s>' % self.__class__.__name__
 
+@interface.implementer(ICanvasPathShape)
 class _CanvasPathShape(_CanvasShape):
 
 	# We write points ourself for speed. The list is often long and only

@@ -44,6 +44,7 @@ from nti.dataserver.interfaces import ITitledContent
 from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import IReadableShared
 from nti.dataserver.interfaces import IUserTaggedContent
+from nti.dataserver.interfaces import IModeledContentBody
 from nti.dataserver.interfaces import ITitledDescribedContent
 from nti.dataserver.interfaces import INeverStoredInSharedStream
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
@@ -136,7 +137,8 @@ class IPost(IContained,
 			IReadableShared,
 			ITitledContent,
 			IUserTaggedContent,
-			INeverStoredInSharedStream):
+			INeverStoredInSharedStream,
+			IModeledContentBody):
 	"""
 	A post within a topic.
 
