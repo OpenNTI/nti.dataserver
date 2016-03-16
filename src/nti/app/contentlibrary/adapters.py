@@ -14,8 +14,6 @@ import time
 from zope import component
 from zope import interface
 
-from zope.interface.common.mapping import IMapping
-
 from zope.intid.interfaces import IIntIds
 
 from zope.location.interfaces import IContained
@@ -369,12 +367,29 @@ def _bundles_from_container_object(obj):
 
 # Containers
 
-@interface.implementer(IPresentationAssetContainer, IContained, IMapping)
+@interface.implementer(IPresentationAssetContainer, IContained)
 class _PresentationAssetContainer(PersistentMapping,
 							   	  PersistentCreatedAndModifiedTimeObject):
 	__name__ = None
 	__parent__ = None
+
 	_SET_CREATED_MODTIME_ON_INIT = False
+
+	def append(self, item):
+		self[item.ntiid] = item
+
+	def extend(self, items):
+		for item in items or ():
+			self.append(item)
+
+	def assets(self):
+		return list(self.values())
+
+	def __setitem__(self, key, value):
+		PersistentMapping.__setitem__(self, key, value)
+
+	def __delitem__(self, key):
+		PersistentMapping.__delitem__(self, key)
 
 @interface.implementer(IPresentationAssetContainer)
 def presentation_asset_items_factory(context):
