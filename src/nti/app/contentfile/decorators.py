@@ -41,7 +41,7 @@ class _ContentFileDecorator(object):
 					href += ('/' + name if name else u'')
 				ext_dict[key] = href
 			# XXX: make sure we add OID/NTIID fields to signal this file
-			# can mark as an internal ref if it's going to be updated
+			# can be marked as an internal ref if it's going to be updated
 			if OID not in ext_dict:
 				ext_dict[OID] = oid
 			if NTIID not in ext_dict:

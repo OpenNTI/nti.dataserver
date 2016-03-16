@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.app.contentfile.view_mixins import to_external_download_href
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -19,13 +18,16 @@ from hamcrest import assert_that
 from hamcrest import starts_with
 from hamcrest import has_property
 
+from nti.app.contentfile.view_mixins import to_external_download_href
+
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from nti.externalization.tests import externalizes
 
-from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.dataserver.tests import mock_dataserver
 
