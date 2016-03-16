@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import sys
 import collections
 import simplejson as json
@@ -31,7 +29,10 @@ from zope.schema.interfaces import ConstraintNotSatisfied
 from z3c.password.interfaces import InvalidPassword
 
 from pyramid import httpexceptions as hexc
+
 from pyramid.threadlocal import get_current_request
+
+from nti.app.externalization import MessageFactory as _
 
 def _json_error_map(o):
 	if isinstance(o, set):
