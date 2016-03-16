@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 import six
 
 from zope import interface
+from zope import lifecycleevent
 
 from zope.mimetype.interfaces import IContentTypeAware
 
@@ -26,6 +27,8 @@ from nti.contentfolder.interfaces import IContentFolder
 from nti.contentfolder.interfaces import INamedContainer
 
 from nti.namedfile.file import get_file_name
+
+from nti.namedfile.interfaces import IFile
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
@@ -90,6 +93,32 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 	def rename(self, old, new):
 		item = self._delitemf(old, event=False)
 		self._setitemf(new, item)
+
+	def moveTo(self, item, target, newName=None):
+		assert 		isinstance(item, six.string_types) \
+				or	INamedContainer.providedBy(item) \
+				or	IFile.providedBy(item)
+
+		assert INamedContainer.providedBy(target)
+		if self == target:
+			return False
+
+		# check item exists in this continer
+		name = get_context_name(item) or item
+		if name not in self:
+			return False
+		newName = newName or name
+
+		# remove from target if found
+		if newName in target:
+			del target[newName]
+
+		item = self._delitemf(name, event=False)
+		item.name = newName
+		target._setitemf(newName, item)
+
+		lifecycleevent.moved(item, self, name, target, newName)
+		return True
 
 @interface.implementer(IRootFolder)
 class RootFolder(ContentFolder):

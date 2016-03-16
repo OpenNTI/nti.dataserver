@@ -343,8 +343,6 @@ class MoveView(AbstractAuthenticatedView,
 	def __call__(self):
 		theObject = self.context
 		self._check_object_exists(theObject)
-		self._check_object_unmodified_since(theObject)
-		
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot move root folder."))
 
@@ -354,6 +352,7 @@ class MoveView(AbstractAuthenticatedView,
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid path."))
 
 		current = theObject
+		parent = current.__parent__
 		if not path.startswith(u'/'):
 			current = current.__parent__ if INamedFile.providedBy(current) else current
 
@@ -375,16 +374,10 @@ class MoveView(AbstractAuthenticatedView,
 				target = e.context
 				target_name = e.segment
 
-		# remove from current
-		current.remove(theObject)
-
 		if INamedContainer.providedBy(target):
-			theObject.name = target_name
-			target.add(theObject)
+			parent.moveTo(theObject, target, target_name)
 		else:
-			parent = target.__parent__
-			theObject.name = target.name
-			parent.add(theObject)
+			parent.moveTo(theObject, target.__parent__, target_name)
 
 		# XXX: externalize first
 		self.request.response.status_int = 201

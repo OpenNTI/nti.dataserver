@@ -62,6 +62,11 @@ class IContentFolder(INamedContainer):
 		"""
 		rename an stored item
 		"""
+		
+	def moveTo(item, target, newName=None):
+		"""
+		move the specified item to the target with a possible new name
+		"""
 
 class IRootFolder(IContentFolder):
 	pass
