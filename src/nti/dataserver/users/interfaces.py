@@ -14,8 +14,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import re
 import codecs
 import string
@@ -37,6 +35,12 @@ from z3c.schema.email import isValidMailAddress
 
 from plone.i18n.locales.interfaces import ICcTLDInformation
 
+from nti.dataserver.interfaces import InvalidData
+from nti.dataserver.interfaces import checkCannotBeBlank
+from nti.dataserver.interfaces import FieldCannotBeOnlyWhitespace
+
+from nti.dataserver.users import MessageFactory as _
+
 from nti.dataserver_fragments.schema import ExtendedCompoundModeledContentBody
 
 from nti.mailer.interfaces import IEmailAddressable
@@ -55,10 +59,6 @@ from nti.schema.field import ValidTextLine
 from nti.schema.interfaces import InvalidValue
 from nti.schema.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE
 from nti.schema.jsonschema import TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
-
-from ..interfaces import InvalidData
-from ..interfaces import checkCannotBeBlank
-from ..interfaces import FieldCannotBeOnlyWhitespace
 
 class UsernameCannotBeBlank(FieldCannotBeOnlyWhitespace):
 
@@ -171,9 +171,9 @@ def checkEmailAddress(value):
 		return True
 	raise EmailAddressInvalid(value)
 
-# : A sequence of only non-alphanumeric characters
-# : or a sequence of only digits and spaces, the underscore, and non-alphanumeric characters
-# : (which is basically \W with digits and _ added back
+#: A sequence of only non-alphanumeric characters
+#: or a sequence of only digits and spaces, the underscore, and non-alphanumeric characters
+#: (which is basically \W with digits and _ added back
 _INVALID_REALNAME_RE = re.compile(r'^\W+$|^[\d\s\W_]+$', re.UNICODE)
 
 def checkRealname(value):
