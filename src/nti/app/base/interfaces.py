@@ -14,7 +14,7 @@ from zope.file.interfaces import IFileReader
 from nti.schema.field import Number
 from nti.schema.field import TextLine
 
-class IMultipartSource(IFileReader):
+class ISource(IFileReader):
 
     length = Number(title="Source length", required=False, default=None)
 
@@ -27,3 +27,5 @@ class IMultipartSource(IFileReader):
         """
         return the length of this source
         """
+IMultipartSource = ISource
+

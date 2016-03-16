@@ -29,12 +29,13 @@ from zope.proxy import ProxyBase
 
 from nti.app.authentication import get_remote_user as _get_remote_user
 
-from nti.common.property import Lazy
+from nti.app.base.interfaces import ISource
+
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.dataserver.interfaces import IDataserver
+from nti.common.property import Lazy
 
-from .interfaces import IMultipartSource
+from nti.dataserver.interfaces import IDataserver
 
 def _check_creator(remote_user, obj):
 	result = False
@@ -145,7 +146,7 @@ class AbstractAuthenticatedView(AbstractView, AuthenticatedViewMixin):
 	Base class for views that expect authentication to be required.
 	"""
 
-@interface.implementer(IMultipartSource)
+@interface.implementer(ISource)
 class SourceProxy(ProxyBase):
 
 	length = property(lambda s: s.__dict__.get('_v_length'),
