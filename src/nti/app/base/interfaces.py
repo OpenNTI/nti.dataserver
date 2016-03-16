@@ -18,7 +18,7 @@ class ISource(IFileReader):
 
     length = Number(title="Source length", required=False, default=None)
 
-    contentType = TextLine(title="content type", required=True,
+    contentType = TextLine(title="content type", required=False,
                            default=u'application/octet-stream' )
 
     filename = TextLine(title="source file name", required=False)
@@ -28,4 +28,3 @@ class ISource(IFileReader):
         return the length of this source
         """
 IMultipartSource = ISource
-
