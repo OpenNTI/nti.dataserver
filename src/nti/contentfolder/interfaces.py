@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope.annotation.interfaces import IAttributeAnnotatable
+
 from zope.container.constraints import contains
 from zope.container.constraints import containers
 
@@ -39,7 +41,7 @@ class INamedContainer(IContained,
 	use_blobs = Bool(title="Use blobs flag", required=True, default=True)
 	use_blobs.setTaggedValue('_ext_excluded_out', True)
 
-class IContentFolder(INamedContainer):
+class IContentFolder(INamedContainer, IAttributeAnnotatable):
 
 	containers(str('.INamedContainer'))
 	contains(str('.INamedContainer'),
