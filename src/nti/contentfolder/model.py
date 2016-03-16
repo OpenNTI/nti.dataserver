@@ -91,7 +91,13 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		return False
 
 	def rename(self, old, new):
-		item = self._delitemf(old, event=False)
+		assert 		isinstance(old, six.string_types) \
+				or	INamedContainer.providedBy(old) \
+				or	IFile.providedBy(old)
+
+		name = get_context_name(old) or old
+		item = self._delitemf(name, event=False)
+		item.name = new # set new name
 		self._setitemf(new, item)
 
 	def moveTo(self, item, target, newName=None):
@@ -114,7 +120,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 			del target[newName]
 
 		item = self._delitemf(name, event=False)
-		item.name = newName
+		item.name = newName # set new name
 		target._setitemf(newName, item)
 
 		lifecycleevent.moved(item, self, name, target, newName)
