@@ -65,6 +65,8 @@ class TestDecorators(ApplicationLayerTest):
 			update_from_external_object(internal, ext_obj, require_updater=True)
 			self.ds.root['name'] = internal
 			href = to_external_download_href(internal)
+			
+			assert_that(internal, externalizes(all_of(has_key('OID'))))
 
 		assert_that(href, starts_with('/dataserver2/Objects/'))
 		assert_that(href, ends_with('/download/ichigo.gif'))
