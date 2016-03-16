@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope.annotation.interfaces import IAttributeAnnotatable
+
 from zope.location.interfaces import IContained
 
 from nti.namedfile.interfaces import IFile
@@ -19,7 +21,7 @@ from nti.namedfile.interfaces import INamedBlobImage
 
 from nti.schema.field import ValidTextLine
 
-class IContentBaseFile(IFile, IContained):
+class IContentBaseFile(IFile, IAttributeAnnotatable, IContained):
     name = ValidTextLine(title="Identifier for the file", required=True)
 IBaseFile = IContentBaseFile #BWC
 
