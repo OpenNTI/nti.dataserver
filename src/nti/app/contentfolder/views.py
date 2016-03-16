@@ -250,7 +250,11 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 		if IRootFolder.providedBy(self.context):
 			raise hexc.HTTPForbidden()
 
-		del theObject.__parent__[theObject.__name__]
+		parent = theObject.__parent__
+		if not INamedContainer.providedBy(parent):
+			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+
+		del parent[theObject.__name__]
 		return hexc.HTTPNoContent()
 
 @view_config(name='clear')
@@ -292,6 +296,10 @@ class RenameView(AbstractAuthenticatedView,
 		if IRootFolder.providedBy(self.context):
 			raise hexc.HTTPForbidden(_("Cannot rename root folder."))
 
+		parent = theObject.__parent__
+		if not INamedContainer.providedBy(parent):
+			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+
 		data = self.readInput()
 		name = data.get('name')
 		if not name:
@@ -299,7 +307,6 @@ class RenameView(AbstractAuthenticatedView,
 
 		# get name/filename
 		name = safe_filename(name_finder(name))
-		parent = theObject.__parent__
 		if name in parent:
 			raise hexc.HTTPUnprocessableEntity(_("File already exists."))
 
@@ -345,6 +352,10 @@ class MoveView(AbstractAuthenticatedView,
 		self._check_object_exists(theObject)
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot move root folder."))
+
+		parent = theObject.__parent__
+		if not INamedContainer.providedBy(parent):
+			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
 
 		data = self.readInput()
 		path = data.get('path')
