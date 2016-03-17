@@ -1536,7 +1536,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_batch_after_timestamp(self):
 		"""
-		Test batchAfter, filtering by timestamp.
+		Test batchAfter, filtering by timestamp. We should not have any batch-next links for extra data.
 		"""
 		batch_param_name = 'batchAfter'
 		ntiids = []
@@ -1565,34 +1565,42 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		ugd_res = self.fetch_user_ugd(top_n_containerid, params={ batch_param_name: '',
 																'batchSize': 5,
 																'batchStart': 10})
-		assert_that(ugd_res.json_body['Items'], has_length(5))
-		assert_that(ugd_res.json_body['TotalItemCount'], is_(20))
+		ugd_res = ugd_res.json_body
+		assert_that(ugd_res['Items'], has_length(5))
+		assert_that(ugd_res['TotalItemCount'], is_(20))
+		self.require_link_href_with_rel(ugd_res, 'batch-next')
 
 		# Now, ask for a batch after the tenth item. Match the sort-order (lastMod, descending)
 		ugd_res = self.fetch_user_ugd(top_n_containerid, params={batch_param_name: 10,
 																 'batchSize': 10 })
-		assert_that(ugd_res.json_body['Items'], has_length(9))
-		assert_that(ugd_res.json_body['TotalItemCount'], is_(20))
+		ugd_res = ugd_res.json_body
+		assert_that(ugd_res['Items'], has_length(9))
+		assert_that(ugd_res['TotalItemCount'], is_(20))
+		self.forbid_link_with_rel(ugd_res, 'batch-next')
 
 		# Batching after the first object
 		ugd_res = self.fetch_user_ugd(top_n_containerid, params={batch_param_name: 1,
 																 'batchSize': 3 })
-		assert_that(ugd_res.json_body['Items'], has_length(3))
-		assert_that(ugd_res.json_body['TotalItemCount'], is_(20))
+		ugd_res = ugd_res.json_body
+		assert_that(ugd_res['Items'], has_length(3))
+		assert_that(ugd_res['TotalItemCount'], is_(20))
+		self.require_link_href_with_rel(ugd_res, 'batch-next')
 		# We exclude our first object, but get only the latest three items.
 		expected_ntiids = ntiids[:3]
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
-		assert_that(ugd_res.json_body['Items'], contains(*matchers))
+		assert_that(ugd_res['Items'], contains(*matchers))
 
 		# Batching after the first object, all items
 		ugd_res = self.fetch_user_ugd(top_n_containerid, params={batch_param_name: 1,
 																 'batchSize': 20 })
-		assert_that(ugd_res.json_body['Items'], has_length(18))
-		assert_that(ugd_res.json_body['TotalItemCount'], is_(20))
+		ugd_res = ugd_res.json_body
+		assert_that(ugd_res['Items'], has_length(18))
+		assert_that(ugd_res['TotalItemCount'], is_(20))
+		self.forbid_link_with_rel(ugd_res, 'batch-next')
 		# We exclude the first two objects
 		expected_ntiids = ntiids[:18]
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
-		assert_that(ugd_res.json_body['Items'], contains(*matchers))
+		assert_that(ugd_res['Items'], contains(*matchers))
 
 from nti.testing.matchers import is_true, is_false
 

@@ -861,6 +861,12 @@ class _UGDView(AbstractAuthenticatedView,
 											 batch_after=batch_after,
 											 batch_before=batch_before )
 				number_items_needed = None
+		else:
+			# Make sure we set number_items_needed to our new filtered size.
+			# This prevents extra batch links when no more items exist.
+			# TODO: Need some work to clear/update the counts reported.
+			merged = tuple( merged )
+			number_items_needed = len( merged )
 		return merged, number_items_needed
 
 	def _sort_filter_batch_objects( self, objects ):
