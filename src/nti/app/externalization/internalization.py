@@ -87,10 +87,10 @@ def _handle_content_type(reader, input_data, request, content_type):
 		result = dict()
 		data = request.POST
 		for key, value in list(data.items()):  # mutating
-			if (    isinstance(value, (cgi.FieldStorage, cgi.MiniFieldStorage))
+			if (	isinstance(value, (cgi.FieldStorage, cgi.MiniFieldStorage))
 				or  (hasattr(value, 'type') and hasattr(value, 'file'))):
 				pass  # ignore
-			elif key == '__json__': # special case for embedded json data
+			elif key in ('__json__', '__input__'): # special case for embedded json data
 				json_data = read_input_data(data[key], request)
 				assert isinstance(json_data, collections.Mapping)
 				result.update(json_data)
