@@ -80,7 +80,7 @@ class TestNote(ApplicationLayerTest):
 		assert_that(res, has_property('body', has_length(greater_than_or_equal_to(60))))
 
 	@WithSharedApplicationMockDS
-	def test_update_note(self):
+	def test_update_note_direct_data(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
 
@@ -121,3 +121,31 @@ class TestNote(ApplicationLayerTest):
 						   extra_environ=self._make_extra_environ(),
 						   status=200 )
 		assert_that(res, has_property('body', has_length(greater_than_or_equal_to(60))))
+		
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_update_note_multipart(self):
+		ext_file = {
+			'MimeType': 'application/vnd.nextthought.contentfile',
+			'filename': r'/Users/ichigo/ichigo.txt',
+			'name':'ichigo'
+		}
+		ext_obj = { "Class": "Note",
+					"ContainerId": "tag_nti_foo",
+					"MimeType": "application/vnd.nextthought.note",
+					"applicableRange": {"Class": "ContentRangeDescription",
+										"MimeType": "application/vnd.nextthought.contentrange.contentrangedescription"},
+					"body": ['ichigo', ext_file],
+					"title": "bleach"}
+
+		path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/'
+
+		data= {'__json__': to_json_representation(ext_obj)}
+		res = self.testapp.post(urllib.quote(path), data,
+						   		upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
+						   		status=201)
+
+		path = res.json_body['href']
+		durl = res.json_body['body'][1]['download_url']
+
+		res = self.testapp.get(durl, status=200 )
+		assert_that(res, has_property('body', has_length(greater_than_or_equal_to(6))))
