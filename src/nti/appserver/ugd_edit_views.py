@@ -74,7 +74,7 @@ class UGDPostView(AbstractAuthenticatedView,
 
 			if not externalValue:
 				# read fields in multipart data
-				externalValue = read_body_as_external_object(self.equest)
+				externalValue = read_body_as_external_object(self.request)
 			
 			if not externalValue:
 				raise hexc.HTTPUnprocessableEntity("No input source was specified")
