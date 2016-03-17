@@ -14,8 +14,6 @@ import time
 from zope import component
 from zope import interface
 
-from zope.intid.interfaces import IIntIds
-
 from zope.location.interfaces import IContained
 
 from zope.security.interfaces import IPrincipal
@@ -61,11 +59,8 @@ from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
 from nti.contenttypes.presentation.interfaces import IPackagePresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
-from nti.contenttypes.courses.index import IX_PACKAGES
-from nti.contenttypes.courses.index import IX_SITE as IX_COURSES_SITE
-
-from nti.contenttypes.courses.utils import get_courses_catalog
 from nti.contenttypes.courses.utils import get_course_subinstances
+from nti.contenttypes.courses.utils import get_courses_for_packages
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
@@ -199,19 +194,12 @@ def _pacakge_asset_to_containers(context):
 	result = _package_lineage_to_containers(context)
 	package = find_interface(context, IContentPackage, strict=False)
 	folder = find_interface(context, IHostPolicyFolder, strict=False)
-	if package is not None and folder != None:
-		catalog = get_courses_catalog()
+	if package is not None and folder is not None:
 		containers = set(result.containers)
-		intids = component.getUtility(IIntIds)
-		query = {
-			IX_PACKAGES: {'any_of':(package.ntiid,) },
-			IX_COURSES_SITE: {'any_of':(folder.__name__,)}
-		}
-		for uid in catalog.apply(query) or ():
-			course = intids.queryObject(uid)
-			entry = ICourseCatalogEntry(course, None)
-			if entry != None:
-				containers.add(entry.ntiid)
+		courses = get_courses_for_packages(folder.__name__, package.ntiid)
+		for course in courses:
+			entry = ICourseCatalogEntry(course)
+			containers.add(entry.ntiid)
 		result = _Containers(tuple(containers))
 	
 	# check for slides and slidevideos
