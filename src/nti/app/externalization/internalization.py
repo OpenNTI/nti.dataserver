@@ -62,6 +62,8 @@ def class_name_from_content_type(request):
 	return nti_mimetype_class(content_type)
 
 def _handle_unicode(value, request):
+	if isinstance(value, unicode): # already unicode
+		return value
 	try:
 		value = unicode(value, request.charset)
 	except UnicodeError:
@@ -85,9 +87,14 @@ def _handle_content_type(reader, input_data, request, content_type):
 		result = dict()
 		data = request.POST
 		for key, value in list(data.items()):  # mutating
-			if (	isinstance(value, (cgi.FieldStorage, cgi.MiniFieldStorage))
-				or  (hasattr(value, 'type') and hasattr(value, 'file')) ):
-				pass # ignore
+			if (    isinstance(value, (cgi.FieldStorage, cgi.MiniFieldStorage))
+				or  (hasattr(value, 'type') and hasattr(value, 'file'))):
+				pass  # ignore
+			elif key == '__json__': # special case for embedded json data
+				json_data = read_input_data(data[key], request)
+				assert isinstance(json_data, collections.Mapping)
+				result.update(json_data)
+				del data[key]
 			else:
 				result[_handle_unicode(key, request)] = data[key]
 				del data[key]
@@ -123,8 +130,8 @@ def read_body_as_external_object(request, input_data=None,
 	ext_format = 'json'
 	value = input_data if input_data is not None else request.body
 	content_type = getattr(request, 'content_type', None) or u''
-	if (	content_type.endswith('plist') 
-		or	content_type == 'application/xml' 
+	if (content_type.endswith('plist')
+		or	content_type == 'application/xml'
 		or	request.GET.get('format') == 'plist'):  # pragma: no cover
 		ext_format = 'plist'
 
