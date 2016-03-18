@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import re
 from urllib import quote
 from urllib import unquote
 from urlparse import urlparse
@@ -272,15 +273,15 @@ def safe_download_file_name(name):
 			result = 'file' + ext
 	return result
 
-def to_external_href(item, add_name=False):
+def to_external_oid_href(item, add_name=False):
 	_, external = to_external_oid_and_link(item, render=True, name='view')
 	if add_name:
 		name = download_file_name(item) or 'file.dat'
 		external += '/%s' % safe_download_file_name(name)
 	return external
-to_external_view_href = to_external_href
+to_external_href = to_external_oid_href
 
-def to_external_download_href(item):
+def to_external_download_oid_href(item):
 	contentType = getattr(item, 'contentType', None)
 	target = to_external_ntiid_oid(item, add_to_connection=True)
 	if target:
@@ -296,7 +297,7 @@ def to_external_download_href(item):
 def get_file_from_oid_external_link(link):
 	result = None
 	try:
-		if link.endswith('view') or link.endswith('download'):
+		if re.match('(.+)/(@@)?[view|download](\/.*)?', link):
 			path = urlparse(link).path
 			path = os.path.split(path)[0]
 		else:

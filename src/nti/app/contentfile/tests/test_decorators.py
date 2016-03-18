@@ -18,7 +18,7 @@ from hamcrest import assert_that
 from hamcrest import starts_with
 from hamcrest import has_property
 
-from nti.app.contentfile.view_mixins import to_external_download_href
+from nti.app.contentfile.view_mixins import to_external_download_oid_href
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
@@ -64,8 +64,7 @@ class TestDecorators(ApplicationLayerTest):
 			internal = find_factory_for(ext_obj)()
 			update_from_external_object(internal, ext_obj, require_updater=True)
 			self.ds.root['name'] = internal
-			href = to_external_download_href(internal)
-			
+			href = to_external_download_oid_href(internal)
 			assert_that(internal, externalizes(all_of(has_key('OID'))))
 
 		assert_that(href, starts_with('/dataserver2/Objects/'))
