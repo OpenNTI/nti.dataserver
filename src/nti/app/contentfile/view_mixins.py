@@ -300,6 +300,8 @@ def get_file_from_oid_external_link(link):
 		if re.match('(.+)/(@@)?[view|download](\/.*)?', link):
 			path = urlparse(link).path
 			path = os.path.split(path)[0]
+			if path.endswith('download') or path.endswith('view'):
+				path = os.path.split(path)[0]
 		else:
 			path = link
 		ntiid = unquote(os.path.split(path)[1] or u'')  # last part of path
