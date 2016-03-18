@@ -30,6 +30,7 @@ from zope.proxy import ProxyBase
 from nti.app.authentication import get_remote_user as _get_remote_user
 
 from nti.app.base.interfaces import ISource
+from nti.app.base.interfaces import ISourceFiler
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -224,4 +225,12 @@ def get_all_sources(request, default_content_type=u'application/octet-stream'):
 	for name, source in values.items():
 		source = process_source(source, default_content_type)
 		result[name] = source
+	return result
+
+def get_source_filer(context=None, user=None, constraint=ISourceFiler):
+	result = component.queryMultiAdapter((user, context), constraint)
+	if result is None:
+		result = component.queryAdapter(user, constraint)
+	if result is None:
+		result = constraint(context, None)
 	return result
