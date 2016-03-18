@@ -273,14 +273,6 @@ def safe_download_file_name(name):
 			result = 'file' + ext
 	return result
 
-def to_external_oid_href(item, add_name=False):
-	_, external = to_external_oid_and_link(item, render=True, name='view')
-	if add_name:
-		name = download_file_name(item) or 'file.dat'
-		external += '/%s' % safe_download_file_name(name)
-	return external
-to_external_href = to_external_oid_href
-
 def to_external_download_oid_href(item):
 	contentType = getattr(item, 'contentType', None)
 	target = to_external_ntiid_oid(item, add_to_connection=True)
