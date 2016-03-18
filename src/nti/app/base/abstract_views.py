@@ -228,7 +228,7 @@ def get_all_sources(request, default_content_type=u'application/octet-stream'):
 	return result
 
 def get_source_filer(context=None, user=None, constraint=ISourceFiler):
-	result = component.queryMultiAdapter((user, context), constraint)
+	result = component.queryMultiAdapter((context, user), constraint)
 	if result is None:
 		result = component.queryAdapter(user, constraint)
 	if result is None:
