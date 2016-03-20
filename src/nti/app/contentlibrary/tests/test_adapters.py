@@ -13,7 +13,7 @@ from hamcrest import has_property
 
 from zope import interface
 
-from nti.assessment.interfaces import ASSESSMENT_INTERFACES
+from nti.assessment import ASSESSMENT_INTERFACES
 
 from nti.contenttypes.presentation import ALL_PRESENTATION_ASSETS_INTERFACES
 
