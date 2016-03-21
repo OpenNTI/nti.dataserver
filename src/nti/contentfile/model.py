@@ -11,7 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from BTrees.OOBTree import OOTreeSet
+
 from nti.common.property import alias
+
+from nti.common import sets
 
 from nti.contentfile.interfaces import IContentFile
 from nti.contentfile.interfaces import IContentImage
@@ -23,10 +27,35 @@ from nti.namedfile.file import NamedImage
 from nti.namedfile.file import NamedBlobFile
 from nti.namedfile.file import NamedBlobImage
 
+from nti.wref.interfaces import IWeakRef
+
 class BaseContentMixin(object):
+
 	creator = None
 	__name__ = alias('name')
-BaseMixin = BaseContentMixin #BWC
+
+	def _lazy_create_ootreeset_for_wref(self):
+		self._p_changed = True
+		result = OOTreeSet()
+		if self._p_jar:
+			self._p_jar.add(result)
+		return result
+
+	def _remove_entity_from_named_lazy_set_of_wrefs(self, name, context):
+		self._p_activate()
+		if name in self.__dict__:
+			jar = getattr(self, '_p_jar', None)
+			container = getattr(self, name)
+			if jar is not None:
+				jar.readCurrent(self)
+				container._p_activate()
+				jar.readCurrent(container)
+			wref = IWeakRef(context, None)
+			if wref is not None:
+				__traceback_info__ = context, wref
+				sets.discard(container, wref)
+
+BaseMixin = BaseContentMixin  # BWC
 
 @interface.implementer(IContentFile)
 class ContentFile(NamedFile, BaseContentMixin):
