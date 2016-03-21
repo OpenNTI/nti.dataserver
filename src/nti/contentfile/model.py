@@ -41,7 +41,7 @@ class BaseContentMixin(object):
 			self._p_jar.add(result)
 		return result
 
-	def _remove_entity_from_named_lazy_set_of_wrefs(self, name, context):
+	def _remove_from_named_lazy_set_of_wrefs(self, name, context):
 		self._p_activate()
 		if name in self.__dict__:
 			jar = getattr(self, '_p_jar', None)
