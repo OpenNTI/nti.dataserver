@@ -70,6 +70,15 @@ class BaseContentMixin(object):
 	def remove_association(self, context):
 		self._remove_from_named_lazy_set_of_wrefs('_associations', context)
 
+	def associations(self):
+		for wref in self._associations:
+			try:
+				obj = wref()
+				if obj is not None:
+					yield obj
+			except (Exception):
+				logger.exception("Error while getting associatied object")
+
 BaseMixin = BaseContentMixin  # BWC
 
 @interface.implementer(IContentFile)

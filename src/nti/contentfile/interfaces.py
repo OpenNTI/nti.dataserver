@@ -23,6 +23,22 @@ from nti.schema.field import ValidTextLine
 
 class IContentBaseFile(IFile, IAttributeAnnotatable, IContained):
     name = ValidTextLine(title="Identifier for the file", required=True)
+    
+    def add_association(context):
+        """
+        add a associatied object to this file
+        """
+
+    def remove_association(self, context):
+        """
+        remove an associatied object from this file
+        """
+
+    def associations(self):
+        """
+        return an iterable with the associatied objects
+        """
+
 IBaseFile = IContentBaseFile #BWC
 
 class IContentFile(INamedFile, IContentBaseFile):
