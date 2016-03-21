@@ -13,6 +13,7 @@ from zope import interface
 
 from BTrees.OOBTree import OOTreeSet
 
+from nti.common.property import Lazy
 from nti.common.property import alias
 
 from nti.common import sets
@@ -54,6 +55,20 @@ class BaseContentMixin(object):
 			if wref is not None:
 				__traceback_info__ = context, wref
 				sets.discard(container, wref)
+
+	@Lazy
+	def _associations(self):
+		return self._lazy_create_ootreeset_for_wref()
+	
+	def add_association(self, context):
+		wref = IWeakRef(context, None)
+		if wref is not None:
+			self._associations.add(wref)
+			return True
+		return False
+
+	def remove_association(self, context):
+		self._remove_from_named_lazy_set_of_wrefs('_associations', context)
 
 BaseMixin = BaseContentMixin  # BWC
 
