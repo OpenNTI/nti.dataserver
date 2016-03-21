@@ -16,8 +16,6 @@ from zope import interface
 
 from zope.intid.interfaces import IIntIds
 
-from zope.catalog.interfaces import ICatalog
-
 from BTrees.OOBTree import Set
 from BTrees.LFBTree import LFSet
 
@@ -38,11 +36,12 @@ from nti.dataserver.metadata_index import IX_TAGGEDTO
 from nti.dataserver.metadata_index import IX_CREATEDTIME
 from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
 from nti.dataserver.metadata_index import TP_DELETED_PLACEHOLDER
-from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
 from nti.dataserver.authentication import _dynamic_memberships_that_participate_in_security
 
 from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.metadata import dataserver_metadata_catalog
 
 from nti.utils.property import annotation_alias
 
@@ -83,7 +82,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
 	@CachedProperty
 	def _catalog(self):
-		return component.getUtility(ICatalog, METADATA_CATALOG_NAME)
+		return dataserver_metadata_catalog()
 
 	@CachedProperty
 	def _notable_storage(self):
@@ -297,9 +296,9 @@ class UserNotableData(AbstractAuthenticatedView):
 		# are probably more things shared directly with me or replied
 		# to me than created by others that I happen to be able to see
 		questionable_intids = [
-					toplevel_intids_by_priority_creators,
-					intids_tagged_to_me,
-					topic_intids_by_priority_creators,
+			toplevel_intids_by_priority_creators,
+			intids_tagged_to_me,
+			topic_intids_by_priority_creators,
 		]
 		self._notable_storage.add_intids(questionable_intids, safe=False)
 		questionable_intids = catalog.family.IF.multiunion(questionable_intids)
