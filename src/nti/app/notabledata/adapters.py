@@ -288,7 +288,7 @@ class UserNotableData(AbstractAuthenticatedView):
 		# Now any topics by our a-listers, but only non-excluded topics
 		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
 		topic_intids_by_priority_creators = catalog.family.IF.intersection(topic_intids,
-		 																	intids_by_priority_creators)
+		 																   intids_by_priority_creators)
 
 		# Sadly, to be able to provide the "TotalItemCount" we have to
 		# apply security to all the intids not guaranteed to be
@@ -296,10 +296,11 @@ class UserNotableData(AbstractAuthenticatedView):
 		# doing so incrementally, as needed, on the theory that there
 		# are probably more things shared directly with me or replied
 		# to me than created by others that I happen to be able to see
-		questionable_intids = [toplevel_intids_by_priority_creators,
-							   intids_tagged_to_me,
-							   topic_intids_by_priority_creators,
-						   ]
+		questionable_intids = [
+					toplevel_intids_by_priority_creators,
+					intids_tagged_to_me,
+					topic_intids_by_priority_creators,
+		]
 		self._notable_storage.add_intids(questionable_intids, safe=False)
 		questionable_intids = catalog.family.IF.multiunion(questionable_intids)
 		if self._intids_in_time_range is not None:
