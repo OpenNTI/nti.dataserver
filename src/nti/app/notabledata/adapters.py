@@ -11,15 +11,21 @@ logger = __import__('logging').getLogger(__name__)
 
 from array import array
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.intid.interfaces import IIntIds
 
-from zope.catalog.catalog import ResultSet
 from zope.catalog.interfaces import ICatalog
 
 from BTrees.OOBTree import Set
 from BTrees.LFBTree import LFSet
+
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.notabledata.interfaces import IUserNotableData
+from nti.app.notabledata.interfaces import IUserNotableDataStorage
+from nti.app.notabledata.interfaces import IUserPriorityCreatorNotableProvider
 
 from nti.common.property import CachedProperty
 
@@ -40,31 +46,33 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.utils.property import annotation_alias
 
-from .interfaces import IUserNotableData
-from .interfaces import IUserNotableDataStorage
-from .interfaces import IUserPriorityCreatorNotableProvider
-
-from ..base.abstract_views import AbstractAuthenticatedView
+from nti.zope_catalog.catalog import ResultSet
 
 _BLOG_ENTRY_NTIID = "tag:nextthought.com,2011-10:%s-Topic:PersonalBlogEntry"
 _BLOG_ENTRY_MIMETYPE = "application/vnd.nextthought.forums.personalblogentry"
-_BLOG_ENTRY_POST_MIMETYPE = "application/vnd.nextthought.forums.personalblogentrypost"
 _BLOG_COMMENT_MIMETYPE = "application/vnd.nextthought.forums.personalblogcomment"
+_BLOG_ENTRY_POST_MIMETYPE = "application/vnd.nextthought.forums.personalblogentrypost"
 
+_DFL_TOPIC_MIMETYPE = "application/vnd.nextthought.forums.dflheadlinetopic"
 _TOPIC_MIMETYPE = "application/vnd.nextthought.forums.communityheadlinetopic"
 _TOPIC_COMMENT_MYMETYPE = "application/vnd.nextthought.forums.generalforumcomment"
-_DFL_TOPIC_MIMETYPE = "application/vnd.nextthought.forums.dflheadlinetopic"
 
 _MESSAGEINFO_MYMETYPE = "application/vnd.nextthought.messageinfo"
 
+class SafeResultSet(ResultSet):
+
+	def __init__(self, uids, uidutil, *args, **kwargs):
+		ResultSet.__init__(self, uids, uidutil, ignore_invalid=True)
+_SafeResultSet = SafeResultSet #BWC
+		
 @interface.implementer(IUserNotableData)
-@component.adapter(IUser,interface.Interface)
+@component.adapter(IUser, interface.Interface)
 class UserNotableData(AbstractAuthenticatedView):
 
 	def __init__(self, context, request):
 		AbstractAuthenticatedView.__init__(self, request)
 		self.remoteUser = context
-		self._time_range = (None,None)
+		self._time_range = (None, None)
 
 	def __reduce__(self):
 		raise TypeError()
@@ -105,7 +113,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
 	@CachedProperty
 	def _all_blog_comment_intids(self):
-		return self._catalog['mimeType'].apply( {'any_of': (_BLOG_COMMENT_MIMETYPE,)} )
+		return self._catalog['mimeType'].apply({'any_of': (_BLOG_COMMENT_MIMETYPE,)})
 
 	@CachedProperty
 	def _topics_created_by_me_intids(self):
@@ -118,7 +126,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
 	def __topic_ntiids(self, excluded_topic_oids=()):
 		topic_ntiids = {
-			x.NTIID or None for x in ResultSet(self._topics_created_by_me_intids, self._intids)
+			x.NTIID or None for x in SafeResultSet(self._topics_created_by_me_intids, self._intids)
 			if to_external_ntiid_oid(x) not in excluded_topic_oids
 		}
 		topic_ntiids.discard(None)
@@ -176,8 +184,8 @@ class UserNotableData(AbstractAuthenticatedView):
 			# to callers. Batching from 0 to a timestamp is extremely slow as our
 			# index increases in size. The entire index has to be awaken to do
 			# the filtering.
-			logger.warn( 'Slow running query from time 0 to %s on large index.',
-						max_created_time )
+			logger.warn('Slow running query from time 0 to %s on large index.',
+						max_created_time)
 
 		intids_in_time_range = self._catalog[IX_CREATEDTIME].apply(
 											{'between': (min_created_time, max_created_time,)})
@@ -186,16 +194,16 @@ class UserNotableData(AbstractAuthenticatedView):
 	@CachedProperty
 	def _group_ntiids(self):
 		# Return all friends list we own or are members of.
-		results = set( self.remoteUser.friendsLists.values() ) \
-				| set( self.remoteUser.dynamic_memberships )
-		return {x.NTIID for x in results if IFriendsList.providedBy( x )}
+		results = set(self.remoteUser.friendsLists.values()) \
+				| set(self.remoteUser.dynamic_memberships)
+		return {x.NTIID for x in results if IFriendsList.providedBy(x)}
 
 	@CachedProperty('_time_range')
 	def _safely_viewable_notable_intids(self):
 		catalog = self._catalog
 		# Any top-level items shared directly to me or my groups
 		shared_with_ids = self._group_ntiids
-		shared_with_ids.add( self.remoteUser.username )
+		shared_with_ids.add(self.remoteUser.username)
 		intids_shared_to_me = catalog['sharedWith'].apply({'any_of': shared_with_ids})
 
 		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
@@ -204,13 +212,13 @@ class UserNotableData(AbstractAuthenticatedView):
 		# Blog posts are now top-level, exclude them. It's confusing when both
 		# blogs and blog-posts are returned.
 		blog_post_intids = catalog['mimeType'].apply({'any_of': (_BLOG_ENTRY_POST_MIMETYPE,)})
-		toplevel_intids_shared_to_me = catalog.family.IF.difference( toplevel_intids_shared_to_me,
-																	blog_post_intids )
+		toplevel_intids_shared_to_me = catalog.family.IF.difference(toplevel_intids_shared_to_me,
+																	blog_post_intids)
 
 		# Any topics shared to me or my groups
 		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,
 															_DFL_TOPIC_MIMETYPE)})
-		topic_intids = catalog.family.IF.intersection( topic_intids, intids_shared_to_me )
+		topic_intids = catalog.family.IF.intersection(topic_intids, intids_shared_to_me)
 
 		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
 
@@ -253,16 +261,16 @@ class UserNotableData(AbstractAuthenticatedView):
 		# it definitely slows down over time
 		tagged_to_usernames_or_intids = {self.remoteUser.username}
 		# Note the use of private API, a signal to cleanup soon
-		for membership in _dynamic_memberships_that_participate_in_security( self.remoteUser, as_principals=False ):
+		for membership in _dynamic_memberships_that_participate_in_security(self.remoteUser, as_principals=False):
 			if IDynamicSharingTargetFriendsList.providedBy(membership):
-				tagged_to_usernames_or_intids.add( membership.NTIID )
+				tagged_to_usernames_or_intids.add(membership.NTIID)
 		intids_tagged_to_me = catalog[IX_TAGGEDTO].apply({'any_of': tagged_to_usernames_or_intids})
 
 		safely_viewable_intids = self._safely_viewable_notable_intids
 		intids_by_priority_creators = LFSet()
-		for provider in component.subscribers( (self.remoteUser, self.request),
-											   IUserPriorityCreatorNotableProvider ):
-			intids_by_priority_creators.update( provider.get_notable_intids() )
+		for provider in component.subscribers((self.remoteUser, self.request),
+											   IUserPriorityCreatorNotableProvider):
+			intids_by_priority_creators.update(provider.get_notable_intids())
 
 		# Top-level things by the instructors...
 		toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
@@ -279,7 +287,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		# Now any topics by our a-listers, but only non-excluded topics
 		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
-		topic_intids_by_priority_creators = catalog.family.IF.intersection(	topic_intids,
+		topic_intids_by_priority_creators = catalog.family.IF.intersection(topic_intids,
 		 																	intids_by_priority_creators)
 
 		# Sadly, to be able to provide the "TotalItemCount" we have to
@@ -292,8 +300,8 @@ class UserNotableData(AbstractAuthenticatedView):
 							   intids_tagged_to_me,
 							   topic_intids_by_priority_creators,
 						   ]
-		self._notable_storage.add_intids(questionable_intids,safe=False)
-		questionable_intids = catalog.family.IF.multiunion(	questionable_intids )
+		self._notable_storage.add_intids(questionable_intids, safe=False)
+		questionable_intids = catalog.family.IF.multiunion(questionable_intids)
 		if self._intids_in_time_range is not None:
 			questionable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
 																 questionable_intids)
@@ -335,7 +343,7 @@ class UserNotableData(AbstractAuthenticatedView):
 	__nonzero__ = __bool__
 
 	def __iter__(self):
-		return iter(ResultSet(self.get_notable_intids(), self._intids))
+		return iter(SafeResultSet(self.get_notable_intids(), self._intids))
 
 	def sort_notable_intids(self, notable_intids,
 							field_name='createdTime',
@@ -352,17 +360,15 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		# For large lists, an array is more memory efficient then a list,
 		# since it uses native storage
-		array_type = 'l' if isinstance(self._catalog.family.maxint, long) else 'i' # Py3 porting issue, long went away?
+		array_type = 'l' if isinstance(self._catalog.family.maxint, long) else 'i'  # Py3 porting issue, long went away?
 		return array(str(array_type), _sorted)
 
 	def iter_notable_intids(self, notable_intids, ignore_missing=False):
-		factory = _SafeResultSet if ignore_missing else ResultSet
-		return factory(notable_intids, self._intids)
+		return SafeResultSet(notable_intids, self._intids)
 
 	_KEY = 'nti.appserver.ugd_query_views._NotableUGDLastViewed'
 	lastViewed = annotation_alias(_KEY, annotation_property='remoteUser', default=0,
 								  doc="LastViewed is stored as an annotation on the user")
-
 
 	def is_object_notable(self, maybe_notable):
 		# Tests with a Janux database snapshot seem to indicate that the intid
@@ -388,19 +394,13 @@ class UserNotableData(AbstractAuthenticatedView):
 			not_notable = self._not_notable_oids
 			if not_notable is None:
 				not_notable = self._not_notable_oids = Set()
-			not_notable.add( to_external_ntiid_oid(maybe_notable) )
-
-class _SafeResultSet(ResultSet):
-
-	def __iter__(self):
-		for uid in self.uids:
-			obj = self.uidutil.queryObject(uid)
-			if obj is not None:
-				yield obj
+			not_notable.add(to_external_ntiid_oid(maybe_notable))
 
 from zope import lifecycleevent
-from zope.container.contained import Contained
+
 from zope.annotation.factory import factory as an_factory
+
+from zope.container.contained import Contained
 
 from persistent import Persistent
 from persistent.list import PersistentList
@@ -473,7 +473,7 @@ class UserNotableDataStorage(Persistent, Contained):
 		"""
 		self._p_activate()
 		s = '_safe_intid_set' if safe else '_unsafe_intid_set'
-		if s in self.__dict__: # has Lazy kicked in?
-			ids.append( getattr(self, s) )
+		if s in self.__dict__:  # has Lazy kicked in?
+			ids.append(getattr(self, s))
 
 UserNotableDataStorageFactory = an_factory(UserNotableDataStorage)
