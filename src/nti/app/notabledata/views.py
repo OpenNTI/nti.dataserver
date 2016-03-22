@@ -170,9 +170,9 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 		path = request.path
 
 		links.append(Link(path,
-							rel='lastViewed',
-							elements=('lastViewed',),
-							method='PUT'))
+						  rel='lastViewed',
+						  elements=('lastViewed',),
+						  method='PUT'))
 		return result
 
 	@property
