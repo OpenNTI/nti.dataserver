@@ -11,15 +11,15 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from zope.catalog.interfaces import ICatalog
-
 from zope.intid.interfaces import IIntIds
+
+from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
-from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -28,27 +28,30 @@ from nti.appserver.ugd_query_views import UGDView
 
 from nti.common.maps import CaseInsensitiveDict
 
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+
+from nti.dataserver import authorization as nauth
+
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
-from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver.users import Community
 from nti.dataserver.users.interfaces import IHiddenMembership
 
-from nti.dataserver import authorization as nauth
-
 from nti.dataserver.metadata_index import IX_TOPICS
 from nti.dataserver.metadata_index import IX_SHAREDWITH
 from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
-from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
+
+from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.metadata import dataserver_metadata_catalog
 
 from nti.zope_catalog.catalog import ResultSet
 
@@ -68,11 +71,11 @@ class CreateCommunityView(AbstractAuthenticatedView,
 		username = externalValue.pop('username', None) or externalValue.pop('Username', None)
 		if not username:
 			raise hexc.HTTPUnprocessableEntity("Username not specified")
-		
+
 		community = Community.get_community(username)
 		if community is not None:
 			raise hexc.HTTPUnprocessableEntity("Community already exists")
-		
+
 		args = {'username': username}
 		args['external_value'] = externalValue
 		community = Community.create_community(**args)
@@ -87,7 +90,7 @@ def username_search(search_term=None):
 	dataserver = component.getUtility(IDataserver)
 	_users = IShardLayout(dataserver).users_folder
 	if search_term:
-		min_inclusive, max_exclusive = _make_min_max_btree_range(search_term)	
+		min_inclusive, max_exclusive = _make_min_max_btree_range(search_term)
 		usernames = _users.iterkeys(min_inclusive, max_exclusive, excludemax=True)
 	else:
 		usernames = _users.iterkeys()
@@ -112,7 +115,7 @@ class ListCommunitiesView(AbstractAuthenticatedView):
 			usernames = usernames.split(",")
 		else:
 			usernames = username_search()
-	
+
 		total = 0
 		result = LocatedExternalDict()
 		items = result[ITEMS] = {}
@@ -155,7 +158,7 @@ class JoinCommunityView(AbstractAuthenticatedView):
 		community = self.request.context
 		if not community.joinable:
 			raise hexc.HTTPForbidden()
-		
+
 		user = self.remoteUser
 		if user not in community:
 			user.record_dynamic_membership(community)
@@ -197,13 +200,13 @@ class CommunityMembersView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
 	_DEFAULT_BATCH_SIZE = 50
 	_DEFAULT_BATCH_START = 0
-	
+
 	def _batch_params(self):
 		self.batch_size, self.batch_start = self._get_batch_size_start()
 		self.limit = self.batch_start + self.batch_size + 2
 		self.batch_after = None
 		self.batch_before = None
-		
+
 	def __call__(self):
 		self._batch_params()
 
@@ -263,7 +266,7 @@ class TraxResultSet(ResultSet):
 	def getObject(self, uid):
 		obj = super(TraxResultSet, self).getObject(uid)
 		if IHeadlinePost.providedBy(obj):
-			obj = obj.__parent__ # return entry
+			obj = obj.__parent__  # return entry
 		return obj
 
 @view_config(route_name='objects.generic.traversal',
@@ -276,35 +279,35 @@ class CommunityActivityView(UGDView):
 	def _set_user_and_ntiid(self, *args, **kwargs):
 		self.ntiid = u''
 		self.user = self.remoteUser
-	
+
 	def _get_security_check(self):
 		def security_check(x):
 			return True
 		return False, security_check
 
-	def getObjectsForId(self, *args, **kwargs ):
+	def getObjectsForId(self, *args, **kwargs):
 		context = self.request.context
 		if not context.public and self.remoteUser not in context:
 			raise hexc.HTTPForbidden()
-		
-		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
+
+		catalog = dataserver_metadata_catalog()
 		if catalog is None:
 			raise hexc.HTTPNotFound("No catalog")
 		intids = component.getUtility(IIntIds)
 
 		username = context.username
 		intids_shared_with_comm = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
-		
+
 		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
 		top_level_shared_intids = toplevel_intids_extent.intersection(intids_shared_with_comm)
-		
+
 		seen = set()
 		board = ICommunityBoard(context, None) or {}
 		for forum in board.values():
 			seen.update(intids.queryId(t) for t in forum.values())
 		seen.discard(None)
 		topics_intids = intids.family.IF.LFSet(seen)
-		
+
 		all_intids = intids.family.IF.union(topics_intids, top_level_shared_intids)
 		items = TraxResultSet(all_intids, intids, ignore_invalid=True)
 		return (items,)

@@ -9,36 +9,48 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import six
 import time
 import urllib
 from urlparse import urljoin
 
-try:
-	from gevent import sleep
-except ImportError:
-	from time import sleep
-
 from zope import component
 
-from pyramid.view import view_config
-from pyramid.renderers import render
 from pyramid import httpexceptions as hexc
+
+from pyramid.renderers import render
+
+from pyramid.view import view_config
 
 from itsdangerous import BadSignature
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.error import raise_json_error as raise_error
+
 from nti.app.externalization.internalization import read_body_as_external_object
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.app.users import MessageFactory as _
+
+from nti.app.users import VERIFY_USER_EMAIL_VIEW
+from nti.app.users import REQUEST_EMAIL_VERFICATION_VIEW
+from nti.app.users import SEND_USER_EMAIL_VERFICATION_VIEW
+from nti.app.users import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
+
+from nti.app.users.utils import get_email_verification_time
+from nti.app.users.utils import safe_send_email_verification
+from nti.app.users.utils import generate_mail_verification_pair
+from nti.app.users.utils import get_verification_signature_data
 
 from nti.appserver.interfaces import IApplicationSettings
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.appserver.policies.site_policies import guess_site_display_name
+
+from nti.common._compat import sleep
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -48,25 +60,19 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users import User
+
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
+
 from nti.dataserver.users.utils import reindex_email_verification
 
 from nti.externalization.externalization import to_external_object
 
-from .utils import get_email_verification_time
-from .utils import safe_send_email_verification
-from .utils import generate_mail_verification_pair
-from .utils import get_verification_signature_data
-
-from . import VERIFY_USER_EMAIL_VIEW
-from . import REQUEST_EMAIL_VERFICATION_VIEW
-from . import SEND_USER_EMAIL_VERFICATION_VIEW
-from . import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
-
 MAX_REQUEST_COUNT = 5
-MAX_WAIT_TIME_EMAILS = 300 # 5 mins
+
+#: Max wait time between emails
+MAX_WAIT_TIME_EMAILS = 300  # 5 mins
 
 def _login_app_root():
 	settings = component.getUtility(IApplicationSettings)
@@ -77,7 +83,7 @@ def _login_app_root():
 			 name=VERIFY_USER_EMAIL_VIEW,
 			 request_method='GET',
 			 context=IDataserverFolder)
-class VerifyUserEmailView( AbstractAuthenticatedView ):
+class VerifyUserEmailView(AbstractAuthenticatedView):
 
 	def process_verification(self, user, values):
 		signature = values.get('signature') or values.get('token')
@@ -97,13 +103,13 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 		reindex_email_verification(user)
 
 	def _do_render(self, template_args):
-		result = render( "templates/email_verification_completion_page.pt",
+		result = render("templates/email_verification_completion_page.pt",
 						 template_args,
-						 request=self.request )
+						 request=self.request)
 
 		response = self.request.response
-		response.content_type = str( 'text/html' )
-		response.content_encoding = str('identity' )
+		response.content_type = str('text/html')
+		response.content_encoding = str('identity')
 		response.text = result
 		return response
 
@@ -117,25 +123,25 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 			# This seems generic enough that we would want to do
 			# this for all authenticated views (or the BrowserRedirectorPlugin).
 			current_path = request.current_route_path()
-			current_path = urllib.quote( current_path )
+			current_path = urllib.quote(current_path)
 			return_url = "%s?return=%s" % (login_root, current_path)
-			return hexc.HTTPFound( location=return_url )
+			return hexc.HTTPFound(location=return_url)
 
-		destination_url = urljoin( self.request.application_url, login_root )
+		destination_url = urljoin(self.request.application_url, login_root)
 		template_args = {'href': destination_url}
 
 		policy = component.getUtility(ISitePolicyUserEventListener)
-		support_email = getattr( policy, 'SUPPORT_EMAIL', 'support@nextthought.com' )
+		support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
 		profile = IUserProfile(user)
 		user_ext = to_external_object(user)
 		informal_username = user_ext.get('NonI18NFirstName', profile.realname) or user.username
 
 		template_args['profile'] = profile
-		template_args['informal_username'] = informal_username
-		template_args['support_email'] = support_email
 		template_args['error_message'] = None
+		template_args['support_email'] = support_email
+		template_args['informal_username'] = informal_username
 		template_args['site_name'] = guess_site_display_name(self.request)
-		template_args['username'] = getattr( user, 'username', '' )
+		template_args['username'] = getattr(user, 'username', '')
 
 		try:
 			values = CaseInsensitiveDict(**request.params)
@@ -146,14 +152,14 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 					getattr(e, 'detail', ''))
 			template_args['error_message'] = _("Unable to verify account.")
 
-		return self._do_render( template_args )
+		return self._do_render(template_args)
 
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,
 			 request_method='POST',
 			 context=IDataserverFolder)
-class VerifyUserEmailWithTokenView(	AbstractAuthenticatedView,
-									ModeledContentUploadRequestUtilsMixin):
+class VerifyUserEmailWithTokenView(AbstractAuthenticatedView,
+								   ModeledContentUploadRequestUtilsMixin):
 
 	def __call__(self):
 		values = CaseInsensitiveDict(self.readInput())
@@ -181,15 +187,15 @@ class VerifyUserEmailWithTokenView(	AbstractAuthenticatedView,
 			 context=IUser,
 			 renderer='rest',
 			 permission=nauth.ACT_UPDATE)
-class RequestEmailVerificationView(	AbstractAuthenticatedView,
-									ModeledContentUploadRequestUtilsMixin):
+class RequestEmailVerificationView(AbstractAuthenticatedView,
+								   ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
 		if self.request.body:
-			values = read_body_as_external_object( self.request )
+			values = read_body_as_external_object(self.request)
 		else:
 			values = self.request.params
-		result = CaseInsensitiveDict( values )
+		result = CaseInsensitiveDict(values)
 		return result
 
 	def __call__(self):
@@ -218,9 +224,9 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 			else:
 				raise_error(self.request,
 							hexc.HTTPUnprocessableEntity,
-							{ 'message': _("A current request is been processed." ),
+							{ 'message': _("A current request is been processed."),
 							  'seconds': MAX_WAIT_TIME_EMAILS - diff_time },
-							None )
+							None)
 		return hexc.HTTPNoContent()
 
 @view_config(route_name='objects.generic.traversal',
@@ -246,7 +252,7 @@ class SendUserEmailVerificationView(AbstractAuthenticatedView,
 			# send email
 			profile = IUserProfile(user, None)
 			email = getattr(profile, 'email', None)
-			email_verified =  getattr(profile, 'email_verified', False)
+			email_verified = getattr(profile, 'email_verified', False)
 			if not email_verified:
 				safe_send_email_verification(user, profile, email, self.request)
 			else:

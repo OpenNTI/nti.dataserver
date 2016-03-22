@@ -21,18 +21,21 @@ from zope.catalog.interfaces import ICatalog
 
 from zope.interface.interfaces import IMethod
 
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
 
-from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
+from pyramid.view import view_config
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.appserver.utils import is_true
 
-from nti.common.string import safestr
 from nti.common.maps import CaseInsensitiveDict
+
+from nti.common.string import safestr
 
 from nti.dataserver import authorization as nauth
 
@@ -50,8 +53,9 @@ from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
-from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_external_object
+
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.internalization import update_from_external_object
 
 from nti.schema.interfaces import find_most_derived_interface

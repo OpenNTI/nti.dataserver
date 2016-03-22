@@ -13,6 +13,9 @@ from zope import component
 
 from pyramid.threadlocal import get_current_request
 
+from nti.app.users.utils import set_email_verification_time
+from nti.app.users.utils import safe_send_email_verification
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
@@ -22,9 +25,6 @@ from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 
 from nti.dataserver.users.utils import reindex_email_verification
-
-from .utils import set_email_verification_time
-from .utils import safe_send_email_verification
 
 @component.adapter(IUser, IWillCreateNewEntityEvent)
 def _new_user_is_not_blacklisted(user, event):

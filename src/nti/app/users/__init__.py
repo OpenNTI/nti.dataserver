@@ -43,7 +43,7 @@ def username_search(search_term):
 	min_inclusive, max_exclusive = _make_min_max_btree_range(search_term)
 	dataserver = component.getUtility(IDataserver)
 	_users = IShardLayout(dataserver).users_folder
-	usernames = list(_users.iterkeys(min_inclusive, max_exclusive, excludemax=True))
+	usernames = tuple(_users.iterkeys(min_inclusive, max_exclusive, excludemax=True))
 	return usernames
 
 def all_usernames():

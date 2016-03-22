@@ -11,23 +11,24 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 from zope import component
-
-from zope.catalog.interfaces import ICatalog
 
 from zope.intid.interfaces import IIntIds
 
-from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
+
+from pyramid.view import view_config
 
 from nti.app.authentication import get_remote_user
 
-from nti.appserver.ugd_query_views import UGDView
+from nti.app.users import MessageFactory as _
+
 from nti.appserver.ugd_edit_views import UGDDeleteView
 
+from nti.appserver.ugd_query_views import UGDView
+
 from nti.dataserver import authorization as nauth
+
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
@@ -36,7 +37,8 @@ from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.metadata_index import IX_TOPICS
 from nti.dataserver.metadata_index import IX_SHAREDWITH
 from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
-from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
+
+from nti.metadata import dataserver_metadata_catalog
 
 from nti.zope_catalog.catalog import ResultSet
 
@@ -45,7 +47,7 @@ from nti.zope_catalog.catalog import ResultSet
 # Not present on things that the user cannot gain additional information
 # about his membership in.
 # See :func:`exit_dfl_view` for what can be done with it.
-from . import REL_MY_MEMBERSHIP
+from nti.app.users import REL_MY_MEMBERSHIP
 
 def _authenticated_user_is_member(context, request):
 	"""
@@ -110,7 +112,7 @@ class DFLActivityView(UGDView):
 		if self.remoteUser != context.creator and self.remoteUser not in context:
 			raise hexc.HTTPForbidden()
 
-		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
+		catalog = dataserver_metadata_catalog()
 		if catalog is None:
 			raise hexc.HTTPNotFound("No catalog")
 		if self.remoteUser not in context and self.remoteUser != context.creator:

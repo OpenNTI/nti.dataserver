@@ -13,10 +13,13 @@ from zope import component
 
 from zope.security.interfaces import IPrincipal
 
-from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
+from pyramid.view import view_config
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.users import SUGGESTED_CONTACTS
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -27,18 +30,18 @@ from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import User
-from nti.dataserver.users.suggested_contacts import SuggestedContact
 
 from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowSuggestedContacts
 from nti.dataserver.users.interfaces import get_all_suggested_contacts
 from nti.dataserver.users.interfaces import ISecondOrderSuggestedContactProvider
 
-from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.externalization import toExternalObject
-from nti.externalization.interfaces import StandardExternalFields
+from nti.dataserver.users.suggested_contacts import SuggestedContact
 
-from . import SUGGESTED_CONTACTS
+from nti.externalization.externalization import toExternalObject
+
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
 
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
@@ -56,9 +59,10 @@ def to_suggested_contacts(users):
 
 class _AbstractSuggestedContactsView(AbstractAuthenticatedView):
 
-	# The maximum number of results we will return
+	#: The maximum number of results we will return
 	MAX_REQUEST_SIZE = 10
-	# The minimum number of results we must return
+
+	#: The minimum number of results we must return
 	MIN_RESULT_COUNT = 4
 
 	def _get_params(self):
@@ -82,17 +86,21 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 		1. Friends friends list (2nd order)
 		2. Suggested contacts utility
 	"""
-	# The portion of results we get from our contact pool.
+	#: The portion of results we get from our contact pool.
 	LIMITED_CONTACT_RATIO = .6
-	# The portion of results we get from the context.
+
+	#: The portion of results we get from the context.
 	LIMITED_CONTACT_RATIO_SINGLE_SOURCE = .2
-	# The minimum number of contacts we must have in our pool
+
+	#: The minimum number of contacts we must have in our pool
 	MIN_LIMITED_CONTACT_POOL_SIZE = 2
-	# The minimum number of contacts our context must have.
-	# For a user with 5 friends, we'll return a single contact
-	# from that source. Less than that and we'll return nothing.
+
+	#: The minimum number of contacts our context must have.
+	#: For a user with 5 friends, we'll return a single contact
+	#: from that source. Less than that and we'll return nothing.
 	MIN_LIMITED_CONTACT_POOL_SIZE_SINGLE_SOURCE = 5
-	# TODO Do we need a min fill count to preserve privacy?
+
+	#: TODO: Do we need a min fill count to preserve privacy?
 	MIN_FILL_COUNT = 0
 
 	def _set_limited_count(self, pool, pool_size_min, limited_ratio):
@@ -132,8 +140,8 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 		"""
 		if not self.existing_pool or not self.limited_count:
 			return ()
-		results = set()
 
+		results = set()
 		suggestion_args = self._get_suggestion_args()
 		for _, provider in list(component.getUtilitiesFor(ISecondOrderSuggestedContactProvider)):
 			for suggestion in provider.suggestions(*suggestion_args):
@@ -147,13 +155,13 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 		Get the rest of our suggested contacts from our contacts
 		utility.
 		"""
-		# TODO Currently our only subscriber does so based on
+		# TODO: Currently our only subscriber does so based on
 		# courses.  We also need one for global community.
 		fill_in_count = self.result_count - len(intermediate_contacts)
 		intermediate_usernames = {x.username for x in intermediate_contacts}
 		results = set()
 
-		# TODO We want to do something smarter here for users
+		# TODO: We want to do something smarter here for users
 		# looking at suggestions in other user's profiles.
 		for contact in get_all_suggested_contacts(self.context):
 			if		contact.username not in intermediate_usernames \
@@ -176,9 +184,9 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 		self._get_params()
 		limited_contacts = self._get_limited_contacts()
 		fill_in_contacts = self._get_fill_in_contacts(limited_contacts)
-		results[ 'ItemCount' ] = 0
-		results[ CLASS ] = SUGGESTED_CONTACTS
-		results[ MIME_TYPE ] = SUGGESTED_CONTACTS_MIMETYPE
+		results['ItemCount'] = 0
+		results[CLASS] = SUGGESTED_CONTACTS
+		results[MIME_TYPE] = SUGGESTED_CONTACTS_MIMETYPE
 
 		# Only return anything if we meet our minimum requirements.
 		if 		len(fill_in_contacts) >= self.MIN_FILL_COUNT \
@@ -186,8 +194,8 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 			result_list = []
 			result_list.extend(limited_contacts)
 			result_list.extend(fill_in_contacts)
-			results[ ITEMS ] = [toExternalObject(x, name="summary") for x in result_list]
-			results[ 'ItemCount' ] = len(result_list)
+			results[ITEMS ] = [toExternalObject(x, name="summary") for x in result_list]
+			results['Total'] = results['ItemCount'] = len(result_list)
 		return results
 
 @view_config(context=ICommunity)
@@ -234,20 +242,20 @@ class _MembershipSuggestedContactsView(_AbstractSuggestedContactsView):
 
 		if 		self.remoteUser is None \
 			or 	IDisallowSuggestedContacts.providedBy(context) \
-			or 	not (self.remoteUser in context \
-					or	self.remoteUser == context.creator):
+			or 	not (	self.remoteUser in context \
+					 or	self.remoteUser == context.creator):
 			raise hexc.HTTPForbidden()
 
 		results = LocatedExternalDict()
 		self._get_params()
 		contacts = self._get_contacts()
-		results[ 'ItemCount' ] = 0
-		results[ CLASS ] = SUGGESTED_CONTACTS
-		results[ MIME_TYPE ] = SUGGESTED_CONTACTS_MIMETYPE
+		results['ItemCount' ] = 0
+		results[CLASS] = SUGGESTED_CONTACTS
+		results[MIME_TYPE] = SUGGESTED_CONTACTS_MIMETYPE
 
 		if len(contacts) >= self.MIN_RESULT_COUNT:
 			result_list = []
 			result_list.extend(contacts)
-			results[ ITEMS ] = [toExternalObject(x, name="summary") for x in result_list]
-			results[ 'ItemCount' ] = len(result_list)
+			results[ITEMS] = [toExternalObject(x, name="summary") for x in result_list]
+			results['Total'] = results['ItemCount'] = len(result_list)
 		return results

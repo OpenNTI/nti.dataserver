@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import six
 import isodate
 from urllib import unquote
@@ -22,23 +20,32 @@ from zope.component.hooks import site as current_site
 
 from zope.traversing.interfaces import IEtcNamespace
 
-from pyramid.view import view_config
-from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
+from pyramid.view import view_config
+from pyramid.view import view_defaults
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.common.time import bit64_int_to_time
+from nti.app.users import MessageFactory as _
+
+from nti.app.users import is_true
+from nti.app.users import all_usernames
+from nti.app.users import username_search
+
 from nti.common.maps import CaseInsensitiveDict
+
+from nti.common.time import bit64_int_to_time
+
+from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.dataserver.users import User
-
-from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
@@ -54,11 +61,7 @@ from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from .utils import generate_mail_verification_pair
-
-from . import is_true
-from . import all_usernames
-from . import username_search
+from nti.app.users.utils import generate_mail_verification_pair
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -149,10 +152,10 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 		shared = values.get('shared') or values.get('include_shared')
 		shared = is_true(shared)
 
-		dynamic = values.get('dynamic') or \
-				   values.get('dynamic_friends') or \
-				   values.get('include_dynamic') or \
-				   values.get('include_dynamic_friends')
+		dynamic = 	  values.get('dynamic') \
+				   or values.get('dynamic_friends') \
+				   or values.get('include_dynamic')  \
+				   or values.get('include_dynamic_friends')
 		dynamic = is_true(dynamic)
 
 		data = remove_broken_objects(user, include_containers=containers,

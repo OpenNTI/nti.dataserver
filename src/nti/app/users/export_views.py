@@ -13,23 +13,33 @@ from collections import defaultdict
 
 from zope import component
 
-from zope.catalog.interfaces import ICatalog
+from zope.intid.interfaces import IIntIds
 
-from zope.intid import IIntIds
-
-from pyramid.location import lineage
-from pyramid.view import view_config
-from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
+from pyramid.location import lineage
+
+from pyramid.view import view_config
+from pyramid.view import view_defaults
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.app.users import is_true
+from nti.app.users import all_usernames
+from nti.app.users import get_mime_type
+from nti.app.users import username_search
+from nti.app.users import parse_mime_types
 
 from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IUserTranscriptStorage
 
-from nti.common.proxy import removeAllProxies
 from nti.common.maps import CaseInsensitiveDict
+
+from nti.common.proxy import removeAllProxies
+
+from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IACE
 from nti.dataserver.interfaces import IUser
@@ -38,12 +48,10 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.dataserver.users import User
-from nti.dataserver import authorization as nauth
 
 from nti.dataserver.metadata_index import IX_CREATOR
 from nti.dataserver.metadata_index import IX_MIMETYPE
 from nti.dataserver.metadata_index import IX_SHAREDWITH
-from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -51,15 +59,11 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import NonExternalizableObjectError
 
+from nti.metadata import dataserver_metadata_catalog
+
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.zodb import isBroken
-
-from . import is_true
-from . import all_usernames
-from . import get_mime_type
-from . import username_search
-from . import parse_mime_types
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -68,7 +72,7 @@ messageinfo_mime_type = u'application/vnd.nextthought.messageinfo'
 
 def get_user_objects(user, mime_types=(), broken=False):
 	intids = component.getUtility(IIntIds)
-	catalog = component.getUtility(ICatalog, METADATA_CATALOG_NAME)
+	catalog = dataserver_metadata_catalog()
 
 	result_ids = None
 	created_ids = None
@@ -105,9 +109,9 @@ def get_user_objects(user, mime_types=(), broken=False):
 	for uid in result_ids or ():
 		try:
 			obj = intids.queryObject(uid)
-			if 	obj is None or \
-				IUser.providedBy(obj) or \
-				IDeletedObjectPlaceholder.providedBy(obj):
+			if 		obj is None \
+				or	IUser.providedBy(obj) \
+				or	IDeletedObjectPlaceholder.providedBy(obj):
 				continue
 
 			if isBroken(obj, uid):
@@ -158,7 +162,7 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 			for obj in get_user_objects(user, mime_types):
 				objects.append(obj)
 				total += 1
-		result['Total'] = total
+		result['Total'] = result['ItemCount'] = total
 		return result
 
 @view_config(name='ExportObjectsSharedwith')
@@ -178,7 +182,7 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 			raise hexc.HTTPUnprocessableEntity('User not found')
 
 		intids = component.getUtility(IIntIds)
-		catalog = component.getUtility(ICatalog, METADATA_CATALOG_NAME)
+		catalog = dataserver_metadata_catalog()
 
 		sharedWith_ids = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
 
@@ -201,10 +205,10 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 		for uid in result_ids:
 			try:
 				obj = intids.queryObject(uid)
-				if	obj is not None and \
-					not isBroken(obj, uid) and \
-					not IUser.providedBy(obj) and \
-					not IDeletedObjectPlaceholder.providedBy(obj):
+				if		obj is not None \
+					and not isBroken(obj, uid) \
+					and not IUser.providedBy(obj) \
+					and not IDeletedObjectPlaceholder.providedBy(obj):
 					items.append(obj)
 			except TypeError as e:
 				logger.debug("Error processing object %s(%s); %s", type(obj), uid, e)
@@ -257,9 +261,9 @@ class DeleteUserObjects(AbstractAuthenticatedView, ModeledContentUploadRequestUt
 					broken = oid in broken_objects or pid in broken_objects
 					if not broken:
 						strong = obj if not callable(obj) else obj()
-						broken = strong is not None and \
-								 oid in broken_objects and \
-								 pid in broken_objects
+						broken =     strong is not None \
+								 and oid in broken_objects \
+								 and pid in broken_objects
 						if broken:
 							obj = strong
 					if broken:
@@ -294,8 +298,10 @@ class ObjectResolverView(AbstractAuthenticatedView):
 		try:
 			result['Object'] = toExternalObject(obj)
 		except NonExternalizableObjectError:
-			result['Object'] = {'Class': "NonExternalizableObject",
-								'InternalType': "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)}
+			result['Object'] = {
+					'Class': "NonExternalizableObject",
+					'InternalType': "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)
+			}
 
 		result['IntId'] = intids.queryId(obj)
 		for resource in lineage(obj):

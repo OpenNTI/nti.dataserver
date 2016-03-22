@@ -17,6 +17,11 @@ from pyramid.interfaces import IRequest
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
+from nti.app.users import REL_MY_MEMBERSHIP
+from nti.app.users import SUGGESTED_CONTACTS
+from nti.app.users import REQUEST_EMAIL_VERFICATION_VIEW
+from nti.app.users import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserverFolder
@@ -29,19 +34,15 @@ from nti.dataserver.users.interfaces import IDisallowActivityLink
 from nti.dataserver.users.interfaces import IDisallowHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowSuggestedContacts
 
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
+from nti.externalization.singleton import SingletonDecorator
+
 from nti.links.links import Link
 
 from nti.traversal.traversal import find_interface
-
-from . import REL_MY_MEMBERSHIP
-from . import SUGGESTED_CONTACTS
-from . import REQUEST_EMAIL_VERFICATION_VIEW
-from . import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
 
 LINKS = StandardExternalFields.LINKS
 
@@ -51,14 +52,13 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 
 	def _predicate(self, context, result):
 		profile = IUserProfile(context, None)
-		result = bool(self._is_authenticated and \
-					  self.remoteUser == context and \
-					  profile is not None and \
-					  not profile.email_verified)
+		result = bool(	  self._is_authenticated 
+					  and self.remoteUser == context
+					  and profile is not None
+					  and not profile.email_verified)
 		return result
 
 	def _do_decorate_external(self, context, result):
-
 		_links = result.setdefault(LINKS, [])
 		link = Link(context, rel="RequestEmailVerification",
 					elements=(REQUEST_EMAIL_VERFICATION_VIEW,))
@@ -131,9 +131,9 @@ class _DFLGetMembershipLinkProvider(AbstractTwoStateViewLinkDecorator):
 class _DFLLinksDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
-		result = bool(self._is_authenticated and \
-					  (self.remoteUser in context or \
-					  self.remoteUser == context.creator))
+		result = bool(self._is_authenticated 
+					  and (	   self.remoteUser in context 
+					  		or self.remoteUser == context.creator))
 		return result
 
 	def _do_decorate_external(self, context, result):
@@ -159,7 +159,7 @@ class _DFLEditLinkRemoverDecorator(object):
 	def decorateExternalObject(self, context, external):
 		links = external.get(LINKS, ())
 		if context.Locked:
-			for idx, link in enumerate(list(links)): # mutating
+			for idx, link in enumerate(list(links)):  # mutating
 				if link.get('rel') == 'edit':
 					links.pop(idx)
 					break
@@ -182,8 +182,8 @@ class _CommunitySuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAware
 	def _predicate(self, context, result):
 		# Should we check for public here? It's false by default.
 		result = bool(self._is_authenticated \
-					  and not IDisallowSuggestedContacts.providedBy( context ) \
-					  or (self.remoteUser in context \
+					  and not IDisallowSuggestedContacts.providedBy(context) \
+					  or (	 self.remoteUser in context \
 						  or self.remoteUser == context.creator))
 		return result
 
@@ -198,8 +198,8 @@ class _DFLSuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecora
 
 	def _predicate(self, context, result):
 		result = bool(self._is_authenticated \
-					  and (	self.remoteUser in context \
-					  		or self.remoteUser == context.creator))
+					  and (		self.remoteUser in context \
+					  		or	self.remoteUser == context.creator))
 		return result
 
 	def _do_decorate_external(self, context, result):

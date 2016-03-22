@@ -14,15 +14,17 @@ logger = __import__('logging').getLogger(__name__)
 import six
 import time
 
-from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
-from nti.appserver.ugd_edit_views import UGDPutView
+from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.appserver.dataserver_pyramid_views import GenericGetView
+
+from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
@@ -32,13 +34,14 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import Entity
 
+from nti.dataserver.users.interfaces import IDisallowMembershipOperations
+
 from nti.dataserver.users.users_external import _avatar_url
 from nti.dataserver.users.users_external import _background_url
 
-from nti.dataserver.users.interfaces import IDisallowMembershipOperations
+from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.links.externalization import render_link
@@ -121,12 +124,12 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 			result = None
 			if x == everyone: # always
 				result = None
-			elif ICommunity.providedBy(x) and \
-				not IDisallowMembershipOperations.providedBy(x) and \
-				(x.public or self.remoteUser in x):
+			elif 	ICommunity.providedBy(x) \
+				and not IDisallowMembershipOperations.providedBy(x) \
+				and (x.public or self.remoteUser in x):
 				result = toExternalObject(x, name='summary')
-			elif IDynamicSharingTargetFriendsList.providedBy(x) and \
-				(self.remoteUser in x or self.remoteUser == x.creator):
+			elif 	IDynamicSharingTargetFriendsList.providedBy(x) \
+				and (self.remoteUser in x or self.remoteUser == x.creator):
 				result = toExternalObject(x)
 			return result
 
@@ -147,7 +150,7 @@ class UserUpdateView(UGDPutView):
 
 	def readInput(self, value=None):
 		value = super(UserUpdateView, self).readInput(value=value)
-		value.pop( 'DynamicMemberships', None )
+		value.pop('DynamicMemberships', None)
 		return value
 	
 @view_config(context=IUsersFolder,
