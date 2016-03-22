@@ -38,6 +38,9 @@ from nti.common.property import Lazy
 
 from nti.dataserver.interfaces import IDataserver
 
+from nti.namedfile.file import name_finder
+from nti.namedfile.file import safe_filename
+
 def _check_creator(remote_user, obj):
 	result = False
 	try:
@@ -200,13 +203,17 @@ def process_source(source, default_content_type=u'application/octet-stream'):
 		if not length or length == -1:
 			length = _get_file_size(source)
 		filename = getattr(source, 'filename', None)
-		contentType = (		getattr(source, 'type', None) 
-					   or	getattr(source, 'contentType', None))
+		contentType = getattr(source, 'type', None) or getattr(source, 'contentType', None)
 		contentType = contentType or default_content_type
 		source = source.file
 		source.seek(0)
 		source = SourceProxy(source, filename, contentType, length)
 	return source
+
+def get_safe_source_filename(source, default):
+	result = getattr(source, 'filename', None) or getattr(source, 'name', None) or default
+	result = safe_filename(name_finder(result))
+	return result
 
 def get_source(request, *keys):
 	source = None
