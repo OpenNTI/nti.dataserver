@@ -260,6 +260,9 @@ class UGDPutView(AbstractAuthenticatedView,
 		# preconditions
 		self._check_object_unmodified_since(theObject)
 
+		# Now check any object constraints
+		self._check_object_constraints(theObject)
+
 		# Then ensure the users match
 		# remoteUser = self.getRemoteUser()
 		# if remoteUser != theObject.creator:

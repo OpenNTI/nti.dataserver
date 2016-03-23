@@ -622,6 +622,9 @@ class ModeledContentEditRequestUtilsMixin(object):
 	or existing objects.
 	"""
 
+	def _to_utc(self, last_mod):
+		return datetime.datetime.fromtimestamp(last_mod, webob.datetime_utils.UTC)
+	
 	def _check_object_exists(self, o, cr='', cid='', oid=''):
 		"""
 		If the first argument is None or has been deleted (is marked
@@ -630,9 +633,6 @@ class ModeledContentEditRequestUtilsMixin(object):
 		"""
 		if o is None or IDeletedObjectPlaceholder.providedBy(o):
 			raise hexc.HTTPNotFound("No object %s/%s/%s" % (cr, cid, oid))
-
-	def _to_utc(self, last_mod):
-		return datetime.datetime.fromtimestamp(last_mod, webob.datetime_utils.UTC)
 
 	def _check_object_unmodified_since(self, obj):
 		"""
@@ -648,3 +648,6 @@ class ModeledContentEditRequestUtilsMixin(object):
 			if 		obj_last_mod is not None \
 				and self._to_utc(obj_last_mod) > self.request.if_unmodified_since:
 				raise hexc.HTTPPreconditionFailed()
+
+	def _check_object_constraints(self, obj):
+		pass
