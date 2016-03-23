@@ -11,12 +11,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 
 from datetime import datetime
 
 from pyramid.view import view_config
-from pyramid.view import view_defaults  # NOTE: Only usable on classes
+from pyramid.view import view_defaults
 
 from nti.app.externalization.internalization import read_body_as_external_object
 
@@ -35,6 +36,7 @@ from nti.dataserver.interfaces import IDefaultPublished
 from nti.dataserver.interfaces import ICalendarPublishable
 
 class _AbstractPublishingView(object):
+
 	__metaclass__ = ABCMeta
 
 	_iface = IDefaultPublished
@@ -43,30 +45,30 @@ class _AbstractPublishingView(object):
 		self.request = request
 
 	@abstractmethod
-	def _do_provide(self, topic):
+	def _do_provide(self, context):
 		"""
 		This method is responsible for firing any ObjectSharingModifiedEvents needed.
 		"""
-		# Which is done by the topic object's publish/unpublish method
+		# Which is done by the context object's publish/unpublish method
 		raise NotImplementedError()  # pragma: no cover
 
 	@abstractmethod
-	def _test_provides(self, topic):
+	def _test_provides(self, context):
 		raise NotImplementedError()  # pragma: no cover
 
 	def __call__(self):
 		request = self.request
-		topic = request.context
+		context = request.context
 
-		if not IPublishable.providedBy(topic):
+		if not IPublishable.providedBy(context):
 			raise TypeError("Object not publishable; this is a development error.",
-							topic)
+							context)
 
-		if self._test_provides(topic):
-			self._do_provide(topic)
+		if self._test_provides(context):
+			self._do_provide(context)
 
-		request.response.location = request.resource_path(topic)
-		return uncached_in_response(topic)
+		request.response.location = request.resource_path(context)
+		return uncached_in_response(context)
 
 @view_config(context=IPublishable)
 @view_defaults(route_name='objects.generic.traversal',
@@ -76,11 +78,11 @@ class _AbstractPublishingView(object):
 			   name=VIEW_PUBLISH)
 class PublishView(_AbstractPublishingView):
 
-	def _do_provide(self, topic):
-		topic.publish()
+	def _do_provide(self, context):
+		context.publish()
 
-	def _test_provides(self, topic):
-		return not IDefaultPublished.providedBy(topic)
+	def _test_provides(self, context):
+		return not IDefaultPublished.providedBy(context)
 
 @view_config(context=IPublishable)
 @view_defaults(route_name='objects.generic.traversal',
@@ -90,11 +92,11 @@ class PublishView(_AbstractPublishingView):
 			   name=VIEW_UNPUBLISH)
 class UnpublishView(_AbstractPublishingView):
 
-	def _do_provide(self, topic):
-		topic.unpublish()
+	def _do_provide(self, context):
+		context.unpublish()
 
-	def _test_provides(self, topic):
-		return IDefaultPublished.providedBy(topic)
+	def _test_provides(self, context):
+		return IDefaultPublished.providedBy(context)
 
 @view_config(context=ICalendarPublishable)
 @view_defaults(route_name='objects.generic.traversal',
@@ -131,7 +133,7 @@ class CalendarPublishView(_AbstractPublishingView,
 		start, end = self._get_dates()
 		obj.publish(start=start, end=end)
 
-	def _test_provides(self, topic):
+	def _test_provides(self, context):
 		# Allow the underlying implementation to handle state.
 		return True
 
@@ -143,9 +145,9 @@ class CalendarPublishView(_AbstractPublishingView,
 			   name=VIEW_UNPUBLISH)
 class CalendarUnpublishView(_AbstractPublishingView):
 
-	def _do_provide(self, topic):
-		topic.unpublish()
+	def _do_provide(self, context):
+		context.unpublish()
 
-	def _test_provides(self, topic):
+	def _test_provides(self, context):
 		# Allow the underlying implementation to handle state.
 		return True
