@@ -31,9 +31,6 @@ from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
 from nti.appserver.pyramid_authorization import is_readable
 
-from nti.assessment.interfaces import IQAssessment
-from nti.assessment.interfaces import IQSubmittable
-
 from nti.contentlibrary.interfaces import IContentUnit
 from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IContentPackageBundle
@@ -73,8 +70,6 @@ from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.schema.interfaces import find_most_derived_interface
-
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
@@ -92,18 +87,6 @@ class _Type(object):
 @interface.implementer(IContainedTypeAdapter)
 def _asset_to_contained_type(context):
 	provided = iface_of_asset(context)
-	return _Type(provided.__name__)
-
-@component.adapter(IQAssessment)
-@interface.implementer(IContainedTypeAdapter)
-def _assessment_to_contained_type(context):
-	provided = find_most_derived_interface(context, IQAssessment)
-	return _Type(provided.__name__)
-
-@component.adapter(IQSubmittable)
-@interface.implementer(IContainedTypeAdapter)
-def _submittable_to_contained_type(context):
-	provided = find_most_derived_interface(context, IQSubmittable)
 	return _Type(provided.__name__)
 
 # Namespace
@@ -135,16 +118,6 @@ def _package_lineage_to_namespace(context):
 def _package_asset_to_namespace(context):
 	return _package_lineage_to_namespace(context)
 
-@component.adapter(IQAssessment)
-@interface.implementer(INamespaceAdapter)
-def _assessment_to_namespace(context):
-	return _package_lineage_to_namespace(context)
-
-@component.adapter(IQSubmittable)
-@interface.implementer(INamespaceAdapter)
-def _submittable_to_namespace(context):
-	return _package_lineage_to_namespace(context)
-
 # Namespace
 
 class _NTIID(object):
@@ -157,16 +130,6 @@ class _NTIID(object):
 @interface.implementer(INTIIDAdapter)
 @component.adapter(IPresentationAsset)
 def _asset_to_ntiid(context):
-	return _NTIID(context.ntiid)
-
-@component.adapter(IQAssessment)
-@interface.implementer(INTIIDAdapter)
-def _assessment_to_ntiid(context):
-	return _NTIID(context.ntiid)
-
-@component.adapter(IQSubmittable)
-@interface.implementer(INTIIDAdapter)
-def _submittable_to_ntiid(context):
 	return _NTIID(context.ntiid)
 
 # Containers
@@ -233,18 +196,6 @@ def _course_asset_to_containers(context):
 	result.discard(None)
 	result.discard(context.ntiid)
 	return _Containers(tuple(result))
-
-@component.adapter(IQAssessment)
-@interface.implementer(IContainersAdapter)
-def _assessment_to_containers(context):
-	result = _package_lineage_to_containers(context)
-	return result
-
-@component.adapter(IQSubmittable)
-@interface.implementer(IContainersAdapter)
-def _submittable_to_containers(context):
-	result = _package_lineage_to_containers(context)
-	return result
 
 # Bundles
 
