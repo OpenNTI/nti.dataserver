@@ -189,10 +189,14 @@ def create_recorder_catalog(catalog=None, family=None):
 		catalog[name] = index
 	return catalog
 
+def get_catalog(registry=component):
+	catalog = registry.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
+	return catalog
+
 def install_recorder_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
 	intids = lsm.getUtility(IIntIds) if intids is None else intids
-	catalog = lsm.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
+	catalog = get_catalog(registry=lsm)
 	if catalog is not None:
 		return catalog
 
@@ -220,10 +224,9 @@ def get_recordables(objects=True, catalog=None, intids=None):
 	return the recordable objects/docids in the catalog
 	"""
 
-	if catalog is None:
-		catalog = component.getUtility(IMetadataCatalog, name=CATALOG_NAME)
-	
-	locked_index = catalog[IX_LOCKED]
+	catalog = get_catalog() if catalog is None else catalog
 	intids = component.queryUtility(IIntIds) if intids is None else intids
+
+	locked_index = catalog[IX_LOCKED]
 	doc_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
 	return _yield_ids(doc_ids, intids, objects)
