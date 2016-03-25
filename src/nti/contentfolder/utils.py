@@ -88,4 +88,6 @@ def mkdirs(current, path, factory=ContentFolder):
 			new_folder = factory(name=segment)
 			current[segment] = new_folder
 			current = new_folder
+		else:
+			current = current[segment]
 	return current

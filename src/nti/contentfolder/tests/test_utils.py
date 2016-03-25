@@ -67,5 +67,9 @@ class TestUtils(unittest.TestCase):
 		root = RootFolder()
 		created = mkdirs(root, "/home/users/ichigo/bankai")
 		assert_that(created, has_property('name', 'bankai'))
+
 		t = traverse(root, "/home/users/ichigo/bankai")
+		assert_that(created, is_(t))
+		
+		created = mkdirs(root, "/home/users/ichigo/bankai")
 		assert_that(created, is_(t))
