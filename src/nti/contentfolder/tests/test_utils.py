@@ -18,6 +18,7 @@ import unittest
 from nti.contentfolder.model import RootFolder
 from nti.contentfolder.model import ContentFolder
 
+from nti.contentfolder.utils import mkdirs
 from nti.contentfolder.utils import traverse
 from nti.contentfolder.utils import TraversalException
 
@@ -62,3 +63,9 @@ class TestUtils(unittest.TestCase):
 		obj = traverse(ichigo, './bankai/..')
 		assert_that(obj, is_(ichigo))
 		
+	def test_mkdirs(self):
+		root = RootFolder()
+		created = mkdirs(root, "/home/users/ichigo/bankai")
+		assert_that(created, has_property('name', 'bankai'))
+		t = traverse(root, "/home/users/ichigo/bankai")
+		assert_that(created, is_(t))
