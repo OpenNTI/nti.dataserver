@@ -33,18 +33,19 @@ IMultipartSource = ISource
 
 class ISourceFiler(interface.Interface):
     
-    def save(source, key, contentType=None, overwrite=False, **kwargs):
+    def save(key, source, contentType=None, bucket=None, overwrite=False, **kwargs):
         """
         Save the specifed source in this filer object
         
+        :param key: Source key identifier. (e.g. filename)
         :param source Source object to save. This object can be a python stream 
                or a :class:`.ISource` object
-               
-        :param key: Source key identifier. (e.g. filename)
         :param contentType: Source content type
+        :param bucket: Bucket (e.g subir) to write the source
         :param overwrite: Overite existing flag
         :return A source URL or href
         """
+    write = save
     
     def get(key):
         """
@@ -53,7 +54,8 @@ class ISourceFiler(interface.Interface):
         :param key source identifier, href or url
         :return Source object or stream
         """
-        
+    read = get
+    
     def remove(key):
         """
         Remove a source
