@@ -261,13 +261,13 @@ class UGDPutView(AbstractAuthenticatedView,
 		self._check_object_unmodified_since(theObject)
 
 		# Now check any object constraints
-		self._check_object_constraints(theObject)
+		externalValue = self.readInput()
+		self._check_object_constraints(theObject, externalValue)
 
 		# Then ensure the users match
 		# remoteUser = self.getRemoteUser()
 		# if remoteUser != theObject.creator:
 		# 	raise hexc.HTTPForbidden()
-
 		creator = theObject.creator
 		# This is required; only register this view for objects that have it.
 		# This class is NOT meant to be a fully generic PUT view by itself.
@@ -278,7 +278,6 @@ class UGDPutView(AbstractAuthenticatedView,
 		containerId = getattr(theObject, 'containerId', None)
 		objectId = getattr(theObject, 'id', None) or str(theObject)
 
-		externalValue = self.readInput()
 		self.updateContentObject(theObject, externalValue)  # Should fire lifecycleevent.modified
 
 		if containerId:

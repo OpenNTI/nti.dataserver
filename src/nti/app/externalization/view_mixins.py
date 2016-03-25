@@ -649,5 +649,5 @@ class ModeledContentEditRequestUtilsMixin(object):
 				and self._to_utc(obj_last_mod) > self.request.if_unmodified_since:
 				raise hexc.HTTPPreconditionFailed()
 
-	def _check_object_constraints(self, obj):
+	def _check_object_constraints(self, obj, externalValue):
 		pass
