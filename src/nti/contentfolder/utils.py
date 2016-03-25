@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import lifecycleevent
+
 from nti.contentfolder.interfaces import IRootFolder
 
 from nti.contentfolder.model import ContentFolder
@@ -85,7 +87,9 @@ def mkdirs(current, path, factory=ContentFolder):
 				current = current.__parent__
 			continue
 		if segment not in current:
-			new_folder = factory(name=segment)
+			new_folder = factory()
+			new_folder.name = segment
+			lifecycleevent.created(new_folder)
 			current[segment] = new_folder
 			current = new_folder
 		else:

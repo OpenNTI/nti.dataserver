@@ -34,6 +34,7 @@ from nti.app.contentfolder import MessageFactory as _
 from nti.app.contentfolder import CFIO
 
 from nti.app.externalization.error import raise_json_error
+from nti.app.externalization.internalization import read_body_as_external_object
 
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -54,6 +55,7 @@ from nti.contentfolder.interfaces import INamedContainer
 
 from nti.contentfolder.model import ContentFolder
 
+from nti.contentfolder.utils import mkdirs
 from nti.contentfolder.utils import traverse
 from nti.contentfolder.utils import TraversalException
 from nti.contentfolder.utils import NotSuchFileException
@@ -143,26 +145,46 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 	
 	def readInput(self, value=None):
 		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
-		if isinstance(data, six.string_types):
-			data = {
-				'name': data,
-				'title': data,
-				'description': data,
-				MIMETYPE: self.default_folder_mime_type
-			}
-		elif isinstance(data, Mapping) and MIMETYPE not in data:
+		if MIMETYPE not in data:
+			data['title'] = data.get('title') or data['name']
+			data['description'] = data.get('description') or data['name']
 			data[MIMETYPE] = self.default_folder_mime_type
 		return data
 
 	def _do_call(self):
 		creator = self.remoteUser
 		new_folder = self.readCreateUpdateContentObject(creator)
+		new_folder.creator = creator.username
 		if new_folder.name in self.context:
 			raise hexc.HTTPUnprocessableEntity(_("Folder exists."))
 		lifecycleevent.created(new_folder)
 		self.context.add(new_folder)
 		self.request.response.status_int = 201
 		return new_folder
+
+@view_config(context=INamedContainer)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   name="mkdirs",
+			   permission=nauth.ACT_UPDATE,
+			   request_method='POST')
+class MkdirsView(AbstractAuthenticatedView):
+
+	folder_factory = ContentFolder
+
+	def builder(self):
+		result = self.folder_factory()
+		result.creator = self.remoteUser.username
+		return result
+
+	def __call__(self):
+		data = read_body_as_external_object(self.request)
+		path = data.get('path')
+		if not path:
+			raise hexc.HTTPUnprocessableEntity(_("Path not specified."))
+		result = mkdirs(self.context, path, self.builder)
+		self.request.response.status_int = 201
+		return result
 
 @view_config(name="upload")
 @view_defaults(route_name='objects.generic.traversal',
