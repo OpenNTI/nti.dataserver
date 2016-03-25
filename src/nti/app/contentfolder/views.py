@@ -145,6 +145,8 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 	
 	def readInput(self, value=None):
 		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		if isinstance(data, six.string_types):
+			data = {'name': data}
 		if MIMETYPE not in data:
 			data['title'] = data.get('title') or data['name']
 			data['description'] = data.get('description') or data['name']
@@ -179,6 +181,8 @@ class MkdirsView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		data = read_body_as_external_object(self.request)
+		if isinstance(data, six.string_types):
+			data = {'path': data}
 		path = data.get('path')
 		if not path:
 			raise hexc.HTTPUnprocessableEntity(_("Path not specified."))
