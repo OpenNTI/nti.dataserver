@@ -68,10 +68,11 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		if has_permission(ACT_UPDATE, context, request):
 			_links.append(_create_link(context, "mkdir", "@@mkdir"))
 			_links.append(_create_link(context, "clear", "@@clear"))
+			_links.append(_create_link(context, "mkdirs", "@@mkdirs"))
 			_links.append(_create_link(context, "upload", "@@upload"))
 
 		# non root folders
-		if 	not IRootFolder.providedBy(context) \
+		if 		not IRootFolder.providedBy(context) \
 			and has_permission(ACT_UPDATE, context, request):
 			_links.append(_create_link(context, "move", "@@move"))
 			_links.append(_create_link(context, "rename", "@@rename"))
