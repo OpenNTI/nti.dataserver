@@ -71,6 +71,7 @@ class IInvitation(IContained,
 		Once the invitation has been accepted, this should notify an :class:`IInvitationAcceptedEvent`.
 
 		:raises InvitationExpiredError: If the invitation has expired.
+		:return  None/False if invitation was not accepted
 		"""
 
 class IObjectInvitation(IInvitation):
@@ -98,7 +99,6 @@ class IInvitations(IContained,
 		"""
 		Remove the given invitation with this object.
 		"""
-
 
 	def getInvitationByCode(code):
 		"""
@@ -160,6 +160,7 @@ class IInvitationActor(interface.Interface):
 		
 		:param user User being invited
 		:param entity Entity user is invited to
+		:return None/False if invitation was not accepted
 		"""
 		
 class IInvitationAssociationActor(IInvitationActor):

@@ -65,6 +65,7 @@ class ActorZcmlInvitation(ZcmlInvitation):
 class InvitationAssociationActor(object):
 	
 	def accept(self, user, entity):
+		result = True
 		if ICommunity.providedBy(entity):
 			logger.info("Accepting invitation to join community %s", entity)
 			user.record_dynamic_membership(entity)
@@ -73,8 +74,10 @@ class InvitationAssociationActor(object):
 			logger.info("Accepting invitation to join DFL %s", entity)
 			entity.addFriend(user)
 		else:
+			result = False
 			logger.warn("Don't know how to accept invitation to join entity %s",
 						entity)
+		return result
 
 @interface.implementer(IJoinEntitiesInvitation)
 class JoinEntitiesInvitation(ActorZcmlInvitation):
@@ -100,11 +103,13 @@ class JoinEntitiesInvitation(ActorZcmlInvitation):
 		return result
 
 	def accept(self, user):
+		result = False
 		actor = component.getUtility(self.actor_interface)
 		for entity in self.entities:
 			entity = self.transform(entity)
 			if entity is not None:
-				actor.accept(user, entity)
+				result = actor.accept(user, entity) or result
 		super(JoinEntitiesInvitation, self).accept(user)
+		return result
 
 JoinCommunityInvitation = JoinEntitiesInvitation
