@@ -98,9 +98,12 @@ def accept_invitations(user, invitation_codes):
 	:class:`nti.dataserver.users.interfaces.IWillCreateNewEntityEvent`. Makes the user
 	accept all the invitations in the code list, raising errors if this cannot be done.
 	"""
+	result = {}
 	utility = component.getUtility(IInvitations)
 	for code in invitation_codes:
 		invitation = utility.getInvitationByCode(code)
 		if not invitation:
 			raise InvitationCodeError(code)
-		invitation.accept(user)
+		if invitation.accept(user):
+			result[code] = invitation
+	return result
