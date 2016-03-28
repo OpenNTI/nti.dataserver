@@ -373,17 +373,6 @@ def _update_index_when_content_changes(content_package,
 
 	if sync_results is None:
 		sync_results = _new_sync_results(content_package)
-#
-# 	if catalog is not None:  # may be None in test mode
-# 		sk_lastModified = sibling_key.lastModified
-# 		last_mod_namespace = _get_file_last_mod_namespace(content_package, index_filename)
-# 		last_modified = catalog.get_last_modified(last_mod_namespace)
-# 		if last_modified and last_modified >= sk_lastModified:
-# 			logger.info("No change to %s since %s, ignoring",
-# 						sibling_key,
-# 						sk_lastModified)
-# 			return
-# 		catalog.set_last_modified(last_mod_namespace, sk_lastModified)
 
 	index_text = content_package.read_contents_of_sibling_entry(index_filename)
 
