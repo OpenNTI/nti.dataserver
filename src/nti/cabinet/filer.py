@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import pickle
-from io import BytesIO
+from StringIO import StringIO
 
 from zope import interface
 
@@ -90,7 +90,6 @@ class DirectoryFiler(object):
 			return None
 
 		data = None
-		result = BytesIO()
 		try:
 			with open(key, "rb") as fp:
 				target = pickle.load(fp)
@@ -101,17 +100,16 @@ class DirectoryFiler(object):
 				data = fp.read()
 				contentType = u'application/octet-stream'
 
-		result.write(data)
+		result = StringIO(data)
 		result.flush()
-		result.seek(0)
-
-		length = result.getSize()
+		length = result.len
 		filename = os.path.relpath(key, self.path)
-
+		result.seek(0)
+				
 		result = SourceProxy(result,
 							 length=length,
 							 filename=filename,
-							 contentType=contentType, length=None)
+							 contentType=contentType)
 		return result
 	read = get
 
