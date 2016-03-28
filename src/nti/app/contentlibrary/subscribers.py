@@ -71,6 +71,7 @@ from nti.intid.common import addIntId
 from nti.intid.common import removeIntId
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.recorder.record import copy_transaction_history
 from nti.recorder.record import remove_transaction_history
@@ -524,18 +525,27 @@ def _get_locked_objects( objects ):
 		if IRecordable.providedBy(item) and item.isLocked():
 			yield item
 
-def _update_container( old_package, new_package ):
+def _update_container( old_unit, new_unit, new_package=None ):
 	"""
 	Move all locked objects from our old container to our new,
 	updating lineage as we go.
 	"""
-	old_container = IPresentationAssetContainer( old_package )
-	new_container = IPresentationAssetContainer( new_package )
+	new_package = new_package if new_package is not None else new_unit
+	old_container = IPresentationAssetContainer( old_unit )
+	new_container = IPresentationAssetContainer( new_unit )
 	for item in _get_locked_objects( old_container.values() ):
-		# Only set lineage of our old-parent was the old package.
-		if item.__parent__ == old_package:
-			item.__parent__ = new_package
+		# We always want to update our lineage to our new unit.
+		item.__parent__ = new_unit
 		new_container[item.ntiid] = item
+	# Now recursively on children.
+	for old_child in old_unit.children:
+		# Get the corresponding new unit from our library, if available.
+		new_child = find_object_with_ntiid( old_child.ntiid )
+		if new_child is None:
+			# We're removing this unit, use the content package to
+			# keep any created items.
+			new_child = new_package
+		_update_container( old_child, new_child, new_package )
 
 @component.adapter(IContentPackage, IContentPackageReplacedEvent)
 def _update_indices_when_content_changes(content_package, event):
