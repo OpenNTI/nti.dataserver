@@ -18,6 +18,29 @@ from zope.proxy import ProxyBase
 from nti.cabinet.interfaces import ISource
 
 @interface.implementer(ISource)
+class SourceFile(object):
+
+    def __init__(self, filename, data=None, contentType=None):
+        self.data = data
+        self.filename = filename
+        self.contentType = contentType
+
+    @property
+    def length(self):
+        result = str(self.data) if self.data is not None else u''
+        return len(result)
+    
+    @property
+    def size(self):
+        return self.length
+
+    def getSize(self):
+        return self.size
+
+    def __len__(self):
+        return self.length
+
+@interface.implementer(ISource)
 class SourceProxy(ProxyBase):
 
     length = property(lambda s: s.__dict__.get('_v_length'),
