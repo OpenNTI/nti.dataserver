@@ -99,7 +99,7 @@ def get_connection(registry=None):
 	if registry == component.getGlobalSiteManager():
 		return None
 	else:
-		result = IConnection(registry, None)
+		result = IConnection(registry)
 		return result
 
 def intid_register(item, intids, connection):
@@ -508,20 +508,20 @@ def update_indices_when_content_changes(content_package, sync_results=None):
 										   sync_results=sync_results)
 	return sync_results
 
-def _get_locked_objects( objects ):
+def _get_locked_objects(objects):
 	for item in objects:
 		if IRecordable.providedBy(item) and item.isLocked():
 			yield item
 
-def _update_container( old_unit, new_unit, new_children_dict, new_package=None ):
+def _update_container(old_unit, new_unit, new_children_dict, new_package=None):
 	"""
 	Move all locked objects from our old container to our new,
 	updating lineage as we go.
 	"""
 	new_package = new_package if new_package is not None else new_unit
-	old_container = IPresentationAssetContainer( old_unit )
-	new_container = IPresentationAssetContainer( new_unit )
-	for item in _get_locked_objects( old_container.values() ):
+	old_container = IPresentationAssetContainer(old_unit)
+	new_container = IPresentationAssetContainer(new_unit)
+	for item in _get_locked_objects(old_container.values()):
 		# We always want to update our lineage to our new unit.
 		item.__parent__ = new_unit
 		new_container[item.ntiid] = item
@@ -529,25 +529,25 @@ def _update_container( old_unit, new_unit, new_children_dict, new_package=None )
 	for old_child in old_unit.children:
 		# Get the corresponding new unit from our dict, if available. If non-existent,
 		# use the content package to make sure we keep any created items.
-		new_child = new_children_dict.get( old_child.ntiid, new_package )
-		_update_container( old_child, new_child, new_children_dict, new_package )
+		new_child = new_children_dict.get(old_child.ntiid, new_package)
+		_update_container(old_child, new_child, new_children_dict, new_package)
 
-def _get_children_dict( new_package ):
+def _get_children_dict(new_package):
 	accum = dict()
-	def _recur( obj, accum ):
+	def _recur(obj, accum):
 		accum[obj.ntiid] = obj
 		for child in obj.children:
-			_recur( child, accum )
-	_recur( new_package, accum )
+			_recur(child, accum)
+	_recur(new_package, accum)
 	return accum
 
 @component.adapter(IContentPackage, IContentPackageReplacedEvent)
 def _update_indices_when_content_changes(content_package, event):
 	sync_results = _get_sync_results(content_package, event)
 	update_indices_when_content_changes(content_package, sync_results)
-	if IContentPackageReplacedEvent.providedBy( event ):
-		new_children_dict = _get_children_dict( content_package )
-		_update_container( event.original, content_package, new_children_dict )
+	if IContentPackageReplacedEvent.providedBy(event):
+		new_children_dict = _get_children_dict(content_package)
+		_update_container(event.original, content_package, new_children_dict)
 
 # clear events
 
