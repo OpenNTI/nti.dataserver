@@ -71,7 +71,6 @@ from nti.intid.common import addIntId
 from nti.intid.common import removeIntId
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
-from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.recorder.record import copy_transaction_history
 from nti.recorder.record import remove_transaction_history
@@ -525,7 +524,7 @@ def _get_locked_objects( objects ):
 		if IRecordable.providedBy(item) and item.isLocked():
 			yield item
 
-def _update_container( old_unit, new_unit, new_package=None ):
+def _update_container( old_unit, new_unit, new_children_dict, new_package=None ):
 	"""
 	Move all locked objects from our old container to our new,
 	updating lineage as we go.
@@ -539,20 +538,27 @@ def _update_container( old_unit, new_unit, new_package=None ):
 		new_container[item.ntiid] = item
 	# Now recursively on children.
 	for old_child in old_unit.children:
-		# Get the corresponding new unit from our library, if available.
-		new_child = find_object_with_ntiid( old_child.ntiid )
-		if new_child is None:
-			# We're removing this unit, use the content package to
-			# keep any created items.
-			new_child = new_package
-		_update_container( old_child, new_child, new_package )
+		# Get the corresponding new unit from our dict, if available. If non-existent,
+		# use the content package to make sure we keep any created items.
+		new_child = new_children_dict.get( old_child.ntiid, new_package )
+		_update_container( old_child, new_child, new_children_dict, new_package )
+
+def _get_children_dict( new_package ):
+	accum = dict()
+	def _recur( obj, accum ):
+		accum[obj.ntiid] = obj
+		for child in obj.children:
+			_recur( child, accum )
+	_recur( new_package, accum )
+	return accum
 
 @component.adapter(IContentPackage, IContentPackageReplacedEvent)
 def _update_indices_when_content_changes(content_package, event):
 	sync_results = _get_sync_results(content_package, event)
 	update_indices_when_content_changes(content_package, sync_results)
 	if IContentPackageReplacedEvent.providedBy( event ):
-		_update_container( event.original, content_package )
+		new_children_dict = _get_children_dict( content_package )
+		_update_container( event.original, content_package, new_children_dict )
 
 # clear events
 
