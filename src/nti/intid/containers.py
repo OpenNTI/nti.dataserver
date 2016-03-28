@@ -99,12 +99,12 @@ class IntidResolvingIterable(_AbstractIntidResolvingFacade, Iterable, Container,
 				if not allow_missing:
 					raise
 				logger.log(loglevels.TRACE, "Incorrect key '%s' in %r of %r",
-							iid, self.__name__, self.__parent__)
+						   iid, self.__name__, self.__parent__)
 			except KeyError:
 				if not allow_missing:
 					raise
 				logger.log(loglevels.TRACE, "Failed to resolve key '%s' in %r of %r",
-							iid, self.__name__, self.__parent__)
+						   iid, self.__name__, self.__parent__)
 
 	def __len__(self):
 		"""
@@ -331,13 +331,18 @@ class IntidContainedStorage(Persistent, Contained, Iterable, Container, Sized):
 
 	# Some dict-like conveniences
 	__getitem__ = getContainer
+
 	get = getContainer
 	pop = popContainer
+
 	def __contains__(self, key):
 		return key in self._containers
+
 	def keys(self):
 		return self._containers.keys()
+
 	def values(self):
 		return self.containers.values()  # unwrapping
+
 	def items(self):
 		return self.containers.items()  # unwrapping

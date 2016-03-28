@@ -14,8 +14,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import BTrees
-
 from zope import interface
 from zope import event as zope_event
 
@@ -24,6 +22,8 @@ from zope.security.proxy import removeSecurityProxy
 from zc.intid.utility import AddedEvent
 from zc.intid.utility import RemovedEvent
 from zc.intid.utility import IntIds as _ZCIntIds
+
+import BTrees
 
 from nti.intid.interfaces import IIntIds
 from nti.intid.interfaces import IntIdMissingError
