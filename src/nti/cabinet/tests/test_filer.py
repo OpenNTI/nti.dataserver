@@ -73,5 +73,16 @@ class TestFiler(unittest.TestCase):
 							  overwrite=True)
 			assert_that(href, ends_with("bleach/ichigo.xml"))
 			assert_that(filer.is_bucket("bleach"), is_(True))
+			
+			href = filer.save("ichigo.xml", 
+							  source,
+							  bucket="bleach/souls",
+							  contentType="text/xml", 
+							  overwrite=True)
+			assert_that(href, ends_with("bleach/souls/ichigo.xml"))
+			
+			assert_that(filer.remove(href), is_(True))
+			source = filer.get(href)
+			assert_that(source, is_(none()))
 		finally:
 			shutil.rmtree(tmp_dir, True)
