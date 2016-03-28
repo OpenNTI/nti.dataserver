@@ -19,7 +19,6 @@ from zope.component.hooks import getSite
 from zope.intid.interfaces import IIntIds
 
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
-from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zope.securitypolicy.rolepermission import AnnotationRolePermissionManager
 
@@ -374,17 +373,17 @@ def _update_index_when_content_changes(content_package,
 
 	if sync_results is None:
 		sync_results = _new_sync_results(content_package)
-
-	if catalog is not None:  # may be None in test mode
-		sk_lastModified = sibling_key.lastModified
-		last_mod_namespace = _get_file_last_mod_namespace(content_package, index_filename)
-		last_modified = catalog.get_last_modified(last_mod_namespace)
-		if last_modified and last_modified >= sk_lastModified:
-			logger.info("No change to %s since %s, ignoring",
-						sibling_key,
-						sk_lastModified)
-			return
-		catalog.set_last_modified(last_mod_namespace, sk_lastModified)
+#
+# 	if catalog is not None:  # may be None in test mode
+# 		sk_lastModified = sibling_key.lastModified
+# 		last_mod_namespace = _get_file_last_mod_namespace(content_package, index_filename)
+# 		last_modified = catalog.get_last_modified(last_mod_namespace)
+# 		if last_modified and last_modified >= sk_lastModified:
+# 			logger.info("No change to %s since %s, ignoring",
+# 						sibling_key,
+# 						sk_lastModified)
+# 			return
+# 		catalog.set_last_modified(last_mod_namespace, sk_lastModified)
 
 	index_text = content_package.read_contents_of_sibling_entry(index_filename)
 
@@ -413,7 +412,7 @@ def _update_index_when_content_changes(content_package,
 	# }
 
 	# Load our json index files
-	# TODO Do we need to register our global, non-persistent catalog?
+	# We should not need to register our global, non-persistent catalog.
 	added = ()
 	if item_iface == INTISlideDeck:
 		# Also remove our other slide types
@@ -520,10 +519,30 @@ def update_indices_when_content_changes(content_package, sync_results=None):
 										   sync_results=sync_results)
 	return sync_results
 
-@component.adapter(IContentPackage, IObjectModifiedEvent)
+def _get_locked_objects( objects ):
+	for item in objects:
+		if IRecordable.providedBy(item) and item.isLocked():
+			yield item
+
+def _update_container( old_package, new_package ):
+	"""
+	Move all locked objects from our old container to our new,
+	updating lineage as we go.
+	"""
+	old_container = IPresentationAssetContainer( old_package )
+	new_container = IPresentationAssetContainer( new_package )
+	for item in _get_locked_objects( old_container.values() ):
+		# Only set lineage of our old-parent was the old package.
+		if item.__parent__ == old_package:
+			item.__parent__ = new_package
+		new_container[item.ntiid] = item
+
+@component.adapter(IContentPackage, IContentPackageReplacedEvent)
 def _update_indices_when_content_changes(content_package, event):
 	sync_results = _get_sync_results(content_package, event)
 	update_indices_when_content_changes(content_package, sync_results)
+	if IContentPackageReplacedEvent.providedBy( event ):
+		_update_container( event.original, content_package )
 
 # clear events
 

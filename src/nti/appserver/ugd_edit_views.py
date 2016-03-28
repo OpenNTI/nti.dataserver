@@ -45,7 +45,7 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 
-def _id(x): 
+def _id(x):
 	return x
 
 class UGDPostView(AbstractAuthenticatedView,
@@ -75,10 +75,10 @@ class UGDPostView(AbstractAuthenticatedView,
 			if not externalValue:
 				# read fields in multipart data
 				externalValue = read_body_as_external_object(self.request)
-			
+
 			if not externalValue:
 				raise hexc.HTTPUnprocessableEntity("No input source was specified")
-			
+
 			result = self.doReadCreateUpdateContentObject(creator,
 													  	  search_owner=search_owner,
 													      externalValue=externalValue)
