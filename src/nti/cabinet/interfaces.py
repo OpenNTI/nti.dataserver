@@ -63,3 +63,15 @@ class ISourceFiler(interface.Interface):
         :param key source identifier, href or url
         :return True if source has been removed
         """
+
+    def list(bucket=None):
+        """
+        listing of keys
+        
+        :param bucket: Bucket (e.g subir)
+        """
+        
+    def is_bucket(key):
+        """
+        return if the specified key/url/href is a Bucket
+        """
