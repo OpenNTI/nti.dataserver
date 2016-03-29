@@ -515,8 +515,7 @@ def _get_locked_objects(objects):
 
 def _update_container(old_unit, new_unit, new_children_dict, new_package=None):
 	"""
-	Move all locked objects from our old container to our new,
-	updating lineage as we go.
+	Move all locked objects from our old container to our new updating lineage as we go.
 	"""
 	new_package = new_package if new_package is not None else new_unit
 	old_container = IPresentationAssetContainer(old_unit)
@@ -545,7 +544,8 @@ def _get_children_dict(new_package):
 def _update_indices_when_content_changes(content_package, event):
 	sync_results = _get_sync_results(content_package, event)
 	update_indices_when_content_changes(content_package, sync_results)
-	if IContentPackageReplacedEvent.providedBy(event):
+	if 		IContentPackageReplacedEvent.providedBy(event) \
+		and not IGlobalContentPackage.providedBy(content_package):
 		new_children_dict = _get_children_dict(content_package)
 		_update_container(event.original, content_package, new_children_dict)
 
