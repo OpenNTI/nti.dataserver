@@ -542,12 +542,12 @@ def _get_children_dict(new_package):
 
 @component.adapter(IContentPackage, IContentPackageReplacedEvent)
 def _update_indices_when_content_changes(content_package, event):
-	sync_results = _get_sync_results(content_package, event)
-	update_indices_when_content_changes(content_package, sync_results)
-	if 		IContentPackageReplacedEvent.providedBy(event) \
-		and not IGlobalContentPackage.providedBy(content_package):
-		new_children_dict = _get_children_dict(content_package)
-		_update_container(event.original, content_package, new_children_dict)
+	if not IGlobalContentPackage.providedBy(content_package):
+		sync_results = _get_sync_results(content_package, event)
+		update_indices_when_content_changes(content_package, sync_results)
+		if IContentPackageReplacedEvent.providedBy(event):
+			new_children_dict = _get_children_dict(content_package)
+			_update_container(event.original, content_package, new_children_dict)
 
 # clear events
 
