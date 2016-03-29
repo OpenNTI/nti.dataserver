@@ -13,7 +13,6 @@ import os
 import re
 from urllib import quote
 from urllib import unquote
-from urlparse import urlparse
 
 from collections import Mapping
 from collections import OrderedDict
@@ -287,21 +286,25 @@ def to_external_download_oid_href(item):
 		return external
 	return None
 
+pattern = re.compile('(.+)/%s(.+)/(@@)?[view|download](\/.*)?' % TAG_NTC,
+					 re.UNICODE | re.IGNORECASE)
+
 def is_oid_external_link(link):
-	pattern = '(.+)/%s(.+)/(@@)?[view|download](\/.*)?' % TAG_NTC
-	return bool(re.match(pattern, unquote(link)))
+	return bool(pattern.match(unquote(link)))
 
 def get_file_from_oid_external_link(link):
 	result = None
 	try:
+		link = unquote(link)
 		if is_oid_external_link(link):
-			path = urlparse(link).path
-			path = os.path.split(path)[0]
+			match = pattern.match(link)
+			path = "%s%s" % (TAG_NTC, match.groups()[1])
 			if path.endswith('download') or path.endswith('view'):
 				path = os.path.split(path)[0]
+			ntiid = path
 		else:
 			path = link
-		ntiid = unquote(os.path.split(path)[1] or u'')  # last part of path
+			ntiid = unquote(os.path.split(path)[1] or u'')  # last part of path
 		if is_valid_ntiid_string(ntiid):
 			result = find_object_with_ntiid(ntiid)
 			if not IPloneNamed.providedBy(result):
