@@ -9,6 +9,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+try:
+	from cStringIO import StringIO
+except ImportError:
+	from StringIO import StringIO
+
 from zope import interface
 
 from BTrees.OOBTree import OOTreeSet
@@ -35,6 +40,8 @@ class BaseContentMixin(object):
 	creator = None
 	__name__ = alias('name')
 
+	# associations
+
 	def _lazy_create_ootreeset_for_wref(self):
 		self._p_changed = True
 		result = OOTreeSet()
@@ -59,7 +66,7 @@ class BaseContentMixin(object):
 	@Lazy
 	def _associations(self):
 		return self._lazy_create_ootreeset_for_wref()
-	
+
 	def add_association(self, context):
 		wref = IWeakRef(context, None)
 		if wref is not None:
@@ -78,6 +85,23 @@ class BaseContentMixin(object):
 					yield obj
 			except (Exception):
 				logger.exception("Error while getting associatied object")
+
+	# IFileReader
+
+	_v_fp = None
+
+	def _get_v_fp(self):
+		self._v_fp = StringIO(self.data) if self._v_fp is None else self._v_fp
+		return self._v_fp
+
+	def read(self, size=-1):
+		return self._get_v_fp().read(size)
+
+	def seek(self, offset, whence=0):
+		return self._get_v_fp().seek(offset, whence)
+
+	def tell(self):
+		return self._get_v_fp().tell()
 
 BaseMixin = BaseContentMixin  # BWC
 
