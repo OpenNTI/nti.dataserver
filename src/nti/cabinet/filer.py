@@ -11,16 +11,26 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import pickle
-from StringIO import StringIO
 
 from zope import interface
 
 from nti.cabinet.interfaces import ISourceFiler
 
 from nti.cabinet.mixins import SourceFile
-from nti.cabinet.mixins import SourceProxy
+from nti.cabinet.mixins import DeferredSourceFile
 
 from nti.common.random import generate_random_hex_string
+
+def transfer(source, target):
+	if hasattr(source, 'read'):
+		target.data = source.read()
+	elif hasattr(source, 'data'):
+		target.data = source.data
+	else:
+		target.data = source
+
+	if getattr(source, 'contentType', None):
+		target.contentType = source.contentType
 
 @interface.implementer(ISourceFiler)
 class DirectoryFiler(object):
@@ -31,17 +41,6 @@ class DirectoryFiler(object):
 			os.makedirs(path)
 		elif not os.path.isdir(path):
 			raise IOError("%s is not directory", path)
-
-	def _transfer(self, source, target):
-		if hasattr(source, 'read'):
-			target.data = source.read()
-		elif hasattr(source, 'data'):
-			target.data = source.data
-		else:
-			target.data = source
-
-		if getattr(source, 'contentType', None):
-			target.contentType = source.contentType
 
 	def _get_unique_file_name(self, path, key):
 		separator = '_'
@@ -55,7 +54,7 @@ class DirectoryFiler(object):
 		return newtext
 
 	def save(self, key, source, contentType=None, bucket=None, overwrite=False,
-			 relative=True, **kwargs):
+			 relative=True, deferred=False, **kwargs):
 		contentType = contentType or u'application/octet-stream'
 		key = os.path.split(key)[1]  # proper name
 
@@ -73,10 +72,13 @@ class DirectoryFiler(object):
 		else:
 			out_file = os.path.join(out_dir, key)
 
-		target = SourceFile(filename=out_file)
-		self._transfer(source, target)
-		if not target.contentType:
-			target.contentType = contentType
+		if deferred:
+			target = DeferredSourceFile(out_dir, key)
+		else:
+			target = SourceFile(key)
+		transfer(source, target)
+		target.contentType = contentType or target.contentType
+		target.close()
 
 		with open(out_file, "wb") as fp:
 			pickle.dump(target, fp, pickle.HIGHEST_PROTOCOL)
@@ -91,39 +93,21 @@ class DirectoryFiler(object):
 		key = os.path.normpath(key)
 		if not key.startswith(self.path) or not os.path.exists(key):
 			return None
-
-		data = None
-		try:
-			with open(key, "rb") as fp:
-				target = pickle.load(fp)
-				data = target.data
-				contentType = target.contentType
-		except Exception:
-			with open(key, "rb") as fp:
-				data = fp.read()
-				contentType = u'application/octet-stream'
-
-		result = StringIO(data)
-		result.flush()
-		length = result.len
-		filename = os.path.relpath(key, self.path)
-		result.seek(0)
-				
-		result = SourceProxy(result,
-							 length=length,
-							 filename=filename,
-							 contentType=contentType)
+		with open(key, "rb") as fp:
+			result = pickle.load(fp)
 		return result
-	read = get
 
 	def remove(self, key):
-		if not key.startswith(self.path):
-			key = os.path.join(self.path, key)
-		key = os.path.normpath(key)
-		if not key.startswith(self.path) or not os.path.exists(key):
-			return False
-		os.remove(key)
-		return not os.path.exists(key)
+		result = self.get(key)
+		if result is not None:
+			if hasattr(result, 'remove'):
+				result.remove()
+			else:
+				if not key.startswith(self.path):
+					key = os.path.join(self.path, key)
+				os.remove(key)
+			return True
+		return False
 
 	def list(self, bucket=None):
 		path = os.path.join(self.path, bucket) if bucket else self.path

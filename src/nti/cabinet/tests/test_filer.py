@@ -34,16 +34,17 @@ class TestFiler(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
 
-	def get_source(self):
+	def get_data_source(self):
 		return StringIO("<ichigo/>")
 
-	def test_ops(self):
+	def _test_ops(self, deferred=False):
 		tmp_dir = tempfile.mkdtemp(dir="/tmp")
 		try:
 			filer = DirectoryFiler(tmp_dir)
-			source = self.get_source()
-			href = filer.save("ichigo.xml", source, relative=False,
-							 contentType="text/xml", overwrite=True)
+			data = self.get_data_source()
+			href = filer.save("ichigo.xml", data, relative=False,
+							  contentType="text/xml", overwrite=True,
+							  deferred=deferred)
 			assert_that(href, is_not(none()))
 			assert_that(href, starts_with(tmp_dir))
 			
@@ -51,35 +52,44 @@ class TestFiler(unittest.TestCase):
 			assert_that(source, is_not(none()))
 			assert_that(source, verifiably_provides(ISource))
 			assert_that(source, has_property('length', is_(9)))
-			assert_that(source, has_property('filename', is_("ichigo.xml")))
 			assert_that(source, has_property('contentType', is_("text/xml")))
+			assert_that(source, has_property('filename', is_("ichigo.xml")))
+
+			assert_that(source.read(), is_("<ichigo/>"))
+			assert_that(source, has_property('data', is_("<ichigo/>")))
+			source.close()
+
+			with source as ds:
+				assert_that(ds.read(), is_("<ichigo/>"))
 
 			source = filer.get("/home/foo")
 			assert_that(source, is_(none()))
 			
-			source = self.get_source()
+			data = self.get_data_source()
 			href = filer.save("ichigo.xml", 
-							  source,
+							  data,
 							  contentType="text/xml", 
-							  overwrite=False)
-
-			assert_that(source, is_not(none()))
+							  overwrite=False,
+							  deferred=deferred)
 			assert_that(href, does_not(ends_with("ichigo.xml")))
 
-			source = self.get_source()
+			data = self.get_data_source()
 			href = filer.save("ichigo.xml", 
-							  source,
+							  data,
 							  bucket="bleach",
 							  contentType="text/xml", 
-							  overwrite=True)
+							  overwrite=True,
+							  deferred=deferred)
 			assert_that(href, ends_with("bleach/ichigo.xml"))
 			assert_that(filer.is_bucket("bleach"), is_(True))
 			
+			data = self.get_data_source()
 			href = filer.save("ichigo.xml", 
-							  source,
+							  data,
 							  bucket="bleach/souls",
 							  contentType="text/xml", 
-							  overwrite=True)
+							  overwrite=True,
+							  deferred=deferred)
 			assert_that(href, ends_with("bleach/souls/ichigo.xml"))
 			
 			assert_that(filer.remove(href), is_(True))
@@ -87,3 +97,10 @@ class TestFiler(unittest.TestCase):
 			assert_that(source, is_(none()))
 		finally:
 			shutil.rmtree(tmp_dir, True)
+			
+	def test_non_deferred(self):
+		self._test_ops(False)
+	
+	def test_deferred(self):
+		self._test_ops(True)
+
