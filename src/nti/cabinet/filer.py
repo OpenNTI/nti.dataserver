@@ -54,7 +54,8 @@ class DirectoryFiler(object):
 				break
 		return newtext
 
-	def save(self, key, source, contentType=None, bucket=None, overwrite=False, **kwargs):
+	def save(self, key, source, contentType=None, bucket=None, overwrite=False,
+			 relative=True, **kwargs):
 		contentType = contentType or u'application/octet-stream'
 		key = os.path.split(key)[1]  # proper name
 
@@ -79,6 +80,8 @@ class DirectoryFiler(object):
 
 		with open(out_file, "wb") as fp:
 			pickle.dump(target, fp, pickle.HIGHEST_PROTOCOL)
+		if relative:
+			out_file = os.path.relpath(out_file, self.path)
 		return out_file
 	write = save
 

@@ -42,7 +42,8 @@ class TestFiler(unittest.TestCase):
 		try:
 			filer = DirectoryFiler(tmp_dir)
 			source = self.get_source()
-			href = filer.save("ichigo.xml", source, contentType="text/xml", overwrite=True)
+			href = filer.save("ichigo.xml", source, relative=False,
+							 contentType="text/xml", overwrite=True)
 			assert_that(href, is_not(none()))
 			assert_that(href, starts_with(tmp_dir))
 			
