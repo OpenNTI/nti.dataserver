@@ -286,10 +286,13 @@ def to_external_download_oid_href(item):
 		return external
 	return None
 
+def is_oid_external_link(link):
+	return bool(re.match('(.+)/(@@)?[view|download](\/.*)?', link))
+
 def get_file_from_oid_external_link(link):
 	result = None
 	try:
-		if re.match('(.+)/(@@)?[view|download](\/.*)?', link):
+		if is_oid_external_link(link):
 			path = urlparse(link).path
 			path = os.path.split(path)[0]
 			if path.endswith('download') or path.endswith('view'):
