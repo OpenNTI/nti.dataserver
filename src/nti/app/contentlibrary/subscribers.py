@@ -32,7 +32,8 @@ from nti.coremetadata.interfaces import IRecordable
 from nti.contentlibrary.indexed_data import get_site_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
-from nti.contentlibrary.interfaces import IContentPackage
+from nti.contentlibrary.interfaces import IContentPackage,\
+	IGlobalContentPackageLibrary
 from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageAddedEvent
@@ -500,6 +501,9 @@ def update_indices_when_content_changes(content_package, sync_results=None):
 	if sync_results is None:
 		sync_results = _new_sync_results(content_package)
 
+	if IGlobalContentPackageLibrary.providedBy(content_package.__parent__):
+		return sync_results
+
 	for name, item_iface, func in INDICES:
 		_update_index_when_content_changes(content_package,
 										   index_filename=name,
@@ -542,12 +546,11 @@ def _get_children_dict(new_package):
 
 @component.adapter(IContentPackage, IContentPackageReplacedEvent)
 def _update_indices_when_content_changes(content_package, event):
-	if not IGlobalContentPackage.providedBy(content_package):
-		sync_results = _get_sync_results(content_package, event)
-		update_indices_when_content_changes(content_package, sync_results)
-		if IContentPackageReplacedEvent.providedBy(event):
-			new_children_dict = _get_children_dict(content_package)
-			_update_container(event.original, content_package, new_children_dict)
+	sync_results = _get_sync_results(content_package, event)
+	update_indices_when_content_changes(content_package, sync_results)
+	if IContentPackageReplacedEvent.providedBy(event):
+		new_children_dict = _get_children_dict(content_package)
+		_update_container(event.original, content_package, new_children_dict)
 
 # clear events
 
