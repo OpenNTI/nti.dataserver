@@ -53,6 +53,7 @@ from nti.links.externalization import render_link
 
 from nti.links.links import Link
 
+from nti.ntiids.ntiids import TAG_NTC
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -287,7 +288,8 @@ def to_external_download_oid_href(item):
 	return None
 
 def is_oid_external_link(link):
-	return bool(re.match('(.+)/(@@)?[view|download](\/.*)?', link))
+	pattern = '(.+)/%s(.+)/(@@)?[view|download](\/.*)?' % TAG_NTC
+	return bool(re.match(pattern, link))
 
 def get_file_from_oid_external_link(link):
 	result = None
