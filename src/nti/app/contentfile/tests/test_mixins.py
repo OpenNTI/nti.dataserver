@@ -20,6 +20,7 @@ from zope import interface
 
 from plone.namedfile.interfaces import INamed
 
+from nti.app.contentfile.view_mixins import is_oid_external_link
 from nti.app.contentfile.view_mixins import get_file_from_oid_external_link
 
 class TestMixins(unittest.TestCase):
@@ -53,3 +54,7 @@ class TestMixins(unittest.TestCase):
 		interface.noLongerProvides(foo, INamed)
 		n = get_file_from_oid_external_link('http://x.org/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/@@view')
 		assert_that(n, is_(none()))
+
+		assert_that(is_oid_external_link(
+						'/dataserver2/Objects/tag%3Anextthought.com%2C2011-10%3Azope.security.management.system_user-OID-0x3fb1a3e4dc1691ea%3A5573657273%3Atux9jJFntYr/download/ichigo.xml'),
+					is_(True))

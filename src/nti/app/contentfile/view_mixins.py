@@ -289,7 +289,7 @@ def to_external_download_oid_href(item):
 
 def is_oid_external_link(link):
 	pattern = '(.+)/%s(.+)/(@@)?[view|download](\/.*)?' % TAG_NTC
-	return bool(re.match(pattern, link))
+	return bool(re.match(pattern, unquote(link)))
 
 def get_file_from_oid_external_link(link):
 	result = None
