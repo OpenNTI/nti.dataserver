@@ -45,7 +45,6 @@ class ISourceFiler(interface.Interface):
         :param overwrite: Overite existing flag
         :return A source URL or href
         """
-    write = save
     
     def get(key):
         """
@@ -54,8 +53,7 @@ class ISourceFiler(interface.Interface):
         :param key source identifier, href or url
         :return Source object or stream
         """
-    read = get
-    
+
     def remove(key):
         """
         Remove a source

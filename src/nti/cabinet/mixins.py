@@ -86,10 +86,10 @@ class SourceFile(object):
 		self.close()
 
 @interface.implementer(ISource)
-class DeferredSourceFile(SourceFile):
+class ReferenceSourceFile(SourceFile):
 
 	def __init__(self, path, filename, data=None, contentType=None):
-		super(DeferredSourceFile, self).__init__(filename, contentType=contentType)
+		super(ReferenceSourceFile, self).__init__(filename, contentType=contentType)
 		self.path = path
 		if data is not None:
 			self.data = data

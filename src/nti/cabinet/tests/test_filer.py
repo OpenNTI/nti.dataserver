@@ -11,8 +11,10 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import ends_with
-from hamcrest import starts_with
+from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import starts_with
+from hamcrest import greater_than
 from hamcrest import has_property
 does_not = is_not
 
@@ -37,14 +39,14 @@ class TestFiler(unittest.TestCase):
 	def get_data_source(self):
 		return StringIO("<ichigo/>")
 
-	def _test_ops(self, deferred=False):
+	def _test_ops(self, reference=False):
 		tmp_dir = tempfile.mkdtemp(dir="/tmp")
 		try:
 			filer = DirectoryFiler(tmp_dir)
 			data = self.get_data_source()
 			href = filer.save("ichigo.xml", data, relative=False,
 							  contentType="text/xml", overwrite=True,
-							  deferred=deferred)
+							  reference=reference)
 			assert_that(href, is_not(none()))
 			assert_that(href, starts_with(tmp_dir))
 			
@@ -70,7 +72,7 @@ class TestFiler(unittest.TestCase):
 							  data,
 							  contentType="text/xml", 
 							  overwrite=False,
-							  deferred=deferred)
+							  reference=reference)
 			assert_that(href, does_not(ends_with("ichigo.xml")))
 
 			data = self.get_data_source()
@@ -79,17 +81,18 @@ class TestFiler(unittest.TestCase):
 							  bucket="bleach",
 							  contentType="text/xml", 
 							  overwrite=True,
-							  deferred=deferred)
+							  reference=reference)
 			assert_that(href, ends_with("bleach/ichigo.xml"))
 			assert_that(filer.is_bucket("bleach"), is_(True))
-			
+			assert_that(filer.list("bleach"), has_length(greater_than(0)))
+
 			data = self.get_data_source()
 			href = filer.save("ichigo.xml", 
 							  data,
 							  bucket="bleach/souls",
 							  contentType="text/xml", 
 							  overwrite=True,
-							  deferred=deferred)
+							  reference=reference)
 			assert_that(href, ends_with("bleach/souls/ichigo.xml"))
 			
 			assert_that(filer.remove(href), is_(True))
@@ -98,9 +101,8 @@ class TestFiler(unittest.TestCase):
 		finally:
 			shutil.rmtree(tmp_dir, True)
 			
-	def test_non_deferred(self):
+	def test_non_reference(self):
 		self._test_ops(False)
 	
-	def test_deferred(self):
+	def test_reference(self):
 		self._test_ops(True)
-

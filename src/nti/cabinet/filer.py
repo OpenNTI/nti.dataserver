@@ -17,7 +17,7 @@ from zope import interface
 from nti.cabinet.interfaces import ISourceFiler
 
 from nti.cabinet.mixins import SourceFile
-from nti.cabinet.mixins import DeferredSourceFile
+from nti.cabinet.mixins import ReferenceSourceFile
 
 from nti.common.random import generate_random_hex_string
 
@@ -54,7 +54,7 @@ class DirectoryFiler(object):
 		return newtext
 
 	def save(self, key, source, contentType=None, bucket=None, overwrite=False,
-			 relative=True, deferred=False, **kwargs):
+			 relative=True, reference=False, **kwargs):
 		contentType = contentType or u'application/octet-stream'
 		key = os.path.split(key)[1]  # proper name
 
@@ -72,8 +72,8 @@ class DirectoryFiler(object):
 		else:
 			out_file = os.path.join(out_dir, key)
 
-		if deferred:
-			target = DeferredSourceFile(out_dir, key)
+		if reference:
+			target = ReferenceSourceFile(out_dir, key)
 		else:
 			target = SourceFile(key)
 		transfer(source, target)
@@ -85,7 +85,6 @@ class DirectoryFiler(object):
 		if relative:
 			out_file = os.path.relpath(out_file, self.path)
 		return out_file
-	write = save
 
 	def get(self, key):
 		if not key.startswith(self.path):
