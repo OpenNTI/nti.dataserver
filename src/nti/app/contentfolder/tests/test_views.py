@@ -162,6 +162,8 @@ class TestContentFolderViews(ApplicationLayerTest):
 			ichigo = ds.root._ofs_root['ichigo'] # only in test
 			href = get_cf_io_href(ichigo)
 			assert_that(href, is_not(none()))
-			res = self.testapp.get(href, status=200)
-			assert_that(res, has_property('app_iter', has_length(1)))
-			assert_that(res, has_property('app_iter', is_(['ichigo'])))
+			for pfx in ('', '/file.dat'):
+				href += pfx
+				res = self.testapp.get(href, status=200)
+				assert_that(res, has_property('app_iter', has_length(1)))
+				assert_that(res, has_property('app_iter', is_(['ichigo'])))
