@@ -39,10 +39,10 @@ class TestFiler(unittest.TestCase):
 	def get_data_source(self):
 		return StringIO("<ichigo/>")
 
-	def _test_ops(self, reference=False):
+	def _test_ops(self, reference=False, native=False):
 		tmp_dir = tempfile.mkdtemp(dir="/tmp")
 		try:
-			filer = DirectoryFiler(tmp_dir)
+			filer = DirectoryFiler(tmp_dir, native=native)
 			data = self.get_data_source()
 			href = filer.save("ichigo.xml", data, relative=False,
 							  contentType="text/xml", overwrite=True,
@@ -55,15 +55,20 @@ class TestFiler(unittest.TestCase):
 			assert_that(source, is_not(none()))
 			assert_that(source, verifiably_provides(ISource))
 			assert_that(source, has_property('length', is_(9)))
-			assert_that(source, has_property('contentType', is_("text/xml")))
 			assert_that(source, has_property('filename', is_("ichigo.xml")))
 
+			if not native:
+				assert_that(source, has_property('contentType', is_("text/xml")))
+
 			assert_that(source.read(), is_("<ichigo/>"))
-			assert_that(source, has_property('data', is_("<ichigo/>")))
+			if not native:
+				assert_that(source, has_property('data', is_("<ichigo/>")))
+
 			source.close()
 
-			with source as ds:
-				assert_that(ds.read(), is_("<ichigo/>"))
+			if not native:
+				with source as ds:
+					assert_that(ds.read(), is_("<ichigo/>"))
 
 			source = filer.get("/home/foo")
 			assert_that(source, is_(none()))
@@ -111,6 +116,7 @@ class TestFiler(unittest.TestCase):
 			
 	def test_non_reference(self):
 		self._test_ops(False)
+		self._test_ops(False, True)
 	
 	def test_reference(self):
 		self._test_ops(True)

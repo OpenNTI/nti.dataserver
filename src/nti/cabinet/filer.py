@@ -17,12 +17,12 @@ from zope import interface
 
 from nti.cabinet.interfaces import ISourceFiler
 
-from nti.cabinet.mixins import SourceFile
+from nti.cabinet.mixins import SourceFile, SourceProxy
 from nti.cabinet.mixins import ReferenceSourceFile
 
 from nti.common.random import generate_random_hex_string
 
-def transfer(source, target):
+def transfer_to_class_file(source, target):
 	if hasattr(source, 'read'):
 		target.data = source.read()
 	elif hasattr(source, 'data'):
@@ -33,10 +33,20 @@ def transfer(source, target):
 	if getattr(source, 'contentType', None):
 		target.contentType = source.contentType
 
+def transfer_to_native_file(source, target):
+	with open(target, "wb") as fp:
+		if hasattr(source, 'read'):
+			fp.write(source.read())
+		elif hasattr(source, 'data'):
+			fp.write(source.data)
+		else:
+			fp.write(source)
+
 @interface.implementer(ISourceFiler)
 class DirectoryFiler(object):
 
-	def __init__(self, path):
+	def __init__(self, path, native=False):
+		self.native = native
 		self.path = self.prepare(path) if path else None
 
 	def prepare(self, path):
@@ -46,7 +56,7 @@ class DirectoryFiler(object):
 		elif not os.path.isdir(path):
 			raise IOError("%s is not directory", path)
 		return path
-	
+
 	def reset(self, path=None):
 		path = self.path if not path else path
 		if path:
@@ -85,16 +95,21 @@ class DirectoryFiler(object):
 		else:
 			out_file = os.path.join(out_dir, key)
 
-		if reference:
-			target = ReferenceSourceFile(out_dir, key)
-		else:
-			target = SourceFile(key)
-		transfer(source, target)
-		target.contentType = contentType or target.contentType
-		target.close()
+		if not self.native:
+			if reference:
+				target = ReferenceSourceFile(out_dir, key)
+			else:
+				target = SourceFile(key)
 
-		with open(out_file, "wb") as fp:
-			pickle.dump(target, fp, pickle.HIGHEST_PROTOCOL)
+			transfer_to_class_file(source, target)
+			target.contentType = contentType or target.contentType
+			target.close()
+
+			with open(out_file, "wb") as fp:
+				pickle.dump(target, fp, pickle.HIGHEST_PROTOCOL)
+		else:
+			transfer_to_native_file(source, out_file)
+
 		if relative:
 			out_file = os.path.relpath(out_file, self.path)
 		return out_file
@@ -105,8 +120,13 @@ class DirectoryFiler(object):
 		key = os.path.normpath(key)
 		if not key.startswith(self.path) or not os.path.exists(key):
 			return None
-		with open(key, "rb") as fp:
-			result = pickle.load(fp)
+
+		if not self.native:
+			with open(key, "rb") as fp:
+				result = pickle.load(fp)
+		else:
+			name = os.path.split(key)[1]
+			result = SourceProxy(open(key, "rb"), name, length=os.stat(key).st_size)
 		return result
 
 	def remove(self, key):
