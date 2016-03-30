@@ -30,6 +30,42 @@ def get_file_size(source):
 	return result
 
 @interface.implementer(ISource)
+class SourceProxy(ProxyBase):
+	"""
+	Source proxy for a io.file object
+	"""
+	length = property(lambda s: s.__dict__.get('_v_length'),
+					  lambda s, v: s.__dict__.__setitem__('_v_length', v))
+
+	contentType = property(
+					lambda s: s.__dict__.get('_v_content_type'),
+					lambda s, v: s.__dict__.__setitem__('_v_content_type', v))
+
+	filename = property(
+					lambda s: s.__dict__.get('_v_filename'),
+					lambda s, v: s.__dict__.__setitem__('_v_filename', v))
+
+	def __new__(cls, base, *args, **kwargs):
+		return ProxyBase.__new__(cls, base)
+
+	def __init__(self, base, filename=None, contentType=None, length=None):
+		ProxyBase.__init__(self, base)
+		self.length = length
+		self.filename = filename
+		self.contentType = contentType
+
+	@readproperty
+	def mode(self):
+		return "rb"
+
+	@property
+	def size(self):
+		return self.length
+
+	def getSize(self):
+		return self.size
+
+@interface.implementer(ISource)
 class SourceFile(object):
 
 	_data = None
@@ -136,37 +172,3 @@ class ReferenceSourceFile(SourceFile):
 	def getSize(self):
 		return self.length
 	size = getSize
-
-@interface.implementer(ISource)
-class SourceProxy(ProxyBase):
-
-	length = property(lambda s: s.__dict__.get('_v_length'),
-					  lambda s, v: s.__dict__.__setitem__('_v_length', v))
-
-	contentType = property(
-					lambda s: s.__dict__.get('_v_content_type'),
-					lambda s, v: s.__dict__.__setitem__('_v_content_type', v))
-
-	filename = property(
-					lambda s: s.__dict__.get('_v_filename'),
-					lambda s, v: s.__dict__.__setitem__('_v_filename', v))
-
-	def __new__(cls, base, *args, **kwargs):
-		return ProxyBase.__new__(cls, base)
-
-	def __init__(self, base, filename=None, contentType=None, length=None):
-		ProxyBase.__init__(self, base)
-		self.length = length
-		self.filename = filename
-		self.contentType = contentType
-
-	@readproperty
-	def mode(self):
-		return "rb"
-
-	@property
-	def size(self):
-		return self.length
-
-	def getSize(self):
-		return self.size

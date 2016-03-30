@@ -45,7 +45,7 @@ class TestFiler(unittest.TestCase):
 			filer = DirectoryFiler(tmp_dir, native=native)
 			data = self.get_data_source()
 			href = filer.save("ichigo.xml", data, relative=False,
-							  contentType="text/xml", overwrite=True,
+							  contentType="application/xml", overwrite=True,
 							  reference=reference)
 			assert_that(href, is_not(none()))
 			assert_that(href, starts_with(tmp_dir))
@@ -56,9 +56,7 @@ class TestFiler(unittest.TestCase):
 			assert_that(source, verifiably_provides(ISource))
 			assert_that(source, has_property('length', is_(9)))
 			assert_that(source, has_property('filename', is_("ichigo.xml")))
-
-			if not native:
-				assert_that(source, has_property('contentType', is_("text/xml")))
+			assert_that(source, has_property('contentType', is_("application/xml")))
 
 			assert_that(source.read(), is_("<ichigo/>"))
 			if not native:
@@ -76,7 +74,7 @@ class TestFiler(unittest.TestCase):
 			data = self.get_data_source()
 			href = filer.save("ichigo.xml", 
 							  data,
-							  contentType="text/xml", 
+							  contentType="application/xml", 
 							  overwrite=False,
 							  reference=reference)
 			assert_that(href, does_not(ends_with("ichigo.xml")))
@@ -85,7 +83,7 @@ class TestFiler(unittest.TestCase):
 			href = filer.save("ichigo.xml", 
 							  data,
 							  bucket="bleach",
-							  contentType="text/xml", 
+							  contentType="application/xml", 
 							  overwrite=True,
 							  reference=reference)
 			assert_that(href, ends_with("bleach/ichigo.xml"))
@@ -99,7 +97,7 @@ class TestFiler(unittest.TestCase):
 			href = filer.save("ichigo.xml", 
 							  data,
 							  bucket="bleach/souls",
-							  contentType="text/xml", 
+							  contentType="application/xml", 
 							  overwrite=True,
 							  reference=reference)
 			assert_that(href, ends_with("bleach/souls/ichigo.xml"))

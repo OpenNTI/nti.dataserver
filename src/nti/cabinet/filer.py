@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import pickle
 import shutil
+import mimetypes
 
 from zope import interface
 
@@ -45,7 +46,7 @@ def transfer_to_native_file(source, target):
 @interface.implementer(ISourceFiler)
 class DirectoryFiler(object):
 
-	def __init__(self, path, native=False):
+	def __init__(self, path, native=True):
 		self.native = native
 		self.path = self.prepare(path) if path else None
 
@@ -126,7 +127,10 @@ class DirectoryFiler(object):
 				result = pickle.load(fp)
 		else:
 			name = os.path.split(key)[1]
-			result = SourceProxy(open(key, "rb"), name, length=os.stat(key).st_size)
+			contentType = mimetypes.guess_type(name.lower())[0]
+			result = SourceProxy(open(key, "rb"), name,
+								 contentType=contentType,
+								 length=os.stat(key).st_size)
 		return result
 
 	def remove(self, key):
