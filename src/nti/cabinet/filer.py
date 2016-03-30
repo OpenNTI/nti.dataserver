@@ -108,6 +108,18 @@ class DirectoryFiler(object):
 			return True
 		return False
 
+	def contains(self, key, bucket=None):
+		if bucket:
+			if not bucket.startswith(self.path):
+				bucket = os.path.join(self.path, bucket)
+				bucket = os.path.normpath(bucket)
+			key = os.path.join(bucket, key)
+		elif not key.startswith(self.path):
+			key = os.path.join(self.path, key)
+			key = os.path.normpath(key)
+		result = key.startswith(self.path) and os.path.exists(key)
+		return result
+
 	def list(self, bucket=None):
 		path = os.path.join(self.path, bucket) if bucket else self.path
 		path = os.path.normpath(path)

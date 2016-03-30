@@ -54,6 +54,14 @@ class ISourceFiler(interface.Interface):
         :return Source object or stream
         """
 
+    def contains(self, key, bucket=None):
+        """
+        Check a source with the specifed key exists in this filer
+        
+        :param key: Source identifier, href or url
+        :param bucket: Optional bucket name (e.g subir)
+        """
+    
     def remove(key):
         """
         Remove a source

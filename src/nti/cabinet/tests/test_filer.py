@@ -49,6 +49,7 @@ class TestFiler(unittest.TestCase):
 							  reference=reference)
 			assert_that(href, is_not(none()))
 			assert_that(href, starts_with(tmp_dir))
+			assert_that(filer.contains(href), is_(True))
 			
 			source = filer.get(href)
 			assert_that(source, is_not(none()))
@@ -86,6 +87,9 @@ class TestFiler(unittest.TestCase):
 			assert_that(filer.is_bucket("bleach"), is_(True))
 			assert_that(filer.list("bleach"), has_length(greater_than(0)))
 
+			assert_that(filer.contains(href), is_(True))
+			assert_that(filer.contains("ichigo.xml", "bleach"), is_(True))
+
 			data = self.get_data_source()
 			href = filer.save("ichigo.xml", 
 							  data,
@@ -95,9 +99,13 @@ class TestFiler(unittest.TestCase):
 							  reference=reference)
 			assert_that(href, ends_with("bleach/souls/ichigo.xml"))
 			
+			assert_that(filer.contains(href), is_(True))
+			assert_that(filer.contains("ichigo.xml", "bleach/souls"), is_(True))
+			
 			assert_that(filer.remove(href), is_(True))
 			source = filer.get(href)
 			assert_that(source, is_(none()))
+			assert_that(filer.contains(href), is_(False))
 		finally:
 			shutil.rmtree(tmp_dir, True)
 			
