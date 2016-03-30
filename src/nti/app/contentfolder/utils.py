@@ -9,7 +9,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import re
+from urllib import quote
 from urllib import unquote
 from urlparse import urljoin
 
@@ -41,14 +43,26 @@ def get_ds2(request=None):
 def is_cf_io_href(link):
 	return bool(pattern.match(unquote(link)))
 
+def safe_download_file_name(name):
+	if not name:
+		result = 'file.dat'
+	else:
+		ext = os.path.splitext(name)[1]
+		try:
+			result = quote(name)
+		except Exception:
+			result = 'file' + ext
+	return result
+
 def get_cf_io_href(context, request=None):
 	context = IContentBaseFile(context, None)
 	intids = component.getUtility(IIntIds)
+	safe_name = safe_download_file_name(context.filename)
 	uid = intids.queryId(context) if context is not None else None
 	ds2 = get_ds2(request)
 	if ds2 and uid is not None:
-		name = to_external_string(uid)
-		href = '/%s/%s/%s' % (ds2, CFIO, name)
+		code = to_external_string(uid)
+		href = '/%s/%s/%s/%s' % (ds2, CFIO, code, safe_name)
 		return href
 	return None
 

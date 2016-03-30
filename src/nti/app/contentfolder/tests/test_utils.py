@@ -41,5 +41,3 @@ class TestUtils(unittest.TestCase):
 		n = get_file_from_cf_io_url('/dataserver2/cf.io/xrPH9/sample.dat')
 		assert_that(n, is_(foo))
 
-		n = get_file_from_cf_io_url('/dataserver2/cf.io/xxx')
-		assert_that(n, is_(none()))
