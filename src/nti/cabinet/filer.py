@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import pickle
+import shutil
 
 from zope import interface
 
@@ -36,15 +37,23 @@ def transfer(source, target):
 class DirectoryFiler(object):
 
 	def __init__(self, path):
-		self.path = self.reset(path) if path else None
+		self.path = self.prepare(path) if path else None
 
-	def reset(self, path):
+	def prepare(self, path):
 		path = os.path.expanduser(path)
 		if not os.path.exists(path):
 			os.makedirs(path)
 		elif not os.path.isdir(path):
 			raise IOError("%s is not directory", path)
 		return path
+	
+	def reset(self, path=None):
+		path = self.path if not path else path
+		if path:
+			path = os.path.expanduser(path)
+			shutil.rmtree(path, True)
+			return True
+		return False
 
 	def _get_unique_file_name(self, path, key):
 		separator = '_'
