@@ -32,8 +32,7 @@ from nti.coremetadata.interfaces import IRecordable
 from nti.contentlibrary.indexed_data import get_site_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
-from nti.contentlibrary.interfaces import IContentPackage,\
-	IGlobalContentPackageLibrary
+from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageAddedEvent
@@ -500,9 +499,6 @@ def _get_sync_results(content_package, event):
 def update_indices_when_content_changes(content_package, sync_results=None):
 	if sync_results is None:
 		sync_results = _new_sync_results(content_package)
-
-	if IGlobalContentPackageLibrary.providedBy(content_package.__parent__):
-		return sync_results
 
 	for name, item_iface, func in INDICES:
 		_update_index_when_content_changes(content_package,
