@@ -36,11 +36,15 @@ def transfer(source, target):
 class DirectoryFiler(object):
 
 	def __init__(self, path):
-		self.path = path
+		self.path = self.reset(path) if path else None
+
+	def reset(self, path):
+		path = os.path.expanduser(path)
 		if not os.path.exists(path):
 			os.makedirs(path)
 		elif not os.path.isdir(path):
 			raise IOError("%s is not directory", path)
+		return path
 
 	def _get_unique_file_name(self, path, key):
 		separator = '_'
