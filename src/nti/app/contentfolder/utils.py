@@ -35,7 +35,7 @@ pattern = re.compile('(.+)/%s/(.+)(\/.*)?' % CFIO, re.UNICODE | re.IGNORECASE)
 def get_ds2(request=None):
 	request = request if request else get_current_request()
 	try:
-		result = request.path_info_peek() if request else None # e.g. /dataserver2
+		result = request.path_info_peek() if request else None  # e.g. /dataserver2
 	except AttributeError:  # in unit test we may see this
 		result = None
 	return result or "dataserver2"
@@ -54,7 +54,7 @@ def safe_download_file_name(name):
 			result = 'file' + ext
 	return result
 
-def get_cf_io_href(context, request=None):
+def to_external_cf_io_href(context, request=None):
 	context = IContentBaseFile(context, None)
 	intids = component.getUtility(IIntIds)
 	safe_name = safe_download_file_name(context.filename)
@@ -65,12 +65,14 @@ def get_cf_io_href(context, request=None):
 		href = '/%s/%s/%s/%s' % (ds2, CFIO, code, safe_name)
 		return href
 	return None
+get_cf_io_href = to_external_cf_io_href
 
-def get_cf_io_url(context, request=None):
+def to_external_cf_io_url(context, request=None):
 	request = request if request else get_current_request()
-	href = get_cf_io_href(context, request=request)
+	href = to_external_cf_io_href(context, request=request)
 	result = urljoin(request.host_url, href) if href else href
 	return result
+get_cf_io_url = to_external_cf_io_url
 
 def get_object(uid, intids=None):
 	intids = component.getUtility(IIntIds) if intids is None else intids
