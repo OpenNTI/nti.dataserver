@@ -131,6 +131,8 @@ def transfer_data(source, target):
 		target.data = source.read() 
 	elif hasattr(source, 'data'): 
 		target.data = source.data
+	else: 
+		target.data = source
 
 	# copy contentType if available
 	if		not getattr(target, 'contentType', None) \
