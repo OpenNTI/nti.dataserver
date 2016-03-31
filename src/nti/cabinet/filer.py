@@ -39,7 +39,7 @@ def _add_types():
 	mimetypes.add_type('application/x-tcl', '.tcl')
 	mimetypes.add_type('application/x-tcl', '.tk')
 	mimetypes.add_type('application/x-x509-ca-cert', '.pem')
-	mimetypes.add_type('video/3gpp', '3gpp')
+	mimetypes.add_type('video/3gpp', '.3gpp')
 _add_types()
 del _add_types
 
