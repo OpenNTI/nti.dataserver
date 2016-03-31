@@ -33,8 +33,6 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.forums.interfaces import IPostFileConstraints
 
-from nti.appserver import httpexceptions as hexc
-
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
 # loaded (usually with ZCML, so in practice this is not a problem,
@@ -136,10 +134,11 @@ class _AbstractForumPostView(PostUploadMixin,
 		if not self.request.POST:
 			externalValue = super(_AbstractForumPostView, self).readInput(value=value)
 		else:
-			externalValue = get_source(self.request, 'json', 'input', 'source', 'content')
-			if not externalValue:
-				raise hexc.HTTPUnprocessableEntity("No source was specified")
-			externalValue = super(_AbstractForumPostView, self).readInput(value=externalValue.read())
+			externalValue = get_source(self.request, 'json') # test legacy ipad
+			if externalValue:
+				externalValue = super(_AbstractForumPostView, self).readInput(value=externalValue.read())
+			else:
+				externalValue = super(_AbstractForumPostView, self).readInput(value=value)
 		return externalValue
 	
 	def _read_incoming_post(self, datatype, constraint):
