@@ -52,7 +52,7 @@ class SourceProxy(ProxyBase):
 		ProxyBase.__init__(self, base)
 		self.length = length
 		self.filename = filename
-		self.contentType = contentType
+		self.contentType = contentType or u'application/octet-stream'
 
 	@readproperty
 	def mode(self):

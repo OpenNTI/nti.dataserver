@@ -23,7 +23,7 @@ from nti.cabinet.mixins import ReferenceSourceFile
 
 from nti.common.random import generate_random_hex_string
 
-def transfer_to_class_file(source, target):
+def transfer_to_storage_file(source, target):
 	if hasattr(source, 'read'):
 		target.data = source.read()
 	elif hasattr(source, 'data'):
@@ -77,6 +77,13 @@ class DirectoryFiler(object):
 				break
 		return newtext
 
+	def new_storage_file(self, key, out_dir, reference=False):
+		if reference:
+			target = ReferenceSourceFile(out_dir, key)
+		else:
+			target = SourceFile(key)
+		return target
+	
 	def save(self, key, source, contentType=None, bucket=None, overwrite=False,
 			 relative=True, reference=False, **kwargs):
 		contentType = contentType or u'application/octet-stream'
@@ -97,15 +104,10 @@ class DirectoryFiler(object):
 			out_file = os.path.join(out_dir, key)
 
 		if not self.native:
-			if reference:
-				target = ReferenceSourceFile(out_dir, key)
-			else:
-				target = SourceFile(key)
-
-			transfer_to_class_file(source, target)
+			target = self.new_storage_file(key, out_dir, reference)
+			transfer_to_storage_file(source, target)
 			target.contentType = contentType or target.contentType
 			target.close()
-
 			with open(out_file, "wb") as fp:
 				pickle.dump(target, fp, pickle.HIGHEST_PROTOCOL)
 		else:
