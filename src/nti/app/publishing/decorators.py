@@ -24,6 +24,8 @@ from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
 from nti.appserver.pyramid_authorization import has_permission
 
+from nti.coremetadata.interfaces import INoPublishLink
+
 from nti.dataserver.authorization import ACT_CONTENT_EDIT
 
 from nti.dataserver.interfaces import ICalendarPublishable
@@ -44,6 +46,7 @@ def _acl_decoration(request):
 def _expose_links(context, request):
 	return (	_acl_decoration(request)
 			and	getattr(context, '_p_jar', None)
+			and not INoPublishLink.providedBy(context)
 			and has_permission(ACT_CONTENT_EDIT, context, request))
 
 def _get_publish_state(obj):
