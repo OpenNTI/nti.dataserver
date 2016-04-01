@@ -3,8 +3,9 @@
 """
 Constants and types for dealing with our unique IDs.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -20,16 +21,19 @@ from nti.chatserver.interfaces import IUserTranscriptStorage
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
+from nti.dataserver import authorization_acl as nacl
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import ACLLocationProxy
 
-from nti.dataserver import authorization_acl as nacl
+from nti.ntiids.interfaces import INTIIDResolver
 
 from nti.ntiids.ntiids import ROOT
-from nti.ntiids.interfaces import INTIIDResolver
-from nti.ntiids.ntiids import get_provider, get_specific
+
+from nti.ntiids.ntiids import get_provider
+from nti.ntiids.ntiids import get_specific
 
 import zope.deferredimport
 zope.deferredimport.initialize()
@@ -66,56 +70,55 @@ zope.deferredimport.deprecatedFrom(
 	"TYPE_CLASS",
 	"find_object_with_ntiid")
 
-NTIID_ROOT = ROOT # re-export
+NTIID_ROOT = ROOT  # re-export
 
 @interface.implementer(INTIIDResolver)
 class _OIDResolver(object):
 
-	def resolve( self, key ):
-		dataserver = component.queryUtility( IDataserver )
+	def resolve(self, key):
+		dataserver = component.queryUtility(IDataserver)
 		try:
-			return dataserver.get_by_oid( key, ignore_creator=True ) if dataserver else None
+			return dataserver.get_by_oid(key, ignore_creator=True) if dataserver else None
 		except ValueError:
 			# Unpacking an OID key can raise ValueError if its in the wrong format
-			logger.debug( "Invalid OID NTIID %s", key, exc_info=True )
-			return None # per our spec
+			logger.debug("Invalid OID NTIID %s", key, exc_info=True)
+			return None  # per our spec
 
-def _resolve_user( provider_name, namespace ):
-	dataserver = component.queryUtility( IDataserver )
+def _resolve_user(provider_name, namespace):
+	dataserver = component.queryUtility(IDataserver)
 	user = None
 	if dataserver:
-		user = dataserver.root[namespace].get( provider_name )
+		user = dataserver.root[namespace].get(provider_name)
 		if not user:
 			# Try unescaping it. See ntiids.py for more. The transformation is
 			# not totally reliable. The - becomes _ when "escaped" (as does whitespace,
 			# but those aren't allowed in user names). This wouldn't be a problem except that
 			# usernames can contain - already. So if the name mixes _ and -, then we can't
 			# recover it
-			provider_name = provider_name.replace( '_', '-' )
-			user = dataserver.root[namespace].get( provider_name )
-
+			provider_name = provider_name.replace('_', '-')
+			user = dataserver.root[namespace].get(provider_name)
 	return user
 
 @interface.implementer(INTIIDResolver)
 class _NamedEntityResolver(object):
 
-	def resolve( self, key ):
+	def resolve(self, key):
 		# TODO: We currently know that everything we support, users and
 		# communities, live in the same namespace
-		ent_name = get_specific( key )
-		return _resolve_user( ent_name, 'users' )
+		ent_name = get_specific(key)
+		return _resolve_user(ent_name, 'users')
 
-def _match( x, container_id, case_sensitive=True ):
+def _match(x, container_id, case_sensitive=True):
 	"""
 	Things that are user-like, or might have their NTIID used like a Username
 	and share that namespace, are expected to be treated case *in*sensitively.
 	You should also configure a lowercase resolver.
 	"""
 	if case_sensitive:
-		return x if getattr( x, 'NTIID', None ) == container_id else None
+		return x if getattr(x, 'NTIID', None) == container_id else None
 
 	# warnings.warn( "Hack for UI: making some NTIIDS case-insensitive." )
-	return x if getattr( x, 'NTIID', '' ).lower() == (container_id.lower() or 'B').lower() else None
+	return x if getattr(x, 'NTIID', '').lower() == (container_id.lower() or 'B').lower() else None
 
 class AbstractUserBasedResolver(object):
 	"""
@@ -134,29 +137,29 @@ class AbstractUserBasedResolver(object):
 	#: a particular type of globally named entity.
 	required_iface = IEntity
 
-	def resolve( self, ntiid ):
-		provider_name = get_provider( ntiid )
-		user = _resolve_user( provider_name, self.namespace )
+	def resolve(self, ntiid):
+		provider_name = get_provider(ntiid)
+		user = _resolve_user(provider_name, self.namespace)
 
-		if user and self.required_iface.providedBy( user ):
-			return self._resolve( ntiid, user )
+		if user and self.required_iface.providedBy(user):
+			return self._resolve(ntiid, user)
 
 	@abstractmethod
-	def _resolve( self, ntiid, user ):
+	def _resolve(self, ntiid, user):
 		"""Subclasses implement this to finish the resolution in the scope of a user."""
 		raise NotImplementedError()
 
-_AbstractUserBasedResolver = AbstractUserBasedResolver # BWC
+_AbstractUserBasedResolver = AbstractUserBasedResolver  # BWC
 
 class AbstractAdaptingUserBasedResolver(AbstractUserBasedResolver):
 	"""
 	Adapts the found user to some interface and returns that or the default value.
 	"""
 
-	default_value = None
 	adapt_to = None
+	default_value = None
 
-	def _resolve( self, ntiid, user ):
+	def _resolve(self, ntiid, user):
 		return component.queryAdapter(user, self.adapt_to, default=self.default_value)
 
 class AbstractMappingAdaptingUserBasedResolver(AbstractAdaptingUserBasedResolver):
@@ -165,32 +168,32 @@ class AbstractMappingAdaptingUserBasedResolver(AbstractAdaptingUserBasedResolver
 	adapted from the user.
 	"""
 
-	def _resolve( self, ntiid, user ):
-		mapping = super(AbstractMappingAdaptingUserBasedResolver,self)._resolve( ntiid, user )
+	def _resolve(self, ntiid, user):
+		mapping = super(AbstractMappingAdaptingUserBasedResolver, self)._resolve(ntiid, user)
 		if mapping is not None:
-			return mapping.get( get_specific( ntiid ) )
+			return mapping.get(get_specific(ntiid))
 
 @interface.implementer(INTIIDResolver)
 class _ContentResolver(object):
 
-	def resolve( self, key ):
+	def resolve(self, key):
 		result = None
 		library = component.queryUtility(IContentPackageLibrary)
-		path = library.pathToNTIID( key ) if library else None
+		path = library.pathToNTIID(key) if library else None
 		if path:
 			result = path[-1]
 			# TODO: ACL Proxy can probably go away
-			result = ACLLocationProxy( result, result.__parent__,
-									   result.__name__, nacl.ACL(result) )
+			result = ACLLocationProxy(result, result.__parent__,
+									   result.__name__, nacl.ACL(result))
 		return result
 
 @interface.implementer(INTIIDResolver)
 class _MeetingRoomResolver(_AbstractUserBasedResolver):
 
-	def _resolve( self, key, user ):
+	def _resolve(self, key, user):
 		result = None
 		for x in user.friendsLists.itervalues():
-			if _match( x, key, False ):
+			if _match(x, key, False):
 				result = x
 				break
 		return result
@@ -198,19 +201,19 @@ class _MeetingRoomResolver(_AbstractUserBasedResolver):
 @interface.implementer(INTIIDResolver)
 class _TranscriptResolver(_AbstractUserBasedResolver):
 
-	def _resolve( self, key, user ):
-		result = IUserTranscriptStorage(user).transcript_for_meeting( key )
-		if result is None: # bool is based on messages
-			logger.debug( "Failed to find transcript given oid: %s", key )
+	def _resolve(self, key, user):
+		result = IUserTranscriptStorage(user).transcript_for_meeting(key)
+		if result is None:  # bool is based on messages
+			logger.debug("Failed to find transcript given oid: %s", key)
 		return result
 
 @interface.implementer(INTIIDResolver)
 class _UGDResolver(_AbstractUserBasedResolver):
 
-	def _resolve( self, key, user ):
+	def _resolve(self, key, user):
 		# Try looking up the ntiid by name in each container
 		# TODO: This is terribly expensive
-		if not IUser.providedBy( user ):
+		if not IUser.providedBy(user):
 			# NOTE: We are abusing this interface. We actually look
 			# at a property not defined by this interface, user.containers.
 			# We really want nti_interfaces.IContainerIterable, but cannot use it.
@@ -222,7 +225,7 @@ class _UGDResolver(_AbstractUserBasedResolver):
 			container = user.containers.containers[container_name]
 			if isinstance(container, numbers.Number):
 				continue
-			result = container.get( key )
+			result = container.get(key)
 			if result:
 				break
 		return result
