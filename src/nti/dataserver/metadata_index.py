@@ -21,50 +21,56 @@ CATALOG_NAME = 'nti.dataserver.++etc++metadata-catalog'
 
 from zope import interface
 
-from zc.intid import IIntIds
+from zope.intid.interfaces import IIntIds
 
 from zope.catalog.interfaces import ICatalogIndex
 
 from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDevice
+from nti.dataserver.interfaces import IThreadable
+from nti.dataserver.interfaces import ICreatedTime
+from nti.dataserver.interfaces import IFriendsList
+from nti.dataserver.interfaces import ILastModified
+from nti.dataserver.interfaces import IModeledContent
+from nti.dataserver.interfaces import ICreatedUsername
+from nti.dataserver.interfaces import IMetadataCatalog
+from nti.dataserver.interfaces import IUserTaggedContent
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+from nti.dataserver.interfaces import IInspectableWeakThreadable
+from nti.dataserver.interfaces import IContained as INTIContained
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+
 from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import TYPE_UUID
 from nti.ntiids.ntiids import TYPE_INTID
-from nti.ntiids.ntiids import TYPE_NAMED_ENTITY
 from nti.ntiids.ntiids import TYPE_MEETINGROOM
+from nti.ntiids.ntiids import TYPE_NAMED_ENTITY
+
 from nti.ntiids.ntiids import is_ntiid_of_types
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.zope_catalog.catalog import Catalog
-from nti.zope_catalog.topic import TopicIndex
-from nti.zope_catalog.topic import ExtentFilteredSet
+
 from nti.zope_catalog.index import NormalizationWrapper
 from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
 from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
 
-from nti.zope_catalog.index import AttributeKeywordIndex
-from nti.zope_catalog.string import StringTokenNormalizer
+from nti.zope_catalog.topic import TopicIndex
+from nti.zope_catalog.topic import ExtentFilteredSet
+
 from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
 
-from .interfaces import IUser
-from .interfaces import IDevice
-from .interfaces import IThreadable
-from .interfaces import IFriendsList
-from .interfaces import ILastModified
-from .interfaces import IModeledContent
-from .interfaces import ICreatedUsername
-from .interfaces import IMetadataCatalog
-from .interfaces import IUserTaggedContent
-from .interfaces import IDeletedObjectPlaceholder
-from .interfaces import IInspectableWeakThreadable
-from .interfaces import IContained as INTIContained
-from .interfaces import IDynamicSharingTargetFriendsList
+from nti.zope_catalog.index import AttributeKeywordIndex
 
-from .contenttypes.forums.interfaces import ICommentPost
-from .contenttypes.forums.interfaces import IHeadlinePost
-from .contenttypes.forums.interfaces import IPersonalBlogEntryPost
+from nti.zope_catalog.string import StringTokenNormalizer
 
 class MimeTypeIndex(ValueIndex):
 	default_field_name = 'mimeType'
@@ -91,13 +97,13 @@ class ValidatingContainerId(object):
 
 	__slots__ = (b'containerId',)
 
-	_IGNORED_TYPES = {TYPE_OID,TYPE_UUID,TYPE_INTID}
+	_IGNORED_TYPES = {TYPE_OID, TYPE_UUID, TYPE_INTID}
 
 	def __init__(self, obj, default):
 		contained = INTIContained(obj, default)
 		if contained is not None:
 			cid = contained.containerId
-			if	is_ntiid_of_types( cid, self._IGNORED_TYPES ) and \
+			if	is_ntiid_of_types(cid, self._IGNORED_TYPES) and \
 				not ICommentPost.providedBy(obj):
 				self.containerId = None
 			else:
@@ -136,7 +142,7 @@ def SharedWithIndex(family=None):
 	return NormalizationWrapper(field_name='sharedWith',
 								normalizer=StringTokenNormalizer(),
 								index=SharedWithRawIndex(family=family),
-								is_collection=True )
+								is_collection=True)
 
 class TaggedToRawIndex(RawSetIndex):
 	pass
@@ -152,7 +158,6 @@ class TaggedTo(object):
 	it exists, we return its NTIID or username: If the entity is globally
 	named, then the username is returned, otherwise, if the entity is only
 	locally named, the NTIID is returned.
-
 	"""
 
 	__slots__ = (b'context',)
@@ -162,7 +167,7 @@ class TaggedTo(object):
 	_ENTITY_TYPES = {TYPE_NAMED_ENTITY, TYPE_NAMED_ENTITY.lower(),
 					 TYPE_MEETINGROOM, TYPE_MEETINGROOM.lower()}
 
-	def __init__( self, context, default ):
+	def __init__(self, context, default):
 		self.context = IUserTaggedContent(context, None)
 
 	@property
@@ -177,8 +182,8 @@ class TaggedTo(object):
 
 		username_tags = set()
 		for raw_tag in raw_tags:
-			if is_ntiid_of_types( raw_tag, self._ENTITY_TYPES ):
-				entity = find_object_with_ntiid( raw_tag )
+			if is_ntiid_of_types(raw_tag, self._ENTITY_TYPES):
+				entity = find_object_with_ntiid(raw_tag)
 				if entity is not None:
 					# We actually have to be a bit careful here; we only want
 					# to catch certain types of entity tags, those that are either
@@ -188,9 +193,9 @@ class TaggedTo(object):
 					# Currently, this abstraction doesn't exactly exist so we
 					# are very specific about it. See also :mod:`sharing`
 					if IUser.providedBy(entity):
-						username_tags.add( entity.username )
+						username_tags.add(entity.username)
 					elif IDynamicSharingTargetFriendsList.providedBy(entity):
-						username_tags.add( entity.NTIID )
+						username_tags.add(entity.NTIID)
 		return username_tags
 
 def TaggedToIndex(family=None):
@@ -201,7 +206,7 @@ def TaggedToIndex(family=None):
 								normalizer=StringTokenNormalizer(),
 								index=TaggedToRawIndex(family=family),
 								interface=TaggedTo,
-								is_collection=True )
+								is_collection=True)
 
 class CreatorOfInReplyToRawIndex(RawValueIndex):
 	pass
@@ -214,21 +219,23 @@ class CreatorOfInReplyTo(object):
 
 	__slots__ = (b'context',)
 
-	def __init__( self, context, default ):
+	def __init__(self, context, default):
 		self.context = context
 
 	@property
 	def creator_name_replied_to(self):
 		try:
 			return ICreatedUsername(self.context.inReplyTo).creator_username
-		except (TypeError,AttributeError):
+		except (TypeError, AttributeError):
 			return None
 
 	def __reduce__(self):
 		raise TypeError()
 
 def CreatorOfInReplyToIndex(family=None):
-	"Indexes all the replies to a particular user"
+	"""
+	Indexes all the replies to a particular user
+	"""
 	return NormalizationWrapper(field_name='creator_name_replied_to',
 								normalizer=StringTokenNormalizer(),
 								index=CreatorOfInReplyToRawIndex(family=family),
@@ -244,7 +251,7 @@ def isTopLevelContentObjectFilter(extent, docid, document):
 		if IFriendsList.providedBy(document) or IDevice.providedBy(document):
 			# These things are modeled content, for some reason
 			return False
-		
+
 		if IPersonalBlogEntryPost.providedBy(document):
 			return bool(document.sharedWith)
 		# HeadlinePosts (which are IMutedInStream) are threadable,
@@ -266,7 +273,7 @@ class TopLevelContentExtentFilteredSet(ExtentFilteredSet):
 	A filter for a topic index that collects top-level objects.
 	"""
 	def __init__(self, fid, family=None):
-		super(TopLevelContentExtentFilteredSet,self).__init__(
+		super(TopLevelContentExtentFilteredSet, self).__init__(
 			  fid,
 			  isTopLevelContentObjectFilter,
 			  family=family)
@@ -280,7 +287,7 @@ class DeletedObjectPlaceholderExtentFilteredSet(ExtentFilteredSet):
 	A filter for a topic index that collects deleted placeholders.
 	"""
 	def __init__(self, fid, family=None):
-		super(DeletedObjectPlaceholderExtentFilteredSet,self).__init__(
+		super(DeletedObjectPlaceholderExtentFilteredSet, self).__init__(
 			fid,
 			isDeletedObjectPlaceholder,
 			family=family)
@@ -290,7 +297,7 @@ class CreatedTimeRawIndex(RawIntegerValueIndex):
 
 def CreatedTimeIndex(family=None):
 	return NormalizationWrapper(field_name='createdTime',
-								interface=ILastModified,
+								interface=ICreatedTime,
 								index=CreatedTimeRawIndex(family=family),
 								normalizer=TimestampToNormalized64BitIntNormalizer())
 
@@ -307,7 +314,7 @@ class RevSharedWith(object):
 
 	__slots__ = (b'context',)
 
-	def __init__( self, context, default=None):
+	def __init__(self, context, default=None):
 		self.context = context
 
 	@property
@@ -352,35 +359,34 @@ class MetadataCatalog(Catalog):
 		pass
 
 	def force_index_doc(self, docid, ob):
-		self.super_index_doc( docid, ob )
+		self.super_index_doc(docid, ob)
 
-def install_metadata_catalog( site_manager_container, intids=None ):
+def install_metadata_catalog(site_manager_container, intids=None):
 	"""
 	Installs the global metadata catalog.
 	"""
 	lsm = site_manager_container.getSiteManager()
-	if intids is None:
-		intids = lsm.getUtility(IIntIds)
+	intids = lsm.getUtility(IIntIds) if intids is None else intids
 
 	catalog = MetadataCatalog(family=intids.family)
 	catalog.__name__ = CATALOG_NAME
 	catalog.__parent__ = site_manager_container
-	intids.register( catalog )
-	lsm.registerUtility( catalog, provided=IMetadataCatalog, name=CATALOG_NAME )
+	intids.register(catalog)
+	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
 
-	for name, clazz in ( (IX_MIMETYPE, MimeTypeIndex),
-						 (IX_CONTAINERID, ContainerIdIndex),
-						 (IX_CREATOR, CreatorIndex),
-						 (IX_CREATEDTIME, CreatedTimeIndex),
-						 (IX_LASTMODIFIED, LastModifiedIndex),
-						 (IX_SHAREDWITH, SharedWithIndex),
-						 (IX_REPLIES_TO_CREATOR, CreatorOfInReplyToIndex),
-						 (IX_TAGGEDTO, TaggedToIndex),
-						 (IX_REVSHAREDWITH, RevSharedWithIndex),
-						 (IX_TOPICS, TopicIndex)):
-		index = clazz( family=intids.family )
+	for name, clazz in ((IX_MIMETYPE, MimeTypeIndex),
+						(IX_CONTAINERID, ContainerIdIndex),
+						(IX_CREATOR, CreatorIndex),
+						(IX_CREATEDTIME, CreatedTimeIndex),
+						(IX_LASTMODIFIED, LastModifiedIndex),
+						(IX_SHAREDWITH, SharedWithIndex),
+						(IX_REPLIES_TO_CREATOR, CreatorOfInReplyToIndex),
+						(IX_TAGGEDTO, TaggedToIndex),
+						(IX_REVSHAREDWITH, RevSharedWithIndex),
+						(IX_TOPICS, TopicIndex)):
+		index = clazz(family=intids.family)
 		assert ICatalogIndex.providedBy(index)
-		intids.register( index )
+		intids.register(index)
 		# As a very minor optimization for unit tests, if we
 		# already set the name and parent of the index,
 		# the ObjectAddedEvent won't be fired
