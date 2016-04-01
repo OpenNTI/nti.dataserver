@@ -22,10 +22,7 @@ import cPickle as pickle
 
 import simplejson as json
 
-try:
-	import gevent
-except ImportError:
-	gevent = None
+import gevent
 
 from zope import component
 from zope import interface
@@ -53,7 +50,9 @@ from nti.socketio.interfaces import ISocketSession
 from nti.socketio.interfaces import ISocketIOSocket
 from nti.socketio.interfaces import ISocketSessionConnectedEvent
 from nti.socketio.interfaces import ISocketSessionDisconnectedEvent
+
 from nti.socketio.interfaces import SocketSessionDisconnectedEvent
+
 from nti.socketio.persistent_session import AbstractSession as Session
 
 from nti.transactions import transactions
