@@ -125,6 +125,18 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 
 		lifecycleevent.moved(item, self, name, target, newName)
 		return True
+	
+	# compatible methods
+
+	def getChildNamed(self, key):
+		try:
+			result = self[key]
+		except KeyError:
+			result = None
+		return result
+
+	def enumerateChildren(self):
+		return tuple(self.keys())
 
 @interface.implementer(IRootFolder)
 class RootFolder(ContentFolder):

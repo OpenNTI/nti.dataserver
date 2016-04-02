@@ -102,6 +102,11 @@ class BaseContentMixin(object):
 
 	def tell(self):
 		return self._get_v_fp().tell()
+	
+	# compatible methods
+
+	def readContents(self):
+		return self.data
 
 BaseMixin = BaseContentMixin  # BWC
 
