@@ -232,6 +232,17 @@ class LibraryCatalog(Catalog):
 			return True
 		return False
 
+	# namespaces
+	
+	def namespace_index(self):
+		return self[IX_NAMESPACE]
+	
+	def get_namespace(self, item, intids=None):
+		doc_id = get_uid(item, intids)
+		if doc_id is not None:
+			return self.namespace_index.documents_to_values.get(doc_id)
+		return None
+	
 	# search
 
 	def get_references(self,

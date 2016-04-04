@@ -192,6 +192,14 @@ class ContainedObjectCatalog(Persistent):
 			doc_id = item
 		return doc_id
 
+	def get_namespace(self, item, intids=None):
+		doc_id = self._doc_id(item, intids)
+		if doc_id is not None:
+			result = self._namespace_index.documents_to_values.get(doc_id)
+		else:
+			result = None
+		return result
+	
 	def get_containers(self, item, intids=None):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
