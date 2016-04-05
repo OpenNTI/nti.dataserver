@@ -17,7 +17,8 @@ from zope import interface
 
 from nti.cabinet.interfaces import ISourceFiler
 
-from nti.cabinet.mixins import SourceFile, SourceProxy
+from nti.cabinet.mixins import SourceFile
+from nti.cabinet.mixins import SourceProxy 
 from nti.cabinet.mixins import ReferenceSourceFile
 
 from nti.common import mimetypes
