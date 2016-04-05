@@ -37,6 +37,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.forums.interfaces import IPostFileConstraints
 
+from nti.app.forums.views import MessageFactory as _
+
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
 # loaded (usually with ZCML, so in practice this is not a problem,

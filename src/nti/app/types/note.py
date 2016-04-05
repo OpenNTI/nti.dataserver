@@ -33,6 +33,8 @@ from nti.app.contentfile import transfer_internal_content_data
 
 from nti.app.externalization.error import raise_json_error
 
+from nti.app.types import MessageFactory as _
+
 from nti.app.types.interfaces import INoteFileConstraints
 
 from nti.appserver.interfaces import INewObjectTransformer
