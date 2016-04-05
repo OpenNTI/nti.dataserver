@@ -14,10 +14,12 @@ from functools import partial
 from zope import component
 from zope import interface
 
-from zope.schema.interfaces import ConstraintNotSatisfied
+from pyramid import httpexceptions as hexc
 
 from pyramid.interfaces import IRequest
 from pyramid.interfaces import IExceptionResponse
+
+from pyramid.threadlocal import get_current_request
 
 from pyramid.view import view_config
 
@@ -28,6 +30,8 @@ from nti.app.contentfile import validate_sources
 from nti.app.contentfile import get_content_files
 from nti.app.contentfile import read_multipart_sources
 from nti.app.contentfile import transfer_internal_content_data
+
+from nti.app.externalization.error import raise_json_error
 
 from nti.app.types.interfaces import INoteFileConstraints
 
@@ -65,12 +69,12 @@ def _submission_transformer(request, context):
 class NotePutView(UGDPutView):
 
 	def updateContentObject(self, contentObject, externalValue, set_id=False, notify=True):
-		result = UGDPutView.updateContentObject(self, 
+		result = UGDPutView.updateContentObject(self,
 												contentObject=contentObject,
 												externalValue=externalValue,
 												set_id=set_id,
 												notify=notify)
-		sources = transfer_internal_content_data(contentObject, 
+		sources = transfer_internal_content_data(contentObject,
 												 request=self.request,
 												 ownership=False)
 		if sources:
@@ -86,8 +90,16 @@ def validate_attachments(user, context, sources=()):
 	# check max files to upload
 	constraints = file_contraints(context, user, INoteFileConstraints)
 	if constraints is not None and len(sources) > constraints.max_files:
-		raise ConstraintNotSatisfied(len(sources), 'max_files')
-	
+		raise_json_error(get_current_request(),
+						 hexc.HTTPUnprocessableEntity,
+						 {
+							u'message': _('Maximum number attachments exceeded.'),
+							u'code': 'MaxAttachmentsExceeded',
+							u'field': 'max_files',
+							u'constraint': constraints.max_files
+						 },
+						 None)
+
 	# take ownership
 	for source in sources:
 		source.__parent__ = context
@@ -96,5 +108,4 @@ def validate_attachments(user, context, sources=()):
 @interface.implementer(INoteFileConstraints)
 class _NoteFileConstraints(FileConstraints):
 	max_files = 5
-	max_file_size = 10485760 # 10 MB
-					
+	max_file_size = 10485760  # 10 MB
