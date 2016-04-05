@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import pickle
 import shutil
-import mimetypes
 
 from zope import interface
 
@@ -21,27 +20,9 @@ from nti.cabinet.interfaces import ISourceFiler
 from nti.cabinet.mixins import SourceFile, SourceProxy
 from nti.cabinet.mixins import ReferenceSourceFile
 
-from nti.common.random import generate_random_hex_string
+from nti.common import mimetypes
 
-def _add_types():
-	mimetypes.add_type('text/html', '.shtml')
-	mimetypes.add_type('text/mathml', '.mml')
-	mimetypes.add_type('text/x-component', '.htc')
-	mimetypes.add_type('image/x-jng', '.jng')
-	mimetypes.add_type('application/java-archive', '.war')
-	mimetypes.add_type('application/java-archive', '.ear')
-	mimetypes.add_type('application/x-cocoa', '.cco')
-	mimetypes.add_type('application/x-java-archive-diff', '.jardiff');
-	mimetypes.add_type('application/x-makeself', '.run')
-	mimetypes.add_type('application/x-perl', ',pm')
-	mimetypes.add_type('application/x-redhat-package-manager', '.rpm')
-	mimetypes.add_type('application/x-sea', '.sea')
-	mimetypes.add_type('application/x-tcl', '.tcl')
-	mimetypes.add_type('application/x-tcl', '.tk')
-	mimetypes.add_type('application/x-x509-ca-cert', '.pem')
-	mimetypes.add_type('video/3gpp', '.3gpp')
-_add_types()
-del _add_types
+from nti.common.random import generate_random_hex_string
 
 def transfer_to_storage_file(source, target):
 	if hasattr(source, 'read'):
