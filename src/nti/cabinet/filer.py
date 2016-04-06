@@ -19,6 +19,7 @@ from nti.cabinet.interfaces import ISourceFiler
 
 from nti.cabinet.mixins import SourceFile
 from nti.cabinet.mixins import SourceProxy 
+from nti.cabinet.mixins import SourceBucket
 from nti.cabinet.mixins import ReferenceSourceFile
 
 from nti.common import mimetypes
@@ -125,16 +126,30 @@ class DirectoryFiler(object):
 		key = os.path.normpath(key)
 		if not key.startswith(self.path) or not os.path.exists(key):
 			return None
-
-		if not self.native:
-			with open(key, "rb") as fp:
-				result = pickle.load(fp)
+		
+		# compute a parent
+		bucket = os.path.split(key)[0] + os.path.sep + '..'
+		bucket = os.path.normpath(bucket)
+		if not bucket.startswith(self.path):
+			bucket = None
 		else:
-			name = os.path.split(key)[1]
-			contentType = mimetypes.guess_type(name.lower())[0]
-			result = SourceProxy(open(key, "rb"), name,
-								 contentType=contentType,
-								 length=os.stat(key).st_size)
+			bucket = os.path.relpath(bucket, self.path)
+		parent = SourceBucket(bucket, self)
+			
+		if os.path.isdir(key):
+			bucket = os.path.relpath(key, self.path)
+			result = SourceBucket(bucket, self)
+		else:
+			if not self.native:
+				with open(key, "rb") as fp:
+					result = pickle.load(fp)
+			else:
+				name = os.path.split(key)[1]
+				contentType = mimetypes.guess_type(name.lower())[0]
+				result = SourceProxy(open(key, "rb"), name,
+									 contentType=contentType,
+									 length=os.stat(key).st_size)
+		result.__parent__ = parent
 		return result
 
 	def remove(self, key):

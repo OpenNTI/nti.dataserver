@@ -16,9 +16,43 @@ from zope import interface
 
 from zope.cachedescriptors.property import readproperty
 
+from zope.container.contained import Contained
+
 from zope.proxy import ProxyBase
 
 from nti.cabinet.interfaces import ISource
+from nti.cabinet.interfaces import ISourceBucket
+
+from nti.schema.schema import EqHash
+
+# Buckets
+
+@EqHash('__name__')
+@interface.implementer(ISourceBucket)
+class SourceBucket(Contained):
+	
+	def __init__(self, bucket, filer):
+		self.filer = filer
+		self.__name__ = bucket
+
+	@property
+	def bucket(self):
+		return self.__name__
+
+	@property
+	def name(self):
+		return os.path.split(self.__name__)[1] if self.__name__ else u''
+	
+	def getChildNamed(self, name):
+		if not name.startswith(self.bucket):
+			name = os.path.join(self.bucket, name)
+		result = self.filer.get(name)
+		return result
+	
+	def enumerateChildren(self):
+		return self.filter.list(self.bucket)
+
+# Key Sources
 
 def get_file_size(source):
 	result = None
@@ -34,6 +68,9 @@ class SourceProxy(ProxyBase):
 	"""
 	Source proxy for a io.file object
 	"""
+	__parent__ = property(lambda s: s.__dict__.get('_v__parent__'),
+					 	  lambda s, v: s.__dict__.__setitem__('_v__parent__', v))
+		
 	length = property(lambda s: s.__dict__.get('_v_length'),
 					  lambda s, v: s.__dict__.__setitem__('_v_length', v))
 
@@ -64,12 +101,20 @@ class SourceProxy(ProxyBase):
 
 	def getSize(self):
 		return self.size
+	
+	@property
+	def __name__(self):
+		return self.filename
+	
+	def readContents(self):
+		return self.read()
 
 @interface.implementer(ISource)
 class SourceFile(object):
 
 	_data = None
 	_v_fp = None
+	__parent__ = None
 
 	def __init__(self, filename, data=None, contentType=None):
 		self.filename = filename
@@ -115,11 +160,18 @@ class SourceFile(object):
 		return self.length
 	size = getSize
 
+	def readContents(self):
+		return self.data
+
 	def __enter__(self):
 		return self
 
 	def __exit__(self, *args):
 		self.close()
+
+	@property
+	def __name__(self):
+		return self.filename
 
 @interface.implementer(ISource)
 class ReferenceSourceFile(SourceFile):

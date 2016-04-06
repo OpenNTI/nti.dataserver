@@ -29,6 +29,7 @@ from StringIO import StringIO
 from nti.cabinet.filer import DirectoryFiler
 
 from nti.cabinet.interfaces import ISource
+from nti.cabinet.interfaces import ISourceBucket
 
 from nti.cabinet.tests import SharedConfiguringTestLayer
 
@@ -50,18 +51,18 @@ class TestFiler(unittest.TestCase):
 			assert_that(href, is_not(none()))
 			assert_that(href, starts_with(tmp_dir))
 			assert_that(filer.contains(href), is_(True))
-			
+
 			source = filer.get(href)
 			assert_that(source, is_not(none()))
 			assert_that(source, verifiably_provides(ISource))
 			assert_that(source, has_property('length', is_(9)))
 			assert_that(source, has_property('filename', is_("ichigo.xml")))
 			assert_that(source, has_property('contentType', is_("application/xml")))
-
+			assert_that(source, has_property('__parent__', is_not(none())))
+			
 			assert_that(source.read(), is_("<ichigo/>"))
 			if not native:
 				assert_that(source, has_property('data', is_("<ichigo/>")))
-
 			source.close()
 
 			if not native:
@@ -89,10 +90,19 @@ class TestFiler(unittest.TestCase):
 			assert_that(href, ends_with("bleach/ichigo.xml"))
 			assert_that(filer.is_bucket("bleach"), is_(True))
 			assert_that(filer.list("bleach"), has_length(greater_than(0)))
-
 			assert_that(filer.contains(href), is_(True))
 			assert_that(filer.contains("ichigo.xml", "bleach"), is_(True))
 
+			bucket = filer.get('bleach')
+			assert_that(bucket, has_property('bucket', is_('bleach')))
+			assert_that(bucket, verifiably_provides(ISourceBucket))
+			assert_that(bucket, has_property('__parent__', is_not(none())))
+			ichigo = bucket.getChildNamed("ichigo.xml")
+			assert_that(ichigo, is_not(none()))
+			
+			foo = bucket.getChildNamed("foo.xml")
+			assert_that(foo, is_(none()))
+			
 			data = self.get_data_source()
 			href = filer.save("ichigo.xml", 
 							  data,

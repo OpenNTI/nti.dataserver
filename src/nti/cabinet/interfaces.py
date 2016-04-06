@@ -13,10 +13,24 @@ from zope import interface
 
 from zope.file.interfaces import IFileReader
 
+from zope.location.interfaces import IContained
+
 from nti.schema.field import Number
 from nti.schema.field import TextLine
 
-class ISource(IFileReader):
+class ISourceBucket(IContained):
+
+    def enumerateChildren():
+        """
+        return all children in this bucket
+        """
+        
+    def getChildNamed(name):
+        """
+        return the child object with the specfied name
+        """
+
+class ISource(IFileReader, IContained):
 
     length = Number(title="Source length", required=False, default=None)
 
@@ -28,6 +42,11 @@ class ISource(IFileReader):
     def getSize():
         """
         return the length of this source
+        """
+        
+    def readContents():
+        """
+        read all the contents of this source
         """
 IMultipartSource = ISource
 
