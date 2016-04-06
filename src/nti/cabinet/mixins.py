@@ -10,7 +10,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-from StringIO import StringIO
+try:
+	from cStringIO import StringIO
+except ImportError:
+	from StringIO import StringIO
 
 from zope import interface
 
@@ -54,14 +57,23 @@ class SourceBucket(Contained):
 
 # Key Sources
 
-def get_file_size(source):
+def _get_file_stat(source, name):
 	result = None
 	try:
 		with open(source, "rb") as fp:
-			result = os.fstat(fp.fileno()).st_size
-	except AttributeError:
+			result = getattr(os.fstat(fp.fileno()), name)
+	except Exception:
 		pass
 	return result
+
+def get_file_size(source):
+	return _get_file_stat(source, 'st_size')
+
+def get_file_createdTime(source):
+	return _get_file_stat(source, 'st_ctime')
+
+def get_file_lastModified(source):
+	return _get_file_stat(source, 'st_mtime')
 
 @interface.implementer(ISource)
 class SourceProxy(ProxyBase):
@@ -137,7 +149,7 @@ class SourceFile(object):
 		return self._v_fp
 
 	def read(self, size=-1):
-		return self._get_v_fp().read(size)
+		return self._get_v_fp().read(size) if size != -1 else self.data
 
 	def seek(self, offset, whence=0):
 		return self._get_v_fp().seek(offset, whence)
