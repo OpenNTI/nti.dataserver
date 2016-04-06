@@ -29,6 +29,8 @@ from nti.common.random import generate_random_hex_string
 def transfer_to_storage_file(source, target):
 	if hasattr(source, 'read'):
 		target.data = source.read()
+	elif hasattr(source, 'readContents'):
+		target.data = source.readContents()
 	elif hasattr(source, 'data'):
 		target.data = source.data
 	else:
