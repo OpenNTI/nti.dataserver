@@ -162,7 +162,10 @@ class DirectoryFiler(object):
 			else:
 				if not key.startswith(self.path):
 					key = os.path.join(self.path, key)
-				os.remove(key)
+				if os.path.isdir(key):
+					shutil.rmtree(key, True)
+				else:
+					os.remove(key)
 			return True
 		return False
 
@@ -181,7 +184,7 @@ class DirectoryFiler(object):
 	def list(self, bucket=None):
 		path = os.path.join(self.path, bucket) if bucket else self.path
 		path = os.path.normpath(path)
-		if not path.startswith(self.path):
+		if not path.startswith(self.path) or not os.path.isdir(path):
 			raise IOError("Invalid bucket name")
 		result = tuple(os.listdir(path))
 		return result
