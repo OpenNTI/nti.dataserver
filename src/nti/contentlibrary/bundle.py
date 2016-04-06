@@ -30,29 +30,30 @@ from nti.common.property import alias
 
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
+from nti.contentlibrary import DuplicatePacakgeException
+from nti.contentlibrary import MissingContentBundleNTIIDException
+from nti.contentlibrary import MissingContentPacakgeReferenceException
+
+from nti.contentlibrary.interfaces import IDisplayableContent
+from nti.contentlibrary.interfaces import IContentPackageBundle
+from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
+
+from nti.contentlibrary.presentationresource import DisplayableContentMixin
+
 from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 
 from nti.externalization.persistence import NoPickle
 from nti.externalization.representation import WithRepr
 
-from nti.schema.schema import EqHash
-from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createFieldProperties
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import EqHash
+from nti.schema.schema import SchemaConfigured
 
 from nti.wref.interfaces import IWeakRef
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
-
-from .interfaces import IDisplayableContent
-from .interfaces import IContentPackageBundle
-from .interfaces import IContentPackageBundleLibrary
-
-from .presentationresource import DisplayableContentMixin
-
-from . import DuplicatePacakgeException
-from . import MissingContentBundleNTIIDException
-from . import MissingContentPacakgeReferenceException
 
 @WithRepr
 @interface.implementer(IContentPackageBundle, IAttributeAnnotatable)
@@ -228,31 +229,32 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 _BUNDLE_META_NAME = "bundle_meta_info.json"
 BUNDLE_META_NAME = _BUNDLE_META_NAME  # export
 
+from zope.schema.fieldproperty import FieldProperty
+
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IDelimitedHierarchyKey
+from nti.contentlibrary.interfaces import IEnumerableDelimitedHierarchyBucket
+from nti.contentlibrary.interfaces import ISyncableContentPackageBundleLibrary
+from nti.contentlibrary.interfaces import ContentPackageBundleLibraryModifiedOnSyncEvent
+
+from nti.contentlibrary.wref import contentunit_wref_to_missing_ntiid
+
 from nti.ntiids.schema import ValidNTIID
 
 from nti.schema.field import IndexedIterable
 
-from zope.schema.fieldproperty import FieldProperty
-
-from .interfaces import IContentPackageLibrary
-from .interfaces import IDelimitedHierarchyKey
-from .interfaces import IEnumerableDelimitedHierarchyBucket
-from .interfaces import ISyncableContentPackageBundleLibrary
-from .interfaces import ContentPackageBundleLibraryModifiedOnSyncEvent
-
-from .wref import contentunit_wref_to_missing_ntiid
-
-class _IContentBundleMetaInfo(IContentPackageBundle):
+class IContentBundleMetaInfo(IContentPackageBundle):
 
 	ContentPackages = IndexedIterable(title="An iterable of NTIIDs of sub-containers embedded via reference in this content",
 									  value_type=ValidNTIID(title="The embedded NTIID"),
 									  unique=True,
 									  default=())
+_IContentBundleMetaInfo = IContentBundleMetaInfo # alias
 
 @EqHash('ntiid')
 @NoPickle
 @WithRepr
-class _ContentBundleMetaInfo(object):
+class ContentBundleMetaInfo(object):
 	"""
 	Meta-information.
 
@@ -264,7 +266,7 @@ class _ContentBundleMetaInfo(object):
 	content package references.
 	"""
 
-	ContentPackages = FieldProperty(_IContentBundleMetaInfo['ContentPackages'])
+	ContentPackages = FieldProperty(IContentBundleMetaInfo['ContentPackages'])
 
 	_ContentPackages_wrefs = ()
 
@@ -274,6 +276,7 @@ class _ContentBundleMetaInfo(object):
 		# however, here we need the NTIID, which comes out of the file;
 		# also we expect it to be quite small
 		json_value = key.readContentsAsJson()
+
 		# TODO: If there is no NTIID, we should derive one automatically
 		# from the key name
 		if require_ntiid and 'ntiid' not in json_value:
@@ -281,9 +284,10 @@ class _ContentBundleMetaInfo(object):
 
 		for k, v in json_value.items():
 			setattr(self, str(k), v)
-		self.lastModified = key.lastModified
-		self.createdTime = key.createdTime
+
 		self.key = key
+		self.createdTime = key.createdTime
+		self.lastModified = key.lastModified
 
 		if self.ContentPackages:
 			self._ContentPackages_wrefs = self.getContentPackagesWrefs(content_library)
@@ -305,13 +309,14 @@ class _ContentBundleMetaInfo(object):
 				cps.append(contentunit_wref_to_missing_ntiid(ntiid))
 
 		return tuple(cps)
+_ContentBundleMetaInfo = ContentBundleMetaInfo # alias
+
+from nti.contentlibrary.dublincore import DCMETA_FILENAME
+from nti.contentlibrary.dublincore import read_dublincore_from_named_key
 
 from nti.externalization.internalization import validate_named_field_value
 
 from nti.zodb import readCurrent as _readCurrent
-
-from .dublincore import DCMETA_FILENAME
-from .dublincore import read_dublincore_from_named_key
 
 def _validate_package_refs(bundle, meta):
 	try:
@@ -481,7 +486,6 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 										  # pass in the existing object as an optimization
 										  _meta=meta)
 				assert meta.ntiid == bundle.ntiid
-
 
 			# Start with the adds
 			if things_to_add:
