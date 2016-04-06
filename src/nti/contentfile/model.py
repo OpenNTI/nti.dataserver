@@ -95,7 +95,7 @@ class BaseContentMixin(object):
 		return self._v_fp
 
 	def read(self, size=-1):
-		return self._get_v_fp().read(size)
+		return self._get_v_fp().read(size) if size != -1 else self.data
 
 	def seek(self, offset, whence=0):
 		return self._get_v_fp().seek(offset, whence)
