@@ -186,8 +186,11 @@ class DirectoryFiler(object):
 		path = os.path.normpath(path)
 		if not path.startswith(self.path) or not os.path.isdir(path):
 			raise IOError("Invalid bucket name")
-		result = tuple(os.listdir(path))
-		return result
+		result = []
+		for name in os.listdir(path):
+			name = os.path.join(bucket, name) if bucket else name
+			result.append(name)
+		return tuple(result)
 
 	def is_bucket(self, key):
 		if not key.startswith(self.path):
