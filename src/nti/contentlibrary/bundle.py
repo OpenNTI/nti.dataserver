@@ -329,7 +329,7 @@ from nti.zodb import readCurrent as _readCurrent
 
 def _validate_package_refs(bundle, meta):
 	try:
-		if 	len(bundle._ContentPackages_wrefs) == len(meta._ContentPackages_wrefs) \
+		if 		len(bundle._ContentPackages_wrefs) == len(meta._ContentPackages_wrefs) \
 			and len([x for x in meta._ContentPackages_wrefs if x() is not None]) == 0:
 			# Wrefs are the same size, but nothing is resolvable (e.g. not in the library).
 			raise MissingContentPacakgeReferenceException(
@@ -339,13 +339,13 @@ def _validate_package_refs(bundle, meta):
 		# Not sure we can do anything here.
 		pass
 
-def sync_bundle_from_json_key(data_key, bundle, content_library=None,
-							  dc_meta_name=DCMETA_FILENAME,
-							  excluded_keys=(),
-							  _meta=None):
+def synchronize_bundle(data_source, bundle, 
+					   content_library=None, 
+					   excluded_keys=(),
+					   _meta=None):
 	"""
-	Given a :class:`IDelimitedHierarchyKey` whose contents are a JSON
-	object representing a :class:`IContentPackageBundle`, synchronize
+	Given either a :class:`IDelimitedHierarchyKey` whose contents are a JSON
+	or a JSON source, and an object representing a :class:`IContentPackageBundle`, synchronize
 	the bundle fields (those declared in the interface) to match
 	the JSON values.
 
@@ -353,7 +353,7 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 	it takes care not to set any fields whose values haven't changed.
 
 	The bundle object will have its bundle-standard `root` property
-	set to the ``data_key`` bucket.
+	set to the ``data_source`` bucket.
 
 	:keyword content_library: The implementation of :class:`IContentPackageLibrary`
 		that should be used to produce the ContentPackage objects. These will be
@@ -363,11 +363,6 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 
 		If you do not provide this utility, the currently active library will
 		be used.
-
-	:keyword dc_meta_name: If given (defaults to a standard value),
-		DublinCore metadata will be read from this file (a sibling of the `data_key`).
-		You can use a non-standard
-		filename if you might have multiple things in the same bucket.
 	"""
 	# we can't check the lastModified dates, the bundle object
 	# might have been modified independently
@@ -377,7 +372,7 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 	bundle_iface = IContentPackageBundle
 	# ^ In the past, we used interface.providedBy(bundle), but that
 	# could let anything be set
-	meta = _meta or _ContentBundleMetaInfo(data_key, content_library,
+	meta = _meta or _ContentBundleMetaInfo(data_source, content_library,
 										   require_ntiid='ntiid' not in excluded_keys)
 	fields_to_update = (set(meta.__dict__)
 						- set(excluded_keys)
@@ -421,10 +416,26 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 	elif bundle.lastModified < meta.lastModified:
 		bundle.updateLastModIfGreater(meta.lastModified)
 
+	return modified
+
+def sync_bundle_from_json_key(data_key, bundle, content_library=None,
+							  dc_meta_name=DCMETA_FILENAME,
+							  excluded_keys=(),
+							  _meta=None):
+	"""
+	:keyword dc_meta_name: If given (defaults to a standard value),
+		DublinCore metadata will be read from this file (a sibling of the `data_key`).
+		You can use a non-standard
+		filename if you might have multiple things in the same bucket.
+	"""
+	result = synchronize_bundle(data_key, bundle, 
+								content_library=content_library,
+								excluded_keys=excluded_keys,
+								_meta=_meta)
 	# Metadata if we need it
 	read_dublincore_from_named_key(bundle, data_key.__parent__, dc_meta_name)
 
-	return modified
+	return result
 
 @interface.implementer(ISyncableContentPackageBundleLibrary)
 @component.adapter(IContentPackageBundleLibrary)
