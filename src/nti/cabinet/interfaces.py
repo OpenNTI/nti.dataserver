@@ -20,6 +20,8 @@ from nti.schema.field import TextLine
 
 class ISourceBucket(IContained):
 
+    name = interface.Attribute("Bucket name")
+
     def enumerateChildren():
         """
         return all children in this bucket
@@ -38,6 +40,8 @@ class ISource(IFileReader, IContained):
                            default=u'application/octet-stream' )
 
     filename = TextLine(title="source file name", required=False)
+
+    name = interface.Attribute("Source name")
 
     def getSize():
         """

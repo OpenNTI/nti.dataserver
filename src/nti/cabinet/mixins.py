@@ -26,6 +26,8 @@ from zope.proxy import ProxyBase
 from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceBucket
 
+from nti.common.property import alias
+
 from nti.schema.schema import EqHash
 
 # Buckets
@@ -34,6 +36,8 @@ from nti.schema.schema import EqHash
 @interface.implementer(ISourceBucket)
 class SourceBucket(Contained):
 	
+	name = alias('__name__')
+
 	def __init__(self, bucket, filer):
 		self.filer = filer
 		self.__name__ = bucket
@@ -117,7 +121,8 @@ class SourceProxy(ProxyBase):
 	@property
 	def __name__(self):
 		return self.filename
-	
+	name = __name__
+
 	def readContents(self):
 		return self.read()
 
@@ -184,6 +189,7 @@ class SourceFile(object):
 	@property
 	def __name__(self):
 		return self.filename
+	name = __name__
 
 @interface.implementer(ISource)
 class ReferenceSourceFile(SourceFile):
