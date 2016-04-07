@@ -11,11 +11,15 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+
 from zope.dublincore import xmlmetadata
-from zope.dublincore.interfaces import IWriteZopeDublinCore
+
 from zope.dublincore.annotatableadapter import partialAnnotatableAdapterFactory
 
-from .interfaces import IDelimitedHierarchyKey
+from zope.dublincore.interfaces import IWriteZopeDublinCore
+
+from nti.contentlibrary.interfaces import IDelimitedHierarchyKey
 
 #: An optional XML file containing Dublin Core metadata to be associated
 #: with the content package
@@ -33,23 +37,18 @@ _xml_to_attr = { 'Creator': 'creators',
 				 'Description': 'description'}
 _scalars = {'Title', 'Description'}
 
-def read_dublincore_from_named_key(dublin_object, bucket, filename=DCMETA_FILENAME):
-	dublin_key = bucket.getChildNamed(DCMETA_FILENAME)
-	if not IDelimitedHierarchyKey.providedBy(dublin_key):
-		return
-
+def read_dublincore_from_source(dublin_object, source, lastModified=None):
 	dublin_properties = IWriteZopeDublinCore(dublin_object, None)
 	if dublin_properties is None:
 		return
 
-	if dublin_key.lastModified <= getattr(dublin_properties, 'lastModified', 0):
-		return
+	lastModified = time.time() if lastModified is None else lastModified
 
 	# While we'd like to read from the file directly for better
 	# errors,, it turns out that this triggers a codepath in
 	# xml.sax that tries to resolve DTDs externally across HTTP, which we
 	# don't really want. There's no trivial way to customize this.
-	metadata = xmlmetadata.parseString(dublin_key.readContents())
+	metadata = xmlmetadata.parseString(source)
 
 	# Most implementations use an underlying dictionary that's supposed
 	# to track with what the metadata produces. If we don't know a property
@@ -74,12 +73,27 @@ def read_dublincore_from_named_key(dublin_object, bucket, filename=DCMETA_FILENA
 	# time
 	try:
 		dublin_properties._changed()
-		core_mapping.lastModified = dublin_key.lastModified
+		core_mapping.lastModified = lastModified
 	except AttributeError:
 		pass
-	dublin_properties.lastModified = dublin_key.lastModified
+	dublin_properties.lastModified = lastModified
 
 	return dublin_properties
+
+def read_dublincore_from_named_key(dublin_object, bucket, filename=DCMETA_FILENAME):
+	dublin_key = bucket.getChildNamed(DCMETA_FILENAME)
+	if not IDelimitedHierarchyKey.providedBy(dublin_key):
+		return
+
+	dublin_properties = IWriteZopeDublinCore(dublin_object, None)
+	if dublin_properties is None:
+		return
+
+	if dublin_key.lastModified <= getattr(dublin_properties, 'lastModified', 0):
+		return
+
+	source = dublin_key.readContents()
+	return read_dublincore_from_source(dublin_object, source,  dublin_key.lastModified)
 
 #: A standard adapter for the content packages and bundles
 #: defined in this package (things that implement IDisplayableContent)

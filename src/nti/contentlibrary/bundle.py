@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -270,24 +272,31 @@ class ContentBundleMetaInfo(object):
 
 	_ContentPackages_wrefs = ()
 
-	def __init__(self, key, content_library, require_ntiid=True):
+	def __init__(self, key_or_source, content_library, require_ntiid=True):
 		# For big/complex JSON, we want to avoid loading the JSON
 		# and turning it indo objects unless the timestamp is newer;
 		# however, here we need the NTIID, which comes out of the file;
 		# also we expect it to be quite small
-		json_value = key.readContentsAsJson()
+		if IDelimitedHierarchyKey.providedBy(key_or_source):
+			json_value = key_or_source.readContentsAsJson()
+		else:
+			json_value = key_or_source
 
 		# TODO: If there is no NTIID, we should derive one automatically
 		# from the key name
 		if require_ntiid and 'ntiid' not in json_value:
-			raise MissingContentBundleNTIIDException("Missing ntiid", key)
+			raise MissingContentBundleNTIIDException("Missing ntiid", key_or_source)
 
 		for k, v in json_value.items():
 			setattr(self, str(k), v)
 
-		self.key = key
-		self.createdTime = key.createdTime
-		self.lastModified = key.lastModified
+		if IDelimitedHierarchyKey.providedBy(key_or_source):
+			self.key = key_or_source 
+			self.createdTime = key_or_source.createdTime
+			self.lastModified = key_or_source.lastModified
+		else:
+			self.key = None
+			self.createdTime = self.lastModified = time.time()
 
 		if self.ContentPackages:
 			self._ContentPackages_wrefs = self.getContentPackagesWrefs(content_library)
