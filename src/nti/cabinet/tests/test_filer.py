@@ -115,6 +115,12 @@ class TestFiler(unittest.TestCase):
 			assert_that(filer.contains(href), is_(True))
 			assert_that(filer.contains("ichigo.xml", "bleach/souls"), is_(True))
 			
+			if native:
+				listed = filer.list("bleach")
+				assert_that(listed, is_((u'bleach/ichigo.xml', u'bleach/souls')))
+				assert_that(filer.is_bucket(u'bleach/souls'), is_(True))
+				assert_that(filer.is_bucket(u'bleach/ichigo.xml'), is_(False))
+
 			assert_that(filer.remove(href), is_(True))
 			source = filer.get(href)
 			assert_that(source, is_(none()))
