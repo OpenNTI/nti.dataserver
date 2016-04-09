@@ -237,6 +237,7 @@
 			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlineTopic
 				 *
 				 nti.appserver.ugd_feed_views.AbstractFeedView"/>
+
 	<!-- For comments, we can probably do better with titles -->
 	<adapter factory="nti.appserver._table_utils.TopicCommentContentProvider"
 			 provides="zope.contentprovider.interfaces.IContentProvider"
@@ -252,6 +253,10 @@
 	<adapter factory=".adapters._PostFileConstraints"
 			 provides=".interfaces.IPostFileConstraints"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
+
+	<adapter factory=".adapters._PostFileConstraints"
+			 provides=".interfaces.IPostFileConstraints"
+			 for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost" />
 
 	<adapter factory=".adapters._PersonalBlogDisplayNameGenerator" />
 
