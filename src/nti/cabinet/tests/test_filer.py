@@ -100,6 +100,10 @@ class TestFiler(unittest.TestCase):
 			ichigo = bucket.getChildNamed("ichigo.xml")
 			assert_that(ichigo, is_not(none()))
 			
+			if native:
+				listed = bucket.enumerateChildren()
+				assert_that(listed, is_((u'bleach/ichigo.xml',)))
+
 			foo = bucket.getChildNamed("foo.xml")
 			assert_that(foo, is_(none()))
 			

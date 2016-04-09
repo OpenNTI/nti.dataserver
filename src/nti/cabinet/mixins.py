@@ -57,7 +57,7 @@ class SourceBucket(Contained):
 		return result
 	
 	def enumerateChildren(self):
-		return self.filter.list(self.bucket)
+		return self.filer.list(self.bucket)
 
 # Key Sources
 
