@@ -24,9 +24,9 @@ from zope.location.interfaces import ISublocations
 
 from persistent import Persistent
 
-from nti.containers.containers import CheckingLastModifiedBTreeContainer
+from nti.common import integer_strings
 
-from nti.externalization import integer_strings
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitations

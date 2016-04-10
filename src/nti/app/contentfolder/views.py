@@ -41,6 +41,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.common.file import safe_filename
 
+from nti.common.integer_strings import from_external_string
+
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.common.property import Lazy
@@ -66,8 +68,6 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.externalization import to_external_object
-
-from nti.externalization.integer_strings import from_external_string
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import LocatedExternalList
