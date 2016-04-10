@@ -201,3 +201,8 @@ class DirectoryFiler(object):
 		if not key.startswith(self.path) or not os.path.exists(key):
 			return False
 		return os.path.isdir(key)
+	isBucket = is_bucket
+
+	def key_name(self, identifier):
+		return os.path.split(identifier)[1]
+	keyName = key_name

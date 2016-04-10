@@ -56,6 +56,11 @@ IMultipartSource = ISource
 
 class ISourceFiler(interface.Interface):
     
+    def key_name(self, identifier):
+        """
+        return the key name for the specified identifier
+        """
+
     def save(key, source, contentType=None, bucket=None, overwrite=False, **kwargs):
         """
         Save the specifed source in this filer object
