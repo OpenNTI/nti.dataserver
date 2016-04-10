@@ -43,6 +43,8 @@ def transfer_to_native_file(source, target):
 	with open(target, "wb") as fp:
 		if hasattr(source, 'read'):
 			fp.write(source.read())
+		elif hasattr(source, 'readContents'):
+			fp.write(source.readContents())
 		elif hasattr(source, 'data'):
 			fp.write(source.data)
 		else:
