@@ -80,7 +80,8 @@ def read_dublincore_from_source(dublin_object, source, lastModified=None):
 
 	return dublin_properties
 
-def read_dublincore_from_named_key(dublin_object, bucket, filename=DCMETA_FILENAME):
+def read_dublincore_from_named_key(dublin_object, bucket, 
+								   filename=DCMETA_FILENAME, force=False):
 	dublin_key = bucket.getChildNamed(DCMETA_FILENAME)
 	if not IDelimitedHierarchyKey.providedBy(dublin_key):
 		return
@@ -89,11 +90,12 @@ def read_dublincore_from_named_key(dublin_object, bucket, filename=DCMETA_FILENA
 	if dublin_properties is None:
 		return
 
-	if dublin_key.lastModified <= getattr(dublin_properties, 'lastModified', 0):
+	if not force and dublin_key.lastModified <= getattr(dublin_properties, 'lastModified', 0):
 		return
 
 	source = dublin_key.readContents()
-	return read_dublincore_from_source(dublin_object, source,  dublin_key.lastModified)
+	result = read_dublincore_from_source(dublin_object, source, dublin_key.lastModified)
+	return result
 
 #: A standard adapter for the content packages and bundles
 #: defined in this package (things that implement IDisplayableContent)
