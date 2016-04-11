@@ -36,6 +36,7 @@ from nti.app.contentfolder import CFIO
 from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.internalization import read_body_as_external_object
 
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -83,22 +84,28 @@ ITEMS = StandardExternalFields.ITEMS
 MIMETYPE = StandardExternalFields.MIMETYPE
 LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 
+expanded_expected_types = six.string_types + (Mapping,)
+
 @view_config(name="contents")
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context=INamedContainer,
 			   permission=nauth.ACT_READ,
 			   request_method='GET')
-class ContainerContentsView(AbstractAuthenticatedView):
-
+class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
+	
+	_DEFAULT_BATCH_SIZE = 50
+	_DEFAULT_BATCH_START = 0
+	
 	def ext_obj(self, item):
 		result = to_external_object(item)
 		return result
 
 	def __call__(self):
 		result = LocatedExternalDict()
-		items = result[ITEMS] = map(self.ext_obj, self.context.values())
-		result['Total'] = result['ItemCount'] = len(items)
+		items = map(self.ext_obj, self.context.values())	
+		self._batch_items_iterable(result, items)
+		result['Total'] = len(items)
 		return result
 
 @view_config(name="tree")
@@ -145,7 +152,8 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 	default_folder_mime_type = ContentFolder.mimeType
 	
 	def readInput(self, value=None):
-		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		data = read_body_as_external_object(self.request, 
+											expected_type=expanded_expected_types)
 		if isinstance(data, six.string_types):
 			data = {'name': data}
 		if MIMETYPE not in data:
@@ -181,7 +189,8 @@ class MkdirsView(AbstractAuthenticatedView):
 		return result
 
 	def __call__(self):
-		data = read_body_as_external_object(self.request)
+		data = read_body_as_external_object(self.request, 
+											expected_type=expanded_expected_types)
 		if isinstance(data, six.string_types):
 			data = {'path': data}
 		path = data.get('path')
@@ -308,7 +317,8 @@ class RenameView(AbstractAuthenticatedView,
 				 ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
-		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		data = read_body_as_external_object(self.request, 
+											expected_type=expanded_expected_types)
 		if isinstance(data, six.string_types):
 			data = safe_filename(name_finder(data))
 			data = {'name': data}
@@ -368,7 +378,8 @@ class MoveView(AbstractAuthenticatedView,
 			   ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
-		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		data = read_body_as_external_object(self.request, 
+											expected_type=expanded_expected_types)
 		if isinstance(data, six.string_types):
 			data = {'path': data}
 		assert isinstance(data, Mapping)
