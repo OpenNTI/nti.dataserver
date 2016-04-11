@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import time
 try:
 	from cStringIO import StringIO
 except ImportError:
@@ -27,6 +28,8 @@ from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceBucket
 
 from nti.common.property import alias
+
+from nti.coremetadata.interfaces import ILastModified
 
 from nti.schema.schema import EqHash
 
@@ -79,7 +82,7 @@ def get_file_createdTime(source):
 def get_file_lastModified(source):
 	return _get_file_stat(source, 'st_mtime')
 
-@interface.implementer(ISource)
+@interface.implementer(ISource, ILastModified)
 class SourceProxy(ProxyBase):
 	"""
 	Source proxy for a io.file object
@@ -98,13 +101,24 @@ class SourceProxy(ProxyBase):
 					lambda s: s.__dict__.get('_v_filename'),
 					lambda s, v: s.__dict__.__setitem__('_v_filename', v))
 
+	createdTime = property(
+					lambda s: s.__dict__.get('_v_createdTime'),
+					lambda s, v: s.__dict__.__setitem__('_v_createdTime', v))
+
+	lastModified = property(
+					lambda s: s.__dict__.get('_v_lastModified'),
+					lambda s, v: s.__dict__.__setitem__('_v_lastModified', v))
+
 	def __new__(cls, base, *args, **kwargs):
 		return ProxyBase.__new__(cls, base)
 
-	def __init__(self, base, filename=None, contentType=None, length=None):
+	def __init__(self, base, filename=None, contentType=None, length=None,
+				 createdTime=0, lastModified=0):
 		ProxyBase.__init__(self, base)
 		self.length = length
 		self.filename = filename
+		self.createdTime = createdTime or 0
+		self.lastModified = lastModified or 0
 		self.contentType = contentType or u'application/octet-stream'
 
 	@readproperty
@@ -126,18 +140,25 @@ class SourceProxy(ProxyBase):
 	def readContents(self):
 		return self.read()
 
-@interface.implementer(ISource)
+@interface.implementer(ISource, ILastModified)
 class SourceFile(object):
 
 	_data = None
+	_time = None
 	_v_fp = None
 	__parent__ = None
 
-	def __init__(self, filename, data=None, contentType=None):
+	def __init__(self, filename, data=None, contentType=None, 
+				 createdTime=None, lastModified=None):
+		self._time = time.time()
 		self.filename = filename
 		self.contentType = contentType
 		if data is not None:
 			self.data = data
+		if createdTime is not None:
+			self.createdTime = createdTime
+		if lastModified is not None:
+			self.lastModified = lastModified
 
 	def _getData(self):
 		return self._data
@@ -148,6 +169,14 @@ class SourceFile(object):
 	@readproperty
 	def mode(self):
 		return "rb"
+
+	@readproperty
+	def createdTime(self):
+		return self._time
+
+	@readproperty
+	def lastModified(self):
+		return self._time
 
 	def _get_v_fp(self):
 		self._v_fp = StringIO(self.data) if self._v_fp is None else self._v_fp
@@ -194,8 +223,11 @@ class SourceFile(object):
 @interface.implementer(ISource)
 class ReferenceSourceFile(SourceFile):
 
-	def __init__(self, path, filename, contentType=None, **kwargs):
-		super(ReferenceSourceFile, self).__init__(filename, contentType=contentType)
+	def __init__(self, path, filename, contentType=None, 
+				 createdTime=None, lastModified=None):
+		super(ReferenceSourceFile, self).__init__(filename, contentType=contentType, 
+												  createdTime=createdTime, 
+												  lastModified=lastModified)
 		self.path = path
 
 	@property
@@ -234,3 +266,11 @@ class ReferenceSourceFile(SourceFile):
 	def getSize(self):
 		return self.length
 	size = getSize
+	
+	@readproperty
+	def createdTime(self):
+		return get_file_createdTime(self._v_data_file) or 0
+
+	@readproperty
+	def lastModified(self):
+		return get_file_lastModified(self._v_data_file) or 0
