@@ -35,7 +35,7 @@ from nti.schema.schema import EqHash
 @EqHash('__name__')
 @interface.implementer(ISourceBucket)
 class SourceBucket(Contained):
-	
+
 	name = alias('__name__')
 
 	def __init__(self, bucket, filer):
@@ -49,13 +49,13 @@ class SourceBucket(Contained):
 	@property
 	def name(self):
 		return os.path.split(self.__name__)[1] if self.__name__ else u''
-	
+
 	def getChildNamed(self, name):
 		if not name.startswith(self.bucket):
 			name = os.path.join(self.bucket, name)
 		result = self.filer.get(name)
 		return result
-	
+
 	def enumerateChildren(self):
 		return self.filer.list(self.bucket)
 
@@ -86,7 +86,7 @@ class SourceProxy(ProxyBase):
 	"""
 	__parent__ = property(lambda s: s.__dict__.get('_v__parent__'),
 					 	  lambda s, v: s.__dict__.__setitem__('_v__parent__', v))
-		
+
 	length = property(lambda s: s.__dict__.get('_v_length'),
 					  lambda s, v: s.__dict__.__setitem__('_v_length', v))
 
@@ -117,7 +117,7 @@ class SourceProxy(ProxyBase):
 
 	def getSize(self):
 		return self.size
-	
+
 	@property
 	def __name__(self):
 		return self.filename
@@ -194,16 +194,13 @@ class SourceFile(object):
 @interface.implementer(ISource)
 class ReferenceSourceFile(SourceFile):
 
-	def __init__(self, path, filename, data=None, contentType=None):
+	def __init__(self, path, filename, contentType=None, **kwargs):
 		super(ReferenceSourceFile, self).__init__(filename, contentType=contentType)
 		self.path = path
-		if data is not None:
-			self.data = data
 
 	@property
 	def _v_data_file(self):
-		name = '.__%s__.dat' % self.filename
-		return os.path.join(self.path, name)
+		return os.path.join(self.path, self.filename)
 
 	def _getData(self):
 		with open(self._v_data_file, "rb") as fp:
@@ -212,11 +209,9 @@ class ReferenceSourceFile(SourceFile):
 	def _setData(self, data):
 		# close resources
 		self.close()
-		# remove if set to None
 		if data is None and os.path.exists(self._v_data_file):
-			os.remove(self._v_data_file)
-			return
-		# write to deferred file
+			data = b''  # 0 byte file
+		# write to file
 		with open(self._v_data_file, "wb") as fp:
 			fp.write(data)
 
@@ -228,9 +223,6 @@ class ReferenceSourceFile(SourceFile):
 
 	def remove(self):
 		self.close()
-		path = os.path.join(self.path, self.filename)
-		if os.path.exists(path):
-			os.remove(path)
 		if os.path.exists(self._v_data_file):
 			os.remove(self._v_data_file)
 

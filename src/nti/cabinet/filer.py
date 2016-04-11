@@ -18,7 +18,6 @@ from zope import interface
 from nti.cabinet.interfaces import ISourceFiler
 
 from nti.cabinet.mixins import SourceFile
-from nti.cabinet.mixins import SourceProxy 
 from nti.cabinet.mixins import SourceBucket
 from nti.cabinet.mixins import ReferenceSourceFile
 
@@ -84,15 +83,8 @@ class DirectoryFiler(object):
 				break
 		return newtext
 
-	def new_storage_file(self, key, out_dir, reference=False):
-		if reference:
-			target = ReferenceSourceFile(out_dir, key)
-		else:
-			target = SourceFile(key)
-		return target
-
 	def save(self, key, source, contentType=None, bucket=None, overwrite=False,
-			 relative=True, reference=False, **kwargs):
+			 relative=True, **kwargs):
 		contentType = contentType or u'application/octet-stream'
 		key = os.path.split(key)[1]  # proper name
 
@@ -111,7 +103,7 @@ class DirectoryFiler(object):
 			out_file = os.path.join(out_dir, key)
 
 		if not self.native:
-			target = self.new_storage_file(key, out_dir, reference)
+			target = SourceFile(key)
 			transfer_to_storage_file(source, target)
 			target.contentType = contentType or target.contentType
 			target.close()
@@ -130,7 +122,7 @@ class DirectoryFiler(object):
 		key = os.path.normpath(key)
 		if not key.startswith(self.path) or not os.path.exists(key):
 			return None
-		
+
 		# compute a parent
 		bucket = os.path.split(key)[0] + os.path.sep + '..'
 		bucket = os.path.normpath(bucket)
@@ -139,7 +131,7 @@ class DirectoryFiler(object):
 		else:
 			bucket = os.path.relpath(bucket, self.path)
 		parent = SourceBucket(bucket, self)
-			
+
 		if os.path.isdir(key):
 			bucket = os.path.relpath(key, self.path)
 			result = SourceBucket(bucket, self)
@@ -148,11 +140,11 @@ class DirectoryFiler(object):
 				with open(key, "rb") as fp:
 					result = pickle.load(fp)
 			else:
-				name = os.path.split(key)[1]
+				key_path, name = os.path.split(key)
 				contentType = mimetypes.guess_type(name.lower())[0]
-				result = SourceProxy(open(key, "rb"), name,
-									 contentType=contentType,
-									 length=os.stat(key).st_size)
+				result = ReferenceSourceFile(key_path,
+											 name,
+											 contentType=contentType)
 		result.__parent__ = parent
 		return result
 
