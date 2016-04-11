@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -30,7 +31,7 @@ class TestCommunityViews(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_create_list_community(self):
 		ext_obj = {'username': 'bleach',
- 				   'alias': 'Bleach',	
+ 				   'alias': 'Bleach',
  				   'realname': u'Bleach',
  				   'public': True,
  				   'joinable': True}
@@ -43,12 +44,12 @@ class TestCommunityViews(ApplicationLayerTest):
 			c = Community.get_community(username='bleach')
 			assert_that(c, has_property('public', is_(True)))
 			assert_that(c, has_property('joinable', is_(True)))
-			
+
 		path = '/dataserver2/@@list.communities'
 		res = self.testapp.get(path, status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
 		assert_that(res.json_body, has_entry('Total', is_(2)))
-		
+
 		path = '/dataserver2/@@list.communities?term=B'
 		res = self.testapp.get(path, status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(1)))
@@ -60,8 +61,8 @@ class TestCommunityViews(ApplicationLayerTest):
 			c = Community.create_community(username='bleach')
 			assert_that(c, has_property('public', is_(False)))
 			assert_that(c, has_property('joinable', is_(False)))
-			
-		ext_obj = {'alias': 'Bleach',	
+
+		ext_obj = {'alias': 'Bleach',
  				   'realname': u'Bleach',
  				   'public': True,
  				   'joinable': True}
@@ -76,26 +77,26 @@ class TestCommunityViews(ApplicationLayerTest):
 			c = Community.get_community(username='bleach')
 			assert_that(c, has_property('public', is_(True)))
 			assert_that(c, has_property('joinable', is_(True)))
-	
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_get_community(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			Community.create_community(username='bleach')
 			self._create_user("ichigo", "temp001")
-			
+
 		path = '/dataserver2/users/bleach'
-		self.testapp.get(path, 
+		self.testapp.get(path,
 					  	 extra_environ=self._make_extra_environ(user="ichigo"),
 					  	 status=403)
-		
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			c = Community.get_community(username='bleach')
 			c.public = True
-			
-		self.testapp.get(path, 
+
+		self.testapp.get(path,
 					  	 extra_environ=self._make_extra_environ(user="ichigo"),
 					  	 status=200)
-			
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_join_community(self):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -103,17 +104,17 @@ class TestCommunityViews(ApplicationLayerTest):
 
 		path = '/dataserver2/users/bleach/join'
 		self.testapp.post(path, status=403)
-		
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			c = Community.get_community(username='bleach')
 			c.joinable = True
-			
+
 		self.testapp.post(path, status=200)
 		with mock_dataserver.mock_db_trans(self.ds):
 			community = Community.get_community(username='bleach')
 			user = User.get_user(self.default_username)
 			assert_that(user, is_in(community))
-			
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_leave_community(self):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -128,7 +129,7 @@ class TestCommunityViews(ApplicationLayerTest):
 			community = Community.get_community(username='bleach')
 			user = User.get_user(self.default_username)
 			assert_that(user, is_not(is_in(community)))
-			
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_membership_community(self):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -142,24 +143,24 @@ class TestCommunityViews(ApplicationLayerTest):
 		path = '/dataserver2/users/bleach/members'
 		res = self.testapp.get(path, status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
-		
-		res = self.testapp.get(	path, 
+
+		res = self.testapp.get(	path,
 					  			extra_environ=self._make_extra_environ(user="ichigo"),
 					  			status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
-		
-		self.testapp.get(path, 
+
+		self.testapp.get(path,
 					  	 extra_environ=self._make_extra_environ(user="aizen"),
 					  	 status=403)
-		
+
 		hide_path = '/dataserver2/users/bleach/hide'
 		self.testapp.post(hide_path, status=200)
-		
-		res = self.testapp.get(	path, 
+
+		res = self.testapp.get(	path,
 					  			extra_environ=self._make_extra_environ(user="ichigo"),
 					  			status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(1)))
-		
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			community = Community.get_community(username='bleach')
 			user = User.get_user(self.default_username)
@@ -168,12 +169,12 @@ class TestCommunityViews(ApplicationLayerTest):
 
 		unhide_path = '/dataserver2/users/bleach/unhide'
 		self.testapp.post(unhide_path, status=200)
-		
-		res = self.testapp.get(	path, 
+
+		res = self.testapp.get(	path,
 					  			extra_environ=self._make_extra_environ(user="ichigo"),
 					  			status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
-		
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_activity_community(self):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -189,7 +190,7 @@ class TestCommunityViews(ApplicationLayerTest):
 			note.addSharingTarget(c)
 			note.containerId = u'mycontainer'
 			user.addContainedObject(note)
-		
+
 		path = '/dataserver2/users/bleach/Activity'
 		res = self.testapp.get(path, status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(1)))

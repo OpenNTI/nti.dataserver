@@ -11,8 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from zope.intid.interfaces import IIntIds
-
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -24,7 +22,7 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.appserver.ugd_query_views import UGDView
+from nti.app.users.entity_view_mixins import EntityActivityViewMixin
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -42,16 +40,10 @@ from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 from nti.dataserver.users import Community
 from nti.dataserver.users.interfaces import IHiddenMembership
 
-from nti.dataserver.metadata_index import IX_TOPICS
-from nti.dataserver.metadata_index import IX_SHAREDWITH
-from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
-
 from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-
-from nti.metadata import dataserver_metadata_catalog
 
 from nti.zope_catalog.catalog import ResultSet
 
@@ -274,7 +266,7 @@ class TraxResultSet(ResultSet):
 			 request_method='GET',
 			 context=ICommunity,
 			 permission=nauth.ACT_READ)
-class CommunityActivityView(UGDView):
+class CommunityActivityView(EntityActivityViewMixin):
 
 	def _set_user_and_ntiid(self, *args, **kwargs):
 		self.ntiid = u''
@@ -285,29 +277,15 @@ class CommunityActivityView(UGDView):
 			return True
 		return False, security_check
 
-	def getObjectsForId(self, *args, **kwargs):
-		context = self.request.context
+	def check_permission(self, context, user):
+		super( CommunityActivityView, self ).check_permission( context, user )
 		if not context.public and self.remoteUser not in context:
 			raise hexc.HTTPForbidden()
 
-		catalog = dataserver_metadata_catalog()
-		if catalog is None:
-			raise hexc.HTTPNotFound("No catalog")
-		intids = component.getUtility(IIntIds)
+	@property
+	def _context_id(self):
+		return self.context.username
 
-		username = context.username
-		intids_shared_with_comm = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
-
-		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
-		top_level_shared_intids = toplevel_intids_extent.intersection(intids_shared_with_comm)
-
-		seen = set()
-		board = ICommunityBoard(context, None) or {}
-		for forum in board.values():
-			seen.update(intids.queryId(t) for t in forum.values())
-		seen.discard(None)
-		topics_intids = intids.family.IF.LFSet(seen)
-
-		all_intids = intids.family.IF.union(topics_intids, top_level_shared_intids)
-		items = TraxResultSet(all_intids, intids, ignore_invalid=True)
-		return (items,)
+	@property
+	def _entity_board(self):
+		return ICommunityBoard(self.request.context, None) or {}

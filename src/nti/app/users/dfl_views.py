@@ -11,10 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
-
-from zope.intid.interfaces import IIntIds
-
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -23,9 +19,9 @@ from nti.app.authentication import get_remote_user
 
 from nti.app.users import MessageFactory as _
 
-from nti.appserver.ugd_edit_views import UGDDeleteView
+from nti.app.users.entity_view_mixins import EntityActivityViewMixin
 
-from nti.appserver.ugd_query_views import UGDView
+from nti.appserver.ugd_edit_views import UGDDeleteView
 
 from nti.dataserver import authorization as nauth
 
@@ -33,12 +29,6 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
-
-from nti.dataserver.metadata_index import IX_TOPICS
-from nti.dataserver.metadata_index import IX_SHAREDWITH
-from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
-
-from nti.metadata import dataserver_metadata_catalog
 
 from nti.zope_catalog.catalog import ResultSet
 
@@ -101,37 +91,12 @@ class TraxResultSet(ResultSet):
 			 request_method='GET',
 			 context=IDynamicSharingTargetFriendsList,
 			 permission=nauth.ACT_READ)
-class DFLActivityView(UGDView):
+class DFLActivityView(EntityActivityViewMixin):
 
-	def _set_user_and_ntiid(self, *args, **kwargs):
-		self.ntiid = u''
-		self.user = self.remoteUser
+	@property
+	def _entity_board(self):
+		return IDFLBoard(self.request.context, None) or {}
 
-	def getObjectsForId(self, *args, **kwargs):
-		context = self.request.context
-		if self.remoteUser != context.creator and self.remoteUser not in context:
-			raise hexc.HTTPForbidden()
-
-		catalog = dataserver_metadata_catalog()
-		if catalog is None:
-			raise hexc.HTTPNotFound("No catalog")
-		if self.remoteUser not in context and self.remoteUser != context.creator:
-			raise hexc.HTTPForbidden()
-		intids = component.getUtility(IIntIds)
-
-		username = context.NTIID
-		intids_shared_with_dfl = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
-
-		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
-		top_level_shared_intids = toplevel_intids_extent.intersection(intids_shared_with_dfl)
-
-		seen = set()
-		board = IDFLBoard(context, None) or {}
-		for forum in board.values():
-			seen.update(intids.queryId(t) for t in forum.values())
-		seen.discard(None)
-		topics_intids = intids.family.IF.LFSet(seen)
-
-		all_intids = intids.family.IF.union(topics_intids, top_level_shared_intids)
-		items = TraxResultSet(all_intids, intids, ignore_invalid=True)
-		return (items,)
+	@property
+	def _context_id(self):
+		return self.context.NTIID
