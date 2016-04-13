@@ -50,14 +50,47 @@ from nti.dataserver.contenttypes.forums.interfaces import IPost
 
 from nti.externalization.interfaces import StandardExternalFields
 
+def validate_attachments(user=None, context=None, sources=()):
+	sources = sources or ()
+
+	# check source contraints
+	validate_sources(user, context, sources, constraint=IPostFileConstraints)
+
+	# check max files to upload
+	constraints = IPostFileConstraints(context, None)
+	if constraints is not None and len(sources) > constraints.max_files:
+		raise_json_error(get_current_request(),
+						 hexc.HTTPUnprocessableEntity,
+						 {
+							u'message': _('Maximum number attachments exceeded.'),
+							u'code': 'MaxAttachmentsExceeded',
+							u'field': 'max_files',
+							u'constraint': constraints.max_files
+						 },
+						 None)
+
+	# take ownership
+	for source in sources:
+		source.__parent__ = context
+
 class PostUploadMixin(AuthenticatedViewMixin,
 					  ModeledContentUploadRequestUtilsMixin):
 	"""
 	Support for uploading of IPost objects.
 	"""
 
-	def _read_incoming_post(self, datatype, constraint):
+	def readInput(self, value=None):
+		if not self.request.POST:
+			externalValue = super(PostUploadMixin, self).readInput(value=value)
+		else:
+			externalValue = get_source(self.request, 'json')  # test legacy ipad
+			if externalValue:
+				externalValue = super(PostUploadMixin, self).readInput(value=externalValue.read())
+			else:
+				externalValue = super(PostUploadMixin, self).readInput(value=value)
+		return externalValue
 
+	def _read_incoming_post(self, datatype, constraint):
 		# Note the similarity to ugd_edit_views
 		creator = self.getRemoteUser()
 		externalValue = self.readInput()
@@ -68,8 +101,8 @@ class PostUploadMixin(AuthenticatedViewMixin,
 			externalValue[StandardExternalFields.CLASS] = datatype
 
 		containedObject = self.createAndCheckContentObject(creator, datatype,
-															externalValue, creator,
-															constraint)
+														   externalValue, creator,
+														   constraint)
 		containedObject.creator = creator
 
 		# The process of updating may need to index and create KeyReferences
@@ -86,6 +119,12 @@ class PostUploadMixin(AuthenticatedViewMixin,
 		self.updateContentObject(containedObject, externalValue, set_id=False,
 								 notify=False)
 		# Which just verified the validity of the title.
+
+		sources = get_content_files(containedObject)
+		if sources and self.request and self.request.POST:
+			read_multipart_sources(self.request, sources.values())
+		if sources:
+			validate_attachments(self.remoteUser, containedObject, tuple(sources.values()))
 		return containedObject, externalValue
 
 	def _find_factory_from_precondition(self, forum):
@@ -112,29 +151,6 @@ class PostUploadMixin(AuthenticatedViewMixin,
 
 		return topic_factory_name, topic_factory, topic_type
 
-def validate_attachments(user=None, context=None, sources=()):
-	sources = sources or ()
-	
-	# check source contraints
-	validate_sources(user, context, sources, constraint=IPostFileConstraints)
-	
-	# check max files to upload
-	constraints = IPostFileConstraints(context, None)
-	if constraints is not None and len(sources) > constraints.max_files:
-		raise_json_error(get_current_request(),
-						 hexc.HTTPUnprocessableEntity,
-						 {
-							u'message': _('Maximum number attachments exceeded.'),
-							u'code': 'MaxAttachmentsExceeded',
-							u'field': 'max_files',
-							u'constraint': constraints.max_files
-						 },
-						 None)
-
-	# take ownership
-	for source in sources:
-		source.__parent__ = context
-
 class _AbstractForumPostView(PostUploadMixin,
 							 AbstractAuthenticatedView):
 	"""
@@ -143,26 +159,6 @@ class _AbstractForumPostView(PostUploadMixin,
 
 	def _get_topic_creator(self):
 		return self.getRemoteUser()
-
-	def readInput(self, value=None):
-		if not self.request.POST:
-			externalValue = super(_AbstractForumPostView, self).readInput(value=value)
-		else:
-			externalValue = get_source(self.request, 'json') # test legacy ipad
-			if externalValue:
-				externalValue = super(_AbstractForumPostView, self).readInput(value=externalValue.read())
-			else:
-				externalValue = super(_AbstractForumPostView, self).readInput(value=value)
-		return externalValue
-	
-	def _read_incoming_post(self, datatype, constraint):
-		context, externalValue = super(_AbstractForumPostView, self)._read_incoming_post(datatype, constraint)
-		sources = get_content_files(context)
-		if sources and self.request and self.request.POST:
-			read_multipart_sources(self.request, sources.values())
-		if sources:
-			validate_attachments(self.remoteUser, context, sources.values())
-		return context, externalValue
 
 	def _do_call(self):
 		forum = self.request.context
@@ -245,6 +241,7 @@ class _AbstractTopicPostView(PostUploadMixin,
 
 	def _do_call(self):
 		topic = self.request.context
+
 		comment_factory_name, _, comment_iface = \
 						self._find_factory_from_precondition(topic)
 
@@ -266,5 +263,4 @@ class _AbstractTopicPostView(PostUploadMixin,
 		# Respond with the pretty location of the object
 		self.request.response.status_int = 201  # created
 		self.request.response.location = self.request.resource_path(incoming_post)
-
 		return incoming_post
