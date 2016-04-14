@@ -421,7 +421,8 @@ def synchronize_bundle(data_source, bundle,
 def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 							  dc_meta_name=DCMETA_FILENAME,
 							  excluded_keys=(),
-							  _meta=None):
+							  _meta=None,
+							  dc_bucket=None):
 	"""
 	:keyword dc_meta_name: If given (defaults to a standard value),
 		DublinCore metadata will be read from this file (a sibling of the `data_key`).
@@ -433,7 +434,8 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 								excluded_keys=excluded_keys,
 								_meta=_meta)
 	# Metadata if we need it
-	read_dublincore_from_named_key(bundle, data_key.__parent__, dc_meta_name)
+	dc_bucket = data_key.__parent__ if dc_bucket is None else dc_bucket
+	read_dublincore_from_named_key(bundle, dc_bucket, dc_meta_name)
 
 	return result
 
