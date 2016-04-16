@@ -20,14 +20,8 @@ from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
-
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
-
-from nti.externalization.interfaces import LocatedExternalDict
-
-from nti.zodb import isBroken
 
 @view_config(name='IntIdResolver')
 @view_defaults(route_name='objects.generic.traversal',
@@ -52,43 +46,4 @@ class IntIdResolverView(AbstractAuthenticatedView):
 		result = intids.queryObject(uid)
 		if result is None:
 			raise hexc.HTTPNotFound()
-		return result
-
-@view_config(name='UnregisterMissingObjects')
-@view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   context=IDataserverFolder,
-			   permission=nauth.ACT_NTI_ADMIN)
-class UnregisterMissingObjectsView(AbstractAuthenticatedView,
-						 		   ModeledContentUploadRequestUtilsMixin):
-
-	def __call__(self):
-		total = 0
-		result = LocatedExternalDict()
-		broken = result['Broken'] = {}
-		missing = result['Missing'] = []
-		intids = component.getUtility(IIntIds)
-		for uid in intids:
-			obj = None
-			try:
-				obj = intids.getObject(uid)
-				if isBroken(obj, uid):
-					broken[uid] = str(type(obj))
-			except KeyError:
-				missing.append(uid)
-			else:
-				total += 1
-
-		for uid, obj in broken.items():
-			logger.info("Unregistering broken object %s,%s", uid, obj)
-			intids.forceUnregister(uid, notify=False, removeAttribute=False)
-
-		for uid in missing:
-			logger.info("Unregistering missing %s", uid)
-			intids.forceUnregister(uid, notify=False, removeAttribute=False)
-
-		result['Total'] = total
-		result['TotalBroken'] = len(broken)
-		result['TotalMissing'] = len(missing)
-		logger.info("Missing/Broken objects %s", result)
 		return result
