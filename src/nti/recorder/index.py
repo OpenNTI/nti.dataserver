@@ -108,24 +108,6 @@ def PrincipalIndex(family=None):
 								index=PrincipalRawIndex(family=family),
 								normalizer=StringTokenNormalizer())
 
-class ValidatingTargetIntID(object):
-
-	__slots__ = (b'intid',)
-
-	def __init__(self, obj, default=None):
-		if ITransactionRecord.providedBy(obj):
-			source = find_interface(obj, IRecordable, strict=False)
-		elif IRecordable.providedBy(obj):
-			source = obj
-		else:
-			source = None
-		if source is not None:
-			intids = component.queryUtility(IIntIds)  # test mode
-			self.intid = intids.queryId(source) if intids is not None else None
-
-	def __reduce__(self):
-		raise TypeError()
-
 class TIDIndex(AttributeValueIndex):
 	default_field_name = 'tid'
 	default_interface = ITransactionRecord
