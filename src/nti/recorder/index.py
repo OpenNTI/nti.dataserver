@@ -210,23 +210,17 @@ def install_recorder_catalog(site_manager_container, intids=None):
 		intids.register(index)
 	return catalog
 
-def _yield_ids(doc_ids, intids, objects=True):
-	for uid in doc_ids or ():
-		if intids is None:  # tests
+def get_recordables(catalog=None, intids=None, **kwargs):
+	"""
+	return the recordable objects in the catalog
+	"""
+	catalog = get_catalog() if catalog is None else catalog
+	intids = component.queryUtility(IIntIds) if intids is None else intids
+	locked_index = catalog[IX_LOCKED]
+	for uid in set(locked_index.documents_to_values.keys()):
+		if intids is None: # tests
 			yield uid
 		else:
 			obj = intids.queryObject(uid)
 			if IRecordable.providedBy(obj):
-				yield obj if objects else uid
-
-def get_recordables(objects=True, catalog=None, intids=None):
-	"""
-	return the recordable objects/docids in the catalog
-	"""
-
-	catalog = get_catalog() if catalog is None else catalog
-	intids = component.queryUtility(IIntIds) if intids is None else intids
-
-	locked_index = catalog[IX_LOCKED]
-	doc_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
-	return _yield_ids(doc_ids, intids, objects)
+				yield obj

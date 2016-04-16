@@ -29,9 +29,9 @@ class TestAdapters(unittest.TestCase):
 
 	def test_get_recordables(self):
 		recordable = RecordableMixin()
-		recordable.locked = True
+		recordable.lock()
 		catalog = create_recorder_catalog(family=BTrees.family64)
 		catalog.super_index_doc(1, recordable)
-		uids = list(get_recordables(objects=False, catalog=catalog))
+		uids = list(get_recordables(catalog=catalog))
 		assert_that(uids, has_length(1))
 		assert_that(1, is_in(uids))
