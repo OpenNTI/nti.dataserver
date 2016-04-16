@@ -21,6 +21,7 @@ from zope.location import locate
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.coremetadata.interfaces import IRecordable
+from nti.coremetadata.interfaces import IRecordableContainer
 
 from nti.recorder.interfaces import ITransactionRecord
 
@@ -52,6 +53,9 @@ IX_TYPE = 'type'
 
 #: Recordable object locked attribute index
 IX_LOCKED = 'locked'
+
+#: Recordable container object child-order-locked attribute index
+IX_CHILD_ORDER_LOCKED = 'childOrderLocked'
 
 #: Recordable object MimeType
 IX_MIMETYPE = 'mimeType'
@@ -164,6 +168,27 @@ class LockedIndex(AttributeValueIndex):
 	field_name = default_field_name = 'locked'
 	interface = default_interface = ValidatingLocked
 
+class ValidatingChildOrderLocked(object):
+
+	__slots__ = (b'child_order_locked',)
+
+	def __init__(self, obj, default=None):
+		if ITransactionRecord.providedBy(obj):
+			source = find_interface(obj, IRecordableContainer, strict=False)
+		elif IRecordableContainer.providedBy(obj):
+			source = obj
+		else:
+			source = None
+		if source is not None:
+			self.child_order_locked = source.isChildOrderLocked()
+
+	def __reduce__(self):
+		raise TypeError()
+
+class ChildOrderLockedIndex(AttributeValueIndex):
+	field_name = default_field_name = 'child_order_locked'
+	interface = default_interface = ValidatingChildOrderLocked
+
 @interface.implementer(IMetadataCatalog)
 class MetadataRecorderCatalog(Catalog):
 
@@ -182,8 +207,9 @@ def create_recorder_catalog(catalog=None, family=None):
 						(IX_LOCKED, LockedIndex),
 						(IX_MIMETYPE, MimeTypeIndex),
 						(IX_PRINCIPAL, PrincipalIndex),
+						(IX_ATTRIBUTES, AttributeSetIndex),
 						(IX_CREATEDTIME, CreatedTimeIndex),
-						(IX_ATTRIBUTES, AttributeSetIndex)):
+						(IX_CHILD_ORDER_LOCKED, ChildOrderLockedIndex)):
 		index = clazz(family=family)
 		locate(index, catalog, name)
 		catalog[name] = index

@@ -18,7 +18,15 @@ from zope.component.hooks import setHooks
 
 from zope.intid.interfaces import IIntIds
 
-from nti.contentlibrary.indexed_data.catalog import install_library_catalog
+from zope.location import locate
+
+from nti.coremetadata.interfaces import IRecordableContainer
+
+from nti.recorder.index import IX_CHILD_ORDER_LOCKED
+
+from nti.recorder.index import get_recordables
+from nti.recorder.index import ChildOrderLockedIndex
+from nti.recorder.index import install_recorder_catalog
 
 def do_evolve(context):
 	setHooks()
@@ -33,11 +41,22 @@ def do_evolve(context):
 		lsm = ds_folder.getSiteManager()
 		intids = lsm.getUtility(IIntIds)
 
-		install_library_catalog(ds_folder, intids)
+		catalog = install_recorder_catalog(ds_folder, intids)
+		if IX_CHILD_ORDER_LOCKED not in catalog:
+			index = ChildOrderLockedIndex(family=intids.family)
+			locate(index, catalog, IX_CHILD_ORDER_LOCKED)
+			intids.register(index)
+			catalog[IX_CHILD_ORDER_LOCKED] = index
+
+			for recordable in get_recordables(catalog=catalog, intids=intids):
+				doc_id = intids.queryId(recordable)
+				if doc_id is not None and IRecordableContainer.providedBy(recordable):
+					index.index_doc(doc_id, recordable)
+
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):
 	"""
-	Evolve to gen 78 by installing the new library asset catalog.
+	Evolve to gen 78 by modifying the recorder catalog.
 	"""
 	do_evolve(context)
