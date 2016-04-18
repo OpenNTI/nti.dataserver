@@ -238,10 +238,11 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 		master = set()
 		catalog = get_library_catalog()
 		intids = component.getUtility(IIntIds)
+		all_packages = tuple(yield_content_packages())
 
 		# clean containers by removing those assets that either
 		# don't have an intid or cannot be found in the registry
-		for package in yield_content_packages():
+		for package in all_packages:
 			# check every object in the package
 			folder = find_interface(package, IHostPolicyFolder, strict=False)
 			sites.add(folder.__name__)
@@ -258,6 +259,9 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 					remove_transaction_history(asset)
 				else:
 					master.add(ntiid)
+
+		if not all_packages:
+			sites = get_component_hierarchy_names()
 
 		# unregister those utilities that cannot be found in the package containers
 		for site in sites:
