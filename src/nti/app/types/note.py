@@ -45,7 +45,7 @@ from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import INote
 
-from nti.namedfile.file import FileConstraints
+from nti.namedfile.constraints import FileConstraints
 
 @component.adapter(IRequest, INote)
 @interface.implementer(INewObjectTransformer)

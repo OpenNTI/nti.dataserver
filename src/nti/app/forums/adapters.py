@@ -26,7 +26,7 @@ from nti.app.forums.interfaces import IPostFileConstraints
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
-from nti.namedfile.file import FileConstraints
+from nti.namedfile.constraints import FileConstraints
 
 @interface.implementer_only(IDisplayNameGenerator)
 @component.adapter(IPersonalBlog, IRequest)
