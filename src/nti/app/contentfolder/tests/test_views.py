@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.app.contentfolder.utils import get_cf_io_href
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -19,6 +18,8 @@ from hamcrest import has_property
 does_not = is_not
 
 from zope import component
+
+from nti.app.contentfolder.utils import get_cf_io_href
 
 from nti.dataserver.interfaces import IDataserver
 
