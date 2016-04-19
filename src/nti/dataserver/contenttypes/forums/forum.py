@@ -73,12 +73,12 @@ DEFAULT_FORUM_NAME = 'Forum'
 DEFAULT_PERSONAL_BLOG_NAME = 'Blog'
 
 def query_uid(obj, intids=None):
-	intids = intids or component.getUtility(IIntIds)
+	intids = component.getUtility(IIntIds) if intids is None else intids
 	result = intids.queryId(obj)
 	return result
 
 def query_object(uid, intids=None):
-	intids = intids or component.getUtility(IIntIds)
+	intids = component.getUtility(IIntIds) if intids is None else intids
 	try:
 		# JAM: FIXME: Shouldn't this be long? We need to check the family
 		result = intids.queryObject(int(uid), None)
