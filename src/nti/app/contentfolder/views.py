@@ -457,13 +457,13 @@ class CFIOView(AbstractAuthenticatedView):
 		if not IContentBaseFile.providedBy(context):
 			raise hexc.HTTPNotFound()
 		
-		view_name = '@@view'
+		view_name = '@@download'
 		content_disposition = request.headers.get("Content-Disposition")
 		if not content_disposition:
 			params = CaseInsensitiveDict(parse_qs(request.query_string or ''))
 			content_disposition = params.get('contentDisposition')
-		if content_disposition and 'attachment' in content_disposition:
-			view_name = '@@download'
+		if content_disposition and 'view' in content_disposition:
+			view_name = '@@view'
 			
 		ntiid = to_external_ntiid_oid(context)
 		path = b'/dataserver2/Objects/%s/%s' % (self._encode(ntiid), view_name)
