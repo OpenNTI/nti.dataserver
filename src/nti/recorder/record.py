@@ -33,9 +33,10 @@ from nti.recorder.interfaces import TRX_RECORD_HISTORY_KEY
 from nti.recorder.interfaces import ITransactionRecord
 from nti.recorder.interfaces import ITransactionRecordHistory
 
-from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import EqHash
 
 @WithRepr
 @total_ordering
@@ -99,7 +100,7 @@ def get_transactions(obj, sort=False, descending=True):
 			result.sort(key=lambda t: t.createdTime, reverse=descending)
 	except AttributeError:
 		pass
-	return result
+	return tuple(result)
 getTransactions = get_transactions
 
 def remove_transaction_history(obj):
