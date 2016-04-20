@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 import sys
+from urlparse import parse_qs
 from collections import Mapping
 
 from zope import component
@@ -458,13 +459,14 @@ class CFIOView(AbstractAuthenticatedView):
 		
 		view_name = '@@view'
 		content_disposition = request.headers.get("Content-Disposition")
-		if 'attachment' in content_disposition:
+		if not content_disposition:
+			params = CaseInsensitiveDict(parse_qs(request.query_string or ''))
+			content_disposition = params.get('contentDisposition')
+		if content_disposition and 'attachment' in content_disposition:
 			view_name = '@@download'
-
+			
 		ntiid = to_external_ntiid_oid(context)
 		path = b'/dataserver2/Objects/%s/%s' % (self._encode(ntiid), view_name)
-		if request.query_string:
-			path += '?' + self._encode(request.query_string)
 	
 		# set subrequest
 		subrequest = request.blank(path)
