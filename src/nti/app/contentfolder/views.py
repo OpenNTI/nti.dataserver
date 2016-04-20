@@ -457,7 +457,7 @@ class CFIOView(AbstractAuthenticatedView):
 			raise hexc.HTTPNotFound()
 		
 		view_name = '@@view'
-		content_disposition = request.headers.get.get("Content-Disposition")
+		content_disposition = request.headers.get("Content-Disposition")
 		if 'attachment' in content_disposition:
 			view_name = '@@download'
 
