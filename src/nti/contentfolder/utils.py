@@ -35,7 +35,7 @@ def traverse(current, path=None):
 	root = find_interface(current, IRootFolder, strict=False)
 	if not path or path == u'/':
 		return root
-
+	__traceback_info__ = current, path
 	if path.startswith('/'):
 		current = root
 		path = path[1:]
