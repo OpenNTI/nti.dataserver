@@ -435,7 +435,7 @@ def _update_index_when_content_changes(content_package,
 	registered_count = len(added)
 	removed_count = len(removed)
 
-	is_global_manager = bool(registry != component.getGlobalSiteManager())
+	is_global_manager = bool(registry == component.getGlobalSiteManager())
 	
 	# update sync results
 	for item in added or ():
