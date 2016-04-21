@@ -47,6 +47,7 @@ from nti.contentlibrary.indexed_data import get_library_catalog
 from nti.contenttypes.presentation import PACKAGE_CONTAINER_INTERFACES
 
 from nti.contenttypes.presentation.interfaces import IPresentationAsset
+from nti.contenttypes.presentation.interfaces import ILegacyPresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.dataserver import authorization as nauth
@@ -247,6 +248,8 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 			folder = find_interface(package, IHostPolicyFolder, strict=False)
 			sites.add(folder.__name__)
 			for ntiid, asset, container in self._unit_assets(package):
+				if ILegacyPresentationAsset.providedBy(asset):
+					continue
 				uid = intids.queryId(asset)
 				provided = iface_of_thing(asset)
 				if uid is None:
@@ -267,6 +270,8 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 		for site in sites:
 			registry = self._site_registry(site)
 			for ntiid, asset, provided in self._registered_assets(registry):
+				if ILegacyPresentationAsset.providedBy(asset):
+					continue
 				uid = intids.queryId(asset)
 				if uid is None or ntiid not in master:
 					remove_transaction_history(asset)
