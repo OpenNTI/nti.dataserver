@@ -52,6 +52,7 @@ from nti.contenttypes.presentation.interfaces import INTITimeline
 from nti.contenttypes.presentation.interfaces import INTISlideDeck
 from nti.contenttypes.presentation.interfaces import INTISlideVideo
 from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
+from nti.contenttypes.presentation.interfaces import ILegacyPresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.contenttypes.presentation.utils import create_object_from_external
@@ -434,13 +435,17 @@ def _update_index_when_content_changes(content_package,
 	registered_count = len(added)
 	removed_count = len(removed)
 
+	is_global_manager = bool(registry != component.getGlobalSiteManager())
+	
 	# update sync results
 	for item in added or ():
 		sync_results.add_asset(item, locked=False)
+		if is_global_manager:
+			interface.alsoProvides(item, ILegacyPresentationAsset)
 
 	# Index our contained items; ignoring the global library.
 	index_item_count = 0
-	if registry != component.getGlobalSiteManager():
+	if not is_global_manager:
 		index_item_count = _index_items(content_package,
 										index,
 										item_iface,
