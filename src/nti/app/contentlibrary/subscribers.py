@@ -354,7 +354,7 @@ def _clear_assets_by_interface(content_package, iface, force=False):
 		for child in unit.children or ():
 			recur(child)
 		container = IPresentationAssetContainer(unit)
-		for key, value in list(container.items()):  # mutating
+		for key, value in tuple(container.items()):  # mutating
 			provided = iface_of_asset(value)
 			if provided.isOrExtends(iface) and can_be_removed(value, force):
 				del container[key]
@@ -467,7 +467,7 @@ def _clear_assets(content_package, force=False):
 		if force:
 			container.clear()
 		else:
-			for key, value in list(container.items()):  # mutating
+			for key, value in tuple(container.items()):  # mutating
 				if can_be_removed(value, force):
 					del container[key]
 

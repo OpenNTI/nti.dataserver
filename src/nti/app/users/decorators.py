@@ -159,7 +159,7 @@ class _DFLEditLinkRemoverDecorator(object):
 	def decorateExternalObject(self, context, external):
 		links = external.get(LINKS, ())
 		if context.Locked:
-			for idx, link in enumerate(list(links)):  # mutating
+			for idx, link in enumerate(tuple(links)):  # mutating
 				if link.get('rel') == 'edit':
 					links.pop(idx)
 					break

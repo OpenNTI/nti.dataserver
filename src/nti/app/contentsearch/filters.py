@@ -22,7 +22,7 @@ class _SearchContentObjectFilter(object):
 		pass
 
 	def filter_creatable_objects(self, terms):
-		for name in list(terms):  # mutating
+		for name in tuple(terms):  # mutating
 			if name.startswith(self.PREFIX):
 				terms.pop(name, None)
 		return terms
