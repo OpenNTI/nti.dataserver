@@ -365,10 +365,6 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 	"""
 	Handle the caching and 403 response communication for
 	LibraryPath views.
-
-	This caching may not hold anymore, since items may be
-	published/visible at an editor's call. But with a max
-	age set, it may not be a big deal.
 	"""
 	# Max age of 5 minutes, then they need to check with us.
 	max_age = 300
@@ -410,6 +406,9 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 
 	def do_call(self, to_call, *args):
 		# Try to bail early if our last mod hasn't changed.
+		# 4.2016 - This caching may not hold anymore, since items may
+		# be published/visible/edited via the API. But with a max
+		# age set, it may not be a big deal.
 		self.pre_caching()
 
 		# Otherwise, try after we have data.
@@ -419,7 +418,6 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 		except ForbiddenContextException as e:
 			# It appears we only have top-level-context objects,
 			# return a 403 so the client can react appropriately.
-			# TODO: Replace this with our new @@forbidden_related_context view?
 			response = hexc.HTTPForbidden()
 			result = LocatedExternalDict()
 			result[ITEMS] = e.joinable_contexts
