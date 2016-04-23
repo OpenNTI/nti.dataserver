@@ -9,19 +9,24 @@ Remove an entity.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from nti.monkey import relstorage_patch_all_except_gevent_on_import
+relstorage_patch_all_except_gevent_on_import.patch()
+
+logger = __import__('logging').getLogger(__name__)
+
 import os
 import sys
 import argparse
 
+from nti.dataserver.utils import run_with_dataserver
+
+from nti.dataserver.utils.base_script import setSite
+from nti.dataserver.utils.base_script import create_context
+
 from nti.dataserver import users
 
-from .base_script import setSite
-from .base_script import create_context
-
-from . import run_with_dataserver
-
 _type_map = { 'user': (users.User.get_user, users.User.delete_user),
-			  'community': (users.Community.get_entity,  users.Community.delete_entity) }
+			  'community': (users.Community.get_entity, users.Community.delete_entity) }
 
 # package loader info
 
@@ -39,7 +44,7 @@ def _delete_user(factory, username, site=None):
 	return deleter(username)
 
 def main():
-	arg_parser = argparse.ArgumentParser( description="Delete a user-type object" )
+	arg_parser = argparse.ArgumentParser(description="Delete a user-type object")
 	arg_parser.add_argument('username', help="The username to delete")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
@@ -59,15 +64,15 @@ def main():
 
 	site = args.site
 	username = args.username
-	context = create_context(env_dir)
+	context = create_context(env_dir, with_library=True)
 	conf_packages = ('nti.appserver',)
-	
-	run_with_dataserver( environment_dir=env_dir,
+
+	run_with_dataserver(environment_dir=env_dir,
 						 xmlconfig_packages=conf_packages,
 						 verbose=args.verbose,
 						 context=context,
 						 function=lambda: _delete_user(_type_map[args.type], username, site))
-	sys.exit( 0 )
+	sys.exit(0)
 
 if __name__ == '__main__':
 	main()
