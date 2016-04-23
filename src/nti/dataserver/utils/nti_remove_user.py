@@ -64,14 +64,14 @@ def main():
 
 	site = args.site
 	username = args.username
-	context = create_context(env_dir, with_library=True)
 	conf_packages = ('nti.appserver',)
+	context = create_context(env_dir, with_library=True)
 
 	run_with_dataserver(environment_dir=env_dir,
-						 xmlconfig_packages=conf_packages,
-						 verbose=args.verbose,
-						 context=context,
-						 function=lambda: _delete_user(_type_map[args.type], username, site))
+						xmlconfig_packages=conf_packages,
+						verbose=args.verbose,
+						context=context,
+						function=lambda: _delete_user(_type_map[args.type], username, site))
 	sys.exit(0)
 
 if __name__ == '__main__':

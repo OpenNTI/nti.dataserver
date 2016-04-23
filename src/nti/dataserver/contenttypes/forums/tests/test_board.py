@@ -19,19 +19,25 @@ from nose.tools import assert_raises
 
 from nti.testing.matchers import is_empty
 from nti.testing.matchers import aq_inContextOf
-from nti.testing.matchers import verifiably_provides, validly_provides
+from nti.testing.matchers import validly_provides
+from nti.testing.matchers import verifiably_provides
 
 from zope import interface
+
 from zope.container.interfaces import InvalidItemType
 
-from nti.utils._compat import Implicit
+from nti.common._compat import Implicit
 
-from nti.externalization.tests import externalizes
+from nti.dataserver.contenttypes.forums.board import Board
+from nti.dataserver.contenttypes.forums.board import DFLBoard
+from nti.dataserver.contenttypes.forums.board import CommunityBoard
 
-from nti.dataserver.contenttypes.forums.interfaces import IBoard, IForum
-from nti.dataserver.contenttypes.forums.board import Board, CommunityBoard, DFLBoard
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import IForum
 
 from nti.dataserver.contenttypes.forums.tests import ForumLayerTest
+
+from nti.externalization.tests import externalizes
 
 class TestBoard(ForumLayerTest):
 

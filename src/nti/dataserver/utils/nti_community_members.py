@@ -7,6 +7,9 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from nti.monkey import relstorage_patch_all_except_gevent_on_import
+relstorage_patch_all_except_gevent_on_import.patch()
+
 logger = __import__('logging').getLogger(__name__)
 
 import os
@@ -15,11 +18,11 @@ import sys
 import codecs
 import argparse
 
-import zope.intid
-
 from zope import component
 
 from zope.catalog.interfaces import ICatalog
+
+from zope.intid.interfaces import IIntIds
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -29,7 +32,7 @@ from nti.dataserver.users.index import CATALOG_NAME
 
 from nti.dataserver.utils import run_with_dataserver
 
-from .base_script import set_site
+from nti.dataserver.utils.base_script import set_site
 
 def _tx_string(s):
 	if s and isinstance(s, unicode):
@@ -43,7 +46,7 @@ def get_index_field_value(userid, ent_catalog, indexname):
 	return result
 
 def get_member_info(community):
-	intids = component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(IIntIds)
 	catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	for user in community:
 		if not IUser.providedBy(user):

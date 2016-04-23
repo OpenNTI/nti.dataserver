@@ -11,8 +11,8 @@ import sys
 import logging
 import functools
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.component.hooks import setSite
 from zope.component.hooks import setHooks
@@ -24,9 +24,10 @@ from zope.dottedname import resolve as dottedname
 import zope.exceptions.log
 from zope.exceptions.exceptionformatter import print_exception
 
+from nti.dataserver._Dataserver import Dataserver, MinimalDataserver
+
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IDataserverTransactionRunner
-from nti.dataserver._Dataserver import Dataserver, MinimalDataserver
 
 from nti.externalization.persistence import NoPickle
 
@@ -66,15 +67,15 @@ _user_function_failed = object()  # sentinel
 class _DataserverCreationFailed(Exception): pass
 
 def run_with_dataserver(environment_dir=None,
-						 function=None,
-						 as_main=True,
-						 verbose=False,
-						 config_features=(),
-						 xmlconfig_packages=(),
-						 context=None,
-						 minimal_ds=False,
-						 use_transaction_runner=True,
-						 logging_verbose_level=logging.INFO):
+						function=None,
+						as_main=True,
+						verbose=False,
+						config_features=(),
+						xmlconfig_packages=(),
+						context=None,
+						minimal_ds=False,
+						use_transaction_runner=True,
+						logging_verbose_level=logging.INFO):
 	"""
 	Execute the `function` in the (already running) dataserver
 	environment configured at `environment_dir`.
@@ -104,8 +105,10 @@ def run_with_dataserver(environment_dir=None,
 
 	@functools.wraps(function)
 	def run_user_fun_print_exception():
-		"""Run the user-given function in the environment; print exceptions
-		in this env too."""
+		"""
+		Run the user-given function in the environment; print exceptions
+		in this env too.
+		"""
 		try:
 			return function()
 		except Exception:
@@ -153,7 +156,7 @@ def run_with_dataserver(environment_dir=None,
 			except:
 				pass
 
-	return run(function=run_user_fun_transaction_wrapper, as_main=as_main,
+	return run(	function=run_user_fun_transaction_wrapper, as_main=as_main,
 				verbose=verbose, config_features=config_features,
 				xmlconfig_packages=xmlconfig_packages, context=context,
 				_print_exc=False, logging_verbose_level=logging_verbose_level)
@@ -207,8 +210,10 @@ def run(function=None, as_main=True, verbose=False, config_features=(),
 	if _print_exc:
 		@functools.wraps(function)
 		def fun():
-			"""Run the user-given function in the environment; print exceptions
-			in this env too."""
+			"""
+			Run the user-given function in the environment; print exceptions
+			in this env too.
+			"""
 			try:
 				return function()
 			except Exception:
@@ -271,8 +276,8 @@ def open_all_databases(db, close_children=False):
 	finally:
 		_safe_close(conn)
 
-@interface.implementer(IDataserver)
 @NoPickle
+@interface.implementer(IDataserver)
 class _MockDataserver(object):
 
 	def __init__(self, dataserver_folder, root_connection):
@@ -313,7 +318,6 @@ def interactive_setup(root=".",
 		will be registered globally.
 	:keyword with_library: If ``True`` (*not* the default) then the library will
 		be loaded from the ``etc/library.zcml`` file during the configuration process.
-
 	"""
 
 	log_format = '[%(name)s] %(levelname)s: %(message)s'

@@ -7,11 +7,12 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from nti.monkey import gevent_patch_on_import  # Must be very early
+from nti.monkey import gevent_patch_on_import
 gevent_patch_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
+import sys
 import time
 import os.path
 import argparse
@@ -22,18 +23,20 @@ import requests
 import gevent.pool
 
 import transaction
+
 from zope import component
 
 import webob.datetime_utils
 
 from nti.dataserver.interfaces import IDataserver
+
 from nti.dataserver.users.interfaces import IAvatarURL
 
-from . import run_with_dataserver
+from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver.utils.base_script import create_context
 
 def _downloadAvatarIcons(targetDir):
 	ds = component.getUtility(IDataserver)
-
 	_users = (x for x in ds.root['users'].values() if hasattr(x, 'username'))
 	seen = set()
 	urls = set()
@@ -97,24 +100,30 @@ def _downloadAvatarIcons(targetDir):
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Cache all gravatar urls locally")
-	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
-	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
+							dest='verbose')
 	arg_parser.add_argument('-d', '--directory',
-							 dest='export_dir',
-							 default='avatar',
-							 help="Output directory")
+							dest='export_dir',
+							default='avatar',
+							help="Output directory")
 	args = arg_parser.parse_args()
 
 	out_dir = args.export_dir
 	if not os.path.exists(out_dir):
 		os.mkdir(out_dir)
 
-	env_dir = args.env_dir
-	if not env_dir:
-		env_dir = os.getenv('DATASERVER_DIR')
+	env_dir = os.getenv('DATASERVER_DIR')
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
-		raise ValueError("Invalid dataserver environment root directory", env_dir)
+		raise IOError("Invalid dataserver environment root directory")
 
+	conf_packages = ('nti.appserver',)
+	context = create_context(env_dir, with_library=True)
 	run_with_dataserver(environment_dir=env_dir,
+						xmlconfig_packages=conf_packages,
 						verbose=args.verbose,
+						context=context,
 						function=lambda: _downloadAvatarIcons(out_dir))
+	sys.exit(0)
+
+if __name__ == '__main__':
+	main()

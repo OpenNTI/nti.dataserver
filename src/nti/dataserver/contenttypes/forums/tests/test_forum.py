@@ -27,7 +27,9 @@ from zope import component
 
 from zope.container.interfaces import InvalidItemType, InvalidContainerType
 
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
+
+from nti.common._compat import Implicit
 
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
@@ -35,8 +37,6 @@ from nti.dataserver.users import Community
 from nti.dataserver.users import DynamicFriendsList
 
 from nti.externalization.tests import externalizes
-
-from nti.utils._compat import Implicit
 
 from nti.wref.interfaces import IWeakRef
 

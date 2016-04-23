@@ -17,11 +17,14 @@ import sys
 import pprint
 import argparse
 
-from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
-from nti.dataserver.utils import run_with_dataserver
+
+from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IFriendlyNamed
+
+from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver.utils.base_script import create_context
 
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
@@ -79,22 +82,27 @@ def main():
 	arg_parser.add_argument('owner', help="The owner of the friend list")
 	arg_parser.add_argument('name', help="The name of friend list")
 	arg_parser.add_argument('-a', '--add',
-							 dest='add_members',
-							 nargs="+",
-							 help="The usernames of the entities to add")
+							dest='add_members',
+							nargs="+",
+							help="The usernames of the entities to add")
 	arg_parser.add_argument('-r', '--remove',
-							 dest='remove_members',
-							 nargs="+",
-							 help="The usernames of the entities to remove")
+							dest='remove_members',
+							nargs="+",
+							help="The usernames of the entities to remove")
 	args = arg_parser.parse_args()
 
 	env_dir = os.getenv('DATASERVER_DIR')
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise ValueError("Invalid dataserver environment root directory", env_dir)
 
+	conf_packages = ('nti.appserver',)
+	context = create_context(env_dir, with_library=True)
+
 	run_with_dataserver(environment_dir=env_dir,
-						 verbose=args.verbose,
-						 function=lambda: process_params(args))
+						xmlconfig_packages=conf_packages,
+						verbose=args.verbose,
+						context=context,
+						function=lambda: process_params(args))
 
 if __name__ == '__main__':
 	main()

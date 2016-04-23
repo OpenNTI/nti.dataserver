@@ -14,9 +14,11 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from zope.component.hooks import site, getSite
+from zope.component.hooks import site
+from zope.component.hooks import getSite 
 
 import zope.generations.generations
+
 from zope.generations import interfaces as gen_interfaces
 
 from zc import intid as zc_intid

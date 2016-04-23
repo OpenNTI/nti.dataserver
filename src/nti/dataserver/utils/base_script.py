@@ -18,7 +18,8 @@ import zope.browserpage
 
 from zope.component import hooks
 
-from zope.configuration import xmlconfig, config
+from zope.configuration import config
+from zope.configuration import xmlconfig
 
 from zope.container.contained import Contained
 

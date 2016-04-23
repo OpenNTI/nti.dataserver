@@ -9,6 +9,9 @@ Creates an entity
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from nti.monkey import relstorage_patch_all_except_gevent_on_import
+relstorage_patch_all_except_gevent_on_import.patch()
+
 logger = __import__('logging').getLogger(__name__)
 
 import os
@@ -19,21 +22,20 @@ import argparse
 from zope import component
 from zope import interface
 
-from nti.dataserver.users import User
-from nti.dataserver.users import Entity
-from nti.dataserver.users import Community
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import INewUserPlacer
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 
+from nti.dataserver.users import User
+from nti.dataserver.users import Entity
+from nti.dataserver.users import Community
+
 from nti.dataserver.shards import AbstractShardPlacer
 
+from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver.utils.base_script import set_site
+
 from nti.externalization.externalization import to_external_object
-
-from .base_script import set_site
-
-from . import run_with_dataserver
 
 _type_map = { 'user': User.create_user,
 			  'community': Community.create_community }
@@ -107,29 +109,36 @@ def create_user(args=None):
 	arg_parser.add_argument('password', nargs='?')
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
+
 	arg_parser.add_argument('-t', '--type',
 							 dest='type',
 							 choices=_type_map,
 							 default='user',
 							 help="The type of user object to create")
+
 	arg_parser.add_argument('-n', '--name',
 							 dest='name',
 							 help="The realname of the user")
+
 	arg_parser.add_argument('-a', '--alias',
 							 dest='alias',
 							 help="The alias of the user")
+
 	arg_parser.add_argument('--email',
 							 dest='email',
 							 help="The email address of the user")
+
 	arg_parser.add_argument('--birthdate',
 							 dest='birthdate',
 							 help="The birthdate of the user in YYYY-MM-DD form")
+
 	arg_parser.add_argument('-c', '--communities',
 							 dest='communities',
 							 nargs="+",
 							 default=(),
 							 help="The names of communities to add the user to. "
 							 	  "Slightly incompatible with --site")
+
 	arg_parser.add_argument('--coppa',
 							 dest='coppa',
 							 action='store_true',
@@ -145,6 +154,7 @@ def create_user(args=None):
 							 action='store_true',
 							 default=False,
 							 help="Public community")
+
 	arg_parser.add_argument('--joinable',
 							 dest='joinable',
 							 action='store_true',
@@ -176,9 +186,12 @@ def create_user(args=None):
 	run_with_dataserver(environment_dir=env_dir,
 						xmlconfig_packages=(package,),
 						verbose=args.verbose,
-						function=lambda: _create_user(_type_map[args.type], username,
-													  password, args.name,
-													  args.communities, args))
+						function=lambda: _create_user(_type_map[args.type],
+													  username,
+													  password, 
+													  args.name,
+													  args.communities, 
+													  args))
 
 def main(args=None):
 	create_user(args)
