@@ -61,7 +61,9 @@ def _set_avatar(username, url=None, image=None, background=False, site=None):
 		mime_type = guess_type(image)[0] or b'text/plain'
 		with open(image, 'rb') as fp:
 			data = fp.read()
-		data = encode(raw_bytes=data, mime_type=mime_type)
+		data = encode(raw_bytes=data, 
+					  charset=b"utf-8",
+					  mime_type=mime_type)
 		setattr(profile, field, data)
 	return profile
 
