@@ -29,7 +29,8 @@ import ZConfig
 from relstorage.storage import RelStorage
 from relstorage.zodbconvert import schema_xml
 
-from zc.zlibstorage import compress, decompress
+from zc.zlibstorage import compress
+from zc.zlibstorage import decompress
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Compress an existing RelStorage database")

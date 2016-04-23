@@ -23,14 +23,15 @@ from zope import interface
 
 from nti.common.string import safestr
 
-from nti.dataserver.users import Community
 from nti.dataserver.interfaces import ICommunity
+
+from nti.dataserver.users import Community
 from nti.dataserver.users.interfaces import IDisallowActivityLink
+
+from nti.dataserver.utils import run_with_dataserver
 
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
-
-from . import run_with_dataserver
 
 def update_community(username, name=None, alias=None, public=False,
 					 joinable=False, profile=True, verbose=False):

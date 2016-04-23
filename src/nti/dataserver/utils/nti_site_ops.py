@@ -15,17 +15,17 @@ import argparse
 from collections import Mapping
 
 from zope import component
+
 from zope.component.hooks import site as current_site
 
 from zope.traversing.interfaces import IEtcNamespace
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
+from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver.utils.base_script import create_context
+
 from nti.site.hostpolicy import get_all_host_sites
-
-from .base_script import create_context
-
-from . import run_with_dataserver
 
 conf_package = 'nti.appserver'
 

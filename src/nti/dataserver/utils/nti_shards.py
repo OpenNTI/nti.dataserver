@@ -17,11 +17,12 @@ import sys
 import argparse
 
 from nti.dataserver import users
-from nti.dataserver.interfaces import IShardLayout
 
 from nti.dataserver.generations.install import install_shard
 
-from . import run_with_dataserver
+from nti.dataserver.interfaces import IShardLayout
+
+from nti.dataserver.utils import run_with_dataserver
 
 def _init_shard(shard_name):
 	dataserver = users._get_shared_dataserver()
@@ -53,16 +54,16 @@ def main():
 
 	site_group = arg_parser.add_mutually_exclusive_group()
 	site_group.add_argument('-l', '--list',
-							 dest='list',
-							 help='List shards', action='store_true')
+							dest='list',
+							help='List shards', action='store_true')
 
 	site_group.add_argument('-c', '--create',
-							 dest='create',
-							 help='Create shard', action='store_true')
+							dest='create',
+							help='Create shard', action='store_true')
 
 	arg_parser.add_argument('-n', '--name',
-							 dest='name',
-							 help="The shard name")
+							dest='name',
+							help="The shard name")
 	args = arg_parser.parse_args()
 
 	env_dir = os.getenv('DATASERVER_DIR')

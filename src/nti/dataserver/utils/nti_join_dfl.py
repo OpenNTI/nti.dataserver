@@ -22,7 +22,7 @@ from nti.dataserver import users
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from . import run_with_dataserver
+from nti.dataserver.utils import run_with_dataserver
 
 def _process_args(args):
 	user = users.User.get_user(args.username)

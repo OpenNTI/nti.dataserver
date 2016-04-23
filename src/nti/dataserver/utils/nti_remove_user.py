@@ -9,9 +9,6 @@ Remove an entity.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from nti.monkey import relstorage_patch_all_except_gevent_on_import
-relstorage_patch_all_except_gevent_on_import.patch()
-
 logger = __import__('logging').getLogger(__name__)
 
 import os
@@ -20,7 +17,7 @@ import argparse
 
 from nti.dataserver.utils import run_with_dataserver
 
-from nti.dataserver.utils.base_script import setSite
+from nti.dataserver.utils.base_script import set_site
 from nti.dataserver.utils.base_script import create_context
 
 from nti.dataserver import users
@@ -33,7 +30,7 @@ _type_map = { 'user': (users.User.get_user, users.User.delete_user),
 def _delete_user(factory, username, site=None):
 	__traceback_info__ = locals().items()
 
-	setSite(site)
+	set_site(site)
 
 	getter, deleter = factory
 	entity = getter(username)

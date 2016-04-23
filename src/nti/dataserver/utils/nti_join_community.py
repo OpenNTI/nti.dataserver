@@ -31,7 +31,7 @@ from nti.dataserver.users.interfaces import IDisallowActivityLink
 
 from nti.externalization.externalization import to_external_object
 
-from . import run_with_dataserver
+from nti.dataserver.utils import run_with_dataserver
 
 def _tx_string(s):
 	if s is not None and isinstance(s, unicode):

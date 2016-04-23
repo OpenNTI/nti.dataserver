@@ -19,10 +19,11 @@ import sys
 import getpass
 import argparse
 
-from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
 
-from . import run_with_dataserver
+from nti.dataserver.users import User
+
+from nti.dataserver.utils import run_with_dataserver
 
 def _set_pass(username, password):
 	user = User.get_user(username)
