@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 entry_points = {
 	'console_scripts': [
 		# library
+		"nti_s3put = nti.contentlibrary.nti_s3put:main",
 		"nti_sync_all_libraries = nti.app.contentlibrary.utils.nti_sync_all_libraries:main",
 		"nti_sync_library_assets = nti.app.contentlibrary.utils.nti_sync_library_assets:main",
 		# dataserver
@@ -13,6 +14,7 @@ entry_points = {
 		"nti_cache_avatars = nti.dataserver.utils.nti_cache_avatars:main",
 		"nti_create_user = nti.dataserver.utils.nti_create_user:main",
 		"nti_update_user = nti.dataserver.utils.nti_update_user:main",
+		"nti_set_user_avatar = nti.dataserver.utils.nti_set_user_avatar:main",
 		"nti_create_friendslist = nti.dataserver.utils.nti_create_friendslist:main",
 		"nti_add_remove_friends = nti.dataserver.utils.nti_add_remove_friends:main",
 		"nti_join_dfl = nti.dataserver.utils.nti_join_dfl:main",
@@ -25,9 +27,9 @@ entry_points = {
 		"nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",
 		"nti_remove_user = nti.dataserver.utils.nti_remove_user:main",
 		"nti_export_entities = nti.dataserver.utils.nti_export_entities:main",
-		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
+		# appserver
 		"nti_index_listener = nti.appserver.application:index_listener_main",
-		"nti_s3put = nti.contentlibrary.nti_s3put:main",
+		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
 		# NOTE: The command line tools are deprecated. Leave the setup.py entry points
 		# pointing to this package to get the deprecation notice
 		'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
