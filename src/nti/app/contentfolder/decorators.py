@@ -121,5 +121,5 @@ class _ContextPathDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	def _do_decorate_external(self, context, result):
 		path = result.get('path', None)
 		if not path and INamedContainer.providedBy(context.__parent__):
-			result.set('path', self.compute_path(context))
+			result['path'] = self.compute_path(context)
 	
