@@ -7,7 +7,7 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__( 'logging' ).getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import six
@@ -18,15 +18,15 @@ import numbers
 import warnings
 import collections
 
-import zope.intid
-
-from zope import interface
 from zope import component
+from zope import interface
 from zope import lifecycleevent
 
 from zope.cachedescriptors.property import cachedIn
 
 from zope.deprecation import deprecated
+
+from zope.intid.interfaces import IIntIds
 
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 
@@ -85,13 +85,13 @@ from nti.zodb import minmax, isBroken
 BROADCAST_DEFAULT_DS = None
 
 SharingTarget = sharing.SharingTargetMixin
-deprecated( 'SharingTarget', 'Prefer sharing.SharingTargetMixin' )
+deprecated('SharingTarget', 'Prefer sharing.SharingTargetMixin')
 
 SharingSource = sharing.SharingSourceMixin
-deprecated( 'SharingSource', 'Prefer sharing.SharingSourceMixin' )
+deprecated('SharingSource', 'Prefer sharing.SharingSourceMixin')
 
 DynamicSharingTarget = sharing.DynamicSharingTargetMixin
-deprecated( 'DynamicSharingTarget', 'Prefer sharing.DynamicSharingTargetMixin' )
+deprecated('DynamicSharingTarget', 'Prefer sharing.DynamicSharingTargetMixin')
 
 class _Password(object):
 	"""
@@ -99,7 +99,7 @@ class _Password(object):
 	encoded by a password manager. Immutable.
 	"""
 
-	def __init__( self, password, manager_name='bcrypt' ):
+	def __init__(self, password, manager_name='bcrypt'):
 		"""
 		Creates a password given the plain text and the name of a manager
 		to encode it with.
@@ -111,20 +111,20 @@ class _Password(object):
 			and :mod:`zope.password`.
 		"""
 
-		manager = component.getUtility( IPasswordManager, name=manager_name )
-		self.__encoded = manager.encodePassword( password )
+		manager = component.getUtility(IPasswordManager, name=manager_name)
+		self.__encoded = manager.encodePassword(password)
 		self.password_manager = manager_name
 
-	def checkPassword( self, password ):
+	def checkPassword(self, password):
 		"""
 		:return: Whether the given (plain text) password matches the
 		encoded password stored by this object.
 		"""
-		manager = component.getUtility( IPasswordManager, name=self.password_manager )
-		result = manager.checkPassword( self.__encoded, password )
+		manager = component.getUtility(IPasswordManager, name=self.password_manager)
+		result = manager.checkPassword(self.__encoded, password)
 		return result
 
-	def getPassword( self ):
+	def getPassword(self):
 		"""
 		Like the zope pluggableauth principals, we allow getting the raw
 		bytes of the password. Obviously these are somewhat valuable, even
@@ -158,7 +158,7 @@ class Principal(sharing.SharingSourceMixin, Entity):  # order matters
 				 password=None,
 				 parent=None):
 
-		super(Principal,self).__init__(username,
+		super(Principal, self).__init__(username,
 									   parent=parent)
 		if password:
 			self.password = password
@@ -168,13 +168,13 @@ class Principal(sharing.SharingSourceMixin, Entity):  # order matters
 
 	def _get_password(self):
 		return self.__dict__.get('password', None)
-	def _set_password(self,np):
+	def _set_password(self, np):
 		# TODO: Names for these?
-		component.getUtility( pwd_interfaces.IPasswordUtility ).verify( np )
+		component.getUtility(pwd_interfaces.IPasswordUtility).verify(np)
 		# NOTE: The password policy objects do not have an option to forbid
 		# all whitespace, so we implement that manually here.
 		# TODO: Subclass the policy and implement one that does, install that and migrate
-		if np and not np.strip(): # but do allow leading/trailing whitespace
+		if np and not np.strip():  # but do allow leading/trailing whitespace
 			raise PasswordCannotConsistOfOnlyWhitespace()
 		# NOTE: The password policy objects do not have an option to forbid
 		# specific passwords from a list, so we implement that manually here.
@@ -186,7 +186,7 @@ class Principal(sharing.SharingSourceMixin, Entity):  # order matters
 		# otherwise, no change
 	def _del_password(self):
 		del self.__dict__['password']
-	password = property(_get_password,_set_password,_del_password)
+	password = property(_get_password, _set_password, _del_password)
 
 	NTIID_TYPE = None
 	NTIID = cachedIn('_v_ntiid')(named_entity_ntiid)
@@ -195,7 +195,7 @@ if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 	# For use by nti_run_integration_tests, nti_run_general_purpose_tests;
 	# plain text passwords are much faster than bcrpyt, and since
 	# the tests use HTTP Basic Auth, this makes a difference
-	print( "users.py: WARN: Configuring with plain text passwords", file=sys.stderr )
+	print("users.py: WARN: Configuring with plain text passwords", file=sys.stderr)
 	Principal.password_manager_name = 'Plain Text'
 
 from nti.common.property import Lazy
@@ -206,7 +206,7 @@ from .entity import NOOPCM as _NOOPCM
 
 from .friends_lists import FriendsList
 from .friends_lists import DynamicFriendsList
-from .friends_lists import _FriendsListMap # BWC
+from .friends_lists import _FriendsListMap  # BWC
 
 import zope.deferredimport
 zope.deferredimport.initialize()
@@ -222,21 +222,21 @@ zope.deferredimport.deprecatedFrom(
 	"_FriendsListUsernameIterable")
 
 ShareableMixin = sharing.ShareableMixin
-deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
+deprecated('ShareableMixin', 'Prefer sharing.ShareableMixin')
 
 from .device import Device
 from .device import _DevicesMap
 
-@interface.implementer(ITranscriptContainer )
+@interface.implementer(ITranscriptContainer)
 class _TranscriptsMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 	contained_type = ITranscript
 	container_name = 'Transcripts'
 	__name__ = container_name
 
-@interface.implementer( IContainerIterable,
+@interface.implementer(IContainerIterable,
 						IUser,
 						IIntIdIterable,
-						ISublocations )
+						ISublocations)
 class User(Principal):
 	"""A user is the central class for data storage. It maintains
 	not only a few distinct pieces of data but also a collection of
@@ -257,7 +257,7 @@ class User(Principal):
 	mime_type = 'application/vnd.nextthought.user'
 
 	@classmethod
-	def get_user( cls, username, dataserver=None, default=None ):
+	def get_user(cls, username, dataserver=None, default=None):
 		"""
 		Returns the User having ``username``, else None.
 
@@ -266,20 +266,20 @@ class User(Principal):
 			behave like a :mod:`zope.interface` cast. Note that it is this specific
 			class, not :class:`User` in general.
 		"""
-		if isinstance( username, cls ):
+		if isinstance(username, cls):
 			return username
-		result = cls.get_entity( username, dataserver=dataserver, default=default ) if username else None
-		return result if isinstance( result, User ) else default # but this instance check is the base class
+		result = cls.get_entity(username, dataserver=dataserver, default=default) if username else None
+		return result if isinstance(result, User) else default  # but this instance check is the base class
 
 	@classmethod
-	def create_user( cls, dataserver=None, **kwargs ):
+	def create_user(cls, dataserver=None, **kwargs):
 		"""
 		Creates (and returns) and places in the dataserver a new user,
 		constructed using the keyword arguments given, the same as
 		those the User constructor takes. Raises a :class:`KeyError`
 		if the user already exists. You handle the transaction.
 		"""
-		return cls.create_entity( dataserver=dataserver, **kwargs )
+		return cls.create_entity(dataserver=dataserver, **kwargs)
 
 	delete_user = Principal.delete_entity
 
@@ -289,26 +289,26 @@ class User(Principal):
 	# As a dictionary with keys 'add' and 'remove', mapping to lists
 
 	@classmethod
-	def _resolve_entities( cls, dataserver, external_object, value ):
+	def _resolve_entities(cls, dataserver, external_object, value):
 		result = []
-		if isinstance( value, basestring ):
-			result = cls.get_entity( value, dataserver=dataserver )
-		elif isinstance( value, collections.Sequence ):
+		if isinstance(value, basestring):
+			result = cls.get_entity(value, dataserver=dataserver)
+		elif isinstance(value, collections.Sequence):
 			# A list of names or externalized-entity maps
 			result = []
 			for username in value:
 				if isinstance(username, collections.Mapping):
-					username = username.get( 'Username' )
-				entity = cls.get_entity( username, dataserver=dataserver )
-				if entity: result.append( entity )
-		elif isinstance( value, collections.Mapping ):
-			if value.get( 'add' ) or value.get( 'remove' ):
+					username = username.get('Username')
+				entity = cls.get_entity(username, dataserver=dataserver)
+				if entity: result.append(entity)
+		elif isinstance(value, collections.Mapping):
+			if value.get('add') or value.get('remove'):
 				# Specified edits
-				result = { 'add': cls._resolve_entities( dataserver, external_object, value.get( 'add' ) ),
-						   'remove': cls._resolve_entities( dataserver, external_object, value.get( 'remove' ) ) }
+				result = { 'add': cls._resolve_entities(dataserver, external_object, value.get('add')),
+						   'remove': cls._resolve_entities(dataserver, external_object, value.get('remove')) }
 			else:
 				# a single externalized entity map
-				result = cls.get_entity( value.get( 'Username' ), dataserver=dataserver )
+				result = cls.get_entity(value.get('Username'), dataserver=dataserver)
 
 		return result
 
@@ -320,7 +320,7 @@ class User(Principal):
 	lastLoginTime = minmax.NumericPropertyDefaultingToZero(b'lastLoginTime', minmax.NumericMaximum, as_number=True)
 	# ...although, pending a more sophisticated notification tracking
 	# mechanism, we are allowing notification count to be set...
-	notificationCount = minmax.NumericPropertyDefaultingToZero( b'notificationCount', minmax.MergingCounter )
+	notificationCount = minmax.NumericPropertyDefaultingToZero(b'notificationCount', minmax.MergingCounter)
 
 	# TODO: If no AvatarURL is set when externalizing,
 	# send back a gravatar URL for the primary email:
@@ -329,24 +329,26 @@ class User(Principal):
 	def __init__(self, username, password=None,
 
 				 parent=None, _stack_adjust=0):
-		super(User,self).__init__(username, password=password,
+		super(User, self).__init__(username, password=password,
 								  parent=parent)
-		IUser['username'].bind(self).validate( self.username )
+		IUser['username'].bind(self).validate(self.username)
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
 
-		if self.__parent__ is None and component.queryUtility( zope.intid.IIntIds ) is not None:
-			warnings.warn( "No parent provided. User will have no Everyone list or Community; either use User.create_user or provide parent kwarg",
-						   stacklevel=(2 if type(self) == User else 3) + _stack_adjust )
+		if self.__parent__ is None and component.queryUtility(IIntIds) is not None:
+			warnings.warn(
+				"No parent provided. User will have no Everyone list or Community; "
+				"either use User.create_user or provide parent kwarg",
+				stacklevel=(2 if type(self) == User else 3) + _stack_adjust)
 
 		self.friendsLists = _FriendsListMap()
 		self.friendsLists.__parent__ = self
 
 		# Join our default community
 		if self.__parent__:
-			everyone = self.__parent__.get( Everyone._realname )
+			everyone = self.__parent__.get(Everyone._realname)
 			if everyone:
-				self.record_dynamic_membership( everyone )
+				self.record_dynamic_membership(everyone)
 
 		# We maintain a list of devices associated with this user
 		# TODO: Want a persistent set?
@@ -366,7 +368,7 @@ class User(Principal):
 														  containers={self.friendsLists.container_name: self.friendsLists,
 																	  self.devices.container_name: self.devices })
 		self.containers.__parent__ = self
-		self.containers.__name__ = '' # TODO: This is almost certainly wrong. We hack around it
+		self.containers.__name__ = ''  # TODO: This is almost certainly wrong. We hack around it
 
 	def __setstate__(self, data):
 		# Old objects might have a 'stream' of none? For no particular
@@ -382,7 +384,7 @@ class User(Principal):
 		return self
 
 	@creator.setter
-	def creator( self, other ):
+	def creator(self, other):
 		""" Ignored. """
 		return
 
@@ -395,18 +397,18 @@ class User(Principal):
 	def update_last_login_time(self):
 		self.lastLoginTime = time.time()
 
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		#with self._NoChangeBroadcast( self ):
-		super(User,self).updateFromExternalObject( parsed, *args, **kwargs )
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		# with self._NoChangeBroadcast( self ):
+		super(User, self).updateFromExternalObject(parsed, *args, **kwargs)
 		updated = None
-		lastLoginTime = parsed.pop( 'lastLoginTime', None )
-		if isinstance( lastLoginTime, numbers.Number ) and self.lastLoginTime < lastLoginTime:
+		lastLoginTime = parsed.pop('lastLoginTime', None)
+		if isinstance(lastLoginTime, numbers.Number) and self.lastLoginTime < lastLoginTime:
 			self.lastLoginTime = lastLoginTime
-			self.notificationCount = 0 # reset to zero. Note that we don't del the property to keep the same persistent object object
+			self.notificationCount = 0  # reset to zero. Note that we don't del the property to keep the same persistent object object
 			updated = True
 
-		notificationCount = parsed.pop( 'NotificationCount', None )
-		if isinstance( notificationCount, numbers.Number ):
+		notificationCount = parsed.pop('NotificationCount', None)
+		if isinstance(notificationCount, numbers.Number):
 			self.notificationCount = notificationCount
 			updated = True
 
@@ -416,14 +418,14 @@ class User(Principal):
 				# To change an existing password, you must send the old
 				# password (The default, empty string, is never a valid password and lets
 				# us produce better error messages then having no default)
-				old_pw = parsed.pop( 'old_password', '' )
+				old_pw = parsed.pop('old_password', '')
 				# And it must match
-				if not self.password.checkPassword( old_pw ):
+				if not self.password.checkPassword(old_pw):
 					raise OldPasswordDoesNotMatchCurrentPassword()
-			password = parsed.pop( 'password' )
+			password = parsed.pop('password')
 			# TODO: Names/sites for these? That are distinct from the containment structure?
-			component.getUtility( pwd_interfaces.IPasswordUtility ).verify( password, old_pw )
-			self.password = password # NOTE: This re-verifies
+			component.getUtility(pwd_interfaces.IPasswordUtility).verify(password, old_pw)
+			self.password = password  # NOTE: This re-verifies
 			updated = True
 
 		# Muting/Unmuting conversations. Notice that we only allow
@@ -434,39 +436,39 @@ class User(Principal):
 		# only available /immediately/ after muting it, as an 'Undo' action (like in
 		# gmail). Our muted conversations still show up in search results, as in gmail.
 		if 'mute_conversation' in parsed:
-			self.mute_conversation( parsed.pop( 'mute_conversation' ) )
+			self.mute_conversation(parsed.pop('mute_conversation'))
 			updated = True
 		elif 'unmute_conversation' in parsed:
-			self.unmute_conversation( parsed.pop( 'unmute_conversation' ) )
+			self.unmute_conversation(parsed.pop('unmute_conversation'))
 			updated = True
 
 		# See notes on how ignoring and accepting values may arrive.
-		def handle_ext( reset, add, value ):
+		def handle_ext(reset, add, value):
 			if value:
 				updated = True
 				for x in value:
-					reset( x )
-					add( x )
+					reset(x)
+					add(x)
 
-		def set_from_input( field, existing, remove ):
+		def set_from_input(field, existing, remove):
 			"""
 			Get our set from input. For targeted removes, go
 			ahead and remove.
 			"""
-			value = parsed.pop( field, None )
+			value = parsed.pop(field, None)
 			result = None
-			if isinstance( value, collections.Sequence ):
-				result = set( value )
-			elif isinstance( value, collections.Mapping ):
-				result = set( existing )
-				for x in (value.get( 'add' ) or ()):
-					result.add( x )
-				for x in (value.get( 'remove') or () ):
+			if isinstance(value, collections.Sequence):
+				result = set(value)
+			elif isinstance(value, collections.Mapping):
+				result = set(existing)
+				for x in (value.get('add') or ()):
+					result.add(x)
+				for x in (value.get('remove') or ()):
 					updated = True
-					result.discard( x )
-					remove( x )
+					result.discard(x)
+					remove(x)
 			elif value is not None:
-				result = set( (value,) )
+				result = set((value,))
 			return result or set()
 
 		# Allow targeted add/removals for ignoring/accepting. With this
@@ -474,36 +476,36 @@ class User(Principal):
 		# accept from them if they exist in both arrays).  We get our
 		# incoming set (and remove specified drops) and then do any
 		# new ignores or accepts.
-		old_ignore = set( self.entities_ignoring_shared_data_from )
+		old_ignore = set(self.entities_ignoring_shared_data_from)
 		ignoring = set_from_input('ignoring', old_ignore, self.stop_ignoring_shared_data_from)
 		ignoring_diff = ignoring - old_ignore
-		handle_ext( self.reset_shared_data_from,
+		handle_ext(self.reset_shared_data_from,
 					self.ignore_shared_data_from,
-					ignoring_diff )
+					ignoring_diff)
 
-		old_accept = set( self.entities_accepting_shared_data_from )
+		old_accept = set(self.entities_accepting_shared_data_from)
 		accepting = set_from_input('accepting', old_accept, self.stop_accepting_shared_data_from)
 		accepting_diff = accepting - old_accept
-		handle_ext( self.reset_shared_data_from,
+		handle_ext(self.reset_shared_data_from,
 					self.accept_shared_data_from,
-					accepting_diff )
+					accepting_diff)
 		return updated
 
-	### Sharing
+	# ## Sharing
 
-	def _get_dynamic_sharing_targets_for_read( self ):
+	def _get_dynamic_sharing_targets_for_read(self):
 		"""
 		Overrides the super method to return both the communities we are a
 		member of, plus the friends lists we ourselves have created that are dynamic.
 		"""
-		result = set( super(User,self)._get_dynamic_sharing_targets_for_read() )
+		result = set(super(User, self)._get_dynamic_sharing_targets_for_read())
 		for fl in self.friendsLists.values():
-			if IDynamicSharingTarget.providedBy( fl ):
-				result.add( fl )
+			if IDynamicSharingTarget.providedBy(fl):
+				result.add(fl)
 		return result
 
-	def _get_entities_followed_for_read( self ):
-		return set( super(User,self)._get_entities_followed_for_read() )
+	def _get_entities_followed_for_read(self):
+		return set(super(User, self)._get_entities_followed_for_read())
 
 	@Lazy
 	def _circled_events_storage(self):
@@ -528,15 +530,15 @@ class User(Principal):
 		result.__parent__ = self
 		return result
 
-	def accept_shared_data_from( self, source ):
+	def accept_shared_data_from(self, source):
 		""" Accepts if not ignored; auto-follows as well.
 		:return: A truth value. If this was the initial add, it will be the Change.
 			If the source is ignored, it will be False."""
 
-		if self.is_ignoring_shared_data_from( source ):
+		if self.is_ignoring_shared_data_from(source):
 			return False
-		already_accepting = super(User,self).is_accepting_shared_data_from( source )
-		if super(User,self).accept_shared_data_from( source ):
+		already_accepting = super(User, self).is_accepting_shared_data_from(source)
+		if super(User, self).accept_shared_data_from(source):
 			if already_accepting:
 				# No change
 				return True
@@ -544,7 +546,7 @@ class User(Principal):
 			# Broadcast a change for the first time we're circled by this person
 			# TODO: Do we need to implement a limbo state, pending acceptance
 			# by the person?
-			change = Change( Change.CIRCLED, source )
+			change = Change(Change.CIRCLED, source)
 			change.creator = source
 			# Not anchored, show at root and below. This overrides
 			# the containerId gained from the source.
@@ -553,50 +555,50 @@ class User(Principal):
 			# to be us so we can treat this object like one of our sublocations
 			change.__parent__ = self
 			assert change.__name__ == source.username
-			change.useSummaryExternalObject = True # Don't send the whole user
+			change.useSummaryExternalObject = True  # Don't send the whole user
 
 			# Now that it's all configured, store it, give it an intid, and let
 			# it get indexed. Let listeners do things do it (e.g., notabledata).
 			# We still keep ownership though (its parent is set to us)...
 			# it's important to do this before going through _noticeChange, which will
 			# further disseminate this event
-			self._circled_events_storage.append( change )
-			lifecycleevent.created( change )
-			lifecycleevent.added( change )
+			self._circled_events_storage.append(change)
+			lifecycleevent.created(change)
+			lifecycleevent.added(change)
 
 			# Bypass the whole mess of broadcasting and going through the DS and change listeners,
 			# and just notice the incoming change.
 			# TODO: Clean this up, go back to event based.
-			self._noticeChange( change )
+			self._noticeChange(change)
 
-			return change # which is both True and useful
+			return change  # which is both True and useful
 
-	def is_accepting_shared_data_from( self, source ):
+	def is_accepting_shared_data_from(self, source):
 		""" We say we're accepting so long as we're not ignoring. """
 		# TODO: the 'incoming' group discussed in super will obsolete this
-		return not self.is_ignoring_shared_data_from( source )
+		return not self.is_ignoring_shared_data_from(source)
 
-	def getFriendsList( self, name ):
+	def getFriendsList(self, name):
 		""" Returns the friends list having the given name, otherwise
 		returns None. """
-		return self.friendsLists.get( name )
+		return self.friendsLists.get(name)
 
-	def getFriendsLists( self, name=None ):
+	def getFriendsLists(self, name=None):
 		""" Returns all the friends lists"""
 		return tuple(self.friendsLists.values())
 
-	def maybeCreateContainedObjectWithType( self, datatype, externalValue ):
-		if datatype in ( self.devices.container_name, Device.mimeType ):
+	def maybeCreateContainedObjectWithType(self, datatype, externalValue):
+		if datatype in (self.devices.container_name, Device.mimeType):
 			result = Device(externalValue)
 		else:
 			# FIXME: This is a hack to translate mimetypes to the old
 			# style of name that works with self.containers
-			if datatype in ( FriendsList.mimeType, DynamicFriendsList.mimeType ):
+			if datatype in (FriendsList.mimeType, DynamicFriendsList.mimeType):
 				datatype = self.friendsLists.container_name
-			result = self.containers.maybeCreateContainedObjectWithType( datatype, externalValue )
+			result = self.containers.maybeCreateContainedObjectWithType(datatype, externalValue)
 		return result
 
-	def addContainedObject( self, contained ):
+	def addContainedObject(self, contained):
 		# Must make sure it has a connection so it can generate
 		# a OID/ID. We must use our connection, rather than
 		# our storage's connection because if we were created
@@ -607,20 +609,20 @@ class User(Principal):
 		# TODO: This should not be needed anymore as
 		# intid listeners, etc, adapt to IKeyReference which adapts to IConnection
 		# which walks the containment tree
-		if getattr( contained, '_p_jar', self ) is None \
-			and getattr( self, '_p_jar' ) is not None:
-			self._p_jar.add( contained )
+		if getattr(contained, '_p_jar', self) is None \
+			and getattr(self, '_p_jar') is not None:
+			self._p_jar.add(contained)
 
-		result = self.containers.addContainedObject( contained )
+		result = self.containers.addContainedObject(contained)
 		return result
 
-	def deleteContainedObject( self, containerId, containedId ):
+	def deleteContainedObject(self, containerId, containedId):
 		try:
 			self.containers._p_activate()
-			self.containers._p_jar.readCurrent( self.containers )
+			self.containers._p_jar.readCurrent(self.containers)
 		except AttributeError:
 			pass
-		return self.containers.deleteContainedObject( containerId, containedId )
+		return self.containers.deleteContainedObject(containerId, containedId)
 
 	# TODO: Could/Should we use proxy objects to automate
 	# the update process? Allowing updates directly to deep objects?
@@ -628,16 +630,16 @@ class User(Principal):
 	# and if any of them belong to us posting a notification? (That seems
 	# convenient but a poor separation of concerns)
 
-	def getContainedObject( self, containerId, containedId, defaultValue=None ):
-		if containerId == self.containerId: # "Users"
+	def getContainedObject(self, containerId, containedId, defaultValue=None):
+		if containerId == self.containerId:  # "Users"
 			return self
-		return self.containers.getContainedObject( containerId, containedId, defaultValue )
+		return self.containers.getContainedObject(containerId, containedId, defaultValue)
 
-	def getContainer( self, containerId, defaultValue=None, context_cache=None ):
-		stored_value = self.containers.getContainer( containerId, defaultValue )
+	def getContainer(self, containerId, defaultValue=None, context_cache=None):
+		stored_value = self.containers.getContainer(containerId, defaultValue)
 		return stored_value
 
-	def getAllContainers( self ):
+	def getAllContainers(self):
 		""" Returns all containers, as a map from containerId to container.
 		The returned value *MUST NOT* be modified."""
 		return self.containers.containers
@@ -654,15 +656,15 @@ class User(Principal):
 		"""
 		# We could simply return getAllContainers().values() and let findObjectsProviding
 		# deal with the traversal, but this way is a tad more general
-		if interface.interfaces.IInterface.providedBy( of_type ):
+		if interface.interfaces.IInterface.providedBy(of_type):
 			test = of_type.providedBy
 		elif isinstance(of_type, six.class_types):
-			test = lambda x: isinstance( x, of_type )
+			test = lambda x: isinstance(x, of_type)
 		else:
 			test = lambda x: True
 
 		for container in self.getAllContainers().values():
-			if not hasattr( container, 'values' ): continue
+			if not hasattr(container, 'values'): continue
 			for o in container.values():
 				if test(o):
 					yield o
@@ -689,7 +691,7 @@ class User(Principal):
 		# Now anything else in containers that we put there that is actually
 		# a child of us (this includes self.friendsLists and self.devices)
 		for v in self.containers.itervalues():
-			if getattr( v, '__parent__', None ) is self:
+			if getattr(v, '__parent__', None) is self:
 				yield v
 
 		# Now our circled events, these need to get deleted/indexed etc
@@ -708,25 +710,25 @@ class User(Principal):
 		#### TODO: But what does turning this off break? Certain migration patterns?
 		#### Or does it break deleting a user? Chat message storage winds up with
 		#### too many objects still with intids?
-		#annotations = zope.annotation.interfaces.IAnnotations(self, {})
+		# annotations = zope.annotation.interfaces.IAnnotations(self, {})
 
 		# Technically, IAnnotations doesn't have to be iterable of values,
 		# but it always is (see zope.annotation.attribute)
-		#for val in annotations.values():
-		#	if getattr( val, '__parent__', None ) is self:
-		#		yield val
+		# for val in annotations.values():
+		# 	if getattr( val, '__parent__', None ) is self:
+		# 		yield val
 
-	def _is_container_ntiid( self, containerId ):
+	def _is_container_ntiid(self, containerId):
 		"""
 		Filters out things that are not used as NTIIDs. In the future,
 		this will be easy (as soon as everything is tag-based). Until then,
 		we rely on the fact that all our custom keys are upper cased.
 		"""
 		return len(containerId) > 1 and \
-			   (containerId.startswith( 'tag:nextthought.com' )
+			   (containerId.startswith('tag:nextthought.com')
 				or containerId[0].islower())
 
-	def iterntiids( self, include_stream=True, stream_only=False ):
+	def iterntiids(self, include_stream=True, stream_only=False):
 		"""
 		Returns an iterable across the NTIIDs that are relevant to this user.
 		"""
@@ -737,40 +739,40 @@ class User(Principal):
 		if not stream_only:
 			for k in self.containers:
 				if self._is_container_ntiid(k) and k not in seen:
-					seen.add( k )
+					seen.add(k)
 					yield k
 
 			for k in self.containersOfShared:
 				if self._is_container_ntiid(k) and k not in seen:
-					seen.add( k )
+					seen.add(k)
 					yield k
 		if include_stream:
 			for k in self.streamCache:
 				if self._is_container_ntiid(k) and k not in seen:
-					seen.add( k )
+					seen.add(k)
 					yield k
 
 		fl_set = {x for x in self.friendsLists.values() if IDynamicSharingTarget.providedBy(x)}
 		interesting_dynamic_things = set(self.dynamic_memberships) | fl_set
 		for com in interesting_dynamic_things:
-			if not stream_only and hasattr( com, 'containersOfShared' ):
+			if not stream_only and hasattr(com, 'containersOfShared'):
 				for k in com.containersOfShared:
-					if self._is_container_ntiid( k ) and k not in seen:
-						seen.add( k )
+					if self._is_container_ntiid(k) and k not in seen:
+						seen.add(k)
 						yield k
-			if include_stream and hasattr( com, 'streamCache' ):
+			if include_stream and hasattr(com, 'streamCache'):
 				for k in com.streamCache:
-					if self._is_container_ntiid( k ) and k not in seen:
-						seen.add( k )
+					if self._is_container_ntiid(k) and k not in seen:
+						seen.add(k)
 						yield k
 
-	def itercontainers( self ):
+	def itercontainers(self):
 		# TODO: Not sure about this. Who should be responsible for
 		# the UGD containers? Should we have some different layout
 		# for that (probably).
 		return (v
 				for v in self.containers.containers.itervalues()
-				if INamedContainer.providedBy( v ) )
+				if INamedContainer.providedBy(v))
 
 	def iter_objects(self, include_stream=True, stream_only=False,
 					 include_shared=False, only_ntiid_containers=False):
@@ -805,22 +807,22 @@ class User(Principal):
 
 			interesting_dynamic_things = set(self.dynamic_memberships) | fl_set
 			for com in interesting_dynamic_things:
-				if not stream_only and hasattr( com, 'containersOfShared' ):
+				if not stream_only and hasattr(com, 'containersOfShared'):
 					for name, container in com.containersOfShared.items():
-						if not only_ntiid_containers or self._is_container_ntiid( name ):
+						if not only_ntiid_containers or self._is_container_ntiid(name):
 							for obj in _loop(container, False):
 								yield obj
 
-				if include_stream and hasattr( com, 'streamCache' ):
+				if include_stream and hasattr(com, 'streamCache'):
 					for name, container in com.streamCache.iteritems():
-						if not only_ntiid_containers or self._is_container_ntiid( name ):
+						if not only_ntiid_containers or self._is_container_ntiid(name):
 							for obj in _loop(container, False):
 								yield obj
 
 	def iter_intids(self, include_stream=True, stream_only=False,
 					include_shared=False, only_ntiid_containers=False):
 		seen = set()
-		intid = component.getUtility( zope.intid.IIntIds )
+		intid = component.getUtility(IIntIds)
 		for obj in self.iter_objects(include_stream=include_stream,
 									 stream_only=stream_only,
 									 include_shared=include_shared,
@@ -831,7 +833,7 @@ class User(Principal):
 					seen.add(uid)
 					yield uid
 
-	def updates( self ):
+	def updates(self):
 		"""
 		This is officially deprecated now.
 
@@ -839,13 +841,13 @@ class User(Principal):
 		"""
 		return _NOOPCM
 
-	def _acceptIncomingChange( self, change, direct=True ):
-		accepted = super(User,self)._acceptIncomingChange( change, direct=direct )
+	def _acceptIncomingChange(self, change, direct=True):
+		accepted = super(User, self)._acceptIncomingChange(change, direct=direct)
 		if accepted:
 			self.notificationCount.increment()
-			self._broadcastIncomingChange( change )
+			self._broadcastIncomingChange(change)
 
-	def _broadcastIncomingChange( self, change ):
+	def _broadcastIncomingChange(self, change):
 		"""
 		Distribute the incoming change to any connected devices/sessions.
 		This is an extension point for layers.
@@ -856,7 +858,7 @@ class User(Principal):
 		# being registered.
 		if not apnsCon:
 			if self.devices:
-				logger.warn( "No APNS connection, not broadcasting change" )
+				logger.warn("No APNS connection, not broadcasting change")
 			return
 		if self.devices:
 			from nti.apns.payload import APNSPayload
@@ -865,22 +867,22 @@ class User(Principal):
 			if change.containerId:
 				# Valid NTIIDs are also valid URLs; this
 				# condition is mostly for legacy code (tests)
-				if ntiids.is_valid_ntiid_string( change.containerId ):
+				if ntiids.is_valid_ntiid_string(change.containerId):
 					userInfo = {'url:': change.containerId }
 
-			payload = APNSPayload( badge=self.notificationCount.value,
+			payload = APNSPayload(badge=self.notificationCount.value,
 								   sound='default',
 								   # TODO: I18N text for this
-								   alert='An object was shared with you', #change.creator.preferredDisplayName + ' shared an object',
-								   userInfo=userInfo )
+								   alert='An object was shared with you',  # change.creator.preferredDisplayName + ' shared an object',
+								   userInfo=userInfo)
 			for device in self.devices.itervalues():
-				if not isinstance( device, Device ):
+				if not isinstance(device, Device):
 					continue
 				__traceback_info__ = device, payload, change
 				try:
-					apnsCon.sendNotification( device.deviceId, payload )
-				except Exception: # Big catch: this is not crucial, we shouldn't hurt anything without it
-					logger.exception("Failed to send APNS notification" )
+					apnsCon.sendNotification(device.deviceId, payload)
+				except Exception:  # Big catch: this is not crucial, we shouldn't hurt anything without it
+					logger.exception("Failed to send APNS notification")
 
 	def _xxx_extra_intids_of_memberships(self):
 		# We want things shared with the DFLs we own to be counted
@@ -897,67 +899,67 @@ class User(Principal):
 # be 'User' as well.
 # TODO: MimeTypes?
 
-@interface.implementer( IOpenIdUser )
+@interface.implementer(IOpenIdUser)
 class OpenIdUser(User):
 	__external_class_name__ = 'User'
 
 	identity_url = None
 
-	def __init__(self, username, **kwargs ):
-		id_url = kwargs.pop( 'identity_url', None)
-		super(OpenIdUser,self).__init__(username,**kwargs)
+	def __init__(self, username, **kwargs):
+		id_url = kwargs.pop('identity_url', None)
+		super(OpenIdUser, self).__init__(username, **kwargs)
 		if id_url:
 			self.identity_url = id_url
 
-@interface.implementer( IFacebookUser )
+@interface.implementer(IFacebookUser)
 class FacebookUser(User):
 	__external_class_name__ = 'User'
 	facebook_url = None
 
-	def __init__(self, username, **kwargs ):
-		id_url = kwargs.pop( 'facebook_url', None)
-		super(FacebookUser,self).__init__(username,**kwargs)
+	def __init__(self, username, **kwargs):
+		id_url = kwargs.pop('facebook_url', None)
+		super(FacebookUser, self).__init__(username, **kwargs)
 		if id_url:
 			self.facebook_url = id_url
 
 @component.adapter(apns_interfaces.IDeviceFeedbackEvent)
-def user_devicefeedback( msg ):
+def user_devicefeedback(msg):
 	def feedback():
 		deviceId = msg.deviceId
-		hexDeviceId = deviceId.encode( 'hex' )
+		hexDeviceId = deviceId.encode('hex')
 		# TODO: Very inefficient
 		# Switch this to ZCatalog/repoze.catalog
 		if msg.timestamp < 0: return
 		datasvr = get_shared_dataserver()
-		logger.debug( 'Searching for device %s', hexDeviceId )
-		for user in (u for u in datasvr.root['users'].itervalues() if isinstance(u,User)):
+		logger.debug('Searching for device %s', hexDeviceId)
+		for user in (u for u in datasvr.root['users'].itervalues() if isinstance(u, User)):
 			if hexDeviceId in user.devices:
-				logger.debug( 'Found device id %s in user %s', hexDeviceId, user )
+				logger.debug('Found device id %s in user %s', hexDeviceId, user)
 				del user.devices[hexDeviceId]
 
 	# Be sure we run in the right site and transaction.
 	# Our usual caller is in nti.apns and knows nothing about that.
 	# NOTE: We are not using a site policy here so the listener is limited
-	if IConnection( component.getSiteManager(), None ):
+	if IConnection(component.getSiteManager(), None):
 		feedback()
 	else:
-		component.getUtility( IDataserverTransactionRunner )( feedback )
+		component.getUtility(IDataserverTransactionRunner)(feedback)
 
 @component.adapter(ITargetedStreamChangeEvent)
-def onChange( event ):
+def onChange(event):
 	entity = event.entity
 	msg = event.object
 	if hasattr(entity, '_noticeChange'):
 		try:
 			entity._p_activate()
-			entity._p_jar.readCurrent( entity )
+			entity._p_jar.readCurrent(entity)
 		except AttributeError:
 			pass
-		entity._noticeChange( msg )
+		entity._noticeChange(msg)
 
 @interface.implementer(IZContained)
 @interface.implementer(IUserBlacklistedStorage)
-class UserBlacklistedStorage( Persistent ):
+class UserBlacklistedStorage(Persistent):
 	"""
 	Stores deleted/blacklisted usernames case-insensitively in a btree
 	to their int-encoded delete times.
@@ -970,12 +972,12 @@ class UserBlacklistedStorage( Persistent ):
 		return user.username.lower()
 
 	def blacklist_user(self, user):
-		user_key = self._get_user_key( user )
+		user_key = self._get_user_key(user)
 		now = time.time()
 		self._storage[user_key] = time_to_64bit_int(now)
 
 	def is_user_blacklisted(self, user):
-		user_key = self._get_user_key( user )
+		user_key = self._get_user_key(user)
 		return user_key in self._storage
 
 	def remove_blacklist_for_user(self, username):
@@ -988,16 +990,16 @@ class UserBlacklistedStorage( Persistent ):
 		return result
 
 	def __iter__(self):
-		return iter( self._storage.items() )
+		return iter(self._storage.items())
 
 	def __len__(self):
-		return len( self._storage )
+		return len(self._storage)
 
 @component.adapter(IUser, IObjectRemovedEvent)
 def _blacklist_username(user, event):
 	username = user.username
 	if 	not IRecreatableUser.providedBy(user) and \
 		not username.lower().endswith('@nextthought.com'):
-		user_blacklist = component.getUtility( IUserBlacklistedStorage )
+		user_blacklist = component.getUtility(IUserBlacklistedStorage)
 		user_blacklist.blacklist_user(user)
 		logger.info("Black-listing username %s", username)

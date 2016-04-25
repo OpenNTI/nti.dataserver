@@ -11,8 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import operator
 
-from zc import intid as zc_intid
-
 from zope import component
 from zope import interface
 
@@ -22,12 +20,27 @@ from zope.container.contained import ContainerModifiedEvent
 
 from zope.event import notify
 
+from zope.intid.interfaces import IIntIds
+
 from BTrees.OOBTree import OOTreeSet
 from BTrees.OOBTree import difference as OOBTree_difference
 from BTrees.OOBTree import intersection as OOBTree_intersection
 
 from nti.common.property import alias
 from nti.common.property import CachedProperty
+
+from nti.dataserver.interfaces import IHTC_NEW_FACTORY
+
+from nti.dataserver.interfaces import IFriendsList
+from nti.dataserver.interfaces import IUsernameIterable
+from nti.dataserver.interfaces import IFriendsListContainer
+from nti.dataserver.interfaces import ISimpleEnclosureContainer
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+from nti.dataserver.interfaces import ISharingTargetEnumerableIntIdEntityContainer
+
+from nti.dataserver.enclosures import SimpleEnclosureMixin
+
+from nti.dataserver.users.entity import Entity
 
 from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
@@ -37,19 +50,6 @@ from nti.ntiids.ntiids import escape_provider
 from nti.ntiids.ntiids import TYPE_MEETINGROOM_GROUP
 
 from nti.wref.interfaces import IWeakRef
-
-from ..interfaces import IHTC_NEW_FACTORY
-
-from ..interfaces import IFriendsList
-from ..interfaces import IUsernameIterable
-from ..interfaces import IFriendsListContainer
-from ..interfaces import ISimpleEnclosureContainer
-from ..interfaces import IDynamicSharingTargetFriendsList
-from ..interfaces import ISharingTargetEnumerableIntIdEntityContainer
-
-from ..enclosures import SimpleEnclosureMixin
-
-from .entity import Entity
 
 _marker = object()
 
@@ -354,7 +354,7 @@ class _FriendsListEntityIterable(object):
 	def iter_intids(self):
 		return self.context.iter_intids()
 
-from ..sharing import DynamicSharingTargetMixin
+from nti.dataserver.sharing import DynamicSharingTargetMixin
 
 @interface.implementer(IDynamicSharingTargetFriendsList)
 class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matters
@@ -460,8 +460,6 @@ class _DynamicFriendsListUsernameIterable(_FriendsListUsernameIterable):
 		names.add(self.context.creator.username)
 		return iter(names)
 
-from zope.intid.interfaces import IIntIds
-
 @component.adapter(IDynamicSharingTargetFriendsList)
 class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 	"""
@@ -501,7 +499,7 @@ class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 		if self.context.creator:
 			yield self.context.creator.username
 
-from ..datastructures import AbstractCaseInsensitiveNamedLastModifiedBTreeContainer
+from nti.dataserver.datastructures import AbstractCaseInsensitiveNamedLastModifiedBTreeContainer
 
 @interface.implementer(IFriendsListContainer)
 class _FriendsListMap(AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
@@ -527,7 +525,7 @@ class _FriendsListMap(AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
 		# To allow these to be updated and add members during creation, they must be able
 		# to be weak ref'd, which means they must have intid
 		try:
-			component.getUtility(zc_intid.IIntIds).register(result)
+			component.getUtility(IIntIds).register(result)
 		except component.ComponentLookupError:
 			pass  # unittest cases
 		return result

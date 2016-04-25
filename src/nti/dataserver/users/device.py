@@ -16,19 +16,19 @@ from zope import interface
 
 from zope.component.factory import Factory
 
+from nti.dataserver.interfaces import IDevice
+from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import IDeviceContainer
+from nti.dataserver.interfaces import IHTC_NEW_FACTORY
+
+from nti.dataserver.datastructures import AbstractNamedLastModifiedBTreeContainer
+
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
 
 from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
-
-from ..interfaces import IDevice
-from ..interfaces import IZContained
-from ..interfaces import IDeviceContainer
-from ..interfaces import IHTC_NEW_FACTORY
-
-from ..datastructures import AbstractNamedLastModifiedBTreeContainer
 
 @functools.total_ordering
 @interface.implementer(IDevice, IZContained)

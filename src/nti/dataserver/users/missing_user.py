@@ -12,8 +12,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 from zope import interface
 
 from zope.annotation.interfaces import IAttributeAnnotatable
@@ -23,6 +21,9 @@ from nti.common import create_gravatar_url
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IMissingUser
 from nti.dataserver.interfaces import IMissingEntity
+
+from nti.dataserver.users import MessageFactory as _
+
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.zodb import minmax

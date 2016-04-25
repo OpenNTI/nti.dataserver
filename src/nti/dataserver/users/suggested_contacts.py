@@ -24,17 +24,17 @@ from nti.dataserver.interfaces import IEntityContainer
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 
 from nti.dataserver.users import User
+from nti.dataserver.users.interfaces import ISuggestedContact
+from nti.dataserver.users.interfaces import ISuggestedContactsProvider
+from nti.dataserver.users.interfaces import ISuggestedContactRankingPolicy
+from nti.dataserver.users.interfaces import ISecondOrderSuggestedContactProvider
 
 from nti.externalization.representation import WithRepr
 
-from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from .interfaces import ISuggestedContact
-from .interfaces import ISuggestedContactsProvider
-from .interfaces import ISuggestedContactRankingPolicy
-from .interfaces import ISecondOrderSuggestedContactProvider
+from nti.schema.schema import EqHash
 
 @total_ordering
 @WithRepr
@@ -124,7 +124,7 @@ class _SecondOrderContactProvider(object):
 
 				# No one can see the Koppa Kids or nextthought users.
 				if 		ICoppaUserWithoutAgreement.providedBy(x) \
-					or 	username.endswith( '@nextthought.com' ):
+					or 	username.endswith('@nextthought.com'):
 					return False
 
 				# public comms can be searched
@@ -140,19 +140,19 @@ class _SecondOrderContactProvider(object):
 				# Otherwise, visible if it doesn't have dynamic memberships,
 				# or we share dynamic memberships
 				return 	not hasattr(x, 'usernames_of_dynamic_memberships') or \
-						x.usernames_of_dynamic_memberships.intersection( user_community_names )
+						x.usernames_of_dynamic_memberships.intersection(user_community_names)
 			return test
 		return lambda _: True
 
 	def _get_contacts(self, target, accum):
-		entities_followed = getattr( target, 'entities_followed', () )
+		entities_followed = getattr(target, 'entities_followed', ())
 		for entity in entities_followed:
 			username = entity.username
 			if username in accum:
 				suggested_contact = accum[username]
 				suggested_contact.rank += 1
 			else:
-				accum[username] = SuggestedContact( username=username, rank=1 )
+				accum[username] = SuggestedContact(username=username, rank=1)
 
 	def _get_suggestions_for_user(self, user):
 		"""
@@ -161,33 +161,33 @@ class _SecondOrderContactProvider(object):
 		"""
 		accum = dict()
 		for target in user.entities_followed:
-			self._get_contacts( target, accum )
+			self._get_contacts(target, accum)
 
 		existing_pool = {e.username for e in user.entities_followed}
-		existing_pool.add( user.username )
-		contacts = self.ranking.sort( accum.values() )
+		existing_pool.add(user.username)
+		contacts = self.ranking.sort(accum.values())
 		return contacts
 
 	def suggestions(self, user, source_user=None, *args, **kwargs):
 		# Could we ever come across cross-site suggestions?
-		accept_filter = self._make_visibility_test( user )
+		accept_filter = self._make_visibility_test(user)
 		existing_pool = {e.username for e in user.entities_followed}
-		existing_pool.add( user.username )
+		existing_pool.add(user.username)
 
 		if source_user is not None and user != source_user:
 			# Ok, we want suggestions for a user based on a
 			# another user.  Add that user and her friends.
-			contacts_iter = itertools.chain( (source_user,),
-											source_user.entities_followed )
+			contacts_iter = itertools.chain((source_user,),
+											source_user.entities_followed)
 		else:
 			# Suggestions based on just our given user.
-			contacts_iter = self._get_suggestions_for_user( user )
+			contacts_iter = self._get_suggestions_for_user(user)
 
 		for contact in contacts_iter:
 			target_name = contact.username
 			if target_name not in existing_pool:
-				target = User.get_user( target_name )
+				target = User.get_user(target_name)
 
 				if 		target is not None \
-					and accept_filter( target ):
+					and accept_filter(target):
 					yield target

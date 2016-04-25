@@ -11,13 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 from collections import Mapping
 
-from zope.intid.interfaces import IIntIds
-
 from zope import component
 
 from zope.catalog.interfaces import ICatalog
 
-from zc import intid as zc_intid
+from zope.intid.interfaces import IIntIds
 
 from nti.externalization.interfaces import LocatedExternalDict
 
@@ -108,7 +106,7 @@ def remove_broken_objects(user, include_containers=True, include_stream=True,
 		Returns an iterable across the NTIIDs that are relevant to this user.
 		"""
 
-		intids = component.queryUtility(zc_intid.IIntIds)
+		intids = component.queryUtility(IIntIds)
 		attribute = intids.attribute
 
 		result = LocatedExternalDict()

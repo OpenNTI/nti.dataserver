@@ -125,7 +125,7 @@
 			 provides=".interfaces.IAvatarURLProvider"
 			 for="nti.dataserver.interfaces.ICoppaUser" />
 
-	<!-- Fallback for KK, just in case -->
+	<!-- Fallback for Koppa Kids, just in case -->
 	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
 			 provides=".interfaces.IAvatarURLProvider"
 			 for="nti.dataserver.interfaces.ICoppaUser"

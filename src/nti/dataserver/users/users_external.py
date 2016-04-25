@@ -34,11 +34,24 @@ from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization.interfaces import IExternalObject
+from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
+
+from nti.dataserver.users.interfaces import IAvatarURL
+from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IAvatarChoices
+from nti.dataserver.users.interfaces import IBackgroundURL
+from nti.dataserver.users.interfaces import IFriendlyNamed
+from nti.dataserver.users.interfaces import ICommunityProfile
+from nti.dataserver.users.interfaces import IHiddenMembership
+from nti.dataserver.users.interfaces import IRestrictedUserProfile
+
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import decorate_external_mapping
 from nti.externalization.externalization import to_standard_external_dictionary
+
+from nti.externalization.interfaces import IExternalObject
+
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.links.links import Link
 
@@ -47,16 +60,6 @@ from nti.schema.interfaces import find_most_derived_interface
 from nti.site.interfaces import InappropriateSiteError
 
 from nti.zodb import urlproperty
-
-from .interfaces import IAvatarURL
-from .interfaces import IUserProfile
-from .interfaces import IAvatarChoices
-from .interfaces import IBackgroundURL
-from .interfaces import IFriendlyNamed
-from .interfaces import TAG_HIDDEN_IN_UI
-from .interfaces import ICommunityProfile
-from .interfaces import IHiddenMembership
-from .interfaces import IRestrictedUserProfile
 
 def _image_url(entity, avatar_iface, attr_name, view_name):
 	"""
@@ -206,7 +209,7 @@ class _CommunityExternalObject(_EntityExternalObject):
 		entity = self.entity
 		most_derived_profile_iface = find_most_derived_interface(entity, ICommunityProfile)
 		# Adapt to our profile
-		entity = most_derived_profile_iface( entity )
+		entity = most_derived_profile_iface(entity)
 		for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
 			if 	   name in result \
 				or field.queryTaggedValue(TAG_HIDDEN_IN_UI) \
@@ -279,7 +282,7 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 	public_summary_profile_fields = ('affiliation', 'home_page', 'description',
 									 'location', 'role', 'about', 'twitter',
 									 'facebook', 'googlePlus', 'linkedIn',
-									 'education', 'positions', 'interests' )
+									 'education', 'positions', 'interests')
 
 	# These could probably be put as tags on the interface fields, but the number of
 	# profile interfaces in use makes that a chore. At the moment, this is the simpler option
@@ -291,7 +294,7 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 			prof = IUserProfile(self.entity)
 			for f in self.public_summary_profile_fields:
 				val = getattr(prof, f, None)
-				extDict[f] = toExternalObject( val )
+				extDict[f] = toExternalObject(val)
 		return extDict
 
 @component.adapter(ICoppaUserWithoutAgreement)

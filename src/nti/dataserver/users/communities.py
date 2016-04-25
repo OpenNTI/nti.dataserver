@@ -9,15 +9,16 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zope.intid
-
 from zope import component
 from zope import interface
 
-from zope.annotation.interfaces import IAnnotations
 from zope.annotation.factory import factory as an_factory
 
+from zope.annotation.interfaces import IAnnotations
+
 from zope.cachedescriptors.property import cachedIn
+
+from zope.intid.interfaces import IIntIdRemovedEvent
 
 from zope.location.interfaces import ISublocations
 
@@ -26,40 +27,40 @@ from BTrees.OOBTree import OOTreeSet
 from nti.common.property import Lazy
 from nti.common.property import alias
 
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IEntityIntIdIterable
+from nti.dataserver.interfaces import IUnscopedGlobalCommunity
+from nti.dataserver.interfaces import IStopDynamicMembershipEvent
+from nti.dataserver.interfaces import IStartDynamicMembershipEvent
+from nti.dataserver.interfaces import ILengthEnumerableEntityContainer
+
+from nti.dataserver.sharing import DynamicSharingTargetMixin
+from nti.dataserver.sharing import _remove_entity_from_named_lazy_set_of_wrefs
+from nti.dataserver.sharing import _set_of_usernames_from_named_lazy_set_of_wrefs
+from nti.dataserver.sharing import _iterable_of_entities_from_named_lazy_set_of_wrefs
+
+from nti.dataserver.users.entity import Entity
+from nti.dataserver.users.entity import NOOPCM as _NOOPCM
+from nti.dataserver.users.entity import named_entity_ntiid
+
+from nti.dataserver.users.interfaces import IHiddenMembership
+
 from nti.ntiids.ntiids import TYPE_NAMED_ENTITY_COMMUNITY
 
 from nti.wref.interfaces import IWeakRef
 
-from ..interfaces import IUser
-from ..interfaces import ICommunity
-from ..interfaces import IEntityIntIdIterable
-from ..interfaces import IUnscopedGlobalCommunity
-from ..interfaces import IStopDynamicMembershipEvent
-from ..interfaces import IStartDynamicMembershipEvent
-from ..interfaces import ILengthEnumerableEntityContainer
-
-from ..sharing import DynamicSharingTargetMixin
-from ..sharing import _remove_entity_from_named_lazy_set_of_wrefs
-from ..sharing import _set_of_usernames_from_named_lazy_set_of_wrefs
-from ..sharing import _iterable_of_entities_from_named_lazy_set_of_wrefs
-
-from .entity import Entity
-from .entity import NOOPCM as _NOOPCM
-from .entity import named_entity_ntiid
-
-from .interfaces import IHiddenMembership
-
 @interface.implementer(ICommunity, ISublocations)
-class Community(DynamicSharingTargetMixin, Entity): # order of inheritance matters
-	
+class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matters
+
 	mimeType = mime_type = 'application/vnd.nextthought.community'
 
 	public = False
 	joinable = False
-	
+
 	Public = alias('public')
 	Joinable = alias('joinable')
-	
+
 	@classmethod
 	def create_community(cls, dataserver=None, **kwargs):
 		"""
@@ -163,7 +164,7 @@ class Community(DynamicSharingTargetMixin, Entity): # order of inheritance matte
 		if '_members' in self.__dict__:
 			for wref in self._members:
 				yield wref.username
-				
+
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		result = super(Community, self).updateFromExternalObject(parsed, *args, **kwargs)
 		if 'public' in parsed:
@@ -185,13 +186,13 @@ class Everyone(Community):
 	_alias = 'Public'
 
 	def __init__(self):
-		super(Everyone,self).__init__( self._realname )
+		super(Everyone, self).__init__(self._realname)
 
-	def __setstate__(self,state):
+	def __setstate__(self, state):
 		for k in ('_avatarURL', '_realname', 'alias'):
 			if k in state:
 				del state[k]
-		super(Everyone,self).__setstate__( state )
+		super(Everyone, self).__setstate__(state)
 
 @component.adapter(IUser, IStartDynamicMembershipEvent)
 def _add_member_to_community(entity, event):
@@ -203,7 +204,7 @@ def _remove_member_from_community(entity, event):
 	if ICommunity.providedBy(event.target) and not IUnscopedGlobalCommunity.providedBy(event.target):
 		event.target._del_member(entity)
 
-@component.adapter(ICommunity, zope.intid.interfaces.IIntIdRemovedEvent)
+@component.adapter(ICommunity, IIntIdRemovedEvent)
 def _remove_all_members_when_community_deleted(entity, event):
 	"""
 	Clean up the weak references
@@ -243,12 +244,12 @@ class CommunityEntityContainer(object):
 @component.adapter(ICommunity)
 @interface.implementer(IHiddenMembership)
 class HiddenMembership(OOTreeSet):
-	
+
 	def add(self, entity):
 		wref = IWeakRef(entity)
 		super(HiddenMembership, self).add(wref)
 	hide = add
-	
+
 	def remove(self, entity):
 		wref = IWeakRef(entity, None)
 		if wref in self:
@@ -256,7 +257,7 @@ class HiddenMembership(OOTreeSet):
 			return True
 		return False
 	unhide = remove
-	
+
 	def __contains__(self, x):
 		try:
 			return super(HiddenMembership, self).__contains__(IWeakRef(x, None))

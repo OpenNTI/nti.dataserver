@@ -11,13 +11,20 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zc.intid import IIntIds
-
 from zope.catalog.field import FieldIndex
+
 from zope.catalog.interfaces import ICatalog
+
 from zope.catalog.keyword import CaseInsensitiveKeywordIndex
 
 from zope.index.topic.filter import FilteredSetBase
+
+from zope.intid.interfaces import IIntIds
+
+from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IFriendlyNamed
+from nti.dataserver.users.interfaces import IContactEmailRecovery
+from nti.dataserver.users.interfaces import IRestrictedUserProfile
 
 from nti.zope_catalog.catalog import Catalog
 from nti.zope_catalog.topic import TopicIndex
@@ -25,13 +32,8 @@ from nti.zope_catalog.topic import TopicIndex
 # Old name for BWC
 from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex as CaseInsensitiveFieldIndex
 
-from .interfaces import IUserProfile
-from .interfaces import IFriendlyNamed
-from .interfaces import IContactEmailRecovery
-from .interfaces import IRestrictedUserProfile
-
-# : The name of the utility that the Zope Catalog
-# : for users should be registered under
+#: The name of the utility that the Zope Catalog
+#: for users should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
 
 IX_ALIAS = 'alias'
@@ -134,8 +136,7 @@ class EmailVerifiedFilteredSet(FilteredSetBase):
 
 def install_user_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
-	if intids is None:
-		intids = lsm.getUtility(IIntIds)
+	intids = lsm.getUtility(IIntIds) if intids is None else intids
 
 	catalog = Catalog(family=intids.family)
 	catalog.__name__ = CATALOG_NAME

@@ -14,15 +14,15 @@ import functools
 
 from six import string_types
 
-from zc import intid as zc_intid
-
-from zope import interface
 from zope import component
+from zope import interface
 from zope import lifecycleevent
 
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.event import notify
+
+from zope.intid.interfaces import IIntIds
 
 from zope.keyreference.interfaces import IKeyReference
 
@@ -32,6 +32,23 @@ from ZODB.POSException import ConnectionStateError
 import transaction
 
 from nti.common.property import CachedProperty
+
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IShardLayout
+from nti.dataserver.interfaces import ILastModified
+from nti.dataserver.interfaces import INewUserPlacer
+from nti.dataserver.interfaces import SYSTEM_USER_NAME
+
+from nti.dataserver.users.interfaces import IRequireProfileUpdate
+from nti.dataserver.users.interfaces import UsernameCannotBeBlank
+from nti.dataserver.users.interfaces import WillDeleteEntityEvent
+from nti.dataserver.users.interfaces import WillUpdateEntityEvent
+from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
+from nti.dataserver.users.interfaces import WillCreateNewEntityEvent
+from nti.dataserver.users.interfaces import WillUpdateNewEntityEvent
+from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
+from nti.dataserver.users.interfaces import UsernameContainsIllegalChar
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
@@ -43,23 +60,6 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.ntiids.ntiids import escape_provider
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from ..interfaces import IEntity
-from ..interfaces import IDataserver
-from ..interfaces import IShardLayout
-from ..interfaces import ILastModified
-from ..interfaces import INewUserPlacer
-from ..interfaces import SYSTEM_USER_NAME
-
-from .interfaces import IRequireProfileUpdate
-from .interfaces import UsernameCannotBeBlank
-from .interfaces import WillDeleteEntityEvent
-from .interfaces import WillUpdateEntityEvent
-from .interfaces import IImmutableFriendlyNamed
-from .interfaces import WillCreateNewEntityEvent
-from .interfaces import WillUpdateNewEntityEvent
-from .interfaces import IUserProfileSchemaProvider
-from .interfaces import UsernameContainsIllegalChar
 
 def get_shared_dataserver(context=None, default=None):
 	if default != None:
@@ -192,7 +192,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
 		# Register an intid for this user that we are creating so that the events that fire before
 		# ObjectAdded (which is usually when intids get assigned) can use it.
-		component.getUtility(zc_intid.IIntIds).register(user)
+		component.getUtility(IIntIds).register(user)
 		notify(WillCreateNewEntityEvent(user, ext_value, preflight_only, meta_data))
 
 		if preflight_only:

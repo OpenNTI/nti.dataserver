@@ -20,16 +20,16 @@ from zope import interface
 from nti.common import create_gravatar_url
 from nti.common import GENERATED_GRAVATAR_TYPES
 
-from ..interfaces import IUser
-from ..interfaces import IEntity
-from ..interfaces import ICoppaUser
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import ICoppaUser
 
-from .interfaces import IAvatarURL
-from .interfaces import IBackgroundURL
-from .interfaces import IAvatarChoices
-from .interfaces import IAvatarURLProvider
-from .interfaces import ICompleteUserProfile
-from .interfaces import IBackgroundURLProvider
+from nti.dataserver.users.interfaces import IAvatarURL
+from nti.dataserver.users.interfaces import IBackgroundURL
+from nti.dataserver.users.interfaces import IAvatarChoices
+from nti.dataserver.users.interfaces import IAvatarURLProvider
+from nti.dataserver.users.interfaces import ICompleteUserProfile
+from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
 @component.adapter(IEntity)
 @interface.implementer(IAvatarURLProvider, IAvatarURL)
