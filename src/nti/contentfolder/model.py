@@ -17,6 +17,7 @@ from zope import lifecycleevent
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.common.property import alias
+from nti.common.property import CachedProperty
 
 from nti.coremetadata.interfaces import SYSTEM_USER_ID
 
@@ -137,6 +138,21 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 
 	def enumerateChildren(self):
 		return tuple(self.keys())
+	
+	@CachedProperty('__parent__')
+	def path(self):
+		context = self
+		result = []
+		while context is not None and not IRootFolder.providedBy(context):
+			try:
+				result.append(context.__name__)
+				context = context.__parent__
+			except AttributeError:
+				break
+		result.reverse()
+		result = '/'.join(result)
+		result = '/' + result if not result.startswith('/' ) else result
+		return result
 
 @interface.implementer(IRootFolder)
 class RootFolder(ContentFolder):
