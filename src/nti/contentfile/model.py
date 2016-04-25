@@ -40,6 +40,8 @@ class BaseContentMixin(object):
 	creator = None
 	__name__ = alias('name')
 
+	path = None # XXX BWC
+
 	# associations
 
 	def _lazy_create_ootreeset_for_wref(self):
