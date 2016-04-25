@@ -27,6 +27,8 @@ from nti.appserver.interfaces import IApplicationSettings
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
+from nti.common.property import Lazy
+
 from nti.common.string import TRUE_VALUES
 
 from nti.contentfragments.html import sanitize_user_html
@@ -51,7 +53,7 @@ AVATAR_BG_COLORS = [ "#5E35B1","#3949AB","#1E88E5","#039BE5",
 					"#C0CA33","#FDD835","#FFB300", "#FB8C00","#F4511E"]
 
 class AbstractMemberEmailView(AbstractAuthenticatedView,
-							ModeledContentUploadRequestUtilsMixin):
+							  ModeledContentUploadRequestUtilsMixin):
 	"""
 	An abstract view used to email one or members of an entity. The
 	``iter_members`` function defines which members are emailed.
@@ -65,33 +67,33 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 	# By default, we only email to internal users
 	EMAIL_EXTERNALLY_DEFAULT = False
 
-	@property
+	@Lazy
 	def _no_reply_addr(self):
 		return 'no-reply@nextthought.com'
 
-	@property
+	@Lazy
 	def _sender_reply_addr(self):
 		result = self._email_address_for_user( self.sender )
 		return result or self._no_reply_addr
 
-	@property
+	@Lazy
 	def sender(self):
 		return self.remoteUser
 
-	@property
+	@Lazy
 	def support_email(self):
 		policy = component.getUtility(ISitePolicyUserEventListener)
 		support_email = getattr( policy, 'SUPPORT_EMAIL', 'support@nextthought.com' )
 		return support_email
 
-	@property
+	@Lazy
 	def sender_avatar_url(self):
 		avatar_container = IAvatarURL( self.sender )
 		if avatar_container.avatarURL:
 			return self.request.resource_url(self.sender, '@@avatar')
 		return None
 
-	@property
+	@Lazy
 	def sender_avatar_initials(self):
 		# XXX: Logic copied from digest_email.py
 		named = IFriendlyNamed( self.sender )
@@ -107,7 +109,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 			result = named[0]
 		return result
 
-	@property
+	@Lazy
 	def sender_avatar_bg_color(self):
 		# Hash the username into our BG color array.
 		username = self.sender.username
@@ -117,12 +119,12 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		result = AVATAR_BG_COLORS[ index ]
 		return result
 
-	@property
+	@Lazy
 	def sender_display_name(self):
 		names = IFriendlyNamed(self.sender)
 		return names.alias or names.realname or self.sender.username
 
-	@property
+	@Lazy
 	def email_externally(self):
 		settings = component.getUtility( IApplicationSettings )
 		val = settings.get( 'email_externally',
