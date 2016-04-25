@@ -15,6 +15,8 @@ from zope import component
 
 from zope.intid.interfaces import IIntIds
 
+from ZODB.POSException import POSError
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.location import lineage
@@ -37,6 +39,8 @@ from nti.chatserver.interfaces import IUserTranscriptStorage
 
 from nti.common.maps import CaseInsensitiveDict
 
+from nti.common.property import Lazy
+
 from nti.common.proxy import removeAllProxies
 
 from nti.dataserver import authorization as nauth
@@ -53,24 +57,26 @@ from nti.dataserver.metadata_index import IX_CREATOR
 from nti.dataserver.metadata_index import IX_MIMETYPE
 from nti.dataserver.metadata_index import IX_SHAREDWITH
 
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import NonExternalizableObjectError
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.externalization.externalization import toExternalObject
-from nti.externalization.externalization import NonExternalizableObjectError
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.metadata import dataserver_metadata_catalog
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.zodb import isBroken
-
+OID = StandardExternalFields.OID
+CLASS = StandardExternalFields.CLASS
 ITEMS = StandardExternalFields.ITEMS
 
 transcript_mime_type = u'application/vnd.nextthought.transcript'
 messageinfo_mime_type = u'application/vnd.nextthought.messageinfo'
 
-def get_user_objects(user, mime_types=(), broken=False):
+def get_user_objects(user, mime_types=()):
 	intids = component.getUtility(IIntIds)
 	catalog = dataserver_metadata_catalog()
 
@@ -84,8 +90,8 @@ def get_user_objects(user, mime_types=(), broken=False):
 	if mime_types:
 		mime_types = set(mime_types)
 		process_transcripts = \
-				bool(transcript_mime_type in mime_types or
-					 messageinfo_mime_type in mime_types)
+				bool(transcript_mime_type in mime_types
+					 or messageinfo_mime_type in mime_types)
 		if process_transcripts:
 			mime_types.discard(transcript_mime_type)
 			mime_types.discard(messageinfo_mime_type)
@@ -111,16 +117,12 @@ def get_user_objects(user, mime_types=(), broken=False):
 			obj = intids.queryObject(uid)
 			if 		obj is None \
 				or	IUser.providedBy(obj) \
-				or	IDeletedObjectPlaceholder.providedBy(obj):
+				or	IDeletedObjectPlaceholder.providedBy(obj) \
+				or	(process_transcripts and IMessageInfo.providedBy(obj)):
 				continue
 
-			if isBroken(obj, uid):
-				if not broken:
-					continue
-			elif process_transcripts and IMessageInfo.providedBy(obj):
-				continue
 			yield obj
-		except TypeError as e:
+		except (POSError, TypeError) as e:
 			logger.debug("Error processing object %s(%s); %s", type(obj), uid, e)
 
 	if process_transcripts:
@@ -135,6 +137,30 @@ def get_user_objects(user, mime_types=(), broken=False):
 			   context=IDataserverFolder,
 			   permission=nauth.ACT_NTI_ADMIN)
 class ExportUserObjectsView(AbstractAuthenticatedView):
+
+	@Lazy
+	def _intids(self):
+		return component.getUtility(IIntIds)
+
+	def _externalize(self, obj, decorate=False):
+		try:
+			result = toExternalObject(obj, decorate=decorate)
+		except NonExternalizableObjectError:
+			result = {
+				CLASS: 'NonExternalizableObject',
+				OID: to_external_ntiid_oid(obj),
+				'IntId': self._intids.queryId(obj),
+				'Object': "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)
+			}
+		except Exception as e:
+			logger.debug("Error processing object %s(%s); %s", type(obj), e)
+			result = {
+				'Message': str(e),
+			 	'Object': str(type(obj)),
+			 	'Exception': str(type(e)),
+			 	CLASS: 'NonExternalizableObject'
+			 }
+		return result
 
 	def __call__(self):
 		request = self.request
@@ -160,7 +186,8 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 				continue
 			objects = items[username] = []
 			for obj in get_user_objects(user, mime_types):
-				objects.append(obj)
+				ext_obj = self._externalize(obj)
+				objects.append(ext_obj)
 				total += 1
 		result['Total'] = result['ItemCount'] = total
 		return result
@@ -171,7 +198,7 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 			   request_method='GET',
 			   context=IDataserverFolder,
 			   permission=nauth.ACT_NTI_ADMIN)
-class ExportObjectsSharedWithView(AbstractAuthenticatedView):
+class ExportObjectsSharedWithView(ExportUserObjectsView):
 
 	def __call__(self):
 		request = self.request
@@ -203,16 +230,11 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 		result = LocatedExternalDict()
 		items = result[ITEMS] = []
 		for uid in result_ids:
-			try:
-				obj = intids.queryObject(uid)
-				if		obj is not None \
-					and not isBroken(obj, uid) \
-					and not IUser.providedBy(obj) \
-					and not IDeletedObjectPlaceholder.providedBy(obj):
-					items.append(obj)
-			except TypeError as e:
-				logger.debug("Error processing object %s(%s); %s", type(obj), uid, e)
-		result['Total'] = len(items)
+			obj = intids.queryObject(uid)
+			if obj is not None:
+				ext_obj = self._externalize(obj)
+				items.append(ext_obj)
+		result['Total'] = result['ItemCount'] = len(items)
 		return result
 
 @view_config(name='DeleteUserObjects')
@@ -231,27 +253,29 @@ class DeleteUserObjects(AbstractAuthenticatedView, ModeledContentUploadRequestUt
 		if not user:
 			raise hexc.HTTPUnprocessableEntity('User not found')
 
-		broken = is_true(values.get('broken', 'F'))
 		mime_types = values.get('mime_types') or values.get('mimeTypes') or u''
 		mime_types = parse_mime_types(mime_types)
 
 		broken_objects = set()
 		counter_map = defaultdict(int)
-		for obj in list(get_user_objects(user, mime_types, broken)):
-			if isBroken(obj):
+		for obj in list(get_user_objects(user, mime_types)):
+			try:
+				try:
+					objId = obj.id
+					mime_type = get_mime_type(obj)
+					containerId = obj.containerId
+					obj = user.getContainedObject(containerId, objId)
+					if obj is not None and user.deleteContainedObject(containerId, objId):
+						counter_map[mime_type] = counter_map[mime_type] + 1
+				except AttributeError:
+					pass
+			except (POSError, TypeError):
 				oid = getattr(obj, 'oid', None)
 				pid = getattr(obj, '_p_oid', None)
 				if pid:
 					broken_objects.add(pid)
 				if oid:
 					broken_objects.add(oid)
-			else:
-				objId = obj.id
-				mime_type = get_mime_type(obj)
-				containerId = obj.containerId
-				obj = user.getContainedObject(containerId, objId)
-				if obj is not None and user.deleteContainedObject(containerId, objId):
-					counter_map[mime_type] = counter_map[mime_type] + 1
 
 		if broken_objects:
 			for container in list(user.containers.values()):
@@ -261,11 +285,10 @@ class DeleteUserObjects(AbstractAuthenticatedView, ModeledContentUploadRequestUt
 					broken = oid in broken_objects or pid in broken_objects
 					if not broken:
 						strong = obj if not callable(obj) else obj()
-						broken =     strong is not None \
+						broken = strong is not None \
 								 and oid in broken_objects \
 								 and pid in broken_objects
-						if broken:
-							obj = strong
+						obj = strong if broken else obj
 					if broken:
 						counter_map['broken'] = counter_map['broken'] + 1
 						user.containers._v_removeFromContainer(container, obj)
@@ -299,8 +322,9 @@ class ObjectResolverView(AbstractAuthenticatedView):
 			result['Object'] = toExternalObject(obj)
 		except NonExternalizableObjectError:
 			result['Object'] = {
-					'Class': "NonExternalizableObject",
-					'InternalType': "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)
+				CLASS: "NonExternalizableObject",
+				OID: to_external_ntiid_oid(obj),
+				'Object': "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)
 			}
 
 		result['IntId'] = intids.queryId(obj)
@@ -350,5 +374,5 @@ class ExportUsersView(AbstractAuthenticatedView):
 					items[user.username] = toExternalObject(user, name='summary')
 				else:
 					items[user.username] = toExternalObject(user)
-		result['Total'] = len(items)
+		result['Total'] = result['ItemCount'] = len(items)
 		return result
