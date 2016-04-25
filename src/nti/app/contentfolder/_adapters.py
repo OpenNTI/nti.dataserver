@@ -20,7 +20,7 @@ from ZODB.interfaces import IConnection
 from nti.contentfolder.model import RootFolder
 
 @interface.implementer(IPathAdapter)
-class OFSPathAdapter(Contained):
+class _OFSPathAdapter(Contained):
 	"""
 	XXX: Adapter to be used only in unit tests.
 	"""
