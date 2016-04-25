@@ -31,7 +31,7 @@
 
 	<subscriber factory=".decorators._ContextPathDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for="nti.contentfolder.interfaces.INamedFile
+				for="nti.namedfile.interfaces.INamedFile
 					 pyramid.interfaces.IRequest" />
 
 	<configure zcml:condition="have testmode">
