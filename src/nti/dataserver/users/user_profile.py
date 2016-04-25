@@ -27,33 +27,33 @@ from persistent import Persistent
 
 from nti.common.property import CachedProperty
 
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IPrincipal
+
+from nti.dataserver.users.interfaces import IEducation
+from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IFriendlyNamed
+from nti.dataserver.users.interfaces import IInterestProfile
+from nti.dataserver.users.interfaces import ICommunityProfile
+from nti.dataserver.users.interfaces import IEducationProfile
+from nti.dataserver.users.interfaces import IEmailAddressable
+from nti.dataserver.users.interfaces import ISocialMediaProfile
+from nti.dataserver.users.interfaces import ICompleteUserProfile
+from nti.dataserver.users.interfaces import IProfessionalProfile
+from nti.dataserver.users.interfaces import IProfessionalPosition
+from nti.dataserver.users.interfaces import IRestrictedUserProfile
+from nti.dataserver.users.interfaces import IEmailRequiredUserProfile
+from nti.dataserver.users.interfaces import IRestrictedUserProfileWithContactEmail
+
+from nti.dataserver.users.utils import AvatarUrlProperty as _AvatarUrlProperty
+from nti.dataserver.users.utils import BackgroundUrlProperty as _BackgrounUrlProperty
+
 from nti.externalization.representation import WithRepr
 
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
-
-from ..interfaces import IUser
-from ..interfaces import IEntity
-from ..interfaces import ICommunity
-from ..interfaces import IPrincipal
-
-from .interfaces import IEducation
-from .interfaces import IUserProfile
-from .interfaces import IFriendlyNamed
-from .interfaces import IInterestProfile
-from .interfaces import ICommunityProfile
-from .interfaces import IEducationProfile
-from .interfaces import IEmailAddressable
-from .interfaces import ISocialMediaProfile
-from .interfaces import ICompleteUserProfile
-from .interfaces import IProfessionalProfile
-from .interfaces import IProfessionalPosition
-from .interfaces import IRestrictedUserProfile
-from .interfaces import IEmailRequiredUserProfile
-from .interfaces import IRestrictedUserProfileWithContactEmail
-
-from .utils import AvatarUrlProperty as _AvatarUrlProperty
-from .utils import BackgroundUrlProperty as _BackgrounUrlProperty
 
 class _ExistingDictReadFieldPropertyStoredThroughField(FP):
 	"""
@@ -159,7 +159,7 @@ class ImageProfileMixin(object):
 
 	For convenience, we have a read-only shadow of the username value.
 	"""
-	# : NOTE: See users_external, this is fairly tightly coupled to that
+	#: NOTE: See users_external, this is fairly tightly coupled to that
 
 	_avatarURL = None
 	avatarURL = _AvatarUrlProperty(data_name="avatarURL",

@@ -11,31 +11,31 @@ logger = __import__('logging').getLogger(__name__)
 
 from collections import Mapping
 
-from zc import intid as zc_intid
-
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
 
 from zope import component
 
 from zope.catalog.interfaces import ICatalog
 
+from zc import intid as zc_intid
+
 from nti.externalization.interfaces import LocatedExternalDict
+
+from nti.dataserver.interfaces import IStreamChangeEvent
+from nti.dataserver.interfaces import IDynamicSharingTarget
+
+from nti.dataserver.users.index import IX_EMAIL
+from nti.dataserver.users.index import IX_TOPICS
+from nti.dataserver.users.index import CATALOG_NAME
+from nti.dataserver.users.index import IX_EMAIL_VERIFIED
+
+from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IAvatarURLProvider
+from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
 from nti.zodb import isBroken
 from nti.zodb import readCurrent
 from nti.zodb.urlproperty import UrlProperty
-
-from ..interfaces import IStreamChangeEvent
-from ..interfaces import IDynamicSharingTarget
-
-from .index import IX_EMAIL
-from .index import IX_TOPICS
-from .index import CATALOG_NAME
-from .index import IX_EMAIL_VERIFIED
-
-from .interfaces import IUserProfile
-from .interfaces import IAvatarURLProvider
-from .interfaces import IBackgroundURLProvider
 
 # email
 
@@ -182,10 +182,11 @@ class ImageUrlProperty(UrlProperty):
 	externalized URL).
 	"""
 
+	max_file_size = None
 	avatar_field_name = u''
 	avatar_provider_interface = None
 	ignore_url_with_missing_host = True
-	
+
 	# TODO: Should we be scaling this now?
 	# TODO: Should we be enforcing constraints on this? Like max size,
 	# ensuring it really is an image, etc? With arbitrary image uploading, we risk
@@ -196,11 +197,13 @@ class ImageUrlProperty(UrlProperty):
 			adapted = self.avatar_provider_interface(instance.context)
 			result = getattr(adapted, self.avatar_field_name, None)
 		return result
-	
+
 class AvatarUrlProperty(ImageUrlProperty):
+	max_file_size = 204800  # 200 KB
 	avatar_field_name = 'avatarURL'
 	avatar_provider_interface = IAvatarURLProvider
 
 class BackgroundUrlProperty(ImageUrlProperty):
+	max_file_size = 204800  # 200 KB
 	avatar_field_name = 'backgroundURL'
 	avatar_provider_interface = IBackgroundURLProvider
