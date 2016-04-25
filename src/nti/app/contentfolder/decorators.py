@@ -99,3 +99,27 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		_links.append(_create_link(context, rel="delete", method='DELETE'))
 		_links.append(_create_link(context, rel="move", name="@@move", method="POST"))
 		_links.append(_create_link(context, rel="rename", name="@@rename", method='POST'))
+
+@component.adapter(INamedFile)
+@component.adapter(INamedContainer)
+@interface.implementer(IExternalObjectDecorator)
+class _ContextPathDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	def compute_path(self, context):
+		result = []
+		while context is not None and not IRootFolder.providedBy(context):
+			try:
+				result.append(context.__name__)
+				context = context.__parent__
+			except AttributeError:
+				break
+		result.reverse()
+		result = '/'.join(result)
+		result = '/' + result if not result.startswith('/' ) else result
+		return result
+
+	def _do_decorate_external(self, context, result):
+		path = result.get('path', None)
+		if not path and INamedContainer.providedBy(context.__parent__):
+			result.set('path', self.compute_path(context))
+	
