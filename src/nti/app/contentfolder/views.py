@@ -94,17 +94,30 @@ expanded_expected_types = six.string_types + (Mapping,)
 			   permission=nauth.ACT_READ,
 			   request_method='GET')
 class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
-	
-	_DEFAULT_BATCH_SIZE = 50
+
 	_DEFAULT_BATCH_START = 0
-	
+	_DEFAULT_BATCH_SIZE = 100
+
 	def ext_obj(self, item):
 		result = to_external_object(item)
 		return result
 
+	def ext_container(self, context, result, depth):
+		if depth >= 0:
+			items = result[ITEMS] = list()
+			for item in tuple(context.values()):  # snapshopt
+				ext_obj = self.ext_obj(item)
+				items.append(ext_obj)
+				if INamedContainer.providedBy(item) and depth:
+					self.ext_container(item, ext_obj, depth - 1)
+			return items
+		return ()
+
 	def __call__(self):
+		values = CaseInsensitiveDict(self.request.params)
+		depth = values.get('depth', 0)
 		result = LocatedExternalDict()
-		items = map(self.ext_obj, self.context.values())	
+		items = self.ext_container(self.context, result, depth)
 		self._batch_items_iterable(result, items)
 		result['Total'] = len(items)
 		return result
@@ -120,7 +133,7 @@ class TreeView(AbstractAuthenticatedView):
 	def recur(self, container, result):
 		files = 0
 		folders = 0
-		for name, value in list(container.items()): # snapshot
+		for name, value in list(container.items()):  # snapshot
 			if INamedContainer.providedBy(value):
 				folders += 1
 				data = LocatedExternalList()
@@ -140,7 +153,7 @@ class TreeView(AbstractAuthenticatedView):
 		result['Files'] = files
 		result['Folders'] = folders
 		return result
-	
+
 @view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
@@ -151,9 +164,9 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 
 	content_predicate = INamedContainer.providedBy
 	default_folder_mime_type = ContentFolder.mimeType
-	
+
 	def readInput(self, value=None):
-		data = read_body_as_external_object(self.request, 
+		data = read_body_as_external_object(self.request,
 											expected_type=expanded_expected_types)
 		if isinstance(data, six.string_types):
 			data = {'name': data}
@@ -190,7 +203,7 @@ class MkdirsView(AbstractAuthenticatedView):
 		return result
 
 	def __call__(self):
-		data = read_body_as_external_object(self.request, 
+		data = read_body_as_external_object(self.request,
 											expected_type=expanded_expected_types)
 		if isinstance(data, six.string_types):
 			data = {'path': data}
@@ -220,7 +233,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		else:
 			contentType, _, _ = getImageInfo(source)
 			source.seek(0)  # reset
-			if contentType: # is image
+			if contentType:  # is image
 				factory = ContentBlobImage if self.use_blobs else ContentImage
 			else:
 				factory = ContentBlobFile if self.use_blobs else ContentFile
@@ -230,7 +243,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		factory = self.factory(source)
 		filename = getattr(source, 'filename', None)
 		contentType = getattr(source, 'contentType', None)
-		
+
 		# transfer data
 		result = factory()
 		result.name = name
@@ -318,7 +331,7 @@ class RenameView(AbstractAuthenticatedView,
 				 ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
-		data = read_body_as_external_object(self.request, 
+		data = read_body_as_external_object(self.request,
 											expected_type=expanded_expected_types)
 		if isinstance(data, six.string_types):
 			data = safe_filename(name_finder(data))
@@ -330,7 +343,7 @@ class RenameView(AbstractAuthenticatedView,
 		theObject = self.context
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
-		
+
 		if IRootFolder.providedBy(self.context):
 			raise hexc.HTTPForbidden(_("Cannot rename root folder."))
 
@@ -379,7 +392,7 @@ class MoveView(AbstractAuthenticatedView,
 			   ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
-		data = read_body_as_external_object(self.request, 
+		data = read_body_as_external_object(self.request,
 											expected_type=expanded_expected_types)
 		if isinstance(data, six.string_types):
 			data = {'path': data}
@@ -441,7 +454,7 @@ class MoveView(AbstractAuthenticatedView,
 			   context=IDataserverFolder,
 			   permission=nauth.ACT_NTI_ADMIN)
 class CFIOView(AbstractAuthenticatedView):
-	
+
 	def _encode(self, s):
 		return s.encode('utf-8') if isinstance(s, unicode) else s
 
@@ -456,7 +469,7 @@ class CFIOView(AbstractAuthenticatedView):
 		context = intids.queryObject(uid)
 		if not IContentBaseFile.providedBy(context):
 			raise hexc.HTTPNotFound()
-		
+
 		view_name = '@@download'
 		content_disposition = request.headers.get("Content-Disposition")
 		if not content_disposition:
@@ -464,10 +477,10 @@ class CFIOView(AbstractAuthenticatedView):
 			content_disposition = params.get('contentDisposition')
 		if content_disposition and 'view' in content_disposition:
 			view_name = '@@view'
-			
+
 		ntiid = to_external_ntiid_oid(context)
 		path = b'/dataserver2/Objects/%s/%s' % (self._encode(ntiid), view_name)
-	
+
 		# set subrequest
 		subrequest = request.blank(path)
 		subrequest.method = b'GET'
