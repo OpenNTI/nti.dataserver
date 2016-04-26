@@ -35,6 +35,10 @@ from nti.app.contentfile import MessageFactory as _
 
 from nti.app.externalization.error import raise_json_error
 
+from nti.contentfile.interfaces import IContentBaseFile
+
+from nti.contentfile.model import transform_to_blob
+
 from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
 
 from nti.externalization.externalization import to_external_object
@@ -46,7 +50,7 @@ from nti.namedfile.file import get_file_name as get_context_name
 from nti.namedfile.interfaces import IFile
 from nti.namedfile.interfaces import IFileConstraints
 
-from nti.dataserver.interfaces import IInternalFileRef
+from nti.dataserver.interfaces import IInternalFileRef, IModeledContentBody
 
 from nti.links.externalization import render_link
 
@@ -176,9 +180,12 @@ def get_content_files(context, attr="body"):
 	"""
 	result = OrderedDict()
 	sources = getattr(context, attr, None) if attr else context
-	for data in sources or ():
+	is_mcb = IModeledContentBody.providedBy(context) and attr=='body'
+	for idx, data in enumerate(sources or ()):
 		name = get_context_name(data)
 		if name:
+			if is_mcb and IContentBaseFile.providedBy(data):
+				data = sources[idx] = transform_to_blob(data)
 			result[name] = data
 	return result
 
