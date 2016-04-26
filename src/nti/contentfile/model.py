@@ -42,7 +42,7 @@ class BaseContentMixin(object):
 	creator = None
 	__name__ = alias('name')
 
-	path = None # XXX BWC
+	path = None  # XXX BWC
 
 	# associations
 
@@ -110,7 +110,7 @@ class BaseContentMixin(object):
 
 	def tell(self):
 		return self._get_v_fp().tell()
-	
+
 	# compatible methods
 
 	def readContents(self):
@@ -147,7 +147,7 @@ def transform_to_blob(context):
 				setattr(result, key, value)
 		if IInternalFileRef.providedBy(context):
 			interface.alsoProvides(result, IInternalFileRef)
-			result.reference = context.reference # extra check
+			result.reference = getattr(context, 'reference', None)  # extra check
 		if context.has_associations:
 			[result.add_association(obj) for obj in context.associations]
 	return result
