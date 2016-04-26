@@ -49,13 +49,13 @@ from nti.namedfile.constraints import FileConstraints
 
 @component.adapter(IRequest, INote)
 @interface.implementer(INewObjectTransformer)
-def _submission_transformer_factory(request, context):
-	result = partial(_submission_transformer, request)
+def _note_transformer_factory(request, context):
+	result = partial(_note_transformer, request)
 	return result
 
 @component.adapter(IRequest, INote)
 @interface.implementer(IExceptionResponse)
-def _submission_transformer(request, context):
+def _note_transformer(request, context):
 	sources = get_content_files(context)
 	if sources and request and request.POST:
 		read_multipart_sources(request, sources.values())

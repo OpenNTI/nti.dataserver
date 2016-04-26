@@ -12,7 +12,7 @@
 			 for="nti.dataserver.interfaces.INote"
 			 provides=".interfaces.INoteFileConstraints" />
 
-	<adapter factory=".note._submission_transformer" />
-	<adapter factory=".note._submission_transformer_factory" />
+	<adapter factory=".note._note_transformer" />
+	<adapter factory=".note._note_transformer_factory" />
 
 </configure>
