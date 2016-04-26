@@ -142,7 +142,7 @@ def transform_to_blob(context):
 	else:
 		result = context
 	if result is not context:
-		for key, value in context.__dict__.values():
+		for key, value in context.__dict__.items():
 			if not key.startswith('_'):
 				setattr(result, key, value)
 		if IInternalFileRef.providedBy(context):
