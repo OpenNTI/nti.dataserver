@@ -33,6 +33,8 @@ from nti.namedfile.file import NamedImage
 from nti.namedfile.file import NamedBlobFile
 from nti.namedfile.file import NamedBlobImage
 
+from nti.namedfile.interfaces import IInternalFileRef
+
 from nti.wref.interfaces import IWeakRef
 
 class BaseContentMixin(object):
@@ -88,6 +90,10 @@ class BaseContentMixin(object):
 			except (Exception):
 				logger.exception("Error while getting associatied object")
 
+	@property
+	def has_associations(self):
+		return '_associations' in self.__dict__
+
 	# IFileReader
 
 	_v_fp = None
@@ -139,4 +145,9 @@ def transform_to_blob(context):
 		for key, value in context.__dict__.values():
 			if not key.startswith('_'):
 				setattr(result, key, value)
+		if IInternalFileRef.providedBy(context):
+			interface.alsoProvides(result, IInternalFileRef)
+			result.reference = context.reference # extra check
+		if context.has_associations:
+			[result.add_association(obj) for obj in context.associations]
 	return result
