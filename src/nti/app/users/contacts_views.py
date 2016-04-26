@@ -100,7 +100,9 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 	#: from that source. Less than that and we'll return nothing.
 	MIN_LIMITED_CONTACT_POOL_SIZE_SINGLE_SOURCE = 5
 
-	#: TODO: Do we need a min fill count to preserve privacy?
+	# XXX: Do we need a min fill count to preserve privacy?
+	#: The minimum number of filled in suggestions that may help
+	#: maintain privacy.
 	MIN_FILL_COUNT = 0
 
 	def _set_limited_count(self, pool, pool_size_min, limited_ratio):
@@ -113,6 +115,8 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 
 	def _get_params(self):
 		super(UserSuggestedContactsView, self)._get_params()
+		# We want to not return the context the user is looking at.
+		self.existing_pool.add( self.context.username )
 
 		if self.remoteUser == self.context:
 			self._set_limited_count(self.existing_pool,
@@ -161,8 +165,6 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 		intermediate_usernames = {x.username for x in intermediate_contacts}
 		results = set()
 
-		# TODO: We want to do something smarter here for users
-		# looking at suggestions in other user's profiles.
 		for contact in get_all_suggested_contacts(self.context):
 			if		contact.username not in intermediate_usernames \
 				and contact.username not in self.existing_pool \

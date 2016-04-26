@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import itertools
-
 from functools import total_ordering
 
 from zope import interface
@@ -168,7 +166,7 @@ class _SecondOrderContactProvider(object):
 		contacts = self.ranking.sort(accum.values())
 		return contacts
 
-	def suggestions(self, user, source_user=None, *args, **kwargs):
+	def suggestions(self, user, source_user=None):
 		# Could we ever come across cross-site suggestions?
 		accept_filter = self._make_visibility_test(user)
 		existing_pool = {e.username for e in user.entities_followed}
@@ -176,9 +174,9 @@ class _SecondOrderContactProvider(object):
 
 		if source_user is not None and user != source_user:
 			# Ok, we want suggestions for a user based on a
-			# another user.  Add that user and her friends.
-			contacts_iter = itertools.chain((source_user,),
-											source_user.entities_followed)
+			# another user. Add that user's friends.
+			contacts_iter = tuple( source_user.entities_followed )
+			existing_pool.add( source_user.username )
 		else:
 			# Suggestions based on just our given user.
 			contacts_iter = self._get_suggestions_for_user(user)
