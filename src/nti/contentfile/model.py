@@ -91,7 +91,10 @@ class BaseContentMixin(object):
 				logger.exception("Error while getting associatied object")
 
 	def has_associations(self):
-		return '_associations' in self.__dict__
+		result = False
+		if '_associations' in self.__dict__:
+			result = bool(list(self.associations()))
+		return result
 
 	# IFileReader
 
