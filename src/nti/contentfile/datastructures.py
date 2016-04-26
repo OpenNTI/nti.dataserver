@@ -13,6 +13,11 @@ from zope import component
 
 from nti.common.dataurl import DataURL
 
+from nti.contentfile import CONTENT_FILE_MIMETYPE
+from nti.contentfile import CONTENT_IMAGE_MIMETYPE
+from nti.contentfile import CONTENT_BLOB_FILE_MIMETYPE
+from nti.contentfile import CONTENT_BLOB_IMAGE_MIMETYPE
+
 from nti.contentfile.interfaces import IContentFile
 from nti.contentfile.interfaces import IContentImage
 from nti.contentfile.interfaces import IContentBlobFile
@@ -32,7 +37,7 @@ class ContentFileObjectIO(NamedFileObjectIO):
 	_excluded_in_ivars_ = {'download_url'}.union(NamedFileObjectIO._excluded_in_ivars_)
 
 	def _ext_mimeType(self, obj):
-		return u'application/vnd.nextthought.contentfile'
+		return CONTENT_FILE_MIMETYPE
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		result = super(ContentFileObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
@@ -44,27 +49,27 @@ class ContentFileObjectIO(NamedFileObjectIO):
 class ContentImageObjectIO(ContentFileObjectIO):
 
 	def _ext_mimeType(self, obj):
-		return u'application/vnd.nextthought.contentimage'
+		return CONTENT_IMAGE_MIMETYPE
 
 @component.adapter(IContentBlobFile)
 class ContentBlobFileObjectIO(ContentFileObjectIO):
 
 	def _ext_mimeType(self, obj):
-		return u'application/vnd.nextthought.contentblobfile'
+		return CONTENT_BLOB_FILE_MIMETYPE
 
 @component.adapter(IContentBlobImage)
 class ContentBlobImageObjectIO(ContentFileObjectIO):
 
 	def _ext_mimeType(self, obj):
-		return u'application/vnd.nextthought.contentblobimage'
+		return CONTENT_BLOB_IMAGE_MIMETYPE
 
 def BaseFactory(ext_obj, file_factory, image_factory=None):
 	factory = file_factory
 	image_factory = image_factory or file_factory
 	url = ext_obj.get('url') or ext_obj.get('value')
-	contentType = (		ext_obj.get('FileMimeType')
-					or 	ext_obj.get('contentType') 
-					or 	ext_obj.get('content_type') )
+	contentType = (ext_obj.get('FileMimeType')
+					or 	ext_obj.get('contentType')
+					or 	ext_obj.get('content_type'))
 	if url and url.startswith(b'data:'):
 		ext_obj['url'] = DataURL(url)
 		ext_obj.pop('value', None)
