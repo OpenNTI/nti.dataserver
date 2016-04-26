@@ -278,7 +278,7 @@ class CommunityActivityView(EntityActivityViewMixin):
 		return False, security_check
 
 	def check_permission(self, context, user):
-		super( CommunityActivityView, self ).check_permission( context, user )
+		super(CommunityActivityView, self).check_permission(context, user)
 		if not context.public and self.remoteUser not in context:
 			raise hexc.HTTPForbidden()
 

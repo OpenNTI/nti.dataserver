@@ -23,9 +23,9 @@ from nti.appserver.ugd_query_views import UGDView
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
-
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
+
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.metadata_index import IX_TOPICS
 from nti.dataserver.metadata_index import IX_SHAREDWITH

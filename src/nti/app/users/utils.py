@@ -34,6 +34,7 @@ from zope.security.interfaces import IPrincipal
 from itsdangerous import JSONWebSignatureSerializer as SignatureSerializer
 
 from nti.app.users import MessageFactory as _
+
 from nti.app.users import VERIFY_USER_EMAIL_VIEW
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
@@ -66,6 +67,7 @@ def _signature_and_token(username, email, secret_key):
 	return signature, token
 
 def generate_mail_verification_pair(user, email=None, secret_key=None):
+	__traceback_info__ = user, email
 	user = get_user(user)
 	if user is None:
 		raise ValueError("User not found")
@@ -87,6 +89,7 @@ def generate_mail_verification_pair(user, email=None, secret_key=None):
 
 def get_verification_signature_data(user, signature, params=None,
 									email=None, secret_key=None):
+	__traceback_info__ = user, email
 	user = get_user(user)
 	if user is None:
 		raise ValueError("User not found")

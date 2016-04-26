@@ -46,7 +46,7 @@ def _user_modified_from_external_event(user, event):
 		set_email_verification_time(user, 0)
 		# send email
 		request = getattr(event, 'request', None) or get_current_request()
-		if request:
+		if request is not None:
 			profile.email = email  # update email so send-email can do its work
 			safe_send_email_verification(user, profile, email,
 										 request=request,
