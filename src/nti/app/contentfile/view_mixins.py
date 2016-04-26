@@ -179,15 +179,24 @@ def get_content_files(context, attr="body"):
 	:param context: Source object
 	:param attr attribute name to check in context (optional)
 	"""
+	new_sources = []
+	transformed = False
 	result = OrderedDict()
 	sources = getattr(context, attr, None) if attr else context
 	is_mcb = IModeledContentBody.providedBy(context) and attr=='body'
-	for idx, data in enumerate(sources or ()):
+	for data in sources or ():
 		name = get_context_name(data)
 		if name:
 			if is_mcb and IContentBaseFile.providedBy(data):
-				data = sources[idx] = transform_to_blob(data)
+				transformed = True
+				data = transform_to_blob(data)
 			result[name] = data
+		new_sources.append(data)
+	# if there has beeen any transformation and context
+	# is IModeledContentBody then assigned new sources
+	if transformed and is_mcb:
+		value = sources.__class__(new_sources) # list or tuple
+		setattr(context, attr, value)
 	return result
 
 def transfer_internal_content_data(context, attr="body", request=None, ownership=True):

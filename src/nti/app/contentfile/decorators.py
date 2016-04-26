@@ -17,15 +17,6 @@ from plone.namedfile.interfaces import IFile
 from nti.app.contentfile.view_mixins import download_file_name
 from nti.app.contentfile.view_mixins import to_external_oid_and_link
 
-from nti.contentfile import CONTENT_FILE_MIMETYPE
-from nti.contentfile import CONTENT_IMAGE_MIMETYPE
-from nti.contentfile import CONTENT_BLOB_FILE_MIMETYPE
-from nti.contentfile import CONTENT_BLOB_IMAGE_MIMETYPE
-
-from nti.contentfile.interfaces import IContentBaseFile
-
-from nti.dataserver.interfaces import IModeledContentBody
-
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
@@ -33,7 +24,6 @@ from nti.externalization.singleton import SingletonDecorator
 
 OID = StandardExternalFields.OID
 NTIID = StandardExternalFields.NTIID
-MIMETYPE = StandardExternalFields.MIMETYPE
 
 @component.adapter(IFile)
 @interface.implementer(IExternalMappingDecorator)
@@ -62,17 +52,3 @@ class _ContentFileDecorator(object):
 		ext_dict.pop('parameters', None)
 		ext_dict['value'] = ext_dict['url']
 		ext_dict['size'] = item.getSize()
-
-@component.adapter(IContentBaseFile)
-@interface.implementer(IExternalMappingDecorator)
-class _ContentBaseFileDecorator(object):
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalMapping(self, item, ext_dict):
-		if IModeledContentBody.providedBy(item.__parent__):
-			mimeType = ext_dict.get(MIMETYPE)
-			if mimeType == CONTENT_BLOB_FILE_MIMETYPE:
-				ext_dict[mimeType] = CONTENT_FILE_MIMETYPE
-			elif mimeType == CONTENT_BLOB_IMAGE_MIMETYPE:
-				ext_dict[mimeType] = CONTENT_IMAGE_MIMETYPE

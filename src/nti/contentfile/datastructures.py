@@ -13,6 +13,8 @@ from zope import component
 
 from nti.common.dataurl import DataURL
 
+from nti.coremetadata.interfaces import IModeledContentBody
+
 from nti.contentfile import CONTENT_FILE_MIMETYPE
 from nti.contentfile import CONTENT_IMAGE_MIMETYPE
 from nti.contentfile import CONTENT_BLOB_FILE_MIMETYPE
@@ -28,7 +30,11 @@ from nti.contentfile.model import ContentImage
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
 
+from nti.externalization.interfaces import StandardExternalFields
+
 from nti.namedfile.datastructures import NamedFileObjectIO
+
+MIMETYPE = StandardExternalFields.MIMETYPE
 
 @component.adapter(IContentFile)
 class ContentFileObjectIO(NamedFileObjectIO):
@@ -44,7 +50,18 @@ class ContentFileObjectIO(NamedFileObjectIO):
 		ext_self = self._ext_replacement()
 		assert ext_self.name, 'must provide a content file name'
 		return result
-
+	
+	def toExternalObject(self, *args, **kwargs):
+		ext_dict = super(ContentFileObjectIO, self).toExternalObject(*args, **kwargs)
+		the_file = self._ext_replacement()
+		if IModeledContentBody.providedBy(the_file.__parent__):
+			mimeType = ext_dict.get(MIMETYPE)
+			if mimeType == CONTENT_BLOB_FILE_MIMETYPE:
+				ext_dict[mimeType] = CONTENT_FILE_MIMETYPE
+			elif mimeType == CONTENT_BLOB_IMAGE_MIMETYPE:
+				ext_dict[mimeType] = CONTENT_IMAGE_MIMETYPE
+		return ext_dict
+	
 @component.adapter(IContentImage)
 class ContentImageObjectIO(ContentFileObjectIO):
 
