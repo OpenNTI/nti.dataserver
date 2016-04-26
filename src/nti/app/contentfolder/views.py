@@ -284,6 +284,22 @@ class ContentFileGetView(AbstractAuthenticatedView):
 		result.lastModified = self.request.context.lastModified
 		return result
 
+@view_config(context=IContentBaseFile)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   name='associations',
+			   permission=nauth.ACT_READ,
+			   request_method='GET')
+class ContentFileAssociationsView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		result = LocatedExternalDict()
+		result[ITEMS] = items = []
+		if self.context.has_associations():
+			items.extend(self.context.associations())
+		result['ItemCount'] = result['Total'] = len(items)
+		return result
+
 @view_config(context=INamedFile)
 @view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',

@@ -72,7 +72,7 @@ class TestModel(unittest.TestCase):
 		assert_that(internal, has_property('filename', 'ichigo.gif'))
 		assert_that(internal, has_property('name', 'ichigo.gif'))
 
-		assert_that(internal.has_associations, is_(False))
+		assert_that(internal.has_associations(), is_(False))
 		
 		assert_that(internal,
 					externalizes(all_of(has_key('CreatedTime'),

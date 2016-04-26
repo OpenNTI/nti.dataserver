@@ -90,7 +90,6 @@ class BaseContentMixin(object):
 			except (Exception):
 				logger.exception("Error while getting associatied object")
 
-	@property
 	def has_associations(self):
 		return '_associations' in self.__dict__
 

@@ -91,14 +91,17 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return 		parent is not None \
 				and self._acl_decoration \
 				and self._is_authenticated \
-				and INamedContainer.providedBy(parent) \
-				and has_permission(ACT_UPDATE, context, self.request)
+				and INamedContainer.providedBy(parent)
 
 	def _do_decorate_external(self, context, result):
+		request = self.request
 		_links = result.setdefault(LINKS, [])
-		_links.append(_create_link(context, rel="delete", method='DELETE'))
-		_links.append(_create_link(context, rel="move", name="@@move", method="POST"))
-		_links.append(_create_link(context, rel="rename", name="@@rename", method='POST'))
+		if has_permission(ACT_READ, context, request):
+			_links.append(_create_link(context, rel="associations", method='GET'))
+		if has_permission(ACT_UPDATE, context, request):
+			_links.append(_create_link(context, rel="delete", method='DELETE'))
+			_links.append(_create_link(context, rel="move", name="@@move", method="POST"))
+			_links.append(_create_link(context, rel="rename", name="@@rename", method='POST'))
 
 @component.adapter(INamedFile)
 @component.adapter(INamedContainer)

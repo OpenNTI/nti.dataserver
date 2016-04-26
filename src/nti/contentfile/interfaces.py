@@ -40,6 +40,11 @@ class IContentBaseFile(IFile, IAttributeAnnotatable, IContained):
 		return an iterable with the associatied objects
 		"""
 
+	def has_associations():
+		"""
+		return if this object has any associations
+		"""
+		
 IBaseFile = IContentBaseFile  # BWC
 
 class IContentFile(INamedFile, IContentBaseFile):
