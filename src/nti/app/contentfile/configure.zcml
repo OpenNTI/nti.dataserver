@@ -17,8 +17,4 @@
 				for="plone.namedfile.interfaces.IFile"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
 
-	<subscriber factory=".decorators._ContentBaseFileDecorator"
-				for="nti.contentfile.interfaces.IContentBaseFile"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
-
 </configure>
