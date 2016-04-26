@@ -54,12 +54,15 @@ class ContentFileObjectIO(NamedFileObjectIO):
 	def toExternalObject(self, *args, **kwargs):
 		ext_dict = super(ContentFileObjectIO, self).toExternalObject(*args, **kwargs)
 		the_file = self._ext_replacement()
+		# XXX: CS-20160426 For BWC we want to transform all content blob mimetype
+		# to regular files. This cannot be done in a decorator since the external
+		# NimeType is set in the super class method
 		if IModeledContentBody.providedBy(the_file.__parent__):
 			mimeType = ext_dict.get(MIMETYPE)
 			if mimeType == CONTENT_BLOB_FILE_MIMETYPE:
-				ext_dict[mimeType] = CONTENT_FILE_MIMETYPE
+				ext_dict[MIMETYPE] = CONTENT_FILE_MIMETYPE
 			elif mimeType == CONTENT_BLOB_IMAGE_MIMETYPE:
-				ext_dict[mimeType] = CONTENT_IMAGE_MIMETYPE
+				ext_dict[MIMETYPE] = CONTENT_IMAGE_MIMETYPE
 		return ext_dict
 	
 @component.adapter(IContentImage)
