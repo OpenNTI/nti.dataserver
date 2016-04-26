@@ -49,8 +49,9 @@ from nti.namedfile.file import get_file_name as get_context_name
 
 from nti.namedfile.interfaces import IFile
 from nti.namedfile.interfaces import IFileConstraints
+from nti.namedfile.interfaces import IInternalFileRef
 
-from nti.dataserver.interfaces import IInternalFileRef, IModeledContentBody
+from nti.dataserver.interfaces import IModeledContentBody
 
 from nti.links.externalization import render_link
 
