@@ -26,8 +26,9 @@ from z3c.batching.batch import Batch
 
 from ZODB.POSException import POSError
 
-from pyramid import traversal
 from pyramid import httpexceptions as hexc
+
+from pyramid import traversal
 
 import webob.datetime_utils
 
@@ -541,17 +542,18 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		return containedObject
 
 	def updateContentObject(self, contentObject, externalValue, set_id=False,
-							notify=True, pre_hook=None):
+							notify=True, pre_hook=None, object_hook=None):
 		# We want to be sure to only change values on the actual content object,
 		# not things in its traversal lineage
 		containedObject = update_object_from_external_object(aq_base(contentObject),
 															 externalValue,
 															 notify=notify,
+															 pre_hook=pre_hook,
 															 request=self.request,
-															 pre_hook=pre_hook)
+															 object_hook=object_hook)
 
 		# If they provided an ID, use it if we can and we need to
-		if set_id and ID in externalValue \
+		if 		set_id and ID in externalValue \
 			and hasattr(containedObject, ID) \
 			and getattr(containedObject, ID, None) != externalValue[ID]:
 			try:

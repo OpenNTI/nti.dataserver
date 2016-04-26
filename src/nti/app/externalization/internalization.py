@@ -20,6 +20,7 @@ from zope import component
 from pyramid import httpexceptions as hexc
 
 from nti.app.externalization import MessageFactory as _
+
 from nti.app.externalization.error import handle_possible_validation_error
 
 from nti.dataserver.interfaces import IDataserver
@@ -164,13 +165,18 @@ def read_body_as_external_object(request, input_data=None,
 		ex = hexc.HTTPBadRequest(_("Failed to parse/transform input"))
 		raise ex, None, tb
 
-def update_object_from_external_object(contentObject, externalValue,
-									   notify=True, request=None, pre_hook=None):
+def update_object_from_external_object(contentObject,
+									   externalValue,
+									   notify=True, 
+									   request=None, 
+									   pre_hook=None,
+									   object_hook=None):
 	dataserver = component.queryUtility(IDataserver)
 	try:
 		__traceback_info__ = contentObject, externalValue
 		return update_from_external_object(contentObject, externalValue,
 										   context=dataserver, notify=notify,
-										   pre_hook=pre_hook)
+										   pre_hook=pre_hook,
+										   object_hook=object_hook)
 	except Exception as e:
 		handle_possible_validation_error(request, e)
