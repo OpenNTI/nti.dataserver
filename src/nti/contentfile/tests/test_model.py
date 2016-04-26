@@ -21,14 +21,19 @@ from nti.testing.matchers import verifiably_provides
 
 import unittest
 
+from zope import interface
+
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.contentfile.model import ContentFile
+from nti.contentfile.model import ContentFile, transform_to_blob
 
 from nti.contentfile.interfaces import IContentFile
+from nti.contentfile.interfaces import IContentBlobImage
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
+
+from nti.namedfile.interfaces import IInternalFileRef
 
 from nti.contentfile.tests import SharedConfiguringTestLayer
 
@@ -77,3 +82,13 @@ class TestModel(unittest.TestCase):
 		assert_that(internal, has_property('__name__', is_('ichigo.gif')))
 		internal.name = 'foo'
 		assert_that(internal, has_property('__name__', is_('foo')))
+
+		internal.reference = 'oid'
+		interface.alsoProvides(internal, IInternalFileRef)
+		blob = transform_to_blob(internal)
+		assert_that(blob, verifiably_provides(IContentBlobImage))
+		assert_that(IInternalFileRef.providedBy(blob), is_(True))
+		assert_that(blob, has_property('reference', is_('oid')))
+		assert_that(blob, has_property('name', is_('foo')))
+		assert_that(blob, has_property('filename', is_('ichigo.gif')))
+		assert_that(blob, has_property('contentType', is_('image/gif')))
