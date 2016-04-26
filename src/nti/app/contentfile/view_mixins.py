@@ -322,7 +322,7 @@ pattern = re.compile('(.+)/%s(.+)/(@@)?[view|download](\/.*)?' % TAG_NTC,
 					 re.UNICODE | re.IGNORECASE)
 
 def is_oid_external_link(link):
-	return bool(pattern.match(unquote(link)))
+	return bool(pattern.match(unquote(link))) if link else False
 
 def get_file_from_oid_external_link(link):
 	result = None
