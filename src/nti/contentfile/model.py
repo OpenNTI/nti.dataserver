@@ -127,3 +127,16 @@ class ContentImage(NamedImage, BaseContentMixin):
 @interface.implementer(IContentBlobImage)
 class ContentBlobImage(NamedBlobImage, BaseContentMixin):
 	pass
+
+def transform_to_blob(context):
+	if IContentFile.providedBy(context):
+		result = ContentBlobFile()
+	elif IContentImage.providedBy(context):
+		result = ContentBlobImage()
+	else:
+		result = context
+	if result is not context:
+		for key, value in context.__dict__.values():
+			if not key.startswith('_'):
+				setattr(result, key, value)
+	return result
