@@ -292,6 +292,11 @@ class ContentFileGetView(AbstractAuthenticatedView):
 			   request_method='DELETE')
 class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin):
 
+	def _do_delete(self, theObject):
+		parent = theObject.__parent__
+		del parent[theObject.__name__]
+		return hexc.HTTPNoContent()
+
 	def __call__(self):
 		theObject = self.context
 		self._check_object_exists(theObject)
@@ -304,7 +309,7 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 		if not INamedContainer.providedBy(parent):
 			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
 
-		del parent[theObject.__name__]
+		self._do_delete(theObject)
 		return hexc.HTTPNoContent()
 
 @view_config(name='clear')
