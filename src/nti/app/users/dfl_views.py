@@ -25,10 +25,10 @@ from nti.appserver.ugd_edit_views import UGDDeleteView
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
-
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
+
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.zope_catalog.catalog import ResultSet
 
