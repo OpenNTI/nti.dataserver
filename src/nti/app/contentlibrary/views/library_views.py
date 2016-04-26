@@ -361,7 +361,7 @@ class PreResponseLibraryPathCacheController(object):
 		# Context is ignored
 		return cache_controller(obj, system)
 
-class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
+class AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 	"""
 	Handle the caching and 403 response communication for
 	LibraryPath views.
@@ -433,7 +433,7 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 			 name=LIBRARY_PATH_GET_VIEW,
 			 permission=nauth.ACT_READ,
 			 request_method='GET')
-class _LibraryPathView(_AbstractCachingLibraryPathView):
+class _LibraryPathView(AbstractCachingLibraryPathView):
 	"""
 	Return an ordered list of lists of library paths to an object.
 
@@ -475,7 +475,7 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 			try:
 				container = package[container]
 				if container is not None and container != package:
-					# In alpha, some packages can access themselves (?
+					# In alpha, some packages can access themselves (?)
 					# package[package.ntiid] == package -> True
 					return [container]
 			except (KeyError, AttributeError):
@@ -682,7 +682,7 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 			 name=LIBRARY_PATH_GET_VIEW,
 			 permission=nauth.ACT_READ,
 			 request_method='GET')
-class _PostLibraryPathView(_AbstractCachingLibraryPathView):
+class _PostLibraryPathView(AbstractCachingLibraryPathView):
 	"""
 	For board items, getting the path traversal can
 	be accomplished through lineage.

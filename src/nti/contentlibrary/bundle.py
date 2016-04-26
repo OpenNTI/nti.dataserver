@@ -140,7 +140,7 @@ class PersistentContentPackageBundle(ContentPackageBundle,
 				result.append(x)
 		return result
 	ContentPackages = property(_get_ContentPackages, _set_ContentPackages)
-	
+
 	def __repr__(self):
 		try:
 			return super(PersistentContentPackageBundle, self).__repr__()
@@ -154,7 +154,7 @@ class PersistentContentPackageBundle(ContentPackageBundle,
 			return object.__str__(self)
 
 	__unicode__ = __str__
-	
+
 _marker = object()
 
 @interface.implementer(IContentPackageBundleLibrary)
@@ -291,7 +291,7 @@ class ContentBundleMetaInfo(object):
 			setattr(self, str(k), v)
 
 		if IDelimitedHierarchyKey.providedBy(key_or_source):
-			self.key = key_or_source 
+			self.key = key_or_source
 			self.createdTime = key_or_source.createdTime
 			self.lastModified = key_or_source.lastModified
 		else:
@@ -339,8 +339,8 @@ def _validate_package_refs(bundle, meta):
 		# Not sure we can do anything here.
 		pass
 
-def synchronize_bundle(data_source, bundle, 
-					   content_library=None, 
+def synchronize_bundle(data_source, bundle,
+					   content_library=None,
 					   excluded_keys=(),
 					   _meta=None):
 	"""
@@ -429,7 +429,7 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 		You can use a non-standard
 		filename if you might have multiple things in the same bucket.
 	"""
-	result = synchronize_bundle(data_key, bundle, 
+	result = synchronize_bundle(data_key, bundle,
 								content_library=content_library,
 								excluded_keys=excluded_keys,
 								_meta=_meta)

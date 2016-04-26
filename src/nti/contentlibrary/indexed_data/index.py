@@ -199,7 +199,7 @@ class ContainedObjectCatalog(Persistent):
 		else:
 			result = None
 		return result
-	
+
 	def get_containers(self, item, intids=None):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:

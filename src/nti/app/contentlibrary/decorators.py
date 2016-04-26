@@ -167,9 +167,9 @@ class _PostLibraryPathLinkDecorator(object):
 		link.__parent__ = context
 		_links.append(link)
 
-class _BaseBoardLibraryPathLinkDecorator(object):
+class AbstractLibraryPathLinkDecorator(object):
 	"""
-	Create a `LibraryPath` link to our board object.
+	Create a `LibraryPath` link to our object.
 	"""
 
 	__metaclass__ = SingletonDecorator
@@ -186,12 +186,12 @@ class _BaseBoardLibraryPathLinkDecorator(object):
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(ITopic)
-class _TopicLibraryPathLinkDecorator(_BaseBoardLibraryPathLinkDecorator):
+class _TopicLibraryPathLinkDecorator(AbstractLibraryPathLinkDecorator):
 	pass
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(IForum)
-class _ForumLibraryPathLinkDecorator(_BaseBoardLibraryPathLinkDecorator):
+class _ForumLibraryPathLinkDecorator(AbstractLibraryPathLinkDecorator):
 	pass
 
 class _IPad120BundleContentPackagesAdjuster(AbstractAuthenticatedRequestAwareDecorator):
