@@ -172,7 +172,7 @@ def read_multipart_sources(request, sources=()):
 			result.append(data)
 	return result
 
-def _get_content_files_from_modeled_content_body(context):
+def get_content_files_from_modeled_content_body(context):
 	new_sources = []
 	transformed = False
 	result = OrderedDict()
@@ -200,7 +200,7 @@ def get_content_files(context, attr="body"):
 		# XXX: CS - 20160426 for model content body object we want to save 
 		# content file blobs but keep the same MimeType for BWC. so we transform
 		# contentfiles to contentblobfiles
-		return _get_content_files_from_modeled_content_body(context)
+		return get_content_files_from_modeled_content_body(context)
 	else:
 		result = OrderedDict()
 		sources = getattr(context, attr, None) if attr else context
