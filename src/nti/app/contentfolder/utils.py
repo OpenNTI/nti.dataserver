@@ -41,7 +41,7 @@ def get_ds2(request=None):
 	return result or "dataserver2"
 
 def is_cf_io_href(link):
-	return bool(pattern.match(unquote(link)))
+	return bool(pattern.match(unquote(link))) if link else False
 
 def safe_download_file_name(name):
 	if not name:
