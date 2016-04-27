@@ -83,7 +83,6 @@ from nti.namedfile.interfaces import INamedFile
 
 ITEMS = StandardExternalFields.ITEMS
 MIMETYPE = StandardExternalFields.MIMETYPE
-LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 
 expanded_expected_types = six.string_types + (Mapping,)
 
@@ -269,34 +268,6 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			self.context.add(item)
 
 		self.request.response.status_int = 201
-		result['ItemCount'] = result['Total'] = len(items)
-		return result
-
-@view_config(context=IContentBaseFile)
-@view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   permission=nauth.ACT_READ,
-			   request_method='GET')
-class ContentFileGetView(AbstractAuthenticatedView):
-
-	def __call__(self):
-		result = to_external_object(self.request.context)
-		result.lastModified = self.request.context.lastModified
-		return result
-
-@view_config(context=IContentBaseFile)
-@view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   name='associations',
-			   permission=nauth.ACT_READ,
-			   request_method='GET')
-class ContentFileAssociationsView(AbstractAuthenticatedView):
-
-	def __call__(self):
-		result = LocatedExternalDict()
-		result[ITEMS] = items = []
-		if self.context.has_associations():
-			items.extend(self.context.associations())
 		result['ItemCount'] = result['Total'] = len(items)
 		return result
 
