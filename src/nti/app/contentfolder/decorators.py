@@ -102,6 +102,7 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			_links.append(_create_link(context, rel="delete", method='DELETE'))
 			_links.append(_create_link(context, rel="move", name="@@move", method="POST"))
 			_links.append(_create_link(context, rel="rename", name="@@rename", method='POST'))
+			_links.append(_create_link(context, rel="associate", name="@@associate", method='POST'))
 
 @component.adapter(INamedFile)
 @component.adapter(INamedContainer)

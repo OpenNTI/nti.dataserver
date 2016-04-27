@@ -95,6 +95,6 @@ class ContentFileAssociateView(AbstractAuthenticatedView,
 		target = find_object_with_ntiid(ntiid)
 		if target is None:
 			raise hexc.HTTPUnprocessableEntity(_("Cannot find target object."))
-		if target is not self.context:
+		if target is not self.context and target is not self.context.__parent__:
 			self.context.add_association(target)
 		return hexc.HTTPNoContent()

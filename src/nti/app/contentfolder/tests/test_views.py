@@ -23,6 +23,8 @@ from nti.app.contentfolder.utils import get_cf_io_href
 
 from nti.dataserver.interfaces import IDataserver
 
+from nti.externalization.oids import to_external_ntiid_oid
+
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -60,6 +62,25 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(2),
 								'Items', has_length(2)))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_associate(self):
+		self.testapp.post('/dataserver2/ofs/root/@@upload',
+						  upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo') ],
+						  status=201)
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._get_user(self.default_username)
+			oid = to_external_ntiid_oid(user)
+		
+		data = {'ntiid': oid}
+		self.testapp.post_json('/dataserver2/ofs/root/ichigo.txt/@@associate',
+							   data, status=204)
+		
+		res = self.testapp.get('/dataserver2/ofs/root/ichigo.txt/@@associations',
+							   status=200)
+		assert_that(res.json_body,
+					has_entries('ItemCount', is_(1),
+								'Items', has_length(1)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_tree(self):
