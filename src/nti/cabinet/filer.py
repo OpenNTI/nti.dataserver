@@ -116,10 +116,15 @@ class DirectoryFiler(object):
 			out_file = os.path.relpath(out_file, self.path)
 		return out_file
 
-	def get(self, key):
-		if not key.startswith(self.path):
+	def get(self, key, bucket=None):
+		if bucket:
+			if not bucket.startswith(self.path):
+				bucket = os.path.join(self.path, bucket)
+				bucket = os.path.normpath(bucket)
+			key = os.path.join(bucket, key)
+		elif not key.startswith(self.path):
 			key = os.path.join(self.path, key)
-		key = os.path.normpath(key)
+			key = os.path.normpath(key)
 		if not key.startswith(self.path) or not os.path.exists(key):
 			return None
 
@@ -148,8 +153,8 @@ class DirectoryFiler(object):
 		result.__parent__ = parent
 		return result
 
-	def remove(self, key):
-		result = self.get(key)
+	def remove(self, key, bucket=None):
+		result = self.get(key, bucket=bucket)
 		if result is not None:
 			if hasattr(result, 'remove'):
 				result.remove()

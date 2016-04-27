@@ -74,11 +74,12 @@ class ISourceFiler(interface.Interface):
         :return A source URL or href
         """
     
-    def get(key):
+    def get(key, bucket=None):
         """
         Return a source
         
         :param key source identifier, href or url
+        :param bucket: Optional bucket name (e.g subir)
         :return Source object or stream
         """
 
@@ -90,7 +91,7 @@ class ISourceFiler(interface.Interface):
         :param bucket: Optional bucket name (e.g subir)
         """
     
-    def remove(key):
+    def remove(key, bucket=None):
         """
         Remove a source
         
