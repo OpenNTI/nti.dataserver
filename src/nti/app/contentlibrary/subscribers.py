@@ -196,9 +196,9 @@ def _can_be_removed(registered, force=False):
 can_be_removed = _can_be_removed
 
 def _removed_registered(provided, name, intids=None, registry=None,
-						catalog=None, force=False):
+						catalog=None, force=False, item=None):
 	registry = get_site_registry(registry)
-	registered = registry.queryUtility(provided, name=name)
+	registered = registry.queryUtility(provided, name=name) if item is None else item
 	intids = component.getUtility(IIntIds) if intids is None else intids
 	if _can_be_removed(registered, force=force):
 		catalog = get_library_catalog() if catalog is None else catalog
@@ -246,7 +246,8 @@ def _remove_from_registry(namespace=None,
 										  force=force,
 										  intids=intids,
 										  catalog=catalog,
-										  registry=registry)
+										  registry=registry,
+										  item=item)
 			if removed is not None:
 				result.append(removed)
 			elif sync_results is not None:
@@ -436,7 +437,7 @@ def _update_index_when_content_changes(content_package,
 	removed_count = len(removed)
 
 	is_global_manager = bool(registry == component.getGlobalSiteManager())
-	
+
 	# update sync results
 	for item in added or ():
 		sync_results.add_asset(item, locked=False)
