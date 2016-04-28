@@ -32,6 +32,7 @@ from nti.app.contentlibrary.subscribers import clear_content_package_assets
 from nti.app.contentlibrary.subscribers import update_indices_when_content_changes
 
 from nti.app.contentlibrary.utils import yield_content_packages
+from nti.app.contentlibrary.utils.common import remove_package_inaccessible_assets
 
 from nti.app.contentlibrary.views import iface_of_thing
 
@@ -46,8 +47,6 @@ from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contenttypes.presentation import PACKAGE_CONTAINER_INTERFACES
 
-from nti.contenttypes.presentation.interfaces import IPresentationAsset
-from nti.contenttypes.presentation.interfaces import ILegacyPresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.dataserver import authorization as nauth
@@ -57,8 +56,6 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.intid.common import removeIntId
-
 from nti.recorder.record import remove_transaction_history
 
 from nti.site.hostpolicy import get_host_site
@@ -66,8 +63,6 @@ from nti.site.hostpolicy import get_host_site
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.site.site import get_component_hierarchy_names
-
-from nti.site.utils import unregisterUtility
 
 from nti.traversal.traversal import find_interface
 
@@ -207,124 +202,11 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 	def readInput(self, value=None):
 		return _read_input(self.request)
 
-	def _registered_assets(self, registry):
-		for provided in PACKAGE_CONTAINER_INTERFACES:
-			for ntiid, asset in list(registry.getUtilitiesFor(provided)):
-				yield ntiid, asset, provided
-
-	def _unit_assets(self, package):
-		result = []
-		def recur(unit):
-			for child in unit.children or ():
-				recur(child)
-			container = IPresentationAssetContainer(unit)
-			for key, value in container.items():
-				provided = iface_of_thing(value)
-				if provided in PACKAGE_CONTAINER_INTERFACES:
-					result.append((key, value, container))
-		recur(package)
-		return result
-
-	def _site_registry(self, site_name):
-		folder = get_host_site(site_name)
-		registry = folder.getSiteManager()
-		return registry
-
-	def _do_call(self, result):
-		registered = 0
-		items = result[ITEMS] = []
-
-		seen = set()
-		sites = set()
-		master = set()
-		catalog = get_library_catalog()
-		intids = component.getUtility(IIntIds)
-		all_packages = tuple(yield_content_packages())
-
-		# clean containers by removing those assets that either
-		# don't have an intid or cannot be found in the registry
-		for package in all_packages:
-			# check every object in the package
-			folder = find_interface(package, IHostPolicyFolder, strict=False)
-			sites.add(folder.__name__)
-			for ntiid, asset, container in self._unit_assets(package):
-				if ILegacyPresentationAsset.providedBy(asset):
-					continue
-				uid = intids.queryId(asset)
-				provided = iface_of_thing(asset)
-				if uid is None:
-					container.pop(ntiid, None)
-					remove_transaction_history(asset)
-				elif component.queryUtility(provided, name=ntiid) is None:
-					catalog.unindex(uid)
-					removeIntId(asset)
-					container.pop(ntiid, None)
-					remove_transaction_history(asset)
-				else:
-					master.add(ntiid)
-
-		if not all_packages:
-			sites = get_component_hierarchy_names()
-
-		# unregister those utilities that cannot be found in the package containers
-		for site in sites:
-			registry = self._site_registry(site)
-			for ntiid, asset, provided in self._registered_assets(registry):
-				if ILegacyPresentationAsset.providedBy(asset):
-					continue
-				uid = intids.queryId(asset)
-				if uid is None or ntiid not in master:
-					remove_transaction_history(asset)
-					unregisterUtility(registry,
-									  name=ntiid,
-								   	  provided=provided)
-					if uid is not None:
-						catalog.unindex(uid)
-						removeIntId(asset)
-					if ntiid not in seen:
-						seen.add(ntiid)
-						items.append({
-							'IntId':uid,
-							NTIID:ntiid,
-							MIMETYPE:asset.mimeType,
-						})
-				else:
-					registered += 1
-
-		# unindex invalid entries in catalog
-		references = catalog.get_references(sites=sites,
-										 	provided=PACKAGE_CONTAINER_INTERFACES)
-		for uid in references or ():
-			asset = intids.queryObject(uid)
-			if asset is None or not IPresentationAsset.providedBy(asset):
-				catalog.unindex(uid)
-			else:
-				ntiid = asset.ntiid
-				provided = iface_of_thing(asset)
-				if component.queryUtility(provided, name=ntiid) is None:
-					catalog.unindex(uid)
-					removeIntId(asset)
-					remove_transaction_history(asset)
-					if ntiid not in seen:
-						seen.add(ntiid)
-						items.append({
-							'IntId':uid,
-							NTIID:ntiid,
-							MIMETYPE:asset.mimeType,
-						})
-
-		items.sort(key=lambda x:x[NTIID])
-		result['Sites'] = list(sites)
-		result['TotalContainedAssets'] = len(master)
-		result['TotalRegisteredAssets'] = registered
-		result['Total'] = result['ItemCount'] = len(items)
-		return result
-
 	def __call__(self):
 		result = LocatedExternalDict()
 		endInteraction()
 		try:
-			self._do_call(result)
+			result = remove_package_inaccessible_assets()
 		finally:
 			restoreInteraction()
 		return result
