@@ -108,3 +108,9 @@ class IContainersAdapter(interface.Interface):
 	Adapts contained objects to their str containers NTIIDs.
 	"""
 	containers = interface.Attribute("NTIID strings")
+
+class ISlideDeckAdapter(interface.Interface):
+	"""
+	Adapts contained objects to their video NTIIDs
+	"""
+	videos = interface.Attribute("NTIID strings")

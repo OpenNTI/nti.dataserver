@@ -33,6 +33,7 @@ from nti.common.time import time_to_64bit_int
 
 from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
+from nti.contentlibrary.indexed_data.interfaces import ISlideDeckAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainersAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
@@ -53,6 +54,7 @@ IX_TYPE = 'type'
 IX_NTIID = 'ntiid'
 IX_NAMESPACE = 'namespace'
 IX_CONTAINERS = 'containers'
+IX_SLIDEDECK_VIDEOS = 'slideDeckVideos'
 
 def to_iterable(value):
 	if isinstance(value, (list, tuple, set)):
@@ -150,10 +152,13 @@ class NTIIDIndex(ValueIndex):
 	default_interface = INTIIDAdapter
 
 class ContainersIndex(RetainSetIndex):
-	field_callable = None
-	field_name = default_field_name = 'containers'
+	default_field_name = 'containers'
 	interface = default_interface = IContainersAdapter
 
+class SlideDeckVideosIndex(RetainSetIndex):
+	default_field_name = 'ntiids'
+	interface = default_interface = ISlideDeckAdapter
+	
 class LibraryCatalog(Catalog):
 
 	family = BTrees.family64
@@ -296,7 +301,8 @@ def create_library_catalog(catalog=None, family=None):
 						 (IX_TYPE, TypeIndex),
 						 (IX_NTIID, NTIIDIndex),
 						 (IX_NAMESPACE, NamespaceIndex),
-						 (IX_CONTAINERS, ContainersIndex),):
+						 (IX_CONTAINERS, ContainersIndex),
+						 (IX_SLIDEDECK_VIDEOS, SlideDeckVideosIndex)):
 		index = clazz(family=family)
 		locate(index, catalog, name)
 		catalog[name] = index
