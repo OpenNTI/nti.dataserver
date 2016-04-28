@@ -140,6 +140,7 @@ class SourceProxy(ProxyBase):
 	def readContents(self):
 		return self.read()
 
+@EqHash('filename')
 @interface.implementer(ISource, ILastModified)
 class SourceFile(object):
 
@@ -148,10 +149,11 @@ class SourceFile(object):
 	_v_fp = None
 	__parent__ = None
 
-	def __init__(self, filename, data=None, contentType=None, 
-				 createdTime=None, lastModified=None):
+	def __init__(self, name, data=None, contentType=None, 
+				 createdTime=None, lastModified=None, path=None):
+		self.name = name
+		self.path = path or u''
 		self._time = time.time()
-		self.filename = filename
 		self.contentType = contentType
 		if data is not None:
 			self.data = data
@@ -160,6 +162,10 @@ class SourceFile(object):
 		if lastModified is not None:
 			self.lastModified = lastModified
 
+	@property
+	def filename(self):
+		return os.path.join(self.path, self.name)
+	
 	def _getData(self):
 		return self._data
 	def _setData(self, data):
@@ -217,50 +223,46 @@ class SourceFile(object):
 
 	@property
 	def __name__(self):
-		return self.filename
-	name = __name__
+		return self.name
 
 @interface.implementer(ISource)
 class ReferenceSourceFile(SourceFile):
 
-	def __init__(self, path, filename, contentType=None, 
+	def __init__(self, path, name, contentType=None, 
 				 createdTime=None, lastModified=None):
-		super(ReferenceSourceFile, self).__init__(filename, contentType=contentType, 
+		super(ReferenceSourceFile, self).__init__(name, 
+												  path=path,
+												  contentType=contentType, 
 												  createdTime=createdTime, 
 												  lastModified=lastModified)
-		self.path = path
-
-	@property
-	def _v_data_file(self):
-		return os.path.join(self.path, self.filename)
 
 	def _getData(self):
-		with open(self._v_data_file, "rb") as fp:
+		with open(self.filename, "rb") as fp:
 			return fp.read()
 
 	def _setData(self, data):
 		# close resources
 		self.close()
-		if data is None and os.path.exists(self._v_data_file):
+		if data is None and os.path.exists(self.filename):
 			data = b''  # 0 byte file
 		# write to file
-		with open(self._v_data_file, "wb") as fp:
+		with open(self.filename, "wb") as fp:
 			fp.write(data)
 
 	data = property(_getData, _setData)
 
 	def _get_v_fp(self):
-		self._v_fp = open(self._v_data_file, "rb") if self._v_fp is None else self._v_fp
+		self._v_fp = open(self.filename, "rb") if self._v_fp is None else self._v_fp
 		return self._v_fp
 
 	def remove(self):
 		self.close()
-		if os.path.exists(self._v_data_file):
-			os.remove(self._v_data_file)
+		if os.path.exists(self.filename):
+			os.remove(self.filename)
 
 	@property
 	def length(self):
-		return get_file_size(self._v_data_file)
+		return get_file_size(self.filename)
 	size = length
 
 	def getSize(self):
@@ -269,8 +271,8 @@ class ReferenceSourceFile(SourceFile):
 	
 	@readproperty
 	def createdTime(self):
-		return get_file_createdTime(self._v_data_file) or 0
+		return get_file_createdTime(self.filename) or 0
 
 	@readproperty
 	def lastModified(self):
-		return get_file_lastModified(self._v_data_file) or 0
+		return get_file_lastModified(self.filename) or 0

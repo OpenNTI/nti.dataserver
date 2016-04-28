@@ -61,6 +61,11 @@ class ISourceFiler(interface.Interface):
         return the key name for the specified identifier
         """
 
+    def get_external_link(item):
+        """
+        return the external link of the specified item
+        """
+        
     def save(key, source, contentType=None, bucket=None, overwrite=False, **kwargs):
         """
         Save the specifed source in this filer object

@@ -40,14 +40,13 @@ class TestFiler(unittest.TestCase):
 	def get_data_source(self):
 		return StringIO("<ichigo/>")
 
-	def _test_ops(self, reference=False, native=False):
+	def test_operations(self):
 		tmp_dir = tempfile.mkdtemp(dir="/tmp")
 		try:
-			filer = DirectoryFiler(tmp_dir, native=native)
+			filer = DirectoryFiler(tmp_dir)
 			data = self.get_data_source()
 			href = filer.save("ichigo.xml", data, relative=False,
-							  contentType="application/xml", overwrite=True,
-							  reference=reference)
+							  contentType="application/xml", overwrite=True)
 			assert_that(href, is_not(none()))
 			assert_that(href, starts_with(tmp_dir))
 			assert_that(filer.contains(href), is_(True))
@@ -56,18 +55,13 @@ class TestFiler(unittest.TestCase):
 			assert_that(source, is_not(none()))
 			assert_that(source, verifiably_provides(ISource))
 			assert_that(source, has_property('length', is_(9)))
-			assert_that(source, has_property('filename', is_("ichigo.xml")))
-			assert_that(source, has_property('contentType', is_("application/xml")))
+			assert_that(source, has_property('name', is_("ichigo.xml")))
 			assert_that(source, has_property('__parent__', is_not(none())))
-			
-			assert_that(source.read(), is_("<ichigo/>"))
-			if not native:
-				assert_that(source, has_property('data', is_("<ichigo/>")))
-			source.close()
+			assert_that(source, has_property('filename', ends_with("/ichigo.xml")))
+			assert_that(source, has_property('contentType', is_("application/xml")))
 
-			if not native:
-				with source as ds:
-					assert_that(ds.read(), is_("<ichigo/>"))
+			assert_that(source.read(), is_("<ichigo/>"))
+			source.close()
 
 			source = filer.get("/home/foo")
 			assert_that(source, is_(none()))
@@ -76,8 +70,7 @@ class TestFiler(unittest.TestCase):
 			href = filer.save("ichigo.xml", 
 							  data,
 							  contentType="application/xml", 
-							  overwrite=False,
-							  reference=reference)
+							  overwrite=False)
 			assert_that(href, does_not(ends_with("ichigo.xml")))
 
 			data = self.get_data_source()
@@ -85,8 +78,7 @@ class TestFiler(unittest.TestCase):
 							  data,
 							  bucket="bleach",
 							  contentType="application/xml", 
-							  overwrite=True,
-							  reference=reference)
+							  overwrite=True)
 			assert_that(href, ends_with("bleach/ichigo.xml"))
 			assert_that(filer.is_bucket("bleach"), is_(True))
 			assert_that(filer.list("bleach"), has_length(greater_than(0)))
@@ -100,9 +92,8 @@ class TestFiler(unittest.TestCase):
 			ichigo = bucket.getChildNamed("ichigo.xml")
 			assert_that(ichigo, is_not(none()))
 			
-			if native:
-				listed = bucket.enumerateChildren()
-				assert_that(listed, is_((u'bleach/ichigo.xml',)))
+			listed = bucket.enumerateChildren()
+			assert_that(listed, is_((u'bleach/ichigo.xml',)))
 
 			foo = bucket.getChildNamed("foo.xml")
 			assert_that(foo, is_(none()))
@@ -112,18 +103,16 @@ class TestFiler(unittest.TestCase):
 							  data,
 							  bucket="bleach/souls",
 							  contentType="application/xml", 
-							  overwrite=True,
-							  reference=reference)
+							  overwrite=True)
 			assert_that(href, ends_with("bleach/souls/ichigo.xml"))
 			
 			assert_that(filer.contains(href), is_(True))
 			assert_that(filer.contains("ichigo.xml", "bleach/souls"), is_(True))
 			
-			if native:
-				listed = filer.list("bleach")
-				assert_that(listed, is_((u'bleach/ichigo.xml', u'bleach/souls')))
-				assert_that(filer.is_bucket(u'bleach/souls'), is_(True))
-				assert_that(filer.is_bucket(u'bleach/ichigo.xml'), is_(False))
+			listed = filer.list("bleach")
+			assert_that(listed, is_((u'bleach/ichigo.xml', u'bleach/souls')))
+			assert_that(filer.is_bucket(u'bleach/souls'), is_(True))
+			assert_that(filer.is_bucket(u'bleach/ichigo.xml'), is_(False))
 
 			assert_that(filer.remove(href), is_(True))
 			source = filer.get(href)
@@ -131,10 +120,3 @@ class TestFiler(unittest.TestCase):
 			assert_that(filer.contains(href), is_(False))
 		finally:
 			shutil.rmtree(tmp_dir, True)
-			
-	def test_non_reference(self):
-		self._test_ops(False)
-		self._test_ops(False, True)
-	
-	def test_reference(self):
-		self._test_ops(True)

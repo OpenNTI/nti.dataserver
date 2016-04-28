@@ -10,14 +10,13 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import pickle
 import shutil
 
 from zope import interface
 
+from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceFiler
 
-from nti.cabinet.mixins import SourceFile
 from nti.cabinet.mixins import SourceBucket
 from nti.cabinet.mixins import ReferenceSourceFile
 
@@ -52,8 +51,7 @@ def transfer_to_native_file(source, target):
 @interface.implementer(ISourceFiler)
 class DirectoryFiler(object):
 
-	def __init__(self, path, native=True):
-		self.native = native
+	def __init__(self, path):
 		self.path = self.prepare(path) if path else None
 
 	def prepare(self, path):
@@ -102,16 +100,7 @@ class DirectoryFiler(object):
 		else:
 			out_file = os.path.join(out_dir, key)
 
-		if not self.native:
-			target = SourceFile(key)
-			transfer_to_storage_file(source, target)
-			target.contentType = contentType or target.contentType
-			target.close()
-			with open(out_file, "wb") as fp:
-				pickle.dump(target, fp, pickle.HIGHEST_PROTOCOL)
-		else:
-			transfer_to_native_file(source, out_file)
-
+		transfer_to_native_file(source, out_file)
 		if relative:
 			out_file = os.path.relpath(out_file, self.path)
 		return out_file
@@ -141,15 +130,11 @@ class DirectoryFiler(object):
 			bucket = os.path.relpath(key, self.path)
 			result = SourceBucket(bucket, self)
 		else:
-			if not self.native:
-				with open(key, "rb") as fp:
-					result = pickle.load(fp)
-			else:
-				key_path, name = os.path.split(key)
-				contentType = mimetypes.guess_type(name.lower())[0]
-				result = ReferenceSourceFile(key_path,
-											 name,
-											 contentType=contentType)
+			key_path, name = os.path.split(key)
+			contentType = mimetypes.guess_type(name.lower())[0]
+			result = ReferenceSourceFile(name=name,
+										 path=key_path,
+										 contentType=contentType)
 		result.__parent__ = parent
 		return result
 
@@ -203,3 +188,7 @@ class DirectoryFiler(object):
 	def key_name(self, identifier):
 		return os.path.split(identifier)[1]
 	keyName = key_name
+	
+	def get_external_link(self, item):
+		return item.filename if ISource.providedBy(item) else None
+	to_external_link = get_external_link
