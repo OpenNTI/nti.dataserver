@@ -155,8 +155,8 @@ class ContainersIndex(RetainSetIndex):
 	default_field_name = 'containers'
 	interface = default_interface = IContainersAdapter
 
-class SlideDeckVideosIndex(RetainSetIndex):
-	default_field_name = 'ntiids'
+class SlideDeckVideosIndex(AttributeSetIndex):
+	default_field_name = 'videos'
 	interface = default_interface = ISlideDeckAdapter
 	
 class LibraryCatalog(Catalog):

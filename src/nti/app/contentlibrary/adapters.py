@@ -38,7 +38,8 @@ from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
 from nti.contentlibrary.indexed_data import get_library_catalog
 
-from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
+from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter,\
+	ISlideDeckAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainersAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
@@ -49,7 +50,7 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.contenttypes.presentation import iface_of_asset
 
-from nti.contenttypes.presentation.interfaces import INTISlide
+from nti.contenttypes.presentation.interfaces import INTISlide, INTISlideDeck
 from nti.contenttypes.presentation.interfaces import INTISlideVideo
 from nti.contenttypes.presentation.interfaces import IPresentationAsset
 from nti.contenttypes.presentation.interfaces import ICoursePresentationAsset
@@ -196,6 +197,21 @@ def _course_asset_to_containers(context):
 	result.discard(None)
 	result.discard(context.ntiid)
 	return _Containers(tuple(result))
+
+# Containers
+
+class _SlideDeck(object):
+
+	__slots__ = (b'videos',)
+
+	def __init__(self, videos):
+		self.videos = videos
+
+@component.adapter(INTISlideDeck)
+@interface.implementer(ISlideDeckAdapter)
+def _slideck_data(context):
+	videos = {v.video_ntiid for v in context.Videos or ()}
+	return _SlideDeck(videos)
 
 # Bundles
 
