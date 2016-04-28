@@ -5,9 +5,8 @@ entry_points = {
 	'console_scripts': [
 		# library
 		"nti_s3put = nti.contentlibrary.nti_s3put:main",
-		"nti_sync_all_libraries = nti.app.contentlibrary.utils.nti_sync_all_libraries:main",
-		"nti_sync_library_assets = nti.app.contentlibrary.utils.nti_sync_library_assets:main",
-		"nti_remove_package_inaccessible_assets = nti.app.contentlibrary.utils.nti_remove_package_inaccessible_assets:main",
+		"nti_sync_all_libraries = nti.app.contentlibrary.scripts.nti_sync_all_libraries:main",
+		"nti_sync_library_assets = nti.app.contentlibrary.scripts.nti_sync_library_assets:main",
 		# dataserver
 		"nti_shards = nti.dataserver.utils.nti_shards:main",
 		"nti_init_env = nti.dataserver.utils.nti_init_env:main",
