@@ -21,7 +21,7 @@ from zope.dublincore.interfaces import IDCDescriptiveProperties
 
 from plone.namedfile.interfaces import INamed as IPloneNamed
 
-from nti.coremetadata.interfaces import ICreated 
+from nti.coremetadata.interfaces import ICreated
 from nti.coremetadata.interfaces import ILastModified
 
 from nti.schema.field import Bool
@@ -64,10 +64,15 @@ class IContentFolder(INamedContainer, IAttributeAnnotatable):
 		"""
 		rename an stored item
 		"""
-		
+
 	def moveTo(item, target, newName=None):
 		"""
 		move the specified item to the target with a possible new name
+		"""
+
+	def copyTo(item, target, newName=None):
+		"""
+		copy the specified item to the target with a possible new name
 		"""
 
 class IRootFolder(IContentFolder):

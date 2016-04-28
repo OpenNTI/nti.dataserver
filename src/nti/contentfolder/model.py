@@ -60,7 +60,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 	parameters = {}
 	mimeType = mime_type = str('application/vnd.nextthought.contentfolder')
 
-	path = None # BWC
+	path = None  # BWC
 
 	def __init__(self, *args, **kwargs):
 		super(ContentFolder, self).__init__()
@@ -99,7 +99,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 
 		name = get_context_name(old) or old
 		item = self._delitemf(name, event=False)
-		item.name = new # set new name
+		item.name = new  # set new name
 		self._setitemf(new, item)
 
 	def moveTo(self, item, target, newName=None):
@@ -122,12 +122,37 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 			del target[newName]
 
 		item = self._delitemf(name, event=False)
-		item.name = newName # set new name
+		item.name = newName  # set new name
 		target._setitemf(newName, item)
-
 		lifecycleevent.moved(item, self, name, target, newName)
 		return True
-	
+
+	def copyTo(self, item, target=None, newName=None):
+		target = self if target is None else target
+		assert 	isinstance(item, six.string_types) or IFile.providedBy(item)
+		assert INamedContainer.providedBy(target)
+
+		# check item exists in this continer
+		name = get_context_name(item) or item
+		if name not in self:
+			raise KeyError("Could not find source file")
+		newName = newName or name
+
+		# no copy
+		if self == target and newName == name:
+			return item
+
+		# create new file
+		item = self[name]
+		newObject = item.__class__()
+		for key, value in item.__dict__.items():
+			if not key.startswith('_') and key != 'data':
+				setattr(newObject, key, value)
+		newObject.name = newName  # set name
+		newObject.data = item.data  # set data
+		target.add(newObject)
+		return newObject
+
 	# compatible methods
 
 	def getChildNamed(self, key):

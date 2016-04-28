@@ -14,6 +14,7 @@ from hamcrest import is_not
 from hamcrest import has_entries
 from hamcrest import assert_that
 from hamcrest import has_property
+does_not = is_not
 
 from nti.testing.matchers import validly_provides
 
@@ -48,23 +49,55 @@ class TestModel(unittest.TestCase):
 		f1.add(NamedFile(name="foo"))
 		assert_that('foo', is_in(f1))
 		self.assertRaises(Exception, f1.__setitem__, 'foo', object())
-		
+
 		ext_obj = to_external_object(root)
-		assert_that(ext_obj, 
+		assert_that(ext_obj,
 					has_entries(
 						u'MimeType', u'application/vnd.nextthought.contentrootfolder',
 						u'name', u'root'))
 		factory = find_factory_for(ext_obj)
 		assert_that(factory, is_(none()))
-		
+
 		ext_obj = to_external_object(f1)
-		assert_that(ext_obj, 
+		assert_that(ext_obj,
 					has_entries(
 						u'MimeType', u'application/vnd.nextthought.contentfolder',
 						u'name', u'f1'))
-		
+
 		factory = find_factory_for(ext_obj)
 		assert_that(factory, is_not(none()))
 		internal = factory()
 		update_from_external_object(internal, ext_obj)
 		assert_that(internal, has_property('name', is_('f1')))
+
+	def test_move(self):
+		root = RootFolder()
+		bleach = root.add(ContentFolder(name='bleach'))
+		ichigo = root.add(NamedFile(name="ichigo", data=b'shikai'))
+
+		root.moveTo(ichigo, bleach, 'aizen')
+		assert_that('ichigo', does_not(is_in(root)))
+		assert_that('aizen', does_not(is_in(root)))
+		assert_that('aizen', is_in(bleach))
+
+		aizen = bleach['aizen']
+		assert_that(aizen, has_property('data', is_(b'shikai')))
+
+	def test_copy(self):
+		root = RootFolder()
+		bleach = root.add(ContentFolder(name='bleach'))
+		ichigo = root.add(NamedFile(name="ichigo", data=b'shikai'))
+
+		aizen = root.copyTo(ichigo, bleach, 'aizen')
+		assert_that(aizen, is_not(none()))
+		assert_that(aizen, is_not(ichigo))
+		assert_that(aizen, has_property('data', is_(b'shikai')))
+
+		same = root.copyTo(ichigo)
+		assert_that(same, is_not(none()))
+		assert_that(same, is_(ichigo))
+
+		aizen = root.copyTo(ichigo, newName='aizen')
+		assert_that(aizen, is_not(none()))
+		assert_that(aizen, is_not(ichigo))
+		assert_that(aizen, has_property('data', is_(b'shikai')))

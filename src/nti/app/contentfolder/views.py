@@ -173,7 +173,8 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 			data['title'] = data.get('title') or data['name']
 			data['description'] = data.get('description') or data['name']
 			data[MIMETYPE] = self.default_folder_mime_type
-		return data
+		assert isinstance(data, Mapping)
+		return CaseInsensitiveDict(data)
 
 	def _do_call(self):
 		creator = self.remoteUser
@@ -201,11 +202,16 @@ class MkdirsView(AbstractAuthenticatedView):
 		result.creator = self.remoteUser.username
 		return result
 
-	def __call__(self):
+	def readInput(self, value=None):
 		data = read_body_as_external_object(self.request,
 											expected_type=expanded_expected_types)
 		if isinstance(data, six.string_types):
 			data = {'path': data}
+		assert isinstance(data, Mapping)
+		return CaseInsensitiveDict(data)
+
+	def __call__(self):
+		data = self.readInput()
 		path = data.get('path')
 		if not path:
 			raise hexc.HTTPUnprocessableEntity(_("Path not specified."))
@@ -391,21 +397,7 @@ class MoveView(AbstractAuthenticatedView,
 		assert isinstance(data, Mapping)
 		return CaseInsensitiveDict(data)
 
-	def __call__(self):
-		theObject = self.context
-		self._check_object_exists(theObject)
-		if IRootFolder.providedBy(theObject):
-			raise hexc.HTTPForbidden(_("Cannot move root folder."))
-
-		parent = theObject.__parent__
-		if not INamedContainer.providedBy(parent):
-			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
-
-		data = self.readInput()
-		path = data.get('path')
-		if not path:
-			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid path."))
-
+	def _get_parent_target(self, theObject, path):
 		current = theObject
 		parent = current.__parent__
 		if not path.startswith(u'/'):
@@ -428,7 +420,24 @@ class MoveView(AbstractAuthenticatedView,
 			else:
 				target = e.context
 				target_name = e.segment
+		return parent, target, target_name
 
+	def __call__(self):
+		theObject = self.context
+		self._check_object_exists(theObject)
+		if IRootFolder.providedBy(theObject):
+			raise hexc.HTTPForbidden(_("Cannot move root folder."))
+
+		parent = theObject.__parent__
+		if not INamedContainer.providedBy(parent):
+			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+
+		data = self.readInput()
+		path = data.get('path')
+		if not path:
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid path."))
+
+		parent, target, target_name = self._get_parent_target(theObject, path)
 		if INamedContainer.providedBy(target):
 			parent.moveTo(theObject, target, target_name)
 		else:
@@ -437,6 +446,37 @@ class MoveView(AbstractAuthenticatedView,
 		# XXX: externalize first
 		self.request.response.status_int = 201
 		result = to_external_object(theObject)
+		return result
+
+@view_config(context=INamedFile)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_READ,
+			   request_method='POST')
+class CopyView(MoveView):
+
+	def __call__(self):
+		theObject = self.context
+		self._check_object_exists(theObject)
+
+		parent = theObject.__parent__
+		if not INamedContainer.providedBy(parent):
+			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+
+		data = self.readInput()
+		path = data.get('path')
+		if not path:
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid path."))
+
+		parent, target, target_name = self._get_parent_target(theObject, path)
+		if INamedContainer.providedBy(target):
+			result = parent.copyTo(theObject, target, target_name)
+		else:
+			result = parent.copyTo(theObject, target.__parent__, target_name)
+
+		# XXX: externalize first
+		self.request.response.status_int = 201
+		result = to_external_object(result)
 		return result
 
 @view_config(name=CFIO)
