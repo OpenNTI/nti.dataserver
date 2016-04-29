@@ -146,8 +146,11 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		item = self[name]
 		newObject = item.__class__()
 		for key, value in item.__dict__.items():
-			if not key.startswith('_') and key != 'data':
-				setattr(newObject, key, value)
+			if not key.startswith('_') and key not in ('data', 'size'):
+				try:
+					setattr(newObject, key, value)
+				except (AttributeError, TypeError): # ignore readonly
+					pass
 		newObject.name = newName  # set name
 		newObject.data = item.data  # set data
 		target.add(newObject)

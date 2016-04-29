@@ -146,7 +146,10 @@ def transform_to_blob(context):
 	if result is not context:
 		for key, value in context.__dict__.items():
 			if not key.startswith('_'):
-				setattr(result, key, value)
+				try:
+					setattr(result, key, value)
+				except (AttributeError, TypeError): # ignore readonly
+					pass
 		if IInternalFileRef.providedBy(context):
 			interface.alsoProvides(result, IInternalFileRef)
 			result.reference = getattr(context, 'reference', None)  # extra check

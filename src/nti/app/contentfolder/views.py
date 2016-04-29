@@ -451,6 +451,7 @@ class MoveView(AbstractAuthenticatedView,
 @view_config(context=INamedFile)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
+			   name='copy',
 			   permission=nauth.ACT_READ,
 			   request_method='POST')
 class CopyView(MoveView):
