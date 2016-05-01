@@ -18,11 +18,7 @@ from zope.component.hooks import setHooks
 
 from zope.intid.interfaces import IIntIds
 
-from zope.location.location import locate
-
-from nti.dataserver.users.index import IX_MIMETYPE
-from nti.dataserver.users.index import MimeTypeIndex
-from nti.dataserver.users.index import install_entity_catalog
+from nti.contentlibrary.indexed_data.catalog import install_library_catalog
 
 def do_evolve(context):
 	setHooks()
@@ -37,23 +33,12 @@ def do_evolve(context):
 		lsm = ds_folder.getSiteManager()
 		intids = lsm.getUtility(IIntIds)
 
-		catalog = install_entity_catalog(ds_folder, intids)
-		if IX_MIMETYPE not in catalog:
-			index = MimeTypeIndex(family=intids.family)
-			intids.register(index)
-			locate(index, catalog, IX_MIMETYPE)
-			catalog[IX_MIMETYPE] = index
-			
-			users = ds_folder['users']
-			for user in users.values():
-				doc_id = intids.queryId(user)
-				if doc_id is not None:
-					index.index_doc(doc_id, user)
-
+		install_library_catalog(ds_folder, intids)
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):
 	"""
-	Evolve to gen 79 by installing the mimeType index for the entity catalog
+	Evolve to gen 79 by installing the new library asset catalog.
 	"""
-	do_evolve(context)
+	# do_evolve(context)  XXX DON'T INSTALL YET
+	pass

@@ -138,10 +138,13 @@ class EmailVerifiedFilteredSet(FilteredSetBase):
 			# The normal PythonFilteredSet seems to have a bug and never unindexes?
 			self.unindex_doc(docid)
 
-def install_user_catalog(site_manager_container, intids=None):
+def install_entity_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
-	intids = lsm.getUtility(IIntIds) if intids is None else intids
+	catalog = lsm.getUtility(ICatalog, name=CATALOG_NAME)
+	if catalog is not None:
+		return catalog
 
+	intids = lsm.getUtility(IIntIds) if intids is None else intids
 	catalog = Catalog(family=intids.family)
 	catalog.__name__ = CATALOG_NAME
 	catalog.__parent__ = site_manager_container
@@ -158,12 +161,6 @@ def install_user_catalog(site_manager_container, intids=None):
 						(IX_PASSWORD_RECOVERY_EMAIL_HASH, PasswordRecoveryEmailHashIndex)):
 		index = clazz(family=intids.family)
 		intids.register(index)
-		# As a very minor optimization for unit tests, if we
-		# already set the name and parent of the index,
-		# the ObjectAddedEvent won't be fired
-		# when we add the index to the catalog.
-		# ObjectAdded/Removed events *must* fire during evolution,
-		# though.
 		index.__name__ = name
 		index.__parent__ = catalog
 		catalog[name] = index
@@ -182,3 +179,4 @@ def install_user_catalog(site_manager_container, intids=None):
 	topics_index.__parent__ = catalog
 	catalog[IX_TOPICS] = topics_index
 	return catalog
+install_user_catalog = install_entity_catalog
