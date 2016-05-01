@@ -38,8 +38,8 @@ from nti.zope_catalog.topic import TopicIndex
 # Old name for BWC
 CaseInsensitiveFieldIndex = CaseInsensitiveAttributeFieldIndex
 
-# : The name of the utility that the Zope Catalog
-# : for users should be registered under
+#: The name of the utility that the Zope Catalog
+#: for users should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
 
 IX_ALIAS = 'alias'
