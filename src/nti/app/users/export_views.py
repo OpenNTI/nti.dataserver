@@ -90,7 +90,7 @@ def get_user_objects(user, mime_types=()):
 	if mime_types:
 		mime_types = set(mime_types)
 		process_transcripts = \
-				bool(transcript_mime_type in mime_types
+				bool(	transcript_mime_type in mime_types
 					 or messageinfo_mime_type in mime_types)
 		if process_transcripts:
 			mime_types.discard(transcript_mime_type)
@@ -285,7 +285,7 @@ class DeleteUserObjects(AbstractAuthenticatedView, ModeledContentUploadRequestUt
 					broken = oid in broken_objects or pid in broken_objects
 					if not broken:
 						strong = obj if not callable(obj) else obj()
-						broken = strong is not None \
+						broken = 	 strong is not None \
 								 and oid in broken_objects \
 								 and pid in broken_objects
 						obj = strong if broken else obj

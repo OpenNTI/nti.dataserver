@@ -35,7 +35,7 @@ class TestCommunityViews(ApplicationLayerTest):
  				   'realname': u'Bleach',
  				   'public': True,
  				   'joinable': True}
-		path = '/dataserver2/@@create.community'
+		path = '/dataserver2/@@create_community'
 		res = self.testapp.post_json(path, ext_obj, status=200)
 		assert_that(res.json_body, has_entry('Username', 'bleach'))
 		assert_that(res.json_body, has_entry('alias', 'Bleach'))
@@ -45,12 +45,12 @@ class TestCommunityViews(ApplicationLayerTest):
 			assert_that(c, has_property('public', is_(True)))
 			assert_that(c, has_property('joinable', is_(True)))
 
-		path = '/dataserver2/@@list.communities'
+		path = '/dataserver2/@@list_communities'
 		res = self.testapp.get(path, status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
 		assert_that(res.json_body, has_entry('Total', is_(2)))
 
-		path = '/dataserver2/@@list.communities?term=B'
+		path = '/dataserver2/@@list_communities?term=B'
 		res = self.testapp.get(path, status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(1)))
 		assert_that(res.json_body, has_entry('Total', is_(1)))

@@ -186,7 +186,7 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 		self._get_params()
 		limited_contacts = self._get_limited_contacts()
 		fill_in_contacts = self._get_fill_in_contacts(limited_contacts)
-		results['ItemCount'] = 0
+		results['Total'] = results['ItemCount'] = 0
 		results[CLASS] = SUGGESTED_CONTACTS
 		results[MIME_TYPE] = SUGGESTED_CONTACTS_MIMETYPE
 
@@ -251,7 +251,7 @@ class _MembershipSuggestedContactsView(_AbstractSuggestedContactsView):
 		results = LocatedExternalDict()
 		self._get_params()
 		contacts = self._get_contacts()
-		results['ItemCount' ] = 0
+		results['Total'] = results['ItemCount' ] = 0
 		results[CLASS] = SUGGESTED_CONTACTS
 		results[MIME_TYPE] = SUGGESTED_CONTACTS_MIMETYPE
 
