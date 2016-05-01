@@ -50,7 +50,7 @@ from nti.zope_catalog.catalog import ResultSet
 ITEMS = StandardExternalFields.ITEMS
 
 @view_config(name='CreateCommunity')
-@view_config(name='create.community')
+@view_config(name='create_community')
 @view_defaults(route_name='objects.generic.traversal',
 			   request_method='POST',
 			   context=IDataserverFolder,
@@ -89,7 +89,7 @@ def username_search(search_term=None):
 	return usernames
 
 @view_config(name='ListCommunities')
-@view_config(name='list.communities')
+@view_config(name='list_communities')
 @view_defaults(route_name='objects.generic.traversal',
 			   request_method='GET',
 			   context=IDataserverFolder,
