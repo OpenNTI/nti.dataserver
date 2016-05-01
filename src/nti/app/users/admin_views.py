@@ -114,23 +114,28 @@ class ResetUserBlacklistView(AbstractAuthenticatedView):
 class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 							   	  ModeledContentUploadRequestUtilsMixin):
 
-	"""
-	Remove username from blacklist.
-	"""
 	def __call__(self):
 		values = CaseInsensitiveDict(self.readInput())
-		username = values.get('username') or values.get('user')
-		if not username:
-			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
-
-		user_blacklist = component.getUtility(IUserBlacklistedStorage)
-		did_remove = user_blacklist.remove_blacklist_for_user(username)
+		usernames = 	values.get('usernames') \
+					 or values.get('username') \
+					 or values.get('users') \
+					 or values.get('user') 
+		if isinstance(usernames, six.string_types):
+			usernames = usernames.split()
+		if not usernames:
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
 
 		result = LocatedExternalDict()
+		items = result[ITEMS] = []
 		result.__name__ = self.request.view_name
 		result.__parent__ = self.request.context
-		result['username'] = username
-		result['did_remove'] = did_remove
+
+		user_blacklist = component.getUtility(IUserBlacklistedStorage)
+		for username in set(usernames):
+			if username and user_blacklist.remove_blacklist_for_user(username):
+				items.append(username)
+
+		result['Total'] = result['ItemCount'] = len(items)
 		return result
 
 @view_config(name='RemoveUserBrokenObjects')
@@ -142,10 +147,6 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 			   context=IDataserverFolder)
 class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 							  ModeledContentUploadRequestUtilsMixin):
-
-	"""
-	Remove user broken objects
-	"""
 
 	def __call__(self):
 		values = CaseInsensitiveDict(self.readInput())
