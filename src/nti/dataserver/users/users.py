@@ -969,16 +969,19 @@ class UserBlacklistedStorage(Persistent):
 		self._storage = BTrees.OLBTree.BTree()
 
 	def _get_user_key(self, user):
-		return user.username.lower()
+		username = getattr(user, 'username', user)
+		return username.lower()
 
 	def blacklist_user(self, user):
-		user_key = self._get_user_key(user)
 		now = time.time()
+		user_key = self._get_user_key(user)
 		self._storage[user_key] = time_to_64bit_int(now)
+	add = blacklist_user
 
 	def is_user_blacklisted(self, user):
 		user_key = self._get_user_key(user)
 		return user_key in self._storage
+	__contains__ = is_user_blacklisted
 
 	def remove_blacklist_for_user(self, username):
 		result = False
@@ -988,6 +991,11 @@ class UserBlacklistedStorage(Persistent):
 		except KeyError:
 			pass
 		return result
+	remove = remove_blacklist_for_user
+
+	def clear(self):
+		self._storage.clear()
+	reset = clear
 
 	def __iter__(self):
 		return iter(self._storage.items())
@@ -998,8 +1006,8 @@ class UserBlacklistedStorage(Persistent):
 @component.adapter(IUser, IObjectRemovedEvent)
 def _blacklist_username(user, event):
 	username = user.username
-	if 	not IRecreatableUser.providedBy(user) and \
-		not username.lower().endswith('@nextthought.com'):
+	if 		not IRecreatableUser.providedBy(user) \
+		and not username.lower().endswith('@nextthought.com'):
 		user_blacklist = component.getUtility(IUserBlacklistedStorage)
 		user_blacklist.blacklist_user(user)
 		logger.info("Black-listing username %s", username)

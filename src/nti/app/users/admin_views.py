@@ -90,6 +90,20 @@ class GetUserBlacklistView(AbstractAuthenticatedView):
 		result['Total'] = result['Count'] = count
 		return result
 
+@view_config(name='ResetUserBlacklist')
+@view_config(name='reset_user_black_list')
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_NTI_ADMIN,
+			   request_method='POST',
+			   context=IDataserverFolder)
+class ResetUserBlacklistView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		user_blacklist = component.getUtility(IUserBlacklistedStorage)
+		user_blacklist.clear()
+		return hexc.HTTPNoContent()
+
 @view_config(name='RemoveFromUserBlacklist')
 @view_config(name='remove_from_user_black_list')
 @view_defaults(route_name='objects.generic.traversal',

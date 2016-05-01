@@ -120,7 +120,6 @@ class TestMisc(unittest.TestCase):
 		assert_that( user.getContainedObject( "FriendsLists", "Friend" ),
 					 is_( user.getContainedObject( 'FriendsLists', "friend" ) ) )
 
-
 	def test_everyone_has_creator(self):
 		assert_that( users.Everyone(), has_property( 'creator', nti_interfaces.SYSTEM_USER_NAME ) )
 
@@ -130,6 +129,18 @@ class TestMisc(unittest.TestCase):
 
 		with assert_raises(zope.schema.interfaces.ConstraintNotSatisfied):
 			users.Entity( username=nti_interfaces.SYSTEM_USER_ID )
+			
+	def test_user_blacklisted_storage(self):
+		storage = users.users.UserBlacklistedStorage()
+		storage.add('ichigo')
+		assert_that(storage, has_length(1))
+		assert_that('ichigo', is_in(storage))
+		storage.blacklist_user('aizen')
+		assert_that(storage, has_length(2))
+		storage.remove_blacklist_for_user('ichigo')
+		assert_that(storage, has_length(1))
+		storage.clear()
+		assert_that(storage, has_length(0))
 
 class TestUser(DataserverLayerTest):
 

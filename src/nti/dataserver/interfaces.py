@@ -1436,21 +1436,29 @@ class IUserBlacklistedStorage(interface.Interface):
 	Stores blacklisted users.
 	"""
 
-	def is_user_blacklisted(self, user):
+	def is_user_blacklisted(user):
 		"""
 		For the given user, return a bool whether the user is blacklisted or not.
 		Useful during user creation time.
 		"""
 
-	def blacklist_user(self, user):
+	def blacklist_user(user):
 		"""
 		Blacklists the given user.
 		"""
-
-	def remove_blacklist_for_user(self, username):
+	add = blacklist_user
+	
+	def remove_blacklist_for_user(username):
 		"""
 		Remove the given username from the blacklist.
 		"""
+	remove = remove_blacklist_for_user
+	
+	def clear():
+		"""
+		Clear all entries in this storage
+		"""
+	reset = clear
 
 class IInteractionQuerier(interface.Interface):
 	"""
