@@ -55,9 +55,24 @@ IX_PASSWORD_RECOVERY_EMAIL_HASH = 'password_recovery_email_hash'
 IX_EMAIL_VERIFIED = 'email_verified'
 IX_OPT_IN_EMAIL_COMMUNICATION = 'opt_in_email_communication'
 
+class ValidatingMimeType(object):
+
+	__slots__ = (b'mimeType',)
+
+	def __init__(self, obj, default=None):
+		try:
+			if IEntity.providedBy(obj):
+				self.mimeType = 	getattr(obj, 'mimeType', None) \
+								or	getattr(obj, 'mime_type', None) 
+		except (AttributeError, TypeError):
+			pass
+
+	def __reduce__(self):
+		raise TypeError()
+
 class MimeTypeIndex(ValueIndex):
-	default_interface = IEntity
 	default_field_name = IX_MIMETYPE
+	default_interface = ValidatingMimeType
 
 class AliasIndex(CaseInsensitiveFieldIndex):
 	default_field_name = IX_ALIAS
