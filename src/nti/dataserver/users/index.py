@@ -155,7 +155,7 @@ class EmailVerifiedFilteredSet(FilteredSetBase):
 
 def install_entity_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
-	catalog = lsm.getUtility(ICatalog, name=CATALOG_NAME)
+	catalog = lsm.queryUtility(ICatalog, name=CATALOG_NAME)
 	if catalog is not None:
 		return catalog
 
