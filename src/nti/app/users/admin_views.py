@@ -18,8 +18,6 @@ from zope import component
 
 from zope.component.hooks import site as current_site
 
-from zope.traversing.interfaces import IEtcNamespace
-
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -34,6 +32,8 @@ from nti.app.users import MessageFactory as _
 from nti.app.users import is_true
 from nti.app.users import all_usernames
 from nti.app.users import username_search
+
+from nti.app.users.utils import generate_mail_verification_pair
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -61,7 +61,7 @@ from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.app.users.utils import generate_mail_verification_pair
+from nti.site.hostpolicy import get_all_host_sites
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -116,12 +116,12 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 
 	def __call__(self):
 		values = CaseInsensitiveDict(self.readInput())
-		usernames = 	values.get('usernames') \
-					 or values.get('username') \
+		usernames = 	values.get('user') \
 					 or values.get('users') \
-					 or values.get('user') 
+					 or values.get('username') \
+					 or values.get('usernames') 
 		if isinstance(usernames, six.string_types):
-			usernames = usernames.split()
+			usernames = usernames.split(",")
 		if not usernames:
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
 
@@ -156,7 +156,7 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity(_("User not found"))
+			raise hexc.HTTPUnprocessableEntity(_("User not found."))
 
 		containers = values.get('containers') or values.get('include_containers')
 		containers = bool(not containers or is_true(containers))
@@ -180,7 +180,7 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 
 		result = LocatedExternalDict()
 		result[ITEMS] = data
-		result['Total'] = result['Count'] = len(data)
+		result['Total'] = result['ItemCount'] = len(data)
 		return result
 
 @view_config(name='GetEmailVerificationToken')
@@ -196,16 +196,16 @@ class GetEmailVerificationTokenView(AbstractAuthenticatedView):
 		values = CaseInsensitiveDict(self.request.params)
 		username = values.get('username') or values.get('user')
 		if not username:
-			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
 
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity(_("User not found"))
+			raise hexc.HTTPUnprocessableEntity(_("User not found."))
 
 		profile = IUserProfile(user)
 		email = values.get('email') or profile.email
 		if not email:
-			raise hexc.HTTPUnprocessableEntity(_("Email address not provided"))
+			raise hexc.HTTPUnprocessableEntity(_("Email address not provided."))
 
 		signature, token = generate_mail_verification_pair(user, email)
 		result = LocatedExternalDict()
@@ -229,16 +229,16 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
 		values = CaseInsensitiveDict(self.readInput())
 		username = values.get('username') or values.get('user')
 		if not username:
-			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
 
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity(_("User not found"))
+			raise hexc.HTTPUnprocessableEntity(_("User not found."))
 
 		profile = IUserProfile(user)
 		email = values.get('email') or profile.email
 		if not email:
-			raise hexc.HTTPUnprocessableEntity(_("Email address not provided"))
+			raise hexc.HTTPUnprocessableEntity(_("Email address not provided."))
 		else:
 			try:
 				checkEmailAddress(email)
@@ -265,11 +265,11 @@ class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtils
 		values = CaseInsensitiveDict(self.readInput())
 		username = values.get('username') or values.get('user')
 		if not username:
-			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
 
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity(_("User not found"))
+			raise hexc.HTTPUnprocessableEntity(_("User not found."))
 
 		User.delete_user(username)
 		return hexc.HTTPNoContent()
@@ -294,8 +294,7 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
 			return True
 
 		# look in other sites
-		hostsites = component.queryUtility(IEtcNamespace, name='hostsites') or {}
-		for site in hostsites.values():
+		for site in get_all_host_sites():
 			with current_site(site):
 				result = find_object_with_ntiid(name)
 				if result is not None:
@@ -331,8 +330,8 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
 			usernames = all_usernames()
 
 		result = LocatedExternalDict()
-		items = result['Items'] = {}
+		items = result[ITEMS] = {}
 		for username, rmap in self._check_users_containers(usernames):
 			items[username] = rmap
-		result['Total'] = len(items)
+		result['Total'] = result['ItemCount'] = len(items)
 		return result
