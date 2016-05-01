@@ -21,24 +21,31 @@ from zope.index.topic.filter import FilteredSetBase
 
 from zope.intid.interfaces import IIntIds
 
+from nti.dataserver.interfaces import IEntity
+
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 from nti.dataserver.users.interfaces import IRestrictedUserProfile
 
 from nti.zope_catalog.catalog import Catalog
+
+from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
+from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex
+
 from nti.zope_catalog.topic import TopicIndex
 
 # Old name for BWC
-from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex as CaseInsensitiveFieldIndex
+CaseInsensitiveFieldIndex = CaseInsensitiveAttributeFieldIndex
 
-#: The name of the utility that the Zope Catalog
-#: for users should be registered under
+# : The name of the utility that the Zope Catalog
+# : for users should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
 
 IX_ALIAS = 'alias'
 IX_EMAIL = 'email'
 IX_TOPICS = 'topics'
+IX_MIMETYPE = 'mimeType'
 IX_REALNAME = 'realname'
 IX_CONTACT_EMAIL = 'contact_email'
 IX_REALNAME_PARTS = 'realname_parts'
@@ -48,42 +55,39 @@ IX_PASSWORD_RECOVERY_EMAIL_HASH = 'password_recovery_email_hash'
 IX_EMAIL_VERIFIED = 'email_verified'
 IX_OPT_IN_EMAIL_COMMUNICATION = 'opt_in_email_communication'
 
-class AliasIndex(CaseInsensitiveFieldIndex):
+class MimeTypeIndex(ValueIndex):
+	default_interface = IEntity
+	default_field_name = IX_MIMETYPE
 
+class AliasIndex(CaseInsensitiveFieldIndex):
 	default_field_name = IX_ALIAS
 	default_interface = IFriendlyNamed
 
 class RealnameIndex(CaseInsensitiveFieldIndex):
-
 	default_field_name = IX_REALNAME
 	default_interface = IFriendlyNamed
 
 class RealnamePartsIndex(CaseInsensitiveKeywordIndex):
-
-	default_field_name = 'get_searchable_realname_parts'
 	default_interface = IFriendlyNamed
+	default_field_name = 'get_searchable_realname_parts'
 
 	def __init__(self, *args, **kwargs):
 		super(RealnamePartsIndex, self).__init__(*args, **kwargs)
 		self.field_callable = True
 
 class EmailIndex(CaseInsensitiveFieldIndex):
-
 	default_field_name = IX_EMAIL
 	default_interface = IUserProfile
 
 class ContactEmailIndex(CaseInsensitiveFieldIndex):
-
 	default_field_name = IX_CONTACT_EMAIL
 	default_interface = IUserProfile
 
 class PasswordRecoveryEmailHashIndex(FieldIndex):
-
 	default_field_name = IX_PASSWORD_RECOVERY_EMAIL_HASH
 	default_interface = IRestrictedUserProfile
 
 class ContactEmailRecoveryHashIndex(FieldIndex):
-
 	default_field_name = IX_CONTACT_EMAIL_RECOVERY_HASH
 	default_interface = IContactEmailRecovery
 
@@ -146,6 +150,7 @@ def install_user_catalog(site_manager_container, intids=None):
 
 	for name, clazz in ((IX_ALIAS, AliasIndex),
 						(IX_EMAIL, EmailIndex),
+						(IX_MIMETYPE, MimeTypeIndex),
 						(IX_REALNAME, RealnameIndex),
 						(IX_CONTACT_EMAIL, ContactEmailIndex),
 						(IX_REALNAME_PARTS, RealnamePartsIndex),
