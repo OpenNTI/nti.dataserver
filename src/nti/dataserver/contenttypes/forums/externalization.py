@@ -77,7 +77,7 @@ class _PostExporter(object):
 				continue
 			name = value.filename or value.name
 			mimeType = guess_type(name)[0] or u'application/octet-stream'
-			items[name] = encode(value.data, mimeType)
+			items[name] = [encode(value.data, mimeType)]
 		if items:
 			result['Files'] = items
 		return result
