@@ -9,7 +9,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+
 from zope import component
+
+from zope.intid.interfaces import IIntIds
 
 from pyramid import httpexceptions as hexc
 
@@ -38,6 +42,8 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 
 from nti.dataserver.users import Community
+from nti.dataserver.users import get_entity_catalog
+
 from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.externalization.externalization import toExternalObject
@@ -51,6 +57,7 @@ ITEMS = StandardExternalFields.ITEMS
 
 @view_config(name='CreateCommunity')
 @view_config(name='create_community')
+@view_config(name='create.community')
 @view_defaults(route_name='objects.generic.traversal',
 			   request_method='POST',
 			   context=IDataserverFolder,
@@ -90,6 +97,7 @@ def username_search(search_term=None):
 
 @view_config(name='ListCommunities')
 @view_config(name='list_communities')
+@view_config(name='list.communities')
 @view_defaults(route_name='objects.generic.traversal',
 			   request_method='GET',
 			   context=IDataserverFolder,
@@ -102,22 +110,25 @@ class ListCommunitiesView(AbstractAuthenticatedView):
 		term = values.get('term') or values.get('search')
 		usernames = values.get('usernames') or values.get('username')
 		if term:
-			usernames = username_search(term)
-		elif usernames:
-			usernames = usernames.split(",")
-		else:
-			usernames = username_search()
+			usernames = set(username_search(term))
+		elif isinstance(usernames, six.string_types):
+			usernames = set(usernames.split(","))
 
-		total = 0
+		intids = component.getUtility(IIntIds)
+		catalog = get_entity_catalog()
+		doc_ids = catalog['mimeType'].apply(
+						{'any_of': (u'application/vnd.nextthought.community',)})
+		
 		result = LocatedExternalDict()
 		items = result[ITEMS] = {}
-		for username in usernames:
-			community = Community.get_community(username)
-			if community is None or not ICommunity.providedBy(community):
+		for doc_id in doc_ids or ():
+			community = intids.queryObject(doc_id)
+			if not ICommunity.providedBy(community):
 				continue
-			items[username] = community
-			total += 1
-		result['Total'] = total
+			if usernames and community.username not in usernames:
+				continue
+			items[community.username] = community
+		result['Total'] = result['ItemCount'] = len(items)
 		return result
 
 @view_config(route_name='objects.generic.traversal',
