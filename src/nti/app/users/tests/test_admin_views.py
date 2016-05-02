@@ -62,21 +62,21 @@ class TestAdminViews(ApplicationLayerTest):
 		body = res.json_body
 		assert_that(body, has_entry('Items', has_length(0)))
 		assert_that(body, has_entry('Count', is_(0)))
-		
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			# Remove user
 			user_one = User.create_user(username='ichigo')
 			lifecycleevent.removed(user_one)
-			
+
 		res = self.testapp.get(path, None, status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(1)))
-		
+
 		self.testapp.post_json('/dataserver2/@@ResetUserBlacklist',
 								status=204)
 
 		res = self.testapp.get(path, None, status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(0)))
-		
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_force_email_verification(self):
 		username = 'user_one'
@@ -134,7 +134,7 @@ class TestAdminViews(ApplicationLayerTest):
 		self.testapp.post_json('/dataserver2/@@RemoveUser',
 								{'username':username},
 								status=422)
-		
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_ghost_user_objects(self):
 		username = self.default_username.lower()
