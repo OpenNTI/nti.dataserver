@@ -110,9 +110,9 @@ class ListCommunitiesView(AbstractAuthenticatedView):
 		term = values.get('term') or values.get('search')
 		usernames = values.get('usernames') or values.get('username')
 		if term:
-			usernames = set(username_search(term))
+			usernames = {x.lower() for x in username_search(term)}
 		elif isinstance(usernames, six.string_types):
-			usernames = set(usernames.split(","))
+			usernames = {x.lower() for x in usernames.split(",") if x}
 
 		intids = component.getUtility(IIntIds)
 		catalog = get_entity_catalog()
@@ -120,14 +120,15 @@ class ListCommunitiesView(AbstractAuthenticatedView):
 						{'any_of': (u'application/vnd.nextthought.community',)})
 		
 		result = LocatedExternalDict()
-		items = result[ITEMS] = {}
+		items = result[ITEMS] = []
 		for doc_id in doc_ids or ():
 			community = intids.queryObject(doc_id)
 			if not ICommunity.providedBy(community):
 				continue
-			if usernames and community.username not in usernames:
+			username = community.username.lower()
+			if usernames and username not in usernames:
 				continue
-			items[community.username] = community
+			items.append(community)
 		result['Total'] = result['ItemCount'] = len(items)
 		return result
 
