@@ -77,6 +77,22 @@
 						 .interfaces.IForumACE"
 		iobase=".externalization._MaybeThreadableForumObjectInternalObjectIO" />
 
+	<adapter factory=".externalization._BoardExporter"
+			 for=".interfaces.IBoard"
+			 name="exporter" />
+
+	<adapter factory=".externalization._ForumExporter"
+			 for=".interfaces.IForum"
+			 name="exporter" />
+
+	<adapter factory=".externalization._TopicExporter"
+			 for=".interfaces.ITopic"
+			 name="exporter" />
+
+	<adapter factory=".externalization._PostExporter"
+			 for=".interfaces.IPost"
+			 name="exporter" />
+
 	<!-- ACLs -->
 	<adapter factory=".acl._TopicACLProvider"
 			 for=".interfaces.IPersonalBlogEntry"/>

@@ -11,11 +11,34 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
+from zope import interface
+
+from nti.common.dataurl import encode
+from nti.common.mimetypes import guess_type
+
 from nti.dataserver.interfaces import IThreadable
 
-from ..threadable import ThreadableExternalizableMixin
+from nti.dataserver.contenttypes.base import UserContentRootInternalObjectIOMixin
 
-from ..base import UserContentRootInternalObjectIOMixin
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import IForum
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+
+from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
+
+from nti.externalization.externalization import to_external_object
+
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IInternalObjectExternalizer
+
+from nti.mimetype import decorateMimeType
+
+from nti.namedfile.interfaces import INamedFile
+
+ITEMS = StandardExternalFields.ITEMS
+MIMETYPE = StandardExternalFields.MIMETYPE
 
 class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,
 												  UserContentRootInternalObjectIOMixin):
@@ -33,3 +56,104 @@ class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,
 	def _ext_can_update_threads(self):
 		return (super(_MaybeThreadableForumObjectInternalObjectIO, self)._ext_can_update_threads()
 				and IThreadable.providedBy(self._ext_replacement()))
+
+@component.adapter(IPost)
+@interface.implementer(IInternalObjectExternalizer)
+class _PostExporter(object):
+
+	def __init__(self, obj):
+		self.post = obj
+
+	def toExternalObject(self, **kwargs):
+		mod_args = dict(**kwargs)
+		mod_args['name'] = ''  # set default
+		mod_args['decorate'] = False  # no decoration
+		result = to_external_object(self.topic, **mod_args)
+		if MIMETYPE not in result:
+			decorateMimeType(self.forum, result)
+		items = {}
+		for value in self.post.body or ():
+			if not INamedFile.providedBy(value):
+				continue
+			name = value.filename or value.name
+			mimeType = guess_type(name)[0] or u'application/octet-stream'
+			items[name] = encode(value.data, mimeType)
+		if items:
+			result['Files'] = items
+		return result
+
+@component.adapter(ITopic)
+@interface.implementer(IInternalObjectExternalizer)
+class _TopicExporter(object):
+
+	def __init__(self, obj):
+		self.topic = obj
+
+	def toExternalObject(self, **kwargs):
+		mod_args = dict(**kwargs)
+		mod_args['name'] = ''  # set default
+		mod_args['decorate'] = False  # no decoration
+		result = to_external_object(self.topic, **mod_args)
+		if MIMETYPE not in result:
+			decorateMimeType(self.forum, result)
+		result.pop('PostCount', None)
+		result.pop('NewestDescendant', None)
+		result.pop('NewestDescendantCreatedTime', None)
+		items = []  # export posts
+		mod_args['name'] = 'exporter'
+		for post in sorted(self.topic.values(), key=lambda x:x.createdTime):
+			ext_obj = to_external_object(post, **mod_args)
+			items.append(ext_obj)
+		if items:
+			result[ITEMS] = items
+		return result
+
+@component.adapter(IForum)
+@interface.implementer(IInternalObjectExternalizer)
+class _ForumExporter(object):
+
+	def __init__(self, obj):
+		self.forum = obj
+
+	def toExternalObject(self, **kwargs):
+		mod_args = dict(**kwargs)
+		mod_args['name'] = ''  # set default
+		mod_args['decorate'] = False  # no decoration
+		result = to_external_object(self.forum, **mod_args)
+		if MIMETYPE not in result:
+			decorateMimeType(self.forum, result)
+		result.pop('TopicCount', None)
+		result.pop('NewestDescendant', None)
+		result.pop('NewestDescendantCreatedTime', None)
+		items = []  # export topics
+		mod_args['name'] = 'exporter'
+		for topic in sorted(self.forum.values(), key=lambda x:x.createdTime):
+			ext_obj = to_external_object(topic, **mod_args)
+			items.append(ext_obj)
+		if items:
+			result[ITEMS] = items
+		return result
+
+@component.adapter(IBoard)
+@interface.implementer(IInternalObjectExternalizer)
+class _BoardExporter(object):
+
+	def __init__(self, obj):
+		self.board = obj
+
+	def toExternalObject(self, **kwargs):
+		mod_args = dict(**kwargs)
+		mod_args['name'] = ''  # set default
+		mod_args['decorate'] = False  # no decoration
+		result = to_external_object(self.board, **mod_args)
+		if MIMETYPE not in result:
+			decorateMimeType(self.board, result)
+		result.pop('ForumCount', None)
+		items = []  # export forum
+		mod_args['name'] = 'exporter'
+		for forum in sorted(self.board.values(), key=lambda x:x.createdTime):
+			ext_obj = to_external_object(forum, **mod_args)
+			items.append(ext_obj)
+		if items:
+			result[ITEMS] = items
+		return result
