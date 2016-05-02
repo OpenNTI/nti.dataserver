@@ -150,8 +150,8 @@ class TestUserExportViews(ApplicationLayerTest):
 		assert_that(res.json_body, has_entry('Items', has_length(1)))
 
 		res = self.testapp.get(path, status=200)
-		assert_that(res.json_body, has_entry('Total', is_(5)))
-		assert_that(res.json_body, has_entry('Items', has_length(5)))
+		assert_that(res.json_body, has_entry('Total', is_(0)))
+		assert_that(res.json_body, has_entry('Items', has_length(0)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_object_resolver(self):

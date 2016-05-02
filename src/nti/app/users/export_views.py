@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
 from collections import defaultdict
 
 from zope import component
@@ -29,7 +30,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.users import is_true
-from nti.app.users import all_usernames
 from nti.app.users import get_mime_type
 from nti.app.users import username_search
 from nti.app.users import parse_mime_types
@@ -360,14 +360,12 @@ class ExportUsersView(AbstractAuthenticatedView):
 		usernames = values.get('usernames') or values.get('username')
 		if term:
 			usernames = username_search(term)
-		elif usernames:
-			usernames = usernames.split(',')
-		else:
-			usernames = all_usernames()
+		elif isinstance(usernames, six.string_types):
+			usernames = set(usernames.split(','))
 
 		result = LocatedExternalDict()
 		items = result[ITEMS] = {}
-		for username in usernames:
+		for username in usernames or ():
 			user = User.get_user(username)
 			if user and IUser.providedBy(user):
 				if summary:
