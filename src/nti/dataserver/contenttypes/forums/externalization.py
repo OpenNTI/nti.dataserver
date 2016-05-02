@@ -28,6 +28,8 @@ from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
 from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
+from nti.dataserver.users import Entity
+
 from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import StandardExternalFields
@@ -57,9 +59,20 @@ class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,
 		return (super(_MaybeThreadableForumObjectInternalObjectIO, self)._ext_can_update_threads()
 				and IThreadable.providedBy(self._ext_replacement()))
 
-@component.adapter(IPost)
 @interface.implementer(IInternalObjectExternalizer)
-class _PostExporter(object):
+class _BaseExporter(object):
+
+	def handle_sharedWith(self, result):
+		sharedWith = result.get('sharedWith')
+		for idx, name in enumerate(sharedWith or ()):
+			entity = Entity.get_entity(name)
+			if entity is not None:
+				sharedWith[idx] = to_external_object(entity,
+													 name='summary',
+													 decorate=False)
+
+@component.adapter(IPost)
+class _PostExporter(_BaseExporter):
 
 	def __init__(self, obj):
 		self.post = obj
@@ -71,6 +84,7 @@ class _PostExporter(object):
 		result = to_external_object(self.post, **mod_args)
 		if MIMETYPE not in result:
 			decorateMimeType(self.post, result)
+		self.handle_sharedWith(result)
 		items = {}
 		for value in self.post.body or ():
 			if not INamedFile.providedBy(value):
@@ -83,8 +97,7 @@ class _PostExporter(object):
 		return result
 
 @component.adapter(ITopic)
-@interface.implementer(IInternalObjectExternalizer)
-class _TopicExporter(object):
+class _TopicExporter(_BaseExporter):
 
 	def __init__(self, obj):
 		self.topic = obj
@@ -96,6 +109,7 @@ class _TopicExporter(object):
 		result = to_external_object(self.topic, **mod_args)
 		if MIMETYPE not in result:
 			decorateMimeType(self.topic, result)
+		self.handle_sharedWith(result)
 		result.pop('PostCount', None)
 		result.pop('NewestDescendant', None)
 		result.pop('NewestDescendantCreatedTime', None)
@@ -109,8 +123,7 @@ class _TopicExporter(object):
 		return result
 
 @component.adapter(IForum)
-@interface.implementer(IInternalObjectExternalizer)
-class _ForumExporter(object):
+class _ForumExporter(_BaseExporter):
 
 	def __init__(self, obj):
 		self.forum = obj
@@ -122,6 +135,7 @@ class _ForumExporter(object):
 		result = to_external_object(self.forum, **mod_args)
 		if MIMETYPE not in result:
 			decorateMimeType(self.forum, result)
+		self.handle_sharedWith(result)
 		result.pop('TopicCount', None)
 		result.pop('NewestDescendant', None)
 		result.pop('NewestDescendantCreatedTime', None)
@@ -135,8 +149,7 @@ class _ForumExporter(object):
 		return result
 
 @component.adapter(IBoard)
-@interface.implementer(IInternalObjectExternalizer)
-class _BoardExporter(object):
+class _BoardExporter(_BaseExporter):
 
 	def __init__(self, obj):
 		self.board = obj
@@ -148,6 +161,7 @@ class _BoardExporter(object):
 		result = to_external_object(self.board, **mod_args)
 		if MIMETYPE not in result:
 			decorateMimeType(self.board, result)
+		self.handle_sharedWith(result)
 		result.pop('ForumCount', None)
 		items = []  # export forum
 		mod_args['name'] = 'exporter'
