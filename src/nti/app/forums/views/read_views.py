@@ -47,6 +47,8 @@ from nti.dataserver.interfaces import IACLProvider
 
 from nti.dataserver import authorization as nauth
 
+from nti.externalization.externalization import to_external_object
+
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
 # loaded (usually with ZCML, so in practice this is not a problem,
@@ -82,7 +84,9 @@ _d_view_defaults.update(permission=nauth.ACT_DELETE,
 @view_config(context=frm_interfaces.IPost)
 @view_defaults(**_r_view_defaults)
 class ForumGetView(GenericGetView):
-	""" Support for simply returning the blog item """
+	""" 
+	Support for simply returning the blog item 
+	"""
 	def __call__(self):
 		result = super(ForumGetView, self).__call__()
 		if result is not None:
@@ -103,8 +107,7 @@ class ForumGetView(GenericGetView):
 @view_config(context=frm_interfaces.IBoard)
 @view_config(context=frm_interfaces.IGeneralHeadlineTopic)
 @view_config(context=frm_interfaces.IPersonalBlogEntry)
-@view_defaults(name=VIEW_CONTENTS,
-				**_r_view_defaults)
+@view_defaults(name=VIEW_CONTENTS, **_r_view_defaults)
 class ForumsContainerContentsGetView(UGDQueryView):
 	"""
 	The ``/contents`` view for the forum objects we are using.
@@ -112,7 +115,6 @@ class ForumsContainerContentsGetView(UGDQueryView):
 	The contents fully support the same sorting and paging parameters
 	as the UGD views.
 	"""
-
 
 	def __init__(self, request):
 		self.request = request
@@ -156,7 +158,6 @@ class ForumsContainerContentsGetView(UGDQueryView):
 			self.result_iface = IUseTheRequestContextUGDExternalCollection
 		except TypeError:
 			pass
-
 		return super(ForumsContainerContentsGetView, self).__call__()
 
 	def _is_readable(self, x):
@@ -219,8 +220,8 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 	"""
 
 	SORT_KEYS = ForumsContainerContentsGetView.SORT_KEYS.copy()
-	SORT_KEYS['NewestDescendantCreatedTime'] = operator.attrgetter('NewestDescendantCreatedTime', 'createdTime')
 	SORT_KEYS['PostCount'] = operator.attrgetter('PostCount', 'createdTime')
+	SORT_KEYS['NewestDescendantCreatedTime'] = operator.attrgetter('NewestDescendantCreatedTime', 'createdTime')
 
 	def _make_heapq_NewestDescendantCreatedTime_descending_key(self, plain_key):
 		def _negate_tuples(x):
@@ -273,7 +274,8 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 			# is weird.
 			# NOTE: Using the key= argument fails because it masks AttributeErrors and results in
 			# heterogenous comparisons
-			newest_time = max((getattr(x, 'NewestDescendantCreatedTime', 0) for x in self.request.context.values()))
+			newest_time = max(getattr(x, 'NewestDescendantCreatedTime', 0) 
+							  for x in self.request.context.values())
 			newest_time = max(result.lastModified, newest_time)
 			result.lastModified = newest_time
 			result['Last Modified'] = newest_time
@@ -297,5 +299,28 @@ class ForumContentsFeedView(AbstractFeedView):
 	def _object_and_creator(self, ipost_or_itopic):
 		title = ipost_or_itopic.title
 		# The object to render is either the 'story' (blog text) or the post itself
-		data_object = ipost_or_itopic.headline if frm_interfaces.IHeadlineTopic.providedBy(ipost_or_itopic) else ipost_or_itopic
+		if frm_interfaces.IHeadlineTopic.providedBy(ipost_or_itopic):
+			data_object = ipost_or_itopic.headline
+		else:
+			data_object = ipost_or_itopic
 		return data_object, ipost_or_itopic.creator, title, ipost_or_itopic.tags
+
+_e_view_defaults = _r_view_defaults.copy()
+_e_view_defaults['name'] = 'export'
+
+@view_config(context=frm_interfaces.IBoard)
+@view_config(context=frm_interfaces.IForum)
+@view_config(context=frm_interfaces.ITopic)
+@view_config(context=frm_interfaces.IPost)
+@view_defaults(**_e_view_defaults)
+class ExportObjectView(GenericGetView):
+
+	def __call__(self):
+		result = to_external_object(self.context, name='exporter')
+		return result
+	
+del _view_defaults
+del _e_view_defaults
+del _c_view_defaults
+del _r_view_defaults
+del _d_view_defaults
