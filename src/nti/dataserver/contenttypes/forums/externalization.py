@@ -68,9 +68,9 @@ class _PostExporter(object):
 		mod_args = dict(**kwargs)
 		mod_args['name'] = ''  # set default
 		mod_args['decorate'] = False  # no decoration
-		result = to_external_object(self.topic, **mod_args)
+		result = to_external_object(self.post, **mod_args)
 		if MIMETYPE not in result:
-			decorateMimeType(self.forum, result)
+			decorateMimeType(self.post, result)
 		items = {}
 		for value in self.post.body or ():
 			if not INamedFile.providedBy(value):
@@ -95,7 +95,7 @@ class _TopicExporter(object):
 		mod_args['decorate'] = False  # no decoration
 		result = to_external_object(self.topic, **mod_args)
 		if MIMETYPE not in result:
-			decorateMimeType(self.forum, result)
+			decorateMimeType(self.topic, result)
 		result.pop('PostCount', None)
 		result.pop('NewestDescendant', None)
 		result.pop('NewestDescendantCreatedTime', None)
