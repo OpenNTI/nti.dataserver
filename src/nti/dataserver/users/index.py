@@ -21,6 +21,8 @@ from zope.index.topic.filter import FilteredSetBase
 
 from zope.intid.interfaces import IIntIds
 
+from zope.location.location import locate
+
 from nti.dataserver.interfaces import IEntity
 
 from nti.dataserver.users.interfaces import IUserProfile
@@ -176,14 +178,14 @@ def install_entity_catalog(site_manager_container, intids=None):
 						(IX_PASSWORD_RECOVERY_EMAIL_HASH, PasswordRecoveryEmailHashIndex)):
 		index = clazz(family=intids.family)
 		intids.register(index)
-		index.__name__ = name
-		index.__parent__ = catalog
+		locate(index, catalog, name)
 		catalog[name] = index
 
 	opt_in_comm_set = OptInEmailCommunicationFilteredSet(IX_OPT_IN_EMAIL_COMMUNICATION,
 														 family=intids.family)
 
-	email_verified_set = EmailVerifiedFilteredSet(IX_EMAIL_VERIFIED, family=intids.family)
+	email_verified_set = EmailVerifiedFilteredSet(IX_EMAIL_VERIFIED, 
+												  family=intids.family)
 
 	topics_index = TopicIndex(family=intids.family)
 	topics_index.addFilter(opt_in_comm_set)

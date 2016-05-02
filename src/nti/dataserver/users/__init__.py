@@ -12,8 +12,14 @@ logger = __import__('logging').getLogger(__name__)
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
+from zope import component
+
+from zope.catalog.interfaces import ICatalog
+
 # re-exports
 from nti.dataserver.activitystream_change import Change
+
+from nti.dataserver.users.index import CATALOG_NAME
 
 from nti.dataserver.users.communities import Everyone
 from nti.dataserver.users.communities import Community
@@ -39,3 +45,6 @@ from nti.dataserver.users.users import FacebookUser
 from nti.dataserver.users.users import onChange
 from nti.dataserver.users.users import user_devicefeedback
 from nti.dataserver.users.users import get_shared_dataserver as _get_shared_dataserver
+
+def get_entity_catalog():
+    return component.queryUtility(ICatalog, name=CATALOG_NAME)
