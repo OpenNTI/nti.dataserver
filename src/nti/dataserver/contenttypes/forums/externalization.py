@@ -64,11 +64,12 @@ class _BaseExporter(object):
 
 	def handle_sharedWith(self, result):
 		sharedWith = result.get('sharedWith')
-		for idx, name in enumerate(sharedWith or ()):
-			entity = Entity.get_entity(name)
-			if entity is not None:
+		if sharedWith:
+			sharedWith = result['sharedWith'] = list(sharedWith)
+			for idx, name in enumerate(sharedWith or ()):
+				entity = Entity.get_entity(name)
 				sharedWith[idx] = to_external_object(entity,
-													 name='summary',
+													 name='exporter',
 													 decorate=False)
 
 @component.adapter(IPost)

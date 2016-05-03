@@ -50,10 +50,14 @@ from nti.externalization.externalization import decorate_external_mapping
 from nti.externalization.externalization import to_standard_external_dictionary
 
 from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.links.links import Link
+
+from nti.mimetype import decorateMimeType
 
 from nti.schema.interfaces import find_most_derived_interface
 
@@ -303,6 +307,26 @@ class _CoppaUserSummaryExternalObject(_UserSummaryExternalObject):
 	# fields are public to other people.
 	public_summary_profile_fields = ()
 
+@component.adapter(IEntity)
+@interface.implementer(IExternalObject)
+class _EntityExporterExternalObject(object):
+
+	def __init__(self, entity):
+		self.entity = entity
+
+	def toExternalObject(self, **kwargs):
+		result = LocatedExternalDict()
+		cls = getattr(self.entity, '__external_class_name__', None)
+		if cls:
+			result[StandardExternalFields.CLASS] = cls
+		else:
+			result[StandardExternalFields.CLASS] = self.entity.__class__.__name__
+		decorateMimeType(self.entity, result)
+		result['Username'] = self.entity.username
+		if IUseNTIIDAsExternalUsername.providedBy(self.entity):
+			result[StandardExternalFields.ID] = self.entity.NTIID
+		return result
+	
 # By default, when externalizing we send the minimum public data.
 # A few places exist, such as the resolve user api, that can
 # get the 'complete' data by asking for the registered 'personal'

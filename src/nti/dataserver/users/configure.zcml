@@ -59,6 +59,9 @@
 	<adapter factory=".users_external._CoppaUserPersonalSummaryExternalObject"
 			 name="personal-summary" />
 
+	<adapter factory=".users_external._EntityExporterExternalObject"
+			 name="exporter" />
+
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.ISuggestedContact
 						 .interfaces.IEducation
