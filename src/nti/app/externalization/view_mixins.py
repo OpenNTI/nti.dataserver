@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import sys
+import copy
 import datetime
 import operator
 import transaction
@@ -564,21 +565,11 @@ class ModeledContentUploadRequestUtilsMixin(object):
 				pass
 		return containedObject
 
-	def readCreateUpdateContentObject(self, user, search_owner=False, externalValue=None):
-		"""
-		Combines reading the external input, deriving the expected data
-		type, creating the content object, and updating it in one step.
-
-		:keyword bool search_owner: If set to True (not the default), we will
-			look for a user along our context's lineage; the user
-			will be used by default. It will be returned. If False,
-			the return will only be the contained object.
-
-		:keyword dict externalValue: External value use to create the content object
-
-		"""
+	def doReadCreateUpdateContentObject(self, user, search_owner=False, externalValue=None,
+										deepCopy=False):
 		creator = user
 		externalValue = self.readInput() if not externalValue else externalValue
+		returnExternal = copy.deepcopy(externalValue) if deepCopy else externalValue
 		datatype = self.findContentType(externalValue)
 
 		context = self.request.context
@@ -616,6 +607,24 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		# if we'll keep this object yet, and we haven't fired a created event
 		self.updateContentObject(containedObject, externalValue, set_id=True, notify=False)
 
+		return (containedObject, owner, returnExternal)
+
+	def readCreateUpdateContentObject(self, user, search_owner=False, externalValue=None):
+		"""
+		Combines reading the external input, deriving the expected data
+		type, creating the content object, and updating it in one step.
+
+		:keyword bool search_owner: If set to True (not the default), we will
+			look for a user along our context's lineage; the user
+			will be used by default. It will be returned. If False,
+			the return will only be the contained object.
+
+		:keyword dict externalValue: External value use to create the content object
+
+		"""
+		containedObject, owner, _ = self.doReadCreateUpdateContentObject(user, 
+																		 search_owner, 
+																		 externalValue)
 		return (containedObject, owner) if search_owner else containedObject
 
 class ModeledContentEditRequestUtilsMixin(object):
