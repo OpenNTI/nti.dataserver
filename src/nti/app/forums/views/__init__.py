@@ -18,6 +18,7 @@ from zope import component
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from nti.common._compat import aq_base
+from nti.common.string import TRUE_VALUES
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -51,3 +52,6 @@ def match_title_of_post_to_blog( post, event ):
 		and post.title != post.__parent__.title:
 		post.__parent__.title = post.title
 	return
+
+def is_true(v):
+	return bool(v and str(v).lower() in TRUE_VALUES)

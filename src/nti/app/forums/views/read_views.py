@@ -14,6 +14,10 @@ logger = __import__('logging').getLogger(__name__)
 import re
 import datetime
 import operator
+from io import BytesIO
+from gzip import GzipFile
+
+import simplejson
 
 from zope import interface
 
@@ -21,6 +25,8 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from nti.app.forums import VIEW_CONTENTS
+
+from nti.app.forums.views import is_true
 
 from nti.app.renderers.interfaces import INoHrefInResponse
 from nti.app.renderers.interfaces import IETagCachedUGDExternalCollection
@@ -62,16 +68,16 @@ frm_ext = frm_ext
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 _view_defaults = dict(route_name='objects.generic.traversal',
-						renderer='rest')
+					  renderer='rest')
 _c_view_defaults = _view_defaults.copy()
 _c_view_defaults.update(permission=nauth.ACT_CREATE,
-						 request_method='POST')
+						request_method='POST')
 _r_view_defaults = _view_defaults.copy()
 _r_view_defaults.update(permission=nauth.ACT_READ,
-						 request_method='GET')
+						request_method='GET')
 _d_view_defaults = _view_defaults.copy()
 _d_view_defaults.update(permission=nauth.ACT_DELETE,
-						 request_method='DELETE')
+						request_method='DELETE')
 
 @view_config(context=frm_interfaces.IHeadlineTopic)
 @view_config(context=frm_interfaces.IForum)
@@ -309,7 +315,8 @@ class ForumContentsFeedView(AbstractFeedView):
 		return data_object, ipost_or_itopic.creator, title, ipost_or_itopic.tags
 
 _e_view_defaults = _r_view_defaults.copy()
-_e_view_defaults['name'] = 'export'
+_e_view_defaults.update(permission=nauth.ACT_NTI_ADMIN,
+						name='export')
 
 @view_config(context=frm_interfaces.IBoard)
 @view_config(context=frm_interfaces.IForum)
@@ -320,11 +327,23 @@ class ExportObjectView(GenericGetView):
 
 	def __call__(self):
 		result = to_external_object(self.context, name='exporter', decorate=False)
-		interface.alsoProvides(result, INoHrefInResponse)
+		if is_true(self.request.params.get('compress')):
+			stream = BytesIO()
+			simplejson.dump(result, GzipFile(fileobj=stream, mode='w'),
+							indent='\t', sort_keys=True)
+			stream.flush()
+			stream.seek(0)
+			result = response = self.request.response
+			response.content_encoding = str('identity')
+			response.content_type = str('application/x-gzip; charset=UTF-8')
+			response.content_disposition = str('attachment; filename="export.gzip"')
+			response.body_file = stream
+		else:
+			interface.alsoProvides(result, INoHrefInResponse)
 		return result
 	
 del _view_defaults
-del _e_view_defaults
 del _c_view_defaults
-del _r_view_defaults
 del _d_view_defaults
+del _e_view_defaults
+del _r_view_defaults
