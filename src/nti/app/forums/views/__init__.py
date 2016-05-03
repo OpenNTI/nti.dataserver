@@ -18,6 +18,7 @@ from zope import component
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from nti.common._compat import aq_base
+
 from nti.common.string import TRUE_VALUES
 
 # TODO: FIXME: This solves an order-of-imports issue, where
