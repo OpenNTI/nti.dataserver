@@ -15,11 +15,14 @@ import re
 import datetime
 import operator
 
+from zope import interface
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from nti.app.forums import VIEW_CONTENTS
 
+from nti.app.renderers.interfaces import INoHrefInResponse
 from nti.app.renderers.interfaces import IETagCachedUGDExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.interfaces import ILongerCachedUGDExternalCollection
@@ -317,6 +320,7 @@ class ExportObjectView(GenericGetView):
 
 	def __call__(self):
 		result = to_external_object(self.context, name='exporter')
+		interface.alsoProvides(result, INoHrefInResponse)
 		return result
 	
 del _view_defaults

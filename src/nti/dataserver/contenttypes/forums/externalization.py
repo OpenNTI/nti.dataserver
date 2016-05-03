@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from collections import Mapping
+
 from zope import component
 from zope import interface
 
@@ -33,14 +35,19 @@ from nti.dataserver.users import Entity
 from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import StandardInternalFields
 from nti.externalization.interfaces import IInternalObjectExternalizer
 
 from nti.mimetype import decorateMimeType
 
 from nti.namedfile.interfaces import INamedFile
 
+OID = StandardExternalFields.OID
 ITEMS = StandardExternalFields.ITEMS
+NTIID = StandardExternalFields.NTIID
 MIMETYPE = StandardExternalFields.MIMETYPE
+CONTAINER_ID = StandardExternalFields.CONTAINER_ID
+INTERNAL_CONTAINER_ID = StandardInternalFields.CONTAINER_ID
 
 class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,
 												  UserContentRootInternalObjectIOMixin):
@@ -61,6 +68,18 @@ class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,
 
 @interface.implementer(IInternalObjectExternalizer)
 class _BaseExporter(object):
+
+	REMOVAL = (OID, NTIID, CONTAINER_ID, INTERNAL_CONTAINER_ID)
+
+	def __init__(self, obj):
+		self.obj = obj
+
+	def _remover(self, result):
+		if isinstance(result, Mapping):
+			for key in tuple(result.keys()) : # mutating
+				if key in self.REMOVAL:
+					result.pop(key, None)
+		return result
 
 	def handle_sharedWith(self, result):
 		sharedWith = result.get('sharedWith')
@@ -95,7 +114,7 @@ class _PostExporter(_BaseExporter):
 			items[name] = [encode(value.data, mimeType)]
 		if items:
 			result['Files'] = items
-		return result
+		return self._remover(result)
 
 @component.adapter(ITopic)
 class _TopicExporter(_BaseExporter):
@@ -110,18 +129,25 @@ class _TopicExporter(_BaseExporter):
 		result = to_external_object(self.topic, **mod_args)
 		if MIMETYPE not in result:
 			decorateMimeType(self.topic, result)
+		# handle headline
+		headline = result.get('headline')
+		if headline:
+			self._remover(headline)
+			self.handle_sharedWith(headline)
+		# remove unwanted
 		self.handle_sharedWith(result)
 		result.pop('PostCount', None)
 		result.pop('NewestDescendant', None)
 		result.pop('NewestDescendantCreatedTime', None)
-		items = []  # export posts
+		# export posts
+		items = []
 		mod_args['name'] = 'exporter'
 		for post in sorted(self.topic.values(), key=lambda x:x.createdTime):
 			ext_obj = to_external_object(post, **mod_args)
 			items.append(ext_obj)
 		if items:
 			result[ITEMS] = items
-		return result
+		return self._remover(result)
 
 @component.adapter(IForum)
 class _ForumExporter(_BaseExporter):
@@ -147,7 +173,7 @@ class _ForumExporter(_BaseExporter):
 			items.append(ext_obj)
 		if items:
 			result[ITEMS] = items
-		return result
+		return self._remover(result)
 
 @component.adapter(IBoard)
 class _BoardExporter(_BaseExporter):
@@ -171,4 +197,4 @@ class _BoardExporter(_BaseExporter):
 			items.append(ext_obj)
 		if items:
 			result[ITEMS] = items
-		return result
+		return self._remover(result)
