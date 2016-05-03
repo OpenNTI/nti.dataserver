@@ -87,7 +87,7 @@ class TestModel(unittest.TestCase):
 
 		internal.reference = 'oid'
 		interface.alsoProvides(internal, IInternalFileRef)
-		blob = transform_to_blob(internal)
+		blob = transform_to_blob(internal, associations=True)
 		assert_that(blob, verifiably_provides(IContentBlobImage))
 		assert_that(IInternalFileRef.providedBy(blob), is_(True))
 		assert_that(blob, has_property('reference', is_('oid')))

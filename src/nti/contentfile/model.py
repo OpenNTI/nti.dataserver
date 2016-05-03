@@ -136,7 +136,7 @@ class ContentImage(NamedImage, BaseContentMixin):
 class ContentBlobImage(NamedBlobImage, BaseContentMixin):
 	pass
 
-def transform_to_blob(context):
+def transform_to_blob(context, associations=False):
 	if IContentFile.providedBy(context):
 		result = ContentBlobFile()
 	elif IContentImage.providedBy(context):
@@ -153,6 +153,6 @@ def transform_to_blob(context):
 		if IInternalFileRef.providedBy(context):
 			interface.alsoProvides(result, IInternalFileRef)
 			result.reference = getattr(context, 'reference', None)  # extra check
-		if context.has_associations:
+		if context.has_associations or associations:
 			[result.add_association(obj) for obj in context.associations()]
 	return result
