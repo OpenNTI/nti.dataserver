@@ -565,8 +565,8 @@ class ModeledContentUploadRequestUtilsMixin(object):
 				pass
 		return containedObject
 
-	def doReadCreateUpdateContentObject(self, user, search_owner=False, externalValue=None,
-										deepCopy=False):
+	def performReadCreateUpdateContentObject(self, user, search_owner=False, externalValue=None,
+											 deepCopy=False):
 		creator = user
 		externalValue = self.readInput() if not externalValue else externalValue
 		returnExternal = copy.deepcopy(externalValue) if deepCopy else externalValue
@@ -622,9 +622,9 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		:keyword dict externalValue: External value use to create the content object
 
 		"""
-		containedObject, owner, _ = self.doReadCreateUpdateContentObject(user, 
-																		 search_owner, 
-																		 externalValue)
+		containedObject, owner, _ = self.performReadCreateUpdateContentObject(user, 
+																		 	  search_owner, 
+																			  externalValue)
 		return (containedObject, owner) if search_owner else containedObject
 
 class ModeledContentEditRequestUtilsMixin(object):
