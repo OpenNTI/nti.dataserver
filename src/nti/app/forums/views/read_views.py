@@ -319,7 +319,7 @@ _e_view_defaults['name'] = 'export'
 class ExportObjectView(GenericGetView):
 
 	def __call__(self):
-		result = to_external_object(self.context, name='exporter')
+		result = to_external_object(self.context, name='exporter', decorate=False)
 		interface.alsoProvides(result, INoHrefInResponse)
 		return result
 	

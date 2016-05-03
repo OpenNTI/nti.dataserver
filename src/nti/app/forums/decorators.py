@@ -214,7 +214,7 @@ class SecurityAwareForumTopicCountDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, context, mapping):
-		if not mapping['TopicCount']:
+		if not mapping.get('TopicCount'):
 			# Nothing to do if its already empty
 			return
 
