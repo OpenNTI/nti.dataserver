@@ -46,8 +46,8 @@ _view_defaults = dict(route_name='objects.generic.traversal', renderer='rest')
 
 @view_config(context=IGeneralForum)
 @view_defaults(permission=nauth.ACT_UPDATE,
-				request_method='PUT',
-				**_view_defaults)
+			   request_method='PUT',
+			   **_view_defaults)
 class ForumObjectPutView(UGDPutView):
 	"""
 	Editing an existing forum etc

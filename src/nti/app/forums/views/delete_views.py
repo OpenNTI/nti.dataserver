@@ -33,22 +33,22 @@ from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
-from nti.dataserver.contenttypes.forums.interfaces import ICommentPost 
-from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum 
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry 
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
 
-_view_defaults = dict(  route_name='objects.generic.traversal',
-						renderer='rest' )
+_view_defaults = dict(route_name='objects.generic.traversal',
+					  renderer='rest')
 _c_view_defaults = _view_defaults.copy()
-_c_view_defaults.update( permission=nauth.ACT_CREATE,
-						 request_method='POST' )
+_c_view_defaults.update(permission=nauth.ACT_CREATE,
+						request_method='POST')
 _r_view_defaults = _view_defaults.copy()
-_r_view_defaults.update( permission=nauth.ACT_READ,
-						 request_method='GET' )
+_r_view_defaults.update(permission=nauth.ACT_READ,
+						request_method='GET')
 _d_view_defaults = _view_defaults.copy()
-_d_view_defaults.update( permission=nauth.ACT_DELETE,
-						 request_method='DELETE' )
+_d_view_defaults.update(permission=nauth.ACT_DELETE,
+						request_method='DELETE')
 
 def _do_aq_delete(theObject):
 	"""
@@ -71,14 +71,14 @@ def _do_aq_delete(theObject):
 @view_config(context=IGeneralHeadlineTopic)
 @view_defaults(**_d_view_defaults)
 class HeadlineTopicDeleteView(UGDDeleteView):
-	""" 
-	Deleting an existing topic 
+	"""
+	Deleting an existing topic
 	"""
 
-	## Deleting an IPersonalBlogEntry winds up in users.users.py:user_willRemoveIntIdForContainedObject,
-	## thus posting the usual activitystream DELETE notifications
+	# # Deleting an IPersonalBlogEntry winds up in users.users.py:user_willRemoveIntIdForContainedObject,
+	# # thus posting the usual activitystream DELETE notifications
 
-	def _do_delete_object( self, theObject ):
+	def _do_delete_object(self, theObject):
 		# Delete from enclosing container
 		_do_aq_delete(theObject)
 		return theObject
@@ -86,11 +86,11 @@ class HeadlineTopicDeleteView(UGDDeleteView):
 @view_config(context=IGeneralForum)
 @view_defaults(**_d_view_defaults)
 class ForumDeleteView(UGDDeleteView):
-	""" 
-	Deleting an existing forum 
+	"""
+	Deleting an existing forum
 	"""
 
-	def _do_delete_object( self, theObject ):
+	def _do_delete_object(self, theObject):
 		# Standard delete from enclosing container. This
 		# dispatches to all the sublocations and thus removes
 		# the comments, etc, and into the activity streams
@@ -100,7 +100,7 @@ class ForumDeleteView(UGDDeleteView):
 @view_config(context=ICommentPost)
 @view_defaults(**_d_view_defaults)
 class CommentDeleteView(UGDDeleteView):
-	""" 
+	"""
 	Deleting an existing forum comment.
 
 	This is somewhat unusual as we leave an object behind to mark
@@ -109,7 +109,7 @@ class CommentDeleteView(UGDDeleteView):
 	clear the body.
 	"""
 
-	def _do_delete_object( self, theObject ):
+	def _do_delete_object(self, theObject):
 		deleting = aq_base(theObject)
 		interface.alsoProvides(deleting, IDeletedObjectPlaceholder)
 
@@ -122,5 +122,10 @@ class CommentDeleteView(UGDDeleteView):
 		# Because we are not actually removing it, no IObjectRemoved events fire
 		# but we do want to sent a modified event to be sure that timestamps, etc,
 		# get updated. This also triggers removing from the user's Activity
-		notify( lifecycleevent.ObjectModifiedEvent( deleting ) )
+		notify(lifecycleevent.ObjectModifiedEvent(deleting))
 		return theObject
+
+del _view_defaults
+del _c_view_defaults
+del _r_view_defaults
+del _d_view_defaults
