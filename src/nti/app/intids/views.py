@@ -39,7 +39,7 @@ class IntIdResolverView(AbstractAuthenticatedView):
 
 		try:
 			uid = int(uid)
-		except (ValueError, TypeError, AssertionError):
+		except (ValueError, TypeError):
 			raise hexc.HTTPUnprocessableEntity("Must specify a valid intid")
 
 		intids = component.getUtility(IIntIds)
