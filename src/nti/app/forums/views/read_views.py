@@ -46,6 +46,8 @@ from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 
 from nti.cabinet.filer import transfer_to_native_file
 
+from nti.common.random import generate_random_hex_string
+
 from nti.coremetadata.interfaces import IModeledContentBody
 
 from nti.contentprocessing.content_utils import clean_special_characters
@@ -359,7 +361,7 @@ class ExportObjectView(GenericGetView):
 				simplejson.dump(result, fp, indent='\t', sort_keys=True)
 			self._process_files(self.context, out_dir)
 			
-			base_name = tempfile.mktemp()
+			base_name = tempfile.mktemp() + "_" + generate_random_hex_string(6)
 			result = shutil.make_archive(base_name, 'zip', out_dir)
 		
 			response = self.request.response
