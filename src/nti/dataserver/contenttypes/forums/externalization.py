@@ -121,6 +121,7 @@ class _PostExporter(_BaseExporter):
 		for value, ext_obj in zip(int_body, ext_body):
 			if INamedFile.providedBy(value):
 				ext_obj['name'] = self.ext_filename(value)
+				self._remover(ext_obj)
 		return self._remover(result)
 
 @component.adapter(ITopic)
