@@ -311,8 +311,8 @@ class UserNotableData(AbstractAuthenticatedView):
 		for questionable_uid in questionable_intids:
 			if questionable_uid in safely_viewable_intids:
 				continue
-			questionable_obj = uidutil.getObject(questionable_uid)
-			if security_check(questionable_obj):
+			questionable_obj = uidutil.queryObject(questionable_uid)
+			if questionable_obj is not None and security_check(questionable_obj):
 				safely_viewable_intids.add(questionable_uid)
 
 		# 2015-07-11 Subtract any message info
