@@ -11,13 +11,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
+
 from collections import Mapping
 
 from zope import component
 from zope import interface
 
-from nti.common.dataurl import encode
-from nti.common.mimetypes import guess_type
+from ZODB.utils import p64
 
 from nti.dataserver.interfaces import IThreadable
 
@@ -97,6 +98,16 @@ class _PostExporter(_BaseExporter):
 	def __init__(self, obj):
 		self.post = obj
 
+	def ext_filename(self, context):
+		name = context.filename or context.name
+		try:
+			oid = context._p_oid
+			_, ext = os.path.splitext(name)
+			name = p64(oid) + ext
+		except AttributeError:
+			pass
+		return name
+
 	def toExternalObject(self, **kwargs):
 		mod_args = dict(**kwargs)
 		mod_args['name'] = ''  # set default
@@ -105,15 +116,11 @@ class _PostExporter(_BaseExporter):
 		if MIMETYPE not in result:
 			decorateMimeType(self.post, result)
 		self.handle_sharedWith(result)
-		items = {}
-		for value in self.post.body or ():
-			if not INamedFile.providedBy(value):
-				continue
-			name = value.filename or value.name
-			mimeType = guess_type(name)[0] or u'application/octet-stream'
-			items[name] = [encode(value.data, mimeType)]
-		if items:
-			result['Files'] = items
+		int_body = self.post.body or ()
+		ext_body = result.get('body') or ()
+		for value, ext_obj in zip(int_body, ext_body):
+			if INamedFile.providedBy(value):
+				ext_obj['filename'] = self.ext_filename(value)
 		return self._remover(result)
 
 @component.adapter(ITopic)
