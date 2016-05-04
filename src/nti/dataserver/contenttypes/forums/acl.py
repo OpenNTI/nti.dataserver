@@ -25,7 +25,19 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from nti.dataserver.users import Entity
+from nti.dataserver import authorization as nauth
+
+from nti.dataserver.authorization_acl import ace_denying
+from nti.dataserver.authorization_acl import ace_allowing
+from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
+
+from nti.dataserver.contenttypes.forums.interfaces import WRITE_PERMISSION
+from nti.dataserver.contenttypes.forums.interfaces import CREATE_PERMISSION
+from nti.dataserver.contenttypes.forums.interfaces import DELETE_PERMISSION
+from nti.dataserver.contenttypes.forums.interfaces import ALL_PERMISSIONS as FORUM_ALL_PERMISSIONS
+
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IACLProvider
@@ -33,14 +45,9 @@ from nti.dataserver.interfaces import ACE_ACT_ALLOW
 from nti.dataserver.interfaces import ALL_PERMISSIONS
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver import authorization as nauth
-from nti.dataserver.authorization_acl import ace_denying
-from nti.dataserver.authorization_acl import ace_allowing
-from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
+from nti.dataserver.users import Entity
 
 from nti.traversal.traversal import find_interface
-
-from . import interfaces as frm_interfaces
 
 class _ForumACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
@@ -134,7 +141,7 @@ class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		return self._extend_with_admin_privs(acl)
 
-@component.adapter(frm_interfaces.IPost)
+@component.adapter(IPost)
 class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
 	We want posts to get their own acl, giving the creator full
@@ -166,7 +173,7 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 			acl.append(ace_allowing(topic_creator, nauth.ACT_DELETE, self))
 			acl.append(ace_allowing(topic_creator, nauth.ACT_READ, self))
 
-@component.adapter(frm_interfaces.IHeadlinePost)
+@component.adapter(IHeadlinePost)
 @interface.implementer(IACLProvider)
 class _HeadlinePostACLProvider(object):
 	"""
@@ -198,11 +205,11 @@ class _ACLBasedProvider(object):
 	@classmethod
 	def _resolve_perm(cls, perm):
 		result = nauth.ACT_READ
-		if perm in (frm_interfaces.ALL_PERMISSIONS, frm_interfaces.WRITE_PERMISSION):
+		if perm in (FORUM_ALL_PERMISSIONS, WRITE_PERMISSION):
 			result = ALL_PERMISSIONS
-		elif perm == frm_interfaces.CREATE_PERMISSION:
+		elif perm == CREATE_PERMISSION:
 			result = nauth.ACT_CREATE
-		elif perm == frm_interfaces.DELETE_PERMISSION:
+		elif perm == DELETE_PERMISSION:
 			result = nauth.ACT_DELETE
 		return result
 

@@ -15,12 +15,13 @@ from zope import interface
 
 from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.dataserver.contenttypes.forums.interfaces import IForumACE
+
 from nti.dataserver.interfaces import IACE
 
-from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from .interfaces import IForumACE
+from nti.schema.schema import SchemaConfigured
 
 @interface.implementer(IForumACE, IACE, IContentTypeAware)
 class ForumACE(SchemaConfigured):
@@ -41,7 +42,7 @@ class ForumACE(SchemaConfigured):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self.Action == other.Action
+			return self is other or (	 self.Action == other.Action
 									 and set(self.Entities) == set(other.Entities)
 									 and set(self.Permissions) == set(other.Permissions))
 		except AttributeError:

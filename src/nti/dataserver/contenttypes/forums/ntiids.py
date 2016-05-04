@@ -14,7 +14,13 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from zope.intid import IIntIds
+from zope.intid.interfaces import IIntIds
+
+from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
+from nti.dataserver.contenttypes.forums.interfaces import IDFLForum
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -27,12 +33,6 @@ from nti.dataserver.ntiids import AbstractMappingAdaptingUserBasedResolver
 from nti.ntiids.ntiids import get_provider
 from nti.ntiids.ntiids import get_specific
 from nti.ntiids.interfaces import INTIIDResolver
-
-from .interfaces import IDFLBoard
-from .interfaces import IDFLForum
-from .interfaces import IPersonalBlog
-from .interfaces import ICommunityBoard
-from .interfaces import ICommunityForum
 
 @interface.implementer(INTIIDResolver)
 class _BlogResolver(AbstractAdaptingUserBasedResolver):
