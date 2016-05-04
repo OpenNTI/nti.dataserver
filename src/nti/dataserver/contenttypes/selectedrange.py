@@ -13,14 +13,14 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from nti.dataserver.contenttypes.base import UserContentRoot
+from nti.dataserver.contenttypes.base import UserContentRootInternalObjectIO
+
+from nti.dataserver.interfaces import ISelectedRange
+from nti.dataserver.interfaces import IUserTaggedContent
+from nti.dataserver.interfaces import IAnchoredRepresentation
+
 from nti.schema.fieldproperty import createDirectFieldProperties
-
-from ..interfaces import ISelectedRange
-from ..interfaces import IUserTaggedContent
-from ..interfaces import IAnchoredRepresentation
-
-from .base import UserContentRoot
-from .base import UserContentRootInternalObjectIO
 
 @interface.implementer(ISelectedRange)
 class SelectedRange(UserContentRoot):

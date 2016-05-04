@@ -12,10 +12,10 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from ..interfaces import IBookmark
+from nti.dataserver.contenttypes.selectedrange import SelectedRange
+from nti.dataserver.contenttypes.selectedrange import SelectedRangeInternalObjectIO
 
-from .selectedrange import SelectedRange
-from .selectedrange import SelectedRangeInternalObjectIO
+from nti.dataserver.interfaces import IBookmark
 
 @interface.implementer(IBookmark)
 class Bookmark(SelectedRange):

@@ -16,19 +16,20 @@ from zope import component
 
 from zope.container.contained import Contained
 
-from nti.schema.schema import SchemaConfigured
+from nti.dataserver.contenttypes.base import UserContentRoot
+from nti.dataserver.contenttypes.base import UserContentRootInternalObjectIO
+
+from nti.dataserver.contenttypes.threadable import ThreadableMixin
+
+from nti.dataserver.interfaces import IMedia
+from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import IEmbeddedMedia
+from nti.dataserver.interfaces import IEmbeddedAudio
+from nti.dataserver.interfaces import IEmbeddedVideo
+
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from ..interfaces import IMedia
-from ..interfaces import IZContained
-from ..interfaces import IEmbeddedMedia
-from ..interfaces import IEmbeddedAudio
-from ..interfaces import IEmbeddedVideo
-
-from .base import UserContentRoot
-from .base import UserContentRootInternalObjectIO
-
-from .threadable import ThreadableMixin
+from nti.schema.schema import SchemaConfigured
 
 @interface.implementer(IMedia, IZContained)
 class Media(ThreadableMixin, UserContentRoot, Contained, SchemaConfigured):

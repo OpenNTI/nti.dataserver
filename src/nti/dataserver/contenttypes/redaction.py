@@ -14,12 +14,12 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from nti.dataserver.contenttypes.selectedrange import SelectedRange
+from nti.dataserver.contenttypes.selectedrange import SelectedRangeInternalObjectIO
+
+from nti.dataserver.interfaces import IRedaction
+
 from nti.schema.fieldproperty import createDirectFieldProperties
-
-from ..interfaces import IRedaction
-
-from .selectedrange import SelectedRange
-from .selectedrange import SelectedRangeInternalObjectIO
 
 @interface.implementer(IRedaction)
 class Redaction(SelectedRange):

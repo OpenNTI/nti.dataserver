@@ -24,15 +24,15 @@ from persistent.list import PersistentList
 
 from nti.common import sets
 
+from nti.dataserver.interfaces import IThreadable
+from nti.dataserver.interfaces import IInspectableWeakThreadable
+
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.intid.containers import IntidResolvingIterable
 
 from nti.wref.interfaces import IWeakRef
 from nti.wref.interfaces import IWeakRefToMissing
-
-from ..interfaces import IThreadable
-from ..interfaces import IInspectableWeakThreadable
 
 @interface.implementer(IInspectableWeakThreadable)
 class ThreadableMixin(object):
@@ -67,7 +67,7 @@ class ThreadableMixin(object):
 	_referents = ()
 
 	def __init__(self):
-		super(ThreadableMixin,self).__init__()
+		super(ThreadableMixin, self).__init__()
 
 	def getInReplyTo(self, allow_cached=True):
 		"""
@@ -78,13 +78,13 @@ class ThreadableMixin(object):
 
 		try:
 			return self._inReplyTo(allow_cached=allow_cached)
-		except TypeError: # Not ICachingWeakRef
+		except TypeError:  # Not ICachingWeakRef
 			return self._inReplyTo()
 
-	def setInReplyTo( self, value ):
+	def setInReplyTo(self, value):
 		self._inReplyTo = IWeakRef(value) if value is not None else None
 
-	inReplyTo = property( getInReplyTo, setInReplyTo )
+	inReplyTo = property(getInReplyTo, setInReplyTo)
 
 	def isOrWasChildInThread(self):
 		return self._inReplyTo is not None or self._references
@@ -96,40 +96,40 @@ class ThreadableMixin(object):
 
 		return list(self.getReferences())
 
-	def getReferences(self,allow_cached=True):
+	def getReferences(self, allow_cached=True):
 		for ref in (self._references or ()):
 			try:
 				val = ref(allow_cached=allow_cached)
-			except TypeError: # Not ICachingWeakRef
+			except TypeError:  # Not ICachingWeakRef
 				val = ref()
 
 			if val is not None:
 				yield val
 
-	def addReference( self, value ):
+	def addReference(self, value):
 		if value is not None:
 			if self._references is ThreadableMixin._references:
 				self._references = PersistentList()
 			self._references.append(IWeakRef(value))
 
-	def clearReferences( self ):
+	def clearReferences(self):
 		try:
 			del self._references[:]
 		except TypeError:
-			pass # The class tuple
+			pass  # The class tuple
 
 	@property
 	def replies(self):
-		return 	IntidResolvingIterable( self._replies, allow_missing=True, parent=self, name='replies' ) \
+		return 	IntidResolvingIterable(self._replies, allow_missing=True, parent=self, name='replies') \
 				if self._replies is not ThreadableMixin._replies else ()
 
 	@property
 	def referents(self):
-		return 	IntidResolvingIterable( self._referents, allow_missing=True, parent=self, name='referents' ) \
+		return 	IntidResolvingIterable(self._referents, allow_missing=True, parent=self, name='referents') \
 				if self._referents is not ThreadableMixin._referents else ()
 
-@component.adapter( IThreadable, IIntIdAddedEvent )
-def threadable_added( threadable, event ):
+@component.adapter(IThreadable, IIntIdAddedEvent)
+def threadable_added(threadable, event):
 	"""
 	Update the replies and referents. NOTE: This assumes that IThreadable is actually
 	a ThreadableMixin.
@@ -137,34 +137,33 @@ def threadable_added( threadable, event ):
 	# Note that we don't trust the 'references' value of the client.
 	# we build the reference chain ourself based on inReplyTo.
 	inReplyTo = threadable.inReplyTo
-	if not IThreadable.providedBy( inReplyTo ): # None in the real world, test case stuff otherwise
-		return # nothing to do
+	if not IThreadable.providedBy(inReplyTo):  # None in the real world, test case stuff otherwise
+		return  # nothing to do
 
-	intids = component.getUtility( IIntIds )
-	intid = intids.getId( threadable )
-	_threadable_added( threadable, intids, intid )
+	intids = component.getUtility(IIntIds)
+	intid = intids.getId(threadable)
+	_threadable_added(threadable, intids, intid)
 
-def _threadable_added( threadable, intids, intid ):
+def _threadable_added(threadable, intids, intid):
 	# This function is for migration support
 	inReplyTo = threadable.inReplyTo
-	if not IThreadable.providedBy( inReplyTo ):
-		return # nothing to do
+	if not IThreadable.providedBy(inReplyTo):
+		return  # nothing to do
 
 	# Only the direct parent gets added as a reply
 	if inReplyTo._replies is ThreadableMixin._replies:
 		inReplyTo._replies = intids.family.II.TreeSet()
-	inReplyTo._replies.add( intid )
+	inReplyTo._replies.add(intid)
 
 	# Now walk up the tree and record the indirect reference (including in the direct
 	# parent)
-	while IThreadable.providedBy( inReplyTo ):
+	while IThreadable.providedBy(inReplyTo):
 		if inReplyTo._referents is ThreadableMixin._referents:
 			inReplyTo._referents = intids.family.II.TreeSet()
-		inReplyTo._referents.add( intid )
-
+		inReplyTo._referents.add(intid)
 		inReplyTo = inReplyTo.inReplyTo
 
-@component.adapter( IThreadable, IIntIdRemovedEvent )
+@component.adapter(IThreadable, IIntIdRemovedEvent)
 def threadable_removed(threadable, event):
 	"""
 	Update the replies and referents. NOTE: This assumes that IThreadable is actually a
@@ -173,23 +172,23 @@ def threadable_removed(threadable, event):
 	# Note that we don't trust the 'references' value of the client.
 	# we build the reference chain ourself based on inReplyTo.
 	inReplyTo = threadable.inReplyTo
-	if not IThreadable.providedBy( inReplyTo ):
-		return # nothing to do
+	if not IThreadable.providedBy(inReplyTo):
+		return  # nothing to do
 
-	intids = component.getUtility( IIntIds )
-	intid = intids.getId( threadable )
+	intids = component.getUtility(IIntIds)
+	intid = intids.getId(threadable)
 
 	# Only the direct parent gets added as a reply
 	try:
-		sets.discard( inReplyTo._replies, intid )
+		sets.discard(inReplyTo._replies, intid)
 	except AttributeError:
 		pass
 
 	# Now walk up the tree and record the indirect reference (including in the direct
 	# parent)
-	while IThreadable.providedBy( inReplyTo ):
+	while IThreadable.providedBy(inReplyTo):
 		try:
-			sets.discard( inReplyTo._referents, intid )
+			sets.discard(inReplyTo._referents, intid)
 		except AttributeError:
 			pass
 		inReplyTo = inReplyTo.inReplyTo
@@ -207,23 +206,23 @@ class ThreadableExternalizableMixin(object):
 	The subclass must define the `_ext_replacement` function as the object being externalized.
 	"""
 
-	__external_oids__ = ['inReplyTo', 'references'] # Cause these to be resolved automatically
+	__external_oids__ = ['inReplyTo', 'references']  # Cause these to be resolved automatically
 
 	#: If True (the default) then when objects that we are replies to or that
 	#: we reference are deleted, we will write out placeholder missing values
 	#: for them. Otherwise, there will be a null value or gap. See :const:`nti.ntiids.ntiids.TYPE_MISSING`
 	_ext_write_missing_references = True
 
-	def toExternalObject(self,mergeFrom=None, **kwargs):
-		extDict = super(ThreadableExternalizableMixin,self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
+	def toExternalObject(self, mergeFrom=None, **kwargs):
+		extDict = super(ThreadableExternalizableMixin, self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
 		if self._ext_can_write_threads():
-			assert isinstance( extDict, collections.Mapping )
+			assert isinstance(extDict, collections.Mapping)
 			context = self._ext_replacement()
-			extDict['inReplyTo'] = self._ext_ref( context.inReplyTo, context._inReplyTo )
-			extDict['references'] = [ self._ext_ref( ref(), ref ) for ref in context._references ]
+			extDict['inReplyTo'] = self._ext_ref(context.inReplyTo, context._inReplyTo)
+			extDict['references'] = [ self._ext_ref(ref(), ref) for ref in context._references ]
 		return extDict
 
-	def _ext_ref( self, obj, ref ):
+	def _ext_ref(self, obj, ref):
 		"""
 		Produce a string value for the object we reference (or are a reply to).
 		By default, this will distinguish the three cases of never having been set,
@@ -231,10 +230,10 @@ class ThreadableExternalizableMixin(object):
 		now referring to an object that is deleted.
 		"""
 		if obj is not None:
-			result = to_external_ntiid_oid( obj )
+			result = to_external_ntiid_oid(obj)
 			if not result:
 				__traceback_info__ = self, obj, ref
-				raise ValueError( "Unable to create external reference", obj )
+				raise ValueError("Unable to create external reference", obj)
 			return result
 
 		# No object. Did we have a reference at one time?
@@ -243,20 +242,20 @@ class ThreadableExternalizableMixin(object):
 			missing_ref = IWeakRefToMissing(ref, None)
 			return missing_ref.make_missing_ntiid() if missing_ref is not None else None
 
-	def updateFromExternalObject( self, parsed, **kwargs ):
-		assert isinstance( parsed, collections.Mapping )
-		inReplyTo = parsed.pop( 'inReplyTo', None )
-		references = parsed.pop( 'references', () )
-		super(ThreadableExternalizableMixin, self).updateFromExternalObject( parsed, **kwargs )
+	def updateFromExternalObject(self, parsed, **kwargs):
+		assert isinstance(parsed, collections.Mapping)
+		inReplyTo = parsed.pop('inReplyTo', None)
+		references = parsed.pop('references', ())
+		super(ThreadableExternalizableMixin, self).updateFromExternalObject(parsed, **kwargs)
 
 		if self._ext_can_update_threads():
 			context = self._ext_replacement()
 			context.inReplyTo = inReplyTo
 			context.clearReferences()
 			for ref in references:
-				context.addReference( ref )
+				context.addReference(ref)
 
-	def _ext_can_update_threads( self ):
+	def _ext_can_update_threads(self):
 		"""
 		By default, once this object has been created and the thread-related values
 		have been set, they cannot be changed by sending external data.
@@ -265,7 +264,7 @@ class ThreadableExternalizableMixin(object):
 		:class:`persistent.Persistent`, or otherwise defining the
 		``_p_mtime`` property.)
 		"""
-		mod_time = getattr( self._ext_replacement(), '_p_mtime', None )
+		mod_time = getattr(self._ext_replacement(), '_p_mtime', None)
 		return not mod_time
 
 	def _ext_can_write_threads(self):

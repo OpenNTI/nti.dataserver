@@ -61,13 +61,13 @@ class Note(ThreadableMixin, Highlight):
 	Implementation of a note.
 	"""
 
-	# : A sequence of properties we would like to copy from the parent
-	# : when a child reply is created. If the child already has them, they
-	# : are left alone.
-	# : This consists of the anchoring properties, and for some reason the title
+	#: A sequence of properties we would like to copy from the parent
+	#: when a child reply is created. If the child already has them, they
+	#: are left alone.
+	#: This consists of the anchoring properties, and for some reason the title
 	_inheritable_properties_ = ('applicableRange', 'title')
 
-	# : We override the default highlight style to suppress it.
+	#: We override the default highlight style to suppress it.
 	style = FieldProperty(_style_field)
 
 	body = BodyFieldProperty(INote['body'])  # uses the 'body' in the dict, which is compatible with persistent objects
@@ -79,8 +79,8 @@ class Note(ThreadableMixin, Highlight):
 
 	__getitem__ = _make_getitem('body')
 
-from .highlight import HighlightInternalObjectIO
-from .threadable import ThreadableExternalizableMixin
+from nti.dataserver.contenttypes.highlight import HighlightInternalObjectIO
+from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
 @component.adapter(INote)
 class NoteInternalObjectIO(ThreadableExternalizableMixin, HighlightInternalObjectIO):

@@ -13,26 +13,27 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from nti.dataserver.contenttypes.base import UserContentRoot
+
+from nti.dataserver.contenttypes.selectedrange import SelectedRange  # BWC top-level import
+
 from nti.dataserver.interfaces import IHighlight
 from nti.dataserver.interfaces import IPresentationPropertyHolder
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from .base import UserContentRoot
-UserContentRoot = UserContentRoot # BWC top-level import
-
-from .selectedrange import SelectedRange # BWC top-level import
+UserContentRoot = UserContentRoot  # BWC top-level import
 
 @interface.implementer(IHighlight)
-class Highlight(SelectedRange): #, _HighlightBWC):
+class Highlight(SelectedRange):  # , _HighlightBWC):
 	"""
 	Implementation of a highlight.
 	"""
 	createDirectFieldProperties(IPresentationPropertyHolder)
 	createDirectFieldProperties(IHighlight)
 
-	def __init__( self ):
-		super(Highlight,self).__init__()
+	def __init__(self):
+		super(Highlight, self).__init__()
 
 from .selectedrange import SelectedRangeInternalObjectIO
 
@@ -41,7 +42,7 @@ class HighlightInternalObjectIO(SelectedRangeInternalObjectIO):
 
 	_ext_primitive_out_ivars_ = { 'style' } | SelectedRangeInternalObjectIO._ext_primitive_out_ivars_
 
-	def updateFromExternalObject( self, ext_parsed, *args, **kwargs ):
+	def updateFromExternalObject(self, ext_parsed, *args, **kwargs):
 		# Merge any incoming presentation properties with what we have;
 		# this allows clients to simply drop things they don't know about
 		ext_self = self._ext_self
