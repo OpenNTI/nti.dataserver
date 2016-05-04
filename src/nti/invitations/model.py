@@ -11,14 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 import time
 
-from zope import component
 from zope import interface
 
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.cachedescriptors.property import readproperty
-
-from zope.intid.interfaces import IIntIds
 
 from zope.container.contained import Contained
 
@@ -28,6 +25,10 @@ from z3c.schema.email.field import isValidMailAddress
 
 from nti.common.property import alias
 
+from nti.common.random import generate_random_hex_string
+
+from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
+
 from nti.coremetadata.interfaces import SYSTEM_USER_NAME
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
@@ -35,6 +36,7 @@ from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 from nti.externalization.representation import WithRepr
 
 from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IInvitations
 
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -60,12 +62,6 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 		PersistentCreatedModDateTrackingObject.__init__(self)
 
 	@readproperty
-	def code(self):
-		intids = component.queryUtility(IIntIds)
-		result = intids.queryId(self) if intids is not None else None
-		return result
-
-	@readproperty
 	def sender(self):
 		return SYSTEM_USER_NAME
 
@@ -89,3 +85,22 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 			return (self.code, self.createdTime) > (self.code, self.createdTime)
 		except AttributeError:  # pragma: no cover
 			return NotImplemented
+
+@interface.implementer(IInvitations, IAttributeAnnotatable)
+class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer):
+	
+	def add(self, invitation):
+		code = invitation.code
+		if not code:
+			code = generate_random_hex_string()
+			while code in self:
+				code = generate_random_hex_string()
+		self[code] = invitation
+	registerInvitation = append = add
+	
+	def remove(self, invitation):
+		code = getattr(invitation, 'code', invitation)
+		del self[code]
+	removeInvitation = remove
+	
+	getInvitationByCode = CaseInsensitiveLastModifiedBTreeContainer.__getitem__

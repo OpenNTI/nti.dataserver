@@ -1,6 +1,7 @@
 <!-- -*- mode: nxml -*- -->
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:ext="http://nextthought.com/ntp/ext"
 			xmlns:invite="http://nextthought.com/ntp/invite">
 
 	<include package="zope.component" file="meta.zcml" />
@@ -12,4 +13,12 @@
 
 	<utility factory=".invitation.InvitationAssociationActor" />
 
+	<!-- Externalization -->
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+
+	<ext:registerAutoPackageIO
+		root_interfaces=".interfaces.IInvitation"
+		modules=".model" />
+	
 </configure>

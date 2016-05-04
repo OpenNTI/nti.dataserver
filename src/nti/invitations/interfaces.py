@@ -68,6 +68,8 @@ class IInvitation(IContained,
 	
 	expiryTime = Number(title="The expiry timestamp.", required=False)
 	
+	sent = Number(title="The sent timestamp.", required=False)
+	
 # 	def accept(user):
 # 		"""
 # 		Perform whatever action is required for the ``user`` to accept the invitation, including
