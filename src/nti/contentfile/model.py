@@ -145,11 +145,12 @@ def transform_to_blob(context, associations=False):
 		result = context
 	if result is not context:
 		for key, value in context.__dict__.items():
-			if not key.startswith('_') or key in ('_size', '_data'):
+			if not key.startswith('_') and not key in ('data'):
 				try:
 					setattr(result, key, value)
 				except (AttributeError, TypeError): # ignore readonly
 					pass
+		result.data = context.data # be explicit
 		if IInternalFileRef.providedBy(context):
 			interface.alsoProvides(result, IInternalFileRef)
 			result.reference = getattr(context, 'reference', None)  # extra check
