@@ -105,6 +105,6 @@ class TestPatch(unittest.TestCase):
 		# But the transaction loop has been batched to recognize this
 		# even outside a ZopeTransactionExtension
 
-		from nti.utils.transactions import TransactionLoop
+		from nti.transactions.transactions import TransactionLoop
 		assert_that( TransactionLoop._retryable.im_func(TransactionLoop,  (type(sql_exc), sql_exc, None) ),
 					 is_true() )
