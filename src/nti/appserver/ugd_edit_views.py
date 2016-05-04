@@ -122,7 +122,6 @@ class UGDPostView(AbstractAuthenticatedView,
 
 		containedObject, owner = self.readCreateUpdateContentObject(creator, search_owner=True)
 		containedObject = self._transform_incoming_object(containedObject)
-
 		# TODO: The WSGI code would attempt to infer a containerID from the
 		# path. Should we?
 		if not getattr(containedObject, StandardInternalFields.CONTAINER_ID, None):
@@ -174,7 +173,6 @@ class UGDPostView(AbstractAuthenticatedView,
 		__traceback_info__ = containedObject
 		assert containedObject.__parent__
 		assert containedObject.__name__
-
 		# We used to ACL proxy here
 		return containedObject
 
@@ -303,7 +301,6 @@ class UGDPutView(AbstractAuthenticatedView,
 			theObject = toExternalObject(theObject, 'personal-summary')
 			# used to call self._check_object_exists, but this is a programming problem
 			assert theObject is not None
-
 		return theObject
 		# We used to ACL proxy here, but that should no longer be necessary.
 

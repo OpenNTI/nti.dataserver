@@ -145,7 +145,7 @@ def transform_to_blob(context, associations=False):
 		result = context
 	if result is not context:
 		for key, value in context.__dict__.items():
-			if not key.startswith('_'):
+			if not key.startswith('_') or key in ('_size', '_data'):
 				try:
 					setattr(result, key, value)
 				except (AttributeError, TypeError): # ignore readonly

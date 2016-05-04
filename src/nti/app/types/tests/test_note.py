@@ -20,7 +20,7 @@ from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import greater_than_or_equal_to
 
-from nti.contentfile.model import ContentFile
+from nti.contentfile.model import ContentBlobFile
 
 from nti.externalization.representation import to_json_representation
 
@@ -62,14 +62,14 @@ class TestNote(ApplicationLayerTest):
 					 		extra_environ=self._make_extra_environ(update_request=True),
 							headers={u"Content-Type": b"application/json" },
 					 		status=201)
-		assert_that(res.json_body, has_entry('body', has_item(has_entries('Class', 'ContentFile',
+		assert_that(res.json_body, has_entry('body', has_item(has_entries('Class', 'ContentBlobFile',
 																		  'download_url', is_not(none())))))
 		assert_that(res.json_body, has_entry('OID', is_not(none())))
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			note = find_object_with_ntiid(res.json_body['OID'])
 			assert_that(note, is_not(none()))
-			assert_that(note, has_property('body', has_item(is_(ContentFile))))
+			assert_that(note, has_property('body', has_item(is_(ContentBlobFile))))
 			assert_that(note.body[1], has_property('__parent__', is_(note)))
 			assert_that(note.body[1], has_property('data', is_not(none())))
 
@@ -107,8 +107,7 @@ class TestNote(ApplicationLayerTest):
 					 		status=201)
 		path = res.json_body['href']
 		durl = res.json_body['body'][1]['download_url']
-
-		# udpate
+		# Update
 		ext_obj = dict(res.json_body)
 		ext_obj['body'][0] = 'Azien'
 		data = to_json_representation(ext_obj)
@@ -121,7 +120,7 @@ class TestNote(ApplicationLayerTest):
 						   extra_environ=self._make_extra_environ(),
 						   status=200 )
 		assert_that(res, has_property('body', has_length(greater_than_or_equal_to(60))))
-		
+
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_update_note_multipart(self):
 		ext_file = {

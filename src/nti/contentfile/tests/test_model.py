@@ -12,6 +12,7 @@ from hamcrest import none
 from hamcrest import all_of
 from hamcrest import is_not
 from hamcrest import has_key
+from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
@@ -58,12 +59,12 @@ class TestModel(unittest.TestCase):
 
 		factory = find_factory_for(ext_obj)
 		assert_that(factory, is_not(none()))
-		
+
 		internal = factory()
 		update_from_external_object(internal, ext_obj, require_updater=True)
-		
+
 		assert_that(IContentTypeAware.providedBy(internal), is_(True))
-		
+
 		# value changed to URI
 		assert_that(ext_obj, has_key('url'))
 		assert_that(ext_obj, does_not(has_key('value')))
@@ -73,7 +74,7 @@ class TestModel(unittest.TestCase):
 		assert_that(internal, has_property('name', 'ichigo.gif'))
 
 		assert_that(internal.has_associations(), is_(False))
-		
+
 		assert_that(internal,
 					externalizes(all_of(has_key('CreatedTime'),
 										has_key('Last Modified'),
@@ -94,3 +95,5 @@ class TestModel(unittest.TestCase):
 		assert_that(blob, has_property('name', is_('foo')))
 		assert_that(blob, has_property('filename', is_('ichigo.gif')))
 		assert_that(blob, has_property('contentType', is_('image/gif')))
+		assert_that(blob, has_property('data', not_none()))
+		assert_that(blob, has_property('size', is_( 61 )))
