@@ -11,24 +11,23 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import re
+import shutil
 import datetime
 import operator
-from io import BytesIO
-from gzip import GzipFile
+import tempfile
+from collections import Mapping
+
+from ZODB.utils import p64
 
 import simplejson
-
-from zope import interface
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from nti.app.forums import VIEW_CONTENTS
 
-from nti.app.forums.views import is_true
-
-from nti.app.renderers.interfaces import INoHrefInResponse
 from nti.app.renderers.interfaces import IETagCachedUGDExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.interfaces import ILongerCachedUGDExternalCollection
@@ -45,6 +44,10 @@ from nti.appserver.ugd_feed_views import AbstractFeedView
 from nti.appserver.ugd_query_views import _combine_predicate
 from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 
+from nti.cabinet.filer import transfer_to_native_file
+
+from nti.coremetadata.interfaces import IModeledContentBody
+
 from nti.contentprocessing.content_utils import clean_special_characters
 
 from nti.contentsearch.interfaces import ITagsResolver
@@ -57,6 +60,8 @@ from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver import authorization as nauth
 
 from nti.externalization.externalization import to_external_object
+
+from nti.namedfile.interfaces import INamedFile
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -325,22 +330,46 @@ _e_view_defaults.update(permission=nauth.ACT_NTI_ADMIN,
 @view_defaults(**_e_view_defaults)
 class ExportObjectView(GenericGetView):
 
+	def _ext_filename(self, context):
+		name = context.filename or context.name
+		try:
+			oid = context._p_oid
+			_, ext = os.path.splitext(name)
+			name = p64(oid) + ext
+		except AttributeError:
+			pass
+		return name
+
+	def _process_files(self, context, out_dir):
+		if isinstance(context, Mapping):
+			for value in context.values():
+				self._process_files(value, out_dir)
+		elif IModeledContentBody.providedBy(context):
+			for value in context.body or ():
+				if INamedFile.providedBy(value):
+					name = self._ext_filename(value)
+					name = os.path.join(out_dir, name)
+					transfer_to_native_file(value, name)
+
 	def __call__(self):
 		result = to_external_object(self.context, name='exporter', decorate=False)
-		if is_true(self.request.params.get('compress')):
-			stream = BytesIO()
-			simplejson.dump(result, GzipFile(fileobj=stream, mode='w'),
-							indent='\t', sort_keys=True)
-			stream.flush()
-			stream.seek(0)
-			result = response = self.request.response
+		try:
+			out_dir = tempfile.mkdtemp()
+			with open(os.path.join(out_dir, 'data.json'), "wb") as fp:
+				simplejson.dump(result, fp, indent='\t', sort_keys=True)
+			self._process_files(self.context, out_dir)
+			
+			base_name = tempfile.mktemp()
+			result = shutil.make_archive(base_name, 'zip', out_dir)
+		
+			response = self.request.response
 			response.content_encoding = str('identity')
 			response.content_type = str('application/x-gzip; charset=UTF-8')
-			response.content_disposition = str('attachment; filename="export.gzip"')
-			response.body_file = stream
-		else:
-			interface.alsoProvides(result, INoHrefInResponse)
-		return result
+			response.content_disposition = str('attachment; filename="export.zip"')
+			response.body_file = open(result, "rb")
+			return response
+		finally:
+			shutil.rmtree(out_dir)
 	
 del _view_defaults
 del _c_view_defaults
