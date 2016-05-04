@@ -122,7 +122,7 @@ class _PostExporter(_BaseExporter):
 			if INamedFile.providedBy(value):
 				ext_obj['name'] = self.ext_filename(value)
 				self._remover(ext_obj)
-		return self._remover(result)
+		return result # XXX: don't remove internal data
 
 @component.adapter(ITopic)
 class _TopicExporter(_BaseExporter):
