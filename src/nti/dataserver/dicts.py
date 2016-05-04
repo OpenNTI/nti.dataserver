@@ -14,19 +14,20 @@ logger = __import__('logging').getLogger(__name__)
 import time
 import collections
 
-import zc.dict
-
 from zope import interface
+
+from zc.dict import Dict as ZC_Dict
 
 from nti.containers.containers import _tx_key_insen
 
-from nti.zodb.persistentproperty import PersistentPropertyHolder
+from nti.coremetadata.interfaces import ILastModified
+
 from nti.zodb.minmax import NumericMaximum, NumericPropertyDefaultingToZero
 
-from .interfaces import ILastModified
+from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 @interface.implementer(ILastModified)
-class LastModifiedDict(PersistentPropertyHolder, zc.dict.Dict):
+class LastModifiedDict(PersistentPropertyHolder, ZC_Dict):
 	"""
 	A BTree-based persistent dictionary that maintains the
 	data required by :class:`interfaces.ILastModified`. Since this is not a
@@ -78,7 +79,7 @@ class LastModifiedDict(PersistentPropertyHolder, zc.dict.Dict):
 		self.updateLastMod()
 
 register = getattr(collections.Mapping, "register")
-register(zc.dict.Dict)
+register(ZC_Dict)
 
 class CaseInsensitiveLastModifiedDict(LastModifiedDict):
 	"""
