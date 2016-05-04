@@ -9,40 +9,36 @@ An implementation of this class should be registered as a persistent utility in 
 .. $Id$
 """
 
-# Regarding existing work: There's a Plone product, but it's very specific to plone and works
-# only for initial registration.
-
-# There's z3ext.principal.invite, which is interesting and possibly applicable,
-# but doesn't seem to be available anymore. Some inspiration from it, though.
-# See http://pydoc.net/z3ext.principal.invite/0.4.0/z3ext.principal.invite.interfaces
-
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
-from zope import schema
 from zope import interface
 
 from zope.annotation.interfaces import IAnnotatable
 
 from zope.container.interfaces import IContained
 
-from zope.interface.interfaces import ObjectEvent, IObjectEvent
+from zope.interface.interfaces import ObjectEvent 
+from zope.interface.interfaces import IObjectEvent
 
 from zope.schema import ValidationError
 
 from nti.coremetadata.interfaces import ICreated
 from nti.coremetadata.interfaces import ILastModified
+from nti.coremetadata.interfaces import SYSTEM_USER_NAME
 
-from nti.dataserver_core.interfaces import IUser
+from nti.invitations import MessageFactory as _
+
+from nti.schema.field import Bool
+from nti.schema.field import Number
+from nti.schema.field import Object
+from nti.schema.field import ValidTextLine
 
 class IInvitation(IContained,
 				  ICreated,
-				  ILastModified,
-				  IAnnotatable):
+				  ILastModified):
 	"""
 	An invitation from one user of the system (or the system itself)
 	for another user to be able to do something.
@@ -59,28 +55,40 @@ class IInvitation(IContained,
 	applicable only to certain users (for example, a list of invited users).
 	"""
 
-	# TODO: What descriptive properties, if any?
-	code = interface.Attribute("A unique code that identifies this invitation within its IInvitations container.")
+	code = ValidTextLine(title="A unique code that identifies this invitation.",
+						 required=False)
 
-	def accept(user):
+	receiver = ValidTextLine(title="Invitation receiver (username or email).",
+						  	 required=False)
+	
+	inviter = ValidTextLine(title="Invitation inviter (sender).",
+						    required=True, default=SYSTEM_USER_NAME)
+	
+	accepted = Bool(title="Accepted flag.", default=False, required=False)
+	
+	expiryTime = Number(title="The expiry timestamp.", required=False)
+	
+# 	def accept(user):
+# 		"""
+# 		Perform whatever action is required for the ``user`` to accept the invitation, including
+# 		validating that the user is actually allowed to accept the invitation. Typically
+# 		this means that this method has side effects.
+# 
+# 		Once the invitation has been accepted, this should notify an :class:`IInvitationAcceptedEvent`.
+# 
+# 		:raises InvitationExpiredError: If the invitation has expired.
+# 		:return  None/False if invitation was not accepted
+# 		"""
+
+	def is_email():
 		"""
-		Perform whatever action is required for the ``user`` to accept the invitation, including
-		validating that the user is actually allowed to accept the invitation. Typically
-		this means that this method has side effects.
-
-		Once the invitation has been accepted, this should notify an :class:`IInvitationAcceptedEvent`.
-
-		:raises InvitationExpiredError: If the invitation has expired.
-		:return  None/False if invitation was not accepted
+		Returns true if the receiver is an email address
 		"""
 
-class IObjectInvitation(IInvitation):
-	"""
-	An invitation relating to a specific object.
-	"""
-
-	object_int_id = interface.Attribute('The global intid for the object the invitation refers to.')
-	object = interface.Attribute('Object')
+	def is_expired():
+		"""
+		Returns true if this invitation has expired
+		"""
 
 class IInvitations(IContained,
 				   IAnnotatable):
@@ -110,15 +118,13 @@ class IInvitationEvent(IObjectEvent):
 	"""
 	An event specifically about an invitation.
 	"""
-	object = schema.Object(IInvitation,
-						   title="The invitation.")
+	object = Object(IInvitation, title="The invitation.")
 
 class IInvitationAcceptedEvent(IInvitationEvent):
 	"""
 	An invitation has been accepted.
 	"""
-	user = schema.Object(IUser,
-						 title="The user that accepted the invitation.")
+	user = interface.Attribute("The user that accepted the invitation.")
 
 @interface.implementer(IInvitationAcceptedEvent)
 class InvitationAcceptedEvent(ObjectEvent):

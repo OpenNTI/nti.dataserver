@@ -20,6 +20,7 @@ from zope.component import eventtesting
 from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationAcceptedEvent
 
+from nti.invitations.model import Invitation
 from nti.invitations.invitation import PersistentInvitation
 
 from nti.invitations.tests import SharedConfiguringTestLayer
@@ -29,7 +30,7 @@ class TestInvitation(unittest.TestCase):
 	layer = SharedConfiguringTestLayer
 
 	def test_valid_interface(self):
-		assert_that(PersistentInvitation(), verifiably_provides(IInvitation))
+		assert_that(Invitation(), verifiably_provides(IInvitation))
 
 	def test_accept_event(self):
 		eventtesting.clearEvents()
