@@ -32,7 +32,7 @@
 	<adapter factory=".media.MediaInternalObjectIO" />
 	<adapter factory=".canvas.CanvasInternalObjectIO" />
 	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
-	<adapter factory=".highlight.HighlightInternalObjectIO"/>
+	<adapter factory=".highlight.HighlightInternalObjectIO" />
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
 
 	<!-- Blob file URL storage for canvas images -->
