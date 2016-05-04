@@ -19,7 +19,7 @@ import operator
 import tempfile
 from collections import Mapping
 
-from ZODB.utils import p64
+from ZODB.utils import u64
 
 import simplejson
 
@@ -337,7 +337,7 @@ class ExportObjectView(GenericGetView):
 		try:
 			oid = context._p_oid
 			_, ext = os.path.splitext(name)
-			name = p64(oid) + ext
+			name = str(u64(oid)) + ext
 		except AttributeError:
 			pass
 		return name

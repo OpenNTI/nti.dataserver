@@ -18,7 +18,7 @@ from collections import Mapping
 from zope import component
 from zope import interface
 
-from ZODB.utils import p64
+from ZODB.utils import u64
 
 from nti.dataserver.interfaces import IThreadable
 
@@ -103,7 +103,7 @@ class _PostExporter(_BaseExporter):
 		try:
 			oid = context._p_oid
 			_, ext = os.path.splitext(name)
-			name = p64(oid) + ext
+			name = str(u64(oid)) + ext
 		except AttributeError:
 			pass
 		return name
@@ -120,7 +120,7 @@ class _PostExporter(_BaseExporter):
 		ext_body = result.get('body') or ()
 		for value, ext_obj in zip(int_body, ext_body):
 			if INamedFile.providedBy(value):
-				ext_obj['filename'] = self.ext_filename(value)
+				ext_obj['name'] = self.ext_filename(value)
 		return self._remover(result)
 
 @component.adapter(ITopic)
