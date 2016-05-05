@@ -75,6 +75,9 @@ from nti.dataserver.users.users import UserBlacklistedStorage
 
 from nti.intid import utility as intid_utility
 
+from nti.invitations.index import install_invitations_catalog
+from nti.invitations.model import install_invitations_container
+
 from nti.recorder.index import install_recorder_catalog
 
 def install_chat(context):
@@ -163,7 +166,8 @@ def install_main(context):
 		install_metadata_catalog(dataserver_folder, intids)
 		install_recorder_catalog(dataserver_folder, intids)
 		install_container_catalog(dataserver_folder, intids)
-
+		install_invitations_catalog(dataserver_folder, intids)
+		
 		users_folder = dataserver_folder['users']
 		interface.alsoProvides(users_folder, IUsersFolder)
 
@@ -179,6 +183,7 @@ def install_main(context):
 
 		install_username_blacklist(dataserver_folder)
 
+		install_invitations_container(dataserver_folder, intids)
 	return dataserver_folder
 
 def install_intids(dataserver_folder):
