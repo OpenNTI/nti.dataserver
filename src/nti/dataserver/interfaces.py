@@ -45,6 +45,7 @@ from nti.contentrange.contentrange import ContentRangeDescription
 
 from nti.schema.field import Dict
 from nti.schema.field import Object
+from nti.schema.field import Variant
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
@@ -1424,12 +1425,10 @@ class INotableFilter(interface.Interface):
 		"""
 
 def get_notable_filter(obj):
-	filters = component.subscribers((obj,), INotableFilter)
-	filters = list(filters)
+	filters = list(component.subscribers((obj,), INotableFilter))
 	def uber_filter(user=None):
 		return any((f.is_notable(obj, user) for f in filters))
 	return uber_filter
-
 
 class IUserBlacklistedStorage(interface.Interface):
 	"""
@@ -1471,6 +1470,22 @@ class IInteractionQuerier(interface.Interface):
 		"""
 		return the current security interaction
 		"""
+
+# Invitations
+from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IInvitationActor
+
+class IJoinEntityInvitation(IInvitation):
+	"""
+	Interface for a invitation to join entities
+	"""
+
+	entity = ValidTextLine(title="The entity username", required=True)
+
+class IJoinEntityInvitationActor(IInvitationActor):
+	"""
+	Actor to join a user to an entity
+	"""
 
 # Weak Refs and related BWC exports
 

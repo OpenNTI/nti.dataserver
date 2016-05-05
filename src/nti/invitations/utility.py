@@ -68,6 +68,7 @@ class PersistentInvitations(Persistent, Contained):
 			invitation.code = code
 		# The container implementation raises KeyError if the key is already used
 		self._invitations[invitation.code] = invitation
+	add = registerInvitation
 
 	def removeInvitation(self, invitation):
 		if IInvitation.providedBy(invitation):
@@ -75,6 +76,7 @@ class PersistentInvitations(Persistent, Contained):
 				raise KeyError('Invitation must already have a code.')
 			invitation = invitation.code
 		del self._invitations[invitation]
+	remove = removeInvitation
 
 	def getInvitationByCode(self, code):
 		code = code.strip() if code else code

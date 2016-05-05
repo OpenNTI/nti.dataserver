@@ -20,7 +20,7 @@ from zope.annotation.interfaces import IAnnotatable
 
 from zope.container.interfaces import IContained
 
-from zope.interface.interfaces import ObjectEvent 
+from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
 
 from zope.schema import ValidationError
@@ -60,27 +60,15 @@ class IInvitation(IContained,
 
 	receiver = ValidTextLine(title="Invitation receiver (username or email).",
 						  	 required=False)
-	
+
 	inviter = ValidTextLine(title="Invitation inviter (sender).",
-						    required=True, default=SYSTEM_USER_NAME)
-	
+							required=True, default=SYSTEM_USER_NAME)
+
 	accepted = Bool(title="Accepted flag.", default=False, required=True)
-	
+
 	expiryTime = Number(title="The expiry timestamp.", required=True, default=0)
-	
+
 	sent = Number(title="The sent timestamp.", required=False, readonly=True)
-	
-# 	def accept(user):
-# 		"""
-# 		Perform whatever action is required for the ``user`` to accept the invitation, including
-# 		validating that the user is actually allowed to accept the invitation. Typically
-# 		this means that this method has side effects.
-# 
-# 		Once the invitation has been accepted, this should notify an :class:`IInvitationAcceptedEvent`.
-# 
-# 		:raises InvitationExpiredError: If the invitation has expired.
-# 		:return  None/False if invitation was not accepted
-# 		"""
 
 	def is_email():
 		"""
@@ -99,16 +87,18 @@ class IInvitations(IContained,
 	for the site.
 	"""
 
-	def registerInvitation(invitation):
+	def add(invitation):
 		"""
 		Registers the given invitation with this object. This object is responsible for
 		assigning the invitation code and taking ownership of the invitation.
 		"""
+	registerInvitation = add
 
-	def removeInvitation(invitation):
+	def remove(invitation):
 		"""
 		Remove the given invitation with this object.
 		"""
+	removeInvitation = remove
 
 	def getInvitationByCode(code):
 		"""
@@ -141,16 +131,20 @@ class InvitationValidationError(ValidationError):
 	an invitation.
 	"""
 
-	def __init__(self, code):
-		super(InvitationValidationError, self).__init__(code)
-		self.value = code
+	def __init__(self, invitation):
+		super(InvitationValidationError, self).__init__()
+		self.invitation = invitation
 
 class InvitationCodeError(InvitationValidationError):
-	__doc__ = _('The invitation code is not valid.')
+	__doc__ = _('The invitation is not valid.')
 	i18n_message = __doc__
 
 class InvitationExpiredError(InvitationValidationError):
-	__doc__ = _('The invitation code has expired.')
+	__doc__ = _('The invitation has expired.')
+	i18n_message = __doc__
+
+class InvitationActorError(InvitationValidationError):
+	__doc__ = _('The invitation does not have actor.')
 	i18n_message = __doc__
 
 class IJoinEntitiesInvitation(IInvitation):
@@ -162,15 +156,22 @@ class IInvitationActor(interface.Interface):
 	"""
 	An interface for a utility to act on an invitation
 	"""
-	def accept(user, entity):
+
+	def accept(user, invitation):
 		"""
-		Perform the invitation
-		
+		Perform whatever action is required for the ``user`` to accept the invitation, including
+ 		validating that the user is actually allowed to accept the invitation. Typically
+ 		this means that this method has side effects.
+
 		:param user User being invited
-		:param entity Entity user is invited to
+		:param invitation invitation object
 		:return None/False if invitation was not accepted
+
+		Once the invitation has been accepted, this should notify an :class:`IInvitationAcceptedEvent`.
+
+ 		:raises InvitationExpiredError: If the invitation has expired.
 		"""
-		
+
 class IInvitationAssociationActor(IInvitationActor):
 	"""
 	Actor to join a user to a entity group
@@ -180,8 +181,8 @@ class IInvitationEntityFinder(interface.Interface):
 	"""
 	An interface for a utility to find an entity
 	"""
+
 	def find(username):
 		"""
 		returns the entity with the specified username
 		"""
-	

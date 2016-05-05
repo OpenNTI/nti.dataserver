@@ -14,6 +14,8 @@ from datetime import datetime
 
 from zope import component
 
+from zope.event import notify
+
 from zope.intid.interfaces import IIntIds
 
 from BTrees.LFBTree import LFSet
@@ -23,11 +25,21 @@ from nti.invitations.index import IX_RECEIVER
 from nti.invitations.index import IX_EXPIRYTIME
 
 from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IInvitationActor
+from nti.invitations.interfaces import InvitationActorError
+from nti.invitations.interfaces import InvitationExpiredError
+from nti.invitations.interfaces import InvitationAcceptedEvent
 
 from nti.invitations.index import get_invitations_catalog
 
 MAX_TS = time.mktime(datetime.max.timetuple())
 
+def get_invitation_actor(invitation, user=None):
+	actor = component.queryMultiAdapter((invitation, user), IInvitationActor)
+	if actor is None:
+		actor = IInvitationActor(invitation, None)
+	return actor
+		
 def get_pending_invitations(*receivers):
 	result = []
 	catalog = get_invitations_catalog()
@@ -48,3 +60,14 @@ def get_pending_invitations(*receivers):
 		if IInvitation.providedBy(obj):
 			result.append(obj)
 	return result
+
+def accept_invitation(user, invitation):
+	if invitation.is_expired():
+		raise InvitationExpiredError(invitation)
+	actor = get_invitation_actor(invitation, user)
+	if actor is None:
+		raise InvitationActorError(invitation)
+	if actor.accept(user, invitation):
+		notify(InvitationAcceptedEvent(invitation, user))
+		return True
+	return False
