@@ -17,8 +17,6 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.cachedescriptors.property import readproperty
 
-from zope.container.contained import Contained
-
 from zope.mimetype.interfaces import IContentTypeAware
 
 from z3c.schema.email.field import isValidMailAddress
@@ -47,10 +45,12 @@ from nti.schema.schema import EqHash
 @EqHash('code')
 @interface.implementer(IInvitation, IAttributeAnnotatable, IContentTypeAware)
 class Invitation(PersistentCreatedModDateTrackingObject,
-				 SchemaConfigured,
-				 Contained):
+				 SchemaConfigured):
 
 	createDirectFieldProperties(IInvitation)
+
+	__parent__ = None
+	__name__ = alias('code')
 
 	inviter = alias('sender')
 	username = alias('receiver')
@@ -96,6 +96,7 @@ class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer):
 			code = generate_random_hex_string()
 			while code in self:
 				code = generate_random_hex_string()
+			invitation.code = code
 		self[code] = invitation
 	registerInvitation = append = add
 	
