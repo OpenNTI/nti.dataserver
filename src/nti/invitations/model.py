@@ -67,12 +67,12 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 		return SYSTEM_USER_NAME
 
 	def is_email(self):
-		return self.receiver and isValidMailAddress(self.receiver)
+		return bool(self.receiver and isValidMailAddress(self.receiver))
 	isEmail = is_email
 
 	def is_expired(self):
 		expirationTime = self.expiryTime
-		return expirationTime and expirationTime <= time.time()
+		return bool(expirationTime and expirationTime <= time.time())
 	isExpired = is_expired
 	
 	def __lt__(self, other):
