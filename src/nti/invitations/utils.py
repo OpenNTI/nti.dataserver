@@ -41,7 +41,7 @@ def get_invitation_actor(invitation, user=None):
 		actor = IInvitationActor(invitation, None)
 	return actor
 		
-def get_pending_invitation_ids(receivers, catalog=None):
+def get_pending_invitation_ids(receivers, now=None, catalog=None):
 	if isinstance(receivers, six.string_types):
 		receivers = set(receivers.split(","))
 	else:
@@ -54,7 +54,8 @@ def get_pending_invitation_ids(receivers, catalog=None):
 	}
 	no_expire_ids = catalog.apply(query) or LFSet()
 	
-	query[IX_EXPIRYTIME] = {'between': (time.time(), MAX_TS)}
+	now = time.time() if not now else now
+	query[IX_EXPIRYTIME] = {'between': (now, MAX_TS)}
 	in_between_ids = catalog.apply(query) or LFSet()
 	
 	result = catalog.family.IF.multiunion([no_expire_ids, in_between_ids])
@@ -64,6 +65,33 @@ def get_pending_invitations(receivers, catalog=None):
 	result = []
 	intids = component.getUtility(IIntIds)
 	doc_ids = get_pending_invitation_ids(receivers, catalog)
+	for uid in doc_ids or ():
+		obj = intids.queryObject(uid)
+		if IInvitation.providedBy(obj):
+			result.append(obj)
+	return result
+
+def get_expired_invitation_ids(receivers=None, now=None, catalog=None):
+	if isinstance(receivers, six.string_types):
+		receivers = set(receivers.split(","))
+	elif receivers:
+		receivers = set(receivers)
+
+	now = time.time() - 60 if not now else now # 60 min value w/ minute resolution
+	catalog = get_invitations_catalog() if catalog is None else catalog
+	query = {
+		IX_ACCEPTED: {'any_of': (False,)},
+		IX_EXPIRYTIME: {'between': (60, now)}, # 60 min value w/ minute resolution
+	}
+	if receivers:
+		query[IX_RECEIVER]= {'any_of': receivers}
+	expired_ids = catalog.apply(query) or LFSet()
+	return expired_ids
+
+def get_expired_invitations(receivers=None, now=None, catalog=None):
+	result = []
+	intids = component.getUtility(IIntIds)
+	doc_ids = get_expired_invitation_ids(receivers, now, catalog)
 	for uid in doc_ids or ():
 		obj = intids.queryObject(uid)
 		if IInvitation.providedBy(obj):

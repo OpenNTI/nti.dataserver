@@ -20,6 +20,7 @@ from nti.invitations.index import create_invitations_catalog
 
 from nti.invitations.model import Invitation
 
+from nti.invitations.utils import get_expired_invitation_ids
 from nti.invitations.utils import get_pending_invitation_ids
 
 from nti.invitations.tests import SharedConfiguringTestLayer
@@ -51,9 +52,20 @@ class TestUtils(unittest.TestCase):
 						expiryTime=time.time() + 1000)
 		catalog.index_doc(3, i3)
 
-		result = get_pending_invitation_ids("ichigo", catalog)
+		result = get_pending_invitation_ids("ichigo", catalog=catalog)
 		assert_that(result, has_length(2))
 		assert_that(sorted(result), is_([1,3]))
 		
-		result = get_pending_invitation_ids("aizen", catalog)
+		result = get_pending_invitation_ids("aizen", catalog=catalog)
+		assert_that(result, has_length(0))
+		
+		result = get_expired_invitation_ids(catalog=catalog)
+		assert_that(result, has_length(1))
+		assert_that(sorted(result), is_([2]))
+		
+		result = get_expired_invitation_ids("ichigo", catalog=catalog)
+		assert_that(result, has_length(1))
+		assert_that(sorted(result), is_([2]))
+		
+		result = get_expired_invitation_ids("aizen", catalog=catalog)
 		assert_that(result, has_length(0))
