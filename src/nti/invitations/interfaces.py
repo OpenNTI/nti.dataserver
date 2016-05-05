@@ -64,11 +64,11 @@ class IInvitation(IContained,
 	inviter = ValidTextLine(title="Invitation inviter (sender).",
 						    required=True, default=SYSTEM_USER_NAME)
 	
-	accepted = Bool(title="Accepted flag.", default=False, required=False)
+	accepted = Bool(title="Accepted flag.", default=False, required=True)
 	
-	expiryTime = Number(title="The expiry timestamp.", required=False)
+	expiryTime = Number(title="The expiry timestamp.", required=True, default=0)
 	
-	sent = Number(title="The sent timestamp.", required=False)
+	sent = Number(title="The sent timestamp.", required=False, readonly=True)
 	
 # 	def accept(user):
 # 		"""
