@@ -24,14 +24,13 @@ from BTrees.LFBTree import LFSet
 from nti.invitations.index import IX_ACCEPTED
 from nti.invitations.index import IX_RECEIVER
 from nti.invitations.index import IX_EXPIRYTIME
+from nti.invitations.index import get_invitations_catalog
 
 from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationActor
 from nti.invitations.interfaces import InvitationActorError
 from nti.invitations.interfaces import InvitationExpiredError
 from nti.invitations.interfaces import InvitationAcceptedEvent
-
-from nti.invitations.index import get_invitations_catalog
 
 MAX_TS = time.mktime(datetime.max.timetuple())
 
