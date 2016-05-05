@@ -17,6 +17,10 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.cachedescriptors.property import readproperty
 
+from zope.container.contained import Contained
+
+from zope.intid.interfaces import IIntIds
+
 from zope.mimetype.interfaces import IContentTypeAware
 
 from z3c.schema.email.field import isValidMailAddress
@@ -88,7 +92,8 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 			return NotImplemented
 
 @interface.implementer(IInvitations, IAttributeAnnotatable)
-class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer):
+class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer,
+						   Contained):
 	
 	def add(self, invitation):
 		code = invitation.code
@@ -106,3 +111,15 @@ class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer):
 	removeInvitation = remove
 	
 	getInvitationByCode = CaseInsensitiveLastModifiedBTreeContainer.__getitem__
+
+def install_invitations_container(site_manager_container, intids=None):
+	lsm = site_manager_container.getSiteManager()
+	intids = lsm.getUtility(IIntIds) if intids is None else intids
+	registry = lsm.queryUtility(IInvitations)
+	if registry is None:
+		registry = InvitationsContainer()
+		registry.__parent__ = site_manager_container
+		registry.__name__ = '++etc++invitations-container'
+		intids.register(registry)
+		lsm.registerUtility(registry, provided=IInvitations)
+	return registry
