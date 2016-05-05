@@ -61,10 +61,10 @@ def get_pending_invitation_ids(receivers, now=None, catalog=None):
 	result = catalog.family.IF.multiunion([no_expire_ids, in_between_ids])
 	return result
 
-def get_pending_invitations(receivers, catalog=None):
+def get_pending_invitations(receivers, now=None, catalog=None):
 	result = []
 	intids = component.getUtility(IIntIds)
-	doc_ids = get_pending_invitation_ids(receivers, catalog)
+	doc_ids = get_pending_invitation_ids(receivers, now, catalog)
 	for uid in doc_ids or ():
 		obj = intids.queryObject(uid)
 		if IInvitation.providedBy(obj):
