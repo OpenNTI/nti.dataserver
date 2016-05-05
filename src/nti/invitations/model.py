@@ -54,6 +54,7 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 
 	inviter = alias('sender')
 	username = alias('receiver')
+	expirationTime = alias('expiryTime')
 
 	parameters = {} # IContentTypeAware
 
@@ -70,7 +71,7 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 	isEmail = is_email
 
 	def is_expired(self):
-		expirationTime = self.expirationTime
+		expirationTime = self.expiryTime
 		return expirationTime and expirationTime <= time.time()
 	isExpired = is_expired
 	

@@ -13,8 +13,6 @@ from hamcrest import is_not
 from hamcrest import assert_that
 from hamcrest import has_property
 
-from nti.testing.matchers import verifiably_provides
-
 import fudge
 import unittest
 
@@ -23,7 +21,6 @@ from zope import interface
 from zope.keyreference.interfaces import IKeyReference
 
 from nti.invitations import utility
-from nti.invitations import interfaces
 from nti.invitations import invitation
 
 from nti.invitations.tests import SharedConfiguringTestLayer
@@ -31,10 +28,6 @@ from nti.invitations.tests import SharedConfiguringTestLayer
 class TestUtility(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
-
-	def test_valid_interface(self):
-		assert_that(utility.PersistentInvitations(), 
-					verifiably_provides(interfaces.IInvitations))
 
 	@fudge.patch('nti.invitations.utility.get_invitation_code')
 	def test_add_remove_invitation(self, mock_gic):

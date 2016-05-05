@@ -68,8 +68,9 @@ class IInvitation(IContained,
 
 	expiryTime = Number(title="The expiry timestamp.", required=True, default=0)
 
-	sent = Number(title="The sent timestamp.", required=False, readonly=True)
-
+	sent = Number(title="The sent timestamp.", required=False)
+	sent.setTaggedValue('_ext_excluded_out', True)
+	
 	def is_email():
 		"""
 		Returns true if the receiver is an email address
