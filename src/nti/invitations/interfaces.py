@@ -115,7 +115,7 @@ class IInvitations(IContained,
 		such invitation.
 		"""
 
-class IInvitationsContainer(IInvitations, IContainer):
+class IInvitationsContainer(IContainer):
 	contains(str('.IInvitation'))
 		
 class IInvitationEvent(IObjectEvent):

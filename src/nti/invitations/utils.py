@@ -76,7 +76,6 @@ def get_expired_invitation_ids(receivers=None, now=None, catalog=None):
 		receivers = set(receivers.split(","))
 	elif receivers:
 		receivers = set(receivers)
-	receivers.discard(None)
 	now = time.time() - 60 if not now else now # 60 min value w/ minute resolution
 	catalog = get_invitations_catalog() if catalog is None else catalog
 	query = {
@@ -84,6 +83,7 @@ def get_expired_invitation_ids(receivers=None, now=None, catalog=None):
 		IX_EXPIRYTIME: {'between': (60, now)}, # 60 min value w/ minute resolution
 	}
 	if receivers:
+		receivers.discard(None)
 		query[IX_RECEIVER]= {'any_of': receivers}
 	expired_ids = catalog.apply(query) or LFSet()
 	return expired_ids
