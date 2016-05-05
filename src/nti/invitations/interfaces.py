@@ -18,6 +18,9 @@ from zope import interface
 
 from zope.annotation.interfaces import IAnnotatable
 
+from zope.container.constraints import contains
+
+from zope.container.interfaces import IContainer
 from zope.container.interfaces import IContained
 
 from zope.interface.interfaces import ObjectEvent
@@ -81,6 +84,11 @@ class IInvitation(IContained,
 		Returns true if this invitation has expired
 		"""
 
+	def is_accepted():
+		"""
+		Returns true if the invitation has been accepted
+		"""
+		
 class IInvitations(IContained,
 				   IAnnotatable):
 	"""
@@ -107,6 +115,9 @@ class IInvitations(IContained,
 		such invitation.
 		"""
 
+class IInvitationsContainer(IInvitations, IContainer):
+	contains(str('.IInvitation'))
+		
 class IInvitationEvent(IObjectEvent):
 	"""
 	An event specifically about an invitation.

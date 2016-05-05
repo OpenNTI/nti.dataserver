@@ -83,9 +83,20 @@ def ReceiverIndex(family=None):
 								index=ReceiverRawIndex(family=family),
 								normalizer=StringTokenNormalizer())
 
+class ValidatingAccepted(object):
+
+	__slots__ = (b'accepted',)
+
+	def __init__(self, obj, default=None):
+		if IInvitation.providedBy(obj):
+			self.accepted = obj.is_accepted()
+
+	def __reduce__(self):
+		raise TypeError()
+
 class AcceptedIndex(AttributeValueIndex):
 	default_field_name = 'accepted'
-	default_interface = IInvitation
+	default_interface = ValidatingAccepted
 
 class CreatedTimeRawIndex(RawIntegerValueIndex):
 	pass

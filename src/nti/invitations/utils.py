@@ -45,6 +45,7 @@ def get_pending_invitation_ids(receivers, now=None, catalog=None):
 		receivers = set(receivers.split(","))
 	else:
 		receivers = set(receivers)
+	receivers.discard(None)
 	catalog = get_invitations_catalog() if catalog is None else catalog
 	query = {
 		IX_ACCEPTED: {'any_of': (False,)},
@@ -75,7 +76,7 @@ def get_expired_invitation_ids(receivers=None, now=None, catalog=None):
 		receivers = set(receivers.split(","))
 	elif receivers:
 		receivers = set(receivers)
-
+	receivers.discard(None)
 	now = time.time() - 60 if not now else now # 60 min value w/ minute resolution
 	catalog = get_invitations_catalog() if catalog is None else catalog
 	query = {

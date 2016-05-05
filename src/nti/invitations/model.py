@@ -38,7 +38,7 @@ from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 from nti.externalization.representation import WithRepr
 
 from nti.invitations.interfaces import IInvitation
-from nti.invitations.interfaces import IInvitations
+from nti.invitations.interfaces import IInvitationsContainer
 
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -79,6 +79,10 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 		return bool(expirationTime and expirationTime <= time.time())
 	isExpired = is_expired
 	
+	def is_accepted(self):
+		return self.accepted
+	isAccepted = is_accepted
+
 	def __lt__(self, other):
 		try:
 			return (self.code, self.createdTime) < (self.code, self.createdTime)
@@ -91,7 +95,7 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 		except AttributeError:  # pragma: no cover
 			return NotImplemented
 
-@interface.implementer(IInvitations, IAttributeAnnotatable)
+@interface.implementer(IInvitationsContainer, IAttributeAnnotatable)
 class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer,
 						   Contained):
 	
@@ -115,11 +119,11 @@ class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer,
 def install_invitations_container(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
 	intids = lsm.getUtility(IIntIds) if intids is None else intids
-	registry = lsm.queryUtility(IInvitations)
+	registry = lsm.queryUtility(IInvitationsContainer)
 	if registry is None:
 		registry = InvitationsContainer()
 		registry.__parent__ = site_manager_container
 		registry.__name__ = '++etc++invitations-container'
 		intids.register(registry)
-		lsm.registerUtility(registry, provided=IInvitations)
+		lsm.registerUtility(registry, provided=IInvitationsContainer)
 	return registry
