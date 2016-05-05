@@ -103,4 +103,4 @@ class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer):
 		del self[code]
 	removeInvitation = remove
 	
-	getInvitationByCode = CaseInsensitiveLastModifiedBTreeContainer.__getitem__
+	getInvitationByCode = InvitationsContainer.__getitem__
