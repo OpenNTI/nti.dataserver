@@ -142,13 +142,19 @@ class _IMeetingTranscriptStorage(ICreated,  # ICreated so they get an ACL
 	meeting = Object(IMeeting, title="The meeting we hold messages to; may go null")
 
 	def add_message(msg):
-		"""Store the message with this transcript."""
+		"""
+		Store the message with this transcript.
+		"""
 
 	def remove_message(msg):
-		"""Remove the message from this transcript."""
+		"""
+		Remove the message from this transcript.
+		"""
 
 	def itervalues():
-		"""Iterate all the messages in this transcript"""
+		"""
+		Iterate all the messages in this transcript.
+		"""
 
 @interface.implementer(_IMeetingTranscriptStorage)
 class _AbstractMeetingTranscriptStorage(PersistentCreatedModDateTrackingObject,
@@ -276,8 +282,8 @@ def _transcript_ntiid(meeting, creator_username=None, nttype=ntiids.TYPE_TRANSCR
 		given meeting (chat session) with the given participant.
 	"""
 	return ntiids.make_ntiid(base=meeting.id,
-							  provider=creator_username,
-							  nttype=nttype)
+							 provider=creator_username,
+							 nttype=nttype)
 
 def _get_by_oid(*args, **kwargs):
 	return None
@@ -302,8 +308,8 @@ class _UserTranscriptStorageAdapter(object):
 		if not ntiids.is_ntiid_of_type(meeting_oid, ntiids.TYPE_OID):
 			# We'll take any type, usually a TRANSCRIPT type
 			meeting_oid = ntiids.make_ntiid(base=meeting_oid,
-											 provider=SYSTEM_USER_NAME,
-											 nttype=ntiids.TYPE_OID)
+											provider=SYSTEM_USER_NAME,
+											nttype=ntiids.TYPE_OID)
 
 		meeting = ntiids.find_object_with_ntiid(meeting_oid)
 		if meeting is not None:
@@ -331,7 +337,6 @@ class _UserTranscriptStorageAdapter(object):
 					 and ntiids.get_specific(value_meeting_id) == specific):
 					result = Transcript(value)
 					break
-
 		return result
 
 	def _transcript_storages(self):
@@ -515,10 +520,9 @@ class TranscriptSummary(object):
 	_NTIID_TYPE_ = ntiids.TYPE_TRANSCRIPT_SUMMARY
 
 	# BWC aliases
-	ContainerId = read_alias('containerId')
 	NTIID = read_alias('__name__')
+	ContainerId = read_alias('containerId')
 	LastModified = read_alias('lastModified')
-
 
 	def __init__(self, meeting_storage):
 		"""

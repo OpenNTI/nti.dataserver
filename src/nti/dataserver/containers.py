@@ -16,9 +16,9 @@ from zope.container.interfaces import IContained
 
 from ZODB.interfaces import IConnection
 
-from nti.schema.interfaces import IBeforeSequenceAssignedEvent
+from nti.dataserver.interfaces import IModeledContent
 
-from .interfaces import IModeledContent
+from nti.schema.interfaces import IBeforeSequenceAssignedEvent
 
 import zope.deferredimport
 zope.deferredimport.initialize()

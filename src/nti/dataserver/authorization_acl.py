@@ -34,38 +34,39 @@ from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackage
 from nti.dataserver import authorization
 from nti.dataserver import authentication
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.dataserver.interfaces import ACE_ACT_DENY
+from nti.dataserver.interfaces import ACE_DENY_ALL
+from nti.dataserver.interfaces import ACE_ALLOW_ALL
+from nti.dataserver.interfaces import ACE_ACT_ALLOW
+from nti.dataserver.interfaces import ALL_PERMISSIONS
+from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
+
+from nti.dataserver.interfaces import IACE
+from nti.dataserver.interfaces import IACL
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import ICreated
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IPrincipal
+from nti.dataserver.interfaces import IPermission
+from nti.dataserver.interfaces import IACLProvider
+from nti.dataserver.interfaces import IFriendsList
+from nti.dataserver.interfaces import IReadableShared
+from nti.dataserver.interfaces import IEnclosedContent
+from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import IAuthorizationPolicy
+from nti.dataserver.interfaces import IACLProviderCacheable
+from nti.dataserver.interfaces import IShareableModeledContent
+from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
+from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
+
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.externalization.singleton import SingletonDecorator
 
 from nti.ntiids import ntiids
 
 from nti.traversal import traversal
-
-from .interfaces import IACE
-from .interfaces import IACL
-from .interfaces import IUser
-from .interfaces import IEntity
-from .interfaces import ICreated
-from .interfaces import ICommunity
-from .interfaces import IPrincipal
-from .interfaces import IPermission
-from .interfaces import IACLProvider
-from .interfaces import IFriendsList
-from .interfaces import IReadableShared
-from .interfaces import IEnclosedContent
-from .interfaces import IDataserverFolder
-from .interfaces import IAuthorizationPolicy
-from .interfaces import IACLProviderCacheable
-from .interfaces import IShareableModeledContent
-from .interfaces import ICoppaUserWithoutAgreement
-from .interfaces import IUseNTIIDAsExternalUsername
-
-from .interfaces import ACE_ACT_DENY
-from .interfaces import ACE_DENY_ALL
-from .interfaces import ACE_ALLOW_ALL
-from .interfaces import ACE_ACT_ALLOW
-from .interfaces import ALL_PERMISSIONS
-from .interfaces import AUTHENTICATED_GROUP_NAME
 
 @interface.implementer(IACE)
 class _ACE(object):

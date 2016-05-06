@@ -19,6 +19,8 @@ from zope.lifecycleevent import IObjectModifiedEvent
 
 from zope.security.management import queryInteraction
 
+from nti.dataserver.activitystream_change import Change
+
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IContained
 from nti.dataserver.interfaces import TargetedStreamChangeEvent
@@ -28,8 +30,6 @@ from nti.dataserver.interfaces import ISharingTargetEntityIterable
 from nti.intid.interfaces import IIntIdAddedEvent
 from nti.intid.interfaces import IntIdMissingError
 from nti.intid.interfaces import IIntIdRemovedEvent
-
-from nti.dataserver.activitystream_change import Change
 
 def _enqueue_change_to_target(target, change, accum=None):
 	"""

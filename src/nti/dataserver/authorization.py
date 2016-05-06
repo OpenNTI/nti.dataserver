@@ -79,6 +79,7 @@ from zope import component
 from zope import interface
 
 from zope.annotation import factory as afactory
+
 from zope.annotation.interfaces import IAnnotations
 from zope.annotation.interfaces import IAttributeAnnotatable
 
