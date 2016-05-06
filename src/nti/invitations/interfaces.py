@@ -28,6 +28,8 @@ from zope.interface.interfaces import IObjectEvent
 
 from zope.schema import ValidationError
 
+from nti.common.property import alias
+
 from nti.coremetadata.interfaces import ICreated
 from nti.coremetadata.interfaces import ILastModified
 from nti.coremetadata.interfaces import SYSTEM_USER_NAME
@@ -123,6 +125,21 @@ class IInvitationEvent(IObjectEvent):
 	An event specifically about an invitation.
 	"""
 	object = Object(IInvitation, title="The invitation.")
+
+class IInvitationSentEvent(IInvitationEvent):
+	"""
+	An invitation has been sent.
+	"""
+	user = interface.Attribute("The user to whom the invitation is sent.")
+
+@interface.implementer(IInvitationSentEvent)
+class InvitationSentEvent(ObjectEvent):
+
+	receiver = alias('user')
+
+	def __init__(self, obj, user):
+		super(InvitationSentEvent, self).__init__(obj)
+		self.user = user
 
 class IInvitationAcceptedEvent(IInvitationEvent):
 	"""
