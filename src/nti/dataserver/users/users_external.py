@@ -17,9 +17,9 @@ import functools
 from zope import component
 from zope import interface
 
-from zope.proxy import removeAllProxies
-
 from ZODB.POSException import POSError
+
+from nti.common.proxy import removeAllProxies
 
 from nti.dataserver import users
 from nti.dataserver import authorization_acl as auth
