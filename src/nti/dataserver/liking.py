@@ -24,14 +24,14 @@ from contentratings.interfaces import IUserRating
 from contentratings.interfaces import IRatingStorage
 from contentratings.interfaces import IObjectRatedEvent
 
+from nti.dataserver import rating as ranking
+
 from nti.dataserver.interfaces import ILikeable
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IMemcacheClient
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
-
-from . import rating as ranking
 
 #: Category name for liking; use this as the name of the adapter
 LIKE_CAT_NAME = 'likes'

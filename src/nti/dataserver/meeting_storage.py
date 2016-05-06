@@ -11,12 +11,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zope.annotation
-
-from zope import interface
 from zope import component
+from zope import interface
+
+from zope.annotation import factory as a_factory
 
 from zope.container.constraints import contains
+
 from zope.container.interfaces import IBTreeContainer
 
 from ZODB.interfaces import IConnection
@@ -28,9 +29,11 @@ from nti.chatserver.interfaces import IMessageInfoStorage
 
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
-from nti.dataserver import users
-from nti.dataserver.interfaces import IEntity
 from nti.dataserver.datastructures import check_contained_object_for_storage
+
+from nti.dataserver.interfaces import IEntity
+
+from nti.dataserver.users import Entity
 
 from nti.externalization import oids
 
@@ -44,7 +47,7 @@ class IMeetingContainer(IBTreeContainer):
 class _MeetingContainer(CheckingLastModifiedBTreeContainer):
 	pass
 
-EntityMeetingContainerAnnotation = zope.annotation.factory(_MeetingContainer)
+EntityMeetingContainerAnnotation = a_factory(_MeetingContainer)
 
 @interface.implementer(IMeetingStorage)
 class CreatorBasedAnnotationMeetingStorage(object):
@@ -55,40 +58,37 @@ class CreatorBasedAnnotationMeetingStorage(object):
 	a :class:`nti.dataserver.datastructures.ContainedStorage` works. Like with that class,
 	meetings are assigned ID values based on their OID NTIID. (It would be nice
 	to somehow work in the intid value, but we don't have that.)
-
-
 	"""
 
-	def __init__( self ):
+	def __init__(self):
 		pass
 
-	def __delitem__( self, room_id ):
+	def __delitem__(self, room_id):
 		"""
 		Rooms cannot be deleted using this storage. They accumulate on the user
 		until such time as we decide to manually clean them out or the
 		user goes away.
 		"""
-		pass # pragma: no cover
+		pass  # pragma: no cover
 
-	def __getitem__( self, room_id ):
-		result =  self.get( room_id )
-		if result is None: # pragma: no cover
-			raise KeyError( room_id ) # compat with mapping contract
+	def __getitem__(self, room_id):
+		result = self.get(room_id)
+		if result is None:  # pragma: no cover
+			raise KeyError(room_id)  # compat with mapping contract
 		return result
 
-	def get( self, room_id ):
-		result = ntiids.find_object_with_ntiid( room_id )
-		if IMeeting.providedBy( result ):
+	def get(self, room_id):
+		result = ntiids.find_object_with_ntiid(room_id)
+		if IMeeting.providedBy(result):
 			return result
 		if result is not None:
-			logger.debug( "Attempted to use chatserver to find non-meeting with id %s", room_id )
+			logger.debug("Attempted to use chatserver to find non-meeting with id %s", room_id)
 
-	def add_room( self, room ):
-		check_contained_object_for_storage( room )
+	def add_room(self, room):
+		check_contained_object_for_storage(room)
 		# At this point we know we have a containerId
 
-
-		creator = users.Entity.get_entity( room.creator )
+		creator = Entity.get_entity(room.creator)
 		meeting_container = IMeetingContainer(creator)
 
 		# Ensure that we can get an NTIID OID by making
@@ -97,13 +97,13 @@ class CreatorBasedAnnotationMeetingStorage(object):
 		# object for its jar, we don't use the IConnection adapter, which
 		# would traverse up the parent hierarchy and might find something
 		# we don't want it to.
-		if getattr( room, '_p_jar', None ) is None:
-			IConnection( creator ).add( room )
+		if getattr(room, '_p_jar', None) is None:
+			IConnection(creator).add(room)
 
-		room.id = oids.to_external_ntiid_oid( room, default_oid=None, add_to_intids=True )
+		room.id = oids.to_external_ntiid_oid(room, default_oid=None, add_to_intids=True)
 		if room.id is None:
 			__traceback_info__ = creator, meeting_container, room
-			raise ValueError( "Unable to get OID for room" )
+			raise ValueError("Unable to get OID for room")
 
 		meeting_container[room.id] = room
 
@@ -112,7 +112,7 @@ class IMessageInfoContainer(IBTreeContainer, IMessageInfoStorage):
 
 @interface.implementer(IMessageInfoContainer)
 @component.adapter(IEntity)
-class _MessageInfoContainer(CheckingLastModifiedBTreeContainer): # TODO: Container constraints
+class _MessageInfoContainer(CheckingLastModifiedBTreeContainer):  # TODO: Container constraints
 	"""
 	Messages have IDs that are UUIDs, so we use that as the key
 	in the container.
@@ -126,11 +126,11 @@ class _MessageInfoContainer(CheckingLastModifiedBTreeContainer): # TODO: Contain
 		if msg_info.ID in self:
 			del self[msg_info.ID]
 
-EntityMessageInfoContainerAnnotation = zope.annotation.factory(_MessageInfoContainer)
+EntityMessageInfoContainerAnnotation = a_factory(_MessageInfoContainer)
 
 @interface.implementer(IMessageInfoStorage)
 @component.adapter(IMessageInfo)
-def CreatorBasedAnnotationMessageInfoStorage( msg_info ):
+def CreatorBasedAnnotationMessageInfoStorage(msg_info):
 	"""
 	A factory for finding message storages for the given message, based
 	on the creator of the message.
@@ -140,10 +140,10 @@ def CreatorBasedAnnotationMessageInfoStorage( msg_info ):
 	on the creator of the message.
 	"""
 
-	check_contained_object_for_storage( msg_info )
+	check_contained_object_for_storage(msg_info)
 	creator_name = msg_info.creator
-	creator = users.Entity.get_entity( creator_name )
+	creator = Entity.get_entity(creator_name)
 	__traceback_info__ = creator, creator_name, msg_info
 
-	message_container = IMessageInfoStorage( creator )
+	message_container = IMessageInfoStorage(creator)
 	return message_container
