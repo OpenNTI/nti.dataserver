@@ -8,8 +8,6 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="zope.security" />
-	
-	<include package="." file="meta.zcml" />
 
 	<utility factory=".invitation.InvitationAssociationActor" />
 
