@@ -27,7 +27,7 @@ from z3c.schema.email.field import isValidMailAddress
 
 from nti.common.property import alias
 
-from nti.common.random import generate_random_hex_string
+from nti.common.random import generate_random_string
 
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
@@ -103,9 +103,9 @@ class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer,
 	def add(self, invitation):
 		code = invitation.code
 		if not code:
-			code = generate_random_hex_string()
+			code = generate_random_string().upper()
 			while code in self:
-				code = generate_random_hex_string()
+				code = generate_random_string().upper()
 			invitation.code = code
 		self[code] = invitation
 	registerInvitation = append = add
