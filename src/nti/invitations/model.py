@@ -112,7 +112,10 @@ class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer,
 	
 	def remove(self, invitation):
 		code = getattr(invitation, 'code', invitation)
-		del self[code]
+		if code in self:
+			del self[code]
+			return True
+		return False
 	removeInvitation = remove
 	
 	getInvitationByCode = CaseInsensitiveLastModifiedBTreeContainer.__getitem__

@@ -40,20 +40,24 @@ def get_invitation_actor(invitation, user=None):
 		actor = IInvitationActor(invitation, None)
 	return actor
 		
-def get_pending_invitation_ids(receivers, now=None, catalog=None):
+def get_pending_invitation_ids(receivers=None, now=None, catalog=None):
 	if isinstance(receivers, six.string_types):
 		receivers = set(receivers.split(","))
-	else:
+	elif receivers:
 		receivers = set(receivers)
-	receivers.discard(None)
 	catalog = get_invitations_catalog() if catalog is None else catalog
 	query = {
 		IX_ACCEPTED: {'any_of': (False,)},
-		IX_RECEIVER: {'any_of': receivers},
 		IX_EXPIRYTIME: {'any_of': (0,)},
 	}
+	if receivers:
+		receivers.discard(None)
+		query[IX_RECEIVER]= {'any_of': receivers}
+
+	# pending no expiry
 	no_expire_ids = catalog.apply(query) or LFSet()
 	
+	# peding with expiration
 	now = time.time() if not now else now
 	query[IX_EXPIRYTIME] = {'between': (now, MAX_TS)}
 	in_between_ids = catalog.apply(query) or LFSet()
@@ -61,7 +65,7 @@ def get_pending_invitation_ids(receivers, now=None, catalog=None):
 	result = catalog.family.IF.multiunion([no_expire_ids, in_between_ids])
 	return result
 
-def get_pending_invitations(receivers, now=None, catalog=None):
+def get_pending_invitations(receivers=None, now=None, catalog=None):
 	result = []
 	intids = component.getUtility(IIntIds)
 	doc_ids = get_pending_invitation_ids(receivers, now, catalog)
@@ -96,6 +100,14 @@ def get_expired_invitations(receivers=None, now=None, catalog=None):
 		obj = intids.queryObject(uid)
 		if IInvitation.providedBy(obj):
 			result.append(obj)
+	return result
+
+def delete_expired_invitations(container, receivers=None, now=None, catalog=None):
+	result = []
+	invitations = get_expired_invitations(receivers, now, catalog)
+	for invitation in invitations:
+		if container.remove(invitation):
+			result.append(invitation)
 	return result
 
 def accept_invitation(user, invitation):
