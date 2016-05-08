@@ -26,6 +26,9 @@ from zope.container.interfaces import IContained
 from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
 
+from zope.lifecycleevent import ObjectModifiedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+
 from zope.schema import ValidationError
 
 from nti.common.property import alias
@@ -39,6 +42,7 @@ from nti.invitations import MessageFactory as _
 from nti.schema.field import Bool
 from nti.schema.field import Number
 from nti.schema.field import Object
+from nti.schema.field import ValidText
 from nti.schema.field import ValidTextLine
 
 class IInvitation(IContained,
@@ -64,11 +68,13 @@ class IInvitation(IContained,
 						 required=False)
 
 	receiver = ValidTextLine(title="Invitation receiver (username or email).",
-						  	 required=False)
+						  	 required=True)
 
-	inviter = ValidTextLine(title="Invitation inviter (sender).",
-							required=True, default=SYSTEM_USER_NAME)
+	sender = ValidTextLine(title="Invitation sender.",
+						   required=True, default=SYSTEM_USER_NAME)
 
+	message = ValidText(title="Invitation message.", required=False)
+	
 	accepted = Bool(title="Accepted flag.", default=False, required=True)
 
 	expiryTime = Number(title="The expiry timestamp.", required=True, default=0)
@@ -141,14 +147,14 @@ class InvitationSentEvent(ObjectEvent):
 		super(InvitationSentEvent, self).__init__(obj)
 		self.user = user
 
-class IInvitationAcceptedEvent(IInvitationEvent):
+class IInvitationAcceptedEvent(IObjectModifiedEvent, IInvitationEvent):
 	"""
 	An invitation has been accepted.
 	"""
 	user = interface.Attribute("The user that accepted the invitation.")
 
 @interface.implementer(IInvitationAcceptedEvent)
-class InvitationAcceptedEvent(ObjectEvent):
+class InvitationAcceptedEvent(ObjectModifiedEvent):
 
 	def __init__(self, obj, user):
 		super(InvitationAcceptedEvent, self).__init__(obj)

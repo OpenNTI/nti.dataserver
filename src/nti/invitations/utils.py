@@ -117,6 +117,7 @@ def accept_invitation(user, invitation):
 	if actor is None:
 		raise InvitationActorError(invitation)
 	if actor.accept(user, invitation):
+		invitation.accepted = True
 		notify(InvitationAcceptedEvent(invitation, user))
 		return True
 	return False

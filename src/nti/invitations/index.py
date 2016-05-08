@@ -69,7 +69,7 @@ class SenderRawIndex(RawValueIndex):
 	pass
 
 def SenderIndex(family=None):
-	return NormalizationWrapper(field_name='inviter',
+	return NormalizationWrapper(field_name='sender',
 								interface=IInvitation,
 								index=SenderRawIndex(family=family),
 								normalizer=StringTokenNormalizer())
