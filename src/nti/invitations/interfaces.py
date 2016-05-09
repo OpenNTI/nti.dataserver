@@ -178,6 +178,10 @@ class InvitationExpiredError(InvitationValidationError):
 	__doc__ = _('The invitation has expired.')
 	i18n_message = __doc__
 
+class InvitationAlreadyAcceptedError(InvitationValidationError):
+	__doc__ = _('Invitation already accepted.')
+	i18n_message = __doc__
+
 class InvitationActorError(InvitationValidationError):
 	__doc__ = _('The invitation does not have actor.')
 	i18n_message = __doc__
