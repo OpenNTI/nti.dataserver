@@ -31,17 +31,17 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 
 from nti.dataserver.interfaces import IHighlight
 
+from nti.externalization.externalization import to_external_ntiid_oid
+
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import SingletonDecorator
 
-from nti.externalization.externalization import to_external_ntiid_oid
-
 from nti.links.links import Link
 
-from nti.ntiids.ntiids import find_object_with_ntiid
 from nti.ntiids.ntiids import is_valid_ntiid_string
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 LINKS = StandardExternalFields.LINKS
 
@@ -184,13 +184,13 @@ class AbstractLibraryPathLinkDecorator(object):
 		link.__parent__ = context
 		_links.append(link)
 
-@interface.implementer(IExternalMappingDecorator)
 @component.adapter(ITopic)
+@interface.implementer(IExternalMappingDecorator)
 class _TopicLibraryPathLinkDecorator(AbstractLibraryPathLinkDecorator):
 	pass
 
-@interface.implementer(IExternalMappingDecorator)
 @component.adapter(IForum)
+@interface.implementer(IExternalMappingDecorator)
 class _ForumLibraryPathLinkDecorator(AbstractLibraryPathLinkDecorator):
 	pass
 
