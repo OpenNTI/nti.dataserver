@@ -75,6 +75,16 @@ def get_pending_invitations(receivers=None, now=None, catalog=None):
 			result.append(obj)
 	return result
 
+def has_pending_invitations(receivers=None, now=None, catalog=None):
+	result = []
+	intids = component.getUtility(IIntIds)
+	doc_ids = get_pending_invitation_ids(receivers, now, catalog)
+	for uid in doc_ids or ():
+		obj = intids.queryObject(uid)
+		if IInvitation.providedBy(obj):
+			return True
+	return False
+
 def get_expired_invitation_ids(receivers=None, now=None, catalog=None):
 	if isinstance(receivers, six.string_types):
 		receivers = set(receivers.split(","))
