@@ -31,13 +31,13 @@ JoinCommunityInvitation = JoinEntityInvitation
 @interface.implementer(IJoinEntityInvitationActor)
 class JoinEntityInvitationActor(object):
 
-	def get_entity(self, invitation):
-		entity = Entity.get_entity(invitation.entity)
-		return entity
+	def __init__(self, invitation=None):
+		self.invitation = invitation
 
-	def accept(self, user, invitation):
+	def accept(self, user, invitation=None):
 		result = True
-		entity = self.get_entity(invitation)
+		invitation = self.invitation if invitation is None else invitation
+		entity = Entity.get_entity(invitation.entity)
 		if entity is None:
 			logger.warn("Entity %s does not exists %s", invitation.entity)
 			result = False
