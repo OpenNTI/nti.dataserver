@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 80
+generation = 81
 
 from zope import component
 
@@ -18,8 +18,7 @@ from zope.component.hooks import setHooks
 
 from zope.intid.interfaces import IIntIds
 
-from nti.invitations.index import install_invitations_catalog
-from nti.invitations.model import install_invitations_container
+from nti.contentlibrary.indexed_data.catalog import install_library_catalog
 
 def do_evolve(context):
 	setHooks()
@@ -34,12 +33,12 @@ def do_evolve(context):
 		lsm = ds_folder.getSiteManager()
 		intids = lsm.getUtility(IIntIds)
 
-		install_invitations_catalog(ds_folder, intids)
-		install_invitations_container(ds_folder, intids)
+		install_library_catalog(ds_folder, intids)
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):
 	"""
-	Evolve to gen 80 by installing the new invitations catalog and container
+	Evolve to gen 81 by installing the new library asset catalog.
 	"""
-	do_evolve(context)
+	# do_evolve(context)  XXX DON'T INSTALL YET
+	pass
