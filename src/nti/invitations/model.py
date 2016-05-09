@@ -118,7 +118,8 @@ class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer,
 		return False
 	removeInvitation = remove
 	
-	getInvitationByCode = CaseInsensitiveLastModifiedBTreeContainer.__getitem__
+	def getInvitationByCode(self, code):
+		return self.get(code)
 
 def install_invitations_container(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
