@@ -166,7 +166,7 @@ class InvitationValidationError(ValidationError):
 	an invitation.
 	"""
 
-	def __init__(self, invitation):
+	def __init__(self, invitation=None):
 		super(InvitationValidationError, self).__init__()
 		self.invitation = invitation
 
