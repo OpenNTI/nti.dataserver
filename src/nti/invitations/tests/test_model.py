@@ -35,42 +35,42 @@ class TestModel(unittest.TestCase):
 
 	def test_valid_interface(self):
 		assert_that(Invitation(), verifiably_provides(IInvitation))
-	
+
 	def test_external(self):
 		invitation = Invitation(code='bleach',
 								receiver='ichigo',
-								inviter='aizen',
+								sender='aizen',
 								accepted=True)
-		assert_that(invitation, 
+		assert_that(invitation,
 					externalizes(all_of(has_entry('code', 'bleach'),
 								 has_entry('receiver', 'ichigo'),
-								 has_entry('inviter', 'aizen'),
+								 has_entry('sender', 'aizen'),
 								 has_entry('accepted', is_(True)),
 								 has_entry('expiryTime', is_(0)))))
 
 	def test_misc(self):
 		invitation = Invitation(code='bleach',
 								receiver='ichigo',
-								inviter='aizen',
+								sender='aizen',
 								accepted=True)
 
 		assert_that(invitation.is_expired(), is_(False))
 		invitation.expiryTime = 10
 		assert_that(invitation.is_expired(), is_(True))
-		
+
 		assert_that(invitation.is_email(), is_(False))
 		invitation.receiver = 'ichigo@bleach.org'
 		assert_that(invitation.is_email(), is_(True))
-		
+
 	def test_container(self):
 		invitation = Invitation(code='bleach',
 								receiver='ichigo',
-								inviter='aizen',
+								sender='aizen',
 								accepted=True)
 		container = InvitationsContainer()
 		container.add(invitation)
 		assert_that(container, has_length(is_(1)))
 		assert_that(invitation, has_property('code', is_not(none())))
-		
+
 		container.remove(invitation)
 		assert_that(container, has_length(is_(0)))

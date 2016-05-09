@@ -33,39 +33,39 @@ class TestUtils(unittest.TestCase):
 		catalog = create_invitations_catalog(family=BTrees.family64)
 		i1 = Invitation(code='bleach',
 						receiver='ichigo',
-						inviter='aizen',
+						sender='aizen',
 						accepted=False,
 						expiryTime=0.0)
 		catalog.index_doc(1, i1)
-		
+
 		i2 = Invitation(code='bleach2',
 						receiver='ichigo',
-						inviter='aizen',
+						sender='aizen',
 						accepted=False,
-						expiryTime=time.time()-2000)
+						expiryTime=time.time() - 2000)
 		catalog.index_doc(2, i2)
-		
+
 		i3 = Invitation(code='bleach3',
 						receiver='ichigo',
-						inviter='aizen',
+						sender='aizen',
 						accepted=False,
 						expiryTime=time.time() + 1000)
 		catalog.index_doc(3, i3)
 
 		result = get_pending_invitation_ids("ichigo", catalog=catalog)
 		assert_that(result, has_length(2))
-		assert_that(sorted(result), is_([1,3]))
-		
+		assert_that(sorted(result), is_([1, 3]))
+
 		result = get_pending_invitation_ids("aizen", catalog=catalog)
 		assert_that(result, has_length(0))
-		
+
 		result = get_expired_invitation_ids(catalog=catalog)
 		assert_that(result, has_length(1))
 		assert_that(sorted(result), is_([2]))
-		
+
 		result = get_expired_invitation_ids("ichigo", catalog=catalog)
 		assert_that(result, has_length(1))
 		assert_that(sorted(result), is_([2]))
-		
+
 		result = get_expired_invitation_ids("aizen", catalog=catalog)
 		assert_that(result, has_length(0))
