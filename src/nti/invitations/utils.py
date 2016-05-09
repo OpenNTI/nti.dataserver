@@ -21,6 +21,8 @@ from zope.intid.interfaces import IIntIds
 
 from BTrees.LFBTree import LFSet
 
+from nti.common.random import generate_random_string
+
 from nti.invitations.index import IX_ACCEPTED
 from nti.invitations.index import IX_RECEIVER
 from nti.invitations.index import IX_EXPIRYTIME
@@ -34,6 +36,11 @@ from nti.invitations.interfaces import InvitationAcceptedEvent
 
 MAX_TS = time.mktime(datetime.max.timetuple())
 
+def get_random_invitation_code():
+	s = generate_random_string(10).upper()
+	result = s[0:3] + '-' + s[3:6] + '-' + s[6:]
+	return result
+	
 def get_invitation_actor(invitation, user=None):
 	actor = component.queryMultiAdapter((invitation, user), IInvitationActor)
 	if actor is None:

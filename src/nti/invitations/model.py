@@ -27,8 +27,6 @@ from z3c.schema.email.field import isValidMailAddress
 
 from nti.common.property import alias
 
-from nti.common.random import generate_random_string
-
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.coremetadata.interfaces import SYSTEM_USER_NAME
@@ -39,6 +37,8 @@ from nti.externalization.representation import WithRepr
 
 from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationsContainer
+
+from nti.invitations.utils import get_random_invitation_code
 
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -100,17 +100,12 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer,
 						   Contained):
 	
-	def get_random_code(self):
-		s = generate_random_string(10).upper()
-		result = s[0:3] + '-' + s[3:6] + '-' + s[6:]
-		return result
-	
 	def add(self, invitation):
 		code = invitation.code
 		if not code:
-			code = self.get_random_code()
+			code = get_random_invitation_code()
 			while code in self:
-				code = self.get_random_code()
+				code = get_random_invitation_code()
 			invitation.code = code
 		self[code] = invitation
 	registerInvitation = append = add
