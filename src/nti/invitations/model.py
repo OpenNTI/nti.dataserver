@@ -100,12 +100,17 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer,
 						   Contained):
 	
+	def get_random_code(self):
+		s = generate_random_string(10).upper()
+		result = s[0:3] + '-' + s[3:6] + '-' + s[6:]
+		return result
+	
 	def add(self, invitation):
 		code = invitation.code
 		if not code:
-			code = generate_random_string().upper()
+			code = self.get_random_code()
 			while code in self:
-				code = generate_random_string().upper()
+				code = self.get_random_code()
 			invitation.code = code
 		self[code] = invitation
 	registerInvitation = append = add
