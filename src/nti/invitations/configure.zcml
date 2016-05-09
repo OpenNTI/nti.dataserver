@@ -19,4 +19,7 @@
 		root_interfaces=".interfaces.IInvitation"
 		modules=".model" />
 	
+	<!-- Events -->
+	<subscriber handler=".subscribers._on_invitation_sent" />
+	
 </configure>
