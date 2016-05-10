@@ -62,6 +62,8 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 		
 	parameters = {} # IContentTypeAware
 
+	mimeType = mime_type = u"application/vnd.nextthought.invitation"
+
 	def __init__(self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 		PersistentCreatedModDateTrackingObject.__init__(self)

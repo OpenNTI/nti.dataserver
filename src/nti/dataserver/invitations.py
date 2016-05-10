@@ -26,6 +26,8 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 class JoinEntityInvitation(Invitation):
 	createDirectFieldProperties(IJoinEntityInvitation)
 
+	mimeType = mime_type = u"application/vnd.nextthought.joinentityinvitation"
+
 JoinCommunityInvitation = JoinEntityInvitation
 
 @interface.implementer(IJoinEntityInvitationActor)
