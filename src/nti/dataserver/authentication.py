@@ -32,7 +32,7 @@ from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 
-def _dynamic_memberships_that_participate_in_security(user, as_principals=True):
+def dynamic_memberships_that_participate_in_security(user, as_principals=True):
 	# Add principals for all the communities that the user is in
 	# These are valid ACL targets because they are in the same namespace
 	# as users (so no need to prefix with community_ or something like that)
@@ -56,6 +56,8 @@ def _dynamic_memberships_that_participate_in_security(user, as_principals=True):
 	for friends_list in friends_lists.values():
 		if IDynamicSharingTargetFriendsList.providedBy(friends_list):
 			yield IPrincipal(friends_list) if as_principals else friends_list
+
+_dynamic_memberships_that_participate_in_security = dynamic_memberships_that_participate_in_security
 
 def _user_factory(username):
 	# To avoid circular imports (sharing imports us, users imports us, we import users). sigh.
@@ -98,7 +100,7 @@ def effective_principals(username,
 	request = get_current_request() if request is None else request
 
 	key = (username, authenticated)
-	if (	key in getattr(request, '_v_nti_ds_authentication_eff_prin_cache', ())
+	if (key in getattr(request, '_v_nti_ds_authentication_eff_prin_cache', ())
 		and not skip_cache):
 		return request._v_nti_ds_authentication_eff_prin_cache[key]
 
@@ -140,10 +142,10 @@ def effective_principals(username,
 	# XXX: Hack to put the global content admin role in effective principals.
 	# Ideally, we give these roles access directly on whatever object they
 	# need permission on.
-	roles = principalRoleManager.getRolesForPrincipal( username )
+	roles = principalRoleManager.getRolesForPrincipal(username)
 	for role, access in roles or ():
 		if role == "nti.roles.contentlibrary.admin" and access == Allow:
-			result.add( IPrincipal( role ))
+			result.add(IPrincipal(role))
 
 	# Make hashable before we cache
 	result = frozenset(result)

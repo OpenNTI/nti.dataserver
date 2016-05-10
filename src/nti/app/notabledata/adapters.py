@@ -27,6 +27,8 @@ from nti.app.notabledata.interfaces import IUserPriorityCreatorNotableProvider
 
 from nti.common.property import CachedProperty
 
+from nti.dataserver.authentication import dynamic_memberships_that_participate_in_security
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -37,9 +39,11 @@ from nti.dataserver.metadata_index import IX_CREATEDTIME
 from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
 from nti.dataserver.metadata_index import TP_DELETED_PLACEHOLDER
 
-from nti.dataserver.authentication import _dynamic_memberships_that_participate_in_security
+from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.invitations.utils import get_pending_invitation_ids
 
 from nti.metadata import dataserver_metadata_catalog
 
@@ -110,6 +114,12 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		return container_id_idx.apply({'any_of': container_ids})
 
+	@CachedProperty
+	def _all_my_pending_invitations_intids(self):
+		username = self.remoteUser.username
+		email = getattr(IUserProfile(self.remoteUser, None), 'email', None)
+		return get_pending_invitation_ids(receivers=(username, email))
+	
 	@CachedProperty
 	def _all_blog_comment_intids(self):
 		return self._catalog['mimeType'].apply({'any_of': (_BLOG_COMMENT_MIMETYPE,)})
@@ -260,7 +270,7 @@ class UserNotableData(AbstractAuthenticatedView):
 		# it definitely slows down over time
 		tagged_to_usernames_or_intids = {self.remoteUser.username}
 		# Note the use of private API, a signal to cleanup soon
-		for membership in _dynamic_memberships_that_participate_in_security(self.remoteUser, as_principals=False):
+		for membership in dynamic_memberships_that_participate_in_security(self.remoteUser, as_principals=False):
 			if IDynamicSharingTargetFriendsList.providedBy(membership):
 				tagged_to_usernames_or_intids.add(membership.NTIID)
 		intids_tagged_to_me = catalog[IX_TAGGEDTO].apply({'any_of': tagged_to_usernames_or_intids})
@@ -407,8 +417,8 @@ from persistent.list import PersistentList
 
 from nti.common.property import Lazy
 
-@interface.implementer(IUserNotableDataStorage)
 @component.adapter(IUser)
+@interface.implementer(IUserNotableDataStorage)
 class UserNotableDataStorage(Persistent, Contained):
 
 	def __init__(self):
