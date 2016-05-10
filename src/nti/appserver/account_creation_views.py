@@ -66,13 +66,9 @@ from nti.dataserver.users.interfaces import IRequireProfileUpdate
 from nti.dataserver.users.interfaces import UsernameCannotBeBlank
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
-from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
 from nti.intid.utility import IntIdMissingError
-
-from nti.invitations.utility import accept_invitations
-from nti.invitations.interfaces import InvitationValidationError
 
 from nti.schema.interfaces import InvalidValue
 from nti.schema.interfaces import find_most_derived_interface
@@ -175,9 +171,6 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 						 	'message': str(e),
 							'code': e.__class__.__name__},
 						exc_info[2])
-		handle_validation_error(request, e)
-	except InvitationValidationError as e:
-		e.field = 'invitation_codes'
 		handle_validation_error(request, e)
 	except BlacklistedUsernameError as e:
 		exc_info = sys.exc_info()
@@ -446,20 +439,6 @@ def account_profile_schema_view(request):
 	return {'Username': request.context.username,
 			'AvatarURLChoices': _get_avatar_choices_for_username(request.context.username, request),
 			'ProfileSchema': _AccountProfileSchemafier(request.context).make_schema() }
-
-@component.adapter(IUser, IWillCreateNewEntityEvent)
-def accept_invitations_on_user_creation(user, event):
-	"""
-	Registered as an event handler on the WillCreate notification (not the
-	DidCreateWithRequest notification, because that doesn't fire for preflight,
-	and we need to check the codes for preflight).
-	"""
-	if not event.ext_value:
-		return
-
-	invite_codes = event.ext_value.get('invitation_codes')
-	if invite_codes:
-		accept_invitations(user, invite_codes)
 
 @component.adapter(IUser, IUserUpgradedEvent)
 def request_profile_update_on_user_upgrade(user, event):
