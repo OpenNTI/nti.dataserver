@@ -31,6 +31,7 @@ from nti.invitations.index import get_invitations_catalog
 from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationActor
 from nti.invitations.interfaces import InvitationActorError
+from nti.invitations.interfaces import IInvitationsContainer
 from nti.invitations.interfaces import InvitationExpiredError
 from nti.invitations.interfaces import InvitationAcceptedEvent
 
@@ -118,8 +119,9 @@ def get_expired_invitations(receivers=None, now=None, catalog=None):
 			result.append(obj)
 	return result
 
-def delete_expired_invitations(container, receivers=None, now=None, catalog=None):
+def delete_expired_invitations(receivers=None, now=None, catalog=None):
 	result = []
+	container = component.getUtility(IInvitationsContainer)
 	invitations = get_expired_invitations(receivers, now, catalog)
 	for invitation in invitations:
 		if container.remove(invitation):

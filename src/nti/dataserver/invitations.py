@@ -39,7 +39,7 @@ class JoinEntityInvitationActor(object):
 		invitation = self.invitation if invitation is None else invitation
 		entity = Entity.get_entity(invitation.entity)
 		if entity is None:
-			logger.warn("Entity %s does not exists %s", invitation.entity)
+			logger.warn("Entity %s does not exists", invitation.entity)
 			result = False
 		elif ICommunity.providedBy(entity):
 			logger.info("Accepting invitation to join community %s", entity)
