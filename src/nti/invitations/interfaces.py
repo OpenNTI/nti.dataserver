@@ -97,12 +97,14 @@ class IInvitation(IContained,
 		Returns true if the invitation has been accepted
 		"""
 		
-class IInvitations(IContained,
-				   IAnnotatable):
+class IInvitationsContainer(IContained,
+							IContainer,
+				   			IAnnotatable):
 	"""
 	A central registry of invitations. Intended to be used as a utility registered
 	for the site.
 	"""
+	contains(str('.IInvitation'))
 
 	def add(invitation):
 		"""
@@ -122,9 +124,7 @@ class IInvitations(IContained,
 		Returns an invitation having the given code, or None if there is no
 		such invitation.
 		"""
-
-class IInvitationsContainer(IContainer):
-	contains(str('.IInvitation'))
+IInvitations = IInvitationsContainer # BWC
 		
 class IInvitationEvent(IObjectEvent):
 	"""
@@ -209,19 +209,4 @@ class IInvitationActor(interface.Interface):
 		Once the invitation has been accepted, this should notify an :class:`IInvitationAcceptedEvent`.
 
  		:raises InvitationExpiredError: If the invitation has expired.
-		"""
-
-class IInvitationAssociationActor(IInvitationActor):
-	"""
-	Actor to join a user to a entity group
-	"""
-
-class IInvitationEntityFinder(interface.Interface):
-	"""
-	An interface for a utility to find an entity
-	"""
-
-	def find(username):
-		"""
-		returns the entity with the specified username
 		"""

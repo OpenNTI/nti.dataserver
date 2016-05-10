@@ -9,8 +9,6 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
-	<utility factory=".invitation.InvitationAssociationActor" />
-
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
