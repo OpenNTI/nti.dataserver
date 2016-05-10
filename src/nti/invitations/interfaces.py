@@ -68,7 +68,7 @@ class IInvitation(IContained,
 						 required=False)
 
 	receiver = ValidTextLine(title="Invitation receiver (username or email).",
-						  	 required=False)
+						  	 required=True)
 
 	sender = ValidTextLine(title="Invitation sender.",
 						   required=True, default=SYSTEM_USER_NAME)
