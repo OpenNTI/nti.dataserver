@@ -136,6 +136,7 @@ def accept_invitation(user, invitation):
 		raise InvitationActorError(invitation)
 	if actor.accept(user, invitation):
 		invitation.accepted = True
+		invitation.receiver = user.username # update 
 		notify(InvitationAcceptedEvent(invitation, user))
 		return True
 	return False
