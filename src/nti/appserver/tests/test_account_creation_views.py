@@ -20,6 +20,7 @@ from hamcrest import greater_than
 from hamcrest import has_property
 from hamcrest import contains_string
 does_not = is_not
+from nose.tools import assert_raises
 
 import datetime
 import unittest
@@ -29,26 +30,32 @@ from zope import component
 
 from zope.component import eventtesting
 
-from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
+from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent 
 
 import pyramid.httpexceptions as hexc
 
 from nti.appserver import interfaces as app_interfaces
-from nti.appserver.account_creation_views import account_create_view, account_preflight_view
+
+from nti.appserver.account_creation_views import account_create_view 
+from nti.appserver.account_creation_views import account_preflight_view 
 
 from nti.dataserver import users
 from nti.dataserver import shards
-from nti.dataserver.users import interfaces as user_interfaces
+
 from nti.dataserver.interfaces import IShardLayout, INewUserPlacer
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.users import interfaces as user_interfaces
+
 from nti.externalization.representation import to_json_representation
 
 from nti.app.testing.base import TestBaseMixin
-from nti.app.testing.testing import ITestMailDelivery
+
 from nti.app.testing.layers import NewRequestSharedConfiguringTestLayer
 
-from nose.tools import assert_raises
+from nti.app.testing.testing import ITestMailDelivery
+
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 class _AbstractValidationViewBase(TestBaseMixin):
 	""" Base for the things where validation should fail """
@@ -83,24 +90,6 @@ class _AbstractValidationViewBase(TestBaseMixin):
 		assert_that( exc.exception.json_body, has_entry( 'code', u'FieldContainsCensoredSequence' ) )
 		assert_that( exc.exception.json_body, has_entry( 'value', u'ichigo kuro\U0001f383saki') )
 		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'Last name contains a censored sequence.' ) ) )
-
-# We no longer validate invitations during account creation.
-# 	@WithMockDSTrans
-# 	def test_create_invalid_invitation_code(self):
-# 		self.request.content_type = b'application/vnd.nextthought+json'
-# 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
-# 													 'password': 'pass123word',
-# 													 'realname': 'Jason Madden',
-# 													 'email': 'foo@bar.com',
-# 													 'invitation_codes': ['foobar'] } )
-#
-# 		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
-# 			self.the_view( self.request )
-#
-# 		assert_that( exc.exception.json_body, has_entry( 'field', 'invitation_codes' ) )
-# 		assert_that( exc.exception.json_body, has_entry( 'code', 'InvitationCodeError' ) )
-# 		assert_that( exc.exception.json_body, has_entry( 'value', 'foobar' ) )
-# 		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'The invitation code is not valid.' ) ) )
 
 	@WithMockDSTrans
 	def test_create_valid_invitation_code(self):
