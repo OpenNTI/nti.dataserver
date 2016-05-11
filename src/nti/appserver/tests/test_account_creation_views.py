@@ -7,8 +7,6 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-logger = __import__('logging').getLogger(__name__)
-
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import has_key
@@ -20,6 +18,7 @@ from hamcrest import greater_than
 from hamcrest import has_property
 from hamcrest import contains_string
 does_not = is_not
+
 from nose.tools import assert_raises
 
 import datetime
@@ -675,8 +674,8 @@ def main(email=None, uname=None, cname=None):
 
 	import nti.dataserver.utils
 
-	from pyramid.testing import setUp as psetUp
 	from pyramid.testing import DummyRequest
+	from pyramid.testing import setUp as psetUp
 
 	nti.dataserver.utils._configure( set_up_packages=('nti.appserver',) )
 	request = DummyRequest()
@@ -686,13 +685,14 @@ def main(email=None, uname=None, cname=None):
 
 	import pyramid_mailer
 	from pyramid_mailer.interfaces import IMailer
+
 	component.provideUtility( pyramid_mailer.Mailer.from_settings(
 				 {'mail.queue_path': '/tmp/ds_maildir',
 				  'mail.default_sender': 'no-reply@nextthought.com' } ), IMailer )
-
-	import nti.app.pyramid_zope.z3c_zpt
+	
 	from pyramid.interfaces import IRendererFactory
-
+	import nti.app.pyramid_zope.z3c_zpt
+	
 	component.provideUtility( nti.app.pyramid_zope.z3c_zpt.renderer_factory, IRendererFactory, name='.pt' )
 
 	import pyramid_chameleon.text
