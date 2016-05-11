@@ -84,23 +84,23 @@ class _AbstractValidationViewBase(TestBaseMixin):
 		assert_that( exc.exception.json_body, has_entry( 'value', u'ichigo kuro\U0001f383saki') )
 		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'Last name contains a censored sequence.' ) ) )
 
-	@WithMockDSTrans
-	def test_create_invalid_invitation_code(self):
-		self.request.content_type = b'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
-													 'password': 'pass123word',
-													 'realname': 'Jason Madden',
-													 'email': 'foo@bar.com',
-													 'invitation_codes': ['foobar'] } )
-
-		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
-			self.the_view( self.request )
-
-
-		assert_that( exc.exception.json_body, has_entry( 'field', 'invitation_codes' ) )
-		assert_that( exc.exception.json_body, has_entry( 'code', 'InvitationCodeError' ) )
-		assert_that( exc.exception.json_body, has_entry( 'value', 'foobar' ) )
-		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'The invitation code is not valid.' ) ) )
+# We no longer validate invitations during account creation.
+# 	@WithMockDSTrans
+# 	def test_create_invalid_invitation_code(self):
+# 		self.request.content_type = b'application/vnd.nextthought+json'
+# 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
+# 													 'password': 'pass123word',
+# 													 'realname': 'Jason Madden',
+# 													 'email': 'foo@bar.com',
+# 													 'invitation_codes': ['foobar'] } )
+#
+# 		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+# 			self.the_view( self.request )
+#
+# 		assert_that( exc.exception.json_body, has_entry( 'field', 'invitation_codes' ) )
+# 		assert_that( exc.exception.json_body, has_entry( 'code', 'InvitationCodeError' ) )
+# 		assert_that( exc.exception.json_body, has_entry( 'value', 'foobar' ) )
+# 		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'The invitation code is not valid.' ) ) )
 
 	@WithMockDSTrans
 	def test_create_valid_invitation_code(self):
