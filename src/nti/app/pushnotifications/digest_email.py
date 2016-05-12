@@ -88,7 +88,7 @@ from nti.mailer.interfaces import EmailAddresablePrincipal
 
 from nti.utils.property import annotation_alias
 
-from .interfaces import INotableDataEmailClassifier
+from nti.app.pushnotifications.interfaces import INotableDataEmailClassifier
 
 _ONE_WEEK = 7 * 24 * 60 * 60
 _TWO_WEEKS = _ONE_WEEK * 2
@@ -167,7 +167,7 @@ class _TemplateArgs(object):
 
 	@property
 	def total_remaining_href(self):
-		anchor = '!profile/%s/Notifications' % self.remoteUser.username
+		anchor = 'notifications'
 		return self.request.route_url('objects.generic.traversal',
 									  traverse=(),
 									  _anchor=anchor).replace('/dataserver2',
@@ -182,10 +182,11 @@ class _TemplateArgs(object):
 		ntiid = (to_external_ntiid_oid(self._primary, mask_creator=True)
 				 or getattr(self._primary, 'NTIID', None))
 		if ntiid:
-			# The webapp does a weird dance, like so:
+			# The clients do not use the prefix.
+			ntiid = ntiid.replace( 'tag:nextthought.com,2011-10:', '' )
 			return self.request.route_url('objects.generic.traversal',
 										  traverse=(),
-										  _anchor="!object/ntiid/" + ntiid).replace('/dataserver2',
+										  _anchor="id/" + ntiid).replace('/dataserver2',
 																					self.web_root)
 
 		# TODO: These don't actually do what we want in terms of interacting
