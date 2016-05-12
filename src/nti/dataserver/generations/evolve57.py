@@ -15,7 +15,7 @@ from zope import component
 from zope.component.hooks import site, setHooks
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.contentlibrary.library import _register_units
+from nti.contentlibrary.library import _register_content_units
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
 
@@ -24,7 +24,7 @@ def _do_register_units():
 	if library is not None:
 		logger.info('Registering units for %s', library)
 		for package in library.contentPackages:
-			_register_units(package)
+			_register_content_units( library, package)
 
 def do_evolve(context):
 	setHooks()
