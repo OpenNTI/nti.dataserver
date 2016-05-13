@@ -19,10 +19,6 @@ from zope.container.interfaces import INameChooser
 
 from ZODB.interfaces import IConnection
 
-from pyramid import httpexceptions as hexc
-
-from pyramid.threadlocal import get_current_request
-
 from nti.app.base.abstract_views import get_source
 from nti.app.base.abstract_views import AuthenticatedViewMixin
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -31,13 +27,9 @@ from nti.app.contentfile import validate_sources
 from nti.app.contentfile import get_content_files
 from nti.app.contentfile import read_multipart_sources
 
-from nti.app.externalization.error import raise_json_error
-
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.forums.interfaces import IPostFileConstraints
-
-from nti.app.forums.views import MessageFactory as _
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -55,19 +47,6 @@ def validate_attachments(user=None, context=None, sources=()):
 
 	# check source contraints
 	validate_sources(user, context, sources, constraint=IPostFileConstraints)
-
-	# check max files to upload
-	constraints = IPostFileConstraints(context, None)
-	if constraints is not None and len(sources) > constraints.max_files:
-		raise_json_error(get_current_request(),
-						 hexc.HTTPUnprocessableEntity,
-						 {
-							u'message': _('Maximum number attachments exceeded.'),
-							u'code': 'MaxAttachmentsExceeded',
-							u'field': 'max_files',
-							u'constraint': constraints.max_files
-						 },
-						 None)
 
 	# take ownership
 	for source in sources:

@@ -50,5 +50,4 @@ class _PersonalBlogDisplayNameGenerator(BrowserView):
 
 @interface.implementer(IPostFileConstraints)
 class _PostFileConstraints(FileConstraints):
-	max_files = 2
 	max_file_size = 10485760  # 10 MB

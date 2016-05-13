@@ -78,6 +78,20 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
 	if isinstance(sources, Mapping):
 		sources = sources.values()
 
+	constraints = file_contraints(context, user, constraint)
+	if 		constraints is not None \
+		and constraints.max_files \
+		and len(sources) > constraints.max_files:
+		raise_json_error(get_current_request(),
+						 hexc.HTTPUnprocessableEntity,
+						 {
+							u'message': _('Maximum number attachments exceeded.'),
+							u'code': 'MaxAttachmentsExceeded',
+							u'field': 'max_files',
+							u'constraint': constraints.max_files
+						 },
+						 None)
+
 	for source in sources or ():
 		ctx = context if context is not None else source
 		validator = file_contraints(ctx, user, constraint)
@@ -133,12 +147,12 @@ def transfer_data(source, target):
 	"""
 	# copy data
 	if hasattr(source, 'read'):
-		target.data = source.read() 
+		target.data = source.read()
 	elif hasattr(source, 'readContents'):
-		target.data = source.readContents() 
-	elif hasattr(source, 'data'): 
+		target.data = source.readContents()
+	elif hasattr(source, 'data'):
 		target.data = source.data
-	else: 
+	else:
 		target.data = source
 
 	# copy contentType if available
@@ -197,7 +211,7 @@ def get_content_files(context, attr="body"):
 	:param attr attribute name to check in context (optional)
 	"""
 	if IModeledContentBody.providedBy(context) and attr=='body':
-		# XXX: CS - 20160426 for model content body object we want to save 
+		# XXX: CS - 20160426 for model content body object we want to save
 		# content file blobs but keep the same MimeType for BWC. so we transform
 		# contentfiles to contentblobfiles
 		return get_content_files_from_modeled_content_body(context)
@@ -222,7 +236,7 @@ def transfer_internal_content_data(context, attr="body", request=None, ownership
 	result = []
 	files = get_content_files(context, attr=attr)
 	for target in files.values():
-		
+
 		# not an internal ref
 		if not IInternalFileRef.providedBy(target):
 			# if it has no data check in the multipart upload for a source
@@ -239,7 +253,7 @@ def transfer_internal_content_data(context, attr="body", request=None, ownership
 			interface.noLongerProvides(target, IInternalFileRef)
 			continue
 
-		# it it's an internal find the original source reference and 
+		# it it's an internal find the original source reference and
 		# copy its data.
 		if IInternalFileRef.providedBy(target):
 			source = find_object_with_ntiid(target.reference)
@@ -251,7 +265,7 @@ def transfer_internal_content_data(context, attr="body", request=None, ownership
 				# remove internal reference
 				interface.noLongerProvides(target, IInternalFileRef)
 				result.append(target)
-				
+
 	if ownership: # take ownership
 		for target in result:
 			target.__parent__ = context

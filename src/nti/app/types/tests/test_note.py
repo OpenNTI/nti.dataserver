@@ -18,6 +18,7 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
+from hamcrest import contains_string
 from hamcrest import greater_than_or_equal_to
 
 from nti.contentfile.model import ContentBlobFile
@@ -143,8 +144,23 @@ class TestNote(ApplicationLayerTest):
 						   		upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
 						   		status=201)
 
-		path = res.json_body['href']
 		durl = res.json_body['body'][1]['download_url']
 
 		res = self.testapp.get(durl, status=200 )
 		assert_that(res, has_property('body', has_length(greater_than_or_equal_to(6))))
+
+		# Test validation
+		ext_file2 = dict( ext_file )
+		ext_file2['name'] = 'ichigo2'
+		ext_file3 = dict( ext_file )
+		ext_file3['name'] = 'ichigo3'
+		ext_obj['body'] = ['ichigo', ext_file, ext_file2, ext_file3]
+		data= {'__json__': to_json_representation(ext_obj)}
+		res = self.testapp.post(urllib.quote(path), data,
+						   		upload_files=[('ichigo', 'ichigo.txt', b'ichigo'),
+											  ('ichigo2', 'ichigo.txt', b'ichigo2'),
+											  ('ichigo3', 'ichigo.txt', b'ichigo3')],
+						   		status=422)
+		res = res.json_body
+		assert_that( res.get( 'message'), is_( 'Maximum number attachments exceeded.' ))
+		assert_that( res.get( 'code'), is_( 'MaxAttachmentsExceeded' ))

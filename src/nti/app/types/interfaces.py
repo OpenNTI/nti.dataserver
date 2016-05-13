@@ -14,4 +14,4 @@ from nti.namedfile.interfaces import IFileConstraints
 from nti.schema.field import Int
 
 class INoteFileConstraints(IFileConstraints):
-    max_files = Int(title="max attachments files", required=True, default=5)
+	pass
