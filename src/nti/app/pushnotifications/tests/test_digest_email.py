@@ -168,7 +168,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( msg, contains_string('<span>jason.madden@nextthought.com (jason)</span>'))
 
 		assert_that( msg, contains_string('See All Activity'))
-		assert_that( msg, contains_string('http://localhost/NextThoughtWebApp/#!profile/jason/Notifications'))
+		assert_that( msg, contains_string('http://localhost/NextThoughtWebApp/notifications'))
 
 		assert_that( msg, does_not(contains_string('replied to a note')))
 		assert_that( msg, does_not(contains_string('NO CONTENT')))
@@ -176,10 +176,11 @@ class TestApplicationDigest(ApplicationLayerTest):
 		note_oid = self.note_oids[0]
 		note_oid = note_oid[0:note_oid.index('OID')]
 		for oid in note_oid, self.blog_oid:
+			oid = oid.replace( 'tag:nextthought.com,2011-10:', '' )
 			assert_that( oid.lower(),
 						 does_not( contains_string(self.extra_environ_default_user.lower()) ) )
 
-			assert_that( msg, contains_string( 'http://localhost/NextThoughtWebApp/#!object/ntiid/' + oid ) )
+			assert_that( msg, contains_string( 'http://localhost/NextThoughtWebApp/id/' + oid ) )
 
 	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
 	@time_monotonically_increases

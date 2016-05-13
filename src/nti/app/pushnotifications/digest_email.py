@@ -167,11 +167,10 @@ class _TemplateArgs(object):
 
 	@property
 	def total_remaining_href(self):
-		anchor = 'notifications'
 		return self.request.route_url('objects.generic.traversal',
-									  traverse=(),
-									  _anchor=anchor).replace('/dataserver2',
-															  self.web_root)
+									  'notifications',
+									  traverse=()).replace('/dataserver2',
+														   self.web_root)
 
 	@property
 	def href(self):
@@ -185,9 +184,10 @@ class _TemplateArgs(object):
 			# The clients do not use the prefix.
 			ntiid = ntiid.replace( 'tag:nextthought.com,2011-10:', '' )
 			return self.request.route_url('objects.generic.traversal',
-										  traverse=(),
-										  _anchor="id/" + ntiid).replace('/dataserver2',
-																					self.web_root)
+										  'id',
+										  ntiid,
+										  traverse=()).replace('/dataserver2',
+																self.web_root)
 
 		# TODO: These don't actually do what we want in terms of interacting
 		# with the application...
