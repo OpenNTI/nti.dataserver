@@ -18,7 +18,6 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
-from hamcrest import contains_string
 from hamcrest import greater_than_or_equal_to
 
 from nti.contentfile.model import ContentBlobFile
