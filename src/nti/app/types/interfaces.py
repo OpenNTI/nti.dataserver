@@ -11,7 +11,5 @@ logger = __import__('logging').getLogger(__name__)
 
 from nti.namedfile.interfaces import IFileConstraints
 
-from nti.schema.field import Int
-
 class INoteFileConstraints(IFileConstraints):
 	pass

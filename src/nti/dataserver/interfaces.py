@@ -45,7 +45,6 @@ from nti.contentrange.contentrange import ContentRangeDescription
 
 from nti.schema.field import Dict
 from nti.schema.field import Object
-from nti.schema.field import Variant
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
@@ -1258,7 +1257,9 @@ class ObjectFlaggedEvent(interface.interfaces.ObjectEvent):
 class ObjectUnflaggedEvent(interface.interfaces.ObjectEvent):
 	pass
 
-class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody):
+from nti.namedfile.interfaces import IFileConstrained
+
+class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody, IFileConstrained):
 	"""
 	A user-created note attached to other content.
 	"""

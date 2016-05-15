@@ -52,6 +52,8 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.interfaces import ExtendedCompoundModeledContentBody
 from nti.dataserver.interfaces import INotModifiedInStreamWhenContainerModified
 
+from nti.namedfile.interfaces import IFileConstrained
+
 from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import Variant
@@ -136,6 +138,7 @@ class IPost(IContained,
 			ITitledContent,
 			IModeledContent,
 			IReadableShared,
+			IFileConstrained,
 			IUserTaggedContent,
 			IModeledContentBody,
 			INeverStoredInSharedStream):
