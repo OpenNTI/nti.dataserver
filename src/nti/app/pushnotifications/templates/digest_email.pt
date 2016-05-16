@@ -135,7 +135,7 @@
 									</td>
 								</tr>
 								</tal:block>
-								<tr width="100%">
+								<tr width="100%" style="display: table;">
 									<td valign="top" align="left" style="padding: 0px; padding-left:15px; padding-right:15px;">
 										<div>
 											<div tal:condition="options/total_remaining"
