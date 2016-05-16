@@ -19,6 +19,8 @@ from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.contentfile.view_mixins import file_contraints
+
 from nti.app.contentfolder import MessageFactory as _
 
 from nti.app.externalization.internalization import read_body_as_external_object
@@ -35,6 +37,8 @@ from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.namedfile.interfaces import IFileConstrained
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -98,3 +102,17 @@ class ContentFileAssociateView(AbstractAuthenticatedView,
 		if target is not self.context and target is not self.context.__parent__:
 			self.context.add_association(target)
 		return hexc.HTTPNoContent()
+
+@view_config(context=IFileConstrained)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   name='constrains',
+			   permission=nauth.ACT_READ,
+			   request_method='POST')
+class FileConstrainsView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		result = file_contraints(self.context, self.remoteUser)
+		if result is None:
+			return hexc.HTTPNotFound()
+		return result
