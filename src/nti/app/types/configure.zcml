@@ -10,7 +10,7 @@
 
 	<adapter factory=".note._NoteFileConstraints"
 			 for="nti.dataserver.interfaces.INote"
-			 provides=".interfaces.INoteFileConstraints" />
+			 provides="nti.namedfile.interfaces.IFileConstraints" />
 
 	<adapter factory=".note._note_transformer" />
 	<adapter factory=".note._note_transformer_factory" />

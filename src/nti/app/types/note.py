@@ -26,8 +26,6 @@ from nti.app.contentfile import get_content_files
 from nti.app.contentfile import read_multipart_sources
 from nti.app.contentfile import transfer_internal_content_data
 
-from nti.app.types.interfaces import INoteFileConstraints
-
 from nti.appserver.interfaces import INewObjectTransformer
 
 from nti.appserver.ugd_edit_views import UGDPutView
@@ -78,13 +76,12 @@ def validate_attachments(user, context, sources=()):
 	sources = sources or ()
 
 	# check source contraints
-	validate_sources(user, context, sources, constraint=INoteFileConstraints)
+	validate_sources(user, context, sources)
 
 	# take ownership
 	for source in sources:
 		source.__parent__ = context
 
 @component.adapter(INote)
-@interface.implementer(INoteFileConstraints)
 class _NoteFileConstraints(FileConstraints):
 	max_file_size = 10485760  # 10 MB

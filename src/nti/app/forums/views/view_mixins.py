@@ -29,8 +29,6 @@ from nti.app.contentfile import read_multipart_sources
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.app.forums.interfaces import IPostFileConstraints
-
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
 # loaded (usually with ZCML, so in practice this is not a problem,
@@ -46,7 +44,7 @@ def validate_attachments(user=None, context=None, sources=()):
 	sources = sources or ()
 
 	# check source contraints
-	validate_sources(user, context, sources, constraint=IPostFileConstraints)
+	validate_sources(user, context, sources)
 
 	# take ownership
 	for source in sources:

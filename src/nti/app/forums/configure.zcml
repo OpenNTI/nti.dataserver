@@ -247,15 +247,15 @@
 
 	<!-- Adapters -->
 	<adapter factory=".adapters._PostFileConstraints"
-			 provides=".interfaces.IPostFileConstraints"
+			 provides="nti.namedfile.interfaces.IFileConstraints"
 			 for="nti.dataserver.contenttypes.forums.interfaces.ITopic" />
 
 	<adapter factory=".adapters._PostFileConstraints"
-			 provides=".interfaces.IPostFileConstraints"
+			 provides="nti.namedfile.interfaces.IFileConstraints"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
 
 	<adapter factory=".adapters._PostFileConstraints"
-			 provides=".interfaces.IPostFileConstraints"
+			 provides="nti.namedfile.interfaces.IFileConstraints"
 			 for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost" />
 
 	<adapter factory=".adapters._PersonalBlogDisplayNameGenerator" />

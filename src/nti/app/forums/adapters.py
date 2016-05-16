@@ -22,7 +22,6 @@ from zc.displayname.interfaces import IDisplayNameGenerator
 from pyramid.interfaces import IRequest
 
 from nti.app.forums import MessageFactory as _
-from nti.app.forums.interfaces import IPostFileConstraints
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
@@ -48,6 +47,5 @@ class _PersonalBlogDisplayNameGenerator(BrowserView):
 		result = convertName(result, self.request, None)
 		return result
 
-@interface.implementer(IPostFileConstraints)
 class _PostFileConstraints(FileConstraints):
 	max_file_size = 10485760  # 10 MB
