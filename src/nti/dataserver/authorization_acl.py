@@ -34,6 +34,7 @@ from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackage
 from nti.dataserver import authorization
 from nti.dataserver import authentication
 
+
 from nti.dataserver.interfaces import ACE_ACT_DENY
 from nti.dataserver.interfaces import ACE_DENY_ALL
 from nti.dataserver.interfaces import ACE_ALLOW_ALL
@@ -54,6 +55,7 @@ from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import IReadableShared
 from nti.dataserver.interfaces import IEnclosedContent
 from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import IModeledContentBody
 from nti.dataserver.interfaces import IAuthorizationPolicy
 from nti.dataserver.interfaces import IACLProviderCacheable
 from nti.dataserver.interfaces import IShareableModeledContent
@@ -640,9 +642,9 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	must have these groups/communities in their effective principals.
 
 	This is modified: If this object is the child of another :class:`.IReadableShared`
-	e.g., a Canvas inside a Note, then the ACL is skipped and just inherited
-	from the parent (so traversal must be appropriate and respected in ACL checks). This
-	prevents problems when denying all access.
+	or :class:`IModeledContentBody`, e.g., a Canvas inside a Note, then the ACL
+	is skipped and just inherited from the parent (so traversal must be appropriate
+	and respected in ACL checks). This prevents problems when denying all access.
 
 	.. note:: Even in this case, we still give administrators/moderators access
 		to the nested object. This is something of a hack: we don't really want them
@@ -664,7 +666,9 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 		# Inherit if we are nested. See class comment. NOTE: We are just checking the direct parent,
 		# not the entire traversal chain; checking to see if anything we are within is IReadableShared
 		# might pull in the wrong permissions, depending on how the nesting goes (?)
-		if IReadableShared.providedBy(getattr(self.context, '__parent__', None)):
+		parent = getattr( self.context, '__parent__', None )
+		if 		IReadableShared.providedBy( parent ) \
+			or  IModeledContentBody.providedBy( parent ):
 			result = _ACL()
 			self._extend_with_admin_privs(result, 'Nested _ShareableModeledContentACLProvider')
 			return result
