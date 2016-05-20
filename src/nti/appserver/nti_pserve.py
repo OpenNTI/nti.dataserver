@@ -42,7 +42,7 @@ def main():
 	# do now that we expect to be on 1.5. Check this.
 	pyramid_dist = get_distribution('pyramid')
 	if pyramid_dist and pyramid_dist.has_version():
-		assert pyramid_dist.version.startswith('1.6')
+		assert pyramid_dist.version.startswith('1.7')
 
 	sys.exit(
 		load_entry_point('pyramid', 'console_scripts', 'pserve')()
