@@ -304,7 +304,8 @@ def download_file_name(context):
 	result = None
 	if IPloneNamed.providedBy(context):
 		result = NamedFileMixin.nameFinder(context.filename) or context.filename
-	return result or getattr(context, 'name', None)
+	result = result or getattr(context, 'name', None)
+	return safe_download_file_name( result )
 
 def safe_download_file_name(name):
 	if not name:
@@ -324,7 +325,7 @@ def to_external_download_oid_href(item):
 	target = to_external_ntiid_oid(item, add_to_connection=True)
 	if target:
 		name = download_file_name(item)
-		name = quote(name) if name else 'file.dat'
+		name = name if name else 'file.dat'
 		elements = ('download', name)
 		external = _to_external_link_impl(target,
 										  elements,

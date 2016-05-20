@@ -17,6 +17,7 @@ from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import starts_with
 from hamcrest import has_property
+from hamcrest import contains_string
 
 from nti.app.contentfile.view_mixins import to_external_download_oid_href
 
@@ -38,8 +39,8 @@ class TestDecorators(ApplicationLayerTest):
 	ext_obj = {
 				'MimeType': 'application/vnd.nextthought.contentfile',
 				'value': GIF_DATAURL,
-				'filename': r'ichigo.gif',
-				'name':'ichigo'
+				'filename': r'Getting Started.pdf',
+				'name':'Getting Started.pdf'
 			}
 
 	def test_content_file(self):
@@ -65,10 +66,12 @@ class TestDecorators(ApplicationLayerTest):
 			update_from_external_object(internal, ext_obj, require_updater=True)
 			self.ds.root['name'] = internal
 			href = to_external_download_oid_href(internal)
-			assert_that(internal, externalizes(all_of(has_key('OID'))))
+			assert_that(internal, externalizes(all_of(has_key('OID'),
+													  has_entry( 'url',
+																contains_string( '/Getting%20Started.pdf' )))))
 
 		assert_that(href, starts_with('/dataserver2/Objects/'))
-		assert_that(href, ends_with('/download/ichigo.gif'))
+		assert_that(href, ends_with('/download/Getting%20Started.pdf'))
 
 		res = self.testapp.get(href, status=200)
 		assert_that(res, has_property('content_length', is_(61)))
