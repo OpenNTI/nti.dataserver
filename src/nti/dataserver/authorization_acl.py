@@ -34,7 +34,6 @@ from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackage
 from nti.dataserver import authorization
 from nti.dataserver import authentication
 
-
 from nti.dataserver.interfaces import ACE_ACT_DENY
 from nti.dataserver.interfaces import ACE_DENY_ALL
 from nti.dataserver.interfaces import ACE_ALLOW_ALL
