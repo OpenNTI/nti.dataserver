@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Bacwards compatibility exports. Prefer :mod:`nti.intid.wref`.
-
 .. $Id$
 """
 
@@ -18,4 +16,3 @@ zope.deferredimport.deprecatedFrom(
     "Moved to nti.intid.wref",
     "nti.intid.wref",
     "WeakRef")
-

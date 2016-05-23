@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Backwards compatibility exports. Prefer :mod:`nti.intid.utility`.
-
 .. $Id$
 """
 

@@ -37,11 +37,13 @@ class SimplePersistentEnclosure(PersistentCreatedModDateTrackingObject):
 	"""
 
 	creator = None
-	lastModified = 0
 	createdTime = 0
+	lastModified = 0
+
+	_data = None
+
 	__parent__ = None
 	__name__ = alias('name')
-	_data = None
 
 	def __init__(self, name, data='', mime_type='text/plain'):
 		super(SimplePersistentEnclosure, self).__init__()
@@ -105,7 +107,7 @@ class SimpleEnclosureMixin(object):
 		"""
 		Adds a new enclosure to this object.
 
-		:param content: An instance of :class:`nti_interfaces.IContent` 
+		:param content: An instance of :class:`nti_interfaces.IContent`
 			(esp. :class:`nti_interfaces.IEnclosedContent`)
 			This method may change the `name` attribute of this object if
 			there is already an enclosure with this name, and the enclosure
