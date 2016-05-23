@@ -172,6 +172,7 @@ class AbstractMappingAdaptingUserBasedResolver(AbstractAdaptingUserBasedResolver
 		mapping = super(AbstractMappingAdaptingUserBasedResolver, self)._resolve(ntiid, user)
 		if mapping is not None:
 			return mapping.get(get_specific(ntiid))
+		return None
 
 @interface.implementer(INTIIDResolver)
 class _ContentResolver(object):

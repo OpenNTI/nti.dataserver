@@ -18,7 +18,7 @@ from z3c.password.password import HighSecurityPasswordUtility
 
 from persistent import Persistent
 
-from .interfaces import IZContained
+from nti.dataserver.interfaces import IZContained
 
 @interface.implementer(IZContained)
 class HighSecurityPasswordUtility(Persistent, HighSecurityPasswordUtility):
@@ -27,3 +27,4 @@ class HighSecurityPasswordUtility(Persistent, HighSecurityPasswordUtility):
 	"""
 	__name__ = None
 	__parent__ = None
+

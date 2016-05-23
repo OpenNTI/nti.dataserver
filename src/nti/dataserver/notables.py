@@ -16,7 +16,7 @@ from zope import interface
 from nti.dataserver.interfaces import INotableFilter
 from nti.dataserver.interfaces import IStreamChangeCircledEvent
 
-@interface.implementer( INotableFilter )
+@interface.implementer(INotableFilter)
 class CircledNotableFilter(object):
 	"""
 	Check to see if the given object is a circled event for our user.
@@ -31,10 +31,10 @@ class CircledNotableFilter(object):
 		self.context = context
 
 	def is_notable(self, obj, user):
-		return	IStreamChangeCircledEvent.providedBy( obj ) \
+		return	IStreamChangeCircledEvent.providedBy(obj) \
 			and obj.__parent__ == user
 
-@interface.implementer( INotableFilter )
+@interface.implementer(INotableFilter)
 class ReplyToNotableFilter(object):
 	"""
 	Determines if an object is notable by checking to see if it is a
@@ -45,9 +45,9 @@ class ReplyToNotableFilter(object):
 
 	def is_notable(self, obj, user):
 		result = False
-		obj_creator = getattr( obj, 'creator', None )
-		obj_parent = getattr( obj, 'inReplyTo', None )
-		parent_creator = getattr( obj_parent, 'creator', None )
+		obj_creator = getattr(obj, 'creator', None)
+		obj_parent = getattr(obj, 'inReplyTo', None)
+		parent_creator = getattr(obj_parent, 'creator', None)
 
 		if 		obj_creator is not None \
 			and obj_parent is not None \
