@@ -495,6 +495,9 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
 		# Hmm, valid but not an OID.
 		logger.debug("Failed to resolve non-OID NTIID %s", oid_string)
 		return None
+	else:
+		# Nothing given.
+		return None
 
 	oid_string, database_name, intid = oids.fromExternalOID(oid_string)
 	if not oid_string:

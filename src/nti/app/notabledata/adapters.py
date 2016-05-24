@@ -67,7 +67,7 @@ class SafeResultSet(ResultSet):
 	def __init__(self, uids, uidutil, *args, **kwargs):
 		ResultSet.__init__(self, uids, uidutil, ignore_invalid=True)
 _SafeResultSet = SafeResultSet #BWC
-		
+
 @interface.implementer(IUserNotableData)
 @component.adapter(IUser, interface.Interface)
 class UserNotableData(AbstractAuthenticatedView):
@@ -119,7 +119,7 @@ class UserNotableData(AbstractAuthenticatedView):
 		username = self.remoteUser.username
 		email = getattr(IUserProfile(self.remoteUser, None), 'email', None)
 		return get_pending_invitation_ids(receivers=(username, email))
-	
+
 	@CachedProperty
 	def _all_blog_comment_intids(self):
 		return self._catalog['mimeType'].apply({'any_of': (_BLOG_COMMENT_MIMETYPE,)})

@@ -111,6 +111,7 @@ class TestDataserver(unittest.TestCase):
 		__traceback_info__ = obj._p_oid
 		assert_that( mock_dataserver.current_mock_ds.get_by_oid( obj._p_oid ), is_( obj ) )
 		assert_that( mock_dataserver.current_mock_ds.get_by_oid( '00000' ), is_( none() ) )
+		assert_that( mock_dataserver.current_mock_ds.get_by_oid( '' ), is_( none() ) )
 
 		assert_that( get_object_by_oid( mock_dataserver.current_transaction, u'436534760' ), is_( none() ) )
 
