@@ -26,7 +26,7 @@ class NoteJsonSchemafier(CoreJsonSchemafier):
 	
 	def allow_field(self, name, field):
 		if name in ('id', 'sharingTargets', 'flattenedSharingTargets',
-					'flattenedSharingTargetNames'):
+					'flattenedSharingTargetNames', 'references'):
 			return False
 		return super(NoteJsonSchemafier, self).allow_field(name, field)
 
@@ -37,14 +37,23 @@ class NoteJsonSchemafier(CoreJsonSchemafier):
 			item_schema['base_type'] = 'string'
 			item_schema['type'] = 'List'
 		elif name == 'title':
+			item_schema['type'] = 'string'
+		elif name == 'inReplyTo':
+			item_schema['base_type'] = 'string'
+			item_schema['type'] = 'string'
+		elif name == 'applicableRange':
+			item_schema['base_type'] = 'application/vnd.nextthought.contentrange.contentrangedescription'
+			item_schema['type'] = 'Object'
+		elif name == 'presentationProperties':
+			item_schema['base_type'] = 'string'
+			item_schema['type'] = 'Dict'
+		elif name == 'body':
+			types = set(item_schema['base_type'])
+			types.discard('named')
+			types.add('namedfile')
+			item_schema['base_type'] = [unicode(x) for x in sorted(types, reverse=True)]
 			item_schema['type'] = 'List'
-		elif name == 'inReplyTo':
-			item_schema['base_type'] = 'string'
-			item_schema['type'] = 'string'
-		elif name == 'inReplyTo':
-			item_schema['base_type'] = 'string'
-			item_schema['type'] = 'string'
-
+	
 @interface.implementer(IObjectJsonSchemaMaker)
 class NoteJsonSchemaMaker(object):
 
