@@ -11,15 +11,12 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
 import unittest
-from hamcrest import assert_that, equal_to, is_, none, not_none, has_property, not_none
-from . import mock_dataserver
-from nose.tools import assert_raises
+from hamcrest import assert_that, equal_to, is_, none, has_property, not_none
+from nti.dataserver.tests import mock_dataserver
 
 from nti.ntiids import ntiids
 import nti.dataserver.contenttypes as contenttypes
@@ -125,7 +122,6 @@ class TestDataserver(unittest.TestCase):
 
 		oid = toExternalOID( obj )
 		assert_that( mock_dataserver.current_mock_ds.get_by_oid( oid ), is_( obj ) )
-
 
 	@mock_dataserver.WithMockDSTrans
 	def test_get_ntiid_oid_system_user(self):
