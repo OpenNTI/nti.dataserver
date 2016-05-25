@@ -59,7 +59,7 @@ class NoteJsonSchemaMaker(object):
 
 	maker = NoteJsonSchemafier
 
-	def make_schema(self, schema=INote):
+	def make_schema(self, schema=INote, user=None):
 		result = LocatedExternalDict()
 		maker = self.maker(schema)
 		result[FIELDS] = maker.make_schema()
