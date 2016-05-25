@@ -57,4 +57,8 @@
 	<adapter factory=".file._ModeledContentFileObjectIO"
 			 for="..interfaces.IModeledContentFile"  />
 
+	<!-- Schema maker -->
+	<utility factory=".jsonschema.NoteJsonSchemaMaker" name="note" />
+
 </configure>
+

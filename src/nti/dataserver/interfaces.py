@@ -1265,6 +1265,7 @@ class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody, IFileC
 	"""
 
 	body = ExtendedCompoundModeledContentBody()
+INote.setTaggedValue('_ext_jsonschema', u'note')
 
 class IDeletedObjectPlaceholder(interface.Interface):
 	"""
