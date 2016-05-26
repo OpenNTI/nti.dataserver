@@ -8,6 +8,7 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
+	<!-- Adapters -->
 	<adapter factory=".note._NoteFileConstraints"
 			 for="nti.dataserver.interfaces.INote"
 			 provides="nti.namedfile.interfaces.IFileConstraints" />
@@ -15,4 +16,10 @@
 	<adapter factory=".note._note_transformer" />
 	<adapter factory=".note._note_transformer_factory" />
 
+	<!-- Decorators -->
+	<subscriber factory=".decorators._NoteRequestDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.dataserver.interfaces.INote
+					 pyramid.interfaces.IRequest" />
+		
 </configure>

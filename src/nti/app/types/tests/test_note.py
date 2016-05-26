@@ -11,6 +11,7 @@ import urllib
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import has_key
 from hamcrest import is_not
 from hamcrest import has_item
 from hamcrest import has_entry
@@ -66,6 +67,7 @@ class TestNote(ApplicationLayerTest):
 																		  'download_url', is_not(none())))))
 		assert_that(res.json_body, has_entry('OID', is_not(none())))
 
+		href = res.json_body['href']
 		with mock_dataserver.mock_db_trans(self.ds):
 			note = find_object_with_ntiid(res.json_body['OID'])
 			assert_that(note, is_not(none()))
@@ -78,6 +80,12 @@ class TestNote(ApplicationLayerTest):
 						   extra_environ=self._make_extra_environ(),
 						   status=200 )
 		assert_that(res, has_property('body', has_length(greater_than_or_equal_to(60))))
+
+		res = testapp.get( href + '/@@schema',
+						   extra_environ=self._make_extra_environ(),
+						   status=200 )
+		assert_that(res.json_body, has_key('Fields'))
+		assert_that(res.json_body, has_key('Constraints'))
 
 	@WithSharedApplicationMockDS
 	def test_update_note_direct_data(self):

@@ -18,9 +18,13 @@ from pyramid.interfaces import IRequest
 from pyramid.interfaces import IExceptionResponse
 
 from pyramid.view import view_config
+from pyramid.view import view_defaults
 
 from nti.app.authentication import get_remote_user
 
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.contentfile import file_contraints
 from nti.app.contentfile import validate_sources
 from nti.app.contentfile import get_content_files
 from nti.app.contentfile import read_multipart_sources
@@ -30,11 +34,17 @@ from nti.appserver.interfaces import INewObjectTransformer
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
+from nti.coremetadata.utils import make_schema
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import INote
 
+from nti.externalization.externalization import to_external_object
+
 from nti.namedfile.constraints import FileConstraints
+
+from nti.namedfile.interfaces import IFileConstraints
 
 @component.adapter(IRequest, INote)
 @interface.implementer(INewObjectTransformer)
@@ -72,6 +82,21 @@ class NotePutView(UGDPutView):
 			validate_attachments(self.remoteUser, contentObject, sources)
 		return result
 
+@view_config(context=INote)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_READ,
+			   request_method='GET',
+			   name="schema")
+class NoteSchemaView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		result = make_schema(INote, self.remoteUser)
+		constraints = file_contraints(self.context, self.remoteUser)
+		if constraints is not None:
+			result['Constraints']= to_external_object(constraints)
+		return result
+
 def validate_attachments(user, context, sources=()):
 	sources = sources or ()
 
@@ -83,5 +108,8 @@ def validate_attachments(user, context, sources=()):
 		source.__parent__ = context
 
 @component.adapter(INote)
-class _NoteFileConstraints(FileConstraints):
-	max_file_size = 10485760  # 10 MB
+@interface.implementer(IFileConstraints)
+def _NoteFileConstraints(note):
+	result = FileConstraints()
+	result.max_file_size = 10485760  # 10 MB
+	return result
