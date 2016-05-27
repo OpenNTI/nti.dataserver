@@ -1075,12 +1075,14 @@ class TestFunctionalChatserver(ApplicationLayerTest,_ChatserverTestMixin):
 				sessions[2] = self.Session( 'jason', strict_events=True )
 				chatserver = chat.Chatserver( sessions )
 
+				creator = sessions[1].the_user
 				note = Note()
-				note.creator = sessions[1].the_user
+				note.creator = creator
 				note.addSharingTarget( sessions[2].the_user )
 				self.ds.root._p_jar.add( note )
 				# If there's no __parent__, there's no link
 				note.__parent__ = self.ds.root
+				note.__name__ = 'himitsu'
 
 				# Check the permissions
 				assert_that( note, permits( 'sjohnson', auth.ACT_READ ) )
