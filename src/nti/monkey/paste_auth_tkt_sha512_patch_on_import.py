@@ -29,17 +29,17 @@ import repoze.who.plugins.auth_tkt
 from pyramid.authentication import parse_ticket as _pyramid_parse, BadTicket as _pyramid_BadTicket
 
 @functools.wraps(_pyramid_parse)
-def _parse_ticket( s, t, ip ):
+def _parse_ticket(s, t, ip, digest_algo=None):
 	try:
-		## The size of the digest changes from md5 to sha512. 
-		## Pyramid deals with this, paste does not
-		return _pyramid_parse( s, t, ip, 'sha512' )
+		# The size of the digest changes from md5 to sha512.
+		# Pyramid deals with this, paste does not
+		return _pyramid_parse(s, t, ip, 'sha512')
 	except _pyramid_BadTicket as e:
-		raise paste.auth.auth_tkt.BadTicket( e.args[0], e.expected )
+		raise paste.auth.auth_tkt.BadTicket(e.args[0], e.expected)
 
 def patch():
-	def _patch( mod ):
-		if getattr(mod, 'hashlib', None) == hashlib: ## Paste 2.0
+	def _patch(mod):
+		if getattr(mod, 'hashlib', None) == hashlib:  # Paste 2.0
 			org_init = mod.AuthTicket.__init__
 			def new_init(self, *args, **kwargs):
 				digest_algo = kwargs.pop('digest_algo', None)
@@ -48,7 +48,7 @@ def patch():
 				kwargs['digest_algo'] = digest_algo
 				org_init(self, *args, **kwargs)
 			mod.AuthTicket.__init__ = new_init
-		## Paste 1.7.5.x and 2.0.x
+		# Paste 1.7.5.x and 2.0.x
 		mod.md5 = sha512
 		mod.DEFAULT_DIGEST = sha512
 		mod.parse_ticket = _parse_ticket
@@ -57,21 +57,21 @@ def patch():
 		from repoze.who import _auth_tkt as who_auth_tkt
 		# Match the exceptions
 		paste.auth.auth_tkt.BadTicket = who_auth_tkt.BadTicket
-		_patch( who_auth_tkt )
+		_patch(who_auth_tkt)
 	except ImportError:
 		who_auth_tkt = None
 
 	try:
 		# We only have to change these here...
-		_patch( paste.auth.auth_tkt )
+		_patch(paste.auth.auth_tkt)
 		# ...because repoze imports the module (in 2.0)
 		if who_auth_tkt is None:
 			assert repoze.who.plugins.auth_tkt.auth_tkt == paste.auth.auth_tkt
-		else: # 2.1
+		else:  # 2.1
 			assert repoze.who.plugins.auth_tkt.auth_tkt == who_auth_tkt
 
 		assert 'parse_ticket' not in repoze.who.plugins.auth_tkt.__dict__
 	except AttributeError:
-		raise ImportError( "Paste does not use MD5 anymore. Incompatible change. FIXME" )
+		raise ImportError("Paste does not use MD5 anymore. Incompatible change. FIXME")
 
 patch()

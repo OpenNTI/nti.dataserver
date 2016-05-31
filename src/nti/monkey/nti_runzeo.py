@@ -35,6 +35,7 @@ relstorage_explicitly_close_memcache_patch_on_import.patch()
 # (XXX: Except we probably do, definitely under pypy.)
 
 import sys
+
 from pkg_resources import load_entry_point, get_distribution
 
 def main():

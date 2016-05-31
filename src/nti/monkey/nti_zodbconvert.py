@@ -16,6 +16,7 @@ from nti.monkey import relstorage_patch_all_on_import
 relstorage_patch_all_on_import.patch()
 
 import sys
+
 from pkg_resources import load_entry_point
 
 def main():
