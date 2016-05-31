@@ -20,13 +20,16 @@ from nti.app.users.utils import get_verification_signature_data
 from nti.app.users.utils import generate_verification_email_url
 
 from nti.dataserver.users import User
-from nti.dataserver.users.interfaces import IUserProfile
+
 from nti.dataserver.users.utils import is_email_verified
 
-from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.users.interfaces import IUserProfile
+
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
-from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.dataserver.tests import mock_dataserver
 
 class TestMailViewFunctions(mock_dataserver.DataserverLayerTest):
 

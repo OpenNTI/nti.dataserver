@@ -17,9 +17,11 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
+from collections import Mapping
 
 from zope import component
 from zope import interface
+
 from zope.authentication import interfaces
 
 from pyramid.interfaces import IAuthenticationPolicy
@@ -198,15 +200,19 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 		#
 		# We fix both issues here
 
+		remote = request.environ.get('REMOTE_USER_DATA', b'')
+		if not isinstance(remote, Mapping):
+			remote = {'username': remote}
+
 		api = self._getAPI(request)
 		identity = (self._get_identity(request) or {}).copy()
 		fake_identity = {
+			'userdata': remote,
 			'repoze.who.userid': principal,
 			'max_age': str(self._cookie_timeout),
 			'tokens': request.environ.get('REMOTE_USER_TOKENS', ()),
-			'userdata': request.environ.get('REMOTE_USER_DATA', b'')
 		}
-		if (principal != identity.get('repoze.who.userid')  # start from scratch for a changed user
+		if (	principal != identity.get('repoze.who.userid')  # start from scratch for a changed user
 			or 'identifier' not in identity  # also from scratch, remembering unconditionally, usually from app code
 			or 'AUTH_TYPE' not in request.environ):  # also from scratch (typically basic auth)
 			fake_identity['identifier'] = api.name_registry[self._identifier_id]

@@ -10,8 +10,9 @@ __docformat__ = "restructuredtext en"
 from hamcrest import not_none
 from hamcrest import assert_that
 
-import isodate
 import datetime
+
+import isodate
 
 from zope.dottedname import resolve as dottedname
 

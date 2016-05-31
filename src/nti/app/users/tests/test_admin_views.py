@@ -17,15 +17,19 @@ from hamcrest import has_property
 
 from zope import lifecycleevent
 
-from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
+
+from nti.dataserver.users import User
+
 from nti.dataserver.users.interfaces import IUserProfile
+
 from nti.dataserver.users.utils import is_email_verified
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 class TestAdminViews(ApplicationLayerTest):
 

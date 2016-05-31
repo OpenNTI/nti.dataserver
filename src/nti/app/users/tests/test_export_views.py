@@ -18,24 +18,29 @@ import zc.intid as zc_intid
 
 from zope import component
 
-from nti.chatserver.meeting import _Meeting as Meet
-from nti.chatserver.messageinfo import MessageInfo as Msg
 from nti.chatserver.interfaces import IUserTranscriptStorage
 
-from nti.dataserver.users import User
+from nti.chatserver.messageinfo import MessageInfo as Msg
+
+from nti.chatserver.meeting import _Meeting as Meet
+
 from nti.dataserver.contenttypes import Note
+
+from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_ntiid_oid
 
-from nti.dataserver.tests import mock_dataserver
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
-from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.dataserver.tests import mock_dataserver
 
 class TestUserExportViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_export_user_objects(self):
+
 		with mock_dataserver.mock_db_trans(self.ds) as conn:
 			user = User.get_user(self.default_username)
 			note = Note()
@@ -120,6 +125,7 @@ class TestUserExportViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_export_users(self):
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user(username='nti@nt.com',
 							  external_value={u'email':u"nti@nt.com",
@@ -155,6 +161,7 @@ class TestUserExportViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_object_resolver(self):
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.get_user(self.default_username)
 			note = Note()

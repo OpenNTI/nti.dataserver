@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -16,15 +15,17 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
 
+from nti.dataserver.contenttypes import Note
+
 from nti.dataserver.users import User
 from nti.dataserver.users import Community
-from nti.dataserver.contenttypes import Note
 from nti.dataserver.users.interfaces import IHiddenMembership
 
-from nti.dataserver.tests import mock_dataserver
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
-from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.dataserver.tests import mock_dataserver
 
 class TestCommunityViews(ApplicationLayerTest):
 
@@ -144,9 +145,9 @@ class TestCommunityViews(ApplicationLayerTest):
 		res = self.testapp.get(path, status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
 
-		res = self.testapp.get(	path,
-					  			extra_environ=self._make_extra_environ(user="ichigo"),
-					  			status=200)
+		res = self.testapp.get(path,
+					  		   extra_environ=self._make_extra_environ(user="ichigo"),
+					  		   status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
 
 		self.testapp.get(path,
@@ -156,7 +157,7 @@ class TestCommunityViews(ApplicationLayerTest):
 		hide_path = '/dataserver2/users/bleach/hide'
 		self.testapp.post(hide_path, status=200)
 
-		res = self.testapp.get(	path,
+		res = self.testapp.get(path,
 					  			extra_environ=self._make_extra_environ(user="ichigo"),
 					  			status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(1)))
@@ -170,7 +171,7 @@ class TestCommunityViews(ApplicationLayerTest):
 		unhide_path = '/dataserver2/users/bleach/unhide'
 		self.testapp.post(unhide_path, status=200)
 
-		res = self.testapp.get(	path,
+		res = self.testapp.get(path,
 					  			extra_environ=self._make_extra_environ(user="ichigo"),
 					  			status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(2)))

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from hamcrest.library.number.ordering_comparison import greater_than_or_equal_to
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -13,18 +12,22 @@ from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
+from hamcrest import greater_than_or_equal_to
 
 from zope import interface
 
-from nti.dataserver.users import User
-from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
-from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.users import User
+from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.app.testing.webtest import TestApp
-from nti.app.testing.decorators import WithSharedApplicationMockDS
+
 from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.dataserver.tests import mock_dataserver
 
 class TestApplicationUserProfileViews(ApplicationLayerTest):
 
