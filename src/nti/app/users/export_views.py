@@ -29,7 +29,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.app.users import is_true
 from nti.app.users import get_mime_type
 from nti.app.users import username_search
 from nti.app.users import parse_mime_types
@@ -42,6 +41,8 @@ from nti.common.maps import CaseInsensitiveDict
 from nti.common.property import Lazy
 
 from nti.common.proxy import removeAllProxies
+
+from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
 

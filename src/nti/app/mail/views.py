@@ -29,7 +29,7 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.common.property import Lazy
 
-from nti.common.string import TRUE_VALUES
+from nti.common.string import is_true
 
 from nti.contentfragments.html import sanitize_user_html
 
@@ -44,13 +44,9 @@ from nti.externalization.internalization import update_from_external_object
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable
 
-def _is_true(t):
-	result = bool(t and str(t).lower() in TRUE_VALUES)
-	return result
-
-AVATAR_BG_COLORS = [ "#5E35B1","#3949AB","#1E88E5","#039BE5",
-					"#00ACC1","#00897B","#43A047","#7CB342",
-					"#C0CA33","#FDD835","#FFB300", "#FB8C00","#F4511E"]
+AVATAR_BG_COLORS = ["#5E35B1", "#3949AB", "#1E88E5", "#039BE5",
+					"#00ACC1", "#00897B", "#43A047", "#7CB342",
+					"#C0CA33", "#FDD835", "#FFB300", "#FB8C00", "#F4511E"]
 
 class AbstractMemberEmailView(AbstractAuthenticatedView,
 							  ModeledContentUploadRequestUtilsMixin):
@@ -73,7 +69,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 
 	@Lazy
 	def _sender_reply_addr(self):
-		result = self._email_address_for_user( self.sender )
+		result = self._email_address_for_user(self.sender)
 		return result or self._no_reply_addr
 
 	@Lazy
@@ -83,12 +79,12 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 	@Lazy
 	def support_email(self):
 		policy = component.getUtility(ISitePolicyUserEventListener)
-		support_email = getattr( policy, 'SUPPORT_EMAIL', 'support@nextthought.com' )
+		support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
 		return support_email
 
 	@Lazy
 	def sender_avatar_url(self):
-		avatar_container = IAvatarURL( self.sender )
+		avatar_container = IAvatarURL(self.sender)
 		if avatar_container.avatarURL:
 			return self.request.resource_url(self.sender, '@@avatar')
 		return None
@@ -96,10 +92,10 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 	@Lazy
 	def sender_avatar_initials(self):
 		# XXX: Logic copied from digest_email.py
-		named = IFriendlyNamed( self.sender )
+		named = IFriendlyNamed(self.sender)
 		human_name = None
 		if named and named.realname:
-			human_name = HumanName( named.realname )
+			human_name = HumanName(named.realname)
 		# User's initials if we have both first and last
 		if human_name and human_name.first and human_name.last:
 			result = human_name.first[0] + human_name.last[0]
@@ -113,9 +109,9 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 	def sender_avatar_bg_color(self):
 		# Hash the username into our BG color array.
 		username = self.sender.username
-		username_hash = hashlib.md5( username.lower() ).hexdigest()
-		username_hash = int( username_hash, 16 )
-		index = username_hash % len( AVATAR_BG_COLORS )
+		username_hash = hashlib.md5(username.lower()).hexdigest()
+		username_hash = int(username_hash, 16)
+		index = username_hash % len(AVATAR_BG_COLORS)
 		result = AVATAR_BG_COLORS[ index ]
 		return result
 
@@ -126,10 +122,10 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 
 	@Lazy
 	def email_externally(self):
-		settings = component.getUtility( IApplicationSettings )
-		val = settings.get( 'email_externally',
-							self.EMAIL_EXTERNALLY_DEFAULT )
-		return _is_true( val )
+		settings = component.getUtility(IApplicationSettings)
+		val = settings.get('email_externally',
+							self.EMAIL_EXTERNALLY_DEFAULT)
+		return is_true(val)
 
 	def __accept_user(self, user):
 		# Only email externally if configured to do so. Otherwise, only
@@ -143,7 +139,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		if not self.email_externally:
 			email = getattr(IEmailAddressable(user, None), 'email', None)
 			return 	email	\
-				and (	email == 'jamadden@ou.edu' \
+				and (email == 'jamadden@ou.edu' \
 					or	email == 'jzuech3@gmail.com' \
 					or 	email.endswith('@nextthought.com'))
 		return True
@@ -191,21 +187,21 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		raise NotImplementedError()
 
 	def readInput(self):
-		email_json = super(AbstractMemberEmailView,self).readInput()
-		mail_obj = find_factory_for( email_json )()
+		email_json = super(AbstractMemberEmailView, self).readInput()
+		mail_obj = find_factory_for(email_json)()
 		update_from_external_object(mail_obj, email_json)
-		if not IEmail.providedBy( mail_obj ):
+		if not IEmail.providedBy(mail_obj):
 			raise hexc.HTTPUnprocessableEntity()
 		return mail_obj
 
 	def _email_address_for_user(self, user):
-		addr = IEmailAddressable( user, None )
+		addr = IEmailAddressable(user, None)
 		return addr and addr.email
 
 	def get_template_args(self, body, to_addr):
 		result = {}
 		result['body'] = body
-		result['text_body'] = IPlainTextContentFragment( body )
+		result['text_body'] = IPlainTextContentFragment(body)
 		result['email_to'] = to_addr
 		result['support_email'] = self.support_email
 		result['sender_name'] = self.sender_display_name
@@ -217,20 +213,20 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 
 	def _get_body(self, email):
 		# Make sure we sanitize our user input
-		body = sanitize_user_html( email.Body )
+		body = sanitize_user_html(email.Body)
 		return body
 
 	def _get_reply_addr(self, to_user, email):
 		if email.NoReply:
 			result = self._no_reply_addr
 		else:
-			result = self.reply_addr_for_recipient( to_user )
+			result = self.reply_addr_for_recipient(to_user)
 		return result
 
 	def send_email(self, to_user, subject, body, email):
-		reply_addr = self._get_reply_addr( to_user, email )
-		to_addr = self._email_address_for_user( to_user )
-		user_args = self.get_template_args( body, to_addr )
+		reply_addr = self._get_reply_addr(to_user, email)
+		to_addr = self._email_address_for_user(to_user)
+		user_args = self.get_template_args(body, to_addr)
 		try:
 			mailer = component.getUtility(ITemplatedMailer)
 			mailer.queue_simple_html_text_email(
@@ -240,7 +236,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 								recipients=[to_addr],
 								template_args=user_args,
 								request=self.request,
-								text_template_extension=".mak" )
+								text_template_extension=".mak")
 		except Exception:
 			logger.exception('Error while sending email to %s', to_user)
 
@@ -250,20 +246,20 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 
 		email = self.readInput()
 		subject = email.Subject or self._default_subject()
-		body = self._get_body( email )
+		body = self._get_body(email)
 		send_count = 0
 
 		for member in self.iter_members():
-			if self.__accept_user( member ):
+			if self.__accept_user(member):
 				send_count += 1
-				self.send_email( member, subject, body, email )
+				self.send_email(member, subject, body, email)
 
 		# Now copy to author
-		if email.Copy and self.__accept_user( self.sender ):
+		if email.Copy and self.__accept_user(self.sender):
 			subject = '[COPY] %s' % subject
-			self.send_email( self.sender, subject, body, email )
+			self.send_email(self.sender, subject, body, email)
 
-		logger.info( '%s sent %s emails to %s (NoReply=%s) (sender_reply=%s)',
+		logger.info('%s sent %s emails to %s (NoReply=%s) (sender_reply=%s)',
 					self.remoteUser, send_count, self._context_logged_info,
 					email.NoReply, self._sender_reply_addr)
 		return hexc.HTTPNoContent()

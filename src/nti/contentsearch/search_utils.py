@@ -18,29 +18,31 @@ import functools
 
 from zope import component
 
-from nti.common.string import safestr
+from nti.common.string import is_true
+from nti.common.string import to_unicode
+
+from nti.dataserver.interfaces import IDataserverTransactionRunner
 
 from nti.dataserver.users import User
-from nti.dataserver.interfaces import IDataserverTransactionRunner
 
 from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import is_ntiid_of_type
 
-from .common import sort_search_types
-from .common import get_indexable_types
-from .common import get_type_from_mimetype
+from nti.contentsearch.common import sort_search_types
+from nti.contentsearch.common import get_indexable_types
+from nti.contentsearch.common import get_type_from_mimetype
 
-from .constants import invalid_type_
+from nti.contentsearch.constants import invalid_type_
 
-from .content_utils import get_collection_root
-from .content_utils import get_content_translation_table
+from nti.contentsearch.content_utils import get_collection_root
+from nti.contentsearch.content_utils import get_content_translation_table
 
-from .interfaces import ISearchQuery
-from .interfaces import IIndexManager
-from .interfaces import ISearchPackageResolver
+from nti.contentsearch.interfaces import ISearchQuery
+from nti.contentsearch.interfaces import IIndexManager
+from nti.contentsearch.interfaces import ISearchPackageResolver
 
-from .search_query import QueryObject
-from .search_query import DateTimeRange
+from nti.contentsearch.search_query import QueryObject
+from nti.contentsearch.search_query import DateTimeRange
 
 def _get_current_request():
 	result = None
@@ -109,9 +111,6 @@ def register_content(package=None, indexname=None, indexdir=None, ntiid=None, in
 		logger.exception("Failed to add book search %s", indexname)
 
 _extractor_pe = re.compile('[?*]*(.*)')
-
-def is_true(v):
-	return v is not None and str(v).lower() in ('1', 'true', 'yes', 'y', 't')
 
 def clean_search_query(query, language='en'):
 	temp = re.sub('[*?]', '', query)
@@ -197,7 +196,7 @@ def create_queryobject(username, params):
 		if name not in ISearchQuery and name not in accepted_keys:
 			value = args[name]
 			if value:
-				context[safestr(name)] = safestr(value)
+				context[to_unicode(name)] = to_unicode(value)
 			del args[name]
 	# remove to be resetted
 	for name in ('ntiid', 'term', 'username'):
@@ -206,7 +205,7 @@ def create_queryobject(username, params):
 	args['context'] = context
 
 	term = params.get('term', u'')
-	term = clean_search_query(safestr(term))
+	term = clean_search_query(to_unicode(term))
 	args['term'] = term
 
 	args['username'] = username

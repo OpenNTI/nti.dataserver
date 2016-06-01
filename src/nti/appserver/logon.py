@@ -57,9 +57,11 @@ from zope.traversing import api as ztraversing
 
 import pyramid.request
 import pyramid.interfaces
-from pyramid.view import view_config
-from pyramid import security as sec
 import pyramid.httpexceptions as hexc
+
+from pyramid import security as sec
+
+from pyramid.view import view_config
 
 import requests
 from requests.exceptions import RequestException
@@ -85,19 +87,22 @@ from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
 
-from . import interfaces as app_interfaces
+from nti.appserver import interfaces as app_interfaces
 
-from ._util import logon_userid_with_request
+from nti.appserver._util import logon_userid_with_request
 
-from .account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
-from .account_recovery_views import REL_FORGOT_USERNAME, REL_FORGOT_PASSCODE, REL_RESET_PASSCODE
+from nti.appserver.account_recovery_views import REL_RESET_PASSCODE
+from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT
+from nti.appserver.account_recovery_views import REL_FORGOT_PASSCODE
+from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME
+from nti.appserver.account_creation_views import REL_PREFLIGHT_CREATE_ACCOUNT
 
-from .interfaces import ILogonPong
+from nti.appserver.interfaces import ILogonPong
 
-from .link_providers import flag_link_provider
-from .link_providers import unique_link_providers
+from nti.appserver.link_providers import flag_link_provider
+from nti.appserver.link_providers import unique_link_providers
 
-from .pyramid_authorization import has_permission
+from nti.appserver.pyramid_authorization import has_permission
 
 #: Link relationship indicating a welcome page
 #: Fetching the href of this link returns either a content page
@@ -1195,11 +1200,9 @@ import os
 import hashlib
 from urlparse import urljoin
 
-from nti.common.string import TRUE_VALUES
+from nti.appserver.interfaces import IGoogleLogonSettings
 
 from nti.utils.interfaces import IOAuthKeys
-
-from .interfaces import IGoogleLogonSettings
 
 OPENID_CONFIGURATION = None
 LOGON_GOOGLE_OAUTH2 = 'logon.google.oauth2'
@@ -1207,9 +1210,6 @@ DEFAULT_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 DEFAULT_TOKEN_URL = 'https://www.googleapis.com/oauth2/v4/token'
 DEFAULT_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 DISCOVERY_DOC_URL = 'https://accounts.google.com/.well-known/openid-configuration'
-
-def is_true(s):
-	return bool(s and str(s).lower() in TRUE_VALUES)
 
 def _redirect_uri(request):
 	root = request.route_path('objects.generic.traversal', traverse=())

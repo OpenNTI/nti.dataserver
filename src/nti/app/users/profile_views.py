@@ -31,11 +31,11 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.appserver.utils import is_true
-
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.common.string import safestr
+from nti.common.string import to_unicode
+
+from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
 
@@ -383,7 +383,7 @@ class UserProfileUpdateView(AbstractAuthenticatedView,
 		for name, sch_def in fields.items():
 			value = values.get(name, None)
 			if value is not None:
-				value = safestr(value)
+				value = to_unicode(value)
 				external[name] = sch_def.fromUnicode(unicode(value)) if value else None
 
 		restore_iface = False

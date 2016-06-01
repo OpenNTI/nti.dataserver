@@ -18,8 +18,6 @@ from zope import component
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.common.string import TRUE_VALUES
-
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 
@@ -29,10 +27,6 @@ VERIFY_USER_EMAIL_VIEW = "verify_user_email"
 REQUEST_EMAIL_VERFICATION_VIEW = "request_email_verification"
 SEND_USER_EMAIL_VERFICATION_VIEW = "send_user_email_verification"
 VERIFY_USER_EMAIL_WITH_TOKEN_VIEW = "verify_user_email_with_token"
-
-def is_true(value):
-	value = value if isinstance(value, six.string_types) else str(value)
-	return value.lower() in TRUE_VALUES
 
 def _make_min_max_btree_range(search_term):
 	min_inclusive = search_term  # start here

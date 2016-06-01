@@ -41,7 +41,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.common.string import TRUE_VALUES
+from nti.common.string import is_true
 
 from nti.contentlibrary.indexed_data import get_library_catalog
 
@@ -75,9 +75,6 @@ def _get_package_ntiids(values):
 	if ntiids and isinstance(ntiids, six.string_types):
 		ntiids = ntiids.split()
 	return ntiids
-
-def _is_true(v):
-	return v and str(v).lower() in TRUE_VALUES
 
 def _read_input(request):
 	result = CaseInsensitiveDict()
@@ -150,7 +147,7 @@ class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
 		total = 0
 		values = self.readInput()
 		ntiids = _get_package_ntiids(values)
-		force = _is_true(values.get('force'))
+		force = is_true(values.get('force'))
 
 		items = result[ITEMS] = {}
 		for package in yield_content_packages(ntiids):

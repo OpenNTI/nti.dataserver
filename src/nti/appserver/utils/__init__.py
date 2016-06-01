@@ -30,6 +30,3 @@ class _JsonBodyView(object):
         else:
             values = {}
         return values
-
-def is_true(v):
-    return v is not None and str(v).lower() in ('1', 'true', 'yes', 'y', 't')
