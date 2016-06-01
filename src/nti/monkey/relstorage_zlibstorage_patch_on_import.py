@@ -64,7 +64,9 @@ def _patch_relstorage_registerDB():
 		# when the version changes.
 		try:
 			super(RelStorage, self).registerDB(db)
-			raise TypeError("Internals changed, check patch")
+			# ZODB 4.3.0 No longer raise AttributeError when registering the db 
+			# so there is no need to raise a TypeError checking for internals
+			# raise TypeError("Internals changed, check patch")
 		except AttributeError:
 			# We expect the MRO to be
 			# [<class 'relstorage.storage.RelStorage'>,
