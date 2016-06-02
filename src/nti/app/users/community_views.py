@@ -26,6 +26,7 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.app.users import MessageFactory as _
 from nti.app.users.entity_view_mixins import EntityActivityViewMixin
 
 from nti.common.maps import CaseInsensitiveDict
@@ -67,13 +68,14 @@ class CreateCommunityView(AbstractAuthenticatedView,
 
 	def __call__(self):
 		externalValue = self.readInput()
-		username = externalValue.pop('username', None) or externalValue.pop('Username', None)
+		username = 		externalValue.pop('username', None) \
+					or	externalValue.pop('Username', None)
 		if not username:
-			raise hexc.HTTPUnprocessableEntity("Username not specified")
+			raise hexc.HTTPUnprocessableEntity(_("Username not specified."))
 
 		community = Community.get_community(username)
 		if community is not None:
-			raise hexc.HTTPUnprocessableEntity("Community already exists")
+			raise hexc.HTTPUnprocessableEntity(_("Community already exists."))
 
 		args = {'username': username}
 		args['external_value'] = externalValue
