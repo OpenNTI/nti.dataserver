@@ -24,6 +24,11 @@ from zope.i18n.interfaces import IUserPreferredLanguages
 
 from pyramid.threadlocal import get_current_request
 
+from nti.appserver.link_providers import provide_links
+
+from nti.appserver.interfaces import ILogonPong
+from nti.appserver.interfaces import IModeratorDealtWithFlag
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IContainerContext
 from nti.dataserver.interfaces import IContextAnnotatable
@@ -34,10 +39,11 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from .link_providers import provide_links
-
-from .interfaces import ILogonPong
-from .interfaces import IModeratorDealtWithFlag
+def _nameparser_suffixes(config):
+	result = set(getattr(config, 'SUFFIXES', ()))
+	result.update(getattr(config, 'SUFFIX_ACRONYMS', ()))
+	result.update(getattr(config, 'SUFFIX_NOT_ACRONYMS', ()))
+	return result
 
 @component.adapter(ILogonPong)
 @interface.implementer(IExternalObjectDecorator)
@@ -79,6 +85,7 @@ class _EnglishFirstAndLastNameDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
+	
 	def decorateExternalMapping(self, original, external):
 		realname = external.get('realname')
 		if not realname or '@' in realname or realname == external.get('ID'):
@@ -88,7 +95,7 @@ class _EnglishFirstAndLastNameDecorator(object):
 		if preflangs and 'en' == (preflangs.getPreferredLanguages() or (None,))[0]:
 			# FIXME: Duplicated from users.user_profile
 			# CFA: another suffix we see from certain financial quorters
-			suffixes = nameparser_config.SUFFIXES | set(('cfa',))
+			suffixes = _nameparser_suffixes(nameparser_config) | set(('cfa',))
 			constants = nameparser_config.Constants(suffixes=suffixes)
 
 			human_name = nameparser.HumanName(realname, constants=constants)

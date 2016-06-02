@@ -92,6 +92,12 @@ class _ExistingDictReadFieldPropertyStoredThroughField(FP):
 
 # TODO: Isn't this extremely similar to dm.zope.schema? Did we forget about that?
 
+def _nameparser_suffixes(config):
+	result = set(getattr(config, 'SUFFIXES', ()))
+	result.update(getattr(config, 'SUFFIX_ACRONYMS', ()))
+	result.update(getattr(config, 'SUFFIX_NOT_ACRONYMS', ()))
+	return result
+
 def get_searchable_realname_parts(realname):
 	nameparser_config = getattr(nameparser, 'config')
 
@@ -100,7 +106,7 @@ def get_searchable_realname_parts(realname):
 	# this handle more complex naming scenarios?
 	if realname:
 		# CFA: another suffix we see from certain financial quorters
-		suffixes = nameparser_config.SUFFIXES | set(('cfa',))
+		suffixes = _nameparser_suffixes(nameparser_config) | set(('cfa',))
 		constants = nameparser_config.Constants(suffix_acronyms=suffixes)
 		name = nameparser.HumanName(realname, constants=constants)
 		# We try to be a bit more sophisticated around certain
