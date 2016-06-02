@@ -55,6 +55,9 @@ from nti.externalization.representation import WithRepr
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+from nti.utils.nameparser import constants as np_constants
+from nti.utils.nameparser import all_prefixes as np_all_prefixes
+
 class _ExistingDictReadFieldPropertyStoredThroughField(FP):
 	"""
 	Migration from existing data fields in instance dictionaries to
@@ -92,23 +95,14 @@ class _ExistingDictReadFieldPropertyStoredThroughField(FP):
 
 # TODO: Isn't this extremely similar to dm.zope.schema? Did we forget about that?
 
-def _nameparser_suffixes(config):
-	result = set(getattr(config, 'SUFFIXES', ()))
-	result.update(getattr(config, 'SUFFIX_ACRONYMS', ()))
-	result.update(getattr(config, 'SUFFIX_NOT_ACRONYMS', ()))
-	return result
-
 def get_searchable_realname_parts(realname):
-	nameparser_config = getattr(nameparser, 'config')
-
 	# This implementation is fairly naive, returning
 	# first, middle, and last if they are not blank. How does
 	# this handle more complex naming scenarios?
 	if realname:
 		# CFA: another suffix we see from certain financial quorters
-		suffixes = _nameparser_suffixes(nameparser_config) | set(('cfa',))
-		constants = nameparser_config.Constants(suffix_acronyms=suffixes)
-		name = nameparser.HumanName(realname, constants=constants)
+		name = nameparser.HumanName(realname, 
+									constants=np_constants(extra_suffixes=('cfa',)))
 		# We try to be a bit more sophisticated around certain
 		# naming scenarios.
 		if name.first == realname and ' ' in realname:
@@ -118,9 +112,9 @@ def get_searchable_realname_parts(realname):
 			# of this name and try again (avoid doing this if there are simply
 			# no components, as can happen on the mathcounts site or in tests)
 			splits = realname.lower().split()
-			prefixes = nameparser_config.PREFIXES.symmetric_difference(splits)
-			constants = nameparser_config.Constants(prefixes=prefixes, suffixes=suffixes)
-			name = nameparser.HumanName(realname, constants=constants)
+			prefixes = np_all_prefixes().symmetric_difference(splits)
+			constants = np_constants(prefixes=prefixes, extra_suffixes=('cfa',))
+			name = nameparser.HumanName(realname, constants=constants())
 		# because we are cached, be sure to return an immutable value
 		return tuple([x for x in name[1:4] if x])
 
