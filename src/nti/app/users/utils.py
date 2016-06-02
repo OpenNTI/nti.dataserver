@@ -128,8 +128,9 @@ def generate_verification_email_url(user, request=None, host_url=None,
 	except AttributeError:
 		host_url = None
 
-	signature, token = generate_mail_verification_pair(user=user, email=email,
-														secret_key=secret_key)
+	signature, token = generate_mail_verification_pair(user=user,
+													   email=email,
+													   secret_key=secret_key)
 	params = urlencode({'username': user.username.lower(),
 						'signature': signature})
 

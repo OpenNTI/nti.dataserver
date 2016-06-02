@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Views and other objects relating to functions exposed for dynamic friends lists.
-
 .. $Id$
 """
 
