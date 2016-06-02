@@ -9,10 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 import nameparser
-nameparser_config = getattr(nameparser, "config")
 
 from zope import component
 from zope import interface
@@ -23,6 +20,8 @@ from zope.i18n import translate
 from zope.i18n.interfaces import IUserPreferredLanguages
 
 from pyramid.threadlocal import get_current_request
+
+from nti.appserver import MessageFactory as _
 
 from nti.appserver.link_providers import provide_links
 
@@ -39,11 +38,7 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-def _nameparser_suffixes(config):
-	result = set(getattr(config, 'SUFFIXES', ()))
-	result.update(getattr(config, 'SUFFIX_ACRONYMS', ()))
-	result.update(getattr(config, 'SUFFIX_NOT_ACRONYMS', ()))
-	return result
+from nti.utils.nameparser import constants as np_constants
 
 @component.adapter(ILogonPong)
 @interface.implementer(IExternalObjectDecorator)
@@ -95,13 +90,10 @@ class _EnglishFirstAndLastNameDecorator(object):
 		if preflangs and 'en' == (preflangs.getPreferredLanguages() or (None,))[0]:
 			# FIXME: Duplicated from users.user_profile
 			# CFA: another suffix we see from certain financial quorters
-			suffixes = _nameparser_suffixes(nameparser_config) | set(('cfa',))
-			constants = nameparser_config.Constants(suffixes=suffixes)
-
-			human_name = nameparser.HumanName(realname, constants=constants)
-			first = human_name.first or human_name.last
+			human_name = nameparser.HumanName(realname, 
+											  constants=np_constants(extra_suffixes=('cfa',)))
 			last = human_name.last or human_name.first
-
+			first = human_name.first or human_name.last
 			if first:
 				external['NonI18NFirstName'] = first
 				external['NonI18NLastName'] = last
