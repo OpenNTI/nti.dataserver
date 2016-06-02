@@ -35,7 +35,7 @@ from nti.app.users import MessageFactory as _
 # See :func:`exit_dfl_view` for what can be done with it.
 from nti.app.users import REL_MY_MEMBERSHIP
 
-from nti.app.users.entity_view_mixins import EntityActivityViewMixin
+from nti.app.users.view_mixins import EntityActivityViewMixin
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
 

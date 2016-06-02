@@ -27,7 +27,8 @@ from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMi
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.users import MessageFactory as _
-from nti.app.users.entity_view_mixins import EntityActivityViewMixin
+
+from nti.app.users.view_mixins import EntityActivityViewMixin
 
 from nti.common.maps import CaseInsensitiveDict
 
