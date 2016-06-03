@@ -22,6 +22,7 @@ from nti.invitations.model import Invitation
 
 from nti.invitations.utils import get_expired_invitation_ids
 from nti.invitations.utils import get_pending_invitation_ids
+from nti.invitations.utils import get_random_invitation_code
 
 from nti.invitations.tests import SharedConfiguringTestLayer
 
@@ -69,3 +70,7 @@ class TestUtils(unittest.TestCase):
 
 		result = get_expired_invitation_ids("aizen", catalog=catalog)
 		assert_that(result, has_length(0))
+
+	def test_get_random_invitation_code(self):
+		code = get_random_invitation_code()
+		assert_that(code, has_length(12))
