@@ -87,9 +87,8 @@ class RetainSetIndex(AttributeSetIndex):
 		value = {v for v in self.to_iterable(value) if v is not None}
 		old = self.documents_to_values.get(doc_id) or set()
 		if value.difference(old):
-			value.update(old or ())
-			# call zc.catalog.index.SetIndex which does the actual
-			# value indexation
+			value.update(old)
+			# call zc.catalog.index.SetIndex which does the actual indexation
 			result = ZC_SetIndex.index_doc(self, doc_id, value)
 			return result
 	index_containers = do_index_doc
@@ -117,8 +116,7 @@ class RetainSetIndex(AttributeSetIndex):
 		for v in to_iterable(containers):
 			old.discard(v)
 		if old:
-			# call zc.catalog.index.SetIndex which does the actual
-			# value indexation
+			# call zc.catalog.index.SetIndex which does the actual indexation
 			ZC_SetIndex.index_doc(self, doc_id, old)
 		else:
 			super(RetainSetIndex, self).unindex_doc(doc_id)
