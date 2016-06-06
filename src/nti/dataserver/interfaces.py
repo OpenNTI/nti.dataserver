@@ -1461,18 +1461,6 @@ class IUserBlacklistedStorage(interface.Interface):
 		"""
 	reset = clear
 
-class IInteractionQuerier(interface.Interface):
-	"""
-	Marker interface for a utility to query a security interaction.
-
-	We include this utility for testing purposes
-	"""
-
-	def queryInteraction():
-		"""
-		return the current security interaction
-		"""
-
 # Invitations
 from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationActor
@@ -1488,6 +1476,21 @@ class IJoinEntityInvitationActor(IInvitationActor):
 	"""
 	Actor to join a user to an entity
 	"""
+
+# XXX Now make all the interfaces previously
+# declared implement the correct interface
+# This is mostly an optimization, right?
+def __setup_interfaces():
+	from nti.mimetype.mimetype import nti_mimetype_with_class
+	for x in sys.modules['nti.dataserver.interfaces'].__dict__.itervalues():
+		if interface.interfaces.IInterface.providedBy( x ):
+			if x.extends( IModeledContent ) and not IContentTypeAware.providedBy( x ):
+				name = x.__name__[1:] # strip the leading I
+				x.mime_type = nti_mimetype_with_class( name )
+				interface.alsoProvides( x, IContentTypeAware )
+
+__setup_interfaces()
+del __setup_interfaces
 
 # Weak Refs and related BWC exports
 
@@ -1512,18 +1515,3 @@ class IEnrolledContainer(interface.Interface):
 deprecated('ISectionInfoContainer', 'No longer used')
 class ISectionInfoContainer(interface.Interface):
 	pass
-
-# XXX Now make all the interfaces previously
-# declared implement the correct interface
-# This is mostly an optimization, right?
-def __setup_interfaces():
-	from nti.mimetype.mimetype import nti_mimetype_with_class
-	for x in sys.modules['nti.dataserver.interfaces'].__dict__.itervalues():
-		if interface.interfaces.IInterface.providedBy( x ):
-			if x.extends( IModeledContent ) and not IContentTypeAware.providedBy( x ):
-				name = x.__name__[1:] # strip the leading I
-				x.mime_type = nti_mimetype_with_class( name )
-				interface.alsoProvides( x, IContentTypeAware )
-
-__setup_interfaces()
-del __setup_interfaces

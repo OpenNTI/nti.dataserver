@@ -15,11 +15,4 @@
 	<subscriber handler=".activitystream.stream_didAddIntIdForContainedObject" />
 	<subscriber handler=".activitystream.stream_willRemoveIntIdForContainedObject" />
 
-	<configure zcml:condition="not-have testmode">
-		<utility factory=".activitystream.InteractionQuerier" />
-	</configure>	
-	<configure zcml:condition="have testmode">
-		<utility factory=".activitystream.TestInteractionQuerier" />
-	</configure>
-	
 </configure>

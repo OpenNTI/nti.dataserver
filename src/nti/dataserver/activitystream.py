@@ -79,25 +79,8 @@ def _enqueue_change_to_target(target, change, accum=None):
 # around Zope catalogs having been updated so that we (and listeners to what
 # we fire) can make use of them.
 
-from zope import interface
-
-from nti.dataserver.interfaces import IInteractionQuerier
-
-@interface.implementer(IInteractionQuerier)
-class TestInteractionQuerier(object):
-
-	def queryInteraction(self):
-		return self
-
-@interface.implementer(IInteractionQuerier)
-class InteractionQuerier(object):
-
-	def queryInteraction(self):
-		return queryInteraction()
-
 def hasQueryInteraction():
-	querier = component.queryUtility(IInteractionQuerier)
-	return querier.queryInteraction() is not None if querier is not None else False
+	return queryInteraction() is not None
 
 def _stream_preflight(contained):
 	# Make sure we don't broadcast changes for system created

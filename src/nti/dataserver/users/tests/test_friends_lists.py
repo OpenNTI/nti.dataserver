@@ -20,6 +20,8 @@ from hamcrest import is_not as does_not
 from hamcrest import greater_than_or_equal_to
 is_not = does_not
 
+import fudge
+
 from nti.contentrange.contentrange import ContentRangeDescription
 
 from nti.dataserver import authorization as nauth
@@ -335,7 +337,9 @@ class TestDFL(DataserverLayerTest):
 		assert_that(fl, has_property('Locked', is_(False)))
 
 	@WithMockDS
-	def test_sharing_with_dfl(self):
+	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+	def test_sharing_with_dfl(self, mock_hqi):
+		mock_hqi.is_callable().with_args().returns(True)
 		ds = mock_dataserver.current_mock_ds
 		with mock_dataserver.mock_db_trans(ds):
 			owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture(ds)
@@ -380,7 +384,8 @@ class TestDFL(DataserverLayerTest):
 			_assert_that_item_is_in_contained_stream_and_data_with_notification_count(owner_user, child_note, 1)
 
 	@WithMockDS
-	def test_sharing_with_dfl_member_shares_top_level(self):
+	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+	def test_sharing_with_dfl_member_shares_top_level(self, mock_hqi):
 		"""
 		If a member of the DFL shares something unrelated with the DFL,
 		it is visible to the creator of the DFL in the shared data, in the stream, and
@@ -389,7 +394,7 @@ class TestDFL(DataserverLayerTest):
 
 		Validates the DFL sharing architecture.
 		"""
-
+		mock_hqi.is_callable().with_args().returns(True)
 		ds = mock_dataserver.current_mock_ds
 		with mock_dataserver.mock_db_trans(ds):
 			owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture(ds)
@@ -434,11 +439,13 @@ class TestDFL(DataserverLayerTest):
 				assert_that(intids, has_length(greater_than_or_equal_to(1)))
 
 	@WithMockDS
-	def test_replace_dfl_sharing_with_a_member(self):
+	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+	def test_replace_dfl_sharing_with_a_member(self, mock_hqi):
 		"""
 		After removing the DFL share from a note and replace it with a direct sharing
 		of a DFL member, make sure the note is still accessible
 		"""
+		mock_hqi.is_callable().with_args().returns(True)
 		ds = mock_dataserver.current_mock_ds
 		with mock_dataserver.mock_db_trans(ds):
 			jmadden = users.User.create_user(username='jmadden@nextthought.com')
