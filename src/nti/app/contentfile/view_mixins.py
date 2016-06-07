@@ -199,7 +199,7 @@ def get_content_files_from_modeled_content_body(context):
 			result[name] = data
 		new_sources.append(data)
 	if transformed:
-		value = context.body.__class__(new_sources) # list or tuple
+		value = context.body.__class__(new_sources)  # list or tuple
 		context.body = value
 	return result
 
@@ -210,7 +210,7 @@ def get_content_files(context, attr="body"):
 	:param context: Source object
 	:param attr attribute name to check in context (optional)
 	"""
-	if IModeledContentBody.providedBy(context) and attr=='body':
+	if IModeledContentBody.providedBy(context) and attr == 'body':
 		# XXX: CS - 20160426 for model content body object we want to save
 		# content file blobs but keep the same MimeType for BWC. so we transform
 		# contentfiles to contentblobfiles
@@ -266,7 +266,7 @@ def transfer_internal_content_data(context, attr="body", request=None, ownership
 				interface.noLongerProvides(target, IInternalFileRef)
 				result.append(target)
 
-	if ownership: # take ownership
+	if ownership:  # take ownership
 		for target in result:
 			target.__parent__ = context
 
@@ -305,7 +305,7 @@ def download_file_name(context):
 	if IPloneNamed.providedBy(context):
 		result = NamedFileMixin.nameFinder(context.filename) or context.filename
 	result = result or getattr(context, 'name', None)
-	return safe_download_file_name( result )
+	return safe_download_file_name(result)
 
 def safe_download_file_name(name):
 	if not name:
