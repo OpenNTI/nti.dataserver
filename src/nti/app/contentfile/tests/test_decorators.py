@@ -43,6 +43,13 @@ class TestDecorators(ApplicationLayerTest):
 				'name':'Getting Started.pdf'
 			}
 
+	global_obj = {
+				'MimeType': 'application/vnd.nextthought.contentfile',
+				'value': GIF_DATAURL,
+				'filename': r'Getting ÀÀÀ.pdf',
+				'name':'Getting ÀÀÀ.pdf'
+			}
+
 	def test_content_file(self):
 		ext_obj = self.ext_obj
 		assert_that(find_factory_for(ext_obj), is_(not_none()))
@@ -70,9 +77,18 @@ class TestDecorators(ApplicationLayerTest):
 													  has_entry( 'url',
 																contains_string( '/Getting%20Started.pdf' )))))
 
+			ext_obj = self.global_obj
+			internal = find_factory_for(ext_obj)()
+			update_from_external_object(internal, ext_obj, require_updater=True)
+			self.ds.root['name1'] = internal
+			global_href = to_external_download_oid_href(internal)
+
 		assert_that(href, starts_with('/dataserver2/Objects/'))
 		assert_that(href, ends_with('/download/Getting%20Started.pdf'))
 
 		res = self.testapp.get(href, status=200)
 		assert_that(res, has_property('content_length', is_(61)))
 		assert_that(res, has_property('content_type', is_('image/gif')))
+
+		# Test fetching our global obj
+		self.testapp.get(global_href, status=200)

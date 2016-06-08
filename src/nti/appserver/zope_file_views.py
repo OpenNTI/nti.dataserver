@@ -161,7 +161,7 @@ class FilenameRespectingDownload(download.Download):
 		filename = getattr(self.context, 'filename', None)
 		__traceback_info__= filename,
 		for k, v in download.getHeaders(self.context,
-										contentDisposition="attachment",
+										contentDisposition=b"attachment",
 										downloadName=filename):
 			self.request.response.setHeader(k, v)
 		return download.DownloadResult(self.context)
