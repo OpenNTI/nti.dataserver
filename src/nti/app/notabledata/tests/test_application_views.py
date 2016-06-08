@@ -167,7 +167,9 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 								 testapp=True,
 								 default_authenticate=True)
 	@time_monotonically_increases
-	def test_notable_ugd_top_level_shared_directly_to_me(self):
+	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+	def test_notable_ugd_top_level_shared_directly_to_me(self, mock_interaction):
+		mock_interaction.is_callable().with_args().returns(True)
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._get_user()
 			jason = self._get_user('jason')
