@@ -87,7 +87,7 @@ class BaseContentMixin(object):
 				obj = wref()
 				if obj is not None:
 					yield obj
-			except (Exception):
+			except Exception:
 				logger.exception("Error while getting associatied object")
 
 	def has_associations(self):
