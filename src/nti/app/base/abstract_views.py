@@ -28,6 +28,7 @@ from nti.cabinet.interfaces import ISourceFiler
 
 from nti.cabinet.mixins import SourceProxy
 
+from nti.common.file import name_finder
 from nti.common.file import safe_filename
 
 from nti.common.maps import CaseInsensitiveDict
@@ -35,8 +36,6 @@ from nti.common.maps import CaseInsensitiveDict
 from nti.common.property import Lazy
 
 from nti.dataserver.interfaces import IDataserver
-
-from nti.namedfile.file import name_finder
 
 def _check_creator(remote_user, obj):
 	result = False

@@ -41,6 +41,7 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.common.file import name_finder
 from nti.common.file import safe_filename
 
 from nti.common.integer_strings import from_external_string
@@ -76,8 +77,6 @@ from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.oids import to_external_ntiid_oid
-
-from nti.namedfile.file import name_finder
 
 from nti.namedfile.interfaces import INamedFile
 
