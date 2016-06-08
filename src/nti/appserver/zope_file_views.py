@@ -159,6 +159,7 @@ class FilenameRespectingDownload(download.Download):
 	"""
 	def __call__(self):
 		filename = getattr(self.context, 'filename', None)
+		__traceback_info__= filename,
 		for k, v in download.getHeaders(self.context,
 										contentDisposition="attachment",
 										downloadName=filename):
