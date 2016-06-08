@@ -199,7 +199,9 @@ class TestUGDQueryViews(NewRequestLayerTest):
 		transaction.abort()
 
 	@WithMockDS(with_changes=True)
-	def test_rstream_not_found_following_community(self):
+	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+	def test_rstream_not_found_following_community(self, mock_interaction):
+		mock_interaction.is_callable().with_args().returns(True)
 		with mock_dataserver.mock_db_trans(self.ds):
 
 			view = _RecursiveUGDStreamView(get_current_request())
@@ -996,13 +998,15 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDSWithChanges
 	@time_monotonically_increases
-	def test_replies_from_non_dfl_member(self):
+	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+	def test_replies_from_non_dfl_member(self, mock_interaction):
 		"""
 		If an object is shared with both a DFL and a non-member, then
 		if the non-member replies, it should be visible to the DFL members.
 		NOTE: This is implemented as something of a deliberate security hole, allowing anyone
 		to share with DFLs whether or not they are members. See :class:`nti.dataserver.users.friends_lists.DynamicFriendsLists`
 		"""
+		mock_interaction.is_callable().with_args().returns(True)
 		from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture, _note_from
 		from nti.dataserver.users.tests.test_friends_lists import _assert_that_item_is_in_contained_stream_and_data_with_notification_count
 

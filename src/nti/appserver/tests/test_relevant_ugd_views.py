@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import fudge
+
 from hamcrest import is_
 from hamcrest import has_entry
 from hamcrest import has_length
@@ -58,7 +60,9 @@ class TestRelevantUGDView(ApplicationLayerTest):
 		redaction = user.addContainedObject(redaction)
 
 	@WithSharedApplicationMockDSWithChanges
-	def test_relevant_view(self):
+	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+	def test_relevant_view(self, mock_interaction):
+		mock_interaction.is_callable().with_args().returns(True)
 		requestor = 'ichigo@nt.com'
 		containerId = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.brief_history_of_cosmetology'
 		sub_container_id = "tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.1920s"

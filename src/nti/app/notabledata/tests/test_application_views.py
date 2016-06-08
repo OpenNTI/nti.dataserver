@@ -6,6 +6,7 @@ __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+import fudge
 
 from hamcrest import is_
 from hamcrest import contains
@@ -221,7 +222,9 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 								 testapp=True,
 								 default_authenticate=True)
 	@time_monotonically_increases
-	def test_notable_ugd_blog_shared_directly_to_me(self):
+	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+	def test_notable_ugd_blog_shared_directly_to_me(self, mock_interaction):
+		mock_interaction.is_callable().with_args().returns(True)
 		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog',
 									  {'Class': 'Post', 'title': 'my title', 'body': ['my body']},
 									  status=201 )
@@ -356,9 +359,10 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 								 testapp=True,
 								 default_authenticate=True)
 	@time_monotonically_increases
-	def test_notable_ugd_tagged_to_me(self):
+	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+	def test_notable_ugd_tagged_to_me(self, mock_interaction):
+		mock_interaction.is_callable().with_args().returns(True)
 		self._do_test_notable_ugd_tagged_to_entity()
-
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
