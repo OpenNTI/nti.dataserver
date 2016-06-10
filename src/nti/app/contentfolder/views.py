@@ -9,8 +9,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import six
 import sys
+import zipfile
 from urlparse import parse_qs
 from collections import Mapping
 
@@ -47,6 +49,8 @@ from nti.common.file import safe_filename
 from nti.common.integer_strings import from_external_string
 
 from nti.common.maps import CaseInsensitiveDict
+
+from nti.common.mimetypes import guess_type
 
 from nti.common.property import Lazy
 
@@ -85,6 +89,12 @@ MIMETYPE = StandardExternalFields.MIMETYPE
 
 expanded_expected_types = six.string_types + (Mapping,)
 
+def to_unicode(name):
+	try:
+		return unicode(name)
+	except Exception:
+		return name.decode("UTF-8")
+		
 @view_config(name="contents")
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
@@ -250,9 +260,9 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 
 		# transfer data
 		result = factory()
-		result.name = name
 		result.data = source.read()
-		result.filename = filename or name
+		result.name = to_unicode(name)
+		result.filename = to_unicode(filename or name)
 		result.contentType = contentType or u'application/octet-stream'
 		return result
 
@@ -271,6 +281,71 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		for item in items:
 			lifecycleevent.created(item)
 			self.context.add(item)
+
+		self.request.response.status_int = 201
+		result['ItemCount'] = result['Total'] = len(items)
+		return result
+
+@view_config(name="upload_zip")
+@view_config(name="UploadZip")
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=INamedContainer,
+			   permission=nauth.ACT_UPDATE,
+			   request_method='POST')
+class UploadZip(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
+
+	folder_factory = ContentFolder
+
+	@Lazy
+	def use_blobs(self):
+		return self.context.use_blobs
+
+	def builder(self):
+		result = self.folder_factory()
+		result.creator = self.remoteUser.username
+		return result
+
+	def factory(self, filename):
+		contentType = guess_type(filename)[0]
+		if contentType and contentType.startswith('image'):
+			factory = ContentBlobImage if self.use_blobs else ContentImage
+		else:
+			factory = ContentBlobFile if self.use_blobs else ContentFile
+		return factory
+
+	def get_namedfile(self, source, name, filename=None):
+		factory = self.factory(filename or name)
+		result = factory()
+		result.name = name
+		result.data = source.read()
+		result.filename = filename or name
+		result.contentType = guess_type(filename)[0] or u'application/octet-stream'
+		return result
+		
+	def _do_call(self):
+		result = LocatedExternalDict()
+		result[ITEMS] = items = {}
+		creator = self.remoteUser.username
+		sources = get_all_sources(self.request, None)
+		for source in sources.values():
+			with zipfile.ZipFile(source) as zfile:
+				for info in zfile.infolist():
+					name = to_unicode(info.filename)
+					filepath, filename = os.path.split(name)
+					if info.file_size == 0: # folder
+						continue
+					file_key = safe_filename(filename)
+					with zfile.open(info, "r") as source:
+						if filepath:
+							folder = mkdirs(self.context, filepath, self.builder)
+						else:
+							folder = self.context
+						target = self.get_namedfile(source, file_key, filename)
+						target.creator = creator
+						lifecycleevent.created(target)
+						folder.add(target)
+						items[name] = target
 
 		self.request.response.status_int = 201
 		result['ItemCount'] = result['Total'] = len(items)
