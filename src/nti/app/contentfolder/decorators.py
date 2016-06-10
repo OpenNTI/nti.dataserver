@@ -70,6 +70,7 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			_links.append(_create_link(context, "clear", "@@clear"))
 			_links.append(_create_link(context, "mkdirs", "@@mkdirs"))
 			_links.append(_create_link(context, "upload", "@@upload"))
+			_links.append(_create_link(context, "upload_zip", "@@upload_zip"))
 
 		# non root folders
 		if 		not IRootFolder.providedBy(context) \
