@@ -20,6 +20,8 @@ from zope.security.interfaces import IPrincipal
 
 from persistent.mapping import PersistentMapping
 
+from BTrees.OOBTree import OOBTree
+
 from pyramid.location import lineage
 
 from nti.appserver.context_providers import get_top_level_contexts
@@ -38,9 +40,9 @@ from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
 from nti.contentlibrary.indexed_data import get_library_catalog
 
-from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter,\
-	ISlideDeckAdapter
+from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
+from nti.contentlibrary.indexed_data.interfaces import ISlideDeckAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainersAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
@@ -67,6 +69,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import system_user
 
+from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 from nti.ntiids.ntiids import find_object_with_ntiid
@@ -345,6 +348,27 @@ class _PresentationAssetContainer(PersistentMapping,
 
 	def __delitem__(self, key):
 		PersistentMapping.__delitem__(self, key)
+
+@interface.implementer(IPresentationAssetContainer, IContained)
+class _PresentationAssetOOBTree(OOBTree, CreatedAndModifiedTimeMixin):
+	__name__ = None
+	__parent__ = None
+
+	_SET_CREATED_MODTIME_ON_INIT = False
+
+	def __init__(self, *args, **kwargs):
+		OOBTree.__init__(self)
+		CreatedAndModifiedTimeMixin.__init__(self, *args, **kwargs)
+		
+	def append(self, item):
+		self[item.ntiid] = item
+
+	def extend(self, items):
+		for item in items or ():
+			self.append(item)
+
+	def assets(self):
+		return list(self.values())
 
 @interface.implementer(IPresentationAssetContainer)
 def presentation_asset_items_factory(context):
