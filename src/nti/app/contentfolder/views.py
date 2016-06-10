@@ -287,13 +287,12 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		return result
 
 @view_config(name="upload_zip")
-@view_config(name="UploadZip")
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context=INamedContainer,
 			   permission=nauth.ACT_UPDATE,
 			   request_method='POST')
-class UploadZip(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
+class UploadZipView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
 	folder_factory = ContentFolder
 

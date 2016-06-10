@@ -37,7 +37,7 @@ from nti.dataserver.tests import mock_dataserver
 class TestContentFolderViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def xtest_operations(self):
+	def test_operations(self):
 		data = {'name': 'CLC3403'}
 		res = self.testapp.post_json('/dataserver2/ofs/root/@@mkdir',
 									  data,
@@ -52,7 +52,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 								'Items', has_length(1)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def xtest_upload_multipart(self):
+	def test_upload_multipart(self):
 		res = self.testapp.post('/dataserver2/ofs/root/@@upload',
 								upload_files=[ 	('ichigo', 'ichigo.txt', b'ichigo'), 
 												('aizen', 'aizen.txt', b'aizen') ],
@@ -93,7 +93,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 								'Items', has_length(1)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def xtest_associate(self):
+	def test_associate(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						  upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo') ],
 						  status=201)
@@ -112,7 +112,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 								'Items', has_length(1)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def xtest_tree(self):
+	def test_tree(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						 upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo'), 
 										('aizen.txt', 'aizen.txt', b'aizen') ],
@@ -138,7 +138,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 								'Files', 4))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def xtest_delete(self):
+	def test_delete(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
 						  status=201)
@@ -152,7 +152,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 		self.testapp.delete('/dataserver2/ofs/root', status=403)
 		
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def xtest_clear(self):
+	def test_clear(self):
 		res = self.testapp.post('/dataserver2/ofs/root/@@upload',
 								upload_files=[ 	('ichigo', 'ichigo.txt', b'ichigo'), 
 												('aizen', 'aizen.txt', b'aizen') ],
@@ -168,7 +168,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 								'Items', has_length(0)))
 		
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def xtest_rename(self):
+	def test_rename(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
 						  status=201)
@@ -180,7 +180,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 		self.testapp.post_json('/dataserver2/ofs/root/@@rename', {'name':'xxx'}, status=403)
 		
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def xtest_move(self):
+	def test_move(self):
 		data = {'name': 'bleach'}
 		self.testapp.post_json('/dataserver2/ofs/root/@@mkdir', data, status=201)
 
@@ -203,7 +203,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 								'Items', has_length(1)))
 		
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def xtest_copy(self):
+	def test_copy(self):
 		data = {'name': 'bleach'}
 		self.testapp.post_json('/dataserver2/ofs/root/@@mkdir', data, status=201)
 
@@ -221,7 +221,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 								'Items', has_length(1)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def xtest_cfio(self):
+	def test_cfio(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
 						  status=201)
