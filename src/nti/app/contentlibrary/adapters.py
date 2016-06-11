@@ -14,6 +14,8 @@ import time
 from zope import component
 from zope import interface
 
+from zope.deprecation import deprecated
+
 from zope.location.interfaces import IContained
 
 from zope.security.interfaces import IPrincipal
@@ -69,7 +71,6 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import system_user
 
-from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 from nti.ntiids.ntiids import find_object_with_ntiid
@@ -325,32 +326,14 @@ def _bundles_from_container_object(obj):
 
 # Containers
 
-@interface.implementer(IPresentationAssetContainer, IContained)
+deprecated('_PresentationAssetContainer', 'Use lastest container implementation')
 class _PresentationAssetContainer(PersistentMapping,
 							   	  PersistentCreatedAndModifiedTimeObject):
-	__name__ = None
-	__parent__ = None
-
-	_SET_CREATED_MODTIME_ON_INIT = False
-
-	def append(self, item):
-		self[item.ntiid] = item
-
-	def extend(self, items):
-		for item in items or ():
-			self.append(item)
-
-	def assets(self):
-		return list(self.values())
-
-	def __setitem__(self, key, value):
-		PersistentMapping.__setitem__(self, key, value)
-
-	def __delitem__(self, key):
-		PersistentMapping.__delitem__(self, key)
+	pass
 
 @interface.implementer(IPresentationAssetContainer, IContained)
-class _PresentationAssetOOBTree(OOBTree, CreatedAndModifiedTimeMixin):
+class _PresentationAssetOOBTree(OOBTree, PersistentCreatedAndModifiedTimeObject):
+
 	__name__ = None
 	__parent__ = None
 
@@ -358,7 +341,7 @@ class _PresentationAssetOOBTree(OOBTree, CreatedAndModifiedTimeMixin):
 
 	def __init__(self, *args, **kwargs):
 		OOBTree.__init__(self)
-		CreatedAndModifiedTimeMixin.__init__(self, *args, **kwargs)
+		PersistentCreatedAndModifiedTimeObject.__init__(self, *args, **kwargs)
 		
 	def append(self, item):
 		self[item.ntiid] = item
@@ -376,7 +359,7 @@ def presentation_asset_items_factory(context):
 		result = context._presentation_asset_item_container
 		return result
 	except AttributeError:
-		result = context._presentation_asset_item_container = _PresentationAssetContainer()
+		result = context._presentation_asset_item_container = _PresentationAssetOOBTree()
 		result.createdTime = time.time()
 		result.__parent__ = context
 		result.__name__ = '_presentation_asset_item_container'
