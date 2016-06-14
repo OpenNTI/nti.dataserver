@@ -8,6 +8,10 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
+		<!-- Subscribers -->
+	<subscriber handler=".subscribers._record_published" />
+	<subscriber handler=".subscribers._record_unpublished" />
+
 	<!-- Publishing workflow -->
 	<subscriber factory=".decorators.PublishLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
