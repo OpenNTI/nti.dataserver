@@ -36,6 +36,7 @@ from nti.intid.common import addIntId
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
+INTID = StandardExternalFields.INTID
 NTIID = StandardExternalFields.NTIID
 
 @view_config(name='IntIdResolver')
@@ -92,6 +93,6 @@ class RegisterWithIntIdView(AbstractAuthenticatedView,
 			addIntId(obj)
 			uid = intids.queryId(obj)
 		result = LocatedExternalDict()
-		result['IntId'] = uid
+		result[INTID] = uid
 		result[NTIID] = ntiid
 		return result
