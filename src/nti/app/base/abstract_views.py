@@ -146,13 +146,14 @@ class AbstractAuthenticatedView(AbstractView, AuthenticatedViewMixin):
 	Base class for views that expect authentication to be required.
 	"""
 
-def _get_file_size(source):
+def _get_source_size(source):
 	result = None
 	try:
 		result = os.fstat(source.file.fileno()).st_size
 	except AttributeError:
 		pass
 	return result
+_get_file_size = _get_source_size
 
 def process_source(source, default_content_type=u'application/octet-stream'):
 	if isinstance(source, six.string_types):
@@ -163,7 +164,7 @@ def process_source(source, default_content_type=u'application/octet-stream'):
 	elif source is not None:
 		length = getattr(source, 'length', None)
 		if not length or length == -1:
-			length = _get_file_size(source)
+			length = _get_source_size(source)
 		filename = getattr(source, 'filename', None)
 		contentType =	getattr(source, 'type', None) \
 					 or getattr(source, 'contentType', None)
