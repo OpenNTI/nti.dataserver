@@ -17,3 +17,9 @@ VIEW_PUBLISH = "publish"
 
 #: Unpublish view name
 VIEW_UNPUBLISH = "unpublish"
+
+#: Publish transaction type
+TRX_TYPE_PUBLISH = 'publish'
+
+#: Unpublish transaction type
+TRX_TYPE_UNPUBLISH = 'unpublish'
