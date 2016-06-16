@@ -20,12 +20,16 @@ from zope.intid.interfaces import IIntIds
 from persistent.mapping import PersistentMapping
 
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
+
+INTID = StandardExternalFields.INTID
+NTIID = StandardExternalFields.NTIID
 
 class TestViews(ApplicationLayerTest):
 
@@ -51,5 +55,5 @@ class TestViews(ApplicationLayerTest):
 		data = {'ntiid': oid}
 		res = self.testapp.post_json('/dataserver2/@@RegisterWithIntId',
 							   		 data, status=200)
-		assert_that(res.json_body, has_entry('NTIID', is_(oid)))
-		assert_that(res.json_body, has_entry('IntId', is_not(none())))
+		assert_that(res.json_body, has_entry(NTIID, is_(oid)))
+		assert_that(res.json_body, has_entry(INTID, is_not(none())))
