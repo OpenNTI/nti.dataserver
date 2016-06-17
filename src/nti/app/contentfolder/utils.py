@@ -38,7 +38,7 @@ def get_ds2(request=None):
 		result = request.path_info_peek() if request else None  # e.g. /dataserver2
 	except AttributeError:  # in unit test we may see this
 		result = None
-	return result or "dataserver2"
+	return result or u"dataserver2"
 
 def is_cf_io_href(link):
 	return bool(pattern.match(unquote(link))) if link else False
@@ -55,11 +55,11 @@ def safe_download_file_name(name):
 	return result
 
 def to_external_cf_io_href(context, request=None):
-	context = IContentBaseFile(context, None)
+	ds2 = get_ds2(request)
 	intids = component.getUtility(IIntIds)
+	context = IContentBaseFile(context, None)
 	safe_name = safe_download_file_name(context.filename)
 	uid = intids.queryId(context) if context is not None else None
-	ds2 = get_ds2(request)
 	if ds2 and uid is not None:
 		code = to_external_string(uid)
 		href = '/%s/%s/%s/%s' % (ds2, CFIO, code, safe_name)
