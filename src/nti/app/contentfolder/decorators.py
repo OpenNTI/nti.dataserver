@@ -129,7 +129,7 @@ class _ContextPathDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	
 	def _cf_io(self, context, result):
 		if INamedFile.providedBy(context):
-			href = to_external_cf_io_href(context)
+			href = to_external_cf_io_href(context, self.request)
 			if href: # add href
 				result[CFIO] = href
 
