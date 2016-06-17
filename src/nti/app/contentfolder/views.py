@@ -36,6 +36,8 @@ from nti.app.contentfolder import MessageFactory as _
 
 from nti.app.contentfolder import CFIO
 
+from nti.app.contentfolder.utils import get_ds2
+
 from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.internalization import read_body_as_external_object
 
@@ -591,7 +593,7 @@ class CFIOView(AbstractAuthenticatedView):
 			view_name = '@@view'
 
 		ntiid = to_external_ntiid_oid(context)
-		path = b'/dataserver2/Objects/%s/%s' % (self._encode(ntiid), view_name)
+		path = b'/%s/Objects/%s/%s' % (get_ds2(), self._encode(ntiid), view_name)
 
 		# set subrequest
 		subrequest = request.blank(path)
