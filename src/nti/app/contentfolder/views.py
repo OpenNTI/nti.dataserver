@@ -54,6 +54,8 @@ from nti.common.mimetypes import guess_type
 
 from nti.common.property import Lazy
 
+from nti.common.string import is_true
+
 from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfile.model import ContentFile
@@ -84,8 +86,10 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.namedfile.interfaces import INamedFile
 
+TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
 MIMETYPE = StandardExternalFields.MIMETYPE
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 expanded_expected_types = six.string_types + (Mapping,)
 
@@ -123,11 +127,13 @@ class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
 	def __call__(self):
 		values = CaseInsensitiveDict(self.request.params)
+		all_items = is_true(values.get('all'))
 		depth = values.get('depth', 0)
 		result = LocatedExternalDict()
 		items = self.ext_container(self.context, result, depth)
-		self._batch_items_iterable(result, items)
-		result['Total'] = len(items)
+		if not all_items:
+			self._batch_items_iterable(result, items)
+		result[TOTAL] = len(items)
 		return result
 
 @view_config(name="tree")
@@ -283,7 +289,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			self.context.add(item)
 
 		self.request.response.status_int = 201
-		result['ItemCount'] = result['Total'] = len(items)
+		result[ITEM_COUNT] = result[TOTAL] = len(items)
 		return result
 
 @view_config(name="upload_zip")
@@ -347,7 +353,7 @@ class UploadZipView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsM
 						items[name] = target
 
 		self.request.response.status_int = 201
-		result['ItemCount'] = result['Total'] = len(items)
+		result[ITEM_COUNT] = result[TOTAL]  = len(items)
 		return result
 
 @view_config(context=INamedFile)
