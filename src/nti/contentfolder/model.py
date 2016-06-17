@@ -56,6 +56,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 	__parent__ = None
 	name = alias('__name__')
 
+	tags = None
 	creator = None
 	parameters = {}
 	mimeType = mime_type = str('application/vnd.nextthought.contentfolder')

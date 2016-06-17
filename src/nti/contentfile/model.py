@@ -39,6 +39,7 @@ from nti.wref.interfaces import IWeakRef
 
 class BaseContentMixin(object):
 
+	tags = ()
 	creator = None
 	__name__ = alias('name')
 

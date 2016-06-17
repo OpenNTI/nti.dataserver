@@ -25,6 +25,7 @@ from nti.coremetadata.interfaces import ICreated
 from nti.coremetadata.interfaces import ILastModified
 
 from nti.schema.field import Bool
+from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 
 class INamedContainer(IContained,
@@ -32,6 +33,7 @@ class INamedContainer(IContained,
 					  IContentContainer,
 					  ILastModified,
 					  ICreated):
+	tags = ListOrTuple(ValidTextLine(title="A single tag"), required=False)
 	name = ValidTextLine(title="Folder name", required=True)
 
 	# dublin core

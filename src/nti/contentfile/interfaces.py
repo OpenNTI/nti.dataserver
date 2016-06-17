@@ -19,9 +19,12 @@ from nti.namedfile.interfaces import INamedImage
 from nti.namedfile.interfaces import INamedBlobFile
 from nti.namedfile.interfaces import INamedBlobImage
 
+from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 
 class IContentBaseFile(IFile, IAttributeAnnotatable, IContained):
+
+	tags = ListOrTuple(ValidTextLine(title="A single tag"), required=False)
 
 	name = ValidTextLine(title="Identifier for the file", required=True)
 
