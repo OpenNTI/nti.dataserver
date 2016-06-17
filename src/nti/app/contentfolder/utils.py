@@ -58,12 +58,13 @@ def to_external_cf_io_href(context, request=None):
 	ds2 = get_ds2(request)
 	intids = component.getUtility(IIntIds)
 	context = IContentBaseFile(context, None)
-	safe_name = safe_download_file_name(context.filename)
-	uid = intids.queryId(context) if context is not None else None
-	if ds2 and uid is not None:
-		code = to_external_string(uid)
-		href = '/%s/%s/%s/%s' % (ds2, CFIO, code, safe_name)
-		return href
+	if context is not None:
+		safe_name = safe_download_file_name(context.filename)
+		uid = intids.queryId(context) if context is not None else None
+		if ds2 and uid is not None:
+			code = to_external_string(uid)
+			href = '/%s/%s/%s/%s' % (ds2, CFIO, code, safe_name)
+			return href
 	return None
 get_cf_io_href = to_external_cf_io_href
 
