@@ -16,6 +16,9 @@ from zope.location.interfaces import ILocation
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
+from nti.app.contentfolder import CFIO
+from nti.app.contentfolder.utils import to_external_cf_io_href
+
 from nti.appserver.pyramid_authorization import has_permission
 
 from nti.common.property import Lazy
@@ -123,8 +126,15 @@ class _ContextPathDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		result = '/'.join(result)
 		result = '/' + result if not result.startswith('/') else result
 		return result
+	
+	def _cf_io(self, context, result):
+		if INamedFile.providedBy(context):
+			href = to_external_cf_io_href(context)
+			if href: # add href
+				result[CFIO] = href
 
 	def _do_decorate_external(self, context, result):
 		path = result.get('path', None)
+		self._cf_io(context, result)
 		if not path and INamedContainer.providedBy(context.__parent__):
 			result['path'] = self.compute_path(context)
