@@ -57,6 +57,7 @@ from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 
 from nti.externalization.interfaces import LocatedExternalDict
 
+
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
@@ -127,7 +128,7 @@ class _SetSyncLockView(AbstractAuthenticatedView):
 						 None)
 
 	def __call__(self):
-		self.redis.acquire()
+		self.acquire()
 		return hexc.HTTPNoContent()
 
 @view_config(permission=ACT_SYNC_LIBRARY)

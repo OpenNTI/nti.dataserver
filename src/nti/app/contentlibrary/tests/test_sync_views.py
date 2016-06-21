@@ -23,7 +23,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-class TestApplicationAdminViews(ApplicationLayerTest):
+class TestSyncViews(ApplicationLayerTest):
 
 	layer = ContentLibraryApplicationTestLayer
 
@@ -46,3 +46,10 @@ class TestApplicationAdminViews(ApplicationLayerTest):
 
 		syncd = eventtesting.getEvents(IContentPackageLibraryModifiedOnSyncEvent)
 		assert_that(syncd, is_not(empty()))
+		
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_lock_ops(self):
+		self.testapp.post('/dataserver2/@@SetSyncLock', status=204)
+		self.testapp.get('/dataserver2/@@IsSyncInProgress', status=200)
+		self.testapp.post('/dataserver2/@@RemoveSyncLock', status=204)
+		self.testapp.get('/dataserver2/@@LastSyncTime', status=200)
