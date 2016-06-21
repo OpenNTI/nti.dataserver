@@ -37,6 +37,9 @@ from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.contentlibrary import LOCK_TIMEOUT
+from nti.app.contentlibrary import SYNC_LOCK_NAME
+
 from nti.app.contentlibrary.synchronize import synchronize
 
 from nti.app.externalization.error import raise_json_error
@@ -53,12 +56,6 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 
 from nti.externalization.interfaces import LocatedExternalDict
-
-# : Redis sync lock name
-SYNC_LOCK_NAME = '/var/libraries/Lock/sync'
-
-# : The amount of time for which we will hold the lock during sync
-LOCK_TIMEOUT = 60 * 60  # 60 minutes
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
