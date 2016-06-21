@@ -65,6 +65,7 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		# read based ops
 		if has_permission(ACT_READ, context, request):
 			_links.append(_create_link(context, "tree", "@@tree"))
+			_links.append(_create_link(context, "export", "@@export"))
 			_links.append(_create_link(context, "contents", "@@contents"))
 
 		# update based ops
@@ -73,7 +74,7 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			_links.append(_create_link(context, "clear", "@@clear"))
 			_links.append(_create_link(context, "mkdirs", "@@mkdirs"))
 			_links.append(_create_link(context, "upload", "@@upload"))
-			_links.append(_create_link(context, "upload_zip", "@@upload_zip"))
+			_links.append(_create_link(context, "import", "@@import"))
 
 		# non root folders
 		if 		not IRootFolder.providedBy(context) \

@@ -67,7 +67,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 								'Items', has_length(2)))
 		
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def test_upload_zip(self):
+	def test_import_export_zip(self):
 		source = BytesIO()
 		with zipfile.ZipFile(source, "w") as zfile:
 			zfile.writestr("shinigami/ichigo.txt", b'ichigo')
@@ -75,7 +75,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 			zfile.writestr("arrancar/ulquiorra.txt", b'ulquiorra')			
 		data = source.getvalue()
 
-		res = self.testapp.post('/dataserver2/ofs/root/@@upload_zip',
+		res = self.testapp.post('/dataserver2/ofs/root/@@import',
 								upload_files=[ 	('ichigo', 'ichigo.txt', data) ],
 								status=201)
 		assert_that(res.json_body,
@@ -91,6 +91,13 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(1),
 								'Items', has_length(1)))
+		
+		res = self.testapp.get('/dataserver2/ofs/root/@@export', status=200)
+		source = BytesIO()
+		source.write(res.body)
+		source.seek(0)
+		with zipfile.ZipFile(source, "r") as zfile:
+			assert_that(zfile.infolist(), has_length(3))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_associate(self):

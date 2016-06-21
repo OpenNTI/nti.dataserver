@@ -12,7 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import six
 import sys
+import shutil
 import zipfile
+import tempfile
 from urlparse import parse_qs
 from collections import Mapping
 
@@ -294,13 +296,13 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		result[ITEM_COUNT] = result[TOTAL] = len(items)
 		return result
 
-@view_config(name="upload_zip")
+@view_config(name="import")
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context=INamedContainer,
 			   permission=nauth.ACT_UPDATE,
 			   request_method='POST')
-class UploadZipView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
+class ImportView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
 	folder_factory = ContentFolder
 
@@ -357,6 +359,40 @@ class UploadZipView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsM
 		self.request.response.status_int = 201
 		result[ITEM_COUNT] = result[TOTAL]  = len(items)
 		return result
+
+@view_config(name="export")
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=INamedContainer,
+			   permission=nauth.ACT_READ,
+			   request_method='GET')
+class ExportView(AbstractAuthenticatedView):
+
+	def _recur(self, context, zip_file, path=''):
+		if INamedContainer.providedBy(context):
+			new_path = os.path.join(path, context.name)
+			for item in context.values():
+				self._recur(item, zip_file, new_path)
+		elif INamed.providedBy(context):
+			filename = os.path.join(path, context.name)
+			zip_file.writestr(filename, context.data)
+			
+	def __call__(self):
+		out_dir = tempfile.mkdtemp()
+		try:
+			source = os.path.join(out_dir, 'export.zip')
+			with zipfile.ZipFile(source, mode="w") as zfile:
+				for item in self.context.values():
+					self._recur(item, zfile)
+		
+			response = self.request.response
+			response.content_encoding = str('identity')
+			response.content_type = str('application/x-gzip; charset=UTF-8')
+			response.content_disposition = str('attachment; filename="export.zip"')
+			response.body_file = open(source, "rb")
+			return response
+		finally:
+			shutil.rmtree(out_dir)
 
 @view_config(context=INamedFile)
 @view_config(context=INamedContainer)
