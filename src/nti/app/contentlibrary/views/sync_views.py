@@ -105,6 +105,34 @@ class _IsSyncInProgressView(AbstractAuthenticatedView):
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
+			   request_method='POST',
+			   context=IDataserverFolder,
+			   name='SetSyncLock')
+class _SetSyncLockView(AbstractAuthenticatedView):
+	
+	@Lazy
+	def redis(self):
+		return component.getUtility(IRedisClient)
+
+	def acquire(self):
+		# Fail fast if we cannot acquire the lock.
+		lock = self.redis.lock(SYNC_LOCK_NAME, LOCK_TIMEOUT)
+		acquired = lock.acquire(blocking=False)
+		if acquired:
+			return lock
+		raise_json_error(self.request,
+						 hexc.HTTPLocked,
+						 {'message': 'Sync already in progress',
+						  'code':'Exception'},
+						 None)
+
+	def __call__(self):
+		self.redis.acquire()
+		return hexc.HTTPNoContent()
+
+@view_config(permission=ACT_SYNC_LIBRARY)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
 			   request_method='GET',
 			   context=IDataserverFolder,
 			   name='LastSyncTime')
@@ -112,7 +140,8 @@ class _LastSyncTimeView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		hostsites = component.getUtility(IEtcNamespace, name='hostsites')
-		return getattr(hostsites, 'lastSynchronized', 0)
+		result = getattr(hostsites, 'lastSynchronized', 0)
+		return result
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
@@ -120,7 +149,8 @@ class _LastSyncTimeView(AbstractAuthenticatedView):
 			   context=IDataserverFolder,
 			   name='SyncAllLibraries')
 class _SyncAllLibrariesView(AbstractAuthenticatedView,
-							ModeledContentUploadRequestUtilsMixin):
+							ModeledContentUploadRequestUtilsMixin,
+							_SetSyncLockView):
 	"""
 	A view that synchronizes all of the in-database libraries
 	(and sites) with their on-disk and site configurations.
@@ -152,23 +182,6 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 				values = self.request.params
 			result.update(values)
 		return result
-
-	@Lazy
-	def redis(self):
-		return component.getUtility(IRedisClient)
-
-	@Lazy
-	def lock(self):
-		# Fail fast if we cannot acquire the lock.
-		lock = self.redis.lock(SYNC_LOCK_NAME, LOCK_TIMEOUT)
-		acquired = lock.acquire(blocking=False)
-		if acquired:
-			return lock
-		raise_json_error(self.request,
-						 hexc.HTTPLocked,
-						 {'message': 'Sync already in progress',
-						  'code':'Exception'},
-						 None)
 
 	def release(self, lock):
 		try:
@@ -241,7 +254,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 	def __call__(self):
 		logger.info('Acquiring sync lock')
 		# With 'with', we deadlock while attempting to re-acquire the lock.
-		lock = self.lock
+		lock = self.acquire()
 		try:
 			logger.info('Starting sync %s', self._txn_id())
 			return self._do_call()
