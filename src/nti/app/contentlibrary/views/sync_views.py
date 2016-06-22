@@ -43,12 +43,16 @@ from nti.app.contentlibrary import SYNC_LOCK_NAME
 from nti.app.contentlibrary.synchronize import synchronize
 
 from nti.app.externalization.error import raise_json_error
+
 from nti.app.externalization.internalization import read_body_as_external_object
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.common.property import Lazy
-from nti.common.string import TRUE_VALUES
 from nti.common.maps import CaseInsensitiveDict
+
+from nti.common.property import Lazy
+
+from nti.common.string import TRUE_VALUES
 
 from nti.dataserver.interfaces import IRedisClient
 from nti.dataserver.interfaces import IDataserverFolder
@@ -56,7 +60,6 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 
 from nti.externalization.interfaces import LocatedExternalDict
-
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
@@ -86,7 +89,7 @@ class _IsSyncInProgressView(AbstractAuthenticatedView):
 	def redis(self):
 		return component.getUtility(IRedisClient)
 
-	def lock(self):
+	def acquire(self):
 		lock = self.redis.lock(SYNC_LOCK_NAME, LOCK_TIMEOUT, blocking_timeout=1)
 		acquired = lock.acquire(blocking=False)
 		return (lock, acquired)
@@ -99,7 +102,7 @@ class _IsSyncInProgressView(AbstractAuthenticatedView):
 			pass
 
 	def __call__(self):
-		lock, acquired = self.lock()
+		lock, acquired = self.acquire()
 		self.release(lock, acquired)
 		return not acquired
 
