@@ -566,7 +566,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		return containedObject
 
 	def performReadCreateUpdateContentObject(self, user, search_owner=False, externalValue=None,
-											 deepCopy=False):
+											 deepCopy=False, add_to_connection=True):
 		creator = user
 		externalValue = self.readInput() if not externalValue else externalValue
 		returnExternal = copy.deepcopy(externalValue) if deepCopy else externalValue
@@ -592,16 +592,16 @@ class ModeledContentUploadRequestUtilsMixin(object):
 														   datatype, 
 														   externalValue,
 														   creator)
-		containedObject.creator = creator
-
-		# The process of updating may need to index and create KeyReferences
-		# so we need to have a jar. We don't have a parent to inherit from just yet
-		# (If we try to set the wrong one, it messes with some events and some
-		# KeyError detection in the containers)
-		# containedObject.__parent__ = owner
-		owner_jar = getattr(owner, '_p_jar', None)
-		if owner_jar and getattr(containedObject, '_p_jar', self) is None:
-			owner_jar.add(containedObject)
+		if add_to_connection:
+			containedObject.creator = creator
+			# The process of updating may need to index and create KeyReferences
+			# so we need to have a jar. We don't have a parent to inherit from just yet
+			# (If we try to set the wrong one, it messes with some events and some
+			# KeyError detection in the containers)
+			# containedObject.__parent__ = owner
+			owner_jar = getattr(owner, '_p_jar', None)
+			if owner_jar and getattr(containedObject, '_p_jar', self) is None:
+				owner_jar.add(containedObject)
 
 		# Update the object, but don't fire any modified events. We don't know
 		# if we'll keep this object yet, and we haven't fired a created event
