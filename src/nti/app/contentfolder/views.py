@@ -90,6 +90,8 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.oids import to_external_ntiid_oid
 
+from nti.mimetype.externalization import decorateMimeType
+
 from nti.namedfile.interfaces import INamedFile
 
 TOTAL = StandardExternalFields.TOTAL
@@ -162,7 +164,9 @@ class TreeView(AbstractAuthenticatedView):
 				files += c2
 				folders += c1
 			else:
-				result.append(name)
+				ext_obj = to_external_object(value, decorate=False)
+				decorateMimeType(value, ext_obj)
+				result.append(ext_obj)
 				files += 1
 		return folders, files
 
@@ -459,7 +463,6 @@ class RenameView(AbstractAuthenticatedView,
 		data = read_body_as_external_object(self.request,
 											expected_type=expanded_expected_types)
 		if isinstance(data, six.string_types):
-			data = safe_filename(name_finder(data))
 			data = {'name': data}
 		assert isinstance(data, Mapping)
 		return CaseInsensitiveDict(data)
@@ -482,24 +485,24 @@ class RenameView(AbstractAuthenticatedView,
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid name."))
 
 		# get name/filename
-		name = safe_filename(name_finder(name))
-		if name in parent:
+		new_key = safe_filename(name_finder(name))
+		if new_key in parent:
 			raise hexc.HTTPUnprocessableEntity(_("File already exists."))
 
 		# get content type
 		contentType = data.get('contentType') or data.get('content_type')
 
 		# replace name
-		old = theObject.name
-		theObject.name = name
+		old_key = theObject.name
+		theObject.name = new_key # name is key
 
 		# for files only
 		if INamed.providedBy(theObject):
-			theObject.filename = name
+			theObject.filename = name # filename is display name
 			theObject.contentType = contentType or theObject.contentType
 
 		# replace in folder
-		parent.rename(old, name)
+		parent.rename(old_key, new_key)
 
 		# XXX: externalize first
 		result = to_external_object(theObject)

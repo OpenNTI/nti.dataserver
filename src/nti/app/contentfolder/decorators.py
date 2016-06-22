@@ -67,17 +67,17 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 		# update based ops
 		if has_permission(ACT_UPDATE, context, request):
-			_links.append(_create_link(context, "mkdir", "@@mkdir"))
-			_links.append(_create_link(context, "clear", "@@clear"))
-			_links.append(_create_link(context, "mkdirs", "@@mkdirs"))
-			_links.append(_create_link(context, "upload", "@@upload"))
-			_links.append(_create_link(context, "import", "@@import"))
+			_links.append(_create_link(context, "mkdir", "@@mkdir", method='POST'))
+			_links.append(_create_link(context, "clear", "@@clear", method='POST'))
+			_links.append(_create_link(context, "mkdirs", "@@mkdirs", method='POST'))
+			_links.append(_create_link(context, "upload", "@@upload", method='POST'))
+			_links.append(_create_link(context, "import", "@@import", method='POST'))
 
 		# non root folders
 		if 		not IRootFolder.providedBy(context) \
 			and has_permission(ACT_UPDATE, context, request):
-			_links.append(_create_link(context, "move", "@@move"))
-			_links.append(_create_link(context, "rename", "@@rename"))
+			_links.append(_create_link(context, "move", "@@move", method='POST'))
+			_links.append(_create_link(context, "rename", "@@rename", method='POST'))
 
 @component.adapter(INamedFile)
 @interface.implementer(IExternalObjectDecorator)
