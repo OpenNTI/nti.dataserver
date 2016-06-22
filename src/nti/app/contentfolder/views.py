@@ -286,13 +286,16 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		for name, source in sources.items():
 			filename = getattr(source, 'filename', None)
 			file_key = safe_filename(name_finder(name))
-			target = self.get_namedfile(source, file_key, filename)
-			target.creator = creator
+			if file_key in self.context:
+				target = self.context[file_key]
+				target.data = source.read()
+				lifecycleevent.modified(target)
+			else:
+				target = self.get_namedfile(source, file_key, filename)
+				target.creator = creator
+				lifecycleevent.created(target)
+				self.context.add(target)
 			items.append(target)
-
-		for item in items:
-			lifecycleevent.created(item)
-			self.context.add(item)
 
 		self.request.response.status_int = 201
 		result[ITEM_COUNT] = result[TOTAL] = len(items)
@@ -352,10 +355,15 @@ class ImportView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 							folder = mkdirs(self.context, filepath, self.builder)
 						else:
 							folder = self.context
-						target = self.get_namedfile(source, file_key, filename)
-						target.creator = creator
-						lifecycleevent.created(target)
-						folder.add(target)
+						if file_key in folder:
+							target = folder[file_key]
+							target.data = source.read()
+							lifecycleevent.modified(target)
+						else:
+							target = self.get_namedfile(source, file_key, filename)
+							target.creator = creator
+							lifecycleevent.created(target)
+							folder.add(target)
 						items[name] = target
 
 		self.request.response.status_int = 201
