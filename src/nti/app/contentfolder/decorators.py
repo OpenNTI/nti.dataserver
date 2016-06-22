@@ -16,9 +16,6 @@ from zope.location.interfaces import ILocation
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
-from nti.app.contentfolder import CFIO
-from nti.app.contentfolder.utils import to_external_cf_io_href
-
 from nti.appserver.pyramid_authorization import has_permission
 
 from nti.common.property import Lazy
@@ -102,7 +99,9 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		request = self.request
 		_links = result.setdefault(LINKS, [])
 		if has_permission(ACT_READ, context, request):
+			_links.append(_create_link(context, rel="external", method='GET'))
 			_links.append(_create_link(context, rel="associations", method='GET'))
+
 		if has_permission(ACT_UPDATE, context, request):
 			_links.append(_create_link(context, rel="delete", method='DELETE'))
 			_links.append(_create_link(context, rel="copy", name="@@copy", method="POST"))
@@ -128,14 +127,7 @@ class _ContextPathDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		result = '/' + result if not result.startswith('/') else result
 		return result
 	
-	def _cf_io(self, context, result):
-		if INamedFile.providedBy(context):
-			href = to_external_cf_io_href(context, self.request)
-			if href: # add href
-				result[CFIO] = href
-
 	def _do_decorate_external(self, context, result):
 		path = result.get('path', None)
-		self._cf_io(context, result)
 		if not path and INamedContainer.providedBy(context.__parent__):
 			result['path'] = self.compute_path(context)

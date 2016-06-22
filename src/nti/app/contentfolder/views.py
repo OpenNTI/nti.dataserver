@@ -39,6 +39,8 @@ from nti.app.contentfolder import MessageFactory as _
 from nti.app.contentfolder import CFIO
 
 from nti.app.contentfolder.utils import get_ds2
+from nti.app.contentfolder.utils import to_external_cf_io_url
+from nti.app.contentfolder.utils import to_external_cf_io_href
 
 from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.internalization import read_body_as_external_object
@@ -595,6 +597,21 @@ class CopyView(MoveView):
 		# XXX: externalize first
 		self.request.response.status_int = 201
 		result = to_external_object(result)
+		return result
+
+@view_config(name=CFIO)
+@view_config(name='external')
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=IContentBaseFile,
+			   permission=nauth.ACT_READ,
+			   request_method='GET')
+class ContentFileExternalView(MoveView):
+
+	def __call__(self):
+		result = LocatedExternalDict()
+		result['url'] = to_external_cf_io_url(self.context, self.request)
+		result['href'] = to_external_cf_io_href(self.context, self.request)
 		return result
 
 @view_config(name=CFIO)

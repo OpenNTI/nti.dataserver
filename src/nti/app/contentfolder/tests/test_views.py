@@ -14,6 +14,7 @@ from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
+from hamcrest import starts_with
 from hamcrest import has_property
 does_not = is_not
 
@@ -117,7 +118,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(1),
 								'Items', has_length(1)))
-
+			
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_tree(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
@@ -237,7 +238,11 @@ class TestContentFolderViews(ApplicationLayerTest):
 			ds = component.getUtility(IDataserver)
 			ichigo = ds.root._ofs_root['ichigo'] # only in test
 			href = get_cf_io_href(ichigo)
-			assert_that(href, is_not(none()))
-			res = self.testapp.get(href, status=200)
-			assert_that(res, has_property('app_iter', has_length(1)))
-			assert_that(res, has_property('app_iter', is_(['ichigo'])))
+		
+		assert_that(href, is_not(none()))
+		res = self.testapp.get(href, status=200)
+		assert_that(res, has_property('app_iter', has_length(1)))
+		assert_that(res, has_property('app_iter', is_(['ichigo'])))
+
+		res = self.testapp.get('/dataserver2/ofs/root/ichigo/@@external', status=200)
+		assert_that(res.json_body, has_entry('href', starts_with('/dataserver2/cf.io/')))
