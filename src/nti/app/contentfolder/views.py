@@ -139,7 +139,7 @@ class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 	def __call__(self):
 		result = LocatedExternalDict()
 		values = CaseInsensitiveDict(self.request.params)
-		depth = values.get('depth', 0)
+		depth = int(values.get('depth') or 0)
 		all_items = is_true(values.get('all'))
 		items = self.ext_container(self.context, result, depth)
 		if not all_items:
