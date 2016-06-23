@@ -43,6 +43,8 @@ from nti.namedfile.interfaces import IFileConstrained
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 ITEMS = StandardExternalFields.ITEMS
+TOTAL = StandardExternalFields.TOTAL
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 expanded_expected_types = six.string_types + (Mapping,)
 
@@ -71,7 +73,7 @@ class ContentFileAssociationsView(AbstractAuthenticatedView):
 		result[ITEMS] = items = []
 		if self.context.has_associations():
 			items.extend(self.context.associations())
-		result['ItemCount'] = result['Total'] = len(items)
+		result[ITEM_COUNT] = result[TOTAL] = len(items)
 		return result
 
 @view_config(context=IContentBaseFile)
