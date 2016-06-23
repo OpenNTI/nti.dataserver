@@ -102,8 +102,10 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		request = self.request
 		_links = result.setdefault(LINKS, [])
 		if has_permission(ACT_READ, context, request):
-			_links.append(_create_link(context, rel="external", method='GET'))
-			_links.append(_create_link(context, rel="associations", method='GET'))
+			_links.append(_create_link(context, rel="external", 
+									   name="@@external", method='GET'))
+			_links.append(_create_link(context, rel="associations", 
+									   name="@@associations", method='GET'))
 
 		if has_permission(ACT_UPDATE, context, request):
 			_links.append(_create_link(context, rel="delete", method='DELETE'))
