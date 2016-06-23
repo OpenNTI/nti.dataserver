@@ -125,7 +125,7 @@ class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 	def ext_container(self, context, result, depth):
 		if depth >= 0:
 			items = result[ITEMS] = list()
-			for item in tuple(context.values()):  # snapshopt
+			for item in list(context.values()):  # snapshopt
 				ext_obj = self.ext_obj(item)
 				items.append(ext_obj)
 				if INamedContainer.providedBy(item) and depth:
@@ -152,28 +152,44 @@ class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 			   request_method='GET')
 class TreeView(AbstractAuthenticatedView):
 
-	def recur(self, container, result):
+	def external(self, context):
+		ext_obj = to_external_object(context, decorate=False)
+		decorateMimeType(context, ext_obj)
+		return ext_obj
+				
+	def recur(self, container, result, flat=False):
 		files = 0
 		folders = 0
 		for name, value in list(container.items()):  # snapshot
 			if INamedContainer.providedBy(value):
 				folders += 1
-				data = LocatedExternalList()
-				result.append({name:data})
-				c1, c2 = self.recur(value, data)
+				if flat:
+					data = LocatedExternalList()
+					result.append({name:data})
+				else:
+					external = self.external(value)
+					result.append(external)
+					data = external[ITEMS] = LocatedExternalList()
+				c1, c2 = self.recur(value, data, flat=flat)
 				files += c2
 				folders += c1
 			else:
-				ext_obj = to_external_object(value, decorate=False)
-				decorateMimeType(value, ext_obj)
-				result.append(ext_obj)
+				if flat:
+					result.append(name)
+				else:
+					external = self.external(value)
+					result.append(external)
 				files += 1
 		return folders, files
 
 	def __call__(self):
-		result = LocatedExternalDict()
+		flat = is_true(self.request.params.get('flat'))
+		if flat:
+			result = LocatedExternalDict()
+		else:
+			result = self.external(self.context)
 		items = result[ITEMS] = LocatedExternalList()
-		folders, files = self.recur(self.context, items)
+		folders, files = self.recur(self.context, items, flat=flat)
 		result['Files'] = files
 		result['Folders'] = folders
 		return result
