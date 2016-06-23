@@ -74,8 +74,8 @@ class TestDecorators(ApplicationLayerTest):
 			self.ds.root['name'] = internal
 			href = to_external_download_oid_href(internal)
 			assert_that(internal, externalizes(all_of(has_key('OID'),
-													  has_entry( 'url',
-																contains_string( '/Getting%20Started.pdf' )))))
+													  has_entry('url',
+																contains_string( '/Getting_Started.pdf' )))))
 
 			ext_obj = self.global_obj
 			internal = find_factory_for(ext_obj)()
@@ -84,7 +84,7 @@ class TestDecorators(ApplicationLayerTest):
 			global_href = to_external_download_oid_href(internal)
 
 		assert_that(href, starts_with('/dataserver2/Objects/'))
-		assert_that(href, ends_with('/download/Getting%20Started.pdf'))
+		assert_that(href, ends_with('/download/Getting_Started.pdf'))
 
 		res = self.testapp.get(href, status=200)
 		assert_that(res, has_property('content_length', is_(61)))
