@@ -90,12 +90,15 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.oids import to_external_ntiid_oid
 
+from nti.links.links import Link
+
 from nti.mimetype.externalization import decorateMimeType
 
 from nti.namedfile.interfaces import INamedFile
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
+LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
@@ -433,23 +436,53 @@ class ExportView(AbstractAuthenticatedView):
 			   request_method='DELETE')
 class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin):
 
+	def readInput(self, value=None):
+		if self.request.body:
+			result = CaseInsensitiveDict(read_body_as_external_object(self.request))
+		else:
+			result = CaseInsensitiveDict(self.request.params)
+		return result
+	
 	def _do_delete(self, theObject):
 		parent = theObject.__parent__
 		del parent[theObject.__name__]
 		return hexc.HTTPNoContent()
 
+	def _has_associations(self, theObject):
+		return		IContentBaseFile.providedBy(theObject) \
+				and theObject.has_associations()
+	
 	def __call__(self):
 		theObject = self.context
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
 
-		if IRootFolder.providedBy(self.context):
-			raise hexc.HTTPForbidden()
+		if IRootFolder.providedBy(theObject):
+			raise hexc.HTTPForbidden(_("Cannot delete root folder."))
 
 		parent = theObject.__parent__
 		if not INamedContainer.providedBy(parent):
 			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
 
+		if self._has_associations(theObject):
+			values = self.readInput()
+			force = is_true(values.get('force'))
+			if not force:
+				links = (
+					Link(self.request.path, rel='confirm',
+						 params={'force':True}, method='DELETE'),
+					Link(theObject, rel='associations',
+						 elements=('@@associations',), method='GET'),
+				)
+				raise_json_error(
+						self.request,
+						hexc.HTTPUnprocessableEntity,
+						{
+							u'message': _('This content file has references.'),
+							u'code': 'ContentFileHasReferences',
+							LINKS: to_external_object(links)
+						},
+						None)
 		self._do_delete(theObject)
 		return hexc.HTTPNoContent()
 
