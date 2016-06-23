@@ -134,10 +134,10 @@ class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		return ()
 
 	def __call__(self):
-		values = CaseInsensitiveDict(self.request.params)
-		all_items = is_true(values.get('all'))
-		depth = values.get('depth', 0)
 		result = LocatedExternalDict()
+		values = CaseInsensitiveDict(self.request.params)
+		depth = values.get('depth', 0)
+		all_items = is_true(values.get('all'))
 		items = self.ext_container(self.context, result, depth)
 		if not all_items:
 			self._batch_items_iterable(result, items)
@@ -183,7 +183,8 @@ class TreeView(AbstractAuthenticatedView):
 		return folders, files
 
 	def __call__(self):
-		flat = is_true(self.request.params.get('flat'))
+		values = CaseInsensitiveDict(self.request.params)
+		flat = is_true(values.get('flat'))
 		if flat:
 			result = LocatedExternalDict()
 		else:

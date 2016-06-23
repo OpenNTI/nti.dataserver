@@ -35,9 +35,10 @@ from nti.namedfile.interfaces import INamedFile
 
 LINKS = StandardExternalFields.LINKS
 
-def _create_link(context, rel, name=None, method=None):
+def _create_link(context, rel, name=None, method=None, params=None):
 	elements = () if not name else (name,)
-	link = Link(context, rel=rel, elements=elements, method=method)
+	link = Link(context, rel=rel, elements=elements, 
+				method=method, params=params)
 	interface.alsoProvides(link, ILocation)
 	link.__name__ = ''
 	link.__parent__ = context
@@ -61,9 +62,11 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 		# read based ops
 		if has_permission(ACT_READ, context, request):
-			_links.append(_create_link(context, "tree", "@@tree"))
+			_links.append(_create_link(context, "tree", "@@tree",
+									   params={'flat':False}))
 			_links.append(_create_link(context, "export", "@@export"))
-			_links.append(_create_link(context, "contents", "@@contents"))
+			_links.append(_create_link(context, "contents", "@@contents",
+									   params={'depth':0, 'all':False}))
 
 		# update based ops
 		if has_permission(ACT_UPDATE, context, request):
