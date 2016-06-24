@@ -111,7 +111,7 @@ def to_unicode(name):
 		return unicode(name)
 	except Exception:
 		return name.decode("UTF-8")
-		
+
 @view_config(name="contents")
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
@@ -161,7 +161,7 @@ class TreeView(AbstractAuthenticatedView):
 		ext_obj = to_external_object(context, decorate=False)
 		decorateMimeType(context, ext_obj)
 		return ext_obj
-				
+
 	def recur(self, container, result, flat=False):
 		files = 0
 		folders = 0
@@ -362,7 +362,7 @@ class ImportView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		result.filename = filename or name
 		result.contentType = guess_type(filename)[0] or u'application/octet-stream'
 		return result
-		
+
 	def _do_call(self):
 		result = LocatedExternalDict()
 		result[ITEMS] = items = {}
@@ -373,7 +373,7 @@ class ImportView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 				for info in zfile.infolist():
 					name = to_unicode(info.filename)
 					filepath, filename = os.path.split(name)
-					if info.file_size == 0: # folder
+					if info.file_size == 0:  # folder
 						continue
 					file_key = safe_filename(filename)
 					with zfile.open(info, "r") as source:
@@ -393,7 +393,7 @@ class ImportView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 						items[name] = target
 
 		self.request.response.status_int = 201
-		result[ITEM_COUNT] = result[TOTAL]  = len(items)
+		result[ITEM_COUNT] = result[TOTAL] = len(items)
 		return result
 
 @view_config(name="export")
@@ -412,7 +412,7 @@ class ExportView(AbstractAuthenticatedView):
 		elif INamed.providedBy(context):
 			filename = os.path.join(path, context.name)
 			zip_file.writestr(filename, context.data)
-			
+
 	def __call__(self):
 		out_dir = tempfile.mkdtemp()
 		try:
@@ -420,7 +420,7 @@ class ExportView(AbstractAuthenticatedView):
 			with zipfile.ZipFile(source, mode="w") as zfile:
 				for item in self.context.values():
 					self._recur(item, zfile)
-		
+
 			response = self.request.response
 			response.content_encoding = str('identity')
 			response.content_type = str('application/x-gzip; charset=UTF-8')
@@ -444,7 +444,7 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 		else:
 			result = CaseInsensitiveDict(self.request.params)
 		return result
-	
+
 	def _do_delete(self, theObject):
 		parent = theObject.__parent__
 		del parent[theObject.__name__]
@@ -453,7 +453,7 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 	def _has_associations(self, theObject):
 		return		IContentBaseFile.providedBy(theObject) \
 				and theObject.has_associations()
-	
+
 	def __call__(self):
 		theObject = self.context
 		self._check_object_exists(theObject)
@@ -501,12 +501,12 @@ class ClearContainerView(AbstractAuthenticatedView):
 		return hexc.HTTPNoContent()
 
 class RenameMixin(object):
-	
+
 	@classmethod
-	def do_rename(cls, theObject, new_name, old_key=None):		
+	def do_rename(cls, theObject, new_name, old_key=None):
 		if not new_name:
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid name."))
-		
+
 		# get name/filename
 		parent = theObject.__parent__
 		new_key = safe_filename(name_finder(new_name))
@@ -515,11 +515,11 @@ class RenameMixin(object):
 
 		# replace name
 		old_key = old_key or theObject.name
-		theObject.name = new_key # name is key
+		theObject.name = new_key  # name is key
 
 		# for files only
 		if INamed.providedBy(theObject):
-			theObject.filename = new_name # filename is display name
+			theObject.filename = new_name  # filename is display name
 
 		# replace in folder
 		parent.rename(old_key, new_key)
@@ -540,7 +540,7 @@ class RenameView(UGDPutView, RenameMixin):
 		parent = theObject.__parent__
 		if not INamedContainer.providedBy(parent):
 			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
-			
+
 	def readInput(self, value=None):
 		data = read_body_as_external_object(self.request)
 		return CaseInsensitiveDict(data)
@@ -564,11 +564,11 @@ class RenameView(UGDPutView, RenameMixin):
 			   renderer='rest',
 			   permission=nauth.ACT_UPDATE,
 			   request_method='PUT')
-class NamedContainerPutView(UGDPutView, RenameMixin): # order matters
+class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 
 	key_attr = u'name'
 	name_attr = u'name'
-	
+
 	def _clean_external(self, externalValue):
 		# remove readonly data
 		for key in ('path', 'data'):
@@ -586,21 +586,21 @@ class NamedContainerPutView(UGDPutView, RenameMixin): # order matters
 			raise hexc.HTTPForbidden(_("Cannot update root folder."))
 		self._clean_external(externalValue)
 
-	def updateContentObject(self, contentObject, externalValue, set_id=False, 
+	def updateContentObject(self, contentObject, externalValue, set_id=False,
 							notify=False, pre_hook=None, object_hook=None):
 		# capture old key data
 		old_key = getattr(contentObject, self.key_attr)
 		old_name = getattr(contentObject, self.name_attr).lower()
-		
+
 		# update
-		result = UGDPutView.updateContentObject(self, 
-											  	contentObject, 
-											  	externalValue, 
-											  	set_id=set_id, 
-											  	notify=False, 
-											  	pre_hook=pre_hook, 
+		result = UGDPutView.updateContentObject(self,
+											  	contentObject,
+											  	externalValue,
+											  	set_id=set_id,
+											  	notify=False,
+											  	pre_hook=pre_hook,
 											  	object_hook=object_hook)
-		
+
 		# check for rename
 		new_name = getattr(contentObject, self.name_attr)
 		if old_name is not new_name.lower():
@@ -612,7 +612,7 @@ class NamedContainerPutView(UGDPutView, RenameMixin): # order matters
 
 	def __call__(self):
 		result = UGDPutView.__call__(self)
-		result = to_external_object(result) # externalize first
+		result = to_external_object(result)  # externalize first
 		return result
 
 @view_config(context=INamedFile)
@@ -620,11 +620,11 @@ class NamedContainerPutView(UGDPutView, RenameMixin): # order matters
 			   renderer='rest',
 			   permission=nauth.ACT_UPDATE,
 			   request_method='PUT')
-class ContentFilePutView(NamedContainerPutView): 
+class ContentFilePutView(NamedContainerPutView):
 
 	key_attr = u'name'
 	name_attr = u'filename'
-	
+
 	def _check_object_constraints(self, theObject, externalValue):
 		parent = theObject.__parent__
 		if not INamedContainer.providedBy(parent):
