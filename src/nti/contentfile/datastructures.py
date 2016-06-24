@@ -48,12 +48,15 @@ class ContentFileObjectIO(NamedFileObjectIO):
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		result = super(ContentFileObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
 		ext_self = self._ext_replacement()
+		if 'tags' in parsed:
+			ext_self.tags = parsed.get('tags') or ()
 		assert ext_self.name, 'must provide a content file name'
 		return result
 
 	def toExternalObject(self, *args, **kwargs):
 		ext_dict = super(ContentFileObjectIO, self).toExternalObject(*args, **kwargs)
 		the_file = self._ext_replacement()
+		ext_dict['tags'] = the_file.tags # return tags
 		# XXX: CS-20160426 For BWC we want to transform all content blob mimetype
 		# to regular files in IModeledContentBody objects.
 		# This cannot be done in a decorator since the external
