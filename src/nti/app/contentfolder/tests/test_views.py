@@ -198,6 +198,22 @@ class TestContentFolderViews(ApplicationLayerTest):
 		self.testapp.post_json('/dataserver2/ofs/root/@@rename', {'name':'xxx'}, status=403)
 		
 	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_update(self):
+		self.testapp.post('/dataserver2/ofs/root/@@upload',
+						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
+						  status=201)
+
+		res = self.testapp.put_json('/dataserver2/ofs/root/ichigo',
+							 		{'filename':'aizen', 'tags':('awesome',)},
+							 		status=200)
+		assert_that(res.json_body, has_entry('tags', [u'awesome']))
+		assert_that(res.json_body, has_entry('name', is_('aizen')))
+		assert_that(res.json_body, has_entry('filename', is_('aizen')))
+
+		self.testapp.get('/dataserver2/ofs/root/ichigo', status=404)
+		self.testapp.get('/dataserver2/ofs/root/aizen', status=200)
+
+	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_move(self):
 		data = {'name': 'bleach'}
 		self.testapp.post_json('/dataserver2/ofs/root/@@mkdir', data, status=201)

@@ -49,6 +49,8 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.appserver.ugd_edit_views import UGDPutView
+
 from nti.common.file import name_finder
 from nti.common.file import safe_filename
 
@@ -498,6 +500,30 @@ class ClearContainerView(AbstractAuthenticatedView):
 		self.context.clear()
 		return hexc.HTTPNoContent()
 
+class RenameMixin(object):
+	
+	@classmethod
+	def do_rename(cls, theObject, new_name, old_key=None):		
+		if not new_name:
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid name."))
+		
+		# get name/filename
+		parent = theObject.__parent__
+		new_key = safe_filename(name_finder(new_name))
+		if new_key in parent:
+			raise hexc.HTTPUnprocessableEntity(_("File already exists."))
+
+		# replace name
+		old_key = old_key or theObject.name
+		theObject.name = new_key # name is key
+
+		# for files only
+		if INamed.providedBy(theObject):
+			theObject.filename = new_name # filename is display name
+
+		# replace in folder
+		parent.rename(old_key, new_key)
+
 @view_config(context=INamedFile)
 @view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',
@@ -505,13 +531,18 @@ class ClearContainerView(AbstractAuthenticatedView):
 			   permission=nauth.ACT_UPDATE,
 			   request_method='POST',
 			   name='rename')
-class RenameView(AbstractAuthenticatedView,
-				 ModeledContentEditRequestUtilsMixin,
-				 ModeledContentUploadRequestUtilsMixin):
+class RenameView(UGDPutView, RenameMixin):
 
+	def _check_object_constraints(self, theObject, externalValue=None):
+		if IRootFolder.providedBy(theObject):
+			raise hexc.HTTPForbidden(_("Cannot rename root folder."))
+
+		parent = theObject.__parent__
+		if not INamedContainer.providedBy(parent):
+			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+			
 	def readInput(self, value=None):
-		data = read_body_as_external_object(self.request,
-											expected_type=expanded_expected_types)
+		data = read_body_as_external_object(self.request)
 		if isinstance(data, six.string_types):
 			data = {'name': data}
 		assert isinstance(data, Mapping)
@@ -522,40 +553,68 @@ class RenameView(AbstractAuthenticatedView,
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
 
-		if IRootFolder.providedBy(self.context):
-			raise hexc.HTTPForbidden(_("Cannot rename root folder."))
+		data = self.readInput()
+		self._check_object_constraints(theObject, data)
+		new_name = data.get('name') or data.get('filename')
+		self.do_rename(theObject, new_name=new_name)
 
+		# XXX: externalize first
+		result = to_external_object(theObject)
+		return result
+
+@view_config(context=INamedFile)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_UPDATE,
+			   request_method='PUT')
+class ContentFilePutView(UGDPutView, RenameMixin): # order matters
+
+	key_attr = u'name'
+	name_attr = u'filename'
+	
+	def _check_object_constraints(self, theObject, externalValue):
+		# check context
 		parent = theObject.__parent__
 		if not INamedContainer.providedBy(parent):
 			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
 
-		data = self.readInput()
-		name = data.get('name')
-		if not name:
-			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid name."))
+		# remove readonly data
+		for key in ('path', 'data'):
+			externalValue.pop(key, None)
 
-		# get name/filename
-		new_key = safe_filename(name_finder(name))
-		if new_key in parent:
-			raise hexc.HTTPUnprocessableEntity(_("File already exists."))
+		# check / replace in case key is specified
+		if self.key_attr in externalValue:
+			name = externalValue.pop(self.key_attr, None)
+			if self.name_attr not in externalValue:
+				externalValue[self.name_attr] = name
 
-		# get content type
-		contentType = data.get('contentType') or data.get('content_type')
+	def updateContentObject(self, contentObject, externalValue, set_id=False, 
+							notify=False, pre_hook=None, object_hook=None):
+		# capture old key data
+		old_key = getattr(contentObject, self.key_attr)
+		old_name = getattr(contentObject, self.name_attr).lower()
+		
+		# update
+		result = UGDPutView.updateContentObject(self, 
+											  	contentObject, 
+											  	externalValue, 
+											  	set_id=set_id, 
+											  	notify=False, 
+											  	pre_hook=pre_hook, 
+											  	object_hook=object_hook)
+		
+		# check for rename
+		new_name = getattr(contentObject, self.name_attr)
+		if old_name is not new_name.lower():
+			self.do_rename(contentObject, new_name=new_name, old_key=old_key)
 
-		# replace name
-		old_key = theObject.name
-		theObject.name = new_key # name is key
+		# notify
+		lifecycleevent.modified(contentObject)
+		return result
 
-		# for files only
-		if INamed.providedBy(theObject):
-			theObject.filename = name # filename is display name
-			theObject.contentType = contentType or theObject.contentType
-
-		# replace in folder
-		parent.rename(old_key, new_key)
-
-		# XXX: externalize first
-		result = to_external_object(theObject)
+	def __call__(self):
+		result = UGDPutView.__call__(self)
+		result = to_external_object(result) # externalize first
 		return result
 
 @view_config(context=INamedFile)
