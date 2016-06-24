@@ -590,7 +590,7 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 							notify=False, pre_hook=None, object_hook=None):
 		# capture old key data
 		old_key = getattr(contentObject, self.key_attr)
-		old_name = getattr(contentObject, self.name_attr).lower()
+		old_name = getattr(contentObject, self.name_attr)
 
 		# update
 		result = UGDPutView.updateContentObject(self,
@@ -603,7 +603,7 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 
 		# check for rename
 		new_name = getattr(contentObject, self.name_attr)
-		if old_name is not new_name.lower():
+		if old_name.lower() is not new_name.lower():
 			self.do_rename(contentObject, new_name=new_name, old_key=old_key)
 
 		# notify
