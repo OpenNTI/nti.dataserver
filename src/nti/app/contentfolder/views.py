@@ -559,22 +559,17 @@ class RenameView(UGDPutView, RenameMixin):
 		result = to_external_object(theObject)
 		return result
 
-@view_config(context=INamedFile)
+@view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   permission=nauth.ACT_UPDATE,
 			   request_method='PUT')
-class ContentFilePutView(UGDPutView, RenameMixin): # order matters
+class NamedContainerPutView(UGDPutView, RenameMixin): # order matters
 
 	key_attr = u'name'
-	name_attr = u'filename'
+	name_attr = u'name'
 	
-	def _check_object_constraints(self, theObject, externalValue):
-		# check context
-		parent = theObject.__parent__
-		if not INamedContainer.providedBy(parent):
-			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
-
+	def _clean_external(self, externalValue):
 		# remove readonly data
 		for key in ('path', 'data'):
 			externalValue.pop(key, None)
@@ -584,6 +579,12 @@ class ContentFilePutView(UGDPutView, RenameMixin): # order matters
 			name = externalValue.pop(self.key_attr, None)
 			if self.name_attr not in externalValue:
 				externalValue[self.name_attr] = name
+		return externalValue
+
+	def _check_object_constraints(self, theObject, externalValue):
+		if IRootFolder.providedBy(theObject):
+			raise hexc.HTTPForbidden(_("Cannot update root folder."))
+		self._clean_external(externalValue)
 
 	def updateContentObject(self, contentObject, externalValue, set_id=False, 
 							notify=False, pre_hook=None, object_hook=None):
@@ -614,20 +615,21 @@ class ContentFilePutView(UGDPutView, RenameMixin): # order matters
 		result = to_external_object(result) # externalize first
 		return result
 
-@view_config(context=INamedContainer)
+@view_config(context=INamedFile)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   permission=nauth.ACT_UPDATE,
 			   request_method='PUT')
-class NamedContainerPutView(ContentFilePutView):
+class ContentFilePutView(NamedContainerPutView): 
 
 	key_attr = u'name'
-	name_attr = u'name'
+	name_attr = u'filename'
 	
 	def _check_object_constraints(self, theObject, externalValue):
-		if IRootFolder.providedBy(theObject):
-			raise hexc.HTTPForbidden(_("Cannot update root folder."))
-		super(NamedContainerPutView, self)._check_object_constraints(theObject, externalValue)
+		parent = theObject.__parent__
+		if not INamedContainer.providedBy(parent):
+			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+		self._clean_external(externalValue)
 
 @view_config(context=INamedFile)
 @view_config(context=INamedContainer)
