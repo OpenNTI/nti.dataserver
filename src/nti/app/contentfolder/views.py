@@ -543,9 +543,6 @@ class RenameView(UGDPutView, RenameMixin):
 			
 	def readInput(self, value=None):
 		data = read_body_as_external_object(self.request)
-		if isinstance(data, six.string_types):
-			data = {'name': data}
-		assert isinstance(data, Mapping)
 		return CaseInsensitiveDict(data)
 
 	def __call__(self):
@@ -616,6 +613,21 @@ class ContentFilePutView(UGDPutView, RenameMixin): # order matters
 		result = UGDPutView.__call__(self)
 		result = to_external_object(result) # externalize first
 		return result
+
+@view_config(context=INamedContainer)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_UPDATE,
+			   request_method='PUT')
+class NamedContainerPutView(ContentFilePutView):
+
+	key_attr = u'name'
+	name_attr = u'name'
+	
+	def _check_object_constraints(self, theObject, externalValue):
+		if IRootFolder.providedBy(theObject):
+			raise hexc.HTTPForbidden(_("Cannot update root folder."))
+		super(NamedContainerPutView, self)._check_object_constraints(theObject, externalValue)
 
 @view_config(context=INamedFile)
 @view_config(context=INamedContainer)
