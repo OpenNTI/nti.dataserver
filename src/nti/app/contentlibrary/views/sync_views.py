@@ -152,8 +152,8 @@ class _LastSyncTimeView(AbstractAuthenticatedView):
 			   renderer='rest',
 			   context=IDataserverFolder,
 			   name='SyncAllLibraries')
-class _SyncAllLibrariesView(_SetSyncLockView,
-							ModeledContentUploadRequestUtilsMixin):
+class SyncAllLibrariesView(_SetSyncLockView,
+						   ModeledContentUploadRequestUtilsMixin):
 	"""
 	A view that synchronizes all of the in-database libraries
 	(and sites) with their on-disk and site configurations.
@@ -195,34 +195,7 @@ class _SyncAllLibrariesView(_SetSyncLockView,
 	def _txn_id(self):
 		return "txn.%s" % get_thread_ident()
 
-	def _do_call(self):
-		values = self.readInput()
-		site = values.get('site')
-		allowRemoval = values.get('allowRemoval') or u''
-		allowRemoval = allowRemoval.lower() in TRUE_VALUES
-		# things to sync
-		for name in ('ntiids', 'ntiid', 'packages', 'package'):
-			ntiids = values.get(name)
-			if ntiids:
-				break
-		ntiids = set(ntiids.split()) if isinstance(ntiids, string_types) else ntiids
-		ntiids = list(ntiids) if ntiids else ()
-
-		# Unfortunately, zope.dublincore includes a global subscriber registration
-		# (zope.dublincore.creatorannotator.CreatorAnnotator)
-		# that will update the `creators` property of IZopeDublinCore to include
-		# the current principal when any ObjectCreated /or/ ObjectModified event
-		# is fired, if there is a current interaction. Normally we want this,
-		# but here we care specifically about getting the dublincore metadata
-		# we specifically defined in the libraries, and not the requesting principal.
-		# Our simple-minded approach is to simply void the interaction during this process
-		# (which works so long as zope.securitypolicy doesn't get involved...)
-		# This is somewhat difficult to test the side-effects of, sadly.
-
-		# JZ - 8.2015 - Disabling interaction also prevents stream changes
-		# from being broadcast (specifically topic creations). We've seen such
-		# changes end up causing conflict issues when managing sessions. These
-		# retries cause syncs to take much longer to perform.
+	def _do_sync(self, ntiids, site, allowRemoval):
 		now = time.time()
 		result = LocatedExternalDict()
 		result['Transaction'] = self._txn_id()
@@ -252,6 +225,37 @@ class _SyncAllLibrariesView(_SetSyncLockView,
 							 exc_traceback)
 		finally:
 			restoreInteraction()
+		return result
+
+	def _do_call(self):
+		values = self.readInput()
+		# parse params
+		site = values.get('site')
+		allowRemoval = values.get('allowRemoval') or u''
+		allowRemoval = allowRemoval.lower() in TRUE_VALUES
+		# things to sync (package and courses)
+		for name in ('ntiids', 'ntiid', 'packages', 'package'):
+			ntiids = values.get(name)
+			if ntiids:
+				break
+		ntiids = set(ntiids.split()) if isinstance(ntiids, string_types) else ntiids
+		ntiids = list(ntiids) if ntiids else ()
+		# Unfortunately, zope.dublincore includes a global subscriber registration
+		# (zope.dublincore.creatorannotator.CreatorAnnotator)
+		# that will update the `creators` property of IZopeDublinCore to include
+		# the current principal when any ObjectCreated /or/ ObjectModified event
+		# is fired, if there is a current interaction. Normally we want this,
+		# but here we care specifically about getting the dublincore metadata
+		# we specifically defined in the libraries, and not the requesting principal.
+		# Our simple-minded approach is to simply void the interaction during this process
+		# (which works so long as zope.securitypolicy doesn't get involved...)
+		# This is somewhat difficult to test the side-effects of, sadly.
+
+		# JZ - 8.2015 - Disabling interaction also prevents stream changes
+		# from being broadcast (specifically topic creations). We've seen such
+		# changes end up causing conflict issues when managing sessions. These
+		# retries cause syncs to take much longer to perform.
+		result = self._do_sync(ntiids, site, allowRemoval)
 		return result
 
 	def __call__(self):
