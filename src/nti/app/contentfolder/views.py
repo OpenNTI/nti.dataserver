@@ -301,7 +301,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 	def get_namedfile(self, source, name, filename=None):
 		factory = self.factory(source)
 		filename = getattr(source, 'filename', None)
-		contentType = getattr(source, 'contentType', None)
+		contentType = getattr(source, 'contentType', None) or guess_type(filename)[0]
 
 		# transfer data
 		result = factory()
