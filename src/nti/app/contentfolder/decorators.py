@@ -20,6 +20,8 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.common.property import Lazy
 
+from nti.contentfile.interfaces import IContentBaseFile
+
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import INamedContainer
 
@@ -101,18 +103,21 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	def _do_decorate_external(self, context, result):
 		request = self.request
 		_links = result.setdefault(LINKS, [])
-		if has_permission(ACT_READ, context, request):
+		if 		IContentBaseFile.providedBy(context) \
+			and has_permission(ACT_READ, context, request):
 			_links.append(_create_link(context, rel="external", 
 									   name="@@external", method='GET'))
 			_links.append(_create_link(context, rel="associations", 
 									   name="@@associations", method='GET'))
 
-		if has_permission(ACT_UPDATE, context, request):
+		if 	has_permission(ACT_UPDATE, context, request):
 			_links.append(_create_link(context, rel="delete", method='DELETE'))
 			_links.append(_create_link(context, rel="copy", name="@@copy", method="POST"))
 			_links.append(_create_link(context, rel="move", name="@@move", method="POST"))
 			_links.append(_create_link(context, rel="rename", name="@@rename", method='POST'))
-			_links.append(_create_link(context, rel="associate", name="@@associate", method='POST'))
+			if IContentBaseFile.providedBy(context):
+				_links.append(_create_link(context, rel="associate", 
+										   name="@@associate", method='POST'))
 
 @component.adapter(INamedFile)
 @component.adapter(INamedContainer)
