@@ -127,10 +127,17 @@ class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		result = to_external_object(item)
 		return result
 
+	def ext_key(self, item):
+		if INamedContainer.providedBy(item):
+			result = (u'a', item.name)
+		else:
+			result = (u'z', item.filename)
+		return result
+
 	def ext_container(self, context, result, depth):
 		if depth >= 0:
 			items = result[ITEMS] = list()
-			for item in list(context.values()):  # snapshopt
+			for item in sorted(context.values(), key=self.ext_key):  # snapshopt
 				ext_obj = self.ext_obj(item)
 				items.append(ext_obj)
 				if INamedContainer.providedBy(item) and depth:
