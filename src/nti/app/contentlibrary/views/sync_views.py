@@ -152,8 +152,8 @@ class _LastSyncTimeView(AbstractAuthenticatedView):
 			   renderer='rest',
 			   context=IDataserverFolder,
 			   name='SyncAllLibraries')
-class SyncAllLibrariesView(_SetSyncLockView,
-						   ModeledContentUploadRequestUtilsMixin):
+class _SyncAllLibrariesView(_SetSyncLockView,
+						    ModeledContentUploadRequestUtilsMixin):
 	"""
 	A view that synchronizes all of the in-database libraries
 	(and sites) with their on-disk and site configurations.
@@ -267,4 +267,3 @@ class SyncAllLibrariesView(_SetSyncLockView,
 			return self._do_call()
 		finally:
 			self.release(lock)
-_SyncAllLibrariesView = SyncAllLibrariesView #BWC
