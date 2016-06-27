@@ -45,13 +45,13 @@ def is_cf_io_href(link):
 
 def safe_download_file_name(name):
 	if not name:
-		result = 'file.dat'
+		result = u'file.dat'
 	else:
 		ext = os.path.splitext(name)[1]
 		try:
 			result = quote(name)
 		except Exception:
-			result = 'file' + ext
+			result = u'file' + ext
 	return result
 
 def to_external_cf_io_href(context, request=None):
@@ -63,7 +63,7 @@ def to_external_cf_io_href(context, request=None):
 		uid = intids.queryId(context) if context is not None else None
 		if ds2 and uid is not None:
 			code = to_external_string(uid)
-			href = '/%s/%s/%s/%s' % (ds2, CFIO, code, safe_name)
+			href = u'/%s/%s/%s/%s' % (ds2, CFIO, code, safe_name)
 			return href
 	return None
 get_cf_io_href = to_external_cf_io_href
