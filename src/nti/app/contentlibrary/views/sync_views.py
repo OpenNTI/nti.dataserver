@@ -267,3 +267,4 @@ class SyncAllLibrariesView(_SetSyncLockView,
 			return self._do_call()
 		finally:
 			self.release(lock)
+_SyncAllLibrariesView = SyncAllLibrariesView #BWC
