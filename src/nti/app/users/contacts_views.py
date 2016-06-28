@@ -43,9 +43,11 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
-ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
-MIME_TYPE = StandardExternalFields.MIMETYPE
+ITEMS = StandardExternalFields.ITEMS
+TOTAL = StandardExternalFields.TOTAL
+MIMETYPE = StandardExternalFields.MIMETYPE
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 SUGGESTED_CONTACTS_MIMETYPE = 'application/vnd.nextthought.suggestedcontacts'
 
@@ -186,9 +188,9 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 		self._get_params()
 		limited_contacts = self._get_limited_contacts()
 		fill_in_contacts = self._get_fill_in_contacts(limited_contacts)
-		results['Total'] = results['ItemCount'] = 0
+		results[TOTAL] = results[ITEM_COUNT] = 0
 		results[CLASS] = SUGGESTED_CONTACTS
-		results[MIME_TYPE] = SUGGESTED_CONTACTS_MIMETYPE
+		results[MIMETYPE] = SUGGESTED_CONTACTS_MIMETYPE
 
 		# Only return anything if we meet our minimum requirements.
 		if 		len(fill_in_contacts) >= self.MIN_FILL_COUNT \
@@ -197,7 +199,7 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 			result_list.extend(limited_contacts)
 			result_list.extend(fill_in_contacts)
 			results[ITEMS ] = [toExternalObject(x, name="summary") for x in result_list]
-			results['Total'] = results['ItemCount'] = len(result_list)
+			results[TOTAL] = results[ITEM_COUNT] = len(result_list)
 		return results
 
 @view_config(context=ICommunity)
@@ -251,13 +253,13 @@ class _MembershipSuggestedContactsView(_AbstractSuggestedContactsView):
 		results = LocatedExternalDict()
 		self._get_params()
 		contacts = self._get_contacts()
-		results['Total'] = results['ItemCount' ] = 0
+		results[TOTAL] = results[ITEM_COUNT] = 0
 		results[CLASS] = SUGGESTED_CONTACTS
-		results[MIME_TYPE] = SUGGESTED_CONTACTS_MIMETYPE
+		results[MIMETYPE] = SUGGESTED_CONTACTS_MIMETYPE
 
 		if len(contacts) >= self.MIN_RESULT_COUNT:
 			result_list = []
 			result_list.extend(contacts)
 			results[ITEMS] = [toExternalObject(x, name="summary") for x in result_list]
-			results['Total'] = results['ItemCount'] = len(result_list)
+			results[TOTAL] = results[ITEM_COUNT] = len(result_list)
 		return results

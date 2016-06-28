@@ -61,7 +61,7 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 	def _do_decorate_external(self, context, result):
 		_links = result.setdefault(LINKS, [])
 		link = Link(context, rel="RequestEmailVerification",
-					elements=(REQUEST_EMAIL_VERFICATION_VIEW,))
+					elements=('@@' + REQUEST_EMAIL_VERFICATION_VIEW,))
 		_links.append(link)
 
 		ds2 = find_interface(context, IDataserverFolder)
@@ -79,7 +79,7 @@ class _UserMembershipsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _do_decorate_external(self, context, result):
 		_links = result.setdefault(LINKS, [])
-		link = Link(context, rel="memberships", elements=('memberships',))
+		link = Link(context, rel="memberships", elements=('@@memberships',))
 		_links.append(link)
 
 @component.adapter(ICommunity)
@@ -95,24 +95,24 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		in_community = self.remoteUser in context
 		if context.joinable:
 			if not in_community:
-				link = Link(context, elements=('join',), rel="join")
+				link = Link(context, elements=('@@join',), rel="join")
 			else:
-				link = Link(context, elements=('leave',), rel="leave")
+				link = Link(context, elements=('@@leave',), rel="leave")
 			_links.append(link)
 
 		if not IDisallowMembersLink.providedBy(context) and (context.public or in_community):
-			link = Link(context, elements=('members',), rel="members")
+			link = Link(context, elements=('@@members',), rel="members")
 			_links.append(link)
 
 		if in_community and not IDisallowHiddenMembership.providedBy(context):
 			if self.remoteUser in IHiddenMembership(context, None) or ():
-				link = Link(context, elements=('unhide',), rel="unhide")
+				link = Link(context, elements=('@@unhide',), rel="unhide")
 			else:
-				link = Link(context, elements=('hide',), rel="hide")
+				link = Link(context, elements=('@@hide',), rel="hide")
 			_links.append(link)
 
 		if not IDisallowActivityLink.providedBy(context):
-			link = Link(context, rel="Activity", elements=('Activity',))
+			link = Link(context, elements=('@@Activity',), rel="Activity")
 			_links.append(link)
 
 @interface.implementer(IExternalMappingDecorator)
