@@ -18,6 +18,8 @@ functions to not escape these values.
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import pkg_resources
 
 # In fact we require running on 1.3, which changes

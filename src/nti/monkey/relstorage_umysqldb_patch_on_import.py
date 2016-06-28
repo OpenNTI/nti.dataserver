@@ -12,6 +12,8 @@ retriable exceptions that zope.sqlalchemy knows about.
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 def _patch():
 	try:
 		import umysqldb
@@ -32,14 +34,8 @@ def _patch():
 	_patch_relstorage_error(umysqldb)
 	_patch_transaction_retry()
 
-	from . import relstorage_timestamp_repr_patch_on_import
-	relstorage_timestamp_repr_patch_on_import.patch()
-	from . import relstorage_zlibstorage_patch_on_import
-	relstorage_zlibstorage_patch_on_import.patch()
-	from . import relstorage_explicitly_close_memcache_patch_on_import
+	from nti.monkey import relstorage_explicitly_close_memcache_patch_on_import
 	relstorage_explicitly_close_memcache_patch_on_import.patch()
-	from . import relstorage_locker_patch_on_import
-	relstorage_locker_patch_on_import.patch()
 
 def _patch_connection():
 

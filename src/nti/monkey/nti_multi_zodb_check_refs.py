@@ -13,7 +13,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import relstorage_patch_all_except_gevent_on_import
+from nti.monkey import relstorage_patch_all_except_gevent_on_import
 relstorage_patch_all_except_gevent_on_import.patch()
 
 import sys

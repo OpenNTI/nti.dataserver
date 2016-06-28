@@ -12,8 +12,8 @@ from hamcrest import assert_that
 
 def test_release():
 	from relstorage.storage import RelStorage
-	from ..relstorage_explicitly_close_memcache_patch_on_import import patch
+	from nti.monkey.relstorage_explicitly_close_memcache_patch_on_import import patch
 	patch()
 
-	assert_that( RelStorage.release.im_func.__module__,
-				 is_('nti.monkey.relstorage_explicitly_close_memcache_patch_on_import') )
+	assert_that(RelStorage.release.im_func.__module__,
+				is_('nti.monkey.relstorage_explicitly_close_memcache_patch_on_import'))

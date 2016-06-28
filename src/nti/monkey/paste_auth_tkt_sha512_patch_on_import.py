@@ -26,7 +26,8 @@ import paste.auth.auth_tkt
 
 import repoze.who.plugins.auth_tkt
 
-from pyramid.authentication import parse_ticket as _pyramid_parse, BadTicket as _pyramid_BadTicket
+from pyramid.authentication import parse_ticket as _pyramid_parse
+from pyramid.authentication import BadTicket as _pyramid_BadTicket
 
 @functools.wraps(_pyramid_parse)
 def _parse_ticket(s, t, ip, digest_algo=None):
