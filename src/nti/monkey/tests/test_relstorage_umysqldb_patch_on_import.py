@@ -24,7 +24,7 @@ class TestPatch(unittest.TestCase):
 		from relstorage.storage import RelStorage
 
 		class Adapter(object):
-			pass
+			packundo = None
 
 		class Schema(object):
 			def prepare(self): pass
