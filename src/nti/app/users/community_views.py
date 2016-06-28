@@ -56,6 +56,8 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.zope_catalog.catalog import ResultSet
 
 ITEMS = StandardExternalFields.ITEMS
+TOTAL = StandardExternalFields.TOTAL
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 @view_config(name='CreateCommunity')
 @view_config(name='create_community')
@@ -132,7 +134,7 @@ class ListCommunitiesView(AbstractAuthenticatedView):
 			if usernames and username not in usernames:
 				continue
 			items.append(community)
-		result['Total'] = result['ItemCount'] = len(items)
+		result[TOTAL] = result[ITEM_COUNT] = len(items)
 		return result
 
 @view_config(route_name='objects.generic.traversal',
@@ -231,6 +233,7 @@ class CommunityMembersView(AbstractAuthenticatedView, BatchingUtilsMixin):
 									if x == self.remoteUser
 									else 'summary'))
 
+		result[TOTAL] = community.number_of_members()
 		self._batch_items_iterable(result, community,
 								   number_items_needed=self.limit,
 								   batch_size=self.batch_size,

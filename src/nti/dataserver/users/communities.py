@@ -150,6 +150,13 @@ class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matt
 		# if desired.
 		return self.iter_members()
 
+	def number_of_members(self):
+		self._p_activate()
+		if '_members' in self.__dict__:
+			return len(self._members)
+		return 0
+	numberOfMembers = number_of_members
+
 	def iter_member_usernames(self):
 		return _set_of_usernames_from_named_lazy_set_of_wrefs(self, '_members')
 
