@@ -57,6 +57,8 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.zope_catalog.catalog import ResultSet
 
 ITEMS = StandardExternalFields.ITEMS
+TOTAL = StandardExternalFields.TOTAL
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 def _authenticated_user_is_member(context, request):
 	"""
@@ -151,5 +153,5 @@ class ListDFLsView(AbstractAuthenticatedView):
 			if usernames and username not in usernames:
 				continue
 			items.append(entity)
-		result['Total'] = result['ItemCount'] = len(items)
+		result[TOTAL] = result[ITEM_COUNT] = len(items)
 		return result
