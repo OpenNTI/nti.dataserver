@@ -88,13 +88,14 @@ def mkdirs(current, path, factory=ContentFolder):
 			if root != current:
 				current = current.__parent__
 			continue
-		if safe_filename(segment) not in current:
+		safe_segment = safe_filename(segment)
+		if safe_segment not in current:
 			new_folder = factory()
 			new_folder.filename = segment
-			new_folder.name = safe_filename(segment)
+			new_folder.name = safe_segment
 			lifecycleevent.created(new_folder)
-			current[new_folder.name] = new_folder
+			current[safe_segment] = new_folder
 			current = new_folder
 		else:
-			current = current[safe_filename(segment)]
+			current = current[safe_segment]
 	return current
