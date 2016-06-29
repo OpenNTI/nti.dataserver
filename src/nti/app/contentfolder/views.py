@@ -233,6 +233,7 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 			data['title'] = data.get('title') or data['name']
 			data['description'] = data.get('description') or data['name']
 			data[MIMETYPE] = self.default_folder_mime_type
+		data['filename'] = data.get('filename') or data['name']
 		return data
 
 	def _do_call(self):
@@ -537,10 +538,7 @@ class RenameMixin(object):
 		# replace name
 		old_key = old_key or theObject.name
 		theObject.name = new_key  # name is key
-
-		# for files only
-		if INamed.providedBy(theObject):
-			theObject.filename = new_name  # filename is display name
+		theObject.filename = new_name  # filename is display name
 
 		# replace in folder
 		parent.rename(old_key, new_key)
@@ -588,7 +586,7 @@ class RenameView(UGDPutView, RenameMixin):
 class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 
 	key_attr = u'name'
-	name_attr = u'name'
+	name_attr = u'filename'
 
 	def _clean_external(self, externalValue):
 		# remove readonly data
