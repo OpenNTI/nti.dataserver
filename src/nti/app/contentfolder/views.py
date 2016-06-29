@@ -216,12 +216,12 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 	content_predicate = INamedContainer.providedBy
 	default_folder_mime_type = ContentFolder.mimeType
 		
-	def generate(self, prefix=_('untitled')):
+	def generate(self, prefix=_('Unnamed Folder')):
 		for x in xrange(10000):
 			name = prefix + (u'' if x == 0 else '.%s' % x)
 			if name not in self.context:
 				return name
-		return '%.%' % (prefix, generate_random_hex_string() )
+		return '%.%' % (prefix, generate_random_hex_string())
 
 	def readInput(self, value=None):
 		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
@@ -239,7 +239,8 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 	def _do_call(self):
 		creator = self.remoteUser
 		new_folder = self.readCreateUpdateContentObject(creator)
-		new_folder.creator = creator.username
+		new_folder.creator = creator.username # use username
+		new_folder.name = safe_filename(new_folder.name)
 		if new_folder.name in self.context:
 			raise hexc.HTTPUnprocessableEntity(_("Folder exists."))
 		lifecycleevent.created(new_folder)
