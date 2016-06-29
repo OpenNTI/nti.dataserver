@@ -27,6 +27,7 @@ from nti.contentfolder.interfaces import INamedContainer
 
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_UPDATE
+from nti.dataserver.authorization import ACT_DELETE 
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
@@ -78,6 +79,9 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			_links.append(_create_link(context, "upload", "@@upload", method='POST'))
 			_links.append(_create_link(context, "import", "@@import", method='POST'))
 
+		if 	has_permission(ACT_DELETE, context, request):
+			_links.append(_create_link(context, rel="delete", method='DELETE'))
+
 		# non root folders
 		if 		not IRootFolder.providedBy(context) \
 			and has_permission(ACT_UPDATE, context, request):
@@ -110,8 +114,10 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			_links.append(_create_link(context, rel="associations", 
 									   name="@@associations", method='GET'))
 
-		if 	has_permission(ACT_UPDATE, context, request):
+		if 	has_permission(ACT_DELETE, context, request):
 			_links.append(_create_link(context, rel="delete", method='DELETE'))
+
+		if 	has_permission(ACT_UPDATE, context, request):
 			_links.append(_create_link(context, rel="copy", name="@@copy", method="POST"))
 			_links.append(_create_link(context, rel="move", name="@@move", method="POST"))
 			_links.append(_create_link(context, rel="rename", name="@@rename", method='POST'))

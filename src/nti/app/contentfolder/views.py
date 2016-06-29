@@ -10,13 +10,11 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import six
 import sys
 import shutil
 import zipfile
 import tempfile
 from urlparse import parse_qs
-from collections import Mapping
 
 from zope import component
 from zope import lifecycleevent
@@ -62,6 +60,8 @@ from nti.common.mimetypes import guess_type
 
 from nti.common.property import Lazy
 
+from nti.common.random import generate_random_hex_string
+
 from nti.common.string import is_true
 
 from nti.contentfile.interfaces import IContentBaseFile
@@ -103,8 +103,6 @@ ITEMS = StandardExternalFields.ITEMS
 LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
-
-expanded_expected_types = six.string_types + (Mapping,)
 
 def to_unicode(name):
 	try:
@@ -217,18 +215,25 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 
 	content_predicate = INamedContainer.providedBy
 	default_folder_mime_type = ContentFolder.mimeType
+		
+	def generate(self, prefix=_('untitled')):
+		for x in xrange(10000):
+			name = prefix + (u'' if x == 0 else '.%s' % x)
+			if name not in self.context:
+				return name
+		return '%.%' % (prefix, generate_random_hex_string() )
 
 	def readInput(self, value=None):
-		data = read_body_as_external_object(self.request,
-											expected_type=expanded_expected_types)
-		if isinstance(data, six.string_types):
-			data = {'name': data}
+		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		data = CaseInsensitiveDict(data)
+		if 'name' not in data:
+			data['name'] = self.generate()
 		if MIMETYPE not in data:
+			data['tags'] = data.get('tags') or ()
 			data['title'] = data.get('title') or data['name']
 			data['description'] = data.get('description') or data['name']
 			data[MIMETYPE] = self.default_folder_mime_type
-		assert isinstance(data, Mapping)
-		return CaseInsensitiveDict(data)
+		return data
 
 	def _do_call(self):
 		creator = self.remoteUser
@@ -247,7 +252,7 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 			   name="mkdirs",
 			   permission=nauth.ACT_UPDATE,
 			   request_method='POST')
-class MkdirsView(AbstractAuthenticatedView):
+class MkdirsView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
 	folder_factory = ContentFolder
 
@@ -257,12 +262,11 @@ class MkdirsView(AbstractAuthenticatedView):
 		return result
 
 	def readInput(self, value=None):
-		data = read_body_as_external_object(self.request,
-											expected_type=expanded_expected_types)
-		if isinstance(data, six.string_types):
-			data = {'path': data}
-		assert isinstance(data, Mapping)
-		return CaseInsensitiveDict(data)
+		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		data = CaseInsensitiveDict(data)
+		if 'name' in data:
+			data['path'] = data.pop('name', None)
+		return data
 
 	def __call__(self):
 		data = self.readInput()
@@ -473,25 +477,35 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 		if not INamedContainer.providedBy(parent):
 			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
 
-		if self._has_associations(theObject):
+		if 		self._has_associations(theObject) \
+			or	(INamedContainer.providedBy(theObject) and len(theObject) > 0):
 			values = self.readInput()
 			force = is_true(values.get('force'))
 			if not force:
 				links = (
 					Link(self.request.path, rel='confirm',
 						 params={'force':True}, method='DELETE'),
-					Link(theObject, rel='associations',
-						 elements=('@@associations',), method='GET'),
 				)
-				raise_json_error(
-						self.request,
-						hexc.HTTPUnprocessableEntity,
-						{
-							u'message': _('This content file has references.'),
-							u'code': 'ContentFileHasReferences',
-							LINKS: to_external_object(links)
-						},
-						None)
+				if INamedContainer.providedBy(theObject):
+					raise_json_error(
+							self.request,
+							hexc.HTTPConflict,
+							{
+								u'message': _('This folder is not empty.'),
+								u'code': 'FolderIsNotEmpty',
+								LINKS: to_external_object(links)
+							},
+							None)
+				else:
+					raise_json_error(
+							self.request,
+							hexc.HTTPConflict,
+							{
+								u'message': _('This content file has references.'),
+								u'code': 'ContentFileHasReferences',
+								LINKS: to_external_object(links)
+							},
+							None)
 		self._do_delete(theObject)
 		return hexc.HTTPNoContent()
 
@@ -650,12 +664,11 @@ class MoveView(AbstractAuthenticatedView,
 			   ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
-		data = read_body_as_external_object(self.request,
-											expected_type=expanded_expected_types)
-		if isinstance(data, six.string_types):
-			data = {'path': data}
-		assert isinstance(data, Mapping)
-		return CaseInsensitiveDict(data)
+		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		data = CaseInsensitiveDict(data)
+		if 'name' in data:
+			data['path'] = data.pop('name', None)
+		return data
 
 	def _get_parent_target(self, theObject, path):
 		current = theObject
