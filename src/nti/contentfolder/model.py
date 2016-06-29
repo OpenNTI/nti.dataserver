@@ -17,6 +17,7 @@ from zope import lifecycleevent
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.common.property import alias
+from nti.common.property import readproperty
 
 from nti.coremetadata.interfaces import SYSTEM_USER_ID
 
@@ -66,9 +67,14 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 	def __init__(self, *args, **kwargs):
 		super(ContentFolder, self).__init__()
 		self.name = kwargs.get('name')
-		self.use_blobs = kwargs.get('use_blobs', True)
 		self.title = kwargs.get('title') or self.name
+		self.use_blobs = kwargs.get('use_blobs', True)
+		self.filename = kwargs.get('filename') or self.name
 		self.description = kwargs.get('description') or self.title
+
+	@readproperty
+	def filename(self):
+		return self.name
 
 	def __setitem__(self, key, value):
 		checkValidId(key)

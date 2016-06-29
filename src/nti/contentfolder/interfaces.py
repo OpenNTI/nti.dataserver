@@ -34,7 +34,8 @@ class INamedContainer(IContained,
 					  ILastModified,
 					  ICreated):
 	tags = ListOrTuple(ValidTextLine(title="A single tag"), required=False)
-	name = ValidTextLine(title="Folder name", required=True)
+	name = ValidTextLine(title="Folder URL-safe name", required=True)
+	filename = ValidTextLine(title="Folder name", required=True)
 
 	# dublin core
 	title = ValidTextLine(title="Folder title", required=False, default=None)

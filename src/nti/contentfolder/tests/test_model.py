@@ -62,13 +62,15 @@ class TestModel(unittest.TestCase):
 		assert_that(ext_obj,
 					has_entries(
 						u'MimeType', u'application/vnd.nextthought.contentfolder',
-						u'name', u'f1'))
+						u'name', u'f1',
+						u'filename', u'f1'))
 
 		factory = find_factory_for(ext_obj)
 		assert_that(factory, is_not(none()))
 		internal = factory()
 		update_from_external_object(internal, ext_obj)
 		assert_that(internal, has_property('name', is_('f1')))
+		assert_that(internal, has_property('filename', is_('f1')))
 
 	def test_move(self):
 		root = RootFolder()
