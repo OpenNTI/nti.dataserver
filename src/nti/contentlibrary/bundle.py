@@ -342,7 +342,8 @@ def _validate_package_refs(bundle, meta):
 def synchronize_bundle(data_source, bundle,
 					   content_library=None,
 					   excluded_keys=(),
-					   _meta=None):
+					   _meta=None,
+					   update_bundle=True):
 	"""
 	Given either a :class:`IDelimitedHierarchyKey` whose contents are a JSON
 	or a JSON source, and an object representing a :class:`IContentPackageBundle`, synchronize
@@ -407,7 +408,7 @@ def synchronize_bundle(data_source, bundle,
 			modified = True
 			validate_named_field_value(bundle, bundle_iface, str(k), getattr(meta, k))()
 
-	if bundle.root != meta.key.__parent__:
+	if update_bundle and bundle.root != meta.key.__parent__:
 		modified = True
 		bundle.root = meta.key.__parent__
 
@@ -422,7 +423,8 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 							  dc_meta_name=DCMETA_FILENAME,
 							  excluded_keys=(),
 							  _meta=None,
-							  dc_bucket=None):
+							  dc_bucket=None,
+							  update_bundle=True):
 	"""
 	:keyword dc_meta_name: If given (defaults to a standard value),
 		DublinCore metadata will be read from this file (a sibling of the `data_key`).
@@ -432,7 +434,8 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 	result = synchronize_bundle(data_key, bundle,
 								content_library=content_library,
 								excluded_keys=excluded_keys,
-								_meta=_meta)
+								_meta=_meta,
+								update_bundle=update_bundle)
 	# Metadata if we need it
 	dc_bucket = data_key.__parent__ if dc_bucket is None else dc_bucket
 	read_dublincore_from_named_key(bundle, dc_bucket, dc_meta_name)
