@@ -218,10 +218,10 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 		
 	def generate(self, prefix=_('Unnamed Folder')):
 		for x in xrange(10000):
-			name = prefix + (u'' if x == 0 else '.%s' % x)
+			name = prefix + (u'' if x == 0 else ' %s' % x)
 			if name not in self.context:
 				return name
-		return '%.%' % (prefix, generate_random_hex_string())
+		return '% %' % (prefix, generate_random_hex_string())
 
 	def readInput(self, value=None):
 		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
