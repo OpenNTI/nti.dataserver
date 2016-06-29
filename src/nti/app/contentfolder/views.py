@@ -219,7 +219,7 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 	def generate(self, prefix=_('Unnamed Folder')):
 		for x in xrange(10000):
 			name = prefix + (u'' if x == 0 else ' %s' % x)
-			if name not in self.context:
+			if safe_filename(name) not in self.context:
 				return name
 		return '% %' % (prefix, generate_random_hex_string())
 
