@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import lifecycleevent
 
+from nti.common.file import safe_filename
+
 from nti.contentfolder.interfaces import IRootFolder
 
 from nti.contentfolder.model import ContentFolder
@@ -86,12 +88,13 @@ def mkdirs(current, path, factory=ContentFolder):
 			if root != current:
 				current = current.__parent__
 			continue
-		if segment not in current:
+		if safe_filename(segment) not in current:
 			new_folder = factory()
-			new_folder.name = segment
+			new_folder.filename = segment
+			new_folder.name = safe_filename(segment)
 			lifecycleevent.created(new_folder)
-			current[segment] = new_folder
+			current[new_folder.name] = new_folder
 			current = new_folder
 		else:
-			current = current[segment]
+			current = current[safe_filename(segment)]
 	return current
