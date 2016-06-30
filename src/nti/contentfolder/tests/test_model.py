@@ -81,8 +81,9 @@ class TestModel(unittest.TestCase):
 		assert_that('ichigo', does_not(is_in(root)))
 		assert_that('aizen', does_not(is_in(root)))
 		assert_that('aizen', is_in(bleach))
-
+	
 		aizen = bleach['aizen']
+		assert_that(aizen, has_property('__parent__', is_(bleach)))
 		assert_that(aizen, has_property('data', is_(b'shikai')))
 
 	def test_copy(self):
