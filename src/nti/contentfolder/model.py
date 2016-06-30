@@ -132,6 +132,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		item.name = newName  # set new name
 		target._setitemf(newName, item)
 		lifecycleevent.moved(item, self, name, target, newName)
+		item.__parent__ = target # set lineage
 		return True
 
 	def copyTo(self, item, target=None, newName=None):
