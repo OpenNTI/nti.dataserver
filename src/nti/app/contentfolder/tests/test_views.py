@@ -141,10 +141,10 @@ class TestContentFolderViews(ApplicationLayerTest):
 					has_entries('Folders', 1,
 								'Files', 4))
 		assert_that(res.json_body, has_entry('Items', has_length(3)))
-		assert_that(res.json_body['Items'][0], has_entry('name', 'aizen.txt'))
-		assert_that(res.json_body['Items'][1], 
+		assert_that(res.json_body['Items'][0], 
 					has_entries('name', 'bleach', 
 								'Items', has_length(2)))
+		assert_that(res.json_body['Items'][1], has_entry('name', 'aizen.txt'))
 		assert_that(res.json_body['Items'][2], has_entry('name', 'ichigo.txt'))
 		
 		res = self.testapp.get('/dataserver2/ofs/root/@@tree?flat=True', status=200)
@@ -153,7 +153,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 								'Files', 4))
 		assert_that(res.json_body,                   
 					has_entry('Items',
-							  is_([u'aizen.txt', {u'bleach': [u'rukia.txt', u'zaraki.txt']}, u'ichigo.txt'])))
+							  is_([ {u'bleach': [u'rukia.txt', u'zaraki.txt']}, u'aizen.txt', u'ichigo.txt'])))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_delete(self):

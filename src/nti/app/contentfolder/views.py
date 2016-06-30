@@ -15,6 +15,7 @@ import shutil
 import zipfile
 import tempfile
 from urlparse import parse_qs
+from functools import partial
 
 from zope import component
 from zope import lifecycleevent
@@ -85,6 +86,8 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.externalization import to_external_object
+from nti.externalization.externalization import to_standard_external_created_time
+from nti.externalization.externalization import to_standard_external_last_modified_time
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import LocatedExternalList
@@ -104,38 +107,74 @@ LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
+SORT_KEYS = CaseInsensitiveDict({
+	'name' : lambda x: x.filename,
+	'fileType' : lambda x: getattr(x, 'contentType', x.filename),
+	'createdTime' : partial( to_standard_external_created_time, default=0),
+	'lastModified': partial( to_standard_external_last_modified_time, default=0 ),
+})
+SORT_KEYS['fileName'] = SORT_KEYS['name']
+SORT_KEYS['type'] = SORT_KEYS['fileType']
+
 def to_unicode(name):
 	try:
 		return unicode(name)
 	except Exception:
 		return name.decode("UTF-8")
 
+class SortMixin(object):
+
+	_DEFAULT_SORT_ON = 'filename'
+	
+	def ext_obj(self, item):
+		result = to_external_object(item)
+		return result
+	
+	@Lazy
+	def _params(self):
+		values = CaseInsensitiveDict(self.request.params)
+		return values
+
+	@Lazy
+	def _sortOn(self):
+		return self._params.get('sortOn', self._DEFAULT_SORT_ON )
+	
+	@Lazy
+	def _sortFunc(self):
+		return SORT_KEYS.get(self._sortOn, SORT_KEYS[self._DEFAULT_SORT_ON])
+	
+	@Lazy
+	def _sortOrder(self):
+		return self._params.get('sortOrder', 'ascending')
+	
+	def _isAscending(self):
+		return self._sortOrder == 'ascending'
+	
+	def _isBatching(self):
+		size, start = self._get_batch_size_start()
+		return bool(size is not None and start is not None)
+	
+	def _sortKey(self, item):
+		value = self._sortFunc(item)
+		if INamedContainer.providedBy(item):
+			result = (u'a', value)
+		else:
+			result = (u'z', value)
+		return result
+	
 @view_config(name="contents")
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context=INamedContainer,
 			   permission=nauth.ACT_READ,
 			   request_method='GET')
-class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
-
-	_DEFAULT_BATCH_START = 0
-	_DEFAULT_BATCH_SIZE = 100
-
-	def ext_obj(self, item):
-		result = to_external_object(item)
-		return result
-
-	def ext_key(self, item):
-		if INamedContainer.providedBy(item):
-			result = (u'a', item.name)
-		else:
-			result = (u'z', item.filename)
-		return result
+class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin, SortMixin):
 
 	def ext_container(self, context, result, depth):
 		if depth >= 0:
 			items = result[ITEMS] = list()
-			for item in sorted(context.values(), key=self.ext_key):  # snapshopt
+			reverse = not self._isAscending()
+			for item in sorted(context.values(), key=self._sortKey, reverse=reverse):
 				ext_obj = self.ext_obj(item)
 				items.append(ext_obj)
 				if INamedContainer.providedBy(item) and depth:
@@ -145,12 +184,13 @@ class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
 	def __call__(self):
 		result = LocatedExternalDict()
-		values = CaseInsensitiveDict(self.request.params)
-		depth = int(values.get('depth') or 0)
-		all_items = is_true(values.get('all'))
+		batching = self._isBatching()
+		depth = int(self._params.get('depth') or 0)
 		items = self.ext_container(self.context, result, depth)
-		if not all_items:
+		if batching:
 			self._batch_items_iterable(result, items)
+		else:
+			result[ITEM_COUNT] = len(items)
 		result[TOTAL] = len(items)
 		return result
 
@@ -160,7 +200,7 @@ class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 			   context=INamedContainer,
 			   permission=nauth.ACT_READ,
 			   request_method='GET')
-class TreeView(AbstractAuthenticatedView):
+class TreeView(AbstractAuthenticatedView, SortMixin):
 
 	def external(self, context):
 		ext_obj = to_external_object(context, decorate=False)
@@ -170,7 +210,9 @@ class TreeView(AbstractAuthenticatedView):
 	def recur(self, container, result, flat=False):
 		files = 0
 		folders = 0
-		for name, value in list(container.items()):  # snapshot
+		reverse = not self._isAscending()
+		for value in sorted(container.values(), key=self._sortKey, reverse=reverse):
+			name = value.name #
 			if INamedContainer.providedBy(value):
 				folders += 1
 				if flat:
@@ -191,6 +233,9 @@ class TreeView(AbstractAuthenticatedView):
 					result.append(external)
 				files += 1
 		return folders, files
+
+	def sort(self, result):
+		pass
 
 	def __call__(self):
 		values = CaseInsensitiveDict(self.request.params)

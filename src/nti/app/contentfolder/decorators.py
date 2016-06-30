@@ -69,7 +69,7 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 									   params={'flat':False}))
 			_links.append(_create_link(context, "export", "@@export"))
 			_links.append(_create_link(context, "contents", "@@contents",
-									   params={'depth':0, 'all':False}))
+									   params={'depth':0}))
 
 		# update based ops
 		if has_permission(ACT_UPDATE, context, request):
