@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
+
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.container.constraints import contains
@@ -79,4 +81,7 @@ class IContentFolder(INamedContainer, IAttributeAnnotatable):
 		"""
 
 class IRootFolder(IContentFolder):
+	pass
+
+class ILockedFolder(interface.Interface):
 	pass
