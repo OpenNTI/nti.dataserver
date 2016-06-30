@@ -16,8 +16,11 @@ from zope.security.interfaces import IPrincipal
 
 from nti.common.property import Lazy
 
-from nti.contentfolder.interfaces import IContentFolder
+from nti.contentfolder.interfaces import ILockedFolder
+from nti.contentfolder.interfaces import IContentFolder 
 
+from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ACT_UPDATE
 from nti.dataserver.authorization import ROLE_ADMIN
 from nti.dataserver.authorization import ROLE_CONTENT_ADMIN
 
@@ -44,10 +47,18 @@ class ContentFolderACLProvider(object):
 
 	@Lazy
 	def __acl__(self):
-		aces = [ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, self),
-				ace_allowing(ROLE_CONTENT_ADMIN, ALL_PERMISSIONS, type(self))]
+		aces = [ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, self) ]
+		if ILockedFolder.providedBy(self.context):
+			aces.append(ace_allowing(ROLE_CONTENT_ADMIN, ACT_READ, type(self)))
+			aces.append(ace_allowing(ROLE_CONTENT_ADMIN, ACT_UPDATE, type(self)))
+		else:
+			aces.append(ace_allowing(ROLE_CONTENT_ADMIN, ALL_PERMISSIONS, type(self)))
 		result = acl_from_aces(aces)
 		creator = IPrincipal(self.context.creator, None)
 		if creator is not None:
-			aces.append(ace_allowing(creator, ALL_PERMISSIONS, self))
+			if ILockedFolder.providedBy(self.context):
+				aces.append(ace_allowing(creator, ACT_READ, self))
+				aces.append(ace_allowing(creator, ACT_UPDATE, type(self)))
+			else:
+				aces.append(ace_allowing(creator, ALL_PERMISSIONS, self))
 		return result
