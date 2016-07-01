@@ -48,6 +48,8 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.appserver.pyramid_authorization import has_permission
+
 from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.common.file import name_finder
@@ -84,6 +86,9 @@ from nti.contentfolder.utils import TraversalException
 from nti.contentfolder.utils import NotSuchFileException
 
 from nti.dataserver import authorization as nauth
+
+from nti.dataserver.authorization import ACT_NTI_ADMIN
+
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.externalization import to_external_object
@@ -595,7 +600,8 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 class ClearContainerView(AbstractAuthenticatedView):
 
 	def __call__(self):
-		if ILockedFolder.providedBy(self.context):
+		if 		ILockedFolder.providedBy(self.context) \
+			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
 			raise hexc.HTTPForbidden(_("Cannot clear a locked folder."))
 		self.context.clear()
 		return hexc.HTTPNoContent()
@@ -633,7 +639,8 @@ class RenameView(UGDPutView, RenameMixin):
 	def _check_object_constraints(self, theObject, externalValue=None):
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot rename root folder."))
-		if ILockedFolder.providedBy(theObject):
+		if 		ILockedFolder.providedBy(theObject) \
+			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
 			raise hexc.HTTPForbidden(_("Cannot rename a locked folder."))
 
 		parent = theObject.__parent__
@@ -683,7 +690,8 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 	def _check_object_constraints(self, theObject, externalValue):
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot update root folder."))
-		if ILockedFolder.providedBy(theObject):
+		if 		ILockedFolder.providedBy(theObject) \
+			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
 			raise hexc.HTTPForbidden(_("Cannot update a locked folder."))
 		self._clean_external(externalValue)
 
@@ -780,7 +788,8 @@ class MoveView(AbstractAuthenticatedView,
 		self._check_object_exists(theObject)
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot move root folder."))
-		if ILockedFolder.providedBy(theObject):
+		if 		ILockedFolder.providedBy(theObject) \
+			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
 			raise hexc.HTTPForbidden(_("Cannot move a locked folder."))
 
 		parent = theObject.__parent__
