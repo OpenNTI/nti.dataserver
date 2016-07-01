@@ -798,8 +798,8 @@ class MoveView(AbstractAuthenticatedView,
 		else:
 			new_parent = target.__parent__
 		
-		if 		INamedContainer.providedBy(theObject) and theObject is target \
-			or	INamedFile.providedBy(theObject) and target is parent:
+		if 		INamedContainer.providedBy(theObject) and theObject is new_parent \
+			or	INamedFile.providedBy(theObject) and parent is new_parent:
 			raise hexc.HTTPUnprocessableEntity(_("Cannot move object onto itself."))
 
 		parent.moveTo(theObject, new_parent, target_name)
