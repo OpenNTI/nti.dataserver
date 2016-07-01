@@ -794,9 +794,15 @@ class MoveView(AbstractAuthenticatedView,
 
 		parent, target, target_name = self._get_parent_target(theObject, path)
 		if INamedContainer.providedBy(target):
-			parent.moveTo(theObject, target, target_name)
+			new_parent = target
 		else:
-			parent.moveTo(theObject, target.__parent__, target_name)
+			new_parent = target.__parent__
+		
+		if 		INamedContainer.providedBy(theObject) and theObject is target \
+			or	INamedFile.providedBy(theObject) and target is parent:
+			raise hexc.HTTPUnprocessableEntity(_("Cannot move object onto itself."))
+
+		parent.moveTo(theObject, new_parent, target_name)
 
 		# XXX: externalize first
 		self.request.response.status_int = 201
