@@ -544,7 +544,7 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 		return hexc.HTTPNoContent()
 
 	def _has_associations(self, theObject):
-		return		IContentBaseFile.providedBy(theObject) \
+		return		hasattr(theObject, 'has_associations') \
 				and theObject.has_associations()
 
 	def __call__(self):
@@ -554,6 +554,10 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot delete root folder."))
+
+		if 		ILockedFolder.providedBy(self.context) \
+			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+			raise hexc.HTTPForbidden(_("Cannot delete a locked folder."))
 
 		parent = theObject.__parent__
 		if not INamedContainer.providedBy(parent):
@@ -639,6 +643,7 @@ class RenameView(UGDPutView, RenameMixin):
 	def _check_object_constraints(self, theObject, externalValue=None):
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot rename root folder."))
+
 		if 		ILockedFolder.providedBy(theObject) \
 			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
 			raise hexc.HTTPForbidden(_("Cannot rename a locked folder."))
@@ -690,6 +695,7 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 	def _check_object_constraints(self, theObject, externalValue):
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot update root folder."))
+
 		if 		ILockedFolder.providedBy(theObject) \
 			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
 			raise hexc.HTTPForbidden(_("Cannot update a locked folder."))
@@ -788,6 +794,7 @@ class MoveView(AbstractAuthenticatedView,
 		self._check_object_exists(theObject)
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot move root folder."))
+
 		if 		ILockedFolder.providedBy(theObject) \
 			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
 			raise hexc.HTTPForbidden(_("Cannot move a locked folder."))
