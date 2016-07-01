@@ -73,6 +73,7 @@ from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
 
 from nti.contentfolder.interfaces import IRootFolder
+from nti.contentfolder.interfaces import ILockedFolder
 from nti.contentfolder.interfaces import INamedContainer
 
 from nti.contentfolder.model import ContentFolder
@@ -594,6 +595,8 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 class ClearContainerView(AbstractAuthenticatedView):
 
 	def __call__(self):
+		if ILockedFolder.providedBy(self.context):
+			raise hexc.HTTPForbidden(_("Cannot clear a locked folder."))
 		self.context.clear()
 		return hexc.HTTPNoContent()
 
@@ -630,6 +633,8 @@ class RenameView(UGDPutView, RenameMixin):
 	def _check_object_constraints(self, theObject, externalValue=None):
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot rename root folder."))
+		if ILockedFolder.providedBy(theObject):
+			raise hexc.HTTPForbidden(_("Cannot rename a locked folder."))
 
 		parent = theObject.__parent__
 		if not INamedContainer.providedBy(parent):
@@ -678,6 +683,8 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 	def _check_object_constraints(self, theObject, externalValue):
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot update root folder."))
+		if ILockedFolder.providedBy(theObject):
+			raise hexc.HTTPForbidden(_("Cannot update a locked folder."))
 		self._clean_external(externalValue)
 
 	def updateContentObject(self, contentObject, externalValue, set_id=False,
@@ -773,6 +780,8 @@ class MoveView(AbstractAuthenticatedView,
 		self._check_object_exists(theObject)
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot move root folder."))
+		if ILockedFolder.providedBy(theObject):
+			raise hexc.HTTPForbidden(_("Cannot move a locked folder."))
 
 		parent = theObject.__parent__
 		if not INamedContainer.providedBy(parent):

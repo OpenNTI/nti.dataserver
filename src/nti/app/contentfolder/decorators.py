@@ -22,7 +22,7 @@ from nti.common.property import Lazy
 
 from nti.contentfile.interfaces import IContentBaseFile
 
-from nti.contentfolder.interfaces import IRootFolder
+from nti.contentfolder.interfaces import IRootFolder, ILockedFolder
 from nti.contentfolder.interfaces import INamedContainer
 
 from nti.dataserver.authorization import ACT_READ
@@ -75,12 +75,17 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		# update based ops
 		if has_permission(ACT_UPDATE, context, request):
 			_links.append(_create_link(context, "mkdir", "@@mkdir", method='POST'))
-			_links.append(_create_link(context, "clear", "@@clear", method='POST'))
 			_links.append(_create_link(context, "mkdirs", "@@mkdirs", method='POST'))
 			_links.append(_create_link(context, "upload", "@@upload", method='POST'))
 			_links.append(_create_link(context, "import", "@@import", method='POST'))
 
-		if 	has_permission(ACT_DELETE, context, request):
+			if not ILockedFolder.providedBy(context):
+				_links.append(_create_link(context, "move", "@@move", method='POST'))
+				_links.append(_create_link(context, "clear", "@@clear", method='POST'))
+				_links.append(_create_link(context, "rename", "@@rename", method='POST'))
+						
+		if 		has_permission(ACT_DELETE, context, request) \
+			and not ILockedFolder.providedBy(context):
 			_links.append(_create_link(context, rel="delete", method='DELETE'))
 
 		# non root folders
