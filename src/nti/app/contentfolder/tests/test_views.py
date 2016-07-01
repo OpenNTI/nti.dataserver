@@ -156,6 +156,21 @@ class TestContentFolderViews(ApplicationLayerTest):
 							  is_([ {u'bleach': [u'rukia.txt', u'zaraki.txt']}, u'aizen.txt', u'ichigo.txt'])))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_search(self):
+		self.testapp.post('/dataserver2/ofs/root/@@upload',
+						 upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo'), 
+										('aizen.txt', 'aizen.txt', b'aizen'),
+										('rukia.txt', 'rukia.txt', b'rukia'), 
+										('zaraki.txt', 'zaraki.txt', b'zaraki'),
+										('abarai.txt', 'abarai.txt', b'abarai'), ],
+						 status=201)
+
+		data = {'name': 'ai'}		
+		res = self.testapp.get('/dataserver2/ofs/root/@@search', data, status=200)
+		assert_that(res.json_body,                   
+					has_entry('Items', has_length(2)))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_delete(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],

@@ -172,8 +172,8 @@ class ContainerContentsView(AbstractAuthenticatedView, BatchingUtilsMixin, SortM
 
 	def ext_container(self, context, result, depth):
 		if depth >= 0:
-			items = result[ITEMS] = list()
 			reverse = not self._isAscending()
+			items = result[ITEMS] = LocatedExternalList()
 			for item in sorted(context.values(), key=self._sortKey, reverse=reverse):
 				ext_obj = self.ext_obj(item)
 				items.append(ext_obj)
@@ -234,9 +234,6 @@ class TreeView(AbstractAuthenticatedView, SortMixin):
 				files += 1
 		return folders, files
 
-	def sort(self, result):
-		pass
-
 	def __call__(self):
 		values = CaseInsensitiveDict(self.request.params)
 		flat = is_true(values.get('flat'))
@@ -250,6 +247,38 @@ class TreeView(AbstractAuthenticatedView, SortMixin):
 		result['Folders'] = folders
 		return result
 
+@view_config(name="search")
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=INamedContainer,
+			   permission=nauth.ACT_READ,
+			   request_method='GET')
+class SearchView(AbstractAuthenticatedView, BatchingUtilsMixin, SortMixin):
+
+	def external(self, context):
+		ext_obj = to_external_object(context, decorate=False)
+		decorateMimeType(context, ext_obj)
+		return ext_obj
+
+	def search(self):
+		reverse = not self._isAscending()
+		name = (self._params.get('name') or u'').lower()
+		result = [v for v in list(self.context.values()) if name in v.filename.lower()]
+		result.sort(key=self._sortKey, reverse=reverse)
+		return result
+
+	def __call__(self):
+		result = LocatedExternalDict()
+		batching = self._isBatching()
+		items = self.search()
+		if batching:
+			self._batch_items_iterable(result, items)
+		else:
+			result[ITEMS] = items
+			result[ITEM_COUNT] = len(items)
+		result[TOTAL] = len(items)
+		return result
+	
 @view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
