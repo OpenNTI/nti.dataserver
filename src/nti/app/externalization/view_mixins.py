@@ -239,7 +239,7 @@ class BatchingUtilsMixin(object):
 		result['BatchPage'] = batch_start // batch_size + 1
 		batched_results = self.__batch_result_list(result,
 												   result_list,
-												   batch_start, 
+												   batch_start,
 												   batch_size,
 												   number_items_needed)
 		result[ITEMS] = batched_results
@@ -589,7 +589,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		owner = owner_root if owner_root else creator
 
 		containedObject = self.createAndCheckContentObject(owner,
-														   datatype, 
+														   datatype,
 														   externalValue,
 														   creator)
 		if add_to_connection:
@@ -622,8 +622,8 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		:keyword dict externalValue: External value use to create the content object
 
 		"""
-		containedObject, owner, _ = self.performReadCreateUpdateContentObject(user, 
-																		 	  search_owner, 
+		containedObject, owner, _ = self.performReadCreateUpdateContentObject(user,
+																		 	  search_owner,
 																			  externalValue)
 		return (containedObject, owner) if search_owner else containedObject
 
@@ -635,7 +635,7 @@ class ModeledContentEditRequestUtilsMixin(object):
 
 	def _to_utc(self, last_mod):
 		return datetime.datetime.fromtimestamp(last_mod, webob.datetime_utils.UTC)
-	
+
 	def _check_object_exists(self, o, cr='', cid='', oid=''):
 		"""
 		If the first argument is None or has been deleted (is marked

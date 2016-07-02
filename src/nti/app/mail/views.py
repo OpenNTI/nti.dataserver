@@ -139,7 +139,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		if not self.email_externally:
 			email = getattr(IEmailAddressable(user, None), 'email', None)
 			return 	email	\
-				and (email == 'jamadden@ou.edu' \
+				and (	email == 'jamadden@ou.edu' \
 					or	email == 'jzuech3@gmail.com' \
 					or 	email.endswith('@nextthought.com'))
 		return True

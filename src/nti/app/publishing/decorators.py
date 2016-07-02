@@ -42,7 +42,7 @@ LINKS = StandardExternalFields.LINKS
 def _acl_decoration(request):
 	result = getattr(request, 'acl_decoration', True)
 	return result
-	
+
 def _expose_links(context, request):
 	return (	_acl_decoration(request)
 			and	getattr(context, '_p_jar', None)

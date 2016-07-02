@@ -325,7 +325,7 @@ def _store_asset(content_package, container_id, ntiid, item):
 	return True
 
 def _index_items(content_package, index, item_iface, catalog, registry,
-				 intids=None, connection=None):
+				 intids=None, connection=None, is_global_manager=False):
 	result = 0
 	for container_id, indexed_ids in index['Containers'].items():
 		for indexed_id in indexed_ids:
@@ -342,12 +342,14 @@ def _index_items(content_package, index, item_iface, catalog, registry,
 							 indexed_id,
 							 obj)
 
-				result += _index_item(obj,
-									  content_package,
-									  container_id,
-									  catalog=catalog,
-									  intids=intids,
-									  connection=connection)
+				# Only index it if not global
+				if not is_global_manager:
+					result += _index_item(obj,
+										  content_package,
+										  container_id,
+										  catalog=catalog,
+										  intids=intids,
+										  connection=connection)
 	return result
 
 def _clear_assets_by_interface(content_package, iface, force=False):
@@ -445,15 +447,16 @@ def _update_index_when_content_changes(content_package,
 			interface.alsoProvides(item, ILegacyPresentationAsset)
 
 	# Index our contained items; ignoring the global library.
-	index_item_count = 0
+	index_item_count = _index_items(content_package,
+									index,
+									item_iface,
+									catalog,
+									registry,
+									intids=intids,
+									connection=connection,
+									is_global_manager=is_global_manager)
+
 	if not is_global_manager:
-		index_item_count = _index_items(content_package,
-										index,
-										item_iface,
-										catalog,
-										registry,
-										intids=intids,
-										connection=connection)
 		# keep transaction history
 		_copy_remove_transactions(removed, registry=registry)
 
