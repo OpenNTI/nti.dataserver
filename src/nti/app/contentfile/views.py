@@ -9,9 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
-from collections import Mapping
-
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -22,8 +19,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.contentfile.view_mixins import file_contraints
 
 from nti.app.contentfolder import MessageFactory as _
-
-from nti.app.externalization.internalization import read_body_as_external_object
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -45,8 +40,6 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
-
-expanded_expected_types = six.string_types + (Mapping,)
 
 @view_config(context=IContentBaseFile)
 @view_defaults(route_name='objects.generic.traversal',
@@ -84,20 +77,16 @@ class ContentFileAssociationsView(AbstractAuthenticatedView):
 			   request_method='POST')
 class ContentFileAssociateView(AbstractAuthenticatedView,
 							   ModeledContentUploadRequestUtilsMixin):
-
+	
 	def readInput(self, value=None):
-		data = read_body_as_external_object(self.request,
-											expected_type=expanded_expected_types)
-		if isinstance(data, six.string_types):
-			data = {'ntiid': data}
-		assert isinstance(data, Mapping)
+		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
 		return CaseInsensitiveDict(data)
 
 	def __call__(self):
 		values = self.readInput()
 		ntiid = values.get('ntiid') or values.get('oid') or values.get('target')
 		if not ntiid:
-			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+			raise hexc.HTTPUnprocessableEntity(_("Must provide a valid context id."))
 		target = find_object_with_ntiid(ntiid)
 		if target is None:
 			raise hexc.HTTPUnprocessableEntity(_("Cannot find target object."))
