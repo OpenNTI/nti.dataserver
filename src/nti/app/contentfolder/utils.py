@@ -81,14 +81,14 @@ def get_object(uid, intids=None):
 	return result
 
 def get_file_from_cf_io_url(link, intids=None):
+	__traceback_info__ = link,
 	result = None
 	try:
 		link = unquote(link)
 		if is_cf_io_href(link):
 			match = pattern.match(link)
 			uid = match.groups()[1]
-			if '/' in uid:
-				uid = uid.split('/')[0]
+			uid = uid.split('/')[0] if '/' in uid else uid
 			uid = from_external_string(uid)
 			result = get_object(uid, intids=intids)
 			if not IPloneNamed.providedBy(result):
