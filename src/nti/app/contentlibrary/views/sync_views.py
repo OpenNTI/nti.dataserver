@@ -199,7 +199,6 @@ class _SyncAllLibrariesView(_SetSyncLockView,
 		now = time.time()
 		result = LocatedExternalDict()
 		result['Transaction'] = self._txn_id()
-		endInteraction()
 		try:
 			params, results = synchronize(sleep=self._SLEEP,
 										  site=site,
@@ -223,8 +222,6 @@ class _SyncAllLibrariesView(_SetSyncLockView,
 							 hexc.HTTPUnprocessableEntity,
 							 result,
 							 exc_traceback)
-		finally:
-			restoreInteraction()
 		return result
 
 	def _do_call(self):
@@ -260,10 +257,11 @@ class _SyncAllLibrariesView(_SetSyncLockView,
 
 	def __call__(self):
 		logger.info('Acquiring sync lock')
-		# With 'with', we deadlock while attempting to re-acquire the lock.
+		endInteraction()
 		lock = self.acquire()
 		try:
 			logger.info('Starting sync %s', self._txn_id())
 			return self._do_call()
 		finally:
 			self.release(lock)
+			restoreInteraction()
