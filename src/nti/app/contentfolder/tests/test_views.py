@@ -18,6 +18,7 @@ from hamcrest import starts_with
 from hamcrest import has_property
 does_not = is_not
 
+import fudge
 import zipfile
 from io import BytesIO
 
@@ -171,10 +172,15 @@ class TestContentFolderViews(ApplicationLayerTest):
 					has_entry('Items', has_length(2)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def test_delete(self):
+	@fudge.patch('nti.app.contentfolder.views.has_associations')
+	def test_delete(self, mock_ha):
+		mock_ha.is_callable().with_args().returns(True)
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
 						  status=201)
+		self.testapp.delete('/dataserver2/ofs/root/ichigo', status=409)
+		
+		mock_ha.is_callable().with_args().returns(False)
 		self.testapp.delete('/dataserver2/ofs/root/ichigo', status=204)
 		
 		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)

@@ -523,6 +523,10 @@ class ExportView(AbstractAuthenticatedView):
 		finally:
 			shutil.rmtree(out_dir)
 
+def has_associations(theObject):
+	return	  hasattr(theObject, 'has_associations') \
+		  and theObject.has_associations()
+
 @view_config(context=INamedFile)
 @view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',
@@ -544,8 +548,7 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 		return hexc.HTTPNoContent()
 
 	def _has_associations(self, theObject):
-		return		hasattr(theObject, 'has_associations') \
-				and theObject.has_associations()
+		return has_associations(theObject)
 
 	def __call__(self):
 		theObject = self.context
