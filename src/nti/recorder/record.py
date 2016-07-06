@@ -100,7 +100,7 @@ def get_transactions(obj, sort=False, descending=True):
 			result.sort(key=lambda t: t.createdTime, reverse=descending)
 	except AttributeError:
 		pass
-	return tuple(result)
+	return result
 getTransactions = get_transactions
 
 def remove_transaction_history(obj):
