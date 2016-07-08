@@ -106,7 +106,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 
 		name = get_context_name(old) or old
 		item = self._delitemf(name, event=False)
-		item.name = new  # set new name
+		item.__name__ = item.name = new  # set new name
 		self._setitemf(new, item)
 
 	def moveTo(self, item, target, newName=None):
@@ -129,7 +129,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 			del target[newName]
 
 		item = self._delitemf(name, event=False)
-		item.name = newName  # set new name
+		item.__name__ = item.name = newName  # set new name
 		target._setitemf(newName, item)
 		lifecycleevent.moved(item, self, name, target, newName)
 		item.__parent__ = target # set lineage
