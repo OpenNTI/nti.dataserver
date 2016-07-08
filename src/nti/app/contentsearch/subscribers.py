@@ -24,7 +24,8 @@ from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
-from zc.lockfile import LockFile, LockError
+from zc.lockfile import LockFile
+from zc.lockfile import LockError
 
 from nti.common import make_cache_dir
 
@@ -87,14 +88,14 @@ def add_s3_index(title, event):
 			break
 	try:
 		for indexdir_key in indexdir_keys:
-			local_file = os.path.join(title_index_cache_dir, 
+			local_file = os.path.join(title_index_cache_dir,
 									  indexdir_key.key.split('/')[-1])
 			__traceback_info__ = title, indexdir_key, local_file
 			# Smarmy bastards. We get different answers for key.last_modified
 			# (and hence key_last_modified) depending on whether we look at it
 			# before or after we have downloaded the file.
-			# The string comes back in two different forms, which parse differently 
-			# (due to timezone parsing) So we need to preserve the before value so we 
+			# The string comes back in two different forms, which parse differently
+			# (due to timezone parsing) So we need to preserve the before value so we
 			# can be consistent
 			last_modified = key_last_modified(indexdir_key)
 			if 	os.path.exists(local_file) and \
@@ -160,5 +161,4 @@ def reset_indexes_when_removed(content_package, event):
 	indexmanager = component.queryUtility(IIndexManager)
 	if indexmanager is None:  # pragma: no cover
 		return
-
 	indexmanager.unregister_content(content_package.ntiid)

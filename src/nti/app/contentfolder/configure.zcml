@@ -41,4 +41,7 @@
 				 provides="zope.traversing.interfaces.IPathAdapter" />
 	</configure>
 
+	<!-- Subscribers -->
+	<subscriber handler=".subscribers._on_content_file_added" />
+
 </configure>
