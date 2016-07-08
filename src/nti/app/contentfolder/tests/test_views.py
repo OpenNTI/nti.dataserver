@@ -211,10 +211,17 @@ class TestContentFolderViews(ApplicationLayerTest):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
 						  status=201)
-		self.testapp.post_json('/dataserver2/ofs/root/ichigo/@@rename', {'name':'aizen'},
-								status=200)
+		res = self.testapp.get('/dataserver2/ofs/root/ichigo', status=200)
+		assert_that(res.json_body, has_entry('path', '/ichigo'))
+		
+		res = self.testapp.post_json('/dataserver2/ofs/root/ichigo/@@rename', {'name':'aizen'},
+									 status=200)
+		assert_that(res.json_body, has_entry('path', '/aizen'))
+
 		self.testapp.get('/dataserver2/ofs/root/ichigo', status=404)
-		self.testapp.get('/dataserver2/ofs/root/aizen', status=200)
+
+		res = self.testapp.get('/dataserver2/ofs/root/aizen', status=200)
+		assert_that(res.json_body, has_entry('path', '/aizen'))
 		
 		self.testapp.post_json('/dataserver2/ofs/root/@@rename', {'name':'xxx'}, status=403)
 		
