@@ -264,6 +264,17 @@ class TestContentFolderViews(ApplicationLayerTest):
 					has_entries('ItemCount', is_(1),
 								'Items', has_length(1)))
 		
+		data = {'path': '/bleach/ichigo'}
+		self.testapp.post_json('/dataserver2/ofs/root/bleach/ichigo/@@move',
+						  		data,
+						  		status=422)
+		
+		data = {'path': '/aizen'}
+		res = self.testapp.post_json('/dataserver2/ofs/root/bleach/ichigo/@@move',
+						  			 data,
+						  			 status=201)
+		assert_that(res.json_body, has_entry('path', '/aizen'))
+		
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_copy(self):
 		data = {'name': 'bleach'}

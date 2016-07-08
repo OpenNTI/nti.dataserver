@@ -37,7 +37,7 @@ from nti.app.contentfolder import MessageFactory as _
 
 from nti.app.contentfolder import CFIO
 
-from nti.app.contentfolder.utils import get_ds2
+from nti.app.contentfolder.utils import get_ds2, compute_path
 from nti.app.contentfolder.utils import to_external_cf_io_url
 from nti.app.contentfolder.utils import to_external_cf_io_href
 
@@ -817,8 +817,9 @@ class MoveView(AbstractAuthenticatedView,
 		else:
 			new_parent = target.__parent__
 		
-		if 		INamedContainer.providedBy(theObject) and theObject is new_parent \
-			or	INamedFile.providedBy(theObject) and parent is new_parent:
+		from_path = compute_path(theObject)
+		target_path = compute_path(new_parent)
+		if from_path.lower() == target_path.lower():
 			raise hexc.HTTPUnprocessableEntity(_("Cannot move object onto itself."))
 
 		parent.moveTo(theObject, new_parent, target_name)
