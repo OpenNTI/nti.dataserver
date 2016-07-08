@@ -14,6 +14,8 @@ from zope import interface
 
 from zope.location.interfaces import ILocation
 
+from nti.app.contentfolder.utils import compute_path
+
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver.pyramid_authorization import has_permission
@@ -135,21 +137,8 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 @component.adapter(INamedContainer)
 @interface.implementer(IExternalObjectDecorator)
 class _ContextPathDecorator(AbstractAuthenticatedRequestAwareDecorator):
-
-	def compute_path(self, context):
-		result = []
-		while context is not None and not IRootFolder.providedBy(context):
-			try:
-				result.append(context.__name__)
-				context = context.__parent__
-			except AttributeError:
-				break
-		result.reverse()
-		result = '/'.join(result)
-		result = '/' + result if not result.startswith('/') else result
-		return result
 	
 	def _do_decorate_external(self, context, result):
 		path = result.get('path', None)
 		if not path and INamedContainer.providedBy(context.__parent__):
-			result['path'] = self.compute_path(context)
+			result['path'] = compute_path(context)

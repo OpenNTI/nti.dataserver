@@ -41,9 +41,14 @@ class BaseContentMixin(object):
 
 	tags = ()
 	creator = None
-	__name__ = alias('name')
 
 	path = None  # XXX BWC
+
+	__parent__ = None
+	__name__ = alias('name')
+
+	def __init__(self, *args, **kwargs):
+		super(BaseContentMixin, self).__init__(*args, **kwargs)
 
 	# associations
 
@@ -122,19 +127,19 @@ class BaseContentMixin(object):
 BaseMixin = BaseContentMixin  # BWC
 
 @interface.implementer(IContentFile)
-class ContentFile(NamedFile, BaseContentMixin):
+class ContentFile(BaseContentMixin, NamedFile):
 	pass
 
 @interface.implementer(IContentBlobFile)
-class ContentBlobFile(NamedBlobFile, BaseContentMixin):
+class ContentBlobFile(BaseContentMixin, NamedBlobFile):
 	pass
 
 @interface.implementer(IContentImage)
-class ContentImage(NamedImage, BaseContentMixin):
+class ContentImage(BaseContentMixin, NamedImage):
 	pass
 
 @interface.implementer(IContentBlobImage)
-class ContentBlobImage(NamedBlobImage, BaseContentMixin):
+class ContentBlobImage(BaseContentMixin, NamedBlobImage):
 	pass
 
 def transform_to_blob(context, associations=False):
