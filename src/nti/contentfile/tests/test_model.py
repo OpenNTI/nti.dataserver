@@ -26,7 +26,8 @@ from zope import interface
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.contentfile.model import ContentFile, transform_to_blob
+from nti.contentfile.model import ContentFile
+from nti.contentfile.model import transform_to_blob 
 
 from nti.contentfile.interfaces import IContentFile
 from nti.contentfile.interfaces import IContentBlobImage
@@ -50,6 +51,16 @@ class TestModel(unittest.TestCase):
 		assert_that(ContentFile(name="cc", contentType='xx'),
 				    verifiably_provides(IContentFile))
 
+	def test_name(self):
+		internal = ContentFile()
+		internal.name = 'ichigo'
+		assert_that(internal, has_property('name', is_('ichigo')))
+		assert_that(internal, has_property('__name__', is_('ichigo')))
+		
+		internal.name = 'aizen'
+		assert_that(internal, has_property('name', is_('aizen')))
+		assert_that(internal, has_property('__name__', is_('aizen')))
+		
 	def test_file(self):
 		ext_obj = {
 			'MimeType': 'application/vnd.nextthought.contentimage',
