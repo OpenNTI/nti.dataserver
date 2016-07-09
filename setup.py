@@ -214,6 +214,7 @@ setup(
 		'awesome-slugify',
 		'boto',	 # amazon
 		'brownie',	 # Common utilities
+		'cffi', # Foreign Function Interface
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
@@ -389,24 +390,24 @@ setup(
 		'zope.interface',
 		'zope.intid',
 		'zope.keyreference',
-		'zope.lifecycleevent',	 # Object Added/Removed/etc events
+		'zope.lifecycleevent',	# Object Added/Removed/etc events
 		'zope.login',  # Providers of Zope3 authentication.ILoginPassword for Zope3 publisher interfaces; pulled in by zope.file[test] and indirectly zope.app.component[test]
 		'zope.location',
 		'zope.mimetype',
 		'zope.minmax',
 		'zope.pagetemplate',
 		'zope.password',  # encrypted password management
-		'zope.pluggableauth',	# pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
+		'zope.pluggableauth',# pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		 # Persistent, schema-based preferences with
 		 # site- and local defaults
 		'zope.preference',
 		'zope.ptresource',
 		'zope.publisher',
 		'zope.principalannotation',	# Annotating principals in Zope3's global reg; pulled in indirectly by zope.app.component[test]
-		'zope.principalregistry',  # Global principal registry component for Zope3
+		'zope.principalregistry',   # Global principal registry component for Zope3
 		'zope.processlifetime',
 		'zope.proxy',	# 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
-		'zope.server',	 # DO NOT USED. Included as transitive for latest.
+		'zope.server',	# DO NOT USED. Included as transitive for latest.
 		'zope.sequencesort',  # advanced locale aware sorting
 		'zope.schema',
 		'zope.security[zcml,untrustedpython]',	 # >= 4.0.0b1 gets PyPy support!
