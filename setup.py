@@ -214,7 +214,7 @@ setup(
 		'awesome-slugify',
 		'boto',	 # amazon
 		'brownie',	 # Common utilities
-		'cffi', # Foreign Function Interface
+		 # 'cffi', # Foreign Function Interface, libffi required
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
