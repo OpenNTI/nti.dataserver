@@ -239,11 +239,6 @@ setup(
 		'greenlet' if not IS_PYPY else '', # pypy has its own greenlet implementation
 		'gunicorn',
 		'hiredis' if not IS_PYPY else '', # Redis C parser (almost certainly an anti-optimization on PyPy)
-		 # HTML5 parsing library
-		 # Note that the 1.0 series is a much improved parser over 0.95;
-		 # this may result in some differences. (0.99 is actually newer
-		 # than 1.0b3)
-		'html5lib',
 		'isodate',	 # ISO8601 date/time/duration parser and formatter
 		'itsdangerous', # Simple helper library for signing data that roundtrips through untrusted environments
 		'logilab-common',
