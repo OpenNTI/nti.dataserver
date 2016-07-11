@@ -120,6 +120,9 @@ def _get_user_info_extract():
 			continue
 
 		username = u.username
+		if User.get_user( username ) is None:
+			# Orphaned, command-line delete?
+			continue
 		userid = _replace_username(username)
 		alias = _get_index_field_value(iid, ent_catalog, 'alias')
 		email = _get_index_field_value(iid, ent_catalog, 'email')
