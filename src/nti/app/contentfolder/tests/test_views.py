@@ -56,7 +56,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_upload_multipart(self):
 		res = self.testapp.post('/dataserver2/ofs/root/@@upload',
-								upload_files=[ 	('ichigo', 'ichigo.txt', b'ichigo'), 
+								upload_files=[ 	('ichigo', 'ichigo.txt', b'ichigo'),
 												('aizen', 'aizen.txt', b'aizen') ],
 								status=201)
 		assert_that(res.json_body,
@@ -67,14 +67,14 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(2),
 								'Items', has_length(2)))
-		
+
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_import_export_zip(self):
 		source = BytesIO()
 		with zipfile.ZipFile(source, "w") as zfile:
 			zfile.writestr("shinigami/ichigo.txt", b'ichigo')
 			zfile.writestr("shinigami/sōsuke.txt", b'aizen')
-			zfile.writestr("arrancar/ulquiorra.txt", b'ulquiorra')			
+			zfile.writestr("arrancar/ulquiorra.txt", b'ulquiorra')
 		data = source.getvalue()
 
 		res = self.testapp.post('/dataserver2/ofs/root/@@import',
@@ -83,7 +83,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(3),
 								'Items', has_length(3)))
-		
+
 		res = self.testapp.get('/dataserver2/ofs/root/shinigami/@@contents', status=200)
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(2),
@@ -93,7 +93,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(1),
 								'Items', has_length(1)))
-		
+
 		res = self.testapp.get('/dataserver2/ofs/root/@@export', status=200)
 		source = BytesIO()
 		source.write(res.body)
@@ -109,21 +109,21 @@ class TestContentFolderViews(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._get_user(self.default_username)
 			oid = to_external_ntiid_oid(user)
-		
+
 		data = {'ntiid': oid}
 		self.testapp.post_json('/dataserver2/ofs/root/ichigo.txt/@@associate',
 							   data, status=204)
-		
+
 		res = self.testapp.get('/dataserver2/ofs/root/ichigo.txt/@@associations',
 							   status=200)
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(1),
 								'Items', has_length(1)))
-			
+
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_tree(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
-						 upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo'), 
+						 upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo'),
 										('aizen.txt', 'aizen.txt', b'aizen') ],
 						 status=201)
 
@@ -133,7 +133,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 							   status=201)
 
 		self.testapp.post('/dataserver2/ofs/root/bleach/@@upload',
-						 upload_files=[ ('rukia.txt', 'rukia.txt', b'rukia'), 
+						 upload_files=[ ('rukia.txt', 'rukia.txt', b'rukia'),
 										('zaraki.txt', 'zaraki.txt', b'zaraki') ],
 						 status=201)
 
@@ -142,33 +142,33 @@ class TestContentFolderViews(ApplicationLayerTest):
 					has_entries('Folders', 1,
 								'Files', 4))
 		assert_that(res.json_body, has_entry('Items', has_length(3)))
-		assert_that(res.json_body['Items'][0], 
-					has_entries('name', 'bleach', 
+		assert_that(res.json_body['Items'][0],
+					has_entries('name', 'bleach',
 								'Items', has_length(2)))
 		assert_that(res.json_body['Items'][1], has_entry('name', 'aizen.txt'))
 		assert_that(res.json_body['Items'][2], has_entry('name', 'ichigo.txt'))
-		
+
 		res = self.testapp.get('/dataserver2/ofs/root/@@tree?flat=True', status=200)
 		assert_that(res.json_body,
 					has_entries('Folders', 1,
 								'Files', 4))
-		assert_that(res.json_body,                   
+		assert_that(res.json_body,
 					has_entry('Items',
 							  is_([ {u'bleach': [u'rukia.txt', u'zaraki.txt']}, u'aizen.txt', u'ichigo.txt'])))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_search(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
-						 upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo'), 
+						 upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo'),
 										('aizen.txt', 'aizen.txt', b'aizen'),
-										('rukia.txt', 'rukia.txt', b'rukia'), 
+										('rukia.txt', 'rukia.txt', b'rukia'),
 										('zaraki.txt', 'zaraki.txt', b'zaraki'),
 										('abarai.txt', 'abarai.txt', b'abarai'), ],
 						 status=201)
 
-		data = {'name': 'ai'}		
+		data = {'name': 'ai'}
 		res = self.testapp.get('/dataserver2/ofs/root/@@search', data, status=200)
-		assert_that(res.json_body,                   
+		assert_that(res.json_body,
 					has_entry('Items', has_length(2)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
@@ -179,33 +179,33 @@ class TestContentFolderViews(ApplicationLayerTest):
 						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
 						  status=201)
 		self.testapp.delete('/dataserver2/ofs/root/ichigo', status=409)
-		
+
 		mock_ha.is_callable().with_args().returns(False)
 		self.testapp.delete('/dataserver2/ofs/root/ichigo', status=204)
-		
+
 		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(0),
 								'Items', has_length(0)))
-		
+
 		self.testapp.delete('/dataserver2/ofs/root', status=403)
-		
+
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_clear(self):
 		res = self.testapp.post('/dataserver2/ofs/root/@@upload',
-								upload_files=[ 	('ichigo', 'ichigo.txt', b'ichigo'), 
+								upload_files=[ 	('ichigo', 'ichigo.txt', b'ichigo'),
 												('aizen', 'aizen.txt', b'aizen') ],
 								status=201)
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(2)))
 
 		self.testapp.post('/dataserver2/ofs/root/@@clear', status=204)
-		
+
 		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(0),
 								'Items', has_length(0)))
-		
+
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_rename(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
@@ -213,7 +213,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 						  status=201)
 		res = self.testapp.get('/dataserver2/ofs/root/ichigo', status=200)
 		assert_that(res.json_body, has_entry('path', '/ichigo'))
-		
+
 		res = self.testapp.post_json('/dataserver2/ofs/root/ichigo/@@rename', {'name':'aizen'},
 									 status=200)
 		assert_that(res.json_body, has_entry('path', '/aizen'))
@@ -222,9 +222,9 @@ class TestContentFolderViews(ApplicationLayerTest):
 
 		res = self.testapp.get('/dataserver2/ofs/root/aizen', status=200)
 		assert_that(res.json_body, has_entry('path', '/aizen'))
-		
+
 		self.testapp.post_json('/dataserver2/ofs/root/@@rename', {'name':'xxx'}, status=403)
-		
+
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_update(self):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
@@ -254,27 +254,33 @@ class TestContentFolderViews(ApplicationLayerTest):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						  upload_files=[('data.txt', 'data.txt', b'ichigo')],
 						  status=201)
-		
+
 		data = {'path': 'bleach/ichigo/foo.txt'}
 		self.testapp.post_json('/dataserver2/ofs/root/data.txt/@@move',
 						  		data,
+						  		status=422)
+
+		data = {'path': 'bleach/ichigo'}
+		self.testapp.post_json('/dataserver2/ofs/root/data.txt/@@move',
+						  		data,
 						  		status=201)
+
 		res = self.testapp.get('/dataserver2/ofs/root/bleach/ichigo/@@contents', status=200)
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(1),
 								'Items', has_length(1)))
-		
+
 		data = {'path': '/bleach/ichigo'}
 		self.testapp.post_json('/dataserver2/ofs/root/bleach/ichigo/@@move',
 						  		data,
 						  		status=422)
-		
-		data = {'path': '/aizen'}
+
+		data = {'path': '/'}
 		res = self.testapp.post_json('/dataserver2/ofs/root/bleach/ichigo/@@move',
 						  			 data,
 						  			 status=201)
-		assert_that(res.json_body, has_entry('path', '/aizen'))
-		
+		assert_that(res.json_body, has_entry('path', '/ichigo'))
+
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_copy(self):
 		data = {'name': 'bleach'}
@@ -283,7 +289,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						  upload_files=[('data.txt', 'data.txt', b'ichigo')],
 						  status=201)
-		
+
 		data = {'path': 'bleach/foo.txt'}
 		self.testapp.post_json('/dataserver2/ofs/root/data.txt/@@copy',
 						  		data,
@@ -303,7 +309,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 			ds = component.getUtility(IDataserver)
 			ichigo = ds.root._ofs_root['ichigo'] # only in test
 			href = get_cf_io_href(ichigo)
-		
+
 		assert_that(href, is_not(none()))
 		res = self.testapp.get(href, status=200)
 		assert_that(res, has_property('app_iter', has_length(1)))

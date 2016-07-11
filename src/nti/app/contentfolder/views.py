@@ -131,11 +131,11 @@ def to_unicode(name):
 class SortMixin(object):
 
 	_DEFAULT_SORT_ON = 'filename'
-	
+
 	def ext_obj(self, item):
 		result = to_external_object(item)
 		return result
-	
+
 	@Lazy
 	def _params(self):
 		values = CaseInsensitiveDict(self.request.params)
@@ -144,22 +144,22 @@ class SortMixin(object):
 	@Lazy
 	def _sortOn(self):
 		return self._params.get('sortOn', self._DEFAULT_SORT_ON )
-	
+
 	@Lazy
 	def _sortFunc(self):
 		return SORT_KEYS.get(self._sortOn, SORT_KEYS[self._DEFAULT_SORT_ON])
-	
+
 	@Lazy
 	def _sortOrder(self):
 		return self._params.get('sortOrder', 'ascending')
-	
+
 	def _isAscending(self):
 		return self._sortOrder == 'ascending'
-	
+
 	def _isBatching(self):
 		size, start = self._get_batch_size_start()
 		return bool(size is not None and start is not None)
-	
+
 	def _sortKey(self, item):
 		value = self._sortFunc(item)
 		if INamedContainer.providedBy(item):
@@ -167,7 +167,7 @@ class SortMixin(object):
 		else:
 			result = (u'z', value)
 		return result
-	
+
 @view_config(name="contents")
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
@@ -284,7 +284,7 @@ class SearchView(AbstractAuthenticatedView, BatchingUtilsMixin, SortMixin):
 			result[ITEM_COUNT] = len(items)
 		result[TOTAL] = len(items)
 		return result
-	
+
 @view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
@@ -295,7 +295,7 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 
 	content_predicate = INamedContainer.providedBy
 	default_folder_mime_type = ContentFolder.mimeType
-		
+
 	def generate(self, prefix=_('Unnamed Folder')):
 		for x in xrange(10000):
 			name = prefix + (u'' if x == 0 else ' %s' % x)
@@ -627,9 +627,15 @@ class RenameMixin(object):
 			raise hexc.HTTPUnprocessableEntity(_("File already exists."))
 
 		# replace name
+		old_name = theObject.filename
 		old_key = old_key or theObject.name
 		theObject.name = new_key  # name is key
 		theObject.filename = new_name  # filename is display name
+		if hasattr( theObject, 'title' ) and theObject.title == old_name:
+			theObject.title = new_name
+		if 		hasattr( theObject, 'description' ) \
+			and theObject.description == old_name:
+			theObject.description = new_name
 
 		# replace in folder
 		parent.rename(old_key, new_key)
@@ -767,7 +773,7 @@ class MoveView(AbstractAuthenticatedView,
 			data['path'] = data.pop('name', None)
 		return data
 
-	def _get_parent_target(self, theObject, path):
+	def _get_parent_target(self, theObject, path, strict=True):
 		current = theObject
 		parent = current.__parent__
 		if not path.startswith(u'/'):
@@ -777,7 +783,9 @@ class MoveView(AbstractAuthenticatedView,
 			target_name = theObject.name
 			target = traverse(current, path)
 		except (TraversalException) as e:
-			if not isinstance(e, NotSuchFileException) or e.path:
+			if 		not isinstance(e, NotSuchFileException) \
+				or 	e.path \
+				or  strict:
 				exc_info = sys.exc_info()
 				raise_json_error(
 						self.request,
@@ -816,7 +824,7 @@ class MoveView(AbstractAuthenticatedView,
 			new_parent = target
 		else:
 			new_parent = target.__parent__
-		
+
 		from_path = compute_path(theObject)
 		target_path = compute_path(new_parent)
 		if from_path.lower() == target_path.lower():
@@ -850,7 +858,7 @@ class CopyView(MoveView):
 		if not path:
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid path."))
 
-		parent, target, target_name = self._get_parent_target(theObject, path)
+		parent, target, target_name = self._get_parent_target(theObject, path, strict=False)
 		if INamedContainer.providedBy(target):
 			result = parent.copyTo(theObject, target, target_name)
 		else:
