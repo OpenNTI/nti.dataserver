@@ -83,7 +83,7 @@ from nti.contentfolder.model import ContentFolder
 from nti.contentfolder.utils import mkdirs
 from nti.contentfolder.utils import traverse
 from nti.contentfolder.utils import TraversalException
-from nti.contentfolder.utils import NotSuchFileException
+from nti.contentfolder.utils import NoSuchFileException
 
 from nti.dataserver import authorization as nauth
 
@@ -783,7 +783,7 @@ class MoveView(AbstractAuthenticatedView,
 			target_name = theObject.name
 			target = traverse(current, path)
 		except (TraversalException) as e:
-			if 		not isinstance(e, NotSuchFileException) \
+			if 		not isinstance(e, NoSuchFileException) \
 				or 	e.path \
 				or  strict:
 				exc_info = sys.exc_info()

@@ -30,7 +30,7 @@ class TraversalException(Exception):
 class NotDirectoryException(TraversalException):
 	pass
 
-class NotSuchFileException(TraversalException):
+class NoSuchFileException(TraversalException):
 	pass
 
 def traverse(current, path=None):
@@ -58,7 +58,7 @@ def traverse(current, path=None):
 		try:
 			current = current[segment]
 		except KeyError:
-			raise NotSuchFileException("Not such file or directory.",
+			raise NoSuchFileException("Not such file or directory.",
 										current, segment, path)
 		except TypeError:
 			raise NotDirectoryException("Not a directory.",
