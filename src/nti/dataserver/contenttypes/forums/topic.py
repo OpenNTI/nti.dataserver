@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -161,6 +163,7 @@ def _post_added_to_topic(post, event):
 class HeadlineTopic(Topic):
 
 	headline = AcquisitionFieldProperty(IHeadlineTopic['headline'])
+	publishLastModified = None
 
 	def _did_modify_publication_status(self, oldSharingTargets):
 		"""
@@ -198,6 +201,7 @@ class HeadlineTopic(Topic):
 		oldSharingTargets = set(self.sharingTargets)
 		interface.alsoProvides(self, IDefaultPublished)
 
+		self.publishLastModified = time.time()
 		self._did_modify_publication_status(oldSharingTargets)
 
 	def unpublish(self):
