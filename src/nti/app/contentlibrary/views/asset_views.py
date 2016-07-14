@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
-import time
 
 from zope import component
 
@@ -36,7 +35,10 @@ from nti.app.contentlibrary.utils.common import remove_package_inaccessible_asse
 
 from nti.app.contentlibrary.views import iface_of_thing
 
+from nti.app.contentlibrary.views.sync_views import _AbstractSyncAllLibrariesView
+
 from nti.app.externalization.internalization import read_body_as_external_object
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.common.maps import CaseInsensitiveDict
@@ -68,7 +70,9 @@ from nti.traversal.traversal import find_interface
 
 ITEMS = StandardExternalFields.ITEMS
 NTIID = StandardExternalFields.NTIID
+TOTAL = StandardExternalFields.TOTAL
 MIMETYPE = StandardExternalFields.MIMETYPE
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 def _get_package_ntiids(values):
 	ntiids = values.get('ntiid') or values.get('ntiids')
@@ -116,7 +120,7 @@ class GetPackagePresentationAssetsView(AbstractAuthenticatedView,
 										  key=lambda x: x.__class__.__name__)
 			total += len(items[package.ntiid])
 
-		result['ItemCount'] = result['Total'] = total
+		result[ITEM_COUNT] = result[TOTAL] = total
 		return result
 
 @view_config(context=IDataserverFolder)
@@ -124,11 +128,7 @@ class GetPackagePresentationAssetsView(AbstractAuthenticatedView,
 			   renderer='rest',
 			   permission=nauth.ACT_NTI_ADMIN,
 			   name='ResetPackagePresentationAssets')
-class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
-										 ModeledContentUploadRequestUtilsMixin):
-
-	def readInput(self, value=None):
-		return _read_input(self.request)
+class ResetPackagePresentationAssetsView(_AbstractSyncAllLibrariesView):
 
 	def _unit_assets(self, package):
 		result = []
@@ -143,12 +143,13 @@ class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
 		recur(package)
 		return result
 
-	def _do_call(self, result):
+	def _do_call(self):
 		total = 0
 		values = self.readInput()
 		ntiids = _get_package_ntiids(values)
 		force = is_true(values.get('force'))
 
+		result = LocatedExternalDict()
 		items = result[ITEMS] = {}
 		for package in yield_content_packages(ntiids):
 			seen = ()
@@ -174,18 +175,26 @@ class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
 				# record output
 				items[package.ntiid] = removed
 				total += len(removed)
-		result['Total'] = total
+		result[TOTAL] = total
 		return result
 
-	def __call__(self):
-		now = time.time()
+@view_config(context=IDataserverFolder)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_NTI_ADMIN,
+			   name='SyncPackagePresentationAssets')
+class SyncPackagePresentationAssetsView(_AbstractSyncAllLibrariesView):
+
+	def _do_call(self):
+		values = self.readInput()
 		result = LocatedExternalDict()
-		endInteraction()
-		try:
-			self._do_call(result)
-		finally:
-			restoreInteraction()
-			result['SyncTime'] = time.time() - now
+		items = result[ITEMS] = []
+		ntiids = _get_package_ntiids(values)
+		for package in yield_content_packages(ntiids):
+			folder = find_interface(package, IHostPolicyFolder, strict=False)
+			with current_site(get_host_site(folder.__name__)):
+				items.append(package.ntiid)
+				update_indices_when_content_changes(package)
 		return result
 
 @view_config(context=IDataserverFolder)
@@ -206,37 +215,4 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 			result = remove_package_inaccessible_assets()
 		finally:
 			restoreInteraction()
-		return result
-
-@view_config(context=IDataserverFolder)
-@view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   permission=nauth.ACT_NTI_ADMIN,
-			   name='SyncPackagePresentationAssets')
-class SyncPackagePresentationAssetsView(AbstractAuthenticatedView,
-										ModeledContentUploadRequestUtilsMixin):
-
-	def readInput(self, value=None):
-		return _read_input(self.request)
-
-	def _do_call(self, result):
-		values = self.readInput()
-		items = result[ITEMS] = []
-		ntiids = _get_package_ntiids(values)
-		for package in yield_content_packages(ntiids):
-			folder = find_interface(package, IHostPolicyFolder, strict=False)
-			with current_site(get_host_site(folder.__name__)):
-				items.append(package.ntiid)
-				update_indices_when_content_changes(package)
-		return result
-
-	def __call__(self):
-		now = time.time()
-		result = LocatedExternalDict()
-		endInteraction()
-		try:
-			self._do_call(result)
-		finally:
-			restoreInteraction()
-			result['SyncTime'] = time.time() - now
 		return result
