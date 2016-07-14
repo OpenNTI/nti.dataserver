@@ -11,6 +11,7 @@
 		<!-- Subscribers -->
 	<subscriber handler=".subscribers._record_published" />
 	<subscriber handler=".subscribers._record_unpublished" />
+	<subscriber handler=".subscribers._on_calendar_publishable_modified" />
 
 	<!-- Publishing workflow -->
 	<subscriber factory=".decorators.PublishLinkDecorator"
