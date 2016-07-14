@@ -147,13 +147,48 @@ class _LastSyncTimeView(AbstractAuthenticatedView):
 		result = getattr(hostsites, 'lastSynchronized', 0)
 		return result
 
+class _AbstractSyncAllLibrariesView(_SetSyncLockView,
+						    		ModeledContentUploadRequestUtilsMixin):
+	
+	def readInput(self, value=None):
+		result = CaseInsensitiveDict()
+		if self.request:
+			if self.request.body:
+				values = read_body_as_external_object(self.request)
+			else:
+				values = self.request.params
+			result.update(values)
+		return result
+
+	def release(self, lock):
+		try:
+			lock.release()
+		except Exception:
+			logger.exception("Error while releasing Sync lock")
+
+	def _txn_id(self):
+		return "txn.%s" % get_thread_ident()
+
+	def _do_call(self):
+		pass
+
+	def __call__(self):
+		logger.info('Acquiring sync lock')
+		endInteraction()
+		lock = self.acquire()
+		try:
+			logger.info('Starting sync %s', self._txn_id())
+			return self._do_call()
+		finally:
+			self.release(lock)
+			restoreInteraction()
+
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context=IDataserverFolder,
 			   name='SyncAllLibraries')
-class _SyncAllLibrariesView(_SetSyncLockView,
-						    ModeledContentUploadRequestUtilsMixin):
+class _SyncAllLibrariesView(_AbstractSyncAllLibrariesView):
 	"""
 	A view that synchronizes all of the in-database libraries
 	(and sites) with their on-disk and site configurations.
@@ -175,25 +210,6 @@ class _SyncAllLibrariesView(_SetSyncLockView,
 	# (specifically in nti.app.products.courseware) so we allow
 	# disabling it.
 	_SLEEP = True
-
-	def readInput(self, value=None):
-		result = CaseInsensitiveDict()
-		if self.request:
-			if self.request.body:
-				values = read_body_as_external_object(self.request)
-			else:
-				values = self.request.params
-			result.update(values)
-		return result
-
-	def release(self, lock):
-		try:
-			lock.release()
-		except Exception:
-			logger.exception("Error while releasing Sync lock")
-
-	def _txn_id(self):
-		return "txn.%s" % get_thread_ident()
 
 	def _do_sync(self, ntiids, site, allowRemoval):
 		now = time.time()
@@ -254,14 +270,3 @@ class _SyncAllLibrariesView(_SetSyncLockView,
 		# retries cause syncs to take much longer to perform.
 		result = self._do_sync(ntiids, site, allowRemoval)
 		return result
-
-	def __call__(self):
-		logger.info('Acquiring sync lock')
-		endInteraction()
-		lock = self.acquire()
-		try:
-			logger.info('Starting sync %s', self._txn_id())
-			return self._do_call()
-		finally:
-			self.release(lock)
-			restoreInteraction()
