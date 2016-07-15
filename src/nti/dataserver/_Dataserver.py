@@ -35,9 +35,6 @@ from persistent import Persistent
 from nti.chatserver.chatserver import Chatserver
 
 from nti.dataserver import config
-from nti.dataserver import sessions
-from nti.dataserver import meeting_storage
-from nti.dataserver import meeting_container_storage
 
 from nti.dataserver.interfaces import SYSTEM_USER_ID
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
@@ -48,8 +45,13 @@ from nti.dataserver.interfaces import IRedisClient
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IMemcacheClient
 from nti.dataserver.interfaces import IDataserverClosedEvent
-
 from nti.dataserver.interfaces import InappropriateSiteError
+
+from nti.dataserver.meeting_container_storage import MeetingContainerStorage
+
+from nti.dataserver.meeting_storage import CreatorBasedAnnotationMeetingStorage
+
+from nti.dataserver.sessions import SessionService
 
 from nti.externalization.interfaces import IExternalReferenceResolver
 
@@ -456,12 +458,12 @@ class Dataserver(MinimalDataserver):
 
 	def _setup_session_manager(self):
 		# The session service will read a component from our local site manager
-		return sessions.SessionService()
+		return SessionService()
 
 	def _setup_chat(self):
 		return  Chatserver(self.session_manager,
-						   meeting_storage=meeting_storage.CreatorBasedAnnotationMeetingStorage(),
-						   meeting_container_storage=meeting_container_storage.MeetingContainerStorage())
+						   meeting_storage=CreatorBasedAnnotationMeetingStorage(),
+						   meeting_container_storage=MeetingContainerStorage())
 
 	def get_sessions(self):
 		return self.session_manager
@@ -536,12 +538,6 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
 		# RelStorage can also raise struct.error if the oid_string is not packed validly:
 		# see ZODB.utils.u64.
 		result = connection[oid_string]
-
-		# if result is None and required_user not in (required_user_marker, SYSTEM_USER_NAME):
-			# TODO: Right here, we have a user. We couldn't find the object globally,
-			# so it may have been moved. We need to get the user-local index
-			# and ask it to find it.
-			# pass
 
 		if IWeakRef.providedBy(result):
 			result = result()
