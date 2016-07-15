@@ -18,7 +18,7 @@ from paste.deploy.converters import asbool
 from nti.appserver.application import createApplication
 from nti.appserver.application_server import WebSocketServer
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IDataserver
 
 SOCKET_IO_PATH = 'socket.io'
 
@@ -72,7 +72,7 @@ def _serve(httpd):
 			# SIGHUP could cause this to raise 'interrupted system call'
 			httpd.serve_forever()
 		except KeyboardInterrupt:
-			component.getUtility(nti_interfaces.IDataserver).close()
+			component.getUtility(IDataserver).close()
 			raise
 
 def _create_app_server(wsgi_app, global_conf, host='', port=None, **kwargs):

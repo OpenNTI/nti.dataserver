@@ -57,7 +57,11 @@ from nti.externalization.interfaces import IExternalReferenceResolver
 
 from nti.externalization.oids import fromExternalOID
 
-from nti.ntiids import ntiids
+from nti.ntiids.ntiids import TYPE_OID
+from nti.ntiids.ntiids import get_parts
+from nti.ntiids.ntiids import escape_provider
+from nti.ntiids.ntiids import is_ntiid_of_type
+from nti.ntiids.ntiids import is_valid_ntiid_string
 
 from nti.wref.interfaces import IWeakRef
 
@@ -509,14 +513,14 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
 	# TODO: This is probably rife with possibilities for attack
 	required_user_marker = connection
 	required_user = None
-	if ntiids.is_ntiid_of_type(oid_string, ntiids.TYPE_OID):
-		parts = ntiids.get_parts(oid_string)
+	if is_ntiid_of_type(oid_string, TYPE_OID):
+		parts = get_parts(oid_string)
 		oid_string = parts.specific
 		# The provider must be given. If it's the system user,
 		# we'll ignore it. Otherwise, it must be checked. If it's not
 		# present, then use a marker that will always fail.
 		required_user = parts.provider or required_user_marker
-	elif ntiids.is_valid_ntiid_string(oid_string):
+	elif is_valid_ntiid_string(oid_string):
 		# Hmm, valid but not an OID.
 		logger.debug("Failed to resolve non-OID NTIID %s", oid_string)
 		return None
@@ -554,7 +558,7 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
 			# Only the system user can access anything without a creator
 			# (TODO: Should that change?)
 			if creator_name != None:  # must check
-				if ntiids.escape_provider(creator_name) != required_user:
+				if escape_provider(creator_name) != required_user:
 					result = None
 			elif required_user and required_user not in (SYSTEM_USER_NAME, SYSTEM_USER_ID):
 				result = None
