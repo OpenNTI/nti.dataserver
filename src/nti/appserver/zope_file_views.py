@@ -23,11 +23,11 @@ from zope.file.interfaces import IFile
 
 from zope.publisher.interfaces.browser import IBrowserRequest
 
+from ZODB.POSException import POSError
+
 from pyramid.security import NO_PERMISSION_REQUIRED
 
 from pyramid.view import view_config
-
-from ZODB.POSException import POSKeyError
 
 from plone.namedfile import NamedImage
 
@@ -69,7 +69,7 @@ def _do_view(request, view, event=False):
 	view = view(request.context, IBrowserRequest(request))
 	try:
 		app_iter = view()
-	except POSKeyError:
+	except POSError:
 		# We get this from RelStorage if the blob directory is not
 		# configured correctly, typically on a new machine/new deployment.
 		# The wrapping IFile object exists, but the underling blob
@@ -161,8 +161,8 @@ class FilenameRespectingDownload(download.Download):
 		filename = getattr(self.context, 'filename', None)
 		__traceback_info__= filename,
 		for k, v in download.getHeaders(self.context,
-										contentDisposition=b"attachment",
-										downloadName=filename):
+										downloadName=filename,
+										contentDisposition=b"attachment"):
 			self.request.response.setHeader(k, v)
 		return download.DownloadResult(self.context)
 
@@ -275,6 +275,7 @@ def image_to_dataurl_extjs(request):
 	# in the json body. Status codes also don't exist, and layer boundaries are meaningless
 	body = dict(rsp.json_body)
 	body['success'] = True
+
 	# IE9 will prompt the user to save the response for application/*
 	# content-types when not loading through a XHR, so we have to lie about
 	# the response type, which confuses many tools but makes IE happy
