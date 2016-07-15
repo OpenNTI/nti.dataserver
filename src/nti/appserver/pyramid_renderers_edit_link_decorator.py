@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from collections import Mapping
+
 from zope import interface
 
 from zope.location.interfaces import ILocation
@@ -29,15 +31,39 @@ from nti.dataserver.interfaces import IShouldHaveTraversablePath
 # make sure we use nti.dataserver.traversal to find the root site
 from nti.dataserver.traversal import find_nearest_site as ds_find_nearest_site
 
-from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.links.links import Link
+from nti.externalization.oids import to_external_ntiid_oid
+
 from nti.links.externalization import render_link
+
+from nti.links.links import Link
 
 LINKS = StandardExternalFields.LINKS
 IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy
+
+@interface.implementer(IExternalObjectDecorator)
+class _EditLinkRemoverDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	links_to_remove = ('edit',)
+
+	def _do_decorate_external(self, context, result):
+		new_links = []
+		_links = result.setdefault(LINKS, [])
+		for link in _links:
+			try:
+				# Some links may be externalized already.
+				if isinstance(link, Mapping):
+					rel = link.get('rel')
+				else:
+					rel = link.rel
+				if rel not in self.links_to_remove:
+					new_links.append(link)
+			except AttributeError:
+				pass
+		result[LINKS] = new_links
 
 @interface.implementer(IExternalMappingDecorator)
 class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
