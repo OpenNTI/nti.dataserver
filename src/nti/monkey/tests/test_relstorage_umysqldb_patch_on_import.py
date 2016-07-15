@@ -64,14 +64,13 @@ class TestPatch(unittest.TestCase):
 
 		assert_that( storage._tid, is_( bytes ) ) # bytes, not unicode
 
-
 	def test_sqlalchemy_retry(self):
 		import nti.monkey.relstorage_umysqldb_patch_on_import
 		nti.monkey.relstorage_umysqldb_patch_on_import.patch()
 
 		from zope.sqlalchemy.datamanager import SessionDataManager
 		import transaction
-		import pymysql.err
+		import pymysql
 		import sqlalchemy.exc
 
 		class MockSqlTransaction(object):
@@ -90,7 +89,7 @@ class TestPatch(unittest.TestCase):
 		# This joins the session to the transaction manager
 		manager = SessionDataManager(MockSession(), 'status', transaction.manager)
 
-		exc = pymysql.err.OperationalError()
+		exc = pymysql.OperationalError()
 		sql_exc = sqlalchemy.exc.OperationalError('statement', 'params', exc)
 		assert_that( transaction.manager._retryable(type(sql_exc), sql_exc),
 					 is_true() )

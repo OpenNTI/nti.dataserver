@@ -34,9 +34,6 @@ def _patch():
 	_patch_relstorage_error(umysqldb)
 	_patch_transaction_retry()
 
-	from nti.monkey import relstorage_explicitly_close_memcache_patch_on_import
-	relstorage_explicitly_close_memcache_patch_on_import.patch()
-
 def _patch_connection():
 
 	# The underlying umysql driver doesn't handle dicts as arguments
@@ -180,36 +177,8 @@ def _patch_connection():
 	umysqldb.Connection = Connection
 
 def _patch_relstorage_error(umysqldb):
-	import pymysql.err
-	from pymysql.err import DatabaseError
-
-	# Now got to patch relstorage to recognize some exceptions. If these
-	# don't get caught, relstorage may not properly close the connection, or fail
-	# to recognize that the connection is already closed
-	import relstorage.adapters.mysql
-	assert relstorage.adapters.mysql.MySQLdb is umysqldb
-
-	# XXX: The PyPy branch of relstorage takes care of most of this
-
-	for attr in (relstorage.adapters.mysql,
-				 relstorage.adapters.mysql.MySQLdbConnectionManager):
-		# close_exceptions: "to ignore when closing the connection"
-		attr.close_exceptions += (pymysql.err.Error,  # The one usually mapped to
-								  IOError,  # This one can escape mapping
-								  DatabaseError)
-
-	for attr in (relstorage.adapters.mysql,
-				 relstorage.adapters.mysql.MySQLdbConnectionManager):
-		# disconnected_exceptions: "indicates the connection is disconnected"
-
-		# Note we don't make the generic `pymysql.err.Error` indicate
-		# disconnection
-		attr.disconnected_exceptions += (IOError,  # This one can escape mapping;
-										 # This one has only been seen as its subclass,
-										 # InternalError, as (0, 'Socket receive buffer full'),
-										 # which should probably be taken as disconnect
-										 DatabaseError,
-										 )
+	import relstorage.adapters._mysql_drivers
+	assert relstorage.adapters._mysql_drivers.MySQLdbDriver.connect is umysqldb.connect
 
 def _patch_transaction_retry():
 	# We've seen OperationalError "database has gone away (32, broken pipe)", which is a
