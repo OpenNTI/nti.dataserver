@@ -1,19 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
-# Patch for relstorage.
-# This MUST be done by the higher level, sometimes we want
-# to get MySQLdb
-# import nti.monkey.relstorage_umysqldb_patch_on_import
-# nti.monkey.relstorage_umysqldb_patch_on_import.patch()
 
 import os
 import redis
@@ -24,13 +18,15 @@ from urlparse import urlparse
 from zope import component
 from zope import interface
 
+import zope.deprecation as zope_deprecation
+
 from zope.event import notify
+
+from zope.interface.interfaces import ObjectEvent
 
 from zope.intid.interfaces import IIntIds
 
 from zope.processlifetime import DatabaseOpenedWithRoot
-
-import zope.deprecation as zope_deprecation
 
 from ZODB.interfaces import IConnection
 
@@ -40,41 +36,51 @@ from nti.chatserver.chatserver import Chatserver
 
 from nti.dataserver import config
 from nti.dataserver import sessions
-from nti.dataserver import interfaces
 from nti.dataserver import meeting_storage
 from nti.dataserver import meeting_container_storage
 
+from nti.dataserver.interfaces import SYSTEM_USER_ID
+from nti.dataserver.interfaces import SYSTEM_USER_NAME
+
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IOIDResolver
+from nti.dataserver.interfaces import IRedisClient
+from nti.dataserver.interfaces import IShardLayout
+from nti.dataserver.interfaces import IMemcacheClient
+from nti.dataserver.interfaces import IDataserverClosedEvent
+
 from nti.dataserver.interfaces import InappropriateSiteError
 
-from nti.externalization import oids
-from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import IExternalReferenceResolver
+
+from nti.externalization.oids import fromExternalOID
 
 from nti.ntiids import ntiids
 
-from nti.wref import interfaces as wref_interfaces
+from nti.wref.interfaces import IWeakRef
 
-###
 ### Note: There is a bug is some versions of the python interpreter
 ### such that initiating ZEO connections at the module level
 ### results in a permanant hang: the interpreter has two threads
 ### that are both waiting on either the GIL or the import lock,
 ### but something forgot to release it. The solution is to move this
 ### into its own function and call it explicitly.
-###
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 
 def get_by_oid(oid_string, ignore_creator=False):
-	resolver = component.queryUtility(interfaces.IOIDResolver)
+	resolver = component.queryUtility(IOIDResolver)
 	if resolver is None:
 		logger.warn("Using dataserver without a proper ISiteManager configuration.")
-	return resolver.get_object_by_oid(oid_string, ignore_creator=ignore_creator) if resolver else None
+	if resolver:
+		return resolver.get_object_by_oid(oid_string, ignore_creator=ignore_creator)
+	return None
 
-@interface.implementer(interfaces.IDataserverClosedEvent)
-class DataserverClosedEvent(interfaces.ObjectEvent):
+@interface.implementer(IDataserverClosedEvent)
+class DataserverClosedEvent(ObjectEvent):
 	pass
 
-@interface.implementer(interfaces.IShardLayout)
+@interface.implementer(IShardLayout)
 class MinimalDataserver(object):
 	"""
 	Represents the basic connections and nothing more.
@@ -109,7 +115,9 @@ class MinimalDataserver(object):
 		for deprecated in ('_setup_storage', '_setup_launch_zeo', '_setup_storages'):
 			meth = getattr(self, deprecated, None)
 			if meth is not None:  # pragma: no cover
-				raise DeprecationWarning(deprecated + " is no longer supported. Remove your method " + str(meth))
+				raise DeprecationWarning(deprecated + 
+										 " is no longer supported. Remove your method " +
+										 str(meth))
 
 	def _setup_conf(self, environment_dir, demo=False):
 		return config.temp_get_config(environment_dir, demo=demo)
@@ -155,7 +163,10 @@ class MinimalDataserver(object):
 	def _setup_redis(self, conf):
 		__traceback_info__ = self, conf, conf.main_conf
 		if not conf.main_conf.has_option('redis', 'redis_url'):
-			msg = "YOUR CONFIGURATION IS OUT OF DATE. Please install redis and then run nti_init_env --upgrade-outdated --write-supervisord"
+			msg = """
+			YOUR CONFIGURATION IS OUT OF DATE. Please install redis and then 
+			run nti_init_env --upgrade-outdated --write-supervisord
+			"""
 			logger.warn(msg)
 			raise DeprecationWarning(msg)
 
@@ -166,9 +177,9 @@ class MinimalDataserver(object):
 			client = redis.StrictRedis(unix_socket_path=parsed_url.path)  # XXX Windows
 		else:
 			client = redis.StrictRedis.from_url(redis_url)
-		interface.alsoProvides(client, interfaces.IRedisClient)
+		interface.alsoProvides(client, IRedisClient)
 		# TODO: Probably shouldn't be doing this
-		component.getGlobalSiteManager().registerUtility(client, interfaces.IRedisClient)
+		component.getGlobalSiteManager().registerUtility(client, IRedisClient)
 		return client
 
 	def _setup_cache(self, conf):
@@ -196,7 +207,7 @@ class MinimalDataserver(object):
 		# greenlets; see the monkey patch.) So we write an implementation that is
 		# TODO: How much of a penalty do we take for this? We probably want a real
 		# visible, manageable pool.
-		@interface.implementer(interfaces.IMemcacheClient)
+		@interface.implementer(IMemcacheClient)
 		class _Client(object):
 
 			def __init__(self, cache):
@@ -216,7 +227,7 @@ class MinimalDataserver(object):
 					return self.cache.delete(*args, **kwargs)
 
 		gsm = component.getGlobalSiteManager()
-		gsm.registerUtility(_Client(cache), interfaces.IMemcacheClient)
+		gsm.registerUtility(_Client(cache), IMemcacheClient)
 		# NOTE: This is not UDP based, it is TCP based, so we have to be careful
 		# to close it. Our fork function uses disconnect_all, which simply
 		# terminates the open sockets, if any; they all open back up
@@ -308,7 +319,7 @@ class MinimalDataserver(object):
 
 		# Clean up what we did to the site manager
 		gsm = component.getGlobalSiteManager()
-		if gsm.queryUtility(interfaces.IRedisClient) is self.redis:
+		if gsm.queryUtility(IRedisClient) is self.redis:
 			gsm.unregisterUtility(self.redis)
 		notify(DataserverClosedEvent(self))
 
@@ -370,7 +381,7 @@ from nti.processlifetime import IProcessDidFork
 
 @component.adapter(IProcessDidFork)
 def _process_did_fork_listener(event):
-	ds = component.queryUtility(interfaces.IDataserver)
+	ds = component.queryUtility(IDataserver)
 	if ds:
 		# Re-open in place. pre-fork we called ds.close()
 		ds._reopen()
@@ -386,7 +397,19 @@ def _process_did_fork_listener(event):
 	# in _v_nextid. However, we just closed and reopened the database,
 	# so that volatile attribute will not be present
 
-@interface.implementer(interfaces.IDataserver)
+# close all resources at exit
+def close_at_exit():
+	ds = component.queryUtility(IDataserver)
+	try:
+		if ds:
+			ds.close()
+	except Exception:
+		pass
+
+import atexit
+atexit.register(close_at_exit)
+
+@interface.implementer(IDataserver)
 class Dataserver(MinimalDataserver):
 
 	chatserver = None
@@ -451,10 +474,10 @@ _SynchronousChangeDataserver = Dataserver
 zope_deprecation.deprecated('_SynchronousChangeDataserver',
 							"Use plain Dataserver")
 
-@interface.implementer(ext_interfaces.IExternalReferenceResolver)
+@interface.implementer(IExternalReferenceResolver)
 @component.adapter(object, basestring)
 def ExternalRefResolverFactory(_, __):
-	ds = component.queryUtility(interfaces.IDataserver)
+	ds = component.queryUtility(IDataserver)
 	return _ExternalRefResolver(ds) if ds else None
 
 class _ExternalRefResolver(object):
@@ -465,7 +488,7 @@ class _ExternalRefResolver(object):
 	def resolve(self, oid):
 		return self.ds.get_by_oid(oid)
 
-@interface.implementer(interfaces.IOIDResolver)
+@interface.implementer(IOIDResolver)
 class PersistentOidResolver(Persistent):
 
 	def get_object_by_oid(self, oid_string, ignore_creator=False):
@@ -499,7 +522,7 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
 		# Nothing given.
 		return None
 
-	oid_string, database_name, intid = oids.fromExternalOID(oid_string)
+	oid_string, database_name, intid = fromExternalOID(oid_string)
 	if not oid_string:
 		logger.debug('No OID string given')
 		return None
@@ -514,13 +537,13 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
 		# see ZODB.utils.u64.
 		result = connection[oid_string]
 
-		# if result is None and required_user not in (required_user_marker, interfaces.SYSTEM_USER_NAME):
+		# if result is None and required_user not in (required_user_marker, SYSTEM_USER_NAME):
 			# TODO: Right here, we have a user. We couldn't find the object globally,
 			# so it may have been moved. We need to get the user-local index
 			# and ask it to find it.
 			# pass
 
-		if wref_interfaces.IWeakRef.providedBy(result):
+		if IWeakRef.providedBy(result):
 			result = result()
 
 		if result is not None and intid is not None:
@@ -537,7 +560,7 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
 			if creator_name != None:  # must check
 				if ntiids.escape_provider(creator_name) != required_user:
 					result = None
-			elif required_user and required_user not in (interfaces.SYSTEM_USER_NAME, interfaces.SYSTEM_USER_ID):
+			elif required_user and required_user not in (SYSTEM_USER_NAME, SYSTEM_USER_ID):
 				result = None
 
 		return result
