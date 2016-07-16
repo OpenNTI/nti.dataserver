@@ -45,7 +45,7 @@ LINKS = StandardExternalFields.LINKS
 IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy
 
 @interface.implementer(IExternalObjectDecorator)
-class _EditLinkRemoverDecorator(AbstractAuthenticatedRequestAwareDecorator):
+class EditLinkRemoverDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	links_to_remove = ('edit',)
 
@@ -64,6 +64,7 @@ class _EditLinkRemoverDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			except AttributeError:
 				pass
 		result[LINKS] = new_links
+LinkRemoverDecorator = EditLinkRemoverDecorator
 
 @interface.implementer(IExternalMappingDecorator)
 class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
