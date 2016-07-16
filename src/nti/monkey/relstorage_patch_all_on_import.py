@@ -23,8 +23,11 @@ nti_internal_patch_on_import.patch()
 # it should be executed after gevent and umysqldb have been applied
 def _patch():
 	import threading
-	import relstorage
-	relstorage.storage._DummyLock = threading.RLock
+	try:
+		import relstorage
+		relstorage.storage._DummyLock = threading.RLock
+	except ImportError:
+		pass
 _patch()
 
 def patch():
