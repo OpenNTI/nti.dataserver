@@ -322,6 +322,7 @@ setup(
 		 # pulls *all* templates into memory/ZODB so they are traversable,
 		 # but we haven't done that).
 		'z3c.macro',
+		'z3c.pagelet',
 		'z3c.password',	# password policies
 		'z3c.pt',  # Better ZPT support than plastex, add-in to Chameleon
 		'z3c.ptcompat',	# Make zope.pagetemplate also use the Chameleon-based ZPT
