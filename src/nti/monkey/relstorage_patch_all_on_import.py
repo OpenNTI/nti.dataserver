@@ -24,7 +24,7 @@ nti_internal_patch_on_import.patch()
 def _patch():
 	import threading
 	try:
-		import relstorage
+		import relstorage.storage
 		relstorage.storage._DummyLock = threading.RLock
 	except ImportError:
 		pass
