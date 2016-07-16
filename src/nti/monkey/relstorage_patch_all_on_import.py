@@ -19,5 +19,13 @@ gevent_patch_on_import.patch()
 relstorage_umysqldb_patch_on_import.patch()
 nti_internal_patch_on_import.patch()
 
+# patch for RelStorage 2.0b2 
+# it should be executed after gevent and umysqldb have been applied
+def _patch():
+	import threading
+	import relstorage
+	relstorage.storage._DummyLock = threading.RLock
+_patch()
+
 def patch():
 	pass
