@@ -30,8 +30,6 @@ the function :func:`impersonate_user` for more details.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from . import MessageFactory as _
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -45,8 +43,8 @@ import anyjson as json
 from openid import oidutil
 oidutil.log = logging.getLogger('openid').info
 
-from zope import interface
 from zope import component
+from zope import interface
 from zope import lifecycleevent
 
 from zope.event import notify
@@ -66,28 +64,10 @@ from pyramid.view import view_config
 import requests
 from requests.exceptions import RequestException
 
-from nti.app.renderers import interfaces as app_renderes_interfaces
+from nti.app.renderers.interfaces import IResponseCacheController
+from nti.app.renderers.interfaces import IPrivateUncacheableInResponse
 
-from nti.contentlibrary import interfaces as lib_interfaces
-
-from nti.dataserver import authorization as nauth
-from nti.dataserver.interfaces import IGoogleUser
-from nti.dataserver import interfaces as nti_interfaces
-
-from nti.dataserver import users
-from nti.dataserver.users import User
-from nti.dataserver.users.utils import force_email_verification
-from nti.dataserver.users.interfaces import GoogleUserCreatedEvent
-
-from nti.externalization import interfaces as ext_interfaces
-
-from nti.links.links import Link
-
-from nti.mimetype import mimetype
-
-from nti.ntiids import ntiids
-
-from nti.appserver import interfaces as app_interfaces
+from nti.appserver import MessageFactory as _
 
 from nti.appserver._util import logon_userid_with_request
 
@@ -98,11 +78,45 @@ from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME
 from nti.appserver.account_creation_views import REL_PREFLIGHT_CREATE_ACCOUNT
 
 from nti.appserver.interfaces import ILogonPong
+from nti.appserver.interfaces import IMissingUser
+from nti.appserver.interfaces import IUserLogonEvent
+from nti.appserver.interfaces import ILogonLinkProvider
+from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
+from nti.appserver.interfaces import IUnauthenticatedUserLinkProvider
+from nti.appserver.interfaces import ILogonUsernameFromIdentityURLProvider
+
+from nti.appserver.interfaces import UserLogoutEvent
+from nti.appserver.interfaces import UserCreatedWithRequestEvent
 
 from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.link_providers import unique_link_providers
 
 from nti.appserver.pyramid_authorization import has_permission
+
+from nti.contentlibrary import interfaces as lib_interfaces
+
+from nti.common.string import is_true
+
+from nti.dataserver import authorization as nauth
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.interfaces import IGoogleUser
+
+from nti.dataserver.users import User
+from nti.dataserver.users import OpenIdUser
+from nti.dataserver.users import FacebookUser
+
+from nti.dataserver.users.interfaces import GoogleUserCreatedEvent
+
+from nti.dataserver.users.utils import force_email_verification
+
+from nti.externalization.interfaces import IExternalObject
+
+from nti.links.links import Link
+
+from nti.mimetype import mimetype
+
+from nti.ntiids import ntiids
 
 #: Link relationship indicating a welcome page
 #: Fetching the href of this link returns either a content page
@@ -163,8 +177,8 @@ ROUTE_OPENID_RESPONSE = 'logon.openid.response'
 # OpenID domain.
 AX_TYPE_CONTENT_ROLES = 'tag:nextthought.com,2011:ax/contentroles/1'
 
-# The time limit for a GET request during
-# the authentication process
+#: The time limit for a GET request during
+#: the authentication process
 _REQUEST_TIMEOUT = 0.5
 
 def _authenticated_user(request):
@@ -177,7 +191,7 @@ def _authenticated_user(request):
 	"""
 	remote_user_name = request.authenticated_userid
 	if remote_user_name:
-		remote_user = users.User.get_user(remote_user_name)
+		remote_user = User.get_user(remote_user_name)
 		return remote_user
 
 def _links_for_authenticated_users(request):
@@ -237,11 +251,10 @@ def _links_for_unauthenticated_users(request):
 
 			if yes:
 				links.append(Link(route, rel=rel,
-								  target_mime_type=mimetype.nti_mimetype_from_object(users.User)))
+								  target_mime_type=mimetype.nti_mimetype_from_object(User)))
 
 
-		for provider in component.subscribers((request,),
-											  app_interfaces.IUnauthenticatedUserLinkProvider):
+		for provider in component.subscribers((request,), IUnauthenticatedUserLinkProvider):
 			links.extend(provider.get_links())
 
 	links = tuple(links) if links else ()
@@ -303,7 +316,7 @@ def logout(request):
 	response = _forgetting(request, 'success', hexc.HTTPNoContent)
 	username = request.authenticated_userid
 	user = User.get_user(username)
-	notify(app_interfaces.UserLogoutEvent(user, request))
+	notify(UserLogoutEvent(user, request))
 	return response
 
 @view_config(route_name=REL_PING, request_method='GET', renderer='rest')
@@ -328,8 +341,8 @@ def ping(request):
 	return result
 
 @interface.implementer(ILogonPong,
-						ext_interfaces.IExternalObject,
-						app_renderes_interfaces.IPrivateUncacheableInResponse)
+					   IExternalObject,
+					   IPrivateUncacheableInResponse)
 class _Pong(dict):
 
 	__external_class_name__ = 'Pong'
@@ -339,7 +352,7 @@ class _Pong(dict):
 		dict.__init__(self)
 		self.links = lnks
 
-@interface.implementer(app_interfaces.IMissingUser)
+@interface.implementer(IMissingUser)
 class NoSuchUser(object):
 
 	def __init__(self, username):
@@ -361,8 +374,8 @@ def handshake(request):
 
 	# TODO: Check for existence in the database before generating these.
 	# We also need to be validating whether we can do a openid login, etc.
-	user = users.User.get_user(username=desired_username,
-							   dataserver=component.getUtility(nti_interfaces.IDataserver))
+	user = User.get_user(username=desired_username,
+						 dataserver=component.getUtility(nti_interfaces.IDataserver))
 
 	if user is None:
 		# Use an IMissingUser so we find the right link providers
@@ -375,7 +388,7 @@ def handshake(request):
 	# If any provider raises the NotImplementedError when called, that link
 	# type will be dropped if it hasn't been seen yet.
 	providers = []
-	for provider in component.subscribers((user, request), app_interfaces.ILogonLinkProvider):
+	for provider in component.subscribers((user, request), ILogonLinkProvider):
 		providers.append((provider.rel, getattr(provider, 'priority', 0), provider))
 
 	ignored = set()
@@ -402,7 +415,7 @@ def handshake(request):
 		result['AuthenticatedUsername'] = username
 	return result
 
-@interface.implementer(app_interfaces.ILogonLinkProvider)
+@interface.implementer(ILogonLinkProvider)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class _SimpleExistingUserLinkProvider(object):
 
@@ -418,7 +431,7 @@ class _SimpleExistingUserLinkProvider(object):
 						rel=self.rel)
 
 
-@interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
+@interface.implementer(IAuthenticatedUserLinkProvider)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class _OnlinePolicyLinkProvider (object):
 
@@ -433,8 +446,8 @@ class _OnlinePolicyLinkProvider (object):
 		return (Link (target=TOS_URL, rel=self.tos_rel),
 				Link (target=PRIVACY_POLICY_URL, rel=self.privacy_rel),)
 
-@interface.implementer(app_interfaces.ILogonLinkProvider)
-@component.adapter(app_interfaces.IMissingUser, pyramid.interfaces.IRequest)
+@interface.implementer(ILogonLinkProvider)
+@component.adapter(IMissingUser, pyramid.interfaces.IRequest)
 class _SimpleMissingUserFacebookLinkProvider(object):
 
 	rel = REL_LOGIN_FACEBOOK
@@ -481,7 +494,7 @@ def _prepare_oid_link(request, username, rel, params=()):
 		logger.exception("Unable to direct to route %s", rel)
 		return
 
-@interface.implementer(app_interfaces.ILogonLinkProvider)
+@interface.implementer(ILogonLinkProvider)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class WhitelistedDomainLinkProviderMixin(object):
 	"""
@@ -512,7 +525,7 @@ class WhitelistedDomainLinkProviderMixin(object):
 	def params_for(self, user):
 		return ()
 
-@component.adapter(app_interfaces.IMissingUser, pyramid.interfaces.IRequest)
+@component.adapter(IMissingUser, pyramid.interfaces.IRequest)
 class MissingUserWhitelistedLinkProviderMixin(WhitelistedDomainLinkProviderMixin):
 	"""
 	Provides a Google login link for a predefined list of domains
@@ -583,10 +596,10 @@ class _ExistingOpenIdUserLoginLinkProvider(object):
 
 	def __call__(self):
 		return _prepare_oid_link(self.request, self.user.username, self.rel,
-								  params={'openid': self.user.identity_url})
+								 params={'openid': self.user.identity_url})
 
-@interface.implementer(ext_interfaces.IExternalObject,
-						app_renderes_interfaces.IPrivateUncacheableInResponse)
+@interface.implementer(IExternalObject,
+					   IPrivateUncacheableInResponse)
 class _Handshake(dict):
 
 	__external_class_name__ = 'Handshake'
@@ -674,7 +687,7 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
 
 	# Mark this response up as if it were entirely private and not to be cached
 	private_data = _Handshake(())
-	app_renderes_interfaces.IResponseCacheController(private_data)(private_data, {'request': request})
+	IResponseCacheController(private_data)(private_data, {'request': request})
 
 	return response
 
@@ -728,7 +741,7 @@ def impersonate_user(request):
 									 require_matching_username=False,
 									 audit=True)
 
-@interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
+@interface.implementer(IAuthenticatedUserLinkProvider)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class ImpersonationLinkProvider(object):
 	"""
@@ -933,7 +946,7 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 	:return: The user object
 	"""
 	dataserver = component.getUtility(nti_interfaces.IDataserver)
-	user = users.User.get_user(username=username, dataserver=dataserver)
+	user = User.get_user(username=username, dataserver=dataserver)
 	url_attr = iface.names()[0] if iface and iface.names() and idurl else None
 	if user:
 		if iface and not iface.providedBy(user):
@@ -967,7 +980,7 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 		if iface:
 			assert iface.providedBy(user)
 		# We manually fire the user_created event. See account_creation_views
-		notify(app_interfaces.UserCreatedWithRequestEvent(user, request))
+		notify(UserCreatedWithRequestEvent(user, request))
 	return user
 
 def _update_users_content_roles(user, idurl, content_roles):
@@ -1054,7 +1067,7 @@ def _openidcallback(context, request, success_dict):
 
 	idurl_domain = urlparse.urlparse(idurl).netloc
 	username_provider = component.queryMultiAdapter((None, request),
-													app_interfaces.ILogonUsernameFromIdentityURLProvider,
+													ILogonUsernameFromIdentityURLProvider,
 													name=idurl_domain)
 	if username_provider:
 		username = username_provider.getUsername(idurl, success_dict)
@@ -1074,7 +1087,7 @@ def _openidcallback(context, request, success_dict):
 		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
 		the_user = _deal_with_external_account(request, username=username, fname=fname, lname=lname, email=email,
 											   idurl=idurl, iface=nti_interfaces.IOpenIdUser,
-											   user_factory=users.OpenIdUser.create_user)
+											   user_factory=OpenIdUser.create_user)
 		_update_users_content_roles(the_user, idurl, content_roles)
 	except hexc.HTTPError:
 		raise
@@ -1084,7 +1097,7 @@ def _openidcallback(context, request, success_dict):
 
 	return _create_success_response(request, userid=the_user.username)
 
-@component.adapter(nti_interfaces.IUser, app_interfaces.IUserLogonEvent)
+@component.adapter(nti_interfaces.IUser, IUserLogonEvent)
 def _user_did_logon(user, event):
 	request = event.request
 	request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
@@ -1169,7 +1182,7 @@ def facebook_oauth2(request):
 									   fname=data['first_name'], lname=data['last_name'],
 									   email=data['email'], idurl=data['link'],
 									   iface=nti_interfaces.IFacebookUser,
-									   user_factory=users.FacebookUser.create_user)
+									   user_factory=FacebookUser.create_user)
 
 	# For the data formats, see here:
 	# https://developers.facebook.com/docs/reference/api/user/
