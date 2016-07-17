@@ -12,11 +12,11 @@ logger = logging.getLogger(__name__)
 import nti.dataserver as dataserver
 
 import sys
-if 'nti.monkey.gevent_patch_on_import' in sys.modules: # DON'T import this; it should already be imported if needed
-	sys.modules['nti.monkey.gevent_patch_on_import'].check_threadlocal_status()
+if 'nti.monkey.patch_gevent_on_import' in sys.modules: # DON'T import this; it should already be imported if needed
+	sys.modules['nti.monkey.patch_gevent_on_import'].check_threadlocal_status()
 
-from nti.monkey import webob_cookie_escaping_patch_on_import
-webob_cookie_escaping_patch_on_import.patch()
+from nti.monkey import patch_webob_cookie_escaping_on_import
+patch_webob_cookie_escaping_on_import.patch()
 
 import os
 import time

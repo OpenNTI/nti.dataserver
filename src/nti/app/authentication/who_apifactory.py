@@ -11,8 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 # Like Pyramid 1.4+, cause Paste's AuthTkt cookies to use the more secure
 # SHA512 algorithm instead of the weaker MD5 (actually, repoze.who, now)
-import nti.monkey.paste_auth_tkt_sha512_patch_on_import
-nti.monkey.paste_auth_tkt_sha512_patch_on_import.patch()
+import nti.monkey.patch_paste_auth_tkt_sha512_on_import
+nti.monkey.patch_paste_auth_tkt_sha512_on_import.patch()
 
 from zope import component
 

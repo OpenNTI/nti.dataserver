@@ -34,12 +34,10 @@ def _do_test_parse(AuthTicket, parse_ticket, BadTicket):
 
 def test_patch():
 	import paste.auth.auth_tkt
-	import nti.monkey.paste_auth_tkt_sha512_patch_on_import
-	nti.monkey.paste_auth_tkt_sha512_patch_on_import.patch()
+	import nti.monkey.patch_paste_auth_tkt_sha512_on_import
+	nti.monkey.patch_paste_auth_tkt_sha512_on_import.patch()
 
 	assert_that( paste.auth.auth_tkt, has_property('md5', is_( sha512 ) ))
-
-	from paste.auth.auth_tkt import AuthTicket, parse_ticket
 
 	assert_that( paste.auth.auth_tkt, has_property('DEFAULT_DIGEST', is_( sha512 ) ))
 	
@@ -56,8 +54,8 @@ except ImportError:
 
 @unittest.skipIf(is_repoze_20, "Only needed under repoze.who 2.1" )
 def test_patch_repoze21():
-	import nti.monkey.paste_auth_tkt_sha512_patch_on_import
-	nti.monkey.paste_auth_tkt_sha512_patch_on_import.patch()
+	import nti.monkey.patch_paste_auth_tkt_sha512_on_import
+	nti.monkey.patch_paste_auth_tkt_sha512_on_import.patch()
 
 	assert_that( is_repoze_21.md5, is_( sha512 ) )
 

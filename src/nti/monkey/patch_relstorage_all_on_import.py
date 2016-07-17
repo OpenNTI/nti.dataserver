@@ -11,13 +11,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.monkey import gevent_patch_on_import
-from nti.monkey import nti_internal_patch_on_import
-from nti.monkey import relstorage_umysqldb_patch_on_import
+from nti.monkey import patch_gevent_on_import
+from nti.monkey import patch_nti_internal_on_import
+from nti.monkey import patch_relstorage_umysqldb_on_import
 
-gevent_patch_on_import.patch()
-relstorage_umysqldb_patch_on_import.patch()
-nti_internal_patch_on_import.patch()
+patch_gevent_on_import.patch()
+patch_relstorage_umysqldb_on_import.patch()
+patch_nti_internal_on_import.patch()
 
 def patch():
 	pass

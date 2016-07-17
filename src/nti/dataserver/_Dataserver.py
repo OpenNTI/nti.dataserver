@@ -380,8 +380,8 @@ def _after_database_opened_listener(event):
 # then this config won't even be loaded in the parent process so this
 # won't fire...still, be safe)
 
-from nti.monkey import random_seed_patch_on_import
-random_seed_patch_on_import.patch()  # since we'll be reseeding, make sure we get good seeds
+from nti.monkey import patch_random_seed_on_import
+patch_random_seed_on_import.patch()  # since we'll be reseeding, make sure we get good seeds
 
 from nti.processlifetime import IProcessDidFork
 

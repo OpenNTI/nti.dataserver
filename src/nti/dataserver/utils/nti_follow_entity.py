@@ -9,8 +9,8 @@ Follow/Unfollow entities.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from nti.monkey import relstorage_patch_all_except_gevent_on_import
-relstorage_patch_all_except_gevent_on_import.patch()
+from nti.monkey import patch_relstorage_all_except_gevent_on_import
+patch_relstorage_all_except_gevent_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 

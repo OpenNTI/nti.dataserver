@@ -21,8 +21,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.monkey import relstorage_umysqldb_patch_on_import
-relstorage_umysqldb_patch_on_import.patch()
+from nti.monkey import patch_relstorage_umysqldb_on_import
+patch_relstorage_umysqldb_on_import.patch()
 
 # NOTE: Not importing patch_all, don't want gevent
 # (XXX: Except we probably do, definitely under pypy.)

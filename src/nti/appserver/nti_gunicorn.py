@@ -184,11 +184,11 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		super (which patches the whole system).
 		"""
 		# But we do import the patches, to make sure we get the patches we do want
-		import nti.monkey.gevent_patch_on_import
-		nti.monkey.gevent_patch_on_import.patch()
+		import nti.monkey.patch_gevent_on_import
+		nti.monkey.patch_gevent_on_import.patch()
 
-		from nti.monkey import webob_cookie_escaping_patch_on_import
-		webob_cookie_escaping_patch_on_import.patch()
+		from nti.monkey import patch_webob_cookie_escaping_on_import
+		patch_webob_cookie_escaping_on_import.patch()
 
 	def __init__(self, *args, **kwargs):
 		# These objects are instantiated by the master process (arbiter)

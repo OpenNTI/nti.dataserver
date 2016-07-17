@@ -296,8 +296,8 @@ if version_info[0] >= 1 and 'ZEO' not in sys.modules:
 	logger.info("Monkey-patching the MySQL driver for RelStorage to work with gevent")
 
 	# Monkey-patch for RelStorage to use pure-python drivers that are non-blocking
-	from . import relstorage_umysqldb_patch_on_import
-	relstorage_umysqldb_patch_on_import.patch()
+	from nti.monkey import patch_relstorage_umysqldb_on_import
+	patch_relstorage_umysqldb_on_import.patch()
 
 else:
 	logger = __import__('logging').getLogger(__name__)

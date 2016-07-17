@@ -16,8 +16,8 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 # Note that we must not import *anything* before the patch
-from nti.monkey import gevent_patch_on_import
-gevent_patch_on_import.patch()
+from nti.monkey import patch_gevent_on_import
+patch_gevent_on_import.patch()
 
 from nti.traversal import monkey as traversing_patch_on_import
 traversing_patch_on_import.patch()
@@ -25,14 +25,14 @@ del traversing_patch_on_import
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.monkey import relstorage_patch_all_on_import
-relstorage_patch_all_on_import.patch()
+from nti.monkey import patch_relstorage_all_on_import
+patch_relstorage_all_on_import.patch()
 
-from nti.monkey import webob_cookie_escaping_patch_on_import
-webob_cookie_escaping_patch_on_import.patch()
+from nti.monkey import patch_webob_cookie_escaping_on_import
+patch_webob_cookie_escaping_on_import.patch()
 
-from nti.monkey import random_seed_patch_on_import
-random_seed_patch_on_import.patch()
+from nti.monkey import patch_random_seed_on_import
+patch_random_seed_on_import.patch()
 
 import sys
 from pkg_resources import load_entry_point, get_distribution

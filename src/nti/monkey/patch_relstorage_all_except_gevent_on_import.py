@@ -9,16 +9,16 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.monkey import nti_internal_patch_on_import
+from nti.monkey import patch_nti_internal_on_import
 
 def patch():
-	nti_internal_patch_on_import.patch()
+	patch_nti_internal_on_import.patch()
 
 	try:
 		__import__('MySQLdb')
 	except ImportError:
 		# This may or may not work.
-		from nti.monkey import relstorage_umysqldb_patch_on_import
-		relstorage_umysqldb_patch_on_import.patch()
+		from nti.monkey import patch_relstorage_umysqldb_on_import
+		patch_relstorage_umysqldb_on_import.patch()
 
 patch()

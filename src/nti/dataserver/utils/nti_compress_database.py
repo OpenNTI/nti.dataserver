@@ -9,11 +9,11 @@ Applies ZlibStorage to an existing relstorage instance.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-import nti.monkey.gevent_patch_on_import
-nti.monkey.gevent_patch_on_import.patch()
+import nti.monkey.patch_gevent_on_import
+nti.monkey.patch_gevent_on_import.patch()
 
-import nti.monkey.relstorage_umysqldb_patch_on_import
-nti.monkey.relstorage_umysqldb_patch_on_import.patch()
+import nti.monkey.patch_relstorage_umysqldb_on_import
+nti.monkey.patch_relstorage_umysqldb_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 

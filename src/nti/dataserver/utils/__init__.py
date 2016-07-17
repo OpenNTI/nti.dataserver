@@ -34,8 +34,8 @@ from nti.externalization.persistence import NoPickle
 # We are often, but not always, called from main,
 # so we need to be sure the relevant non-gevent
 # patches are applied
-import nti.monkey.relstorage_patch_all_except_gevent_on_import
-nti.monkey.relstorage_patch_all_except_gevent_on_import.patch()
+import nti.monkey.patch_relstorage_all_except_gevent_on_import
+nti.monkey.patch_relstorage_all_except_gevent_on_import.patch()
 
 def _configure(self=None, set_up_packages=(), features=(), context=None, execute=True):
 	# zope.component.globalregistry conveniently adds

@@ -8,5 +8,5 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 def test_patch():
-	import nti.monkey.webob_cookie_escaping_patch_on_import
-	nti.monkey.webob_cookie_escaping_patch_on_import.patch()
+	import nti.monkey.patch_webob_cookie_escaping_on_import
+	nti.monkey.patch_webob_cookie_escaping_on_import.patch()
