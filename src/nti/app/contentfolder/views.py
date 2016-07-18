@@ -527,13 +527,7 @@ def has_associations(theObject):
 	return	  hasattr(theObject, 'has_associations') \
 		  and theObject.has_associations()
 
-@view_config(context=INamedFile)
-@view_config(context=INamedContainer)
-@view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   permission=nauth.ACT_DELETE,
-			   request_method='DELETE')
-class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin):
+class DeleteMixin(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin):
 
 	def readInput(self, value=None):
 		if self.request.body:
@@ -550,24 +544,74 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 	def _has_associations(self, theObject):
 		return has_associations(theObject)
 
-	def __call__(self):
-		theObject = self.context
+	def _check_object(self, theObject):
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
-
-		if IRootFolder.providedBy(theObject):
-			raise hexc.HTTPForbidden(_("Cannot delete root folder."))
-
-		if 		ILockedFolder.providedBy(self.context) \
-			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
-			raise hexc.HTTPForbidden(_("Cannot delete a locked folder."))
-
+	
+	def _check_context(self, theObject):	
 		parent = theObject.__parent__
 		if not INamedContainer.providedBy(parent):
 			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+		return parent
+	
+	def _check_associationst(self, theObject):	
+		if self._has_associations(theObject):
+			values = self.readInput()
+			force = is_true(values.get('force'))
+			if not force:
+				links = (
+					Link(self.request.path, rel='confirm',
+						 params={'force':True}, method='DELETE'),
+				)
+				raise_json_error(
+						self.request,
+						hexc.HTTPConflict,
+						{
+							u'message': _('This content file has references.'),
+							u'code': 'ContentFileHasReferences',
+							LINKS: to_external_object(links)
+						},
+						None)
 
-		if 		self._has_associations(theObject) \
-			or	(INamedContainer.providedBy(theObject) and len(theObject) > 0):
+@view_config(context=INamedFile)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_DELETE,
+			   request_method='DELETE')
+class DeleteFileView(DeleteMixin):
+
+	def __call__(self):
+		theObject = self.context
+		self._check_object(theObject)
+		self._check_context(theObject)
+		self._check_associationst(theObject)
+		self._do_delete(theObject)
+		return hexc.HTTPNoContent()
+
+@view_config(context=INamedContainer)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_DELETE,
+			   request_method='DELETE')
+class DeleteFolderView(DeleteMixin):
+
+	def _check_context(self, theObject):		
+		if IRootFolder.providedBy(theObject):
+			raise hexc.HTTPForbidden(_("Cannot delete root folder."))
+		
+		if 		ILockedFolder.providedBy(self.context) \
+			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+			raise hexc.HTTPForbidden(_("Cannot delete a locked folder."))
+		
+		DeleteMixin._check_context(self, theObject)
+				
+	def __call__(self):
+		theObject = self.context
+		self._check_object(theObject)
+		self._check_context(theObject)
+		self._check_associationst(theObject)
+
+		if INamedContainer.providedBy(theObject) and len(theObject) > 0:
 			values = self.readInput()
 			force = is_true(values.get('force'))
 			if not force:
