@@ -199,7 +199,8 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(2)))
 
-		self.testapp.post('/dataserver2/ofs/root/@@clear', status=204)
+		data = {'force':True}
+		self.testapp.post_json('/dataserver2/ofs/root/@@clear', data, status=204)
 
 		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)
 		assert_that(res.json_body,

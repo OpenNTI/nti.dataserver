@@ -17,6 +17,8 @@ import tempfile
 from urlparse import parse_qs
 from functools import partial
 
+from slugify import slugify_filename
+
 from zope import component
 from zope import lifecycleevent
 
@@ -367,6 +369,10 @@ class MkdirsView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			   request_method='POST')
 class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
+	def readInput(self, value=None):
+		result = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		return CaseInsensitiveDict(result)
+
 	@Lazy
 	def use_blobs(self):
 		return self.context.use_blobs
@@ -397,14 +403,31 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		result.contentType = contentType or u'application/octet-stream'
 		return result
 
+	def get_unique_file_name(self, text, container):
+		separator = '_'
+		newtext = text
+		slugified = slugify_filename(text)
+		text_noe, ext = os.path.splitext(slugified)
+		while True:
+			if newtext not in container:
+				break
+			s = generate_random_hex_string(6)
+			newtext = "%s%s%s%s" % (text_noe, separator, s, ext)
+		return newtext
+
 	def _do_call(self):
+		values = self.readInput()
 		result = LocatedExternalDict()
 		result[ITEMS] = items = []
 		creator = self.remoteUser.username
+		overwrite = is_true(values.get('overwrite'))
 		sources = get_all_sources(self.request, None)
 		for name, source in sources.items():
 			filename = getattr(source, 'filename', None)
 			file_key = safe_filename(name_finder(name))
+			if not overwrite and file_key in self.context:
+				file_key = self.get_unique_file_name(file_key, self.context)
+	
 			if file_key in self.context:
 				target = self.context[file_key]
 				target.data = source.read()
@@ -554,7 +577,7 @@ class DeleteMixin(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin
 			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
 		return parent
 	
-	def _check_associationst(self, theObject):	
+	def _check_associations(self, theObject):	
 		if self._has_associations(theObject):
 			values = self.readInput()
 			force = is_true(values.get('force'))
@@ -584,7 +607,7 @@ class DeleteFileView(DeleteMixin):
 		theObject = self.context
 		self._check_object(theObject)
 		self._check_context(theObject)
-		self._check_associationst(theObject)
+		self._check_associations(theObject)
 		self._do_delete(theObject)
 		return hexc.HTTPNoContent()
 
@@ -595,22 +618,18 @@ class DeleteFileView(DeleteMixin):
 			   request_method='DELETE')
 class DeleteFolderView(DeleteMixin):
 
+	def _check_locked(self, theObject):
+		if 		ILockedFolder.providedBy(theObject) \
+			and not has_permission(ACT_NTI_ADMIN, theObject, self.request):
+			raise hexc.HTTPForbidden(_("Cannot delete a locked folder."))
+		
 	def _check_context(self, theObject):		
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot delete root folder."))
-		
-		if 		ILockedFolder.providedBy(self.context) \
-			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
-			raise hexc.HTTPForbidden(_("Cannot delete a locked folder."))
-		
+		self._check_locked(theObject)
 		DeleteMixin._check_context(self, theObject)
 				
-	def __call__(self):
-		theObject = self.context
-		self._check_object(theObject)
-		self._check_context(theObject)
-		self._check_associationst(theObject)
-
+	def _check_non_empty(self, theObject):
 		if INamedContainer.providedBy(theObject) and len(theObject) > 0:
 			values = self.readInput()
 			force = is_true(values.get('force'))
@@ -639,6 +658,13 @@ class DeleteFolderView(DeleteMixin):
 								LINKS: to_external_object(links)
 							},
 							None)
+
+	def __call__(self):
+		theObject = self.context
+		self._check_object(theObject)
+		self._check_context(theObject)
+		self._check_non_empty(theObject)
+		self._check_associations(theObject)
 		self._do_delete(theObject)
 		return hexc.HTTPNoContent()
 
@@ -648,12 +674,12 @@ class DeleteFolderView(DeleteMixin):
 			   context=INamedContainer,
 			   permission=nauth.ACT_UPDATE,
 			   request_method='POST')
-class ClearContainerView(AbstractAuthenticatedView):
+class ClearContainerView(DeleteFolderView):
 
 	def __call__(self):
-		if 		ILockedFolder.providedBy(self.context) \
-			and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
-			raise hexc.HTTPForbidden(_("Cannot clear a locked folder."))
+		theObject = self.context
+		self._check_locked(theObject)
+		self._check_non_empty(theObject)
 		self.context.clear()
 		return hexc.HTTPNoContent()
 
