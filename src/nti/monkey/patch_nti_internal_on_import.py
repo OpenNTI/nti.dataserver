@@ -23,4 +23,4 @@ def patch():
 	moved(str("nti.dataserver.session_consumer"), str("nti.socketio.session_consumer"))
 	
 	# content search invalid package
-	moved(str("nti.contentsearch._repoze_adpater"), str("nti.contentsearch._repoze_adapter"))
+	moved(str("nti.contentsearch.repoze_adpater"), str("nti.contentsearch._repoze_adapter"))
