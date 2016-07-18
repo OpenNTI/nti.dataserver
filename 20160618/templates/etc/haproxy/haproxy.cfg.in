@@ -1,0 +1,232 @@
+global
+	log 127.0.0.1 daemon warning
+	# let us take as many connections as possible; let backends
+	# do their own queuing. We need to specify a value here or
+	# we get haproxy default of 2000. Trying to use too many
+	# for the system ulimit results in a warning but startup proceeds.
+	# Total Max Connections. This is dependent on ulimit. On OS X with a 
+	# ulimit of 32767, the maxconn possible is 16366.
+	maxconn 16366
+
+	stats socket ${haproxy_stats_socket} mode 600 level admin process 1
+	stats timeout 2m
+
+	# SSL Tuning
+	tune.ssl.default-dh-param 2048
+	tune.ssl.cachesize 20000
+	ssl-default-bind-ciphers ${ciphers}
+	ssl-default-bind-options no-sslv3 no-tls-tickets
+
+	# Set to use 2 processes. Process 1 is for processing normal traffic. 
+	# Processes 2 are for SSL operations.
+	nbproc 2
+
+defaults
+	maxconn 16366
+
+	timeout queue 5s
+	timeout server 15m
+	timeout client 15m
+	timeout connect 60s
+	# Force websocket connections to move to a different
+	# worker every so often. This overrides client/server
+	# timeout...
+	# At least, that's the intent, but it turns out this
+	# is an IDLE timeout, so it's much too high to do any
+	# good. Should we reconsider? Is this even needed?
+	timeout tunnel 15m
+	errorfile 408 /dev/null
+
+listen ssl-term
+	mode http
+	bind-process 2
+	${ssl_binds}
+
+	# Let gunicorn/nginx know if we are dealing with an incoming HTTPS request
+	# (This is a default 'secure-header' in gunicorns conf)
+	# If we fail do do this, the server cannot correctly generate
+	# absolute URLs, and that includes the wss:// URLs used for
+	# websockets (and Safari 6 at least, has a problem if the server
+	# returns a ws:// URL over SSL; Chrome doesn't care)
+	reqidel ^X-FORWARDED-PROTOCOL:.*
+	reqadd X-FORWARDED-PROTOCOL:\ ssl if { ssl_fc }
+
+	server http unix@${ssl_socket} send-proxy
+
+frontend all
+	mode http
+	bind-process 1
+	log global
+	timeout client 86400000
+	# Listen for HTTP connections on this port. Give it
+	# an ID so it can be tested for.
+
+	# Port for traffic from one backend to another using the proxy protocol
+	# As of 3/4/15 only the nodeserver makes use of this
+	# In multi-tier environments, not only is it more efficient to
+	# have this use the accept-proxy option, but it is required to get proper
+	# IP address logs with gunicorn >= 19.x
+	bind ${haproxy_addr}:${haproxy_proxy_port} id ${haproxy_proxy_port} accept-proxy
+
+	# Port for admin and dev connections over HTTP
+	bind ${haproxy_addr}:${haproxy_http_port} id ${haproxy_http_port}
+
+	# Listen on the socket for incoming SSL in proxy mode
+	# We give it a specific id so that we can match in an ACL
+	# (We can't match on ssl itself because that's already been handled)
+	bind unix@${ssl_socket} user ${ssl_socket_owner} mode 600 id 42 accept-proxy
+
+	default_backend www_backend
+
+	acl robots url_sub -i robots.txt robots-dev.txt
+	acl google_verification url_beg /google
+
+	acl is_mobile path_beg /mobile
+
+	acl is_websocket hdr(Upgrade) -i WebSocket
+	acl is_websocket hdr_beg(Host) -i ws
+
+	acl is_dyn path_beg /dataserver
+	acl is_dyn path_beg /_ops
+	acl is_dyn path_beg /library
+	acl is_dyn path_beg /socket.io
+	acl is_dyn path_beg /dictionary
+	# The plain strings (non-site-specific) is also passed to the DS
+	# for language negotiation and a redirect
+	acl is_dyn path_beg ${webapp_location}resources/strings/strings.js
+
+	# unlike site css above for the mobile app we pass
+	# site requests to nginx where we try file the appropriate places
+	# that may contain this data.  This is the approach we took with
+	# landing and it gets load off the server.  We probably want to do
+	# this for the rest of the site.css files also - CMU
+	acl is_mobile_site_css path_beg /mobile/resources/css/sites/current/site.css
+
+	# Acls for optimizing away having to wait for a several second
+	# webapp load if we know we are def. not authed
+	acl is_maybe_authed hdr_sub(cookie) nti.auth_tkt # Do we have an auth.tkt? if not we are def. not authed
+
+	# Our stunnel socket is always SSL
+	acl is_ssl so_id 42
+	# Sometimes in some environments we need additional rules about
+	# SSL; for example, it may have been handled by a front-end proxy
+	# already. List those here.
+	${haproxy_addl_ssl_acls}
+
+	# Define an ACL to block incoming IP addresses
+	acl is_blocked_ip src 0.0.0.0
+	${haproxy_addl_blocked_ip_acls}
+
+	# Block some common attack vectors and private info
+	acl is_blocked_name path_end .php .asp .jsp .exe .aspx
+	acl is_blocked_name path_end assessment_index.json resources.index
+	acl is_blocked_name path_dir .nti_acl indexdir
+	http-request deny if is_blocked_name
+
+	acl is_host_cors url_sub ?h=
+
+	${haproxy_extra_config}
+
+	${haproxy_extra_redirects}
+
+	# Make sure we use the dev robots file in dev environments
+	reqrep ^([^\ :]*)\ .*/robots.txt\ ([^\ ]*) \1\ /robots-dev.txt\ \2 if robots
+
+	# Bandaid so that the default favicon works in dev environments
+	reqrep ^([^\ :]*)\ .*/favicon\.ico\ ([^\ ]*) \1\ /app/resources/images/favicon.ico\ \2
+
+	# force site policy to janux for development so we don't have to edit /etc/hosts
+	# reqidel ^ORIGIN:.*
+	# reqadd ORIGIN:\ http://janux.ou.edu
+
+	# Go to the app by default
+	# redirect location /down/down.html code 302 if { path_beg /NextThoughtWebApp or path_beg /login }  #THIS IS FOR THE DOWN PAGE ONLY- NOT WORKING YET
+	# redirect location /NextThoughtWebApp/index.html code 301 if { path / }
+	redirect location /tutorials/index.html code 301 if { path /tutorials }
+
+	# If we might be authenticated, then if we are coming in to the root,
+	# try to go to the app instead. This helps preserve old bookmarks
+	# as well as streamlining the process.
+	redirect location ${webapp_location} code 302 if is_maybe_authed { path / }
+
+	# use_backend www_backend_up if is_down
+	use_backend s3_backend if robots
+	use_backend s3_backend if google_verification
+	use_backend ip_blocked_backend if is_blocked_ip
+	use_backend node_backend if is_mobile !is_mobile_site_css
+	use_backend www_backend if is_host_cors
+	use_backend socket_backend if is_websocket
+	use_backend socket_backend if is_dyn
+
+backend s3_backend
+	mode http
+	balance roundrobin
+
+	reqrep  ^Host:\ .*  Host:\ s3.amazonaws.com
+	reqirep  ^([^\ ]*)\ /(.*) \1\ /nextthought-support-pages/\2
+
+	server s3 s3.amazonaws.com:443 ssl verify none
+
+backend ip_blocked_backend
+	# This backend defines no servers,
+	# which means using it results in a 503 Service Unavailable.
+	# We use that to map that error to a canned response.
+	mode http
+	errorfile 503 ${deployment:etc-directory|shell-path}/haproxy/blocked.http
+
+backend www_backend
+	mode	http
+	balance roundrobin
+	# We expect to be talking PROXY to nginx, so
+	# no need to mess with x-forworded-for.
+
+	# Because we mix and match static content requests with
+	# DS requests, true keep-alive might not be possible; the browser
+	# could send one request to each type of resource in the same
+	# TCP connection
+	# NOTE: This seems to be fixed in 1.5-dev22
+	# option http-server-close
+	option prefer-last-server
+
+	${haproxy_backend_port_rewrite}
+
+	timeout server 15m
+	timeout connect 4s
+	${nginx_servers}
+
+backend socket_backend
+	mode	http
+	balance source
+	# Recent versions of the server support (and require) the PROXY
+	# protocol, meaning that X-Forwarded-For is not needed (or even
+	# supported anymore). This lets us not need http-server-close or
+	# forwardfor; in theory it might let us use http-keep-alive, if
+	# there is any benefit.
+
+	# Unfortunately, because we mix and match static content requests with
+	# DS requests, true keep-alive might not be possible; the browser
+	# could send one request to each type of resource in the same
+	# TCP connection. So we need server-close.
+	# NOTE: This seems to be fixed in 1.5-dev22
+	# option http-server-close
+	option prefer-last-server
+	# option forwardfor if-none # This sets X-Forwarded-For
+	# If we don't set this, then we lose X-Forwarded-For
+
+	${dataserver_servers}
+
+backend node_backend
+	mode http
+	option prefer-last-server
+	timeout server 15m
+	timeout connect 4s
+	# reqrep ^(.*\ )/mobile(/?.*) \1\2
+	${nodejs_servers}
+
+backend widget_dev_backend
+	mode http
+	option prefer-last-server
+	timeout server 15m
+	timeout connect 4s
+	reqrep ^(.*\ )/widget(/?.*) \1\2
+	server nodejs 127.0.0.1:8000 observe layer7 weight 1

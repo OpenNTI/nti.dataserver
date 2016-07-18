@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Put local npm-bin and compass on the path
+export PATH=node_modules/.bin:${deployment:bin-directory|shell-path}:$PATH
+
+pushd ${environment:webapp_path|shell-path}
+
+rm -rf node_modules/
+${deployment:bin-directory}/npm install
+make
+
+
+# until we hook this into the node service, we have to pre-render the html.
+${python|shell-path} ${environment:webapp_path|shell-path}/manual-render.py ${analytics-key} ${itunes} $*
+popd
+
+# Now the login app
+# First the templates
+pushd ${environment:loginapp_path}
+make render
+
+# Then the timestamps
+cd src/main
+${python|shell-path} ./deploy.py ${analytics-key} ${itunes}
+
+popd

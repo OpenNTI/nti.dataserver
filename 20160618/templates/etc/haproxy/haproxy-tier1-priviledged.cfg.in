@@ -1,0 +1,38 @@
+global
+    log         127.0.0.1 local2 warning 
+    maxconn     ${haproxy_maxconn} # Total Max Connections. This is dependent on ulimit
+
+    stats socket ${haproxy_priviledged_stats_socket} mode 600 level admin
+    stats timeout 2m
+
+defaults
+    timeout queue 5s
+    timeout server 5m
+    timeout client 60s
+    timeout connect 60s
+    # Force websocket connections to move to a different
+    # worker every so ofter. This overrides client/server
+    # timeout
+    timeout tunnel 10m
+    errorfile 408 /dev/null
+
+frontend httpredir ${haproxy_http_addr}:${haproxy_redirect_to_ssl_port}
+    mode http
+    log global
+    timeout client 600
+    default_backend ssl_backend
+
+backend ssl_backend
+    mode http
+    timeout server 30000
+    timeout connect 4000
+    # Simply send a 302 redirect to the same Host and path and query
+    # the client sent in the first place, but with the
+    # https protocol. The client will usually do a GET of
+    # the new Location.
+    # NOTE: If the Host contained a port, even the default of
+    # 80, it would be preserved, so we first rewrite the Host
+    # to remove any port
+    reqirep ^Host:\ (.*):[0-9]* Host:\ \1
+    redirect scheme https
+

@@ -1,0 +1,62 @@
+var $AppConfig = {
+	"debug": false,
+	"debugDelegation": false,
+	"debugSocket": false,
+	"debugSocketVerbosely": false,
+
+	"enableLogging": ${enable_logging},
+	"enableLogCapture": true,
+	"enableSymbolicLinkingNav": true,
+
+	"obscureUsernames": ${obscure_usernames},
+	"openExternalPDFsInNewWindow": ${external_pdf_new_window},
+
+	"features": {
+		${features}
+	},
+
+	"server": "/dataserver2/",
+	"server-host": "",
+	"server-path": "/dataserver2/",
+	"login": "${unauth_location}",
+	"unsupported": "/login/unsupported.html",
+
+	"corsSalt": "${cors_salt}",
+	"allowIPad": ${allow_mobile_safari},
+	"disableProfiles": ${disable_profiles},
+	"Preferences":{
+		"webapp_kalturaPreferFlash": false
+	},
+	"kalturaUIID": "${kalturaUIID}",
+	"activity_timeouts": {
+		"inactive_timeout": ${activity_inactive_timeout},
+		"inactive_warn": ${activity_inactive_warn},
+		"blur_timeout": ${activity_blur_timeout},
+		"blur_warn": ${activity_blur_warn}
+	}
+};
+
+if( ${enable_global_onerror} ){
+	window.onerror = function(msg,url,line){
+		//strange, spec says we get a file url, ff seems to have given a stacktrace of sorts
+		var urls = url.split(/([\r\n]+)|(\s*-\>\s*)/);
+		//did it come from us?
+		var basePrefix = new RegExp("^" + location.protocol + '//' + location.host, "i");
+		if (basePrefix.test(urls[0])) {
+			if((window.NextThought || {}).isInitialized){
+				return;
+			}
+			window.location.replace($AppConfig.unsupported);
+		}
+	};
+
+}
+
+//frame buster
+//use weak comparison on purpose.
+/*jslint eqeq:true */
+if( top != window ){
+	top.location.href = location.href;
+	//If the frame busting code is blocked, tell them embedding is not supported.
+	location.replace('resources/iframe.html');
+}

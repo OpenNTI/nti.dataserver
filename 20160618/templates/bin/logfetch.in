@@ -1,0 +1,127 @@
+#!${deployment:bin-directory}/python
+
+import argparse
+import codecs
+import json
+import os
+import shutil
+import tarfile
+
+from datetime import datetime
+from multiprocessing import Pool
+from subprocess import check_call
+from tempfile import mkdtemp
+
+def _get_logs( username, server, log_dir ):
+    cmd = [
+        '/usr/bin/scp',
+        '-i', '${backupvars:backup_ssh_key}',
+        '-q',
+        '-r',
+        '%s@%s:%s' % (username, server, '${backupvars:remote_log_dir}'),
+        log_dir
+    ]
+    check_call(cmd)
+
+def _upload_logs( archive, prefix='' ):
+    cmd = [
+        '${deployment:bin-directory}/s3put',
+        '--access_key', '${boto:aws_access_key_id}',
+        '--secret_key', '${boto:aws_secret_access_key}',
+        '--multipart',
+        '-w',
+        '-b', '${backupvars:backup_bucket}',
+        '-g', 'private',
+        '-p', prefix,
+        archive
+    ]
+    check_call( cmd )
+
+def _archive_logs(log_dir, archive_dir, date):
+    if not os.path.exists(archive_dir):
+        os.makedirs(archive_dir)
+
+    archive = os.path.join(archive_dir, date)+u'.tgz'
+    #If archive already exists, remove it.
+    if os.path.exists(archive):
+        os.unlink(archive)
+    with tarfile.open(archive, 'w:gz') as tar:
+        tar.add(log_dir, arcname=date)
+
+    return archive
+
+def _backup_logs(data):
+    _get_logs(data['username'], data['server'], data['log_dir'])
+
+    # Build the log archive and compress it
+    archive = _archive_logs(os.path.dirname(data['log_dir']), data['archive_dir'], data['date'])
+
+    # Upload the backup
+    _upload_logs(archive, prefix=data['s3_prefix'])
+
+def _parse_args():
+    arg_parser = argparse.ArgumentParser( description="NTI Log Backup Utility" )
+    arg_parser.add_argument( '-c', '--config',
+                             help="Log configuration file." )
+    arg_parser.add_argument( '-e', '--environment-name', dest='environment_name',
+                             help="Database configuration file." )
+    arg_parser.add_argument( '--backup-dir', dest='backup_dir',
+                             help="Path to the root of the log backup store." )
+    return arg_parser.parse_args()
+
+def main():
+    # Parse command line args
+    args = _parse_args()
+
+    backup_dir = os.path.abspath(os.path.expanduser(args.backup_dir))
+    config_file = os.path.abspath(os.path.expanduser(args.config))
+    environment_name = args.environment_name
+
+    now = datetime.now()
+    date = now.strftime('%Y%m%d')
+    hour = now.strftime('%H')
+
+    environment = None
+    with codecs.open(config_file, 'rb', 'utf-8') as data_file:
+        _data = json.load(data_file)
+        if u'environments' in _data:
+            if environment_name in _data['environments']:
+                environment = _data['environments'][environment_name]
+
+    if environment is None:
+        print('No definition for the %s environment found in %s' % (environment_name, config_file))
+
+    # make a tmp dir and compress the logs into there
+    old_cwd = os.getcwd()
+    tmp_dir = mkdtemp()
+    try:
+        # Build up the log backup configs
+        sets = []
+        for server in environment['servers']:
+            log_dir = os.path.join(backup_dir,environment_name, server, date)
+
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+
+            data = {
+                'date': date,
+                'server': server,
+                'username': environment['username'],
+                'log_dir': os.path.join(log_dir, hour),
+                'archive_dir': os.path.join(tmp_dir,u'logs',environment_name, server),
+                's3_prefix': tmp_dir
+            }
+            sets.append(data)
+
+        # Take the backup for all the server logs in the environment at as close to the same time as possible
+        process_pool = Pool(processes=len(sets))
+        process_pool.map_async(_backup_logs, sets)
+        process_pool.close()
+        process_pool.join()
+    finally:
+        os.chdir(old_cwd)
+        if os.path.exists(tmp_dir):
+            shutil.rmtree(tmp_dir)
+
+if __name__ == '__main__': # pragma: no cover
+    main()

@@ -1,0 +1,214 @@
+	server {
+		charset utf-8;
+
+		# All non-debug traffic should come from HAProxy in the PROXY protocol.
+		# This is more efficient than communicating over HTTP.
+		listen ${nginx-conf:nginx_ip}:${nginx-conf:nginx_proxy_port} proxy_protocol;
+
+		# However for development and debugging there may be a need to bind
+		# to additional ports and use other protocols than PROXY.
+		${nginx-conf:nginx_extra_binds}
+
+		root   ${landingpage_path|shell-path};
+		server_name	 ${global_host_name};
+		# Don't use our defined server name if we do a redirect;
+		# instead use the value the client supplies in the
+		# Host header. This is necessary if we are virtual
+		# hosting many sites. (TODO: if it's localhost, i.e., we're in
+		# dev, we probably do want to force it, so we can better test
+		# injected Host headers without monkeying with /etc/hosts)
+		server_name_in_redirect off;
+		# Redirect to the default port (haproxy), not our local
+		# port, which isn't reachable.
+		# However, note that in development haproxy will re-insert
+		# the port if needed.
+		port_in_redirect off;
+
+		proxy_http_version 1.1;
+		etag on;
+		if_modified_since before;
+		lingering_close on;
+
+		set_real_ip_from 192.168.0.0/24;
+		set_real_ip_from 10.50.0.0/24;
+		set_real_ip_from 10.50.8.0/24;
+		set_real_ip_from 127.0.0.1;
+		set_real_ip_from unix:;
+		real_ip_recursive on;
+		real_ip_header proxy_protocol;
+
+		location /this/should/not/exist.html {
+			error_page 404 =503 /maintenance/index.html;
+		}
+
+		location = / {
+			# haproxy is redirecting to ${nginx-conf:webapp_location} if the root
+			# gets hit and we could be authenticated. This makes it hard
+			# to get back to the landing content, if any. So we redirect
+			# (unauthenticated) hits of the root to be directly to
+			# /index.html (which we handle with the block below), letting
+			# the back button work as expected.
+			return 302 $uri_scheme://$host/index.html;
+		}
+
+		location  / {
+			proxy_pass ${proxy_root};
+		}
+
+		location = /favicon.ico {
+			alias ${sitepackage_location}/dist/shared/favicon.ico;
+		}
+
+		location = /mobile/resources/css/sites/current/site.css {
+			return 301 $uri_scheme://$host/site-assets/mobileapp/site.css;
+		}
+
+		location /site-assets/ {
+			alias ${sitepackage_location}/dist/;
+		}
+
+		location /widgets {
+			root ${nginx-conf:mobileweb_path}/dist;
+		}
+
+		location = /loginsuccess {
+			# On a successful login, the login app will redirect
+			# here by default (see defaults.js). We then
+			# redirect to the app; this keeps the coupling minimal
+			rewrite ^.*$ ${nginx-conf:webapp_location} redirect;
+		}
+
+		location @login {
+			rewrite ^.*$ ${nginx-conf:loginapp_location} redirect;
+		}
+
+		location @error {
+			return 404;
+		}
+
+		location ${nginx-conf:webapp_location} {
+			alias ${nginx-conf:webapp_path/dist/client/|shell-path}/;
+			# a header so that we can do a head request and try to
+			# bust the cached redirect... see login app.
+			add_header X-NTI-WebApp true;
+			try_files $uri ${nginx-conf:webapp_location}index.html;
+		}
+
+		location ${nginx-conf:webapp_location}js/ {
+			alias ${nginx-conf:webapp_path/dist/client/|shell-path}/js/;
+		}
+
+		location ${nginx-conf:webapp_location}resources/ {
+			alias ${nginx-conf:webapp_path/dist/client/|shell-path}/resources/;
+		}
+
+		location ${nginx-conf:webapp_location}content/ {
+			alias ${nginx-conf:webapp_path/dist/client/|shell-path}/content/;
+		}
+
+		location ${nginx-conf:webapp_location}config.js {
+			alias ${nginx-conf:webapp_config_file};
+		}
+
+		location ${nginx-conf:webapp_location}resources/css/site.css {
+			return 301 $uri_scheme://$host/site-assets/webapp/site.css;
+		}
+
+		location ${nginx-conf:webapp_location}resources/css/site/ {
+			alias ${sitepackage_location}/dist/webapp/;
+		}
+
+		location ${nginx-conf:webapp_location}resources/css/shared/ {
+			alias ${sitepackage_location}/dist/shared/;
+		}
+
+		location ${nginx-conf:webapp_location}resources/strings/site.js {
+			return 301 $uri_scheme://$host/site-assets/webapp/strings.js;
+		}
+
+		location = ${nginx-conf:webapp_location}resources/images/favicon.ico {
+			return 301 $uri_scheme://$host/favicon.ico;
+		}
+
+		location ${nginx-conf:global_content_location} {
+			alias ${nginx-conf:global_content_directory/.|shell-path}/;
+			auth_request /_ops/identify;
+			location ~* ${nginx-conf:global_content_location}(.*\.(png|jpg|jpeg|svg|gif)) {
+				auth_request off;
+			}
+		}
+
+		location ${nginx-conf:hosted_badge_images_location} {
+			alias ${nginx-conf:hosted_badge_images_directory/.|shell-path}/;
+		}
+		
+		location = /_ops/identify {
+			proxy_pass http://dataserver/_ops/identify;
+			proxy_set_header Connection "";
+			proxy_http_version 1.1;
+			proxy_pass_request_body off;
+			proxy_set_header Content-Length "";
+		}
+
+		location ${nginx-conf:global_content_location}welcome/ {
+			alias ${nginx-conf:webapp_path/dist/client/content/welcome/|shell-path}/;
+		}
+
+		# 03-30-2016 SAJ: This rule needs to be removed when web app commit
+		# dd41ad5 is deployed everywhere
+		location /login {
+			rewrite ^.*$ ${nginx-conf:loginapp_location} redirect;
+		}
+
+		location ${nginx-conf:loginapp_location} {
+			alias ${nginx-conf:loginapp_path/src/main/WebApp/|shell-path}/;
+			expires +1h;
+			add_header Cache-Control proxy-revalidate;
+		}
+
+		location = ${nginx-conf:loginapp_location}resources/css/site.css {
+			return 301 $uri_scheme://$host/site-assets/loginapp/site.css;
+		}
+
+		location ${nginx-conf:loginapp_location}resources/css/site/ {
+			alias ${sitepackage_location}/dist/loginapp/;
+		}
+
+		location ${nginx-conf:loginapp_location}resources/shared/ {
+			alias ${sitepackage_location}/dist/shared/;
+		}
+
+		location = ${nginx-conf:loginapp_location}resources/strings/site.js {
+			return 301 $uri_scheme://$host/site-assets/loginapp/strings.js;
+		}
+
+		location = ${nginx-conf:loginapp_location}resources/favicon.ico {
+			return 301 $uri_scheme://$host/favicon.ico;
+		}
+
+		# 03-30-2016 SAJ: We need to remove this rule ASAP
+		location /landing {
+			# Send them to the root
+			rewrite ^/landing$ /index.html redirect;
+			rewrite ^/landing/(.*)$ /$1 redirect;
+		}
+
+${extra_config}
+
+		# deny access to .htaccess files, if Apache's document root
+		# concurs with nginx's one
+		#
+		location ~ /\.ht {
+			deny  all;
+		}
+
+		# shutdown .svn and .git, apperantly 
+		location ~ /\.svn/ {
+			deny all;
+		}
+
+		location ~ /\.git/ {
+			deny all;
+		}
+
+	}

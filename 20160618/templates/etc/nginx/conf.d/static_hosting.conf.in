@@ -1,0 +1,40 @@
+	server {
+		charset utf-8;
+		
+		# All non-debug traffic should come from HAProxy in the PROXY protocol.
+		# This is more efficient than communicating over HTTP.
+		listen ${nginx_ip}:${nginx_proxy_port} proxy_protocol;
+		
+		# However for development and debugging there may be a need to bind
+		# to additional ports and use other protocols than PROXY.
+		${nginx_extra_binds}
+
+		root   ${nginx_root|shell-path};
+		server_name	 ${nginx_host_name};
+
+		port_in_redirect off;
+
+		etag on;
+		if_modified_since before;
+		lingering_close on;
+
+		# deny access to .htaccess files, if Apache's document root
+		# concurs with nginx's one
+		#
+		location ~ /\.ht {
+			deny  all;
+		}
+
+		# shutdown .svn and .git, apperantly 
+		location ~ /\.svn/ {
+			deny all;
+		}
+
+		location ~ /\.git/ {
+			deny all;
+		}
+
+		# Additional custom configuration below
+		${nginx_extra_server_config}
+
+	}

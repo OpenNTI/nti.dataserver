@@ -1,0 +1,219 @@
+	#need to map the landing cookie.  Can we get this in the location somehow?
+	map $http_cookie $site_landing_name {
+		default ${default_landing_site_name};
+		~nti.landing_site_name=(?<mc>[^\;]+) $mc;
+	}
+
+	upstream dataserver {
+		server ${nginx_dataserver_port};
+
+		keepalive 16;
+	}
+
+	server {
+		charset utf-8;
+
+		# All non-debug traffic should come from HAProxy in the PROXY protocol.
+		# This is more efficient than communicating over HTTP.
+		listen ${nginx_ip}:${nginx_proxy_port} proxy_protocol;
+
+		# However for development and debugging there may be a need to bind
+		# to additional ports and use other protocols than PROXY.
+		${nginx_extra_binds}
+
+		root   ${global_content_directory|shell-path};
+		server_name	 ${global_host_name};
+		# Don't use our defined server name if we do a redirect;
+		# instead use the value the client supplies in the
+		# Host header. This is necessary if we are virtual
+		# hosting many sites. (TODO: if it's localhost, i.e., we're in
+		# dev, we probably do want to force it, so we can better test
+		# injected Host headers without monkeying with /etc/hosts)
+		server_name_in_redirect off;
+		# Redirect to the default port (haproxy), not our local
+		# port, which isn't reachable.
+		# However, note that in development haproxy will re-insert
+		# the port if needed.
+		port_in_redirect off;
+
+		proxy_http_version 1.1;
+		etag on;
+		if_modified_since before;
+		lingering_close on;
+
+		set_real_ip_from 192.168.0.0/24;
+		set_real_ip_from 10.50.0.0/24;
+		set_real_ip_from 10.50.8.0/24;
+		set_real_ip_from 127.0.0.1;
+		set_real_ip_from unix:;
+		real_ip_recursive on;
+		real_ip_header proxy_protocol;
+
+		location /this/should/not/exist.html {
+			error_page 404 =503 /maintenance/index.html;
+		}
+
+		location = / {
+			# haproxy is redirecting to ${webapp_location} if the root
+			# gets hit and we could be authenticated. This makes it hard
+			# to get back to the landing content, if any. So we redirect
+			# (unauthenticated) hits of the root to be directly to
+			# /index.html (which we handle with the block below), letting
+			# the back button work as expected.
+			return 302 $uri_scheme://$host/index.html;
+		}
+
+		location  / {
+			index  index.html index.htm;
+			root ${loginapp_path/src/main/WebApp|shell-path}/;
+			expires +1h;
+			add_header Cache-Control proxy-revalidate;
+			# Is there a maintenance page? If so, go there. Did we get a
+			# landing cookie that maps to a file on disk? if so, go there;
+			# do the same for the server name. Finally, if nothing matches,
+			# go to login.
+			try_files /maintenance/index.html
+					  /landing/$site_landing_name$uri
+					  /landing/$host$uri
+					  /landing/$server_name$uri
+					  /landing/$site_landing_name$uri/index.html
+					  /landing/$host$uri/index.html
+					  /landing/$server_name$uri/index.html
+					  @login;
+		}
+
+		location = /mobile/resources/css/sites/current/site.css {
+			root ${mobileweb_path}/dist/client/resources/css/sites/;
+			try_files   /$host/site.css
+					/$server_name/site.css
+				    	/$host/site.css
+					/$server_name/site.css
+					@error;
+		}
+
+		location /widgets {
+			root ${mobileweb_path}/dist;
+		}
+
+		location = /maintenance/index.html {
+			expires 30s;
+		}
+
+		location = /loginsuccess {
+			# On a successful login, the login app will redirect
+			# here by default (see defaults.js). We then
+			# redirect to the app; this keeps the coupling minimal
+			rewrite ^.*$ ${webapp_location} redirect;
+		}
+
+		location @login {
+			rewrite ^.*$ /login/ redirect;
+		}
+
+		location @error {
+			return 404;
+		}
+
+		location /dataserver {
+			# We don't proxy to the DS; haproxy in front
+			# of us should do that.
+			return 404;
+		}
+
+		location ${webapp_location} {
+			alias ${webapp_path/dist/client/|shell-path}/;
+			# a header so that we can do a head request and try to
+			# bust the cached redirect... see login app.
+			add_header X-NTI-WebApp true;
+			try_files $uri /app/index.html;
+		}
+
+${nginx_extra_server_config}
+
+		location ${webapp_location}js/ {
+			alias ${webapp_path/dist/client/|shell-path}/js/;
+		}
+
+		location ${webapp_location}resources/ {
+			alias ${webapp_path/dist/client/|shell-path}/resources/;
+		}
+
+		location ${webapp_location}content/ {
+			alias ${webapp_path/dist/client/|shell-path}/content/;
+		}
+
+		location ${webapp_location}config.js {
+			alias ${webapp_config_file};
+		}
+
+		location ${global_content_location} {
+			alias ${global_content_directory/.|shell-path}/;
+			auth_request /_ops/identify;
+			location ~* ${global_content_location}(.*\.(png|jpg|jpeg|svg|gif)) {
+				auth_request off;
+			}
+		}
+
+		location ${hosted_badge_images_location} {
+			alias ${hosted_badge_images_directory/.|shell-path}/;
+		}
+		
+		location = /_ops/identify {
+			proxy_pass http://dataserver/_ops/identify;
+			proxy_set_header Connection "";
+			proxy_http_version 1.1;
+			proxy_pass_request_body off;
+			proxy_set_header Content-Length "";
+		}
+
+
+		location ${global_content_location}welcome/ {
+			alias ${webapp_path/dist/client/content/welcome/|shell-path}/;
+		}
+
+		location /purchasables/ { # JAM: Not sure what this is
+			alias /var/www/html/purchasables/;
+		}
+
+		location ${loginapp_location} {
+			alias ${loginapp_path/src/main/WebApp/|shell-path}/;
+
+			expires +1h;
+			add_header Cache-Control proxy-revalidate;
+
+		}
+
+ 		# JAM: The locations beginning with /NextThoughtWebApp/ are for
+		# BWC (old bookmarks) only right now.
+		location /NextThoughtWebApp/ {
+			alias ${webapp_path/dist/client/|shell-path}/;
+		}
+
+		location /NextThoughtWebApp/config.js {
+			alias ${webapp_config_file};
+		}
+
+		# JAM: Likewise for /landing
+		location /landing {
+			# Send them to the root
+			rewrite ^/landing$ /index.html redirect;
+			rewrite ^/landing/(.*)$ /$1 redirect;
+		}
+
+		# deny access to .htaccess files, if Apache's document root
+		# concurs with nginx's one
+		#
+		location ~ /\.ht {
+			deny  all;
+		}
+
+		# shutdown .svn and .git, apperantly 
+		location ~ /\.svn/ {
+			deny all;
+		}
+
+		location ~ /\.git/ {
+			deny all;
+		}
+
+	}

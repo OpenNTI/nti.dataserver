@@ -1,0 +1,48 @@
+<configure xmlns="http://namespaces.zope.org/zope"
+	xmlns:sp="http://nextthought.com/ntp/securitypolicy">
+
+	<!-- Assign principals to roles in the Alpha and Test environment -->
+	<!--
+	For principals, note that only 'id' actually matters.
+	It must match the username of a User in the database
+	to have any effect.
+	-->
+	<sp:principal id="carmon.drumm" login="carmon.drumm" title="Carmon Drumm"/>
+	<sp:grant principal="carmon.drumm" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="lacey.white" login="lacey.white" title="Lacey White"/>
+	<sp:grant principal="lacey.white" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="ashley.stewart" login="ashley.stewart" title="Ashley Stewart"/>
+	<sp:grant principal="ashley.stewart" role="nti.roles.contentlibrary.admin"/>
+	
+	<sp:principal id="ega.panjei" login="ega.panjei" title="Ega Panjei"/>
+	<sp:grant principal="ega.panjei" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="peggy.sabatini" login="peggy.sabatini" title="Peggy Sabatini"/>
+	<sp:grant principal="peggy.sabatini" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="brianna.gaither" login="brianna.gaither" title="Brianna Gaither"/>
+	<sp:grant principal="brianna.gaither" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="meleah.meadows" login="meleah.meadows" title="Meleah Meadows"/>
+	<sp:grant principal="meleah.meadows" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="stacy.zemke" login="stacy.zemke" title="Stacy Zemke"/>
+	<sp:grant principal="stacy.zemke" role="nti.roles.contentlibrary.admin"/>
+
+	<!-- Can this go away -->
+	<sp:principal id="SZEditor" login="SZEditor" title="Stacy Zemke"/>
+	<sp:grant principal="SZEditor" role="nti.roles.contentlibrary.admin"/>
+
+	<!-- For testing -->
+	<sp:principal id="julie.zhu.admin" login="julie.zhu.admin" title="Julie Zhu"/>
+	<sp:grant principal="julie.zhu.admin" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="global.admin.alpha" login="global.admin.alpha" title="Global Admin Alpha"/>
+	<sp:grant principal="global.admin.alpha" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="global.admin.alpha1" login="global.admin.alpha1" title="Global Admin Alpha 1"/>
+	<sp:grant principal="global.admin.alpha1" role="nti.roles.contentlibrary.admin"/>
+
+</configure>

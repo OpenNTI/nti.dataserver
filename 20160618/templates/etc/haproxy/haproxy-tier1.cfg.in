@@ -1,0 +1,231 @@
+global
+    log 127.0.0.1 local2 info
+    # Total Max Connections. This is dependent on ulimit
+    maxconn ${haproxy_maxconn}
+
+    stats socket ${stats_socket} user ${stats_socket_owner} mode 600 level admin process 1
+    stats timeout 2m
+
+    # SSL Tuning
+    tune.ssl.default-dh-param 2048
+    tune.ssl.cachesize 20000
+    ssl-default-bind-ciphers ${haproxy_ciphers}
+    ssl-default-bind-options no-sslv3 no-tls-tickets
+
+    # Set to use 4 processes. Process 1 is for processing normal traffic. 
+    # Processes 2-4 are for SSL operations.
+    nbproc 4
+
+defaults
+    maxconn ${haproxy_global_maxconn}
+
+    timeout queue 5s
+    timeout server 15m
+    timeout client 15m
+    timeout connect 60s
+    # Force websocket connections to move to a different
+    # worker every so ofter. This overrides client/server
+    # timeout
+    timeout tunnel 15m
+    errorfile 408 /dev/null
+
+listen httpredir
+    mode http
+    maxconn ${httpredir_maxconn}
+#    log global
+#    option httplog
+
+    bind ${haproxy_http_addr}:${haproxy_redirect_to_ssl_port}
+
+    timeout client 600
+    timeout server 30000
+    timeout connect 4000
+
+    # Simply send a 302 redirect to the same Host and path and query
+    # the client sent in the first place, but with the
+    # https protocol. The client will usually do a GET of
+    # the new Location.
+    # NOTE: If the Host contained a port, even the default of
+    # 80, it would be preserved, so we first rewrite the Host
+    # to remove any port
+    reqirep ^Host:\ (.*):[0-9]* Host:\ \1
+    redirect scheme https
+
+listen ssl-term
+    mode http
+    bind-process 2,3,4
+    log global
+    option httplog
+    ${haproxy_ssl_binds}
+
+    # Let gunicorn/nginx know if we are dealing with an incoming HTTPS request
+    # (This is a default 'secure-header' in gunicorns conf)
+    reqidel ^X-FORWARDED-PROTOCOL:.*
+    reqadd X-FORWARDED-PROTOCOL:\ ssl if { ssl_fc }
+
+    server http unix@${haproxy_ssl_socket} send-proxy
+
+
+frontend all
+    mode http
+    bind-process 1
+    log global
+    timeout client 86400000
+    option httplog
+    # Listen on the socket for incoming SSL in proxy mode
+    bind ${haproxy_ssl_socket} user ${ssl_socket_owner} mode 600 id 42 accept-proxy
+
+    ${haproxy_hostname_backend_map}
+    acl is_splunk hdr_dom(host) -i splunk
+    acl is_static_hosting hdr(host) -i downloads.nextthought.com
+
+    # Define an ACL to block incoming IP addresses
+    acl is_blocked_ip src 0.0.0.0
+    ${haproxy_addl_blocked_ip_acls}
+
+    ${haproxy_extra_config}
+
+    ${haproxy_extra_redirects}
+
+    use_backend ip_blocked_backend if is_blocked_ip
+    use_backend ci_backend if is_ci
+    use_backend jira_backend if is_jira
+    use_backend npm_backend if is_npm
+    use_backend splunk_backend if is_splunk
+    use_backend static_hosting_backend if is_static_hosting
+    use_backend tier2_backend0 if is_backend0
+    use_backend tier2_backend1 if is_backend1
+    use_backend tier2_backend2 if is_backend2
+    use_backend tier2_backend3 if is_backend3
+    use_backend tier2_backend4 if is_backend4
+    use_backend tier2_backend5 if is_backend5
+    use_backend tier2_backend6 if is_backend6
+    use_backend tier2_backend7 if is_backend7
+    use_backend tier2_backend8 if is_backend8
+    use_backend tier2_backend9 if is_backend9
+
+backend ip_blocked_backend
+    # This backend defines no servers,
+    # which means using it results in a 503 Service Unavailable.
+    # We use that to map that error to a canned response.
+    mode http
+    errorfile 503 ${deployment:etc-directory|shell-path}/haproxy/blocked.http
+
+backend s3_backend
+    mode http
+    balance roundrobin
+
+    reqrep  ^Host:\ .*  Host:\ s3.amazonaws.com
+    reqirep  ^([^\ ]*)\ /(.*) \1\ /nextthought-support-pages/\2
+
+    server s3 s3.amazonaws.com:443 ssl verify none
+
+# Continuous Integration
+backend ci_backend
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_ci_backend}
+
+# Jira
+backend jira_backend
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_jira_backend}
+
+# NPM
+backend npm_backend
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    timeout server 30s
+    timeout client 30s
+    ${haproxy_npm_backend}
+
+# Splunk
+backend splunk_backend
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_splunk_backend}
+
+# Static Hosting
+backend static_hosting_backend
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    timeout server 30s
+    timeout client 30s
+    ${haproxy_static_hosting_backend}
+
+# Old Prod
+backend tier2_backend0
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_tier2_backend0}
+
+# MATHCOUNTS
+backend tier2_backend1
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_tier2_backend1}
+
+# Alpha
+backend tier2_backend2
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_tier2_backend2}
+
+# Janux
+backend tier2_backend3
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_tier2_backend3}
+
+# OU-Test
+backend tier2_backend4
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_tier2_backend4}
+
+# Content Dev
+backend tier2_backend5
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_tier2_backend5}
+
+# Connect
+backend tier2_backend6
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_tier2_backend6}
+
+# CCMF
+backend tier2_backend7
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_tier2_backend7}
+
+# Performance Testing
+backend tier2_backend8
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_tier2_backend8}
+
+# OKState
+backend tier2_backend9
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+    ${haproxy_tier2_backend9}
+

@@ -1,0 +1,155 @@
+global
+    log 127.0.0.1 local2 info
+    # Total Max Connections. This is dependent on ulimit
+    maxconn ${haproxy_maxconn}
+
+    stats socket ${stats_socket} user ${stats_socket_owner} mode 600 level admin
+    stats timeout 2m
+
+defaults
+    maxconn ${haproxy_maxconn}
+
+    timeout queue 5s
+    timeout server 15m
+    timeout client 15m
+    timeout connect 60s
+    # Force websocket connections to move to a different
+    # worker every so ofter. This overrides client/server
+    # timeout
+    timeout tunnel 10m
+    errorfile 408 /dev/null
+
+${haproxy_userlists}
+
+frontend all
+    mode http
+    log global
+    timeout client 86400000
+    option httplog
+
+    # Socket for Tier 1 <-> Tier 2 communication
+    bind unix@${haproxy_socket} user ${haproxy_socket_user} mode 600 id 42 accept-proxy
+
+    # Port for internal Tier 2 traffic using the proxy protocol
+    bind ${haproxy_addr}:${haproxy_port} id ${haproxy_port} accept-proxy
+
+    # Port for admin connections over HTTP
+    bind ${haproxy_addr}:${haproxy_http_port} id ${haproxy_http_port}
+
+    default_backend static_backend
+
+    acl robots url_sub -i robots.txt robots-dev.txt
+    acl google_verification url_beg /google
+
+    acl is_mobile path_beg /mobile
+
+    acl is_websocket hdr(Upgrade) -i WebSocket
+    acl is_websocket hdr_beg(Host) -i ws
+
+    acl is_dyn path_beg /dataserver
+    acl is_dyn path_beg /_ops
+    acl is_dyn path_beg /library
+    acl is_dyn path_beg /socket.io
+    acl is_dyn path_beg /dictionary
+    # The plain strings (non-site-specific) is also passed to the DS
+    # for language negotiation and a redirect
+    acl is_dyn path_beg ${webapp_location}resources/strings/strings.js
+
+    # unlike site css above for the mobile app we pass
+    # site requests to nginx where we try file the appropriate places
+    # that may contain this data.  This is the approach we took with
+    # landing and it gets load off the server.  We probably want to do
+    # this for the rest of the site.css files also - CMU
+    acl is_mobile_site_css path_beg /mobile/resources/css/sites/
+
+    # Acls for optimizing away having to wait for a several second
+    # webapp load if we know we are def. not authed
+    acl is_maybe_authed hdr_sub(cookie) nti.auth_tkt # Do we have an auth.tkt? if not we are def. not authed
+
+    # Block some common attack vectors and private info
+    acl is_blocked_name path_end .php .asp .jsp .exe .aspx
+    acl is_blocked_name path_end assessment_index.json resources.index
+    acl is_blocked_name path_dir .nti_acl indexdir
+    http-request deny if is_blocked_name
+
+    acl is_host_cors url_sub ?h=
+
+    ${haproxy_extra_config}
+
+    ${haproxy_extra_redirects}
+
+    # Go to the app by default
+    # redirect location /down/down.html code 302 if { path_beg /NextThoughtWebApp or path_beg /login }  #THIS IS FOR THE DOWN PAGE ONLY- NOT WORKING YET
+    # redirect location /NextThoughtWebApp/index.html code 301 if { path / }
+    redirect location /tutorials/index.html code 301 if { path /tutorials }
+
+    # If we might be authenticated, then if we are coming in to the root,
+    # try to go to the app instead. This helps preserve old bookmarks
+    # as well as streamlining the process.
+    redirect location /app/ code 302 if is_maybe_authed { path / } !robots !google_verification
+
+    # use_backend www_backend_up if is_down
+    use_backend s3_backend if robots
+    use_backend s3_backend if google_verification
+    use_backend node_backend if is_mobile !is_mobile_site_css
+    use_backend static_backend if is_host_cors
+    use_backend data_backend if is_websocket
+    use_backend data_backend if is_dyn
+
+backend s3_backend
+    mode http
+    balance roundrobin
+
+    reqrep  ^Host:\ .*  Host:\ s3.amazonaws.com
+    reqirep  ^([^\ ]*)\ /(.*) \1\ /nextthought-support-pages/\2
+
+    server s3 s3.amazonaws.com:443 ssl verify none
+
+backend static_backend
+    mode http
+    balance roundrobin
+    # We expect to be talking PROXY to nginx, so
+    # no need to mess with x-forworded-for.
+
+    # option http-keep-alive # Fast static resource
+    # Because we mix and match static content requests with
+    # DS requests, true keep-alive might not be possible; the browser
+    # could send one request to each type of resource in the same
+    # TCP connection
+    # NOTE: This seems to be fixed in 1.5-dev22
+    # option http-server-close
+    option prefer-last-server
+
+    timeout server 15m
+    timeout connect 4s
+    ${static_servers}
+
+backend data_backend
+    mode http
+    balance source
+    # Recent versions of the server support (and require) the PROXY
+    # protocol, meaning that X-Forwarded-For is not needed (or even
+    # supported anymore). This lets us not need http-server-close or
+    # forwardfor; in theory it might let us use http-keep-alive, if
+    # there is any benefit.
+
+    # Unfortunately, because we mix and match static content requests with
+    # DS requests, true keep-alive might not be possible; the browser
+    # could send one request to each type of resource in the same
+    # TCP connection. So we need server-close.
+    # NOTE: This seems to be fixed in 1.5-dev22
+    # option http-server-close
+    option prefer-last-server
+    # option forwardfor if-none # This sets X-Forwarded-For
+    # If we don't set this, then we lose X-Forwarded-For
+
+    option httpchk GET /_ops/ping HTTP/1.1
+
+    ${dataservers}
+
+backend node_backend
+    mode http
+    option prefer-last-server
+    timeout server 15m
+    timeout connect 4s
+    ${node_servers}

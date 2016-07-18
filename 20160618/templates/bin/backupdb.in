@@ -1,0 +1,141 @@
+#!${deployment:bin-directory}/python
+
+import argparse
+import codecs
+import json
+import os
+import shutil
+
+from datetime import datetime
+from multiprocessing import Pool
+from subprocess import check_call
+from subprocess import PIPE
+from subprocess import Popen
+from tempfile import mkdtemp
+
+
+def _backup_database(config):
+    outfilename = os.path.join(config['base_path'],config['server']['filename']+u'.sql')
+    cmd = [
+        '${backupvars:mysqldir}/bin/mysqldump',
+        '--defaults-file=%s' % config['defaults-file'],
+        '--host', config['server']['address'],
+        '--port', config['server']['port'],
+        '--single-transaction',
+        '--add-drop-database',
+        '--all-databases',
+        '--events',
+        '--routines',
+        '--flush-logs',
+        '--master-data=2'
+    ]
+
+    with codecs.open(outfilename, 'wb', 'utf-8') as outfile:
+        process = Popen(cmd, stdout=outfile, stderr=PIPE)
+        stdout, stderr = process.communicate()
+        if stderr != u'':
+            print(stdout, stderr)
+
+def _compress_backup(backup_dir, archive_path):
+    old_dir = os.getcwd()
+    dirname, basename = os.path.split(backup_dir)
+    archive = os.path.join(archive_path, basename+u'.tar.xz')
+
+    cmd = [
+        'tar',
+        '-Jcvf', archive,
+        basename
+    ]
+
+    try:
+        os.chdir(dirname)
+        check_call( cmd )
+    finally:
+        os.chdir(old_dir)
+    return archive
+
+def _upload_backup(archive, prefix=''):
+    cmd = [
+        '${deployment:bin-directory}/s3put',
+        '--access_key', '${boto:aws_access_key_id}',
+        '--secret_key', '${boto:aws_secret_access_key}',
+        '--multipart',
+        '-w',
+        '-b', '${backupvars:backup_bucket}',
+        '-g', 'private',
+        '-p', prefix,
+        archive
+    ]
+    check_call( cmd )
+
+
+def _parse_args():
+    arg_parser = argparse.ArgumentParser( description="NTI DB Backup Utility" )
+    arg_parser.add_argument( '-c', '--config',
+                             help="Database configuration file." )
+    arg_parser.add_argument( '-e', '--environment-name', dest='environment_name',
+                             help="Database configuration file." )
+    arg_parser.add_argument( '--temp-dir', dest='temp_dir',
+                             help="Temporary working directory to hold the uncompressed database backup." )
+    arg_parser.add_argument( '--backup-dir', dest='backup_dir',
+                             help="Path to the root of the database backup store." )
+    return arg_parser.parse_args()
+
+def main():
+    # Parse command line args
+    args = _parse_args()
+    
+    tmp_dir = os.path.abspath(os.path.expanduser(args.temp_dir))
+    backup_dir = os.path.abspath(os.path.expanduser(args.backup_dir))
+    config_file = os.path.abspath(os.path.expanduser(args.config))
+    environment_name = args.environment_name
+
+    now = datetime.now()
+    date = now.strftime('%Y%m%d%H%M')
+
+    environment = None
+    with codecs.open(config_file, 'rb', 'utf-8') as data_file:
+        _data = json.load(data_file)
+        if u'environments' in _data:
+            if environment_name in _data['environments']:
+                environment = _data['environments'][environment_name]
+
+    if environment is None:
+        print('No definition for the %s environment found in %s' % (environment_name, config_file))
+
+    base_path = os.path.join(tmp_dir, u'db-backup-%s-%s' % (environment_name,date))
+
+    sets = []
+    for server in environment['servers']:
+        data = {
+            'base_path': base_path,
+            'server': server,
+            'defaults-file': environment['defaults-file'],
+        }
+        sets.append(data)
+
+    if not os.path.exists(base_path):
+        os.mkdir(base_path)
+
+    try:
+        # Take the backup from all database servers in the environment at as close to the same time as possible
+        process_pool = Pool(processes=len(sets))
+        process_pool.map_async(_backup_database, sets)
+        process_pool.close()
+        process_pool.join()
+
+        # Build the backup archive and compress it
+        archive_path = os.path.join(backup_dir, environment_name)
+        if not os.path.exists(archive_path):
+            os.makedirs(archive_path)
+        archive = _compress_backup(base_path, archive_path)
+
+        # Upload the backup
+        if date[-4:] == u'0000':
+            _upload_backup(archive, prefix=os.path.dirname('${backupvars:db_backup_dir}'))
+    finally:
+        if os.path.exists(base_path):
+            shutil.rmtree(base_path)
+
+if __name__ == '__main__': # pragma: no cover
+    main()

@@ -1,0 +1,61 @@
+user  ${nginx_user};
+worker_processes  ${nginx_workers};
+daemon ${nginx_daemon};
+
+error_log  ${deployment:log-directory/nginx/error.log} warn;
+pid		   ${deployment:run-directory}/nginx.pid;
+
+
+events {
+	worker_connections	1024;
+	multi_accept on;
+}
+
+
+http {
+	include		  mime.types;
+	default_type  application/octet-stream;
+
+	log_format	main  '$remote_addr - $remote_user [$time_local] "$request" '
+					  '$status $body_bytes_sent "$http_referer" '
+					  '"$http_user_agent" "$http_x_forwarded_for"';
+
+	access_log	${deployment:log-directory/nginx/access.log}  main buffer=4k flush=1m;
+
+	sendfile		on;
+	tcp_nopush		on;
+	tcp_nodelay 	on; # on is default
+	directio		1m;
+	${aio}
+
+	keepalive_timeout  30 30;
+	keepalive_disable none;
+
+	client_body_buffer_size 1m;
+	client_body_timeout 15;
+	client_header_timeout 15;
+	send_timeout 15;
+	reset_timedout_connection on;
+
+	gzip  on;
+	gzip_static on;
+	gzip_types application/json text/plain text/css text/javascript application/xml application/x-javascript application/javascript text/xml ;
+	gzip_comp_level 9;
+	gzip_min_length 1100;
+	gzip_proxied any;
+	gzip_vary on;
+	gzip_http_version 1.0;
+
+	open_file_cache max=${nginx_max_open_files} inactive=20s;
+	open_file_cache_valid 30s;
+	open_file_cache_errors on;
+
+	#need to map the value of $http_x_forwarded_protocol so we know if the connection was secure or not
+	map $http_x_forwarded_protocol $uri_scheme {
+		default http;
+		ssl https;
+	}
+
+	include conf.d/*.conf;
+	include conf.d/sites/*.conf;
+}

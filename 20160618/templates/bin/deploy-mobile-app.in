@@ -1,0 +1,14 @@
+#!/bin/bash
+
+pushd ${deployment:root-directory}/sources/nti.web.mobile
+rm -rf node_modules/
+${deployment:bin-directory}/npm install
+
+env_file=src/server/config/env.json
+if [ ! -e "$env_file" ]
+then
+	ln -s ${deployment:etc-directory}/nodeserver/nodeserver-env.json "$env_file"
+fi
+
+PATH=node_modules/.bin:$PATH make
+popd

@@ -1,0 +1,4 @@
+[client]
+password=${passwords:sql_backup_passwd}
+port=${backupvars:outest_db_port}
+user=${backupvars:backup_user}

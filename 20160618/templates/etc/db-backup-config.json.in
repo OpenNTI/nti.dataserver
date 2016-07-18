@@ -1,0 +1,94 @@
+{
+    "environments": {
+        "alpha": {
+            "defaults-file": "${deployment:etc-directory}/mysql/my-client.cnf",
+            "servers": [
+                {
+                    "address": "${backupvars:aux1-address}",
+                    "port": "${backupvars:alpha_db_port}",
+                    "filename": "Users-Users_1-Sessions-Tahrir-Analytics"
+                }
+            ]
+        },
+        "janux": {
+            "defaults-file": "${deployment:etc-directory}/mysql/my-client.cnf",
+            "servers": [
+                {
+                    "address": "${backupvars:db1-address}",
+                    "port": "${backupvars:janux_db_port}",
+                    "filename": "Users-Users_2"
+                },
+                {
+                    "address": "${backupvars:db2-address}",
+                    "port": "${backupvars:janux_db_port}",
+                    "filename": "Users_1-Tahrir-Analytics"
+                }
+            ]
+        },
+        "mc": {
+            "defaults-file": "${deployment:etc-directory}/mysql/my-client.cnf",
+            "servers": [
+                {
+                    "address": "${backupvars:db3-address}",
+                    "port": "${backupvars:mathcounts_db_port}",
+                    "filename": "Users-Users_2-Users_4"
+                },
+                {
+                    "address": "${backupvars:db4-address}",
+                    "port": "${backupvars:mathcounts_db_port}",
+                    "filename": "Users_1-Users_3"
+                }
+            ]
+        },
+        "okstate": {
+            "defaults-file": "${deployment:etc-directory}/mysql/my-client.cnf",
+            "servers": [
+                {
+                    "address": "${backupvars:db3-address}",
+                    "port": "${backupvars:okstate_db_port}",
+                    "filename": "Users"
+                },
+                {
+                    "address": "${backupvars:db4-address}",
+                    "port": "${backupvars:okstate_db_port}",
+                    "filename": "Analytics-Tahrir"
+                }
+            ]
+        },
+        "outest": {
+            "defaults-file": "${deployment:etc-directory}/mysql/my-client.cnf",
+            "servers": [
+                {
+                    "address": "${backupvars:aux1-address}",
+                    "port": "${backupvars:outest_db_port}",
+                    "filename": "Users-Users_1_Test-Users_2_Test-Tahrir-Analytics"
+                }
+            ]
+        },
+        "prod": {
+            "defaults-file": "${deployment:etc-directory}/mysql/my-client.cnf",
+            "servers": [
+                {
+                    "address": "${backupvars:db3-address}",
+                    "port": "${backupvars:prod_db_port}",
+                    "filename": "Analytics"
+                },
+                {
+                    "address": "${backupvars:db4-address}",
+                    "port": "${backupvars:prod_db_port}",
+                    "filename": "Users"
+                }
+            ]
+        },
+        "showcase": {
+            "defaults-file": "${deployment:etc-directory}/mysql/my-client.cnf",
+            "servers": [
+                {
+                    "address": "${backupvars:db4-address}",
+                    "port": "${backupvars:showcase_db_port}",
+                    "filename": "Users-Analytics-Tahrir"
+                }
+            ]
+        }
+    }
+}

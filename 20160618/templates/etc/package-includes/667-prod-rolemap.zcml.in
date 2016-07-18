@@ -1,0 +1,39 @@
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:sp="http://nextthought.com/ntp/securitypolicy">
+
+	<!-- Assign principals to roles in the Production environment -->
+	<!--
+	For principals, note that only 'id' actually matters.
+	It must match the username of a User in the database
+	to have any effect.
+	-->
+	<sp:principal id="carmon.drumm" login="carmon.drumm" title="Carmon Drumm"/>
+	<sp:grant principal="carmon.drumm" role="nti.roles.contentlibrary.admin"/>
+	
+	<sp:principal id="lacey.white" login="lacey.white" title="Lacey White"/>
+	<sp:grant principal="lacey.white" role="nti.roles.contentlibrary.admin"/>
+	
+	<sp:principal id="ashley.stewart" login="ashley.stewart" title="Ashley Stewart"/>
+	<sp:grant principal="ashley.stewart" role="nti.roles.contentlibrary.admin"/>
+	
+	<sp:principal id="Ashley.stewart" login="Ashley.stewart" title="Ashley Stewart"/>
+	<sp:grant principal="Ashley.stewart" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="ega.panjei" login="ega.panjei" title="Ega Panjei"/>
+	<sp:grant principal="ega.panjei" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="nic.stockdale" login="nic.stockdale" title="Nic Stockdale"/>
+	<sp:grant principal="nic.stockdale" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="brianna.gaither" login="brianna.gaither" title="Brianna Gaither"/>
+	<sp:grant principal="brianna.gaither" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="peggy.sabatini" login="peggy.sabatini" title="Peggy Sabatini"/>
+	<sp:grant principal="peggy.sabatini" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="meleah.meadows" login="meleah.meadows" title="Meleah Meadows"/>
+	<sp:grant principal="meleah.meadows" role="nti.roles.contentlibrary.admin"/>
+
+	<sp:principal id="stacy.zemke" login="stacy.zemke" title="Stacy Zemke"/>
+	<sp:grant principal="stacy.zemke" role="nti.roles.contentlibrary.admin"/>
+</configure>

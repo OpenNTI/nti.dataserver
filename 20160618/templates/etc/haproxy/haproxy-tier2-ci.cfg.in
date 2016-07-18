@@ -1,0 +1,51 @@
+global
+    log 127.0.0.1 local2 info
+    # Total Max Connections. This is dependent on ulimit
+    maxconn ${haproxy_maxconn}
+
+    stats socket ${stats_socket} user ${stats_socket_owner} mode 600 level admin
+    stats timeout 2m
+
+defaults
+    maxconn ${haproxy_maxconn}
+
+    timeout queue 5s
+    timeout server 30s
+    timeout client 30s
+    timeout connect 10s
+    errorfile 408 /dev/null
+
+frontend all
+    mode http
+    log global
+    option httplog
+
+    # Socket for Tier 1 <-> Tier 2 communication
+    bind unix@${haproxy_socket} user ${haproxy_socket_user} mode 600 id 42 accept-proxy
+
+    default_backend ci_backend
+
+    acl is_whitelist_host src 108.61.156.146
+    acl is_whitelist_host src 156.110.43.3
+    acl in_whitelist_host src 66.210.82.130/24 # NCED static IP
+    acl in_whitelist_host src 156.110.241.0/24 # Datacenter public IPs
+    acl in_whitelist_host src 10.50.0.0/16 # Internal IPs
+    acl in_whitelist_host src 127.0.0.0/8 # Localhost
+    acl in_whitelist_host src 72.200.207.160/32 # Julie
+    acl in_whitelist_host src 98.162.214.29/32 # Kaley
+    acl in_whitelist_host src 68.97.80.153/32 # Kaley 2
+    acl in_whitelist_host src 162.242.30.207/32 # Mary
+    acl in_whitelist_host src 162.242.30.201/32 # Mary 2
+    acl in_whitelist_host src 72.200.203.181/32 # Jonathan
+    acl in_whitelist_host src 68.97.124.91/32 # Josh Z
+    acl in_whitelist_host src 72.198.26.201/32 # Carlos
+
+    http-request deny if !is_whitelist_host
+
+backend ci_backend
+    mode http
+    option forwardfor # This sets X-Forwarded-For
+    option http-server-close
+
+    ${ci_servers}
+

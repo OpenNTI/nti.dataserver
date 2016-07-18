@@ -1,0 +1,3 @@
+[client]
+password=${passwords:sql_verify_passwd}
+user=${backupvars:verify_user}

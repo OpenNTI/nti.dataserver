@@ -1,0 +1,13 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:gdb="http://nextthought.com/ntp/graphdb">
+
+	<include package="nti.graphdb" file="meta.zcml" />
+	<gdb:registerGraphDB
+				url="${graphdb:url}"
+				username="${graphdb:username}"
+				password="${graphdb:password}" />
+
+</configure>

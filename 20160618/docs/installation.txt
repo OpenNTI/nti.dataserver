@@ -1,0 +1,214 @@
+1) Download/Install Xcode
+2) Download/Install Xcode command line tools ()
+3) Download/Install latest [Oracle] JDK 1.7
+4) Install macports
+5) execute:
+	sudo port install python27
+	sudo port install py27-setuptools
+	sudo port install py27-yaml
+	sudo port install libxml
+	sudo port install libxml2
+	sudo port install nasm
+	sudo port install pcre
+	sudo port install cyrus-sasl2
+	sudo port install graphviz-devel
+	sudo port install wget
+	sudo port install openjpeg
+	sudo port xmlsec (Optional)
+
+	(Optional)
+
+	sudo port install bash
+	sudo port install coreutils
+
+6) edit [bash] profile located in your home directory (e.g. ~/.profile) and add to the PATH variable
+	/opt/local/bin:/opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin
+
+	(so it would look like
+		export PATH=/opt/local/bin:/opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin:/opt/local/sbin:/opt/local/include:$PATH)
+
+	[then add]
+
+	export WORKON_HOME=~/VirtualEnvs
+	source `which virtualenvwrapper.sh`
+
+	[save]
+
+	make sure you point to your macports python . To do so type
+		which python
+		and it should be /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/python
+
+7) source bash profile (or restart terminal) e.g (source .profile)
+
+8) execute:
+		sudo easy_install-2.7 stevedore
+		sudo easy_install-2.7 virtualenv-clone
+		sudo easy_install-2.7 virtualenv
+		sudo easy_install-2.7 virtualenvwrapper
+
+9) execute:
+	mkvirtualenv --distribute nti.dataserver-buildout
+
+10) execute:
+	workon  nti.dataserver-buildout
+
+11) Create a Projects directory under ~/  (HOME DIRECTORY)
+	execute:
+		mkdir ~/Projects
+
+12) cd ~/Projects
+	execute:
+		svn co https://repos.nextthought.com/svn/nti-svn/NextThoughtPlatform/trunk/nti.dataserver-buildout nti.dataserver-buildout
+
+13) cd nti.dataserver-buildout
+	execute:
+		python bootstrap.py
+
+14) edit buildout.cfg file and comment # lxml entry e.g.
+
+parts =
+	  libgmp
+	  pycrypto
+	  cython
+#	  lxml
+
+15) execute (long process)
+		./bin/buildout -c python_developer_environment.cfg
+
+16) execute
+		svn revert buildout.cfg
+
+17) minify app
+	execute:
+		./bin/app-minify
+
+18) cd to ~/Projects and create soft links to the login and webapp
+	execute
+		cd ~/Projects
+		ln -s nti.dataserver-buildout/sources/NextThoughtWebApp
+		ln -s nti.dataserver-buildout/sources/NextThoughtLoginApp
+
+19) in ~/Projects create library and images directories
+	execute:
+		mkdir DataserverGlobalLibrary
+		mkdir hosted_badge_images
+
+	[Download Sample content if available]
+
+20) edit ~/VirtualEnvs/nti.dataserver-buildout/bin/postactivate and add
+	PATH=/Users/{your user}/Projects/nti.dataserver-buildout/bin:$PATH
+
+21) create default .buildout config
+	execute:
+		mkdir ~/.buildout
+
+	create and edit a file called default.cfg in your default buildout directory
+		e.g. vi ~/.buildout/default.cfg
+
+	add the following to the file
+
+	[buildout]
+	eggs-directory = /Users/{your user}/Projects/nti.dataserver-buildout/eggs
+	download-cache = /Users/{your user}/.buildout/cache
+	always-checkout = true
+
+	[init_env]
+	args = --with-example
+
+	[zeo]
+	name=data
+
+==================
+
+[Optional]
+
+21) Start dataserver
+	execute:
+		cd ~/Projects/nti.dataserver-buildout
+		./bin/supervisord -n
+
+22) Log into the dataserver at
+	http://localhost:8082/login
+
+23) Janux HAProxy change
+	edit file in ~/Projects/nti.dataserver-buildout/etc/haproxy/haproxy.cfg
+	search for the line where the string "reqadd X-FORWARDED-PROTOCOL:\ ssl if is_ssl" occurs
+	add/uncomment after it the following
+
+	reqidel ^ORIGIN:.*
+	reqadd ORIGIN:\ http://janux.ou.edu
+
+[Daily]
+
+24) refresh the latest code
+	execute:
+		workon nti.dataserver-buildout
+		cd ~/Projects/nti.dataserver-buildout
+		svn up
+		./bootstrap.sh
+		./bin/buildout -c python_developer_environment.cfg
+		./bin/app-minify
+
+	after the .buildout has been run the ~/Projects/nti.dataserver-buildout/etc/haproxy/haproxy.cfg is overwritten so execute step 23 if required
+
+==================
+
+[Content Generation]
+
+Install the following ports:
+	- libpng
+	- freetype
+	- pngcrush
+	- texlive
+	- texlive-basic
+	- texlive-bibtex-extra
+ 	- texlive-bin
+ 	- texlive-bin-extra
+ 	- texlive-common
+ 	- texlive-context
+	- texlive-fonts-extra
+	- texlive-fonts-recommended
+	- texlive-fontutils
+	- texlive-generic-extra
+	- texlive-generic-recommended
+	- texlive-lang-czechslovak
+	- texlive-lang-english
+	- texlive-lang-european
+	- texlive-lang-french
+	- texlive-lang-german
+	- texlive-lang-greek
+ 	- texlive-lang-italian
+	- texlive-lang-polish
+	- texlive-lang-portuguese
+	- texlive-lang-spanish
+	- texlive-latex
+	- texlive-latex-extra
+	- texlive-latex-recommended
+	- texlive-luatex
+	- texlive-math-extra
+	- texlive-metapost
+	- texlive-pictures
+	- texlive-plain-extra
+	- texlive-pstricks
+	- texlive-science
+	- texlive-xetex
+	- pdf2svg
+	- poppler
+	- ImageMagick
+	- openexr
+	- liblqr
+	- npm
+	
+[dataserver (Optional)]
+	- xpdf
+	- gtk2
+	- jsmin
+	- asymptote
+	- enchant
+	- mysql56
+	- mysql56-server
+
+Install/download
+- phantomjs >= 1.9 < 2.0
+  http://phantomjs.org, download and place the phantomjs command somewhere on your path, e.g.,
+  ~/bin/

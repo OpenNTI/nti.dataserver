@@ -1,0 +1,45 @@
+{
+    "defaults-file": "${backupvars:verify_defaults_file}",
+    "environments": {
+        "alpha": {
+            "servers": [
+                {
+                    "filename": "Users-Users_1-Sessions-Tahrir-Analytics.sql",
+                    "socket": "${verify-vars:alpha_db_socket}"
+                }
+            ]
+        },
+        "janux": {
+            "servers": [
+                {
+                    "filename": "Users-Users_2.sql",
+                    "socket": "${verify-vars:janux_1_db_socket}"
+                },
+                {
+                    "filename": "Users_1-Tahrir-Analytics.sql",
+                    "socket": "${verify-vars:janux_2_db_socket}"
+                }
+            ]
+        },
+        "okstate": {
+            "servers": [
+                {
+                    "filename": "Users.sql",
+                    "socket": "${verify-vars:okstate_1_db_socket}"
+                },
+                {
+                    "filename": "Analytics-Tahrir.sql",
+                    "socket": "${verify-vars:okstate_2_db_socket}"
+                }
+            ]
+        },
+        "outest": {
+            "servers": [
+                {
+                    "filename": "Users-Users_1_Test-Users_2_Test-Tahrir-Analytics.sql",
+                    "socket": "${verify-vars:outest_db_socket}"
+                }
+            ]
+        }
+    }
+}

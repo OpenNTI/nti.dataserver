@@ -1,0 +1,5 @@
+[redis]
+redis_url = ${redis_client_url}
+
+[memcached]
+servers = ${memcached_servers}

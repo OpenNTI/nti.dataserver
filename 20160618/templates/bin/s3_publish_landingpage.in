@@ -1,0 +1,20 @@
+#!/bin/bash
+
+pushd ${landingpage_src}
+rm -rf dist
+git fetch --tags
+git checkout $1
+git pull
+
+${buildout:directory}/bin/npm install
+${buildout:directory}/bin/grunt build
+
+for file in $(find . -name '*.html')
+	do 
+	sed -i -e 's|\(href=\"\)\(/[A-Za-z]\)|\1${remote_server}\2|g' $file
+	sed -i -e 's|\(src=\"\)\(/[A-Za-z]\)|\1${remote_server}\2|g' $file
+done
+
+${buildout:directory}/bin/nti_s3_publish_landingpage -a ${s3_access_key} -s ${s3_secret_key} --cache-max-age=${cache_max_age} -b ${s3_bucket} -p ${landingpage_src}/dist/ ${landingpage_src}/dist/
+
+popd

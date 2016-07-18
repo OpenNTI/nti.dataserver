@@ -1,0 +1,51 @@
+{
+    "environments": {
+        "alpha": {
+            "servers": [
+                "aux1-ou.internal.nextthought.com"
+            ],
+            "username": "ntiuser-alpha"
+        },
+        "janux": {
+            "servers": [
+                "ds1-ou.internal.nextthought.com",
+                "ds2-ou.internal.nextthought.com"
+            ],
+            "username": "ntiuser-ou"
+        },
+        "mathcounts": {
+            "servers": [
+                "ds3-ou.internal.nextthought.com",
+                "ds4-ou.internal.nextthought.com"
+            ],
+            "username": "ntiuser-mc"
+        },
+        "okstate": {
+            "servers": [
+                "ds3-ou.internal.nextthought.com",
+                "ds4-ou.internal.nextthought.com"
+            ],
+            "username": "ntiuser-okstate"
+        },
+        "outest": {
+            "servers": [
+                "aux1-ou.internal.nextthought.com"
+            ],
+            "username": "ntiuser-outest"
+        },
+        "prod": {
+            "servers": [
+                "ds3-ou.internal.nextthought.com",
+                "ds4-ou.internal.nextthought.com"
+            ],
+            "username": "ntiuser-prod"
+        },
+        "showcase": {
+            "servers": [
+                "db4-ou.internal.nextthought.com",
+                "ds4-ou.internal.nextthought.com"
+            ],
+            "username": "ntiuser-showcase"
+        }
+    }
+}

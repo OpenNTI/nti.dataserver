@@ -1,0 +1,110 @@
+{
+	"development": {
+		"mode": "development",
+		"server": "http://${dataserver-ip}:${dataserver-port}/dataserver2/",
+		"port": ${http-port},
+		"user-agreement": "${user-agreement-url}",
+
+		"apps": [
+			{
+				"package": "../../../sources/nti.web.mobile",
+				"basepath": "/mobile/",
+
+				"analyticsKey": "${analytics-key}",
+				"appName": "${app-name}",
+				"appId": "${app-id}",
+				"appVersion": "${app-version}"
+			}
+		],
+
+		"keys": {
+			"googleapi": {
+				"default": "AIzaSyCaTju8sAwS6GX72l9FSCeHZ2PTFOMOVWY",
+				"platform.ou.edu": "default"
+			}
+		},
+
+		"external-libraries": {
+			"mathquill": {
+				"requires": ["jquery"],
+				"url": "${mathquill-url}",
+				"definesSymbol": "jQuery.fn.mathquill",
+				"stylesheets": ["${mathquill-stylesheet}"]
+			},
+			"jquery": {
+				"url": "${jquery-url}",
+				"definesSymbol": "jQuery.noConflict",
+				"invokeDefinedSymbol": true
+			},
+			"jquery.payment": {
+				"requires": ["jquery", "stripe"],
+				"url": "${jquery.payment-url}",
+				"definesSymbol": "jQuery.payment"
+			},
+			"stripe": {
+				"url": "${stripe-url}",
+				"definesSymbol": "Stripe"
+			}
+		}
+	},
+
+
+	"production": {
+		"mode": "production",
+		"server": "http://${dataserver-ip}:${dataserver-port}/dataserver2/",
+		"port": ${http-port},
+		"user-agreement": "${user-agreement-url}"
+	},
+
+
+	"site-mappings": {
+		"ou-alpha.nextthought.com": "platform.ou.edu",
+		"ou-test.nextthought.com": "platform.ou.edu",
+		"janux.ou.edu": "platform.ou.edu",
+		"janux.dev": "platform.ou.edu",
+		"platform.ou.edu": {
+			"name": "platform.ou.edu",
+			"title": "Janux"
+		},
+
+		"okstate-alpha.nextthought.com": "okstate.nextthought.com",
+		"okstate-test.nextthought.com": "okstate.nextthought.com",
+		"learnonline.okstate.edu": "okstate.nextthought.com",
+		"okstate.dev": "okstate.nextthought.com",
+		"okstate.nextthought.com": {
+			"name": "okstate.nextthought.com",
+			"title": "NextThought"
+		},
+
+		"symmys-alpha.nextthought.com": "symmys.nextthought.com",
+		"lab.symmys.com": "symmys.nextthought.com",
+		"symmys.dev": "symmys.nextthought.com",
+		"symmys.nextthought.com": {
+			"name": "symmys.nextthought.com",
+			"title": "SYMMYS"
+		},
+
+		"alpha.dev": "alpha.nextthought.com",
+		"alpha.nextthought.com": {
+			"name": "alpha.nextthought.com",
+			"title": "Alpha"
+		},
+
+		"prmia-alpha.nextthought.com": "prmia.nextthought.com",
+		"prmia-test.nextthought.com": "prmia.nextthought.com",
+		"prmia.dev": "prmia.nextthought.com",
+		"prmia.nextthought.com": {
+			"name": "prmia.nextthought.com",
+			"title": "PRMIA"
+		},
+
+		"i2online.nextthought.com": "i2.nextthought.com",
+		"i2-test.nextthought.com": "i2.nextthought.com",
+		"i2.dev": "i2.nextthought.com",
+		"i2-alpha.nextthought.com": "i2.nextthought.com",
+		"i2.nextthought.com": {
+			"name": "i2.nextthought.com",
+			"title": "i2 Online"
+		}
+	}
+}

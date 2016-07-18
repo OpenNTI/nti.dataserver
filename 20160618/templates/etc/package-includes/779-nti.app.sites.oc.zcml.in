@@ -1,0 +1,18 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:adb="http://nextthought.com/analytics/database">
+
+	<include package="nti.analytics.database" file="meta.zcml" />
+
+	<include package="z3c.baseregistry" file="meta.zcml" />
+
+	<registerIn registry="nti.app.sites.okchristian.sites.OC">
+		<adb:registerAnalyticsDB
+				dburi="${analytics-oc:driver}://${analytics-oc:user}:${analytics-oc:password}@${analytics-oc:host}/${analytics-oc:dbname}?charset=utf8"
+				twophase="${analytics-oc:twophase}"
+				autocommit="${analytics-oc:autocommit}" />
+	</registerIn>
+
+</configure>
