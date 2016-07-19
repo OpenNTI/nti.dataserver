@@ -43,11 +43,15 @@ class ContentBaseFileACLProvider(object):
 		return self.context.__parent__
 
 	@Lazy
-	def __acl__(self):
+	def __aces__(self):
 		aces = [ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, self),
 				ace_allowing(ROLE_CONTENT_ADMIN, ALL_PERMISSIONS, type(self))]
-		result = acl_from_aces(aces)
 		creator = IPrincipal(self.context.creator, None)
 		if creator is not None:
 			aces.append(ace_allowing(creator, ALL_PERMISSIONS, self))
+		return aces
+		
+	@Lazy
+	def __acl__(self):
+		result = acl_from_aces(self.__aces__)
 		return result
