@@ -133,6 +133,7 @@
 	<include package="nti.contentrange" />
 	<include package="nti.contentfolder" />
 	<include package="nti.contentlibrary" />
+	<include package="nti.datastructures" />
 	<include package="nti.contentfragments" />
 
 	<include package=".contenttypes" />
@@ -185,9 +186,6 @@
 	<adapter factory=".meeting_storage.CreatorBasedAnnotationMessageInfoStorage" />
 
 	<!-- Externalization -->
-	<subscriber factory=".datastructures.LinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
-
 	<subscriber factory=".authorization_acl.ACLDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
@@ -196,8 +194,6 @@
 
 	<subscriber factory=".rating.RatingDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
-
-	<adapter factory=".datastructures.LinkNonExternalizableReplacer" />
 
 	<!-- Groups and principals -->
 	<!--

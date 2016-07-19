@@ -47,7 +47,6 @@ from nti.common.time import time_to_64bit_int
 
 from nti.dataserver import dicts
 from nti.dataserver import sharing
-from nti.dataserver import datastructures
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IOpenIdUser
@@ -74,6 +73,8 @@ from nti.dataserver.users.interfaces import PasswordCannotConsistOfOnlyWhitespac
 from nti.dataserver.users.interfaces import OldPasswordDoesNotMatchCurrentPassword
 
 from nti.dataserver.activitystream_change import Change
+
+from nti.datastructures import datastructures
 
 from nti.ntiids import ntiids
 
