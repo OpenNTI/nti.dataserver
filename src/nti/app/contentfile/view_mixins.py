@@ -180,8 +180,15 @@ def read_multipart_sources(request, sources=()):
 		if name:
 			source = get_source(request, name)
 			if source is None:
-				msg = 'Could not find data for file %s' % data.name
-				raise hexc.HTTPUnprocessableEntity(msg)
+				raise_json_error(get_current_request(),
+								 hexc.HTTPUnprocessableEntity,
+								 {
+								 	u'name': data.name,
+									u'message': _('Could not find multipart data.'),
+									u'code': 'CouldNotFindMultiPartData',
+									u'field': 'name'
+								 },
+								 None)
 			data = transfer_data(source, data)
 			result.append(data)
 	return result
