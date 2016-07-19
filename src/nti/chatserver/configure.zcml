@@ -3,8 +3,7 @@
 			xmlns:i18n="http://namespaces.zope.org/i18n"
 			xmlns:ext="http://nextthought.com/ntp/ext"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
-			i18n_domain="nti.dataserver"
-			zcml:condition="not-have dscoreonly">
+			i18n_domain="nti.dataserver">
 
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
