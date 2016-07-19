@@ -15,20 +15,20 @@ from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
+from nti.appserver._util import link_belongs_to_user
+
+from nti.appserver.link_providers.interfaces import IDeletableLinkProvider
+from nti.appserver.link_providers.interfaces import IAuthenticatedUserLinkProvider
+
 from nti.dataserver.dicts import LastModifiedDict
 
 from nti.links.links import Link
 
-from .._util import link_belongs_to_user
-
-from .interfaces import IDeletableLinkProvider
-from ..interfaces import IAuthenticatedUserLinkProvider
-
-# : The name of a view. We will construct links to it, with the actual link name
-# : in the sub-path
+#: The name of a view. We will construct links to it, with the actual link name
+#: in the sub-path
 VIEW_NAME_NAMED_LINKS = 'NamedLinks'
 
-# : Containing a mapping
+#: Containing a mapping
 _GENERATION_LINK_KEY = __name__ + '.LinkGenerations'
 
 def _make_link(user, link_rel, field=None, view_named=None, mime_type=None):

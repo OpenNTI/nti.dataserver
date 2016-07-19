@@ -18,17 +18,21 @@ from zope import interface
 import zope.configuration.fields
 
 from zope.component.zcml import subscriber
-from zope.mimetype.interfaces import mimeTypeConstraint
+
 from zope.configuration.exceptions import ConfigurationError
+
+from zope.mimetype.interfaces import mimeTypeConstraint
 
 from pyramid.interfaces import IRequest
 
-from nti.dataserver.interfaces import IUser
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 
-from nti.schema.field import ValidTextLine
+from nti.appserver.link_providers.link_provider import LinkProvider
+from nti.appserver.link_providers.link_provider import GenerationalLinkProvider
 
-from .link_provider import LinkProvider, GenerationalLinkProvider
+from nti.dataserver.interfaces import IUser
+
+from nti.schema.field import ValidTextLine
 
 class IUserLinkDirective(interface.Interface):
 	"""

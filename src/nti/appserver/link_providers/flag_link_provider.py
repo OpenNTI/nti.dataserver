@@ -35,15 +35,15 @@ from pyramid.interfaces import IRequest
 
 from BTrees.OOBTree import OOTreeSet
 
+from nti.appserver.link_providers.interfaces import FlagLinkAddedEvent
+from nti.appserver.link_providers.interfaces import FlagLinkRemovedEvent
+from nti.appserver.link_providers.interfaces import IDeletableLinkProvider
+
+from nti.appserver.link_providers.link_provider import LinkProvider
+
 from nti.common import sets
 
 from nti.dataserver.interfaces import IUser
-
-from .link_provider import LinkProvider
-
-from .interfaces import FlagLinkAddedEvent
-from .interfaces import FlagLinkRemovedEvent
-from .interfaces import IDeletableLinkProvider
 
 # We store links in an OOTreeSet annotation on the User object
 _LINK_ANNOTATION_KEY = 'nti.appserver.user_link_provider' + '.LinkAnnotation'  # hardcoded name for BWC
@@ -97,8 +97,8 @@ def delete_link(user, link_name):
 
 _delete_link = delete_link
 
-@interface.implementer(IDeletableLinkProvider)
 @component.adapter(IUser, IRequest)
+@interface.implementer(IDeletableLinkProvider)
 class FlagLinkProvider(LinkProvider):
 
 	def get_links(self):

@@ -11,15 +11,16 @@ logger = __import__('logging').getLogger(__name__)
 
 from pyramid.view import view_config
 
-from nti.dataserver.interfaces import IUser
+from nti.appserver import httpexceptions as hexc
+
+from nti.appserver.link_providers import safe_links
+from nti.appserver.link_providers import unique_link_providers
+
+from nti.appserver.link_providers.link_provider import VIEW_NAME_NAMED_LINKS
+
 from nti.dataserver import authorization as nauth
 
-from .. import httpexceptions as hexc
-
-from . import safe_links
-from . import unique_link_providers
-
-from .link_provider import VIEW_NAME_NAMED_LINKS
+from nti.dataserver.interfaces import IUser
 
 def _find_link_providers(user, request, link_name):
 	providers = []
@@ -57,7 +58,6 @@ def named_link_get_view(request):
 	rsp, provider, _ = _preflight(request)
 	if rsp:
 		return rsp  # response
-
 	# If the URL is not absolute already, then when the request is written out it will be
 	# made so by pyramid.
 	return hexc.HTTPNoContent() if not provider.url else hexc.HTTPSeeOther(provider.url)
