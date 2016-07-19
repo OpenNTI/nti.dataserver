@@ -25,9 +25,11 @@ from nti.dataserver.utils.base_script import set_site
 from nti.dataserver.utils.base_script import create_context
 
 def _process_args(args):
-	set_site(args.site)
+	# sync global library
 	library = component.getUtility(IContentPackageLibrary)
 	library.syncContentPackages()
+	# set site and remove
+	set_site(args.site)
 	result = remove_package_inaccessible_assets()
 	if args.verbose:
 		print()
