@@ -251,8 +251,8 @@ IContainerNamesContainer = IContainerNamesContainer
 IZContainerNamesContainer = IZContainerNamesContainer
 IHomogeneousTypeContainer = IHomogeneousTypeContainer
 
-
-IHTC_NEW_FACTORY = 'nti.dataserver.interfaces.IHTCNewFactory'
+from nti.dataserver_core.interfaces import IHTC_NEW_FACTORY
+IHTC_NEW_FACTORY = IHTC_NEW_FACTORY
 
 # BWC exports
 from nti.dataserver_core.interfaces import INamedContainer
