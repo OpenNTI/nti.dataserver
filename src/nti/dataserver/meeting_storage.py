@@ -29,15 +29,15 @@ from nti.chatserver.interfaces import IMessageInfoStorage
 
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
-from nti.dataserver.datastructures import check_contained_object_for_storage
-
 from nti.dataserver.interfaces import IEntity
 
 from nti.dataserver.users import Entity
 
-from nti.externalization import oids
+from nti.datastructures.datastructures import check_contained_object_for_storage
 
-from nti.ntiids import ntiids
+from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 class IMeetingContainer(IBTreeContainer):
 	contains(IMeeting)
@@ -78,7 +78,7 @@ class CreatorBasedAnnotationMeetingStorage(object):
 		return result
 
 	def get(self, room_id):
-		result = ntiids.find_object_with_ntiid(room_id)
+		result = find_object_with_ntiid(room_id)
 		if IMeeting.providedBy(result):
 			return result
 		if result is not None:
@@ -100,7 +100,7 @@ class CreatorBasedAnnotationMeetingStorage(object):
 		if getattr(room, '_p_jar', None) is None:
 			IConnection(creator).add(room)
 
-		room.id = oids.to_external_ntiid_oid(room, default_oid=None, add_to_intids=True)
+		room.id = to_external_ntiid_oid(room, default_oid=None, add_to_intids=True)
 		if room.id is None:
 			__traceback_info__ = creator, meeting_container, room
 			raise ValueError("Unable to get OID for room")
@@ -144,6 +144,5 @@ def CreatorBasedAnnotationMessageInfoStorage(msg_info):
 	creator_name = msg_info.creator
 	creator = Entity.get_entity(creator_name)
 	__traceback_info__ = creator, creator_name, msg_info
-
 	message_container = IMessageInfoStorage(creator)
 	return message_container
