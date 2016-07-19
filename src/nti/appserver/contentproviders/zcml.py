@@ -19,9 +19,9 @@ from zope.configuration import fields
 
 from zope.contentprovider.interfaces import IContentProvider
 
-from nti.schema.field import ValidTextLine
+from nti.appserver.contentproviders.pyramid import PyramidRendererContentProviderFactory
 
-from .pyramid import PyramidRendererContentProviderFactory
+from nti.schema.field import ValidTextLine
 
 class IPyramidRendererDirective(interface.Interface):
 	"""
