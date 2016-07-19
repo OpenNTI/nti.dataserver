@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
-from hamcrest import has_key
 from hamcrest import not_none
 from hamcrest import has_item
 from hamcrest import has_entry
@@ -18,10 +17,8 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
 does_not = is_not
-has_attr = has_property
 
 from nti.testing.matchers import is_empty
-from nti.testing.matchers import validly_provides as verifiably_provides
 
 from zope import interface
 
@@ -35,7 +32,6 @@ from nti.dataserver_core.mixins import ZContainedMixin
 from nti.datastructures.datastructures import ContainedStorage
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
-from nti.dublincore.time_mixins import ModifiedTimeMixin as ModDateTrackingObject
 
 from nti.externalization.oids import toExternalOID
 from nti.externalization.oids import to_external_ntiid_oid
@@ -47,38 +43,6 @@ import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDS
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-
-from nti.testing.base import AbstractTestBase
-
-class TestMisc(AbstractTestBase):
-
-	def test_containedmixins(self):
-		cm = ZContainedMixin()
-		assert_that(cm, verifiably_provides(nti_interfaces.IContained))
-		assert_that(cm, verifiably_provides(nti_interfaces.IZContained))
-
-	def test_moddatetrackingobject_oldstates(self):
-		mto = ModDateTrackingObject()
-		assert_that(mto.lastModified, is_(0))
-		assert_that(mto.__dict__, does_not(has_key('_lastModified')))
-
-		# old state
-		mto.__setstate__({'_lastModified': 32 })
-		assert_that(mto.lastModified, is_(32))
-
-		# updates dynamically
-		mto.updateLastMod(42)
-		assert_that(mto.lastModified, is_(42))
-		assert_that(mto._lastModified, has_attr('value', 42))
-
-		# missing entirely
-		del mto._lastModified
-		assert_that(mto.lastModified, is_(0))
-		mto.updateLastMod(42)
-		assert_that(mto.lastModified, is_(42))
-		assert_that(mto._lastModified, has_attr('value', 42))
-
-		mto._lastModified.__getstate__()
 
 class TestContainedStorage(DataserverLayerTest):
 
@@ -94,9 +58,9 @@ class TestContainedStorage(DataserverLayerTest):
 			self.ds.root['key'] = cs
 
 			assert_that(cs._p_jar, has_property('_registered_objects',
-												 has_item(cs)))
+												has_item(cs)))
 			assert_that(cs._p_jar, has_property('_added',
-												 has_entry(cs._p_oid, cs)))
+												has_entry(cs._p_oid, cs)))
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			cs = self.ds.root['key']
@@ -109,9 +73,9 @@ class TestContainedStorage(DataserverLayerTest):
 			assert_that(cs, has_property('_p_changed', False))
 
 			assert_that(cs._p_jar, has_property('_registered_objects',
-												 does_not(has_item(cs))))
+												does_not(has_item(cs))))
 			assert_that(cs._p_jar, has_property('_added',
-												 is_empty()))
+												is_empty()))
 
 	@WithMockDSTrans
 	def test_id_is_ntiid(self):
