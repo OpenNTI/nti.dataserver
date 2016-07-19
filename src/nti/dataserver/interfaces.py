@@ -525,17 +525,10 @@ class IMutableGroupMember(IGroupMember):
 
 # BWC exports
 from nti.dataserver_core.interfaces import valid_entity_username
+from nti.dataserver_core.interfaces import ICreatedUsername
 
-class ICreatedUsername(interface.Interface):
-	"""
-	Something created by an identified entity, expressed
-	as a (globally unique) username.
-	"""
-	creator_username = DecodingValidTextLine(
-		title=u'The username',
-		constraint=valid_entity_username,
-		readonly=True
-		)
+valid_entity_username=valid_entity_username
+ICreatedUsername=ICreatedUsername
 
 @interface.implementer(ICreatedUsername)
 @component.adapter(ICreated)
@@ -1255,12 +1248,10 @@ class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody, IFileC
 	body = ExtendedCompoundModeledContentBody()
 INote.setTaggedValue('_ext_jsonschema', u'note')
 
-class IDeletedObjectPlaceholder(interface.Interface):
-	"""
-	Marker interface to be applied to things that have actually
-	been deleted, but, for whatever reason, some trace object
-	has to be left behind. These will typically be rendered specially.
-	"""
+# BWC exports
+
+from nti.dataserver_core.interfaces import IDeletedObjectPlaceholder
+IDeletedObjectPlaceholder = IDeletedObjectPlaceholder
 
 # Dynamic event handling
 from nti.socketio.interfaces import ISocketIOChannel
