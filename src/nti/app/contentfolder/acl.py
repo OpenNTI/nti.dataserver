@@ -46,14 +46,13 @@ class ContentFolderACLProvider(object):
 		return self.context.__parent__
 
 	@Lazy
-	def __acl__(self):
+	def __aces__(self):
 		aces = [ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, type(self)) ]
 		if ILockedFolder.providedBy(self.context):
 			aces.append(ace_allowing(ROLE_CONTENT_ADMIN, ACT_READ, type(self)))
 			aces.append(ace_allowing(ROLE_CONTENT_ADMIN, ACT_UPDATE, type(self)))
 		else:
 			aces.append(ace_allowing(ROLE_CONTENT_ADMIN, ALL_PERMISSIONS, type(self)))
-		result = acl_from_aces(aces)
 		creator = IPrincipal(self.context.creator, None)
 		if creator is not None:
 			if ILockedFolder.providedBy(self.context):
@@ -61,4 +60,8 @@ class ContentFolderACLProvider(object):
 				aces.append(ace_allowing(creator, ACT_UPDATE, type(self)))
 			else:
 				aces.append(ace_allowing(creator, ALL_PERMISSIONS, type(self)))
-		return result
+		return aces
+
+	@Lazy
+	def __acl__(self):
+		return acl_from_aces(self.__aces__)
