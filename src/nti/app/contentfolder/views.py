@@ -403,17 +403,25 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		result.contentType = contentType or u'application/octet-stream'
 		return result
 
-	def get_unique_file_name(self, text, container):
+	def get_unique_file_name(self, text, filename, container):
 		separator = '_'
 		newtext = text
+		hex_key = None
+		filename = filename or text 
 		slugified = slugify_filename(text)
 		text_noe, ext = os.path.splitext(slugified)
 		while True:
 			if newtext not in container:
 				break
-			s = generate_random_hex_string(6)
-			newtext = "%s%s%s%s" % (text_noe, separator, s, ext)
-		return newtext
+			else:
+				hex_key = generate_random_hex_string(6)
+				newtext = "%s%s%s%s" % (text_noe, separator, hex_key, ext)
+
+		if hex_key:
+			fn_noe, ext = os.path.splitext(filename)
+			filename = "%s%s%s%s" % (fn_noe, separator, hex_key, ext)
+				
+		return newtext, filename
 
 	def _do_call(self):
 		values = self.readInput()
@@ -426,7 +434,9 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			filename = getattr(source, 'filename', None)
 			file_key = safe_filename(name_finder(name))
 			if not overwrite and file_key in self.context:
-				file_key = self.get_unique_file_name(file_key, self.context)
+				file_key, filename = self.get_unique_file_name(file_key, 
+															   filename, 
+															   self.context)
 	
 			if file_key in self.context:
 				target = self.context[file_key]
