@@ -17,8 +17,6 @@ import tempfile
 from urlparse import parse_qs
 from functools import partial
 
-from slugify import slugify_filename
-
 from zope import component
 from zope import lifecycleevent
 
@@ -39,6 +37,7 @@ from nti.app.contentfolder import MessageFactory as _
 
 from nti.app.contentfolder import CFIO
 
+from nti.app.contentfolder.utils import get_unique_file_name
 from nti.app.contentfolder.utils import get_ds2, compute_path
 from nti.app.contentfolder.utils import to_external_cf_io_url
 from nti.app.contentfolder.utils import to_external_cf_io_href
@@ -403,26 +402,6 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		result.contentType = contentType or u'application/octet-stream'
 		return result
 
-	def get_unique_file_name(self, text, filename, container):
-		separator = '_'
-		newtext = text
-		hex_key = None
-		filename = filename or text 
-		slugified = slugify_filename(text)
-		text_noe, ext = os.path.splitext(slugified)
-		while True:
-			if newtext not in container:
-				break
-			else:
-				hex_key = generate_random_hex_string(6)
-				newtext = "%s%s%s%s" % (text_noe, separator, hex_key, ext)
-
-		if hex_key:
-			fn_noe, ext = os.path.splitext(filename)
-			filename = "%s%s%s%s" % (fn_noe, separator, hex_key, ext)
-				
-		return newtext, filename
-
 	def _do_call(self):
 		values = self.readInput()
 		result = LocatedExternalDict()
@@ -434,9 +413,9 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			filename = getattr(source, 'filename', None)
 			file_key = safe_filename(name_finder(name))
 			if not overwrite and file_key in self.context:
-				file_key, filename = self.get_unique_file_name(file_key, 
-															   filename, 
-															   self.context)
+				file_key, filename = get_unique_file_name(file_key, 
+														  filename=filename, 
+														  container=self.context)
 	
 			if file_key in self.context:
 				target = self.context[file_key]

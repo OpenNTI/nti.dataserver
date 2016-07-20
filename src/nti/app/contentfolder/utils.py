@@ -11,9 +11,13 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import re
+import time
 from urllib import quote
 from urllib import unquote
 from urlparse import urljoin
+from datetime import datetime
+
+from slugify import slugify_filename
 
 from zope import component
 
@@ -111,3 +115,26 @@ def compute_path(context):
 	result = '/'.join(result)
 	result = '/' + result if not result.startswith('/') else result
 	return result
+
+def get_unique_file_name(name, container, now=None, filename=None):
+	counter = 0
+	hex_key = 0
+	newtext = name
+	filename = filename or name
+	slugified = slugify_filename(name)
+	text_noe, ext = os.path.splitext(slugified)
+	now = now or time.time() # current time
+	now = datetime.fromtimestamp(now).strftime("%H.%M.%S")
+	while True:
+		if newtext not in container:
+			break
+		else:
+			counter += 1
+			hex_key = "%s.%s" % (now, counter)
+			newtext = "%s.%s%s" % (text_noe, hex_key, ext)
+
+	if hex_key:
+		fn_noe, ext = os.path.splitext(filename)
+		filename = "%s.%s%s" % (fn_noe, hex_key, ext)
+
+	return newtext, filename

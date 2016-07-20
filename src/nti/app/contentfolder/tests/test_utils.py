@@ -20,6 +20,7 @@ from zope import interface
 
 from plone.namedfile.interfaces import INamed
 
+from nti.app.contentfolder.utils import get_unique_file_name
 from nti.app.contentfolder.utils import get_file_from_cf_io_url
 
 class TestUtils(unittest.TestCase):
@@ -41,3 +42,8 @@ class TestUtils(unittest.TestCase):
 		n = get_file_from_cf_io_url('/dataserver2/cf.io/xrPH9/sample.dat')
 		assert_that(n, is_(foo))
 
+	def test_get_unique_file_name(self):
+		now = 123476490
+		container = ('ichigo.pdf', 'ichigo.21.01.30.1.pdf')
+		name, _ = get_unique_file_name("ichigo.pdf", container=container, now=now)
+		assert_that(name, 'ichigo.21.01.30.2.pdf')
