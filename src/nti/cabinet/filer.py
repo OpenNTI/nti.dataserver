@@ -10,7 +10,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import time
 import shutil
+from datetime import datetime
 
 from zope import interface
 
@@ -21,8 +23,6 @@ from nti.cabinet.mixins import SourceBucket
 from nti.cabinet.mixins import ReferenceSourceFile
 
 from nti.common import mimetypes
-
-from nti.common.random import generate_random_hex_string
 
 def transfer_to_storage_file(source, target):
 	if hasattr(source, 'read'):
@@ -70,12 +70,15 @@ class DirectoryFiler(object):
 			return True
 		return False
 
-	def _get_unique_file_name(self, path, key):
-		separator = '_'
+	def _get_unique_file_name(self, path, key, now=None):
+		counter = 0
+		now = now or time.time() # current time
 		key_noe, ext = os.path.splitext(key)
+		now = datetime.fromtimestamp(now).strftime("%H.%M.%S")
 		while True:
-			s = generate_random_hex_string(6)
-			newtext = "%s%s%s%s" % (key_noe, separator, s, ext)
+			counter += 1
+			hex_key = "%s.%s" % (now, counter)
+			newtext = "%s.%s%s" % (key_noe, hex_key, ext)
 			newtext = os.path.join(path, newtext)
 			if not os.path.exists(newtext):
 				break
