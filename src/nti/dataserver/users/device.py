@@ -21,7 +21,7 @@ from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import IDeviceContainer
 from nti.dataserver.interfaces import IHTC_NEW_FACTORY
 
-from nti.dataserver.datastructures import AbstractNamedLastModifiedBTreeContainer
+from nti.datastructures.datastructures import AbstractNamedLastModifiedBTreeContainer
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
