@@ -101,6 +101,10 @@ class BaseContentMixin(object):
 		if '_associations' in self.__dict__:
 			result = bool(list(self.associations()))
 		return result
+	
+	def clear_associations(self):
+		if '_associations' in self.__dict__:
+			self._associations.clear()
 
 	# IFileReader
 

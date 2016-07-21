@@ -38,6 +38,11 @@ class IContentBaseFile(IFile, IAttributeAnnotatable, IContained):
 		remove an associatied object from this file
 		"""
 
+	def clear_associations():
+		"""
+		remove all associatied object from this file
+		"""
+
 	def associations():
 		"""
 		return an iterable with the associatied objects
