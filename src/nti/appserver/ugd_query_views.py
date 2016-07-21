@@ -31,8 +31,8 @@ from nti.app.renderers.interfaces import IUncacheableInResponse
 from nti.app.renderers.interfaces import IUGDExternalCollection
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.appserver import httpexceptions as hexc
 from nti.appserver import MessageFactory as _
+from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.pyramid_authorization import is_readable
 
@@ -847,7 +847,8 @@ class _UGDView(AbstractAuthenticatedView,
 						or 	self.request.params.get( 'batchBeforeOID', '' )
 
 			if 		batch_object \
-				and batch_size is not None:
+				and batch_size is not None \
+				and batch_start is not None:
 
 				test = lambda key_value: self.__get_key( key_value[1] ) == batch_object
 
@@ -1538,7 +1539,7 @@ class ReferenceListBasedDecorator(AbstractTwoStateViewLinkDecorator):
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
 
-from nti.dataserver.datastructures import LastModifiedCopyingUserList
+from nti.datastructures.datastructures import LastModifiedCopyingUserList
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
