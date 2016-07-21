@@ -499,7 +499,7 @@ class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 		if self.context.creator:
 			yield self.context.creator.username
 
-from nti.dataserver.datastructures import AbstractCaseInsensitiveNamedLastModifiedBTreeContainer
+from nti.datastructures.datastructures import AbstractCaseInsensitiveNamedLastModifiedBTreeContainer
 
 @interface.implementer(IFriendsListContainer)
 class _FriendsListMap(AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
