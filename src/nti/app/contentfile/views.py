@@ -99,7 +99,7 @@ class ContentFileAssociateView(AbstractAuthenticatedView,
 			   renderer='rest',
 			   name='constrains',
 			   permission=nauth.ACT_READ,
-			   request_method='POST')
+			   request_method='GET')
 class FileConstrainsView(AbstractAuthenticatedView):
 
 	def __call__(self):
