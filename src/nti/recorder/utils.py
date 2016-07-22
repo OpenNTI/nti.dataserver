@@ -25,6 +25,8 @@ except ImportError:
 	def get_thread_ident():
 		return id(transaction.get())
 
+from nti.coremetadata.interfaces import IRecordable
+
 from nti.externalization.externalization import isSyntheticKey
 
 from nti.recorder.interfaces import TRX_TYPE_CREATE
@@ -120,6 +122,9 @@ def record_transaction(recordable, principal=None, descriptions=(),
 	lifecycleevent.created(record)
 	history.add(record)
 
-	recordable.lock()
+	if IRecordable.providedBy(recordable):
+		recordable.lock()
+	else:
+		recordable.locked = True
 	return record
 recordTransaction = record_trax = record_transaction

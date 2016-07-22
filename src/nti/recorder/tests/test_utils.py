@@ -36,6 +36,8 @@ from nti.recorder.tests import SharedConfiguringTestLayer
 @interface.implementer(IRecordable, IAttributeAnnotatable)
 class Recordable(Persistent):
 	locked = False
+	def lock(self):
+		self.locked = True
 
 class TestSubscriber(unittest.TestCase):
 
