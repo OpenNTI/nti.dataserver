@@ -71,34 +71,33 @@ def is_created(obj):
 def txn_id():
 	return unicode("txn.%s" % get_thread_ident())
 
-def _get_attributes( descriptions ):
+def _get_attributes(descriptions):
 	if descriptions is not None and not isinstance(descriptions, (tuple, list, set)):
 		descriptions = (descriptions,)
 
 	result = set()
 
-	def _accum( vals ):
+	def _accum(vals):
 		# Exclude synthetic keys, including mimetype.
 		for val in vals:
 			if 		val \
-				and not isSyntheticKey( val ) \
+				and not isSyntheticKey(val) \
 				and val.lower() != 'mimetype':
-				result.add( val )
+				result.add(val)
 
 	for a in descriptions or ():
 		if hasattr(a, 'attributes'):
-			_accum( a.attributes or () )
+			_accum(a.attributes or ())
 		elif isinstance(a, (tuple, list, set)):
-			_accum( a )
+			_accum(a)
 		else:
-			_accum( (a,) )
+			_accum((a,))
 	return result
 
 def record_transaction(recordable, principal=None, descriptions=(),
 					   ext_value=None, type_=TRX_TYPE_UPDATE, history=None):
-
 	__traceback_info__ = recordable, principal, ext_value
-	attributes = _get_attributes( descriptions )
+	attributes = _get_attributes(descriptions)
 	if not attributes and type_ == TRX_TYPE_UPDATE:
 		# Take care not to record anything that's not an actual edit.
 		return
@@ -111,7 +110,7 @@ def record_transaction(recordable, principal=None, descriptions=(),
 	tid = txn_id() if tid == u'0x00' else tid  # new object
 
 	principal = current_principal() if principal is None else principal
-	username = (getattr(principal, 'id', None)
+	username = (	getattr(principal, 'id', None)
 				or	getattr(principal, 'usernane', None)
 				or	principal)
 	ext_value = compress(ext_value) if ext_value is not None else None
@@ -121,6 +120,6 @@ def record_transaction(recordable, principal=None, descriptions=(),
 	lifecycleevent.created(record)
 	history.add(record)
 
-	recordable.locked = True
+	recordable.lock()
 	return record
 recordTransaction = record_trax = record_transaction
