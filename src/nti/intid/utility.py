@@ -126,8 +126,8 @@ class IntIds(_ZCIntIds):
 
 		del self.refs[uid]
 
-		if 	ob is not None and removeAttribute and \
-			getattr(ob, self.attribute, None) is not None:
+		if 		ob is not None and removeAttribute \
+			and getattr(ob, self.attribute, None) is not None:
 			setattr(ob, self.attribute, None)
 
 		if notify and ob is not None:
