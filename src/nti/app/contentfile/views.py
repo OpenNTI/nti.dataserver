@@ -37,8 +37,10 @@ from nti.namedfile.interfaces import IFileConstrained
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
+OID = StandardExternalFields.OID
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
+NTIID = StandardExternalFields.NTIID
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 @view_config(context=IContentBaseFile)
@@ -84,7 +86,7 @@ class ContentFileAssociateView(AbstractAuthenticatedView,
 
 	def __call__(self):
 		values = self.readInput()
-		ntiid = values.get('ntiid') or values.get('oid') or values.get('target')
+		ntiid = values.get(NTIID) or values.get(OID) or values.get('target')
 		if not ntiid:
 			raise hexc.HTTPUnprocessableEntity(_("Must provide a valid context id."))
 		target = find_object_with_ntiid(ntiid)
@@ -100,7 +102,7 @@ class ContentFileAssociateView(AbstractAuthenticatedView,
 			   name='constrains',
 			   permission=nauth.ACT_READ,
 			   request_method='GET')
-class FileConstrainsView(AbstractAuthenticatedView):
+class FileConstrainsGetView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		result = file_contraints(self.context, self.remoteUser)
