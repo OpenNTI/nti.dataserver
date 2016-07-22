@@ -12,7 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 29
 
-from .evolve28 import do_evolve
+from nti.contentsearch.generations.evolve28 import do_evolve
 
 def evolve(context):
 	"""

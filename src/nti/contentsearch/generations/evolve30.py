@@ -16,7 +16,7 @@ from zope import component
 
 from zope.component.hooks import site, setHooks
 
-from ..interfaces import IContentSearcher
+from nti.contentsearch.interfaces import IContentSearcher
 
 def evolve(context):
 	"""

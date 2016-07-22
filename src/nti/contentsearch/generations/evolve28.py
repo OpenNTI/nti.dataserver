@@ -16,7 +16,8 @@ from zope import component
 
 from zope.annotation.interfaces import IAnnotations
 
-from zope.component.hooks import site, setHooks
+from zope.component.hooks import site
+from zope.component.hooks import setHooks
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
