@@ -83,6 +83,11 @@ from zope.annotation import factory as afactory
 from zope.annotation.interfaces import IAnnotations
 from zope.annotation.interfaces import IAttributeAnnotatable
 
+from zope.authentication.interfaces import IAuthenticatedGroup
+from zope.authentication.interfaces import IEveryoneGroup
+from zope.authentication.interfaces import IUnauthenticatedGroup
+from zope.authentication.interfaces import IUnauthenticatedPrincipal
+
 from zope.cachedescriptors.property import Lazy
 
 from zope.container.contained import Contained
@@ -286,6 +291,18 @@ def _system_user_factory(string):
 	assert string in (SYSTEM_USER_NAME, SYSTEM_USER_ID)
 	return system_user
 
+def _zope_unauth_user_factory(string):
+	return component.getUtility(IUnauthenticatedPrincipal)
+
+def _zope_unauth_group_factory(string):
+	return component.getUtility(IUnauthenticatedGroup)
+
+def _zope_auth_group_factory(string):
+	return component.getUtility(IAuthenticatedGroup)
+
+def _zope_everyone_group_factory(string):
+	return component.getUtility(IEveryoneGroup)
+
 # Let the system user externalize
 system_user.toExternalObject = \
 		staticmethod(lambda *args, **kwargs: {'Class': 'SystemUser',
@@ -335,8 +352,12 @@ ROLE_CONTENT_EDITOR = _StringRole(ROLE_CONTENT_EDITOR_NAME)
 ROLE_CONTENT_ADMIN_NAME = 'nti.roles.contentlibrary.admin'
 ROLE_CONTENT_ADMIN = _StringRole(ROLE_CONTENT_ADMIN_NAME)
 
-# TODO: Everyone and Authenticated can go away
-# through the use of the principal registry
+# We're now using the zope principal registry in
+# place of these home grown entities.  However, these are left
+# place as there is some concern we may have acls pickled as
+# part of some persistent objects.
+# TODO: audit this to see if that is the case and remove these
+# class if possible
 class _EveryoneGroup(_StringGroup):
 	"""
 	Everyone, authenticated or not.

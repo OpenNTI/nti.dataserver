@@ -288,12 +288,25 @@
 			 provides=".interfaces.IPrincipal"
 			 name="system"
 			 for="basestring" />
-	<adapter factory=".authorization._EveryoneGroup"
+
+	<!-- Adapters to get from id to the Zope root principal registry entries-->
+
+	<adapter factory=".authorization._zope_unauth_user_factory"
+			 provides=".interfaces.IPrincipal"
+			 name="system.Unknown"
+			 for="basestring" />
+	<adapter factory=".authorization._zope_unauth_group_factory"
 			 provides=".interfaces.IGroup"
-			 name="system.Everyone" />
-	<adapter factory=".authorization._AuthenticatedGroup"
+			 name="system.UnknownGroup"
+			 for="basestring" />
+	<adapter factory=".authorization._zope_auth_group_factory"
 			 provides=".interfaces.IGroup"
-			 name="system.Authenticated" />
+			 name="system.Authenticated"
+			 for="basestring" />
+	<adapter factory=".authorization._zope_everyone_group_factory"
+			 provides=".interfaces.IGroup"
+			 name="system.Everyone"
+			 for="basestring" />
 
 	<adapter factory=".interfaces.DefaultCreatedUsername" />
 
