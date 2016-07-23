@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.ntiids.ntiids import find_object_with_ntiid
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -23,6 +24,8 @@ import zipfile
 from io import BytesIO
 
 from zope import component
+
+from zope.intid.interfaces import IIntIds
 
 from nti.app.contentfolder.utils import get_cf_io_href
 
@@ -48,6 +51,12 @@ class TestContentFolderViews(ApplicationLayerTest):
 					has_entries('OID', is_not(none()),
 								'NTIID', is_not(none())))
 
+		with mock_dataserver.mock_db_trans(self.ds):
+			intids = component.getUtility(IIntIds)
+			internal = find_object_with_ntiid(res.json_body['OID'])
+			doc_id = intids.queryId(internal)
+			assert_that(doc_id, is_not(none()))
+			
 		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(1),
@@ -178,6 +187,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 		self.testapp.post('/dataserver2/ofs/root/@@upload',
 						  upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
 						  status=201)
+
 		self.testapp.delete('/dataserver2/ofs/root/ichigo', status=409)
 
 		mock_ha.is_callable().with_args().returns(False)
@@ -187,7 +197,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(0),
 								'Items', has_length(0)))
-
+			
 		self.testapp.delete('/dataserver2/ofs/root', status=403)
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)

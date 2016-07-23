@@ -71,6 +71,9 @@ class TestModel(unittest.TestCase):
 		update_from_external_object(internal, ext_obj)
 		assert_that(internal, has_property('name', is_('f1')))
 		assert_that(internal, has_property('filename', is_('f1')))
+		
+		del f1['foo']
+		assert_that('foo', is_not(is_in(f1)))
 
 	def test_move(self):
 		root = RootFolder()

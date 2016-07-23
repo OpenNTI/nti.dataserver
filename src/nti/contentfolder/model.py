@@ -14,6 +14,8 @@ import six
 from zope import interface
 from zope import lifecycleevent
 
+from zope.location.location import locate
+
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.common.property import alias
@@ -76,9 +78,18 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 	def filename(self):
 		return self.name
 
-	def __setitem__(self, key, value):
+	def _save(self, key, value):
 		checkValidId(key)
-		CaseInsensitiveCheckingLastModifiedBTreeContainer.__setitem__(self, key, value)
+		self._setitemf(key, value)
+		locate(value, parent=self, name=key)
+		if getattr(value, '_p_jar', None) is None and self._p_jar is not None:
+			self._p_jar.add(value)
+		lifecycleevent.added(value, self, key)
+		self.updateLastMod()
+		self._p_changed = True
+
+	def __setitem__(self, key, value):
+		self._save(key, value)
 
 	def add(self, obj):
 		name = get_context_name(obj)
@@ -89,6 +100,14 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		self[name] = obj
 		return obj
 	append = add
+
+	def _eject(self, key):
+		self._delitemf(key)
+		self.updateLastMod()
+		self._p_changed = True
+
+	def __delitem__(self, key):
+		self._eject(key)
 
 	def remove(self, obj):
 		name = get_context_name(obj)
