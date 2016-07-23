@@ -25,6 +25,7 @@ from pyramid.request import Request
 from pyramid.security import Everyone
 from pyramid.security import Authenticated
 
+from zope.authentication.interfaces import IEveryoneGroup
 from zope.authentication.interfaces import IUnauthenticatedPrincipal
 
 from nti.app.authentication.who_apifactory import create_who_apifactory
@@ -103,12 +104,15 @@ class TestWhoPolicy(unittest.TestCase):
 
 	def test_anonymous_effective_principles(self):
 		unknown_principal = 'test_unauthed_principal_id'
+		everyone_group = 'test_everyone_group'
 
 		mock_get = fudge.Fake()
-		mock_get.is_callable().returns({}).next_call().with_args(IUnauthenticatedPrincipal).returns(unknown_principal)
+		mock_get.is_callable().returns({})
+		mock_get.next_call().with_args(IUnauthenticatedPrincipal).returns(unknown_principal)
+		mock_get.next_call().with_args(IEveryoneGroup).returns(everyone_group)
 		with fudge.patched_context('zope.component', 'getUtility', mock_get):
 			policy = self.policy
 			request = Request.blank('/', headers={'User-Agent': b"NextThought/1.0.2 ntitvos CFNetwork/672.0.8 Darwin/13.0.0"})
 			effective_principals = policy.effective_principals(request)
-			assert_that(effective_principals, has_items(ANONYMOUS_USERNAME, unknown_principal, Everyone))
+			assert_that(effective_principals, has_items(ANONYMOUS_USERNAME, unknown_principal, Everyone, everyone_group))
 			assert_that(effective_principals, does_not(has_items(Authenticated)))

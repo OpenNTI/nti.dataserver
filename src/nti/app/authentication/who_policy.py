@@ -57,7 +57,8 @@ class _GroupsCallback(object):
 			return identity[CACHE_KEY]
 
 		if is_anonymous_identity(identity):
-			return (component.getUtility(interfaces.IUnauthenticatedPrincipal),)
+			return (component.getUtility(interfaces.IUnauthenticatedPrincipal),
+					component.getUtility(interfaces.IEveryoneGroup), )
 
 		username = None
 		if 'repoze.who.userid' in identity: # already identified by AuthTktCookie or _NTIUsersAuthenticatorPlugin
