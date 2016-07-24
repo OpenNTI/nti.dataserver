@@ -83,8 +83,8 @@ from zope.annotation import factory as afactory
 from zope.annotation.interfaces import IAnnotations
 from zope.annotation.interfaces import IAttributeAnnotatable
 
-from zope.authentication.interfaces import IAuthenticatedGroup
 from zope.authentication.interfaces import IEveryoneGroup
+from zope.authentication.interfaces import IAuthenticatedGroup
 from zope.authentication.interfaces import IUnauthenticatedGroup
 from zope.authentication.interfaces import IUnauthenticatedPrincipal
 
@@ -287,20 +287,20 @@ class _StringPrincipal(_AbstractPrincipal):
 		self.id = name
 		self.title = name
 
-def _system_user_factory(string):
-	assert string in (SYSTEM_USER_NAME, SYSTEM_USER_ID)
+def _system_user_factory(s):
+	assert s in (SYSTEM_USER_NAME, SYSTEM_USER_ID)
 	return system_user
 
-def _zope_unauth_user_factory(string):
+def _zope_unauth_user_factory(s):
 	return component.getUtility(IUnauthenticatedPrincipal)
 
-def _zope_unauth_group_factory(string):
+def _zope_unauth_group_factory(s):
 	return component.getUtility(IUnauthenticatedGroup)
 
-def _zope_auth_group_factory(string):
+def _zope_auth_group_factory(s):
 	return component.getUtility(IAuthenticatedGroup)
 
-def _zope_everyone_group_factory(string):
+def _zope_everyone_group_factory(s):
 	return component.getUtility(IEveryoneGroup)
 
 # Let the system user externalize
