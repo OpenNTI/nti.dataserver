@@ -110,6 +110,7 @@ class TestWhoPolicy(unittest.TestCase):
 		mock_get.is_callable().returns({})
 		mock_get.next_call().with_args(IUnauthenticatedPrincipal).returns(unknown_principal)
 		mock_get.next_call().with_args(IEveryoneGroup).returns(everyone_group)
+		mock_get.next_call().with_args(IEveryoneGroup).returns(everyone_group)
 		with fudge.patched_context('zope.component', 'getUtility', mock_get):
 			policy = self.policy
 			request = Request.blank('/', headers={'User-Agent': b"NextThought/1.0.2 ntitvos CFNetwork/672.0.8 Darwin/13.0.0"})
