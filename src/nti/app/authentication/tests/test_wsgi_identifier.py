@@ -1,34 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-import unittest
-from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_length
-from hamcrest import has_key
-from hamcrest import is_not as does_not
+from hamcrest import assert_that
 
 import fudge
+import unittest
 
-
-from ..wsgi_identifier import identify_handler_factory
-from ..who_apifactory import create_who_apifactory
-from ..interfaces import ILogonWhitelist
-from nti.appserver.interfaces import IApplicationSettings
 from repoze.who.interfaces import IAPIFactory
+
+from nti.app.authentication.interfaces import ILogonWhitelist
+
+from nti.app.authentication.who_apifactory import create_who_apifactory
+
+from nti.app.authentication.wsgi_identifier import identify_handler_factory
+
+from nti.appserver.interfaces import IApplicationSettings
 
 class TestWsgiIdentifier(unittest.TestCase):
 
@@ -56,39 +49,39 @@ class TestWsgiIdentifier(unittest.TestCase):
 
 		# First, a different path
 		environ['PATH_INFO'] = '/to_the_app'
-		assert_that( handler( environ, None), is_(42) )
+		assert_that(handler(environ, None), is_(42))
 
 		# ok, now the real path, without a cookie
 		environ['PATH_INFO'] = '/_ops/identify'
 
 
 		called = []
-		assert_that( handler(environ,
-							 lambda s, h: called.append((s,h))),
-					 is_(("",)))
-		assert_that( called[0],
-					 is_(('403 Forbidden', [('Content-Type', 'text/plain')])))
+		assert_that(handler(environ,
+							lambda s, h: called.append((s, h))),
+					is_(("",)))
+		assert_that(called[0],
+					is_(('403 Forbidden', [('Content-Type', 'text/plain')])))
 		del called[:]
 
 		# Now pretend we have an auth cookie
 		api = apifactory(environ)
 		auth_tkt = api.name_registry[apifactory.default_identifier_name]
 
-		cookie = auth_tkt.remember( environ, {'repoze.who.userid': 'jason'})[0]
+		cookie = auth_tkt.remember(environ, {'repoze.who.userid': 'jason'})[0]
 		environ[b'HTTP_COOKIE'] = cookie[1]
 		del environ['paste.cookies']
 
 		# but we're not in the whitelist
-		assert_that( handler(environ,
-							 lambda s, h: called.append((s,h))),
-					 is_(("",)))
-		assert_that( called[0],
+		assert_that(handler(environ,
+							lambda s, h: called.append((s, h))),
+					is_(("",)))
+		assert_that(called[0],
 					 is_(('403 Forbidden', [('Content-Type', 'text/plain')])))
 		del called[:]
 
 		whitelist.append('jason')
-		assert_that( handler(environ,
-							 lambda s, h: called.append((s,h))),
-					 is_(("",)))
-		assert_that( called[0],
-					 is_(('200 OK', [('Content-Type', 'text/plain')])))
+		assert_that(handler(environ,
+							lambda s, h: called.append((s, h))),
+					is_(("",)))
+		assert_that(called[0],
+					is_(('200 OK', [('Content-Type', 'text/plain')])))
