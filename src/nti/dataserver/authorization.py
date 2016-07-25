@@ -298,10 +298,10 @@ def _zope_unauth_group_factory(s):
 	return component.getUtility(IUnauthenticatedGroup)
 
 def _zope_auth_group_factory(s):
-	return component.getUtility(IAuthenticatedGroup)
+	return _AuthenticatedGroup(s)
 
 def _zope_everyone_group_factory(s):
-	return component.getUtility(IEveryoneGroup)
+	return _EveryoneGroup(s)
 
 # Let the system user externalize
 system_user.toExternalObject = \
