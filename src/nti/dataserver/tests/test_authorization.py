@@ -12,10 +12,12 @@ from hamcrest import has_entries
 from nti.testing.matchers import provides
 from nti.externalization.tests import externalizes
 
+from nti.testing.matchers import provides
 from nti.testing.matchers import validly_provides as verifiably_provides
 
 from .mock_dataserver import DataserverLayerTest
 
+from zope.authentication.interfaces import IEveryoneGroup
 from zope.interface.verify import verifyObject
 from zope import component
 from zope.security.permission import Permission
@@ -27,9 +29,9 @@ import nti.dataserver.interfaces as nti_interfaces
 
 class TestAuthorization(DataserverLayerTest):
 
-	def test_everyone_equal_string(self):
+	def test_everyone_adapts(self):
 		iprin = nti_interfaces.IPrincipal('system.Everyone')
-		assert_that( iprin, is_(equal_to('system.Everyone')))
+		assert_that( iprin, provides( IEveryoneGroup ))
 
 	def test_system_user_external(self):
 		assert_that( nti_interfaces.system_user,
