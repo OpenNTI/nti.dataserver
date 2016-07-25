@@ -16,9 +16,12 @@ from zope import component
 from zope.component.hooks import site
 from zope.component.hooks import setHooks
 
-from zope.intid.interfaces import IIntIds
+from BTrees.OIBTree import OIBTree
+from BTrees.OOBTree import OOBTree
 
-from nti.contentlibrary.indexed_data.catalog import install_library_catalog
+from nti.site.hostpolicy import get_all_host_sites
+
+from nti.site.interfaces import IHostPolicySiteManager
 
 def do_evolve(context):
 	setHooks()
@@ -30,15 +33,26 @@ def do_evolve(context):
 		assert  component.getSiteManager() == ds_folder.getSiteManager(), \
 				"Hooks not installed?"
 
-		lsm = ds_folder.getSiteManager()
-		intids = lsm.getUtility(IIntIds)
-
-		install_library_catalog(ds_folder, intids)
+		for site in get_all_host_sites():
+			manager = site.getSiteManager()
+			if not IHostPolicySiteManager.providedBy(manager):
+				continue	
+			if 		hasattr(manager, "_utility_registrations")	\
+				and not isinstance(manager._utility_registrations, OOBTree):					
+				manager._utility_registrations = OOBTree(manager._utility_registrations)
+				manager._adapter_registrations = OOBTree(manager._adapter_registrations)
+			
+			for name in ('adapters', 'utilities'):
+				registry = getattr(manager, name, None)
+				if 		hasattr(registry, "_provided")	\
+					and not isinstance(registry._provided, OIBTree):
+					registry._provided = OIBTree(registry._provided)
+				
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):
 	"""
-	Evolve to gen 81 by installing the new library asset catalog.
+	Evolve to gen 81 to update persistent local site mangager internals
 	"""
-	# do_evolve(context)  XXX DON'T INSTALL YET
-	pass
+	do_evolve(context)
+	
