@@ -707,7 +707,7 @@ class _TestingLibraryTOCEntryACLProvider(object):
 	def __parent__(self):
 		return self.context.__parent__
 
-	@_LazyOnClass
+	@Lazy
 	def __acl__(self):
 		return (ace_allowing(AUTHENTICATED_GROUP_NAME,
 							 ALL_PERMISSIONS,
