@@ -12,15 +12,7 @@ import zope.component.persistentregistry
 from BTrees.OIBTree import OIBTree
 from BTrees.OOBTree import OOBTree
 
-from persistent.list import PersistentList
-
 def _do_patch():
-	
-	def _new_init_registrations(self):
-		self._utility_registrations = OOBTree()
-		self._adapter_registrations = OOBTree()
-		self._handler_registrations = PersistentList()
-		self._subscription_registrations = PersistentList()
 
 	class _PersistentComponents(zope.component.persistentregistry.PersistentComponents):
 		
@@ -30,10 +22,9 @@ def _do_patch():
 			self.utilities._provided = OIBTree()
 
 		def _init_registrations(self):
+			super(_PersistentComponents, self)._init_registrations()
 			self._utility_registrations = OOBTree()
 			self._adapter_registrations = OOBTree()
-			self._handler_registrations = PersistentList()
-			self._subscription_registrations = PersistentList()
 
 	zope.component.persistentregistry.PersistentComponents = _PersistentComponents
 
