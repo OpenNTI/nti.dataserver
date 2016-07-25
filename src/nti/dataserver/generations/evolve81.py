@@ -13,8 +13,8 @@ generation = 81
 
 from zope import component
 
-from zope.component.hooks import site
 from zope.component.hooks import setHooks
+from zope.component.hooks import site as current_site
 
 from BTrees.OIBTree import OIBTree
 from BTrees.OOBTree import OOBTree
@@ -29,7 +29,7 @@ def do_evolve(context):
 	root = conn.root()
 	ds_folder = root['nti.dataserver']
 
-	with site(ds_folder):
+	with current_site(ds_folder):
 		assert  component.getSiteManager() == ds_folder.getSiteManager(), \
 				"Hooks not installed?"
 
