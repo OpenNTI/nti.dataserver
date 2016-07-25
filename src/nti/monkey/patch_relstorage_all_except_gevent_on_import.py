@@ -10,10 +10,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from nti.monkey import patch_nti_internal_on_import
-from nti.monkey import patch_persistent_components
+from nti.monkey import patch_persistent_components_on_import
 
 def patch():
-	patch_persistent_components.patch()
+	patch_persistent_components_on_import.patch()
 	patch_nti_internal_on_import.patch()
 	try:
 		__import__('MySQLdb')
