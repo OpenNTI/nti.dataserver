@@ -26,8 +26,6 @@ import BTrees
 
 from nti.common._compat import integer_types
 
-from nti.common.proxy import removeAllProxies
-
 from nti.common.time import bit64_int_to_time
 from nti.common.time import time_to_64bit_int
 
@@ -36,6 +34,8 @@ from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
 from nti.contentlibrary.indexed_data.interfaces import ISlideDeckAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainersAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
+
+from nti.externalization.proxy import removeAllProxies
 
 from nti.site.interfaces import IHostPolicyFolder
 

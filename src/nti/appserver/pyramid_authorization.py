@@ -139,7 +139,7 @@ zope.testing.cleanup.addCleanUp(_clear_caches)
 
 from ZODB.POSException import POSKeyError
 
-from nti.common.proxy import removeAllProxies
+from nti.externalization.proxy import removeAllProxies
 
 def _lineage_that_ensures_acls(obj):
 	request = get_current_request() or _Fake()

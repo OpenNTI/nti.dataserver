@@ -19,8 +19,6 @@ from zope import interface
 
 from ZODB.POSException import POSError
 
-from nti.common.proxy import removeAllProxies
-
 from nti.dataserver import users
 from nti.dataserver import authorization_acl as auth
 
@@ -54,6 +52,8 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.externalization.proxy import removeAllProxies
 
 from nti.links.links import Link
 

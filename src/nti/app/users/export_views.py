@@ -40,8 +40,6 @@ from nti.common.maps import CaseInsensitiveDict
 
 from nti.common.property import Lazy
 
-from nti.common.proxy import removeAllProxies
-
 from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
@@ -65,6 +63,8 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.externalization.proxy import removeAllProxies
 
 from nti.metadata import dataserver_metadata_catalog
 

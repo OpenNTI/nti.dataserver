@@ -27,12 +27,13 @@ from persistent import Persistent
 from nti.common.property import alias
 from nti.common.time import bit64_int_to_time
 from nti.common.time import time_to_64bit_int
-from nti.common.proxy import removeAllProxies
 
 from nti.contentlibrary.indexed_data import CATALOG_INDEX_NAME
 
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedObjectCatalog
+
+from nti.externalization.proxy import removeAllProxies
 
 from nti.site.interfaces import IHostPolicyFolder
 

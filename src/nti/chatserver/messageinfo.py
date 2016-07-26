@@ -30,7 +30,6 @@ from nti.chatserver.interfaces import IMessageInfo
 
 from nti.common.property import alias 
 from nti.common.property import read_alias
-from nti.common.proxy import removeAllProxies
 
 from nti.dataserver.contenttypes.base import _make_getitem
 from nti.dataserver.contenttypes.threadable import ThreadableMixin
@@ -43,9 +42,13 @@ from nti.dataserver.users import entity
 from nti.dataserver_core.schema import MessageInfoBodyFieldProperty
 
 from nti.externalization.datastructures import InterfaceObjectIO
+
 from nti.externalization.externalization import to_external_object
+
 from nti.externalization.internalization import update_from_external_object
 from nti.externalization.internalization import register_legacy_search_module
+
+from nti.externalization.proxy import removeAllProxies
 
 from nti.mimetype import mimetype
 
