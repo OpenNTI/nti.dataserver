@@ -56,8 +56,6 @@ from nti.appserver.ugd_edit_views import UGDPutView
 from nti.common.file import name_finder
 from nti.common.file import safe_filename
 
-from nti.common.integer_strings import from_external_string
-
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.common.mimetypes import guess_type
@@ -95,6 +93,8 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.externalization.externalization import to_external_object
 from nti.externalization.externalization import to_standard_external_created_time
 from nti.externalization.externalization import to_standard_external_last_modified_time
+
+from nti.externalization.integer_strings import from_external_string
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import LocatedExternalList

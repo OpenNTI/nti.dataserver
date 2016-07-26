@@ -29,12 +29,12 @@ from plone.namedfile.interfaces import INamed as IPloneNamed
 
 from nti.app.contentfolder import CFIO
 
-from nti.common.integer_strings import to_external_string
-from nti.common.integer_strings import from_external_string
-
 from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfolder.interfaces import IRootFolder
+
+from nti.externalization.integer_strings import to_external_string
+from nti.externalization.integer_strings import from_external_string
 
 pattern = re.compile('(.+)/%s/(.+)(\/.*)?' % CFIO, re.UNICODE | re.IGNORECASE)
 
