@@ -47,3 +47,6 @@ def main():
 	sys.exit(
 		load_entry_point('pyramid', 'console_scripts', 'pserve')()
 	)
+
+if __name__ == '__main__':
+	sys.exit(main())
