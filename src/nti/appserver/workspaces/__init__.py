@@ -38,7 +38,8 @@ from nti.common.property import Lazy
 from nti.common.property import alias
 
 from nti.dataserver.users import User
-from nti.dataserver import datastructures
+
+from nti.datastructures import datastructures
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity

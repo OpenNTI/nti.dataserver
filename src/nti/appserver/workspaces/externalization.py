@@ -37,7 +37,8 @@ from nti.appserver.workspaces.interfaces import ICollection
 from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import ILink
+from nti.dataserver.interfaces import ISimpleEnclosureContainer
 
 from nti.datastructures import decorators
 
@@ -79,7 +80,7 @@ class CollectionSummaryExternalizer(object):
 		accepts = collection.accepts
 		if accepts is not None:
 			ext_collection['accepts'] = [mimetype.nti_mimetype_from_object(x) for x in accepts]
-			if nti_interfaces.ISimpleEnclosureContainer.providedBy(collection):
+			if ISimpleEnclosureContainer.providedBy(collection):
 				ext_collection['accepts'].extend(('image/*',))
 				ext_collection['accepts'].extend(('application/pdf',))
 			ext_collection['accepts'].sort()  # For the convenience of tests
@@ -129,7 +130,7 @@ class ContainerCollectionDetailExternalizer(object):
 		def fixup(v_, item):
 			# FIXME: This is similar to the renderer. See comments in the renderer.
 			if StandardExternalFields.LINKS in item:
-				item[StandardExternalFields.LINKS] = [rest.render_link(link) if nti_interfaces.ILink.providedBy(link) else link
+				item[StandardExternalFields.LINKS] = [rest.render_link(link) if ILink.providedBy(link) else link
 													  for link
 													  in item[StandardExternalFields.LINKS]]
 			# TODO: The externalization process and/or the renderer should be handling
@@ -167,8 +168,10 @@ class ContainerCollectionDetailExternalizer(object):
 
 		if 	isinstance(container, collections.Mapping) and \
 			not getattr(container, '_v_container_ext_as_list', False):
-			ext_collection['Items'] = { k: fixup(v, toExternalObject(v, **kwargs)) for k, v in container.iteritems()
-										if not isSyntheticKey(k)}
+			ext_collection['Items'] = { 
+				k: fixup(v, toExternalObject(v, **kwargs)) for k, v in container.iteritems()
+				if not isSyntheticKey(k)
+			}
 		else:
 			ext_collection['Items'] = [fixup(v, toExternalObject(v, **kwargs)) for v in container]
 
@@ -213,7 +216,7 @@ class WorkspaceExternalizer(object):
 		items = [toExternalObject(collection, name='summary', **kwargs)
 				 for collection
 				 in self._workspace.collections]
-		result['Items'] = items
+		result[StandardExternalFields.ITEMS] = items
 		_links = decorators.find_links(self._workspace)
 		if _links:
 			result[StandardExternalFields.LINKS] = _magic_link_externalizer(_links)
