@@ -16,10 +16,10 @@ import warnings
 from zope import interface
 from zope import component
 
+from zope.container.constraints import IContainerTypesConstraint
+
 from zope.location.location import Location
 from zope.location.interfaces import ILocation
-
-from zope.container.constraints import IContainerTypesConstraint
 
 from zope.mimetype.interfaces import IContentTypeAware
 
@@ -34,12 +34,26 @@ from nti.app.authentication import get_remote_user
 from nti.app.renderers.interfaces import IExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 
+from nti.appserver.interfaces import MissingRequest
+from nti.appserver.interfaces import INamedLinkView
+from nti.appserver.interfaces import IContentUnitInfo
+from nti.appserver.interfaces import INamedLinkPathAdapter
+from nti.appserver.interfaces import IUserViewTokenCreator
+from nti.appserver.interfaces import IPageContainerResource
+from nti.appserver.interfaces import IRootPageContainerResource
+
+from nti.appserver.traversal import find_interface
+
+from nti.appserver.workspaces.interfaces import IWorkspace
+from nti.appserver.workspaces.interfaces import ICollection
+from nti.appserver.workspaces.interfaces import IUserService
+from nti.appserver.workspaces.interfaces import IUserWorkspace
+from nti.appserver.workspaces.interfaces import IWorkspaceValidator
+from nti.appserver.workspaces.interfaces import IContainerCollection
+from nti.appserver.workspaces.interfaces import IUserWorkspaceLinkProvider
+
 from nti.common.property import Lazy
 from nti.common.property import alias
-
-from nti.dataserver.users import User
-
-from nti.datastructures import datastructures
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -52,10 +66,13 @@ from nti.dataserver.interfaces import IFriendsListContainer
 from nti.dataserver.interfaces import IHomogeneousTypeContainer
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
+from nti.dataserver.users import User
+from nti.dataserver.users.friends_lists import DynamicFriendsList
+
 from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
-from nti.dataserver.users.friends_lists import DynamicFriendsList
+from nti.datastructures import datastructures
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -66,33 +83,15 @@ from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
 
-from ..traversal import find_interface
-
-from ..interfaces import MissingRequest
-from ..interfaces import INamedLinkView
-from ..interfaces import IContentUnitInfo
-from ..interfaces import INamedLinkPathAdapter
-from ..interfaces import IUserViewTokenCreator
-from ..interfaces import IPageContainerResource
-from ..interfaces import IRootPageContainerResource
-
-from .interfaces import IWorkspace
-from .interfaces import ICollection
-from .interfaces import IUserService
-from .interfaces import IUserWorkspace
-from .interfaces import IWorkspaceValidator
-from .interfaces import IContainerCollection
-from .interfaces import IUserWorkspaceLinkProvider
-
 ITEMS = StandardExternalFields.ITEMS
 
 # pylint
 itc_providedBy = getattr(IContainerTypesConstraint, 'providedBy')
 
-def _find_name( obj ):
-	return getattr( obj, 'name', None ) \
-		   or getattr( obj, '__name__', None ) \
-		   or getattr( obj, 'container_name', None )
+def _find_name(obj):
+	return 	  getattr(obj, 'name', None) \
+		   or getattr(obj, '__name__', None) \
+		   or getattr(obj, 'container_name', None)
 
 class _ContainerWrapper(object):
 	"""
@@ -106,19 +105,19 @@ class _ContainerWrapper(object):
 
 	_name_override = None
 
-	def __init__( self, container ):
+	def __init__(self, container):
 		self._container = container
-		self.__parent__ = getattr( container, '__parent__', None )
+		self.__parent__ = getattr(container, '__parent__', None)
 
-	def name( self ):
-		return self._name_override or _find_name( self._container )
+	def name(self):
+		return self._name_override or _find_name(self._container)
 
 	def set__name__(self, s):
 		self._name_override = s
-	__name__ = property(name,set__name__)
+	__name__ = property(name, set__name__)
 	name = property(name)
 
-def _collections( self, containers ):
+def _collections(self, containers):
 	"""
 	A generator iterating across the containers turning
 	each into an ICollection.
@@ -127,10 +126,10 @@ def _collections( self, containers ):
 		# TODO: Verify that only the first part is needed, because
 		# the site manager hooks are properly installed at runtime.
 		# See the test package for info.
-		adapt = ICollection(x,None) or component.queryAdapter( x, ICollection )
+		adapt = ICollection(x, None) or component.queryAdapter(x, ICollection)
 		if not adapt:
 			continue
-		adapt.__parent__ = self # Right?
+		adapt.__parent__ = self  # Right?
 		yield adapt
 
 @interface.implementer(IWorkspace)
@@ -144,22 +143,22 @@ class ContainerEnumerationWorkspace(_ContainerWrapper):
 	we will use that name as a last resort. This can be overridden.
 	"""
 
-	def __init__( self, container ):
-		super(ContainerEnumerationWorkspace,self).__init__( container )
+	def __init__(self, container):
+		super(ContainerEnumerationWorkspace, self).__init__(container)
 
 	@property
-	def collections( self ):
-		return _collections( self, self._container.itercontainers() )
+	def collections(self):
+		return _collections(self, self._container.itercontainers())
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IHomogeneousTypeContainer)
 class HomogeneousTypedContainerCollection(_ContainerWrapper):
 
-	def __init__( self, container ):
-		super(HomogeneousTypedContainerCollection,self).__init__(container)
+	def __init__(self, container):
+		super(HomogeneousTypedContainerCollection, self).__init__(container)
 
 	@property
-	def accepts( self ):
+	def accepts(self):
 		return (self._container.contained_type,)
 
 	@property
@@ -168,8 +167,8 @@ class HomogeneousTypedContainerCollection(_ContainerWrapper):
 
 class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 
-	def __init__( self, user_workspace ):
-		super( _AbstractPseudoMembershipContainer, self ).__init__( user_workspace )
+	def __init__(self, user_workspace):
+		super(_AbstractPseudoMembershipContainer, self).__init__(user_workspace)
 		try:
 			self._user = user_workspace.user
 		except AttributeError:
@@ -181,7 +180,7 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 		return get_remote_user()
 
 	@property
-	def accepts( self ):
+	def accepts(self):
 		return ()
 
 	@property
@@ -207,7 +206,7 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 			return not self in hidden
 
 	def get_filtered_memberships(self):
-		result = [x for x in self.memberships if self.selector( x )]
+		result = [x for x in self.memberships if self.selector(x)]
 		return result
 
 	def get_last_modified(self, vals):
@@ -218,8 +217,8 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 			# membership, the last mod could still stay
 			# the same.
 			try:
-				last_mod = max( (x.lastModified for x in vals
-								if getattr( x, 'lastModified', 0 )) )
+				last_mod = max((x.lastModified for x in vals
+								if getattr(x, 'lastModified', 0)))
 			except ValueError:
 				pass
 		return last_mod or None
@@ -230,8 +229,8 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 		# our caching here.
 		request = get_current_request()
 		if request is not None:
-			interface.alsoProvides( result, IExternalCollection )
-			IPreRenderResponseCacheController( result )( result, {'request':request} )
+			interface.alsoProvides(result, IExternalCollection)
+			IPreRenderResponseCacheController(result)(result, {'request':request})
 
 	@property
 	def container(self):
@@ -241,8 +240,8 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 			result[ membership.NTIID ] = membership
 		result.__name__ = self.name
 		result.__parent__ = self._user
-		result.lastModified = self.get_last_modified( memberships )
-		self._caching_headers( result )
+		result.lastModified = self.get_last_modified(memberships)
+		self._caching_headers(result)
 		return result
 
 @component.adapter(IFriendsListContainer)
@@ -252,28 +251,28 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
 	..note:: We are correctly not sending back an 'edit' link, but the UI still presents
 		them as editable. We are also sending back the correct creator.
 	"""
-	def __init__( self, container ):
-		super( FriendsListContainerCollection, self ).__init__( container )
+	def __init__(self, container):
+		super(FriendsListContainerCollection, self).__init__(container)
 
 	@property
-	def accepts( self ):
+	def accepts(self):
 		# Try to determine if we should be allowed to create
 		# this kind of thing or not
 		# TODO: This can probably be generalized up
 		user = None
-		user_service = find_interface( self, IUserService )
+		user_service = find_interface(self, IUserService)
 		if user_service:
 			user = user_service.user
 		if user:
 			factory = component.getUtility(sch_interfaces.IVocabularyFactory,
-										   "Creatable External Object Types" )
-			vocab = factory( user )
+										   "Creatable External Object Types")
+			vocab = factory(user)
 			try:
 				vocab.getTermByToken(mimetype.nti_mimetype_from_object(self._container.contained_type))
 			except LookupError:
 				# We can prove that we cannot create it, it's not in our vocabulary.
 				return ()
-		return (self._container.contained_type,DynamicFriendsList)
+		return (self._container.contained_type, DynamicFriendsList)
 
 	@property
 	def last_modified(self):
@@ -288,8 +287,8 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
 		Only FL objects that our remote user can see.
 		"""
 		# In alpha, some users have timestamps in FL collection.
-		return 	IFriendsList.providedBy( obj ) \
-			and not IDynamicSharingTargetFriendsList.providedBy( obj ) \
+		return 	IFriendsList.providedBy(obj) \
+			and not IDynamicSharingTargetFriendsList.providedBy(obj) \
 			and (self.remote_user in obj or self.remote_user == obj.creator)
 
 def _is_remote_same_as_authenticated(user, req=None):
@@ -314,8 +313,8 @@ class DynamicMembershipsContainerCollection(_AbstractPseudoMembershipContainer):
 
 @component.adapter(IUser)
 @interface.implementer(IContainerCollection)
-def _UserDynamicMembershipsCollectionFactory( user ):
-	return DynamicMembershipsContainerCollection( UserEnumerationWorkspace( user ) )
+def _UserDynamicMembershipsCollectionFactory(user):
+	return DynamicMembershipsContainerCollection(UserEnumerationWorkspace(user))
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
@@ -328,20 +327,20 @@ class DynamicFriendsListContainerCollection(_AbstractPseudoMembershipContainer):
 	@property
 	def memberships(self):
 		# Any that we own plus any we were added to.
-		return set( self._user.friendsLists.values() ) | set( self._user.dynamic_memberships )
+		return set(self._user.friendsLists.values()) | set(self._user.dynamic_memberships)
 
 	def selector(self, obj):
 		"""
 		DFLs we own or are a member of, even if it it's not our
 		collection.
 		"""
-		return 	IDynamicSharingTargetFriendsList.providedBy( obj ) \
+		return 	IDynamicSharingTargetFriendsList.providedBy(obj) \
 			and (self.remote_user in obj or self.remote_user == obj.creator)
 
 @component.adapter(IUser)
 @interface.implementer(IContainerCollection)
-def _UserDynamicFriendsListCollectionFactory( user ):
-	return DynamicFriendsListContainerCollection( UserEnumerationWorkspace( user ) )
+def _UserDynamicFriendsListCollectionFactory(user):
+	return DynamicFriendsListContainerCollection(UserEnumerationWorkspace(user))
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
@@ -359,14 +358,14 @@ class CommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
 		Communities that allow membership ops and are either public or
 		we are a member of.
 		"""
-		return 	ICommunity.providedBy( obj ) \
-			and not IDisallowMembershipOperations.providedBy( obj ) \
+		return 	ICommunity.providedBy(obj) \
+			and not IDisallowMembershipOperations.providedBy(obj) \
 			and (obj.public or self.remote_user in obj)
 
 @component.adapter(IUser)
 @interface.implementer(IContainerCollection)
-def _UserCommunitiesCollectionFactory( user ):
-	return CommunitiesContainerCollection( UserEnumerationWorkspace( user ) )
+def _UserCommunitiesCollectionFactory(user):
+	return CommunitiesContainerCollection(UserEnumerationWorkspace(user))
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
@@ -384,22 +383,22 @@ class AllCommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
 		"""
 		Communities you're a member of plus communities
 		"""
-		return 	ICommunity.providedBy( obj ) \
-			and not IDisallowMembershipOperations.providedBy( obj ) \
+		return 	ICommunity.providedBy(obj) \
+			and not IDisallowMembershipOperations.providedBy(obj) \
 			and (obj.public or self.remote_user in obj)
 
 @component.adapter(IUser)
 @interface.implementer(IContainerCollection)
-def _UserAllCommunitiesCollectionFactory( user ):
-	return AllCommunitiesContainerCollection( UserEnumerationWorkspace( user ) )
+def _UserAllCommunitiesCollectionFactory(user):
+	return AllCommunitiesContainerCollection(UserEnumerationWorkspace(user))
 
 @component.adapter(ICollection)
 @interface.implementer(IContentTypeAware)
 class CollectionContentTypeAware(object):
 
-	mimeType = mimetype.nti_mimetype_with_class( 'collection' )
+	mimeType = mimetype.nti_mimetype_with_class('collection')
 
-	def __init__( self, collection ):
+	def __init__(self, collection):
 		pass
 
 def _find_named_link_views(parent, provided=None):
@@ -421,16 +420,16 @@ def _find_named_link_views(parent, provided=None):
 	# Some tests provide a request object without that,
 	# and even then, the route that got is here isn't (yet)
 	# the traversable route we want. So look for the interface by route name.
-	request_iface = component.queryUtility( interface.Interface,
+	request_iface = component.queryUtility(	interface.Interface,
 											name='objects.generic.traversal',
-											default=interface.Interface )
+											default=interface.Interface)
 	# If it isn't loaded because the app hasn't been scanned, we have no
 	# way to route, and no views either. So we get None, which is a fine
 	# discriminator.
 	if provided is None:
-		provided = interface.providedBy( parent )
+		provided = interface.providedBy(parent)
 
-	def _test( name, view ):
+	def _test(name, view):
 		# Views created with the @view_config decorator tend to get wrapped
 		# in a pyramid proxy, which would hide anything they declare to implement
 		# (at least view functions). This is done at venusian scan time, which is after
@@ -442,43 +441,43 @@ def _find_named_link_views(parent, provided=None):
 			# View Functions will directly provide the interface;
 			# view classes, OTOH, will tend to implement it (because using
 			# the @implementer() decorator is easy)
-			if 	INamedLinkView.providedBy( v ) or \
-				INamedLinkView.implementedBy( v ):
+			if 	INamedLinkView.providedBy(v) or \
+				INamedLinkView.implementedBy(v):
 				return True
 
 	adapters = component.getSiteManager().adapters
 	# Order matters. traversing wins, so views first (?)
 	names = [name for name, view
-				   in adapters.lookupAll( (IViewClassifier, request_iface, provided),
+				   in adapters.lookupAll((IViewClassifier, request_iface, provided),
 										  IView)
-				   if name and _test( name, view )]
-	names.extend( (name for name, _ in component.getAdapters( (parent, request ),
-															  INamedLinkPathAdapter )) )
+				   if name and _test(name, view)]
+	names.extend((name for name, _ in component.getAdapters((parent, request),
+															 INamedLinkPathAdapter)))
 
-	names.extend( (name for name, _ in adapters.lookupAll( (provided, interface.providedBy(request)),
-														   INamedLinkPathAdapter)) )
+	names.extend((name for name, _ in adapters.lookupAll((provided, interface.providedBy(request)),
+														  INamedLinkPathAdapter)))
 	return set(names)
 
-def _make_named_view_links( parent, pseudo_target=False, **kwargs ):
+def _make_named_view_links(parent, pseudo_target=False, **kwargs):
 	"""
 	Uses :func:`._find_named_link_views` to find named views
 	appropriate for the parent and returns a fresh
 	list of :class:`.ILink` objects representing them.
 	"""
-	names = _find_named_link_views( parent, **kwargs )
+	names = _find_named_link_views(parent, **kwargs)
 	_links = []
 	for name in names:
 		target = name
-		if pseudo_target: # Hmm...
+		if pseudo_target:  # Hmm...
 			target = Location()
 			target.__name__ = name
 			target.__parent__ = parent
 
-		link = links.Link( target, rel=name )
+		link = links.Link(target, rel=name)
 		link.__name__ = link.target
 		link.__parent__ = parent
-		interface.alsoProvides( link, ILocation )
-		_links.append( link )
+		interface.alsoProvides(link, ILocation)
+		_links.append(link)
 	return _links
 
 @interface.implementer(IWorkspace)
@@ -492,7 +491,7 @@ class GlobalWorkspace(object):
 	__parent__ = None
 
 	def __init__(self, parent=None):
-		super(GlobalWorkspace,self).__init__()
+		super(GlobalWorkspace, self).__init__()
 		if parent:
 			self.__parent__ = parent
 
@@ -500,7 +499,7 @@ class GlobalWorkspace(object):
 	def links(self):
 		# Introspect the component registry to find the things that
 		# want to live directly beneath the dataserver root globally.
-		return _make_named_view_links( self.__parent__ )
+		return _make_named_view_links(self.__parent__)
 
 	@property
 	def name(self): return 'Global'
@@ -509,7 +508,7 @@ class GlobalWorkspace(object):
 	@property
 	def collections(self):
 		return [GlobalCollection(self.__parent__, 'Objects'),
-				GlobalCollection(self.__parent__, 'NTIIDs' ),
+				GlobalCollection(self.__parent__, 'NTIIDs'),
 				GlobalCollection(self.__parent__, 'LibraryPath')]
 
 @interface.implementer(ICollection)
@@ -543,8 +542,8 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	user = alias('_container')
 	context = alias('_container')
 
-	def __init__( self, user ):
-		super(UserEnumerationWorkspace,self).__init__( user )
+	def __init__(self, user):
+		super(UserEnumerationWorkspace, self).__init__(user)
 		self.__name__ = user.username
 
 	@property
@@ -557,7 +556,7 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	@property
 	def links(self):
 		result = []
-		for provider in component.subscribers( (self.user,), IUserWorkspaceLinkProvider):
+		for provider in component.subscribers((self.user,), IUserWorkspaceLinkProvider):
 			links = provider.links(self)
 			result.extend(links or ())
 		return result
@@ -565,18 +564,18 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	@property
 	def collections(self):
 		"The returned collections are sorted by name."
-		result = list(super(UserEnumerationWorkspace,self).collections)
-		result.extend( [c
-						for c in component.subscribers( (self,), ICollection )
-						if c] )
+		result = list(super(UserEnumerationWorkspace, self).collections)
+		result.extend([	c
+						for c in component.subscribers((self,), ICollection)
+						if c])
 
-		return sorted( result, key=lambda x: x.name )
+		return sorted(result, key=lambda x: x.name)
 
 @interface.implementer(IContentUnitInfo)
 class _NTIIDEntry(object):
 
 	__external_class_name__ = 'PageInfo'
-	mimeType = mimetype.nti_mimetype_with_class( __external_class_name__ )
+	mimeType = mimetype.nti_mimetype_with_class(__external_class_name__)
 
 	link_provided = IPageContainerResource
 	recursive_stream_supports_feeds = True
@@ -593,9 +592,9 @@ class _NTIIDEntry(object):
 
 	@property
 	def links(self):
-		result = _make_named_view_links( self.__parent__,
-										 pseudo_target=True, # XXX: FIXME
-										 provided=self.link_provided )
+		result = _make_named_view_links(self.__parent__,
+										 pseudo_target=True,  # XXX: FIXME
+										 provided=self.link_provided)
 
 		# If we support a feed, advertise it
 		# FIXME: We should probably not be doing this. We're making
@@ -604,30 +603,30 @@ class _NTIIDEntry(object):
 		# are less important).
 		if 	self.recursive_stream_supports_feeds and \
 			[x for x in result if x.rel == 'RecursiveStream']:
-			token_creator = component.queryUtility(IUserViewTokenCreator, name='feed.atom' )
+			token_creator = component.queryUtility(IUserViewTokenCreator, name='feed.atom')
 			remote_user = get_remote_user()
 			if token_creator and remote_user:
-				token = token_creator.getTokenForUserId( remote_user.username )
+				token = token_creator.getTokenForUserId(remote_user.username)
 				if token:
 					target = Location()
 					target.__name__ = 'RecursiveStream'
 					target.__parent__ = self.__parent__
-					link = links.Link( target,
-									   rel='alternate',
-									   target_mime_type='application/atom+xml',
-									   title='RSS',
-									   elements=('feed.atom',),
-									   params={'token': token} )
+					link = links.Link(target,
+									  rel='alternate',
+									  target_mime_type='application/atom+xml',
+									  title='RSS',
+									  elements=('feed.atom',),
+									  params={'token': token})
 					# TODO: Token
-					result.append( link )
+					result.append(link)
 
-		result.extend( self.extra_links )
+		result.extend(self.extra_links)
 		return result
 
-	def __repr__( self ):
-		return "<%s.%s %s at %s>" % ( type(self).__module__,
-									  type(self).__name__,
-									  self.ntiid, hex(id(self)) )
+	def __repr__(self):
+		return "<%s.%s %s at %s>" % (type(self).__module__,
+									 type(self).__name__,
+									 self.ntiid, hex(id(self)))
 
 class _RootNTIIDEntry(_NTIIDEntry):
 	"""
@@ -636,8 +635,8 @@ class _RootNTIIDEntry(_NTIIDEntry):
 	"""
 	link_provided = IRootPageContainerResource
 
-	def __init__( self, parent, _ ):
-		super(_RootNTIIDEntry,self).__init__( parent, ntiids.ROOT )
+	def __init__(self, parent, _):
+		super(_RootNTIIDEntry, self).__init__(parent, ntiids.ROOT)
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
@@ -650,12 +649,12 @@ class _UserPagesCollection(Location):
 	__name__ = name
 	__parent__ = None
 
-	def __init__( self, user_workspace ):
+	def __init__(self, user_workspace):
 		self.__parent__ = user_workspace
 		self._workspace = user_workspace
 
 	@property
-	def _user( self ):
+	def _user(self):
 		return self._workspace.user
 
 	@property
@@ -663,8 +662,8 @@ class _UserPagesCollection(Location):
 		# TODO: These are deprecated here, as the entire pages collection is
 		# deprecated. They are moved to the user's workspace
 		result = []
-		for provider in component.subscribers( (self._user,), IUserWorkspaceLinkProvider):
-			links = provider.links(self._workspace )
+		for provider in component.subscribers((self._user,), IUserWorkspaceLinkProvider):
+			links = provider.links(self._workspace)
 			result.extend(links or ())
 		return result
 
@@ -674,16 +673,16 @@ class _UserPagesCollection(Location):
 		ent_parent.__parent__ = self.__parent__
 		return ent_parent
 
-	def make_info_for( self, ntiid ):
+	def make_info_for(self, ntiid):
 		factory = _RootNTIIDEntry if ntiid == ntiids.ROOT else _NTIIDEntry
-		return factory( self._make_parent(ntiid), ntiid )
+		return factory(self._make_parent(ntiid), ntiid)
 
 	@property
 	def container(self):
 		result = datastructures.LastModifiedCopyingUserList()
-		result.append( self.make_info_for(ntiids.ROOT) )
+		result.append(self.make_info_for(ntiids.ROOT))
 		for ntiid in self._user.iterntiids():
-			result.append( self.make_info_for( ntiid ) )
+			result.append(self.make_info_for(ntiid))
 
 		return result
 
@@ -699,9 +698,9 @@ class _UserPagesCollection(Location):
 		for term in vocab:
 			factory = term.value
 			implementing = factory.getInterfaces()
-			parent = implementing.get( '__parent__')
-			if 	parent and getattr( parent, 'constraint', None ) and \
-				itc_providedBy( parent.constraint ):
+			parent = implementing.get('__parent__')
+			if 	parent and getattr(parent, 'constraint', None) and \
+				itc_providedBy(parent.constraint):
 				parent_types = parent.constraint.types
 				# Hmm. Ok, right now we don't have constraints correct everywhere.
 				# But when we do have constraints, they are not a general object
@@ -713,24 +712,24 @@ class _UserPagesCollection(Location):
 
 @component.adapter(IUser)
 @interface.implementer(IContainerCollection)
-def _UserPagesCollectionFactory( user ):
+def _UserPagesCollectionFactory(user):
 	"""
 	Used as a shortcut from the user to the pages class sections. Deprecated.
 	"""
-	return _UserPagesCollection( UserEnumerationWorkspace( user ) )
+	return _UserPagesCollection(UserEnumerationWorkspace(user))
 
 @interface.implementer(IWorkspace)
 @component.adapter(IUserService)
-def _user_workspace( user_service ):
+def _user_workspace(user_service):
 	# The main user workspace lives at /users/ME/
-	user_workspace = UserEnumerationWorkspace( user_service.user )
+	user_workspace = UserEnumerationWorkspace(user_service.user)
 	user_workspace.__name__ = user_service.user.username
 	user_workspace.__parent__ = user_service
 	return user_workspace
 
 @interface.implementer(IWorkspace)
 @component.adapter(IUserService)
-def _global_workspace( user_service ):
+def _global_workspace(user_service):
 	global_ws = GlobalWorkspace(parent=user_service.__parent__)
 	assert global_ws.__parent__
 	return global_ws
@@ -739,11 +738,11 @@ def _global_workspace( user_service ):
 @interface.implementer(IUserService, IContentTypeAware)
 class UserService(Location):
 
-	mimeType = mimetype.nti_mimetype_with_class( 'workspace' )
+	mimeType = mimetype.nti_mimetype_with_class('workspace')
 
 	__parent__ = None
 
-	def __init__( self, user ):
+	def __init__(self, user):
 		self.user = user
 		self.__name__ = 'users'
 		self.__parent__ = component.getUtility(IDataserver).root
@@ -751,7 +750,7 @@ class UserService(Location):
 	@Lazy
 	def _validator(self):
 		return component.queryUtility(IWorkspaceValidator)
-	
+
 	def _is_valid_workspace(self, workspace):
 		result = workspace != None
 		if result and self._validator != None:
@@ -760,10 +759,10 @@ class UserService(Location):
 
 	@property
 	def user_workspace(self):
-		return _user_workspace( self )
+		return _user_workspace(self)
 
 	@property
-	def workspaces( self ):
+	def workspaces(self):
 		"""
 		We query for all subscribers that provide IWorkspace, given an IUserService. This
 		facilitates adding new workspaces from different parts of the code. It also
@@ -772,8 +771,8 @@ class UserService(Location):
 
 		The returned list is sorted by the name of the workspace.
 		"""
-		return sorted( [workspace
+		return sorted([workspace
 						for workspace
-						in component.subscribers( (self,), IWorkspace )
+						in component.subscribers((self,), IWorkspace)
 						if self._is_valid_workspace(workspace)],
-					   key=lambda w: w.name )
+					   key=lambda w: w.name)
