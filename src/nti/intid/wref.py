@@ -23,7 +23,7 @@ from zope import interface
 
 from zc.intid import IIntIds
 
-from nti.common.integer_strings import to_external_string
+from nti.externalization.integer_strings import to_external_string
 
 from nti.ntiids.ntiids import TYPE_MISSING
 from nti.ntiids.ntiids import make_ntiid
