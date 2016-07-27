@@ -65,11 +65,11 @@ class TestUtils(unittest.TestCase):
 		
 	def test_mkdirs(self):
 		root = RootFolder()
-		created = mkdirs(root, "/home/users/ichigo/bankai")
+		created = mkdirs(root, "/home/users/ichigo/bankai", ContentFolder)
 		assert_that(created, has_property('name', 'bankai'))
 
 		t = traverse(root, "/home/users/ichigo/bankai")
 		assert_that(created, is_(t))
 		
-		created = mkdirs(root, "/home/users/ichigo/bankai")
+		created = mkdirs(root, "/home/users/ichigo/bankai", ContentFolder)
 		assert_that(created, is_(t))

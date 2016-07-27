@@ -37,8 +37,8 @@ from nti.app.contentfolder import MessageFactory as _
 
 from nti.app.contentfolder import CFIO
 
+from nti.app.contentfolder.utils import get_ds2
 from nti.app.contentfolder.utils import get_unique_file_name
-from nti.app.contentfolder.utils import get_ds2, compute_path
 from nti.app.contentfolder.utils import to_external_cf_io_url
 from nti.app.contentfolder.utils import to_external_cf_io_href
 
@@ -81,6 +81,7 @@ from nti.contentfolder.model import ContentFolder
 
 from nti.contentfolder.utils import mkdirs
 from nti.contentfolder.utils import traverse
+from nti.contentfolder.utils import compute_path
 from nti.contentfolder.utils import TraversalException
 from nti.contentfolder.utils import NoSuchFileException
 
@@ -267,17 +268,37 @@ class SearchView(AbstractAuthenticatedView, BatchingUtilsMixin, SortMixin):
 		decorateMimeType(context, ext_obj)
 		return ext_obj
 
-	def search(self):
-		reverse = not self._isAscending()
-		name = (self._params.get('name') or u'').lower()
-		result = [v for v in list(self.context.values()) if name in v.filename.lower()]
-		result.sort(key=self._sortKey, reverse=reverse)
-		return result
+	def _get_path(self, context):
+		try:
+			return context.path
+		except AttributeError:
+			return compute_path(context)
+
+	def _search(self, context, name, recursive, items, seen):
+		for v in list(context.values()):
+			if name in v.filename.lower():
+				items.append(v)
+				if INamedContainer.providedBy(context):
+					path = self._get_path(context)
+					if path not in seen:
+						items.append(context)
+						seen.add(path)
+			if recursive and INamedContainer.providedBy(v):
+				self._search(v, name, recursive, items, seen)
+		return items
 
 	def __call__(self):
 		result = LocatedExternalDict()
+		result[ITEMS] = items = list()
+		# read params
 		batching = self._isBatching()
-		items = self.search()
+		reverse = not self._isAscending()
+		name = (self._params.get('name') or u'').lower()
+		recursive = is_true(self._params.get('recursive'))
+		# context is 'already' seen
+		seen = {self._get_path(self.context)}
+		self._search(self.context, name, recursive, items, seen)
+		items.sort(key=self._sortKey, reverse=reverse)
 		if batching:
 			self._batch_items_iterable(result, items)
 		else:

@@ -14,8 +14,6 @@ from zope import interface
 
 from zope.location.interfaces import ILocation
 
-from nti.app.contentfolder.utils import compute_path
-
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver.pyramid_authorization import has_permission
@@ -24,8 +22,11 @@ from nti.common.property import Lazy
 
 from nti.contentfile.interfaces import IContentBaseFile
 
-from nti.contentfolder.interfaces import IRootFolder, ILockedFolder
+from nti.contentfolder.interfaces import IRootFolder
+from nti.contentfolder.interfaces import ILockedFolder  
 from nti.contentfolder.interfaces import INamedContainer
+
+from nti.contentfolder.utils import compute_path
 
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_UPDATE

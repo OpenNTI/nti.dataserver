@@ -20,6 +20,7 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.common.property import alias
 from nti.common.property import readproperty
+from nti.common.property import CachedProperty
 
 from nti.coremetadata.interfaces import SYSTEM_USER_ID
 
@@ -28,6 +29,8 @@ from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeCo
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import IContentFolder
 from nti.contentfolder.interfaces import INamedContainer
+
+from nti.contentfolder.utils import compute_path
 
 from nti.namedfile.file import get_file_name
 
@@ -194,7 +197,15 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 
 	def enumerateChildren(self):
 		return tuple(self.keys())
+	
+	@CachedProperty('__parent__', '__name__')
+	def path(self):
+		return compute_path(self)
 
+	def __str__(self):
+		return "%s(%r)" % (self.__class__.__name__, self.name)
+	__repr__ = __str__
+	
 @interface.implementer(IRootFolder)
 class RootFolder(ContentFolder):
 	createDirectFieldProperties(IRootFolder)

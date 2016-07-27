@@ -168,18 +168,27 @@ class TestContentFolderViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_search(self):
-		self.testapp.post('/dataserver2/ofs/root/@@upload',
-						 upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo'),
+		data = {'name': 'bleach'}
+		self.testapp.post_json('/dataserver2/ofs/root/@@mkdir', data, status=201)
+		self.testapp.post('/dataserver2/ofs/root/bleach/@@upload',
+						  upload_files=[ ('ichigo.txt', 'ichigo.txt', b'ichigo'),
 										('aizen.txt', 'aizen.txt', b'aizen'),
 										('rukia.txt', 'rukia.txt', b'rukia'),
 										('zaraki.txt', 'zaraki.txt', b'zaraki'),
 										('abarai.txt', 'abarai.txt', b'abarai'), ],
-						 status=201)
+						  status=201)
 
-		data = {'name': 'ai'}
+		data = {'name': 'zanpakuto'}
+		self.testapp.post_json('/dataserver2/ofs/root/bleach/@@mkdir', data, status=201)
+		self.testapp.post('/dataserver2/ofs/root/bleach/@@upload',
+						  upload_files=[('bankai.txt', 'bankai.txt', b'bankai'),
+										('shikai.txt', 'shikai.txt', b'shikai') ],
+						  status=201)
+
+		data = {'name': 'ai', 'recursive':True}
 		res = self.testapp.get('/dataserver2/ofs/root/@@search', data, status=200)
 		assert_that(res.json_body,
-					has_entry('Items', has_length(2)))
+					has_entry('Items', has_length(5)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	@fudge.patch('nti.app.contentfolder.views.has_associations')

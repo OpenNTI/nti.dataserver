@@ -15,8 +15,6 @@ from nti.common.file import safe_filename
 
 from nti.contentfolder.interfaces import IRootFolder
 
-from nti.contentfolder.model import ContentFolder
-
 from nti.traversal.traversal import find_interface
 
 class TraversalException(Exception):
@@ -66,7 +64,7 @@ def traverse(current, path=None):
 
 	return current
 
-def mkdirs(current, path, factory=ContentFolder):
+def mkdirs(current, path, factory):
 	root = find_interface(current, IRootFolder, strict=False)
 	if not path or path == u'/':
 		return root
@@ -99,3 +97,16 @@ def mkdirs(current, path, factory=ContentFolder):
 		else:
 			current = current[safe_segment]
 	return current
+
+def compute_path(context):
+	result = []
+	while context is not None and not IRootFolder.providedBy(context):
+		try:
+			result.append(context.__name__)
+			context = context.__parent__
+		except AttributeError:
+			break
+	result.reverse()
+	result = '/'.join(result)
+	result = '/' + result if not result.startswith('/') else result
+	return result

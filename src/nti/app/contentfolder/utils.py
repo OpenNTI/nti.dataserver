@@ -31,8 +31,6 @@ from nti.app.contentfolder import CFIO
 
 from nti.contentfile.interfaces import IContentBaseFile
 
-from nti.contentfolder.interfaces import IRootFolder
-
 from nti.externalization.integer_strings import to_external_string
 from nti.externalization.integer_strings import from_external_string
 
@@ -101,19 +99,6 @@ def get_file_from_cf_io_url(link, intids=None):
 				result = None
 	except Exception:
 		logger.error("Error while getting file from %s", link)
-	return result
-
-def compute_path(context):
-	result = []
-	while context is not None and not IRootFolder.providedBy(context):
-		try:
-			result.append(context.__name__)
-			context = context.__parent__
-		except AttributeError:
-			break
-	result.reverse()
-	result = '/'.join(result)
-	result = '/' + result if not result.startswith('/') else result
 	return result
 
 def get_unique_file_name(name, container, now=None, filename=None):
