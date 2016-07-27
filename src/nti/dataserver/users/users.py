@@ -43,8 +43,6 @@ from persistent.persistence import Persistent
 
 from nti.apns import interfaces as apns_interfaces
 
-from nti.common.time import time_to_64bit_int
-
 from nti.dataserver import dicts
 from nti.dataserver import sharing
 
@@ -78,7 +76,10 @@ from nti.datastructures import datastructures
 
 from nti.ntiids import ntiids
 
-from nti.zodb import minmax, isBroken
+from nti.zodb import minmax
+from nti.zodb import isBroken
+
+from nti.zodb.containers import time_to_64bit_int
 
 # Starts as none, which matches what get_shared_dataserver takes as its
 # clue to use get instead of query. But set to False or 0 to use

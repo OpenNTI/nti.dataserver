@@ -25,8 +25,6 @@ import BTrees
 from persistent import Persistent
 
 from nti.common.property import alias
-from nti.common.time import bit64_int_to_time
-from nti.common.time import time_to_64bit_int
 
 from nti.contentlibrary.indexed_data import CATALOG_INDEX_NAME
 
@@ -36,6 +34,9 @@ from nti.contentlibrary.indexed_data.interfaces import IContainedObjectCatalog
 from nti.externalization.proxy import removeAllProxies
 
 from nti.site.interfaces import IHostPolicyFolder
+
+from nti.zodb.containers import bit64_int_to_time
+from nti.zodb.containers import time_to_64bit_int
 
 from nti.zope_catalog.catalog import ResultSet
 

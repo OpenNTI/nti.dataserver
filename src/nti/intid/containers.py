@@ -42,10 +42,11 @@ from persistent import Persistent
 from nti.common import sets
 
 from nti.common.time import ZERO_64BIT_INT
-from nti.common.time import time_to_64bit_int
-from nti.common.time import bit64_int_to_time
 
 from nti.externalization.representation import make_repr
+
+from nti.zodb.containers import bit64_int_to_time
+from nti.zodb.containers import time_to_64bit_int
 
 # Make pylint not complain about "badly implemented container", "Abstract class not referenced"
 # pylint: disable=R0924,R0921

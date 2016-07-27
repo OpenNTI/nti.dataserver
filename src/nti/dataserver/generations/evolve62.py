@@ -22,8 +22,6 @@ from zope.intid.interfaces import IIntIds
 
 from zope.component.hooks import site, setHooks
 
-from nti.common.time import time_to_64bit_int
-
 from nti.contentlibrary.indexed_data import get_catalog
 from nti.contentlibrary.indexed_data.index import NTIIDIndex
 from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -32,6 +30,8 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
+
+from nti.zodb.containers import time_to_64bit_int
 
 LM_KEY = 'nti.contentlibrary.indexed_data.LastModified'
 

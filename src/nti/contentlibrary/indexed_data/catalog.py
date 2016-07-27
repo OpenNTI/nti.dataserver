@@ -26,9 +26,6 @@ import BTrees
 
 from nti.common._compat import integer_types
 
-from nti.common.time import bit64_int_to_time
-from nti.common.time import time_to_64bit_int
-
 from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
 from nti.contentlibrary.indexed_data.interfaces import ISlideDeckAdapter
@@ -40,6 +37,9 @@ from nti.externalization.proxy import removeAllProxies
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
+
+from nti.zodb.containers import bit64_int_to_time
+from nti.zodb.containers import time_to_64bit_int
 
 from nti.zope_catalog.catalog import Catalog
 from nti.zope_catalog.catalog import ResultSet
