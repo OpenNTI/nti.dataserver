@@ -186,6 +186,14 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		target.add(newObject)
 		return newObject
 
+	@CachedProperty('__parent__', '__name__')
+	def path(self):
+		return compute_path(self)
+
+	def __str__(self):
+		return "%s(%r)" % (self.__class__.__name__, self.name)
+	__repr__ = __str__
+
 	# compatible methods
 
 	def getChildNamed(self, key):
@@ -197,14 +205,6 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 
 	def enumerateChildren(self):
 		return tuple(self.keys())
-	
-	@CachedProperty('__parent__', '__name__')
-	def path(self):
-		return compute_path(self)
-
-	def __str__(self):
-		return "%s(%r)" % (self.__class__.__name__, self.name)
-	__repr__ = __str__
 	
 @interface.implementer(IRootFolder)
 class RootFolder(ContentFolder):
