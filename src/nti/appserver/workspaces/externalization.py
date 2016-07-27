@@ -11,8 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import collections
 
-from zope import interface
 from zope import component
+from zope import interface
 from zope.location import location
 from zope.location import interfaces as loc_interfaces
 
@@ -22,22 +22,38 @@ from pyramid.threadlocal import get_current_request
 
 from nti.app.renderers import rest
 
+from nti.appserver.interfaces import IContentUnitInfo
+from nti.appserver.interfaces import IUserCapabilityFilter
+
+from nti.appserver.capabilities.interfaces import VOCAB_NAME as CAPABILITY_VOCAB_NAME
+
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
-from nti.dataserver import datastructures
+from nti.appserver.pyramid_authorization import is_writable
+
+from nti.appserver.workspaces.interfaces import IService
+from nti.appserver.workspaces.interfaces import IWorkspace
+from nti.appserver.workspaces.interfaces import ICollection
+from nti.appserver.workspaces.interfaces import IUserService
+from nti.appserver.workspaces.interfaces import IContainerCollection
+
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.datastructures import decorators
 
 # make sure we use nti.dataserver.traversal to find the root site
 from nti.dataserver.traversal import find_nearest_site as ds_find_nearest_site
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.externalization import isSyntheticKey
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import to_standard_external_dictionary
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
-from nti.externalization.externalization import to_standard_external_dictionary
-from nti.externalization.externalization import toExternalObject, isSyntheticKey
+
+from nti.externalization.singleton import SingletonDecorator
 
 from nti.links import links
 
@@ -45,45 +61,32 @@ from nti.mimetype import mimetype
 
 from nti.traversal import traversal as nti_traversal
 
-from ..interfaces import IContentUnitInfo
-from ..interfaces import IUserCapabilityFilter
-
-from ..pyramid_authorization import is_writable
-
-from ..capabilities.interfaces import VOCAB_NAME as CAPABILITY_VOCAB_NAME
-
-from .interfaces import IService
-from .interfaces import IWorkspace
-from .interfaces import ICollection
-from .interfaces import IUserService
-from .interfaces import IContainerCollection
-
 @interface.implementer(IExternalObject)
 @component.adapter(ICollection)
 class CollectionSummaryExternalizer(object):
 
-	def __init__( self, collection ):
+	def __init__(self, collection):
 		self._collection = collection
 
-	def toExternalObject( self, **kwargs ):
+	def toExternalObject(self, **kwargs):
 		collection = self._collection
 		ext_collection = LocatedExternalDict()
 		ext_collection.__name__ = collection.__name__
 		ext_collection.__parent__ = collection.__parent__
 		ext_collection[StandardExternalFields.CLASS] = 'Collection'
 		ext_collection['Title'] = collection.name
-		ext_collection['href'] = nti_traversal.normal_resource_path( collection )
+		ext_collection['href'] = nti_traversal.normal_resource_path(collection)
 		accepts = collection.accepts
 		if accepts is not None:
-			ext_collection['accepts'] = [mimetype.nti_mimetype_from_object( x ) for x in accepts]
-			if nti_interfaces.ISimpleEnclosureContainer.providedBy( collection ):
-				ext_collection['accepts'].extend( ('image/*',) )
-				ext_collection['accepts'].extend( ('application/pdf',) )
-			ext_collection['accepts'].sort() # For the convenience of tests
+			ext_collection['accepts'] = [mimetype.nti_mimetype_from_object(x) for x in accepts]
+			if nti_interfaces.ISimpleEnclosureContainer.providedBy(collection):
+				ext_collection['accepts'].extend(('image/*',))
+				ext_collection['accepts'].extend(('application/pdf',))
+			ext_collection['accepts'].sort()  # For the convenience of tests
 
-		_links = datastructures.find_links( self._collection )
+		_links = decorators.find_links(self._collection)
 		if _links:
-			ext_collection[StandardExternalFields.LINKS] = _magic_link_externalizer( _links )
+			ext_collection[StandardExternalFields.LINKS] = _magic_link_externalizer(_links)
 
 		return ext_collection
 
@@ -91,10 +94,10 @@ class CollectionSummaryExternalizer(object):
 @component.adapter(IContainerCollection)
 class ContainerCollectionDetailExternalizer(object):
 
-	def __init__(self, collection ):
+	def __init__(self, collection):
 		self._collection = collection
 
-	def toExternalObject( self, **kwargs ):
+	def toExternalObject(self, **kwargs):
 		collection = self._collection
 		container = collection.container
 		# Feeds can include collections, as a signal of places that
@@ -102,11 +105,11 @@ class ContainerCollectionDetailExternalizer(object):
 		# Since these things are useful to have at the top level, we do
 		# that as well
 		kwargs.pop('name', None)
-		summary_collection = toExternalObject( collection, name='summary', **kwargs )
+		summary_collection = toExternalObject(collection, name='summary', **kwargs)
 		# Copy the basic attributes
-		ext_collection = to_standard_external_dictionary( collection, **kwargs )
+		ext_collection = to_standard_external_dictionary(collection, **kwargs)
 		# Then add the summary info as top-level...
-		ext_collection.update( summary_collection )
+		ext_collection.update(summary_collection)
 		# ... and nested
 		ext_collection['Collection'] = summary_collection
 		ext_collection[StandardExternalFields.LAST_MODIFIED] = container.lastModified
@@ -123,10 +126,10 @@ class ContainerCollectionDetailExternalizer(object):
 		# The downside is backward compatibility.
 		# TODO: We need to be putting mimetype info on each of these
 		# if not already present. Who should be responsible for that?
-		def fixup( v_, item ):
+		def fixup(v_, item):
 			# FIXME: This is similar to the renderer. See comments in the renderer.
 			if StandardExternalFields.LINKS in item:
-				item[StandardExternalFields.LINKS] = [rest.render_link(link) if nti_interfaces.ILink.providedBy( link ) else link
+				item[StandardExternalFields.LINKS] = [rest.render_link(link) if nti_interfaces.ILink.providedBy(link) else link
 													  for link
 													  in item[StandardExternalFields.LINKS]]
 			# TODO: The externalization process and/or the renderer should be handling
@@ -139,35 +142,35 @@ class ContainerCollectionDetailExternalizer(object):
 			# We have made a first pass at this below with acl_wrapped which is nearly correct
 			request = get_current_request()
 
-			if request and is_writable( v_, request ):
-				item.setdefault( StandardExternalFields.LINKS, [] )
-				if not any( [l['rel'] == 'edit' for l in item[StandardExternalFields.LINKS]]):
-					valid_traversal_path = nti_traversal.normal_resource_path( v_ )
-					if valid_traversal_path and not valid_traversal_path.startswith( '/' ):
+			if request and is_writable(v_, request):
+				item.setdefault(StandardExternalFields.LINKS, [])
+				if not any([l['rel'] == 'edit' for l in item[StandardExternalFields.LINKS]]):
+					valid_traversal_path = nti_traversal.normal_resource_path(v_)
+					if valid_traversal_path and not valid_traversal_path.startswith('/'):
 						valid_traversal_path = None
 					if valid_traversal_path:
-						item[StandardExternalFields.LINKS].append( links.Link( valid_traversal_path,
-																			   rel='edit' ) )
-			if 'href' not in item and getattr( v_, '__parent__', None ) is not None:
+						item[StandardExternalFields.LINKS].append(links.Link(valid_traversal_path,
+																			   rel='edit'))
+			if 'href' not in item and getattr(v_, '__parent__', None) is not None:
 				# Let this thing try to produce its
 				# own href
 				# TODO: This if test is probably not needed anymore, with zope.location.traversing
 				# it will either work or raise
 				try:
-					valid_traversal_path = nti_traversal.normal_resource_path( v_ )
-					if valid_traversal_path and valid_traversal_path.startswith( '/' ):
+					valid_traversal_path = nti_traversal.normal_resource_path(v_)
+					if valid_traversal_path and valid_traversal_path.startswith('/'):
 						item['href'] = valid_traversal_path
 				except TypeError:
 					# Usually "Not enough context information to get all parents"
 					pass
 			return item
 
-		if 	isinstance( container, collections.Mapping ) and \
+		if 	isinstance(container, collections.Mapping) and \
 			not getattr(container, '_v_container_ext_as_list', False):
-			ext_collection['Items'] = { k: fixup(v,toExternalObject(v,**kwargs)) for k,v in container.iteritems()
-										if not isSyntheticKey( k )}
+			ext_collection['Items'] = { k: fixup(v, toExternalObject(v, **kwargs)) for k, v in container.iteritems()
+										if not isSyntheticKey(k)}
 		else:
-			ext_collection['Items'] = [fixup(v,toExternalObject(v, **kwargs)) for v in container]
+			ext_collection['Items'] = [fixup(v, toExternalObject(v, **kwargs)) for v in container]
 
 		# Need to add hrefs to each item.
 		# In the near future, this will be taken care of automatically.
@@ -178,7 +181,7 @@ class ContainerCollectionDetailExternalizer(object):
 					 else ext_collection['Items']):
 			if 'href' not in item and 'ID' in item:
 				temp_res.__name__ = item['ID']
-				item['href'] = nti_traversal.normal_resource_path( temp_res )
+				item['href'] = nti_traversal.normal_resource_path(temp_res)
 
 		return ext_collection
 
@@ -199,24 +202,24 @@ def _magic_link_externalizer(_links):
 @component.adapter(IWorkspace)
 class WorkspaceExternalizer(object):
 
-	def __init__( self, workspace ):
+	def __init__(self, workspace):
 		self._workspace = workspace
 
-	def toExternalObject( self, **kwargs ):
+	def toExternalObject(self, **kwargs):
 		kwargs.pop('name', None)
 		result = LocatedExternalDict()
 		result[StandardExternalFields.CLASS] = 'Workspace'
-		result['Title'] = self._workspace.name or getattr( self._workspace, '__name__', None )
-		items = [toExternalObject( collection, name='summary', **kwargs )
+		result['Title'] = self._workspace.name or getattr(self._workspace, '__name__', None)
+		items = [toExternalObject(collection, name='summary', **kwargs)
 				 for collection
 				 in self._workspace.collections]
 		result['Items'] = items
-		_links = datastructures.find_links( self._workspace )
+		_links = decorators.find_links(self._workspace)
 		if _links:
-			result[StandardExternalFields.LINKS] = _magic_link_externalizer( _links )
+			result[StandardExternalFields.LINKS] = _magic_link_externalizer(_links)
 		return result
 
-def _create_search_links( parent ):
+def _create_search_links(parent):
 	# Note that we are providing a complete link with a target
 	# that is a string and also the name of the link. This is
 	# a bit wonky and cooperates with how the CollectionSummaryExternalizer
@@ -225,35 +228,35 @@ def _create_search_links( parent ):
 	search_parent = location.Location()
 	search_parent.__name__ = 'Search'
 	search_parent.__parent__ = parent
-	ugd_link = links.Link( 'RecursiveUserGeneratedData', rel='UGDSearch' )
-	unified_link = links.Link( 'UnifiedSearch', rel='UnifiedSearch' )
+	ugd_link = links.Link('RecursiveUserGeneratedData', rel='UGDSearch')
+	unified_link = links.Link('UnifiedSearch', rel='UnifiedSearch')
 	result = (ugd_link, unified_link)
 	for lnk in result:
 		lnk.__parent__ = search_parent
 		lnk.__name__ = lnk.target
-		interface.alsoProvides( lnk, loc_interfaces.ILocation )
+		interface.alsoProvides(lnk, loc_interfaces.ILocation)
 	return result
 
 @interface.implementer(IExternalObject)
 @component.adapter(IContentUnitInfo)
 class _NTIIDEntryExternalizer(object):
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		self.context = context
 
 	def toExternalObject(self, **kwargs):
-		result = to_standard_external_dictionary( self.context, **kwargs )
+		result = to_standard_external_dictionary(self.context, **kwargs)
 		return result
 
 from nti.links.externalization import render_link
 
 @interface.implementer(IExternalMappingDecorator)
-@component.adapter(IContentUnitInfo) # TODO: IModeledContent?
+@component.adapter(IContentUnitInfo)  # TODO: IModeledContent?
 class ContentUnitInfoHrefDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping( self, context, mapping ):
+	def decorateExternalMapping(self, context, mapping):
 		if 'href' in mapping:
 			return
 
@@ -262,36 +265,37 @@ class ContentUnitInfoHrefDecorator(object):
 			# chatserver.IMeeting (which is IModeledContent and IPersistent)
 			# Our options are to either catch that here, or introduce an
 			# opt-in interface that everything that wants 'edit' implements
-			nearest_site = ds_find_nearest_site( context )
+			nearest_site = ds_find_nearest_site(context)
 		except TypeError:
 			nearest_site = None
 
 		if nearest_site is None:
 			logger.debug("Not providing href links for %s, could not find site",
-						 type(context) )
+						 type(context))
 			return
 
-		link = links.Link( nearest_site, elements=('Objects', context.ntiid) )
-		link.__parent__ = getattr(nearest_site, '__parent__', None) # Nearest site may be IRoot, which has no __parent__
+		link = links.Link(nearest_site, elements=('Objects', context.ntiid))
+		link.__parent__ = getattr(nearest_site, '__parent__', None)  # Nearest site may be IRoot, which has no __parent__
 		link.__name__ = ''
-		interface.alsoProvides( link, loc_interfaces.ILocation )
+		interface.alsoProvides(link, loc_interfaces.ILocation)
 
-		mapping['href'] = render_link( link, nearest_site=nearest_site )['href']
+		mapping['href'] = render_link(link, nearest_site=nearest_site)['href']
 
 @interface.implementer(IExternalObject)
 @component.adapter(IService)
 class ServiceExternalizer(object):
 
-	def __init__( self, service ):
+	def __init__(self, service):
 		self.context = service
 
-	def toExternalObject( self, **kwargs ):
+	def toExternalObject(self, **kwargs):
 		result = LocatedExternalDict()
 		result.__parent__ = self.context.__parent__
 		result.__name__ = self.context.__name__
 		result[StandardExternalFields.CLASS] = 'Service'
-		result[StandardExternalFields.MIMETYPE] = mimetype.nti_mimetype_with_class( 'Service' )
-		result['Items'] = [toExternalObject(ws, **kwargs) for ws in self.context.workspaces]
+		result[StandardExternalFields.MIMETYPE] = mimetype.nti_mimetype_with_class('Service')
+		result[StandardExternalFields.ITEMS] = \
+			  [toExternalObject(ws, **kwargs) for ws in self.context.workspaces]
 		return result
 
 @component.adapter(IUserService)
@@ -301,7 +305,7 @@ class UserServiceExternalizer(ServiceExternalizer):
 	"""
 
 	def toExternalObject(self, **kwargs):
-		result = super(UserServiceExternalizer,self).toExternalObject(**kwargs)
+		result = super(UserServiceExternalizer, self).toExternalObject(**kwargs)
 
 		# TODO: This is almost hardcoded. Needs replaced with something dynamic.
 		# Querying the utilities for the user, which would be registered for specific
@@ -313,12 +317,12 @@ class UserServiceExternalizer(ServiceExternalizer):
 		# Now filter out capabilities.
 		for cap_filter in component.subscribers((self.context.user,),
 												IUserCapabilityFilter):
-			capabilities = cap_filter.filterCapabilities( capabilities )
+			capabilities = cap_filter.filterCapabilities(capabilities)
 
-		result['CapabilityList'] = list( capabilities )
+		result['CapabilityList'] = list(capabilities)
 
 		# Now our community name
-		site_policy = component.queryUtility( ISitePolicyUserEventListener )
+		site_policy = component.queryUtility(ISitePolicyUserEventListener)
 		community_username = getattr(site_policy, 'COM_USERNAME', '')
 		if community_username:
 			result['SiteCommunity'] = community_username
