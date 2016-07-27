@@ -200,7 +200,7 @@ setup(
 		# Benchmarking, however, shows that MySQL-python is by far the fastest under CPython,
 		# and MAY even be gevent friendly. It also seems like PyMySQL is also probably faster
 		# than umysql under CPython, despite umysql's claims (have to finish confirming that).
-		'umysql == 2.61' if not IS_PYPY else '',
+		'umysql',
 		'umysqldb == 1.0.4dev2' if not IS_PYPY else '', # requires PyMySQL < 0.6, but we want 0.6.1; hence our patch
 		'RelStorage',
 		'PyMySQL',
