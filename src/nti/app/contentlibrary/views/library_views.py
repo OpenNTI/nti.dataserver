@@ -562,6 +562,7 @@ class _LibraryPathView(AbstractCachingLibraryPathView):
 				if is_readable(package):
 					hierarchy_context = _get_hierarchy_context_for_context(
 														obj, top_level_context)
+					hierarchy_context = hierarchy_context[0] if hierarchy_context else hierarchy_context
 					if len(hierarchy_context) > 1:
 						# Drop returned top level context
 						result_list.extend( hierarchy_context[1:] )
