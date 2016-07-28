@@ -140,7 +140,8 @@ class UnsubscribeFromEmailSummaryPush(AbstractAuthenticatedView):
 		if not environ.get('REMOTE_USER') or not environ.get('repoze.who.identity'): # pragma: no cover
 			# Hmm, entirely unauthenticated. Did we have an entirely
 			# public resource?
-			return request.response
+			raise hexc.HTTPForbidden()
+
 		username = environ['REMOTE_USER']
 		user = User.get_user( username )
 		result = _do_unsubscribe( request, user )
