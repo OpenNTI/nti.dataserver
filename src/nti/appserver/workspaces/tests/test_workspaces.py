@@ -45,6 +45,17 @@ from nti.appserver import pyramid_authorization
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
+from nti.appserver.workspaces import Service
+from nti.appserver.workspaces import UserService
+from nti.appserver.workspaces import FriendsListContainerCollection
+from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
+from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
+from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
+from nti.appserver.workspaces import _UserPagesCollection as UserPagesCollection
+
+from nti.appserver.workspaces.interfaces import IWorkspace
+from nti.appserver.workspaces.interfaces import ICollection
+
 from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as DynamicLibrary
 
 from nti.dataserver import  users
@@ -54,17 +65,6 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids import ntiids
-
-from nti.appserver.workspaces import FriendsListContainerCollection
-from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
-from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
-from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
-from nti.appserver.workspaces import Service
-from nti.appserver.workspaces import UserService
-from nti.appserver.workspaces import _UserPagesCollection as UserPagesCollection
-
-from nti.appserver.workspaces.interfaces import IWorkspace
-from nti.appserver.workspaces.interfaces import ICollection
 
 from nti.appserver import tests
 

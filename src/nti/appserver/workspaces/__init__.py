@@ -46,6 +46,7 @@ from nti.appserver.interfaces import IRootPageContainerResource
 
 from nti.appserver.traversal import find_interface
 
+from nti.appserver.workspaces.interfaces import IService
 from nti.appserver.workspaces.interfaces import IWorkspace
 from nti.appserver.workspaces.interfaces import ICollection
 from nti.appserver.workspaces.interfaces import IUserService
@@ -84,25 +85,6 @@ from nti.links import links
 from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
-
-from ..traversal import find_interface
-
-from ..interfaces import MissingRequest
-from ..interfaces import INamedLinkView
-from ..interfaces import IContentUnitInfo
-from ..interfaces import INamedLinkPathAdapter
-from ..interfaces import IUserViewTokenCreator
-from ..interfaces import IPageContainerResource
-from ..interfaces import IRootPageContainerResource
-
-from .interfaces import IWorkspace
-from .interfaces import ICollection
-from .interfaces import IService
-from .interfaces import IUserService
-from .interfaces import IUserWorkspace
-from .interfaces import IWorkspaceValidator
-from .interfaces import IContainerCollection
-from .interfaces import IUserWorkspaceLinkProvider
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -308,9 +290,9 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
 		Only FL objects that our remote user can see.
 		"""
 		# In alpha, some users have timestamps in FL collection.
-		return 	IFriendsList.providedBy(obj) \
-			and not IDynamicSharingTargetFriendsList.providedBy(obj) \
-			and (self.remote_user in obj or self.remote_user == obj.creator)
+		return 		IFriendsList.providedBy(obj) \
+				and not IDynamicSharingTargetFriendsList.providedBy(obj) \
+				and (self.remote_user in obj or self.remote_user == obj.creator)
 
 def _is_remote_same_as_authenticated(user, req=None):
 	# XXX This doesn't exactly belong at this layer. Come up with
@@ -337,8 +319,8 @@ class DynamicMembershipsContainerCollection(_AbstractPseudoMembershipContainer):
 def _UserDynamicMembershipsCollectionFactory(user):
 	return DynamicMembershipsContainerCollection(UserEnumerationWorkspace(user))
 
-@interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
+@interface.implementer(IContainerCollection)
 class DynamicFriendsListContainerCollection(_AbstractPseudoMembershipContainer):
 
 	# TODO Do we need to accept posts here?
@@ -355,16 +337,16 @@ class DynamicFriendsListContainerCollection(_AbstractPseudoMembershipContainer):
 		DFLs we own or are a member of, even if it it's not our
 		collection.
 		"""
-		return 	IDynamicSharingTargetFriendsList.providedBy(obj) \
-			and (self.remote_user in obj or self.remote_user == obj.creator)
+		return 		IDynamicSharingTargetFriendsList.providedBy(obj) \
+				and (self.remote_user in obj or self.remote_user == obj.creator)
 
 @component.adapter(IUser)
 @interface.implementer(IContainerCollection)
 def _UserDynamicFriendsListCollectionFactory(user):
 	return DynamicFriendsListContainerCollection(UserEnumerationWorkspace(user))
 
-@interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
+@interface.implementer(IContainerCollection)
 class CommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
 
 	name = 'Communities'
@@ -388,8 +370,8 @@ class CommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
 def _UserCommunitiesCollectionFactory(user):
 	return CommunitiesContainerCollection(UserEnumerationWorkspace(user))
 
-@interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
+@interface.implementer(IContainerCollection)
 class AllCommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
 
 	name = 'AllCommunities'
@@ -788,7 +770,7 @@ class Service(Location):
 		"""
 		return sorted([workspace
 						for workspace
-						in component.subscribers((self,), IWorkspace)
+						in list(component.subscribers((self,), IWorkspace))
 						if self._is_valid_workspace(workspace)],
 					   key=lambda w: w.name )
 
