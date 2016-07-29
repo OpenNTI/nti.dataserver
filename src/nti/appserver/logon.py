@@ -206,7 +206,7 @@ def _links_for_authenticated_users(request):
 
 		# They are already logged in, provide a continue link
 		continue_href = request.route_path('user.root.service', _='')
-		links = [ Link(continue_href, rel=REL_CONTINUE) ]
+		links = [ Link(continue_href, rel=REL_CONTINUE, elements=('service',)) ]
 
 		logout_href = request.route_path(REL_LOGIN_LOGOUT)
 		links.append(Link(logout_href, rel=REL_LOGIN_LOGOUT))
