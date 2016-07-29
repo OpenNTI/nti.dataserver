@@ -90,9 +90,6 @@ from nti.ntiids import ntiids
 
 ITEMS = StandardExternalFields.ITEMS
 
-# pylint
-itc_providedBy = getattr(IContainerTypesConstraint, 'providedBy')
-
 def _find_name(obj):
 	return 	  getattr(obj, 'name', None) \
 		   or getattr(obj, '__name__', None) \
@@ -688,11 +685,12 @@ class _UserPagesCollection(Location):
 		result.append(self.make_info_for(ntiids.ROOT))
 		for ntiid in self._user.iterntiids():
 			result.append(self.make_info_for(ntiid))
-
 		return result
 
 	@property
 	def accepts(self):
+		# pylint
+		itc_providedBy = getattr(IContainerTypesConstraint, 'providedBy')
 		# We probably need to be more picky, too. Some things like
 		# devices and friendslists are sneaking in here where they
 		# don't belong...even though they can be posted here (?)
@@ -704,8 +702,8 @@ class _UserPagesCollection(Location):
 			factory = term.value
 			implementing = factory.getInterfaces()
 			parent = implementing.get('__parent__')
-			if 	parent and getattr(parent, 'constraint', None) and \
-				itc_providedBy(parent.constraint):
+			if 		parent and getattr(parent, 'constraint', None) \
+				and itc_providedBy(parent.constraint):
 				parent_types = parent.constraint.types
 				# Hmm. Ok, right now we don't have constraints correct everywhere.
 				# But when we do have constraints, they are not a general object
