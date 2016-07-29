@@ -13,22 +13,24 @@ logger = __import__('logging').getLogger(__name__)
 
 import warnings
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.authentication.interfaces import IUnauthenticatedPrincipal
 
 from zope.container.constraints import IContainerTypesConstraint
 
-from zope.location.location import Location
 from zope.location.interfaces import ILocation
+
+from zope.location.location import Location
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from zope.schema import interfaces as sch_interfaces
+from zope.schema.interfaces import IVocabularyFactory
 
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
+
 from pyramid.threadlocal import get_current_request
 
 from nti.app.authentication import get_remote_user
@@ -125,7 +127,7 @@ def _collections(self, containers):
 	A generator iterating across the containers turning
 	each into an ICollection.
 	"""
-	for x in containers:
+	for x in containers or ():
 		# TODO: Verify that only the first part is needed, because
 		# the site manager hooks are properly installed at runtime.
 		# See the test package for info.
@@ -240,7 +242,7 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 		memberships = self.get_filtered_memberships()
 		result = LocatedExternalDict()
 		for membership in memberships:
-			result[ membership.NTIID ] = membership
+			result[membership.NTIID] = membership
 		result.__name__ = self.name
 		result.__parent__ = self._user
 		result.lastModified = self.get_last_modified(memberships)
@@ -267,7 +269,7 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
 		if user_service:
 			user = user_service.user
 		if user:
-			factory = component.getUtility(sch_interfaces.IVocabularyFactory,
+			factory = component.getUtility(IVocabularyFactory,
 										   "Creatable External Object Types")
 			vocab = factory(user)
 			try:
@@ -361,9 +363,9 @@ class CommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
 		Communities that allow membership ops and are either public or
 		we are a member of.
 		"""
-		return 	ICommunity.providedBy(obj) \
-			and not IDisallowMembershipOperations.providedBy(obj) \
-			and (obj.public or self.remote_user in obj)
+		return 		ICommunity.providedBy(obj) \
+				and not IDisallowMembershipOperations.providedBy(obj) \
+				and (obj.public or self.remote_user in obj)
 
 @component.adapter(IUser)
 @interface.implementer(IContainerCollection)
@@ -695,7 +697,7 @@ class _UserPagesCollection(Location):
 		# devices and friendslists are sneaking in here where they
 		# don't belong...even though they can be posted here (?)
 		# The fix is to add the right constraints
-		util_callable = component.getUtility(sch_interfaces.IVocabularyFactory,
+		util_callable = component.getUtility(IVocabularyFactory,
 											 "Creatable External Object Types")
 		vocab = util_callable(self._user)
 		for term in vocab:
