@@ -67,7 +67,6 @@ from nti.dataserver import authorization
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import acl_from_aces
 
-from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
 from nti.dataserver.interfaces import EVERYONE_GROUP_NAME
 
 from nti.dataserver.interfaces import IUser
@@ -806,10 +805,9 @@ class UserService(Service):
 
 	@Lazy
 	def __acl__(self):
-		#Authenticated users have access to UserService
-		#perhaps this should be an ace using self.user instead?
+		#The user this service doc is for can read it
 		acl = acl_from_aces(
-			ace_allowing(AUTHENTICATED_GROUP_NAME,
+			ace_allowing(self.user,
 						 authorization.ACT_READ,
 						 Service)
 		)
