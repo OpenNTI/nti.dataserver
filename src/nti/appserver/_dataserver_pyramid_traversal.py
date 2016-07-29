@@ -55,16 +55,16 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.dataserver import authorization_acl as nacl
 
-from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import InappropriateSiteError
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import IZContained
-from nti.dataserver.interfaces import INamedContainer
 from nti.dataserver.interfaces import IDataserverFolder
-from nti.dataserver.interfaces import InappropriateSiteError
-from nti.dataserver.interfaces import IHomogeneousTypeContainer
-from nti.dataserver.interfaces import ISimpleEnclosureContainer
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+from nti.dataserver.interfaces import IHomogeneousTypeContainer
+from nti.dataserver.interfaces import INamedContainer
+from nti.dataserver.interfaces import ISimpleEnclosureContainer
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IZContained
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
