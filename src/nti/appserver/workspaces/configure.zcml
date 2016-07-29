@@ -70,6 +70,9 @@
 	<adapter factory=".UserService"
 			 provides='.interfaces.IUserService'/>
 
+	<adapter factory=".Service"
+			 provides='.interfaces.IService'/>
+
 	<class class=".FriendsListContainerCollection">
 		<implements interface="nti.app.renderers.interfaces.IUnModifiedInResponse" />
 	</class>

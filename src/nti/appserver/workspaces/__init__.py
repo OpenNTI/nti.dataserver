@@ -16,6 +16,8 @@ import warnings
 from zope import interface
 from zope import component
 
+from zope.authentication.interfaces import IUnauthenticatedPrincipal
+
 from zope.container.constraints import IContainerTypesConstraint
 
 from zope.location.location import Location
@@ -82,6 +84,25 @@ from nti.links import links
 from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
+
+from ..traversal import find_interface
+
+from ..interfaces import MissingRequest
+from ..interfaces import INamedLinkView
+from ..interfaces import IContentUnitInfo
+from ..interfaces import INamedLinkPathAdapter
+from ..interfaces import IUserViewTokenCreator
+from ..interfaces import IPageContainerResource
+from ..interfaces import IRootPageContainerResource
+
+from .interfaces import IWorkspace
+from .interfaces import ICollection
+from .interfaces import IService
+from .interfaces import IUserService
+from .interfaces import IUserWorkspace
+from .interfaces import IWorkspaceValidator
+from .interfaces import IContainerCollection
+from .interfaces import IUserWorkspaceLinkProvider
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -728,23 +749,21 @@ def _user_workspace(user_service):
 	return user_workspace
 
 @interface.implementer(IWorkspace)
-@component.adapter(IUserService)
+@component.adapter(IService)
 def _global_workspace(user_service):
 	global_ws = GlobalWorkspace(parent=user_service.__parent__)
 	assert global_ws.__parent__
 	return global_ws
 
-@component.adapter(IUser)
-@interface.implementer(IUserService, IContentTypeAware)
-class UserService(Location):
-
+@component.adapter(IUnauthenticatedPrincipal)
+@interface.implementer(IService, IContentTypeAware)
+class Service(Location):
 	mimeType = mimetype.nti_mimetype_with_class('workspace')
 
 	__parent__ = None
-
-	def __init__(self, user):
-		self.user = user
-		self.__name__ = 'users'
+	
+	def __init__( self, principal ):
+		self.__name__ = 'service'
 		self.__parent__ = component.getUtility(IDataserver).root
 
 	@Lazy
@@ -756,10 +775,6 @@ class UserService(Location):
 		if result and self._validator != None:
 			result = self._validator.validate(workspace)
 		return result
-
-	@property
-	def user_workspace(self):
-		return _user_workspace(self)
 
 	@property
 	def workspaces(self):
@@ -775,4 +790,17 @@ class UserService(Location):
 						for workspace
 						in component.subscribers((self,), IWorkspace)
 						if self._is_valid_workspace(workspace)],
-					   key=lambda w: w.name)
+					   key=lambda w: w.name )
+
+@component.adapter(IUser)
+@interface.implementer(IUserService, IContentTypeAware)
+class UserService(Service):
+
+	def __init__( self, user ):
+		super(UserService,self).__init__( user )
+		self.__name__ = 'users'
+		self.user = user
+
+	@property
+	def user_workspace(self):
+		return _user_workspace( self )

@@ -32,6 +32,8 @@ from persistent import Persistent
 from zope import component
 from zope import interface
 
+from zope.authentication.interfaces import IPrincipal
+
 from zope.location import location
 from zope.location import interfaces as loc_interfaces
 
@@ -57,6 +59,7 @@ from nti.appserver.workspaces import FriendsListContainerCollection
 from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
 from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
 from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
+from nti.appserver.workspaces import Service
 from nti.appserver.workspaces import UserService
 from nti.appserver.workspaces import _UserPagesCollection as UserPagesCollection
 
@@ -249,6 +252,17 @@ class TestHomogeneousTypedContainerCollection(ApplicationLayerTest):
 		cew.__name__ = 'NewName'
 		assert_that( cew.name, is_( 'NewName' ) )
 		assert_that( cew.__name__, is_( 'NewName' ) )
+
+class TestService(ApplicationLayerTest):
+
+	@mock_dataserver.WithMockDSTrans
+	def test_only_global_workspace(self):
+		principal = IPrincipal('system.Unknown')
+		service = Service(principal)
+
+		ext_object = toExternalObject(service)
+
+		assert_that(ext_object['Items'], contains_inanyorder(has_entry( 'Title', 'Global' )))
 
 class TestUserService(ApplicationLayerTest):
 
