@@ -104,10 +104,10 @@ def get_hierarchy_context(obj, user):
 	Return all hierarchical contexts for a given object and user.
 	"""
 	results = []
-	for hiearchy_contexts in component.subscribers(	(obj, user),
+	for hierarchy_contexts in component.subscribers((obj, user),
 													IHierarchicalContextProvider):
-		if hiearchy_contexts:
-			results.extend(hiearchy_contexts)
+		if hierarchy_contexts:
+			results.extend(hierarchy_contexts)
 	return _dedupe_bundles_from_hierarchy(results)
 
 def get_joinable_contexts(obj):

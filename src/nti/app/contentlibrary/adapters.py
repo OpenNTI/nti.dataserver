@@ -169,7 +169,7 @@ def _pacakge_asset_to_containers(context):
 			entry = ICourseCatalogEntry(course)
 			containers.add(entry.ntiid)
 		result = _Containers(tuple(containers))
-	
+
 	# check for slides and slidevideos
 	if		(INTISlide.providedBy(context) or INTISlideVideo.providedBy(context)) \
 		and context.__parent__ is not None \
@@ -259,6 +259,7 @@ def _get_bundles_from_container(obj):
 def _hierarchy_from_obj(obj, user):
 	container_bundles = _get_bundles_from_container(obj)
 	results = [(bundle,) for bundle in container_bundles]
+	results = (results,) if results else results
 	return results
 
 @component.adapter(IContentUnit, IUser)
@@ -342,7 +343,7 @@ class _PresentationAssetOOBTree(OOBTree, PersistentCreatedAndModifiedTimeObject)
 	def __init__(self, *args, **kwargs):
 		OOBTree.__init__(self)
 		PersistentCreatedAndModifiedTimeObject.__init__(self, *args, **kwargs)
-		
+
 	def append(self, item):
 		self[item.ntiid] = item
 
