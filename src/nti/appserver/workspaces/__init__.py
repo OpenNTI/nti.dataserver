@@ -18,6 +18,7 @@ from zope import interface
 
 from zope.authentication.interfaces import IUnauthenticatedPrincipal
 
+from zope.container.contained import Contained
 from zope.container.constraints import IContainerTypesConstraint
 
 from zope.location.interfaces import ILocation
@@ -58,7 +59,16 @@ from nti.appserver.workspaces.interfaces import IContainerCollection
 from nti.appserver.workspaces.interfaces import IUserWorkspaceLinkProvider
 
 from nti.common.property import Lazy
+from nti.common.property import LazyOnClass
 from nti.common.property import alias
+
+from nti.dataserver import authorization
+
+from nti.dataserver.authorization_acl import ace_allowing
+from nti.dataserver.authorization_acl import acl_from_aces
+
+from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
+from nti.dataserver.interfaces import EVERYONE_GROUP_NAME
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -726,8 +736,6 @@ def _UserPagesCollectionFactory(user):
 def _user_workspace(user_service):
 	# The main user workspace lives at /users/ME/
 	user_workspace = UserEnumerationWorkspace(user_service.user)
-	user_workspace.__name__ = user_service.user.username
-	user_workspace.__parent__ = user_service
 	return user_workspace
 
 @interface.implementer(IWorkspace)
@@ -739,13 +747,13 @@ def _global_workspace(user_service):
 
 @component.adapter(IUnauthenticatedPrincipal)
 @interface.implementer(IService, IContentTypeAware)
-class Service(Location):
+class Service(Contained):
 	mimeType = mimetype.nti_mimetype_with_class('workspace')
 
 	__parent__ = None
+	__name__ = 'service'
 	
 	def __init__( self, principal ):
-		self.__name__ = 'service'
 		self.__parent__ = component.getUtility(IDataserver).root
 
 	@Lazy
@@ -774,15 +782,35 @@ class Service(Location):
 						if self._is_valid_workspace(workspace)],
 					   key=lambda w: w.name )
 
+	@LazyOnClass
+	def __acl__(self):
+		#Everyone has access to a raw service
+		acl = acl_from_aces(
+			ace_allowing(EVERYONE_GROUP_NAME,
+						 authorization.ACT_READ,
+						 Service)
+		)
+		return acl
+
 @component.adapter(IUser)
 @interface.implementer(IUserService, IContentTypeAware)
 class UserService(Service):
 
 	def __init__( self, user ):
 		super(UserService,self).__init__( user )
-		self.__name__ = 'users'
 		self.user = user
 
 	@property
 	def user_workspace(self):
 		return _user_workspace( self )
+
+	@Lazy
+	def __acl__(self):
+		#Authenticated users have access to UserService
+		#perhaps this should be an ace using self.user instead?
+		acl = acl_from_aces(
+			ace_allowing(AUTHENTICATED_GROUP_NAME,
+						 authorization.ACT_READ,
+						 Service)
+		)
+		return acl

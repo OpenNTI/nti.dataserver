@@ -38,7 +38,7 @@ class _SearchLinksProvider(object):
 		# TODO: Hardcoding both things
 		search_parent = Location()
 		search_parent.__name__ = 'Search'
-		search_parent.__parent__ = workspace
+		search_parent.__parent__ = self.user
 		result = [Link('RecursiveUserGeneratedData', rel='UGDSearch'),
 				  Link('UnifiedSearch', rel='UnifiedSearch') ]
 		for lnk in result:

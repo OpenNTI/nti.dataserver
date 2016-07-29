@@ -11,11 +11,16 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope import interface
 
 from zope.location.location import LocationProxy
 
+from zope.traversing.interfaces import IPathAdapter
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
+
+from nti.app.authentication import get_remote_user as _get_remote_user
 
 from nti.app.base.abstract_views import AbstractView
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -26,23 +31,55 @@ from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.workspaces.interfaces import IService
 from nti.appserver.workspaces.interfaces import ICollection
 
+from nti.common.property import LazyOnClass as _LazyOnClass
+
 from nti.dataserver import authorization as nauth
+
+from nti.dataserver.authorization_acl import acl_from_aces
+from nti.dataserver.authorization_acl import ace_allowing
+
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+from nti.dataserver.interfaces import IPrincipal
+
+from nti.dataserver_core.interfaces import UNAUTHENTICATED_PRINCIPAL_NAME
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
 ITEMS = StandardExternalFields.ITEMS
 
+def _service_for_user(user):
+	if not user:
+		user = IPrincipal(UNAUTHENTICATED_PRINCIPAL_NAME)
+
+	# JAM: We should make this a multi-adapter on the request
+	# so that the request can be threaded down through workspaces,
+	# collections, etc.
+	service = IService(user)
+	return service
+
+@interface.implementer(IPathAdapter)
+def _service_path_adapter(context, request):
+	user = _get_remote_user(request)
+	return _service_for_user(user)
+
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 request_method='GET',
+			 permission=nauth.ACT_READ,
+			 context=IService)
+class _ServiceView(AbstractView):
+
+	def __call__(self):
+		return self.context
+
+# TODO: Once we verify clients aren't referencing /dataserver2
+# directly we should remove this in place of the /dataserver2/service
+# path
 class _ServiceGetView(AbstractAuthenticatedView):
 
 	def __call__(self):
-		# JAM: We should make this a multi-adapter on the request
-		# so that the request can be threaded down through workspaces,
-		# collections, etc.
-		service = IService(self.remoteUser)
-		# service.__parent__ = self.request.context
-		return service
+		return _service_for_user(self.remoteUser)
 
 @view_defaults(route_name='objects.generic.traversal',
 			   permission=nauth.ACT_READ,
