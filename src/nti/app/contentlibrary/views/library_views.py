@@ -560,10 +560,11 @@ class _LibraryPathView(AbstractCachingLibraryPathView):
 				# We have a hit.
 				result_list = [ top_level_context ]
 				if is_readable(package):
-					hierarchy_context = _get_hierarchy_context_for_context(
-														obj, top_level_context)
+					hierarchy_context = _get_hierarchy_context_for_context(obj, top_level_context)
 					hierarchy_context = hierarchy_context[0] if hierarchy_context else hierarchy_context
-					if hierarchy_context and len(hierarchy_context) > 1:
+					if 		hierarchy_context \
+						and isinstance(hierarchy_context, (list, tuple)) \
+						and len(hierarchy_context) > 1:
 						# Drop returned top level context
 						result_list.extend( hierarchy_context[1:] )
 					path_list = self._externalize_children(legacy_path)

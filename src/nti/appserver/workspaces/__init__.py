@@ -18,8 +18,9 @@ from zope import interface
 
 from zope.authentication.interfaces import IUnauthenticatedPrincipal
 
-from zope.container.contained import Contained
 from zope.container.constraints import IContainerTypesConstraint
+
+from zope.container.contained import Contained
 
 from zope.location.interfaces import ILocation
 
@@ -28,6 +29,8 @@ from zope.location.location import Location
 from zope.mimetype.interfaces import IContentTypeAware
 
 from zope.schema.interfaces import IVocabularyFactory
+
+from zope.security.interfaces import IPrincipal
 
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
@@ -59,8 +62,8 @@ from nti.appserver.workspaces.interfaces import IContainerCollection
 from nti.appserver.workspaces.interfaces import IUserWorkspaceLinkProvider
 
 from nti.common.property import Lazy
-from nti.common.property import LazyOnClass
 from nti.common.property import alias
+from nti.common.property import LazyOnClass
 
 from nti.dataserver import authorization
 
@@ -541,8 +544,8 @@ class GlobalCollection(object):
 	def accepts(self):
 		return ()
 
-@interface.implementer(IUserWorkspace)
 @component.adapter(User)
+@interface.implementer(IUserWorkspace)
 class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	"""
 	Extends the user's typed collections with one
@@ -649,8 +652,8 @@ class _RootNTIIDEntry(_NTIIDEntry):
 	def __init__(self, parent, _):
 		super(_RootNTIIDEntry, self).__init__(parent, ntiids.ROOT)
 
-@interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
+@interface.implementer(IContainerCollection)
 class _UserPagesCollection(Location):
 	"""
 	Turns a User into a ICollection of data for their pages (individual containers).
@@ -783,7 +786,7 @@ class Service(Contained):
 
 	@LazyOnClass
 	def __acl__(self):
-		#Everyone has access to a raw service
+		# Everyone has access to a raw service
 		acl = acl_from_aces(
 			ace_allowing(EVERYONE_GROUP_NAME,
 						 authorization.ACT_READ,
@@ -805,9 +808,10 @@ class UserService(Service):
 
 	@Lazy
 	def __acl__(self):
-		#The user this service doc is for can read it
+		# The user this service doc is for can read it
+		principal = IPrincipal(self.user, self.user)
 		acl = acl_from_aces(
-			ace_allowing(self.user,
+			ace_allowing(principal,
 						 authorization.ACT_READ,
 						 Service)
 		)
