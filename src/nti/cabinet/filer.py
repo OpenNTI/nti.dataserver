@@ -45,7 +45,7 @@ def transfer_to_native_file(source, target):
 			fp.write(source.readContents())
 		elif hasattr(source, 'data'):
 			fp.write(source.data)
-		else:
+		elif source is not None:
 			fp.write(source)
 
 @interface.implementer(ISourceFiler)
