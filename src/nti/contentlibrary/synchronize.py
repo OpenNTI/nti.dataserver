@@ -14,9 +14,11 @@ from zope import interface
 from zope.container.contained import Contained
 
 from nti.common.property import alias
-from nti.common.representation import WithRepr
+
+from nti.externalization.representation import WithRepr
 
 from nti.schema.field import SchemaConfigured
+
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from .interfaces import ISynchronizationParams
