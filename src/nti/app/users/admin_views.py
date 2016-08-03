@@ -38,8 +38,6 @@ from nti.common.maps import CaseInsensitiveDict
 
 from nti.common.string import is_true
 
-from nti.common.time import bit64_int_to_time
-
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
@@ -63,6 +61,8 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.site.hostpolicy import get_all_host_sites
+
+from nti.zodb.containers import bit64_int_to_time
 
 ITEMS = StandardExternalFields.ITEMS
 
