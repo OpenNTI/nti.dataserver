@@ -17,4 +17,7 @@
 		root_interfaces=".interfaces.IContentFolder"
 		modules=".model" />
 
+	<!-- Subscribers -->
+	<subscriber handler=".subscribers._on_content_file_moved" />
+
 </configure>

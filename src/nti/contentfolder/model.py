@@ -130,6 +130,14 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		item = self._delitemf(name, event=False)
 		item.__name__ = item.name = new  # set new name
 		self._setitemf(new, item)
+		
+		def _update(obj):
+			try:
+				obj.updateLastMod()
+			except AttributeError:
+				pass
+		_update(item)
+		_update(self)
 
 	def moveTo(self, item, target, newName=None):
 		assert 		isinstance(item, six.string_types) \
@@ -155,6 +163,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		target._setitemf(newName, item)
 		lifecycleevent.moved(item, self, name, target, newName)
 		item.__parent__ = target # set lineage
+		self.updateLastMod() # update
 		return True
 
 	def copyTo(self, item, target=None, newName=None):
