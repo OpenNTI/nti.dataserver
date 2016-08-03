@@ -31,7 +31,7 @@ from nti.common.property import alias
 
 from nti.coremetadata.interfaces import ILastModified
 
-from nti.schema.schema import EqHash
+from nti.schema.eqhash import EqHash
 
 # Buckets
 

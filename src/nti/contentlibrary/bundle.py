@@ -45,12 +45,14 @@ from nti.contentlibrary.presentationresource import DisplayableContentMixin
 from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 
 from nti.externalization.persistence import NoPickle
+
 from nti.externalization.representation import WithRepr
+
+from nti.schema.eqhash import EqHash
 
 from nti.schema.fieldproperty import createFieldProperties
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from nti.schema.schema import EqHash
 from nti.schema.schema import SchemaConfigured
 
 from nti.wref.interfaces import IWeakRef

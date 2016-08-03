@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 from zope.container.contained import Contained
 
 from nti.common.property import alias
@@ -18,9 +19,11 @@ from nti.externalization.representation import WithRepr
 
 from nti.mimetype import mimetype
 
-from nti.schema.schema import EqHash
-from nti.schema.schema import SchemaConfigured
+from nti.schema.eqhash import EqHash
+
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 from .interfaces import IWhooshBookContent
 from .interfaces import IWhooshNTICardContent

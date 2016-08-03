@@ -19,9 +19,11 @@ from nti.coremetadata.interfaces import ILastModified
 
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
-from nti.schema.schema import EqHash
-from nti.schema.schema import SchemaConfigured
+from nti.schema.eqhash import EqHash
+
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 from .interfaces import IDelimitedHierarchyBucket
 from .interfaces import IDisplayablePlatformPresentationResources

@@ -715,7 +715,7 @@ from zope.interface.interfaces import ComponentLookupError
 
 from nti.intid.interfaces import IntIdMissingError
 
-from nti.schema.schema import EqHash
+from nti.schema.eqhash import EqHash
 
 @EqHash('_obj', '_intid')
 class _PathCacheContentUnitWeakRef(object):

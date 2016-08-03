@@ -19,7 +19,7 @@ from zope.interface.common.sequence import IFiniteSequence
 
 from nti.externalization.representation import WithRepr
 
-from nti.schema.schema import EqHash
+from nti.schema.eqhash import EqHash
 
 from .interfaces import ISearchFragment
 

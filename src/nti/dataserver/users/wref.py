@@ -32,7 +32,7 @@ from nti.dataserver.interfaces import IEntity
 
 from nti.dataserver.users.missing_user import MissingEntity
 
-from nti.schema.schema import EqHash
+from nti.schema.eqhash import EqHash
 
 from nti.wref.interfaces import ICachingWeakRef
 

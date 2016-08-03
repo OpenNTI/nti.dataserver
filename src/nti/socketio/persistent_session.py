@@ -26,9 +26,10 @@ from nti.common.property import dict_read_alias, alias
 
 from nti.externalization.representation import WithRepr
 
-from nti.schema.schema import EqHash
+from nti.schema.eqhash import EqHash
 
 from nti.zodb import minmax
+
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from .protocol import SocketIOSocket

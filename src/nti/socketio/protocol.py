@@ -12,14 +12,16 @@ logger = __import__('logging').getLogger(__name__)
 import six
 import anyjson as json
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.cachedescriptors.property import Lazy
 
 from nti.externalization.persistence import NoPickle
+
 from nti.externalization.representation import to_json_representation_externalized
 
-from nti.schema.schema import EqHash
+from nti.schema.eqhash import EqHash
 
 from .interfaces import ISocketIOSocket
 from .interfaces import ISocketIOMessage

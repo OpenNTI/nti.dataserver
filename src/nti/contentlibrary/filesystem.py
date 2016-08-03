@@ -158,7 +158,7 @@ class _FilesystemTimesMixin(object):
 from lxml import etree
 etree_parse = getattr(etree, 'parse')
 
-from nti.schema.schema import EqHash
+from nti.schema.eqhash import EqHash
 
 @interface.implementer(IFilesystemKey,
 					   ILastModified)

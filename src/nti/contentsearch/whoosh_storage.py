@@ -21,15 +21,17 @@ from zope import interface
 from persistent import Persistent
 
 from whoosh import index
+
+from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
+
 from whoosh.index import LockError
 from whoosh.index import _DEF_INDEX_NAME
-from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
 from nti.common.property import CachedProperty
 
 from nti.externalization.representation import WithRepr
 
-from nti.schema.schema import EqHash
+from nti.schema.eqhash import EqHash
 
 from .interfaces import IWhooshIndexStorage
 

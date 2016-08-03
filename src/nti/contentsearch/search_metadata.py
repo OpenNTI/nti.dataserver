@@ -15,10 +15,6 @@ from zope import interface
 
 from nti.chatserver.interfaces import IMessageInfo
 
-from nti.dataserver.interfaces import INote
-from nti.dataserver.interfaces import IHighlight
-from nti.dataserver.interfaces import IRedaction
-from nti.dataserver.interfaces import ITranscript
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
@@ -27,13 +23,20 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 
+from nti.dataserver.interfaces import INote
+from nti.dataserver.interfaces import IHighlight
+from nti.dataserver.interfaces import IRedaction
+from nti.dataserver.interfaces import ITranscript
+
 from nti.externalization.representation import WithRepr
 
 from nti.mimetype.mimetype import MIME_BASE
 
-from nti.schema.schema import EqHash
-from nti.schema.schema import SchemaConfigured
+from nti.schema.eqhash import EqHash
+
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 from .interfaces import IBookContent
 from .interfaces import INTICardContent

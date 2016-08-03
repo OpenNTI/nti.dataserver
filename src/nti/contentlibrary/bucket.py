@@ -17,7 +17,7 @@ from ZODB.POSException import ConnectionStateError
 
 from nti.common.property import alias
 
-from nti.schema.schema import EqHash
+from nti.schema.eqhash import EqHash
 
 from .interfaces import IDelimitedHierarchyKey
 from .interfaces import IDelimitedHierarchyBucket

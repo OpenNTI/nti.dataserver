@@ -40,10 +40,11 @@ from nti.invitations.interfaces import IInvitationsContainer
 
 from nti.invitations.utils import get_random_invitation_code
 
-from nti.schema.field import SchemaConfigured
-from nti.schema.fieldproperty import createDirectFieldProperties
+from nti.schema.eqhash import EqHash
 
-from nti.schema.schema import EqHash
+from nti.schema.field import SchemaConfigured
+
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 @WithRepr
 @EqHash('code')
