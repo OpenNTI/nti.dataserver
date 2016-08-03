@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
 .. $Id$
 """
 
@@ -12,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.common.representation import WithRepr
+from nti.externalization.representation import WithRepr
 
 from nti.schema.field import Bool
 from nti.schema.field import ValidText
@@ -35,10 +34,10 @@ class IEmail(interface.Interface):
 
 	Body = ValidText(title="The body of the message.", required=True)
 
-@interface.implementer( IEmail )
 @WithRepr
+@interface.implementer(IEmail)
 class Email(SchemaConfigured):
-	createDirectFieldProperties( IEmail )
+	createDirectFieldProperties(IEmail)
 
 	__external_class_name__ = "Email"
 	mime_type = mimeType = 'application/vnd.nextthought.email'
