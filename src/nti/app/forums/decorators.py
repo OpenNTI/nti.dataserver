@@ -117,16 +117,14 @@ class DFLBoardLinkDecorator(object):
 from nti.app.renderers.caching import md5_etag
 
 @interface.implementer(IExternalMappingDecorator)
-class ForumObjectContentsLinkProvider(object):
+class ForumObjectContentsLinkProvider(AbstractAuthenticatedRequestAwareDecorator):
 	"""
 	Decorate forum object externalizations with a link pointing to their
 	children (the contents).
 	"""
 
-	__metaclass__ = SingletonDecorator
-
 	@classmethod
-	def add_link(cls, rel, context, mapping, request, elements=None):
+	def _add_link(cls, rel, context, mapping, request, elements=None):
 		_links = mapping.setdefault(LINKS, [])
 		elements = elements or (VIEW_CONTENTS,
 								md5_etag(context.lastModified,
@@ -138,11 +136,21 @@ class ForumObjectContentsLinkProvider(object):
 		_links.append(link)
 		return link
 
-	def decorateExternalMapping(self, context, mapping):
-		request = get_current_request()
-		if request is None or not request.authenticated_userid:
-			return
+	@classmethod
+	def _can_add(cls, context, request):
+		if request is None:
+			result = True
+		else:
+			# Check the create permission in the forum acl.
+			# FIXME: We shouldn't need to specifically check is_coppa like this.
+			# That should either be handled by the ACL or, failing that,
+			# by the content vocabulary
+			current_user = get_remote_user(request)
+			is_coppa = ICoppaUserWithoutAgreement.providedBy(current_user)
+			result = (not is_coppa and can_create(context, request))
+		return result
 
+	def _do_decorate_external(self, context, mapping):
 		# We only do this for parented objects. Otherwise, we won't
 		# be able to render the links. A non-parented object is usually
 		# a weakref to an object that has been left around
@@ -151,7 +159,7 @@ class ForumObjectContentsLinkProvider(object):
 		# without considering acquired info (NTIIDs from the User would mess
 		# up rendering)
 		context = aq_base(context)
-		if context.__parent__ is None:  # pragma: no cover
+		if context.__parent__ is None: # pragma: no cover
 			return
 
 		# TODO: This can be generalized by using the component
@@ -171,19 +179,14 @@ class ForumObjectContentsLinkProvider(object):
 		# This works because everytime one of the context's children is modified,
 		# our timestamp is also modified. We include the user asking just to be safe
 		# We also advertise that you can POST new items to this url, which is good for caching
-		elements = (VIEW_CONTENTS, md5_etag(context.lastModified,
-											request.authenticated_userid).replace('/', '_'))
-		self.add_link(VIEW_CONTENTS, context, mapping, request, elements)
+		request = self.request
+		elements = (VIEW_CONTENTS, 
+					md5_etag(context.lastModified,
+					 		 request.authenticated_userid).replace('/', '_'))
 
-		current_user = get_remote_user(get_current_request())
-		is_coppa = ICoppaUserWithoutAgreement.providedBy(current_user)
-
-		# Check the create permission in the forum acl.
-		# FIXME: We shouldn't need to specifically check is_coppa like this.
-		# That should either be handled by the ACL or, failing that,
-		# by the content vocabulary
-		if request is None or (not is_coppa and can_create(context, request)):
-			link = self.add_link('add', context, mapping, request, elements)
+		self._add_link(VIEW_CONTENTS, context, mapping, request, elements)
+		if self._can_add(context, request):
+			link = self._add_link('add', context, mapping, request, elements)
 			link.method = 'POST'
 
 @interface.implementer(IExternalObjectDecorator)

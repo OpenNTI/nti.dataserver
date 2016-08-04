@@ -95,16 +95,19 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
-				for="nti.dataserver.contenttypes.forums.interfaces.IBoard"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IBoard
+					 pyramid.interfaces.IRequest" />
 
 	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
-				for="nti.dataserver.contenttypes.forums.interfaces.IForum"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IForum
+					 pyramid.interfaces.IRequest"  />
 
 	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
-				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.ITopic
+					 pyramid.interfaces.IRequest"  />
 
 	<subscriber factory=".decorators.SecurityAwareForumTopicCountDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
