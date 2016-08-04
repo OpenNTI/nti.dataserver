@@ -241,6 +241,126 @@ class AbstractContentPackageLibrary(object):
 		name = root.__name__ if root is not None else self.__name__
 		return name
 
+	def _do_addContentPackages(self, added, lib_sync_results, params, results):
+		for new in added:
+			new.__parent__ = self
+			_register_content_units(self, new)  # get intids
+			lifecycleevent.created(new)
+			lib_sync_results.added(new.ntiid)   # register
+			notify(ContentPackageAddedEvent(new, params, results))
+			
+	def _do_removeContentPackages(self, removed, lib_sync_results, params, results):
+		for old in removed or ():
+			notify(ContentPackageRemovedEvent(old, params, results))
+			_unregister_content_units(old)
+			old.__parent__ = None
+			lib_sync_results.removed(old.ntiid)  # register
+
+	def _do_updateContentPackages(self, changed, lib_sync_results, params, results):
+		for new, old in changed:
+			# check ntiid changes
+			if new.ntiid != old.ntiid:
+				raise UnmatchedRootNTIIDException(
+						"Pacakge NTIID changed from %s to %s" % (old.ntiid, new.ntiid))
+			new.__parent__ = self
+			# XXX CS/JZ, 2-04-15 DO NEITHER call lifecycleevent.created nor
+			# lifecycleevent.added on 'new' objects as modified events subscribers
+			# are expected to handle any change
+			_register_content_units(self, new)
+			lib_sync_results.modified(new.ntiid)  # register
+			# Note that this is the special event that shows both objects.
+			notify(ContentPackageReplacedEvent(new, old, params, results))
+
+	def _do_checkContentPackages(self, added, unmodified, changed=()):
+		_contentPackages = []
+		_contentPackages.extend(added)
+		_contentPackages.extend(unmodified)
+		_contentPackages.extend(changed)
+
+		_contentPackages = tuple(_contentPackages)
+		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
+		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
+		return _contentPackages, _content_packages_by_ntiid
+
+	def _do_completeSyncPackages(self, unmodified, lib_sync_results, params, results, clear_cache):
+		# Signal what pacakges WERE NOT modified
+		for pacakge in unmodified or ():
+			notify(ContentPackageUnmodifiedEvent(pacakge, params, results))
+			
+		# Finish up by saying that we sync'd, even if nothing changed
+		notify(ContentPackageLibraryDidSyncEvent(self, params, results))
+
+		# set last sync time
+		self._enumeration.lastSynchronized = time.time()
+		if clear_cache:
+			self._clear_caches()
+		return lib_sync_results
+
+	def addRemoveContentPackages(self, params=None, results=None):
+		"""
+		Only add/remove content packages in the library
+		"""
+		results = SynchronizationResults() if results is None else results
+		notify(ContentPackageLibraryWillSyncEvent(self, params))
+		lib_sync_results = LibrarySynchronizationResults(Name=self._root_name)
+		results.add(lib_sync_results)
+		
+		never_synced = self._contentPackages is None
+		old_content_packages, old_content_packages_by_ntiid = \
+					self._content_packages_tuple(self._contentPackages)
+					
+		contentPackages = self._enumeration.enumerateContentPackages()
+		_, new_content_packages_by_ntiid = \
+					self._content_packages_tuple(contentPackages)
+					
+		added = [package
+			 		for ntiid, package in new_content_packages_by_ntiid.items()
+			 		if ntiid not in old_content_packages_by_ntiid]
+		
+		removed = []
+		unmodified = []
+		for old in old_content_packages:
+			new = new_content_packages_by_ntiid.get(old.ntiid)
+			if new is None:
+				removed.append(old)
+			else:
+				unmodified.append(old)
+
+		something_changed = removed or added
+		
+		# now set up our view of the world
+		_contentPackages, _content_packages_by_ntiid = \
+									self._do_checkContentPackages(added, unmodified, ())
+		
+		if something_changed or never_synced:
+			enumeration_last_modified = getattr(self._enumeration, 'lastModified', 0)
+			# CS/JZ, 1-29-15 We need this before event firings because some code
+			# (at least question_map.py used to) relies on getting the new content units
+			# via pathToNtiid.
+			# TODO: Verify nothing else is doing so.
+			self._contentPackages = _contentPackages
+			self._enumeration_last_modified = enumeration_last_modified
+			self._content_packages_by_ntiid = _content_packages_by_ntiid
+
+			if not never_synced:
+				logger.info("Library %s adding packages %s", self, added)
+				logger.info("Library %s removing packages %s", self, removed)
+
+			if removed and params != None and not params.allowRemoval:
+				raise ContentRemovalException(
+							"Cannot remove content pacakges without explicitly allowing it")
+
+			self._do_removeContentPackages(removed, lib_sync_results, params, results)
+
+			self._do_addContentPackages(added, lib_sync_results, params, results)
+
+		self._do_completeSyncPackages(unmodified, 
+									  lib_sync_results, 
+									  params, 
+									  results, 
+									  something_changed or never_synced)
+		return lib_sync_results
+
 	def syncContentPackages(self, params=None, results=None):
 		"""
 		Fires created, added, modified, or removed events for each
@@ -256,12 +376,12 @@ class AbstractContentPackageLibrary(object):
 		# filter packages if specified
 		never_synced = self._contentPackages is None
 		filtered_old_content_packages, filtered_old_content_packages_by_ntiid = \
-					self._content_packages_tuple(self._contentPackages, packages)
+						self._content_packages_tuple(self._contentPackages, packages)
 
 		# make sure we get ALL packages
 		contentPackages = self._enumeration.enumerateContentPackages()
 		new_content_packages, new_content_packages_by_ntiid = \
-					self._content_packages_tuple(contentPackages)
+						self._content_packages_tuple(contentPackages)
 		assert 	len(new_content_packages) == len(new_content_packages_by_ntiid), \
 				"Invalid library"
 		enumeration_last_modified = getattr(self._enumeration, 'lastModified', 0)
@@ -299,14 +419,10 @@ class AbstractContentPackageLibrary(object):
 		something_changed = removed or added or changed
 
 		# now set up our view of the world
-		_contentPackages = []
-		_contentPackages.extend(added)
-		_contentPackages.extend(unmodified)
-		_contentPackages.extend([x[0] for x in changed])
-
-		_contentPackages = tuple(_contentPackages)
-		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
-		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
+		_contentPackages, _content_packages_by_ntiid = \
+									self._do_checkContentPackages(added,
+																  unmodified,
+																  [x[0] for x in changed])
 
 		# updated packages
 		packages = set(_content_packages_by_ntiid.keys()) if not packages else packages
@@ -338,32 +454,11 @@ class AbstractContentPackageLibrary(object):
 			# XXX: Note that we are not doing it in parallel, because if we need
 			# ZODB site access, we can have issues. Also not we're not
 			# randomizing because we expect to be preloaded.
-			for old in removed:
-				notify(ContentPackageRemovedEvent(old, params, results))
-				_unregister_content_units(old)
-				old.__parent__ = None
-				lib_sync_results.removed(old.ntiid)  # register
+			self._do_removeContentPackages(removed, lib_sync_results, params, results)
+			
+			self._do_updateContentPackages(changed, lib_sync_results, params, results)
 
-			for new, old in changed:
-				# check ntiid changes
-				if new.ntiid != old.ntiid:
-					raise UnmatchedRootNTIIDException(
-							"Pacakge NTIID changed from %s to %s" % (old.ntiid, new.ntiid))
-				new.__parent__ = self
-				# XXX CS/JZ, 2-04-15 DO NEITHER call lifecycleevent.created nor
-				# lifecycleevent.added on 'new' objects as modified events subscribers
-				# are expected to handle any change
-				_register_content_units(self, new)
-				lib_sync_results.modified(new.ntiid)  # register
-				# Note that this is the special event that shows both objects.
-				notify(ContentPackageReplacedEvent(new, old, params, results))
-
-			for new in added:
-				new.__parent__ = self
-				_register_content_units(self, new)  # get intids
-				lifecycleevent.created(new)
-				lib_sync_results.added(new.ntiid)  # register
-				notify(ContentPackageAddedEvent(new, params, results))
+			self._do_addContentPackages(added, lib_sync_results, params, results)
 
 			# after updating remove parent reference for old objects
 			for _, old in changed:
@@ -378,16 +473,11 @@ class AbstractContentPackageLibrary(object):
 			event = ContentPackageLibraryModifiedOnSyncEvent(self, params, results, attributes)
 			notify(event)
 
-		# Signal what pacakges WERE NOT modified
-		for pacakge in unmodified or ():
-			notify(ContentPackageUnmodifiedEvent(pacakge, params, results))
-
-		# Finish up by saying that we sync'd, even if nothing changed
-		notify(ContentPackageLibraryDidSyncEvent(self, params, results))
-
-		self._enumeration.lastSynchronized = time.time()
-		if something_changed or never_synced:
-			self._clear_caches()
+		self._do_completeSyncPackages(unmodified, 
+									  lib_sync_results, 
+									  params, 
+									  results, 
+									  something_changed or never_synced)
 		return lib_sync_results
 
 	# A map from top-level content-package NTIID to the content package.
