@@ -19,10 +19,6 @@ __docformat__ = "restructuredtext en"
 from nti.monkey import patch_gevent_on_import
 patch_gevent_on_import.patch()
 
-from nti.traversal import monkey as traversing_patch_on_import
-traversing_patch_on_import.patch()
-del traversing_patch_on_import
-
 logger = __import__('logging').getLogger(__name__)
 
 from nti.monkey import patch_relstorage_all_on_import
