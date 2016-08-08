@@ -28,19 +28,22 @@ def _process_args(args):
 	# sync global library
 	library = component.getUtility(IContentPackageLibrary)
 	library.syncContentPackages()
-	# set site and remove
-	set_site(args.site)
-	result = remove_package_inaccessible_assets()
-	if args.verbose:
-		print()
-		pprint.pprint(result)
-		print()
+	for site in args.sites or ():
+		set_site(site)
+		result = remove_package_inaccessible_assets()
+		if args.verbose:
+			print()
+			pprint.pprint(result)
+			print()
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Remove package inaccessible assets")
 	arg_parser.add_argument('-v', '--verbose', help="Be Verbose", action='store_true',
 							dest='verbose')
-	arg_parser.add_argument('-s', '--site', dest='site', help="Application SITE.")
+	arg_parser.add_argument('-s', '--sites', nargs="+", 
+							dest='site', 
+							required=True,
+							help="Application SITE(s).")
 	args = arg_parser.parse_args()
 
 	env_dir = os.getenv('DATASERVER_DIR')
