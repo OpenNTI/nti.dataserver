@@ -46,7 +46,7 @@ def main():
 	arg_parser.add_argument('-v', '--verbose', help="Be Verbose", action='store_true',
 							dest='verbose')
 	arg_parser.add_argument('-s', '--sites', nargs="+", 
-							dest='site', 
+							dest='sites', 
 							required=True,
 							help="Application SITE(s).")
 	args = arg_parser.parse_args()
