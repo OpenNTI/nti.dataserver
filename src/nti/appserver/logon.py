@@ -1355,7 +1355,7 @@ def google_oauth2(request):
 											   iface=None,
 											   user_factory=User.create_user)
 			interface.alsoProvides(user, IGoogleUser)
-			notify(GoogleUserCreatedEvent(user))
+			notify(GoogleUserCreatedEvent(user, request))
 			if is_true(email_verified):
 				force_email_verification(user)  # trusted source
 			request.environ[b'nti.request_had_transaction_side_effects'] = b'True'

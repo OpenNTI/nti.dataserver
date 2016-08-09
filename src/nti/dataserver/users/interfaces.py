@@ -265,12 +265,14 @@ class IGoogleUserCreatedEvent(IObjectEvent):
 	"""
 	Fired after an Google user has been created
 	"""
+	request = interface.Attribute("Request")
 
 @interface.implementer(IGoogleUserCreatedEvent)
 class GoogleUserCreatedEvent(ObjectEvent):
 
-	def __init__(self, obj):
+	def __init__(self, obj, request=None):
 		super(GoogleUserCreatedEvent, self).__init__(obj)
+		self.request = request
 
 class IAvatarURLProvider(Interface):
 	"""
