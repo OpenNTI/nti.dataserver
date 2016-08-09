@@ -1231,6 +1231,7 @@ def _redirect_uri(request):
 	target = target + '/' if not target.endswith('/') else target
 	target = urljoin(target, LOGON_GOOGLE_OAUTH2)
 	return target
+redirect_uri = _redirect_uri
 
 def get_openid_configuration():
 	global OPENID_CONFIGURATION
