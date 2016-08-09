@@ -1224,14 +1224,14 @@ DEFAULT_TOKEN_URL = 'https://www.googleapis.com/oauth2/v4/token'
 DEFAULT_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 DISCOVERY_DOC_URL = 'https://accounts.google.com/.well-known/openid-configuration'
 
-def _redirect_uri(request):
+def redirect_google_oauth2_uri(request):
 	root = request.route_path('objects.generic.traversal', traverse=())
 	root = root[:-1] if root.endswith('/') else root
 	target = urljoin(request.application_url, root)
 	target = target + '/' if not target.endswith('/') else target
 	target = urljoin(target, LOGON_GOOGLE_OAUTH2)
 	return target
-redirect_uri = _redirect_uri
+_redirect_uri = redirect_google_oauth2_uri
 
 def get_openid_configuration():
 	global OPENID_CONFIGURATION
