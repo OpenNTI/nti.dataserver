@@ -1251,8 +1251,8 @@ def redirect_google_oauth2_params(request, state=None, auth_keys=None):
 	return params
 
 @view_config(route_name=REL_LOGIN_GOOGLE, request_method='GET')
-def google_oauth1(request):
-	state = hashlib.sha256(os.urandom(1024)).hexdigest()
+def google_oauth1(request, state=None):
+	state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
 	config = get_openid_configuration()
 	params = redirect_google_oauth2_params(request, state)
 	auth_url = config.get("authorization_endpoint", DEFAULT_AUTH_URL)
