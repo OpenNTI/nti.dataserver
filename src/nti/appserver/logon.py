@@ -1240,17 +1240,22 @@ def get_openid_configuration():
 		OPENID_CONFIGURATION = s.json() if s.status_code == 200 else {}
 	return OPENID_CONFIGURATION
 
-@view_config(route_name=REL_LOGIN_GOOGLE, request_method='GET')
-def google_oauth1(request):
-	auth_keys = component.getUtility(IOAuthKeys, name="google")
-	state = hashlib.sha256(os.urandom(1024)).hexdigest()
-	config = get_openid_configuration()
-	auth_url = config.get("authorization_endpoint", DEFAULT_AUTH_URL)
+def redirect_google_oauth2_params(request, state=None, auth_keys=None):
+	auth_keys = component.getUtility(IOAuthKeys, name="google") if auth_keys is None else auth_keys
+	state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
 	params = {'state': state,
 			  'scope': 'openid email profile',
 			  'response_type': 'code',
 			  'client_id':auth_keys.APIKey,
 			  'redirect_uri':_redirect_uri(request)}
+	return params
+
+@view_config(route_name=REL_LOGIN_GOOGLE, request_method='GET')
+def google_oauth1(request):
+	state = hashlib.sha256(os.urandom(1024)).hexdigest()
+	config = get_openid_configuration()
+	params = redirect_google_oauth2_params(request, state)
+	auth_url = config.get("authorization_endpoint", DEFAULT_AUTH_URL)
 
 	hosted_domain = None
 	login_config = component.queryUtility(IGoogleLogonSettings)
