@@ -151,7 +151,7 @@ REL_TOS_URL = 'content.direct_tos_link'
 REL_PRIVACY_POLICY_URL = 'content.direct_privacy_link'
 
 REL_PING = 'logon.ping'  # See :func:`ping`
-REL_HANDSHAKE = 'logon.handshake'  # : See :func:`handshake`
+REL_HANDSHAKE = 'logon.handshake'  #: See :func:`handshake`
 REL_CONTINUE = 'logon.continue'
 
 REL_LOGIN_LOGOUT = 'logon.logout'  # See :func:`logout`
@@ -167,7 +167,7 @@ ROUTE_OPENID_RESPONSE = 'logon.openid.response'
 # The URI used as in attribute exchange to request the content to which
 # the authenticated entity has access. The attribute value type is defined
 # as a list of unlimited length, each entry of which refers to a specific
-# :class:`nti.contentlibrary.interfaces.IContentPackage`. Certain providers
+#:class:`nti.contentlibrary.interfaces.IContentPackage`. Certain providers
 # may have special mapping rules, but in general, each entry is the specific local
 # part of the NTIID of that content package (and the provider is implied from the
 # OpenID domain). These will be turned into groups that the :class:`nti.dataserver.interfaces.IUser`
@@ -569,8 +569,8 @@ class _MissingUserMallowstreetLoginLinkProvider(MissingUserWhitelistedLinkProvid
 	domains = ('mallowstreet.com',)
 	rel = REL_LOGIN_OPENID
 
-	# : When we go to production, this will change to
-	# : secure....
+	#: When we go to production, this will change to
+	#: secure....
 	_BASE_URL = 'https://demo.mallowstreet.com/Mallowstreet/OpenID/User.aspx/%s'
 
 	def params_for(self, user):
