@@ -20,15 +20,19 @@ try:
 	from saml2.client import Saml2Client
 	from saml2.config import config_factory
 	from saml2.s2repoze.plugins.sp import SAML2Plugin as _SAML2Plugin
-except ImportError: # pypy
+except ImportError:  # pypy
 	_SAML2Plugin = object
+
+from zope import component
+
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 # functions
 
 def find_xmlsec_path():
 	try:
 		from saml2.sigver import get_xmlsec_binary
-		result = get_xmlsec_binary(["/opt/local/bin","/usr/local/bin", "/usr/bin"])
+		result = get_xmlsec_binary(["/opt/local/bin", "/usr/local/bin", "/usr/bin"])
 	except Exception:
 		warnings.warn("xmlsec1 not found")
 		result = None
@@ -62,24 +66,24 @@ def make_plugin(path=None,
 				identity_cache="",
 				idp_query_param="",
 				virtual_organization="",
-				remember_name="$Id$"):
-	path = path or os.environ.get('DATASERVER_DIR')	
+				remember_name="repoze_saml_plugin"):
+	path = path or os.environ.get('DATASERVER_DIR')
 	path = os.path.normpath(os.path.expanduser(path)) if path else path
 	if _SAML2Plugin is object:
 		return None
-	
+
 	# find config files
 	sp = find_sp_file(path)
 	idps = find_idp_files(path)
 
 	# no service provider
-	if not sp: 
+	if not sp:
 		return None
-	
+
 	# check service provider
 	with open(sp) as fp:
 		sp_json = simplejson.load(fp, "UTF-8")
-	
+
 	# check xmlsec binary
 	xmlsec_path = find_xmlsec_path()
 	spec_path = sp_json.get('xmlsec_binary')
@@ -97,7 +101,7 @@ def make_plugin(path=None,
 		local = set(os.path.normpath(x) for x in local if os.path.exists(os.path.normpath(x)))
 	finally:
 		os.chdir(cwd)
-		
+
 	# add specified idps some
 	local.update(idps)
 	if not local:
@@ -106,7 +110,7 @@ def make_plugin(path=None,
 	if sp_json.get('metadata') is None:
 		sp_json['metadata'] = {}
 	sp_json['metadata']['local'] = sorted(local)
-	
+
 	saml_conf = tempfile.mktemp("sp")
 	try:
 		# save config
@@ -116,10 +120,10 @@ def make_plugin(path=None,
 		conf = config_factory("sp", saml_conf)
 		# create client
 		scl = Saml2Client(config=conf, identity_cache=identity_cache,
-                      	  virtual_organization=virtual_organization)
+					  	  virtual_organization=virtual_organization)
 		# create plugin
 		plugin = SAML2Plugin(remember_name, conf, scl, wayf, cache, sid_store,
-                         	 discovery, idp_query_param)
+						 	 discovery, idp_query_param)
 		return plugin
 	finally:
 		os.remove(saml_conf)
@@ -127,4 +131,10 @@ def make_plugin(path=None,
 # classes
 
 class SAML2Plugin(_SAML2Plugin):
-	pass
+
+	def _pick_idp(self, environ, came_from):
+		policy = component.queryAdapter(ISitePolicyUserEventListener)
+		idp_entity_id = getattr(policy, 'idp_entity_id', None)
+		if idp_entity_id:
+			return 0, idp_entity_id
+		return _SAML2Plugin._pick_idp(self, environ, came_from)
