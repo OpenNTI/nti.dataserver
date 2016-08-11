@@ -280,6 +280,7 @@ setup(
 		'pyramid-openid',
 		 # 'psycopg2 >= 2.5.1',	# PostGreSQL
 		 # Monitoring stats and instrumenting code
+		'pysaml2' if not IS_PYPY else '',
 		'python-statsd',  # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
 		 # Consider also https://github.com/phensley/gstatsd
