@@ -10,12 +10,15 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import tempfile
 import warnings
 from glob import glob
 
 import simplejson
 
 try:
+	from saml2.client import Saml2Client
+	from saml2.config import config_factory
 	from saml2.s2repoze.plugins.sp import SAML2Plugin as _SAML2Plugin
 except ImportError: # pypy
 	_SAML2Plugin = object
@@ -51,7 +54,15 @@ def find_idp_files(path=None):
 	result = glob(os.path.join(path, 'idp*.xml')) if path else ()
 	return result
 
-def create_saml2_plugin(path=None):
+def make_plugin(path=None,
+				wayf="",
+				cache="",
+				discovery="",
+				sid_store="",
+				identity_cache="",
+				idp_query_param="",
+				virtual_organization="",
+				remember_name="$Id$"):
 	path = path or os.environ.get('DATASERVER_DIR')	
 	path = os.path.normpath(os.path.expanduser(path)) if path else path
 	if _SAML2Plugin is object:
@@ -79,11 +90,13 @@ def create_saml2_plugin(path=None):
 
 	# check anything specified exists
 	cwd = os.getcwd()
-	os.chdir(path)
-	metadata = sp_json.get('metadata') or {}
-	local = metadata.get('local') or ()
-	local = set(os.path.normpath(x) for x in local if os.path.exists(os.path.normpath(x)))
-	os.chdir(cwd)
+	try:
+		os.chdir(path)
+		metadata = sp_json.get('metadata') or {}
+		local = metadata.get('local') or ()
+		local = set(os.path.normpath(x) for x in local if os.path.exists(os.path.normpath(x)))
+	finally:
+		os.chdir(cwd)
 		
 	# add specified idps some
 	local.update(idps)
@@ -94,7 +107,22 @@ def create_saml2_plugin(path=None):
 		sp_json['metadata'] = {}
 	sp_json['metadata']['local'] = sorted(local)
 	
-	return None
+	saml_conf = tempfile.mktemp("sp")
+	try:
+		# save config
+		with open(saml_conf, "w") as fp:
+			simplejson.dump(sp_json, fp, indent='\t')
+		# parse config
+		conf = config_factory("sp", saml_conf)
+		# create client
+		scl = Saml2Client(config=conf, identity_cache=identity_cache,
+                      	  virtual_organization=virtual_organization)
+		# create plugin
+		plugin = SAML2Plugin(remember_name, conf, scl, wayf, cache, sid_store,
+                         	 discovery, idp_query_param)
+		return plugin
+	finally:
+		os.remove(saml_conf)
 
 # classes
 
