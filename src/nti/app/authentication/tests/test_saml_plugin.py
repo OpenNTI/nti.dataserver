@@ -10,11 +10,13 @@ __docformat__ = "restructuredtext en"
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import assert_that
+from hamcrest import has_property
 
 import os
 import unittest
 
 from nti.app.authentication.saml_plugin import make_plugin
+from nti.app.authentication.saml_plugin import _SAML2Plugin
 
 class TestSAMLPlugin(unittest.TestCase):
 
@@ -22,3 +24,7 @@ class TestSAMLPlugin(unittest.TestCase):
 		path = os.path.join(os.path.dirname(__file__), "saml")
 		plugin = make_plugin(path)
 		assert_that(plugin, is_not(none()))
+
+	def test_internals(self):
+		if _SAML2Plugin is not object:
+			assert_that(_SAML2Plugin, has_property('_pick_idp',  is_not(none())))
