@@ -10,15 +10,14 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 try:
-	from saml2.s2repoze.plugins.sp import SAML2Plugin
+	from saml2.s2repoze.plugins.sp import SAML2Plugin as _SAML2Plugin
 except ImportError: # pypy
-	SAML2Plugin = object
-
-class NTISAML2Plugin(SAML2Plugin):
-	pass
+	_SAML2Plugin = None
 
 def create_saml2_plugin():
-	if SAML2Plugin is object:
+	
+	if _SAML2Plugin is None:
 		return None
-	else:
+
+	class SAML2Plugin(_SAML2Plugin):
 		pass
