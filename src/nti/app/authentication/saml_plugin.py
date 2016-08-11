@@ -144,7 +144,7 @@ class SAML2Plugin(_SAML2Plugin):
 
 	def _pick_idp(self, environ, came_from):
 		policy = component.queryAdapter(ISitePolicyUserEventListener)
-		idp_entity_id = getattr(policy, 'idp_entity_id', None)
+		idp_entity_id = getattr(policy, 'IDP_ENTITY_ID', None)
 		if idp_entity_id:
 			return 0, idp_entity_id
 		return _SAML2Plugin._pick_idp(self, environ, came_from)
