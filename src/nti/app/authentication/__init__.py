@@ -40,4 +40,4 @@ def get_remote_user(request=None, dataserver=None):
 def is_anonymous_identity(identity):
 	if identity is None:
 		return False
-	return 'anonymous' in identity and identity['anonymous']
+	return u'anonymous' in identity and identity[u'anonymous']
