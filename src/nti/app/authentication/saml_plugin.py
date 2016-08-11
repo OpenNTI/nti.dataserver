@@ -53,6 +53,7 @@ def find_idp_files(path=None):
 
 def create_saml2_plugin(path=None):
 	path = path or os.environ.get('DATASERVER_DIR')	
+	path = os.path.normpath(os.path.expanduser(path)) if path else path
 	if _SAML2Plugin is object:
 		return None
 	
@@ -78,7 +79,7 @@ def create_saml2_plugin(path=None):
 
 	# check anything specified exists
 	cwd = os.getcwd()
-	os.chdir(os.path.normpath(os.path.expanduser(path)))
+	os.chdir(path)
 	metadata = sp_json.get('metadata') or {}
 	local = metadata.get('local') or ()
 	local = set(os.path.normpath(x) for x in local if os.path.exists(os.path.normpath(x)))
