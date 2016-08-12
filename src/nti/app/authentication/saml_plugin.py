@@ -44,22 +44,22 @@ def find_xmlsec_path():
 		result = None
 	return result
 
-def etc_dir(path=None):
+def etc_saml_dir(path=None):
 	if not path:
 		ds = os.environ.get('DATASERVER_DIR')
-		path = os.path.join(ds, 'etc') if ds else None
+		path = os.path.join(ds, 'etc/saml') if ds else None
 	path = normalize_path(path)
 	return path
 
 def find_sp_file(path=None):
-	path = etc_dir(path)
+	path = etc_saml_dir(path)
 	path = os.path.join(path, 'sp.json') if path else path
 	if path and os.path.exists(path):
 		return path
 	return None
 
 def find_idp_files(path=None):
-	path = etc_dir(path)
+	path = etc_saml_dir(path)
 	result = glob(os.path.join(path, 'idp*.xml')) if path else ()
 	return result
 
@@ -72,8 +72,6 @@ def make_plugin(path=None,
 				idp_query_param="",
 				virtual_organization="",
 				remember_name=str("auth_tkt")):
-	path = path or os.environ.get('DATASERVER_DIR')
-	path = normalize_path(path)
 	if _SAML2Plugin is object:
 		return None
 
@@ -88,6 +86,9 @@ def make_plugin(path=None,
 	# check service provider
 	with open(sp) as fp:
 		sp_json = simplejson.load(fp, "UTF-8")
+
+	path = path or os.environ.get('DATASERVER_DIR')
+	path = normalize_path(path)
 
 	# check xmlsec binary
 	xmlsec_path = find_xmlsec_path()
