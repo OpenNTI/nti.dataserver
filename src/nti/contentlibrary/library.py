@@ -282,13 +282,15 @@ class AbstractContentPackageLibrary(object):
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 		return _contentPackages, _content_packages_by_ntiid
 
-	def _do_completeSyncPackages(self, unmodified, lib_sync_results, params, results, clear_cache):
-		# Signal what pacakges WERE NOT modified
-		for pacakge in unmodified or ():
-			notify(ContentPackageUnmodifiedEvent(pacakge, params, results))
-			
-		# Finish up by saying that we sync'd, even if nothing changed
-		notify(ContentPackageLibraryDidSyncEvent(self, params, results))
+	def _do_completeSyncPackages(self, unmodified, lib_sync_results, params, results,
+								 clear_cache, do_notify=True):
+		if do_notify:
+			# Signal what pacakges WERE NOT modified
+			for pacakge in unmodified or ():
+				notify(ContentPackageUnmodifiedEvent(pacakge, params, results))
+				
+			# Finish up by saying that we sync'd, even if nothing changed
+			notify(ContentPackageLibraryDidSyncEvent(self, params, results))
 
 		# set last sync time
 		self._enumeration.lastSynchronized = time.time()
@@ -354,11 +356,13 @@ class AbstractContentPackageLibrary(object):
 
 			self._do_addContentPackages(added, lib_sync_results, params, results)
 
+		do_event = bool(something_changed or never_synced)
 		self._do_completeSyncPackages(unmodified, 
 									  lib_sync_results, 
 									  params, 
 									  results, 
-									  something_changed or never_synced)
+									  do_event,
+									  do_event)
 		return lib_sync_results
 
 	def syncContentPackages(self, params=None, results=None):
