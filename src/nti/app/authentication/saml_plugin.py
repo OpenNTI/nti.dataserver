@@ -18,6 +18,7 @@ import simplejson
 try:
 	from saml2.config import SPConfig
 	from saml2.client import Saml2Client
+	from saml2.sigver import SigverError
 	from saml2.s2repoze.plugins.sp import SAML2Plugin as _SAML2Plugin
 except ImportError:  # pypy
 	_SAML2Plugin = object
@@ -38,7 +39,7 @@ def find_xmlsec_path():
 	try:
 		from saml2.sigver import get_xmlsec_binary
 		result = get_xmlsec_binary(["/opt/local/bin", "/usr/local/bin", "/usr/bin"])
-	except Exception:
+	except (Exception, SigverError):
 		warnings.warn("xmlsec1 not found")
 		result = None
 	return result
