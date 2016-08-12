@@ -33,7 +33,7 @@ from nti.contentlibrary.synchronize import SynchronizationResults
 from nti.site.hostpolicy import run_job_in_all_host_sites
 from nti.site.hostpolicy import synchronize_host_policies
 
-def synchronize(sleep=None, allowRemoval=True, site=None, ntiids=()):
+def _do_synchronize(method, sleep=None, site=None, ntiids=(), allowRemoval=True):
 	results = SynchronizationResults()
 	params = SynchronizationParams(ntiids=ntiids or (), allowRemoval=allowRemoval)
 
@@ -74,7 +74,8 @@ def synchronize(sleep=None, allowRemoval=True, site=None, ntiids=()):
 		syncer = ISyncableContentPackageLibrary(site_lib, None)
 		if syncer is not None:
 			logger.info("Sync library %s", site_lib)
-			site_lib.syncContentPackages(params, results)
+			executable = getattr(site_lib, method)
+			executable(params, results)
 			return True
 		return False
 
@@ -91,3 +92,12 @@ def synchronize(sleep=None, allowRemoval=True, site=None, ntiids=()):
 	# notify
 	notify(AllContentPackageLibrariesDidSyncEvent(params, results))
 	return params, results
+
+def syncContentPackages(sleep=None, allowRemoval=True, site=None, ntiids=()):
+	result = _do_synchronize("syncContentPackages", sleep, site, ntiids, allowRemoval)
+	return result
+synchronize = syncContentPackages
+
+def addRemoveContentPackages(sleep=None, site=None):
+	result = _do_synchronize("addRemoveContentPackages", sleep, site)
+	return result

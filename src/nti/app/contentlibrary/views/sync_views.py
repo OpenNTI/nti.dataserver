@@ -40,7 +40,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.contentlibrary import LOCK_TIMEOUT
 from nti.app.contentlibrary import SYNC_LOCK_NAME
 
-from nti.app.contentlibrary.synchronize import synchronize
+from nti.app.contentlibrary.synchronize import syncContentPackages
+from nti.app.contentlibrary.synchronize import addRemoveContentPackages
 
 from nti.app.externalization.error import raise_json_error
 
@@ -187,21 +188,15 @@ class _AbstractSyncAllLibrariesView(_SetSyncLockView,
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context=IDataserverFolder,
-			   name='SyncAllLibraries')
-class _SyncAllLibrariesView(_AbstractSyncAllLibrariesView):
+			   name='AddRemoveContentPackages')
+class _AddRemoveContentPackagesView(_AbstractSyncAllLibrariesView):
 	"""
-	A view that synchronizes all of the in-database libraries
-	(and sites) with their on-disk and site configurations.
+	A view that adds new content pacakges and removes old ones
+	using the data rom on-disk and site configurations.
 	If you GET this view, changes to not take effect but are just
 	logged.
-
-	.. note:: TODO: While this may be useful for scripts,
-		we also need to write a pretty HTML page that shows
-		the various sync stats, like time last sync'd, whether
-		the directory is found, etc, and lets people sync
-		from there.
 	"""
-
+	
 	# Because we'll be doing a lot of filesystem IO, which may not
 	# be well cooperatively tasked (gevent), we would like to give
 	# the opportunity for other greenlets to run by sleeping inbetween
@@ -211,15 +206,17 @@ class _SyncAllLibrariesView(_AbstractSyncAllLibrariesView):
 	# disabling it.
 	_SLEEP = True
 
-	def _do_sync(self, ntiids, site, allowRemoval):
+	def _executable(self, sleep, site, *args, **kwargs):
+		return addRemoveContentPackages(sleep=sleep, site=site)
+
+	def _do_sync(self, site, *args, **kwargs):
 		now = time.time()
 		result = LocatedExternalDict()
 		result['Transaction'] = self._txn_id()
 		try:
-			params, results = synchronize(sleep=self._SLEEP,
-										  site=site,
-										  ntiids=ntiids or (),
-										  allowRemoval=allowRemoval)
+			params, results = self._executable(sleep=self._SLEEP,
+										  	   site=site,
+										  	   *args, **kwargs)
 			result['Params'] = params
 			result['Results'] = results
 			result['SyncTime'] = time.time() - now
@@ -244,15 +241,6 @@ class _SyncAllLibrariesView(_AbstractSyncAllLibrariesView):
 		values = self.readInput()
 		# parse params
 		site = values.get('site')
-		allowRemoval = values.get('allowRemoval') or u''
-		allowRemoval = allowRemoval.lower() in TRUE_VALUES
-		# things to sync (package and courses)
-		for name in ('ntiids', 'ntiid', 'packages', 'package'):
-			ntiids = values.get(name)
-			if ntiids:
-				break
-		ntiids = set(ntiids.split()) if isinstance(ntiids, string_types) else ntiids
-		ntiids = list(ntiids) if ntiids else ()
 		# Unfortunately, zope.dublincore includes a global subscriber registration
 		# (zope.dublincore.creatorannotator.CreatorAnnotator)
 		# that will update the `creators` property of IZopeDublinCore to include
@@ -268,5 +256,44 @@ class _SyncAllLibrariesView(_AbstractSyncAllLibrariesView):
 		# from being broadcast (specifically topic creations). We've seen such
 		# changes end up causing conflict issues when managing sessions. These
 		# retries cause syncs to take much longer to perform.
-		result = self._do_sync(ntiids, site, allowRemoval)
+		result = self._do_sync(site=site)
+		return result
+
+@view_config(permission=ACT_SYNC_LIBRARY)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=IDataserverFolder,
+			   name='SyncAllLibraries')
+class _SyncAllLibrariesView(_AddRemoveContentPackagesView):
+	"""
+	A view that synchronizes all of the in-database libraries
+	(and sites) with their on-disk and site configurations.
+	If you GET this view, changes to not take effect but are just
+	logged.
+
+	.. note:: TODO: While this may be useful for scripts,
+		we also need to write a pretty HTML page that shows
+		the various sync stats, like time last sync'd, whether
+		the directory is found, etc, and lets people sync
+		from there.
+	"""
+
+	def _executable(self, sleep, site, *args, **kwargs):
+		return syncContentPackages(sleep=sleep, site=site, *args, **kwargs)
+
+	def _do_call(self):
+		values = self.readInput()
+		# parse params
+		site = values.get('site')
+		allowRemoval = values.get('allowRemoval') or u''
+		allowRemoval = allowRemoval.lower() in TRUE_VALUES
+		# things to sync (package and courses)
+		for name in ('ntiids', 'ntiid', 'packages', 'package'):
+			ntiids = values.get(name)
+			if ntiids:
+				break
+		ntiids = set(ntiids.split()) if isinstance(ntiids, string_types) else ntiids
+		ntiids = list(ntiids) if ntiids else ()
+		# execute
+		result = self._do_sync(site=site, ntiids=ntiids, allowRemoval=allowRemoval)
 		return result
