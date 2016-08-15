@@ -17,6 +17,8 @@ from pyramid.view import view_config
 
 from nti.app.externalization.error import raise_json_error as _raise_error
 
+from nti.app.saml import MessageFactory as _m
+
 from nti.app.saml import ACS
 from nti.app.saml import SLS
 
@@ -46,9 +48,16 @@ def sls_view(request):
 			 context=SAMLPathAdapter,
 			 route_name='objects.generic.traversal')
 def acs_view(request):
+	environ = request.environ
+	username = environ["repoze.who.identity"]["user"]
+	nameid = environ["repoze.who.identity"]["login"]
+	if not nameid:
+		raise hexc.HTTPUnauthorized()
+	if not username:
+		raise hexc.HTTPUnprocessableEntity(_m("The system did not return any information about you"))
+
 	# from IPython.core.debugger import Tracer; Tracer()()
 	# TODO: Validate errors and get username
-	username = None
 	password = None
 	if not username:
 		_raise_error(request, hexc.HTTPUnprocessableEntity,
