@@ -498,6 +498,7 @@
 	<!-- Additional -->
 	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
 	<include package="nti.app.mail" />
+	<include package="nti.app.saml" />
 	<include package="nti.app.types" />
 	<include package="nti.app.users" />
 	<include package="nti.app.recorder" />
