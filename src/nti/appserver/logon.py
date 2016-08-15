@@ -1251,7 +1251,7 @@ def redirect_google_oauth2_params(request, state=None, auth_keys=None):
 	return params
 
 @view_config(route_name=REL_LOGIN_GOOGLE, request_method='GET')
-def google_oauth1(request, state=None):
+def google_oauth1(request, success=None, failure=None, state=None):
 	state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
 	config = get_openid_configuration()
 	params = redirect_google_oauth2_params(request, state)
@@ -1264,9 +1264,10 @@ def google_oauth1(request, state=None):
 	if hosted_domain:
 		params['hd'] = hosted_domain
 
-	for k in ('success', 'failure'):
-		if request.params.get(k):
-			request.session['google.' + k] = request.params.get(k)
+	for key, value in (('success', success), ('failure', failure)):
+		value = value or request.params.get(key)
+		if value:
+			request.session['google.' + key] = value
 
 	# save state for validation
 	request.session['google.state'] = state
