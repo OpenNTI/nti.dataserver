@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import warnings
 from glob import glob
+from io import BytesIO
 
 import simplejson
 
@@ -150,3 +151,23 @@ class SAML2Plugin(_SAML2Plugin):
 		if idp_entity_id:
 			return 0, idp_entity_id
 		return _SAML2Plugin._pick_idp(self, environ, came_from)
+
+	def _wsgi_input(self, environ):
+		try:
+			environ['wsgi.input'].seek(0) # allow reading
+			wsgi_input = environ['wsgi.input'].read() # copy
+			return wsgi_input or b''
+		except Exception:
+			return b''
+
+	def identify(self, environ):
+		# allow SAML2Plugin to consume input
+		wsgi_input = self._wsgi_input(environ)
+		environ['wsgi.input'] = BytesIO(wsgi_input) # save
+		try:
+			result = _SAML2Plugin.identify(self, environ)
+			result = None if not result else result
+		finally:
+			# restore
+			environ['wsgi.input'] = BytesIO(wsgi_input)
+		return result
