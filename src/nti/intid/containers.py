@@ -41,9 +41,9 @@ from persistent import Persistent
 
 from nti.common import sets
 
-from nti.common.time import ZERO_64BIT_INT
-
 from nti.externalization.representation import make_repr
+
+from nti.zodb.containers import ZERO_64BIT_INT
 
 from nti.zodb.containers import bit64_int_to_time
 from nti.zodb.containers import time_to_64bit_int
