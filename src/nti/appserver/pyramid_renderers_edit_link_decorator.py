@@ -19,6 +19,8 @@ from zope.location.interfaces import ILocation
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
+from nti.app.renderers.interfaces import INoHrefInResponse
+
 from nti.appserver.pyramid_authorization import is_writable
 from nti.appserver.pyramid_authorization import is_deletable
 
@@ -184,7 +186,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 		if needs_edit:
 			links.append(edit_link)
-		if needs_href or needs_edit:
+		if (needs_href or needs_edit) and not INoHrefInResponse.providedBy(context):
 			# For cases that we can, make edit and the toplevel href be the same.
 			# this improves caching
 			mapping['href'] = render_link(edit_link, nearest_site=nearest_site)['href']
