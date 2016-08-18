@@ -47,8 +47,10 @@ def find_xmlsec_path():
 
 def etc_saml_dir(path=None):
 	if not path:
-		ds = os.environ.get('DATASERVER_DIR')
-		path = os.path.join(ds, 'etc/saml') if ds else None
+		path = os.environ.get('DATASERVER_SAML_DIR')
+		if not path:
+			ds = os.environ.get('DATASERVER_DIR')
+			path = os.path.join(ds, 'etc/saml') if ds else None
 	path = normalize_path(path)
 	return path
 
