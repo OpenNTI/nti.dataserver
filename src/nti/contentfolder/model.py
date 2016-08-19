@@ -18,10 +18,6 @@ from zope.location.location import locate
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.common.property import alias
-from nti.common.property import readproperty
-from nti.common.property import CachedProperty
-
 from nti.coremetadata.interfaces import SYSTEM_USER_ID
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
@@ -35,6 +31,10 @@ from nti.contentfolder.utils import compute_path
 from nti.namedfile.file import get_file_name
 
 from nti.namedfile.interfaces import IFile
+
+from nti.property.property import alias
+from nti.property.property import readproperty
+from nti.property.property import CachedProperty
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
