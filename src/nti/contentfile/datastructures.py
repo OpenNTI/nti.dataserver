@@ -11,8 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.common.dataurl import DataURL
-
 from nti.coremetadata.interfaces import IModeledContentBody
 
 from nti.contentfile import CONTENT_FILE_MIMETYPE
@@ -33,6 +31,8 @@ from nti.contentfile.model import ContentBlobImage
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.namedfile.datastructures import NamedFileObjectIO
+
+from nti.property.dataurl import DataURL
 
 MIMETYPE = StandardExternalFields.MIMETYPE
 

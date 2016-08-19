@@ -18,11 +18,6 @@ from zope import interface
 
 from BTrees.OOBTree import OOTreeSet
 
-from nti.common.property import Lazy
-from nti.common.property import alias
-
-from nti.common import sets
-
 from nti.contentfile.interfaces import IContentFile
 from nti.contentfile.interfaces import IContentImage
 from nti.contentfile.interfaces import IContentBlobFile
@@ -34,6 +29,9 @@ from nti.namedfile.file import NamedBlobFile
 from nti.namedfile.file import NamedBlobImage
 
 from nti.namedfile.interfaces import IInternalFileRef
+
+from nti.property.property import Lazy
+from nti.property.property import alias
 
 from nti.wref.interfaces import IWeakRef
 
@@ -59,6 +57,15 @@ class BaseContentMixin(object):
 			self._p_jar.add(result)
 		return result
 
+	def discard(self, container, value):
+		try:
+			container.discard(value)
+		except AttributeError:
+			try:
+				container.remove(value)
+			except (KeyError, ValueError): 
+				pass
+
 	def _remove_from_named_lazy_set_of_wrefs(self, name, context):
 		self._p_activate()
 		if name in self.__dict__:
@@ -71,7 +78,7 @@ class BaseContentMixin(object):
 			wref = IWeakRef(context, None)
 			if wref is not None:
 				__traceback_info__ = context, wref
-				sets.discard(container, wref)
+				self.discard(container, wref)
 
 	@Lazy
 	def _associations(self):
