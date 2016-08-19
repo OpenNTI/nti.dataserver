@@ -27,9 +27,9 @@ from zope.proxy import ProxyBase
 from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceBucket
 
-from nti.common.property import alias
-
 from nti.coremetadata.interfaces import ILastModified
+
+from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 
