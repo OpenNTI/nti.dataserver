@@ -15,8 +15,6 @@ from zope import interface
 from nti.chatserver.interfaces import ACT_MODERATE
 from nti.chatserver.interfaces import IMeetingContainer
 
-from nti.common.property import alias
-
 from nti.dataserver import authorization
 from nti.dataserver import authorization_acl as auth_acl
 
@@ -24,7 +22,8 @@ from nti.dataserver.interfaces import IFriendsList
 
 from nti.ntiids import ntiids
 
-from nti.utils.property import annotation_alias
+from nti.property.property import alias
+from nti.property.property import annotation_alias
 
 @interface.implementer(IMeetingContainer)
 class _AbstractMeetingContainerAdapter(object):

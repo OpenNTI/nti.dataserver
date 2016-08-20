@@ -47,7 +47,7 @@ from nti.invitations.utils import get_pending_invitation_ids
 
 from nti.metadata import dataserver_metadata_catalog
 
-from nti.utils.property import annotation_alias
+from nti.property.property import annotation_alias
 
 from nti.zope_catalog.catalog import ResultSet
 

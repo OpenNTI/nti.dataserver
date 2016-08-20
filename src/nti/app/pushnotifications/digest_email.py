@@ -49,14 +49,15 @@ from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
 from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 
 from nti.app.notabledata.interfaces import IUserNotableData
+
+from nti.app.pushnotifications.interfaces import INotableDataEmailClassifier
+
 from nti.app.pushnotifications.utils import generate_unsubscribe_url
 
 from nti.appserver.context_providers import get_trusted_top_level_contexts
 
 from nti.appserver.policies.site_policies import find_site_policy
 from nti.appserver.policies.site_policies import guess_site_display_name
-
-from nti.common.property import Lazy
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
@@ -86,9 +87,8 @@ from nti.intid.interfaces import IntIdMissingError
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
 
-from nti.utils.property import annotation_alias
-
-from nti.app.pushnotifications.interfaces import INotableDataEmailClassifier
+from nti.property.property import Lazy
+from nti.property.property import annotation_alias
 
 _ONE_WEEK = 7 * 24 * 60 * 60
 _TWO_WEEKS = _ONE_WEEK * 2

@@ -50,7 +50,7 @@ from nti.dataserver.users.interfaces import IRestrictedUserProfileWithContactEma
 
 from nti.dataserver.users.user_profile import make_password_recovery_email_hash
 
-from nti.utils.property import annotation_alias
+from nti.property.property import annotation_alias
 
 from nti.schema.interfaces import IBeforeTextAssignedEvent
 
