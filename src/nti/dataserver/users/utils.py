@@ -31,9 +31,10 @@ from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IAvatarURLProvider
 from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
+from nti.property.urlproperty import UrlProperty
+
 from nti.zodb import isBroken
 from nti.zodb import readCurrent
-from nti.zodb.urlproperty import UrlProperty
 
 # email
 

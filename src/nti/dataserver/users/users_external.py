@@ -63,7 +63,7 @@ from nti.schema.interfaces import find_most_derived_interface
 
 from nti.site.interfaces import InappropriateSiteError
 
-from nti.zodb import urlproperty
+from nti.property.urlproperty import UrlProperty
 
 def _image_url(entity, avatar_iface, attr_name, view_name):
 	"""
@@ -73,7 +73,7 @@ def _image_url(entity, avatar_iface, attr_name, view_name):
 	with_url = avatar_iface(entity, None)
 	with_url = removeAllProxies(with_url)
 	url_property = getattr(type(with_url), attr_name, None)
-	if isinstance(url_property, urlproperty.UrlProperty):
+	if isinstance(url_property, UrlProperty):
 		the_file = url_property.get_file(with_url)
 		if the_file:
 			# TODO: View name. Coupled to the app layer

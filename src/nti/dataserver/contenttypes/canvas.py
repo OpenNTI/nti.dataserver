@@ -391,7 +391,7 @@ class _CanvasTextShape(_CanvasShape):
 
 from nti.links import links
 
-from nti.zodb import urlproperty
+from nti.property.urlproperty import UrlProperty
 
 @interface.implementer(ICanvasURLShape)
 class _CanvasUrlShape(_CanvasShape):
@@ -411,10 +411,10 @@ class _CanvasUrlShape(_CanvasShape):
 	def updateFromExternalObject(self, *args, **kwargs):
 		super(_CanvasUrlShape, self).updateFromExternalObject(*args, **kwargs)
 
-	url = urlproperty.UrlProperty(data_name=_DATA_NAME, 
-								  url_attr_name='url', 
-								  file_attr_name='_file',
-								  use_dict=True)
+	url = UrlProperty(data_name=_DATA_NAME, 
+					  url_attr_name='url', 
+					  file_attr_name='_file',
+					  use_dict=True)
 
 	__getitem__ = url.make_getitem()
 

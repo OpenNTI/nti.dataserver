@@ -19,6 +19,7 @@ from zope.browserresource.interfaces import IFileResource
 from zope.event import notify
 
 from zope.file import download
+
 from zope.file.interfaces import IFile
 
 from zope.publisher.interfaces.browser import IBrowserRequest
@@ -40,10 +41,11 @@ from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.interfaces import IFileViewedEvent
 
-from nti.common import dataurl
-
 from nti.dataserver import authorization as nauth
+
 from nti.dataserver.interfaces import IDataserverFolder
+
+from nti.property import dataurl
 
 @interface.implementer(IFileViewedEvent)
 class FileViewedEvent(object):
