@@ -51,8 +51,6 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.common.property import Lazy
-
 from nti.common.string import TRUE_VALUES
 
 from nti.dataserver.interfaces import IRedisClient
@@ -61,6 +59,8 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 
 from nti.externalization.interfaces import LocatedExternalDict
+
+from nti.property.property import Lazy
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
