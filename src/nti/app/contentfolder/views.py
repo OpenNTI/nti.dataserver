@@ -454,6 +454,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		return result
 
 @view_config(name="import")
+@view_config(name="Import")
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context=INamedContainer,
@@ -523,6 +524,7 @@ class ImportView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		return result
 
 @view_config(name="export")
+@view_config(name="Export")
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context=INamedContainer,
