@@ -60,8 +60,6 @@ from nti.common.maps import CaseInsensitiveDict
 
 from nti.common.mimetypes import guess_type
 
-from nti.common.property import Lazy
-
 from nti.common.random import generate_random_hex_string
 
 from nti.common.string import is_true
@@ -109,6 +107,8 @@ from nti.mimetype.externalization import decorateMimeType
 
 from nti.namedfile.interfaces import INamedFile
 
+from nti.property.property import Lazy
+
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
 LINKS = StandardExternalFields.LINKS
@@ -126,7 +126,7 @@ SORT_KEYS['type'] = SORT_KEYS['fileType']
 
 def to_unicode(name):
 	try:
-		return unicode(name)
+		return unicode(name) # FIXME: python3
 	except Exception:
 		return name.decode("UTF-8")
 
