@@ -25,8 +25,6 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from z3c.schema.email.field import isValidMailAddress
 
-from nti.common.property import alias
-
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.coremetadata.interfaces import SYSTEM_USER_NAME
@@ -39,6 +37,8 @@ from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationsContainer
 
 from nti.invitations.utils import get_random_invitation_code
+
+from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 

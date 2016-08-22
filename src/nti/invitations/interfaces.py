@@ -31,13 +31,13 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zope.schema import ValidationError
 
-from nti.common.property import alias
-
 from nti.coremetadata.interfaces import ICreated
 from nti.coremetadata.interfaces import ILastModified
 from nti.coremetadata.interfaces import SYSTEM_USER_NAME
 
 from nti.invitations import MessageFactory as _
+
+from nti.property.property import alias
 
 from nti.schema.field import Bool
 from nti.schema.field import Number
