@@ -21,8 +21,6 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from persistent import Persistent
 
-from nti.common.property import alias
-
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.representation import WithRepr
@@ -32,6 +30,8 @@ from nti.recorder.interfaces import TRX_RECORD_HISTORY_KEY
 
 from nti.recorder.interfaces import ITransactionRecord
 from nti.recorder.interfaces import ITransactionRecordHistory
+
+from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 
