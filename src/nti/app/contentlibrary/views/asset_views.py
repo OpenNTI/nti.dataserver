@@ -152,7 +152,7 @@ class ResetPackagePresentationAssetsView(_AbstractSyncAllLibrariesView):
 		result = LocatedExternalDict()
 		items = result[ITEMS] = {}
 		for package in yield_content_packages(ntiids):
-			seen = ()
+			seen = set()
 			removed = []
 			folder = find_interface(package, IHostPolicyFolder, strict=False)
 			with current_site(get_host_site(folder.__name__)):
