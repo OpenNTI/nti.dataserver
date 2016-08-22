@@ -22,8 +22,6 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 from nti.appserver.pyramid_authorization import is_writable
 from nti.appserver.pyramid_authorization import is_deletable
 
-from nti.common.property import Lazy
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICreated
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
@@ -40,6 +38,8 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.links.externalization import render_link
 
 from nti.links.links import Link
+
+from nti.property.property import Lazy
 
 LINKS = StandardExternalFields.LINKS
 IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy
