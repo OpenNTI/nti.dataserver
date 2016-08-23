@@ -151,6 +151,10 @@
 	<subscriber factory=".ugd_query_views.RepliesLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
+	<adapter factory=".pyramid_renderers_edit_link_decorator._DefaultEditLinkMaker"
+			 provides=".interfaces.IEditLinkMaker"
+			 for="*"/>
+			 
 	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IModeledContent pyramid.interfaces.IRequest" />

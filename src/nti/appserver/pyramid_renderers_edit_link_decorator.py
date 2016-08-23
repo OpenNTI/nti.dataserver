@@ -13,11 +13,14 @@ logger = __import__('logging').getLogger(__name__)
 
 from collections import Mapping
 
+from zope import component
 from zope import interface
 
 from zope.location.interfaces import ILocation
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
+
+from nti.appserver.interfaces import IEditLinkMaker
 
 from nti.appserver.pyramid_authorization import is_writable
 from nti.appserver.pyramid_authorization import is_deletable
@@ -66,6 +69,53 @@ class EditLinkRemoverDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		result[LINKS] = new_links
 LinkRemoverDecorator = EditLinkRemoverDecorator
 
+def _make_link_to_context(context, allow_traversable_paths=True, link_method=None):
+	if allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context):
+		link = Link(context,
+					rel='edit',
+					method=link_method)
+		link.__parent__ = context.__parent__
+		link.__name__ = context.__name__
+	else:
+		link = Link(to_external_ntiid_oid(context),
+					rel='edit',
+					method=link_method)
+		link.__parent__ = context
+		# XXX: Is this necessary anymore?
+		link.__name__ = ''
+		interface.alsoProvides(link, ILocation)
+
+	try:
+		# We make the link ICreated so that we go to the /Objects/
+		# path under the user to access it, if we are writing
+		# out OID links. The only reason I (JAM) can think this matters,
+		# at this writing, is for legacy tests.
+		# Since community objects have never been traversable to /Objects/
+		# (Actually, nothing besides IUser is), and we don't necessarily
+		# want to make them so, don't do it in that case
+		creator = context.creator
+		if IUser.providedBy(creator):
+			link.creator = context.creator
+			interface.alsoProvides(link, ICreated)
+	except AttributeError:
+		pass
+	return link
+
+@interface.implementer(IEditLinkMaker)
+@component.adapter(interface.Interface)
+class _DefaultEditLinkMaker(object):
+	
+	__slots__ = ('context',)
+	
+	def __init__(self, context):
+		self.context = context
+	
+	@classmethod
+	def make(self, request=None, allow_traversable_paths=True, link_method=None):
+		return _make_link_to_context(self.context,
+									 link_method=link_method,
+									 allow_traversable_paths=allow_traversable_paths)
+
 @interface.implementer(IExternalMappingDecorator)
 class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	"""
@@ -88,36 +138,12 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	link_method = None
 
 	def _make_link_to_context(self, context):
-		if self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context):
-			link = Link(context,
-						rel='edit',
-						method=self.link_method)
-			link.__parent__ = context.__parent__
-			link.__name__ = context.__name__
-		else:
-			link = Link(to_external_ntiid_oid(context),
-						rel='edit',
-						method=self.link_method)
-			link.__parent__ = context
-			# XXX: Is this necessary anymore?
-			link.__name__ = ''
-			interface.alsoProvides(link, ILocation)
-
-		try:
-			# We make the link ICreated so that we go to the /Objects/
-			# path under the user to access it, if we are writing
-			# out OID links. The only reason I (JAM) can think this matters,
-			# at this writing, is for legacy tests.
-			# Since community objects have never been traversable to /Objects/
-			# (Actually, nothing besides IUser is), and we don't necessarily
-			# want to make them so, don't do it in that case
-			creator = context.creator
-			if IUser.providedBy(creator):
-				link.creator = context.creator
-				interface.alsoProvides(link, ICreated)
-		except AttributeError:
-			pass
-		return link
+		maker = IEditLinkMaker(context, None)
+		if maker is not None:
+			return maker.make(self.request, 
+							  link_method=self.link_method,
+							  allow_traversable_paths=self.allow_traversable_paths)
+		return None
 
 	@Lazy
 	def _acl_decoration(self):
@@ -177,6 +203,8 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		try:
 			edit_link = self._make_link_to_context(context)
 		except TypeError:  # commonly a failure to adapt something
+			edit_link = None
+		if edit_link is None:
 			logger.debug("Not providing edit/href links for %s, failed to get link",
 						  getattr(context, '__class__', type(context)),
 						  exc_info=True)

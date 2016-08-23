@@ -7,6 +7,8 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope import schema
 from zope import component
 from zope import interface
@@ -32,6 +34,7 @@ from nti.dataserver.interfaces import ILinked
 from nti.dataserver.interfaces import UserEvent
 from nti.dataserver.interfaces import IUserEvent
 from nti.dataserver.interfaces import ILastModified
+
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 
@@ -628,3 +631,11 @@ class IFileViewedEvent(interface.Interface):
 	"""
 	Event that broadcasts when a file is viewed or downloaded.
 	"""
+
+class IEditLinkMaker(interface.Interface):
+	"""
+	Adapter to make the edit link of a given object
+	"""
+	
+	def make(request=None, allow_traversable_paths=True, link_method=None):
+		pass
