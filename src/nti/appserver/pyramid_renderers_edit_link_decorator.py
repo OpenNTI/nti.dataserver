@@ -103,7 +103,7 @@ def _make_link_to_context(context, allow_traversable_paths=True, link_method=Non
 
 @interface.implementer(IEditLinkMaker)
 @component.adapter(interface.Interface)
-class _DefaultEditLinkMaker(object):
+class DefaultEditLinkMaker(object):
 	
 	__slots__ = ('context',)
 	
@@ -115,6 +115,7 @@ class _DefaultEditLinkMaker(object):
 		return _make_link_to_context(context,
 									 link_method=link_method,
 									 allow_traversable_paths=allow_traversable_paths)
+_DefaultEditLinkMaker = DefaultEditLinkMaker # BWC
 
 @interface.implementer(IExternalMappingDecorator)
 class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
