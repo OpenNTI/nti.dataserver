@@ -139,7 +139,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _make_link_to_context(self, context):
 		maker = IEditLinkMaker(context, None)
-		if maker is not None:
+		if maker is not None and context is not None:
 			return maker.make(self.request, 
 							  link_method=self.link_method,
 							  allow_traversable_paths=self.allow_traversable_paths)
