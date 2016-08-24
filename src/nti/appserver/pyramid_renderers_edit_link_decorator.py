@@ -107,11 +107,12 @@ class _DefaultEditLinkMaker(object):
 	
 	__slots__ = ('context',)
 	
-	def __init__(self, context):
+	def __init__(self, context=None):
 		self.context = context
 
-	def make(self, request=None, allow_traversable_paths=True, link_method=None):
-		return _make_link_to_context(self.context,
+	def make(self, context, request=None, allow_traversable_paths=True, link_method=None):
+		context = self.context if context is None else context
+		return _make_link_to_context(context,
 									 link_method=link_method,
 									 allow_traversable_paths=allow_traversable_paths)
 
@@ -139,7 +140,8 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	def _make_link_to_context(self, context):
 		maker = IEditLinkMaker(context, None)
 		if maker is not None and context is not None:
-			return maker.make(self.request, 
+			return maker.make(context,
+							  request=self.request, 
 							  link_method=self.link_method,
 							  allow_traversable_paths=self.allow_traversable_paths)
 		return None

@@ -637,5 +637,5 @@ class IEditLinkMaker(interface.Interface):
 	Adapter to make the edit link of a given object
 	"""
 	
-	def make(request=None, allow_traversable_paths=True, link_method=None):
+	def make(context, request=None, allow_traversable_paths=True, link_method=None):
 		pass
