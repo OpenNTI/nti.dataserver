@@ -109,8 +109,7 @@ class _DefaultEditLinkMaker(object):
 	
 	def __init__(self, context):
 		self.context = context
-	
-	@classmethod
+
 	def make(self, request=None, allow_traversable_paths=True, link_method=None):
 		return _make_link_to_context(self.context,
 									 link_method=link_method,
