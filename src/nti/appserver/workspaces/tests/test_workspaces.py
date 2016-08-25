@@ -256,13 +256,18 @@ class TestHomogeneousTypedContainerCollection(ApplicationLayerTest):
 class TestService(ApplicationLayerTest):
 
 	@mock_dataserver.WithMockDSTrans
-	def test_only_global_workspace(self):
+	def test_non_user_workspaces(self):
 		principal = IPrincipal('system.Unknown')
 		service = Service(principal)
 
 		ext_object = toExternalObject(service)
 
-		assert_that(ext_object['Items'], contains_inanyorder(has_entry( 'Title', 'Global' )))
+		#We should have a global workspace
+		assert_that(ext_object['Items'], has_item(has_entry( 'Title', 'Global' )))
+
+		#We shouldn't have user specific workspaces
+		user_wss = [x for x in ext_object['Items'] if not x['Title'] or x['Title'] == 'system.Unknown' ]
+		assert_that( user_wss, has_length( 0 ))
 
 class TestUserService(ApplicationLayerTest):
 
