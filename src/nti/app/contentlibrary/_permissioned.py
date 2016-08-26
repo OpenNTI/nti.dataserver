@@ -27,11 +27,11 @@ from nti.app.authentication import get_remote_user
 
 from nti.appserver.pyramid_authorization import is_readable
 
-from nti.common.property import Lazy
-
 from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 from nti.dataserver.interfaces import IMemcacheClient
+
+from nti.property.property import Lazy
 
 #: Default memcached expiration time in secs
 EXP_TIME = 86400
