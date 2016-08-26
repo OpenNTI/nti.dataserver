@@ -29,11 +29,11 @@ from zope.publisher.interfaces.browser import IBrowserRequest
 
 from nti.common._compat import sleep
 
-from nti.common.property import Lazy
-
 from nti.dataserver.interfaces import IRedisClient
 
 from nti.mailer.interfaces import ITemplatedMailer
+
+from nti.property.property import Lazy
 
 from nti.zodb.tokenbucket import PersistentTokenBucket
 

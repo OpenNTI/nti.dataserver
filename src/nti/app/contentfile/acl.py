@@ -14,8 +14,6 @@ from zope import interface
 
 from zope.security.interfaces import IPrincipal
 
-from nti.common.property import Lazy
-
 from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.dataserver.authorization import ROLE_ADMIN
@@ -26,6 +24,8 @@ from nti.dataserver.authorization_acl import acl_from_aces
 
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import ALL_PERMISSIONS
+
+from nti.property.property import Lazy
 
 @component.adapter(IContentBaseFile)
 @interface.implementer(IACLProvider)

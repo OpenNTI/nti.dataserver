@@ -18,8 +18,6 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.appserver.pyramid_authorization import has_permission
 
-from nti.common.property import Lazy
-
 from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfolder.interfaces import IRootFolder
@@ -38,6 +36,8 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.links.links import Link
 
 from nti.namedfile.interfaces import INamedFile
+
+from nti.property.property import Lazy
 
 LINKS = StandardExternalFields.LINKS
 

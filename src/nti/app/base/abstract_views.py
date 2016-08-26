@@ -33,9 +33,9 @@ from nti.common.file import safe_filename
 
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.common.property import Lazy
-
 from nti.dataserver.interfaces import IDataserver
+
+from nti.property.property import Lazy
 
 def _check_creator(remote_user, obj):
 	result = False
