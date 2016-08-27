@@ -22,11 +22,11 @@ from zope.annotation.factory import factory as an_factory
 
 from persistent import Persistent
 
+from nti.app.contentlibrary.content_unit_preferences.interfaces import IContentUnitPreferences
+
 from nti.containers.containers import LastModifiedBTreeContainer
 
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentUnit
-
-from .interfaces import IContentUnitPreferences
 
 # We look for content container preferences. For actual containers, we
 # store the prefs as an annotation on the container.
@@ -48,8 +48,9 @@ class _ContentUnitPreferences(Persistent):
 			self.sharedWith = sharedWith
 
 # For BWC, use the old data.
+ANNOTATION_KEY = u'nti.appserver.contentlibrary.library_views._ContentUnitPreferences'
 _ContainerContentUnitPreferencesFactory = an_factory(_ContentUnitPreferences,
-													 key='nti.appserver.contentlibrary.library_views._ContentUnitPreferences')
+													 key=ANNOTATION_KEY)
 
 # We can also look for preferences on the actual content unit
 # itself. We provide an adapter for IDelimitedHierarchyContentUnit, because
@@ -64,7 +65,7 @@ def _DelimitedHierarchyContentUnitPreferencesFactory(content_unit):
 		return None
 
 	prefs = _ContentUnitPreferences(createdTime=time.mktime(content_unit.created.timetuple()),
-									 lastModified=time.mktime(content_unit.modified.timetuple()),
-									 sharedWith=content_unit.sharedWith)
+									lastModified=time.mktime(content_unit.modified.timetuple()),
+									sharedWith=content_unit.sharedWith)
 	prefs.__parent__ = content_unit
 	return prefs

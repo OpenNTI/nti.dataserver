@@ -16,6 +16,7 @@ from zope.location.interfaces import LocationError
 from zope.traversing.interfaces import ITraversable
 
 from pyramid import traversal
+
 from pyramid.threadlocal import get_current_request
 
 from nti.dataserver import users

@@ -18,10 +18,17 @@ import time
 
 from zope import component
 
-from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
+from pyramid.view import view_config
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.contentlibrary.content_unit_preferences.interfaces import IContentUnitPreferences
+
+from nti.app.contentlibrary.views.library_views import _LibraryTOCRedirectView
+from nti.app.contentlibrary.views.library_views import _RootLibraryTOCRedirectView
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -29,11 +36,6 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.dataserver import authorization as nauth
 
 from nti.ntiids import ntiids
-
-from ..views.library_views import _LibraryTOCRedirectView
-from ..views.library_views import _RootLibraryTOCRedirectView
-
-from .interfaces import IContentUnitPreferences
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',

@@ -12,11 +12,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from nti.app.contentlibrary.content_unit_preferences.interfaces import IContentUnitPreferences
+
 from nti.contentlibrary.interfaces import IContentUnit
 
 from nti.ntiids import ntiids
-
-from .interfaces import IContentUnitPreferences
 
 def prefs_present(prefs):
 	"""
