@@ -46,6 +46,7 @@ def sls_view(request):
 
 @view_config(name=ACS,
 			 context=SAMLPathAdapter,
+			 request_method="POST",
 			 route_name='objects.generic.traversal')
 def acs_view(request):
 	environ = request.environ

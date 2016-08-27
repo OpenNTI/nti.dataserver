@@ -61,6 +61,7 @@
 
 	<pyramid:scan package=".link_providers.views" />
 
+	<include package="nti.app.saml" file="pyramid.zcml" />
 	<include package="nti.app.types" file="pyramid.zcml" />
 	<include package="nti.app.forums" file="pyramid.zcml" />
 	<include package="nti.app.recorder" file="pyramid.zcml" />
