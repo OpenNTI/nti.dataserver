@@ -31,8 +31,6 @@ from ZODB.POSException import ConnectionStateError
 
 import transaction
 
-from nti.common.property import CachedProperty
-
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
@@ -60,6 +58,8 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.ntiids.ntiids import escape_provider
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.property.property import CachedProperty
 
 def get_shared_dataserver(context=None, default=None):
 	if default != None:

@@ -98,8 +98,6 @@ from persistent import Persistent
 
 from BTrees.OOBTree import OOSet
 
-from nti.common.property import alias
-
 from nti.dataserver.interfaces import system_user
 from nti.dataserver.interfaces import SYSTEM_USER_ID
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
@@ -116,6 +114,8 @@ from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.externalization.interfaces import IExternalObject
+
+from nti.property.property import alias
 
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:

@@ -24,9 +24,9 @@ from zope.container.contained import Contained
 
 from zope.proxy import ProxyBase
 
-from nti.common.property import CachedProperty
-
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
+
+from nti.property.property import CachedProperty
 
 from .constants import content_
 from .constants import nticard_

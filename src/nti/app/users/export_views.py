@@ -38,8 +38,6 @@ from nti.chatserver.interfaces import IUserTranscriptStorage
 
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.common.property import Lazy
-
 from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
@@ -69,6 +67,8 @@ from nti.externalization.proxy import removeAllProxies
 from nti.metadata import dataserver_metadata_catalog
 
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.property.property import Lazy
 
 OID = StandardExternalFields.OID
 CLASS = StandardExternalFields.CLASS

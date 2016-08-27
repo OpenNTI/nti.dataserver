@@ -31,9 +31,6 @@ from nti.chatserver.interfaces import IChatserver
 from nti.chatserver.interfaces import IMeetingPolicy
 from nti.chatserver.interfaces import MeetingShouldChangeModerationStateEvent
 
-from nti.common.property import alias
-from nti.common.property import read_alias
-
 # TODO: Break this dep
 from nti.dataserver.contenttypes.threadable import ThreadableMixin
 from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
@@ -41,6 +38,9 @@ from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 from nti.externalization.datastructures import ExternalizableInstanceDict
 
 from nti.externalization.representation import make_repr
+
+from nti.property.property import alias
+from nti.property.property import read_alias
 
 from nti.zodb.minmax import MergingCounter
 

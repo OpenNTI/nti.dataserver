@@ -49,8 +49,6 @@ from nti.common._compat import IAcquirer
 
 from nti.common.iterables import is_nonstr_iter
 
-from nti.common.property import alias
-
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.dataserver import authorization_acl as nacl
@@ -71,6 +69,8 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.externalization import to_external_object
 
 from nti.ntiids import ntiids
+
+from nti.property.property import alias
 
 ITEMS = StandardExternalFields.ITEMS
 

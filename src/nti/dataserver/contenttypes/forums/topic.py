@@ -36,10 +36,6 @@ from zope.security.interfaces import IPrincipal
 
 from nti.common._compat import Implicit
 
-from nti.common.property import Lazy
-from nti.common.property import readproperty
-from nti.common.property import CachedProperty
-
 from nti.containers.containers import AcquireObjectsOnReadMixin
 from nti.containers.containers import AbstractNTIIDSafeNameChooser
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
@@ -82,6 +78,10 @@ from nti.dataserver.sharing import AbstractDefaultPublishableSharedWithMixin
 from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.dataserver.users import Entity
+
+from nti.property.property import Lazy
+from nti.property.property import readproperty
+from nti.property.property import CachedProperty
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.schema.fieldproperty import AcquisitionFieldProperty

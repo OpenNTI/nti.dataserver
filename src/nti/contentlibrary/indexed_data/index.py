@@ -24,14 +24,14 @@ import BTrees
 
 from persistent import Persistent
 
-from nti.common.property import alias
-
 from nti.contentlibrary.indexed_data import CATALOG_INDEX_NAME
 
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainedObjectCatalog
 
 from nti.externalization.proxy import removeAllProxies
+
+from nti.property.property import alias
 
 from nti.site.interfaces import IHostPolicyFolder
 

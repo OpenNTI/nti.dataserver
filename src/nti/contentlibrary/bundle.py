@@ -28,8 +28,6 @@ from zope.event import notify
 
 from ZODB.POSException import ConnectionStateError
 
-from nti.common.property import alias
-
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.contentlibrary import DuplicatePacakgeException
@@ -47,6 +45,8 @@ from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 from nti.externalization.persistence import NoPickle
 
 from nti.externalization.representation import WithRepr
+
+from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 

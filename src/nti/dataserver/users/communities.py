@@ -24,9 +24,6 @@ from zope.location.interfaces import ISublocations
 
 from BTrees.OOBTree import OOTreeSet
 
-from nti.common.property import Lazy
-from nti.common.property import alias
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IEntityIntIdIterable
@@ -47,6 +44,9 @@ from nti.dataserver.users.entity import named_entity_ntiid
 from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.ntiids.ntiids import TYPE_NAMED_ENTITY_COMMUNITY
+
+from nti.property.property import Lazy
+from nti.property.property import alias
 
 from nti.wref.interfaces import IWeakRef
 

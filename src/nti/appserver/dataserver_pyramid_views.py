@@ -26,20 +26,18 @@ from nti.app.base.abstract_views import AbstractView
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.appserver import httpexceptions as hexc
+
 from nti.appserver.context_providers import get_joinable_contexts
+
 from nti.appserver.pyramid_authorization import is_readable
+
 from nti.appserver.workspaces.interfaces import IService
 from nti.appserver.workspaces.interfaces import ICollection
 
-from nti.common.property import LazyOnClass as _LazyOnClass
-
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.authorization_acl import acl_from_aces
-from nti.dataserver.authorization_acl import ace_allowing
-
-from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 from nti.dataserver.interfaces import IPrincipal
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.dataserver_core.interfaces import UNAUTHENTICATED_PRINCIPAL_NAME
 
@@ -163,11 +161,10 @@ def _forbidden_related_context(context, request):
 		raise hexc.HTTPForbidden()
 
 	result = LocatedExternalDict()
-	result.__name__ = request.view_name
 	result.__parent__ = context
+	result.__name__ = request.view_name
 
 	results = get_joinable_contexts(context)
 	if results:
 		result[ITEMS] = results
 	return result
-

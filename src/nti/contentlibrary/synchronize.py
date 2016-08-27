@@ -13,9 +13,9 @@ from zope import interface
 
 from zope.container.contained import Contained
 
-from nti.common.property import alias
-
 from nti.externalization.representation import WithRepr
+
+from nti.property.property import alias
 
 from nti.schema.field import SchemaConfigured
 

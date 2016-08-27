@@ -29,8 +29,6 @@ from nti.appserver.interfaces import IIntIdUserSearchPolicy
 from nti.appserver.interfaces import IExternalFieldResource
 from nti.appserver.interfaces import IExternalFieldTraversable
 
-from nti.common.property import alias
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
@@ -56,6 +54,8 @@ from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import IExternalObjectDecorator
+
+from nti.property.property import alias
 
 from nti.schema.interfaces import find_most_derived_interface
 

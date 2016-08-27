@@ -28,8 +28,6 @@ import BTrees
 
 import persistent
 
-from nti.common.property import Lazy
-
 from nti.common.sets import discard
 
 from nti.dataserver import users
@@ -38,6 +36,8 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ISessionServiceStorage
 
 from nti.intid import utility as intid_utility
+
+from nti.property.property import Lazy
 
 from nti.zodb import readCurrent
 

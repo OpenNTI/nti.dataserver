@@ -35,9 +35,6 @@ from ZODB.POSException import ConnectionStateError
 
 from persistent import Persistent
 
-from nti.common.property import alias
-from nti.common.property import CachedProperty
-
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IPersistentContentUnit
 from nti.contentlibrary.interfaces import ContentPackageAddedEvent
@@ -61,6 +58,9 @@ from nti.externalization.persistence import NoPickle
 from nti.intid.interfaces import ObjectMissingError
 
 from nti.ntiids.ntiids import ROOT as NTI_ROOT
+
+from nti.property.property import alias
+from nti.property.property import CachedProperty
 
 from nti.site.localutility import queryNextUtility
 

@@ -61,10 +61,6 @@ from nti.appserver.workspaces.interfaces import IWorkspaceValidator
 from nti.appserver.workspaces.interfaces import IContainerCollection
 from nti.appserver.workspaces.interfaces import IUserWorkspaceLinkProvider
 
-from nti.common.property import Lazy
-from nti.common.property import alias
-from nti.common.property import LazyOnClass
-
 from nti.dataserver import authorization
 
 from nti.dataserver.authorization_acl import ace_allowing
@@ -99,6 +95,10 @@ from nti.links import links
 from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
+
+from nti.property.property import Lazy
+from nti.property.property import alias
+from nti.property.property import LazyOnClass
 
 ITEMS = StandardExternalFields.ITEMS
 

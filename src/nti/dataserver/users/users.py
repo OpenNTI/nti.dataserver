@@ -200,7 +200,7 @@ if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 	print("users.py: WARN: Configuring with plain text passwords", file=sys.stderr)
 	Principal.password_manager_name = 'Plain Text'
 
-from nti.common.property import Lazy
+from nti.property.property import Lazy
 
 from .communities import Everyone
 

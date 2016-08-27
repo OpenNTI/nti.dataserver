@@ -35,13 +35,13 @@ from zope.schema import Iterable
 
 from contentratings.interfaces import IUserRatable
 
-from nti.common.property import alias
-
 from nti.contentfragments.schema import PlainText
 
 from nti.contentrange import interfaces as rng_interfaces
 
 from nti.contentrange.contentrange import ContentRangeDescription
+
+from nti.property.property import alias
 
 from nti.schema.field import Dict
 from nti.schema.field import Object

@@ -16,8 +16,6 @@ from zope import interface
 
 from zope.intid.interfaces import IIntIds
 
-from nti.common.property import Lazy
-
 from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contentlibrary.indexed_data.interfaces import IIndexedDataContainer
@@ -34,6 +32,8 @@ from nti.contenttypes.presentation.interfaces import INTIVideo
 from nti.contenttypes.presentation.interfaces import INTITimeline
 from nti.contenttypes.presentation.interfaces import INTISlideDeck
 from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
+
+from nti.property.property import Lazy
 
 from nti.site.site import get_component_hierarchy_names
 

@@ -30,9 +30,6 @@ from nti.app.externalization.internalization import update_object_from_external_
 
 from nti.app.renderers.interfaces import IUncacheableInResponse
 
-from nti.common.property import Lazy
-from nti.common.property import CachedProperty
-
 from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch.interfaces import ISearchResults
 from nti.contentsearch.interfaces import SearchCompletedEvent
@@ -44,6 +41,9 @@ from nti.dataserver.interfaces import IMemcacheClient
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.externalization import to_external_object
+
+from nti.property.property import Lazy
+from nti.property.property import CachedProperty
 
 ITEMS = StandardExternalFields.ITEMS
 

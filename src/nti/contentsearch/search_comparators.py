@@ -17,9 +17,9 @@ from zope import interface
 
 import repoze.lru
 
-from nti.common.property import Lazy
-
 from nti.ntiids import ntiids
+
+from nti.property.property import Lazy
 
 from .common import get_sort_order
 

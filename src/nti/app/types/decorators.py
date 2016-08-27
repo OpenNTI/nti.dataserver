@@ -14,8 +14,6 @@ from zope import interface
 
 from zope.location.interfaces import ILocation
 
-from nti.common.property import Lazy
-
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver.pyramid_authorization import has_permission
@@ -28,6 +26,8 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.links.links import Link
+
+from nti.property.property import Lazy
 
 LINKS = StandardExternalFields.LINKS
 

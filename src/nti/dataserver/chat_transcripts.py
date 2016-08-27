@@ -100,10 +100,6 @@ from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IUserTranscriptStorage
 from nti.chatserver.interfaces import IMessageInfoPostedToRoomEvent
 
-from nti.common.property import Lazy
-from nti.common.property import read_alias
-from nti.common.property import CachedProperty
-
 from nti.dataserver import users
 
 from nti.dataserver.interfaces import IUser
@@ -129,6 +125,10 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.ntiids import ntiids
+
+from nti.property.property import Lazy
+from nti.property.property import read_alias
+from nti.property.property import CachedProperty
 
 from nti.schema.field import Object
 

@@ -29,9 +29,6 @@ from nti.appserver.workspaces.interfaces import ICollection
 from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import ILibraryCollection
 
-from nti.common.property import alias
-from nti.common.property import CachedProperty
-
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
@@ -39,6 +36,9 @@ from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
+
+from nti.property.property import alias
+from nti.property.property import CachedProperty
 
 class _PermissionedContentPackageLibrary(ProxyBase,
 										 _PermissionedContentPackageMixin):

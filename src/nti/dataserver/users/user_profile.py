@@ -25,8 +25,6 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from persistent import Persistent
 
-from nti.common.property import CachedProperty
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
@@ -51,6 +49,8 @@ from nti.dataserver.users.utils import AvatarUrlProperty as _AvatarUrlProperty
 from nti.dataserver.users.utils import BackgroundUrlProperty as _BackgrounUrlProperty
 
 from nti.externalization.representation import WithRepr
+
+from nti.property.property import CachedProperty
 
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties

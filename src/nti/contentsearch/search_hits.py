@@ -17,11 +17,10 @@ import collections
 
 from zope import component
 from zope import interface
+
 from zope.location.interfaces import IContained
 
 from nti.chatserver.interfaces import IMessageInfo
-
-from nti.common.property import alias
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
@@ -38,6 +37,8 @@ from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
 from nti.externalization.representation import WithRepr
 
 from nti.mimetype.mimetype import nti_mimetype_from_object
+
+from nti.property.property import alias
 
 from .discriminators import get_uid
 

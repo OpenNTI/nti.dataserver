@@ -22,9 +22,10 @@ from zope.cachedescriptors.property import cachedIn
 
 from ZODB.POSException import ConnectionStateError
 
-from nti.common.property import dict_read_alias, alias
-
 from nti.externalization.representation import WithRepr
+
+from nti.property.property import alias
+from nti.property.property import dict_read_alias
 
 from nti.schema.eqhash import EqHash
 

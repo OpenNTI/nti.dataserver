@@ -15,11 +15,11 @@ from zope import interface
 
 from zope.container.contained import Contained
 
-from nti.common.property import alias
-from nti.common.property import read_alias
-from nti.common.property import CachedProperty
-
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
+
+from nti.property.property import alias
+from nti.property.property import read_alias
+from nti.property.property import CachedProperty
 
 from nti.schema.schema import PermissiveSchemaConfigured
 from nti.schema.fieldproperty import createFieldProperties

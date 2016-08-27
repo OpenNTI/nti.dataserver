@@ -22,8 +22,6 @@ from zope.interface.interfaces import ComponentLookupError
 
 from pyramid.security import Denied as psecDenied
 
-from nti.common.property import alias
-
 from nti.contentlibrary.interfaces import IContentUnit
 from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -66,6 +64,8 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.singleton import SingletonDecorator
 
 from nti.ntiids import ntiids
+
+from nti.property.property import alias
 
 from nti.traversal import traversal
 
@@ -389,7 +389,7 @@ def acl_from_aces(*args):
 		return _ACL(args[0])
 	return _ACL(args)
 
-from nti.common.property import LazyOnClass as _LazyOnClass
+from nti.property.property import LazyOnClass as _LazyOnClass
 
 def _add_admin_moderation(acl, provenance):
 	# admin

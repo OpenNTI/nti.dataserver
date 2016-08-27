@@ -26,9 +26,6 @@ from BTrees.OOBTree import OOTreeSet
 from BTrees.OOBTree import difference as OOBTree_difference
 from BTrees.OOBTree import intersection as OOBTree_intersection
 
-from nti.common.property import alias
-from nti.common.property import CachedProperty
-
 from nti.dataserver.interfaces import IHTC_NEW_FACTORY
 
 from nti.dataserver.interfaces import IFriendsList
@@ -48,6 +45,9 @@ from nti.ntiids.ntiids import DATE
 from nti.ntiids.ntiids import make_ntiid
 from nti.ntiids.ntiids import escape_provider
 from nti.ntiids.ntiids import TYPE_MEETINGROOM_GROUP
+
+from nti.property.property import alias
+from nti.property.property import CachedProperty
 
 from nti.wref.interfaces import IWeakRef
 

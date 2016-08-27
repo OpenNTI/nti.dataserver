@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.common.property import Lazy
-
 from nti.contentindexing.utils import video_date_to_millis
 
 from nti.contentindexing.whooshidx.schemas import create_book_schema
@@ -21,6 +19,8 @@ from nti.contentindexing.whooshidx.schemas import create_audio_transcript_schema
 from nti.contentindexing.whooshidx.schemas import create_video_transcript_schema
 
 from nti.contentprocessing import rank_words
+
+from nti.property.property import Lazy
 
 from .interfaces import ISearchQuery
 

@@ -25,8 +25,9 @@ from zope.location.interfaces import ISublocations
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.common.property import alias
 from nti.common.iterables import isorted
+
+from nti.property.property import alias
 
 from .common import get_mimetype_from_type
 

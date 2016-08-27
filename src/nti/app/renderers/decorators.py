@@ -19,9 +19,9 @@ from abc import abstractmethod
 
 from nti.app.authentication import get_remote_user
 
-from nti.common.property import Lazy
-from nti.common.property import alias
-from nti.common.property import readproperty
+from nti.property.property import Lazy
+from nti.property.property import alias
+from nti.property.property import readproperty
 
 class AbstractRequestAwareDecorator(object):
 	"""

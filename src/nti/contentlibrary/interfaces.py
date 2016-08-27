@@ -31,8 +31,6 @@ from zope.location.interfaces import IContained as IZContained
 
 from persistent.interfaces import IPersistent
 
-from nti.common.property import alias
-
 from nti.coremetadata.interfaces import ILastModified
 
 from nti.dataserver_core.interfaces import IShouldHaveTraversablePath
@@ -41,12 +39,15 @@ from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
 from nti.ntiids.schema import ValidNTIID
 
-from nti.schema.field import Int, ValidTextLine
+from nti.property.property import alias
+
+from nti.schema.field import Int
 from nti.schema.field import Bool
 from nti.schema.field import List
 from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import Iterable
+from nti.schema.field import ValidTextLine
 from nti.schema.field import UniqueIterable
 from nti.schema.field import IndexedIterable
 from nti.schema.field import ValidTextLine as TextLine

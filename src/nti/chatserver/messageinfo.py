@@ -28,9 +28,6 @@ from nti.chatserver.interfaces import CHANNEL_DEFAULT
 
 from nti.chatserver.interfaces import IMessageInfo
 
-from nti.common.property import alias 
-from nti.common.property import read_alias
-
 from nti.dataserver.contenttypes.base import _make_getitem
 from nti.dataserver.contenttypes.threadable import ThreadableMixin
 from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
@@ -51,6 +48,9 @@ from nti.externalization.internalization import register_legacy_search_module
 from nti.externalization.proxy import removeAllProxies
 
 from nti.mimetype import mimetype
+
+from nti.property.property import alias 
+from nti.property.property import read_alias
 
 _BodyFieldProperty = MessageInfoBodyFieldProperty
 

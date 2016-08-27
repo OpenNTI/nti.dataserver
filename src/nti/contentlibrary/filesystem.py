@@ -21,8 +21,8 @@ from zope.cachedescriptors.method import cachedIn
 
 from ZODB.POSException import ConnectionStateError
 
-from nti.common.property import readproperty
-from nti.common.property import CachedProperty
+from nti.property.property import readproperty
+from nti.property.property import CachedProperty
 
 from .contentunit import ContentUnit
 from .contentunit import ContentPackage

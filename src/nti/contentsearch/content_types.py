@@ -13,11 +13,11 @@ from zope import interface
 
 from zope.container.contained import Contained
 
-from nti.common.property import alias
-
 from nti.externalization.representation import WithRepr
 
 from nti.mimetype import mimetype
+
+from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 

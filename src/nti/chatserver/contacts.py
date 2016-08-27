@@ -19,10 +19,10 @@ from zope.event import notify
 from nti.chatserver.interfaces import IContacts
 from nti.chatserver.interfaces import ContactISubscribeToAddedToContactsEvent
 
-from nti.common.property import alias
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IFollowerAddedEvent
+
+from nti.property.property import alias
 
 @interface.implementer(IContacts)
 @component.adapter(IUser)

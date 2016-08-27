@@ -25,8 +25,6 @@ from nti.app.notabledata.interfaces import IUserNotableData
 from nti.app.notabledata.interfaces import IUserNotableDataStorage
 from nti.app.notabledata.interfaces import IUserPriorityCreatorNotableProvider
 
-from nti.common.property import CachedProperty
-
 from nti.dataserver.authentication import dynamic_memberships_that_participate_in_security
 
 from nti.dataserver.interfaces import IUser
@@ -47,6 +45,7 @@ from nti.invitations.utils import get_pending_invitation_ids
 
 from nti.metadata import dataserver_metadata_catalog
 
+from nti.property.property import CachedProperty
 from nti.property.property import annotation_alias
 
 from nti.zope_catalog.catalog import ResultSet
@@ -415,7 +414,7 @@ from zope.container.contained import Contained
 from persistent import Persistent
 from persistent.list import PersistentList
 
-from nti.common.property import Lazy
+from nti.property.property import Lazy
 
 @component.adapter(IUser)
 @interface.implementer(IUserNotableDataStorage)

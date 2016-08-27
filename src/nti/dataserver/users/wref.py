@@ -26,11 +26,11 @@ from zope.intid import IIntIds
 
 from zope.keyreference.interfaces import NotYet
 
-from nti.common.property import read_alias
-
 from nti.dataserver.interfaces import IEntity
 
 from nti.dataserver.users.missing_user import MissingEntity
+
+from nti.property.property import read_alias
 
 from nti.schema.eqhash import EqHash
 

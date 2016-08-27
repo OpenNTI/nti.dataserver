@@ -17,8 +17,6 @@ from zope import interface
 
 from zope.deprecation import deprecate
 
-from nti.common.property import alias
-
 from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import IWritableShared
 from nti.dataserver.interfaces import IUsernameIterable
@@ -39,6 +37,8 @@ from nti.externalization.internalization import update_from_external_object
 from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
+
+from nti.property.property import alias
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 

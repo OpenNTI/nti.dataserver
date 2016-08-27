@@ -17,8 +17,6 @@ from zope.container.interfaces import INameChooser
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.common.property import alias
-
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.dataserver.interfaces import IZContained
@@ -27,6 +25,8 @@ from nti.dataserver.interfaces import IEnclosedContent
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.property.property import alias
 
 @interface.implementer(IEnclosedContent, IContentTypeAware, IZContained)
 class SimplePersistentEnclosure(PersistentCreatedModDateTrackingObject):

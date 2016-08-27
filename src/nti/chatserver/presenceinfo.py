@@ -21,14 +21,14 @@ from zope.component.factory import Factory
 from nti.chatserver.interfaces import IPresenceInfo
 from nti.chatserver.interfaces import IUnattachedPresenceInfo
 
-from nti.common.property import alias
-
 from nti.coremetadata.interfaces import ILastModified
 
 from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
+
+from nti.property.property import alias
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured

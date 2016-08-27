@@ -21,11 +21,13 @@ from email.message import Message
 import boto.ses
 from boto.ses.exceptions import SESAddressBlacklistedError
 
-from repoze.sendmail.interfaces import IMailer
 from repoze.sendmail.encoding import encode_message
+
+from repoze.sendmail.interfaces import IMailer
+
 from repoze.sendmail.queue import ConsoleApp as _ConsoleApp
 
-from nti.common.property import Lazy
+from nti.property.property import Lazy
 
 @interface.implementer(IMailer)
 class SESMailer(object):

@@ -15,7 +15,7 @@ from zope import interface
 
 from ZODB.POSException import ConnectionStateError
 
-from nti.common.property import alias
+from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
 
