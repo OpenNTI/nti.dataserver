@@ -85,14 +85,15 @@ def _validation_error_to_dict(request, validation_error):
 	__traceback_info__ = type(validation_error), validation_error
 	# Validation error may be many things, including invalid password by the policy (see above)
 	# Some places try hard to set a good message, some don't.
-	field_name = None
-	field = getattr(validation_error, 'field', None)
 	msg = ''
 	value = None
 	declared = None
-
+	field_name = None
+	field = getattr(validation_error, 'field', None)
+	
 	if field:
-		fixed_field_name = getattr(field, '__fixup_name__', None)  # handle FieldPropertyStoredThroughField via FieldValidationMixin
+		# handle FieldPropertyStoredThroughField via FieldValidationMixin
+		fixed_field_name = getattr(field, '__fixup_name__', None)
 		field_name = fixed_field_name or getattr(field, '__name__', field)
 		declared = getattr(getattr(field, 'interface', None), '__name__', None)
 
@@ -105,14 +106,17 @@ def _validation_error_to_dict(request, validation_error):
 	if not field_name and isinstance(validation_error, InvalidPassword):
 		field_name = 'password'
 
-	if 	not field_name and isinstance(validation_error, RequiredMissing) and \
-		validation_error.args:
+	if 	not field_name \
+		and isinstance(validation_error, RequiredMissing) \
+		and validation_error.args:
 		field_name = validation_error.args[0]
 
-	if 	not field_name and isinstance(validation_error, ConstraintNotSatisfied) and \
-		validation_error.args:
-		value = validation_error.args[0]
-		field_name = validation_error.args[1]
+	if 	not field_name \
+		and isinstance(validation_error, ConstraintNotSatisfied) \
+		and validation_error.args:
+		args = validation_error.args[0]
+		value = args[0]
+		field_name = args[1] if len(args) >=1 else None
 
 	if not value:
 		value = getattr(validation_error, 'value', value)
@@ -138,10 +142,11 @@ def _validation_error_to_dict(request, validation_error):
 					msg = ''
 
 	result = {'message': msg,
-			  'field': field_name,
 			  'code': validation_error.__class__.__name__,
 			  'value': value,
 			  'declared': declared}
+	if field_name:
+		result['field'] = field_name
 
 	if getattr(validation_error, 'errors', None):
 		# see schema._field._validate_sequence
