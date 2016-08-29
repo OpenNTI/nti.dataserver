@@ -85,11 +85,13 @@ from nti.site.utils import unregisterUtility
 
 ITEMS = StandardExternalFields.ITEMS
 
-INDICES = (('audio_index.json', INTIAudio, create_ntiaudio_from_external),
-			('video_index.json', INTIVideo, create_ntivideo_from_external),
-			('timeline_index.json', INTITimeline, create_timelime_from_external),
-			('slidedeck_index.json', INTISlideDeck, create_object_from_external),
-			('related_content_index.json', INTIRelatedWorkRef, create_relatedwork_from_external))
+INDICES = (
+	('audio_index.json', INTIAudio, create_ntiaudio_from_external),
+	('video_index.json', INTIVideo, create_ntivideo_from_external),
+	('timeline_index.json', INTITimeline, create_timelime_from_external),
+	('slidedeck_index.json', INTISlideDeck, create_object_from_external),
+	('related_content_index.json', INTIRelatedWorkRef, create_relatedwork_from_external)
+)
 
 def prepare_json_text(s):
 	result = unicode(s, 'utf-8') if isinstance(s, bytes) else s
@@ -359,7 +361,9 @@ def _clear_assets_by_interface(content_package, iface, force=False):
 		container = IPresentationAssetContainer(unit)
 		for key, value in tuple(container.items()):  # mutating
 			provided = iface_of_asset(value)
-			if provided.isOrExtends(iface) and can_be_removed(value, force):
+			registered = component.queryUtility(provided, name=key) if not force else None
+			if 	registered is None or \
+				(provided.isOrExtends(iface) and can_be_removed(registered, force)):
 				del container[key]
 	recur(content_package)
 
@@ -409,21 +413,14 @@ def _update_index_when_content_changes(content_package,
 	added = ()
 	if item_iface == INTISlideDeck:
 		# Also remove our other slide types
-		_clear_assets_by_interface(content_package, INTISlide)
-		removed.extend(_remove_from_registry(namespace=content_package.ntiid,
-							  				 provided=INTISlide,
-							  				 registry=registry,
-							 				 catalog=catalog,
-							  			 	 intids=intids,
-							  			 	 sync_results=sync_results))
-
-		_clear_assets_by_interface(content_package, INTISlideVideo)
-		removed.extend(_remove_from_registry(namespace=content_package.ntiid,
-							  				 provided=INTISlideVideo,
-							 				 registry=registry,
-							  				 catalog=catalog,
-							  				 intids=intids,
-							  				 sync_results=sync_results))
+		for provided in (INTISlide, INTISlideVideo):
+			_clear_assets_by_interface(content_package, provided)
+			removed.extend(_remove_from_registry(namespace=content_package.ntiid,
+								  				 provided=provided,
+								  				 registry=registry,
+								 				 catalog=catalog,
+								  			 	 intids=intids,
+								  			 	 sync_results=sync_results))
 
 		added = _load_and_register_slidedeck_json(index_text,
 										  		  registry=registry,
