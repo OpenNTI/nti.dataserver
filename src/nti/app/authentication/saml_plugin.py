@@ -14,6 +14,8 @@ import warnings
 from glob import glob
 from io import BytesIO
 
+from nti.app.saml.client import BasicSAMLClient
+
 import simplejson
 
 try:
@@ -65,6 +67,71 @@ def find_idp_files(path=None):
 	path = etc_saml_dir(path)
 	result = glob(os.path.join(path, 'idp*.xml')) if path else ()
 	return result
+
+def make_saml_client(path=None, 
+					 identity_cache="", 
+					 virtual_organization=""):
+	# find config files
+	sp = find_sp_file(path)
+	idps = find_idp_files(path)
+
+	# no service provider
+	if not sp:
+		return None
+
+	# check service provider
+	with open(sp) as fp:
+		sp_json = simplejson.load(fp, "UTF-8")
+
+	path = path or os.environ.get('DATASERVER_DIR')
+	path = normalize_path(path)
+
+	# check xmlsec binary
+	xmlsec_path = find_xmlsec_path()
+	spec_path = sp_json.get('xmlsec_binary')
+	if not spec_path or not os.path.exists(spec_path):
+		sp_json.pop('xmlsec_binary', None)
+		if xmlsec_path:
+			sp_json['xmlsec_binary'] = xmlsec_path
+
+	# check anything specified exists
+	cwd = os.getcwd()
+	try:
+		os.chdir(path)
+		# check local idps
+		metadata = sp_json.get('metadata') or {}
+		local = metadata.get('local') or ()
+		local = set(normalize_path(x) for x in local if os.path.exists(normalize_path(x)))
+		# cert/key fields
+		for name in ("cert_file", "key_file"):
+			try:
+				value = sp_json[name]
+				value = normalize_path(value) if value else None
+				if not value or not os.path.exists(value):
+					sp_json.pop(name, None)
+				else:
+					sp_json[name] = value
+			except KeyError:
+				pass
+
+		# add specified idps some
+		local.update(idps)
+		if not local:
+			warnings.warn("No idps found")
+			return None
+		if sp_json.get('metadata') is None:
+			sp_json['metadata'] = {}
+		sp_json['metadata']['local'] = sorted(local)
+
+		# parse config
+		conf = SPConfig().load(sp_json)
+		conf.context = "sp"
+		# create client
+		scl = Saml2Client(config=conf, identity_cache=identity_cache,
+					  	  virtual_organization=virtual_organization)
+		return BasicSAMLClient(conf, scl, "", "", "")
+	finally:
+		os.chdir(cwd)
 
 def make_plugin(path=None,
 				wayf="",
