@@ -21,8 +21,6 @@ from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 
 from nti.app.authentication.interfaces import ILogonWhitelist
 
-from nti.app.authentication.saml_plugin import make_plugin
-
 from nti.app.authentication.who_authenticators import AnonymousAccessAuthenticator
 from nti.app.authentication.who_authenticators import KnownUrlTokenBasedAuthenticator
 from nti.app.authentication.who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
@@ -108,17 +106,12 @@ def create_who_apifactory(secure_cookies=True,
 	# app what path to return to (where we came from)
 	redirector = BrowserRedirectorPlugin(str(login_root),
 										 came_from_param=str('return'))
-
-	# SAML2 plugin
-	saml_plugin = make_plugin()
 	
 	# Claimed identity (username) can come from the cookie,
 	# or HTTP Basic auth, or in special cases, from the token query param
 	# The plugin that identified a request will be the one asked to forget
 	# it if a challenge is issued.
 	identifiers = [('auth_tkt', auth_tkt)]
-	if saml_plugin is not None:
-		identifiers.append(('saml', saml_plugin))
 	identifiers.append(('basicauth-interactive', basicauth_interactive))
 	identifiers.append(('basicauth', basicauth))
 	identifiers.append(('token_tkt', token_tkt))
@@ -128,8 +121,6 @@ def create_who_apifactory(secure_cookies=True,
 	# Or possibly HTTP Basic auth, or in special cases, from the
 	# token query param
 	authenticators = [('auth_tkt', auth_tkt)]
-	if saml_plugin is not None:
-		authenticators.append(("saml", saml_plugin))
 	authenticators.append(('htpasswd', DataserverGlobalUsersAuthenticatorPlugin()))
 	authenticators.append(('token_tkt', token_tkt))
 	authenticators.append(('anonymous', anonymous))
@@ -138,8 +129,6 @@ def create_who_apifactory(secure_cookies=True,
 	# of the request; the first plugin that returns a result from
 	# its challenge() method stops iteration.
 	challengers = [('browser-redirector', redirector)]
-	if saml_plugin is not None:
-		challengers.append(("saml", saml_plugin))
 	challengers.append(('basicauth-interactive', basicauth_interactive))
 	challengers.append(('basicauth', basicauth))
 
