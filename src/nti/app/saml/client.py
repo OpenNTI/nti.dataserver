@@ -9,29 +9,24 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zope.i18nmessageid
-MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
-
-from pyramid import httpexceptions as hexc
-
 import saml2
 
-from saml2 import BINDING_HTTP_REDIRECT
 from saml2 import BINDING_HTTP_POST
+from saml2 import BINDING_HTTP_REDIRECT
+
 from saml2 import xmldsig as ds
 
 from saml2.extension.pefim import SPCertEnc
 
 from saml2.samlp import Extensions
 
-from zope import component
 from zope import interface
 
-from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+from pyramid import httpexceptions as hexc
 
-from .interfaces import ISAMLClient
+from nti.app.saml.interfaces import ISAMLClient
 
-SAML_RESPONSE = 'SAMLResponse'
+SAML_RESPONSE = u'SAMLResponse'
 
 @interface.implementer(ISAMLClient)
 class BasicSAMLClient(object):
@@ -50,12 +45,12 @@ class BasicSAMLClient(object):
 
 	saml_client = None
 
-	def __init__(self, 
-				 config, 
-				 saml_client, 
-				 wayf, 
-				 cache,  
-				 idp_query_param="" ):
+	def __init__(self,
+				 config,
+				 saml_client,
+				 wayf,
+				 cache,
+				 idp_query_param=""):
 
 		self.wayf = wayf
 		self.saml_client = saml_client
@@ -69,7 +64,7 @@ class BasicSAMLClient(object):
 			self.metadata = None
 
 	def _pick_idp(self):
-		return 'ssotest.ou.edu' #sso.ou.edu in prod, get this out of zcml config by site
+		return 'ssotest.ou.edu'  # sso.ou.edu in prod, get this out of zcml config by site
 
 	def response_for_logging_in(self, success, error, state=None, passive=False):
 
@@ -98,10 +93,8 @@ class BasicSAMLClient(object):
 				"cert": cert_str,
 				"key": req_key_str
 				}
-				spcertenc = SPCertEnc(x509_data=ds.X509Data(
-					x509_certificate=ds.X509Certificate(text=cert_str)))
-				extensions = Extensions(extension_elements=[
-					element_to_extension_element(spcertenc)])
+				spcertenc = SPCertEnc(x509_data=ds.X509Data(x509_certificate=ds.X509Certificate(text=cert_str)))
+				extensions = Extensions(extension_elements=[element_to_extension_element(spcertenc)])
 
 			if _cli.authn_requests_signed:
 				_sid = saml2.s_utils.sid()
@@ -132,34 +125,28 @@ class BasicSAMLClient(object):
 			raise exc
 
 	def _eval_authn_response(self, saml_response, binding=BINDING_HTTP_REDIRECT):
-
 		logger.info('Processing SAML Authn Response')
 		from IPython.core.debugger import Tracer;Tracer()()
 		try:
 
 			try:
 				authresp = self.saml_client.parse_authn_request_response(saml_response, binding)
-			except Exception as ex:
-				logger.exception('Unable to parse response %s', (excp, ))
+			except Exception:
+				logger.exception('Unable to parse response')
 				raise
 
 			session_info = authresp.session_info()
-		except TypeError as ex:
-			logger.exception('Unable to parse response %s', (excp, ))
+		except TypeError:
+			logger.exception('Unable to parse response')
 			return None
 
 		logger.info('sessioninfo: %s', session_info)
 		return session_info
 
-
 	def process_saml_acs_request(self, request):
-
 		if SAML_RESPONSE not in request.params:
 			raise hexc.HTTPBadRequest('Unexpected SAML Response. No %s', SAML_RESPONSE)
-
 		binding = BINDING_HTTP_POST if request.method == 'POST' else BINDING_HTTP_REDIRECT
-
-		response_info = self._eval_authn_response(request.params[SAML_RESPONSE], binding=binding)
-
+		response_info = self._eval_authn_response(request.params[SAML_RESPONSE], 
+												  binding=binding)
 		return response_info["name_id"], response_info["ava"], response_info
-
