@@ -52,3 +52,17 @@ class TestPrincipals(mock_dataserver.DataserverLayerTest):
 		# Community
 		assert_that( nti_interfaces.IPrincipal( community ),
 					 is_in( with_u ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_for_everyone_string(self):
+		assert_that( authentication.effective_principals( None ), is_( () ) )
+		u = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
+
+		with_u = authentication.effective_principals( u )
+
+		#pyramid security defines it's everyone group as system.Everyone and the
+		#our subsequent ACE_DENY_ALL ACE uses that identifier.  Ensure
+		#that is in our effective principals so that it hits correctly.
+
+		assert_that('system.Everyone', is_in( with_u ))
+		assert_that(nti_interfaces.IPrincipal('system.Everyone'), is_in( with_u ))

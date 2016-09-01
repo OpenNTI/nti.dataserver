@@ -90,7 +90,6 @@ def effective_principals(username,
 		principal.
 	:return: An iterable (set) of :class:`nti.dataserver.interfaces.IPrincipal` objects.
 	"""
-
 	if not username:
 		return ()
 
@@ -126,6 +125,7 @@ def effective_principals(username,
 	if everyone:
 		# Add the authenticated and everyone groups
 		result.add('Everyone')
+		result.add(EVERYONE_GROUP_NAME)
 		result.add(IPrincipal('Everyone'))
 		result.add(IPrincipal(EVERYONE_GROUP_NAME))
 
