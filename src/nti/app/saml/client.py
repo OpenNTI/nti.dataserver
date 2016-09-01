@@ -16,6 +16,8 @@ from saml2 import BINDING_HTTP_REDIRECT
 
 from saml2 import xmldsig as ds
 
+from saml2.saml import NameID
+
 from saml2.extension.pefim import SPCertEnc
 
 from saml2.samlp import Extensions
@@ -26,7 +28,24 @@ from pyramid import httpexceptions as hexc
 
 from nti.app.saml.interfaces import ISAMLClient
 
+from nti.schema.fieldproperty import createFieldProperties
+
+from .interfaces import ISAMLNameId
+from .interfaces import ISAMLUserAssertionInfo
+
 SAML_RESPONSE = u'SAMLResponse'
+
+
+@interface.implementer(ISAMLNameId)
+class _SAMLNameId(object):
+
+	createFieldProperties(ISAMLNameId)
+
+	def __init__(self, name_id):
+		self.nameid = name_id.text
+		self.name_format = name_id.format
+
+
 
 @interface.implementer(ISAMLClient)
 class BasicSAMLClient(object):
@@ -126,11 +145,10 @@ class BasicSAMLClient(object):
 
 	def _eval_authn_response(self, saml_response, binding=BINDING_HTTP_REDIRECT):
 		logger.info('Processing SAML Authn Response')
-		from IPython.core.debugger import Tracer;Tracer()()
 		try:
 
 			try:
-				authresp = self.saml_client.parse_authn_request_response(saml_response, binding)
+				authresp = self.saml_client.parse_authn_request_response(saml_response, binding, )
 			except Exception:
 				logger.exception('Unable to parse response')
 				raise
@@ -149,4 +167,4 @@ class BasicSAMLClient(object):
 		binding = BINDING_HTTP_POST if request.method == 'POST' else BINDING_HTTP_REDIRECT
 		response_info = self._eval_authn_response(request.params[SAML_RESPONSE], 
 												  binding=binding)
-		return response_info["name_id"], response_info["ava"], response_info
+		return response_info

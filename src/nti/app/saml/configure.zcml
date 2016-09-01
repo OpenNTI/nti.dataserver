@@ -13,4 +13,8 @@
 			 factory=".views.SAMLPathAdapter"
 			 provides="zope.traversing.interfaces.IPathAdapter" />
 
+	<adapter for="saml2.saml.NameID"
+			 factory=".client._SAMLNameId"
+			 provides=".interfaces.ISAMLNameId" />
+
 </configure>
