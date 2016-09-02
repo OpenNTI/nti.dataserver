@@ -20,6 +20,8 @@ from nti.schema.field import Object
 from nti.schema.field import DecodingValidTextLine
 from nti.schema.field import ValidTextLine as TextLine
 
+NAMEID_FORMATS_SAML2_VALUES = tuple(x[1] for x in NAMEID_FORMATS_SAML2)
+
 class ISAMLClient(interface.Interface):
 	"""
 	An object that can act as a basic SAML client for SSO operations.
@@ -52,9 +54,10 @@ class ISAMLClient(interface.Interface):
 class SAMLNameIdFormatVocab(object):
 
 	def __contains__(self, key):
-		return key in [x[1] for x in NAMEID_FORMATS_SAML2]
+		return key in NAMEID_FORMATS_SAML2_VALUES
 
 class ISAMLNameId(interface.Interface):
+
 	nameid = TextLine(title="SAML name id",
 					  description="The SAML nameid for the entity",
 					  required=True)
@@ -63,7 +66,6 @@ class ISAMLNameId(interface.Interface):
 						 description="SAML nameid format string",
 						 vocabulary=SAMLNameIdFormatVocab(),
 						 required=True)
-
 
 class ISAMLIDPInfo(interface.Interface):
 	"""
@@ -76,8 +78,6 @@ class ISAMLIDPInfo(interface.Interface):
 	entity_id = TextLine(title=u"The SAML entity id",
 						 description=u"The entity id of this SAML IDP",
 						 required=True)
-
-
 
 class ISAMLUserAssertionInfo(interface.Interface):
 	"""

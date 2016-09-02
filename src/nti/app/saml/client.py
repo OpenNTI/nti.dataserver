@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-.. $Id: __init__.py 94273 2016-08-15 18:55:08Z carlos.sanchez $
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -16,8 +16,6 @@ from saml2 import BINDING_HTTP_REDIRECT
 
 from saml2 import xmldsig as ds
 
-from saml2.saml import NameID
-
 from saml2.extension.pefim import SPCertEnc
 
 from saml2.samlp import Extensions
@@ -28,26 +26,20 @@ from zope import interface
 from pyramid import httpexceptions as hexc
 
 from nti.app.saml.interfaces import ISAMLClient
+from nti.app.saml.interfaces import ISAMLNameId
+from nti.app.saml.interfaces import ISAMLIDPInfo
 
 from nti.schema.fieldproperty import createFieldProperties
 
-from .interfaces import ISAMLIDPInfo
-from .interfaces import ISAMLNameId
-from .interfaces import ISAMLUserAssertionInfo
-
 SAML_RESPONSE = u'SAMLResponse'
-
 
 @interface.implementer(ISAMLNameId)
 class _SAMLNameId(object):
-
 	createFieldProperties(ISAMLNameId)
 
 	def __init__(self, name_id):
 		self.nameid = name_id.text
 		self.name_format = name_id.format
-
-
 
 @interface.implementer(ISAMLClient)
 class BasicSAMLClient(object):
