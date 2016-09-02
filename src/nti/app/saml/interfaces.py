@@ -10,14 +10,15 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 from zope.schema.interfaces import IBaseVocabulary
 
 from saml2.saml import NAMEID_FORMATS_SAML2
 
 from nti.schema.field import Choice
-from nti.schema.field import DecodingValidTextLine
-from nti.schema.field import TextLine
 from nti.schema.field import Object
+from nti.schema.field import DecodingValidTextLine
+from nti.schema.field import ValidTextLine as TextLine
 
 class ISAMLClient(interface.Interface):
 	"""
@@ -28,8 +29,8 @@ class ISAMLClient(interface.Interface):
 	def response_for_logging_in(success, error, state=None, passive=False):
 		"""
 		Returns an HTTPResponse suitable for initiating the SAML login process from
-		the requesting browser.  State must be a json encodable value.  
-		If the response is requested as passive an authentication check with 
+		the requesting browser.  State must be a json encodable value.
+		If the response is requested as passive an authentication check with
 		the idp will be performed but the request will be made in a passive manor (not presenting
 		the user with a login prompt).
 
@@ -53,7 +54,6 @@ class SAMLNameIdFormatVocab(object):
 	def __contains__(self, key):
 		return key in [x[1] for x in NAMEID_FORMATS_SAML2]
 
-
 class ISAMLNameId(interface.Interface):
 	nameid = TextLine(title="SAML name id",
 					  description="The SAML nameid for the entity",
@@ -70,8 +70,8 @@ class ISAMLUserAssertionInfo(interface.Interface):
 	Queried as a named adapter by idp entity id
 	"""
 
-	username = DecodingValidTextLine(title=u'The username', 
-									 min_length=5, 
+	username = DecodingValidTextLine(title=u'The username',
+									 min_length=5,
 									 required=True)
 
 	nameid = Object(ISAMLNameId,
@@ -83,15 +83,10 @@ class ISAMLUserAssertionInfo(interface.Interface):
 					 description=u"The unvalidated email address for the user",
 					 required=False)
 
-	firstname = TextLine(title=u"The user's firstname", #move to ou specific?
+	firstname = TextLine(title=u"The user's firstname",  # move to ou specific?
 					 	 description=u"The admittedly western firstname for the user",
 					 	 required=False)
 
-	lastname = TextLine(title=u"The user's lastname", #move to ou specific?
+	lastname = TextLine(title=u"The user's lastname",  # move to ou specific?
 					 	description=u"The admittedly western lastname for the user",
 					 	required=False)
-
-
-
-
-
