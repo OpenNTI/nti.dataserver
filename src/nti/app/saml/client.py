@@ -85,7 +85,6 @@ class BasicSAMLClient(object):
 			self.metadata = None
 
 	def _pick_idp(self):
-		from IPython.core.debugger import Tracer;Tracer()()
 		idp = component.queryUtility(ISAMLIDPInfo)
 		return idp.entity_id
 
