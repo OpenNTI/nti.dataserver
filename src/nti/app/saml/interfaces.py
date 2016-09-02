@@ -65,6 +65,20 @@ class ISAMLNameId(interface.Interface):
 						 required=True)
 
 
+class ISAMLIDPInfo(interface.Interface):
+	"""
+	Information about a SAML IDP. Typically registered as a utility
+	"""
+	name = TextLine(title=u"name",
+					description=u"A displayable name for the IDP",
+					required=True)
+
+	entity_id = TextLine(title=u"The SAML entity id",
+						 description=u"The entity id of this SAML IDP",
+						 required=True)
+
+
+
 class ISAMLUserAssertionInfo(interface.Interface):
 	"""
 	Queried as a named adapter by idp entity id

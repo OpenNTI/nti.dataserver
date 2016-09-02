@@ -22,6 +22,7 @@ from saml2.extension.pefim import SPCertEnc
 
 from saml2.samlp import Extensions
 
+from zope import component
 from zope import interface
 
 from pyramid import httpexceptions as hexc
@@ -30,6 +31,7 @@ from nti.app.saml.interfaces import ISAMLClient
 
 from nti.schema.fieldproperty import createFieldProperties
 
+from .interfaces import ISAMLIDPInfo
 from .interfaces import ISAMLNameId
 from .interfaces import ISAMLUserAssertionInfo
 
@@ -83,7 +85,9 @@ class BasicSAMLClient(object):
 			self.metadata = None
 
 	def _pick_idp(self):
-		return 'ssotest.ou.edu'  # sso.ou.edu in prod, get this out of zcml config by site
+		from IPython.core.debugger import Tracer;Tracer()()
+		idp = component.queryUtility(ISAMLIDPInfo)
+		return idp.entity_id
 
 	def response_for_logging_in(self, success, error, state=None, passive=False):
 
