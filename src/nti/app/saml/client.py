@@ -148,15 +148,17 @@ class BasicSAMLClient(object):
 				spcertenc = SPCertEnc(x509_data=ds.X509Data(x509_certificate=ds.X509Certificate(text=cert_str)))
 				extensions = Extensions(extension_elements=[element_to_extension_element(spcertenc)])
 
+			is_passive = 'true' if passive else None
+
 			if _cli.authn_requests_signed:
 				_sid = saml2.s_utils.sid()
 				req_id, msg_str = _cli.create_authn_request(
 					dest, vorg="", sign=_cli.authn_requests_signed,
-					message_id=_sid, extensions=extensions)
+					message_id=_sid, extensions=extensions, is_passive=is_passive)
 				_sid = req_id
 			else:
 				req_id, req = _cli.create_authn_request(
-					dest, vorg="", sign=False, extensions=extensions)
+					dest, vorg="", sign=False, extensions=extensions, is_passive=is_passive)
 				msg_str = "%s" % req
 				_sid = req_id
 
@@ -175,7 +177,7 @@ class BasicSAMLClient(object):
 				return ht_args["data"]
 
 		except Exception as exc:
-			logger.error('Unable to generate SAML AuthnRequest')
+			logger.exception('Unable to generate SAML AuthnRequest')
 			raise exc
 
 	def _eval_authn_response(self, saml_response, binding=BINDING_HTTP_REDIRECT):
