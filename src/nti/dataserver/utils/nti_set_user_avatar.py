@@ -14,7 +14,6 @@ import sys
 import argparse
 from urlparse import urlparse
 
-from nti.common.dataurl import encode
 from nti.common.mimetypes import guess_type
 
 from nti.dataserver.interfaces import IEntity
@@ -28,6 +27,8 @@ from nti.dataserver.utils.base_script import set_site
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.property.dataurl import encode
 
 def _find_profile(entity):
 	result = None
