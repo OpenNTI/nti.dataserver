@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from itsdangerous import JSONWebSignatureSerializer
+
 import saml2
 
 from saml2 import BINDING_HTTP_POST
@@ -29,9 +31,24 @@ from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLNameId
 from nti.app.saml.interfaces import ISAMLIDPInfo
 
+from nti.appserver.interfaces import IApplicationSettings
+
 from nti.schema.fieldproperty import createFieldProperties
 
 SAML_RESPONSE = u'SAMLResponse'
+RELAY_STATE = 'RelayState'
+SUCCESS_STATE_PARAM = '_nti_success'
+ERROR_STATE_PARAM = '_nti_error'
+
+def _get_signer_secret(default_secret='not-very-secure-secret'):
+	# TODO: Break these dependencies
+	settings = component.queryUtility(IApplicationSettings) or {}
+	# XXX Reusing the cookie secret, we should probably have our own
+	secret_key = settings.get('cookie_secret', default_secret)
+	return secret_key
+
+def _make_signer(secret, salt='nti-saml-relay-state'):
+	return JSONWebSignatureSerializer(secret, salt=salt)
 
 @interface.implementer(ISAMLNameId)
 class _SAMLNameId(object):
@@ -80,7 +97,28 @@ class BasicSAMLClient(object):
 		idp = component.queryUtility(ISAMLIDPInfo)
 		return idp.entity_id
 
-	def response_for_logging_in(self, success, error, state=None, passive=False):
+	def _extract_relay_state(self, relay_state):
+		signer = _make_signer(_get_signer_secret())
+
+		state = signer.loads(relay_state)
+
+		success = state.pop(SUCCESS_STATE_PARAM, None) if state else None
+		error = state.pop(ERROR_STATE_PARAM, None) if state else None
+
+		return state, success, error
+
+	def _create_relay_state(self, state={}, success=None, error=None):
+		if success:
+			state[SUCCESS_STATE_PARAM] = success
+		if error:
+			state[ERROR_STATE_PARAM] = error
+		
+		signer = _make_signer(_get_signer_secret())
+
+		return signer.dumps(state)
+
+
+	def response_for_logging_in(self, success, error, state={}, passive=False):
 
 		entity_id = self._pick_idp()
 
@@ -122,9 +160,11 @@ class BasicSAMLClient(object):
 				msg_str = "%s" % req
 				_sid = req_id
 
+			state = self._create_relay_state(state=state, success=success, error=error)
+
 			ht_args = _cli.apply_binding(_binding, msg_str,
 				destination=dest,
-				relay_state="")
+				relay_state=state)
 
 			logger.debug("ht_args: %s", ht_args)
 
@@ -159,7 +199,11 @@ class BasicSAMLClient(object):
 	def process_saml_acs_request(self, request):
 		if SAML_RESPONSE not in request.params:
 			raise hexc.HTTPBadRequest('Unexpected SAML Response. No %s', SAML_RESPONSE)
+
 		binding = BINDING_HTTP_POST if request.method == 'POST' else BINDING_HTTP_REDIRECT
 		response_info = self._eval_authn_response(request.params[SAML_RESPONSE], 
 												  binding=binding)
-		return response_info
+
+		state, success, error = self._extract_relay_state(request.params.get(RELAY_STATE, None))
+
+		return response_info, state, success, error

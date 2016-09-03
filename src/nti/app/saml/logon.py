@@ -60,7 +60,7 @@ def acs_view(request):
 	try:
 		saml_client = component.queryUtility(ISAMLClient)
 
-		response = saml_client.process_saml_acs_request(request)
+		response, state, success, error = saml_client.process_saml_acs_request(request)
 		idp_id = response['issuer']
 
 		#Component lookup error here would be a programmer or config error
