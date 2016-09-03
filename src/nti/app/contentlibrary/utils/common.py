@@ -46,6 +46,7 @@ from nti.site.utils import unregisterUtility
 
 from nti.traversal.traversal import find_interface
 
+INTID = StandardExternalFields.INTID
 ITEMS = StandardExternalFields.ITEMS
 NTIID = StandardExternalFields.NTIID
 MIMETYPE = StandardExternalFields.MIMETYPE
@@ -137,7 +138,7 @@ def remove_package_inaccessible_assets():
 				if ntiid not in seen:
 					seen.add(ntiid)
 					items.append({
-						'IntId':uid,
+						INTID:uid,
 						NTIID:ntiid,
 						MIMETYPE:asset.mimeType,
 					})
@@ -161,7 +162,7 @@ def remove_package_inaccessible_assets():
 				if ntiid not in seen:
 					seen.add(ntiid)
 					items.append({
-						'IntId':uid,
+						INTID:uid,
 						NTIID:ntiid,
 						MIMETYPE:asset.mimeType,
 					})
