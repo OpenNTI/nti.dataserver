@@ -24,6 +24,8 @@ from pyramid.threadlocal import get_current_request
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable
 
+from nti.securitypolicy.utils import is_impersonating
+
 @interface.implementer(ITemplatedMailer)
 class _BaseFilteredMailer(object):
 
@@ -124,9 +126,7 @@ class ImpersonatedMailer(NextThoughtOnlyMailer):
 		if _request is None or not hasattr(_request, 'environ'):  # In case we're zope proxied?
 			_request = get_current_request()
 
-		environ = getattr(_request, 'environ', ())
-
-		if 'REMOTE_USER_DATA' in environ and environ['REMOTE_USER_DATA']:
+		if is_impersonating(_request):
 			# This is how we know we are impersonated. In this case,
 			# we want to filter everything. (see nti.appserver.logon)
 			# Hmm, maybe we want to redirect to the impersonating user?
