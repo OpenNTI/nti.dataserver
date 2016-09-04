@@ -24,7 +24,9 @@ from zope.security.zcml import IPermissionDirective
 from zope.schema import TextLine
 
 class IGrantAllDirective(Interface):
-	"""Grant Permissions to roles and principals and roles to principals."""
+	"""
+	Grant Permissions to roles and principals and roles to principals.
+	"""
 
 	principal = TextLine(
 		title=u"Principal",
@@ -37,7 +39,9 @@ class IGrantAllDirective(Interface):
 		required=False)
 
 class IGrantDirective(IGrantAllDirective):
-	"""Grant Permissions to roles and principals and roles to principals."""
+	"""
+	Grant Permissions to roles and principals and roles to principals.
+	"""
 
 	permission = Permission(
 		title=u"Permission",
@@ -45,7 +49,9 @@ class IGrantDirective(IGrantAllDirective):
 		required=False)
 
 class IDefineRoleDirective(IPermissionDirective):
-	"""Define a new role."""
+	"""
+	Define a new role.
+	"""
 
 	id = TextLine(
 		title="Id",
@@ -53,6 +59,7 @@ class IDefineRoleDirective(IPermissionDirective):
 		required=True)
 
 class IDefinePrincipalDirective(_IDefinePrincipalDirective):
+
 	id = TextLine(
 		title="Id",
 		description="Id as which this object will be known and used.",

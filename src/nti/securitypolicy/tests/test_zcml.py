@@ -11,6 +11,7 @@ from hamcrest import contains
 from hamcrest import assert_that
 
 from zope.securitypolicy.interfaces import Allow
+
 from zope.securitypolicy.principalrole import principalRoleManager
 
 from nti.testing import base
@@ -58,5 +59,5 @@ class TestZcml(base.ConfiguringTestBase):
 
 		self.configure_string(zcml)
 
-		assert_that( principalRoleManager.getRolesForPrincipal('grey.allman@nextthought.com'),
-					 contains( ('nti.roles.courseware.report_viewer', Allow)))
+		assert_that(principalRoleManager.getRolesForPrincipal('grey.allman@nextthought.com'),
+					contains(('nti.roles.courseware.report_viewer', Allow)))

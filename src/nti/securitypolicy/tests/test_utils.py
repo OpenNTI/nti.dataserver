@@ -7,10 +7,10 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import unittest
-
-from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import assert_that
+
+import unittest
 
 from nti.securitypolicy.utils import is_impersonating
 
