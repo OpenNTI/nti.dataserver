@@ -94,9 +94,11 @@ def _dedupe_bundles_from_hierarchy(hierarchy_contexts):
 	results = []
 	wrapped_bundles = _get_wrapped_bundles_from_hierarchy(hierarchy_contexts)
 	for hierarchy_context in hierarchy_contexts:
-		top_level_context = hierarchy_context[0] if hierarchy_context else None
-		if top_level_context not in wrapped_bundles:
-			results.append(hierarchy_context)
+		# Make sure some provider didn't give us None.
+		if hierarchy_context:
+			top_level_context = hierarchy_context[0]
+			if top_level_context not in wrapped_bundles:
+				results.append(hierarchy_context)
 	return results
 
 def get_hierarchy_context(obj, user):
