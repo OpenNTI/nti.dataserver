@@ -11,6 +11,7 @@ from hamcrest import is_
 from hamcrest import all_of
 from hamcrest import has_key
 from hamcrest import contains
+from hamcrest import not_
 from hamcrest import equal_to
 from hamcrest import has_item
 from hamcrest import ends_with
@@ -200,6 +201,12 @@ class TestApplicationLogon(ApplicationLayerTest):
 		# The auth_tkt cookie contains both the original and new username
 		assert_that(testapp.cookies['nti.auth_tkt'],
 					 contains_string('sjohnson%40nextthought.com!'))
+
+		# The auth_tkt cookied should not contain any empty username param.
+		# e.g. "username="  The username param is currently being used to signify
+		# we have impesonated someone
+		assert_that(testapp.cookies['nti.auth_tkt'],
+					 not_(contains_string('username="')))
 
 		# Now that we have the cookie, we should be able to request ourself
 		testapp.get('/dataserver2/users/sjohnson@nextthought.com')

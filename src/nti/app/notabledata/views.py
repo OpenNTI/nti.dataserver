@@ -15,6 +15,7 @@ from zope import component
 from zope import interface
 
 from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.httpexceptions import HTTPNoContent
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
@@ -36,6 +37,8 @@ from nti.dataserver.authorization import ACT_READ
 from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
+
+from nti.securitypolicy.utils import is_impersonating
 
 _NOTABLE_NAME = 'RUGDByOthersThatIMightBeInterestedIn'
 
@@ -189,6 +192,13 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 		return super(_NotableUGDLastViewed, self).__call__()
 
 	def _do_call(self):
+
+		#from IPython.core.debugger import Tracer;Tracer()()
+		if is_impersonating(self.request):
+			logger.warn( 'Not setting lastViewed for impersonating user (%s)',
+					self.remoteUser )
+			return HTTPNoContent()
+
 		user_notable_data = self._notable_data
 
 		incoming_last_viewed = self.readInput()

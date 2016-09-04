@@ -201,10 +201,9 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 		# string.
 		#
 		# We fix both issues here
-
 		remote = request.environ.get('REMOTE_USER_DATA', b'')
 		if not isinstance(remote, Mapping):
-			remote = {'username': remote}
+			remote = {'username': remote} # if remote else {}
 
 		api = self._getAPI(request)
 		identity = (self._get_identity(request) or {}).copy()
