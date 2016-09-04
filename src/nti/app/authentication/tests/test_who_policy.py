@@ -53,7 +53,6 @@ class TestWhoPolicy(unittest.TestCase):
 		mock_get.is_callable().returns({'login_app_root': '/login'})
 		with fudge.patched_context('zope.component', 'getUtility', mock_get):
 			policy = self.policy
-			from IPython.core.debugger import Tracer;Tracer()()
 			request = Request.blank('/')
 			headers = policy.remember(request, 'jason')
 

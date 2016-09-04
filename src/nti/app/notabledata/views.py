@@ -193,7 +193,6 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 
 	def _do_call(self):
 
-		#from IPython.core.debugger import Tracer;Tracer()()
 		if is_impersonating(self.request):
 			logger.warn( 'Not setting lastViewed for impersonating user (%s)',
 					self.remoteUser )
