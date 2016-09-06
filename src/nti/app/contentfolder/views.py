@@ -18,6 +18,7 @@ from urlparse import parse_qs
 from functools import partial
 
 from zope import component
+from zope import interface
 from zope import lifecycleevent
 
 from zope.intid.interfaces import IIntIds
@@ -48,6 +49,8 @@ from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.app.renderers.interfaces import INoHrefInResponse
 
 from nti.appserver.pyramid_authorization import has_permission
 
@@ -964,6 +967,7 @@ class ContentFileExternalView(MoveView):
 		result = LocatedExternalDict()
 		result['url'] = to_external_cf_io_url(self.context, self.request)
 		result['href'] = to_external_cf_io_href(self.context, self.request)
+		interface.alsoProvides(result, INoHrefInResponse)
 		return result
 
 @view_config(name=CFIO)
