@@ -17,4 +17,8 @@
 			 factory=".client._SAMLNameId"
 			 provides=".interfaces.ISAMLNameId" />
 
+	<adapter factory=".logon._SAMLIDEntityBindingsFactory"
+			 provides=".interfaces.ISAMLIDPEntityBindings"
+			 for="nti.dataserver.interfaces.IUser" />
+
 </configure>

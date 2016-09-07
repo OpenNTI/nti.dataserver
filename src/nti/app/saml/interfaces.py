@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from zope.container.interfaces import IContainer
+
 from zope.schema.interfaces import IBaseVocabulary
 
 from saml2.saml import NAMEID_FORMATS_SAML2
@@ -66,6 +68,13 @@ class ISAMLNameId(interface.Interface):
 						 description="SAML nameid format string",
 						 vocabulary=SAMLNameIdFormatVocab(),
 						 required=True)
+
+class ISAMLIDPEntityBindings(IContainer):
+	"""
+	A container-like object storing ISAMLNameId remote (nameids) by the IDP entityid
+	that provided the assertion
+	"""
+
 
 class ISAMLIDPInfo(interface.Interface):
 	"""

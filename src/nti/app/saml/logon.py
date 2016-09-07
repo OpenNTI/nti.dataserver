@@ -12,12 +12,16 @@ logger = __import__('logging').getLogger(__name__)
 import urllib
 import urlparse
 
+from zope.annotation import factory as an_factory
+
 from zope import component
 from zope import interface
 
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
+
+from saml2.saml import NAMEID_FORMAT_PERSISTENT
 
 from nti.app.externalization.error import raise_json_error as _raise_error
 
@@ -27,6 +31,7 @@ from nti.app.saml import ACS
 from nti.app.saml import SLS
 
 from nti.app.saml.interfaces import ISAMLClient
+from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
 
 from nti.app.saml.views import SAMLPathAdapter
@@ -35,6 +40,10 @@ from nti.appserver.logon import logout as _do_logout
 from nti.appserver.logon import _create_failure_response
 from nti.appserver.logon import _create_success_response
 from nti.appserver.logon import _deal_with_external_account
+
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
+
+from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users import User
 
@@ -51,10 +60,6 @@ def sls_view(request):
 	response = _do_logout(request)
 	return response
 
-
-def _validate_idp_nameid(user, user_info, idp):
-	pass
-
 def _make_location(url, params=None):
 	if not params:
 		return url
@@ -68,6 +73,36 @@ def _make_location(url, params=None):
 	url_parts[4] = urllib.urlencode(query)
 
 	return urlparse.urlunparse(url_parts)
+
+SAML_IDP_BINDINGS_ANNOTATION_KEY='SAML_IDP_BINDINGS_ANNOTATION_KEY'
+
+@component.adapter(IUser)
+@interface.implementer(ISAMLIDPEntityBindings)
+class SAMLIDPEntityBindings(CheckingLastModifiedBTreeContainer):
+	pass
+
+_SAMLIDEntityBindingsFactory = an_factory(SAMLIDPEntityBindings,
+										  SAML_IDP_BINDINGS_ANNOTATION_KEY)
+
+def _validate_idp_nameid(user, user_info, idp):
+	"""
+	If a user has a preexisting nameid for this idp, verifies the idp identifier matches
+	up with what we stored.  If the nameids are a mismatch we raise an exception.  It is unclear
+	if we should do the same if the user has an associated binding to a different idp already.
+	"""
+	bindings = ISAMLIDPEntityBindings(user, {})
+	nameid = bindings.get(idp, None)
+	
+	#if we have no binding something seems fishy. The user was created
+	#outside the saml process?
+	if nameid is None:
+		logger.warn('user %s exists but has no prexisting saml bindings for %s. Dev environment?', user.username, idp)
+	elif nameid.nameid != user_info.nameid.nameid:
+		#if we have a binding it needs to match, if it doesn't that could mean our username
+		#was reused by the idp.  This shouldnt happen as we are asking for persistent nameids
+		logger.error('SAML persistent nameid %s for user %s does not match idp returned nameid %s', nameid.nameid, user.username, user_info.nameid.nameid)
+		raise hexc.HTTPBadRequest('SAML persistent nameid mismatch.')
+
 
 @view_config(name=ACS,
 			 context=SAMLPathAdapter,
@@ -90,6 +125,9 @@ def acs_view(request):
 		nameid = user_info.nameid
 		if nameid is None:
 			raise ValueError("No nameid provided")
+
+		if nameid.name_format != NAMEID_FORMAT_PERSISTENT:
+			raise ValueError("Expected persistent nameid but was %s", nameid.name_format)
 
 		user = User.get_entity(username)
 
@@ -121,7 +159,11 @@ def acs_view(request):
 			if email_found: # trusted source
 				force_email_verification(user)
 
-		logger.debug("%s logging through SAML", username)
+		nameid_bindings = ISAMLIDPEntityBindings(user)
+		if idp_id not in nameid_bindings:
+			nameid_bindings[idp_id] = user_info.nameid
+
+		logger.debug("%s logging in through SAML", username)
 		return _create_success_response(request, userid=username, success=_make_location(success, state))
 
 	except Exception as e:
