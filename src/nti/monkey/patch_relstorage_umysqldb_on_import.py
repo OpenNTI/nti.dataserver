@@ -35,7 +35,10 @@ def _patch():
 
 def _patch_connection():
 	import umysqldb
-	from relstorage.adapters._mysql_drivers import UConnection
+	try:
+		from relstorage.adapters.mysql.drivers import UConnection
+	except ImportError:
+		from relstorage.adapters._mysql_drivers import UConnection
 	umysqldb.connect = UConnection
 	umysqldb.Connect = UConnection
 	umysqldb.Connection = UConnection
