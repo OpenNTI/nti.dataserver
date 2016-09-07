@@ -33,6 +33,8 @@ from nti.app.saml.interfaces import ISAMLIDPInfo
 
 from nti.appserver.interfaces import IApplicationSettings
 
+from nti.common.string import to_unicode
+
 from nti.schema.fieldproperty import createFieldProperties
 
 SAML_RESPONSE = u'SAMLResponse'
@@ -55,7 +57,7 @@ class _SAMLNameId(object):
 	createFieldProperties(ISAMLNameId)
 
 	def __init__(self, name_id):
-		self.nameid = name_id.text
+		self.nameid = to_unicode(name_id.text)
 		self.name_format = name_id.format
 
 @interface.implementer(ISAMLClient)
