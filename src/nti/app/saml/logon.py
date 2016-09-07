@@ -9,6 +9,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import urllib
+import urlparse
+
 from zope import component
 from zope import interface
 
@@ -51,6 +54,20 @@ def sls_view(request):
 
 def _validate_idp_nameid(user, user_info, idp):
 	pass
+
+def _make_location(url, params=None):
+	if not params:
+		return url
+
+	if not url:
+		return None
+
+	url_parts = list(urlparse.urlparse(url))
+	query = dict(urlparse.parse_qsl(url_parts[4]))
+	query.update(params)
+	url_parts[4] = urllib.urlencode(query)
+
+	return urlparse.urlunparse(url_parts)
 
 @view_config(name=ACS,
 			 context=SAMLPathAdapter,
@@ -105,7 +122,7 @@ def acs_view(request):
 				force_email_verification(user)
 
 		logger.debug("%s logging through SAML", username)
-		return _create_success_response(request, userid=username, success=None)
+		return _create_success_response(request, userid=username, success=_make_location(success, state))
 
 	except Exception as e:
 		logger.exception("An error occurred when processing saml acs request")
