@@ -126,4 +126,4 @@ def acs_view(request):
 
 	except Exception as e:
 		logger.exception("An error occurred when processing saml acs request")
-		return _create_failure_response(request, error=str(e))
+		return _create_failure_response(request, failure=_make_location(error, state), error=str(e))
