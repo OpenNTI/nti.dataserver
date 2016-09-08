@@ -17,6 +17,7 @@ from saml2 import BINDING_HTTP_POST
 from saml2 import BINDING_HTTP_REDIRECT
 
 from saml2 import xmldsig as ds
+from saml2 import element_to_extension_element
 
 from saml2.extension.pefim import SPCertEnc
 
@@ -37,15 +38,15 @@ from nti.common.string import to_unicode
 
 from nti.schema.fieldproperty import createFieldProperties
 
+RELAY_STATE = u'RelayState'
 SAML_RESPONSE = u'SAMLResponse'
-RELAY_STATE = 'RelayState'
-SUCCESS_STATE_PARAM = '_nti_success'
-ERROR_STATE_PARAM = '_nti_error'
+ERROR_STATE_PARAM = u'_nti_error'
+SUCCESS_STATE_PARAM = u'_nti_success'
 
 def _get_signer_secret(default_secret='not-very-secure-secret'):
 	# TODO: Break these dependencies
 	settings = component.queryUtility(IApplicationSettings) or {}
-	# XXX Reusing the cookie secret, we should probably have our own
+	# XXX: Reusing the cookie secret, we should probably have our own
 	secret_key = settings.get('cookie_secret', default_secret)
 	return secret_key
 
@@ -114,11 +115,9 @@ class BasicSAMLClient(object):
 			state[SUCCESS_STATE_PARAM] = success
 		if error:
 			state[ERROR_STATE_PARAM] = error
-		
+
 		signer = _make_signer(_get_signer_secret())
-
 		return signer.dumps(state)
-
 
 	def response_for_logging_in(self, success, error, state={}, passive=False):
 
@@ -138,14 +137,14 @@ class BasicSAMLClient(object):
 			dest = srvs[0]["location"]
 			logger.debug("destination: %s", dest)
 
-			extensions = None
 			cert = None
+			extensions = None
 
 			if _cli.config.generate_cert_func is not None:
 				cert_str, req_key_str = _cli.config.generate_cert_func()
 				cert = {
-				"cert": cert_str,
-				"key": req_key_str
+					"cert": cert_str,
+					"key": req_key_str
 				}
 				spcertenc = SPCertEnc(x509_data=ds.X509Data(x509_certificate=ds.X509Certificate(text=cert_str)))
 				extensions = Extensions(extension_elements=[element_to_extension_element(spcertenc)])
@@ -167,8 +166,8 @@ class BasicSAMLClient(object):
 			state = self._create_relay_state(state=state, success=success, error=error)
 
 			ht_args = _cli.apply_binding(_binding, msg_str,
-				destination=dest,
-				relay_state=state)
+										 destination=dest,
+										 relay_state=state)
 
 			logger.debug("ht_args: %s", ht_args)
 			if not ht_args["data"] and ht_args["headers"][0][0] == "Location":
@@ -187,7 +186,7 @@ class BasicSAMLClient(object):
 		try:
 
 			try:
-				authresp = self.saml_client.parse_authn_request_response(saml_response, binding, )
+				authresp = self.saml_client.parse_authn_request_response(saml_response, binding,)
 			except Exception:
 				logger.exception('Unable to parse response')
 				raise
@@ -205,7 +204,7 @@ class BasicSAMLClient(object):
 			raise hexc.HTTPBadRequest('Unexpected SAML Response. No %s', SAML_RESPONSE)
 
 		binding = BINDING_HTTP_POST if request.method == 'POST' else BINDING_HTTP_REDIRECT
-		response_info = self._eval_authn_response(request.params[SAML_RESPONSE], 
+		response_info = self._eval_authn_response(request.params[SAML_RESPONSE],
 												  binding=binding)
 
 		state, success, error = self._extract_relay_state(request.params.get(RELAY_STATE, None))
