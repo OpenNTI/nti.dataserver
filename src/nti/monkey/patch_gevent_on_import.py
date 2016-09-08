@@ -176,10 +176,16 @@ def check_threadlocal_status(names=('transaction.ThreadTransactionManager',
 			raise TypeError("%s not monkey patched. Bad import order" % name)
 
 	# Now the rlock patch for ZODB
-	dottedname.resolve('ZODB.DB')
-	db = sys.modules['ZODB.DB']  # ZODB.DB shadows the module
-	if db.threading.RLock is not gevent.lock.RLock:
-		raise TypeError("ZODB.DB/threading.RLock not monkey patched")
+	for name in ('ZODB.DB', 'ZODB.utils'):
+		try:
+			dottedname.resolve(name)
+			db = sys.modules[name]
+			if db.threading.RLock is not gevent.lock.RLock:
+				raise TypeError("ZODB.DB/threading.RLock not monkey patched")
+			return
+		except (AttributeError, KeyError, ImportError):
+			pass
+	raise TypeError("ZODB.DB/threading.RLock not monkey patched")
 
 version_info = getattr(gevent, 'version_info', (0, 0, 0, 'final', 0))
 
