@@ -171,10 +171,10 @@ class BasicSAMLClient(object):
 				relay_state=state)
 
 			logger.debug("ht_args: %s", ht_args)
-
 			if not ht_args["data"] and ht_args["headers"][0][0] == "Location":
-				logger.debug('redirect to: %s', ht_args["headers"][0][1])
-				return hexc.HTTPSeeOther(headers=ht_args["headers"])
+				location = ht_args["headers"].pop(0)[1]
+				logger.debug('redirect to: %s', location)
+				return hexc.HTTPSeeOther(location, headers=ht_args["headers"])
 			else:
 				return ht_args["data"]
 
