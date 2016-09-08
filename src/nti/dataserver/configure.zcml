@@ -131,6 +131,7 @@
 	<include package="nti.contentfile" />
 	<include package="nti.invitations" />
 	<include package="nti.contentrange" />
+	<include package="nti.coremetadata" />
 	<include package="nti.contentfolder" />
 	<include package="nti.contentlibrary" />
 	<include package="nti.datastructures" />
