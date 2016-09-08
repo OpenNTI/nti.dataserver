@@ -34,7 +34,7 @@ from pkg_resources import load_entry_point, get_distribution
 def main():
 	zeo_dist = get_distribution( 'ZEO' )
 	if zeo_dist and zeo_dist.has_version():
-		assert zeo_dist.version.startswith( '4.' )
+		assert zeo_dist.version.startswith( '4.' ) or zeo_dist.version.startswith( '5.' )
 
 	sys.exit(
 		load_entry_point('ZEO', 'console_scripts', 'runzeo')()
