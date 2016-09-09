@@ -183,6 +183,7 @@ class BasicSAMLClient(object):
 
 	def _eval_authn_response(self, saml_response, binding=BINDING_HTTP_REDIRECT):
 		logger.info('Processing SAML Authn Response')
+		logger.info('response %s', saml_response)
 		try:
 
 			try:
