@@ -213,9 +213,8 @@ class HeadlineTopic(Topic):
 		interface.noLongerProvides(self, IDefaultPublished)
 		self._did_modify_publication_status(oldSharingTargets)
 
-	def is_published(self):
+	def is_published(self, *args, **kwargs):
 		return IDefaultPublished.providedBy(self)
-
 	isPublished = is_published
 
 @interface.implementer(IGeneralTopic)
