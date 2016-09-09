@@ -91,12 +91,15 @@ def _validate_idp_nameid(user, user_info, idp):
 def acs_view(request):
 	try:
 		saml_client = component.queryUtility(ISAMLClient)
-
+		logger.info('Received an acs request')
 		response, state, success, error = saml_client.process_saml_acs_request(request)
 		idp_id = response['issuer']
+		logger.info('Response from %s recieved, success %s, error %s', idp_id, success, error)
 
 		#Component lookup error here would be a programmer or config error
 		user_info = component.queryAdapter(response, ISAMLUserAssertionInfo, idp_id)
+
+		logger.info('user_info parsed as %s', user_info)
 		
 		username = user_info.username
 		if username is None:
@@ -113,11 +116,13 @@ def acs_view(request):
 
 		#if user, verify saml nameid against idp
 		if user is not None:
+			logger.info('Found an existing user for %s', username)
 			_validate_idp_nameid(user, user_info, idp_id)
 			#should we update the email address here?  That might be nice
 			#but we probably shouldn't do that if we allow them to change
 			#it elsewhere
 		else:
+			logger.info('Creating new user for %s', username)
 			email = user_info.email
 			email_found = bool(email)
 			email = email or username
@@ -143,7 +148,7 @@ def acs_view(request):
 		if idp_id not in nameid_bindings:
 			nameid_bindings[idp_id] = user_info.nameid
 
-		logger.debug("%s logging in through SAML", username)
+		logger.info("%s logging in through SAML", username)
 		return _create_success_response(request, userid=username, success=_make_location(success, state))
 
 	except Exception as e:
