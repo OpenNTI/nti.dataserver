@@ -193,8 +193,10 @@ class HeadlineTopic(Topic):
 		# down, so we do.
 		dispatchToSublocations(self, event)
 
-	def publish(self):
-		"""Causes an ObjectSharingModifiedEvent to be fired if sharing changes."""
+	def publish(self, *args, **kwargs):
+		"""
+		Causes an ObjectSharingModifiedEvent to be fired if sharing changes.
+		"""
 		if IDefaultPublished.providedBy(self):
 			return
 
@@ -204,7 +206,7 @@ class HeadlineTopic(Topic):
 		self.publishLastModified = time.time()
 		self._did_modify_publication_status(oldSharingTargets)
 
-	def unpublish(self):
+	def unpublish(self, *args, **kwargs):
 		"""Causes an ObjectSharingModifiedEvent to be fired if sharing changes."""
 		if not IDefaultPublished.providedBy(self):
 			return
@@ -377,14 +379,14 @@ class PersonalBlogEntry(AbstractDefaultPublishableSharedWithMixin,
 		self._p_changed = True
 		return result
 
-	def publish(self):
+	def publish(self, *args, **kwargs):
 		# By also matching the state of IWritableShared, our
 		# external updater automatically does the right thing and
 		# doesn't even call us
 		if IWritableShared.providedBy(self):
 			interface.noLongerProvides(self, IWritableShared)
 
-		super(PersonalBlogEntry, self).publish()
+		super(PersonalBlogEntry, self).publish(*args, **kwargs)
 		# NOTE: The order of this is weird. We need to capture
 		# and broadcast the ObjectSharingModifiedEvent with the current
 		# sharing targets /before/ we clear out anything set specifically
@@ -395,10 +397,10 @@ class PersonalBlogEntry(AbstractDefaultPublishableSharedWithMixin,
 		if '_sharing_storage' in self.__dict__:
 			self._sharing_storage.clearSharingTargets()
 
-	def unpublish(self):
+	def unpublish(self, *args, **kwargs):
 		# See notes in publish() for why we do this first
 		interface.alsoProvides(self, IWritableShared)
-		super(PersonalBlogEntry, self).unpublish()
+		super(PersonalBlogEntry, self).unpublish(*args, **kwargs)
 
 	def is_published(self, *args, **kwargs):
 		return not IWritableShared.providedBy(self)
