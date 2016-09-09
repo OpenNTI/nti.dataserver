@@ -1,23 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from zope import component
+from zope import interface
+
+from zope.keyreference.interfaces import IKeyReference
+
+from nti.dataserver.interfaces import IRedisClient
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer as DataserverTestLayer
-from zope import component
-from zope import interface
-from nti.dataserver.interfaces import IRedisClient
 
-from zope.keyreference.interfaces import IKeyReference
 @interface.implementer(IKeyReference)
 class _CommentKeyRef(object):
 	def __init__( self, context ):
@@ -46,7 +45,6 @@ class ForumTestLayer(DataserverTestLayer):
 		# Make sure to register it as both types of utility, one is a subclass of the other
 		gsm.registerUtility( intids, provided=zc.intid.IIntIds )
 		cls.__intids = intids
-
 
 		gsm.registerAdapter(_CommentKeyRef, required=(IPost,))
 		gsm.registerAdapter(_CommentKeyRef, required=(IPersonalBlogEntry,) )
@@ -82,7 +80,6 @@ class ForumTestLayer(DataserverTestLayer):
 		gsm.unregisterAdapter(_CommentKeyRef, required=(IPersonalBlogEntry,) )
 		gsm.unregisterAdapter(_CommentKeyRef, required=(IForum,) )
 		gsm.unregisterAdapter(_CommentKeyRef, required=(ITopic,) )
-
 
 	@classmethod
 	def testSetUp(cls, test=None):

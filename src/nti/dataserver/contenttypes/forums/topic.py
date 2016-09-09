@@ -400,7 +400,7 @@ class PersonalBlogEntry(AbstractDefaultPublishableSharedWithMixin,
 		interface.alsoProvides(self, IWritableShared)
 		super(PersonalBlogEntry, self).unpublish()
 
-	def is_published(self):
+	def is_published(self, *args, **kwargs):
 		return not IWritableShared.providedBy(self)
 	isPublished = is_published
 
