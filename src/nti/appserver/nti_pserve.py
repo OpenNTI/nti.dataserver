@@ -18,7 +18,7 @@ __docformat__ = "restructuredtext en"
 # Before doing any monkey patching, patch gevent.signal.signal
 # to work around an issue where using subprocess in a gunicorn worker
 # is broken because of the way that gevent and gunicorn fight over
-# SIGCHLD.  [Gevent github issue to come]
+# SIGCHLD.  https://github.com/gevent/gevent/issues/857
 import gevent.signal
 from gevent.signal import signal as gevent_signal
 from gevent.signal import getsignal as gevent_getsignal
