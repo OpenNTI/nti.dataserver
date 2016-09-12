@@ -486,7 +486,7 @@ setup(
 	dependency_links=[
 		'git+https://github.com/NextThought/nti.nose_traceback_info.git#egg=nti.nose_traceback_info',
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
-		'git+https://github.com/NextThought/z3c.schema.git#egg=z3c.schema-1.0.1.dev0',
+		'git+https://github.com/zopefoundation/z3c.schema.git#egg=z3c.schema-1.0.1.dev0',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev2'
 	],
