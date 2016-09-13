@@ -89,12 +89,14 @@ def _validate_idp_nameid(user, user_info, idp):
 			 request_method="POST",
 			 route_name='objects.generic.traversal')
 def acs_view(request):
+	error = None
 	try:
 		saml_client = component.queryUtility(ISAMLClient)
 		logger.info('Received an acs request')
 		response, state, success, error = saml_client.process_saml_acs_request(request)
 		idp_id = response['issuer']
-		logger.info('Response from %s recieved, success %s, error %s', idp_id, success, error)
+		logger.info('Response from %s recieved, success %s, error %s', 
+					idp_id, success, error)
 
 		#Component lookup error here would be a programmer or config error
 		user_info = component.queryAdapter(response, ISAMLUserAssertionInfo, idp_id)
@@ -110,7 +112,8 @@ def acs_view(request):
 			raise ValueError("No nameid provided")
 
 		if nameid.name_format != NAMEID_FORMAT_PERSISTENT:
-			raise ValueError("Expected persistent nameid but was %s", nameid.name_format)
+			raise ValueError("Expected persistent nameid but was %s", 
+							 nameid.name_format)
 
 		user = User.get_entity(username)
 
@@ -149,8 +152,12 @@ def acs_view(request):
 			nameid_bindings[idp_id] = user_info.nameid
 
 		logger.info("%s logging in through SAML", username)
-		return _create_success_response(request, userid=username, success=_make_location(success, state))
+		return _create_success_response(request,
+										userid=username, 
+										success=_make_location(success, state))
 
 	except Exception as e:
 		logger.exception("An error occurred when processing saml acs request")
-		return _create_failure_response(request, failure=_make_location(error, state), error=str(e))
+		return _create_failure_response(request, 
+										failure=_make_location(error, state),
+										error=str(e))
