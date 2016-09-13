@@ -185,7 +185,7 @@ class TestContentFolderViews(ApplicationLayerTest):
 										('shikai.txt', 'shikai.txt', b'shikai') ],
 						  status=201)
 
-		data = {'name': 'ai', 'recursive':True}
+		data = {'name': 'ai', 'recursive':True, 'containers':True}
 		res = self.testapp.get('/dataserver2/ofs/root/@@search', data, status=200)
 		assert_that(res.json_body,
 					has_entry('Items', has_length(5)))
