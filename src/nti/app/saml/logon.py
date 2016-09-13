@@ -26,7 +26,6 @@ from saml2.saml import NAMEID_FORMAT_PERSISTENT
 from nti.app.saml import ACS
 from nti.app.saml import SLS
 
-from nti.app.saml.interfaces import InvalidSAMLAssertion
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
