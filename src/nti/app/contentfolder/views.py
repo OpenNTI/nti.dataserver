@@ -66,6 +66,7 @@ from nti.common.mimetypes import guess_type
 from nti.common.random import generate_random_hex_string
 
 from nti.common.string import is_true
+from nti.common.string import to_unicode as common_unicode 
 
 from nti.contentfile.interfaces import IContentBaseFile
 
@@ -127,11 +128,11 @@ SORT_KEYS = CaseInsensitiveDict({
 SORT_KEYS['fileName'] = SORT_KEYS['name']
 SORT_KEYS['type'] = SORT_KEYS['fileType']
 
-def to_unicode(name):
+def to_unicode(name, encoding='utf-8', err='strict'):
 	try:
-		return unicode(name) # FIXME: python3
+		return common_unicode(name, encoding=encoding, err=err)
 	except Exception:
-		return name.decode("UTF-8")
+		return name.decode(encoding)
 
 class SortMixin(object):
 
@@ -277,17 +278,17 @@ class SearchView(AbstractAuthenticatedView, BatchingUtilsMixin, SortMixin):
 		except AttributeError:
 			return compute_path(context)
 
-	def _search(self, context, name, recursive, items, seen):
+	def _search(self, context, name, recursive, containers, items, seen):
 		for v in list(context.values()):
 			if name in v.filename.lower():
 				items.append(v)
-				if INamedContainer.providedBy(context):
+				if containers and INamedContainer.providedBy(context):
 					path = self._get_path(context)
 					if path not in seen:
 						items.append(context)
 						seen.add(path)
 			if recursive and INamedContainer.providedBy(v):
-				self._search(v, name, recursive, items, seen)
+				self._search(v, name, recursive, containers, items, seen)
 		return items
 
 	def __call__(self):
@@ -298,9 +299,10 @@ class SearchView(AbstractAuthenticatedView, BatchingUtilsMixin, SortMixin):
 		reverse = not self._isAscending()
 		name = (self._params.get('name') or u'').lower()
 		recursive = is_true(self._params.get('recursive'))
+		containers = is_true(self._params.get('containers'))
 		# context is 'already' seen
 		seen = {self._get_path(self.context)}
-		self._search(self.context, name, recursive, items, seen)
+		self._search(self.context, name, recursive, containers, items, seen)
 		items.sort(key=self._sortKey, reverse=reverse)
 		if batching:
 			self._batch_items_iterable(result, items)
