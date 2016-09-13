@@ -24,6 +24,14 @@ from nti.schema.field import ValidTextLine as TextLine
 
 NAMEID_FORMATS_SAML2_VALUES = tuple(x[1] for x in NAMEID_FORMATS_SAML2)
 
+class InvalidSAMLAssertion(Exception):
+	"""
+	An exception raised when the provided saml assertion response
+	is invalid.  the original state, success, and error urls will be provided on the exception
+	"""
+	pass
+
+
 class ISAMLClient(interface.Interface):
 	"""
 	An object that can act as a basic SAML client for SSO operations.

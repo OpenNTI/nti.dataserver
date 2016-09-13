@@ -28,6 +28,7 @@ from zope import interface
 
 from pyramid import httpexceptions as hexc
 
+from nti.app.saml.interfaces import InvalidSAMLAssertion
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLNameId
 from nti.app.saml.interfaces import ISAMLIDPInfo
@@ -184,30 +185,36 @@ class BasicSAMLClient(object):
 	def _eval_authn_response(self, saml_response, binding=BINDING_HTTP_REDIRECT):
 		logger.info('Processing SAML Authn Response')
 		logger.info('response %s', saml_response)
-		try:
-
-			try:
-				authresp = self.saml_client.parse_authn_request_response(saml_response, binding,)
-			except Exception:
-				logger.exception('Unable to parse response')
-				raise
-
-			session_info = authresp.session_info()
-		except TypeError:
-			logger.exception('Unable to parse response')
-			return None
+		
+		authresp = self.saml_client.parse_authn_request_response(saml_response, binding,)
+		session_info = authresp.session_info()
 
 		logger.info('sessioninfo: %s', session_info)
 		return session_info
 
 	def process_saml_acs_request(self, request):
-		if SAML_RESPONSE not in request.params:
-			raise hexc.HTTPBadRequest('Unexpected SAML Response. No %s', SAML_RESPONSE)
 
-		binding = BINDING_HTTP_POST if request.method == 'POST' else BINDING_HTTP_REDIRECT
-		response_info = self._eval_authn_response(request.params[SAML_RESPONSE],
-												  binding=binding)
+		for param in (SAML_RESPONSE, RELAY_STATE):
+			if param not in request.params:
+				raise hexc.HTTPBadRequest('Unexpected SAML Response. No %s', param)
 
+		#parse out our relay state first so we have it
 		state, success, error = self._extract_relay_state(request.params.get(RELAY_STATE, None))
+
+		#this will throw if the response is invalid, such as invalid authentication
+		#but we need to capture and provide our state, success, and error
+		#so we can get the user back to the proper place. Trap the error, and reraise
+		#our exception to indicate a bad saml assertion
+		try:
+			binding = BINDING_HTTP_POST if request.method == 'POST' else BINDING_HTTP_REDIRECT
+			response_info = self._eval_authn_response(request.params[SAML_RESPONSE],
+													  binding=binding)
+		except Exception as e:
+			logger.exception('Invalid saml response')
+			bad_assertion = InvalidSAMLAssertion()
+			bad_assertion.state = state
+			bad_assertion.success = success
+			bad_assertion.error = error
+			raise bad_assertion
 
 		return response_info, state, success, error
