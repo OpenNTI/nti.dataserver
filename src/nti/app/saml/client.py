@@ -21,6 +21,8 @@ from saml2 import element_to_extension_element
 
 from saml2.extension.pefim import SPCertEnc
 
+from saml2.response import SAMLError
+
 from saml2.samlp import Extensions
 
 from zope import component
@@ -28,7 +30,6 @@ from zope import interface
 
 from pyramid import httpexceptions as hexc
 
-from nti.app.saml.interfaces import InvalidSAMLAssertion
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLNameId
 from nti.app.saml.interfaces import ISAMLIDPInfo
@@ -209,12 +210,11 @@ class BasicSAMLClient(object):
 			binding = BINDING_HTTP_POST if request.method == 'POST' else BINDING_HTTP_REDIRECT
 			response_info = self._eval_authn_response(request.params[SAML_RESPONSE],
 													  binding=binding)
-		except Exception as e:
+		except SAMLError as e:
 			logger.exception('Invalid saml response')
-			bad_assertion = InvalidSAMLAssertion()
-			bad_assertion.state = state
-			bad_assertion.success = success
-			bad_assertion.error = error
-			raise bad_assertion
+			e.state = state
+			e.success = success
+			e.error = error
+			raise e
 
 		return response_info, state, success, error

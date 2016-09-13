@@ -19,6 +19,8 @@ from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 
+from saml2.response import SAMLError
+
 from saml2.saml import NAMEID_FORMAT_PERSISTENT
 
 from nti.app.saml import ACS
@@ -151,7 +153,7 @@ def acs_view(request):
 		logger.info("%s logging in through SAML", username)
 		return _create_success_response(request, userid=username, success=_make_location(success, state))
 
-	except InvalidSAMLAssertion as e:
+	except SAMLError as e:
 		logger.error("Invalid SAML Assertion")
 		return _create_failure_response(request, failure=_make_location(e.error, e.state), error=str(e))
 	except Exception as e:
