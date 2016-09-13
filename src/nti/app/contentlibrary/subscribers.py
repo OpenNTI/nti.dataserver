@@ -209,7 +209,8 @@ def _removed_registered(provided, name, intids=None, registry=None,
 			logger.error("Could not unregister (%s,%s) during sync, continuing...",
 						 provided.__name__, name)
 		else:
-			logger.debug("(%s,%s) has been unregistered", provided.__name__, name)
+			logger.debug("(%s,%s) has been unregistered",
+						 provided.__name__, name)
 		removeIntId(registered)
 		registered.__parent__ = None  # ground
 	elif registered is not None:

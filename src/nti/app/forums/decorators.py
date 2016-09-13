@@ -153,11 +153,10 @@ class ForumObjectContentsLinkProvider(AbstractAuthenticatedRequestAwareDecorator
 	def _do_decorate_external(self, context, mapping):
 		# We only do this for parented objects. Otherwise, we won't
 		# be able to render the links. A non-parented object is usually
-		# a weakref to an object that has been left around
-		# in somebody's stream.
-		# All forum objects should have fully traversable paths by themself,
+		# a weakref to an object that has been left around in somebody's stream.
+		# All forum objects should have fully traversable paths by themselves,
 		# without considering acquired info (NTIIDs from the User would mess
-		# up rendering)
+		# up rendering)/
 		context = aq_base(context)
 		if context.__parent__ is None: # pragma: no cover
 			return
@@ -174,11 +173,11 @@ class ForumObjectContentsLinkProvider(AbstractAuthenticatedRequestAwareDecorator
 
 		# /path/to/forum/topic/contents --> note that contents is not an @@ view,
 		# simply named. This is prettier, but if we need to we can easily @@ it
-		# We also include a "ETag" in the URL to facilitate caching, different everytime
+		# We also include a "ETag" in the URL to facilitate caching, different every time
 		# our children change.
-		# This works because everytime one of the context's children is modified,
+		# This works because every time one of the context's children is modified,
 		# our timestamp is also modified. We include the user asking just to be safe
-		# We also advertise that you can POST new items to this url, which is good for caching
+		# We also advertise that you can POST new items to this url, which is good for caching.
 		request = self.request
 		elements = (VIEW_CONTENTS, 
 					md5_etag(context.lastModified,

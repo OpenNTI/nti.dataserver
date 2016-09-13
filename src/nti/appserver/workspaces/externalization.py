@@ -168,7 +168,7 @@ class ContainerCollectionDetailExternalizer(object):
 
 		if 	isinstance(container, collections.Mapping) and \
 			not getattr(container, '_v_container_ext_as_list', False):
-			ext_collection['Items'] = { 
+			ext_collection['Items'] = {
 				k: fixup(v, toExternalObject(v, **kwargs)) for k, v in container.iteritems()
 				if not isSyntheticKey(k)
 			}

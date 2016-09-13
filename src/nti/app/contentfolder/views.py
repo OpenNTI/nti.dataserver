@@ -437,10 +437,10 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			filename = getattr(source, 'filename', None)
 			file_key = safe_filename(name_finder(name))
 			if not overwrite and file_key in self.context:
-				file_key, filename = get_unique_file_name(file_key, 
-														  filename=filename, 
+				file_key, filename = get_unique_file_name(file_key,
+														  filename=filename,
 														  container=self.context)
-	
+
 			if file_key in self.context:
 				target = self.context[file_key]
 				target.data = source.read()
@@ -585,14 +585,14 @@ class DeleteMixin(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin
 	def _check_object(self, theObject):
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
-	
-	def _check_context(self, theObject):	
+
+	def _check_context(self, theObject):
 		parent = theObject.__parent__
 		if not INamedContainer.providedBy(parent):
 			raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
 		return parent
-	
-	def _check_associations(self, theObject):	
+
+	def _check_associations(self, theObject):
 		if self._has_associations(theObject):
 			values = self.readInput()
 			force = is_true(values.get('force'))
@@ -637,13 +637,13 @@ class DeleteFolderView(DeleteMixin):
 		if 		ILockedFolder.providedBy(theObject) \
 			and not has_permission(ACT_NTI_ADMIN, theObject, self.request):
 			raise hexc.HTTPForbidden(_("Cannot delete a locked folder."))
-		
-	def _check_context(self, theObject):		
+
+	def _check_context(self, theObject):
 		if IRootFolder.providedBy(theObject):
 			raise hexc.HTTPForbidden(_("Cannot delete root folder."))
 		self._check_locked(theObject)
 		DeleteMixin._check_context(self, theObject)
-				
+
 	def _check_non_empty(self, theObject):
 		if INamedContainer.providedBy(theObject) and len(theObject) > 0:
 			values = self.readInput()

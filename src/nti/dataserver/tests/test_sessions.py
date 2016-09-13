@@ -5,16 +5,17 @@ from __future__ import unicode_literals, absolute_import, print_function
 # disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
 from hamcrest import assert_that,  is_, none, is_not, has_property
 from hamcrest import has_length
 from hamcrest import contains
 
+import sys
+import time
+import transaction
+
 from nose.tools import assert_raises
 
 from zope import component
-import transaction
-import sys
 
 from nti.testing.matchers import validly_provides as verifiably_provides
 import nti.dataserver.interfaces as nti_interfaces
@@ -196,15 +197,22 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 
 		sessions = []
 		recur_limit = sys.getrecursionlimit()
-		for _ in range(recur_limit * 2): # The length needs to be pretty big to ensure recursion fails
+		# The length needs to be pretty big to ensure recursion fails
+		two_days_ago = time.time() - 60 * 60 * 24 * 2
+		for val in range(recur_limit * 2):
 			session = self.session_service.create_session( watch_session=False, drop_old_sessions=False )
+			if val % 2 == 0:
+				# Make every other value a day+ old, so it gets cleaned up.
+				session.creation_time -= two_days_ago
 			sessions.append( session )
 			session.incr_hits()
 
-		# All alive right now
-		assert_that( self.session_service.get_sessions_by_owner( session.owner ), has_length( len( sessions ) ) )
+		# Only half are alive now.
+		assert_that( self.session_service.get_sessions_by_owner( session.owner ),
+					 has_length( len( sessions ) / 2 ) )
+		assert_that( called[0], is_( len( sessions ) / 2 ) )
 
-		# Now kill them all, silently
+		# Now kill the rest of them, silently
 		for session in sessions:
 			session.creation_time = 0
 			del session.last_heartbeat_time

@@ -228,8 +228,8 @@ class SessionService(object):
 		The returned session must not be modified.
 
 		:param bool drop_old_sessions: If ``True`` (the default) then we will proactively look
-			for sessions for the session owner in excess of some number or some age and automatically kill them, keeping
-			a limit on the outstanding sessions the owner can have.
+			for sessions for the session owner in excess of some number or some age and
+			automatically kill them, keeping a limit on the outstanding sessions the owner can have.
 			TODO: This may force older clients off the connection? Which may make things worse?
 		:param unicode owner: The session owner.
 		:param kwargs: All the remaining arguments are passed to the session constructor.
@@ -243,17 +243,8 @@ class SessionService(object):
 
 		if drop_old_sessions:
 			outstanding = self.get_sessions_by_owner(session.owner)
-			if len(outstanding) > 5:  # TODO: Param for this?
-				# Sort them from oldest to newest
-				outstanding = sorted(outstanding, key=lambda x: x.creation_time)
-				# split the five newest from all the older ones
-				# newest = outstanding[-5:]
-				older = outstanding[:-5]
-				# Kill all the old ones
-				for s in older:
-					self._session_cleanup(s, send_event=False)
-				for s in older:
-					notify(SocketSessionDisconnectedEvent(s))
+			if outstanding:
+				self._cleanup_sessions( outstanding )
 
 		session_id = session.session_id
 		if watch_session:
@@ -270,13 +261,15 @@ class SessionService(object):
 			result._v_session_service = self
 		return result
 
+	#: Sessions without a hearbeat for 2 minutes get cleaned up.
 	SESSION_HEARTBEAT_TIMEOUT = 60 * 2
 
 	def _is_session_dead(self, session, max_age=SESSION_HEARTBEAT_TIMEOUT):
 		too_old = time.time() - max_age
 		last_heartbeat_time = self.get_last_heartbeat_time(session.session_id, session)
-		return (last_heartbeat_time < too_old and session.creation_time < too_old) \
-		  or (session.state in (Session.STATE_DISCONNECTING, Session.STATE_DISCONNECTED))
+		return (	last_heartbeat_time < too_old
+				and session.creation_time < too_old) \
+		  	or (session.state in (Session.STATE_DISCONNECTING, Session.STATE_DISCONNECTED))
 
 	def _session_cleanup(self, s, send_event=True):
 		"""
@@ -308,6 +301,30 @@ class SessionService(object):
 			s.incr_hits()
 		return s
 
+	#: One day old sessions get cleaned up.
+	SESSION_CLEANUP_AGE = 60 * 60 * 24
+
+	def _cleanup_sessions(self, sessions):
+		"""
+		Cleanup and notify the given sessions; we only clean up (live or dead)
+		sessions if they're a certain age old.
+		"""
+		# We only want to purge day old sessions to hopefully avoid contention
+		# if the system gets in a bad state (rapid client socket requests,
+		# dataserver swapping, etc). If two conflicting requests are cleaning
+		# up the same sessions, conflicts should be much easier to resolve.
+		one_day_ago = time.time() - self.SESSION_CLEANUP_AGE
+		sessions_to_cleanup = []
+		for session in sessions:
+			if session.creation_time < one_day_ago:
+				self._session_cleanup(session, send_event=False)
+				sessions_to_cleanup.append( session )
+
+		# Must notify once we've cleaned up all sessions we need to
+		# in order to avoid a max recursion issue (from subscribers).
+		for session in sessions_to_cleanup:
+			notify(SocketSessionDisconnectedEvent(session))
+
 	def get_sessions_by_owner(self, session_owner):
 		"""
 		Returns sessions for the given owner that are reasonably likely
@@ -319,16 +336,17 @@ class SessionService(object):
 		# and event listeners for dead sessions that also want to know the live sessions and so call us,
 		# we collect all dead sessions before we send any notifications
 		dead_sessions = []
-		for maybe_valid_session in list(maybe_valid_sessions):  # copy because we mutate -> validated_session -> session_cleanup
+		# copy because we mutate -> validated_session -> session_cleanup
+		for maybe_valid_session in list(maybe_valid_sessions):
 			valid_session = self._validated_session(maybe_valid_session,
-													 send_event=False)
+													send_event=False,
+													cleanup=False)
 			if valid_session:
 				result.append(valid_session)
 			elif maybe_valid_session and maybe_valid_session.owner:
 				dead_sessions.append(maybe_valid_session)
 
-		for dead_session in dead_sessions:
-			notify(SocketSessionDisconnectedEvent(dead_session))
+		self._cleanup_sessions( dead_sessions )
 
 		return result
 
