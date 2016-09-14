@@ -59,6 +59,7 @@ ID = StandardExternalFields.ID
 CLASS = StandardExternalFields.CLASS
 ITEMS = StandardExternalFields.ITEMS
 MIMETYPE = StandardExternalFields.MIMETYPE
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 _marker = object()
 _tuple_selector = operator.itemgetter(1)
@@ -243,7 +244,7 @@ class BatchingUtilsMixin(object):
 												   batch_size,
 												   number_items_needed)
 		result[ITEMS] = batched_results
-		result['ItemCount'] = len(batched_results)
+		result[ITEM_COUNT] = len(batched_results)
 		return result
 
 	def _batch_tuple_iterable(self, *args, **kwargs):
