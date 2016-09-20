@@ -181,7 +181,6 @@ class SortMixin(object):
 		return bool(size is not None and start is not None)
 
 	def _sortKey(self, item):
-		from IPython.core.debugger import Tracer; Tracer()()
 		value = self._sortFunc(item)
 		if INamedContainer.providedBy(item):
 			result = (u'a', value)
