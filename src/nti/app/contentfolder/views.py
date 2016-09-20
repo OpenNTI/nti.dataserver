@@ -62,6 +62,7 @@ from nti.common.file import safe_filename
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.common.mimetypes import guess_type
+from nti.common.mimetypes import guess_extension
 
 from nti.common.random import generate_random_hex_string
 
@@ -119,9 +120,20 @@ LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
+def fileType_key(x):
+	if INamedContainer.providedBy(x):
+		return x.filename
+	else:
+		contentType = getattr(x, 'contentType', None)
+		extension = (os.path.splitext(x.filename)[1] or u'').lower()
+		if contentType:
+			guessed = (guess_extension(contentType) or u'').lower()
+			return guessed or extension
+		return extension
+
 SORT_KEYS = CaseInsensitiveDict({
+	'fileType' : fileType_key,
 	'name' : lambda x: x.filename,
-	'fileType' : lambda x: getattr(x, 'contentType', x.filename),
 	'createdTime' : partial( to_standard_external_created_time, default=0),
 	'lastModified': partial( to_standard_external_last_modified_time, default=0 ),
 })
