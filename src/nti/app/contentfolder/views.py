@@ -122,18 +122,20 @@ ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 def fileType_key(x):
 	if INamedContainer.providedBy(x):
-		return x.filename
+		result = (u'', x.filename.lower())
 	else:
 		contentType = getattr(x, 'contentType', None)
 		extension = (os.path.splitext(x.filename)[1] or u'').lower()
 		if contentType:
 			guessed = (guess_extension(contentType) or u'').lower()
-			return guessed or extension
-		return extension
+			result = (guessed or extension, x.filename.lower())
+		else:
+			result = (extension, x.filename.lower())
+	return result
 
 SORT_KEYS = CaseInsensitiveDict({
 	'fileType' : fileType_key,
-	'name' : lambda x: x.filename,
+	'name' : lambda x: x.filename.lower(),
 	'createdTime' : partial( to_standard_external_created_time, default=0),
 	'lastModified': partial( to_standard_external_last_modified_time, default=0 ),
 })
@@ -179,6 +181,7 @@ class SortMixin(object):
 		return bool(size is not None and start is not None)
 
 	def _sortKey(self, item):
+		from IPython.core.debugger import Tracer; Tracer()()
 		value = self._sortFunc(item)
 		if INamedContainer.providedBy(item):
 			result = (u'a', value)
