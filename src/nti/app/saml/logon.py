@@ -14,6 +14,8 @@ import urlparse
 
 from zope import component
 from zope import interface
+from zope.component import getMultiAdapter
+from zope.event import notify
 
 from pyramid import httpexceptions as hexc
 
@@ -28,7 +30,9 @@ from nti.app.saml import SLS
 
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
+from nti.app.saml.interfaces import ISAMLProviderUserInfo
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
+from nti.app.saml.interfaces import ISAMLUserCreatedEvent
 
 from nti.app.saml.views import SAMLPathAdapter
 
@@ -144,6 +148,10 @@ def acs_view(request):
 			interface.alsoProvides(user, IRecreatableUser)
 			if email_found: # trusted source
 				force_email_verification(user)
+
+			# Manually fire event with SAML user info
+			provider_user_info = component.getAdapter(user_info, ISAMLProviderUserInfo)
+			notify(getMultiAdapter((idp_id, user, provider_user_info, request), ISAMLUserCreatedEvent))
 
 		nameid_bindings = ISAMLIDPEntityBindings(user)
 		if idp_id not in nameid_bindings:

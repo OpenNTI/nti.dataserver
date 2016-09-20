@@ -5,6 +5,8 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.dataserver.interfaces import IUserEvent
+from pyramid.interfaces import IRequest
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -113,3 +115,28 @@ class ISAMLUserAssertionInfo(interface.Interface):
 	lastname = TextLine(title=u"The user's lastname",  # move to ou specific?
 					 	description=u"The admittedly western lastname for the user",
 					 	required=False)
+	
+
+class ISAMLProviderUserInfo(interface.Interface):
+	"""
+	Provider specific user information to be stored on user
+	"""
+
+class ISAMLUserCreatedEvent(IUserEvent):
+	"""
+	Event created when user account is created as part of SAML SSO
+	"""
+	
+	idp_id = TextLine(title=u"Issuer",
+					  description=u"ID for the provider, specifically Issuer in the SAML response",
+					  required=True)
+
+	user_info = Object(ISAMLProviderUserInfo,
+					   title=u"SAML provider id info",
+					   description=u"SAML provider specific user identification info",
+					   required=True)
+	
+	request = Object(IRequest,
+					 title=u"Request",
+					 description=u"SAML ACS Request",
+					 required=True)
