@@ -74,8 +74,8 @@ def _check_sharing(obj, user):
 class TopLevelNotableFilter(object):
 	"""
 	Determines whether the object is notable by determining if the
-	object is a top-level note or comment (e.g. topic) I
-	created.
+	object is a top-level note or comment (e.g. topic) in something
+	I created.
 	"""
 	def __init__(self, context):
 		self.context = context
