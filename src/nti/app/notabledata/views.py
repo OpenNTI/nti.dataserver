@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
+from numbers import Number
 
 from zope import component
 from zope import interface
@@ -35,11 +36,15 @@ from nti.appserver.ugd_query_views import _UGDView
 from nti.dataserver.authorization import ACT_READ
 
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
+
+from nti.links.links import Link
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.securitypolicy.utils import is_impersonating
 
+LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 _NOTABLE_NAME = 'RUGDByOthersThatIMightBeInterestedIn'
 
 @view_config(route_name='objects.generic.traversal',
@@ -80,8 +85,8 @@ class _NotableRecursiveUGDView(_UGDView):
 	_force_apply_security = True
 
 	# Default to paging us
-	_DEFAULT_BATCH_SIZE = 100
 	_DEFAULT_BATCH_START = 0
+	_DEFAULT_BATCH_SIZE = 100
 
 	def __call__(self):
 		request = self.request
@@ -100,9 +105,9 @@ class _NotableRecursiveUGDView(_UGDView):
 													   IUserNotableData)
 
 		result = LocatedExternalDict()
-		result['Last Modified'] = result.lastModified = 0
-		result.__parent__ = self.request.context
 		result.__name__ = self.ntiid
+		result.__parent__ = self.request.context
+		result[LAST_MODIFIED] = result.lastModified = 0
 		result.mimeType = nti_mimetype_with_class(None)
 		interface.alsoProvides(result, IUGDExternalCollection)
 
@@ -118,7 +123,7 @@ class _NotableRecursiveUGDView(_UGDView):
 												  limit=2,
 												  reverse=True)))
 		if most_recently_modified_object:
-			result['Last Modified'] = result.lastModified = most_recently_modified_object[0].lastModified
+			result[LAST_MODIFIED] = result.lastModified = most_recently_modified_object[0].lastModified
 
 		descending_sort = request.params.get('sortOrder') != 'ascending'
 		sorted_intids = user_notable_data.sort_notable_intids(safely_viewable_intids,
@@ -140,12 +145,6 @@ class _NotableRecursiveUGDView(_UGDView):
 		# eventually we want this to go away (?)
 		_NotableUGDLastViewed.write_last_viewed(request, user_notable_data, result)
 		return result
-
-from numbers import Number
-
-from nti.externalization.interfaces import StandardExternalFields
-
-from nti.links.links import Link
 
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
@@ -192,10 +191,8 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 		return super(_NotableUGDLastViewed, self).__call__()
 
 	def _do_call(self):
-
 		if is_impersonating(self.request):
-			logger.warn( 'Not setting lastViewed for impersonating user (%s)',
-					self.remoteUser )
+			logger.warn('Not setting lastViewed for impersonating user (%s)', self.remoteUser)
 			return HTTPNoContent()
 
 		user_notable_data = self._notable_data
