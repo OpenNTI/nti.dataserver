@@ -150,8 +150,7 @@ def _asset_to_containers(context):
 	
 	containers.discard(None)
 	containers.discard(context.ntiid)
-	result = _Containers(tuple(containers))
-	return result
+	return _Containers(tuple(containers))
 
 # Slide deck
 
