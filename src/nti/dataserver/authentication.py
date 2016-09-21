@@ -36,26 +36,27 @@ def dynamic_memberships_that_participate_in_security(user, as_principals=True):
 	# Add principals for all the communities that the user is in
 	# These are valid ACL targets because they are in the same namespace
 	# as users (so no need to prefix with community_ or something like that)
-	for community in getattr(user, 'dynamic_memberships', ()):  # Mostly tests pass in a non-User user_factory
-		# Make sure it's a valid community
-		if 	IDynamicSharingTargetFriendsList.providedBy(community) or \
-			(ICommunity.providedBy(community) and \
-			 not IUnscopedGlobalCommunity.providedBy(community)):
-			yield IPrincipal(community) if as_principals else community
+	for membership in getattr(user, 'dynamic_memberships', ()):  # Mostly tests pass in a non-User user_factory
+		# Make sure it's a valid membership
+		if 		IDynamicSharingTargetFriendsList.providedBy(membership) \
+			or (	ICommunity.providedBy(membership) \
+				and not IUnscopedGlobalCommunity.providedBy(membership)):
+			yield IPrincipal(membership) if as_principals else membership
 			# This is a bit of a hack. Now that we store our principals in a
 			# set. We need hashes to collide when either an id or an NTIID
 			# match. So we return our community principal and the principal
 			# for our community username.
 			if as_principals:
-				yield IPrincipal(community.username)
+				yield IPrincipal(membership.username)
 	# This mimics the sharing target's xxx_intids_of_memberships_and_self
 	# which is used as an ACL optimization
 
 	# Now add DFLs we own (must be DFL? see _xxx_extra_intids_of_memberships).
-	friends_lists = getattr(user, 'friendsLists', {})
-	for friends_list in friends_lists.values():
-		if IDynamicSharingTargetFriendsList.providedBy(friends_list):
-			yield IPrincipal(friends_list) if as_principals else friends_list
+	friends_lists = getattr(user, 'friendsLists', None)
+	if friends_lists is not None:
+		for friends_list in friends_lists.values():
+			if IDynamicSharingTargetFriendsList.providedBy(friends_list):
+				yield IPrincipal(friends_list) if as_principals else friends_list
 
 _dynamic_memberships_that_participate_in_security = dynamic_memberships_that_participate_in_security
 

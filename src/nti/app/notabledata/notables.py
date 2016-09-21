@@ -17,7 +17,7 @@ from pyramid.threadlocal import get_current_request
 
 from nti.app.base.abstract_views import make_sharing_security_check
 
-from nti.dataserver.authentication import _dynamic_memberships_that_participate_in_security
+from nti.dataserver.authentication import dynamic_memberships_that_participate_in_security
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
@@ -35,7 +35,7 @@ from nti.dataserver.metadata_index import isTopLevelContentObjectFilter
 def _dynamic_members(user):
 	tagged_to_usernames_or_intids = { user.NTIID }
 	# Note the use of private API, a signal to cleanup soon
-	for membership in _dynamic_memberships_that_participate_in_security(user, as_principals=False):
+	for membership in dynamic_memberships_that_participate_in_security(user, as_principals=False):
 		if IDynamicSharingTargetFriendsList.providedBy(membership):
 			tagged_to_usernames_or_intids.add(membership.NTIID)
 	return tagged_to_usernames_or_intids
