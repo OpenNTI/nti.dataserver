@@ -36,8 +36,6 @@ from nti.app.users.utils import generate_mail_verification_pair
 
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.common.string import is_true
-
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
@@ -50,7 +48,6 @@ from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
 
-from nti.dataserver.users.utils import remove_broken_objects
 from nti.dataserver.users.utils import reindex_email_verification
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -137,51 +134,6 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 				items.append(username)
 
 		result['Total'] = result['ItemCount'] = len(items)
-		return result
-
-@view_config(name='RemoveUserBrokenObjects')
-@view_config(name='remove_user_broken_objects')
-@view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   permission=nauth.ACT_NTI_ADMIN,
-			   request_method='POST',
-			   context=IDataserverFolder)
-class RemoveUserBrokenObjects(AbstractAuthenticatedView,
-							  ModeledContentUploadRequestUtilsMixin):
-
-	def __call__(self):
-		values = CaseInsensitiveDict(self.readInput())
-		username = values.get('username') or values.get('user')
-		if not username:
-			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
-
-		user = User.get_user(username)
-		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity(_("User not found."))
-
-		containers = values.get('containers') or values.get('include_containers')
-		containers = bool(not containers or is_true(containers))
-
-		stream = values.get('stream') or values.get('include_stream')
-		stream = is_true(stream)
-
-		shared = values.get('shared') or values.get('include_shared')
-		shared = is_true(shared)
-
-		dynamic = 	  values.get('dynamic') \
-				   or values.get('dynamic_friends') \
-				   or values.get('include_dynamic')  \
-				   or values.get('include_dynamic_friends')
-		dynamic = is_true(dynamic)
-
-		data = remove_broken_objects(user, include_containers=containers,
-									 include_stream=stream,
-									 include_shared=shared,
-									 include_dynamic_friends=dynamic)
-
-		result = LocatedExternalDict()
-		result[ITEMS] = data
-		result['Total'] = result['ItemCount'] = len(data)
 		return result
 
 @view_config(name='GetEmailVerificationToken')

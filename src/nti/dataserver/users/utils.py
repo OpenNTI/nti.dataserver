@@ -9,18 +9,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from collections import Mapping
-
 from zope import component
 
 from zope.catalog.interfaces import ICatalog
 
 from zope.intid.interfaces import IIntIds
-
-from nti.externalization.interfaces import LocatedExternalDict
-
-from nti.dataserver.interfaces import IStreamChangeEvent
-from nti.dataserver.interfaces import IDynamicSharingTarget
 
 from nti.dataserver.users.index import IX_EMAIL
 from nti.dataserver.users.index import IX_TOPICS
@@ -32,9 +25,6 @@ from nti.dataserver.users.interfaces import IAvatarURLProvider
 from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
 from nti.property.urlproperty import UrlProperty
-
-from nti.zodb import isBroken
-from nti.zodb import readCurrent
 
 # email
 
@@ -91,84 +81,6 @@ def force_email_verification(user, profile=IUserProfile, catalog=None, intids=No
 def is_email_verified(email):
 	result = verified_email_ids(email)
 	return bool(result)
-
-# broken objects
-
-def _getId(obj, attribute='_ds_intid'):
-	try:
-		getattr(obj, attribute, None)
-	except Exception:
-		return None
-
-def remove_broken_objects(user, include_containers=True, include_stream=True,
-						  include_shared=True, include_dynamic_friends=False,
-						  only_ntiid_containers=True):
-		"""
-		Returns an iterable across the NTIIDs that are relevant to this user.
-		"""
-
-		intids = component.queryUtility(IIntIds)
-		attribute = intids.attribute
-
-		result = LocatedExternalDict()
-
-		def _remove(key, obj, container=None):
-			if container is not None:
-				del container[key]
-				result[key] = str(type(obj))  # record
-
-			uid = key
-			if not isinstance(uid, int):
-				uid = _getId(obj, attribute)
-
-			if uid is not None:
-				intids.forceUnregister(uid, notify=True, removeAttribute=False)
-
-		def _loop_and_remove(container, unwrap=True):
-			if isinstance(container, Mapping):
-				readCurrent(container, False)
-				f_unwrap = getattr(container, '_v_unwrap', lambda x:x)
-				for key in list(container.keys()):
-					value = container[key]
-					value = f_unwrap(value) if unwrap else value
-					if isBroken(value):
-						_remove(key, value, container)
-					elif IStreamChangeEvent.providedBy(value) and isBroken(value.object):
-						_remove(key, value, container)
-
-		if include_containers:
-			for name, container in user.containers.iteritems():
-				if not only_ntiid_containers or user._is_container_ntiid(name):
-					_loop_and_remove(container, True)
-
-		if include_stream:
-			for name, container in user.streamCache.iteritems():
-				if not only_ntiid_containers or user._is_container_ntiid(name):
-					_loop_and_remove(container, False)
-
-		if include_shared:
-
-			for name, container in user.containersOfShared.items():
-				if not only_ntiid_containers or user._is_container_ntiid(name):
-					_loop_and_remove(container, False)
-
-			if include_dynamic_friends:
-
-				dynamic_friends = {	x for x in user.friendsLists.values()
-						  			if IDynamicSharingTarget.providedBy(x) }
-
-				interesting_dynamic_things = set(user.dynamic_memberships) | dynamic_friends
-				for dynamic in interesting_dynamic_things:
-					if include_shared and hasattr(dynamic, 'containersOfShared'):
-						for name, container in dynamic.containersOfShared.items():
-							if not only_ntiid_containers or user._is_container_ntiid(name):
-								_loop_and_remove(container, False)
-
-					if include_stream and hasattr(dynamic, 'streamCache'):
-						for name, container in dynamic.streamCache.iteritems():
-							if not only_ntiid_containers or user._is_container_ntiid(name):
-								_loop_and_remove(container, False)
-		return result
 
 # properties
 
