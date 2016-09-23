@@ -48,6 +48,7 @@ SUCCESS_STATE_PARAM = u'_nti_success'
 def _get_signer_secret(default_secret='not-very-secure-secret'):
 	# TODO: Break these dependencies
 	settings = component.queryUtility(IApplicationSettings) or {}
+
 	# XXX: Reusing the cookie secret, we should probably have our own
 	secret_key = settings.get('cookie_secret', default_secret)
 	return secret_key
@@ -139,15 +140,15 @@ class BasicSAMLClient(object):
 			dest = srvs[0]["location"]
 			logger.debug("destination: %s", dest)
 
-			cert = None
+# 			cert = None
 			extensions = None
 
 			if _cli.config.generate_cert_func is not None:
-				cert_str, req_key_str = _cli.config.generate_cert_func()
-				cert = {
-					"cert": cert_str,
-					"key": req_key_str
-				}
+				cert_str, _ = _cli.config.generate_cert_func()
+# 				cert = {
+# 					"cert": cert_str,
+# 					"key": req_key_str
+# 				}
 				spcertenc = SPCertEnc(x509_data=ds.X509Data(x509_certificate=ds.X509Certificate(text=cert_str)))
 				extensions = Extensions(extension_elements=[element_to_extension_element(spcertenc)])
 
