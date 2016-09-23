@@ -15,6 +15,8 @@ import urlparse
 from zope import component
 from zope import interface
 
+from zope.component import queryMultiAdapter
+
 from zope.event import notify
 
 from pyramid import httpexceptions as hexc
@@ -101,9 +103,8 @@ def acs_view(request):
 		idp_id = response['issuer']
 		logger.info('Response from %s recieved, success %s, error %s', idp_id, success, error)
 
-		#Component lookup error here would be a programmer or config error
-		user_info = component.queryAdapter(response, ISAMLUserAssertionInfo, idp_id)
-
+		# Component lookup error here would be a programmer or config error
+		user_info = component.getAdapter(response, ISAMLUserAssertionInfo, idp_id)
 		logger.info('user_info parsed as %s', user_info)
 		
 		username = user_info.username
@@ -119,13 +120,13 @@ def acs_view(request):
 
 		user = User.get_entity(username)
 
-		#if user, verify saml nameid against idp
+		# if user, verify saml nameid against idp
 		if user is not None:
 			logger.info('Found an existing user for %s', username)
 			_validate_idp_nameid(user, user_info, idp_id)
-			#should we update the email address here?  That might be nice
-			#but we probably shouldn't do that if we allow them to change
-			#it elsewhere
+			# should we update the email address here?  That might be nice
+			# but we probably shouldn't do that if we allow them to change
+			# it elsewhere
 		else:
 			logger.info('Creating new user for %s', username)
 			email = user_info.email
@@ -152,8 +153,8 @@ def acs_view(request):
 			# Manually fire event with SAML user info
 			provider_user_info = component.queryAdapter(user_info, ISAMLProviderUserInfo)
 			if provider_user_info is not None:
-				event = component.queryMultiAdapter((idp_id, user, provider_user_info, request),
-										   			ISAMLUserCreatedEvent)
+				event = queryMultiAdapter((idp_id, user, provider_user_info, request),
+										  ISAMLUserCreatedEvent)
 				if event is not None:
 					notify(event)
 
@@ -162,11 +163,15 @@ def acs_view(request):
 			nameid_bindings[idp_id] = user_info.nameid
 
 		logger.info("%s logging in through SAML", username)
-		return _create_success_response(request, userid=username, success=_make_location(success, state))
+		return _create_success_response(request, 
+										userid=username,
+										success=_make_location(success, state))
 
 	except SAMLError as e:
 		logger.error("Invalid SAML Assertion")
-		return _create_failure_response(request, failure=_make_location(e.error, e.state), error=str(e))
+		return _create_failure_response(request, 
+										failure=_make_location(e.error, e.state), 
+										error=str(e))
 	except Exception as e:
 		logger.exception("An unknown error occurred processing saml response")
 		return _create_failure_response(request, error="An unknown error occurred.")
