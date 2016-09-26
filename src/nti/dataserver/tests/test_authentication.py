@@ -6,9 +6,15 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that
+from hamcrest import contains
+from hamcrest import empty
 from hamcrest import is_
 from hamcrest import is_in
 import unittest
+
+import fudge
+
+from fudge.inspector import arg
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authentication
@@ -25,14 +31,14 @@ class TestMisc(unittest.TestCase):
 					 verifiably_provides( nti_interfaces.IImpersonatedAuthenticationPolicy ) )
 
 	def test_effective_prins_no_username(self):
-		assert_that( authentication.effective_principals( '' ), is_( () ) )
+		assert_that( authentication.effective_principals( '' ), empty() )
 
 
 class TestPrincipals(mock_dataserver.DataserverLayerTest):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_effective_principals(self):
-		assert_that( authentication.effective_principals( None ), is_( () ) )
+		assert_that( authentication.effective_principals( None ), empty() )
 		u = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 		community = users.Community( "Foobar" )
 		self.ds.root['users']['Foobar'] = community
@@ -53,9 +59,30 @@ class TestPrincipals(mock_dataserver.DataserverLayerTest):
 		assert_that( nti_interfaces.IPrincipal( community ),
 					 is_in( with_u ) )
 
+	def test_nouser_effective_principal_provider(self):
+		assert_that( authentication.effective_principals( None ), empty() )
+
+		class EPP(object):
+			def __call__(self):
+				return (nti_interfaces.IPrincipal( 'nti-principal@foo.com' ), )
+
+		class MockRegistry(object):
+
+			def subscribers(self, args, interface):
+				if interface == nti_interfaces.INoUserEffectivePrincipalResolver:
+					return (EPP(), )
+
+		assert_that( authentication.effective_principals( None, registry=MockRegistry() ), 
+					 contains( nti_interfaces.IPrincipal( 'nti-principal@foo.com' ) ) )
+
+		assert_that( authentication.effective_principals( '', registry=MockRegistry() ), 
+					 contains( nti_interfaces.IPrincipal( 'nti-principal@foo.com' ) ) )
+
+
+
 	@mock_dataserver.WithMockDSTrans
 	def test_for_everyone_string(self):
-		assert_that( authentication.effective_principals( None ), is_( () ) )
+		assert_that( authentication.effective_principals( None ), empty() )
 		u = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 
 		with_u = authentication.effective_principals( u )

@@ -566,6 +566,20 @@ IUnscopedGlobalCommunity = IUnscopedGlobalCommunity
 IShouldHaveTraversablePath = IShouldHaveTraversablePath
 IUsernameSubstitutionPolicy = IUsernameSubstitutionPolicy
 
+
+class IEffectivePrincipalResolver(interface.Interface):
+	"""
+	A callable returning an iterable of nti.dataserver.interfaces.IPrincipal
+	objects for inclusion in a user's set of effective principals
+	"""
+	
+class INoUserEffectivePrincipalResolver(IEffectivePrincipalResolver):
+	"""
+	An IEffectivePrincipalResolver used to generate an effective principal
+	set when no user is provided.  Implementations of this can be registered
+	as subscribers on IRequest
+	"""
+
 class IUserEvent(interface.interfaces.IObjectEvent):
 	"""
 	An object event where the object is a user.
