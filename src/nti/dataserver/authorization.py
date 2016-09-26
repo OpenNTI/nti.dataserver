@@ -286,6 +286,7 @@ class _StringPrincipal(_AbstractPrincipal):
 		super(_StringPrincipal, self).__init__()
 		self.id = name
 		self.title = name
+StringPrincipal = _StringPrincipal
 
 def _system_user_factory(s):
 	assert s in (SYSTEM_USER_NAME, SYSTEM_USER_ID)
