@@ -20,17 +20,27 @@ from nti.testing.time import time_monotonically_increases
 import fudge
 import unittest
 
+from pyramid.interfaces import IRequest
+
 from pyramid.request import Request
 
 from pyramid.security import Everyone
 from pyramid.security import Authenticated
 
+from zope import component
+from zope import interface
+
 from zope.authentication.interfaces import IEveryoneGroup
 from zope.authentication.interfaces import IUnauthenticatedPrincipal
+
+from zope.component.zcml import subscriber
 
 from nti.app.authentication.who_apifactory import create_who_apifactory
 
 from nti.app.authentication.who_policy import AuthenticationPolicy
+
+from nti.dataserver.interfaces import IPrincipal
+from nti.dataserver.interfaces import INoUserEffectivePrincipalResolver
 
 class FakeGroupsCallback(object):
 
@@ -69,6 +79,37 @@ class TestWhoPolicy(unittest.TestCase):
 						 is_('jason'))
 			# Side-effect: need a reissue
 			assert_that(request, has_property('_authtkt_reissued'))
+
+	def test_anonymous_effective_principles(self):
+
+		@component.adapter(IRequest)
+		@interface.implementer(INoUserEffectivePrincipalResolver)
+		class AnonEffPrincipalProvider(object):
+
+			def __init__(self, request):
+				pass
+
+			def effective_principals(self, request):
+				return ('nti-test-anon-principal@nt.com', )
+
+		everyone_group = 'test_everyone_group'
+
+		mock_get = fudge.Fake()
+		mock_get.is_callable()
+		mock_get.next_call().with_args(IEveryoneGroup).returns(everyone_group)
+		with fudge.patched_context('zope.component', 'getUtility', mock_get):
+
+			sm = component.getGlobalSiteManager()
+			sm.registerSubscriptionAdapter(AnonEffPrincipalProvider)
+			try:
+				policy = self.policy
+				request = Request.blank('/')
+				effective_principals = policy.effective_principals(request)
+				assert_that(effective_principals, has_items(Everyone, 'nti-test-anon-principal@nt.com'))
+				assert_that(effective_principals, does_not(has_items(Authenticated)))
+			finally:
+				sm.unregisterSubscriptionAdapter(AnonEffPrincipalProvider)
+			
 
 	def test_get_groups(self):
 		callback = FakeGroupsCallback();

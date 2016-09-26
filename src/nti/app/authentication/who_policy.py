@@ -117,6 +117,7 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 
 		#Extend with Everyone to match super.
 		principals.add(Everyone)
+		principals.add(component.getUtility(interfaces.IEveryoneGroup))
 		return principals
 
 	def effective_principals(self, request):
