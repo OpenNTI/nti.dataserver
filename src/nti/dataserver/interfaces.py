@@ -569,9 +569,14 @@ IUsernameSubstitutionPolicy = IUsernameSubstitutionPolicy
 
 class IEffectivePrincipalResolver(interface.Interface):
 	"""
-	A callable returning an iterable of nti.dataserver.interfaces.IPrincipal
-	objects for inclusion in a user's set of effective principals
+	Something that can provide a set of effective principals
 	"""
+
+	def effective_principals(request):
+		"""
+		:return: An iterable of nti.dataserver.interfaces.IPrincipal
+		objects.
+		"""
 	
 class INoUserEffectivePrincipalResolver(IEffectivePrincipalResolver):
 	"""

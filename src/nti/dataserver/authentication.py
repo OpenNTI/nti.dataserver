@@ -94,7 +94,6 @@ def effective_principals(username,
 		principal.
 	:return: An iterable (set) of :class:`nti.dataserver.interfaces.IPrincipal` objects.
 	"""
-
 	user = username if hasattr(username, 'username') else user_factory(username)
 	username = user.username if hasattr(user, 'username') else username  # canonicalize
 
@@ -151,11 +150,10 @@ def effective_principals(username,
 			if role == "nti.roles.contentlibrary.admin" and access == Allow:
 				result.add(IPrincipal(role))
 	else:
-		for subscriber in list(registry.subscribers((request,), 
-													INoUserEffectivePrincipalResolver) or ()):
-			principals = subscriber()
-			if principals:
-				result.update(principals)
+		for subscriber in registry.subscribers((request,), 
+												INoUserEffectivePrincipalResolver):
+			result.update(subscriber.effective_principals(request))
+				
 
 	# Make hashable before we cache
 	result = frozenset(result)

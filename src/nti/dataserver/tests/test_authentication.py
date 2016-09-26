@@ -20,7 +20,9 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authentication
 from nti.dataserver import users
 
+from nti.testing.matchers import is_false
 from nti.testing.matchers import validly_provides as verifiably_provides
+
 from pyramid.testing import DummySecurityPolicy
 from nti.dataserver.tests import mock_dataserver
 
@@ -39,6 +41,7 @@ class TestPrincipals(mock_dataserver.DataserverLayerTest):
 	@mock_dataserver.WithMockDSTrans
 	def test_effective_principals(self):
 		assert_that( authentication.effective_principals( None ), empty() )
+		assert_that( authentication.effective_principals( None ), is_false() )
 		u = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 		community = users.Community( "Foobar" )
 		self.ds.root['users']['Foobar'] = community
@@ -61,9 +64,10 @@ class TestPrincipals(mock_dataserver.DataserverLayerTest):
 
 	def test_nouser_effective_principal_provider(self):
 		assert_that( authentication.effective_principals( None ), empty() )
+		assert_that( authentication.effective_principals( None ), is_false() )
 
 		class EPP(object):
-			def __call__(self):
+			def effective_principals(self, request):
 				return (nti_interfaces.IPrincipal( 'nti-principal@foo.com' ), )
 
 		class MockRegistry(object):
@@ -83,6 +87,7 @@ class TestPrincipals(mock_dataserver.DataserverLayerTest):
 	@mock_dataserver.WithMockDSTrans
 	def test_for_everyone_string(self):
 		assert_that( authentication.effective_principals( None ), empty() )
+		assert_that( authentication.effective_principals( None ), is_false() )
 		u = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 
 		with_u = authentication.effective_principals( u )
