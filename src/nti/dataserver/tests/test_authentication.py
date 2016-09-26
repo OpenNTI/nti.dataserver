@@ -62,27 +62,6 @@ class TestPrincipals(mock_dataserver.DataserverLayerTest):
 		assert_that( nti_interfaces.IPrincipal( community ),
 					 is_in( with_u ) )
 
-	def test_nouser_effective_principal_provider(self):
-		assert_that( authentication.effective_principals( None ), empty() )
-		assert_that( authentication.effective_principals( None ), is_false() )
-
-		class EPP(object):
-			def effective_principals(self, request):
-				return (nti_interfaces.IPrincipal( 'nti-principal@foo.com' ), )
-
-		class MockRegistry(object):
-
-			def subscribers(self, args, interface):
-				if interface == nti_interfaces.INoUserEffectivePrincipalResolver:
-					return (EPP(), )
-
-		assert_that( authentication.effective_principals( None, registry=MockRegistry() ), 
-					 contains( nti_interfaces.IPrincipal( 'nti-principal@foo.com' ) ) )
-
-		assert_that( authentication.effective_principals( '', registry=MockRegistry() ), 
-					 contains( nti_interfaces.IPrincipal( 'nti-principal@foo.com' ) ) )
-
-
 
 	@mock_dataserver.WithMockDSTrans
 	def test_for_everyone_string(self):

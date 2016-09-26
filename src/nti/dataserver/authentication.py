@@ -31,7 +31,6 @@ from nti.dataserver.interfaces import IAuthenticationPolicy
 from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
-from nti.dataserver.interfaces import INoUserEffectivePrincipalResolver
 
 def dynamic_memberships_that_participate_in_security(user, as_principals=True):
 	# Add principals for all the communities that the user is in
@@ -71,8 +70,6 @@ def _user_factory(username):
 # separation of concerns
 from pyramid.threadlocal import get_current_request
 
-NO_USER_CACHE_KEY = ('', False)
-
 def effective_principals(username,
 						 registry=component,
 						 authenticated=True,
@@ -94,66 +91,62 @@ def effective_principals(username,
 		principal.
 	:return: An iterable (set) of :class:`nti.dataserver.interfaces.IPrincipal` objects.
 	"""
+	if not username:
+		return ()
+
 	user = username if hasattr(username, 'username') else user_factory(username)
 	username = user.username if hasattr(user, 'username') else username  # canonicalize
 
 	request = get_current_request() if request is None else request
 
-	key = (username, authenticated) if user else NO_USER_CACHE_KEY
+	key = (username, authenticated)
 	if (key in getattr(request, '_v_nti_ds_authentication_eff_prin_cache', ())
 		and not skip_cache):
 		return request._v_nti_ds_authentication_eff_prin_cache[key]
 
 	result = set()
+	# Query all the available groups for this user,
+	# primary groups (unnamed adapter) and other groups (named adapters)
+	for _, adapter in registry.getAdapters((user,), IGroupMember):
+		result.update(adapter.groups)
+	result.update(_dynamic_memberships_that_participate_in_security(user))
 
-	if user:
-		# Query all the available groups for this user,
-		# primary groups (unnamed adapter) and other groups (named adapters)
-		for _, adapter in registry.getAdapters((user,), IGroupMember):
-			result.update(adapter.groups)
-		result.update(_dynamic_memberships_that_participate_in_security(user))
+	# These last three will be duplicates of string-only versions
+	# Ensure that the user (and their NTIID) is in there as a IPrincipal.
+	result.add(IPrincipal(username))
+	if hasattr(user, 'NTIID'):
+		# JZ - 11.2015 - Some persisted principal objects have
+		# unique principal names with NTIID fields, which will not
+		# hash equally with non-ntiid principals. Unique usernames
+		# should not have principals with NTIIDs (fixed in r73647).
+		# To simplify, and since this is cheap, make sure we have an
+		# NTIID principal in our effective principals.
+		result.add(IPrincipal(user.NTIID))
 
-		# These last three will be duplicates of string-only versions
-		# Ensure that the user (and their NTIID) is in there as a IPrincipal.
-		result.add(IPrincipal(username))
-		if hasattr(user, 'NTIID'):
-			# JZ - 11.2015 - Some persisted principal objects have
-			# unique principal names with NTIID fields, which will not
-			# hash equally with non-ntiid principals. Unique usernames
-			# should not have principals with NTIIDs (fixed in r73647).
-			# To simplify, and since this is cheap, make sure we have an
-			# NTIID principal in our effective principals.
-			result.add(IPrincipal(user.NTIID))
+	if everyone:
+		# Add the authenticated and everyone groups
+		result.add('Everyone')
+		result.add(EVERYONE_GROUP_NAME)
+		result.add(IPrincipal('Everyone'))
+		result.add(IPrincipal(EVERYONE_GROUP_NAME))
 
-		if everyone:
-			# Add the authenticated and everyone groups
-			result.add('Everyone')
-			result.add(EVERYONE_GROUP_NAME)
-			result.add(IPrincipal('Everyone'))
-			result.add(IPrincipal(EVERYONE_GROUP_NAME))
+	if authenticated:
+		result.add(IPrincipal(AUTHENTICATED_GROUP_NAME))
+	if '@' in username:
+		# Make the domain portion of the username available as a group
+		# TODO: Prefix this, like we do with roles?
+		domain = username.split('@', 1)[-1]
+		if domain:
+			result.add(domain)
+			result.add(IPrincipal(domain))
 
-		if authenticated:
-			result.add(IPrincipal(AUTHENTICATED_GROUP_NAME))
-		if '@' in username:
-			# Make the domain portion of the username available as a group
-			# TODO: Prefix this, like we do with roles?
-			domain = username.split('@', 1)[-1]
-			if domain:
-				result.add(domain)
-				result.add(IPrincipal(domain))
-
-		# XXX: Hack to put the global content admin role in effective principals.
-		# Ideally, we give these roles access directly on whatever object they
-		# need permission on.
-		roles = principalRoleManager.getRolesForPrincipal(username)
-		for role, access in roles or ():
-			if role == "nti.roles.contentlibrary.admin" and access == Allow:
-				result.add(IPrincipal(role))
-	else:
-		for subscriber in registry.subscribers((request,), 
-												INoUserEffectivePrincipalResolver):
-			result.update(subscriber.effective_principals(request))
-				
+	# XXX: Hack to put the global content admin role in effective principals.
+	# Ideally, we give these roles access directly on whatever object they
+	# need permission on.
+	roles = principalRoleManager.getRolesForPrincipal(username)
+	for role, access in roles or ():
+		if role == "nti.roles.contentlibrary.admin" and access == Allow:
+			result.add(IPrincipal(role))
 
 	# Make hashable before we cache
 	result = frozenset(result)

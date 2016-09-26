@@ -32,6 +32,8 @@ from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 from nti.dataserver.authentication import effective_principals
 
+from nti.dataserver.interfaces import INoUserEffectivePrincipalResolver
+
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
 
@@ -107,6 +109,16 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 			self.__do_reissue(request)
 		return res
 
+	def _effective_principals_for_no_identity(self, request):
+		principals = set()
+		for subscriber in component.subscribers((request,), 
+												INoUserEffectivePrincipalResolver):
+			principals.update(subscriber.effective_principals(request))
+
+		#Extend with Everyone to match super.
+		principals.add(Everyone)
+		return principals
+
 	def effective_principals(self, request):
 		# The who policy defines effective principals as lists. Instead, we
 		# are returning sets to improve performance (since we may have
@@ -114,6 +126,15 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 		# now) because we know the auth policy loops over ACLs checking for
 		# membership in effective principals. If that changes, we'll have to
 		# revert and return lists again.
+
+
+		#If we have no identity we want to allow subscribers of
+		#INoUserEffectivePrincipalResolver to provide effective_principals for
+		#the request.
+		identity = self._get_identity(request)
+		if identity is None:
+			return frozenset(self._effective_principals_for_no_identity(request))
+
 		res = super(AuthenticationPolicy, self).effective_principals(request)
 		if res and len(res) > 1:
 			self.__do_reissue(request)
@@ -213,3 +234,5 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 			fake_identity['identifier'] = api.name_registry[self._identifier_id]
 		identity.update(fake_identity)
 		return api.remember(identity)
+
+
