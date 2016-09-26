@@ -21,7 +21,6 @@ from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 
 from nti.app.authentication.interfaces import ILogonWhitelist
 
-from nti.app.authentication.who_authenticators import AnonymousAccessAuthenticator
 from nti.app.authentication.who_authenticators import KnownUrlTokenBasedAuthenticator
 from nti.app.authentication.who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
 
@@ -91,9 +90,6 @@ def create_who_apifactory(secure_cookies=True,
 	token_tkt = KnownUrlTokenBasedAuthenticator(cookie_secret,
 												allowed_views=token_allowed_views)
 
-	# An identifier and authenticator for anonymous access
-	anonymous = AnonymousAccessAuthenticator()
-
 	# For browsers (NOT application browsers), we want to do authentication via a
 	# redirect to the login app.
 	try:
@@ -115,7 +111,6 @@ def create_who_apifactory(secure_cookies=True,
 	identifiers.append(('basicauth-interactive', basicauth_interactive))
 	identifiers.append(('basicauth', basicauth))
 	identifiers.append(('token_tkt', token_tkt))
-	identifiers.append(('anonymous', anonymous))
 
 	# Confirmation/authentication can come from the cookie (encryption)
 	# Or possibly HTTP Basic auth, or in special cases, from the
@@ -123,7 +118,6 @@ def create_who_apifactory(secure_cookies=True,
 	authenticators = [('auth_tkt', auth_tkt)]
 	authenticators.append(('htpasswd', DataserverGlobalUsersAuthenticatorPlugin()))
 	authenticators.append(('token_tkt', token_tkt))
-	authenticators.append(('anonymous', anonymous))
 
 	# Order matters when multiple plugins accept the classification
 	# of the request; the first plugin that returns a result from

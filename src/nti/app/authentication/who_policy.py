@@ -30,8 +30,6 @@ from pyramid.security import Everyone
 
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
-from nti.app.authentication import is_anonymous_identity
-
 from nti.dataserver.authentication import effective_principals
 
 ONE_DAY = 24 * 60 * 60
@@ -55,10 +53,6 @@ class _GroupsCallback(object):
 		CACHE_KEY = 'nti.dataserver.groups'
 		if CACHE_KEY in identity:
 			return identity[CACHE_KEY]
-
-		if is_anonymous_identity(identity):
-			return (component.getUtility(interfaces.IUnauthenticatedPrincipal),
-					component.getUtility(interfaces.IEveryoneGroup), )
 
 		username = None
 		if 'repoze.who.userid' in identity: # already identified by AuthTktCookie or _NTIUsersAuthenticatorPlugin
@@ -219,21 +213,3 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 			fake_identity['identifier'] = api.name_registry[self._identifier_id]
 		identity.update(fake_identity)
 		return api.remember(identity)
-
-	def _get_groups(self, identity, request):
-		# We are playing a bit fast and loose pretending that an unauthenticated
-		# request has an identity and has been authenticated.  Normally that isn't
-		# the case and as a result our superclass automatically adds Authenticated
-		# to the list returned from the groups callback.  To work around this only
-		# call supers implmeentation with identity is not our special anonymous
-		# identity.  If identity is our special anonymous identity call the groups
-		# callback and only extend it by adding Everyone
-		if not is_anonymous_identity(identity):
-			return super(AuthenticationPolicy, self)._get_groups(identity, request)
-		else:
-			dynamic = self._callback(identity, request)
-			if dynamic is not None:
-				groups = list(dynamic)
-				groups.append(Everyone)
-				return groups
-			return [Everyone]

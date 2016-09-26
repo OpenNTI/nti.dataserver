@@ -31,13 +31,3 @@ def get_remote_user(request=None, dataserver=None):
 		username = request.authenticated_userid or u''
 		result = users.User.get_user(username, dataserver=dataserver)
 	return result
-
-# Returns whether or not the provided identity is our
-# specially constructed anonymous identity. Note:
-# normally an anonymous request wouldn't have an associated
-# identity with it but in order to do this on a classification
-# by classification basis we are playing a bit fast and loose. -cutz
-def is_anonymous_identity(identity):
-	if identity is None:
-		return False
-	return u'anonymous' in identity and identity[u'anonymous']

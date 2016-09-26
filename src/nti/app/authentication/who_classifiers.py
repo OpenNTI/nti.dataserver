@@ -21,8 +21,6 @@ from repoze.who.classifiers import default_request_classifier
 from repoze.who.interfaces import IChallengeDecider
 from repoze.who.interfaces import IRequestClassifier
 
-from nti.app.authentication import is_anonymous_identity
-
 #: A request classification that is meant to indicate a browser
 #: or browser-like environment being used programattically, i.e.,
 #: a web-app request, as opposed to a pure, interactive human user
@@ -33,13 +31,9 @@ CLASS_BROWSER_APP = 'application-browser'
 #: a browser being used interactively.
 CLASS_BROWSER = 'browser'
 
-#: A request classfication meant to distinguish
-#: we are being interacted from a tvos environment (apple tv)
-CLASS_TV_APP = 'application-tvos'
-
 #: A group of classifications that are meant to indicate a browser
 #: or browser-like environment being interacted with programatically
-APP_CLASSES = (CLASS_BROWSER_APP, CLASS_TV_APP,)
+APP_CLASSES = (CLASS_BROWSER_APP, )
 
 @interface.provider(IRequestClassifier)
 def application_request_classifier(environ):
@@ -66,9 +60,7 @@ def application_request_classifier(environ):
 
 		# OK, but is it an programmatic browser request where we'd like to
 		# change up the auth rules?
-		if b'ntitvos' in ua:  # Trumps other rules so we check it first
-			result = CLASS_TV_APP
-		elif environ.get('HTTP_X_REQUESTED_WITH', '').lower() == b'xmlhttprequest':
+		if environ.get('HTTP_X_REQUESTED_WITH', '').lower() == b'xmlhttprequest':
 			# An easy Yes!
 			result = CLASS_BROWSER_APP
 		elif environ.get('paste.testing') is True:
@@ -126,4 +118,4 @@ def forbidden_or_missing_challenge_decider(environ, status, headers):
 	"""
 	identity = environ.get('repoze.who.identity')
 
-	return (not identity or is_anonymous_identity(identity)) and forbidden_challenger(environ, status, headers)
+	return not identity and forbidden_challenger(environ, status, headers)

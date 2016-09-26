@@ -21,11 +21,6 @@ from repoze.who.interfaces import IAuthenticator
 
 from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
 
-from nti.app.authentication import is_anonymous_identity
-from nti.app.authentication.who_classifiers import CLASS_TV_APP
-
-ANONYMOUS_USERNAME = ''
-
 @interface.implementer(IAuthenticator)
 class DataserverGlobalUsersAuthenticatorPlugin(object):
 
@@ -101,27 +96,6 @@ class KnownUrlTokenBasedAuthenticator(object):
 		environ[b'AUTH_TYPE'] = b'token'
 		return component.getAdapter(self.secret, IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
 
-@interface.implementer(IAuthenticator, IIdentifier)
-class AnonymousAccessAuthenticator(object):
-	"""
-	A :mod:`repoze.who` plugin that acts in the role of identifier
-	and authenticator for anonymous (unauthenticated) requests
-	"""
-
-	classifications = {	IAuthenticator: [CLASS_TV_APP],
-						IIdentifier: [CLASS_TV_APP]}
-
-	def authenticate(self, environ, identity):
-		return ANONYMOUS_USERNAME if is_anonymous_identity(identity) else None
-
-	def identify(self, environ):
-		return {'anonymous': True}
-
-	def forget(self, environ, identity):  # pragma: no cover
-		return []
-
-	def remember(self, environ, identity):  # pragma: no cover
-		return []
 
 @interface.implementer(IAuthenticator, IIdentifier)
 class FixedUserAuthenticatorPlugin(object):  # pragma: no cover # For use with redbot testing

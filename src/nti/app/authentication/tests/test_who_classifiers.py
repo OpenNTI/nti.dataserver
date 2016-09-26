@@ -18,7 +18,6 @@ import unittest
 from repoze.who.interfaces import IRequestClassifier
 
 from nti.app.authentication.who_classifiers import APP_CLASSES
-from nti.app.authentication.who_classifiers import CLASS_TV_APP
 from nti.app.authentication.who_classifiers import CLASS_BROWSER_APP
 
 from nti.app.authentication.who_classifiers import application_request_classifier as _nti_request_classifier
@@ -87,15 +86,8 @@ class TestClassifier(unittest.TestCase):
 		environ['HTTP_USER_AGENT'] = b"NextThought/1.0.2 CFNetwork/672.0.8 Darwin/13.0.0"
 		assert_that(_nti_request_classifier(environ), is_(CLASS_BROWSER_APP))
 
-		# Verify we correctly identify tv os app by UA
-		environ['HTTP_USER_AGENT'] = b"NextThought/1.0.2 ntitvos CFNetwork/672.0.8 Darwin/13.0.0"
-		assert_that(_nti_request_classifier(environ), is_(CLASS_TV_APP))
-
-		# Even if we would otherwise be recognized as an CLASS_BROWSER_APP
-		environ['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest'
-		assert_that(_nti_request_classifier(environ), is_(CLASS_TV_APP))
 
 	def test_app_classes(self):
 
 		# We have a well known set of app classes
-		assert_that(APP_CLASSES, contains_inanyorder(CLASS_BROWSER_APP, CLASS_TV_APP,))
+		assert_that(APP_CLASSES, contains_inanyorder(CLASS_BROWSER_APP,))
