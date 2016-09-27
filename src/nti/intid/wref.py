@@ -172,8 +172,10 @@ class ArbitraryOrderableWeakRef(WeakRef):
 			return (self._entity_id, self._entity_oid) > (other._entity_id, other._entity_oid)
 		except AttributeError:
 			return NotImplemented
+OrderableWeakRef = ArbitraryOrderableWeakRef
 
 class NoCachingArbitraryOrderableWeakRef(ArbitraryOrderableWeakRef):
 	
 		def __call__(self, allow_cached=False):
 			return ArbitraryOrderableWeakRef.__call__(self, allow_cached=False)
+NoCachingOrderableWeakRef = NoCachingArbitraryOrderableWeakRef
