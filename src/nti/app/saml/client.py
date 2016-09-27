@@ -34,8 +34,6 @@ from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLNameId
 from nti.app.saml.interfaces import ISAMLIDPInfo
 
-from nti.appserver.interfaces import IApplicationSettings
-
 from nti.common.string import to_unicode
 
 from nti.schema.fieldproperty import createFieldProperties
@@ -46,12 +44,14 @@ ERROR_STATE_PARAM = u'_nti_error'
 SUCCESS_STATE_PARAM = u'_nti_success'
 
 def _get_signer_secret(default_secret='not-very-secure-secret'):
-	# TODO: Break these dependencies
-	settings = component.queryUtility(IApplicationSettings) or {}
-
-	# XXX: Reusing the cookie secret, we should probably have our own
-	secret_key = settings.get('cookie_secret', default_secret)
-	return secret_key
+	try:
+		from nti.appserver.interfaces import IApplicationSettings	
+		settings = component.queryUtility(IApplicationSettings) or {}
+		# XXX: Reusing the cookie secret, we should probably have our own
+		secret_key = settings.get('cookie_secret', default_secret)
+		return secret_key
+	except ImportError:
+		return default_secret
 
 def _make_signer(secret, salt='nti-saml-relay-state'):
 	return JSONWebSignatureSerializer(secret, salt=salt)
@@ -69,9 +69,10 @@ class BasicSAMLClient(object):
 	"""
 	A basic implementation of ISAML client based on the saml2 client package.
 	This is largerly based on the who middleware SAML2Plugin implementation
-	but in a format that fits better into our existing multi idp login process.  While the underlying
-	SAML client supports the full spec we support the basic minimum based of OU's current
-	SAML idp implementation.  This can be expanded in the future.
+	but in a format that fits better into our existing multi idp login process.  
+	While the underlying SAML client supports the full spec we support the basic 
+	minimum based of OU's current SAML idp implementation.  
+	This can be expanded in the future.
 
 	Notable omissions from the SAML2Plugin are:
 	* Multi idp support
@@ -195,18 +196,17 @@ class BasicSAMLClient(object):
 		return session_info
 
 	def process_saml_acs_request(self, request):
-
 		for param in (SAML_RESPONSE, RELAY_STATE):
 			if param not in request.params:
 				raise hexc.HTTPBadRequest('Unexpected SAML Response. No %s', param)
 
-		#parse out our relay state first so we have it
+		# parse out our relay state first so we have it
 		state, success, error = self._extract_relay_state(request.params.get(RELAY_STATE, None))
 
-		#this will throw if the response is invalid, such as invalid authentication
-		#but we need to capture and provide our state, success, and error
-		#so we can get the user back to the proper place. Trap the error, and reraise
-		#our exception to indicate a bad saml assertion
+		# this will throw if the response is invalid, such as invalid authentication
+		# but we need to capture and provide our state, success, and error
+		# so we can get the user back to the proper place. Trap the error, and reraise
+		# our exception to indicate a bad saml assertion
 		try:
 			binding = BINDING_HTTP_POST if request.method == 'POST' else BINDING_HTTP_REDIRECT
 			response_info = self._eval_authn_response(request.params[SAML_RESPONSE],
