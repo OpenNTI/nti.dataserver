@@ -28,6 +28,8 @@ from nti.contentfolder.interfaces import INamedContainer
 
 from nti.contentfolder.utils import compute_path
 
+from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
+
 from nti.namedfile.file import get_file_name
 
 from nti.namedfile.interfaces import IFile
@@ -56,7 +58,8 @@ def get_context_name(context):
 	return result
 
 @interface.implementer(IContentFolder, IContentTypeAware)
-class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
+class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
+					CreatedAndModifiedTimeMixin):
 	createDirectFieldProperties(IContentFolder)
 
 	__parent__ = None
@@ -130,7 +133,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		item = self._delitemf(name, event=False)
 		item.__name__ = item.name = new  # set new name
 		self._setitemf(new, item)
-		
+
 		def _update(obj):
 			try:
 				obj.updateLastMod()
@@ -214,7 +217,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 
 	def enumerateChildren(self):
 		return tuple(self.keys())
-	
+
 @interface.implementer(IRootFolder)
 class RootFolder(ContentFolder):
 	createDirectFieldProperties(IRootFolder)
