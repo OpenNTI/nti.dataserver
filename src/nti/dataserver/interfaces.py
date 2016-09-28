@@ -1446,13 +1446,13 @@ class IUserBlacklistedStorage(interface.Interface):
 		Blacklists the given user.
 		"""
 	add = blacklist_user
-	
+
 	def remove_blacklist_for_user(username):
 		"""
 		Remove the given username from the blacklist.
 		"""
 	remove = remove_blacklist_for_user
-	
+
 	def clear():
 		"""
 		Clear all entries in this storage

@@ -70,10 +70,10 @@
 
 	<ext:registerAutoPackageIO
 		modules=".board .forum .post .topic .ace"
-		root_interfaces=".interfaces.IBoard 
-						 .interfaces.IForum 
-						 .interfaces.ITopic 
-						 .interfaces.IPost 
+		root_interfaces=".interfaces.IBoard
+						 .interfaces.IForum
+						 .interfaces.ITopic
+						 .interfaces.IPost
 						 .interfaces.IForumACE"
 		iobase=".externalization._MaybeThreadableForumObjectInternalObjectIO" />
 
@@ -126,6 +126,10 @@
 
 	<adapter factory=".acl._ACLCommunityForumACLProvider"
 			 for=".interfaces.IACLCommunityForum"/>
+
+	<!-- Zope security -->
+	<adapter factory=".zope_security.BoardRolePermissionManager"
+			 provides="zope.securitypolicy.interfaces.IRolePermissionMap" />
 
 	<!-- Additional/plugin packages -->
 	<include package="z3c.autoinclude" file="meta.zcml" />
