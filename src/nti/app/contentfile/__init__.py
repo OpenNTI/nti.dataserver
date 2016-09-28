@@ -22,4 +22,3 @@ from nti.app.contentfile.view_mixins import to_external_oid_and_link
 from nti.app.contentfile.view_mixins import to_external_download_oid_href
 from nti.app.contentfile.view_mixins import transfer_internal_content_data
 from nti.app.contentfile.view_mixins import get_file_from_oid_external_link
-
