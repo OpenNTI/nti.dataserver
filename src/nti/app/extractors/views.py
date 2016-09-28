@@ -29,6 +29,7 @@ from nti.appserver.interfaces import INamedLinkView
 from nti.contentprocessing.metadata_extractors import get_metadata_from_http_url
 
 from nti.dataserver import authorization as nauth
+
 from nti.dataserver.interfaces import IDataserverFolder
 
 @view_config(route_name='objects.generic.traversal',
@@ -62,7 +63,6 @@ class _URLMetaDataExtractor(AbstractAuthenticatedView):
 		if result is not None:
 			return result
 		return
-
 interface.directlyProvides(_URLMetaDataExtractor, INamedLinkView)
 
 _HOP_BY_HOP_HEADERS = ['te', 'transfer-encoding', 'keep-alive', 'proxy-authorization',
@@ -70,7 +70,6 @@ _HOP_BY_HOP_HEADERS = ['te', 'transfer-encoding', 'keep-alive', 'proxy-authoriza
 
 def _is_hop_by_hop(header, connection=None):
 	return header in _HOP_BY_HOP_HEADERS or header in connection
-
 
 @view_config(route_name='objects.generic.traversal',
 			 request_method='GET',
@@ -84,15 +83,12 @@ class _URLMetaDataSafeImageProxy(AbstractAuthenticatedView):
 
 	def _proxiable_headers(self, headers, strip=[]):
 		safe_headers = {}
-
 		connection = headers.get('Connection', '').lower()
-
 		for header in headers:
 			lower_case_header = header.lower()
-			if 	not _is_hop_by_hop(lower_case_header, connection=connection) \
+			if 		not _is_hop_by_hop(lower_case_header, connection=connection) \
 				and lower_case_header not in strip:
 				safe_headers[header] = headers.get(header)
-
 		return safe_headers
 
 	def _via_header(self, via=None):
@@ -118,5 +114,6 @@ class _URLMetaDataSafeImageProxy(AbstractAuthenticatedView):
 		headers['Via'] = self._via_header(r.headers.get('via', None))
 
 		result = Response(status=r.status_code, 
-						  app_iter=r.iter_content(chunk_size=1024), headers=headers)
+						  app_iter=r.iter_content(chunk_size=1024), 
+						  headers=headers)
 		return result
