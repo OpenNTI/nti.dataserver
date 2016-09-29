@@ -1,0 +1,18 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<!-- Include plugins -->
+	<include package="z3c.autoinclude" file="meta.zcml" />
+	<includePlugins package="." />
+	
+	<adapter factory=".identity._SAMLIDPUserInfoBindingsFactory"
+			 provides=".interfaces.ISAMLIDPUserInfoBindings"
+			 for="nti.dataserver.interfaces.IUser" />
+</configure>

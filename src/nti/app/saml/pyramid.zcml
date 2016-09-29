@@ -8,5 +8,6 @@
 	
 	<pyramid:scan package='.logon' />
 	<pyramid:scan package='.views' />
+	<pyramid:scan package='.admin_views' />
 
 </configure>

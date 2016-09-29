@@ -139,6 +139,7 @@
 
 	<include package=".contenttypes" />
 
+	<include package=".saml" />
 	<include package=".users" />
 	<include package="." file="configure_stream.zcml" />
 	<include package=".utils" file="configure_bootstrap.zcml" />

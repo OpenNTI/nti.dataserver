@@ -15,7 +15,7 @@ import urlparse
 from zope import component
 from zope import interface
 
-from zope.component import queryMultiAdapter
+from zope.component import getMultiAdapter
 
 from zope.event import notify
 
@@ -31,7 +31,6 @@ from nti.app.saml import ACS
 from nti.app.saml import SLS
 
 from nti.app.saml.interfaces import ISAMLClient
-from nti.app.saml.interfaces import ISAMLProviderUserInfo
 from nti.app.saml.interfaces import ISAMLUserCreatedEvent
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
@@ -90,6 +89,15 @@ def _validate_idp_nameid(user, user_info, idp):
 		logger.error('SAML persistent nameid %s for user %s does not match idp returned nameid %s',
 					 nameid.nameid, user.username, user_info.nameid.nameid)
 		raise hexc.HTTPBadRequest('SAML persistent nameid mismatch.')
+
+@view_config(name='auth',
+			 context=SAMLPathAdapter,
+			 request_method="GET",
+			 route_name='objects.generic.traversal')
+def auth_view(request):
+	saml_client = component.queryUtility(ISAMLClient)
+	response = saml_client.response_for_logging_in('/success', '/error')
+	return response
 
 @view_config(name=ACS,
 			 context=SAMLPathAdapter,
@@ -151,12 +159,7 @@ def acs_view(request):
 				force_email_verification(user)
 
 			# Manually fire event with SAML user info
-			provider_user_info = component.queryAdapter(user_info, ISAMLProviderUserInfo)
-			if provider_user_info is not None:
-				event = queryMultiAdapter((idp_id, user, provider_user_info, request),
-										  ISAMLUserCreatedEvent)
-				if event is not None:
-					notify(event)
+			notify(getMultiAdapter((idp_id, user, user_info, request), ISAMLUserCreatedEvent))
 
 		nameid_bindings = ISAMLIDPEntityBindings(user)
 		if idp_id not in nameid_bindings:

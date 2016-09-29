@@ -118,11 +118,6 @@ class ISAMLUserAssertionInfo(interface.Interface):
 					 	description=u"The admittedly western lastname for the user",
 					 	required=False)
 
-class ISAMLProviderUserInfo(interface.Interface):
-	"""
-	Provider specific user information to be stored on user
-	"""
-
 class ISAMLUserCreatedEvent(IUserEvent):
 	"""
 	Event created when user account is created as part of SAML SSO
@@ -132,9 +127,9 @@ class ISAMLUserCreatedEvent(IUserEvent):
 					  description=u"ID for the provider, specifically Issuer in the SAML response",
 					  required=True)
 
-	user_info = Object(ISAMLProviderUserInfo,
-					   title=u"SAML provider id info",
-					   description=u"SAML provider specific user identification info",
+	user_info = Object(ISAMLUserAssertionInfo,
+					   title=u"SAML user info",
+					   description=u"SAML provider specific user info",
 					   required=True)
 
 	request = Object(IRequest,

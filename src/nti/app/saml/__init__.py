@@ -17,3 +17,5 @@ ACS = 'acs'
 
 #: Single Logout Service
 SLS = 'sls'
+
+PROVIDER_INFO = 'GetProviderUserInfo'
