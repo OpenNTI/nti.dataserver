@@ -90,15 +90,6 @@ def _validate_idp_nameid(user, user_info, idp):
 					 nameid.nameid, user.username, user_info.nameid.nameid)
 		raise hexc.HTTPBadRequest('SAML persistent nameid mismatch.')
 
-@view_config(name='auth',
-			 context=SAMLPathAdapter,
-			 request_method="GET",
-			 route_name='objects.generic.traversal')
-def auth_view(request):
-	saml_client = component.queryUtility(ISAMLClient)
-	response = saml_client.response_for_logging_in('/success', '/error')
-	return response
-
 @view_config(name=ACS,
 			 context=SAMLPathAdapter,
 			 request_method="POST",
