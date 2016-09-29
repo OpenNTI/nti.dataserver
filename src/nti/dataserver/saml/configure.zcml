@@ -7,12 +7,9 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="zope.security" />
-
-	<!-- Include plugins -->
-	<include package="z3c.autoinclude" file="meta.zcml" />
-	<includePlugins package="." />
 	
 	<adapter factory=".identity._SAMLIDPUserInfoBindingsFactory"
 			 provides=".interfaces.ISAMLIDPUserInfoBindings"
 			 for="nti.dataserver.interfaces.IUser" />
+
 </configure>

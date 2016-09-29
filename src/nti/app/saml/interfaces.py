@@ -9,13 +9,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from saml2.saml import NAMEID_FORMATS_SAML2
+
 from zope import interface
 
 from zope.container.interfaces import IContainer
 
 from zope.schema.interfaces import IBaseVocabulary
-
-from saml2.saml import NAMEID_FORMATS_SAML2
 
 from pyramid.interfaces import IRequest
 
