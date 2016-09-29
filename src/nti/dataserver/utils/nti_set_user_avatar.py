@@ -23,28 +23,24 @@ from nti.dataserver.users import Entity
 from nti.dataserver.users.interfaces import IProfileAvatarURL
 
 from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver.utils.base_script import set_site
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.property.dataurl import encode
 
-def _find_profile(entity):
-	result = None
+def _find_profiles(entity):
+	result = set()
 	try:
 		for value in entity.__annotations__.values():
 			if IProfileAvatarURL.providedBy(value):
-				result = value
-				break
+				result.add(value)
 	except AttributeError:
 		pass
-	result = IProfileAvatarURL(entity) if result is None else result
+	result.add(IProfileAvatarURL(entity))
 	return result
 
-def _set_avatar(username, url=None, image=None, background=False, site=None):
-	set_site(site)
-
+def _set_avatar(username, url=None, image=None, background=False):
 	if is_valid_ntiid_string(username):
 		entity = find_object_with_ntiid(username)
 	else:
@@ -52,20 +48,20 @@ def _set_avatar(username, url=None, image=None, background=False, site=None):
 	if entity is None or not IEntity.providedBy(entity):
 		raise ValueError("Cannot find entity")
 
-	profile = _find_profile(entity)
 	field = 'backgroundURL' if background else 'avatarURL'
-	if not image and not url:
-		setattr(profile, field, None)
-	elif url:
-		setattr(profile, field, url)
-	elif image:
-		mime_type = guess_type(image)[0] or b'text/plain'
-		with open(image, 'rb') as fp:
-			data = fp.read()
-		data = encode(raw_bytes=data, 
-					  charset=b"utf-8",
-					  mime_type=mime_type)
-		setattr(profile, field, data)
+	for profile in _find_profiles(entity):
+		if not image and not url:
+			setattr(profile, field, None)
+		elif url:
+			setattr(profile, field, url)
+		elif image:
+			mime_type = guess_type(image)[0] or b'text/plain'
+			with open(image, 'rb') as fp:
+				data = fp.read()
+			data = encode(raw_bytes=data, 
+						  charset=b"utf-8",
+						  mime_type=mime_type)
+			setattr(profile, field, data)
 	return profile
 
 def set_entity_avatar(args=None):
@@ -90,10 +86,6 @@ def set_entity_avatar(args=None):
 	site_group.add_argument('-i', '--image',
 							 dest='image',
 							 help="The image file")
-
-	arg_parser.add_argument('-s', '--site',
-							 dest='site',
-							 help="Application SITE.")
 
 	args = arg_parser.parse_args(args=args)
 
@@ -120,7 +112,6 @@ def set_entity_avatar(args=None):
 						function=lambda: _set_avatar(username,
 													 url=url,
 													 image=image,
-													 site=args.site,
 													 background=args.background))
 def main(args=None):
 	set_entity_avatar(args)
