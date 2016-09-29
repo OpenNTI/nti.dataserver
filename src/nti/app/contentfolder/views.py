@@ -67,7 +67,7 @@ from nti.common.mimetypes import guess_extension
 from nti.common.random import generate_random_hex_string
 
 from nti.common.string import is_true
-from nti.common.string import to_unicode as common_unicode 
+from nti.common.string import to_unicode as common_unicode
 
 from nti.contentfile.interfaces import IContentBaseFile
 
@@ -621,7 +621,7 @@ class DeleteMixin(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin
 						self.request,
 						hexc.HTTPConflict,
 						{
-							u'message': _('This content file has references.'),
+							u'message': _('This content file appears in content.'),
 							u'code': 'ContentFileHasReferences',
 							LINKS: to_external_object(links)
 						},
@@ -684,7 +684,7 @@ class DeleteFolderView(DeleteMixin):
 							self.request,
 							hexc.HTTPConflict,
 							{
-								u'message': _('This content file has references.'),
+								u'message': _('This content file appears in content.'),
 								u'code': 'ContentFileHasReferences',
 								LINKS: to_external_object(links)
 							},
