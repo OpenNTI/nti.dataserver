@@ -69,7 +69,7 @@ def process_args(args=None):
 	if args.verbose:
 		print(db, conn, root)
 
-	set_trace()()
+	set_trace()
 
 def main(args=None):
 	process_args(args)
