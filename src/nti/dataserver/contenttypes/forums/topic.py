@@ -32,8 +32,6 @@ from zope.location.interfaces import ILocationInfo
 
 from zope.schema.fieldproperty import FieldProperty
 
-from zope.security.interfaces import IPrincipal
-
 from nti.common._compat import Implicit
 
 from nti.containers.containers import AcquireObjectsOnReadMixin
@@ -63,9 +61,7 @@ from nti.dataserver.contenttypes.forums import _containerIds_from_parent
 
 from nti.dataserver.interfaces import ACE_ACT_ALLOW
 
-from nti.dataserver.interfaces import IACE
 from nti.dataserver.interfaces import ICommunity
-from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IWritableShared
 from nti.dataserver.interfaces import IDefaultPublished
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
@@ -260,7 +256,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		result = find_interface(self, ICommunity, strict=False)
 		if result is None:
 			# for new objects (e.g. new style courses)
-			# find a creator that is a comunity in the lineage
+			# find a creator that is a community in the lineage
 			__traceback_info__ = self
 			lineage = ILocationInfo(self).getParents()
 			lineage.insert(0, self)
@@ -288,34 +284,29 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		# TODO: Remove hack
 		_forum = self.__parent__
 
-		possible_entities = set()
-
 		# TODO: REMOVE IACL
+		# Note: Legacy community based forums/topics rely on the open
+		# students 403ing when trying to access ForCredit discussions,
+		# and the client falling back to querying the Open discussions.
 		if IACLEnabled.providedBy(_forum):
 			# don't include the creator of the forum if we have a ACL
+			result = []
 			for ace in _forum.ACL:
 				for action, entity, perm in ace:
 					if action == ACE_ACT_ALLOW and can_read(perm):
-						possible_entities.add(entity)
-		elif IACLProvider.providedBy(_forum):
-			for ace in IACLProvider(_forum).__acl__:
-				if IACE.providedBy(ace):
-					action = ace.action
-					if action == ACE_ACT_ALLOW:
-						possible_entities.add(IPrincipal(ace.actor).id)
-
-		if possible_entities:
-			result = []
-			for entity in possible_entities:
-				entity = Entity.get_entity(entity)
-				if entity is not None:
-					result.append(entity)
+						entity = Entity.get_entity(entity)
+						if entity is not None:
+							result.append(entity)
 			return result
 
 		# Instead of returning the default set from super, which would return
 		# the dynamic memberships of the *creator* of this object, we
-		# restrict it to the community in which we are embedded
+		# restrict it to the community in which we are embedded.
+		# Note: For normal topics, we just want to return the
+		# community itself; the rest of the ACL members, if included,
+		# would get spammed with sharedWith notable items.
 		return [self._community] if self._community else ()
+
 
 @interface.implementer(IDFLHeadlineTopic)
 class DFLHeadlineTopic(GeneralHeadlineTopic):  # order matters
