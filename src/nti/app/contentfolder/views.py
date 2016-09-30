@@ -621,7 +621,7 @@ class DeleteMixin(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin
 						self.request,
 						hexc.HTTPConflict,
 						{
-							u'message': _('This content file appears in content.'),
+							u'message': _('This file appears in viewable materials.'),
 							u'code': 'ContentFileHasReferences',
 							LINKS: to_external_object(links)
 						},
@@ -684,7 +684,7 @@ class DeleteFolderView(DeleteMixin):
 							self.request,
 							hexc.HTTPConflict,
 							{
-								u'message': _('This content file appears in content.'),
+								u'message': _('This file appears in viewable materials.'),
 								u'code': 'ContentFileHasReferences',
 								LINKS: to_external_object(links)
 							},
