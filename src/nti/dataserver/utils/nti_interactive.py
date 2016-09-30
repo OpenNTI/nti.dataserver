@@ -16,7 +16,7 @@ import os
 import sys
 import argparse
 
-from IPython.core.debugger import Tracer
+from IPython.terminal.debugger import set_trace
 
 from nti.dataserver.utils import interactive_setup
 from nti.dataserver.utils.base_script import create_context
@@ -69,7 +69,7 @@ def process_args(args=None):
 	if args.verbose:
 		print(db, conn, root)
 
-	Tracer()()
+	set_trace()()
 
 def main(args=None):
 	process_args(args)
