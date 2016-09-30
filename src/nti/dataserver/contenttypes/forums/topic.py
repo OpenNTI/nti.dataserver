@@ -20,7 +20,6 @@ from zope import lifecycleevent
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.container.interfaces import INameChooser
-
 from zope.container.contained import ContainerSublocations
 from zope.container.contained import dispatchToSublocations
 
@@ -33,6 +32,8 @@ from zope.location.interfaces import ILocationInfo
 
 from zope.schema.fieldproperty import FieldProperty
 
+from zope.security.interfaces import IPrincipal
+
 from nti.common._compat import Implicit
 
 from nti.containers.containers import AcquireObjectsOnReadMixin
@@ -42,6 +43,7 @@ from nti.containers.containers import CheckingLastModifiedBTreeContainer
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IACLEnabled
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
@@ -59,7 +61,11 @@ from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_PERSONAL_BL
 from nti.dataserver.contenttypes.forums import _CreatedNamedNTIIDMixin
 from nti.dataserver.contenttypes.forums import _containerIds_from_parent
 
+from nti.dataserver.interfaces import ACE_ACT_ALLOW
+
+from nti.dataserver.interfaces import IACE
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IWritableShared
 from nti.dataserver.interfaces import IDefaultPublished
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
@@ -70,6 +76,8 @@ from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 from nti.dataserver.sharing import AbstractDefaultPublishableSharedWithMixin
 
 from nti.dataserver_core.mixins import ZContainedMixin
+
+from nti.dataserver.users import Entity
 
 from nti.property.property import Lazy
 from nti.property.property import readproperty
@@ -274,9 +282,35 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 
 	@property
 	def sharingTargetsWhenPublished(self):
-		# We used to specify the sharingTargets as the members of the
-		# ACL. Now we just share with the community the forum is
-		# designed for (that should be enough...).
+		# HACK: We need to check the of the community forum has an ACL
+		# if so then share the note with the entities that can read the forum
+		# This ACL must be static.
+		# TODO: Remove hack
+		_forum = self.__parent__
+
+		possible_entities = set()
+
+		# TODO: REMOVE IACL
+		if IACLEnabled.providedBy(_forum):
+			# don't include the creator of the forum if we have a ACL
+			for ace in _forum.ACL:
+				for action, entity, perm in ace:
+					if action == ACE_ACT_ALLOW and can_read(perm):
+						possible_entities.add(entity)
+		elif IACLProvider.providedBy(_forum):
+			for ace in IACLProvider(_forum).__acl__:
+				if IACE.providedBy(ace):
+					action = ace.action
+					if action == ACE_ACT_ALLOW:
+						possible_entities.add(IPrincipal(ace.actor).id)
+
+		if possible_entities:
+			result = []
+			for entity in possible_entities:
+				entity = Entity.get_entity(entity)
+				if entity is not None:
+					result.append(entity)
+			return result
 
 		# Instead of returning the default set from super, which would return
 		# the dynamic memberships of the *creator* of this object, we
