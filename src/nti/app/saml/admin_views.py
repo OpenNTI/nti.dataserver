@@ -73,7 +73,9 @@ class IDPEntityBindingsViews(AbstractAuthenticatedView):
 	def list_nameid_view(self):
 		result = LocatedExternalDict()
 		entity_bindings = self._entity_bindings()
-		items = result[ITEMS] = {k:v for k, v in entity_bindings.iteritems()}
+		result.__name__ = self.request.view_name
+		result.__parent__ = self.request.context
+		items = result[ITEMS] = entity_bindings
 		result[TOTAL] = result[ITEM_COUNT] = len(items)
 		return result
 
