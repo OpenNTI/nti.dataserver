@@ -60,6 +60,9 @@ def _make_signer(secret, salt='nti-saml-relay-state'):
 class _SAMLNameId(object):
 	createFieldProperties(ISAMLNameId)
 
+	__external_class_name__ = 'SAMLNameId'
+	mimeType = mime_type = 'application/vnd.nextthought.saml.samlnameid'
+
 	def __init__(self, name_id):
 		self.nameid = to_unicode(name_id.text)
 		self.name_format = name_id.format
