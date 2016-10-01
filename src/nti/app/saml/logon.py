@@ -174,3 +174,12 @@ def acs_view(request):
 		return _create_failure_response(request,
 										failure=_failure,
 										error="An unknown error occurred.")
+
+import zope.deferredimport
+zope.deferredimport.initialize()
+
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.app.saml.model",
+	"nti.app.saml.model",
+	"SAMLIDPEntityBindings",
+	"_SAMLIDEntityBindingsFactory")
