@@ -35,6 +35,10 @@ from nti.dataserver.users.users import User
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+ITEMS = StandardExternalFields.ITEMS
+TOTAL = StandardExternalFields.TOTAL
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
+
 @view_config(name=IDP_NAME_IDS,
 			 context=SAMLPathAdapter,
 			 request_method="GET",
@@ -53,9 +57,9 @@ def list_nameid_view(request):
 	entity_bindings = ISAMLIDPEntityBindings(user)
 
 	result = LocatedExternalDict()
-	result[StandardExternalFields.ITEMS] = {k:v for k,v in entity_bindings.iteritems()}
+	items = result[ITEMS] = {k:v for k, v in entity_bindings.iteritems()}
+	result[TOTAL] = result[ITEM_COUNT] = len(items)
 	return result
-
 
 @view_config(name=PROVIDER_INFO,
 			 context=SAMLPathAdapter,
