@@ -20,3 +20,6 @@ SLS = 'sls'
 
 #: Provider info view
 PROVIDER_INFO = 'GetProviderUserInfo'
+
+#: Provider name ids
+IDP_NAME_IDS = 'NameIds'
