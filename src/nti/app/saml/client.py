@@ -144,16 +144,17 @@ class BasicSAMLClient(object):
 			dest = srvs[0]["location"]
 			logger.debug("destination: %s", dest)
 
-# 			cert = None
+			# cert = None
 			extensions = None
 
 			if _cli.config.generate_cert_func is not None:
 				cert_str, _ = _cli.config.generate_cert_func()
-# 				cert = {
-# 					"cert": cert_str,
-# 					"key": req_key_str
-# 				}
-				spcertenc = SPCertEnc(x509_data=ds.X509Data(x509_certificate=ds.X509Certificate(text=cert_str)))
+				# cert = {
+				# 	"cert": cert_str,
+				# 	"key": req_key_str
+				# }
+				x509_certificate=ds.X509Certificate(text=cert_str)
+				spcertenc = SPCertEnc(x509_data=ds.X509Data(x509_certificate=x509_certificate))
 				extensions = Extensions(extension_elements=[element_to_extension_element(spcertenc)])
 
 			is_passive = 'true' if passive else None
