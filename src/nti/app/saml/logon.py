@@ -182,4 +182,5 @@ zope.deferredimport.deprecatedFrom(
 	"Moved to nti.app.saml.model",
 	"nti.app.saml.model",
 	"SAMLIDPEntityBindings",
-	"_SAMLIDEntityBindingsFactory")
+	"_SAMLIDEntityBindingsFactory",
+	"SAML_IDP_BINDINGS_ANNOTATION_KEY")
