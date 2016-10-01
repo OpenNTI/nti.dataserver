@@ -68,17 +68,17 @@ def list_nameid_view(request):
 			 renderer='rest',
 			 permission=nauth.ACT_NTI_ADMIN)
 def provider_info_view(request):
-		values = CaseInsensitiveDict(request.params)
-		username = values.get('username') or values.get('user')
-		if not username:
-			raise hexc.HTTPUnprocessableEntity(_m("Must specify a username."))
+	values = CaseInsensitiveDict(request.params)
+	username = values.get('username') or values.get('user')
+	if not username:
+		raise hexc.HTTPUnprocessableEntity(_m("Must specify a username."))
 
-		entity_id = values.get('entity_id')
-		if not entity_id:
-			raise hexc.HTTPUnprocessableEntity(_m("Must specify entity_id."))
+	entity_id = values.get('entity_id')
+	if not entity_id:
+		raise hexc.HTTPUnprocessableEntity(_m("Must specify entity_id."))
 
-		user = User.get_user(username)
-		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity(_m("User not found."))
+	user = User.get_user(username)
+	if user is None or not IUser.providedBy(user):
+		raise hexc.HTTPUnprocessableEntity(_m("User not found."))
 
-		return ISAMLIDPUserInfoBindings(user)[entity_id]
+	return ISAMLIDPUserInfoBindings(user)[entity_id]
