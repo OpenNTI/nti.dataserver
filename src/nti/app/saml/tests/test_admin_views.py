@@ -10,6 +10,7 @@ from zope import interface
 
 from hamcrest import assert_that
 from hamcrest import ends_with
+from hamcrest import has_entry
 from hamcrest import has_entries
 from hamcrest import starts_with
 
@@ -27,6 +28,10 @@ from nti.schema.schema import SchemaConfigured
 from persistent.persistence import Persistent
 
 from .interfaces import ITestSAMLProviderUserInfo
+
+from ..client import _SAMLNameId
+from ..interfaces import ISAMLIDPEntityBindings
+from ..interfaces import NAMEID_FORMATS_SAML2_VALUES
 
 @interface.implementer(ITestSAMLProviderUserInfo)		
 class TestProviderInfo(SchemaConfigured, Persistent):
@@ -162,3 +167,108 @@ class TestViews(ApplicationLayerTest):
 								 'test_id': 'testID1',
 								 'MimeType': 'application/vnd.nextthought.saml.testprovideruserinfo'
 								 }))
+
+class MockNameId(object):
+	text = None
+	format = NAMEID_FORMATS_SAML2_VALUES[0]
+
+	def __init__(self, text):
+		self.text = text
+
+class TestNameIdViews(ApplicationLayerTest):
+	
+	layer = ApplicationTestLayer
+	layer.set_up_packages = ('nti.app.saml.tests',)
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_get_for_user(self):
+		admin_user = 'chris@nextthought.com'
+		username = 'utz2345'
+		entity_id = 'sso.nt.com'
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user(username=admin_user)
+
+			user = self._create_user(username=username)
+			bindings = ISAMLIDPEntityBindings(user)
+			bindings[entity_id] = _SAMLNameId(MockNameId('A23BE5'))
+
+		self.testapp.get('/dataserver2/saml/@@NameIds',
+						 extra_environ=self._make_extra_environ(username=username),
+						 status=403)
+
+		self.testapp.get('/dataserver2/saml/@@NameIds',
+						 extra_environ=self._make_extra_environ(username=admin_user),
+						 status=422)
+
+		self.testapp.get('/dataserver2/saml/@@NameIds',
+						 params={'username': 'idontexist'},
+						 extra_environ=self._make_extra_environ(username=admin_user),
+						 status=422)
+
+		response = self.testapp.get('/dataserver2/saml/@@NameIds',
+						 			{'username': username},
+						 			extra_environ=self._make_extra_environ(username=admin_user),
+						 			status=200)
+
+		response = response.json_body
+
+		assert_that(response, has_entry('Items', has_entry('sso.nt.com', 
+										  				   has_entry('nameid', 'A23BE5'))))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_get_for_specific_entity(self):
+		admin_user = 'chris@nextthought.com'
+		username = 'utz2345'
+		entity_id = 'sso.nt.com'
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user(username=admin_user)
+
+			user = self._create_user(username=username)
+			bindings = ISAMLIDPEntityBindings(user)
+			bindings[entity_id] = _SAMLNameId(MockNameId('A23BE5'))
+
+
+		self.testapp.get('/dataserver2/saml/@@NameIds',
+						 			params={'username': username, 'idp_entity_id': 'foo.bar'},
+						 			extra_environ=self._make_extra_environ(username=admin_user),
+						 			status=404)
+
+		response = self.testapp.get('/dataserver2/saml/@@NameIds',
+						 			params={'username': username, 'idp_entity_id': entity_id},
+						 			extra_environ=self._make_extra_environ(username=admin_user),
+						 			status=200)
+
+		response = response.json_body
+
+		assert_that(response, has_entry('nameid', 'A23BE5'))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_remove_for_entity(self):
+		admin_user = 'chris@nextthought.com'
+		username = 'utz2345'
+		entity_id = 'sso.nt.com'
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user(username=admin_user)
+
+			user = self._create_user(username=username)
+			bindings = ISAMLIDPEntityBindings(user)
+			bindings[entity_id] = _SAMLNameId(MockNameId('A23BE5'))
+
+
+		self.testapp.get('/dataserver2/saml/@@NameIds',
+			 			 params={'username': username, 'idp_entity_id': entity_id},
+			 			 extra_environ=self._make_extra_environ(username=admin_user),
+			 			 status=200)
+
+		self.testapp.delete('/dataserver2/saml/@@NameIds?username=utz2345&idp_entity_id=sso.nt.com',
+			 				extra_environ=self._make_extra_environ(username=username),
+			 				status=403)
+
+		self.testapp.delete('/dataserver2/saml/@@NameIds?username=utz2345&idp_entity_id=sso.nt.com',
+			 				extra_environ=self._make_extra_environ(username=admin_user),
+			 				status=204)
+
+		self.testapp.get('/dataserver2/saml/@@NameIds',
+			 			 params={'username': username, 'idp_entity_id': entity_id},
+			 			 extra_environ=self._make_extra_environ(username=admin_user),
+			 			 status=404)
