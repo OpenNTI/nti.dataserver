@@ -176,9 +176,6 @@ class MockNameId(object):
 		self.text = text
 
 class TestNameIdViews(ApplicationLayerTest):
-	
-	layer = ApplicationTestLayer
-	layer.set_up_packages = ('nti.app.saml.tests',)
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_get_for_user(self):
