@@ -28,8 +28,8 @@
 
 	<!-- permissions cache -->
 	<configure zcml:condition="installed nti.contenttypes.courses">
-		<subscriber handler="._permissioned._on_enroll_record" />
-		<subscriber handler="._permissioned._on_unenroll_record" />
+		<subscriber handler="._courses._on_enroll_record" />
+		<subscriber handler="._courses._on_unenroll_record" />
 	</configure>
 
 	<!--

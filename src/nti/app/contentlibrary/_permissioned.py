@@ -16,18 +16,11 @@ from zope import component
 
 from zope.component import hooks
 
-from zope.lifecycleevent.interfaces import IObjectAddedEvent
-from zope.lifecycleevent.interfaces import IObjectRemovedEvent
-
-from zope.security.interfaces import IPrincipal
-
 from zope.traversing.interfaces import IEtcNamespace
 
 from nti.app.authentication import get_remote_user
 
 from nti.appserver.pyramid_authorization import is_readable
-
-from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
 from nti.dataserver.interfaces import IMemcacheClient
 
@@ -82,20 +75,6 @@ def _get_user_content_package_key(user, content_package, client):
 	base = _get_base_key(user.username, content_package.ntiid)
 	result = "/contentlibrary/%s/%s" % (base, ticket)
 	return result.lower()
-
-def _on_operation_on_scope_membership(record, event):
-	principal = record.Principal
-	if principal != None:
-		pid = IPrincipal(principal).id
-		_set_user_ticket(pid, _memcached_client())
-
-@component.adapter(ICourseInstanceEnrollmentRecord, IObjectAddedEvent)
-def _on_enroll_record(record, event):
-	_on_operation_on_scope_membership(record , event)
-
-@component.adapter(ICourseInstanceEnrollmentRecord, IObjectRemovedEvent)
-def _on_unenroll_record(record, event):
-	_on_operation_on_scope_membership(record , event)
 	
 class _PermissionedContentPackageMixin(object):
 
