@@ -144,18 +144,20 @@
 					 pyramid.interfaces.IRequest"
 				zcml:condition="installed nti.app.products.courseware"/>
 
-	<!-- Catalog -->
-	<!-- Type -->
-	<adapter factory=".catalog._asset_to_contained_type" />
-
-	<!-- Namespace -->
-	<adapter factory=".catalog._asset_to_namespace" />
-
-	<!-- NTIID -->
-	<adapter factory=".catalog._asset_to_ntiid" />
+	<configure zcml:condition="installed nti.contenttypes.courses">
+		<!-- Catalog -->
+		<!-- Type -->
+		<adapter factory=".catalog._asset_to_contained_type" />
 	
-	<!-- Containers -->
-	<adapter factory=".catalog._asset_to_containers" />	
+		<!-- Namespace -->
+		<adapter factory=".catalog._asset_to_namespace" />
+	
+		<!-- NTIID -->
+		<adapter factory=".catalog._asset_to_ntiid" />
+		
+		<!-- Containers -->
+		<adapter factory=".catalog._asset_to_containers" />	
+	</configure>
 
 	<!-- Adapters & Subscribers -->
 	<adapter factory=".adapters.presentation_asset_items_factory"
