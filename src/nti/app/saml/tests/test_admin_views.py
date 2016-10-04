@@ -15,7 +15,6 @@ from hamcrest import has_entries
 from hamcrest import starts_with
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
-from nti.app.testing.application_webtest import ApplicationTestLayer
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
@@ -32,27 +31,27 @@ from .interfaces import ITestSAMLProviderUserInfo
 from ..client import _SAMLNameId
 from ..interfaces import ISAMLIDPEntityBindings
 from ..interfaces import NAMEID_FORMATS_SAML2_VALUES
+from . import SAMLTestLayer
 
-@interface.implementer(ITestSAMLProviderUserInfo)		
+@interface.implementer(ITestSAMLProviderUserInfo)
 class TestProviderInfo(SchemaConfigured, Persistent):
 	test_id = 'testID1'
 	mimeType = mime_type = 'application/vnd.nextthought.saml.testprovideruserinfo'
 
 class TestViews(ApplicationLayerTest):
-	
-	layer = ApplicationTestLayer
-	layer.set_up_packages = ('nti.app.saml.tests',)
+
+	layer = SAMLTestLayer
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_provider_info_view_no_user(self):
 		########
 		# Setup
 		getUrl = "/dataserver2/saml/@@GetProviderUserInfo"
-		
+
 		username = 'bobby.hagen@nextthought.com'
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user(username=username)
-		
+
 		extra_environ = self._make_extra_environ(username=username)
 
 		#######
@@ -64,7 +63,7 @@ class TestViews(ApplicationLayerTest):
 
 		#######
 		# Verify
-		
+
 		assert_that(str(response), ends_with('Must specify a username.'))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
@@ -72,11 +71,11 @@ class TestViews(ApplicationLayerTest):
 		########
 		# Setup
 		getUrl = "/dataserver2/saml/@@GetProviderUserInfo"
-		
+
 		username = b'bobby.hagen@nextthought.com'
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user(username=username)
-		
+
 		extra_environ = self._make_extra_environ(username=username)
 
 		#######
@@ -88,7 +87,7 @@ class TestViews(ApplicationLayerTest):
 
 		#######
 		# Verify
-		
+
 		assert_that(str(response), ends_with('Must specify entity_id.'))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
@@ -96,11 +95,11 @@ class TestViews(ApplicationLayerTest):
 		########
 		# Setup
 		getUrl = "/dataserver2/saml/@@GetProviderUserInfo"
-		
+
 		username = b'bobby.hagen@nextthought.com'
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user(username=username)
-		
+
 		extra_environ = self._make_extra_environ(username=username)
 
 		#######
@@ -112,7 +111,7 @@ class TestViews(ApplicationLayerTest):
 
 		#######
 		# Verify
-		
+
 		assert_that(str(response), ends_with('User not found.'))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
@@ -158,7 +157,7 @@ class TestViews(ApplicationLayerTest):
 
 		#######
 		# Verify
-		
+
 # 		assert_that(str(response), ends_with('Must specify entity_id.'))
 		result = response.json_body
 		assert_that(result,
@@ -209,7 +208,7 @@ class TestNameIdViews(ApplicationLayerTest):
 
 		response = response.json_body
 
-		assert_that(response, has_entry('Items', has_entry('sso.nt.com', 
+		assert_that(response, has_entry('Items', has_entry('sso.nt.com',
 										  				   has_entry('nameid', 'A23BE5'))))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)

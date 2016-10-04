@@ -4,15 +4,6 @@
             xmlns:zcml="http://namespaces.zope.org/zcml"
 			xmlns:ext="http://nextthought.com/ntp/ext">
 
-    <include package="zope.component" file="meta.zcml" />
-    <include package="zope.security" file="meta.zcml" />
-    <include package="zope.component" />
-    <include package="zope.security" />
-
-	<!-- Include plugins -->
-	<include package="z3c.autoinclude" file="meta.zcml" />
-	<includePlugins package="." />
-
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
