@@ -42,14 +42,13 @@ from nti.appserver.interfaces import get_principal_ugd_filter
 from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
-from nti.assessment.interfaces import IQPoll
-from nti.assessment.interfaces import IQSurvey
-
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.indexed_data import get_catalog as lib_catalog
 
 from nti.contenttypes.presentation.interfaces import INTIAudio
 from nti.contenttypes.presentation.interfaces import INTIVideo
+from nti.contenttypes.presentation.interfaces import INTIPollRef
+from nti.contenttypes.presentation.interfaces import INTISurveyRef
 
 from nti.dataserver import liking
 from nti.dataserver.users import User
@@ -440,8 +439,11 @@ class _MimeFilter(object):
 def _created_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 	return user == self.creator
 
-from nti.assessment.assessed import QAssessedQuestionSet
-QAssessedQuestionSet.xxx_isReadableByAnyIdOfUser = _created_xxx_isReadableByAnyIdOfUser
+try:
+	from nti.assessment.assessed import QAssessedQuestionSet
+	QAssessedQuestionSet.xxx_isReadableByAnyIdOfUser = _created_xxx_isReadableByAnyIdOfUser
+except ImportError:
+	pass
 
 from nti.dataserver.chat_transcripts import _AbstractMeetingTranscriptStorage
 _AbstractMeetingTranscriptStorage.xxx_isReadableByAnyIdOfUser = _created_xxx_isReadableByAnyIdOfUser
@@ -1250,9 +1252,10 @@ class RecursiveUGDView(_UGDView):
 												 sites=sites,
 												 container_all_of=False,
 									   			 provided=(INTIVideo, INTIAudio,
-															IQPoll, IQSurvey))
+														   INTIPollRef, INTISurveyRef))
 				for obj in objects:
-					containers.add(obj.ntiid)
+					ntiid = getattr(obj, 'target', None) or obj.ntiid
+					containers.add(ntiid)
 
 		# We always include the unnamed root (which holds things like CIRCLED)
 		# NOTE: This is only in the stream. Normally we cannot store contained
