@@ -127,7 +127,6 @@ setup(
 		# 'setuptools_subversion >= 3.1'
 	],
 	install_requires=[
-		'nti.assessment',
 		'nti.common',
 		'nti.contentfragments',
 		'nti.contentindexing',
