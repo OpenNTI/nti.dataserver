@@ -176,12 +176,7 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 		except ConnectionStateError:
 			return object.__repr__(self)
 
-	def __str__(self):
-		try:
-			return self.__name__
-		except ConnectionStateError:
-			return object.__str__(self)
-
+	__str__ = __repr__
 	__unicode__ = __str__
 
 	@property
