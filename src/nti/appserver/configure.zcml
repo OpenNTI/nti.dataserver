@@ -407,12 +407,15 @@
 		<subscriber handler=".nti_gunicorn._process_did_fork_will_exec" />
 	</configure>
 	<subscriber handler=".application._configure_zodb_tween" />
-
+	
 	<include package="nti.socketio" />
-	<include package="nti.assessment" />
 	<include package="nti.contentrange" />
 	<include package="nti.contentfragments" />
 	<include package="nti.contentprocessing" />
+
+	<configure zcml:condition="installed nti.assessment">
+		<include package="nti.assessment" />
+	</configure>
 
 	<!-- UI Rendering -->
 	<include package="." file="configure_tables.zcml" />
