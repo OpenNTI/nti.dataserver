@@ -13,6 +13,7 @@ from hamcrest import assert_that
 from hamcrest import contains_inanyorder
 
 import os
+import gc
 import fudge
 
 from zope import component
@@ -66,12 +67,19 @@ class PersistentComponents(Components, Persistent):
 class TestSubscribers(ApplicationLayerTest):
 
 	def setUp(self):
+		gsm = component.getGlobalSiteManager()
+		self.old_library = gsm.getUtility(IContentPackageLibrary)
 		self.library_dir = os.path.join(os.path.dirname(__file__), 'library')
 		self.library = FileLibrary(self.library_dir)
-		component.getGlobalSiteManager().registerUtility(self.library, IContentPackageLibrary)
+		gsm.registerUtility(self.library, IContentPackageLibrary)
 
 	def tearDown(self):
-		component.getGlobalSiteManager().unregisterUtility(self.library, IContentPackageLibrary)
+		gsm = component.getGlobalSiteManager()
+		gsm.unregisterUtility(self.library, IContentPackageLibrary)
+		gsm.registerUtility(self.old_library, IContentPackageLibrary)
+		del self.library
+		del self.old_library
+		gc.collect()
 
 	@property
 	def sites(self):

@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import gc
+
 import os
 import os.path
 
@@ -34,11 +36,11 @@ from nti.dataserver.tests.mock_dataserver import mock_db_trans
 class _SharedSetup(object):
 
 	@staticmethod
-	def _setup_library( cls, *args, **kwargs ):
-		return FileLibrary( cls.library_dir )
+	def _setup_library(layer, *args, **kwargs ):
+		return FileLibrary(layer.library_dir)
 
 	@staticmethod
-	def install_bundles(cls, ds):
+	def install_bundles(layer, ds):
 		# XXX: This duplicates a lot of what's done by subscribers
 		# in nti.contentlibrary
 		with mock_db_trans(ds):
@@ -46,31 +48,45 @@ class _SharedSetup(object):
 			ds = ds.dataserver_folder
 
 			global_bundle_library = ContentPackageBundleLibrary()
-			cls.bundle_library = global_bundle_library
+			layer.bundle_library = global_bundle_library
 			ds.getSiteManager().registerUtility(global_bundle_library, IContentPackageBundleLibrary)
 			# For traversal purposes (for now) we put the library in '/dataserver2/++etc++bundles/bundles'
 			site = Folder()
 			ds['++etc++bundles'] = site
 			site['bundles'] = global_bundle_library
 
-			bucket = cls.global_library._enumeration.root.getChildNamed('sites').getChildNamed('localsite').getChildNamed('ContentPackageBundles')
+			bucket = layer.global_library._enumeration.root.getChildNamed('sites').getChildNamed('localsite').getChildNamed('ContentPackageBundles')
 			ISyncableContentPackageBundleLibrary(global_bundle_library).syncFromBucket(bucket)
 
 			ds.getSiteManager().registerUtility(site, provided=IEtcNamespace, name='bundles')
 
 	@staticmethod
-	def setUp(cls):
+	def setUp(layer):
 		# Must implement!
-		cls.__old_library = component.queryUtility(IContentPackageLibrary)
-		global_library = cls.global_library = cls._setup_library()
+		gsm = component.getGlobalSiteManager()
+		layer._old_library = gsm.queryUtility(IContentPackageLibrary)
+		if layer._old_library is None:
+			print("WARNING: A previous layer removed the global IContentPackageLibrary", layer)
 
-		component.provideUtility(global_library, IContentPackageLibrary)
+		global_library = layer.global_library = layer._setup_library()
+
+		gsm.registerUtility(global_library, IContentPackageLibrary)
 		global_library.syncContentPackages()
 
 	@staticmethod
-	def tearDown(cls):
+	def tearDown(layer):
 		# Must implement!
-		component.provideUtility(cls.__old_library, IContentPackageLibrary)
+		# Use the dict to avoid inheritance
+		new_library = layer.__dict__['global_library']
+		old_library = layer.__dict__['_old_library']
+		component.getGlobalSiteManager().unregisterUtility(new_library, IContentPackageLibrary)
+		if old_library is not None:
+			component.getGlobalSiteManager().registerUtility(old_library, IContentPackageLibrary)
+		else:
+			print("WARNING: when tearing down layer", layer, "no previous library to restore")
+		del layer.global_library
+		del layer._old_library
+		gc.collect()
 
 class CourseTestContentApplicationTestLayer(ApplicationTestLayer):
 
@@ -93,7 +109,7 @@ class CourseTestContentApplicationTestLayer(ApplicationTestLayer):
 	@classmethod
 	def testSetUp(cls, test=None):
 		test = test or find_test()
-		test.setUpDs = lambda *args: _SharedSetup.install_bundles(cls)
+		test.setUpDs = lambda *args: _SharedSetup.install_bundles(cls, *args)
 
 	@classmethod
 	def testTearDown(cls, test=None):

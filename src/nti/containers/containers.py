@@ -226,7 +226,7 @@ class _CheckObjectOnSetMixin(object):
 try:
 	from Acquisition import aq_base
 	from Acquisition.interfaces import IAcquirer
-	
+
 	class AcquireObjectsOnReadMixin(object):
 		"""
 		Mix this in /before/ the container to support implicit
@@ -291,7 +291,7 @@ class LastModifiedBTreeContainer(DCTimesLastModifiedMixin,
 	"""
 
 	createdTime = 0
-	lastModified = NumericPropertyDefaultingToZero(	str('_lastModified'), 
+	lastModified = NumericPropertyDefaultingToZero(	str('_lastModified'),
 													NumericMaximum,
 													as_number=True)
 
@@ -397,7 +397,7 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	def _checkValue(self, value):
 		if value is None:
 			raise TypeError('Value must not be None')
-	
+
 	def _checkSame(self, key, value):
 		old = self.get(key)
 		if old is not None:
@@ -438,7 +438,7 @@ class NOOwnershipLastModifiedBTreeContainer(EventlessLastModifiedBTreeContainer)
 	A BTreeContainer that only broadcast added, removed and container modified events
 	but does not take ownership of the objects
 	"""
-	
+
 	def clear(self, event=True):
 		for k in list(self.keys()):
 			if event:
@@ -534,7 +534,7 @@ _tx_key_insen = tx_key_insen # BWC
 class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	"""
 	A BTreeContainer that only works with string (unicode) keys, and treats
-	them in a case-insensitive fashion. The original case of the key entered is 
+	them in a case-insensitive fashion. The original case of the key entered is
 	preserved.
 	"""
 
@@ -628,7 +628,7 @@ class CaseSensitiveLastModifiedBTreeFolder(CheckingLastModifiedBTreeFolder):
 	"""
 	Scalable case-sensitive :class:`IFolder` implementation.
 	"""
-	
+
 	def sublocations(self):
 		for v in self._SampleContainer__data.values():
 			yield v
