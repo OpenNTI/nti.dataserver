@@ -27,8 +27,10 @@
 			 name="detail" />
 
 	<!-- permissions cache -->
-	<subscriber handler="._permissioned._on_enroll_record" />
-	<subscriber handler="._permissioned._on_unenroll_record" />
+	<configure zcml:condition="installed nti.contenttypes.courses">
+		<subscriber handler="._permissioned._on_enroll_record" />
+		<subscriber handler="._permissioned._on_unenroll_record" />
+	</configure>
 
 	<!--
 		 The user has a named path adapter to get his personal library.
