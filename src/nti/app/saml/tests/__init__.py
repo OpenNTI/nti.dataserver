@@ -19,7 +19,14 @@ class SAMLTestLayer(ApplicationTestLayer):
 
 	@classmethod
 	def setUp(cls):
-		cls.setUpPackages()
+		# We need to use configure_packages instead of setUpPackages
+		# to avoid having zope.eventtesting.events.append duplicated
+		# as a handler. This is poorly documented in nti.testing 1.0.0.
+		# Passing in our context is critical.
+		cls.configure_packages(set_up_packages=cls.set_up_packages,
+                               features=cls.features,
+                               context=cls.configuration_context)
+
 
 	@classmethod
 	def tearDown(cls):

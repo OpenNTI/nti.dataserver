@@ -220,9 +220,9 @@ class TestLogonViews(ApplicationLayerTest):
 		super(TestLogonViews, self).setUp()
 		eventtesting.clearEvents()
 		del _user_created_events[:]
-		component.provideHandler(_handle_user_create_event)
+		component.getGlobalSiteManager().registerHandler(_handle_user_create_event)
 		self.log_handler = zope.testing.loghandler.Handler(self)
-		self.__policy = component.queryUtility(pyramid.interfaces.IAuthenticationPolicy)
+		self.__policy = component.getGlobalSiteManager().queryUtility(pyramid.interfaces.IAuthenticationPolicy)
 
 	def tearDown(self):
 		self.log_handler.close()
@@ -230,7 +230,7 @@ class TestLogonViews(ApplicationLayerTest):
 		if policy:
 			component.globalSiteManager.unregisterUtility(policy, provided=pyramid.interfaces.IAuthenticationPolicy)
 		if self.__policy:
-			component.provideUtility(self.__policy)
+			component.getGlobalSiteManager().registerUtility(self.__policy)
 		component.getGlobalSiteManager().unregisterHandler(_handle_user_create_event)
 		super(TestLogonViews, self).tearDown()
 
@@ -532,7 +532,6 @@ class TestLogonViews(ApplicationLayerTest):
 
 	@WithMockDSTrans
 	def test_create_facebook_from_external(self):
-
 		fb_user = logon._deal_with_external_account(request=get_current_request(),
 													username="jason.madden@nextthought.com",
 													fname="Jason",
@@ -619,7 +618,7 @@ class TestLogonViews(ApplicationLayerTest):
 
 		user = users.User.create_user(self.ds, username='jason.madden@nextthought.com', password='temp001')
 		content_roles = component.getAdapter(user, nti_interfaces.IGroupMember, nauth.CONTENT_ROLE_PREFIX)
-	
+
 		# initially empty
 		assert_that(list(content_roles.groups), is_([]))
 
