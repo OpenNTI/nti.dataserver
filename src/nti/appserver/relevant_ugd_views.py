@@ -17,12 +17,12 @@ from zope import interface
 from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.appserver import httpexceptions as hexc
+
 from nti.appserver.ugd_query_views import Operator
 from nti.appserver.ugd_query_views import UGDView
 from nti.appserver.ugd_query_views import _RecursiveUGDView
 from nti.appserver.ugd_query_views import _combine_predicate
-
-from nti.assessment.interfaces import IQAssessmentItemContainer
+from nti.appserver.ugd_query_views import lists_and_dicts_to_ext_collection
 
 from nti.contentlibrary.indexed_data import get_catalog as lib_catalog
 from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
@@ -38,12 +38,31 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.site.site import get_component_hierarchy_names
 
-from .ugd_query_views import lists_and_dicts_to_ext_collection
-
+ITEMS = StandardExternalFields.ITEMS
+TOTAL = StandardExternalFields.TOTAL
 LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 
 union_operator = Operator.union
 intersection_operator = Operator.intersection
+
+def _get_library_path(ntiid):
+	library = component.getUtility(IContentPackageLibrary)
+	paths = library.pathToNTIID(ntiid) if library else None
+	return paths[-1] if paths else None
+
+def _container_assessments(units, ntiid):
+	results = []
+	try:
+		from nti.assessment.interfaces import IQAssessmentItemContainer
+		for unit in units + [_get_library_path(ntiid)]:
+			container = IQAssessmentItemContainer(unit, None)
+			if not container:
+				continue
+			for asm_item in container.assessments():
+				results.append(asm_item)
+	except ImportError:
+		pass
+	return results
 
 class _AbstractRelevantUGDView(object):
 
@@ -73,11 +92,6 @@ class _AbstractRelevantUGDView(object):
 		predicate = _combine_predicate(filter_shared_with, predicate, operator=operator)
 		return predicate
 
-	def _get_library_path(self, ntiid):
-		library = component.getUtility(IContentPackageLibrary)
-		paths = library.pathToNTIID(ntiid) if library else None
-		return paths[-1] if paths else None
-
 	def _scan_quizzes(self, ntiid):
 		library = component.getUtility(IContentPackageLibrary)
 		# Quizzes are often subcontainers, so we look at the parent and its children
@@ -86,33 +100,28 @@ class _AbstractRelevantUGDView(object):
 		units = []
 		children = library.childrenOfNTIID(ntiid)
 		for unit in children:
-			unit = find_object_with_ntiid( unit )
+			unit = find_object_with_ntiid(unit)
 			if unit is not None:
-				units.append( unit )
+				units.append(unit)
 
-		for unit in units + [self._get_library_path(ntiid)]:
-			container = IQAssessmentItemContainer(unit, None)
-			if not container:
-				continue
-			for asm_item in container.assessments():
-				results.append( asm_item )
+		results.extend(_container_assessments(units, ntiid))
 		return results
 
 	def _scan_media(self, ntiid):
 		results = []
-		unit = self._get_library_path(ntiid)
+		unit = _get_library_path(ntiid)
 		if unit is None:
 			return results
 
 		for iface in (IVideoIndexedDataContainer, IAudioIndexedDataContainer):
 			for media_data in iface(unit).values():
-				results.append( media_data )
+				results.append(media_data)
 		return results
 
 	def _get_legacy_contained(self, container_ntiid):
 		results = []
-		results.extend( self._scan_media( container_ntiid ))
-		results.extend( self._scan_quizzes( container_ntiid ))
+		results.extend(self._scan_media(container_ntiid))
+		results.extend(self._scan_quizzes(container_ntiid))
 		return results
 
 	def get_contained(self, container_ntiid):
@@ -122,7 +131,7 @@ class _AbstractRelevantUGDView(object):
 										 sites=sites)
 		if not objects:
 			# Needed for non-persistent courses
-			objects = self._get_legacy_contained( container_ntiid )
+			objects = self._get_legacy_contained(container_ntiid)
 		return objects
 
 	def get_objects(self, container_ntiid):
@@ -130,18 +139,18 @@ class _AbstractRelevantUGDView(object):
 		# Seems wrong to do this in all cases, was doing it just for
 		# assessment items before.
 		try:
-			unit = self._get_library_path( container_ntiid )
+			unit = _get_library_path(container_ntiid)
 			container_ntiid = unit.ntiid
 		except AttributeError:
 			pass
-		contained_objects = self.get_contained( container_ntiid )
-		contained_ntiids = set( (x.ntiid for x in contained_objects) )
-		contained_ntiids.add( container_ntiid )
+		contained_objects = self.get_contained(container_ntiid)
+		contained_ntiids = set((x.ntiid for x in contained_objects))
+		contained_ntiids.add(container_ntiid)
 
 		results = []
 		for ntiid in contained_ntiids:
 			contained_ugd = self.getObjectsForId(self.user, ntiid)
-			results.extend( contained_ugd )
+			results.extend(contained_ugd)
 		return results
 
 	def __call__(self):
@@ -151,7 +160,7 @@ class _AbstractRelevantUGDView(object):
 		predicate = self._make_complete_predicate()
 		# De-dupe; we could batch here if needed.
 		result = lists_and_dicts_to_ext_collection(items, predicate)
-		result['Total'] = len(result.get('Items', ()))
+		result[TOTAL] = len(result.get(ITEMS, ()))
 		result.mimeType = nti_mimetype_with_class(None)
 		interface.alsoProvides(result, IUGDExternalCollection)
 		return result
