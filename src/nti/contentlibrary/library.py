@@ -248,7 +248,7 @@ class AbstractContentPackageLibrary(object):
 			lifecycleevent.created(new)
 			lib_sync_results.added(new.ntiid)   # register
 			notify(ContentPackageAddedEvent(new, params, results))
-			
+
 	def _do_removeContentPackages(self, removed, lib_sync_results, params, results):
 		for old in removed or ():
 			notify(ContentPackageRemovedEvent(old, params, results))
@@ -288,7 +288,7 @@ class AbstractContentPackageLibrary(object):
 			# Signal what pacakges WERE NOT modified
 			for pacakge in unmodified or ():
 				notify(ContentPackageUnmodifiedEvent(pacakge, params, results))
-				
+
 			# Finish up by saying that we sync'd, even if nothing changed
 			notify(ContentPackageLibraryDidSyncEvent(self, params, results))
 
@@ -306,19 +306,19 @@ class AbstractContentPackageLibrary(object):
 		notify(ContentPackageLibraryWillSyncEvent(self, params))
 		lib_sync_results = LibrarySynchronizationResults(Name=self._root_name)
 		results.add(lib_sync_results)
-		
+
 		never_synced = self._contentPackages is None
 		old_content_packages, old_content_packages_by_ntiid = \
 					self._content_packages_tuple(self._contentPackages)
-					
+
 		contentPackages = self._enumeration.enumerateContentPackages()
 		_, new_content_packages_by_ntiid = \
 					self._content_packages_tuple(contentPackages)
-					
+
 		added = [package
 			 		for ntiid, package in new_content_packages_by_ntiid.items()
 			 		if ntiid not in old_content_packages_by_ntiid]
-		
+
 		removed = []
 		unmodified = []
 		for old in old_content_packages:
@@ -329,11 +329,11 @@ class AbstractContentPackageLibrary(object):
 				unmodified.append(old)
 
 		something_changed = removed or added
-		
+
 		# now set up our view of the world
 		_contentPackages, _content_packages_by_ntiid = \
 									self._do_checkContentPackages(added, unmodified, ())
-		
+
 		if something_changed or never_synced:
 			enumeration_last_modified = getattr(self._enumeration, 'lastModified', 0)
 			# CS/JZ, 1-29-15 We need this before event firings because some code
@@ -357,10 +357,10 @@ class AbstractContentPackageLibrary(object):
 			self._do_addContentPackages(added, lib_sync_results, params, results)
 
 		do_event = bool(something_changed or never_synced)
-		self._do_completeSyncPackages(unmodified, 
-									  lib_sync_results, 
-									  params, 
-									  results, 
+		self._do_completeSyncPackages(unmodified,
+									  lib_sync_results,
+									  params,
+									  results,
 									  do_event,
 									  do_event)
 		return lib_sync_results
@@ -459,7 +459,7 @@ class AbstractContentPackageLibrary(object):
 			# ZODB site access, we can have issues. Also not we're not
 			# randomizing because we expect to be preloaded.
 			self._do_removeContentPackages(removed, lib_sync_results, params, results)
-			
+
 			self._do_updateContentPackages(changed, lib_sync_results, params, results)
 
 			self._do_addContentPackages(added, lib_sync_results, params, results)
@@ -477,10 +477,10 @@ class AbstractContentPackageLibrary(object):
 			event = ContentPackageLibraryModifiedOnSyncEvent(self, params, results, attributes)
 			notify(event)
 
-		self._do_completeSyncPackages(unmodified, 
-									  lib_sync_results, 
-									  params, 
-									  results, 
+		self._do_completeSyncPackages(unmodified,
+									  lib_sync_results,
+									  params,
+									  results,
 									  something_changed or never_synced)
 		return lib_sync_results
 
@@ -644,16 +644,23 @@ class AbstractContentPackageLibrary(object):
 		self._v_path_to_ntiid_cache.clear()
 
 	def _do_path_to_ntiid(self, ntiid):
+		# As first pass, check for the common case if we are
+		# given a content package ntiid.
+		result = None
+		for title in self.contentPackages:
+			if getattr(title, 'ntiid', None) == ntiid:
+				result = [title]
+				break
+
 		# We special case the root ntiid by only looking in
 		# the top level of content packages for our ID.  We should
 		# always return None unless there are root content prefs.
-		result = None
 		if ntiid == NTI_ROOT:
-			for title in self.contentPackages:
-				if getattr(title, 'ntiid', None) == ntiid:
-					result = [title]
-					break
-		else:
+			return result
+
+		if not result:
+			# Now we really have to work. This is really expensive
+			# as the number of content packages grows in our library.
 			for title in self.contentPackages:
 				vals = _pathToPropertyValue(title, 'ntiid', ntiid)
 				if vals:
