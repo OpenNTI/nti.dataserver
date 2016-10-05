@@ -413,10 +413,6 @@
 	<include package="nti.contentfragments" />
 	<include package="nti.contentprocessing" />
 
-	<configure zcml:condition="installed nti.assessment">
-		<include package="nti.assessment" />
-	</configure>
-
 	<!-- UI Rendering -->
 	<include package="." file="configure_tables.zcml" />
 	<include package="." file="configure_feeds.zcml" />
@@ -503,7 +499,8 @@
 				for="nti.dataserver.interfaces.IContextAnnotatable" />
 
 	<!-- Additional -->
-	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
+	<!-- The ones directly mentioned are part of this distribution 
+		 until they get moved out -->
 	<include package="nti.app.mail" />
 	<include package="nti.app.saml" />
 	<include package="nti.app.types" />
