@@ -25,6 +25,7 @@ from nti.appserver.ugd_query_views import _combine_predicate
 from nti.appserver.ugd_query_views import lists_and_dicts_to_ext_collection
 
 from nti.contentlibrary.indexed_data import get_catalog as lib_catalog
+
 from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
 from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
 
@@ -112,9 +113,8 @@ class _AbstractRelevantUGDView(object):
 		unit = _get_library_path(ntiid)
 		if unit is None:
 			return results
-
-		for iface in (IVideoIndexedDataContainer, IAudioIndexedDataContainer):
-			for media_data in iface(unit).values():
+		for provided in (IVideoIndexedDataContainer, IAudioIndexedDataContainer):
+			for media_data in provided(unit).values():
 				results.append(media_data)
 		return results
 
@@ -156,7 +156,6 @@ class _AbstractRelevantUGDView(object):
 	def __call__(self):
 		# Gather data
 		items = self.get_objects(self.ntiid)
-
 		predicate = self._make_complete_predicate()
 		# De-dupe; we could batch here if needed.
 		result = lists_and_dicts_to_ext_collection(items, predicate)
