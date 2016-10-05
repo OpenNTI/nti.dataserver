@@ -455,8 +455,15 @@ def createApplication( http_port,
 					   pyramid_config=None,
 					   **settings ):
 	"""
+	:keyword bool _return_xml_conf_machine: For testing only. If true,
+	    instead of just the callable, we will return a tuple of the callable
+	    and the XML configuration machine we used to load settings with. This
+	    is useful for loading settings again in the future because it keeps track
+	    of which files have already been loaded.
+
 	:return: A WSGI callable.
 	"""
+	_return_xml_conf_machine = settings.pop('_return_xml_conf_machine', False)
 	begin_time = time.time()
 
 	# Configure subscribers, etc.
@@ -729,6 +736,8 @@ def createApplication( http_port,
 	app = pyramid_config.make_wsgi_app()
 
 	logger.info("Configured Dataserver in %.3fs", time.time() - begin_time)
+	if _return_xml_conf_machine:
+		return (app, xml_conf_machine)
 	return app
 
 @component.adapter(IDatabaseOpenedWithRoot)
