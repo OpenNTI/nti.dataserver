@@ -11,7 +11,6 @@ from nti.dataserver.tests.mock_dataserver import WithMockDS
 from nti.dataserver.tests.mock_dataserver import mock_db_trans
 
 from nti.testing.layers import find_test
-from nti.testing.layers import GCLayerMixin
 from nti.testing.layers import ZopeComponentLayer
 from nti.testing.layers import ConfiguringLayerMixin
 
@@ -46,7 +45,6 @@ zanpakuto_commands =  (	"Shoot To Kill",
 						"Multiplication and subtraction of fire and ice, show your might")
 
 class SharedConfiguringTestLayer(ZopeComponentLayer,
-								 GCLayerMixin,
 								 ConfiguringLayerMixin,
 								 DSInjectorMixin):
 

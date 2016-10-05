@@ -61,10 +61,18 @@ class AdapterTestLayer(SharedConfiguringTestLayer):
 			cls.note = json.load(f)
 
 	@classmethod
+	def tearDown(cls):
+		cls.note = cls.messageinfo = None
+
+	@classmethod
 	def testSetUp(cls, test=None):
 		test = test or find_test()
 		test.note = cls.note
 		test.messageinfo = cls.messageinfo
+
+	@classmethod
+	def testTearDown(cls):
+		pass
 
 class TestContentUtils(unittest.TestCase):
 

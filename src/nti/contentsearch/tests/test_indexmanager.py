@@ -75,6 +75,10 @@ class IndexManagerTestLayer(SharedConfiguringTestLayer):
 		cls.bim.close()
 		shutil.rmtree(cls.book_idx_dir, True)
 
+	@classmethod
+	def testTearDown(cls):
+		pass
+
 class TestIndexManager(unittest.TestCase):
 
 	layer = IndexManagerTestLayer
