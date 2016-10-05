@@ -7,6 +7,10 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-def test_patch():
-	import nti.monkey.patch_webob_cookie_escaping_on_import
-	nti.monkey.patch_webob_cookie_escaping_on_import.patch()
+import unittest
+
+class TestPatch(unittest.TestCase):
+
+	def test_patch(self):
+		import nti.monkey.patch_webob_cookie_escaping_on_import
+		nti.monkey.patch_webob_cookie_escaping_on_import.patch()

@@ -16,7 +16,7 @@ import unittest
 import pkg_resources
 
 from nti.contentrange import _domrange
-from nti.contentrange.tests import test_helpers
+from nti.contentrange.tests import _helpers as test_helpers
 
 class BigDocTests(unittest.TestCase):
 
@@ -26,6 +26,7 @@ class BigDocTests(unittest.TestCase):
 		self.main = "".join(i for i in self.main if ord(i) < 128)
 		self.main = re.sub('\&\#8[0-9][0-9][0-9]',' ',self.main)
 		self.main = self.main.replace('\n',' ')
+
 	def test1(self):
 		bigdoc = test_helpers.Document(self.main)
 		# Useful tool for making test cases; set navigator to True to activate

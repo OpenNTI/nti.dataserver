@@ -13,7 +13,7 @@ from hamcrest import assert_that
 import unittest
 
 from nti.contentrange import _domrange
-from nti.contentrange.tests import test_helpers
+from nti.contentrange.tests import _helpers as test_helpers
 
 class DomTests(unittest.TestCase):
 
@@ -121,4 +121,3 @@ class DomTests(unittest.TestCase):
 		self.r[2].collapse(False)
 		assert_that( self.r[2].collapsed, is_( True ) )
 		assert_that( self.r[2].stringify(), is_( '' ) )
-

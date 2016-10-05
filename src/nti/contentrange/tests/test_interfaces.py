@@ -7,5 +7,9 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-def test_interfaces():
-	__import__( 'nti.contentrange.interfaces' )
+import unittest
+
+class TestInterfaces(unittest.TestCase):
+
+	def test_interfaces(self):
+		__import__( 'nti.contentrange.interfaces' )

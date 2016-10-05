@@ -15,7 +15,7 @@ import unittest
 from nti.contentrange import _domrange
 from nti.contentrange import _convertrange
 from nti.contentrange import contentrange
-from nti.contentrange.tests import test_helpers
+from nti.contentrange.tests import _helpers as test_helpers
 
 class ConversionTests(unittest.TestCase):
 	START_TO_START = 0
