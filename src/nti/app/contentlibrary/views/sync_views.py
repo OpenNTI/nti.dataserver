@@ -114,7 +114,7 @@ class _IsSyncInProgressView(AbstractAuthenticatedView):
 			   context=IDataserverFolder,
 			   name='SetSyncLock')
 class _SetSyncLockView(AbstractAuthenticatedView):
-	
+
 	@Lazy
 	def redis(self):
 		return component.getUtility(IRedisClient)
@@ -150,7 +150,7 @@ class _LastSyncTimeView(AbstractAuthenticatedView):
 
 class _AbstractSyncAllLibrariesView(_SetSyncLockView,
 						    		ModeledContentUploadRequestUtilsMixin):
-	
+
 	def readInput(self, value=None):
 		result = CaseInsensitiveDict()
 		if self.request:
@@ -196,7 +196,7 @@ class _AddRemoveContentPackagesView(_AbstractSyncAllLibrariesView):
 	If you GET this view, changes to not take effect but are just
 	logged.
 	"""
-	
+
 	# Because we'll be doing a lot of filesystem IO, which may not
 	# be well cooperatively tasked (gevent), we would like to give
 	# the opportunity for other greenlets to run by sleeping inbetween
@@ -220,7 +220,7 @@ class _AddRemoveContentPackagesView(_AbstractSyncAllLibrariesView):
 			result['Params'] = params
 			result['Results'] = results
 			result['SyncTime'] = time.time() - now
-		except (StandardError, Exception) as e:
+		except Exception as e: # FIXME: Way too broad an exception
 			logger.exception("Failed to Sync %s", self._txn_id())
 
 			transaction.doom()  # cancel changes
@@ -228,6 +228,9 @@ class _AddRemoveContentPackagesView(_AbstractSyncAllLibrariesView):
 			exc_type, exc_value, exc_traceback = sys.exc_info()
 			result['code'] = e.__class__.__name__
 			result['message'] = str(e)
+			# XXX: No, we should not expose the traceback over the web. Ever,
+			# unless the exception catching middleware is installed, which is only
+			# in devmode.
 			result['traceback'] = repr(traceback.format_exception(exc_type,
 																  exc_value,
 																  exc_traceback))

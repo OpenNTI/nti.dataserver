@@ -478,6 +478,14 @@ clear_package_assets = _clear_assets
 
 def _clear_last_modified(content_package, catalog=None):
 	catalog = get_library_catalog() if catalog is None else catalog
+	if catalog is None:
+		# XXX: Seen this in tests. It means our configuration is
+		# screwed up.
+		# XXX: Why doesn't get_library_catalog() use getComponent and raise
+		# the lookup error? Better to fail fast.
+		logger.warning("Failed to find catalog")
+		return
+
 	for name, _, _ in INDICES:
 		namespace = _get_file_last_mod_namespace(content_package, name)
 		catalog.remove_last_modified(namespace)

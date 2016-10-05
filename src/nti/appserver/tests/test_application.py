@@ -1398,6 +1398,7 @@ class _ApplicationLibraryTestLayer(ApplicationTestLayer):
 	def setUp(cls):
 		# Must implement!
 		pass
+
 	@classmethod
 	def tearDown(cls):
 		# Must implement!
@@ -1406,7 +1407,19 @@ class _ApplicationLibraryTestLayer(ApplicationTestLayer):
 	@classmethod
 	def testSetUp(cls, test=None):
 		test = test or find_test()
-		test.config.registry.registerUtility( test._setup_library() )
+		cls.cur_lib = test.config.registry.queryUtility(lib_interfaces.IContentPackageLibrary)
+		cls.new_lib = test._setup_library()
+		test.config.registry.registerUtility( cls.new_lib )
+
+	@classmethod
+	def testTearDown(cls):
+		test = find_test()
+		test.config.registry.unregisterUtility(cls.new_lib, lib_interfaces.IContentPackageLibrary)
+		if cls.cur_lib is not None and test.config.registry is component.getGlobalSiteManager():
+			test.config.registry.registerUtility(cls.cur_lib, lib_interfaces.IContentPackageLibrary)
+
+		del cls.cur_lib
+		del cls.new_lib
 
 class TestApplicationLibraryBase(ApplicationLayerTest):
 	layer = _ApplicationLibraryTestLayer

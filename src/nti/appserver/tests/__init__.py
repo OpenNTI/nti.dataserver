@@ -7,6 +7,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import gc
 import nti.appserver
 
 import zope.deferredimport
@@ -57,24 +58,32 @@ class ExLibraryApplicationTestLayer(ApplicationTestLayer):
 	@classmethod
 	def setUp(cls):
 		# Must implement!
-		cls.__old_library = component.queryUtility(IContentPackageLibrary)
+		gsm = component.getGlobalSiteManager()
+		cls.__old_library = gsm.queryUtility(IContentPackageLibrary)
 		if cls.__old_library is not None:
 			cls.__old_library.resetContentPackages()
 
 		lib = cls._setup_library()
 
-		component.provideUtility(lib, IContentPackageLibrary)
+		gsm.registerUtility(lib, IContentPackageLibrary)
 		lib.syncContentPackages()
 		cls.__current_library = lib
 
 	@classmethod
 	def tearDown(cls):
 		# Must implement!
+		gsm = component.getGlobalSiteManager()
 		cls.__current_library.resetContentPackages()
+		gsm.unregisterUtility(cls.__current_library, IContentPackageLibrary)
 		del cls.__current_library
 		if cls.__old_library is not None:
-			component.provideUtility(cls.__old_library, IContentPackageLibrary)
-			cls.__old_library.syncContentPackages()
+			gsm.registerUtility(cls.__old_library, IContentPackageLibrary)
+			# XXX Why would we need to sync the content packages here? It's been
+			# sidelined this whole time. Doing so leads to InappropriateSiteError
+			#cls.__old_library.syncContentPackages()
+
+		del cls.__old_library
+		gc.collect()
 
 	# TODO: May need to recreate the application with this library?
 
