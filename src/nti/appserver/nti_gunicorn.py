@@ -549,16 +549,13 @@ def _post_fork(arbiter, worker):
 	# even in the child worker they stick around)
 	prev_handler = None
 	import signal
-	from ._util import dump_stacks
-	from ._util import dump_database_cache
+	from ._util import dump_info
 	import sys
 	import gc
 	def handle_info(signum, frame):
-		stacks = dump_stacks()
-		print('\n'.join(stacks), file=sys.stderr)
+		info = dump_info(db_gc=True)
+		print(info, file=sys.stderr)
 		print('\nGC Enabled:', gc.isenabled())
-		caches = dump_database_cache(gc=True)
-		print('\n'.join(caches), file=sys.stderr)
 		if callable(prev_handler):
 			prev_handler(signum, frame)
 

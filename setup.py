@@ -153,6 +153,7 @@ setup(
 		'nti.wref',
 		'nti.zodb',
 		'nti.zope_catalog',
+		'objgraph',
 		'pywikipedia',
 		 # Zope Acquisition; used by contentratings implicitly
 		 # cool concept. Pulls in ExtensionClass (which should only be used for acquisition)

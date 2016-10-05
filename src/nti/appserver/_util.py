@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import gc as GC
+
 from pyramid.security import remember
 
 from zope import interface
@@ -77,6 +79,26 @@ def logon_user_with_request(user, request, response=None):
 		response.headers.extend(remember(request, user.username.encode('utf-8')))
 		response.set_cookie(b'username', user.username.encode('utf-8'))  # the web app likes this
 
+def dump_obj_growth(limit=20):
+	"""
+	Request information about the most common object types in the heap,
+	and the growth rate since the previous call to this method.
+
+	Returns a (unicode) string.
+	"""
+
+	import objgraph
+
+	from io import BytesIO
+	out = BytesIO()
+	GC.collect()
+	out.write(b"\nObjects\n")
+	objgraph.show_most_common_types(limit=limit, file=out)
+	out.write(b'\nGrowth\n')
+	objgraph.show_growth(limit=limit, file=out)
+
+	return out.getvalue().decode("ascii")
+
 def dump_stacks():
 	"""
 	Request information about the running threads of the current process.
@@ -90,7 +112,6 @@ def dump_stacks():
 	# threads
 	import threading  # Late import this stuff because it may get monkey-patched
 	import sys
-	import gc
 	import traceback
 	from greenlet import greenlet
 
@@ -106,7 +127,7 @@ def dump_stacks():
 	# if greenlet is present, let's dump each greenlet stack
 	# Use the gc module to inspect all objects to find the greenlets
 	# since there isn't a global registry
-	for ob in gc.get_objects():
+	for ob in GC.get_objects():
 		if not isinstance(ob, greenlet):
 			continue
 		if not ob:
@@ -117,14 +138,22 @@ def dump_stacks():
 
 	return dump
 
-def dump_stacks_view(request):
+def dump_info(db_gc=False):
+	"""
+	Dump diagnostic info to a string.
+	"""
 	body = '\n'.join(dump_stacks())
+	body += dump_obj_growth()
+	body += '\n'.join(dump_database_cache(db_gc))
+	return body
+
+def dump_stacks_view(request):
+	body = dump_info()
 	print(body)
 	request.response.text = body
 	request.response.content_type = b'text/plain'
 	return request.response
 
-import gc as GC
 
 from zope import component
 
@@ -138,13 +167,13 @@ def dump_database_cache(gc=False):
 	:keyword gc: If set to True, then each database will be
 		asked to minimize its cache.
 	"""
-
+	lines = ['Databases']
 	db = component.queryUtility(IDatabase)
 	if db is None:
-		return ["No database"]
+		lines.append("\tNo database")
+		return lines
 
 	databases = db.databases or {'': db}
-	lines = []
 	for name, value in databases.items():
 		lines.append("Database\tCacheSize")
 		lines.append("%s\t%s" % (name, value.cacheSize()))
@@ -156,6 +185,12 @@ def dump_database_cache(gc=False):
 		lines.append("\tTypes")
 		for kind, count in sorted(value.cacheDetail(), key=lambda x: x[1]):
 			lines.append('\t\t%s\t%s' % (kind, count))
+
+		lines.append("\tStorage Cache Stats")
+		try:
+			lines.append(repr(value._storage._cache.clients_local_first[0].stats()))
+		except AttributeError:
+			lines.append("\t\tNo storage cache stats")
 
 		if gc:
 			value.cacheMinimize()

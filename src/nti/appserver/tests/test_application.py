@@ -1664,10 +1664,10 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 import nti.appserver._util
 
 class TestUtil(unittest.TestCase):
-	def test_dump_stacks(self):
-		seq = nti.appserver._util.dump_stacks()
-
-		assert_that( seq, has_item( contains_string( 'dump_stacks' ) ) )
+	def test_dump_info(self):
+		string = nti.appserver._util.dump_info()
+		print(string)
+		assert_that( string, contains_string( 'dump_stacks' ) )
 
 class TestAppUtil(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
