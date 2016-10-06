@@ -208,12 +208,10 @@ class IContentPackageLibrary(ILastModified,
 
 	"""
 
-	def pathToNTIID(ntiid, skip_cache=False):
+	def pathToNTIID(ntiid):
 		"""
 		Returns a list of :class:`IContentUnit` objects in order until
 		the given NTIID is encountered, or :obj:`None` if the ``ntiid`` cannot be found.
-
-		:param bool skip_cache Skip cache flag.
 
 		.. attention:: This does not include the
 			:const:`nti.ntiids.ntiids.ROOT` NTIID. That is an implicit
@@ -240,8 +238,7 @@ class IContentPackageLibrary(ILastModified,
 
 	def __getitem__(key):
 		"""
-		Return the :class:`IContentUnit` having the matching ``title`` or ``ntiid``.
-		(Support for titles is a convenience and not to be relied upon).
+		Return the :class:`IContentPackage` having the matching ``ntiid``.
 		"""
 
 	def get(key, default=None):
@@ -301,7 +298,7 @@ class IContentPackageSyncResults(IGenericSynchronizationResults):
 	AssessmentsSyncLocked = UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
 									  	   title="The locked assessment NTIIDs",
 									  	   default=None, required=False)
-	
+
 	AssetsUpdated =  UniqueIterable(value_type=ValidTextLine(title="An asset NTIID"),
 									title="The updated asset NTIIDs",
 									default=None, required=False)

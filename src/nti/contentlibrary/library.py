@@ -15,7 +15,7 @@ import time
 import numbers
 import warnings
 
-from repoze.lru import LRUCache
+from BTrees.OOBTree import OOBTree
 
 from zope import component
 from zope import interface
@@ -35,6 +35,8 @@ from ZODB.POSException import ConnectionStateError
 
 from persistent import Persistent
 
+from nti.contentlibrary.interfaces import IContentPackage
+from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IPersistentContentUnit
 from nti.contentlibrary.interfaces import ContentPackageAddedEvent
@@ -55,12 +57,8 @@ from nti.contentlibrary.synchronize import LibrarySynchronizationResults
 
 from nti.externalization.persistence import NoPickle
 
-from nti.intid.interfaces import ObjectMissingError
-
-from nti.ntiids.ntiids import ROOT as NTI_ROOT
-
+from nti.property.property import Lazy
 from nti.property.property import alias
-from nti.property.property import CachedProperty
 
 from nti.site.localutility import queryNextUtility
 
@@ -271,6 +269,19 @@ class AbstractContentPackageLibrary(object):
 			# Note that this is the special event that shows both objects.
 			notify(ContentPackageReplacedEvent(new, old, params, results))
 
+	def _get_content_units_by_ntiid(self, packages):
+		"""
+		Get our ntiid to content unit map.
+		"""
+		result = OOBTree()
+		def _recur(unit):
+			result[unit.ntiid] = unit
+			for child in unit.children:
+				_recur(child)
+		for package in packages:
+			_recur(package)
+		return result
+
 	def _do_checkContentPackages(self, added, unmodified, changed=()):
 		_contentPackages = []
 		_contentPackages.extend(added)
@@ -279,11 +290,12 @@ class AbstractContentPackageLibrary(object):
 
 		_contentPackages = tuple(_contentPackages)
 		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
+		_content_units_by_ntiid = self._get_content_units_by_ntiid( _contentPackages )
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
-		return _contentPackages, _content_packages_by_ntiid
+		return _contentPackages, _content_packages_by_ntiid, _content_units_by_ntiid
 
 	def _do_completeSyncPackages(self, unmodified, lib_sync_results, params, results,
-								 clear_cache, do_notify=True):
+								 do_notify=True):
 		if do_notify:
 			# Signal what pacakges WERE NOT modified
 			for pacakge in unmodified or ():
@@ -294,8 +306,6 @@ class AbstractContentPackageLibrary(object):
 
 		# set last sync time
 		self._enumeration.lastSynchronized = time.time()
-		if clear_cache:
-			self._clear_caches()
 		return lib_sync_results
 
 	def addRemoveContentPackages(self, params=None, results=None):
@@ -331,7 +341,7 @@ class AbstractContentPackageLibrary(object):
 		something_changed = removed or added
 
 		# now set up our view of the world
-		_contentPackages, _content_packages_by_ntiid = \
+		_contentPackages, _content_packages_by_ntiid, _content_units_by_ntiid = \
 									self._do_checkContentPackages(added, unmodified, ())
 
 		if something_changed or never_synced:
@@ -343,6 +353,7 @@ class AbstractContentPackageLibrary(object):
 			self._contentPackages = _contentPackages
 			self._enumeration_last_modified = enumeration_last_modified
 			self._content_packages_by_ntiid = _content_packages_by_ntiid
+			self._content_units_by_ntiid = _content_units_by_ntiid
 
 			if not never_synced:
 				logger.info("Library %s adding packages %s", self, added)
@@ -361,7 +372,6 @@ class AbstractContentPackageLibrary(object):
 									  lib_sync_results,
 									  params,
 									  results,
-									  do_event,
 									  do_event)
 		return lib_sync_results
 
@@ -423,13 +433,11 @@ class AbstractContentPackageLibrary(object):
 		something_changed = removed or added or changed
 
 		# now set up our view of the world
-		_contentPackages, _content_packages_by_ntiid = \
+		_contentPackages, _content_packages_by_ntiid, _content_units_by_ntiid = \
 									self._do_checkContentPackages(added,
 																  unmodified,
 																  [x[0] for x in changed])
 
-		# updated packages
-		packages = set(_content_packages_by_ntiid.keys()) if not packages else packages
 		if something_changed or never_synced:
 			# CS/JZ, 1-29-15 We need this before event firings because some code
 			# (at least question_map.py used to) relies on getting the new content units
@@ -438,6 +446,7 @@ class AbstractContentPackageLibrary(object):
 			self._contentPackages = _contentPackages
 			self._enumeration_last_modified = enumeration_last_modified
 			self._content_packages_by_ntiid = _content_packages_by_ntiid
+			self._content_units_by_ntiid = _content_units_by_ntiid
 
 			if not never_synced:
 				logger.info("Library %s adding packages %s", self, added)
@@ -480,11 +489,10 @@ class AbstractContentPackageLibrary(object):
 		self._do_completeSyncPackages(unmodified,
 									  lib_sync_results,
 									  params,
-									  results,
-									  something_changed or never_synced)
+									  results)
 		return lib_sync_results
 
-	# A map from top-level content-package NTIID to the content package.
+	# Maps from top-level content-package NTIIDs to the content package.
 	# This is cached based on the value of the _contentPackages variable,
 	# and uses that variable, which must not be modified outside the
 	# confines of this class.
@@ -515,6 +523,11 @@ class AbstractContentPackageLibrary(object):
 	@property
 	def contentPackages(self):
 		return self._get_contentPackages()
+
+	@Lazy
+	def _content_units_by_ntiid(self):
+		result = self._get_content_units_by_ntiid( self.contentPackages )
+		return result
 
 	def __delattr__(self, name):
 		"""
@@ -558,6 +571,8 @@ class AbstractContentPackageLibrary(object):
 		# Must also take care to clear its dependents
 		if '_content_packages_by_ntiid' in self.__dict__:
 			del self._content_packages_by_ntiid
+		if '_content_units_by_ntiid' in self.__dict__:
+			del self._content_units_by_ntiid
 		del self._contentPackages
 
 	@property
@@ -617,11 +632,14 @@ class AbstractContentPackageLibrary(object):
 	# Other container methods
 	def __delitem__(self, key):
 		raise TypeError("deletion not supported")
+
 	def __setitem__(self, key):
 		raise TypeError("setting not supported")
+
 	def __len__(self):
 		# XXX: This doesn't make much sense
 		return len(self._content_packages_by_ntiid)
+
 	def __contains__(self, key):
 		return self.get(key) is not None
 
@@ -635,74 +653,38 @@ class AbstractContentPackageLibrary(object):
 		result = getattr(self._enumeration, 'lastSynchronized', 0)
 		return result
 
-	@CachedProperty("lastSynchronized")
-	def _v_path_to_ntiid_cache(self):
-		result = LRUCache(2000)
+	def _get_content_unit( self, key ):
+		"""
+		Fetch the content unit referenced by the given ntiid.
+		"""
+		result = self._content_units_by_ntiid.get( key )
+		if result is None:
+			# Check our parent
+			parent = queryNextUtility(self, IContentPackageLibrary)
+			if parent is not None:
+				result = parent._get_content_unit( key )
 		return result
 
-	def _clear_caches(self):
-		self._v_path_to_ntiid_cache.clear()
-
-	def _do_path_to_ntiid(self, ntiid):
-		# As first pass, check for the common case if we are
-		# given a content package ntiid.
-		result = None
-		for title in self.contentPackages:
-			if getattr(title, 'ntiid', None) == ntiid:
-				result = [title]
-				break
-
-		# We special case the root ntiid by only looking in
-		# the top level of content packages for our ID.  We should
-		# always return None unless there are root content prefs.
-		if ntiid == NTI_ROOT:
-			return result
-
-		if not result:
-			# Now we really have to work. This is really expensive
-			# as the number of content packages grows in our library.
-			for title in self.contentPackages:
-				vals = _pathToPropertyValue(title, 'ntiid', ntiid)
-				if vals:
-					result = vals
-					break
-		return result
-
-	def pathToNTIID(self, ntiid, skip_cache=False):
+	def pathToNTIID(self, ntiid):
 		"""
 		Returns a list of TOCEntry objects in order until
 		the given ntiid is encountered, or None if the id cannot be found.
 		"""
-		# We store as weak refs to avoid ConnectionStateErrors
-		# and to reduce memory usage.
-		# We could increase this cache size if it's extremely small,
-		# as expected.
 		result = None
-
-		if not skip_cache:
-			result = self._v_path_to_ntiid_cache.get(ntiid)
-			if result:
-				try:
-					result = [x() for x in result]
-					return result
-				except ObjectMissingError:
-					# This should only occur during sync,
-					# before the cache is invalidated.
-					# Fall back to our algorithm.
-					pass
-			elif result is not None:
-				# Empty list cached
-				return None
-
-		result = self._do_path_to_ntiid(ntiid)
-
-		if not skip_cache:
-			if result:
-				cache_val = [_PathCacheContentUnitWeakRef(x) for x in result]
-				self._v_path_to_ntiid_cache.put(ntiid, cache_val)
-			else:
-				# Make sure we don't lose these worst-cases.
-				self._v_path_to_ntiid_cache.put(ntiid, [])
+		unit = self._get_content_unit( ntiid )
+		if unit is not None:
+			result = [unit]
+			# Now iterate upwards and fetch our parents all the way
+			# to the content package.
+			def _get_parent_unit( item ):
+				if IContentPackage.providedBy( item ):
+					return
+				parent = getattr( item, '__parent__', None )
+				if parent is not None:
+					result.append( parent )
+					_get_parent_unit( parent )
+			_get_parent_unit( unit )
+			result.reverse()
 		return result
 
 	def childrenOfNTIID(self, ntiid):
@@ -712,10 +694,9 @@ class AbstractContentPackageLibrary(object):
 
 		:return: Always returns a fresh list.
 		"""
-		path = self.pathToNTIID(ntiid)
 		result = []
-		if path:
-			parent = path[-1]
+		parent = self._get_content_unit( ntiid )
+		if parent is not None:
 			def rec(toc, accum):
 				accum.extend(toc.embeddedContainerNTIIDs)
 				for child in toc.children:
@@ -737,39 +718,15 @@ class AbstractContentPackageLibrary(object):
 		particular order.
 		"""
 		result = []
-		def rec(unit):
+		for unit in self._content_units_by_ntiid.values():
 			if ntiid in unit.embeddedContainerNTIIDs:
 				result.append(self.pathToNTIID(unit.ntiid))
-			for child in unit.children:  # it is even possible to embed the thing twice within a hierarchy
-				rec(child)
-
-		for package in self.contentPackages:
-			rec(package)
+		if not result:
+			# Check our parent
+			parent = queryNextUtility(self, IContentPackageLibrary)
+			if parent is not None:
+				result = parent.pathsToEmbeddedNTIID( ntiid )
 		return result
-
-def _pathToPropertyValue(unit, prop, value):
-	"""
-	A convenience function for returning, in order from the root down,
-	the sequence of children required to reach one with a property equal to
-	the given value.
-	"""
-	results = __pathToPropertyValue(unit, prop, value)
-	if results:
-		results.reverse()
-	return results
-
-def __pathToPropertyValue(unit, prop, value):
-	if getattr(unit, prop, None) == value:
-		return [unit]
-
-	for child in unit.children:
-		childPath = __pathToPropertyValue(child, prop, value)
-		if childPath:
-			childPath.append(unit)
-			return childPath
-	return None
-
-from nti.contentlibrary.interfaces import IGlobalContentPackage
 
 @interface.implementer(IAttributeAnnotatable)
 @NoPickle
@@ -811,41 +768,3 @@ class PersistentContentPackageLibrary(Persistent,
 			return super(PersistentContentPackageLibrary, self).__repr__()
 		except ConnectionStateError:
 			return object.__repr__(self)
-
-from zope.interface.interfaces import ComponentLookupError
-
-from nti.intid.interfaces import IntIdMissingError
-
-from nti.schema.eqhash import EqHash
-
-@EqHash('_obj', '_intid')
-class _PathCacheContentUnitWeakRef(object):
-	"""
-	A specific wref designed just for pathToNtiid caching.
-	We cannot use the existing ContentUnitWeakRef because
-	at sync time, we rely on content packages changing
-	underneath bundles and via wref, being resolved through
-	the library.
-	"""
-
-	__slots__ = (b'_intid', b'_obj')
-
-	def __init__(self, contentunit):
-		self._obj = None
-		self._intid = None
-
-		try:
-			intids = component.getUtility(IIntIds)
-			self._intid = intids.getId(contentunit)
-		except (IntIdMissingError, ComponentLookupError):
-			# For non-persistant cases (or unit tests), store the object itself.
-			# These should be rare.
-			self._obj = contentunit
-
-	def __call__(self):
-		if self._obj is not None:
-			result = self._obj
-		else:
-			intids = component.getUtility(IIntIds)
-			result = intids.getObject(self._intid)
-		return result

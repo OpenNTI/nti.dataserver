@@ -181,22 +181,9 @@ class TestFilesystem(ContentlibraryLayerTest):
 		found_path = library.pathToNTIID( path1 )
 		assert_that( found_path, has_length( 2 ) )
 
-		cache = library._v_path_to_ntiid_cache
-		assert_that( [x() for x in cache.get( path1 )], is_( found_path ) )
-
-		# Path with no result cached
 		dne_path = 'tag:nextthought.com,2011-10:USSC-HTML-Cohen.18-DoesNotExist'
 		found_path = library.pathToNTIID( dne_path )
 		assert_that( found_path, none() )
-		assert_that( cache.get( dne_path ), is_( [] ) )
-
-		# Invalidate our cache
-		library._enumeration.lastSynchronized = time.time() + 1
-		new_cache = library._v_path_to_ntiid_cache
-		assert_that( new_cache, does_not( cache ))
-		assert_that( new_cache.get( path1 ), none() )
-		found_path = library.pathToNTIID( path1 )
-		assert_that( found_path, has_length( 2 ) )
 
 	def test_site_library(self):
 		global_library = filesystem.GlobalFilesystemContentPackageLibrary( os.path.dirname(__file__) )
