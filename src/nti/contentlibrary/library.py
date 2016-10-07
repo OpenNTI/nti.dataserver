@@ -679,10 +679,13 @@ class AbstractContentPackageLibrary(object):
 			def _get_parent_unit( item ):
 				if IContentPackage.providedBy( item ):
 					return
-				parent = getattr( item, '__parent__', None )
-				if parent is not None:
-					result.append( parent )
-					_get_parent_unit( parent )
+				try:
+					parent = item.__parent__
+					if parent is not None:
+						result.append( parent )
+						_get_parent_unit( parent )
+				except AttributeError:
+					pass
 			_get_parent_unit( unit )
 			result.reverse()
 		return result
