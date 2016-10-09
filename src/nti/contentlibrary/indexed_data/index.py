@@ -308,6 +308,13 @@ class ContainedObjectCatalog(Persistent):
 					  self._site_index):
 			index.clear()
 
+	def items(self):
+		yield 'site', self._site_index
+		yield 'type', self._type_index
+		yield 'ntiid', self._ntiid_index
+		yield 'container', self._container_index
+		yield 'namespace', self._namespace_index
+
 def install_container_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
 	if intids is None:
