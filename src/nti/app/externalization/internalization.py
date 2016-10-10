@@ -19,7 +19,7 @@ from zope import component
 
 from pyramid import httpexceptions as hexc
 
-from nti.app.externalization import MessageFactory as _
+from nti.app.externalization import MessageFactory as _m
 
 from nti.app.externalization.error import handle_possible_validation_error
 
@@ -162,7 +162,7 @@ def read_body_as_external_object(request, input_data=None,
 		# so be careful not to try to log it as a string
 		logger.exception("Failed to parse/transform value %r", value)
 		tb = sys.exc_info()[2]
-		ex = hexc.HTTPBadRequest(_("Failed to parse/transform input"))
+		ex = hexc.HTTPBadRequest(_m("Failed to parse/transform input"))
 		raise ex, None, tb
 
 def update_object_from_external_object(contentObject,
