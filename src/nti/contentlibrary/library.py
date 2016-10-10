@@ -526,7 +526,10 @@ class AbstractContentPackageLibrary(object):
 
 	@Lazy
 	def _content_units_by_ntiid(self):
-		result = self._get_content_units_by_ntiid( self.contentPackages )
+		# Make sure we're synced (for legacy/testing compat, also deprecated),
+		# and that we build without parent packages.
+		self._get_contentPackages()
+		result = self._get_content_units_by_ntiid( self._contentPackages )
 		return result
 
 	def __delattr__(self, name):
