@@ -116,7 +116,7 @@ def _validation_error_to_dict(request, validation_error):
 		and validation_error.args:
 		args = validation_error.args[0]
 		value = args[0]
-		field_name = args[1] if len(args) >=1 else None
+		field_name = args[1] if len(args) > 1 else None
 
 	if not value:
 		value = getattr(validation_error, 'value', value)
