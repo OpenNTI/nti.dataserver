@@ -660,6 +660,8 @@ class AbstractContentPackageLibrary(object):
 		"""
 		Fetch the content unit referenced by the given ntiid.
 		"""
+		if not key:
+			return None
 		result = self._content_units_by_ntiid.get( key )
 		if result is None:
 			# Check our parent
