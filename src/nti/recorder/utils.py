@@ -116,6 +116,11 @@ def record_transaction(recordable, principal=None, descriptions=(),
 	username = (	getattr(principal, 'id', None)
 				or	getattr(principal, 'usernane', None)
 				or	principal)
+
+	if username is None:
+		# Tests
+		return
+
 	ext_value = compress(ext_value) if ext_value is not None else None
 	record = TransactionRecord(principal=username, type=type_, tid=tid,
 							   attributes=tuple(attributes),
