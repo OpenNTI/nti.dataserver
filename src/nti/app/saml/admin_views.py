@@ -16,7 +16,7 @@ from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.app.saml import MessageFactory as _m
+from nti.app.saml import MessageFactory as _
 
 from nti.app.saml import IDP_NAME_IDS
 from nti.app.saml import PROVIDER_INFO
@@ -52,17 +52,17 @@ class IDPEntityBindingsViews(AbstractAuthenticatedView):
 	def _user_from_request(self):
 		username = self.request.params.get('username')
 		if not username:
-			raise hexc.HTTPUnprocessableEntity(_m("Must specify a username."))
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
 
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity(_m("User not found."))
+			raise hexc.HTTPUnprocessableEntity(_("User not found."))
 		return user
 
 	def _idp_entity_id_from_request(self):
 		idp_entity_id = self.request.params.get('idp_entity_id')
 		if not idp_entity_id:
-			raise hexc.HTTPUnprocessableEntity(_m("Must specify an idp_entity_id."))
+			raise hexc.HTTPUnprocessableEntity(_("Must specify an idp_entity_id."))
 		return idp_entity_id
 
 	def _entity_bindings(self, user=None):
@@ -109,14 +109,14 @@ def provider_info_view(request):
 	values = CaseInsensitiveDict(request.params)
 	username = values.get('username') or values.get('user')
 	if not username:
-		raise hexc.HTTPUnprocessableEntity(_m("Must specify a username."))
+		raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
 
 	entity_id = values.get('entity_id')
 	if not entity_id:
-		raise hexc.HTTPUnprocessableEntity(_m("Must specify entity_id."))
+		raise hexc.HTTPUnprocessableEntity(_("Must specify entity_id."))
 
 	user = User.get_user(username)
 	if user is None or not IUser.providedBy(user):
-		raise hexc.HTTPUnprocessableEntity(_m("User not found."))
+		raise hexc.HTTPUnprocessableEntity(_("User not found."))
 
 	return ISAMLIDPUserInfoBindings(user)[entity_id]
