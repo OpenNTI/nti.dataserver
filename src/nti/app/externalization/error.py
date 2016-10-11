@@ -32,7 +32,7 @@ from pyramid import httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
 
-from nti.app.externalization import MessageFactory as _
+from nti.app.externalization import MessageFactory as _m
 
 def _json_error_map(o):
 	if isinstance(o, set):
@@ -217,7 +217,7 @@ def handle_possible_validation_error(request, e):
 		# if getattr( e, 'value', None ) is None and len(e.args) == 2:
 		# 	e.value = str(e.args[1])
 		if getattr(e, 'i18n_message', None) is None:
-			e.i18n_message = _("You cannot store that type of object here.")
+			e.i18n_message = _m("You cannot store that type of object here.")
 		handle_validation_error(request, e)
 	elif isinstance(e, (ValueError, Invalid, TypeError, KeyError)):  # pragma: no cover
 		# These are all 'validation' errors. Raise them as unprocessable entities
