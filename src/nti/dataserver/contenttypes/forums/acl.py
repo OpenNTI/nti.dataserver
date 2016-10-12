@@ -60,7 +60,7 @@ class _ForumACLProvider(AbstractCreatedAndSharedACLProvider):
 	def _get_sharing_target_names(self):
 		return ()
 
-class _CommunityForumACLProvider(_ForumACLProvider):
+class CommunityForumACLProvider(_ForumACLProvider):
 	"""
 	Also adds the ability for anyone who can see it to create
 	new topics within it.
@@ -72,7 +72,7 @@ class _CommunityForumACLProvider(_ForumACLProvider):
 	def _get_sharing_target_names(self):
 		return (self.context.creator,)  # the ICommunity
 
-class _CommunityBoardACLProvider(AbstractCreatedAndSharedACLProvider):
+class CommunityBoardACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
 	Gives admins the ability to create/delete entire forums. The creator,
 	aka the community, does not actually have any write access.
@@ -226,7 +226,7 @@ class _ACLBasedProvider(object):
 	def _get_context_acl(self):
 		return getattr(self.context, 'ACL', ())
 
-class _ACLCommunityBoardACLProvider(_CommunityBoardACLProvider, _ACLBasedProvider):
+class _ACLCommunityBoardACLProvider(CommunityBoardACLProvider, _ACLBasedProvider):
 
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		self._extend_with_admin_privs(acl)
@@ -237,7 +237,7 @@ class _ACLCommunityBoardACLProvider(_CommunityBoardACLProvider, _ACLBasedProvide
 				for entity in self._resolve_entities(eid):
 					acl.append(action(entity, perm, self))
 
-class _ACLCommunityForumACLProvider(_CommunityForumACLProvider, _ACLBasedProvider):
+class _ACLCommunityForumACLProvider(CommunityForumACLProvider, _ACLBasedProvider):
 
 	def _do_get_deny_all(self):
 		acl = self._get_context_acl()

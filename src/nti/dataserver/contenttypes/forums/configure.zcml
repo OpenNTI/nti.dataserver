@@ -106,10 +106,10 @@
 	<adapter factory=".acl._ForumACLProvider"
 			 for=".interfaces.IGeneralForum"/>
 
-	<adapter factory=".acl._CommunityForumACLProvider"
+	<adapter factory=".acl.CommunityForumACLProvider"
 			 for=".interfaces.ICommunityForum"/>
 
-	<adapter factory=".acl._CommunityBoardACLProvider"
+	<adapter factory=".acl.CommunityBoardACLProvider"
 			 for=".interfaces.ICommunityBoard"/>
 
 	<adapter factory=".acl._DFLForumACLProvider"
