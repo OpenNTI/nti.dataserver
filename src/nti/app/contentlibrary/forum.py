@@ -198,13 +198,13 @@ from nti.dataserver.authorization import ACT_READ
 
 from nti.dataserver.authorization_acl import ace_allowing
 
-from nti.dataserver.contenttypes.forums.acl import _CommunityForumACLProvider
-from nti.dataserver.contenttypes.forums.acl import _CommunityBoardACLProvider
+from nti.dataserver.contenttypes.forums.acl import CommunityForumACLProvider
+from nti.dataserver.contenttypes.forums.acl import CommunityBoardACLProvider
 
 from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
 
 @component.adapter(IContentBoard)
-class _ContentBoardACLProvider(_CommunityBoardACLProvider):
+class _ContentBoardACLProvider(CommunityBoardACLProvider):
 	"""
 	We want exactly the same thing as the community gets:
 	admins can create/delete forums, and the creator gets nothing special,
@@ -218,7 +218,7 @@ class _ContentBoardACLProvider(_CommunityBoardACLProvider):
 		super(_ContentBoardACLProvider, self)._extend_acl_after_creator_and_sharing(acl)
 
 @component.adapter(IContentForum)
-class _ContentForumACLProvider(_CommunityForumACLProvider):
+class _ContentForumACLProvider(CommunityForumACLProvider):
 	"""
 	Lets everyone create entries inside it right now.
 	"""
