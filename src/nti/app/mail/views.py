@@ -60,10 +60,10 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 	may be fully formed HTML.
 	"""
 
-	# By default, we only email to internal users
+	#: By default, we only email to internal users
 	EMAIL_EXTERNALLY_DEFAULT = False
 
-	@Lazy
+	@property
 	def _no_reply_addr(self):
 		return 'no-reply@nextthought.com'
 
@@ -72,7 +72,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		result = self._email_address_for_user(self.sender)
 		return result or self._no_reply_addr
 
-	@Lazy
+	@property
 	def sender(self):
 		return self.remoteUser
 
