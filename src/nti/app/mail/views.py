@@ -172,7 +172,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		"""
 		return True
 
-	def reply_addr_for_recipient(self, recipient):
+	def reply_addr_for_recipient(self, unused_recipient):
 		"""
 		Subclasses can override this to tailor the reply address
 		by recipient.
@@ -256,6 +256,8 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 
 		# Now copy to author
 		if email.Copy and self.__accept_user(self.sender):
+			logger.info( 'Sending email copy to %s (%s)',
+						 self.sender, self._sender_reply_addr)
 			subject = '[COPY] %s' % subject
 			self.send_email(self.sender, subject, body, email)
 

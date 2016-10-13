@@ -28,7 +28,7 @@ class IEmail(interface.Interface):
 				default=False)
 
 	NoReply = Bool(title="Whether the email will have a NoReply reply address",
-				default=False)
+				   default=False)
 
 	Subject = TextLine(title="The subect line of the email.", required=False)
 
