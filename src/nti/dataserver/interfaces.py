@@ -1143,13 +1143,15 @@ class IPresentationPropertyHolder(interface.Interface):
 
 # BWC exports
 from nti.dataserver_core.interfaces import IContainerContext
+from nti.dataserver_core.interfaces import IUserGeneratedData
 from nti.dataserver_core.interfaces import IContextAnnotatable
 
 IContainerContext = IContainerContext
 
 class IHighlight(IPresentationPropertyHolder,
 				 ISelectedRange,
-				 IContextAnnotatable):
+				 IContextAnnotatable,
+				 IUserGeneratedData):
 	"""
 	A highlighted portion of content the user wishes to remember.
 	"""
@@ -1160,7 +1162,7 @@ class IHighlight(IPresentationPropertyHolder,
 
 from nti.contentfragments.schema import TextUnicodeContentFragment
 
-class IRedaction(ISelectedRange, IContextAnnotatable):
+class IRedaction(ISelectedRange, IContextAnnotatable, IUserGeneratedData):
 	"""
 	A portion of the content the user wishes to ignore or 'un-publish'.
 	It may optionally be provided with an (inline) :attr:`replacementContent`

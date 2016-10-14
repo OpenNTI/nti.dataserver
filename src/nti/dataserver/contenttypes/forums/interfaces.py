@@ -19,7 +19,8 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import interface
 
-from zope.container.constraints import contains, containers  # If passing strings, they require bytes, NOT unicode, or they fail
+from zope.container.constraints import contains
+from zope.container.constraints import containers
 
 from zope.container.interfaces import IContained
 from zope.container.interfaces import IContentContainer
@@ -43,6 +44,7 @@ from nti.dataserver.interfaces import IMutedInStream
 from nti.dataserver.interfaces import ITitledContent
 from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import IReadableShared
+from nti.dataserver.interfaces import IUserGeneratedData
 from nti.dataserver.interfaces import IUserTaggedContent
 from nti.dataserver.interfaces import IModeledContentBody
 from nti.dataserver.interfaces import ITitledDescribedContent
@@ -139,6 +141,7 @@ class IPost(IContained,
 			IModeledContent,
 			IReadableShared,
 			IFileConstrained,
+			IUserGeneratedData,
 			IUserTaggedContent,
 			IModeledContentBody,
 			INeverStoredInSharedStream):
@@ -165,8 +168,9 @@ class ITopic(IContentContainer,
 			 IAcquirer,
 			 IDCTimes,
 			 ILastModified,
-			 ITitledDescribedContent,
+			 IUserGeneratedData,
 			 IUserTaggedContent,
+			 ITitledDescribedContent,
 			 INeverStoredInSharedStream,
 			 INotModifiedInStreamWhenContainerModified):
 	"""
@@ -201,6 +205,7 @@ class IForum(IContentContainer,
 			 IAcquirer,
 			 IDCTimes,
 			 ILastModified,
+			 IUserGeneratedData,
 			 ITitledDescribedContent,
 			 INotModifiedInStreamWhenContainerModified):
 	"""
@@ -239,7 +244,6 @@ class IBoard(IContentContainer,
 
 	ForumCount = Int(title="The number of forums contained as children of this board",
 					  readonly=True)
-
 
 
 class IHeadlinePost(IPost,
@@ -479,8 +483,10 @@ READ_PERMISSION = u'Read'
 WRITE_PERMISSION = u'Write'
 CREATE_PERMISSION = u'Create'
 DELETE_PERMISSION = u'Delete'
+
 PERMISSIONS = (ALL_PERMISSIONS, READ_PERMISSION, WRITE_PERMISSION,
 			   CREATE_PERMISSION, DELETE_PERMISSION)
+
 PERMISSIONS_VOCABULARY = \
 		schema.vocabulary.SimpleVocabulary(
 						[schema.vocabulary.SimpleTerm(_x) for _x in PERMISSIONS])
@@ -492,8 +498,10 @@ class IForumACE(interface.Interface):
 	Action = schema.Choice(vocabulary=ACTION_VOCABULARY, 
 						   title='ACE action', 
 						   required=True)
+
 	Entities = ListOrTuple(value_type=ValidTextLine(title="entity id"),
 						   title="entities ids", required=True)
+
 	Permissions = ListOrTuple(value_type=schema.Choice(vocabulary=PERMISSIONS_VOCABULARY, 
 													   title='ACE permission'), 
 							  required=True)
