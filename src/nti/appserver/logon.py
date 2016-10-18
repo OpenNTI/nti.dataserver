@@ -368,17 +368,22 @@ def handshake(request):
 	The second step in authentication. Inspects provided credentials
 	to decide what sort of logins are possible.
 	"""
-	desired_username = request.params.get('username')
-	if not desired_username:
-		return hexc.HTTPBadRequest(detail="Must provide username")
+	desired_username = request.params.get('username', '')
 
 	# TODO: Check for existence in the database before generating these.
 	# We also need to be validating whether we can do a openid login, etc.
-	user = User.get_user(username=desired_username,
-						 dataserver=component.getUtility(nti_interfaces.IDataserver))
+	user = None
+	if desired_username:
+		user = User.get_user(username=desired_username,
+							 dataserver=component.getUtility(nti_interfaces.IDataserver))
 
 	if user is None:
-		# Use an IMissingUser so we find the right link providers
+		# Use an IMissingUser so we find the right link providers.
+		# Now that we allow no username to be provided we could opt,
+		# in that case, for a INoUser object rather than an IMissingUser
+		# with no username.  This would, for example, give us an 
+		# easy way to not send back the logon.nti.password provider if 
+		# we wanted.
 		user = NoSuchUser(desired_username)
 
 	links = {}
@@ -457,6 +462,8 @@ class _SimpleMissingUserFacebookLinkProvider(object):
 		self.user = user
 
 	def __call__(self):
+		if not self.user.username:
+			return None
 		return Link(self.request.route_path('logon.facebook.oauth1', _query={'username': self.user.username}),
 					rel=self.rel)
 

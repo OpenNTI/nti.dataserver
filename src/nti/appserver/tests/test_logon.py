@@ -21,6 +21,7 @@ from hamcrest import assert_that
 from hamcrest import greater_than
 from hamcrest import has_property
 from hamcrest import same_instance
+from hamcrest import starts_with
 from hamcrest import contains_string
 from hamcrest import greater_than_or_equal_to
 
@@ -334,8 +335,13 @@ class TestLogonViews(ApplicationLayerTest):
 		facebook_link = self._get_link_by_rel(result.links, 'logon.facebook')
 		assert_that(facebook_link.target, is_('/dataserver2/logon.facebook1?username=jason.madden%40nextthought.com'))
 
+	@WithMockDSTrans
 	def test_handshake_no_user(self):
-		assert_that(handshake(get_current_request()), is_(hexc.HTTPBadRequest))
+		# No username param
+		result = handshake(get_current_request())
+		
+		password_link = self._get_link_by_rel(result.links, 'logon.nti.password')
+		assert_that(password_link.target, starts_with('/dataserver2/logon.nti.password'))
 
 	@WithMockDSTrans
 	def test_handshake_existing_user_with_pass(self):
