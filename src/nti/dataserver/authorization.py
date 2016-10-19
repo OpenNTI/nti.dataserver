@@ -319,6 +319,7 @@ class _StringGroup(_StringPrincipal):
 @interface.implementer(IRole)
 class _StringRole(_StringGroup):
 	pass
+StringRole = _StringRole
 
 ROLE_PREFIX = 'role:'
 CONTENT_ROLE_PREFIX = 'content-role:'
