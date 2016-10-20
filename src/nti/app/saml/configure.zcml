@@ -22,6 +22,15 @@
 			 provides=".interfaces.ISAMLIDPEntityBindings"
 			 for="nti.dataserver.interfaces.IUser" />
 
+	<adapter for="basestring
+				  nti.dataserver.interfaces.IUser
+				  .interfaces.ISAMLUserAssertionInfo
+				  pyramid.request.IRequest"
+		factory=".events.SAMLUserCreatedEvent"
+		provides=".interfaces.ISAMLUserCreatedEvent" />
+
+	<subscriber handler=".events._user_created" />
+
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
