@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-.. $Id: interfaces.py 97349 2016-09-23 18:37:47Z bobby.hagen $
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division

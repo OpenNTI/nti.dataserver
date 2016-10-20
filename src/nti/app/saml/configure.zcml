@@ -26,8 +26,8 @@
 				  nti.dataserver.interfaces.IUser
 				  .interfaces.ISAMLUserAssertionInfo
 				  pyramid.request.IRequest"
-		factory=".events.SAMLUserCreatedEvent"
-		provides=".interfaces.ISAMLUserCreatedEvent" />
+			 factory=".events.SAMLUserCreatedEvent"
+			 provides=".interfaces.ISAMLUserCreatedEvent" />
 
 	<subscriber handler=".events._user_created" />
 
