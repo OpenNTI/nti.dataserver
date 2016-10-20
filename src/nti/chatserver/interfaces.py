@@ -26,6 +26,7 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IModeledContent
+from nti.dataserver.interfaces import IUserGeneratedData
 from nti.dataserver.interfaces import IShareableModeledContent
 
 from nti.dataserver.interfaces import UserNotificationEvent
@@ -96,7 +97,7 @@ class IMeeting(IModeledContent, IZContained):
 
 	historical_occupant_names = Set(title="A set of the string names of anyone who has ever been a member of this meeting; immutable.")
 
-class IMeetingShouldChangeModerationStateEvent(interface.interfaces.IObjectEvent):
+class IMeetingShouldChangeModerationStateEvent(IObjectEvent):
 	"""
 	Emitted when the :class:`IMeeting` will be changing moderation state.
 	"""
@@ -104,7 +105,7 @@ class IMeetingShouldChangeModerationStateEvent(interface.interfaces.IObjectEvent
 	moderated = Bool(title="Whether the meeting should become moderated")
 
 @interface.implementer(IMeetingShouldChangeModerationStateEvent)
-class MeetingShouldChangeModerationStateEvent(interface.interfaces.ObjectEvent):
+class MeetingShouldChangeModerationStateEvent(ObjectEvent):
 
 	def __init__(self, o, flag):
 		super(MeetingShouldChangeModerationStateEvent, self).__init__(o)
@@ -146,7 +147,7 @@ class IMeetingPolicy(interface.Interface):
 
 	moderated_by_usernames = interface.Attribute("Iterable of names moderating this meeting.")
 
-class IMessageInfo(IShareableModeledContent, IZContained):
+class IMessageInfo(IShareableModeledContent, IUserGeneratedData, IZContained):
 	# We have to be IShareableModeledContent if we want the same ACL provider to work for us
 	# as works for Notes
 	channel = Choice(
