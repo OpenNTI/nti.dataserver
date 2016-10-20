@@ -31,6 +31,7 @@ from nti.app.saml import ACS
 from nti.app.saml import SLS
 
 from nti.app.saml.interfaces import ISAMLClient
+from nti.app.saml.interfaces import ISAMLIDPInfo
 from nti.app.saml.interfaces import ISAMLUserCreatedEvent
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
@@ -100,12 +101,19 @@ def saml_login(context, request):
 	if 'idp_id' not in request.params:
 		return _create_failure_response(request, error='Missing idp_id')
 
+	idp_id = request.params['idp_id']
+
+	# validate the idp_id is valid in this site context
+	idp = component.queryUtility(ISAMLIDPInfo)
+	if not idp or idp.entity_id != idp_id:
+		return _create_failure_response(request, error='IDP Mismatch')
+
 	# If we get here without one of these something or someone really screwed up
 	# bail loudly
 	saml_client = component.queryUtility(ISAMLClient) 
 	success = request.params.get('success', '/')
 	failure = request.params.get('failure', '/')
-	return saml_client.response_for_logging_in(success, failure)
+	return saml_client.response_for_logging_in(success, failure, entity_id=idp.entity_id)
 
 @view_config(name=ACS,
 			 context=SAMLPathAdapter,
