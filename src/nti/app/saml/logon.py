@@ -48,6 +48,8 @@ from nti.dataserver.users.interfaces import IRecreatableUser
 
 from nti.dataserver.users.utils import force_email_verification
 
+LOGIN_SAML_VIEW = 'logon.saml'
+
 @view_config(name=SLS,
 			 context=SAMLPathAdapter,
 			 route_name='objects.generic.traversal')
@@ -89,6 +91,21 @@ def _validate_idp_nameid(user, user_info, idp):
 		logger.error('SAML persistent nameid %s for user %s does not match idp returned nameid %s',
 					 nameid.nameid, user.username, user_info.nameid.nameid)
 		raise hexc.HTTPBadRequest('SAML persistent nameid mismatch.')
+
+@view_config(name=LOGIN_SAML_VIEW,
+			 context=SAMLPathAdapter,
+			 request_method="GET",
+			 route_name='objects.generic.traversal')
+def saml_login(context, request):
+	if 'idp_id' not in request.params:
+		return _create_failure_response(request, error='Missing idp_id')
+
+	# If we get here without one of these something or someone really screwed up
+	# bail loudly
+	saml_client = component.queryUtility(ISAMLClient) 
+	success = request.params.get('success', '/')
+	failure = request.params.get('failure', '/')
+	return saml_client.response_for_logging_in(success, failure)
 
 @view_config(name=ACS,
 			 context=SAMLPathAdapter,
