@@ -7,7 +7,6 @@ Generic views for any user (or sometimes, entities).
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from __builtin__ import False
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -159,13 +158,25 @@ class UserUpdateView(UGDPutView):
 		
 		return value
 	
-	def validateInput(self, input):
-		
+	@staticmethod
+	def is_valid_year(year):
+		if year is None:
+			return False
+		elif isinstance(year, six.string_types):
+			try:
+				year = int(year)
+			except (ValueError):
+				return False
+		current_year = datetime.datetime.now().year
+		if year < 1900 or year > current_year:
+			return False
+		return True
+
+	def validateInput(self, source):
 		# Assume input is valid until shown otherwise
-		
 		# Validate that startYear < endYear for education,
 		# and that they are in an appropriate range
-		for education in input['education']:
+		for education in source.get('education') or ():
 			start_year = education.get('startYear', None)
 			end_year = education.get('endYear', None)
 			if start_year and not self.is_valid_year(start_year):
@@ -176,7 +187,7 @@ class UserUpdateView(UGDPutView):
 				return False
 				
 		# Same thing for professional experience
-		for position in input['positions']:
+		for position in source.get('positions') or ():
 			start_year = position.get('startYear', None)
 			end_year = position.get('endYear', None)
 			if start_year and not self.is_valid_year(start_year):
@@ -187,18 +198,7 @@ class UserUpdateView(UGDPutView):
 				return False
 			
 		return True
-	
-	def is_valid_year(self, year):
-		
-		if isinstance(year, six.string_types):
-			year = int(year)
-		
-		current_year = datetime.datetime.now().year
-		if year < 1900 or year > current_year:
-			return False
-		return True
-		
-	
+
 @view_config(context=IUsersFolder,
 			 request_method='GET')
 class UsersGetView(GenericGetView):
