@@ -28,6 +28,17 @@ from nti.schema.field import ValidTextLine as TextLine
 
 NAMEID_FORMATS_SAML2_VALUES = tuple(x[1] for x in NAMEID_FORMATS_SAML2)
 
+class ISAMLACSLinkProvider(interface.Interface):
+	"""
+	An object that can provide a link to the saml ACS view.
+	This is typically registered as an adapter on the request
+	"""
+
+	def acs_link(request):
+		"""
+		An **absolute** url to the ACS view or None
+		"""
+
 class ISAMLClient(interface.Interface):
 	"""
 	An object that can act as a basic SAML client for SSO operations.

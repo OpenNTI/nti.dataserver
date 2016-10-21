@@ -30,6 +30,7 @@ from saml2.saml import NAMEID_FORMAT_PERSISTENT
 from nti.app.saml import ACS
 from nti.app.saml import SLS
 
+from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLIDPInfo
 from nti.app.saml.interfaces import ISAMLUserCreatedEvent
@@ -42,6 +43,8 @@ from nti.appserver.logon import logout as _do_logout
 from nti.appserver.logon import _create_failure_response
 from nti.appserver.logon import _create_success_response
 from nti.appserver.logon import _deal_with_external_account
+
+from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users import User
 
@@ -114,6 +117,16 @@ def saml_login(context, request):
 	success = request.params.get('success', '/')
 	failure = request.params.get('failure', '/')
 	return saml_client.response_for_logging_in(success, failure, entity_id=idp.entity_id)
+
+@interface.implementer(ISAMLACSLinkProvider)
+class ACSLinkProvider(object):
+
+	def __init__(self, request):
+		pass
+
+	def acs_link(self, request):
+		root = component.getUtility(IDataserver).dataserver_folder
+		return request.resource_url(root, 'saml', '@@'+ACS)
 
 @view_config(name=ACS,
 			 context=SAMLPathAdapter,

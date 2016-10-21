@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from itsdangerous import JSONWebSignatureSerializer
 
+from pyramid.threadlocal import get_current_request
+
 import saml2
 
 from saml2 import BINDING_HTTP_POST
@@ -30,6 +32,7 @@ from zope import interface
 
 from pyramid import httpexceptions as hexc
 
+from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLNameId
 from nti.app.saml.interfaces import ISAMLIDPInfo
@@ -126,8 +129,7 @@ class BasicSAMLClient(object):
 		signer = _make_signer(_get_signer_secret())
 		return signer.dumps(state)
 
-	def response_for_logging_in(self, success, error, state={}, passive=False, entity_id=None):
-
+	def response_for_logging_in(self, success, error, state={}, passive=False, entity_id=None, acs_link=None):
 		if not entity_id:
 			entity_id = self._pick_idp()
 
@@ -160,15 +162,22 @@ class BasicSAMLClient(object):
 
 			is_passive = 'true' if passive else None
 
+			if not acs_link:
+				request = get_current_request()
+				provider = component.queryAdapter(request, ISAMLACSLinkProvider)
+				acs_link = provider.acs_link(request) if provider else None
+
 			if _cli.authn_requests_signed:
 				_sid = saml2.s_utils.sid()
 				req_id, msg_str = _cli.create_authn_request(
 					dest, vorg="", sign=_cli.authn_requests_signed,
-					message_id=_sid, extensions=extensions, is_passive=is_passive)
+					message_id=_sid, extensions=extensions, is_passive=is_passive,
+					assertion_consumer_service_url=acs_link)
 				_sid = req_id
 			else:
 				req_id, req = _cli.create_authn_request(
-					dest, vorg="", sign=False, extensions=extensions, is_passive=is_passive)
+					dest, vorg="", sign=False, extensions=extensions, is_passive=is_passive,
+					assertion_consumer_service_url=acs_link)
 				msg_str = "%s" % req
 				_sid = req_id
 

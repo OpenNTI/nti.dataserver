@@ -22,6 +22,10 @@
 			 provides=".interfaces.ISAMLIDPEntityBindings"
 			 for="nti.dataserver.interfaces.IUser" />
 
+	<adapter factory=".logon.ACSLinkProvider"
+			 provides=".interfaces.ISAMLACSLinkProvider"
+			 for="pyramid.interfaces.IRequest" />
+
 	<adapter for="basestring
 				  nti.dataserver.interfaces.IUser
 				  .interfaces.ISAMLUserAssertionInfo
