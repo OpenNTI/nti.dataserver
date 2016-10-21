@@ -477,13 +477,21 @@ class IEducation(interface.Interface):
 						   required=True,
 						   min_length=1)
 
+	# TODO: Hardcoding max and min values for now, but
+	# need to implement a proper validation in a view
+	# where we verify that startYear <= endYear and that
+	# the numbers are reasonable values for years.
 	startYear = Int(title='Start year',
 					description=u'Start year',
-					required=False)
+					required=False,
+					min=1900,
+					max=2099)
 
 	endYear = Int(title='End year',
 				  description=u'End year',
-				  required=False)
+				  required=False,
+				  min=1900,
+				  max=2099)
 
 	degree = ValidTextLine(title='Degree name',
 				 		   description=u'Degree name',
@@ -514,13 +522,19 @@ class IProfessionalPosition(interface.Interface):
 						  description=u'Title',
 						  required=False)
 
+	# TODO: As with IEducation, need to do startYear <= endYear
+	# validation in a view. 
 	startYear = Int(title='Start year',
 					description=u'Start year',
-					required=False)
+					required=False,
+					min=1900,
+					max=2099)
 
 	endYear = Int(title='End year',
 				  description=u'End year',
-				  required=False)
+				  required=False,
+				  min=1900,
+				  max=2099)
 
 	description = ValidText(title='Position description',
 				 		   	description=u'Position description',
