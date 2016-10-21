@@ -7,12 +7,14 @@ Generic views for any user (or sometimes, entities).
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from __builtin__ import False
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import six
 import time
+import datetime
 
 from pyramid import httpexceptions as hexc
 
@@ -151,7 +153,51 @@ class UserUpdateView(UGDPutView):
 	def readInput(self, value=None):
 		value = super(UserUpdateView, self).readInput(value=value)
 		value.pop('DynamicMemberships', None)
+		
+		if not self.validateInput(value):
+			raise hexc.HTTPUnprocessableEntity() 
+		
 		return value
+	
+	def validateInput(self, input):
+		
+		# Assume input is valid until shown otherwise
+		
+		# Validate that startYear < endYear for education,
+		# and that they are in an appropriate range
+		for education in input['education']:
+			start_year = education.get('startYear', None)
+			end_year = education.get('endYear', None)
+			if start_year and not self.is_valid_year(start_year):
+				return False
+			if end_year and not self.is_valid_year(end_year):
+				return False
+			if start_year and end_year and not start_year <= end_year:
+				return False
+				
+		# Same thing for professional experience
+		for position in input['positions']:
+			start_year = position.get('startYear', None)
+			end_year = position.get('endYear', None)
+			if start_year and not self.is_valid_year(start_year):
+				return False
+			if end_year and not self.is_valid_year(end_year):
+				return False
+			if start_year and end_year and not start_year <= end_year:
+				return False
+			
+		return True
+	
+	def is_valid_year(self, year):
+		
+		if isinstance(year, six.string_types):
+			year = int(year)
+		
+		current_year = datetime.datetime.now().year
+		if year < 1900 or year > current_year:
+			return False
+		return True
+		
 	
 @view_config(context=IUsersFolder,
 			 request_method='GET')

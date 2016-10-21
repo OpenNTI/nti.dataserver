@@ -483,15 +483,11 @@ class IEducation(interface.Interface):
 	# the numbers are reasonable values for years.
 	startYear = Int(title='Start year',
 					description=u'Start year',
-					required=False,
-					min=1900,
-					max=2099)
+					required=False)
 
 	endYear = Int(title='End year',
 				  description=u'End year',
-				  required=False,
-				  min=1900,
-				  max=2099)
+				  required=False)
 
 	degree = ValidTextLine(title='Degree name',
 				 		   description=u'Degree name',
@@ -526,15 +522,11 @@ class IProfessionalPosition(interface.Interface):
 	# validation in a view. 
 	startYear = Int(title='Start year',
 					description=u'Start year',
-					required=False,
-					min=1900,
-					max=2099)
+					required=False)
 
 	endYear = Int(title='End year',
 				  description=u'End year',
-				  required=False,
-				  min=1900,
-				  max=2099)
+				  required=False)
 
 	description = ValidText(title='Position description',
 				 		   	description=u'Position description',
