@@ -12,9 +12,11 @@ import fudge
 from hamcrest import assert_that
 from hamcrest import equal_to
 from hamcrest import has_properties
+from hamcrest import is_
 from hamcrest import none
 from hamcrest import not_none
 
+from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
 from nti.app.saml.interfaces import ISAMLUserCreatedEvent
@@ -77,6 +79,22 @@ class IsolatedComponents(Persistent, Components):
  	def __parent__(self):
 		# So that IConnection(site_manager) can work.
 		return self.__bases__[0]
+
+class TestACSLinkProvider(ApplicationLayerTest):
+
+	@WithMockDSTrans
+	def test_acs_location(self):
+
+		request = Request.blank('/')
+
+		link_provider = ISAMLACSLinkProvider(request)
+
+		assert_that(link_provider, not_none())
+
+		link = link_provider.acs_link(request)
+
+		assert_that(link, is_('http://localhost/dataserver2/saml/@@acs'))
+
 
 class TestEvents(ApplicationLayerTest):
 
