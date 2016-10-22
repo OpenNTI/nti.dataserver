@@ -21,7 +21,11 @@ from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
+
+from nti.app.users import MessageFactory as _
 
 from nti.appserver.dataserver_pyramid_views import GenericGetView
 
@@ -152,10 +156,6 @@ class UserUpdateView(UGDPutView):
 	def readInput(self, value=None):
 		value = super(UserUpdateView, self).readInput(value=value)
 		value.pop('DynamicMemberships', None)
-		
-		if not self.validateInput(value):
-			raise hexc.HTTPUnprocessableEntity() 
-		
 		return value
 	
 	@staticmethod
@@ -180,23 +180,64 @@ class UserUpdateView(UGDPutView):
 			start_year = education.get('startYear', None)
 			end_year = education.get('endYear', None)
 			if start_year and not self.is_valid_year(start_year):
-				return False
+				raise_json_error(
+						self.request,
+						hexc.HTTPUnprocessableEntity,
+						{
+							u'message': _('Invalid education start year.'),
+							u'code': 'InvalidStartYear',
+						},
+						None)
 			if end_year and not self.is_valid_year(end_year):
-				return False
+				raise_json_error(
+						self.request,
+						hexc.HTTPUnprocessableEntity,
+						{
+							u'message': _('Invalid education end year.'),
+							u'code': 'InvalidEndYear',
+						},
+						None)
 			if start_year and end_year and not start_year <= end_year:
-				return False
+				raise_json_error(
+						self.request,
+						hexc.HTTPUnprocessableEntity,
+						{
+							u'message': _('Invalid education year range.'),
+							u'code': 'InvalidYearRange',
+						},
+						None)
 				
 		# Same thing for professional experience
 		for position in source.get('positions') or ():
 			start_year = position.get('startYear', None)
 			end_year = position.get('endYear', None)
 			if start_year and not self.is_valid_year(start_year):
-				return False
+				raise_json_error(
+						self.request,
+						hexc.HTTPUnprocessableEntity,
+						{
+							u'message': _('Invalid position start year.'),
+							u'code': 'InvalidStartYear',
+						},
+						None)
 			if end_year and not self.is_valid_year(end_year):
-				return False
+				raise_json_error(
+						self.request,
+						hexc.HTTPUnprocessableEntity,
+						{
+							u'message': _('Invalid position end year.'),
+							u'code': 'InvalidEndYear',
+						},
+						None)
 			if start_year and end_year and not start_year <= end_year:
-				return False
-			
+				raise_json_error(
+						self.request,
+						hexc.HTTPUnprocessableEntity,
+						{
+							u'message': _('Invalid position year range.'),
+							u'code': 'InvalidYearRange',
+						},
+						None)
 		return True
 
 @view_config(context=IUsersFolder,
