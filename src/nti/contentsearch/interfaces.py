@@ -134,6 +134,9 @@ class ISearchQuery(interface.Interface):
 				 	  required=True, readonly=True)
 
 
+	items = interface.Attribute('Attributes key/value not in the interface')
+	items.setTaggedValue('_ext_excluded_out', True)
+	
 class ISearchQueryValidator(interface.Interface):
 
 	def validate(query):

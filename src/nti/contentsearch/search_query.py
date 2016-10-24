@@ -88,6 +88,11 @@ class QueryObject(SchemaConfigured):
 	def __setitem__(self, key, val):
 		setattr(self, key, val)
 
+	def items(self):
+		for k, v in list(self.__dict__.items()):
+			if k not in ISearchQuery:
+				yield k, v
+
 	@property
 	def query(self):
 		return self.term
