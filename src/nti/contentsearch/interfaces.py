@@ -87,32 +87,15 @@ class ISearchQuery(interface.Interface):
 	origin = ValidTextLine(title="The raw NTIID where the search was invoked", required=False)
 
 	sortOrder = ValidTextLine(title="descending or ascending  to sort order",
-										 default='descending', required=False)
-
-	surround = Int(title="Highlight surround chars", required=False, default=50, min=1)
-
-	maxchars = Int(title="Highlight max chars", required=False, default=300, min=1)
-
-	prefix = Int(title="Suggestion prefix", required=False, min=1)
-
-	threshold = Number(title="Suggestion threshold", required=False,
-					   default=0.4999, min=0.0)
-
-	maxdist = Int(title="Maximun edit distance from the given word to look at",
-				  required=False, default=15, min=2)
+							  default='descending', required=False)
 
 	applyHighlights = Bool(title="Apply search hit hilights", required=False,
 						   default=True)
-
+		
 	batchSize = Int(title="page size", required=False)
 
 	batchStart = Int(title="The index of the first object to return, starting with zero",
 					 required=False, min=0)
-
-	decayFactor = Number(title="decay factor", required=False, min=0.001, max=1.0, default=0.94)
-
-	site_names = ListOrTuple(ValidTextLine(title="Site names"), required=False)
-	site_names.setTaggedValue('_ext_excluded_out', True)
 
 	context = Dict(ValidTextLine(title='name'),
 				   ValidTextLine(title='value'),
@@ -133,10 +116,27 @@ class ISearchQuery(interface.Interface):
 	IsBatching = Bool(title="Returns true if this is a batch search",
 				 	  required=True, readonly=True)
 
-
 	items = interface.Attribute('Attributes key/value not in the interface')
 	items.setTaggedValue('_ext_excluded_out', True)
-	
+
+	# TODO: to remove
+	surround = Int(title="Highlight surround chars", required=False, default=50, min=1)
+
+	maxchars = Int(title="Highlight max chars", required=False, default=300, min=1)
+
+	prefix = Int(title="Suggestion prefix", required=False, min=1)
+
+	threshold = Number(title="Suggestion threshold", required=False,
+					   default=0.4999, min=0.0)
+
+	maxdist = Int(title="Maximun edit distance from the given word to look at",
+				  required=False, default=15, min=2)
+
+	decayFactor = Number(title="decay factor", required=False, min=0.001, max=1.0, default=0.94)
+
+	site_names = ListOrTuple(ValidTextLine(title="Site names"), required=False)
+	site_names.setTaggedValue('_ext_excluded_out', True)
+
 class ISearchQueryValidator(interface.Interface):
 
 	def validate(query):
