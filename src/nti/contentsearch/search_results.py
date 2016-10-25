@@ -21,39 +21,37 @@ from zope import interface
 
 from zope.container.contained import Contained
 
-from zope.location.interfaces import ISublocations
-
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.common.iterables import isorted
 
-from nti.property.property import alias
+from nti.contentsearch.common import get_mimetype_from_type
 
-from .common import get_mimetype_from_type
+from nti.contentsearch.constants import VIDEO_TRANSCRIPT_MIME_TYPE
 
-from .constants import VIDEO_TRANSCRIPT_MIME_TYPE
+from nti.contentsearch.interfaces import ISearchQuery
+from nti.contentsearch.interfaces import ITypeResolver
+from nti.contentsearch.interfaces import INTIIDResolver
+from nti.contentsearch.interfaces import ISearchResults
+from nti.contentsearch.interfaces import ISuggestResults
+from nti.contentsearch.interfaces import IContentSearchHit
+from nti.contentsearch.interfaces import ISearchHitMetaData
+from nti.contentsearch.interfaces import IUserDataSearchHit
+from nti.contentsearch.interfaces import ISearchHitPredicate
+from nti.contentsearch.interfaces import IContainerIDResolver
+from nti.contentsearch.interfaces import ISearchHitComparator
+from nti.contentsearch.interfaces import ILastModifiedResolver
+from nti.contentsearch.interfaces import ISearchResultsCreator
+from nti.contentsearch.interfaces import ISuggestResultsCreator
+from nti.contentsearch.interfaces import ISuggestAndSearchResults
+from nti.contentsearch.interfaces import ISearchHitComparatorFactory
+from nti.contentsearch.interfaces import ISuggestAndSearchResultsCreator
 
-from .search_hits import get_search_hit
-
-from .interfaces import ISearchQuery
-from .interfaces import ITypeResolver
-from .interfaces import INTIIDResolver
-from .interfaces import ISearchResults
-from .interfaces import ISuggestResults
-from .interfaces import IContentSearchHit
-from .interfaces import ISearchHitMetaData
-from .interfaces import IUserDataSearchHit
-from .interfaces import ISearchHitPredicate
-from .interfaces import IContainerIDResolver
-from .interfaces import ISearchHitComparator
-from .interfaces import ILastModifiedResolver
-from .interfaces import ISearchResultsCreator
-from .interfaces import ISuggestResultsCreator
-from .interfaces import ISuggestAndSearchResults
-from .interfaces import ISearchHitComparatorFactory
-from .interfaces import ISuggestAndSearchResultsCreator
+from nti.contentsearch.search_hits import get_search_hit
 
 create_search_hit = get_search_hit  # alias
+
+from nti.property.property import alias
 
 def _lookup_subscribers(subscriptions=()):
 	result = []
@@ -217,10 +215,8 @@ class _BaseSearchResults(Contained):
 	def __iter__(self):
 		return iter(self.Hits)
 
-@interface.implementer(ISublocations,
-					   ISearchResults,
-					   IContentTypeAware)
-class _SearchResults(_BaseSearchResults):
+@interface.implementer(ISearchResults, IContentTypeAware)
+class SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
 
@@ -341,18 +337,7 @@ class _SearchResults(_BaseSearchResults):
 			self.HitMetaData += other.HitMetaData
 
 		return self
-
-	def __getstate__(self):
-		return {k: v for
-				k, v in self.__dict__.iteritems()
-				if not k.startswith('_v')}
-
-	def __setstate__(self, state):
-		self_dict = self.__dict__
-		for k, v in state.iteritems():
-			if not k.startswith('_v'):
-				self_dict[str(k)] = v
-		self._v_filterCache = None
+_SearchResults = SearchResults # BWC
 
 @interface.implementer(ISuggestResults, IContentTypeAware)
 class _SuggestResults(_BaseSearchResults):
