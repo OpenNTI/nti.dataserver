@@ -121,13 +121,13 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
 		self._batch_params()
 		context = self.request.context
-		memberships = set( context.dynamic_memberships )
-		memberships.update( set( context.friendsLists.values() ) )
+		memberships = set(context.dynamic_memberships)
+		memberships.update(set(context.friendsLists.values()))
 
 		everyone = Entity.get_entity(u'Everyone')
 		def _selector(x):
 			result = None
-			if x == everyone: # always
+			if x == everyone:  # always
 				result = None
 			elif 	ICommunity.providedBy(x) \
 				and not IDisallowMembershipOperations.providedBy(x) \
@@ -158,7 +158,7 @@ class UserUpdateView(UGDPutView):
 		value.pop('DynamicMemberships', None)
 		self.validateInput(value)
 		return value
-	
+
 	@staticmethod
 	def is_valid_year(year):
 		if year is None:
@@ -207,7 +207,7 @@ class UserUpdateView(UGDPutView):
 							u'code': 'InvalidYearRange',
 						},
 						None)
-				
+
 		# Same thing for professional experience
 		for position in source.get('positions') or ():
 			start_year = position.get('startYear', None)
@@ -245,5 +245,5 @@ class UserUpdateView(UGDPutView):
 			 request_method='GET')
 class UsersGetView(GenericGetView):
 
-	def __call__( self ):
+	def __call__(self):
 		raise hexc.HTTPForbidden()
