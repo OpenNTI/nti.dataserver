@@ -91,7 +91,7 @@ class ISearchQuery(interface.Interface):
 
 	applyHighlights = Bool(title="Apply search hit hilights", required=False,
 						   default=True)
-		
+
 	batchSize = Int(title="page size", required=False)
 
 	batchStart = Int(title="The index of the first object to return, starting with zero",
@@ -627,11 +627,11 @@ class ISearchHit(IBaseHit, ILastModified):
 	ContainerId = ValidTextLine(title="Search hit container id", required=False)
 	Fragments = ListOrTuple(value_type=Object(ISearchFragment, title="the fragment"),
 							title="search fragments", required=False)
-	
+
 	TargetMimeType = ValidTextLine(title="Target mimetype", required=True)
 	Target = Object(interface.Interface, title="the object hit", required=False)
 	Target.setTaggedValue('_ext_excluded_out', True)
-	
+
 class IUserDataSearchHit(ISearchHit):
 	"""
 	marker interface for user generated data search hits
@@ -708,13 +708,19 @@ class ISearchHitComparatorFactory(interface.Interface):
 
 class ISearchHitPredicate(interface.Interface):
 	"""
-	Search hit filter - implemented as subscriber"
+	Search hit filter - implemented as subscriber.
 	"""
 
 	def allow(item, score=1.0, query=None):
 		"""
 		allow a search hit into the results
 		"""
+
+class ISearchHitPostProcessingPredicate(ISearchHitPredicate):
+	"""
+	Search hit predicate filter meant to run after `ISearchHitPredicate`
+	subscribers.
+	"""
 
 class ISearchHitMetaData(ILastModified):
 	"""Class to track search hit meta data"""
