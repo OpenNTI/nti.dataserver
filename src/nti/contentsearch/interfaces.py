@@ -175,13 +175,6 @@ class ISearcher(interface.Interface):
 		:param query: Search query
 		"""
 
-	def suggest_and_search(query, *args, **kwargs):
-		"""
-		do a word suggestion and perform a search
-
-		:param query: Search query
-		"""
-
 class IContentSearcher(ISearcher,
 					   IContained):
 	indices = interface.Attribute("index names")
@@ -632,10 +625,13 @@ class ISearchHit(IBaseHit, ILastModified):
 	Type = ValidTextLine(title="Search hit object type", required=True)
 	Creator = ValidTextLine(title="Search hit target creator", required=False)
 	ContainerId = ValidTextLine(title="Search hit container id", required=False)
-	TargetMimeType = ValidTextLine(title="Search hit target mimetype", required=True)
 	Fragments = ListOrTuple(value_type=Object(ISearchFragment, title="the fragment"),
 							title="search fragments", required=False)
-
+	
+	TargetMimeType = ValidTextLine(title="Target mimetype", required=True)
+	Target = Object(interface.Interface, title="the object hit", required=False)
+	Target.setTaggedValue('_ext_excluded_out', True)
+	
 class IUserDataSearchHit(ISearchHit):
 	"""
 	marker interface for user generated data search hits
