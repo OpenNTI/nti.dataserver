@@ -156,6 +156,7 @@ class UserUpdateView(UGDPutView):
 	def readInput(self, value=None):
 		value = super(UserUpdateView, self).readInput(value=value)
 		value.pop('DynamicMemberships', None)
+		self.validateInput(value)
 		return value
 	
 	@staticmethod
