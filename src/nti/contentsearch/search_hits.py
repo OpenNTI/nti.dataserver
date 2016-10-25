@@ -151,6 +151,8 @@ def get_field_value(obj, name, default=u''):
 
 class SearchHit(BaseSearchHit):
 
+	ID = alias('OID')
+
 	adapter_interface = IUserContentResolver
 
 	def __init__(self, original=None, score=1.0):
