@@ -9,12 +9,16 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zope.deferredimport
-zope.deferredimport.initialize()
+from zope.deprecation import deprecated
 
-zope.deferredimport.deprecatedFrom(
-    "Moved to nti.contentsearch.discriminators",
-    "nti.contentsearch.discriminators",
-    "get_sharedWith",
-    "get_object_ngrams",
-    "get_object_content")
+deprecated('get_sharedWith', 'No longer used. BWC only')
+def get_sharedWith(*args, **kwargs):
+    return ()
+
+deprecated('get_object_ngrams', 'No longer used. BWC only')
+def get_object_ngrams(*args, **kwargs):
+    return ()
+
+deprecated('get_object_content', 'No longer used. BWC only')
+def get_object_content(*args, **kwargs):
+    return None
