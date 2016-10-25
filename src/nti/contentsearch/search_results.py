@@ -216,7 +216,7 @@ class _BaseSearchResults(Contained):
 		return iter(self.Hits)
 
 @interface.implementer(ISearchResults, IContentTypeAware)
-class SearchResults(_BaseSearchResults):
+class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
 
@@ -337,7 +337,6 @@ class SearchResults(_BaseSearchResults):
 			self.HitMetaData += other.HitMetaData
 
 		return self
-_SearchResults = SearchResults # BWC
 
 @interface.implementer(ISuggestResults, IContentTypeAware)
 class _SuggestResults(_BaseSearchResults):
