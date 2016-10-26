@@ -24,5 +24,11 @@
 	<subscriber	factory=".filters._SearchContentObjectFilter"
 				provides="nti.appserver.interfaces.ICreatableObjectFilter"
 				for="nti.dataserver.interfaces.IUser" />
-				
+
+	<!-- Search filters -->
+	<subscriber factory=".search_predicates._AccessibleSearchPostProcessingPredicate"
+				provides="nti.contentsearch.interfaces.ISearchHitPostProcessingPredicate"
+				for="*" />
+
+
 </configure>
