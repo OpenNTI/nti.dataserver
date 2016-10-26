@@ -7,26 +7,28 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from zope import interface
-from nti.dataserver import interfaces as nti_interfaces
-
-from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_length
+from hamcrest import none
 from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
 from hamcrest import contains_inanyorder
-
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.testing.matchers import validly_provides
+
+from zope import interface
 
 from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
 
-from nti.dataserver.contenttypes import Note as _Note
 from nti.contentrange.contentrange import ContentRangeDescription
+
+from nti.dataserver.contenttypes import Note as _Note
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
 class _Mutable_P_Mtime_Note(_Note):
 	_p_mtime = None
@@ -88,7 +90,6 @@ class TestThreadable(DataserverLayerTest):
 
 		assert_that( ext, has_entry( 'inReplyTo', 'tag:nextthought.com,2011-10:Missing-x' ) )
 		assert_that( ext, has_entry( 'references', ['tag:nextthought.com,2011-10:Missing-y'] ) )
-
 
 		assert_that( note, validly_provides( nti_interfaces.IInspectableWeakThreadable) )
 
@@ -175,7 +176,7 @@ class TestThreadable(DataserverLayerTest):
 		root = Note()
 		container['root'] = root
 		
-		assert_that(root.most_recent_reply, is_(None))
+		assert_that(root.most_recent_reply, is_(none()))
 
 		first_reply = Note()
 		first_reply.inReplyTo = root
