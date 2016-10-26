@@ -130,7 +130,7 @@ class ThreadableMixin(object):
 	@property
 	def most_recent_reply(self):
 		direct_replies = sorted((reply for reply in self.replies),
-								key=lambda x: x.createdTime, 
+								key=lambda x: getattr(x,'createdTime', 0), 
 								reverse=True)
 		return direct_replies[0] if direct_replies else None
 
