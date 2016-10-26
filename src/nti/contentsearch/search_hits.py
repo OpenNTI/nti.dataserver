@@ -108,6 +108,7 @@ class BaseSearchHit(object):
 	__parent__ = None
 	__name__ = alias('OID')
 
+	Target = None
 	Score = lastModified = 0
 
 	Creator = SYSTEM_USER_NAME
