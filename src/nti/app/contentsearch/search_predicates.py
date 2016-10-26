@@ -82,7 +82,7 @@ class _AccessibleSearchPostProcessingPredicate(object):
 		result = bool(result) and not IDeletedObjectPlaceholder.providedBy(ugd_item)
 		return result
 
-	def allow(self, item, unused_score, **kwargs):
+	def allow(self, item, unused_score, query):
 		if IUserGeneratedData.providedBy( item ):
 			result = self._check_ugd_access( item )
 		else:
