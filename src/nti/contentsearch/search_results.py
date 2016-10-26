@@ -296,7 +296,7 @@ class _SearchResults(_BaseSearchResults):
 		if isinstance(item, (list, tuple)):
 			item, score = item[0], item[1]
 
-		if _allow_search_hit(self._filterCache, item, score, self.Query) or True:
+		if True or _allow_search_hit(self._filterCache, item, score, self.Query):
 			hit = create_search_hit(item, score, self.Query)
 			if self._add_hit(hit):
 				self.metadata.track(item)
