@@ -122,6 +122,16 @@ class ThreadableMixin(object):
 	def replies(self):
 		return 	IntidResolvingIterable(self._replies, allow_missing=True, parent=self, name='replies') \
 				if self._replies is not ThreadableMixin._replies else ()
+				
+	@property
+	def most_recent_reply(self):
+		direct_replies = [reply for reply in self.replies]
+		direct_replies = sorted(direct_replies, key=lambda x: x.createdTime, reverse=True)
+		if direct_replies:
+			return direct_replies[0]
+		else:
+			return None
+		
 
 	@property
 	def referents(self):

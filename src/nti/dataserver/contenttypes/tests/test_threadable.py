@@ -152,7 +152,7 @@ class TestThreadable(DataserverLayerTest):
 
 		assert_that( list(root.replies), is_( [direct_reply] ) )
 		assert_that( list(root.referents), contains_inanyorder( direct_reply, direct_reply_child, grandchild2 ) )
-
+		
 		del container['grandchild1']
 
 		assert_that( list(direct_reply.replies), is_( [grandchild2] ) )
@@ -165,3 +165,33 @@ class TestThreadable(DataserverLayerTest):
 
 		assert_that( list(root.replies), is_( [] ) )
 		assert_that( list(root.referents), is_( [grandchild2] ) )
+		
+	@WithMockDSTrans
+	def test_most_recent_replies(self):
+
+		container = CaseInsensitiveLastModifiedBTreeContainer()
+		self.ds.dataserver_folder['container'] = container
+		
+		root = Note()
+		container['root'] = root
+		
+		assert_that(root.most_recent_reply, is_(None))
+
+		first_reply = Note()
+		first_reply.inReplyTo = root
+		container['first_reply'] = first_reply
+		
+		assert_that(root.most_recent_reply, is_(first_reply))
+		
+		second_reply = Note()
+		second_reply.inReplyTo = root
+		container['second_reply'] = second_reply
+			
+		assert_that(root.most_recent_reply, is_(second_reply))
+		
+		grandchild_reply = Note()
+		grandchild_reply.inReplyTo = first_reply
+		container['grandchild_reply'] = grandchild_reply
+		
+		assert_that(root.most_recent_reply, is_(second_reply))
+			
