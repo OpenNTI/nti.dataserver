@@ -120,23 +120,28 @@ class ThreadableMixin(object):
 
 	@property
 	def replies(self):
-		return 	IntidResolvingIterable(self._replies, allow_missing=True, parent=self, name='replies') \
-				if self._replies is not ThreadableMixin._replies else ()
+		if self._replies is not ThreadableMixin._replies:
+			return IntidResolvingIterable(self._replies, 
+										  allow_missing=True, 
+										  parent=self, 
+										  name='replies')
+		return ()
 				
 	@property
 	def most_recent_reply(self):
-		direct_replies = [reply for reply in self.replies]
-		direct_replies = sorted(direct_replies, key=lambda x: x.createdTime, reverse=True)
-		if direct_replies:
-			return direct_replies[0]
-		else:
-			return None
-		
+		direct_replies = sorted((reply for reply in self.replies),
+								key=lambda x: x.createdTime, 
+								reverse=True)
+		return direct_replies[0] if direct_replies else None
 
 	@property
 	def referents(self):
-		return 	IntidResolvingIterable(self._referents, allow_missing=True, parent=self, name='referents') \
-				if self._referents is not ThreadableMixin._referents else ()
+		if self._referents is not ThreadableMixin._referents:
+			return IntidResolvingIterable(self._referents, 
+										  allow_missing=True, 
+										  parent=self, 
+										  name='referents')
+		return ()
 
 @component.adapter(IThreadable, IIntIdAddedEvent)
 def threadable_added(threadable, event):
