@@ -45,7 +45,8 @@ class ContentUnit(PermissiveSchemaConfigured,
 	# We simply provide initial defaults.
 
 	__external_class_name__ = 'ContentUnit'
-
+	mime_type = mimeType = 'application/vnd.nextthought.contentunit'
+	
 	createdTime = -1
 	lastModified = -1
 
