@@ -598,11 +598,13 @@ class IModeledContentResolver(IPostContentResolver,
 class ISearchFragment(interface.Interface):
 
 	text = Text(title="fragment text", required=True, default=u'')
-
+	field = ValidTextLine(title="Matching field", required=False)
+	
 	matches = ListOrTuple(
-					ListOrTuple(value_type=Int(title='index', min=0),
-								min_length=2,
-								max_length=2),
+					Variant((ValidText(title='Matched text'),
+							 ListOrTuple(value_type=Int(title='index', min=0),
+										 min_length=2,
+										 max_length=2))),
 					title="Iterable with pair tuples where a match occurs",
 					min_length=0,
 					required=True,
