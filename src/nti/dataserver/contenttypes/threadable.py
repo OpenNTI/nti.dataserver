@@ -133,6 +133,8 @@ class ThreadableMixin(object):
 								key=lambda x: getattr(x,'createdTime', 0), 
 								reverse=True)
 		return direct_replies[0] if direct_replies else None
+	
+	mostRecentReply = most_recent_reply
 
 	@property
 	def referents(self):
