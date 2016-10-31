@@ -18,5 +18,5 @@ from nti.contentsearch.interfaces import IResultTransformer
 
 @component.adapter(INTITranscript)
 @interface.implementer(IResultTransformer)
-def transcript_to_media(object):
+def transcript_to_media(obj):
 	return object.__parent__
