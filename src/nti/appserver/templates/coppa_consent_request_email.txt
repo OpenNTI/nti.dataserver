@@ -1,0 +1,142 @@
+Dear Parent,
+
+Your child ${profile.realname} has created a free NextThought account
+with the username ${user.username} and needs your permission before he
+or she can use all of its rich features. To permit your child to join
+the NextThought community, please review the information in this
+notice and then sign and return the attached consent form using one of
+the methods listed on it.
+
+About NextThought
+=================
+
+NextThought is a social learning platform that allows students to read
+educational materials online, annotate them, chat with their peers,
+and share notes and other posts with classmates and teachers.
+
+Your Consent
+========================
+
+By registering for the site, your child has access to limited site
+features, such as reading materials online and making personal notes.
+Before we can enable your child to join the NextThought community, we
+need your parental consent to collect some information from your child
+and grant him or her access to social features.
+
+By reviewing this email and then signing and sending the attached
+form, you permit us to ask for and store your child's full name,
+school affiliation, and email address, and to activate the social
+features for the account. You also permit us to save your email
+address from the form, so that we can notify you of any material
+changes to our privacy practices. If desired, you can also opt-in to
+receiving additional information about NextThought.
+
+If you do not provide this consent, then we will not collect this
+information and your child may continue to use the limited features of
+NextThought. If you do not want him or her to have access to
+NextThought, even in this limited way, please contact us at the email
+address below to delete the account or prohibit further contact.
+
+Our Privacy Practices
+========================
+
+At NextThought we are committed to providing a safe, secure
+environment to support your child's education and appreciate that you
+may want to know more about the information we collect and how we use
+it.
+
+Information Provided at Registration
+========================
+
+When your child registered for an account, we asked for his or her
+name, birthday, username, password, email address, and parent email
+address. To minimize data collected from children, we handle this
+information in specific ways, as outlined below:
+
+	* Birthday
+
+	We ask for children's birthdays to determine which users need
+	parental permission for access to the social features. We do not
+	store this information.
+
+	* First Name, Last Name, and Username
+
+	Children's names are never displayed publicly. Instead, each child
+	is known by the username he or she creates when registering for an
+	account. To protect children's safety and identities, we do not
+	permit their usernames to contain their personal names. Therefore,
+	we ask for first and last names to conduct a screening. We do not
+	save your child's last name after the account is created.
+
+	* Child's Email Address
+
+	We hash (or alter) the email address that a child provides so that
+	we can't view it. This altered email address is used only to
+	recover a password.
+
+	* Parent's Email Address
+
+	We use this address to send you this notice, and we include it on
+	the attached consent form so that we can match your child's
+	username to your email address when you submit the form. We delete
+	your address after sending you this email.
+
+In short, the only personal information we retain after your child
+registers is his or her first name and email address in its altered
+form.
+
+Information We Collect for Access to Social Features
+========================
+
+After we receive your consent and activate the social features, we
+will ask for and store your child's full name, school, and email
+address (in unaltered form). Also, we will save your email address
+from the consent form in order to notify you of changes to our privacy
+practices.
+
+With access to social features your child may be able to fill out
+profile information, post blogs and messages, upload photos, and chat
+online. Please be aware that any personal information your child
+voluntarily posts or sends while using NextThought may be seen by
+other users, and take this opportunity to talk with your child about
+online safety.
+
+Technical Information
+========================
+
+We also collect some technical and usage information via technology,
+such as IP addresses and web browsers in use. We collect this
+information through cookies and other software technologies. However,
+we use it only to support the internal operations of the site.
+
+Sharing Information
+========================
+
+We neither rent nor sell personal information to anyone.
+
+We may use third-party providers to perform services on our behalf,
+which requires sharing some personal information with them in order to
+ensure the proper operation of our site and delivery of our services.
+
+Also, we may share information with those education organizations or
+publishers whose content your child interacts with, such as
+MATHCOUNTS. We have made reasonable efforts to ensure our vendors and
+content providers protect the confidentiality, security, and integrity
+of any personal information that we share with them.
+
+Please take a moment to review our Children's Privacy Policy for more
+details about our information collection and sharing practices.
+
+Your Child's Account
+========================
+
+You may review or delete your child's account at any time. To do this
+please send an email with your request to compliance@nextthought.com.
+
+If you have other questions about NextThought or need further
+assistance with your child's account, please feel free to contact us.
+
+Sincerely,
+NextThought
+
+For more information, visit our website at www.nextthought.com.

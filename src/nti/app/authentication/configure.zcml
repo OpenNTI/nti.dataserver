@@ -1,0 +1,33 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:z3c="http://namespaces.zope.org/z3c"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<subscriber handler=".subscribers._decode_username_request_event" />
+
+	<adapter factory=".subscribers.BasicAuthLoginPassword" />
+
+	<adapter factory=".user_token.DefaultIdentifiedUserTokenAuthenticator"
+			 for="basestring" />
+
+	<utility factory=".pluggableauth.DataserverUsersAuthenticatorPlugin"
+			 name="Dataserver Global User Authenticator" />
+
+	<utility factory="nti.app.authentication.saml_plugin.make_saml_client"
+			 provides="nti.app.saml.interfaces.ISAMLClient" />
+
+	<!-- 
+	By default, everyone can logon. Use logon:whitelist in a
+	sub-site to change that 
+	-->
+	<utility factory=".interfaces.EveryoneLogonWhitelist" />
+
+	<adapter factory=".who_classifiers.application_request_classifier_for_request" />
+
+</configure>

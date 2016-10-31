@@ -1,0 +1,58 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<!-- Subscribers -->
+	<subscriber handler=".subscribers._new_user_is_not_blacklisted" />
+	<subscriber handler=".subscribers._user_modified_from_external_event" />
+
+	<!-- Decorators -->
+	<subscriber factory=".decorators._UserEmailVerificationLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._UserMembershipsLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._CommunityLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.ICommunity
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._DFLGetMembershipLinkProvider"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".decorators._DFLLinksDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._DFLEditLinkRemoverDecorator"
+				for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._UserSuggestedContactsLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					pyramid.interfaces.IRequest"/>
+
+	<subscriber factory=".decorators._CommunitySuggestedContactsLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.ICommunity
+					pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._DFLSuggestedContactsLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList
+					pyramid.interfaces.IRequest" />
+
+</configure>

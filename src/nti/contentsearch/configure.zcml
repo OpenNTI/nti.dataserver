@@ -1,0 +1,304 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:ext="http://nextthought.com/ntp/ext"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="nti.contentindexing" />
+
+	<!-- Database creation and migration -->
+	<utility factory=".generations.install._ContentSearchSchemaManager"
+			 name="nti.dataserver-contentsearch"
+			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
+
+	<!-- Adapters -->
+	<adapter factory=".search_hits.SearchHit"
+			 for="dict"
+			 provides=".interfaces.ISearchHit" />
+
+	<adapter factory=".search_hits.SearchHit"
+			 for="nti.dataserver.interfaces.IModeledContent"
+			 provides=".interfaces.ISearchHit" />
+
+	<adapter factory=".search_hits.HighlightSearchHit"
+			 for="nti.dataserver.interfaces.IHighlight"
+			 provides=".interfaces.IHighlightSearchHit" />
+
+	<adapter factory=".search_hits.NoteSearchHit"
+			 for="nti.dataserver.interfaces.INote"
+			 provides=".interfaces.INoteSearchHit" />
+
+	<adapter factory=".search_hits.MessageInfoSearchHit"
+			 for="nti.chatserver.interfaces.IMessageInfo"
+			 provides=".interfaces.IMessageInfoSearchHit" />
+
+	<adapter factory=".search_hits.RedactionSearchHit"
+			 for="nti.dataserver.interfaces.IRedaction"
+			 provides=".interfaces.IRedactionSearchHit" />
+
+	<adapter factory=".search_hits.PostSearchHit"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
+			 provides=".interfaces.IPostSearchHit" />
+
+	<adapter factory=".search_hits.HeadlineTopicSearchHit"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlineTopic"
+			 provides=".interfaces.IPostSearchHit" />
+
+	<adapter factory=".search_hits.ForumSearchHit"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForum"
+			 provides=".interfaces.IForumSearchHit" />
+
+	<adapter factory=".search_hits.WhooshBookSearchHit"
+			 for=".interfaces.IWhooshBookContent"
+			 provides=".interfaces.IWhooshBookSearchHit" />
+
+	<adapter factory=".search_hits.WhooshAudioTranscriptSearchHit"
+			 for=".interfaces.IWhooshAudioTranscriptContent"
+			 provides=".interfaces.IWhooshAudioTranscriptSearchHit" />
+
+	<adapter factory=".search_hits.WhooshVideoTranscriptSearchHit"
+			 for=".interfaces.IWhooshVideoTranscriptContent"
+			 provides=".interfaces.IWhooshVideoTranscriptSearchHit" />
+
+	<adapter factory=".search_hits.WhooshNTICardSearchHit"
+			 for=".interfaces.IWhooshNTICardContent"
+			 provides=".interfaces.IWhooshNTICardSearchHit" />
+
+	<!-- Externalization -->
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+
+	<ext:registerAutoPackageIO
+		root_interfaces=".interfaces.IDateTimeRange
+						 .interfaces.ISearchQuery
+						 .interfaces.IBookContent
+						 .interfaces.INTICardContent
+						 .interfaces.IVideoTranscriptContent
+						 .interfaces.ISearchFragment"
+		modules=".search_query .content_types .search_fragments" />
+
+	<adapter factory=".externalization._SearchHitMetaDataExternal" />
+
+	<adapter factory=".externalization._SearchHitInternalObjectIO"
+			 for=".interfaces.ISearchHit" />
+
+	<adapter factory=".externalization._SearchResultsInternalObjectIO"
+			 for=".interfaces.ISearchResults" />
+
+	<adapter factory=".externalization._SearchResultsInternalObjectIO"
+			 for=".interfaces.ISuggestResults" />
+
+	<adapter factory=".externalization._SearchResultsInternalObjectIO"
+			 for=".interfaces.ISuggestAndSearchResults" />
+
+	<!-- Decorators -->
+	<subscriber factory=".decorators._SearchHitHighlightDecorator"
+				for=".interfaces.IWhooshBookSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._SearchHitHighlightDecorator"
+				for=".interfaces.IWhooshVideoTranscriptSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._NTICardSearchHitHighlightDecorator"
+				for=".interfaces.IWhooshNTICardSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._NoteSearchHitHighlightDecorator"
+				for=".interfaces.INoteSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._SearchHitHighlightDecorator"
+				for=".interfaces.IHighlightSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._RedactionSearchHitHighlightDecorator"
+				for=".interfaces.IRedactionSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._SearchHitHighlightDecorator"
+				for=".interfaces.IMessageInfoSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._PostSearchHitHighlightDecorator"
+				for=".interfaces.IPostSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._ForumSearchHitHighlightDecorator"
+				for=".interfaces.IForumSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._SearchResultsDecorator"
+				for=".interfaces.ISearchResults"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._SuggestResultsDecorator"
+				for=".interfaces.ISuggestResults"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._SearchHitMetaDataDecorator"
+				for=".interfaces.ISearchHitMetaData"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<!-- Internalization -->
+	<adapter factory=".internalization._QueryObjectUpdater"
+			 for=".interfaces.ISearchQuery"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
+	<adapter factory=".internalization._SearchHitMetaDataUpdater"
+			 for=".interfaces.ISearchHitMetaData"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
+	<adapter factory=".internalization._SearchResultsUpdater"
+			 for=".interfaces.ISearchResults"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
+	<adapter factory=".internalization._SearchResultsUpdater"
+			 for=".interfaces.ISuggestAndSearchResults"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
+	<adapter factory=".internalization._SuggestResultsUpdater"
+			 for=".interfaces.ISuggestResults"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
+	<!-- Search hit comparators -->
+	<utility factory=".search_comparators._TypeSearchHitComparatorFactory" name="type" />
+	<utility factory=".search_comparators._DecaySearchHitComparatorFactory" name="decay" />
+	<utility factory=".search_comparators._ScoreSearchHitComparatorFactory" name="score" />
+	<utility factory=".search_comparators._CreatorSearchHitComparatorFactory" name="creator" />
+	<utility factory=".search_comparators._RelevanceSearchHitComparatorFactory" name="relevance" />
+	<utility factory=".search_comparators._LastModifiedSearchHitComparatorFactory" name="lastModified" />
+
+	<!-- Search hit subscribers -->
+	<subscriber factory=".subscribers._DefaultSearchHitPredicate"
+				provides=".interfaces.ISearchHitPredicate"
+				for="*"
+				zcml:condition="have devmode" />
+
+	<!-- Search pacakge resolvers -->
+	<subscriber factory=".subscribers._DefaultSearchPacakgeResolver"
+				provides=".interfaces.ISearchPackageResolver"
+				for="nti.dataserver.interfaces.IUser" />
+				
+	<!-- Content Resolvers -->
+	<adapter factory=".adapters._StringContentResolver"
+			 provides=".interfaces.IContentResolver"
+			 for="basestring" />
+
+	<adapter factory=".adapters._HighLightContentResolver"
+			 provides=".interfaces.IHighlightContentResolver"
+			 for="nti.dataserver.interfaces.IHighlight" />
+
+	<adapter factory=".adapters._RedactionContentResolver"
+			 provides=".interfaces.IRedactionContentResolver"
+			 for="nti.dataserver.interfaces.IRedaction" />
+
+	<adapter factory=".adapters._NoteContentResolver"
+			 provides=".interfaces.INoteContentResolver"
+			 for="nti.dataserver.interfaces.INote" />
+
+	<adapter factory=".adapters._MessageInfoContentResolver"
+			 provides=".interfaces.IMessageInfoContentResolver"
+			 for="nti.chatserver.interfaces.IMessageInfo" />
+
+	<adapter factory=".adapters._CanvasShapeContentResolver"
+			 provides=".interfaces.IContentResolver"
+			 for="nti.dataserver.contenttypes.Canvas" />
+
+	<adapter factory=".adapters._CanvasTextShapeContentResolver"
+			 provides=".interfaces.IContentResolver"
+			 for="nti.dataserver.contenttypes.CanvasTextShape" />
+
+	<adapter factory=".adapters._PostContentResolver"
+			 provides=".interfaces.IPostContentResolver"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
+
+	<adapter factory=".adapters._ForumContentResolver"
+			 provides=".interfaces.IForumContentResolver"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForum" />
+
+	<adapter factory=".adapters._VideoTranscriptContentResolver"
+			 provides=".interfaces.IVideoTranscriptContentResolver"
+			 for=".interfaces.IVideoTranscriptContent" />
+
+	<adapter factory=".adapters._NTICardContentResolver"
+			 provides=".interfaces.INTICardContentResolver"
+			 for=".interfaces.INTICardContent" />
+
+	<adapter factory=".adapters._BookContentResolver"
+			 provides=".interfaces.IBookContentResolver"
+			 for=".interfaces.IBookContent" />
+
+	<adapter for="*"
+			 factory=".adapters._ACLResolver"
+			 provides=".interfaces.IACLResolver" />
+
+	<adapter factory=".adapters._DictContentResolver"
+			 provides=".interfaces.IModeledContentResolver"
+			 for="dict" />
+
+	<subscriber factory=".adapters._DefaultTagKeywordResolver"
+				for="*"
+				provides=".interfaces.ITagsResolver"/>
+
+	<subscriber factory=".adapters._DefaultTagKeywordResolver"
+				for="*"
+				provides=".interfaces.IKeywordsResolver"/>
+
+	<subscriber factory=".adapters._DictContentResolver"
+				for="dict"
+				provides=".interfaces.ITagsResolver"/>
+
+	<subscriber factory=".adapters._DictContentResolver"
+				for="dict"
+				provides=".interfaces.IKeywordsResolver"/>
+
+	<!-- Type metadata -->
+	<utility factory=".search_metadata._note_metadata" name="note" />
+	<utility factory=".search_metadata._post_metadata" name="post" />
+	<utility factory=".search_metadata._book_metadata" name="content" />
+	<utility factory=".search_metadata._nticard_metadata" name="nticard" />
+	<utility factory=".search_metadata._highlight_metadata" name="highlight" />
+	<utility factory=".search_metadata._redaction_metadata" name="redaction" />
+	<utility factory=".search_metadata._transcript_metadata" name="transcript" />
+	<utility factory=".search_metadata._messageinfo_metadata" name="messageinfo" />
+	<utility factory=".search_metadata._audiotranscript_metadata" name="audiotranscript" />
+	<utility factory=".search_metadata._videotranscript_metadata" name="videotranscript" />
+
+	<utility factory=".search_metadata._generalforum_metadata" name="generalforum" />
+	<utility factory=".search_metadata._communityforum_metadata" name="communityforum" />
+	<utility factory=".search_metadata._personalblogcomment_metadata" name="personalblogcomment" />
+	<utility factory=".search_metadata._generalforumcomment_metadata" name="generalforumcomment" />
+	<utility factory=".search_metadata._personalblogentrypost_metadata" name="personalblogentrypost" />
+	<utility factory=".search_metadata._communityheadlinepost_metadata" name="communityheadlinepost" />
+	
+	<utility factory=".search_metadata._legacypost_metadata" name="legacypost" />
+	<utility factory=".search_metadata._legacycontent_metadata" name="legacycontent" />
+
+	<!-- Search highlights -->
+	<utility factory=".search_highlights.create_default_analyzer" />
+	<utility factory=".search_highlights.create_default_analyzer" name="en" />
+	<utility factory=".search_highlights.create_default_analyzer" name="es" />
+	<utility factory=".search_highlights.create_default_analyzer" name="ru" />
+
+	<!-- Search results -->
+	<utility factory=".search_results._SearchResultCreator"  />
+	<utility factory=".search_results._SuggestResultsCreator"  />
+	<utility factory=".search_results._SuggestAndSearchResultsCreator"  />
+
+	<!-- Search query -->
+	<adapter factory=".search_query._default_query_adapter"
+			 provides=".interfaces.ISearchQuery"
+			 for="basestring" />
+
+	<include file="configure_whoosh.zcml" />
+
+	<!-- Mime factories -->
+	<ext:registerMimeFactories module=".search_hits" />
+	<ext:registerMimeFactories module=".search_results" />
+</configure>

@@ -1,0 +1,75 @@
+// -*- mode: idl -*-
+//A sketch of data structures and APIs.
+
+
+//TODO: Library
+
+//API
+
+//The prefix shall include the username: (1) This may help with
+//impersonation later; (2) Explicit is better than implicit.
+//Thus prefix becomes: /users/$username
+
+/**
+ * CRUD
+ All creation shall be done by POSTing directly to the prefix.
+ The POSTed data MUST have 'ContainerId' and 'Class' attributes.
+ Note 1: The root /Objects/ prefix also works.
+ Note 2: The returned value shall include the HTTP Location header
+ giving the canonical permanent URL of the new data. The canonical
+ URLs will change between releases; always respect what the server provides.
+ Note 3: In the very near future the Content-Type header will
+ be required on the uploaded data. The Content-Type header on the
+ response will change.
+ This includes quizzes.
+
+ Ediing/updating is done by PUTting modified data to one of:
+ 1. The canonical URL.
+ 2. /prefix/Objects/$OID
+ 3. /Objects/$OID
+ Note 1: Very soon the Content-Type will be required.
+ Note 2: Locations will soon become embedded in the data.
+ Note 3: It is not possible to use PUT to create a new resource.
+ Note 4: The same URLs work for DELETE.
+
+ In general, always PUT/POST the entire contents of the object.
+ As a special case, to simply change the sharing settings for something,
+ one only needs to PUT the dictionary having only
+ the 'sharedWith' value to the object's URL.
+
+ Deprecation WARNING:
+  The older per-class URLs beneath /prefix/, e.g., /prefix/Notes/,
+  should be considered deprecated for fetching since they have terrible
+  performance characteristics. Note that these deprecated
+  URLs have removed one level of wrapping compared to earlier DS versions.
+  These URLs are also deprecated for writing.
+
+  The new URLs are currently rooted at /dataserver2/, while the old, deprecated
+  URLs are rooted at /dataserver/.
+*/
+
+
+/**
+ * Supporting finding other entities: GET beneath
+     /UserSearch/$searchString => [usernames]
+ * $searchString can be empty. It does substring matching
+ */
+
+/**
+ * Access contained entities (owned and shared): CRUD beneath:
+/prefix/Pages/$ntiid/UserGeneratedData/
+/prefix/Pages/$ntiid/RecursiveUserGeneratedData/
+
+
+ * Stream:
+/prefix/Pages/$ntiid/Stream/
+/prefix/Pages/$ntiid/RecursiveStream/
+
+ * Stream and Data:
+/prefix/Pages/$ntiid/UserGeneratedDataAndRecursiveStream
+   This URL has the best performance characteristics for most uses. Prefer it.
+
+ * The Recursive versions include the given $ntiid plus
+ * all of the $ntiid's children.
+ *
+ */
