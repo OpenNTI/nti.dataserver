@@ -28,6 +28,7 @@ from nti.schema.field import Text
 from nti.schema.field import Float
 from nti.schema.field import Number
 from nti.schema.field import Object
+from nti.schema.field import Variant
 from nti.schema.field import Iterable
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
@@ -624,7 +625,9 @@ class ISearchHit(IBaseHit, ILastModified):
 	Snippet = ValidTextLine(title="text found", required=False, default=u'')
 	Type = ValidTextLine(title="Search hit object type", required=True)
 	Creator = ValidTextLine(title="Search hit target creator", required=False)
-	ContainerId = ValidTextLine(title="Search hit container id", required=False)
+	ContainerId = Variant((ValidTextLine(title="The ntiid"),
+						   ListOrTuple(value_type=ValidTextLine(title="the ntiid"))),
+						  title="The containers")
 	Fragments = ListOrTuple(value_type=Object(ISearchFragment, title="the fragment"),
 							title="search fragments", required=False)
 
