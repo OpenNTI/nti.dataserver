@@ -864,6 +864,12 @@ class SearchCompletedEvent(component.interfaces.ObjectEvent):
 	def metadata(self):
 		return getattr(self.results, 'HitMetaData', None)
 
+class IResultTransformer(interface.Interface):
+	"""
+	An adapter interface to transform an object into
+	an appropriate object to return on hits.
+	"""
+
 import zope.deferredimport
 zope.deferredimport.initialize()
 zope.deferredimport.deprecatedFrom(
