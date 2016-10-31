@@ -55,8 +55,8 @@ from nti.property.property import alias
 
 def _lookup_subscribers(subscriptions=()):
 	result = []
-	for subscription in subscriptions:
-		subscriber = subscription()  # construct w/ passing any item
+	for subscription in subscriptions or ():
+		subscriber = subscription()  # construct w/o passing any item
 		if subscriber is not None:
 			result.append(subscriber)
 	return result
