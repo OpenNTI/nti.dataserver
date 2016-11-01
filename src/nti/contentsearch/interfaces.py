@@ -809,13 +809,6 @@ class ISuggestResults(IBaseSearchResults):
 
 	add_suggestions = add
 
-class ISuggestAndSearchResults(ISearchResults, ISuggestResults):
-
-	Suggestions = IndexedIterable(
-						title="suggested words",
-						required=False,
-						value_type=ValidTextLine(title="suggested word"))
-
 class ISearchResultsCreator(interface.Interface):
 
 	def __call__(query):
@@ -825,12 +818,6 @@ class ISuggestResultsCreator(interface.Interface):
 
 	def __call__(query):
 		"""return a new instance of a ISuggestResults"""
-
-class ISuggestAndSearchResultsCreator(interface.Interface):
-
-	def __call__(query):
-		"""return a new instance of a ISuggestAndSearchResults"""
-
 
 class IWhooshAnalyzer(interface.Interface):
 	pass

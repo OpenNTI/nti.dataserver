@@ -24,7 +24,6 @@ from .interfaces import ISearchQuery
 from .interfaces import ISearchResults
 from .interfaces import ISuggestResults
 from .interfaces import ISearchHitMetaData
-from .interfaces import ISuggestAndSearchResults
 
 from .constants import ITEMS, HITS, SUGGESTIONS, QUERY, SEARCH_QUERY
 
@@ -89,13 +88,8 @@ class _SearchResultsUpdater(object):
 			parsed[HITS] = parsed[ITEMS]
 			del parsed[ITEMS]
 
-		if ISuggestAndSearchResults.providedBy(self.obj):
-			iface = ISuggestAndSearchResults
-		else:
-			iface = ISearchResults
-
 		_transform_query(parsed)
-		result = InterfaceObjectIO(self.obj, iface).updateFromExternalObject(parsed)
+		result = InterfaceObjectIO(self.obj, ISearchResults).updateFromExternalObject(parsed)
 
 		# make sure we restore the query object to the hits
 		for hit in self.obj._raw_hits():

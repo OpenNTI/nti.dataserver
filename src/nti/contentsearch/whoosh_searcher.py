@@ -47,8 +47,6 @@ from .search_results import merge_search_results
 from .search_results import merge_suggest_results
 from .search_results import get_or_create_search_results
 from .search_results import get_or_create_suggest_results
-from .search_results import merge_suggest_and_search_results
-from .search_results import get_or_create_suggest_and_search_results
 
 from .whoosh_query import CosineScorerModel
 
@@ -219,15 +217,6 @@ class WhooshContentSearcher(Contained,
 			gevent.joinall(greenlets)
 			for greenlet in greenlets:
 				store = merge_search_results(store, greenlet.get())
-		return store
-
-	def suggest_and_search(self, query, store=None, *args, **kwargs):
-		query = ISearchQuery(query)
-		store = get_or_create_suggest_and_search_results(query, store)
-		for s in self._searchables.values():
-			if self.is_valid_content_query(s, query):
-				rs = s.suggest_and_search(query, store=store)
-				store = merge_suggest_and_search_results(store, rs)
 		return store
 
 	def suggest(self, query, store=None, *args, **kwargs):

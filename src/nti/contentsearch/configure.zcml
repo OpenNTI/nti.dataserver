@@ -93,9 +93,6 @@
 	<adapter factory=".externalization._SearchResultsInternalObjectIO"
 			 for=".interfaces.ISuggestResults" />
 
-	<adapter factory=".externalization._SearchResultsInternalObjectIO"
-			 for=".interfaces.ISuggestAndSearchResults" />
-
 	<!-- Decorators -->
 	<subscriber factory=".decorators._SearchHitHighlightDecorator"
 				for=".interfaces.IWhooshBookSearchHit"
@@ -156,10 +153,6 @@
 
 	<adapter factory=".internalization._SearchResultsUpdater"
 			 for=".interfaces.ISearchResults"
-			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
-
-	<adapter factory=".internalization._SearchResultsUpdater"
-			 for=".interfaces.ISuggestAndSearchResults"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
 	<adapter factory=".internalization._SuggestResultsUpdater"
@@ -289,7 +282,6 @@
 	<!-- Search results -->
 	<utility factory=".search_results._SearchResultCreator"  />
 	<utility factory=".search_results._SuggestResultsCreator"  />
-	<utility factory=".search_results._SuggestAndSearchResultsCreator"  />
 
 	<!-- Search query -->
 	<adapter factory=".search_query._default_query_adapter"

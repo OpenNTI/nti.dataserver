@@ -126,45 +126,6 @@ class TestSearchExternal(unittest.TestCase):
 		assert_that(new_suggestions, equal_to(old_suggestions))
 
 	@WithMockDSTrans
-	def test_externalize_search_suggest_results(self):
-		qo = QueryObject.create("theotokos")
-		searchResults = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
-
-		suggestions = domain_words[:3]
-		searchResults.add_suggestions(suggestions)
-
-		usr = self._create_user()
-		commands = zanpakuto_commands[:5]
-		containerId = make_ntiid(nttype='bleach', specific='manga')
-
-		notes = self._create_notes(usr.username, containerId, commands)
-		for note in notes:
-			mock_dataserver.current_transaction.add(note)
-			note = usr.addContainedObject( note )
-		searchResults.extend(notes)
-		old_hits = list(searchResults.Hits)
-		old_suggestions = list(searchResults.Suggestions)
-
-		eo = toExternalObject(searchResults)
-		assert_that(eo, has_entry('Query', u'theotokos'))
-		assert_that(eo, has_entry(HIT_COUNT, len(commands)))
-		assert_that(eo, has_key(LAST_MODIFIED))
-		assert_that(eo[LAST_MODIFIED], greater_than_or_equal_to(0))
-		assert_that(eo, has_key(ITEMS))
-		assert_that(eo[ITEMS], has_length(len(commands)))
-		assert_that(eo[SUGGESTIONS], has_length(len(suggestions)))
-
-		# internalize
-		factory = find_factory_for(eo)
-		new_results = factory()
-		update_from_external_object(new_results, eo)
-		new_hits = list(new_results.Hits)
-		new_suggestions = list(new_results.Suggestions)
-
-		assert_that(new_hits, equal_to(old_hits))
-		assert_that(new_suggestions, equal_to(old_suggestions))
-
-	@WithMockDSTrans
 	def test_search_results_sort_relevance(self):
 		qo = QueryObject.create("sode no shirayuki", sortOn='relevance')
 		containerId = make_ntiid(nttype='bleach', specific='manga')

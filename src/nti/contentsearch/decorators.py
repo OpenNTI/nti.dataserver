@@ -30,7 +30,6 @@ from .interfaces import ISuggestResults
 from .interfaces import ISearchHitMetaData
 from .interfaces import IRedactionSearchHit
 from .interfaces import IWhooshNTICardSearchHit
-from .interfaces import ISuggestAndSearchResults
 
 from .constants import SNIPPET
 from .constants import FRAGMENTS, TOTAL_FRAGMENTS, FIELD, ITEMS, SUGGESTIONS, HITS
@@ -156,9 +155,8 @@ class _SearchResultsDecorator(_ResultsDecorator):
 class _SuggestResultsDecorator(_ResultsDecorator):
 
 	def decorateExternalObject(self, original, external):
-		if not ISuggestAndSearchResults.providedBy(original):
-			external[ITEMS] = external.pop(SUGGESTIONS, [])
-			self.decorateCommon(original, external)
+		external[ITEMS] = external.pop(SUGGESTIONS, [])
+		self.decorateCommon(original, external)
 
 @component.adapter(ISearchHitMetaData)
 class _SearchHitMetaDataDecorator(object):

@@ -43,9 +43,7 @@ from nti.contentsearch.interfaces import ISearchHitComparator
 from nti.contentsearch.interfaces import ILastModifiedResolver
 from nti.contentsearch.interfaces import ISearchResultsCreator
 from nti.contentsearch.interfaces import ISuggestResultsCreator
-from nti.contentsearch.interfaces import ISuggestAndSearchResults
 from nti.contentsearch.interfaces import ISearchHitComparatorFactory
-from nti.contentsearch.interfaces import ISuggestAndSearchResultsCreator
 
 from nti.contentsearch.search_hits import get_search_hit
 
@@ -330,9 +328,7 @@ class _SearchResults(_BaseSearchResults):
 		return self.count
 
 	def __iadd__(self, other):
-		if 	ISearchResults.providedBy(other) or \
-			ISuggestAndSearchResults.providedBy(other):
-
+		if ISearchResults.providedBy(other):
 			self._set_hits(other._raw_hits())
 			self.HitMetaData += other.HitMetaData
 
@@ -358,7 +354,7 @@ class _SuggestResults(_BaseSearchResults):
 	def add_suggestions(self, items):
 		items = (items,) if isinstance(items, six.string_types) or \
 						 not isinstance(items, collections.Iterable) else items
-		self._extend(items)  # avoid any possible conflict w/ _SuggestAndSearchResults
+		self._extend(items)
 
 	add = add_suggestions
 
@@ -368,39 +364,8 @@ class _SuggestResults(_BaseSearchResults):
 	extend = _extend
 
 	def __iadd__(self, other):
-		if 	ISuggestResults.providedBy(other) or \
-			ISuggestAndSearchResults.providedBy(other):
+		if ISuggestResults.providedBy(other):
 			self._words.update(other.suggestions)
-		return self
-
-@interface.implementer(ISuggestAndSearchResults)
-class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
-
-	__metaclass__ = _MetaSearchResults
-
-	def __init__(self, query=None):
-		_SearchResults.__init__(self, query)
-		_SuggestResults.__init__(self, query)
-
-	Hits = hits = property(_SearchResults._get_hits, _SearchResults._set_hits)
-	suggestions = Suggestions = property(_SuggestResults._get_words,
-										 _SuggestResults._set_words)
-
-	def clone(self, meta=True, hits=False, suggestions=True):
-		result = _SearchResults.clone(self, meta, hits)
-		if suggestions:
-			result.Suggestions = self.Suggestions
-		return result
-
-	def add(self, item, score=1.0):
-		_SearchResults.add(self, item, score)
-
-	def extend(self, items):
-		_SearchResults.extend(self, items)
-
-	def __iadd__(self, other):
-		_SearchResults.__iadd__(self, other)
-		_SuggestResults.__iadd__(self, other)
 		return self
 
 @interface.implementer(ISearchResultsCreator)
@@ -414,12 +379,6 @@ class _SuggestResultsCreator(object):
 
 	def __call__(self, query=None):
 		return _SuggestResults(query)
-
-@interface.implementer(ISuggestAndSearchResultsCreator)
-class _SuggestAndSearchResultsCreator(object):
-
-	def __call__(self, query=None):
-		return _SuggestAndSearchResults(query)
 
 # sort
 
@@ -445,14 +404,6 @@ def empty_search_results(query):
 
 def get_or_create_search_results(query, store=None):
 	results = store if store is not None else empty_search_results(query)
-	return results
-
-def empty_suggest_and_search_results(query):
-	result = component.getUtility(ISuggestAndSearchResultsCreator)(query)
-	return result
-
-def get_or_create_suggest_and_search_results(query, store=None):
-	results = store if store is not None else empty_suggest_and_search_results(query)
 	return results
 
 def empty_suggest_results(query):
@@ -484,11 +435,6 @@ def _merge(a, b):
 	return a
 
 def merge_search_results(a, b):
-	v, t = _preflight(a, b)
-	if t: return v
-	return _merge(a, b)
-
-def merge_suggest_and_search_results(a, b):
 	v, t = _preflight(a, b)
 	if t: return v
 	return _merge(a, b)

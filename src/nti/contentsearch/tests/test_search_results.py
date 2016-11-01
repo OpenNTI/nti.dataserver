@@ -32,7 +32,6 @@ from ..search_results import empty_search_results
 from ..search_results import merge_search_results
 from ..search_results import empty_suggest_results
 from ..search_results import merge_suggest_results
-from ..search_results import empty_suggest_and_search_results
 
 from . import zanpakuto_commands
 from . import domain as domain_words
@@ -118,32 +117,6 @@ class TestSearchResults(unittest.TestCase):
 
 		assert_that(count, is_(expected))
 
-	@WithMockDSTrans
-	def test_suggest_and_search_results(self):
-		user = self._create_user()
-		qo = search_interfaces.ISearchQuery("test")
-		sr = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
-		assert_that(sr, is_not(None))
-		assert_that(sr, verifiably_provides(search_interfaces.ISuggestAndSearchResults))
-		assert_that(sr, verifiably_provides(IContentTypeAware))
-
-		sr.add_suggestions(domain_words)
-		assert_that(sr.suggestions, has_length(len(domain_words)))
-		for word in domain_words:
-			assert_that(sr.suggestions, has_item(word))
-
-		notes = []
-		containerid = make_ntiid(nttype='bleach', specific='manga')
-		for cmd in zanpakuto_commands:
-			note = Note()
-			note.body = [unicode(cmd)]
-			note.creator = 'nt@nti.com'
-			note.containerId = containerid
-			note = user.addContainedObject(note)
-			notes.append(note)
-		sr.extend(notes)
-		assert_that(sr, has_length(len(notes)))
-
 	def test_empty_search_results(self):
 		d = empty_search_results(search_interfaces.ISearchQuery("myQuery"))
 		assert_that(d, has_length(0))
@@ -152,12 +125,6 @@ class TestSearchResults(unittest.TestCase):
 	def test_empty_suggest_result(self):
 		d = empty_suggest_results(search_interfaces.ISearchQuery("myQuery"))
 		assert_that(d, has_length(0))
-		assert_that(d.suggestions, has_length(0))
-
-	def test_empty_suggest_and_search_result(self):
-		d = empty_suggest_and_search_results(search_interfaces.ISearchQuery("myQuery"))
-		assert_that(d, has_length(0))
-		assert_that(d.hits, is_([]))
 		assert_that(d.suggestions, has_length(0))
 
 	@WithMockDSTrans

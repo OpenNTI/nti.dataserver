@@ -14,14 +14,16 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from nti.externalization.interfaces import IInternalObjectIO
-from nti.externalization.datastructures import InterfaceObjectIO
+from nti.contentsearch.interfaces import ISearchHitMetaData
+
 from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
 
-from .interfaces import ISearchHitMetaData
+from nti.externalization.datastructures import InterfaceObjectIO
 
-@interface.implementer(IInternalObjectIO)
+from nti.externalization.interfaces import IInternalObjectIO
+
 @component.adapter(ISearchHitMetaData)
+@interface.implementer(IInternalObjectIO)
 class _SearchHitMetaDataExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = ISearchHitMetaData
 
@@ -51,8 +53,7 @@ class _SearchResultsInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):
 		return (search_interfaces.ISearchResults,
-				search_interfaces.ISuggestResults,
-				search_interfaces.ISuggestAndSearchResults)
+				search_interfaces.ISuggestResults)
 
 	@classmethod
 	def _ap_enumerate_module_names(cls):
