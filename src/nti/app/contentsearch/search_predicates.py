@@ -10,8 +10,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import itertools
-
 from zope import interface
 
 from pyramid.threadlocal import get_current_request
@@ -54,20 +52,13 @@ class _AccessibleSearchPostProcessingPredicate(object):
 		return get_remote_user(self.request)
 
 	@Lazy
-	def memberships(self):
-		user = self.user
-		dynamic_memberships = getattr(user, 'usernames_of_dynamic_memberships', ())
-		usernames = itertools.chain((user.username,), dynamic_memberships)
-		result = {x.lower() for x in usernames}
-		return result
-
-	@Lazy
 	def effective_principals(self):
 		return effective_principals(self.user.username, everyone=False, skip_cache=True)
 
 	def _check_ugd_access(self, ugd_item):
-		result = ugd_item.isSharedDirectlyWith(self.user) \
-				 if IReadableShared.providedBy(ugd_item) else False
+		result = False
+		if IReadableShared.providedBy(ugd_item):
+			result = ugd_item.isSharedDirectlyWith(self.user)
 		if not result:
 			to_check = ugd_item
 			if IHeadlinePost.providedBy(ugd_item):
