@@ -113,10 +113,6 @@ class TestIndexManager(unittest.TestCase):
 		hits = self.im.content_search(query=q)
 		assert_that(hits, has_length(1))
 
-		q = QueryObject(indexid='bleach', term='wen')
-		hits = self.im.content_suggest_and_search(query=q)
-		assert_that(hits, has_length(1))
-
 		q = QueryObject(indexid='bleach', term='extre')
 		hits = self.im.content_suggest(query=q)
 		assert_that(hits, has_length(1))
