@@ -106,7 +106,7 @@ class SearchFragment(object):
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.searchfragment'
 
-	__slots__ = ('text', 'matches')
+	__slots__ = ('text', 'matches', 'field')
 
 	def __len__(self):
 		return len(self.matches)
