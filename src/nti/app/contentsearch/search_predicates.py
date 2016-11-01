@@ -12,15 +12,13 @@ logger = __import__('logging').getLogger(__name__)
 
 import itertools
 
-from pyramid.threadlocal import get_current_request
-
 from zope import interface
+
+from pyramid.threadlocal import get_current_request
 
 from nti.app.authentication import get_remote_user
 
 from nti.appserver.pyramid_authorization import has_permission
-
-from nti.contentsearch.discriminators import get_acl
 
 from nti.contentsearch.interfaces import ISearchHitPostProcessingPredicate
 
@@ -44,13 +42,16 @@ class _AccessibleSearchPostProcessingPredicate(object):
 	items through.
 	"""
 
+	def __init__(self, *args):
+		pass
+
 	@Lazy
 	def request(self):
 		return get_current_request()
 
 	@Lazy
 	def user(self):
-		return get_remote_user( self.request )
+		return get_remote_user(self.request)
 
 	@Lazy
 	def memberships(self):
@@ -77,14 +78,13 @@ class _AccessibleSearchPostProcessingPredicate(object):
 										self.user.username,
 										principals=self.effective_principals)
 			else:
-				acl = set(get_acl(ugd_item, ()))
-				result = self.memberships.intersection(acl)
+				result = has_permission(ACT_READ, ugd_item, self.request)
 		result = bool(result) and not IDeletedObjectPlaceholder.providedBy(ugd_item)
 		return result
 
 	def allow(self, item, unused_score, query):
-		if IUserGeneratedData.providedBy( item ):
-			result = self._check_ugd_access( item )
+		if IUserGeneratedData.providedBy(item):
+			result = self._check_ugd_access(item)
 		else:
-			result = has_permission( ACT_READ, item, self.request )
+			result = has_permission(ACT_READ, item, self.request)
 		return result
