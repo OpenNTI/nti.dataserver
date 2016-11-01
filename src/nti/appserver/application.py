@@ -42,6 +42,7 @@ from ZODB.interfaces import IDatabase
 import nti.appserver
 from nti.appserver import pyramid_auth
 from nti.appserver import pyramid_authorization
+from nti.appserver import pyramid_predicates
 from nti.appserver import dataserver_socketio_views
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.traversal import ZopeResourceTreeTraverser
@@ -589,6 +590,8 @@ def createApplication( http_port,
 		# This branch exists only for tests
 		pyramid_config.set_root_factory( 'nti.appserver._dataserver_pyramid_traversal.root_resource_factory' )
 
+	#content_type predicate for view_config.
+	pyramid_config.add_view_predicate('content_type', pyramid_predicates.ContentTypePredicate)
 	# Chameleon templating support; see also _renderer_settings
 	pyramid_config.include( 'pyramid_chameleon' )
 	# Configure Mako for plain text templates (Only! Use ZPT for XML/HTML)
