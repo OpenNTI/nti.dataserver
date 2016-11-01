@@ -33,7 +33,7 @@ from nti.contentsearch import constants
 from nti.contentsearch.common import videotimestamp_to_datetime
 from nti.contentsearch.whoosh_searcher import WhooshContentSearcher
 from nti.contentsearch.whoosh_storage import create_directory_index
-from nti.contentsearch.constants import (HIT, HIT_COUNT, ITEMS, SUGGESTIONS)
+from nti.contentsearch.constants import (HIT, HIT_COUNT, ITEMS)
 
 from nti.contentsearch.tests import find_test
 from nti.contentsearch.tests import zanpakuto_commands
@@ -224,11 +224,3 @@ class TestWhooshContentSearcher(unittest.TestCase):
 		items = hits[ITEMS]
 		assert_that(items, has_length(4))
 		assert_that(items, contains_inanyorder('rage', 'rankle', 'rain', 'raise'))
-
-	def test_suggest_and_search(self):
-		hits = toExternalObject(self.bim.suggest_and_search("ra"))
-		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry('Query', u'ra'))
-		assert_that(hits, has_key(ITEMS))
-		assert_that(hits[ITEMS], has_length(1))
-		assert_that(hits[SUGGESTIONS], has_length(4))
