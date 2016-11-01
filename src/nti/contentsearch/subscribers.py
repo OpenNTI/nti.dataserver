@@ -45,7 +45,7 @@ class _DefaultSearchPacakgeResolver(object):
 				obj = find_object_with_ntiid(ntiid)
 				bundle = IContentPackageBundle(obj, None)
 				if bundle is not None and bundle.ContentPackages:
-					result = [x.ntiid for x in bundle.ContentPackages]
+					result = tuple(x.ntiid for x in bundle.ContentPackages)
 			else:
-				result = [ntiid]
+				result = (ntiid,)
 		return result
