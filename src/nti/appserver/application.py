@@ -23,9 +23,13 @@ import time
 import warnings
 
 from zope import component
-from zope.event import notify
+
+from zope.component.hooks import site
+from zope.component.hooks import setHooks
+
 from zope.configuration import xmlconfig
-from zope.component.hooks import setHooks, site
+
+from zope.event import notify
 
 from zope.processlifetime import ProcessStarting
 from zope.processlifetime import DatabaseOpenedWithRoot
@@ -33,6 +37,7 @@ from zope.processlifetime import IDatabaseOpenedWithRoot
 
 import pyramid.config
 import pyramid.registry
+
 from pyramid.threadlocal import get_current_registry
 
 from paste.deploy.converters import asbool
@@ -40,19 +45,24 @@ from paste.deploy.converters import asbool
 from ZODB.interfaces import IDatabase
 
 import nti.appserver
+
 from nti.appserver import pyramid_auth
-from nti.appserver import pyramid_authorization
 from nti.appserver import pyramid_predicates
+from nti.appserver import pyramid_authorization
 from nti.appserver import dataserver_socketio_views
+
 from nti.appserver import interfaces as app_interfaces
+
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
 import nti.dataserver.users
+
 from nti.dataserver import authorization as nauth
-from nti.dataserver.interfaces import IDataserver
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.interfaces import IDataserver
 
 import nti.dictserver.storage
 
@@ -135,13 +145,13 @@ def _logon_account_views(pyramid_config):
 	pyramid_config.add_route(name='logout', pattern='/dataserver2/logout')
 	pyramid_config.add_view(route_name='logout', view='nti.appserver.logon.logout')
 
-	# 	# Not actually used anywhere; the logon.* routes are
-	# 	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
-	# 	# Note that the openid value MUST be POST'd to this view; an unmodified view goes into
-	# 	# an infinite loop if the openid value is part of a GET param
-	# 	# This value works for any google apps account: https://www.google.com/accounts/o8/id
-	# 	pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
-	# 	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
+	# Not actually used anywhere; the logon.* routes are
+	# pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
+	# Note that the openid value MUST be POST'd to this view; an unmodified view goes into
+	# an infinite loop if the openid value is part of a GET param
+	# This value works for any google apps account: https://www.google.com/accounts/o8/id
+	# pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
+	# pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
 
 	pyramid_config.add_route(name="logon.forgot.username", pattern="/dataserver2/logon.forgot.username")
 	pyramid_config.add_route(name="logon.forgot.passcode", pattern="/dataserver2/logon.forgot.passcode")
@@ -171,7 +181,6 @@ def _socketio_views(pyramid_config):
 def _dictionary_views(pyramid_config, settings):
 	if 'main_dictionary_path' not in settings:
 		return
-
 	try:
 		storage = nti.dictserver.storage.UncleanSQLiteJsonDictionaryTermStorage(settings['main_dictionary_path'])
 		dictionary = nti.dictserver.storage.JsonDictionaryTermDataStorage(storage)
@@ -193,7 +202,6 @@ def _service_odata_views(pyramid_config):
 	# Our previous use of routes for this was inflexible and a poor
 	# fit with traversal. We now make the ITraversable
 	# handle this, preserving traversal flexibility.
-
 
 def _renderer_settings(pyramid_config):
 	# the name rest is deprecated...
@@ -246,8 +254,6 @@ def _sync_host_policies(_):
 	# XXX: JAM: Note: this sync call will move around!
 	from nti.site.hostpolicy import synchronize_host_policies
 	synchronize_host_policies()
-
-
 
 def _library_settings(pyramid_config, server):
 	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
@@ -758,14 +764,6 @@ def _configure_zodb_tween( database_event, registry=None ):
 		# event
 		registry = component.getGlobalSiteManager()
 	registry.nti_zodb_root_db = database_event.database
-
-# These two functions exist for the sake of the installed executables
-# but they do nothing these days
-def sharing_listener_main():
-	pass
-
-def index_listener_main():
-	pass
 
 ####
 # z3c.autoinclude plugin points:
