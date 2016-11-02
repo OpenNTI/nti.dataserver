@@ -765,7 +765,7 @@ class IBaseSearchResults(ILastModified):
 
 class ISearchResults(IBaseSearchResults):
 
-	Name = ValidTextLine(title='Results name')
+	Name = ValidTextLine(title='Results name', required=False)
 
 	Hits = IndexedIterable(
 				value_type=Object(ISearchHit, description="A ISearchHit`"),
