@@ -11,8 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from itsdangerous import JSONWebSignatureSerializer
 
-from pyramid.threadlocal import get_current_request
-
 import saml2
 
 from saml2 import BINDING_HTTP_POST
@@ -31,6 +29,8 @@ from zope import component
 from zope import interface
 
 from pyramid import httpexceptions as hexc
+
+from pyramid.threadlocal import get_current_request
 
 from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLClient
