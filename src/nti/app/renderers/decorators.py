@@ -12,16 +12,25 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
-
 from abc import ABCMeta
 from abc import abstractmethod
 
+from zope import interface
+
+from zope.location.interfaces import ILocation
+
 from nti.app.authentication import get_remote_user
+
+from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.interfaces import StandardExternalFields
+
+from nti.links.links import Link
 
 from nti.property.property import Lazy
 from nti.property.property import alias
 from nti.property.property import readproperty
+
+StandardExternalFields_LINKS = StandardExternalFields.LINKS
 
 class AbstractRequestAwareDecorator(object):
 	"""
@@ -41,7 +50,7 @@ class AbstractRequestAwareDecorator(object):
 		"You may implement this method to check a precondition, return False if no decoration."
 		return True
 
-	def decorateExternalMapping( self, context, result ):
+	def decorateExternalMapping(self, context, result):
 		if self._predicate(context, result):
 			self._do_decorate_external(context, result)
 
@@ -49,7 +58,9 @@ class AbstractRequestAwareDecorator(object):
 
 	@abstractmethod
 	def _do_decorate_external(self, context, result):
-		"Implement this to do your actual decoration"
+		"""
+		Implement this to do your actual decoration
+		"""
 		raise NotImplementedError()
 
 class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
@@ -85,15 +96,6 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
 			# not present
 			return None
 
-from zope.location.interfaces import ILocation
-
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization.interfaces import StandardExternalFields
-
-from nti.links.links import Link
-
-StandardExternalFields_LINKS = StandardExternalFields.LINKS
-
 class AbstractTwoStateViewLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	"""
 	A decorator which checks the state of a predicate of two functions
@@ -127,15 +129,14 @@ class AbstractTwoStateViewLinkDecorator(AbstractAuthenticatedRequestAwareDecorat
 	true_view = None
 	link_predicate = None
 
-	def _do_decorate_external( self, context, mapping ):
+	def _do_decorate_external(self, context, mapping):
 		"""
 		:param extra_elements: A tuple of elements that are unconditionally added to
 			the generated link.
 		"""
 		return self._do_decorate_external_link(context, mapping)
 
-
-	def _do_decorate_external_link( self, context, mapping, extra_elements=() ):
+	def _do_decorate_external_link(self, context, mapping, extra_elements=()):
 		"""
 		:param extra_elements: A tuple of elements that are unconditionally added to
 			the generated link.
@@ -149,29 +150,28 @@ class AbstractTwoStateViewLinkDecorator(AbstractAuthenticatedRequestAwareDecorat
 		if not context.__parent__:
 			return
 
-		predicate_passed = self.link_predicate( context, current_username )
+		predicate_passed = self.link_predicate(context, current_username)
 		# We're assuming that because you can see it, you can (un)like it.
 		# this matches the views
 
 		rel = self.true_view if predicate_passed else self.false_view
-		if rel is None: # Disabled in this case
+		if rel is None:  # Disabled in this case
 			return
 
 		# Use the OID NTIID rather than the 'physical' path because
 		# the 'physical' path may not quite be traversable at this
 		# point...plus, it's more semantically correct because the OID
 		# path points to this exact object, even if moved/renamed
-		target_ntiid = to_external_ntiid_oid( context )
+		target_ntiid = to_external_ntiid_oid(context)
 		if target_ntiid is None:
-			logger.warn( "Failed to get ntiid; not adding link %s for %s", rel, context )
+			logger.warn("Failed to get ntiid; not adding link %s for %s", rel, context)
 			return
 
-		link = Link( target_ntiid, rel=rel, elements=('@@' + rel,) + extra_elements)
-		interface.alsoProvides( link, ILocation )
+		link = Link(target_ntiid, rel=rel, elements=('@@' + rel,) + extra_elements)
+		interface.alsoProvides(link, ILocation)
 		link.__name__ = ''
 		link.__parent__ = context
 
-		_links = mapping.setdefault( StandardExternalFields_LINKS, [] )
-		_links.append( link )
-
+		_links = mapping.setdefault(StandardExternalFields_LINKS, [])
+		_links.append(link)
 		return link
