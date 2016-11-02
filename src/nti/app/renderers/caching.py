@@ -19,7 +19,18 @@ from zope import interface
 from zope.file import interfaces as zf_interfaces
 
 import pyramid.httpexceptions
+
 from pyramid.threadlocal import get_current_request
+
+from nti.app.renderers.interfaces import IExternalCollection
+from nti.app.renderers.interfaces import IUnModifiedInResponse
+from nti.app.renderers.interfaces import IUncacheableInResponse
+from nti.app.renderers.interfaces import IResponseCacheController
+from nti.app.renderers.interfaces import IPrivateUncacheableInResponse
+from nti.app.renderers.interfaces import IUserActivityExternalCollection
+from nti.app.renderers.interfaces import IETagCachedUGDExternalCollection
+from nti.app.renderers.interfaces import IPreRenderResponseCacheController
+from nti.app.renderers.interfaces import ILongerCachedUGDExternalCollection
 
 from nti.appserver import traversal
 from nti.appserver import interfaces as app_interfaces
@@ -27,17 +38,7 @@ from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import flagging
 from nti.dataserver import interfaces as nti_interfaces
 
-from .interfaces import IExternalCollection
-from .interfaces import IUnModifiedInResponse
-from .interfaces import IUncacheableInResponse
-from .interfaces import IResponseCacheController
-from .interfaces import IPrivateUncacheableInResponse
-from .interfaces import IUserActivityExternalCollection
-from .interfaces import IETagCachedUGDExternalCollection
-from .interfaces import IPreRenderResponseCacheController
-from .interfaces import ILongerCachedUGDExternalCollection
-
-def default_vary_on( request ):
+def default_vary_on(request):
 	vary_on = []
 	# It is important to be consistent with these responses;
 	# they should not change if the header is absent from the request
@@ -45,18 +46,18 @@ def default_vary_on( request ):
 
 	# our responses vary based on the Accept parameter, since
 	# that informs representation
-	vary_on.append( b'Accept' )
-	vary_on.append( b'Accept-Encoding' ) # we expect to be gzipped
-	vary_on.append( b'Origin' )
+	vary_on.append(b'Accept')
+	vary_on.append(b'Accept-Encoding')  # we expect to be gzipped
+	vary_on.append(b'Origin')
 
 	# vary_on.append( b'Host' ) # Host is always included
 	return vary_on
 
 @interface.provider(IResponseCacheController)
-def default_cache_controller( data, system ):
+def default_cache_controller(data, system):
 	request = system['request']
 	response = request.response
-	vary_on = default_vary_on( request )
+	vary_on = default_vary_on(request)
 
 	def _prep_cache(rsp):
 		rsp.vary = vary_on
@@ -69,14 +70,14 @@ def default_cache_controller( data, system ):
 		# "if the cache has seen the representation recently, and it was modified relatively long ago."
 		# We set some age guideline here to avoid that trap:
 		if rsp.cache_control.max_age is None:
-			rsp.cache_control.max_age = 0 # You must opt-in for some non-zero lifetime
+			rsp.cache_control.max_age = 0  # You must opt-in for some non-zero lifetime
 			# (Setting it to 0 is equivalent to setting no-cache)
 
 		if request.authenticated_userid is not None:
 			rsp.cache_control.private = True
 
-	end_to_end_reload = False # http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4
-	if request.pragma == 'no-cache' or request.cache_control.no_cache: # None if not set, '*' if set without names
+	end_to_end_reload = False  # http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4
+	if request.pragma == 'no-cache' or request.cache_control.no_cache:  # None if not set, '*' if set without names
 		end_to_end_reload = True
 
 	# We provide non-semantic ETag support based on the current rendering.
@@ -88,25 +89,25 @@ def default_cache_controller( data, system ):
 	if not response.etag:
 		body = system.get('nti.rendered')
 		if body is not None:
-			response.md5_etag( body, set_content_md5=True )
+			response.md5_etag(body, set_content_md5=True)
 	if 	response.etag and request.accept_encoding \
 		and 'gzip' in request.accept_encoding \
 		and not response.etag.endswith(b'./gz'):
 		# The etag is supposed to vary between encodings
 		response.etag += b'./gz'
 
-	if not end_to_end_reload and response.status_int == 200: # We will do caching
+	if not end_to_end_reload and response.status_int == 200:  # We will do caching
 		# If they give us both an etag and a last-modified, and the etag doesn't match,
 		# we MUST NOT generate a 304. Last-Modified is considered a weak validater,
 		# and we could in theory still generate a 304 if etag matched and last-mod didn't.
 		# However, we're going for strong semantics.
 		votes = []
 		if response.etag and request.if_none_match:
-			votes.append( response.etag in request.if_none_match )
+			votes.append(response.etag in request.if_none_match)
 
 		# Not Modified must also be true, if given
 		if response.last_modified is not None and request.if_modified_since:
-			votes.append( response.last_modified <= request.if_modified_since )
+			votes.append(response.last_modified <= request.if_modified_since)
 			# Since we know a modification date, respect If-Modified-Since. The spec
 			# says to only do this on a 200 response
 			# This is a pretty poor time to do it, after we've done all this work
@@ -115,7 +116,7 @@ def default_cache_controller( data, system ):
 			not_mod = pyramid.httpexceptions.HTTPNotModified()
 			not_mod.last_modified = response.last_modified
 			not_mod.cache_control = response.cache_control
-			_prep_cache( not_mod )
+			_prep_cache(not_mod)
 			if response.etag:
 				not_mod.etag = response.etag
 			raise not_mod
@@ -126,8 +127,8 @@ def default_cache_controller( data, system ):
 	if end_to_end_reload:
 		# No, that's not right. That gets us into an endless cycle with the client
 		# and us bouncing 'no-cache' back and forth
-		#response.cache_control.no_cache = True
-		#response.pragma = 'no-cache'
+		# response.cache_control.no_cache = True
+		# response.pragma = 'no-cache'
 		# so lets try something more subtle
 		response.cache_control.max_age = 0
 		response.cache_control.proxy_revalidate = True
@@ -135,7 +136,7 @@ def default_cache_controller( data, system ):
 		response.expires = 0
 
 	elif not response.cache_control.no_cache and not response.cache_control.no_store:
-		_prep_cache( response )
+		_prep_cache(response)
 	return response
 
 @interface.implementer(IResponseCacheController)
@@ -143,7 +144,7 @@ def default_cache_controller_factory(d):
 	return default_cache_controller
 
 @interface.provider(IResponseCacheController)
-def uncacheable_cache_controller( data, system ):
+def uncacheable_cache_controller(data, system):
 	request = system['request']
 	response = request.response
 
@@ -160,7 +161,7 @@ def uncacheable_cache_controller( data, system ):
 
 @interface.implementer(IResponseCacheController)
 @component.adapter(IUncacheableInResponse)
-def uncacheable_factory( data ):
+def uncacheable_factory(data):
 	return uncacheable_cache_controller
 
 @interface.provider(IResponseCacheController)
@@ -186,11 +187,11 @@ def private_uncacheable_cache_controller(data, system):
 
 @interface.implementer(IResponseCacheController)
 @component.adapter(IPrivateUncacheableInResponse)
-def private_uncacheable_factory( data ):
+def private_uncacheable_factory(data):
 	return private_uncacheable_cache_controller
 
 @interface.provider(IResponseCacheController)
-def unmodified_cache_controller( data, system ):
+def unmodified_cache_controller(data, system):
 	"""
 	Use this when the response shouldn't be cached based on last modified dates, and we have
 	no valid Last-Modified data to provide the browser (any that
@@ -201,22 +202,22 @@ def unmodified_cache_controller( data, system ):
 	"""
 	request = system['request']
 	response = request.response
-	response.last_modified = None #
+	response.last_modified = None  #
 	request.if_modified_since = None
-	response = default_cache_controller( data, system )
-	response.last_modified = None # in case it changed
+	response = default_cache_controller(data, system)
+	response.last_modified = None  # in case it changed
 
 @interface.implementer(IResponseCacheController)
 @component.adapter(IUnModifiedInResponse)
-def unmodified_factory( data ):
+def unmodified_factory(data):
 	return unmodified_cache_controller
 
-def md5_etag( *args ):
+def md5_etag(*args):
 	digest = md5()
 	for arg in args:
 		if arg:
-			digest.update( arg.encode('utf-8') if isinstance(arg,unicode) else str(arg) )
-	return digest.digest().encode( 'base64' ).replace( '\n', '' ).strip( '=' )
+			digest.update(arg.encode('utf-8') if isinstance(arg, unicode) else str(arg))
+	return digest.digest().encode('base64').replace('\n', '').strip('=')
 _md5_etag = md5_etag
 
 @interface.implementer(IPreRenderResponseCacheController)
@@ -234,7 +235,7 @@ def UseTheRequestContextCacheController(context):
 	# here would already have been called on the context before the view executed;
 	# we are called after the view. Nothing should have changed on the context object in the
 	# meantime.
-	return IPreRenderResponseCacheController( get_current_request().context )
+	return IPreRenderResponseCacheController(get_current_request().context)
 
 @interface.implementer(IPreRenderResponseCacheController)
 class AbstractReliableLastModifiedCacheController(object):
@@ -245,7 +246,7 @@ class AbstractReliableLastModifiedCacheController(object):
 
 	remote_user = None
 
-	def __init__( self, context, request=None ):
+	def __init__(self, context, request=None):
 		self.context = context
 		self.request = request
 
@@ -259,19 +260,19 @@ class AbstractReliableLastModifiedCacheController(object):
 	def _context_lastModified(self):
 		return self.context.lastModified
 
-	def __call__( self, context, system ):
+	def __call__(self, context, system):
 		request = system['request']
 		self.request = request
 		self.remote_user = request.authenticated_userid
 		response = request.response
 		last_modified = self._context_lastModified
 		response.last_modified = last_modified
-		response.etag = _md5_etag( bytes(last_modified), self.remote_user, *self._context_specific )
-		response.cache_control.max_age = self.max_age # arbitrary
+		response.etag = _md5_etag(bytes(last_modified), self.remote_user, *self._context_specific)
+		response.cache_control.max_age = self.max_age  # arbitrary
 		# Let this raise the not-modified if it will
-		return default_cache_controller( context, system )
+		return default_cache_controller(context, system)
 
-_AbstractReliableLastModifiedCacheController = AbstractReliableLastModifiedCacheController # BWC
+_AbstractReliableLastModifiedCacheController = AbstractReliableLastModifiedCacheController  # BWC
 
 @component.adapter(zf_interfaces.IFile)
 class _ZopeFileCacheController(_AbstractReliableLastModifiedCacheController):
@@ -279,14 +280,14 @@ class _ZopeFileCacheController(_AbstractReliableLastModifiedCacheController):
 	# new objects, they don't overwrite. so we can use the _p_oid and _p_serial
 	# of the IFile as a proxy for the underlying bits of the blob.
 
-	max_age = 3600 # an hour
+	max_age = 3600  # an hour
 
 	@property
 	def _context_lastModified(self):
 		try:
 			return self.context.lastModified
 		except AttributeError:
-			last_mod_parent = traversal.find_interface( self.request.context, nti_interfaces.ILastModified )
+			last_mod_parent = traversal.find_interface(self.request.context, nti_interfaces.ILastModified)
 			if last_mod_parent is not None:
 				return last_mod_parent.lastModified
 
@@ -324,7 +325,7 @@ class _ModeledContentCacheController(_AbstractReliableLastModifiedCacheControlle
 	Individual bits of modeled content have reliable last modified dates
 	"""
 
-	max_age = 0 # XXX arbitrary
+	max_age = 0  # XXX arbitrary
 
 	@property
 	def _context_specific(self):
@@ -334,8 +335,8 @@ class _ModeledContentCacheController(_AbstractReliableLastModifiedCacheControlle
 		flagged = False
 		if self.remote_user:
 			try:
-				flagged = flagging.flags_object( self.context, self.remote_user )
-			except LookupError: # Usually ComponentLookupError, in tests
+				flagged = flagging.flags_object(self.context, self.remote_user)
+			except LookupError:  # Usually ComponentLookupError, in tests
 				flagged = None
 
 		try:
@@ -355,8 +356,8 @@ class _TranscriptCacheController(_ModeledContentCacheController):
 	def _context_specific(self):
 		flags = ()
 		if self.remote_user:
-			flags = tuple( [flagging.flags_object( m, self.remote_user ) for m in self.context.Messages] )
-		return super(_TranscriptCacheController,self)._context_specific + flags
+			flags = tuple([flagging.flags_object(m, self.remote_user) for m in self.context.Messages])
+		return super(_TranscriptCacheController, self)._context_specific + flags
 
 @interface.implementer(IPreRenderResponseCacheController)
 @component.adapter(IExternalCollection)
@@ -365,7 +366,7 @@ class _ExternalCollectionCacheController(_AbstractReliableLastModifiedCacheContr
 	Arbitrary collections coming from this specific place have reliable last-modified dates.
 	"""
 
-	max_age = 0 # XXX arbitrary
+	max_age = 0  # XXX arbitrary
 
 	@property
 	def _context_specific(self):
@@ -374,7 +375,7 @@ class _ExternalCollectionCacheController(_AbstractReliableLastModifiedCacheContr
 @component.adapter(ILongerCachedUGDExternalCollection)
 class _LongerCachedUGDExternalCollectionCacheController(_ExternalCollectionCacheController):
 
-	max_age = 120 # XXX arbitrary
+	max_age = 120  # XXX arbitrary
 
 @component.adapter(IETagCachedUGDExternalCollection)
 class _ETagCachedUGDExternalCollectionCacheController(_ExternalCollectionCacheController):
@@ -399,12 +400,12 @@ class _UserActivityViewCacheController(_ExternalCollectionCacheController):
 
 	max_age = 0
 
-	def __call__( self, context, system ):
+	def __call__(self, context, system):
 		request = system['request']
-		remote_user = get_remote_user( request )
+		remote_user = get_remote_user(request)
 		if remote_user and remote_user != context.__data_owner__:
 			self.max_age = _LongerCachedUGDExternalCollectionCacheController.max_age
-		return _ExternalCollectionCacheController.__call__( self, context, system )
+		return _ExternalCollectionCacheController.__call__(self, context, system)
 
 @interface.implementer(IPreRenderResponseCacheController)
 @component.adapter(app_interfaces.IContentUnitInfo)
@@ -422,10 +423,10 @@ class _ContentUnitInfoCacheController(object):
 	# the rendered form.
 	# See Trell #2962 https://trello.com/c/1TGen4z1
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		pass
 
-	def __call__( self, context, system ):
+	def __call__(self, context, system):
 		return system['request'].response
 
 from zope.proxy.decorator import SpecificationDecoratorBase
@@ -443,7 +444,7 @@ class _UncacheableInResponseProxy(SpecificationDecoratorBase):
 	# when/if these are pickled, they are pickled as their original type,
 	# not the proxy.
 
-def uncached_in_response( context ):
+def uncached_in_response(context):
 	"""
 	Cause the `context` value to not be cacheable when used in a Pyramid
 	response.
@@ -452,4 +453,4 @@ def uncached_in_response( context ):
 	proxy and causes the proxy to also implement
 	:class:`nti.appserver.interfaces.IUncacheableInResponse`
 	"""
-	return context if IUncacheableInResponse.providedBy(context) else _UncacheableInResponseProxy( context )
+	return context if IUncacheableInResponse.providedBy(context) else _UncacheableInResponseProxy(context)
