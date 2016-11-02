@@ -218,10 +218,12 @@ class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
 
+	Name = None
 	metadata = alias('HitMetaData')
 
-	def __init__(self, query=None):
+	def __init__(self, query=None, name=None):
 		super(_SearchResults, self).__init__(query)
+		self.Name = name
 		self.count = 0
 		self._hits = []
 		self._seen = set()
