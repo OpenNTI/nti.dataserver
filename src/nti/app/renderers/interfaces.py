@@ -7,6 +7,8 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope import interface
 
 from pyramid.interfaces import IRenderer
@@ -74,7 +76,7 @@ class IUGDExternalCollection(IExternalCollection):
 	that has the last modified date of the greatest item in that data.
 	"""
 
-	__data_owner__ = interface.Attribute( "The primary user whose data we are looking at, usually in the request path" )
+	__data_owner__ = interface.Attribute("The primary user whose data we are looking at, usually in the request path")
 
 class ILongerCachedUGDExternalCollection(IUGDExternalCollection):
 	"""
