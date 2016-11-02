@@ -21,9 +21,12 @@ from nti.appserver.pyramid_authorization import has_permission
 from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.interfaces import INote
+from nti.dataserver.interfaces import IThreadable
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.externalization.singleton import SingletonDecorator
 
 from nti.links.links import Link
 
@@ -55,3 +58,20 @@ class _NoteRequestDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, result):
         self._do_schema_link(context, result)
+
+@component.adapter(IThreadable)
+@interface.implementer(IExternalMappingDecorator)
+class _MostRecentReplyDecorator(object):
+    """
+    Adds a link to get the most recent reply for a threadable context
+    """
+    
+    __metaclass__ = SingletonDecorator
+    
+    def decorateExternalMapping(self, context, result):
+        _links = result.setdefault(StandardExternalFields.LINKS, [])
+        link = Link(context, rel='mostRecentReply', elements=('mostRecentReply',))
+        interface.alsoProvides(link, ILocation)
+        link.__name__ = ''
+        link.__parent__ = context
+        _links.append(link)

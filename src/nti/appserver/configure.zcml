@@ -169,10 +169,6 @@
 
 	<subscriber factory=".decorators._AuthenticatedUserLinkAdder"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
-				
-	<subscriber factory=".decorators._MostRecentReplyDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.interfaces.IThreadable" />
 
 	<!-- This one is really slow in big databases. -->
 	<subscriber factory=".usersearch_views._SharedDynamicMembershipProviderDecorator"

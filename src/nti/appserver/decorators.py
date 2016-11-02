@@ -16,8 +16,6 @@ from zope import interface
 
 from zope.component.hooks import getSite
 
-from zope.location.interfaces import ILocation
-
 from zope.i18n import translate
 from zope.i18n.interfaces import IUserPreferredLanguages
 
@@ -34,14 +32,11 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IContainerContext
 from nti.dataserver.interfaces import IContextAnnotatable
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
-from nti.dataserver.interfaces import IThreadable
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
-
-from nti.links.links import Link
 
 from nti.utils.nameparser import constants as np_constants
 
@@ -177,20 +172,3 @@ class _DeletedObjectPlaceholderDecorator(object):
 		external['Deleted'] = True
 		if deleted_by_moderator:
 			external['DeletedByModerator'] = True
-
-@component.adapter(IThreadable)
-@interface.implementer(IExternalMappingDecorator)
-class _MostRecentReplyDecorator(object):
-	"""
-	Adds a link to get the most recent reply for a threadable context
-	"""
-	
-	__metaclass__ = SingletonDecorator
-	
-	def decorateExternalMapping(self, context, result):
-		_links = result.setdefault(StandardExternalFields.LINKS, [])
-		link = Link(context, rel='mostRecentReply', elements=('mostRecentReply',))
-		interface.alsoProvides(link, ILocation)
-		link.__name__ = ''
-		link.__parent__ = context
-		_links.append(link)
