@@ -42,4 +42,3 @@ class _OFSPathAdapter(Contained):
 				IConnection(self.context).add(result)
 			return result
 		raise KeyError(key)
-
