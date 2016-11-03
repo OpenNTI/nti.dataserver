@@ -32,6 +32,7 @@ from nti.dataserver.interfaces import IPrincipal
 
 from nti.dataserver.users.interfaces import IEducation
 from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IAboutProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IInterestProfile
 from nti.dataserver.users.interfaces import ICommunityProfile
@@ -101,7 +102,7 @@ def get_searchable_realname_parts(realname):
 	# this handle more complex naming scenarios?
 	if realname:
 		# CFA: another suffix we see from certain financial quorters
-		name = nameparser.HumanName(realname, 
+		name = nameparser.HumanName(realname,
 									constants=np_constants(extra_suffixes=('cfa',)))
 		# We try to be a bit more sophisticated around certain
 		# naming scenarios.
@@ -277,12 +278,20 @@ class InterestProfile(SchemaConfigured, Persistent):
 
 	interests =  FP(IInterestProfile['interests'])
 
+@WithRepr
+@interface.implementer(IAboutProfile)
+class AboutProfile(SchemaConfigured, Persistent):
+	createDirectFieldProperties(IAboutProfile)
+
+	about =  FP(IAboutProfile['about'])
+
 @component.adapter(IUser)
 @interface.implementer(ICompleteUserProfile)
 class CompleteUserProfile(RestrictedUserProfile, # order matters
 						  SocialMediaProfile,
 						  InterestProfile,
 						  EducationProfile,
+						  AboutProfile,
 						  ProfessionalProfile):
 	pass
 
