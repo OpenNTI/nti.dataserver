@@ -40,6 +40,7 @@ from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import ICreatedUsername
 from nti.dataserver.interfaces import IMetadataCatalog
+from nti.dataserver.interfaces import IUserGeneratedData
 from nti.dataserver.interfaces import IUserTaggedContent
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 from nti.dataserver.interfaces import IInspectableWeakThreadable
@@ -288,10 +289,24 @@ class DeletedObjectPlaceholderExtentFilteredSet(ExtentFilteredSet):
 	"""
 	def __init__(self, fid, family=None):
 		super(DeletedObjectPlaceholderExtentFilteredSet, self).__init__(
-			fid,
-			isDeletedObjectPlaceholder,
-			family=family)
+			  fid,
+			  isDeletedObjectPlaceholder,
+			  family=family)
 
+def isUserGeneratedData(extent, docid, document):
+	# NOTE: This is referenced by persistent objects, must stay.
+	return IUserGeneratedData.providedBy(document)
+
+class IsUserGeneratedDataExtentFilteredSet(ExtentFilteredSet):
+	"""
+	A filter for a topic index that collects user generated data objects.
+	"""
+	def __init__(self, fid, family=None):
+		super(IsUserGeneratedDataExtentFilteredSet, self).__init__(
+			  fid,
+			  isUserGeneratedData,
+			  family=family)
+	
 class CreatedTimeRawIndex(RawIntegerValueIndex):
 	pass
 
@@ -320,8 +335,7 @@ class RevSharedWith(object):
 	@property
 	def usernames(self):
 		result = getattr(self.context, 'sharedWith', None)
-		result = None if not result else result
-		return result
+		return None if not result else result
 
 def RevSharedWithIndex(family=None):
 	return AttributeKeywordIndex(field_name='usernames',
@@ -348,6 +362,9 @@ TP_TOP_LEVEL_CONTENT = 'topLevelContent'
 #: that stores deleted placeholders.
 #: See :class:`DeletedObjectPlaceholderExtentFilteredSet`
 TP_DELETED_PLACEHOLDER = 'deletedObjectPlaceholder'
+
+#: See :class:`IUserGeneratedData`
+TP_USER_GENERATED_DATA = 'isUserGeneratedData'
 
 @interface.implementer(IMetadataCatalog)
 class MetadataCatalog(Catalog):
@@ -399,6 +416,7 @@ def install_metadata_catalog(site_manager_container, intids=None):
 
 	topic_index = catalog['topics']
 	for filter_id, factory in ( (TP_TOP_LEVEL_CONTENT, TopLevelContentExtentFilteredSet),
+								(TP_USER_GENERATED_DATA, IsUserGeneratedDataExtentFilteredSet)
 								(TP_DELETED_PLACEHOLDER, DeletedObjectPlaceholderExtentFilteredSet)):
 		the_filter = factory(filter_id, family=intids.family)
 		topic_index.addFilter(the_filter)
