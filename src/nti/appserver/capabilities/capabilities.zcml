@@ -1,0 +1,46 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:cap="http://nextthought.com/ntp/capabilities"
+			i18n_domain='nti.dataserver'>
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="." file="meta.zcml" />
+
+	<!-- Some default capabilities -->
+	<cap:capability
+		id='nti.platform.p2p.chat'
+		title="Chat"
+		description='Can the user chat?' />
+
+	<cap:capability
+		id='nti.platform.p2p.sharing'
+		title="Sharing"
+		description='Can the user access UGD sharing features?' />
+
+	<cap:capability
+		id='nti.platform.p2p.friendslists'
+		title="Create FriendsLists"
+		description='Can the user create new FriendsLists? (Enforced by the vocabulary)' />
+
+	<cap:capability
+		id='nti.platform.p2p.dynamicfriendslists'
+		title="Create DynamicFriendsLists"
+		description='Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)' />
+
+	<cap:capability
+		id='nti.platform.customization.avatar_upload'
+		title="Upload Avatar"
+		description='Can the user upload custom avatar pictures?' />
+
+	<cap:capability
+		id='nti.platform.customization.can_change_password'
+		title="Change Password"
+		description='Can the user change his/her password?' />
+
+</configure>

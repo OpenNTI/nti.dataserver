@@ -1,0 +1,110 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+	
+	<include package="zope.component" />
+
+	<!--
+		Our dispatcher. Apply it to
+		* the 'body' and 'tags' fields (note, forum post, and chat message)
+		* the replacementContent and redactionExplanation fields (IRedaction)
+		* the status field (IPresenceInfo)
+	-->
+	<subscriber handler="nti.contentfragments.censor.censor_before_assign_components_of_sequence"
+				for="* nti.dataserver.interfaces.IModeledContent nti.schema.interfaces.IBeforeSequenceAssignedEvent" />
+
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="body"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.IModeledContent"/>
+
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="tags"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.IUserTaggedContent"/>
+
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="replacementContent"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.IModeledContent"/>
+
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="redactionExplanation"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.IModeledContent"/>
+
+	<!-- Also dispatch on 'titles' -->
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="title"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.ITitledContent"/>
+
+	<!-- And descriptions -->
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="description"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.ITitledDescribedContent"/>
+
+	<!-- And status -->
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="status"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.chatserver.interfaces.IPresenceInfo"/>
+
+	<!-- Install a global policy for ICoppaUser. -->
+	<adapter factory=".censor_policies.coppa_user_censor_policy" />
+
+	<!-- All FriendsLists names are censored, all the time -->
+	<!-- Just like we do for user account usernames -->
+	<subscriber handler=".site_policies._censor_usernames"
+				for="nti.dataserver.interfaces.IFriendsList
+					 zope.lifecycleevent.IObjectCreatedEvent" />
+
+	<subscriber handler=".site_policies._censor_usernames"
+				for="nti.dataserver.interfaces.IUser
+					 nti.dataserver.users.interfaces.IWillCreateNewEntityEvent" /> <!-- This event so preflight works -->
+
+	<!--
+		 Try to catch some fields in profiles as well, when they are
+		 enabled.
+		 (And yes, IUserProfile doesn't define these fields,
+		 subclasses do, subclasses that only converge back at
+		 IUserProfile.)
+		 These are just required to be regular strings,
+		 and are handled independently of the creating user (and location): we always censor them.
+	-->
+	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			 name="description"
+			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+
+	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			 name="location"
+			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+
+	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			 name="affiliation"
+			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+
+	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			 name="role"
+			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+
+	<!--
+		 Make sure messages get the right censoring policy by
+		 assigning their owner as early as needed
+	-->
+	<subscriber
+		handler=".censor_policies.ensure_message_info_has_creator"
+		for="nti.chatserver.interfaces.IMessageInfo nti.socketio.interfaces.ISocketSessionCreatedObjectEvent"/>
+
+	<adapter
+		factory=".censor_policies.message_info_uses_captured_session_info"
+		name="body" />
+
+	<!--
+		The policy for censoring things from regular, non-coppa
+		users based on location isn't enabled by default. If desired, it can be added in a
+		site configuration.
+	-->
+	<!--
+	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			 for="nti.dataserver.interfaces.IUser *" />
+
+	<adapter factory=".censor_policies.user_filesystem_censor_policy" />
+	-->
+
+</configure>

@@ -1,0 +1,17 @@
+Hi ${informal_username},
+
+In order to support your account, please verify your email address.
+Verifying your email helps keep your account secure and ensures timely
+delivery of email notifications.
+
+To verify your email address, please use the following url:
+${href}.
+
+Alternatively, you can enter this verification code on your profile page.
+
+Verification Code: ${token}
+
+Thank you for helping us maintain the security of your account.
+
+If you feel this email was sent in error, or this account was created
+without your consent, you may email ${support_email}.

@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:metal="http://xml.zope.org/namespaces/metal"
+	  xmlns:tal="http://xml.zope.org/namespaces/tal">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title tal:condition="not: options/error_message">Thank you!</title>
+		<title tal:condition="options/error_message">We're Sorry.</title>
+		<style metal:use-macro="macro:style">
+		</style>
+	</head>
+	<body>
+		<div metal:use-macro="macro:header">
+		</div>
+
+		<h1 tal:condition="not: options/error_message">
+		You have been unsubscribed.
+		</h1>
+		<h1 tal:condition="options/error_message">
+		We're sorry.
+		</h1>
+
+		<p tal:condition="not: options/error_message">
+		You have been unsubscribed from future email notifications.
+		</p>
+		<p tal:condition="options/error_message">
+		We were unable to unsubscribe your account from email notifications at this time.  Please try again later and if the problem persists contact <a href="mailto:support@nextthought.com"
+				tal:attributes="href string:mailto:${options/support_email|default}"
+				tal:content="options/support_email">support@nextthought.com</a>.
+		</p>
+	</body>
+</html>
