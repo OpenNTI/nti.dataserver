@@ -18,6 +18,10 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.saml import MessageFactory as _
 
+from nti.app.saml import IDP_NAME_IDS
+from nti.app.saml import PROVIDER_INFO
+from nti.app.saml import GET_PROVIDER_INFO
+
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 
 from nti.app.saml.views import SAMLPathAdapter
@@ -34,10 +38,6 @@ from nti.dataserver.users.users import User
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-
-from . import IDP_NAME_IDS
-from . import PROVIDER_INFO
-from . import GET_PROVIDER_INFO
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
