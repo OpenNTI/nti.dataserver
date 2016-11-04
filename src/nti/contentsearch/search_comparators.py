@@ -17,17 +17,17 @@ from zope import interface
 
 import repoze.lru
 
+from nti.contentsearch.common import get_sort_order
+
+from nti.contentsearch.content_utils import get_ntiid_path as content_ntiid_path
+
+from nti.contentsearch.interfaces import ISearchHit
+from nti.contentsearch.interfaces import ISearchHitComparator
+from nti.contentsearch.interfaces import ISearchHitComparatorFactory
+
 from nti.ntiids import ntiids
 
 from nti.property.property import Lazy
-
-from .common import get_sort_order
-
-from .content_utils import get_ntiid_path as content_ntiid_path
-
-from .interfaces import ISearchHit
-from .interfaces import ISearchHitComparator
-from .interfaces import ISearchHitComparatorFactory
 
 class _CallableComparator(object):
 
@@ -51,8 +51,7 @@ class _ScoreSearchHitComparator(_CallableComparator):
 	def compare_score(cls, a, b):
 		a_score = cls.get_score(a)
 		b_score = cls.get_score(b)
-		result = cmp(b_score, a_score)
-		return result
+		return cmp(b_score, a_score)
 
 	@classmethod
 	def compare(cls, a, b):
@@ -79,8 +78,7 @@ class _LastModifiedSearchHitComparator(_CallableComparator):
 	def compare_lm(cls, a, b):
 		a_lm = cls.get_lm(a)
 		b_lm = cls.get_lm(b)
-		result = cmp(a_lm, b_lm)
-		return result
+		return cmp(a_lm, b_lm)
 
 	@classmethod
 	def compare(cls, a, b):
@@ -107,8 +105,7 @@ class _TypeSearchHitComparator(_ScoreSearchHitComparator,
 	def compare_type(cls, a, b):
 		a_order = get_sort_order(cls.get_type_name(a))
 		b_order = get_sort_order(cls.get_type_name(b))
-		result = cmp(a_order, b_order)
-		return result
+		return cmp(a_order, b_order)
 
 	@classmethod
 	def compare(cls, a, b):
@@ -133,10 +130,9 @@ class _CreatorSearchHitComparator(_ScoreSearchHitComparator,
 
 	@classmethod
 	def compare_creator(cls, a, b):
-		a_creator = a.Creator
-		b_creator = b.Creator
-		result = cmp(a_creator.lower(), b_creator.lower())
-		return result
+		a_creator = a.Creator or u''
+		b_creator = b.Creator or u''
+		return cmp(a_creator.lower(), b_creator.lower())
 
 	@classmethod
 	def compare(cls, a, b):
@@ -171,17 +167,14 @@ class _DecayFactorSearchHitComparator(_CallableComparator):
 		return item.Score or 1.0
 
 	def _score(self, item, use_hours=False):
-		last_modified = datetime.fromtimestamp(item.lastModified)
-		delta = self.now - last_modified
+		delta = self.now - datetime.fromtimestamp(item.lastModified)
 		x = delta.days if not use_hours else delta.total_seconds() / 60.0 / 60.0
-		result = math.pow(self.decay, x) * self.factor(item)
-		return result
+		return math.pow(self.decay, x) * self.factor(item)
 
 	def compare(self, a, b):
 		a_score = self._score(a)
 		b_score = self._score(b)
-		result = cmp(a_score, b_score)
-		return result
+		return cmp(a_score, b_score)
 
 @interface.implementer(ISearchHitComparatorFactory)
 class _DecaySearchHitComparatorFactory(object):
@@ -275,8 +268,7 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 		# compare scores. Score comparation at the moment only make sense within
 		# the same types  when we go to a unified index this we no longer need to
 		# compare the types
-		result = self.compare_score(a, b) if result == 0 else result
-		return result
+		return self.compare_score(a, b) if result == 0 else result
 
 @interface.implementer(ISearchHitComparatorFactory)
 class _RelevanceSearchHitComparatorFactory(object):

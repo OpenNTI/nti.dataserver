@@ -16,69 +16,16 @@
 			 name="nti.dataserver-contentsearch"
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
 
-	<!-- Adapters -->
-	<adapter factory=".search_hits.SearchHit"
-			 for="dict"
-			 provides=".interfaces.ISearchHit" />
-
-	<adapter factory=".search_hits.SearchHit"
-			 for="nti.dataserver.interfaces.IModeledContent"
-			 provides=".interfaces.ISearchHit" />
-
-	<adapter factory=".search_hits.HighlightSearchHit"
-			 for="nti.dataserver.interfaces.IHighlight"
-			 provides=".interfaces.IHighlightSearchHit" />
-
-	<adapter factory=".search_hits.NoteSearchHit"
-			 for="nti.dataserver.interfaces.INote"
-			 provides=".interfaces.INoteSearchHit" />
-
-	<adapter factory=".search_hits.MessageInfoSearchHit"
-			 for="nti.chatserver.interfaces.IMessageInfo"
-			 provides=".interfaces.IMessageInfoSearchHit" />
-
-	<adapter factory=".search_hits.RedactionSearchHit"
-			 for="nti.dataserver.interfaces.IRedaction"
-			 provides=".interfaces.IRedactionSearchHit" />
-
-	<adapter factory=".search_hits.PostSearchHit"
-			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
-			 provides=".interfaces.IPostSearchHit" />
-
-	<adapter factory=".search_hits.HeadlineTopicSearchHit"
-			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlineTopic"
-			 provides=".interfaces.IPostSearchHit" />
-
-	<adapter factory=".search_hits.ForumSearchHit"
-			 for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForum"
-			 provides=".interfaces.IForumSearchHit" />
-
-	<adapter factory=".search_hits.WhooshBookSearchHit"
-			 for=".interfaces.IWhooshBookContent"
-			 provides=".interfaces.IWhooshBookSearchHit" />
-
-	<adapter factory=".search_hits.WhooshAudioTranscriptSearchHit"
-			 for=".interfaces.IWhooshAudioTranscriptContent"
-			 provides=".interfaces.IWhooshAudioTranscriptSearchHit" />
-
-	<adapter factory=".search_hits.WhooshVideoTranscriptSearchHit"
-			 for=".interfaces.IWhooshVideoTranscriptContent"
-			 provides=".interfaces.IWhooshVideoTranscriptSearchHit" />
-
-	<adapter factory=".search_hits.WhooshNTICardSearchHit"
-			 for=".interfaces.IWhooshNTICardContent"
-			 provides=".interfaces.IWhooshNTICardSearchHit" />
-
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.IDateTimeRange
+						 .interfaces.ISearchHit
 						 .interfaces.ISearchQuery
-						 .interfaces.IBookContent
-						 .interfaces.INTICardContent
-						 .interfaces.IVideoTranscriptContent
+						 .interfaces.ISearchResults
+						 .interfaces.ISuggestResults
 						 .interfaces.ISearchFragment"
 		modules=".search_query .content_types .search_fragments" />
 

@@ -18,10 +18,6 @@ from nti.contentprocessing.interfaces import INgramComputer
 from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import get_content_translation_table
 
-from .common import to_list
-
-from .interfaces import IContentResolver
-
 def get_library(library=None):
 	if library is None:
 		return component.queryUtility(IContentPackageLibrary)
@@ -61,12 +57,3 @@ def is_covered_by_ngram_computer(term, language='en'):
 	min_word = min(map(len, tokens)) if tokens else 0
 	return min_word >= ncomp.minsize
 
-def resolve_content_parts(data):
-	result = []
-	items = to_list(data)
-	for item in items or ():
-		adapted = IContentResolver(item, None)
-		if adapted:
-			result.append(adapted.content)
-	result = u' '.join(x for x in result if x is not None)
-	return result

@@ -23,4 +23,11 @@ def patch():
 	moved(str("nti.dataserver.session_consumer"), str("nti.socketio.session_consumer"))
 	
 	# content search invalid package
-	moved(str("nti.contentsearch.repoze_adpater"), str("nti.contentsearch._repoze_adapter"))
+	moved(str("nti.contentsearch._content_utils"), str("nti.contentsearch._deprecated"))
+	moved(str("nti.contentsearch._discriminators"), str("nti.contentsearch._deprecated"))
+	moved(str("nti.contentsearch._indexmanager"), str("nti.contentsearch._deprecated"))
+	moved(str("nti.contentsearch._repoze_index"), str("nti.contentsearch._deprecated"))
+	moved(str("nti.contentsearch._whoosh_schemas"), str("nti.contentsearch._deprecated"))
+	moved(str("nti.contentsearch.content_types"), str("nti.contentsearch._deprecated"))
+	moved(str("nti.contentsearch.indexmanager"), str("nti.contentsearch._deprecated"))
+	moved(str("nti.contentsearch.repoze_adpater"), str("nti.contentsearch._deprecated"))
