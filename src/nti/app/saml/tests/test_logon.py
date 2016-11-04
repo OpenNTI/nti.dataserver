@@ -13,13 +13,12 @@ from hamcrest import assert_that
 from hamcrest import equal_to
 from hamcrest import has_properties
 from hamcrest import is_
-from hamcrest import none
 from hamcrest import not_none
 
 from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
-from nti.app.saml.interfaces import ISAMLUserCreatedEvent
+from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -53,8 +52,8 @@ from ..logon import acs_view
 import gc
 
 
-@interface.implementer(ISAMLUserCreatedEvent)
-class TestSAMLUserCreatedEvent(object):
+@interface.implementer(ISAMLUserAuthenticatedEvent)
+class TestSAMLUserAuthenticatedEvent(object):
 	def __init__(self, idp_id, user, user_info, request):
 		self.idp_id = idp_id
 		self.user = user
@@ -139,14 +138,14 @@ class TestEvents(ApplicationLayerTest):
 				fake_handler = fudge.Fake('created_event_handler').is_callable().expects_call()
 
 				self.captured_event = None
-				@component.adapter(ISAMLUserCreatedEvent)
+				@component.adapter(ISAMLUserAuthenticatedEvent)
 				def user_creation_handler(event):
 					self.captured_event = event
 					return fake_handler(event)
 
 				sm.registerHandler(user_creation_handler)
 
-				sm.registerAdapter(TestSAMLUserCreatedEvent, [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
+				sm.registerAdapter(TestSAMLUserAuthenticatedEvent, [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
 
 				request = Request.blank('/')
 				request.registry = sm
@@ -188,15 +187,17 @@ class TestEvents(ApplicationLayerTest):
 				user = users.User.create_user(username='testUser')
 				get_entity.is_callable().returns(user)
 
+				fake_handler = fudge.Fake('created_event_handler').is_callable().expects_call()
 
 				self.captured_event = None
-				@component.adapter(ISAMLUserCreatedEvent)
+				@component.adapter(ISAMLUserAuthenticatedEvent)
 				def user_creation_handler(event):
 					self.captured_event = event
+					return fake_handler(event)
 
 				sm.registerHandler(user_creation_handler)
 
-				sm.registerAdapter(TestSAMLUserCreatedEvent, [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
+				sm.registerAdapter(TestSAMLUserAuthenticatedEvent, [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
 
 				request = Request.blank('/')
 				request.registry = sm
@@ -209,4 +210,7 @@ class TestEvents(ApplicationLayerTest):
 				#######
 				# Verify
 
-				assert_that(self.captured_event, none())
+				assert_that(self.captured_event, not_none())
+				assert_that(self.captured_event, has_properties({"user":equal_to(user),
+																 "request":equal_to(request),
+																 "user_info":equal_to(user_info)}))

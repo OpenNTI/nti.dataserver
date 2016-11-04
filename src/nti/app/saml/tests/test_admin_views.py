@@ -167,6 +167,46 @@ class TestViews(ApplicationLayerTest):
 								 'MimeType': 'application/vnd.nextthought.saml.testprovideruserinfo'
 								 }))
 
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_delete_provider_info_view(self):
+
+		########
+		# Setup
+		getUrl = "/dataserver2/saml/@@GetProviderUserInfo"
+
+		admin_user_name = b'bobby.hagen@nextthought.com'
+		user_name = 'foo1287'
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user(username=admin_user_name)
+			user = self._create_user(username=user_name)
+			ISAMLIDPUserInfoBindings(user)['test_entity_id'] = TestProviderInfo()
+
+		extra_environ = self._make_extra_environ(username=admin_user_name)
+
+		#######
+		# Test
+		self.testapp.get(getUrl,
+						{'user':user_name, 'entity_id':'test_entity_id'},
+						status=200,
+						extra_environ=extra_environ)
+
+		self.testapp.delete("/dataserver2/saml/@@ProviderUserInfo?user=foo1287&entity_id=test_entity_id",
+						status=403,
+						extra_environ=self._make_extra_environ(username=user_name))
+
+		self.testapp.delete("/dataserver2/saml/@@ProviderUserInfo?user=foo1287&entity_id=test_entity_id",
+						status=204,
+						extra_environ=extra_environ)
+
+		self.testapp.get(getUrl,
+						{'user':user_name, 'entity_id':'test_entity_id'},
+						status=404,
+						extra_environ=extra_environ)
+
+		self.testapp.delete("/dataserver2/saml/@@ProviderUserInfo?user=foo1287&entity_id=test_entity_id",
+						status=404,
+						extra_environ=extra_environ)
+
 class MockNameId(object):
 	text = None
 	format = NAMEID_FORMATS_SAML2_VALUES[0]

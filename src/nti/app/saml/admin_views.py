@@ -18,9 +18,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.saml import MessageFactory as _
 
-from nti.app.saml import IDP_NAME_IDS
-from nti.app.saml import PROVIDER_INFO
-
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 
 from nti.app.saml.views import SAMLPathAdapter
@@ -37,6 +34,10 @@ from nti.dataserver.users.users import User
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+
+from . import IDP_NAME_IDS
+from . import PROVIDER_INFO
+from . import GET_PROVIDER_INFO
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -99,7 +100,7 @@ class IDPEntityBindingsViews(AbstractAuthenticatedView):
 
 		return hexc.HTTPNoContent()
 
-@view_config(name=PROVIDER_INFO,
+@view_config(name=GET_PROVIDER_INFO,
 			 context=SAMLPathAdapter,
 			 request_method="GET",
 			 route_name='objects.generic.traversal',
@@ -119,4 +120,32 @@ def provider_info_view(request):
 	if user is None or not IUser.providedBy(user):
 		raise hexc.HTTPUnprocessableEntity(_("User not found."))
 
-	return ISAMLIDPUserInfoBindings(user)[entity_id]
+	provider_info = ISAMLIDPUserInfoBindings(user).get(entity_id, None)
+	return provider_info if provider_info else hexc.HTTPNotFound('provider info not found')
+
+@view_config(name=PROVIDER_INFO,
+			 context=SAMLPathAdapter,
+			 request_method="DELETE",
+			 route_name='objects.generic.traversal',
+			 renderer='rest',
+			 permission=nauth.ACT_NTI_ADMIN)
+def delete_provider_info_view(request):
+	values = CaseInsensitiveDict(request.params)
+	username = values.get('username') or values.get('user')
+	if not username:
+		raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
+
+	entity_id = values.get('entity_id')
+	if not entity_id:
+		raise hexc.HTTPUnprocessableEntity(_("Must specify entity_id."))
+
+	user = User.get_user(username)
+	if user is None or not IUser.providedBy(user):
+		raise hexc.HTTPUnprocessableEntity(_("User not found."))
+
+	try:
+		del ISAMLIDPUserInfoBindings(user)[entity_id]
+	except KeyError:
+		raise hexc.HTTPNotFound(_('Entity not found.'))
+
+	return hexc.HTTPNoContent()

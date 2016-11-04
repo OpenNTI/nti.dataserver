@@ -19,7 +19,10 @@ ACS = 'acs'
 SLS = 'sls'
 
 #: Provider info view
-PROVIDER_INFO = 'GetProviderUserInfo'
+GET_PROVIDER_INFO = 'GetProviderUserInfo'
+
+#: Provider info view used for deletion
+PROVIDER_INFO = 'ProviderUserInfo'
 
 #: Provider name ids
 IDP_NAME_IDS = 'NameIds'

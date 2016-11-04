@@ -33,7 +33,7 @@ from nti.app.saml import SLS
 from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLIDPInfo
-from nti.app.saml.interfaces import ISAMLUserCreatedEvent
+from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
 
@@ -187,8 +187,8 @@ def acs_view(request):
 			if email_found: # trusted source
 				force_email_verification(user)
 
-			# Manually fire event with SAML user info
-			notify(getMultiAdapter((idp_id, user, user_info, request), ISAMLUserCreatedEvent))
+		# Manually fire event with SAML user info
+		notify(getMultiAdapter((idp_id, user, user_info, request), ISAMLUserAuthenticatedEvent))
 
 		nameid_bindings = ISAMLIDPEntityBindings(user)
 		if idp_id not in nameid_bindings:

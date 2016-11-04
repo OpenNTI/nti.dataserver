@@ -416,7 +416,7 @@ def install_metadata_catalog(site_manager_container, intids=None):
 
 	topic_index = catalog['topics']
 	for filter_id, factory in ( (TP_TOP_LEVEL_CONTENT, TopLevelContentExtentFilteredSet),
-								(TP_USER_GENERATED_DATA, IsUserGeneratedDataExtentFilteredSet)
+								(TP_USER_GENERATED_DATA, IsUserGeneratedDataExtentFilteredSet),
 								(TP_DELETED_PLACEHOLDER, DeletedObjectPlaceholderExtentFilteredSet)):
 		the_filter = factory(filter_id, family=intids.family)
 		topic_index.addFilter(the_filter)

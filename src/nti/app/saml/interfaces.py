@@ -129,7 +129,7 @@ class ISAMLUserAssertionInfo(interface.Interface):
 					 	description=u"The admittedly western lastname for the user",
 					 	required=False)
 
-class ISAMLUserCreatedEvent(IUserEvent):
+class ISAMLUserAuthenticatedEvent(IUserEvent):
 	"""
 	Event created when user account is created as part of SAML SSO
 	"""

@@ -18,7 +18,7 @@ from hamcrest import is_not
 from nti.app.saml.events import SAMLUserCreatedEvent
 
 from nti.app.saml.interfaces import ISAMLNameId
-from nti.app.saml.interfaces import ISAMLUserCreatedEvent
+from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
 
 from nti.app.saml.tests.test_logon import IsolatedComponents
@@ -33,6 +33,8 @@ from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.dataserver.users import users
+
+from nti.schema.eqhash import EqHash
 
 from nti.site.transient import TrivialSite
 
@@ -60,9 +62,15 @@ class TestSAMLUserAssertionInfo:
 # ITestSAMLProviderUserInfo
 
 @interface.implementer(ISAMLProviderUserInfo)
+@EqHash('provider_id')
 class TestSAMLProviderUserInfo:
 	def __init__(self, user_assertion_info ):
 		self.provider_id = user_assertion_info.provider_id
+		self.username = user_assertion_info.username
+		self.nameid = user_assertion_info.nameid
+		self.email = user_assertion_info.email
+		self.firstname = user_assertion_info.firstname
+		self.lastname = user_assertion_info.lastname
 
 def assertion_info(provider_id, username, email, firstname, lastname):
 	name_id = fudge.Fake('name_id').has_attr(nameid="testNameId", name_format=NAMEID_FORMAT_PERSISTENT)
@@ -90,7 +98,7 @@ class TestEvents(ApplicationLayerTest):
 
 		#######
 		# Verify
-		assert_that(user_created_event, validly_provides(ISAMLUserCreatedEvent))
+		assert_that(user_created_event, validly_provides(ISAMLUserAuthenticatedEvent))
 
 	@WithMockDSTrans
 	def test_user_creation_event(self):
@@ -144,7 +152,7 @@ class TestEvents(ApplicationLayerTest):
 			#######
 			# Verify
 
-			expected_info = idp_user2_info
+			expected_info = TestSAMLProviderUserInfo(user_assertion_info)
 			actual_info = ISAMLIDPUserInfoBindings(user)['disneyProvider']
 			assert_that(actual_info, equal_to(expected_info))
 
@@ -156,7 +164,7 @@ class TestEvents(ApplicationLayerTest):
 			user = users.User.create_user(username='testUser')
 			user_assertion_info = assertion_info("pid2", "mickey@mouse.com", "mickey@mouse.com", "Mickey", "Mouse")
 			request = Request.blank('/')
-			event = component.getMultiAdapter(('disneyProvider', user, user_assertion_info, request), ISAMLUserCreatedEvent)
+			event = component.getMultiAdapter(('disneyProvider', user, user_assertion_info, request), ISAMLUserAuthenticatedEvent)
 
 			#######
 			# Test
@@ -177,7 +185,7 @@ class TestEvents(ApplicationLayerTest):
 			user = users.User.create_user(username='testUser')
 			user_assertion_info = assertion_info("pid2", "mickey@mouse.com", "mickey@mouse.com", "Mickey", "Mouse")
 			request = Request.blank('/')
-			event = component.getMultiAdapter(('disneyProvider', user, user_assertion_info, request), ISAMLUserCreatedEvent)
+			event = component.getMultiAdapter(('disneyProvider', user, user_assertion_info, request), ISAMLUserAuthenticatedEvent)
 
 			self.registerComponents()
 
