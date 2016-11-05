@@ -203,6 +203,10 @@ class ISearchHit(ILastModified):
 	Target = Object(interface.Interface, title="the object hit", required=False)
 	Target.setTaggedValue('_ext_excluded_out', True)
 
+class ITranscriptSearchHit(ISearchHit):	
+	EndMilliSecs = Number(title="Media end timestamp", required=False)
+	StartMilliSecs = Number(title="Media start video timestamp", required=False)
+
 class ISearchHitComparator(interface.Interface):
 
 	def compare(a, b):
@@ -337,30 +341,3 @@ class IResultTransformer(interface.Interface):
 	An adapter interface to transform an object into
 	an appropriate object to return on hits.
 	"""
-
-import zope.deferredimport
-zope.deferredimport.initialize()
-zope.deferredimport.deprecatedFrom(
-	"Moved to nti.contentprocessing.interfaces",
-	"nti.contentprocessing.interfaces",
-	"IStopWords"
-)
-
-zope.deferredimport.deprecatedFrom(
-	"Moved to nti.contentindexing.interfaces",
-	"nti.contentindexing.interfaces",
-	"IContentSchemaCreator",
-	"IBookSchemaCreator",
-	"INTICardSchemaCreator",
-	"IAudioTranscriptSchemaCreator",
-	"IVideoTranscriptSchemaCreator"
-)
-
-zope.deferredimport.deprecatedFrom(
-	"Moved to nti.contentindexing.whoosh.interfaces",
-	"nti.contentindexing.whooshidx.interfaces",
-	"IWhooshBookSchemaCreator",
-	"IWhooshNTICardSchemaCreator",
-	"IWhooshAudioTranscriptSchemaCreator",
-	"IWhooshVideoTranscriptSchemaCreator",
-)

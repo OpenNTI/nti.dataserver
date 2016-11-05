@@ -107,11 +107,8 @@
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
 	<!-- Search hit comparators -->
-	<utility factory=".search_comparators._TypeSearchHitComparatorFactory" name="type" />
-	<utility factory=".search_comparators._DecaySearchHitComparatorFactory" name="decay" />
 	<utility factory=".search_comparators._ScoreSearchHitComparatorFactory" name="score" />
 	<utility factory=".search_comparators._CreatorSearchHitComparatorFactory" name="creator" />
-	<utility factory=".search_comparators._RelevanceSearchHitComparatorFactory" name="relevance" />
 	<utility factory=".search_comparators._LastModifiedSearchHitComparatorFactory" name="lastModified" />
 
 	<!-- Search hit subscribers -->
@@ -124,107 +121,6 @@
 	<subscriber factory=".subscribers._DefaultSearchPacakgeResolver"
 				provides=".interfaces.ISearchPackageResolver"
 				for="nti.dataserver.interfaces.IUser" />
-				
-	<!-- Content Resolvers -->
-	<adapter factory=".adapters._StringContentResolver"
-			 provides=".interfaces.IContentResolver"
-			 for="basestring" />
-
-	<adapter factory=".adapters._HighLightContentResolver"
-			 provides=".interfaces.IHighlightContentResolver"
-			 for="nti.dataserver.interfaces.IHighlight" />
-
-	<adapter factory=".adapters._RedactionContentResolver"
-			 provides=".interfaces.IRedactionContentResolver"
-			 for="nti.dataserver.interfaces.IRedaction" />
-
-	<adapter factory=".adapters._NoteContentResolver"
-			 provides=".interfaces.INoteContentResolver"
-			 for="nti.dataserver.interfaces.INote" />
-
-	<adapter factory=".adapters._MessageInfoContentResolver"
-			 provides=".interfaces.IMessageInfoContentResolver"
-			 for="nti.chatserver.interfaces.IMessageInfo" />
-
-	<adapter factory=".adapters._CanvasShapeContentResolver"
-			 provides=".interfaces.IContentResolver"
-			 for="nti.dataserver.contenttypes.Canvas" />
-
-	<adapter factory=".adapters._CanvasTextShapeContentResolver"
-			 provides=".interfaces.IContentResolver"
-			 for="nti.dataserver.contenttypes.CanvasTextShape" />
-
-	<adapter factory=".adapters._PostContentResolver"
-			 provides=".interfaces.IPostContentResolver"
-			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
-
-	<adapter factory=".adapters._ForumContentResolver"
-			 provides=".interfaces.IForumContentResolver"
-			 for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForum" />
-
-	<adapter factory=".adapters._VideoTranscriptContentResolver"
-			 provides=".interfaces.IVideoTranscriptContentResolver"
-			 for=".interfaces.IVideoTranscriptContent" />
-
-	<adapter factory=".adapters._NTICardContentResolver"
-			 provides=".interfaces.INTICardContentResolver"
-			 for=".interfaces.INTICardContent" />
-
-	<adapter factory=".adapters._BookContentResolver"
-			 provides=".interfaces.IBookContentResolver"
-			 for=".interfaces.IBookContent" />
-
-	<adapter for="*"
-			 factory=".adapters._ACLResolver"
-			 provides=".interfaces.IACLResolver" />
-
-	<adapter factory=".adapters._DictContentResolver"
-			 provides=".interfaces.IModeledContentResolver"
-			 for="dict" />
-
-	<subscriber factory=".adapters._DefaultTagKeywordResolver"
-				for="*"
-				provides=".interfaces.ITagsResolver"/>
-
-	<subscriber factory=".adapters._DefaultTagKeywordResolver"
-				for="*"
-				provides=".interfaces.IKeywordsResolver"/>
-
-	<subscriber factory=".adapters._DictContentResolver"
-				for="dict"
-				provides=".interfaces.ITagsResolver"/>
-
-	<subscriber factory=".adapters._DictContentResolver"
-				for="dict"
-				provides=".interfaces.IKeywordsResolver"/>
-
-	<!-- Type metadata -->
-	<utility factory=".search_metadata._note_metadata" name="note" />
-	<utility factory=".search_metadata._post_metadata" name="post" />
-	<utility factory=".search_metadata._book_metadata" name="content" />
-	<utility factory=".search_metadata._nticard_metadata" name="nticard" />
-	<utility factory=".search_metadata._highlight_metadata" name="highlight" />
-	<utility factory=".search_metadata._redaction_metadata" name="redaction" />
-	<utility factory=".search_metadata._transcript_metadata" name="transcript" />
-	<utility factory=".search_metadata._messageinfo_metadata" name="messageinfo" />
-	<utility factory=".search_metadata._audiotranscript_metadata" name="audiotranscript" />
-	<utility factory=".search_metadata._videotranscript_metadata" name="videotranscript" />
-
-	<utility factory=".search_metadata._generalforum_metadata" name="generalforum" />
-	<utility factory=".search_metadata._communityforum_metadata" name="communityforum" />
-	<utility factory=".search_metadata._personalblogcomment_metadata" name="personalblogcomment" />
-	<utility factory=".search_metadata._generalforumcomment_metadata" name="generalforumcomment" />
-	<utility factory=".search_metadata._personalblogentrypost_metadata" name="personalblogentrypost" />
-	<utility factory=".search_metadata._communityheadlinepost_metadata" name="communityheadlinepost" />
-	
-	<utility factory=".search_metadata._legacypost_metadata" name="legacypost" />
-	<utility factory=".search_metadata._legacycontent_metadata" name="legacycontent" />
-
-	<!-- Search highlights -->
-	<utility factory=".search_highlights.create_default_analyzer" />
-	<utility factory=".search_highlights.create_default_analyzer" name="en" />
-	<utility factory=".search_highlights.create_default_analyzer" name="es" />
-	<utility factory=".search_highlights.create_default_analyzer" name="ru" />
 
 	<!-- Search results -->
 	<utility factory=".search_results._SearchResultCreator"  />
@@ -240,4 +136,5 @@
 	<!-- Mime factories -->
 	<ext:registerMimeFactories module=".search_hits" />
 	<ext:registerMimeFactories module=".search_results" />
+
 </configure>
