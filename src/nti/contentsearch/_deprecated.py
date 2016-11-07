@@ -11,7 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope.deprecation import deprecated
 
+from persistent import Persistent
+
 from persistent.mapping import PersistentMapping
+
+from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 deprecated('_RepozeEntityIndexManager', 'No longer used')
 class _RepozeEntityIndexManager(PersistentMapping):
@@ -52,3 +56,15 @@ def get_object_ngrams(*args, **kwargs):
 deprecated('get_object_content', 'No longer used')
 def get_object_content(*args, **kwargs):
 	return None
+
+deprecated('WhooshContentSearcher', 'No longer used')
+class WhooshContentSearcher(PersistentCreatedAndModifiedTimeObject):
+	pass
+	
+deprecated('IndexStorage', 'No longer used')
+class IndexStorage(Persistent):
+	pass
+
+deprecated('DirectoryStorage', 'No longer used')
+class DirectoryStorage(Persistent):
+	pass

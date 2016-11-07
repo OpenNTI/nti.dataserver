@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Search utils.
-
 .. $Id$
 """
 
@@ -18,13 +16,6 @@ from zope import component
 from nti.common.string import is_true
 from nti.common.string import to_unicode
 
-from nti.dataserver.users import User
-
-from nti.ntiids.ntiids import TYPE_OID
-from nti.ntiids.ntiids import is_ntiid_of_type
-
-from nti.contentsearch.constants import invalid_type_
-
 from nti.contentsearch.content_utils import get_collection_root
 from nti.contentsearch.content_utils import get_content_translation_table
 
@@ -34,14 +25,17 @@ from nti.contentsearch.interfaces import ISearchPackageResolver
 from nti.contentsearch.search_query import QueryObject
 from nti.contentsearch.search_query import DateTimeRange
 
+from nti.dataserver.users import User
+
+from nti.ntiids.ntiids import TYPE_OID
+from nti.ntiids.ntiids import is_ntiid_of_type
+
 def _get_current_request():
-	result = None
 	try:
 		from pyramid.threadlocal import get_current_request
-		result = get_current_request()
+		return get_current_request()
 	except ImportError:
-		pass
-	return result
+		return None
 
 def _get_site_names(query=None):
 	result =  getattr(query, 'site_names', None) 
@@ -71,7 +65,7 @@ def clean_search_query(query, language='en'):
 
 	return result
 
-accepted_keys = {'ntiid', 'accept', 'exclude', 
+accepted_keys = {'ntiid', 'accept',
 				 'createdAfter', 'createdBefore',
 				 'modifiedAfter', 'modifiedBefore'}
 
@@ -126,7 +120,6 @@ def _resolve_package_ntiids(username, ntiid=None):
 	return sorted(result)  # predictable order for digest
 
 def create_queryobject(username, params):
-	indexable_type_names = get_indexable_types()
 	username = username or params.get('username', None)
 
 	context = {}
@@ -172,22 +165,12 @@ def create_queryobject(username, params):
 	args['packages'] = sorted(set(args['packages']))  # predictable order
 
 	accept = args.pop('accept', None)
-	exclude = args.pop('exclude', None)
 	if accept:
-		aset = set(accept.split(','))
-		if '*/*' not in aset:
-			aset = {get_type_from_mimetype(e) for e in aset}
-			aset.discard(None)
-			aset = aset if aset else (invalid_type_,)
-			args['searchOn'] = sort_search_types(aset)
-	elif exclude:
-		eset = set(exclude.split(','))
-		if '*/*' in eset:
-			args['searchOn'] = (invalid_type_,)
-		else:
-			eset = {get_type_from_mimetype(e) for e in eset}
-			eset.discard(None)
-			args['searchOn'] = sort_search_types(indexable_type_names - eset)
+		accept = set(accept.split(','))
+		if '*/*' not in accept:
+			accept.discard(u'')
+			accept.discard(None)
+			args['searchOn'] = sorted(accept)
 
 	args['batchSize'], args['batchStart'] = get_batch_size_start(args)
 
