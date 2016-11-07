@@ -12,11 +12,7 @@ __docformat__ = "restructuredtext en"
 from zope import component
 from zope import interface
 
-from zope.container.interfaces import IContained
-
 from zope.deprecation import deprecated
-
-from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ILastModified
@@ -24,12 +20,9 @@ from nti.dataserver.interfaces import ILastModified
 from nti.schema.field import Int
 from nti.schema.field import Bool
 from nti.schema.field import Dict
-from nti.schema.field import Text
 from nti.schema.field import Float
 from nti.schema.field import Number
 from nti.schema.field import Object
-from nti.schema.field import Variant
-from nti.schema.field import Iterable
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
@@ -78,7 +71,7 @@ class ISearchQuery(interface.Interface):
 
 	limit = Int(title="search results limit", required=False, default=None)
 
-	packages = ListOrTuple(ValidTextLine(title="Book content NTIID to search on"),
+	packages = ListOrTuple(ValidTextLine(title="Content NTIID to search on"),
 						   required=False)
 
 	searchOn = ListOrTuple(ValidTextLine(title="Content types to search on"),
@@ -116,18 +109,15 @@ class ISearchQuery(interface.Interface):
 
 	IsEmpty = Bool(title="Returns true if this is an empty search",
 				   required=True, readonly=True)
-
-	IsPrefixSearch = Bool(title="Returns true if the search is for prefix search",
-						  required=True, readonly=True)
-
-	IsPhraseSearch = Bool(title="Returns true if the search is for phrase search",
-					      required=True, readonly=True)
+	IsEmpty.setTaggedValue('_ext_excluded_out', True)
 
 	IsDescendingSortOrder = Bool(title="Returns true if the sortOrder is descending",
 							 	 required=True, readonly=True)
-
+	IsDescendingSortOrder.setTaggedValue('_ext_excluded_out', True)
+	
 	IsBatching = Bool(title="Returns true if this is a batch search",
 				 	  required=True, readonly=True)
+	IsBatching.setTaggedValue('_ext_excluded_out', True)
 
 	items = interface.Attribute('Attributes key/value not in the interface')
 	items.setTaggedValue('_ext_excluded_out', True)
@@ -192,9 +182,9 @@ class ISearchHit(ILastModified):
 	ID = ValidTextLine(title="hit unique id", required=True)
 	NTIID = ValidTextLine(title="hit object ntiid", required=False)
 	Creator = ValidTextLine(title="Search hit target creator", required=False)
-	ContainerId = ListOrTuple(value_type=ValidTextLine(title="the ntiid"),
-						 	  title="The containers")
-	
+	Containers = ListOrTuple(value_type=ValidTextLine(title="the ntiid"),
+						 	 title="The containers")
+
 	Fragments = ListOrTuple(value_type=Object(ISearchFragment, title="the fragment"),
 							title="search fragments", required=False)
 
@@ -203,7 +193,12 @@ class ISearchHit(ILastModified):
 	Target = Object(interface.Interface, title="the object hit", required=False)
 	Target.setTaggedValue('_ext_excluded_out', True)
 
-class ITranscriptSearchHit(ISearchHit):	
+	def clone():
+		"""
+		Clone this object
+		"""
+
+class ITranscriptSearchHit(ISearchHit):
 	EndMilliSecs = Number(title="Media end timestamp", required=False)
 	StartMilliSecs = Number(title="Media start video timestamp", required=False)
 
@@ -267,7 +262,13 @@ class ISearchHitMetaData(ILastModified):
 		pass
 
 class IBaseSearchResults(ILastModified):
+
 	Query = Object(ISearchQuery, title="Search query", required=True)
+
+	def clone():
+		"""
+		Clone this object
+		"""
 
 class ISearchResults(IBaseSearchResults):
 
@@ -280,14 +281,20 @@ class ISearchResults(IBaseSearchResults):
 
 	HitMetaData = Object(ISearchHitMetaData, title="Search hit metadata", required=False)
 
-	def add(hit, score=1.0):
-		"""add a search hit(s) to this result"""
+	def add(hit):
+		"""
+		Add a search hit(s) to this result
+		"""
 
 	def extend(hits):
-		"""add a search hit(s) to this result"""
+		"""
+		Add search hit(s) to this result
+		"""
 
 	def sort():
-		"""sort the results based on the sortBy query param"""
+		"""
+		Sort the results based on the sortBy query param
+		"""
 
 	def __iadd__(other):
 		pass
@@ -300,10 +307,14 @@ class ISuggestResults(IBaseSearchResults):
 						value_type=ValidTextLine(title="suggested word"))
 
 	def add(word):
-		"""add a word suggestion to this result"""
+		"""
+		Add a word suggestion to this result
+		"""
 
 	def extend(words):
-		"""add a word suggestion(s) to this result"""
+		"""
+		Add a word suggestion(s) to this result
+		"""
 
 	add_suggestions = add
 

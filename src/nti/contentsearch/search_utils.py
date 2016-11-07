@@ -11,26 +11,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import os
 import re
-import gevent
-import functools
 
 from zope import component
 
 from nti.common.string import is_true
 from nti.common.string import to_unicode
 
-from nti.dataserver.interfaces import IDataserverTransactionRunner
-
 from nti.dataserver.users import User
 
 from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import is_ntiid_of_type
-
-from nti.contentsearch.common import sort_search_types
-from nti.contentsearch.common import get_indexable_types
-from nti.contentsearch.common import get_type_from_mimetype
 
 from nti.contentsearch.constants import invalid_type_
 
@@ -38,7 +29,6 @@ from nti.contentsearch.content_utils import get_collection_root
 from nti.contentsearch.content_utils import get_content_translation_table
 
 from nti.contentsearch.interfaces import ISearchQuery
-from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch.interfaces import ISearchPackageResolver
 
 from nti.contentsearch.search_query import QueryObject
@@ -59,56 +49,6 @@ def _get_site_names(query=None):
 		request = _get_current_request()
 		result = getattr(request, 'possible_site_names', None)
 	return  ('',) if not result else result 
-
-def gevent_spawn(func=None, **kwargs):
-	assert func is not None
-
-	# prepare function call
-	new_callable = functools.partial(func, **kwargs)
-
-	query = kwargs.get('query', None)
-	site_names = _get_site_names(query)
-
-	def _runner():
-		transactionRunner = component.getUtility(IDataserverTransactionRunner)
-		transactionRunner = functools.partial(transactionRunner,
-											  site_names=site_names,
-											  side_effect_free=True)
-		transactionRunner(new_callable)
-
-	# user the avaible spawn function
-	request = _get_current_request()
-	greenlet = 	request.nti_gevent_spawn(run=_runner) if request is not None \
-				else gevent.spawn(_runner)
-
-	return greenlet
-
-def register_content(package=None, indexname=None, indexdir=None, ntiid=None, indexmanager=None):
-	indexmanager = indexmanager or component.queryUtility(IIndexManager)
-	if package is None:
-		assert indexname, 'must provided and index name'
-		assert indexdir, 'must provided and index location directory'
-		ntiid = ntiid or indexname
-	else:
-		ntiid = ntiid or package.ntiid
-		indexdir = indexdir or package.make_sibling_key('indexdir').absolute_path
-		indexname = os.path.basename(package.get_parent_key().absolute_path)  # TODO: So many assumptions here
-
-	if indexmanager is None:
-
-		return
-
-	try:
-		__traceback_info__ = indexdir, indexmanager, indexname, ntiid
-		if indexmanager.register_content(indexname=indexname, indexdir=indexdir, ntiid=ntiid):
-			logger.debug('Added index %s at %s to indexmanager', indexname, indexdir)
-		else:
-			logger.warn('Failed to add index %s at %s to indexmanager', indexname, indexdir)
-	except ImportError:  # pragma: no cover
-		# Adding a book on disk loads the Whoosh indexes, which
-		# are implemented as pickles. Incompatible version changes
-		# lead to unloadable pickles. We've seen this manifest as ImportError
-		logger.exception("Failed to add book search %s", indexname)
 
 _extractor_pe = re.compile('[?*]*(.*)')
 
@@ -131,7 +71,8 @@ def clean_search_query(query, language='en'):
 
 	return result
 
-accepted_keys = {'ntiid', 'accept', 'exclude', 'createdAfter', 'createdBefore',
+accepted_keys = {'ntiid', 'accept', 'exclude', 
+				 'createdAfter', 'createdBefore',
 				 'modifiedAfter', 'modifiedBefore'}
 
 def get_batch_size_start(params):

@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import copy
+
 from zope import interface
 
 from zope.location.interfaces import IContained
@@ -32,14 +34,18 @@ class SearchHitMixin(object):
 
 	__parent__ = None
 	__name__ = alias('ID')
-	__external_class_name__  = 'SearchHit'
+	__external_class_name__  = 'Hit'
 	
+	ContainerId = alias('Containers')
 	createdTime = alias('lastModified')
 	
 	parameters = {}
 	
 	def __init__(self, *args, **kwargs):
 		super(SearchHitMixin, self).__init__(*args, **kwargs)
+
+	def clone(self):
+		return copy.deepcopy(self)
 
 	def __eq__(self, other):
 		try:
@@ -49,7 +55,7 @@ class SearchHitMixin(object):
 
 	def __hash__(self):
 		xhash = 47
-		xhash ^= hash(self.OID)
+		xhash ^= hash(self.ID)
 		return xhash
 
 @interface.implementer(ISearchHit)

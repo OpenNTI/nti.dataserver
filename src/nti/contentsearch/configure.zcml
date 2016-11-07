@@ -22,23 +22,15 @@
 
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.IDateTimeRange
-						 .interfaces.ISearchHit
 						 .interfaces.ISearchQuery
 						 .interfaces.ISearchResults
 						 .interfaces.ISuggestResults
-						 .interfaces.ISearchFragment"
-		modules=".search_query .content_types .search_fragments" />
-
-	<adapter factory=".externalization._SearchHitMetaDataExternal" />
+						 .interfaces.ISearchFragment
+						 .interfaces.ISearchHitMetaData"
+		modules=".search_query .search_results .search_fragments" />
 
 	<adapter factory=".externalization._SearchHitInternalObjectIO"
 			 for=".interfaces.ISearchHit" />
-
-	<adapter factory=".externalization._SearchResultsInternalObjectIO"
-			 for=".interfaces.ISearchResults" />
-
-	<adapter factory=".externalization._SearchResultsInternalObjectIO"
-			 for=".interfaces.ISuggestResults" />
 
 	<!-- Decorators -->
 	<subscriber factory=".decorators._SearchHitHighlightDecorator"
