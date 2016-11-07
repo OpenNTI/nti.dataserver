@@ -19,6 +19,7 @@ def patch():
 	moved(str("nti.contentsearch._repoze_index"), str("nti.contentsearch._deprecated"))
 	moved(str("nti.contentsearch._whoosh_schemas"), str("nti.contentsearch._deprecated"))
 	moved(str("nti.contentsearch.content_types"), str("nti.contentsearch._deprecated"))
+	moved(str("nti.contentsearch.discriminators"), str("nti.contentsearch._deprecated"))
 	moved(str("nti.contentsearch.indexmanager"), str("nti.contentsearch._deprecated"))
 	moved(str("nti.contentsearch.repoze_adpater"), str("nti.contentsearch._deprecated"))
 	moved(str("nti.contentsearch.whoosh_schemas"), str("nti.contentindexing.whooshidx.schemas'"))
