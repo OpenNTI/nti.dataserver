@@ -20,6 +20,11 @@ from nti.contentsearch.interfaces import ISearchHitMetaData
 from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.interfaces import IInternalObjectUpdater
+from nti.externalization.interfaces import StandardExternalFields
+
+QUERY = 'Query'
+SEARCH_QUERY = 'SearchQuery'
+ITEMS = StandardExternalFields.ITEMS
 
 @component.adapter(ISearchQuery)
 @interface.implementer(IInternalObjectUpdater)
@@ -57,7 +62,14 @@ class _SearchResultsUpdater(object):
 		self.obj = obj
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		if ITEMS in parsed:
+			parsed['Hits'] = parsed.pop(ITEMS, ())
+
+		if SEARCH_QUERY in parsed:
+			parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
+	
 		result = InterfaceObjectIO(self.obj, ISearchResults).updateFromExternalObject(parsed)
+
 		# make sure we restore the query object to the hits
 		for hit in self.obj._raw_hits():
 			hit.Query = self.obj.Query
@@ -74,6 +86,10 @@ class _SuggestResultsUpdater(object):
 		self.obj = obj
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		if ITEMS in parsed:
+			parsed['Suggestions'] = parsed.pop(ITEMS, ())
+		if SEARCH_QUERY in parsed:
+			parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
 		result = InterfaceObjectIO(self.obj,
 								   ISuggestResults).updateFromExternalObject(parsed)
 		return result

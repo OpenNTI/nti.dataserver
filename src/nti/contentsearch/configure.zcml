@@ -33,42 +33,6 @@
 			 for=".interfaces.ISearchHit" />
 
 	<!-- Decorators -->
-	<subscriber factory=".decorators._SearchHitHighlightDecorator"
-				for=".interfaces.IWhooshBookSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory=".decorators._SearchHitHighlightDecorator"
-				for=".interfaces.IWhooshVideoTranscriptSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory=".decorators._NTICardSearchHitHighlightDecorator"
-				for=".interfaces.IWhooshNTICardSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory=".decorators._NoteSearchHitHighlightDecorator"
-				for=".interfaces.INoteSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory=".decorators._SearchHitHighlightDecorator"
-				for=".interfaces.IHighlightSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory=".decorators._RedactionSearchHitHighlightDecorator"
-				for=".interfaces.IRedactionSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory=".decorators._SearchHitHighlightDecorator"
-				for=".interfaces.IMessageInfoSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory=".decorators._PostSearchHitHighlightDecorator"
-				for=".interfaces.IPostSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory=".decorators._ForumSearchHitHighlightDecorator"
-				for=".interfaces.IForumSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
 	<subscriber factory=".decorators._SearchResultsDecorator"
 				for=".interfaces.ISearchResults"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
@@ -114,19 +78,12 @@
 				provides=".interfaces.ISearchPackageResolver"
 				for="nti.dataserver.interfaces.IUser" />
 
-	<!-- Search results -->
-	<utility factory=".search_results._SearchResultCreator"  />
-	<utility factory=".search_results._SuggestResultsCreator"  />
-
 	<!-- Search query -->
 	<adapter factory=".search_query._default_query_adapter"
 			 provides=".interfaces.ISearchQuery"
 			 for="basestring" />
 
-	<include file="configure_whoosh.zcml" />
-
 	<!-- Mime factories -->
 	<ext:registerMimeFactories module=".search_hits" />
-	<ext:registerMimeFactories module=".search_results" />
 
 </configure>
