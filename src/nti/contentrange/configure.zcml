@@ -1,0 +1,28 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml" 
+			xmlns:ext="http://nextthought.com/ntp/ext"
+			i18n_domain="zope">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+	<include package="zope.location" />
+	
+	<include package="nti.externalization" />
+
+	<!-- Externalization -->
+	<adapter factory=".externalization.TextContextExternal" />
+	<adapter factory=".externalization.DomContentPointerExternal" />
+	<adapter factory=".externalization.ContentRangeDescriptionExternal" />
+
+	<adapter factory=".externalization.TimeContentPointerExternal" />
+	<adapter factory=".externalization.TimeRangeDescriptionExternal" />
+	<adapter factory=".externalization.TranscriptContentPointerExternal" />
+	<adapter factory=".externalization.TranscriptRangeDescriptionExternal" />
+	
+	<include package="nti.externalization" file="meta.zcml" />
+	<ext:registerMimeFactories module=".timeline" />
+</configure>

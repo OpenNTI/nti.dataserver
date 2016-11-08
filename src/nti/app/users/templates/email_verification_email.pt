@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:metal="http://xml.zope.org/namespaces/metal"
+	  xmlns:tal="http://xml.zope.org/namespaces/tal">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Welcome To NextThought</title>
+		<style metal:use-macro="macro:style">
+		</style>
+	</head>
+	<body>
+		<div metal:use-macro="macro:header">
+		</div>
+
+		<p>
+			Hi <span tal:content="options/informal_username" class="realname tterm">John</span>,
+		</p>
+
+
+		<p>
+			In order to support your account, please verify your email address. Verifying your
+			email helps keep your account secure and ensures timely delivery of email notifications.
+		</p>
+
+		<p>
+			Verify your email address <a tal:attributes="href options/href">here</a>.  Alternatively,
+			you can enter this verification code on your profile page.
+		</p>
+
+		<p>
+			Verification Code: <strong tal:content="options/token">token</strong>
+		</p>
+
+		<p>
+			Thank you for helping us maintain the security of your account.
+		</p>
+
+		<p class="footer" style="font-size: smaller">
+			If you feel this email was sent in error, or this account was created
+			without your consent, you may email
+			<a href="mailto:support@nextthought.com"
+				tal:attributes="href string:mailto:${options/support_email|default}"
+				tal:content="options/support_email">support@nextthought.com</a>.
+		</p>
+
+	</body>
+</html>

@@ -1,0 +1,349 @@
+# Translations template for nti.dataserver.
+# Copyright (C) 2014 ORGANIZATION
+# This file is distributed under the same license as the nti.dataserver project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: nti.dataserver 0.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2014-08-27 14:26-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.3\n"
+
+#: src/nti/app/contentlibrary/forum.py:59
+#: src/nti/dataserver/contenttypes/forums/forum.py:278
+msgid "Forum"
+msgstr ""
+
+#: src/nti/app/externalization/error.py:207
+msgid "You cannot store that type of object here."
+msgstr ""
+
+#: src/nti/app/externalization/internalization.py:127
+msgid "Failed to parse/transform input"
+msgstr ""
+
+#: src/nti/app/externalization/view_mixins.py:433
+msgid "Unsupported/missing Class"
+msgstr ""
+
+#: src/nti/app/externalization/view_mixins.py:361
+msgid "Unexpected internal error; see logs"
+msgstr ""
+
+#: src/nti/app/forums/adapters.py:41
+msgid "${username}'s Thoughts"
+msgstr ""
+
+#: src/nti/app/pushnotifications/views.py:78
+msgid "Thank you. You have been unsubscribed."
+msgstr ""
+
+#: src/nti/app/renderers/renderers.py:91
+msgid "Rendering to a browser not supported yet"
+msgstr ""
+
+#: src/nti/appserver/_adapters.py:503
+msgid "This item has been deleted."
+msgstr ""
+
+#: src/nti/appserver/_adapters.py:505 src/nti/appserver/flagging_views.py:203
+msgid "This item has been deleted by the moderator."
+msgstr ""
+
+#: src/nti/appserver/_creatable_mime_object_vocabulary.py:123
+msgid "Cannot create that type of object:"
+msgstr ""
+
+#: src/nti/appserver/account_creation_views.py:269
+#: src/nti/appserver/account_creation_views.py:352
+msgid "Cannot create new account while logged on."
+msgstr ""
+
+#: src/nti/appserver/account_creation_views.py:105
+msgid "Missing data"
+msgstr ""
+
+#: src/nti/appserver/account_creation_views.py:127
+#: src/nti/appserver/account_creation_views.py:176
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:213
+msgid "Please provide your first and last names."
+msgstr ""
+
+#: src/nti/appserver/account_creation_views.py:199
+msgid "That username is not available. Please choose another."
+msgstr ""
+
+#: src/nti/appserver/account_recovery_views.py:69
+#: src/nti/appserver/account_recovery_views.py:288
+msgid "Cannot look for forgotten accounts while logged on."
+msgstr ""
+
+#: src/nti/appserver/account_recovery_views.py:308
+msgid "Your reset link is not valid. Please request a new one."
+msgstr ""
+
+#: src/nti/appserver/dataserver_socketio_views.py:134
+msgid "No session found or illegal session id"
+msgstr ""
+
+#: src/nti/appserver/logon.py:427
+msgid "Sign in with ${domain}"
+msgstr ""
+
+#: src/nti/appserver/logon.py:640
+msgid "Multiple usernames"
+msgstr ""
+
+#: src/nti/appserver/logon.py:899
+msgid "The request was canceled by the remote server."
+msgstr ""
+
+#: src/nti/appserver/logon.py:647
+msgid "No username"
+msgstr ""
+
+#: src/nti/appserver/rating_views.py:54
+msgid "rating not specified"
+msgstr ""
+
+#: src/nti/appserver/rating_views.py:59
+msgid "invaing rating"
+msgstr ""
+
+#: src/nti/appserver/ugd_edit_views.py:106
+msgid "Cannot use an ID already in use"
+msgstr ""
+
+#: src/nti/appserver/zope_file_views.py:188
+msgid "Not an image upload"
+msgstr ""
+
+#: src/nti/invitations/interfaces.py:150
+msgid "The invitation code is not valid."
+msgstr ""
+
+#: src/nti/invitations/interfaces.py:154
+msgid "The invitation code has expired."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:661
+msgid "Welcome to NextThought"
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:416
+msgid "Username contains a censored sequence"
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:421
+msgid "Alias contains a censored sequence"
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:591
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:220
+msgid "Please provide your first name."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:595
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:227
+msgid "Please provide your last name."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:613
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:192
+msgid "Birthdate must be in the past."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:676
+msgid "That username is not valid. Please choose another."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:616
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:198
+msgid "Birthdate must be at least four years ago."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:789
+msgid "Username ${username} cannot include any part of the real name ${realname}."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:619
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:204
+msgid "Birthdate must be less than 150 years ago."
+msgstr ""
+
+#: src/nti/appserver/policies/user_policies.py:227
+msgid ""
+"It is too soon to send another consent request email. Please try again "
+"tomorrow."
+msgstr ""
+
+#: src/nti/appserver/policies/user_policies.py:268
+msgid "Please Confirm Your Child's NextThought Account"
+msgstr ""
+
+#: src/nti/appserver/policies/user_policies.py:175
+msgid "NextThought Account Confirmation"
+msgstr ""
+
+#: src/nti/appserver/templates/new_user_created.pt:60
+msgid "Hi ${name}!"
+msgstr ""
+
+#: src/nti/appserver/templates/new_user_created.pt:66
+msgid "Thank you for creating your new account and welcome to NextThought!"
+msgstr ""
+
+#: src/nti/appserver/templates/new_user_created.pt:75
+msgid "Username:"
+msgstr ""
+
+#: src/nti/appserver/templates/new_user_created.pt:81
+msgid "Log in at:"
+msgstr ""
+
+#: src/nti/appserver/templates/new_user_created.pt:88
+msgid ""
+"NextThought offers interactive content and rich features to make learning "
+"both social and personal. Explore the NextThought Help Center in your Library"
+" to get started and learn more about the exciting interactive features "
+"NextThought has to offer."
+msgstr ""
+
+#: src/nti/appserver/templates/new_user_created.pt:100
+msgid "Sincerely,"
+msgstr ""
+
+#: src/nti/appserver/templates/new_user_created.pt:109
+msgid ""
+"If you feel this email was sent in error, or this account was created without"
+" your consent, you may email us at ${support_email}"
+msgstr ""
+
+#: src/nti/appserver/utils/link_providers_admin_views.py:50
+#: src/nti/appserver/utils/users/export_views.py:147
+msgid "User not found"
+msgstr ""
+
+#: src/nti/appserver/utils/coppa/coppa_admin_views.py:144
+msgid "Name"
+msgstr ""
+
+#: src/nti/appserver/utils/coppa/coppa_admin_views.py:154
+msgid "Contact Email"
+msgstr ""
+
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:165
+msgid "Please provide a valid ${field}."
+msgstr ""
+
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:184
+msgid "Please provide a valid birthdate."
+msgstr ""
+
+#: src/nti/appserver/utils/forums/forum_admin_views.py:45
+msgid "Invalid ACL specification"
+msgstr ""
+
+#: src/nti/appserver/utils/forums/forum_admin_views.py:89
+#: src/nti/appserver/utils/forums/forum_admin_views.py:68
+#: src/nti/appserver/utils/forums/forum_admin_views.py:145
+#: src/nti/appserver/utils/forums/forum_admin_views.py:172
+msgid "Community not found"
+msgstr ""
+
+#: src/nti/appserver/utils/forums/forum_admin_views.py:95
+#: src/nti/appserver/utils/forums/forum_admin_views.py:75
+#: src/nti/appserver/utils/forums/forum_admin_views.py:120
+msgid "Board not found"
+msgstr ""
+
+#: src/nti/appserver/utils/forums/forum_admin_views.py:101
+msgid "Community does not allow a forum"
+msgstr ""
+
+#: src/nti/appserver/utils/forums/forum_admin_views.py:105
+#: src/nti/appserver/utils/forums/forum_admin_views.py:180
+#: src/nti/appserver/utils/forums/forum_admin_views.py:154
+msgid "Forum not found"
+msgstr ""
+
+#: src/nti/appserver/utils/forums/forum_admin_views.py:149
+msgid "Cannot delete default forum"
+msgstr ""
+
+#: src/nti/chatserver/_handler.py:58
+msgid ""
+"You are trying to send too many chat messages too quickly. Please wait and "
+"try again."
+msgstr ""
+
+#: src/nti/chatserver/_meeting_post_policy.py:164
+msgid ""
+"The message is too big. It can contain a maximum of ${parts} characters or "
+"shapes"
+msgstr ""
+
+#: src/nti/dataserver/users/interfaces.py:64
+msgid "The field cannot be blank."
+msgstr ""
+
+#: src/nti/dataserver/users/interfaces.py:80
+msgid "The username cannot be blank."
+msgstr ""
+
+#: src/nti/dataserver/users/interfaces.py:107
+msgid "The email address you have entered is not valid."
+msgstr ""
+
+#: src/nti/dataserver/users/interfaces.py:114
+msgid "The first or last name you have entered is not valid."
+msgstr ""
+
+#: src/nti/dataserver/users/interfaces.py:127
+msgid "The password you supplied does not match the current password."
+msgstr ""
+
+#: src/nti/dataserver/users/interfaces.py:130
+msgid "Your pasword cannot contain only whitespace. Please try again."
+msgstr ""
+
+#: src/nti/dataserver/users/interfaces.py:133
+msgid ""
+"The password you supplied has been identified by security researchers as "
+"commonly used and insecure. Please try again."
+msgstr ""
+
+#: src/nti/dataserver/users/interfaces.py:94
+msgid ""
+"Username contains an illegal character. Only letters, digits, and "
+"${allowed_chars} are allowed."
+msgstr ""
+
+#: src/nti/dataserver/users/missing_user.py:37
+msgid "Missing Entity"
+msgstr ""
+
+#: src/nti/dataserver/users/missing_user.py:38
+msgid "Deleted Entity"
+msgstr ""
+
+#: src/nti/dataserver/users/missing_user.py:55
+msgid "Missing User"
+msgstr ""
+
+#: src/nti/dataserver/users/missing_user.py:56
+msgid "Deleted User"
+msgstr ""
+
+#: src/nti/ntiids/ntiids.py:107
+msgid "The value you have used is not valid."
+msgstr ""
+

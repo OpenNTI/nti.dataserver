@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:metal="http://xml.zope.org/namespaces/metal"
+	  xmlns:tal="http://xml.zope.org/namespaces/tal">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title tal:condition="not: options/error_message">Thank you!</title>
+		<title tal:condition="options/error_message">We're Sorry.</title>
+
+		<style metal:use-macro="macro:style">
+		</style>
+		<script tal:condition="not: options/error_message">
+		var timeRemaining = 5, cinterval;
+
+		function updateTimeLeft(timeLeft){
+			document.getElementById('seconds-remaining').innerHTML = timeLeft;
+		}
+
+    	var timeDec = function (){
+        	timeRemaining--;
+        	updateTimeLeft(timeRemaining);
+        	if(timeRemaining === 0){
+           	 	clearInterval(cinterval);
+           	 	window.location = document.getElementById('link').href;
+       	 	}
+   		 };
+    	cinterval = setInterval(timeDec, 1000);
+		</script>
+	</head>
+	<body>
+		<div metal:use-macro="macro:header">
+		</div>
+
+		<tal:block tal:condition="not: options/error_message">
+			<h1>
+				Thank You <span tal:content="options/informal_username" class="realname tterm">John Doe</span>.
+			</h1>
+			<p>
+				Your account has been verified.  You will be redirected to
+				<a id="link" href="https://nextthought.com"
+					tal:attributes="href options/href"
+					tal:content="options/site_name">NextThought</a> in
+				<span id="seconds-remaining">5</span> seconds.
+			</p>
+		</tal:block>
+
+		<tal:block tal:condition="options/error_message">
+			<h1>
+				We're sorry <span tal:content="options/informal_username" class="realname tterm">John Doe</span>.
+			</h1>
+			<p>
+			We were unable to verify your account at this time.  Please try again later and if the
+			problem persists contact <a href="mailto:support@nextthought.com"
+					tal:attributes="href string:mailto:${options/support_email|default}"
+					tal:content="options/support_email">support@nextthought.com</a>.
+			</p>
+		</tal:block>
+	</body>
+</html>

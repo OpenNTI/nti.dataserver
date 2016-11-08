@@ -1,0 +1,73 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:link="http://nextthought.com/ntp/link_providers">
+
+	<include package="zope.component" />
+
+	<include package="nti.appserver.link_providers" file="meta.zcml" />
+
+	<!-- Information used during sending/retrieving contact emails. -->
+	<adapter factory=".user_policies.ContactEmailRecovery" />
+
+	<subscriber handler=".user_policies.dispatch_content_created_to_user_policies" />
+	<subscriber handler=".user_policies.dispatch_content_edited_to_user_policies" />
+
+	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_create" />
+	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_edit" />
+
+	<!-- Emails -->
+	<subscriber handler=".user_policies.send_consent_ack_email" />
+	<subscriber handler=".user_policies.send_consent_request_on_new_coppa_account" />
+	<subscriber handler=".user_policies.send_consent_request_when_contact_email_changes" />
+
+	<!--
+	Default to "sending" new object emails in dev mode.
+	These will actually just get queued to disk in the usual case.
+
+	IN PRODUCTION: Add this same utility registration (without the condition)
+	to site.zcml, and give it a 'name' attribute matching the username
+	of the user that wants email.
+	-->
+	<utility factory="nti.appserver._stream_event_listeners.TemporaryChangeEmailMarker"
+			 zcml:condition="have devmode" />
+
+	<!-- Filter capabilities -->
+	<subscriber factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
+			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
+			 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
+
+
+	<!-- Require specific profile info for Koppa Kids -->
+	<!--
+		 NOTE: The transition between these two will be a bit rough.
+		 We may have to manually copy some information when we change the
+		 interfaces.
+	-->
+	<adapter factory="nti.dataserver.users.user_profile.RestrictedUserProfileWithContactEmailFactory"
+			 provides="nti.dataserver.users.interfaces.IRestrictedUserProfileWithContactEmail"
+			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement" />
+
+	<adapter factory="nti.dataserver.users.user_profile.EmailRequiredUserProfileFactory"
+			 provides="nti.dataserver.users.interfaces.IEmailRequiredUserProfile"
+			 for="nti.dataserver.interfaces.ICoppaUserWithAgreement" />
+
+
+	<!-- Privacy links as needed -->
+	<link:userLink named=".user_policies.REL_CHILDRENS_PRIVACY_PAGE"
+				   url="https://docs.google.com/document/pub?id=1kNo6hwwKwWdhq7jzczAysUWhnsP9RfckIet11pWPW6k"
+				   for="nti.dataserver.interfaces.ICoppaUser"
+				   mimeType="text/html" />
+
+	<link:userLink named=".user_policies.REL_GENERAL_PRIVACY_PAGE"
+				   url="https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gvacXOStsfmUz5TjyDYYy3CVJ2SmM"
+				   mimeType="text/html" />
+
+
+	<!-- Contact email link as needed -->
+	<link:userLink named=".user_policies.REL_CONTACT_EMAIL_SENDS_CONSENT"
+				   field="contact_email"
+				   for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement" />
+
+</configure>

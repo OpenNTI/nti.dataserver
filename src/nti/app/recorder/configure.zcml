@@ -1,0 +1,27 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="nti.recorder" />
+		
+	<subscriber factory=".decorators._TransactionRecordDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.recorder.interfaces.ITransactionRecord
+					pyramid.interfaces.IRequest"/>
+
+	<subscriber factory=".decorators._RecordableDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.coremetadata.interfaces.IRecordable
+					pyramid.interfaces.IRequest"/>
+
+	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.coremetadata.interfaces.IRecordable pyramid.interfaces.IRequest" />
+				
+</configure>

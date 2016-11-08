@@ -1,0 +1,48 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="nti.dataserver">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<!--
+	If we load zope.intid, we get subscribers for the Object events
+	that ensure all ILocation objects are registered/unregistered when
+	they are added/removed, plus another set of events when they
+	get/lose intids. This second set of events is meant to update
+	zope.catalog. A consequence of this is that ILocation objects must
+	be adaptable to KeyReferences when they are ObjectAdded (for
+	purposes of zope.intid, which we don't care about, but this also
+	ensures that they have ZODB Connections, which is good).
+
+	We cannot use these subscribers as-is; see the notes in
+	subscribers.py for details. Instead we have our own implementation
+	that ensures KeyReference, but works with zc.intid.
+	-->
+	<exclude package="zope.intid" file="subscribers.zcml" />
+	<include package="zope.intid" />
+
+	<include package="zope.keyreference" />
+
+	<!--
+	zc.intid fires a different set of events when objects gain/lose
+	intids.
+	-->
+	<include package="zc.intid" />
+
+	<!--
+		 This file has a bug (uses 'interface' instead of
+	     'implements'), so we replicate its effect manually.
+	-->
+	<!--
+	<include package="zc.intid" file="zope-intid.zcml" />
+	-->
+	<class class="zc.intid.utility.IntIds">
+		<implements interface="zope.intid.interfaces.IIntIds"/>
+	</class>
+
+</configure>
