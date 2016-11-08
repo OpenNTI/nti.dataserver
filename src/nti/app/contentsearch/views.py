@@ -27,14 +27,16 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.app.renderers.interfaces import IUncacheableInResponse
 
-from nti.contentsearch.interfaces import ISearcher
+from nti.contentsearch.interfaces import ISearcher 
 from nti.contentsearch.interfaces import ISearchResults
+from nti.contentsearch.interfaces import ISuggestResults 
 from nti.contentsearch.interfaces import SearchCompletedEvent
 
 from nti.contentsearch.search_utils import create_queryobject
 
 from nti.dataserver.users import Entity
 
+from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 
 ITEMS = StandardExternalFields.ITEMS
@@ -94,7 +96,8 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 
 	def _do_search(self, query):
 		searcher = ISearcher(self.remoteUser)
-		return searcher.search(query=query)
+		result = searcher.search(query=query)
+		return (result,) if ISearchResults.providedBy(result) else result
 
 	def search(self, query):
 		result = None
@@ -127,16 +130,7 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 		return result
 
 class SearchView(BaseSearchView):
-
 	name = 'Search'
-
-	def _do_search(self, query, store=None):
-		result = self._check_memcache(query)
-		if result is None:
-			result = self.indexmanager.search(query=query, store=store)
-			if len(result) >= self.max_cache_size:
-				self._store_memcache(query, result)
-		return result
 
 Search = SearchView  # BWC
 
@@ -147,15 +141,16 @@ UserSearch = UserDataSearchView  # BWC
 class SuggestView(BaseView):
 	name = 'Suggest'
 
-	def _do_search(self, query, store=None):
-		result = self.indexmanager.suggest(query=query, store=store)
-		return result
+	def _do_search(self, query):
+		searcher = ISearcher(self.remoteUser)
+		result = searcher.suggest(query=query)
+		return (result,) if ISuggestResults.providedBy(result) else result
 
 	def search(self, *queries):
-		result = None
 		now = time.time()
+		result = LocatedExternalList()
 		for query in queries:
-			result = self._do_search(query=query, store=result)
+			result.extend(self._do_search(query=query))
 		elapsed = time.time() - now
 		entity = Entity.get_entity(query.username)
 		notify(SearchCompletedEvent(entity, result, elapsed))
