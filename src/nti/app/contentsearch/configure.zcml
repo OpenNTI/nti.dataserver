@@ -14,25 +14,14 @@
 	<utility factory="nti.contentsearch.indexmanager.create_index_manager"
 			 provides="nti.contentsearch.interfaces.IIndexManager" />
 
-	<!-- Events -->
-	<subscriber handler=".subscribers.add_s3_index" />
-	<subscriber handler=".subscribers.add_filesystem_index" />
-	<subscriber handler=".subscribers.reset_indexes_when_removed" />
-	<subscriber handler=".subscribers.reset_indexes_when_modified" />
-
 	<!-- Filters -->
 	<subscriber	factory=".filters._SearchContentObjectFilter"
 				provides="nti.appserver.interfaces.ICreatableObjectFilter"
 				for="nti.dataserver.interfaces.IUser" />
 
 	<!-- Search filters -->
-	<subscriber factory=".search_predicates._AccessibleSearchPostProcessingPredicate"
+	<subscriber factory=".predicates._AccessibleSearchPostProcessingPredicate"
 				provides="nti.contentsearch.interfaces.ISearchHitPostProcessingPredicate"
 				for="*" />
-
-	<!-- Transformers -->
-	<adapter factory=".adapters.transcript_to_media"
-			 provides="nti.contentsearch.interfaces.IResultTransformer"
-			 for="nti.contenttypes.presentation.interfaces.INTITranscript" />
 
 </configure>
