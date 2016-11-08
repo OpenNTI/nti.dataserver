@@ -12,7 +12,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import re
 import shutil
 import datetime
 import operator
@@ -49,12 +48,6 @@ from nti.cabinet.filer import transfer_to_native_file
 from nti.common.random import generate_random_hex_string
 
 from nti.coremetadata.interfaces import IModeledContentBody
-
-from nti.contentprocessing.content_utils import clean_special_characters
-
-from nti.contentsearch.interfaces import ITagsResolver
-from nti.contentsearch.interfaces import ITitleResolver
-from nti.contentsearch.interfaces import IContentResolver
 
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IACLProvider
@@ -245,41 +238,6 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 			return (-tpl[0], -tpl[1])
 		return _negate_tuples
 	_make_heapq_PostCount_descending_key = _make_heapq_NewestDescendantCreatedTime_descending_key
-
-	def _get_topic_content(self, topic):
-		# process the post
-		x = topic.headline
-		# get content
-		content = []
-		for iface, name, default, method in ((ITagsResolver, 'tags', (), content.extend),
-											 (ITitleResolver, 'title', u'', content.append),
-											 (IContentResolver, 'content', u'', content.append)):
-			resolver = iface(x, None)
-			value = getattr(resolver, name, None) or default
-			method(value)
-		# join as one
-		content = u' '.join(content)
-		return content
-
-	def _get_searchTerm(self):
-		param = self.request.params.get('searchTerm', None)
-		return param
-
-	def _make_complete_predicate(self, *args, **kwargs):
-		predicate = super(ForumContentsGetView, self)._make_complete_predicate(*args, **kwargs)
-		searchTerm = self._get_searchTerm()
-		if searchTerm:
-			def filter_searchTerm(x):
-				if not frm_interfaces.ITopic.providedBy(x):
-					return True
-				content = self._get_topic_content(x)
-				term = clean_special_characters(searchTerm.lower())
-				match = re.match(".*%s.*" % term, content,
-								 re.MULTILINE | re.DOTALL | re.UNICODE | re.IGNORECASE)
-				return match is not None
-
-			predicate = _combine_predicate(filter_searchTerm, predicate)
-		return predicate
 
 	def __call__(self):
 		result = super(ForumContentsGetView, self).__call__()
