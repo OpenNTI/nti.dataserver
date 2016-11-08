@@ -54,6 +54,26 @@ deprecated('IWhooshIndexStorage', 'Use lastest index implementation')
 class IWhooshIndexStorage(interface.Interface):
 	pass
 
+deprecated('IBookContent', 'Use lastest index implementation')
+class IBookContent(interface.Interface):
+	pass
+
+deprecated('INTICardContent', 'Use lastest index implementation')
+class INTICardContent(interface.Interface):
+	pass
+
+deprecated('IContainerIDResolver', 'Use lastest index implementation')
+class IContainerIDResolver(interface.Interface):
+	pass
+
+deprecated('IAudioTranscriptContent', 'Use lastest index implementation')
+class IAudioTranscriptContent(interface.Interface):
+	pass
+
+deprecated('IVideoTranscriptContent', 'Use lastest index implementation')
+class IVideoTranscriptContent(interface.Interface):
+	pass
+
 # search query
 
 class IDateTimeRange(interface.Interface):
