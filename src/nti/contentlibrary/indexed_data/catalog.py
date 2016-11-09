@@ -27,6 +27,7 @@ import BTrees
 from nti.common._compat import integer_types
 
 from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
+from nti.contentlibrary.indexed_data.interfaces import ITargetAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
 from nti.contentlibrary.indexed_data.interfaces import ISlideDeckAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainersAdapter
@@ -52,6 +53,7 @@ CATALOG_INDEX_NAME = '++etc++contentlibrary.catalog'
 IX_SITE = 'site'
 IX_TYPE = 'type'
 IX_NTIID = 'ntiid'
+IX_TARGET = 'target'
 IX_NAMESPACE = 'namespace'
 IX_CONTAINERS = 'containers'
 IX_SLIDEDECK_VIDEOS = 'slideDeckVideos'
@@ -141,6 +143,10 @@ class TypeIndex(ValueIndex):
 	default_field_name = 'type'
 	default_interface = IContainedTypeAdapter
 	
+class TargetIndex(ValueIndex):
+	default_field_name = 'target'
+	default_interface = ITargetAdapter
+
 class NamespaceIndex(ValueIndex):
 	default_field_name = 'namespace'
 	default_interface = INamespaceAdapter
@@ -251,6 +257,7 @@ class LibraryCatalog(Catalog):
 	def get_references(self,
 					   ntiid=None,
 					   sites=None,
+					   target=None,
 					   provided=None,
 					   namespace=None,
 					   container_ntiids=None,
@@ -262,6 +269,7 @@ class LibraryCatalog(Catalog):
 		for index, value, index_query in ((IX_SITE, sites, 'any_of'),
 										  (IX_NTIID, ntiid, 'any_of'),
 										  (IX_TYPE, provided, 'any_of'),
+										  (IX_TARGET, target, 'any_of'),
 										  (IX_NAMESPACE, namespace, 'any_of'),
 							  			  (IX_CONTAINERS, container_ntiids, container_query)):
 			if value is not None:
@@ -275,6 +283,7 @@ class LibraryCatalog(Catalog):
 	def search_objects(self,
 					   ntiid=None,
 					   sites=None,
+					   target=None,
 					   provided=None,
 					   namespace=None,
 					   container_ntiids=None,
@@ -284,6 +293,7 @@ class LibraryCatalog(Catalog):
 		if intids is not None:
 			refs = self.get_references(ntiid=ntiid,
 									   sites=sites,
+									   target=target,
 									   provided=provided,
 									   namespace=namespace,
 									   container_ntiids=container_ntiids,
@@ -298,6 +308,7 @@ def create_library_catalog(catalog=None, family=None):
 	for name, clazz in ( (IX_SITE, SiteIndex),
 						 (IX_TYPE, TypeIndex),
 						 (IX_NTIID, NTIIDIndex),
+						 (IX_TARGET, TargetIndex),
 						 (IX_NAMESPACE, NamespaceIndex),
 						 (IX_CONTAINERS, ContainersIndex),
 						 (IX_SLIDEDECK_VIDEOS, SlideDeckVideosIndex)):

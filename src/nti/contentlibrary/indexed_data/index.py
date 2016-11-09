@@ -141,6 +141,21 @@ class NTIIDIndex(ValueIndex):
 	default_field_name = 'ntiid'
 	default_interface = ValidatingNTIID
 
+class ValidatingTarget(object):
+	"""
+	The "interface" we adapt to to find the target ntiid
+	"""
+
+	def __init__(self, obj, default):
+		self.target = getattr(obj, "target", None)
+
+	def __reduce__(self):
+		raise TypeError()
+
+class TargetIndex(ValueIndex):
+	default_field_name = 'target'
+	default_interface = ValidatingTarget
+
 class ContainedObjectCatalog(Persistent):
 
 	family = BTrees.family64
@@ -148,6 +163,7 @@ class ContainedObjectCatalog(Persistent):
 	site_index = alias('_site_index')
 	type_index = alias('_type_index')
 	ntiid_index = alias('_ntiid_index')
+	target_index = alias('_target_index')
 	container_index = alias('_container_index')
 	namespace_index = alias('_namespace_index')
 
@@ -161,6 +177,8 @@ class ContainedObjectCatalog(Persistent):
 		self._type_index = TypeIndex(family=self.family)
 		# Track the ntiid of the object
 		self._ntiid_index = NTIIDIndex(family=self.family)
+		# Track the target of an asset
+		self._target_index = TargetIndex(family=self.family)
 		# Track the object site
 		self._site_index = SingleSiteIndex(family=self.family)
 		# Track the containers the object belongs to
@@ -235,7 +253,7 @@ class ContainedObjectCatalog(Persistent):
 		return False
 
 	def get_references(self, container_ntiids=None, provided=None,
-					   namespace=None, ntiid=None, sites=None,
+					   namespace=None, ntiid=None, sites=None, target=None,
 					   container_all_of=True):
 		result = None
 		container_query = 'all_of' if container_all_of else 'any_of'
@@ -244,6 +262,7 @@ class ContainedObjectCatalog(Persistent):
 		for index, value, query in ((self._site_index, sites, 'any_of'),
 									(self._ntiid_index, ntiid, 'any_of'),
 									(self._type_index, provided, 'any_of'),
+									(self._target_index, target, 'any_of'),
 									(self._namespace_index, namespace, 'any_of'),
 							  		(self._container_index, container_ntiids, container_query)):
 			if value is not None:
@@ -256,7 +275,8 @@ class ContainedObjectCatalog(Persistent):
 		return result if result else self.family.IF.LFSet()
 
 	def search_objects(self, container_ntiids=None, provided=None, namespace=None,
-					   ntiid=None, sites=None, intids=None, container_all_of=True):
+					   ntiid=None, sites=None, target=None, 
+					   intids=None, container_all_of=True):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		if intids is not None:
 			refs = self.get_references(container_ntiids=container_ntiids,
@@ -264,6 +284,7 @@ class ContainedObjectCatalog(Persistent):
 									   namespace=namespace,
 									   ntiid=ntiid,
 									   sites=sites,
+									   target=target,
 									   container_all_of=container_all_of)
 			result = ResultSet(refs, intids)
 		else:
@@ -281,6 +302,7 @@ class ContainedObjectCatalog(Persistent):
 		for index, value in ((self._type_index, item),
 							 (self._site_index, sites),
 							 (self._ntiid_index, item),
+							 (self._target_index, item),
 							 (self._namespace_index, namespace),
 							 (self._container_index, container_ntiids)):
 			# XXX: we want to make sure we don't index None in order to
@@ -305,13 +327,14 @@ class ContainedObjectCatalog(Persistent):
 		self._last_modified.clear()
 		for index in (self._container_index, self._type_index,
 					  self._namespace_index, self._ntiid_index,
-					  self._site_index):
+					  self._site_index, self._target_index):
 			index.clear()
 
 	def items(self):
 		yield 'site', self._site_index
 		yield 'type', self._type_index
 		yield 'ntiid', self._ntiid_index
+		yield 'target', self._target_index
 		yield 'container', self._container_index
 		yield 'namespace', self._namespace_index
 

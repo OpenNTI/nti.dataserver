@@ -18,6 +18,7 @@ from nti.contentlibrary.interfaces import IContentUnit
 from nti.contentlibrary.interfaces import IContentPackage
 
 from nti.contentlibrary.indexed_data.interfaces import INTIIDAdapter
+from nti.contentlibrary.indexed_data.interfaces import ITargetAdapter
 from nti.contentlibrary.indexed_data.interfaces import INamespaceAdapter
 from nti.contentlibrary.indexed_data.interfaces import ISlideDeckAdapter
 from nti.contentlibrary.indexed_data.interfaces import IContainersAdapter
@@ -29,7 +30,8 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.contenttypes.presentation import iface_of_asset
 
-from nti.contenttypes.presentation.interfaces import INTISlide
+from nti.contenttypes.presentation.interfaces import IPointer 
+from nti.contenttypes.presentation.interfaces import INTISlide 
 from nti.contenttypes.presentation.interfaces import INTISlideDeck
 from nti.contenttypes.presentation.interfaces import INTISlideVideo
 from nti.contenttypes.presentation.interfaces import IPresentationAsset
@@ -90,6 +92,20 @@ class _NTIID(object):
 @component.adapter(IPresentationAsset)
 def _asset_to_ntiid(context):
 	return _NTIID(context.ntiid)
+
+# Namespace
+
+class _Target(object):
+
+	__slots__ = (b'target',)
+
+	def __init__(self, target):
+		self.target = target
+
+@component.adapter(IPointer)
+@interface.implementer(ITargetAdapter)
+def _asset_to_target(context):
+	return _Target(context.target)
 
 # Containers
 

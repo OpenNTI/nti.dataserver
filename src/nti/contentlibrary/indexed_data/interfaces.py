@@ -114,3 +114,9 @@ class ISlideDeckAdapter(interface.Interface):
 	Adapts contained objects to their video NTIIDs
 	"""
 	videos = interface.Attribute("NTIID strings")
+
+class ITargetAdapter(interface.Interface):
+	"""
+	Adapts contained objects to their target type.
+	"""
+	target = interface.Attribute("NTIID string")
