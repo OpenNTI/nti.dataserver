@@ -23,6 +23,7 @@ from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contentlibrary.indexed_data.index import TargetIndex
 
+from nti.contenttypes.presentation.interfaces import IAssetRef
 from nti.contenttypes.presentation.interfaces import INTIDocketAsset
 
 from nti.dataserver.interfaces import IDataserver
@@ -46,13 +47,14 @@ class MockDataserver(object):
 def _index_docket_assets(current_site, seen, index, intids):
 	result = 0
 	registry = current_site.getSiteManager()
-	for _, item in list(registry.getUtilitiesFor(INTIDocketAsset)):
-		doc_id = intids.queryId(item)
-		if doc_id is None or doc_id in seen:
-			continue
-		seen.add(doc_id)
-		index.index_doc(doc_id, item)
-		result += 1
+	for provided in (INTIDocketAsset, IAssetRef):
+		for _, item in list(registry.getUtilitiesFor(provided)):
+			doc_id = intids.queryId(item)
+			if doc_id is None or doc_id in seen:
+				continue
+			seen.add(doc_id)
+			index.index_doc(doc_id, item)
+			result += 1
 	return result
 
 def do_evolve(context, generation=generation):
