@@ -75,7 +75,7 @@ def do_evolve(context, generation=generation):
 		result = 0
 		seen = set()
 		logger.info('Evolution %s started.', generation)
-		
+
 		catalog = get_library_catalog()
 		if not hasattr(catalog, '_target_index'):
 			catalog._target_index = TargetIndex(family=intids.family)

@@ -38,7 +38,7 @@ def do_evolve(context):
 
 def evolve(context):
 	"""
-	Evolve to gen 81 by installing the new library asset catalog.
+	Evolve to gen 82 by installing the new library asset catalog.
 	"""
 	# do_evolve(context)  XXX DON'T INSTALL YET
 	pass
