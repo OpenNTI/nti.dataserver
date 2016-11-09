@@ -157,6 +157,9 @@
 		
 		<!-- Containers -->
 		<adapter factory=".catalog._asset_to_containers" />	
+		
+		<!-- Target -->
+		<adapter factory=".catalog._asset_to_target" />	
 	</configure>
 
 	<!-- Adapters & Subscribers -->

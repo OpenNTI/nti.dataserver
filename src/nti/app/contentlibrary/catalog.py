@@ -31,6 +31,7 @@ from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 from nti.contenttypes.presentation import iface_of_asset
 
 from nti.contenttypes.presentation.interfaces import IPointer 
+from nti.contenttypes.presentation.interfaces import IAssetRef
 from nti.contenttypes.presentation.interfaces import INTISlide 
 from nti.contenttypes.presentation.interfaces import INTISlideDeck
 from nti.contenttypes.presentation.interfaces import INTISlideVideo
@@ -102,10 +103,12 @@ class _Target(object):
 	def __init__(self, target):
 		self.target = target
 
-@component.adapter(IPointer)
+@component.adapter(IPresentationAsset)
 @interface.implementer(ITargetAdapter)
 def _asset_to_target(context):
-	return _Target(context.target)
+	if IPointer.providedBy(context) or IAssetRef.providedBy(context):
+		return _Target(context.target)
+	return None
 
 # Containers
 
