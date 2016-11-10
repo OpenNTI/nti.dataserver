@@ -56,9 +56,13 @@ from nti.schema.field import ValidURI
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
+
 from nti.schema.interfaces import InvalidValue
-from nti.schema.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE
-from nti.schema.jsonschema import TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
+
+from nti.schema.jsonschema import TAG_UI_TYPE
+from nti.schema.jsonschema import TAG_HIDDEN_IN_UI
+from nti.schema.jsonschema import TAG_READONLY_IN_UI
+from nti.schema.jsonschema import TAG_REQUIRED_IN_UI 
 
 class UsernameCannotBeBlank(FieldCannotBeOnlyWhitespace):
 
@@ -144,11 +148,13 @@ def _load_resource(n, f):
 # 2012-12-07: This list of passwords, identified by industry researchers,
 # as extremely common and in all the rainbow tables, etc, is forbidden
 # see http://arstechnica.com/gadgets/2012/12/blackberry-has-had-it-up-to-here-with-your-terrible-passwords/
+# see https://github.com/typhoon2099/PasswordBannedList/blob/master/banned.list
 _VERBOTEN_PASSWORDS = _load_resource(__name__, 'verboten-passwords.txt')
 del _load_resource
 
 def _checkEmailAddress(address):
-	""" Check email address.
+	""" 
+	Check email address.
 
 	This should catch most invalid but no valid addresses.
 	"""
@@ -468,7 +474,6 @@ class ISocialMediaProfile(interface.Interface):
 	linkedIn = ValidURI(title='linkedIn',
 					  	description=u'The LinkedIn URL',
 					   	required=False)
-
 
 class IEducation(interface.Interface):
 
