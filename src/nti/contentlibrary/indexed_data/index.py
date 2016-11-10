@@ -323,9 +323,7 @@ class ContainedObjectCatalog(Persistent):
 
 	def clear(self):
 		self._last_modified.clear()
-		for index in (self._container_index, self._type_index,
-					  self._namespace_index, self._ntiid_index,
-					  self._site_index, self._target_index):
+		for _, index in self.items():
 			index.clear()
 
 	def items(self):
