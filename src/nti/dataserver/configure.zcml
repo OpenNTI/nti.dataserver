@@ -128,16 +128,15 @@
 	<include package="nti.mimetype" />
 	<include package="nti.chatserver" />
 	<include package="nti.containers" />
+	<include package="nti.dublincore" />
 	<include package="nti.contentfile" />
 	<include package="nti.invitations" />
 	<include package="nti.contentrange" />
+	<include package="nti.coremetadata" />
 	<include package="nti.contentfolder" />
 	<include package="nti.contentlibrary" />
 	<include package="nti.datastructures" />
 	<include package="nti.contentfragments" />
-
-	<include package="nti.coremetadata" />
-	<include package="nti.dublincore" />
 		
 	<include package=".contenttypes" />
 
