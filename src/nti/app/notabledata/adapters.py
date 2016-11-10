@@ -64,7 +64,7 @@ _MESSAGEINFO_MYMETYPE = "application/vnd.nextthought.messageinfo"
 class SafeResultSet(ResultSet):
 
 	def __init__(self, uids, uidutil, *args, **kwargs):
-		ResultSet.__init__(self, uids, uidutil, ignore_invalid=True)
+		ResultSet.__init__(self, uids, uidutil, True)
 _SafeResultSet = SafeResultSet #BWC
 
 @interface.implementer(IUserNotableData)

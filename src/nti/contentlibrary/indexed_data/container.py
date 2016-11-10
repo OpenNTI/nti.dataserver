@@ -110,7 +110,7 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 	get_data_items = values
 
 	def items(self):
-		for doc_id, value in ResultSet(self.doc_ids, self.intids, True).iter_pairs():
+		for doc_id, value in ResultSet(self.doc_ids, self.intids, True).items():
 			return doc_id, value
 
 	def __len__(self):

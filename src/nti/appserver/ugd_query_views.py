@@ -1212,7 +1212,7 @@ class RecursiveUGDView(_UGDView):
 														 limit=number_items_needed,
 														 reverse=sort_order != 'ascending')
 
-		items = ResultSet(intids_created_by_me, uidutil, ignore_invalid=True)
+		items = ResultSet(intids_created_by_me, uidutil, True)
 		self._batch_items_iterable(result, items,
 								   number_items_needed=number_items_needed,
 								   batch_size=batch_size,

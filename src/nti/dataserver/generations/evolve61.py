@@ -36,7 +36,7 @@ def do_evolve(context):
 	
 	catalog._ntiid_index = NTIIDIndex(family=intids.family)
 	docs_ids = catalog._type_index.documents_to_values.keys()
-	for doc_id, value in ResultSet(docs_ids, intids, True).iter_pairs():
+	for doc_id, value in ResultSet(docs_ids, intids, True).items():
 		catalog._ntiid_index.index_doc(doc_id, value)
 	logger.info('Dataserver evolution %s done.', generation)
 	
