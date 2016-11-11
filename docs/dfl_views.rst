@@ -10,8 +10,8 @@ Views
 =====
 
 The implementation of the external interface for a user to edit his DFLs lives
-in the ``nti.appserver.dfl_views`` module.
+in the ``nti.app.users.dfl_views`` module.
 
-.. automodule:: nti.appserver.dfl_views
+.. automodule:: nti.app.users.dfl_views
 	:members:
 	:private-members:

@@ -5,10 +5,10 @@
 User-based Policies
 ===================
 
-.. automodule:: nti.appserver.user_policies
+.. automodule:: nti.appserver.policies.user_policies
 
 
 Site-based Policies
 ===================
 
-.. automodule:: nti.appserver.site_policies
+.. automodule:: nti.appserver.policies.site_policies

@@ -10,7 +10,7 @@ Gunicorn
 Gunicorn is used to handle HTTP serving. We require a specific worker to integrate with
 Gunicorn.
 
-.. automodule:: nti.appserver.gunicorn
+.. automodule:: nti.appserver.nti_gunicorn
 	:private-members:
 
 Servers

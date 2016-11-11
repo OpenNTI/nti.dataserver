@@ -93,6 +93,6 @@ Views
 The views that implement this behaviour are in
 ``nti.appserver.contentlibrary_views``.
 
-.. automodule:: nti.appserver.contentlibrary_views
+.. automodule:: nti.appserver.contentlibrary.library_views
 	:members:
 	:private-members:

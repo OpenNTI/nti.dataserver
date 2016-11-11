@@ -1,35 +1,35 @@
 ===============
- nti.utils API
+ nti.common API
 ===============
 
-.. automodule:: nti.utils
+.. automodule:: nti.common
 
 dataurl
 =======
 
-.. automodule:: nti.utils.dataurl
+.. automodule:: nti.common.dataurl
 
 minidom
 =======
 
-.. automodule:: nti.utils.minidom
+.. automodule:: nti.common.minidom
 
 property
 ========
 
-.. automodule:: nti.utils.property
+.. automodule:: nti.property
 
 schema
 ======
 
-.. automodule:: nti.utils.schema
+.. automodule:: nti.schema
 
 sets
 ====
 
-.. automodule:: nti.utils.sets
+.. automodule:: nti.common.sets
 
 transactions
 ============
 
-.. automodule:: nti.utils.transactions
+.. automodule:: nti.transactions

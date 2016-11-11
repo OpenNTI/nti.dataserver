@@ -9,11 +9,10 @@ Contentrendering API
 
 .. automodule:: nti.contentrendering
 .. automodule:: nti.contentrendering.RenderedBook
-.. automodule:: nti.contentrendering.contentfragments
+.. automodule:: nti.contentfragments
 .. automodule:: nti.contentrendering.domutils
 .. automodule:: nti.contentrendering.mathanalysis
 .. automodule:: nti.contentrendering.microdata
-.. automodule:: nti.contentrendering.mirror
 .. automodule:: nti.contentrendering.ntiidlinksetter
 .. automodule:: nti.contentrendering.relatedlinksetter
 .. automodule:: nti.contentrendering.tociconsetter

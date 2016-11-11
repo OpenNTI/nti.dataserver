@@ -14,7 +14,7 @@ The implementation of the API and storage lives in the
 
 .. automodule:: nti.invitations.interfaces
 
-.. automodule:: nti.invitations.utility
+.. automodule:: nti.invitations.utils
 
 
 Views

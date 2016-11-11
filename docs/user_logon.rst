@@ -34,7 +34,7 @@ If we detect that the user has entered invalid email addresses,
 we go into the bounce-recovery states and action must be taken
 by the user through the ReST interface.
 
-.. automodule:: nti.appserver.bounced_email_workflow
+.. automodule:: nti.app.bulkemail.ses_notification_handler
 
 Batch Process
 -------------

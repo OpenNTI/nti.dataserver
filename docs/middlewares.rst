@@ -38,7 +38,7 @@ Outermost of everything (and around Paste's :class:`~paste.exceptions.errormiddl
 	[filter:nti_cors_options]
 	use = egg:nti.dataserver#cors_options
 
-.. automodule:: nti.appserver.cors
+.. automodule:: nti.wsgi.cors
 	:members:
 	:private-members:
 
