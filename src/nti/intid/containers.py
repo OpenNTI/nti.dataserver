@@ -39,9 +39,9 @@ from BTrees.Length import Length
 
 from persistent import Persistent
 
-from nti.common import sets
-
 from nti.externalization.representation import make_repr
+
+from nti.intid.common import discard_p
 
 from nti.zodb.containers import ZERO_64BIT_INT
 
@@ -286,7 +286,7 @@ class IntidContainedStorage(Persistent, Contained, Iterable, Container, Sized):
 	def deleteContainedObjectIdFromContainer(self, intid, containerId):
 		container_set = self._containers.get(containerId)
 		if container_set is not None:
-			result = sets.discard_p(container_set, intid)
+			result = discard_p(container_set, intid)
 			self.__moddates[containerId] = time_to_64bit_int(time.time())
 			return result
 
