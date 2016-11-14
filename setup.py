@@ -130,7 +130,6 @@ setup(
 		'nti.common',
 		'nti.contentfragments',
 		'nti.contentindexing',
-		'nti.contentprocessing',
 		'nti.contenttypes.presentation',
 		'nti.coremetadata',
 		'nti.dataserver_core',
@@ -442,7 +441,6 @@ setup(
 			 # 'linesman >= 0.3.1',	 # less that 0.3.0 conflicts with pillow (wanted PIL)
 			 # 'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			 #'dblatex >= 0.3.4',  # content rendering, convert docbook to tex. disabled due to sandbox violation
-			'nti.contentrendering',
 			'epydoc >= 3.0.1',	# auto-api docs
 			'httpie',
 			'jsonschema',
