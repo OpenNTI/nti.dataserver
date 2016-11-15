@@ -32,7 +32,6 @@ from nti.app.users.view_mixins import EntityActivityViewMixin
 
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver import authorization as nauth
@@ -52,8 +51,6 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-
-from nti.zope_catalog.catalog import ResultSet
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -123,7 +120,7 @@ class ListCommunitiesView(AbstractAuthenticatedView):
 		catalog = get_entity_catalog()
 		doc_ids = catalog['mimeType'].apply(
 						{'any_of': (u'application/vnd.nextthought.community',)})
-		
+
 		result = LocatedExternalDict()
 		items = result[ITEMS] = []
 		for doc_id in doc_ids or ():
@@ -270,14 +267,6 @@ class UnhideCommunityMembershipView(AbstractAuthenticatedView):
 		if user in hidden:
 			hidden.unhide(user)
 		return community
-
-class TraxResultSet(ResultSet):
-
-	def getObject(self, uid):
-		obj = super(TraxResultSet, self).getObject(uid)
-		if IHeadlinePost.providedBy(obj):
-			obj = obj.__parent__  # return entry
-		return obj
 
 @view_config(route_name='objects.generic.traversal',
 			 name='Activity',

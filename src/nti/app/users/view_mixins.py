@@ -36,11 +36,12 @@ from nti.zope_catalog.catalog import ResultSet
 
 class TraxResultSet(ResultSet):
 
-	def getObject(self, uid):
+	def get_object(self, uid):
 		obj = super(TraxResultSet, self).getObject(uid)
 		if IHeadlinePost.providedBy(obj):
 			obj = obj.__parent__  # return entry
 		return obj
+	getObject = get_object
 
 @view_config(route_name='objects.generic.traversal',
 			 name='Activity',

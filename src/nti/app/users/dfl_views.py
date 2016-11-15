@@ -44,7 +44,6 @@ from nti.common.maps import CaseInsensitiveDict
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
-from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -53,8 +52,6 @@ from nti.dataserver.users import get_entity_catalog
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-
-from nti.zope_catalog.catalog import ResultSet
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -99,14 +96,6 @@ class DFLDeleteView(UGDDeleteView):
 			raise hexc.HTTPForbidden(_("Group is not empty"))
 		return super(DFLDeleteView, self)._do_delete_object(theObject)
 
-class TraxResultSet(ResultSet):
-
-	def getObject(self, uid):
-		obj = super(TraxResultSet, self).getObject(uid)
-		if IHeadlinePost.providedBy(obj):
-			obj = obj.__parent__ # return entry
-		return obj
-
 @view_config(route_name='objects.generic.traversal',
 			 name='Activity',
 			 request_method='GET',
@@ -142,7 +131,7 @@ class ListDFLsView(AbstractAuthenticatedView):
 		catalog = get_entity_catalog()
 		doc_ids = catalog['mimeType'].apply(
 						{'any_of': (u'application/vnd.nextthought.dynamicfriendslist',)})
-		
+
 		result = LocatedExternalDict()
 		items = result[ITEMS] = []
 		for doc_id in doc_ids or ():
