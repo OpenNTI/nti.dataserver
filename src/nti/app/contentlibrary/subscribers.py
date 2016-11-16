@@ -54,6 +54,7 @@ from nti.contenttypes.presentation.interfaces import INTISlideVideo
 from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
 from nti.contenttypes.presentation.interfaces import ILegacyPresentationAsset
 from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
+from nti.contenttypes.presentation.interfaces import IContentBackedPresentationAsset
 
 from nti.contenttypes.presentation.utils import create_object_from_external
 from nti.contenttypes.presentation.utils import create_ntiaudio_from_external
@@ -443,6 +444,8 @@ def _update_index_when_content_changes(content_package,
 		sync_results.add_asset(item, locked=False)
 		if is_global_manager:
 			interface.alsoProvides(item, ILegacyPresentationAsset)
+		else:
+			interface.alsoProvides(item, IContentBackedPresentationAsset)
 
 	# Index our contained items; ignoring the global library.
 	index_item_count = _index_items(content_package,
