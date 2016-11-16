@@ -13,27 +13,15 @@ from zope import interface
 
 from nti.contentlibrary.interfaces import IContentPackageBundle
 
+from nti.contentsearch.interfaces import ISearchPackageResolver
+
 from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import is_ntiid_of_type
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from .interfaces import ISearchHitPredicate
-from .interfaces import ISearchPackageResolver
-
-@interface.implementer(ISearchHitPredicate)
-class _DefaultSearchHitPredicate(object):
-
-	__slots__ = ()
-
-	def __init__(self, *args):
-		pass
-
-	def allow(self, item, score=1.0, query=None):
-		return True
-
 @interface.implementer(ISearchPackageResolver)
-class _DefaultSearchPacakgeResolver(object):
+class DefaultSearchPacakgeResolver(object):
 
 	def __init__(self, *args):
 		pass

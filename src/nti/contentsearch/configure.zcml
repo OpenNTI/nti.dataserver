@@ -168,13 +168,13 @@
 	<utility factory=".search_comparators._LastModifiedSearchHitComparatorFactory" name="lastModified" />
 
 	<!-- Search hit subscribers -->
-	<subscriber factory=".subscribers._DefaultSearchHitPredicate"
+	<subscriber factory=".predicates.DefaultSearchHitPredicate"
 				provides=".interfaces.ISearchHitPredicate"
 				for="*"
 				zcml:condition="have devmode" />
 
 	<!-- Search pacakge resolvers -->
-	<subscriber factory=".subscribers._DefaultSearchPacakgeResolver"
+	<subscriber factory=".resolvers.DefaultSearchPacakgeResolver"
 				provides=".interfaces.ISearchPackageResolver"
 				for="nti.dataserver.interfaces.IUser" />
 				
