@@ -133,6 +133,7 @@ class ACSLinkProvider(object):
 			 request_method="POST",
 			 route_name='objects.generic.traversal')
 def acs_view(request):
+	error = state = None
 	try:
 		saml_client = component.queryUtility(ISAMLClient)
 		logger.info('Received an acs request')
