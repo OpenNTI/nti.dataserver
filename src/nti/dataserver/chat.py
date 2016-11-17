@@ -40,11 +40,11 @@ zope.deferredimport.deprecatedFrom(
 
 zope.deferredimport.deprecated(
     "Import from _Meeting instead",
-    _ChatRoom='nti.chatserver.meeting._Meeting')
+    _ChatRoom='nti.chatserver.meeting:_Meeting')
 
 zope.deferredimport.deprecated(
-    "Import from _Meeting instead",
-    _ModeratedChatRoom='nti.chatserver.meeting._Meeting')
+    "Import from nti.chatserver.meeting._Meeting instead",
+    _ModeratedChatRoom='nti.chatserver.meeting:_Meeting')
 
 import zope.deprecation
 from zope.deprecation import deprecated
