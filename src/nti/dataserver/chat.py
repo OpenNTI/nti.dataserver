@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 """
-Chatserver functionality. This is all deprecated; prefer the nti.chatserver package.
-
 .. $Id$
 """
 
@@ -40,20 +38,20 @@ zope.deferredimport.deprecatedFrom(
     "nti.chatserver.chatserver",
     "Chatserver")
 
+zope.deferredimport.deprecated(
+    "Import from _Meeting instead",
+    _ChatRoom='nti.chatserver.meeting._Meeting')
+
+zope.deferredimport.deprecated(
+    "Import from _Meeting instead",
+    _ModeratedChatRoom='nti.chatserver.meeting._Meeting')
+
 import zope.deprecation
 from zope.deprecation import deprecated
 
 # Many of these class names need to stick around to avoid broken objects
 # in old datbases
 zope.deprecation.__show__.off()
-
-from nti.chatserver.meeting import _Meeting, _ModeratedMeeting
-
-_ChatRoom = _Meeting
-deprecated('_ChatRoom', 'Prefer _Meeting' )
-
-_ModeratedChatRoom = _ModeratedMeeting
-deprecated('_ModeratedChatRoom', 'Prefer _ModeratedMeeting' )
 
 deprecated('Chatserver', 'Prefer nti.chatserver')
 deprecated('MessageInfo', 'Prefer nti.chatserver')
