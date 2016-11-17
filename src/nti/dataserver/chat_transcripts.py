@@ -118,11 +118,11 @@ from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.links import links
 
-from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
-
 from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.datastructures import InterfaceObjectIO
+
+from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
 from nti.ntiids import ntiids
 
@@ -232,12 +232,11 @@ class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
 		intids = self._intids
 		if intids.queryId(meeting) is None:
 			# This really shouldn't be happening anywhere. Why is it?
-			logger.warn("Creating a transcript for a meeting without an intid. How is this possible? %s", meeting)
+			logger.warn("Transcript for a meeting without an intid. %s", meeting)
 			intids.register(meeting)
 
 		super(_DocidMeetingTranscriptStorage, self).__init__(meeting)
-		family = getattr(intids, 'family', BTrees.family64)
-		self.messages = family.II.TreeSet()
+		self.messages = intids.family.II.TreeSet()
 
 	def add_message(self, msg):
 		"""
