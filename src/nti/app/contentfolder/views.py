@@ -56,7 +56,6 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
-from nti.common.file import name_finder
 from nti.common.file import safe_filename
 
 from nti.common.maps import CaseInsensitiveDict
@@ -451,7 +450,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		sources = get_all_sources(self.request, None)
 		for name, source in sources.items():
 			filename = getattr(source, 'filename', None)
-			file_key = safe_filename(name_finder(name))
+			file_key = safe_filename( name )
 			if not overwrite and file_key in self.context:
 				file_key, filename = get_unique_file_name(file_key,
 														  filename=filename,
@@ -723,7 +722,7 @@ class RenameMixin(object):
 
 		# get name/filename
 		parent = theObject.__parent__
-		new_key = safe_filename(name_finder(new_name))
+		new_key = safe_filename( new_name )
 		if new_key in parent:
 			raise hexc.HTTPUnprocessableEntity(_("File already exists."))
 
