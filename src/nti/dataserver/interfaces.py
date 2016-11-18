@@ -33,6 +33,8 @@ from zope.site.interfaces import IRootFolder
 
 from zope.schema import Iterable
 
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
 from contentratings.interfaces import IUserRatable
 
 from nti.contentfragments.schema import PlainText
@@ -1475,6 +1477,18 @@ class IJoinEntityInvitation(IInvitation):
 class IJoinEntityInvitationActor(IInvitationActor):
 	"""
 	Actor to join a user to an entity
+	"""
+
+# Site Roles
+class ISiteRoleManager(IPrincipalRoleManager):
+	"""
+	An IPrincipalRoleManager that can be used to grant
+	roles to principals on a site by site basis.  To grant
+	a role to a principal in a specific site, register an
+	instance of SIteRoleManager as a utility in a registerIn block
+	for this interface.  With the utilty registered, the
+	siteGrant zcml directive can be used to assign
+	roles to a principals within the context of that site.
 	"""
 
 # XXX Now make all the interfaces previously

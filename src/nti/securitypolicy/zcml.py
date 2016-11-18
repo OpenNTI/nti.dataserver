@@ -23,6 +23,8 @@ from zope.security.zcml import IPermissionDirective
 
 from zope.schema import TextLine
 
+from nti.dataserver.interfaces import ISiteRoleManager
+
 class IGrantAllDirective(Interface):
 	"""
 	Grant Permissions to roles and principals and roles to principals.
@@ -47,6 +49,11 @@ class IGrantDirective(IGrantAllDirective):
 		title=u"Permission",
 		description=u"Specifies the Permission to be mapped.",
 		required=False)
+
+class IGrantSiteDirective(IGrantAllDirective):
+	"""
+	Grant roles to prinipals for an ISite
+	"""
 
 class IDefineRoleDirective(IPermissionDirective):
 	"""
@@ -77,3 +84,19 @@ class IDefinePrincipalDirective(_IDefinePrincipalDirective):
 			" for encode/check the password",
 		default="This Manager Does Not Exist",
 		required=False)
+
+def _make_assign_role_callable(components):
+	def grant(role, principal):
+		role_manager = components.getUtility(ISiteRoleManager)
+		role_manager.assignRoleToPrincipal(role, principal, check=False)
+	return grant
+
+def grant_site(_context, principal=None, role=None):
+	if principal and role:
+		components = _context.context.registry
+		_context.action(
+            discriminator=('grantRoleToPrincipal', role, principal),
+            callable=_make_assign_role_callable(components),
+            args=(role, principal),
+        )
+

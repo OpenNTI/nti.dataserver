@@ -18,6 +18,12 @@
 
 	<meta:directive
 		namespace="http://nextthought.com/ntp/securitypolicy"
+		name="grantSite"
+		schema=".zcml.IGrantSiteDirective"
+		handler=".zcml.grant_site" />
+
+	<meta:directive
+		namespace="http://nextthought.com/ntp/securitypolicy"
 		name="role"
 		schema=".zcml.IDefineRoleDirective"
 		handler="zope.securitypolicy.metaconfigure.defineRole" />
