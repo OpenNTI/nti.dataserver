@@ -14,6 +14,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
+
 from zope.interface import Interface
 
 from zope.principalregistry.metadirectives import IDefinePrincipalDirective as _IDefinePrincipalDirective
@@ -85,18 +87,15 @@ class IDefinePrincipalDirective(_IDefinePrincipalDirective):
 		default="This Manager Does Not Exist",
 		required=False)
 
-def _make_assign_role_callable(components):
-	def grant(role, principal):
-		role_manager = components.getUtility(ISiteRoleManager)
-		role_manager.assignRoleToPrincipal(role, principal, check=False)
-	return grant
+def _perform_site_role_grant(role, principal):
+	role_manager = component.getUtility(ISiteRoleManager)
+	role_manager.assignRoleToPrincipal(role, principal, check=False)
 
 def grant_site(_context, principal=None, role=None):
 	if principal and role:
-		components = _context.context.registry
 		_context.action(
             discriminator=('grantRoleToPrincipal', role, principal),
-            callable=_make_assign_role_callable(components),
+            callable=_perform_site_role_grant,
             args=(role, principal),
         )
 
