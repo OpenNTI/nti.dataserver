@@ -251,6 +251,23 @@ class IUnauthenticatedUserLinkProvider(interface.Interface):
 		are specified independently, based on the link relationship.
 		"""
 
+class IImpersonationDecider(interface.Interface):
+	"""
+	Called during the impersonation process to determine if
+	the given request is allowed to impersonate a specific
+	user identifier.  Implementations of this object should
+	be registered as an adapter on an IRequest.  Named adapters will
+	be queried by domain (e.g. @nextthought.com), by userid
+	(e.g. chris@nextthought.com), and lastly by no name.
+	"""
+
+	def validate_impersonation_target(userid):
+		"""
+		Validate the provided userid can be impersonated. The userid
+		may or may not map to a user in the database.  A ValueError
+		should be raised if the userid should not be impersonated.
+		"""
+
 class IUserLogonEvent(IUserEvent):
 	"""
 	Fired when a user has successfully logged on.

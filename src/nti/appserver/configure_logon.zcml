@@ -29,6 +29,17 @@
 				provides=".interfaces.ILogonLinkProvider"
 				for=".interfaces.IMissingUser pyramid.interfaces.IRequest" />
 
+	<!--
+		As of 11/2016 certain external users may gain impersonation
+		access within the site they administer.  As a precautionary measure prevent
+		@nexthtought.com accounts from being impersonated. They are essentially 
+		god accounts that shouldn't be allowed to be impersonated by anyone.
+	-->
+	<adapter factory=".logon.DenyImpersonation"
+			 provides="nti.appserver.interfaces.IImpersonationDecider"
+			 for="pyramid.interfaces.IRequest"
+			 name="nextthought.com"/>
+
 	<!-- Additional links for logged-in users -->
 	
 	<!-- Terms of service and privacy policy direct links -->

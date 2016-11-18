@@ -78,6 +78,7 @@ from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME
 from nti.appserver.account_creation_views import REL_PREFLIGHT_CREATE_ACCOUNT
 
 from nti.appserver.interfaces import ILogonPong
+from nti.appserver.interfaces import IImpersonationDecider
 from nti.appserver.interfaces import IMissingUser
 from nti.appserver.interfaces import IUserLogonEvent
 from nti.appserver.interfaces import ILogonLinkProvider
@@ -647,6 +648,33 @@ def _create_success_response(request, userid=None, success=None):
 
 	return response
 
+def _query_impersonation_decider(request, username, name=''):
+	decider = component.queryAdapter(request, IImpersonationDecider, name)
+	if decider:
+		decider.validate_impersonation_target(username)
+
+def _can_impersonate(request, username):
+	"""
+	Query a set of IImpersonationDeciders to 
+	verify if impersonation of the given username should
+	be allowed for the request
+	"""
+
+	#verify by domain first
+	if '@' in username:
+		domain = username.split('@', 1)[-1]
+		if domain:
+			# May want to consider prefixing this
+			_query_impersonation_decider(request, username, name=domain)
+
+	#now by username
+	_query_impersonation_decider(request, username, name=username)
+
+	#now by global adapter
+	_query_impersonation_decider(request, username)
+
+
+
 def _specified_username_logon(request, allow_no_username=True, require_matching_username=True, audit=False):
 	# This code handles both an existing logged on user and not
 	remote_user = _authenticated_user(request)
@@ -680,7 +708,14 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
 			# reports. This is a pretty basic version of that; if we use
 			# it for anything more than display, we need to formalize it more.
 			if desired_username != remote_user.username.lower():
+				#check if we are allowed to impersonate first
+				try:
+					_can_impersonate(request, desired_username)
+				except ValueError:
+					return _create_failure_response(request,
+													error_factory=hexc.HTTPForbidden)
 				request.environ['REMOTE_USER_DATA'] = str(remote_user.username.lower())
+
 			response = _create_success_response(request, desired_username)
 		except ValueError as e:
 			return _create_failure_response(request,
@@ -697,6 +732,17 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
 	IResponseCacheController(private_data)(private_data, {'request': request})
 
 	return response
+
+@interface.implementer(IImpersonationDecider)
+class DenyImpersonation(object):
+	"""
+	An impersonation decider that always denies
+	"""
+	def __init__(self, request):
+		pass
+
+	def validate_impersonation_target(self, userid):
+		raise ValueError()
 
 @view_config(route_name=REL_LOGIN_NTI_PASSWORD, request_method='GET', renderer='rest')
 def password_logon(request):
@@ -747,6 +793,7 @@ def impersonate_user(request):
 									 allow_no_username=False,
 									 require_matching_username=False,
 									 audit=True)
+
 
 @interface.implementer(IAuthenticatedUserLinkProvider)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)

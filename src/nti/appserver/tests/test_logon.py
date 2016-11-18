@@ -143,6 +143,8 @@ class TestApplicationLogon(ApplicationLayerTest):
 			self._create_user()  # relying on default role / admin user
 			other_user = self._create_user('nobody@nowhere')
 			other_user_username = other_user.username
+			nt_user = self._create_user('chris@nextthought.com')
+			nt_user_username = nt_user.username
 
 		testapp = TestApp(self.app)
 		nobody_env = self._make_extra_environ(username=other_user_username)
@@ -166,6 +168,11 @@ class TestApplicationLogon(ApplicationLayerTest):
 		testapp.get('/dataserver2/logon.nti.impersonate', params={'username': other_user_username + 'dne' },
 					 extra_environ=self._make_extra_environ(),
 					 status=404)
+
+		# @nextthought.com accounts can't be impersonated, even by other @nextthought.com accounts
+		testapp.get('/dataserver2/logon.nti.impersonate', params={'username': nt_user_username },
+					 extra_environ=self._make_extra_environ(),
+					 status=403)
 
 		# Good request...
 		# right person gets it in ping
