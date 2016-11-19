@@ -29,6 +29,8 @@ from zope.publisher.interfaces.browser import IBrowserRequest
 
 from nti.common._compat import sleep
 
+from nti.common.string import to_unicode
+
 from nti.dataserver.interfaces import IRedisClient
 
 from nti.mailer.interfaces import ITemplatedMailer
@@ -363,5 +365,5 @@ class SiteTransactedBulkEmailProcessLoop(DefaultBulkEmailProcessLoop):
 	def process_one_recipient(self):
 		return self._runner(self._super_process_one_recipient,
 							site_names=self.possible_site_names,
-							job_name=self.__name__,
+							job_name=to_unicode(self.__name__),
 							side_effect_free=True)
