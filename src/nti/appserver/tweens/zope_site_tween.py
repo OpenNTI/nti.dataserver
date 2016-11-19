@@ -43,7 +43,10 @@ import transaction
 from zope import component
 from zope import interface
 
-from zope.component.hooks import setSite, getSite, setHooks, clearSite
+from zope.component.hooks import getSite
+from zope.component.hooks import setSite
+from zope.component.hooks import setHooks
+from zope.component.hooks import clearSite
 
 from zope.lifecycleevent import created
 
@@ -51,6 +54,8 @@ from pyramid.threadlocal import manager
 from pyramid.threadlocal import get_current_request
 
 from pyramid.httpexceptions import HTTPBadRequest
+
+from nti.common.string import to_unicode
 
 def _get_possible_site_names(request):
 	"""
@@ -101,6 +106,7 @@ def _gevent_spawn(run, *args, **kwargs):
 
 # Make zope site managers a bit more compatible with pyramid.
 from zope.cachedescriptors.property import readproperty
+
 from zope.site.site import LocalSiteManager as _ZLocalSiteManager
 
 def _notify(self, *events):
@@ -192,7 +198,7 @@ class site_tween(object):
 		# and get the user) record info in the transaction
 		uid = request.authenticated_userid
 		if uid:
-			transaction.get().setUser(uid)
+			transaction.get().setUser(to_unicode(uid))
 
 	def _debug_site(self, new_site):
 		if __debug__:  # pragma: no cover

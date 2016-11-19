@@ -123,7 +123,7 @@ class _transaction_tween(TransactionLoop):
 				request.environ.get('nti.early_teardown_happened')  # see zope_site_tween
 
 	def describe_transaction(self, request):
-		return request.url
+		return None # can turn None
 
 	def run_handler(self, request):
 		try:
