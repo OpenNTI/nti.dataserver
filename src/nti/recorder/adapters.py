@@ -47,7 +47,7 @@ class TransactionRecordContainer(BTreeContainer):
 		del self[key]
 
 	def records(self):
-		return iter(self.values())
+		return list(self.values())
 
 	def _delitemf(self, key):
 		l = self._BTreeContainer__len
