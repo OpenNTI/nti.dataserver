@@ -43,8 +43,8 @@ class TransactionRecordContainer(BTreeContainer):
 			self.add(record)
 
 	def remove(self, record):
-		k = getattr(record, 'key', '') or getattr(record, '__name__', '') or str(record)
-		del self[k]
+		key = getattr(record, 'key', None) or str(record)
+		del self[key]
 
 	def records(self):
 		return list(self.values())
