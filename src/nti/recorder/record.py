@@ -5,7 +5,6 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from zope.location.interfaces import IContained
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -43,18 +42,16 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 @WithRepr
 @total_ordering
 @EqHash('principal', 'createdTime', 'tid')
-@interface.implementer(ITransactionRecord, IContained, IContentTypeAware)
+@interface.implementer(ITransactionRecord, IContentTypeAware)
 class TransactionRecord(PersistentCreatedModDateTrackingObject,
-			 			SchemaConfigured):
+			 			SchemaConfigured,
+			 			Contained):
 
 	createDirectFieldProperties(ITransactionRecord)
 
 	type = TRX_TYPE_UPDATE
 	serial = alias('tid')
 	username = alias('principal')
-
-	__parent__ = None
-	__name__ = alias('key')
 	
 	parameters = {} # IContentTypeAware
 
