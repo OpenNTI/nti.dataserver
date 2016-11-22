@@ -184,6 +184,9 @@
 	<!-- Profile to principal -->
 	<adapter factory=".user_profile._profile_to_principal" />
 
+	<!-- User digest_email times -->
+	<adapter factory=".users._UserDigestEmailMetadata" />
+
 	<!-- Hidden memberships -->
 	<adapter factory=".communities._HiddenMembershipFactory"
 			 for="nti.dataserver.interfaces.ICommunity"

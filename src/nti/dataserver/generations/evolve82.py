@@ -1,24 +1,38 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+Generation 82
+
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 generation = 82
 
-from zope import component
+from zope.annotation.interfaces import IAnnotations
 
 from zope.component.hooks import site
 from zope.component.hooks import setHooks
 
-from zope.intid.interfaces import IIntIds
+from nti.dataserver.interfaces import IUserDigestEmailMetadata
 
-from nti.contentlibrary.indexed_data.catalog import install_library_catalog
+_SENTKEY = 'nti.app.pushnotifications.digest_email.DigestEmailCollector.last_sent'
+_COLLECTEDKEY = 'nti.app.pushnotifications.digest_email.DigestEmailCollector.last_collected'
+
+def _delete_annotation( user ):
+	user_annotations = IAnnotations( user )
+	sent = user_annotations.get( _SENTKEY, 0 )
+	collected =	user_annotations.get( _COLLECTEDKEY, 0 )
+	for annotation_key in (_SENTKEY, _COLLECTEDKEY):
+		try:
+			del user_annotations[annotation_key]
+		except KeyError:
+			pass
+	return collected, sent
 
 def do_evolve(context):
 	setHooks()
@@ -26,19 +40,22 @@ def do_evolve(context):
 	root = conn.root()
 	ds_folder = root['nti.dataserver']
 
-	with site(ds_folder):
-		assert  component.getSiteManager() == ds_folder.getSiteManager(), \
-				"Hooks not installed?"
+	with site( ds_folder ):
+		users_folder = ds_folder['users']
+		logger.info( 'Updating digest meta storage for %s entities', len( users_folder) )
+		for user in users_folder.values():
+			collected, sent = _delete_annotation( user )
+			user_meta = IUserDigestEmailMetadata( user, None )
+			if user_meta is not None:
+				user_meta.last_sent = sent
+				user_meta.last_collected = collected
 
-		lsm = ds_folder.getSiteManager()
-		intids = lsm.getUtility(IIntIds)
-
-		install_library_catalog(ds_folder, intids)
-		logger.info('Dataserver evolution %s done.', generation)
+	logger.info( 'nti.dataserver evolve %s complete.', generation )
 
 def evolve(context):
 	"""
-	Evolve to gen 82 by installing the new library asset catalog.
+	Installs digest email metadata storage for users. Should improve
+	commit times when running the digest_email job.
 	"""
-	# do_evolve(context)  XXX DON'T INSTALL YET
-	pass
+	do_evolve(context)
+

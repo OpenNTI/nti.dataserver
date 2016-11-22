@@ -43,7 +43,6 @@ class SESMailer(object):
 	def sesconn(self):
 		return boto.ses.connect_to_region( 'us-east-1' )
 
-
 	def send(self, fromaddr, toaddrs, message):
 		if not isinstance(message, Message): # pragma: no cover
 			raise ValueError('Message must be instance of email.message.Message')

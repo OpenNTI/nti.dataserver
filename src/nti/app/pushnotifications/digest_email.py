@@ -66,6 +66,7 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IStreamChangeEvent
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IAuthenticationPolicy
+from nti.dataserver.interfaces import IUserDigestEmailMetadata
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 
 from nti.dataserver.users import User
@@ -238,15 +239,12 @@ class DigestEmailCollector(object):
 	def __init__(self, context, request):
 		self.remoteUser = context
 		self.request = request
+		self.time_metadata = IUserDigestEmailMetadata( self.remoteUser )
 
-	_SENTKEY = 'nti.app.pushnotifications.digest_email.DigestEmailCollector.last_sent'
-	last_sent = annotation_alias(_SENTKEY, annotation_property='remoteUser',
-								 default=0,
-								 doc="last_sent is stored as an annotation on the user")
-	_COLLECTEDKEY = 'nti.app.pushnotifications.digest_email.DigestEmailCollector.last_collected'
-	last_collected = annotation_alias(_COLLECTEDKEY, annotation_property='remoteUser',
-								 default=0,
-								 doc="last_sent is stored as an annotation on the user")
+	last_sent = property(lambda x: x.time_metadata.last_sent,
+						 lambda x, new_time: setattr( x.time_metadata, 'last_sent', new_time ))
+	last_collected = property(lambda x: x.time_metadata.last_collected,
+						 	  lambda x, new_time: setattr( x.time_metadata, 'last_collected', new_time ))
 
 	@Lazy
 	def collection_time(self):

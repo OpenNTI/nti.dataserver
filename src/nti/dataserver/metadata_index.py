@@ -306,7 +306,7 @@ class IsUserGeneratedDataExtentFilteredSet(ExtentFilteredSet):
 			  fid,
 			  isUserGeneratedData,
 			  family=family)
-	
+
 class CreatedTimeRawIndex(RawIntegerValueIndex):
 	pass
 

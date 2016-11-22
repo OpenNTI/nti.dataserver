@@ -345,7 +345,8 @@ def _send_mail(pyramid_mail_message=None, recipients=(), request=None):
 
 	message = _pyramid_message_to_message(pyramid_mail_message, recipients, request)
 
-	delivery = component.queryUtility(IMailDelivery) or getattr(pyramidmailer, 'queue_delivery', None)
+	delivery = component.queryUtility(IMailDelivery) \
+			or getattr(pyramidmailer, 'queue_delivery', None)
 	if delivery:
 		delivery.send(pyramid_mail_message.sender,
 					   pyramid_mail_message.send_to,

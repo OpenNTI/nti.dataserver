@@ -47,6 +47,7 @@ from nti.property.property import alias
 
 from nti.schema.field import Dict
 from nti.schema.field import Object
+from nti.schema.field import Number
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
@@ -579,7 +580,7 @@ class IEffectivePrincipalResolver(interface.Interface):
 		:return: An iterable of nti.dataserver.interfaces.IPrincipal
 		objects.
 		"""
-	
+
 class INoUserEffectivePrincipalResolver(IEffectivePrincipalResolver):
 	"""
 	An IEffectivePrincipalResolver used to generate an effective principal
@@ -1462,6 +1463,13 @@ class IUserBlacklistedStorage(interface.Interface):
 		Clear all entries in this storage
 		"""
 	reset = clear
+
+class IUserDigestEmailMetadata(interface.Interface):
+	"""
+	Stores user digest email metadata.
+	"""
+	last_collected = Number( title="The last time the digest data was collected for this user." )
+	last_sent = Number( title="The last time the digest data was sent for this user." )
 
 # Invitations
 from nti.invitations.interfaces import IInvitation

@@ -104,9 +104,9 @@ def _make_link_to_context(context, allow_traversable_paths=True, link_method=Non
 @interface.implementer(IEditLinkMaker)
 @component.adapter(interface.Interface)
 class DefaultEditLinkMaker(object):
-	
+
 	__slots__ = ('context',)
-	
+
 	def __init__(self, context=None):
 		self.context = context
 
@@ -142,7 +142,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		maker = IEditLinkMaker(context, None)
 		if maker is not None and context is not None:
 			return maker.make(context,
-							  request=self.request, 
+							  request=self.request,
 							  link_method=self.link_method,
 							  allow_traversable_paths=self.allow_traversable_paths)
 		return None

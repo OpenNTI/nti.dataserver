@@ -10,7 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 81
+generation = 82
 
 # Allow going forward/backward for testing
 import os
@@ -167,7 +167,7 @@ def install_main(context):
 		install_recorder_catalog(dataserver_folder, intids)
 		install_container_catalog(dataserver_folder, intids)
 		install_invitations_catalog(dataserver_folder, intids)
-		
+
 		users_folder = dataserver_folder['users']
 		interface.alsoProvides(users_folder, IUsersFolder)
 

@@ -307,7 +307,6 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		# would get spammed with sharedWith notable items.
 		return [self._community] if self._community else ()
 
-
 @interface.implementer(IDFLHeadlineTopic)
 class DFLHeadlineTopic(GeneralHeadlineTopic):  # order matters
 
