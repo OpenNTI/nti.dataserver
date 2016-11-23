@@ -18,8 +18,6 @@ from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
-from zope.interface.interfaces import ComponentLookupError
-
 from pyramid.security import Denied as psecDenied
 
 from nti.dataserver import authorization
