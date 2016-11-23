@@ -235,6 +235,7 @@ def _acl_from_ace_lines(lines, provenance):
 	return _ACL([ace_from_string(x.strip(), provenance=provenance)
 				  for x in lines
 				  if x and x.strip() and not x.strip().startswith('#')])
+acl_from_ace_lines = _acl_from_ace_lines
 
 def ACL(obj, default=()):
 	"""
