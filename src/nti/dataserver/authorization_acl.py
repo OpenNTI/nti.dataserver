@@ -54,11 +54,7 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import SingletonDecorator
 
-from nti.ntiids import ntiids
-
 from nti.property.property import alias
-
-from nti.traversal import traversal
 
 @interface.implementer(IACE)
 class _ACE(object):
