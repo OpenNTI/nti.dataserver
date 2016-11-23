@@ -70,7 +70,6 @@
 	<include package="nti.app.invitations" file="pyramid.zcml" />
 	<include package="nti.app.contentfile" file="pyramid.zcml" />
 	<include package="nti.app.contentfolder" file="pyramid.zcml" />
-	<include package="nti.app.contentlibrary" file="pyramid.zcml" />
 
 	<!-- Util views -->
 	<include package=".utils.k20" file="pyramid.zcml" />
