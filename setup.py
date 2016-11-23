@@ -128,6 +128,7 @@ setup(
 	],
 	install_requires=[
 		'nti.common',
+		'nti.containers',
 		'nti.contentfragments',
 		'nti.contentindexing',
 		'nti.contenttypes.presentation',

@@ -471,7 +471,6 @@
 	<include package=".policies" file="configure.zcml" />
 
 	<include package="nti.app.forums" />
-	<include package="nti.app.contentlibrary" />
 
 	<!-- Hacky temporary stuff -->
 	<adapter name="NextthoughtDotComAdmin"
