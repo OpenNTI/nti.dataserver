@@ -12,21 +12,17 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import numbers
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 
 from zope import component
 from zope import interface
 
 from nti.chatserver.interfaces import IUserTranscriptStorage
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
-from nti.dataserver import authorization_acl as nacl
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import ACLLocationProxy
 
 from nti.ntiids.interfaces import INTIIDResolver
 
@@ -173,20 +169,6 @@ class AbstractMappingAdaptingUserBasedResolver(AbstractAdaptingUserBasedResolver
 		if mapping is not None:
 			return mapping.get(get_specific(ntiid))
 		return None
-
-@interface.implementer(INTIIDResolver)
-class _ContentResolver(object):
-
-	def resolve(self, key):
-		result = None
-		library = component.queryUtility(IContentPackageLibrary)
-		path = library.pathToNTIID(key) if library else None
-		if path:
-			result = path[-1]
-			# TODO: ACL Proxy can probably go away
-			result = ACLLocationProxy(result, result.__parent__,
-									   result.__name__, nacl.ACL(result))
-		return result
 
 @interface.implementer(INTIIDResolver)
 class _MeetingRoomResolver(_AbstractUserBasedResolver):

@@ -134,7 +134,6 @@
 	<include package="nti.contentrange" />
 	<include package="nti.coremetadata" />
 	<include package="nti.contentfolder" />
-	<include package="nti.contentlibrary" />
 	<include package="nti.datastructures" />
 	<include package="nti.contentfragments" />
 		

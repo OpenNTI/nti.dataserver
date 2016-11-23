@@ -11,8 +11,6 @@
 
 	<!-- NTIID Resolvers -->
 	<utility factory=".ntiids._OIDResolver" name="OID" />
-	<utility factory=".ntiids._ContentResolver" name="HTML" />
-	<utility factory=".ntiids._ContentResolver" name="Root" />
 	<utility factory=".ntiids._MeetingRoomResolver" name="MeetingRoom" />
 	<utility factory=".ntiids._MeetingRoomResolver" name="MeetingRoom:Group" />
 

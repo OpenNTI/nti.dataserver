@@ -53,7 +53,10 @@ from nti.ntiids import ntiids
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.app.contentlibrary.forum import ContentForum
+try:
+	from nti.app.contentlibrary.forum import ContentForum
+except ImportError:
+	from nti.dataserver.contenttypes.forums.forum import GeneralForum as ContentForum
 
 from nti.appserver.policies.tests import test_application_censoring
 from nti.appserver.tests.test_application import TestApp as _TestApp
