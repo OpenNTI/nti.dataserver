@@ -70,15 +70,8 @@
 	<adapter factory=".authorization_acl._FriendsListACLProvider" />
 	<adapter factory=".authorization_acl._EnclosedContentACLProvider" />
 	<adapter factory=".authorization_acl._DataserverFolderACLProvider" />
-	<adapter factory=".authorization_acl._ContentPackageLibraryACLProvider" />
 	<adapter factory=".authorization_acl._ShareableModeledContentACLProvider" />
 	<adapter factory=".authorization_acl._CoppaUserWithoutAgreementACLProvider" />
-	<adapter factory=".authorization_acl._ContentPackageBundleLibraryACLProvider" />
-	<adapter factory=".authorization_acl._DelimitedHierarchyContentUnitACLProvider" />
-	<adapter factory=".authorization_acl._DelimitedHierarchyContentPackageACLProvider" />
-	
-	<adapter factory=".authorization_acl._TestingLibraryTOCEntryACLProvider"
-			 zcml:condition="have testmode" />
 
 	<class class="zope.security.management.system_user">
 		<implements interface=".interfaces.ISystemUserPrincipal" />
