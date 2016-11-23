@@ -49,24 +49,23 @@ from nti.common._compat import IAcquirer
 
 from nti.common.iterables import is_nonstr_iter
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
 from nti.dataserver import authorization_acl as nacl
 
-from nti.dataserver.interfaces import InappropriateSiteError
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import IDataserverFolder
-from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
-from nti.dataserver.interfaces import IHomogeneousTypeContainer
-from nti.dataserver.interfaces import INamedContainer
-from nti.dataserver.interfaces import ISimpleEnclosureContainer
-from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import INamedContainer
+from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import InappropriateSiteError
+from nti.dataserver.interfaces import IHomogeneousTypeContainer
+from nti.dataserver.interfaces import ISimpleEnclosureContainer
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+
+from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.externalization import to_external_object
 
 from nti.ntiids import ntiids
 
@@ -556,20 +555,6 @@ class DFLTraversable(_PseudoTraversableMixin):
 		except KeyError:
 			# Is there a named path adapter?
 			return adapter_request(self.context, self.request).traverse(key, remaining_path)
-
-@interface.implementer(ITraversable)
-@component.adapter(IContentPackageLibrary, IRequest)
-class LibraryTraversable(object):
-
-	def __init__(self, context, request):
-		self.context = context
-		self.request = request
-
-	def traverse(self, key, remaining_path):
-		try:
-			return self.context[key]
-		except KeyError:
-			raise LocationError(key)
 
 from nti.traversal.traversal import adapter_request  # BWC export
 
