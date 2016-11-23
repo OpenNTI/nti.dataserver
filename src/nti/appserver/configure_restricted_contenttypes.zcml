@@ -1,0 +1,32 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<!--
+		 First, set the internalization process to go through our hooks which checks
+		 a filtered vocabulary.
+	-->
+
+	<utility
+		component="._creatable_mime_object_vocabulary._user_sensitive_factory_finder"
+		provides="nti.externalization.interfaces.IExternalizedObjectFactoryFinder" />
+
+	<includeOverrides file="restricted_overrides.zcml" />
+
+	<!-- Then, install a vocabulary that filters -->
+	<utility
+		factory="._creatable_mime_object_vocabulary._UserCreatableMimeObjectVocabularyFactory"
+		provides="zope.schema.interfaces.IVocabularyFactory"
+		name="Creatable External Object Types" />
+
+	<!-- Last, install a filter -->
+	<subscriber	factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
+				provides=".interfaces.ICreatableObjectFilter"
+				for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement" />
+</configure>

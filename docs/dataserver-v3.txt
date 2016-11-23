@@ -1,0 +1,145 @@
+Dataserver v3
+
+* Quizzes
+
+  The third iteration of the dataserver builds upon the foundation
+  laid in the second dataserver. URLs remain structured in the same
+  fashion, and the same group and modification date behaivour applies.
+  The primary difference is that certain URLs now require data in a
+  particular format (e.g., quizes themselves, quiz submissions); in
+  addition, POSTing values to a particular URL will now automatically
+  result in additional data being available for GETting at a different
+  URL (e.g, quiz submissions and quiz results).
+
+** Quiz Data
+
+   Quiz data is stored under a new root, quizzes. This tree uses URLs
+   of the form:
+
+   /dataserver/quizzes/$ID?format=$FORMAT
+
+   Where $FORMAT is as before, and $ID is a client defined identifier
+   (notice this is not an auto-generated dataserver assigned
+   identifier) for each distinct /quiz/. Any valid URL segment can be
+   used as a quiz identifier. One consequence of this is that creating
+   quizzes can only be done by PUTing the correct data to a complete
+   URL; you cannot POST to the quizzes group (attempting to do so will
+   result in a 405 error).
+
+   Similar to before, a /quiz/ is a dictionary. It must have a
+   top-level 'Items' key mapping to a dictionary of /quiz questions/;
+   the keys for the quiz questions within the Items dictionary are
+   user-assigned. When fetched from the dataserver, a quiz has the key
+   'ID' containing its identifier, and the key 'Last Modified'
+   containing a number of seconds since 1970 that it was last
+   modified.
+
+   A /quiz question/ has a 'Text' key mapping to a string that is the
+   question itself. It also has an 'Answers' key mapping to a list of
+   /quiz answers/. When fetched from the dataserver the quiz questions
+   have an 'ID' key that is the same as the key mapping to them in the
+   quizzes 'Items' dictionary (as always, any 'ID' key present when
+   the data is added to the dataserver is ignored). A /quiz answer/ is
+   simply a string noting one of the acceptable answers for this
+   question.
+
+*** CRUD operations
+
+	As mentioned, quizzes can only be created by PUTting them to a
+	complete URL, and when successful, the response value is the same
+	as if the new ID was to be later accessesd with GET (and it
+	includes the same 'Last Modified' and 'Location' headers and 201
+	response code as normal). They can be DELETEd in the usual
+	fashion, and it is also possible to GET them. It is possible to
+	GET the collection of all quizzes with the same semantics as any
+	other group (e.g, in regards to 'Last Modified' values and such).
+	All of these operations require valid authentication.
+
+*** Quiz Example
+
+	This is an example of the JSON format for uploading a quiz:
+
+	{"Items": { "1" : {"Text": "Question 1", "Answers": ["\(1\)"]},
+	            "2" : {"Text": "Question 2", "Answers": ["Answer 2.1", "Answer 2.2"]} } }
+
+
+** Submitting Responses
+
+   User interaction for taking quizzes and seeing quiz results occurs
+   in the existing users tree in the dataserver. The URLS will be of
+   the form:
+
+   /dataserver/users/$USERNAME/quizresults/$QUIZID/$RESPONSEID?format=$FORMAT
+
+   Where:
+   -$USERNAME is as before
+   -$QUIZID is the identifier of one of the quizzes loaded into the
+   dataserver.
+   -$RESPONSEID is a dataserver-generated identifier for a particular
+   response.
+
+   Unless otherwise stated the behaviour of the quizresults group is
+   the same as any other $TYPE group as described for dataserver-v2
+   (e.g., 'Last Modified' behaviour, 'Items' keys, etc). One
+   difference is that $QUIZID must be the id of a valid, pre-existing
+   quiz stored under /dataserver/quizzes. Another difference is that
+   only POSTing to $QUIZID is allowed; no PUTting to a complete URL is
+   possible. POSTing to $QUIZID will result in a new $RESPONSEID (as
+   before); however, you may rely on the fact that these $RESPONSEID
+   values are monotonically increasing integer values.
+
+*** Submission Data
+
+	The data POSTed to a $QUIZID again must be of a specific format.
+	It is a simple dictionary (no 'Items' key) mapping /quiz question/
+	IDs valid for the particular quiz to the users answer string. For
+	example, a submission for the example quiz above could look like:
+
+	{"1": "1", "2": "My guess 2" }
+
+	It is invalid to submit keys for questions that do not exist in
+	the quiz. If a question exists in the quiz that does not exist in
+	the submission, it is treated as if the user skipped that question.
+
+*** Submission Response
+
+	When submission data is POSTed, it is assessed for correctnes, and
+	the value returned (again, including 'Last Modified' and
+	'Location' headers and the 201 response) is NOT the user's
+	submission echoed back but a /quiz result/.
+
+	A /quiz result/ is a dictionary containing the usual 'ID', 'Last
+	Modified' and 'Items' keys. It also contains a 'QuizID' key which
+	matches the $QUIZID it was posted to (this is most useful when
+	requesting the quizresults group). Each item in 'Items' is mapping
+	from quiz question ID to /quiz question assesment/.
+
+	A /quiz question assesment/ is a dictionary containing the keys
+	'Question', 'Response' and 'Assessment'. The value for 'Question'
+	is the same dictionary contained in the quiz itself for that
+	question id. The 'Response' value is the string the user
+	submitted. The value for assesment is a boolean indicating whether
+	the user was correct or incorrect. For questions that the user did
+	not submit an answer for, this value will be false (but notice
+	that it it still assessed and returned). For example:
+
+	{"ID" : "0",
+	"Last Modified": 1308778804.489641,
+	 "Items": {"1": {"Assessment": false,
+                     "Question": {"Text": "Question 1", "ID": "1", "Answers": ["1"]},
+	 		  		 "Response": "My guess 2"},
+			   "2": {"Assessment": false,
+                     "Question": {"Text": "Question 2", "ID": "2", "Answers": ["Answer 2.1", "Answer 2.2"]},
+			   		  "Response": "My guess 2"}},
+	"QuizID": "the-first-quiz-3" }
+
+	Naturally, this assessment can be retreived later at the complete
+	URL.
+
+*** Submission Assessment
+
+	User response string may either be LaTeX math (by being surrounded
+	by '$'), Open Math XML, or plain text. Plain text is automatically
+	converted to LaTeX math. Each answer should already be in LaTeX
+	math form. For example, the correct answer '\(1\)' will match the
+	response '1' or '$1$'.

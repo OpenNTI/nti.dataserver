@@ -1,0 +1,124 @@
+{
+   "startAnchor":"",
+   "startOffset":0,
+   "CreatedTime":1334000356.817883,
+   "startHighlightedText":"",
+   "MimeType":"application/vnd.nextthought.note",
+   "endAnchor":"",
+   "top":0,
+   "tags":[
+
+   ],
+   "NTIID":"tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273",
+   "AutoTags":[
+
+   ],
+   "Class":"Note",
+   "body":[
+      {
+         "Last Modified":1334000544.101776,
+         "CreatedTime":1334000544.050942,
+         "shapeList":[
+            {
+               "strokeRGBAColor":"0.000 0.000 0.000",
+               "fillRGBAColor":"1.000 1.000 1.000",
+               "text":"Eddard Stark",
+               "strokeOpacity":1.0,
+               "strokeWidth":"0.001%",
+               "fillOpacity":1.0,
+               "strokeColor":"rgb(0.0,0.0,0.0)",
+               "MimeType":"application/vnd.nextthought.canvastextshape",
+               "transform":{
+                  "a":0.031533516215926365,
+                  "c":-0.019405240753958688,
+                  "b":0.019405240753958688,
+                  "d":0.031533516215926365,
+                  "tx":0.31062124248497003,
+                  "ty":0.24048096192384782,
+                  "Class":"CanvasAffineTransform"
+               },
+               "fillColor":"rgb(255.0,255.0,255.0)",
+               "Class":"CanvasTextShape"
+            },
+            {
+               "strokeRGBAColor":"0.000 0.000 0.000",
+               "MimeType":"application/vnd.nextthought.canvascircleshape",
+               "fillOpacity":1.0,
+               "fillRGBAColor":"1.000 1.000 1.000",
+               "fillColor":"rgb(255.0,255.0,255.0)",
+               "strokeColor":"rgb(0.0,0.0,0.0)",
+               "strokeWidth":"0.003%",
+               "transform":{
+                  "a":0.10638297875906683,
+                  "c":-0.0638297871810024,
+                  "b":0.0638297871810024,
+                  "d":0.10638297875906683,
+                  "tx":0.3723404255319149,
+                  "ty":0.10030395136778116,
+                  "Class":"CanvasAffineTransform"
+               },
+               "strokeOpacity":1.0,
+               "Class":"CanvasCircleShape"
+            },
+            {
+               "strokeRGBAColor":"0.000 0.000 0.000",
+               "MimeType":"application/vnd.nextthought.canvascircleshape",
+               "fillOpacity":1.0,
+               "fillRGBAColor":"1.000 1.000 1.000",
+               "fillColor":"rgb(255.0,255.0,255.0)",
+               "strokeColor":"rgb(0.0,0.0,0.0)",
+               "strokeWidth":"0.003%",
+               "transform":{
+                  "a":0.030395136808510637,
+                  "c":-0.07294832826139817,
+                  "b":0.07294832826139817,
+                  "d":0.030395136808510637,
+                  "tx":0.10486322188449848,
+                  "ty":0.0972644376899696,
+                  "Class":"CanvasAffineTransform"
+               },
+               "strokeOpacity":1.0,
+               "Class":"CanvasCircleShape"
+            },
+            {
+               "strokeRGBAColor":"0.000 0.000 0.000",
+               "fillRGBAColor":"1.000 1.000 1.000",
+               "strokeOpacity":1.0,
+               "strokeWidth":"0.003%",
+               "fillOpacity":1.0,
+               "strokeColor":"rgb(0.0,0.0,0.0)",
+               "sides":1,
+               "MimeType":"application/vnd.nextthought.canvaspolygonshape",
+               "transform":{
+                  "a":0.05927051674610608,
+                  "c":-0.09422492402651532,
+                  "b":0.09422492402651532,
+                  "d":0.05927051674610608,
+                  "tx":0.5896656534954408,
+                  "ty":0.2507598784194529,
+                  "Class":"CanvasAffineTransform"
+               },
+               "fillColor":"rgb(255.0,255.0,255.0)",
+               "Class":"CanvasPolygonShape"
+            }
+         ],
+         "MimeType":"application/vnd.nextthought.canvas",
+         "Class":"Canvas"
+      },
+      "Lord of Winterfell"
+   ],
+   "startXpath":"",
+   "endOffset":0,
+   "endXpath":"",
+   "ID":"tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273",
+   "endHighlightedText":"",
+   "startHighlightedFullText":"",
+   "anchorPoint":"a0000000144",
+   "ContainerId":"tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0",
+   "Creator":"carlos.sanchez@nextthought.com",
+   "Last Modified":1334000544.120455,
+   "OID":"tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273",
+   "anchorType":"previousSiblingAnchorName",
+   "endHighlightedFullText":"",
+   "left":100
+}

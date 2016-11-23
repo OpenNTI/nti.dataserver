@@ -1,0 +1,26 @@
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:ext="http://nextthought.com/ntp/ext">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="nti.contentprocessing" />
+
+	<!-- Externalization -->
+	<include package="nti.externalization" file="meta.zcml" />
+    <include package="nti.externalization" />
+    <ext:registerAutoPackageIO
+		root_interfaces="nti.contentprocessing.interfaces.IContentMetadata
+						 nti.contentprocessing.interfaces.IImageMetadata"
+		modules="nti.contentprocessing.metadata_extractors" />
+
+	<subscriber factory=".decorators._ImageMetadataSafeProxyDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.contentprocessing.interfaces.IImageMetadata
+					 pyramid.interfaces.IRequest" />
+
+</configure>
