@@ -42,18 +42,13 @@ from nti.appserver.interfaces import get_principal_ugd_filter
 from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.contentlibrary.indexed_data import get_catalog as lib_catalog
-
-from nti.contenttypes.presentation.interfaces import INTIAudio
-from nti.contenttypes.presentation.interfaces import INTIVideo
-from nti.contenttypes.presentation.interfaces import INTIPollRef
-from nti.contenttypes.presentation.interfaces import INTISurveyRef
-
 from nti.dataserver import liking
-from nti.dataserver.users import User
-from nti.dataserver.users import Entity
 from nti.dataserver import authorization as nauth
+
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopic
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
@@ -61,20 +56,23 @@ from nti.dataserver.interfaces import IBookmark
 from nti.dataserver.interfaces import IThreadable
 from nti.dataserver.interfaces import IUsernameIterable
 from nti.dataserver.interfaces import IStreamChangeEvent
-from nti.dataserver.contenttypes.forums.interfaces import IBoard
-from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlinePost
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopic
+from nti.dataserver.interfaces import IIDContainersQuerier
 
-from nti.dataserver.sharing import SharingContextCache
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.dataserver.sharing import SharingContextCache
+
+from nti.dataserver.users import User
+from nti.dataserver.users import Entity
+
+from nti.externalization.externalization import to_standard_external_created_time
+from nti.externalization.externalization import to_standard_external_last_modified_time
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
-from nti.externalization.externalization import to_standard_external_created_time
-from nti.externalization.externalization import to_standard_external_last_modified_time
+
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.links.links import Link
 
@@ -82,9 +80,8 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 from nti.mimetype.mimetype import nti_mimetype_from_object
 
 from nti.ntiids import ntiids
-from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.site.site import get_component_hierarchy_names
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.zope_catalog.catalog import ResultSet
 
@@ -521,12 +518,12 @@ class _UGDView(AbstractAuthenticatedView,
 	def _get_top_level_contexts(self, obj):
 		top_level_contexts = []
 		if self.user is None:
-			for new_contexts in component.subscribers( (obj,),
-													ITopLevelContainerContextProvider ):
+			for new_contexts in component.subscribers((obj,),
+													  ITopLevelContainerContextProvider ):
 				top_level_contexts.extend( new_contexts )
 		else:
-			for new_contexts in component.subscribers( (obj, self.user),
-													ITopLevelContainerContextProvider ):
+			for new_contexts in component.subscribers((obj, self.user),
+													  ITopLevelContainerContextProvider ):
 				top_level_contexts.extend( new_contexts )
 		return top_level_contexts
 
@@ -719,7 +716,9 @@ class _UGDView(AbstractAuthenticatedView,
 		return predicate
 
 	def _get_sort_key_order(self):
-		"Return a tuple of sort_on, sort_order"
+		"""
+		Return a tuple of sort_on, sort_order
+		"""
 		# The request keys match what z3c.table does
 		sort_on = self.request.params.get( 'sortOn', self._DEFAULT_SORT_ON )
 		_sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS[self._DEFAULT_SORT_ON] )
@@ -732,7 +731,9 @@ class _UGDView(AbstractAuthenticatedView,
 		return sort_on, sort_order
 
 	def _make_sort_key_function(self):
-		"Returns a key function for sorting based on current params"
+		"""
+		Returns a key function for sorting based on current params
+		"""
 		sort_on, sort_order = self._get_sort_key_order()
 		_sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS[self._DEFAULT_SORT_ON] )
 		# heapq needs to have the smallest item first. It doesn't work with reverse sorting.
@@ -1141,7 +1142,7 @@ class RecursiveUGDView(_UGDView):
 		# Special case when a user is asking for his own data for the root;
 		# we can be much faster (and include non-contained data like forums)
 		# through using the catalog
-		if (self._can_special_case_root
+		if (	self._can_special_case_root
 			and self.user == self.remoteUser
 			and self.ntiid == ntiids.ROOT
 			and 'application/vnd.nextthought.transcriptsummary' not in self._get_accept_types()
@@ -1234,35 +1235,15 @@ class RecursiveUGDView(_UGDView):
 		return filters
 
 	def _get_containerids_for_id( self, user, ntiid ):
-		containers = ()
-		if ntiid == ntiids.ROOT:
-			containers = set(user.iterntiids(include_stream=self._iter_ntiids_include_stream,
-											 stream_only=self._iter_ntiids_stream_only))
+		querier = component.queryUtility(IIDContainersQuerier)
+		if querier is not None:
+			result = querier.query(user, 
+								   ntiid, 
+								   self._iter_ntiids_include_stream,
+								   self._iter_ntiids_stream_only)
 		else:
-			library = component.getUtility(IContentPackageLibrary)
-			containers = set( library.childrenOfNTIID( ntiid ) )
-			containers.add( ntiid ) # item
-
-			# include media containers.
-			catalog = lib_catalog()
-			if catalog is not None: # test mode
-				# Should this be all types, or is that too expensive?
-				sites = get_component_hierarchy_names()
-				objects = catalog.search_objects(container_ntiids=containers,
-												 sites=sites,
-												 container_all_of=False,
-									   			 provided=(INTIVideo, INTIAudio,
-														   INTIPollRef, INTISurveyRef))
-				for obj in objects:
-					ntiid = getattr(obj, 'target', None) or obj.ntiid
-					containers.add(ntiid)
-
-		# We always include the unnamed root (which holds things like CIRCLED)
-		# NOTE: This is only in the stream. Normally we cannot store contained
-		# objects with an empty container key, so this takes internal magic
-		containers.add( '' ) # root
-
-		return containers
+			result = ('',)
+		return result
 
 	def _filter_inaccessible_object(self, obj):
 		# XXX: HACK FOR "ACL" community topics. Make sure the object

@@ -1514,6 +1514,17 @@ def __setup_interfaces():
 __setup_interfaces()
 del __setup_interfaces
 
+# Containers
+
+class IIDContainersQuerier(interface.Interface):
+	"""
+	A utility that given a user and ntiid returns all the user and library
+	containers for that ntiid
+	"""
+	
+	def query(user, ntiid, include_stream=True, stream_only=True):
+		pass
+
 # Weak Refs and related BWC exports
 
 import zope.deferredimport
