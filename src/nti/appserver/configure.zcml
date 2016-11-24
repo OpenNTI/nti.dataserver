@@ -441,21 +441,6 @@
 		provides="zope.traversing.interfaces.IPathAdapter"
 		name="currency" />
 
-	<!-- Glossary -->
-	<subscriber handler=".glossary_views.add_main_glossary_from_new_content" />
-	<adapter name="Glossary"
-			 factory=".glossary_views._GlossaryPathAdapter"
-			 provides=".interfaces.INamedLinkPathAdapter"
-			 for=".interfaces.IPageContainerResource pyramid.interfaces.IRequest" />
-	<adapter name="Glossary"
-			 factory=".glossary_views._GlossaryPathAdapter"
-			 provides=".interfaces.INamedLinkPathAdapter"
-			 for=".interfaces.IRootPageContainerResource pyramid.interfaces.IRequest" />
-	<adapter name="Glossary"
-			 factory=".glossary_views._GlossaryPathAdapter"
-			 provides=".interfaces.INamedLinkPathAdapter"
-			 for=".interfaces.INewPageContainerResource pyramid.interfaces.IRequest" />
-
 	<!-- Content restrictions -->
 	<!--
 	Sadly, the include overrides only works at the top-level (?)
