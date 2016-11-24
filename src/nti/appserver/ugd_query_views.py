@@ -27,20 +27,22 @@ from zope.intid.interfaces import IIntIds
 from pyramid.view import view_config
 
 from nti.app.authentication import get_remote_user
+
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.renderers.interfaces import IUncacheableInResponse
 from nti.app.renderers.interfaces import IUGDExternalCollection
-from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.appserver import MessageFactory as _
 from nti.appserver import httpexceptions as hexc
-
-from nti.appserver.pyramid_authorization import is_readable
 
 from nti.appserver.interfaces import INamedLinkView
 from nti.appserver.interfaces import IPrincipalUGDFilter
 from nti.appserver.interfaces import get_principal_ugd_filter
 from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
+
+from nti.appserver.pyramid_authorization import is_readable
 
 from nti.dataserver import liking
 from nti.dataserver import authorization as nauth
