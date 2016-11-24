@@ -58,7 +58,7 @@ from nti.dataserver.interfaces import IBookmark
 from nti.dataserver.interfaces import IThreadable
 from nti.dataserver.interfaces import IUsernameIterable
 from nti.dataserver.interfaces import IStreamChangeEvent
-from nti.dataserver.interfaces import IIDContainersQuerier
+from nti.dataserver.interfaces import IUserNTIIDContainersQuerier
 
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
@@ -1237,7 +1237,7 @@ class RecursiveUGDView(_UGDView):
 		return filters
 
 	def _get_containerids_for_id( self, user, ntiid ):
-		querier = component.queryUtility(IIDContainersQuerier)
+		querier = component.queryUtility(IUserNTIIDContainersQuerier)
 		if querier is not None:
 			result = querier.query(user, 
 								   ntiid, 

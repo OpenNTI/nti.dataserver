@@ -1514,9 +1514,9 @@ def __setup_interfaces():
 __setup_interfaces()
 del __setup_interfaces
 
-# Containers
+# Query
 
-class IIDContainersQuerier(interface.Interface):
+class IUserNTIIDContainersQuerier(interface.Interface):
 	"""
 	A utility that given a user and ntiid returns all the user and library
 	containers for that ntiid
