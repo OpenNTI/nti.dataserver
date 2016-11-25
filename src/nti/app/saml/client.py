@@ -204,10 +204,8 @@ class BasicSAMLClient(object):
 		logger.info('response %s', saml_response)
 		
 		authresp = self.saml_client.parse_authn_request_response(saml_response, binding,)
-		session_info = authresp.session_info()
 
-		logger.info('sessioninfo: %s', session_info)
-		return session_info
+		return authresp
 
 	def process_saml_acs_request(self, request):
 		for param in (SAML_RESPONSE, RELAY_STATE):
@@ -223,8 +221,8 @@ class BasicSAMLClient(object):
 		# our exception to indicate a bad saml assertion
 		try:
 			binding = BINDING_HTTP_POST if request.method == 'POST' else BINDING_HTTP_REDIRECT
-			response_info = self._eval_authn_response(request.params[SAML_RESPONSE],
-													  binding=binding)
+			response = self._eval_authn_response(request.params[SAML_RESPONSE],
+												 binding=binding)
 		except SAMLError as e:
 			logger.exception('Invalid saml response')
 			e.state = state
@@ -232,4 +230,4 @@ class BasicSAMLClient(object):
 			e.error = error
 			raise e
 
-		return response_info, state, success, error
+		return response, state, success, error

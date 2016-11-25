@@ -137,7 +137,12 @@ def acs_view(request):
 	try:
 		saml_client = component.queryUtility(ISAMLClient)
 		logger.info('Received an acs request')
-		response, state, success, error = saml_client.process_saml_acs_request(request)
+		saml_response, state, success, error = saml_client.process_saml_acs_request(request)
+
+		response = saml_response.session_info()
+		logger.info('sessioninfo: %s', response)
+
+
 		idp_id = response['issuer']
 		logger.info('Response from %s recieved, success %s, error %s', idp_id, success, error)
 

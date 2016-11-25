@@ -120,8 +120,11 @@ class TestEvents(ApplicationLayerTest):
 				sm = component.getSiteManager()
 				assert isinstance(sm, Persistent)
 
+				saml_response = fudge.Fake('saml_response')
+				saml_response.provides('session_info').returns({"issuer":"testIssuer"})
+
 				saml_client = fudge.Fake('saml_client')
-				saml_client.provides('process_saml_acs_request').returns(({"issuer":"testIssuer"},None,None,None))
+				saml_client.provides('process_saml_acs_request').returns((saml_response,None,None,None))
 				sm.registerUtility(saml_client, ISAMLClient)
 
 				nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
@@ -174,8 +177,11 @@ class TestEvents(ApplicationLayerTest):
 
 				sm = component.getSiteManager()
 
+				saml_response = fudge.Fake('saml_response')
+				saml_response.provides('session_info').returns({"issuer":"testIssuer"})
+
 				saml_client = fudge.Fake('saml_client')
-				saml_client.provides('process_saml_acs_request').returns(({"issuer":"testIssuer"},None,None,None))
+				saml_client.provides('process_saml_acs_request').returns((saml_response,None,None,None))
 				sm.registerUtility(saml_client, ISAMLClient)
 
 				nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
