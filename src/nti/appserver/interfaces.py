@@ -268,6 +268,22 @@ class IImpersonationDecider(interface.Interface):
 		should be raised if the userid should not be impersonated.
 		"""
 
+class ILogoutForgettingResponseProvider(interface.Interface):
+	"""
+	An object capable of producing a response to forget a 
+	user on logout.  Register this as an adapter on IRequest
+	"""
+
+	def forgetting(request, redirect_param_name, redirect_value=None):
+		"""
+		:param redirect_param_name: The name of the request parameter we look for to provide
+			a redirect URL.
+		:keyword redirect_value: If given, this will be the redirect URL to use; `redirect_param_name`
+			will be ignored.
+		:return: The response object, set up for the redirect. The view (our caller) will return
+			this.
+		"""
+
 class IUserLogonEvent(IUserEvent):
 	"""
 	Fired when a user has successfully logged on.

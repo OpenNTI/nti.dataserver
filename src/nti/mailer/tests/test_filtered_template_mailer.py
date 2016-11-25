@@ -114,5 +114,7 @@ class TestImpersonatedEmail(AppLayerTest, _BaseMixin):
 		self._check('jamadden@ou.edu', 'jamadden@ou.edu')
 
 	def test_create_mail_message_impersonated(self):
+		userdata = {'username': 'sjohnson@nextthought.com'}
+		identity = {'userdata': userdata}
 		self._check('jamadden@ou.edu', 'dummy.email+jamadden@nextthought.com',
-					{'REMOTE_USER_DATA': 'sjohnson@nextthought.com'})
+					{'repoze.who.identity': identity})

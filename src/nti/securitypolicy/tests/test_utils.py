@@ -21,8 +21,11 @@ class TestImpersonationCheck(unittest.TestCase):
 		class _MockRequest(object):
 			environ = None
 
+		userdata = {'username': impersonationTarget}
+		identity = {'userdata': userdata}
+
 		request = _MockRequest()
-		request.environ = {'REMOTE_USER_DATA': impersonationTarget}
+		request.environ = {'repoze.who.identity': identity}
 		return request
 
 	def test_impersonated(self):

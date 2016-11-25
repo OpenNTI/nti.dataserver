@@ -40,6 +40,10 @@
 			 for="pyramid.interfaces.IRequest"
 			 name="nextthought.com"/>
 
+	<adapter factory=".logon.DefaultLogoutResponseProvider"
+			 provides="nti.appserver.interfaces.ILogoutForgettingResponseProvider"
+			 for="pyramid.interfaces.IRequest"/>
+
 	<!-- Additional links for logged-in users -->
 	
 	<!-- Terms of service and privacy policy direct links -->

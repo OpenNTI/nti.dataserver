@@ -12,5 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 def is_impersonating(request):
 	# We know we are impersonating if we have a 'REMOTE_USER_DATA'
 	# value in the environ
-	environ = getattr(request, 'environ', ())
-	return bool('REMOTE_USER_DATA' in environ and environ['REMOTE_USER_DATA'])
+	environ = getattr(request, 'environ', {})
+	identity = environ.get('repoze.who.identity', {})
+	userdata = identity.get('userdata', {})
+	return bool('username' in userdata and userdata.get('username'))

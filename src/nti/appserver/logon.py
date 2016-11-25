@@ -85,6 +85,7 @@ from nti.appserver.interfaces import ILogonLinkProvider
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 from nti.appserver.interfaces import IUnauthenticatedUserLinkProvider
 from nti.appserver.interfaces import ILogonUsernameFromIdentityURLProvider
+from nti.appserver.interfaces import ILogoutForgettingResponseProvider
 
 from nti.appserver.interfaces import UserLogoutEvent
 from nti.appserver.interfaces import UserCreatedWithRequestEvent
@@ -306,6 +307,15 @@ def _forgetting(request, redirect_param_name, no_param_class, redirect_value=Non
 				 response.headers)
 	return response
 
+@interface.implementer(ILogoutForgettingResponseProvider)
+class DefaultLogoutResponseProvider(object):
+
+	def __init__(self, request):
+		pass
+
+	def forgetting(self, request, redirect_param_name, redirect_value=None):
+		return _forgetting(request, redirect_param_name, hexc.HTTPNoContent, redirect_value=redirect_value)
+
 @view_config(route_name=REL_LOGIN_LOGOUT, request_method='GET')
 def logout(request):
 	"Cause the response to the request to terminate the authentication."
@@ -314,7 +324,8 @@ def logout(request):
 	# TODO: We need to associate the socket.io session somehow
 	# so we can terminate just that one session (we cannot terminate all,
 	# multiple logins are allowed )
-	response = _forgetting(request, 'success', hexc.HTTPNoContent)
+	logout_response_provider = ILogoutForgettingResponseProvider(request)
+	response = logout_response_provider.forgetting(request, 'success')
 	username = request.authenticated_userid
 	user = User.get_user(username)
 	notify(UserLogoutEvent(user, request))
@@ -714,7 +725,10 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
 				except ValueError:
 					return _create_failure_response(request,
 													error_factory=hexc.HTTPForbidden)
-				request.environ['REMOTE_USER_DATA'] = str(remote_user.username.lower())
+
+				user_data = request.environ.get('REMOTE_USER_DATA', {})
+				user_data['username'] = str(remote_user.username.lower())
+				request.environ['REMOTE_USER_DATA'] = user_data
 
 			response = _create_success_response(request, desired_username)
 		except ValueError as e:

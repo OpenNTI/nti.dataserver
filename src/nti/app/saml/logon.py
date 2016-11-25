@@ -201,6 +201,13 @@ def acs_view(request):
 			nameid_bindings[idp_id] = user_info.nameid
 
 		logger.info("%s logging in through SAML", username)
+
+		user_data = request.environ.get('REMOTE_USER_DATA', {})
+		user_data['nti.saml.idp'] = idp_id
+		user_data['nti.saml.response_id'] = saml_response.id()
+		user_data['nti.saml.session_id'] = saml_response.session_id()
+		request.environ['REMOTE_USER_DATA']=user_data
+
 		return _create_success_response(request, 
 										userid=username,
 										success=_make_location(success, state))
