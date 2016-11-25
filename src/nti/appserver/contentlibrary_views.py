@@ -25,4 +25,4 @@ zope.deferredimport.deprecatedFrom(
 # nobody seemed to notice that their preferences disappeared,
 # so the only real issue here is the broken pickles
 import zope.deprecation
-zope.deprecation.moved('nti.appserver.contentlibrary.library_views')
+zope.deprecation.moved('nti.app.contentlibrary.views.library_views')

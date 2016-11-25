@@ -238,26 +238,10 @@ def _notify_application_opened_event():
 				pass
 
 @component.adapter(IApplicationTransactionOpenedEvent)
-def _sync_global_library(_):
-	library = component.getGlobalSiteManager().queryUtility(lib_interfaces.IContentPackageLibrary)
-
-	if library is not None:
-		# Ensure the library is enumerated at this time during startup
-		# when we have loaded all the basic ZCML slugs but while
-		# we are in control of the site.
-		# NOTE: We are doing this in a transaction for the dataserver
-		# to allow loading the packages to make persistent changes.
-		library.syncContentPackages()
-
-@component.adapter(IApplicationTransactionOpenedEvent)
 def _sync_host_policies(_):
 	# XXX: JAM: Note: this sync call will move around!
 	from nti.site.hostpolicy import synchronize_host_policies
 	synchronize_host_policies()
-
-def _library_settings(pyramid_config, server):
-	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
-	return library
 
 def _ugd_odata_views(pyramid_config):
 
@@ -493,16 +477,27 @@ def createApplication( http_port,
 		return dataserver_dir_exists and os.path.isdir( dataserver_file( *args ) )
 
 	xml_conf_machine = _create_xml_conf_machine( settings,
-												 features_file=dataserver_file('etc', 'package-includes', '000-features.zcml') )
+												 features_file=dataserver_file('etc', 
+																			   'package-includes', 
+																			   '000-features.zcml') )
 
 	if 'pre_site_zcml' in settings:
 		# One before we load the main config so it has a chance to exclude files
 		logger.debug( "Loading pre-site settings from %s", settings['pre_site_zcml'] )
-		xml_conf_machine = xmlconfig.file( settings['pre_site_zcml'],  package=nti.appserver, context=xml_conf_machine, execute=False )
-	xml_conf_machine = xmlconfig.file( 'configure.zcml', package=nti.appserver, context=xml_conf_machine, execute=False )
+		xml_conf_machine = xmlconfig.file(settings['pre_site_zcml'], 
+										  package=nti.appserver, 
+										  context=xml_conf_machine, 
+										  execute=False )
+	xml_conf_machine = xmlconfig.file('configure.zcml',
+									  package=nti.appserver,
+									  context=xml_conf_machine, 
+									  execute=False )
 	if 'site_zcml' in settings:
 		logger.debug( "Loading site settings from %s", settings['site_zcml'] )
-		xml_conf_machine = xmlconfig.file( settings['site_zcml'],  package=nti.appserver, context=xml_conf_machine, execute=False )
+		xml_conf_machine = xmlconfig.file(settings['site_zcml'],  
+										  package=nti.appserver, 
+										  context=xml_conf_machine,
+										  execute=False )
 		# Preserve the conf machine so that when we load other files later any
 		# exclude settings get processed
 
@@ -515,14 +510,16 @@ def createApplication( http_port,
 			# The files= parameter takes a shell-style glob,
 			# finds the matches, and sorts them, and then includes
 			# them.
-			xmlconfig.include( context, files=dataserver_file('etc', include_dir_name, '*.zcml' ), package=nti.appserver )
+			xmlconfig.include(context, 
+							  files=dataserver_file('etc', include_dir_name, '*.zcml' ), 
+							  package=nti.appserver )
 			# This doesn't return a context, but that's ok,
 			# it is modified in place.
 
 		return context
 
 	# Load the package include slugs created by buildout
-	xml_conf_machine = load_dataserver_slugs( 'package-includes', xml_conf_machine )
+	xml_conf_machine = load_dataserver_slugs('package-includes', xml_conf_machine )
 
 	# Load a library, if needed. We take the first of:
 	# settings['library_zcml']
@@ -549,7 +546,10 @@ def createApplication( http_port,
 		# If tests have already registered a library, use that instead
 		library_zcml = os.path.normpath( os.path.expanduser( library_zcml ) )
 		logger.debug( "Loading library settings from %s", library_zcml )
-		xml_conf_machine = xmlconfig.file( library_zcml,  package=nti.appserver, context=xml_conf_machine, execute=False )
+		xml_conf_machine = xmlconfig.file(library_zcml, 
+										  package=nti.appserver, 
+										  context=xml_conf_machine, 
+										  execute=False )
 
 	xml_conf_machine.execute_actions()
 
@@ -630,7 +630,6 @@ def createApplication( http_port,
 	pyramid_config.add_tween('nti.appserver.tweens.greenlet_runner_tween.greenlet_runner_tween_factory',
 							 under=pyramid.tweens.EXCVIEW )
 
-
 	# Next, connect to the database. We used to use pyramid_zodbconn,
 	# which is not a tween just a set of request hooks (because the
 	# pyramid command line doesn't run tweens). But we don't use that
@@ -696,7 +695,6 @@ def createApplication( http_port,
 	_dictionary_views(pyramid_config, settings)
 
 	_renderer_settings(pyramid_config)
-	_library_settings(pyramid_config, server)
 
 	# XXX: This is an arbitrary time to do this. Why are we doing it now?
 	# (answer: the call to _library_settings used to do it)
