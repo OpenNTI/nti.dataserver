@@ -14,17 +14,17 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 # Export these things
-from zope.processlifetime import IDatabaseOpened, DatabaseOpened
-from zope.processlifetime import IProcessStarting, ProcessStarting
-from zope.processlifetime import IDatabaseOpenedWithRoot, DatabaseOpenedWithRoot
+from zope.processlifetime import DatabaseOpened
+from zope.processlifetime import IDatabaseOpened
+from zope.processlifetime import DatabaseOpenedWithRoot
+from zope.processlifetime import IDatabaseOpenedWithRoot 
+from zope.processlifetime import ProcessStarting as ApplicationProcessStarting
+from zope.processlifetime import IProcessStarting as IApplicationProcessStarting
 
 # Assign to them to keep pylint from complaining
 
 DatabaseOpened = DatabaseOpened
 IDatabaseOpened = IDatabaseOpened
-
-ProcessStarting = ProcessStarting
-IProcessStarting = IProcessStarting
 
 DatabaseOpenedWithRoot = DatabaseOpenedWithRoot
 IDatabaseOpenedWithRoot = IDatabaseOpenedWithRoot
@@ -87,3 +87,12 @@ class IApplicationTransactionOpenedEvent(interface.Interface):
 @interface.implementer(IApplicationTransactionOpenedEvent)
 class ApplicationTransactionOpenedEvent(object):
 	pass
+
+class IProcessStarting(IApplicationProcessStarting):
+	xml_conf_machine = interface.Attribute("The main database.")
+
+@interface.implementer(IProcessStarting)
+class ProcessStarting(ApplicationProcessStarting):
+	
+	def __init__(self, xml_conf_machine=None):
+		self.xml_conf_machine = xml_conf_machine
