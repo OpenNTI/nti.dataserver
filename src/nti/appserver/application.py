@@ -63,7 +63,7 @@ from nti.dataserver.interfaces import IDataserver
 
 import nti.dictserver.storage
 
-from nti.processlifetime import ProcessStarting
+from nti.processlifetime import ApplicationProcessStarting
 from nti.processlifetime import ApplicationTransactionOpenedEvent
 from nti.processlifetime import IApplicationTransactionOpenedEvent
 
@@ -522,7 +522,7 @@ def createApplication( http_port,
 
 	# Notify of startup. (Note that configuring the packages loads zope.component:configure.zcml
 	# which in turn hooks up zope.component.event to zope.event for event dispatching)
-	notify(ProcessStarting(xml_conf_machine))
+	notify(ApplicationProcessStarting(xml_conf_machine))
 	
 	logger.debug( 'Began starting dataserver' )
 	template_cache_dir = setupChameleonCache(config=True) # must do this early

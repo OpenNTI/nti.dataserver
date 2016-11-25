@@ -16,10 +16,10 @@ from zope import interface
 # Export these things
 from zope.processlifetime import DatabaseOpened
 from zope.processlifetime import IDatabaseOpened
+from zope.processlifetime import ProcessStarting
+from zope.processlifetime import IProcessStarting
 from zope.processlifetime import DatabaseOpenedWithRoot
 from zope.processlifetime import IDatabaseOpenedWithRoot 
-from zope.processlifetime import ProcessStarting as ApplicationProcessStarting
-from zope.processlifetime import IProcessStarting as IApplicationProcessStarting
 
 # Assign to them to keep pylint from complaining
 
@@ -88,11 +88,11 @@ class IApplicationTransactionOpenedEvent(interface.Interface):
 class ApplicationTransactionOpenedEvent(object):
 	pass
 
-class IProcessStarting(IApplicationProcessStarting):
+class IApplicationProcessStarting(IProcessStarting):
 	xml_conf_machine = interface.Attribute("The main database.")
 
-@interface.implementer(IProcessStarting)
-class ProcessStarting(ApplicationProcessStarting):
+@interface.implementer(IApplicationProcessStarting)
+class ApplicationProcessStarting(ProcessStarting):
 	
 	def __init__(self, xml_conf_machine=None):
 		self.xml_conf_machine = xml_conf_machine
