@@ -78,14 +78,14 @@ from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME
 from nti.appserver.account_creation_views import REL_PREFLIGHT_CREATE_ACCOUNT
 
 from nti.appserver.interfaces import ILogonPong
-from nti.appserver.interfaces import IImpersonationDecider
 from nti.appserver.interfaces import IMissingUser
 from nti.appserver.interfaces import IUserLogonEvent
 from nti.appserver.interfaces import ILogonLinkProvider
+from nti.appserver.interfaces import IImpersonationDecider
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 from nti.appserver.interfaces import IUnauthenticatedUserLinkProvider
-from nti.appserver.interfaces import ILogonUsernameFromIdentityURLProvider
 from nti.appserver.interfaces import ILogoutForgettingResponseProvider
+from nti.appserver.interfaces import ILogonUsernameFromIdentityURLProvider
 
 from nti.appserver.interfaces import UserLogoutEvent
 from nti.appserver.interfaces import UserCreatedWithRequestEvent
