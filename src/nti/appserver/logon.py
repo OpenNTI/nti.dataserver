@@ -1145,7 +1145,6 @@ def _openidcallback(context, request, success_dict):
 	else:
 		return _create_failure_response(request, error='Unable to derive username')
 
-
 	if _checksum(username) != oidcsum:
 		logger.warn("Checksum mismatch. Logged in multiple times? %s %s username=%s prov=%s",
 					oidcsum, success_dict, username, username_provider)
@@ -1162,7 +1161,6 @@ def _openidcallback(context, request, success_dict):
 											   idurl=idurl, 
 											   iface=nti_interfaces.IOpenIdUser,
 											   user_factory=OpenIdUser.create_user)
-		_update_users_content_roles(the_user, idurl, content_roles)
 		notify(OpenIDUserCreatedEvent(the_user, idurl, content_roles))
 	except hexc.HTTPError:
 		raise
