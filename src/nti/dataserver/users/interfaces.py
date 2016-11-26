@@ -280,6 +280,21 @@ class GoogleUserCreatedEvent(ObjectEvent):
 		super(GoogleUserCreatedEvent, self).__init__(obj)
 		self.request = request
 
+class IOpenIDUserCreatedEvent(IObjectEvent):
+	"""
+	Fired after an OpenID user has been created
+	"""
+	idurl = interface.Attribute("The URL identifying the user on the external system")
+	content_roles =interface.Attribute("An iterable of strings naming provider-local content roles") 
+
+@interface.implementer(IOpenIDUserCreatedEvent)
+class OpenIDUserCreatedEvent(ObjectEvent):
+
+	def __init__(self, obj, idurl=None, content_roles=()):
+		super(OpenIDUserCreatedEvent, self).__init__(obj)
+		self.idurl = idurl
+		self.content_roles = content_roles or ()
+
 class IAvatarURLProvider(Interface):
 	"""
 	Something that can provide a display URL. This is separate

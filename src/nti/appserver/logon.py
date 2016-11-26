@@ -109,6 +109,7 @@ from nti.dataserver.users import OpenIdUser
 from nti.dataserver.users import FacebookUser
 
 from nti.dataserver.users.interfaces import GoogleUserCreatedEvent
+from nti.dataserver.users.interfaces import OpenIDUserCreatedEvent
 
 from nti.dataserver.users.utils import force_email_verification
 
@@ -1153,10 +1154,16 @@ def _openidcallback(context, request, success_dict):
 	try:
 		# TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
 		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
-		the_user = _deal_with_external_account(request, username=username, fname=fname, lname=lname, email=email,
-											   idurl=idurl, iface=nti_interfaces.IOpenIdUser,
+		the_user = _deal_with_external_account(request, 
+											   username=username, 
+											   fname=fname, 
+											   lname=lname, 
+											   email=email,
+											   idurl=idurl, 
+											   iface=nti_interfaces.IOpenIdUser,
 											   user_factory=OpenIdUser.create_user)
 		_update_users_content_roles(the_user, idurl, content_roles)
+		notify(OpenIDUserCreatedEvent(the_user, idurl, content_roles))
 	except hexc.HTTPError:
 		raise
 	except Exception as e:
