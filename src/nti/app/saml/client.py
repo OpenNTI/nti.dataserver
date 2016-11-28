@@ -129,7 +129,7 @@ class BasicSAMLClient(object):
 		signer = _make_signer(_get_signer_secret())
 		return signer.dumps(state)
 
-	def response_for_logging_in(self, success, error, state={}, passive=False, entity_id=None, acs_link=None):
+	def response_for_logging_in(self, success, error, state={}, passive=False, force_authn=True, entity_id=None, acs_link=None):
 		if not entity_id:
 			entity_id = self._pick_idp()
 
@@ -161,23 +161,26 @@ class BasicSAMLClient(object):
 				extensions = Extensions(extension_elements=[element_to_extension_element(spcertenc)])
 
 			is_passive = 'true' if passive else None
+			force = 'true' if force_authn else None
 
 			if not acs_link:
 				request = get_current_request()
 				provider = component.queryAdapter(request, ISAMLACSLinkProvider)
 				acs_link = provider.acs_link(request) if provider else None
 
+			extra_args = {'force_authn': force,
+						  'is_passive': is_passive,
+						  'assertion_consumer_service_url': acs_link}
+
 			if _cli.authn_requests_signed:
 				_sid = saml2.s_utils.sid()
 				req_id, msg_str = _cli.create_authn_request(
 					dest, vorg="", sign=_cli.authn_requests_signed,
-					message_id=_sid, extensions=extensions, is_passive=is_passive,
-					assertion_consumer_service_url=acs_link)
+					message_id=_sid, extensions=extensions, **extra_args)
 				_sid = req_id
 			else:
 				req_id, req = _cli.create_authn_request(
-					dest, vorg="", sign=False, extensions=extensions, is_passive=is_passive,
-					assertion_consumer_service_url=acs_link)
+					dest, vorg="", sign=False, extensions=extensions, **extra_args)
 				msg_str = "%s" % req
 				_sid = req_id
 
