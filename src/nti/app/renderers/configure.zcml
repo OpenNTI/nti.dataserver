@@ -30,7 +30,6 @@
 
 	<adapter factory=".caching._ZopeFileCacheController" />	
 	<adapter factory=".caching._TranscriptCacheController" />
-	<adapter factory=".caching._ContentUnitInfoCacheController" />
 	<adapter factory=".caching._UserActivityViewCacheController" />
 	<adapter factory=".caching._ETagCachedUGDExternalCollectionCacheController" />
 

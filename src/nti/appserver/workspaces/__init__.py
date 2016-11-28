@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import warnings
-
 from zope import component
 from zope import interface
 
@@ -43,8 +41,9 @@ from nti.app.renderers.interfaces import IExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 
 from nti.appserver.interfaces import MissingRequest
+
+from nti.appserver.interfaces import INTIIDEntry
 from nti.appserver.interfaces import INamedLinkView
-from nti.appserver.interfaces import IContentUnitInfo
 from nti.appserver.interfaces import INamedLinkPathAdapter
 from nti.appserver.interfaces import IUserViewTokenCreator
 from nti.appserver.interfaces import IPageContainerResource
@@ -72,7 +71,6 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IFriendsList
-from nti.dataserver.interfaces import INamedContainer
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IContainerIterable
 from nti.dataserver.interfaces import IFriendsListContainer
@@ -314,8 +312,8 @@ def _is_remote_same_as_authenticated(user, req=None):
 		return False
 	return True
 
-@interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
+@interface.implementer(IContainerCollection)
 class DynamicMembershipsContainerCollection(_AbstractPseudoMembershipContainer):
 
 	name = 'DynamicMemberships'
@@ -585,19 +583,20 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
 		return sorted(result, key=lambda x: x.name)
 
-@interface.implementer(IContentUnitInfo)
-class _NTIIDEntry(object):
+@interface.implementer(INTIIDEntry)
+class NTIIDEntry(object):
 
 	__external_class_name__ = 'PageInfo'
 	mimeType = mimetype.nti_mimetype_with_class(__external_class_name__)
 
 	link_provided = IPageContainerResource
 	recursive_stream_supports_feeds = True
+	
 	extra_links = ()
-	contentUnit = None
-	lastModified = 0
 	createdTime = 0
-
+	lastModified = 0
+	contentUnit = None # Legacy field
+	
 	def __init__(self, parent, ntiid):
 		self.__parent__ = parent
 		self.__name__ = ''
@@ -607,18 +606,18 @@ class _NTIIDEntry(object):
 	@property
 	def links(self):
 		result = _make_named_view_links(self.__parent__,
-										 pseudo_target=True,  # XXX: FIXME
-										 provided=self.link_provided)
+										pseudo_target=True,  # XXX: FIXME
+										provided=self.link_provided)
 
 		# If we support a feed, advertise it
 		# FIXME: We should probably not be doing this. We're making
 		# too many assumptions. And we're also duplicating some
 		# stuff that's being done for IForum and ITopic (though those
 		# are less important).
-		if 	self.recursive_stream_supports_feeds and \
-			[x for x in result if x.rel == 'RecursiveStream']:
-			token_creator = component.queryUtility(IUserViewTokenCreator, name='feed.atom')
+		if 		self.recursive_stream_supports_feeds \
+			and [x for x in result if x.rel == 'RecursiveStream']:
 			remote_user = get_remote_user()
+			token_creator = component.queryUtility(IUserViewTokenCreator, name='feed.atom')
 			if token_creator and remote_user:
 				token = token_creator.getTokenForUserId(remote_user.username)
 				if token:
@@ -641,8 +640,9 @@ class _NTIIDEntry(object):
 		return "<%s.%s %s at %s>" % (type(self).__module__,
 									 type(self).__name__,
 									 self.ntiid, hex(id(self)))
+_NTIIDEntry = NTIIDEntry # BWC
 
-class _RootNTIIDEntry(_NTIIDEntry):
+class RootNTIIDEntry(NTIIDEntry):
 	"""
 	Defines the collection entry for the root pseudo-NTIID, which
 	is only meant for the use of the global stream.
@@ -650,7 +650,8 @@ class _RootNTIIDEntry(_NTIIDEntry):
 	link_provided = IRootPageContainerResource
 
 	def __init__(self, parent, _):
-		super(_RootNTIIDEntry, self).__init__(parent, ntiids.ROOT)
+		super(RootNTIIDEntry, self).__init__(parent, ntiids.ROOT)
+_RootNTIIDEntry = RootNTIIDEntry  # BWC
 
 @component.adapter(IUserWorkspace)
 @interface.implementer(IContainerCollection)
@@ -688,7 +689,7 @@ class _UserPagesCollection(Location):
 		return ent_parent
 
 	def make_info_for(self, ntiid):
-		factory = _RootNTIIDEntry if ntiid == ntiids.ROOT else _NTIIDEntry
+		factory = RootNTIIDEntry if ntiid == ntiids.ROOT else NTIIDEntry
 		return factory(self._make_parent(ntiid), ntiid)
 
 	@property

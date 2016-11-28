@@ -22,10 +22,10 @@ from pyramid.threadlocal import get_current_request
 
 from nti.app.renderers import rest
 
-from nti.appserver.interfaces import IContentUnitInfo
-from nti.appserver.interfaces import IUserCapabilityFilter
-
 from nti.appserver.capabilities.interfaces import VOCAB_NAME as CAPABILITY_VOCAB_NAME
+
+from nti.appserver.interfaces import INTIIDEntry 
+from nti.appserver.interfaces import IUserCapabilityFilter
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
@@ -42,9 +42,6 @@ from nti.dataserver.interfaces import ISimpleEnclosureContainer
 
 from nti.datastructures import decorators
 
-# make sure we use nti.dataserver.traversal to find the root site
-from nti.dataserver.traversal import find_nearest_site as ds_find_nearest_site
-
 from nti.externalization.externalization import isSyntheticKey
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import to_standard_external_dictionary
@@ -52,9 +49,6 @@ from nti.externalization.externalization import to_standard_external_dictionary
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.interfaces import IExternalMappingDecorator
-
-from nti.externalization.singleton import SingletonDecorator
 
 from nti.links import links
 
@@ -240,8 +234,8 @@ def _create_search_links(parent):
 		interface.alsoProvides(lnk, loc_interfaces.ILocation)
 	return result
 
+@component.adapter(INTIIDEntry)
 @interface.implementer(IExternalObject)
-@component.adapter(IContentUnitInfo)
 class _NTIIDEntryExternalizer(object):
 
 	def __init__(self, context):
@@ -250,39 +244,6 @@ class _NTIIDEntryExternalizer(object):
 	def toExternalObject(self, **kwargs):
 		result = to_standard_external_dictionary(self.context, **kwargs)
 		return result
-
-from nti.links.externalization import render_link
-
-@interface.implementer(IExternalMappingDecorator)
-@component.adapter(IContentUnitInfo)  # TODO: IModeledContent?
-class ContentUnitInfoHrefDecorator(object):
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalMapping(self, context, mapping):
-		if 'href' in mapping:
-			return
-
-		try:
-			# Some objects are not in the traversal tree. Specifically,
-			# chatserver.IMeeting (which is IModeledContent and IPersistent)
-			# Our options are to either catch that here, or introduce an
-			# opt-in interface that everything that wants 'edit' implements
-			nearest_site = ds_find_nearest_site(context)
-		except TypeError:
-			nearest_site = None
-
-		if nearest_site is None:
-			logger.debug("Not providing href links for %s, could not find site",
-						 type(context))
-			return
-
-		link = links.Link(nearest_site, elements=('Objects', context.ntiid))
-		link.__parent__ = getattr(nearest_site, '__parent__', None)  # Nearest site may be IRoot, which has no __parent__
-		link.__name__ = ''
-		interface.alsoProvides(link, loc_interfaces.ILocation)
-
-		mapping['href'] = render_link(link, nearest_site=nearest_site)['href']
 
 @interface.implementer(IExternalObject)
 @component.adapter(IService)

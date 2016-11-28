@@ -94,16 +94,13 @@ class IUserCapabilityFilter(interface.Interface):
 		the ones allowed.
 		"""
 
-class IContentUnitInfo(ILocation, ILastModified, ILinked):
-	"""
-	Information about a particular bit of content and the links it contains.
-	"""
-
-	contentUnit = Object(IContentUnit,
-						 title="The IContentUnit this object provides info for, if there is one.",
-						 description=""" Typically this will only be provided for one-off requests.
-									Bulk collections/requests will not have it.
-									""")
+class INTIIDEntry(ILocation, ILastModified, ILinked):
+	contentUnit = interface.Attribute("A content unit (legacy attribute)")
+	
+zope.deferredimport.deprecatedFrom(
+    "Moved to nti.app.contentlibrary.interfaces ",
+    "nti.app.contentlibrary.interfaces",
+    "IContentUnitInfo")
 
 class IPrincipalUGDFilter(interface.Interface):
 	"""

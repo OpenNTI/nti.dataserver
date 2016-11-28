@@ -110,8 +110,4 @@
 
 	<adapter factory=".externalization.WorkspaceExternalizer" />
 
-	<!-- Decorators -->
-	<subscriber factory=".decorators.ContentUnitInfoHrefDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
-
 </configure>

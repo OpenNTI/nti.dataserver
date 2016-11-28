@@ -407,28 +407,6 @@ class _UserActivityViewCacheController(_ExternalCollectionCacheController):
 			self.max_age = _LongerCachedUGDExternalCollectionCacheController.max_age
 		return _ExternalCollectionCacheController.__call__(self, context, system)
 
-@interface.implementer(IPreRenderResponseCacheController)
-@component.adapter(app_interfaces.IContentUnitInfo)
-class _ContentUnitInfoCacheController(object):
-	# rendering this doesn't take long, and we need the rendering
-	# process to decorate us with any sharing preferences that may change
-	# and update our modification stamp (this is why we can't be a
-	# subclass of _AbstractReliableLastModifiedCacheController)
-
-	# We used to set a cache-contral max-age header of five minutes
-	# because that sped up navigation in the app noticebly. But it
-	# also led to testing problems if the tester switched accounts.
-	# The fix is to have the app cache these objects itself,
-	# and we go back to ETag/LastModified caching based on
-	# the rendered form.
-	# See Trell #2962 https://trello.com/c/1TGen4z1
-
-	def __init__(self, context):
-		pass
-
-	def __call__(self, context, system):
-		return system['request'].response
-
 from zope.proxy.decorator import SpecificationDecoratorBase
 
 @interface.implementer(IUncacheableInResponse)
