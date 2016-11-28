@@ -288,7 +288,15 @@ class ILogoutForgettingResponseProvider(interface.Interface):
 			this.
 		"""
 
-class IUserLogonEvent(IUserEvent):
+class IUserRequestEvent(IUserEvent):
+	"""
+	An IUserEvent adding information about the request.
+	"""
+	request = schema.Object(IRequest,
+							title="The request that completed the login process.",
+							description="Useful to get IP information and the like.")
+
+class IUserLogonEvent(IUserRequestEvent):
 	"""
 	Fired when a user has successfully logged on.
 
@@ -300,11 +308,7 @@ class IUserLogonEvent(IUserEvent):
 	# TODO: Might want to build this on a lower-level
 	# event holding the principal, this level adding the request
 
-	request = schema.Object(IRequest,
-							title="The request that completed the login process.",
-							description="Useful to get IP information and the like.")
-
-class IUserLogoutEvent(IUserLogonEvent):
+class IUserLogoutEvent(IUserRequestEvent):
 	"""
 	Fired when a user has logged out. This may also occur
 	rarely due to cookies.
