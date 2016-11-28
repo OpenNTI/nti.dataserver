@@ -129,7 +129,7 @@ class BasicSAMLClient(object):
 		signer = _make_signer(_get_signer_secret())
 		return signer.dumps(state)
 
-	def response_for_logging_in(self, success, error, state={}, passive=False, force_authn=True, entity_id=None, acs_link=None):
+	def response_for_logging_in(self, success, error, state={}, passive=False, force_authn=False, entity_id=None, acs_link=None):
 		if not entity_id:
 			entity_id = self._pick_idp()
 
