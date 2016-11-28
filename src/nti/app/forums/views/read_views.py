@@ -28,6 +28,8 @@ from pyramid.view import view_defaults
 
 from nti.app.forums import VIEW_CONTENTS
 
+from nti.app.forums.views.view_mixins import ContentResolver
+
 from nti.app.renderers.interfaces import IETagCachedUGDExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.interfaces import ILongerCachedUGDExternalCollection
@@ -48,16 +50,14 @@ from nti.cabinet.filer import transfer_to_native_file
 
 from nti.common.random import generate_random_hex_string
 
+from nti.coremetadata.interfaces import ITitled
 from nti.coremetadata.interfaces import IModeledContentBody
 
 from nti.contentprocessing.content_utils import clean_special_characters
 
-from nti.contentsearch.interfaces import ITagsResolver
-from nti.contentsearch.interfaces import ITitleResolver
-from nti.contentsearch.interfaces import IContentResolver
-
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IACLProvider
+from nti.dataserver.interfaces import IUserTaggedContent
 
 from nti.dataserver import authorization as nauth
 
@@ -251,9 +251,9 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 		x = topic.headline
 		# get content
 		content = []
-		for iface, name, default, method in ((ITagsResolver, 'tags', (), content.extend),
-											 (ITitleResolver, 'title', u'', content.append),
-											 (IContentResolver, 'content', u'', content.append)):
+		for iface, name, default, method in ((ITitled, 'title', u'', content.append),
+											 (IUserTaggedContent, 'tags', (), content.extend),
+											 (ContentResolver, 'content', u'', content.append)):
 			resolver = iface(x, None)
 			value = getattr(resolver, name, None) or default
 			method(value)

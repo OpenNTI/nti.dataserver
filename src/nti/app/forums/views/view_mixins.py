@@ -241,3 +241,35 @@ class _AbstractTopicPostView(PostUploadMixin,
 		self.request.response.status_int = 201  # created
 		self.request.response.location = self.request.resource_path(incoming_post)
 		return incoming_post
+
+import six
+
+from nti.common.string import to_unicode
+
+from nti.contentprocessing import tokenize_content
+from nti.contentprocessing import get_content_translation_table
+
+def get_content(text=None, language='en'):
+	result = ()
+	text = to_unicode(text) if text else None
+	if text:
+		table = get_content_translation_table(language)
+		result = tokenize_content(text.translate(table), language)
+	result = ' '.join(result)
+	return to_unicode(result)
+
+class ContentResolver(object):
+	
+	def __init__(self, context):
+		self.context = context
+		
+	@property
+	def content(self):
+		try:
+			result = []
+			for x in self.context.body:
+				if isinstance(x, six.string_types):
+					result.append(get_content(x) or '')
+			return ''.join(result)
+		except AttributeError:
+			return None
