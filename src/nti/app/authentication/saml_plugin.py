@@ -70,7 +70,8 @@ def find_idp_files(path=None):
 
 def make_saml_client(path=None, 
 					 identity_cache="", 
-					 virtual_organization=""):
+					 virtual_organization="",
+					 client_factory=BasicSAMLClient):
 	# find config files
 	sp = find_sp_file(path)
 	idps = find_idp_files(path)
@@ -129,7 +130,7 @@ def make_saml_client(path=None,
 		# create client
 		scl = Saml2Client(config=conf, identity_cache=identity_cache,
 					  	  virtual_organization=virtual_organization)
-		return BasicSAMLClient(conf, scl, "", "", "")
+		return client_factory(conf, scl, "", "", "")
 	finally:
 		os.chdir(cwd)
 
