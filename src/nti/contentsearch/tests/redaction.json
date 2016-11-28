@@ -1,0 +1,111 @@
+{
+    "MimeType": "application/vnd.nextthought.redaction", 
+    "ContainerId": "tag:nextthought.com,2011-10:AOPS-HTML-Howes_converted.0", 
+    "replacementContent": "redaction", 
+    "Creator": "carlos.sanchez@nextthought.com", 
+    "Last Modified": 1342646298.927552, 
+    "OID": "tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273", 
+    "ID": "tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273", 
+    "NTIID": "tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273", 
+    "selectedText": "serving a sentence in a Michigan jail", 
+    "AutoTags": [], 
+    "CreatedTime": 1342646298.861731, 
+    "applicableRange": {
+        "start": {
+            "contexts": [
+                {
+                    "contextText": "While serving", 
+                    "Class": "TextContext", 
+                    "contextOffset": 518
+                }, 
+                {
+                    "contextText": "\n", 
+                    "Class": "TextContext", 
+                    "contextOffset": 1
+                }, 
+                {
+                    "contextText": "I ", 
+                    "Class": "TextContext", 
+                    "contextOffset": 2
+                }, 
+                {
+                    "contextText": "\n", 
+                    "Class": "TextContext", 
+                    "contextOffset": 1
+                }, 
+                {
+                    "contextText": "reverse. ", 
+                    "Class": "TextContext", 
+                    "contextOffset": 9
+                }, 
+                {
+                    "contextText": "2", 
+                    "Class": "TextContext", 
+                    "contextOffset": 1
+                }
+            ], 
+            "edgeOffset": 6, 
+            "ancestor": {
+                "role": "ancestor", 
+                "Class": "ElementDomContentPointer", 
+                "elementId": "NTIContent", 
+                "elementTagName": "DIV"
+            }, 
+            "role": "start", 
+            "Class": "TextDomContentPointer"
+        }, 
+        "ancestor": {
+            "role": "ancestor", 
+            "Class": "ElementDomContentPointer", 
+            "elementId": "NTIContent", 
+            "elementTagName": "DIV"
+        }, 
+        "end": {
+            "contexts": [
+                {
+                    "contextText": "jail,", 
+                    "Class": "TextContext", 
+                    "contextOffset": 39
+                }, 
+                {
+                    "contextText": "1", 
+                    "Class": "TextContext", 
+                    "contextOffset": 0
+                }, 
+                {
+                    "contextText": " and", 
+                    "Class": "TextContext", 
+                    "contextOffset": 0
+                }, 
+                {
+                    "contextText": "2", 
+                    "Class": "TextContext", 
+                    "contextOffset": 0
+                }, 
+                {
+                    "contextText": " ", 
+                    "Class": "TextContext", 
+                    "contextOffset": 0
+                }, 
+                {
+                    "contextText": "\n", 
+                    "Class": "TextContext", 
+                    "contextOffset": 0
+                }
+            ], 
+            "edgeOffset": 4, 
+            "ancestor": {
+                "role": "ancestor", 
+                "Class": "ElementDomContentPointer", 
+                "elementId": "NTIContent", 
+                "elementTagName": "DIV"
+            }, 
+            "role": "end", 
+            "Class": "TextDomContentPointer"
+        }, 
+        "Class": "DomContentRangeDescription"
+    }, 
+    "redactionExplanation": null, 
+    "Class": "Redaction", 
+    "tags": []
+}

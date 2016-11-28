@@ -1,0 +1,509 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:z3c="http://namespaces.zope.org/z3c"
+			xmlns:apidoc="http://namespaces.zope.org/apidoc"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="zope.formlib" />
+	<include package="zope.browserresource" />
+	<include package="zope.contentprovider" />
+	<include package="zope.componentvocabulary" />
+
+	<!-- tales:expressiontype -->
+	<include package="zope.browserpage" file="meta.zcml" />
+
+	<!-- browser:resource[Directory] -->
+	<include package="zope.browserresource" file="meta.zcml" />
+
+	<!-- z3c:macro -->
+	<include package="z3c.macro" file="meta.zcml" />
+
+	<!-- regular pagetemplate usage uses chamelean engine -->
+	<include package="z3c.ptcompat" zcml:condition="not-have in-apidoc" />
+	<include package="z3c.macro" />
+
+	<include package="nti.externalization" />
+	<include package="nti.dataserver" />
+	<include package="nti.mailer" />
+
+	<include package="nti.namedfile" file="configure_external.zcml" />
+	
+	<include package="nti.app.authentication" file="meta.zcml" />
+	<securityPolicy component="zope.securitypolicy.zopepolicy.ZopeSecurityPolicy" />
+
+	<subscriber handler=".subscribers.requestEventNotify" />
+
+	<include package=".tweens" />
+	<include package=".capabilities" />
+
+	<!-- apidoc -->
+	<!--
+		Unfortunately, we cannot document all our code in this way
+		for at least two reasons. First, something in the process
+		of documenting nti.contentlibrary.boto_s3 causes a connection
+		to be opened to S3, prompting for a new volume name
+		interactively. Second, documenting
+		nti.contentsearch.zopyxtxng3_evaluator somehow results in a
+		call to sys.exit() with the message "Usage: static-apidoc [options]"
+		which kills the process.
+	-->
+	<!--
+	<apidoc:rootModule module="nti"
+					   zcml:condition="have in-apidoc"/>
+	-->
+
+	<!-- I18N -->
+	<i18n:registerTranslations directory="locales" />
+
+	<!--
+		Let requests be used for negotiating locales in the Zope way.
+		Needed for tables based on z3c/ZPT, which use the Zope-based request
+	-->
+	<!-- Languages -->
+	<include package="nti.app.pyramid_zope" />
+
+	<!-- Zope Requests. This is also cacheable. -->
+	<!--
+		XXX: If the zope.publisher package gets configured, as it
+		does during the API doc process,  we
+		conflict. Why don't we just load it?
+	-->
+	<adapter factory="zope.publisher.browser.ModifiableBrowserLanguages"
+			 provides="zope.i18n.interfaces.IModifiableUserPreferredLanguages"
+			 zcml:condition="not-have in-apidoc" />
+
+	<!-- Charsets -->
+	<adapter factory="zope.publisher.http.HTTPCharsets"
+			 provides="zope.i18n.interfaces.IUserPreferredCharsets"
+			 zcml:condition="not-have in-apidoc" />
+
+	<!-- Country names, language names, flag resources -->
+	<include package="plone.i18n" />
+
+	<!-- Misc -->
+	<include package="nti.app.i18n" />
+
+	<!-- __________________ -->
+
+	<!-- Resource traversal -->
+	<!-- with and without request -->
+	<adapter factory="._dataserver_pyramid_traversal.Dataserver2RootTraversable"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"/>
+
+	<adapter factory="._dataserver_pyramid_traversal.Dataserver2RootTraversable"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 for="nti.dataserver.interfaces.IDataserverFolder"/>
+
+	<adapter factory="._dataserver_pyramid_traversal.UserTraversable"
+			 provides="zope.traversing.interfaces.ITraversable" />
+
+	<adapter factory="._dataserver_pyramid_traversal.CommunityTraversable"
+			 provides="zope.traversing.interfaces.ITraversable" />
+
+	<adapter factory="._dataserver_pyramid_traversal.DFLTraversable"
+			 provides="zope.traversing.interfaces.ITraversable" />
+
+	<include package=".workspaces" />
+
+	<include package="nti.app.renderers" />
+
+	<subscriber factory=".decorators._EnglishFirstAndLastNameDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<!--
+		 ********
+		 Flagging
+		 ********
+	-->
+	<subscriber factory=".flagging_views.FlagLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<!-- Chat -->
+	<!-- Make messages appear as flaggable -->
+	<class class="nti.chatserver.messageinfo.MessageInfo">
+		<!-- Making it flaggable... -->
+		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+		<!-- ...promises that it can be annotatable -->
+		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+		<!-- NOTE: That gets zope.dublincore involved in updating modification times -->
+	</class>
+
+	<!-- ******** -->
+
+	<!-- Favorites/liking/rating -->
+	<subscriber factory=".liking_views.FavoriteLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".liking_views.LikeLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".rating_views.RatingLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<!-- Other decorators -->
+	<subscriber factory=".ugd_query_views.RepliesLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<adapter factory=".pyramid_renderers_edit_link_decorator.DefaultEditLinkMaker"
+			 provides=".interfaces.IEditLinkMaker"
+			 for="*"/>
+			 
+	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IModeledContent pyramid.interfaces.IRequest" />
+
+	<!-- Decorating the user -->
+	<subscriber factory=".pyramid_renderers_edit_link_decorator.UserEditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".pyramid_renderers_profile_link_decorator.ProfileLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".decorators._AuthenticatedUserLinkAdder"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<!-- This one is really slow in big databases. -->
+	<subscriber factory=".usersearch_views._SharedDynamicMembershipProviderDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				zcml:condition='have shared-dynamic-memberships-external' />
+
+	<adapter factory="._adapters.BrokenExternalObject" />
+	<adapter factory="._adapters.EnclosureExternalObject" />
+
+	<subscriber factory=".decorators._DeletedObjectPlaceholderDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
+	<!-- Assessment -->
+
+	<!-- Events -->
+	<subscriber handler=".application._sync_host_policies" />
+	
+	<subscriber handler=".account_creation_views.link_removed_on_user" />
+	<subscriber handler=".account_creation_views.request_profile_update_on_user_upgrade" />
+
+	<!-- Logon -->
+	<include package="." file="configure_logon.zcml" />
+
+	<!-- Individual field updates -->
+	<!-- Normal traversing of the fields namespace, both with and without request -->
+	<adapter factory="._adapters.GenericModeledContentExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IModeledContent pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="._adapters.UserExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="._adapters.CommunityExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.ICommunity pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="._adapters.DFLExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="._adapters.GenericModeledContentExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IModeledContent"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="._adapters.UserExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="._adapters.CommunityExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.ICommunity"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="._adapters.DFLExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<!-- Object graph traversal -->
+	<!--
+	The default traversable is registered by zope.traversing for no
+	request and zope's request. Here we register it for our request;
+	we do the same with some other things that zope.traversing provides.
+	Note in general that it is necessary to register adapters for both
+	no request and with a request.
+	-->
+
+	<adapter for="* pyramid.interfaces.IRequest"
+			 factory="zope.traversing.adapters.DefaultTraversable"
+			 provides="zope.traversing.interfaces.ITraversable" />
+
+	<adapter name="adapter"
+			 for="* pyramid.interfaces.IRequest"
+			 factory="._dataserver_pyramid_traversal.adapter_request"
+			 provides="zope.traversing.interfaces.ITraversable" />
+
+	<!-- Resources -->
+	<adapter name="resource"
+			 for="* pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 factory="._dataserver_pyramid_traversal.resource" />
+
+	<adapter
+		name="etc"
+		for="* pyramid.interfaces.IRequest"
+		provides="zope.traversing.interfaces.ITraversable"
+		factory="zope.traversing.namespace.etc"
+		/>
+	<!-- attribute is very similar to our field namespace,
+		 and so currently disabled until we need it -->
+	<!--
+	<adapter
+		name="attribute"
+		for="* pyramid.interfaces.IRequest"
+		provides="zope.traversing.interfaces.ITraversable"
+		factory="zope.traversing.namespace.attr"
+		/>
+	-->
+	<!-- Our adapter is better, passing on request -->
+	<!--
+	<adapter
+		name="adapter"
+		for="* pyramid.interfaces.IRequest"
+		provides="zope.traversing.interfaces.ITraversable"
+		factory="zope.traversing.namespace.adapter"
+		/>
+	-->
+	<adapter
+		name="item"
+		for="* pyramid.interfaces.IRequest"
+		provides="zope.traversing.interfaces.ITraversable"
+		factory="zope.traversing.namespace.item"
+		/>
+
+	<adapter
+		name="acquire"
+		for="* pyramid.interfaces.IRequest"
+		provides="zope.traversing.interfaces.ITraversable"
+		factory="zope.traversing.namespace.acquire"
+		/>
+
+	<adapter
+		name="view"
+		for="* pyramid.interfaces.IRequest"
+		provides="zope.traversing.interfaces.ITraversable"
+		factory="zope.traversing.namespace.view"
+		/>
+	<!-- our resource is better, passing on request -->
+	<!--
+	<adapter
+		name="resource"
+		for="* pyramid.interfaces.IRequest"
+		provides="zope.traversing.interfaces.ITraversable"
+		factory="zope.traversing.namespace.resource"
+		/>
+	-->
+
+	<!-- These last three might not make much sense? -->
+	<adapter
+		name="lang"
+		for="* pyramid.interfaces.IRequest"
+		provides="zope.traversing.interfaces.ITraversable"
+		factory="zope.traversing.namespace.lang"
+		/>
+
+	<adapter
+		name="skin"
+		for="* pyramid.interfaces.IRequest"
+		provides="zope.traversing.interfaces.ITraversable"
+		factory="zope.traversing.namespace.skin"
+		/>
+
+	<adapter
+		name="vh"
+		for="* pyramid.interfaces.IRequest"
+		provides="zope.traversing.interfaces.ITraversable"
+		factory="zope.traversing.namespace.vh"
+		/>
+
+	<adapter name="service"
+		 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
+		 factory=".dataserver_pyramid_views._service_path_adapter"
+		 provides="zope.traversing.interfaces.IPathAdapter" />
+
+	<!-- <adapter -->
+	<!--	name="adapter" -->
+	<!--	for=".dataserver_pyramid_views._AbstractObjectResource pyramid.interfaces.IRequest" -->
+	<!--	factory="._dataserver_pyramid_traversal._resource_adapter_request" -->
+	<!--	provides="zope.traversing.interfaces.ITraversable" /> -->
+	<!--
+	Note that this object /implements/ ITraversable, but is not
+	registered. Because it's more specific than *, it would trump all
+	access to the many objects that are ISimpleEnclosureContainer.
+	We're not ready for that yet.
+	<adapter
+		for="nti.dataserver.interfaces.ISimpleEnclosureContainer"
+		factory="._adapters.EnclosureTraversable"
+		provides="zope.traversing.interfaces.ITraversable" />
+	-->
+	<adapter name="enclosures"
+			 for="nti.dataserver.interfaces.ISimpleEnclosureContainer pyramid.interfaces.IRequest"
+			 factory="._dataserver_pyramid_traversal.EnclosureTraversable"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+
+	<!-- Account creation endpoints. -->
+	<adapter name="account.create"
+			 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
+			 factory=".account_creation_views.AccountCreatePathAdapter"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+	<adapter name="account.preflight.create"
+			 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
+			 factory=".account_creation_views.AccountCreatePreflightPathAdapter"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+
+	<!-- Events -->
+	<!-- Stream events -->
+	<subscriber handler="._stream_event_listeners.user_change_broadcaster" />
+	<subscriber handler="._stream_event_listeners.user_change_new_note_emailer" />
+
+	<subscriber handler="._socket_event_listeners.session_disconnected_broadcaster" />
+	<subscriber handler="._socket_event_listeners.send_presence_when_contact_added" />
+
+	<subscriber factory=".dataserver_socketio_views._WSWillUpgradeVeto"
+				provides="geventwebsocket.interfaces.IWSWillUpgradeVeto"
+				for="geventwebsocket.interfaces.IWSWillUpgradeEvent" />
+
+	<!--
+		 FriendsLists have no modification date due to the nested user changing
+		 presence, both individually and as a group.
+	-->
+	<class class="nti.dataserver.users.FriendsList">
+		<implements interface="nti.app.renderers.interfaces.IUnModifiedInResponse" />
+	</class>
+
+	<class class=".workspaces.FriendsListContainerCollection">
+		<implements interface="nti.app.renderers.interfaces.IUnModifiedInResponse" />
+	</class>
+
+	<!-- Forking events -->
+	<!--
+	 Note that if we are not preloading the app, then this doesn't
+	 get registered in the master process and so never gets hit.
+	-->
+	<configure zcml:condition="installed gevent">
+		<subscriber handler=".nti_gunicorn._cache_conn_objects" />
+		<subscriber handler=".nti_gunicorn._replace_storage_on_open" />
+		<subscriber handler=".nti_gunicorn._process_will_fork_listener" />
+		<subscriber handler=".nti_gunicorn._process_did_fork_will_exec" />
+	</configure>
+	<subscriber handler=".application._configure_zodb_tween" />
+	
+	<include package="nti.socketio" />
+	<include package="nti.contentrange" />
+	<include package="nti.contentfragments" />
+	<include package="nti.contentprocessing" />
+
+	<!-- UI Rendering -->
+	<include package="." file="configure_tables.zcml" />
+	<include package="." file="configure_feeds.zcml" />
+	<!--
+	Our page header macro. This could be done with z3c.layout
+	too. Note that view and layer are mandatory because we don't
+	pass good values for those things to pagetemplates currently
+	(see nti.app.pyramid_zope.z3c_pt).
+	-->
+	<z3c:macro
+		template="templates/master_email.pt"
+		name="header"
+		for="zope.interface.Interface"
+		view="zope.interface.Interface"
+		layer="zope.interface.Interface" />
+	<z3c:macro
+		template="templates/master_email.pt"
+		name="style"
+		for="zope.interface.Interface"
+		view="zope.interface.Interface"
+		layer="zope.interface.Interface" />
+
+	<!-- TALES function namespaces  -->
+	<adapter
+		factory=".tales.Currency"
+		provides="zope.traversing.interfaces.IPathAdapter"
+		name="currency" />
+
+	<!-- Content restrictions -->
+	<!--
+	Sadly, the include overrides only works at the top-level (?)
+	So we cannot do this from the file we ourselves include.
+	(We do, but without also doing it here, we get conflict errors)
+	-->
+	<includeOverrides file="restricted_overrides.zcml" />
+
+	<include package="." file="configure_restricted_contenttypes.zcml" />
+
+	<includeOverrides file="overrides.zcml" />
+
+	<include package=".policies" file="configure.zcml" />
+
+	<include package="nti.app.forums" />
+
+	<!-- Hacky temporary stuff -->
+	<adapter name="NextthoughtDotComAdmin"
+			 for="nti.dataserver.interfaces.IUser"
+			 factory=".pyramid_auth.NextthoughtDotComAdmin"
+			 provides="nti.dataserver.interfaces.IGroupMember" />
+
+	<!-- Resolving metadata, used in the implementation of links -->
+	<adapter factory=".metadata_resolvers.ContentMetadataFromContentUnit" />
+
+	<utility name="tag"
+			 factory=".metadata_resolvers.TagURLHandler" />
+
+	<!-- Filters -->
+	<subscriber	factory=".ugd_query_views._DefaultPrincipalUGDFilter"
+				provides=".interfaces.IPrincipalUGDFilter"/>
+
+	<!-- Decorators -->
+	<subscriber factory=".decorators._SiteNameAdder"
+				for=".interfaces.ILogonPong"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._ContainerContextDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IContextAnnotatable" />
+
+	<!-- Additional -->
+	<!-- The ones directly mentioned are part of this distribution 
+		 until they get moved out -->
+	<include package="nti.app.mail" />
+	<include package="nti.app.saml" />
+	<include package="nti.app.types" />
+	<include package="nti.app.users" />
+	<include package="nti.app.recorder" />
+	<include package="nti.app.bulkemail" />
+	<include package="nti.app.extractors" />
+	<include package="nti.app.publishing" />
+	<include package="nti.app.invitations" />
+	<include package="nti.app.notabledata" />
+	<include package="nti.app.contentfile" />
+	<include package="nti.app.contentfolder" />
+	<include package="nti.app.contentsearch" />
+	<include package="nti.app.authentication" />
+	<include package="nti.app.pushnotifications" />
+
+	<!-- Plugin packages -->
+	<include package="z3c.autoinclude" file="meta.zcml" />
+	<includePlugins package="nti.appserver.application.PP_APP" />
+	<includePlugins package="nti.appserver.application.PP_APP_SITES" />
+	<includePlugins package="nti.appserver.application.PP_APP_PRODUCTS" />
+
+</configure>

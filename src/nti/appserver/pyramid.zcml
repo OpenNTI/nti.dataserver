@@ -1,0 +1,100 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   xmlns:zcml="http://namespaces.zope.org/zcml"
+		   xmlns:pyramid="http://pylonshq.com/pyramid">
+
+	<include package="pyramid_zcml" />
+
+	<include package="zope.component" file="meta.zcml" />
+
+	<!-- Stacktraces -->
+	<configure zcml:condition="have devmode">
+		<pyramid:route name="stacktraces"
+					   pattern="/stacktraces" />
+
+		<pyramid:view view="._util.dump_stacks_view"
+					  route_name="stacktraces" />
+	</configure>
+
+	<!-- Search Traversal -->
+	<include package="nti.app.contentsearch" file="pyramid.zcml" />
+
+	<!--
+		 NOTE: The order of registration matters,
+		 especially since we are mixing traversal with pattern dispatch.
+		 In all cases, the first registration wins.
+		 So once we add the traversal beneath /dataserver2/,
+		 no more routes can be added beneath it.
+	-->
+	<!--
+		TODO: The named routes beneath /dataserver2/ should become
+		IPathAdapters or named views. That way we don't have the above
+		problem, plus it's more flexible and distributed.
+	-->
+
+	<!-- Normal Traversal -->
+	<pyramid:route name='objects.generic.traversal'
+				   pattern='/dataserver2/*traverse'
+				   factory='._dataserver_pyramid_traversal.dataserver2_root_resource_factory'>
+		The main traversal route.
+	</pyramid:route>
+
+	<pyramid:view route_name='objects.generic.traversal'
+				  view='nti.appserver.dataserver_pyramid_views._GenericGetView_OFF'
+				  renderer='rest'
+				  permission='zope.View'
+				  request_method='GET'
+				  zcml:condition="have this_is_disabled_because_nothing_seems_to_require_it">
+		We provide a default view that can GET anything we traversed
+		too. (Rethink this, it is too general and we keep having to
+		re-establish it later on anyway.)
+	</pyramid:view>
+
+	<pyramid:scan package='._hacks' />
+	<pyramid:scan package='.liking_views' />
+	<pyramid:scan package='.rating_views' />
+	<pyramid:scan package='.flagging_views' />
+	<pyramid:scan package='.feedback_views' />
+	<pyramid:scan package='.zope_file_views' />
+	<pyramid:scan package='.account_creation_views' />
+	<pyramid:scan package='nti.appserver.usersearch_views' />
+
+	<pyramid:scan package=".link_providers.views" />
+
+	<include package="nti.app.saml" file="pyramid.zcml" />
+	<include package="nti.app.types" file="pyramid.zcml" />
+	<include package="nti.app.forums" file="pyramid.zcml" />
+	<include package="nti.app.recorder" file="pyramid.zcml" />
+	<include package="nti.app.bulkemail" file="pyramid.zcml" />
+	<include package="nti.app.publishing" file="pyramid.zcml" />
+	<include package="nti.app.invitations" file="pyramid.zcml" />
+	<include package="nti.app.contentfile" file="pyramid.zcml" />
+	<include package="nti.app.contentfolder" file="pyramid.zcml" />
+
+	<!-- Util views -->
+	<include package=".utils.k20" file="pyramid.zcml" />
+	<pyramid:scan package='.utils.coppa.coppa_admin_views' />
+	<pyramid:scan package='.utils.coppa.coppa_upgrade_views' />
+	<pyramid:scan package='.utils.link_providers_admin_views' />
+
+	<!-- Exception views -->
+	<pyramid:scan package=".excviews" />
+
+	<!-- Related Context Views -->
+	<pyramid:scan package=".dataserver_pyramid_views" />
+
+	<!-- Additional -->
+	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
+	<include package="nti.app.users" file="pyramid.zcml" />
+	<include package="nti.app.intids" file="pyramid.zcml" />
+	<include package="nti.app.extractors" file="pyramid.zcml" />
+	<include package="nti.app.notabledata" file="pyramid.zcml" />
+	<include package="nti.app.pushnotifications" file="pyramid.zcml" />
+
+	<!-- Plugin packages -->
+	<include package="z3c.autoinclude" file="meta.zcml" />
+	<includePlugins package="nti.appserver.application.PP_APP" file="pyramid.zcml" />
+	<includePlugins package="nti.appserver.application.PP_APP_SITES" file="pyramid.zcml" />
+	<includePlugins package="nti.appserver.application.PP_APP_PRODUCTS" file="pyramid.zcml" />
+
+</configure>

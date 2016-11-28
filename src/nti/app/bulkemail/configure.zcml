@@ -1,0 +1,28 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:z3c="http://namespaces.zope.org/z3c"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<adapter factory=".process.DefaultBulkEmailProcessLoop"
+			 for='*'
+			 name="policy_change_email" />
+
+	<adapter factory=".process.DefaultBulkEmailProcessLoop"
+			 for="*"
+			 name="test_policy_change_email" />
+
+	<adapter factory=".policy_change._PolicyChangeProcessDelegate"
+			 for='* *'
+			 name="policy_change_email" />
+	
+	<adapter factory=".policy_change._PolicyChangeProcessTestingDelegate"
+			 for="* *"
+			 name="test_policy_change_email" />
+
+</configure>

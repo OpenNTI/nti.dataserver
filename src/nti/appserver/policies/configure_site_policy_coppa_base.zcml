@@ -1,0 +1,67 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" />
+
+	<include package="z3c.baseregistry" file="meta.zcml" />
+
+	<utility
+		component=".sites.BASECOPPA"
+		provides="zope.component.interfaces.IComponents"
+		name="genericcoppabase" />
+
+	<registerIn registry=".sites.BASECOPPA">
+
+		<!-- On the MC site, we will be able to provide choices for avatars based simply on the username string -->
+		<adapter factory="nti.dataserver.users.avatar_urls.StringComputedAvatarURLChoices"
+				 for="basestring"
+				 provides="nti.dataserver.users.interfaces.IAvatarChoices" />
+
+		<!--
+			On the MC site, we cannot search for users by anything except their username.
+			Note that for accounts initially created on this site and not modified,
+			this is the same as the alias, but for other accounts (logged on from different sites)
+			this is different than alias. We don't search alias, either, and on that site
+			we force the value returned for alias to be the username as well, even if you
+			have something else defined.
+		-->
+		<adapter factory="nti.appserver._adapters._NoOpUserSearchPolicyAndRealnameStripper"
+				 for="nti.dataserver.interfaces.IUser"
+				 provides="nti.appserver.interfaces.IUserSearchPolicy" />
+
+		<!-- Likewise, we never reveal real names -->
+		<adapter factory="nti.appserver._adapters._NoOpUserSearchPolicyAndRealnameStripper"
+				 provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
+
+		<!-- On the MC site, NO ONE can upload avatars  -->
+		<subscriber factory=".user_policies.MathCountsCapabilityFilter"
+				 for="nti.dataserver.interfaces.IUser"
+				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
+
+		<!--
+			The policy for censoring things from regular, non-coppa
+			users by default isn't enabled. If desired, it can be added in a
+			site configuration.
+		-->
+		<!--
+			<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			for="nti.dataserver.interfaces.IUser *" />
+			<adapter factory=".censor_policies.user_filesystem_censor_policy" />
+		-->
+
+		<!--
+			Except apparently on mathcounts.nextthought.com. There, we
+			censor regardless of who you are or where you are trying
+			to do something. This shortcuts directly to the policy,
+			bypassing location.
+		-->
+		<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+				 provides="nti.contentfragments.interfaces.ICensoredContentPolicy"
+				 for="nti.dataserver.interfaces.IUser *" />
+
+	</registerIn>
+
+</configure>
