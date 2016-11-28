@@ -10,10 +10,6 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
-	<!-- Renderers -->
-	<adapter factory="nti.app.renderers.caching.UseTheRequestContextCacheController"
-			 for=".interfaces.ILibraryCollection" />
-
 	<adapter factory=".ContainerEnumerationWorkspace" />
 
 	<!--

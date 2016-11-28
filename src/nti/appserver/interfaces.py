@@ -62,11 +62,15 @@ zope.deferredimport.deprecatedFrom(
 	"nti.appserver.workspaces.interfaces",
 	"ICollection",
 	"IContainerCollection",
-	"ILibraryCollection",
 	"IWorkspace",
 	"IService",
 	"IUserWorkspace",
 	"IUserService")
+
+zope.deferredimport.deprecatedFrom(
+    "Moved to nti.app.contentlibrary.workspaces.interfaces ",
+    "nti.app.contentlibrary.workspaces.interfaces",
+    "ILibraryCollection")
 
 class ICreatableObjectFilter(interface.Interface):
 	"""

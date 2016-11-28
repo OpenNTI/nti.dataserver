@@ -47,15 +47,6 @@ class IContainerCollection(ICollection):
                        title=u"The backing container",
                        readonly=True)
 
-class ILibraryCollection(ICollection):
-    """
-    An :class:`ICollection` wrapping a :class:`.IContentPackageLibrary`.
-    """
-
-    library = Object(IContentPackageLibrary,
-                      title="The library",
-                      readonly=True)
-
 class IWorkspace(ILocation):
     """
     A workspace (in the Atom sense) is a collection of collections.
@@ -110,3 +101,10 @@ class IUserService(IService):
     """
     user_workspace = Object(IUserWorkspace, title="The main workspace for the user")
     user = Object(IUser, title="The user")
+
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+    "Moved to nti.app.contentlibrary.workspaces.interfaces ",
+    "nti.app.contentlibrary.workspaces.interfaces",
+    "ILibraryCollection")
