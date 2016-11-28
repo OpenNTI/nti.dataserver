@@ -27,8 +27,8 @@ zope.deferredimport.deprecatedFrom(
 	"_ContentUnitPreferences")
 
 zope.deferredimport.deprecatedFrom(
-	"Moved to nti.app.contentlibrary.library_views",
-	"nti.app.contentlibrary.library_views",
+	"Moved to nti.app.contentlibrary.views.library_views",
+	"nti.app.contentlibrary.views.library_views",
 	"PAGE_INFO_MT",
 	"PAGE_INFO_MT_JSON",
 	"find_page_info_view_helper")

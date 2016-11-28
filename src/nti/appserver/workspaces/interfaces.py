@@ -12,8 +12,6 @@ from zope import interface
 
 from zope.location.interfaces import ILocation
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IContainer
 

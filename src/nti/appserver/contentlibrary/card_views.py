@@ -10,5 +10,5 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import zope.deprecation
-zope.deprecation.moved('nti.app.contentlibrary.card_views')
+zope.deprecation.moved('nti.app.contentlibrary.views.card_views')
 
