@@ -26,8 +26,6 @@ from pyramid.interfaces import IRequest
 
 from dolmen.builtins import IIterable
 
-from nti.contentlibrary.interfaces import IContentUnit
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ILinked
@@ -38,7 +36,6 @@ from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 
-from nti.schema.field import Object
 from nti.schema.field import ValidTextLine
 
 IContactEmailRecovery = IContactEmailRecovery  # BBB
@@ -96,7 +93,8 @@ class IUserCapabilityFilter(interface.Interface):
 
 class INTIIDEntry(ILocation, ILastModified, ILinked):
 	contentUnit = interface.Attribute("A content unit (legacy attribute)")
-	
+	contentUnit.setTaggedValue('_ext_excluded_out', True)
+
 zope.deferredimport.deprecatedFrom(
     "Moved to nti.app.contentlibrary.interfaces ",
     "nti.app.contentlibrary.interfaces",
@@ -676,4 +674,16 @@ class IEditLinkMaker(interface.Interface):
 	"""
 	
 	def make(context, request=None, allow_traversable_paths=True, link_method=None):
+		pass
+
+
+# UGD Query
+
+class IUserNTIIDContainers(interface.Interface):
+	"""
+	A utility that given a user and ntiid returns all the user and library
+	containers for that ntiid
+	"""
+	
+	def query(user, ntiid, include_stream=True, stream_only=True):
 		pass

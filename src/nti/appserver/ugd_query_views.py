@@ -38,9 +38,11 @@ from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.interfaces import INamedLinkView
 from nti.appserver.interfaces import IPrincipalUGDFilter
-from nti.appserver.interfaces import get_principal_ugd_filter
+from nti.appserver.interfaces import IUserNTIIDContainers
 from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
+
+from nti.appserver.interfaces import get_principal_ugd_filter
 
 from nti.appserver.pyramid_authorization import is_readable
 
@@ -58,7 +60,6 @@ from nti.dataserver.interfaces import IBookmark
 from nti.dataserver.interfaces import IThreadable
 from nti.dataserver.interfaces import IUsernameIterable
 from nti.dataserver.interfaces import IStreamChangeEvent
-from nti.dataserver.interfaces import IUserNTIIDContainersQuerier
 
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
@@ -1237,7 +1238,7 @@ class RecursiveUGDView(_UGDView):
 		return filters
 
 	def _get_containerids_for_id( self, user, ntiid ):
-		querier = component.queryUtility(IUserNTIIDContainersQuerier)
+		querier = component.queryUtility(IUserNTIIDContainers)
 		if querier is not None:
 			result = querier.query(user, 
 								   ntiid, 
