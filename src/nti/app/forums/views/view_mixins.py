@@ -260,7 +260,7 @@ def get_content(text=None, language='en'):
 
 class ContentResolver(object):
 	
-	def __init__(self, context):
+	def __init__(self, context, default=None):
 		self.context = context
 		
 	@property
