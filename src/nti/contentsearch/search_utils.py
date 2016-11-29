@@ -86,7 +86,7 @@ def _parse_dateRange(args, fields):
 		value = check_time(value) if value is not None else None
 		if value is not None:
 			result = result or DateTimeRange()
-			if idx == 0: # after
+			if idx == 0:  # after
 				result.startTime = value
 			else:  # before
 				result.endTime = value
@@ -139,8 +139,7 @@ def create_queryobject(username, params, clazz=QueryObject):
 	args['username'] = username
 	packages = args['packages'] = list()
 
-	ntiid = params.get('ntiid', None)
-	args['origin'] = ntiid
+	ntiid = args['origin'] = params.get('ntiid', None)
 
 	package_ntiids = _resolve_package_ntiids(username, ntiid)
 	if package_ntiids:
