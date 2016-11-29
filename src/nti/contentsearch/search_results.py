@@ -283,6 +283,12 @@ class SearchResultsList(SchemaConfigured):
 	def _set_items(self, items):
 		self._items = items
 	items = Items = property(_get_items, _set_items)
+	
+	def __getitem__(self, index):
+		return self.items[index]
+
+	def __len__(self):
+		return len(self.items)
 
 # sort
 
