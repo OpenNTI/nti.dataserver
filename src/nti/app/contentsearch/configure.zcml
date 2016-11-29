@@ -29,4 +29,10 @@
 					for="nti.dataserver.interfaces.IUser" />
 	</configure>
 
+	<!-- Decorators -->
+	<subscriber factory=".decorators._SearchResultsDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.contentsearch.interfaces.ISearchResults
+					 pyramid.interfaces.IRequest"/>
+					
 </configure>
