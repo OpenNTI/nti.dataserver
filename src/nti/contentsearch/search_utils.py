@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import re
 import six
+import time
 
 from zope import component
 
@@ -19,7 +20,7 @@ from nti.common.string import to_unicode
 
 from nti.contentprocessing import get_content_translation_table
 
-from nti.contentsearch.content_utils import get_collection_root
+from nti.contentsearch.content_utils import get_collection_root_ntiid
 
 from nti.contentsearch.interfaces import ISearchQuery
 from nti.contentsearch.interfaces import ISearchPackageResolver
@@ -90,11 +91,13 @@ def _parse_dateRange(args, fields):
 			else:  # before
 				result.endTime = value
 
-	if 		result is not None \
-		and result.endTime is not None \
-		and result.startTime is not None \
-		and result.endTime < result.startTime:
-		raise ValueError("Invalid time interval")
+	if result is not None:
+		if result.endTime is None:
+			result.endTime = time.time()
+		if result.startTime is None:
+			result.startTime = 0
+		if result.endTime < result.startTime:
+			raise ValueError("Invalid time interval")
 	return result
 
 def _is_type_oid(ntiid):
@@ -142,13 +145,9 @@ def create_queryobject(username, params, clazz=QueryObject):
 	package_ntiids = _resolve_package_ntiids(username, ntiid)
 	if package_ntiids:
 		for pid in package_ntiids:
-			root = get_collection_root(pid)
-			if root is not None:
-				root_ntiid = root.ntiid
+			root_ntiid = get_collection_root_ntiid(pid)
+			if root_ntiid is not None:
 				packages.append(root_ntiid)
-			else:
-				logger.debug("Could not find collection for ntiid '%s'" % pid)
-
 	args['packages'] = sorted(set(args['packages']))  # predictable order
 
 	accept = args.pop('accept', None)
@@ -167,6 +166,12 @@ def create_queryobject(username, params, clazz=QueryObject):
 	args['creationTime'] = creationTime
 	args['modificationTime'] = modificationTime
 	args['applyHighlights'] = is_true(args.get('applyHighlights', True))
+
+	# ILastModified fields
+	if creationTime is not None and 'createdTime' not in context:
+		args['createdTime'] = (creationTime.startTime, creationTime.endTime)
+	if modificationTime is not None and 'lastModified' not in context:
+		args['lastModified'] = (modificationTime.startTime, modificationTime.endTime)
 
 	result = clazz(**args)
 	return result

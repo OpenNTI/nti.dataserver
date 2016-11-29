@@ -22,6 +22,8 @@
 
 	<!-- Search pacakge resolvers -->
 	<configure zcml:condition="installed nti.contentlibrary">
+		<utility factory=".library._DefaultRootPackageResolver" />
+					
 		<subscriber factory=".library._DefaultSearchPacakgeResolver"
 					provides="nti.contentsearch.interfaces.ISearchPackageResolver"
 					for="nti.dataserver.interfaces.IUser" />

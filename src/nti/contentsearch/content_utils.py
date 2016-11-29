@@ -13,33 +13,18 @@ from zope import component
 
 from nti.common.string import to_unicode
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentsearch.interfaces import IRootPackageResolver
 
 from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import get_content_translation_table
 
-def get_library(library=None):
-	if library is None:
-		return component.queryUtility(IContentPackageLibrary)
-	return library
+def get_collection_root(ntiid):
+	resolver = component.queryUtility(IRootPackageResolver)
+	return resolver.resolver(ntiid) if resolver is not None else None
 
-def get_ntiid_path(ntiid, library=None):
-	result = ()
-	library = get_library(library)
-	if library and ntiid:
-		paths = library.pathToNTIID(ntiid)
-		result = tuple(p.ntiid for p in paths) if paths else ()
-	return result
-
-def get_collection_root(ntiid, library=None):
-	library = get_library(library)
-	paths = library.pathToNTIID(ntiid) if library else None
-	return paths[0] if paths else None
-
-def get_collection_root_ntiid(ntiid, library=None):
-	croot = get_collection_root(ntiid, library)
-	result = croot.ntiid if croot else None
-	return result
+def get_collection_root_ntiid(ntiid):
+	croot = get_collection_root(ntiid)
+	return croot.ntiid if croot else None
 
 def get_content(text=None, language='en'):
 	result = ()

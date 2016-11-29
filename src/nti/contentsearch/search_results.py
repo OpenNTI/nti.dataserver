@@ -22,6 +22,7 @@ from zope.container.contained import Contained
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.common.iterables import isorted
+
 from nti.common.string import to_unicode
 
 from nti.contentsearch.interfaces import ISearchResults

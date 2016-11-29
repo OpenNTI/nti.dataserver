@@ -10,10 +10,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
 
 from nti.contentlibrary.interfaces import IContentPackageBundle
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
+from nti.contentsearch.interfaces import IRootPackageResolver
 from nti.contentsearch.interfaces import ISearchPackageResolver
 
 from nti.ntiids.ntiids import ROOT
@@ -39,3 +42,20 @@ class _DefaultSearchPacakgeResolver(object):
 				result = (ntiid,)
 		return result
 
+@interface.implementer(IRootPackageResolver)
+class _DefaultRootPackageResolver(object):
+
+	def __init__(self, *args):
+		pass
+
+	def get_ntiid_path(self, ntiid):
+		library = component.queryUtility(IContentPackageLibrary)
+		if library and ntiid:
+			paths = library.pathToNTIID(ntiid)
+			return tuple(p.ntiid for p in paths) if paths else ()
+		return ()
+
+	def resolve(self, ntiid):
+		library = component.queryUtility(IContentPackageLibrary)
+		paths = library.pathToNTIID(ntiid) if library else None
+		return paths[0] if paths else None
