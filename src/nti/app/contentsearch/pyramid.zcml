@@ -42,16 +42,4 @@
 				  request_method='GET'>
 	</pyramid:view>
 
-	<pyramid:route name='highlight.searchhits'
-				   pattern='/dataserver2/users/{user}/Search/HighlightSearchHits'
-				   traverse='/dataserver2/users/{user}'>
-	</pyramid:route>
-
-	<pyramid:view route_name='highlight.searchhits'
-				  view='.views.HighlightSearchHitsView'
-				  renderer='rest'
-				  permission='nti.actions.search'
-				  request_method='POST'>
-	</pyramid:view>
-
 </configure>

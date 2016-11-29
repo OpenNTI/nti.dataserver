@@ -11,16 +11,12 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.common.string import to_unicode
 
-from nti.contentprocessing.interfaces import INgramComputer
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import get_content_translation_table
-
-from .common import to_list
-
-from .interfaces import IContentResolver
 
 def get_library(library=None):
 	if library is None:
@@ -52,21 +48,4 @@ def get_content(text=None, language='en'):
 		table = get_content_translation_table(language)
 		result = tokenize_content(text.translate(table), language)
 	result = ' '.join(result)
-	return unicode(result)
-
-def is_covered_by_ngram_computer(term, language='en'):
-	tokens = tokenize_content(term)
-	__traceback_info__ = term, tokens
-	ncomp = component.getUtility(INgramComputer, name=language)
-	min_word = min(map(len, tokens)) if tokens else 0
-	return min_word >= ncomp.minsize
-
-def resolve_content_parts(data):
-	result = []
-	items = to_list(data)
-	for item in items or ():
-		adapted = IContentResolver(item, None)
-		if adapted:
-			result.append(adapted.content)
-	result = u' '.join(x for x in result if x is not None)
-	return result
+	return to_unicode(result)

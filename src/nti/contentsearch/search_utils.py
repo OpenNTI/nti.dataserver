@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Search utils.
-
 .. $Id$
 """
 
@@ -11,104 +9,28 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import os
 import re
-import gevent
-import functools
+import six
 
 from zope import component
 
 from nti.common.string import is_true
 from nti.common.string import to_unicode
 
-from nti.dataserver.interfaces import IDataserverTransactionRunner
-
-from nti.dataserver.users import User
-
-from nti.ntiids.ntiids import TYPE_OID
-from nti.ntiids.ntiids import is_ntiid_of_type
-
-from nti.contentsearch.common import sort_search_types
-from nti.contentsearch.common import get_indexable_types
-from nti.contentsearch.common import get_type_from_mimetype
-
-from nti.contentsearch.constants import invalid_type_
+from nti.contentprocessing import get_content_translation_table
 
 from nti.contentsearch.content_utils import get_collection_root
-from nti.contentsearch.content_utils import get_content_translation_table
 
 from nti.contentsearch.interfaces import ISearchQuery
-from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch.interfaces import ISearchPackageResolver
 
 from nti.contentsearch.search_query import QueryObject
 from nti.contentsearch.search_query import DateTimeRange
 
-def _get_current_request():
-	result = None
-	try:
-		from pyramid.threadlocal import get_current_request
-		result = get_current_request()
-	except ImportError:
-		pass
-	return result
+from nti.dataserver.users import User
 
-def _get_site_names(query=None):
-	result =  getattr(query, 'site_names', None) 
-	if result is None:
-		request = _get_current_request()
-		result = getattr(request, 'possible_site_names', None)
-	return  ('',) if not result else result 
-
-def gevent_spawn(func=None, **kwargs):
-	assert func is not None
-
-	# prepare function call
-	new_callable = functools.partial(func, **kwargs)
-
-	query = kwargs.get('query', None)
-	site_names = _get_site_names(query)
-
-	def _runner():
-		transactionRunner = component.getUtility(IDataserverTransactionRunner)
-		transactionRunner = functools.partial(transactionRunner,
-											  site_names=site_names,
-											  side_effect_free=True)
-		transactionRunner(new_callable)
-
-	# user the avaible spawn function
-	request = _get_current_request()
-	greenlet = 	request.nti_gevent_spawn(run=_runner) if request is not None \
-				else gevent.spawn(_runner)
-
-	return greenlet
-
-def register_content(package=None, indexname=None, indexdir=None, ntiid=None, indexmanager=None):
-	indexmanager = indexmanager or component.queryUtility(IIndexManager)
-	if package is None:
-		assert indexname, 'must provided and index name'
-		assert indexdir, 'must provided and index location directory'
-		ntiid = ntiid or indexname
-	else:
-		ntiid = ntiid or package.ntiid
-		indexdir = indexdir or package.make_sibling_key('indexdir').absolute_path
-		indexname = os.path.basename(package.get_parent_key().absolute_path)  # TODO: So many assumptions here
-
-	if indexmanager is None:
-
-		return
-
-	try:
-		__traceback_info__ = indexdir, indexmanager, indexname, ntiid
-		if indexmanager.register_content(indexname=indexname, indexdir=indexdir, ntiid=ntiid):
-			logger.debug('Added index %s at %s to indexmanager', indexname, indexdir)
-		else:
-			logger.warn('Failed to add index %s at %s to indexmanager', indexname, indexdir)
-	except ImportError:  # pragma: no cover
-		# Adding a book on disk loads the Whoosh indexes, which
-		# are implemented as pickles. Incompatible version changes
-		# lead to unloadable pickles. We've seen this manifest as ImportError
-		logger.exception("Failed to add book search %s", indexname)
+from nti.ntiids.ntiids import TYPE_OID
+from nti.ntiids.ntiids import is_ntiid_of_type
 
 _extractor_pe = re.compile('[?*]*(.*)')
 
@@ -131,7 +53,8 @@ def clean_search_query(query, language='en'):
 
 	return result
 
-accepted_keys = {'ntiid', 'accept', 'exclude', 'createdAfter', 'createdBefore',
+accepted_keys = {'ntiid', 'accept',
+				 'createdAfter', 'createdBefore',
 				 'modifiedAfter', 'modifiedBefore'}
 
 def get_batch_size_start(params):
@@ -162,13 +85,15 @@ def _parse_dateRange(args, fields):
 		value = check_time(value) if value is not None else None
 		if value is not None:
 			result = result or DateTimeRange()
-			if idx == 0:  # after
+			if idx == 0: # after
 				result.startTime = value
 			else:  # before
 				result.endTime = value
 
-	if 	result is not None and result.endTime is not None and \
-		result.startTime is not None and result.endTime < result.startTime:
+	if 		result is not None \
+		and result.endTime is not None \
+		and result.startTime is not None \
+		and result.endTime < result.startTime:
 		raise ValueError("Invalid time interval")
 	return result
 
@@ -184,8 +109,7 @@ def _resolve_package_ntiids(username, ntiid=None):
 			result.update(ntiids or ())
 	return sorted(result)  # predictable order for digest
 
-def create_queryobject(username, params):
-	indexable_type_names = get_indexable_types()
+def create_queryobject(username, params, clazz=QueryObject):
 	username = username or params.get('username', None)
 
 	context = {}
@@ -195,8 +119,9 @@ def create_queryobject(username, params):
 	for name in list(args.keys()):
 		if name not in ISearchQuery and name not in accepted_keys:
 			value = args[name]
-			if value:
-				context[to_unicode(name)] = to_unicode(value)
+			if value is not None:
+				value = to_unicode(value) if isinstance(value, six.string_types) else value
+				context[to_unicode(name)] = value
 			del args[name]
 	# remove to be resetted
 	for name in ('ntiid', 'term', 'username'):
@@ -216,8 +141,6 @@ def create_queryobject(username, params):
 
 	package_ntiids = _resolve_package_ntiids(username, ntiid)
 	if package_ntiids:
-		# make sure we register the location where the search query is being made
-		args['location'] = package_ntiids[0] if _is_type_oid(ntiid) else ntiid
 		for pid in package_ntiids:
 			root = get_collection_root(pid)
 			if root is not None:
@@ -225,28 +148,16 @@ def create_queryobject(username, params):
 				packages.append(root_ntiid)
 			else:
 				logger.debug("Could not find collection for ntiid '%s'" % pid)
-	elif ntiid:
-		args['location'] = ntiid
 
 	args['packages'] = sorted(set(args['packages']))  # predictable order
 
 	accept = args.pop('accept', None)
-	exclude = args.pop('exclude', None)
 	if accept:
-		aset = set(accept.split(','))
-		if '*/*' not in aset:
-			aset = {get_type_from_mimetype(e) for e in aset}
-			aset.discard(None)
-			aset = aset if aset else (invalid_type_,)
-			args['searchOn'] = sort_search_types(aset)
-	elif exclude:
-		eset = set(exclude.split(','))
-		if '*/*' in eset:
-			args['searchOn'] = (invalid_type_,)
-		else:
-			eset = {get_type_from_mimetype(e) for e in eset}
-			eset.discard(None)
-			args['searchOn'] = sort_search_types(indexable_type_names - eset)
+		accept = set(accept.split(','))
+		if '*/*' not in accept:
+			accept.discard(u'')
+			accept.discard(None)
+			args['searchOn'] = sorted(accept)
 
 	args['batchSize'], args['batchStart'] = get_batch_size_start(args)
 
@@ -257,4 +168,5 @@ def create_queryobject(username, params):
 	args['modificationTime'] = modificationTime
 	args['applyHighlights'] = is_true(args.get('applyHighlights', True))
 
-	return QueryObject(**args)
+	result = clazz(**args)
+	return result

@@ -17,9 +17,9 @@ from hamcrest import greater_than_or_equal_to
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch.constants import invalid_type_
-from nti.contentsearch.search_utils import create_queryobject
 from nti.contentsearch import interfaces as search_interfaces
+
+from nti.contentsearch.search_utils import create_queryobject
 
 from nti.contentsearch.tests import SharedConfiguringTestLayer
 
@@ -44,10 +44,6 @@ class TestSearchUtils(unittest.TestCase):
 		assert_that(qo.batchStart, is_(0))
 		assert_that(sorted(qo.searchOn), is_(sorted((u'note', u'post'))))
 
-		params = {'accept':'application/vnd.nextthought.foo'}
-		qo = create_queryobject('harribel@bleach.com', params)
-		assert_that(qo.searchOn, is_([invalid_type_]))
-
 	@WithMockDSTrans
 	def test_create_query_object_exclude(self):
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
@@ -62,10 +58,6 @@ class TestSearchUtils(unittest.TestCase):
 		assert_that(qo.batchSize, is_(100))
 		assert_that(qo.batchStart, is_(3))
 		assert_that(qo.searchOn, has_length(greater_than_or_equal_to(7)))
-
-		params = {'exclude':'*/*'}
-		qo = create_queryobject('ulquiorra@bleach.com', params)
-		assert_that(qo.searchOn, is_((invalid_type_,)))
 
 	@WithMockDSTrans
 	def test_create_query_object_badnumbers(self):

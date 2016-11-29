@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-search internalization
-
 .. $Id$
 """
 
@@ -11,36 +9,26 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
-
-from zope import schema
-from zope import interface
 from zope import component
+from zope import interface
+
+from nti.contentsearch.interfaces import ISearchQuery
+from nti.contentsearch.interfaces import ISearchResults
+from nti.contentsearch.interfaces import ISuggestResults
+from nti.contentsearch.interfaces import ISearchHitMetaData
 
 from nti.externalization.datastructures import InterfaceObjectIO
+
 from nti.externalization.interfaces import IInternalObjectUpdater
+from nti.externalization.interfaces import StandardExternalFields
 
-from .interfaces import ISearchQuery
-from .interfaces import ISearchResults
-from .interfaces import ISuggestResults
-from .interfaces import ISearchHitMetaData
+QUERY = 'Query'
+SEARCH_QUERY = 'SearchQuery'
+TOTAL = StandardExternalFields.TOTAL
+ITEMS = StandardExternalFields.ITEMS
 
-from .constants import ITEMS, HITS, SUGGESTIONS, QUERY, SEARCH_QUERY
-
-def _readonly(iface):
-	result = set()
-	for name in schema.getFieldNames(iface):
-		if iface[name].readonly:
-			result.add(name)
-	return result
-
-def _prune_readonly(parsed, iface):
-	for name in _readonly(iface):
-		if name in parsed:
-			del parsed[name]
-
-@interface.implementer(IInternalObjectUpdater)
 @component.adapter(ISearchQuery)
+@interface.implementer(IInternalObjectUpdater)
 class _QueryObjectUpdater(object):
 
 	__slots__ = ('obj',)
@@ -49,12 +37,11 @@ class _QueryObjectUpdater(object):
 		self.obj = obj
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
-		_prune_readonly(parsed, ISearchQuery)
 		result = InterfaceObjectIO(self.obj, ISearchQuery).updateFromExternalObject(parsed)
 		return result
 
-@interface.implementer(IInternalObjectUpdater)
 @component.adapter(ISearchHitMetaData)
+@interface.implementer(IInternalObjectUpdater)
 class _SearchHitMetaDataUpdater(object):
 
 	__slots__ = ('obj',)
@@ -63,17 +50,9 @@ class _SearchHitMetaDataUpdater(object):
 		self.obj = obj
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
-		_prune_readonly(parsed, ISearchHitMetaData)
 		result = InterfaceObjectIO(self.obj,
 								   ISearchHitMetaData).updateFromExternalObject(parsed)
 		return result
-
-def _transform_query(parsed):  # legacy query spec
-	if SEARCH_QUERY in parsed:
-		parsed[QUERY] = parsed[SEARCH_QUERY]
-	elif QUERY in parsed and isinstance(parsed[QUERY], six.string_types):
-		query = ISearchQuery(parsed[QUERY])
-		parsed[QUERY] = query
 
 @interface.implementer(IInternalObjectUpdater)
 class _SearchResultsUpdater(object):
@@ -85,16 +64,20 @@ class _SearchResultsUpdater(object):
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		if ITEMS in parsed:
-			parsed[HITS] = parsed[ITEMS]
-			del parsed[ITEMS]
+			parsed['Hits'] = parsed.pop(ITEMS, ())
 
-		_transform_query(parsed)
+		if TOTAL in parsed:
+			parsed['NumFound'] = parsed.pop(TOTAL, None)
+
+		if SEARCH_QUERY in parsed:
+			parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
+	
 		result = InterfaceObjectIO(self.obj, ISearchResults).updateFromExternalObject(parsed)
 
 		# make sure we restore the query object to the hits
 		for hit in self.obj._raw_hits():
 			hit.Query = self.obj.Query
-
+			hit.__parent__ = result
 		return result
 
 @interface.implementer(IInternalObjectUpdater)
@@ -108,10 +91,9 @@ class _SuggestResultsUpdater(object):
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		if ITEMS in parsed:
-			parsed[SUGGESTIONS] = parsed[ITEMS]
-			del parsed[ITEMS]
-
-		_transform_query(parsed)
+			parsed['Suggestions'] = parsed.pop(ITEMS, ())
+		if SEARCH_QUERY in parsed:
+			parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
 		result = InterfaceObjectIO(self.obj,
 								   ISuggestResults).updateFromExternalObject(parsed)
 		return result

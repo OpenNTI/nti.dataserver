@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
 
 from pyramid.threadlocal import get_current_request
@@ -33,6 +34,7 @@ from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.property.property import Lazy
 
+@component.adapter(IUserGeneratedData)
 @interface.implementer(ISearchHitPostProcessingPredicate)
 class _AccessibleSearchPostProcessingPredicate(object):
 	"""
@@ -73,7 +75,7 @@ class _AccessibleSearchPostProcessingPredicate(object):
 		result = bool(result) and not IDeletedObjectPlaceholder.providedBy(ugd_item)
 		return result
 
-	def allow(self, item, unused_score, query):
+	def allow(self, item, score, query):
 		if IUserGeneratedData.providedBy(item):
 			result = self._check_ugd_access(item)
 		else:

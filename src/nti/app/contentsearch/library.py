@@ -5,6 +5,7 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -21,7 +22,7 @@ from nti.ntiids.ntiids import is_ntiid_of_type
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 @interface.implementer(ISearchPackageResolver)
-class DefaultSearchPacakgeResolver(object):
+class _DefaultSearchPacakgeResolver(object):
 
 	def __init__(self, *args):
 		pass
@@ -37,3 +38,4 @@ class DefaultSearchPacakgeResolver(object):
 			else:
 				result = (ntiid,)
 		return result
+
