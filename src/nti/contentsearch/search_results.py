@@ -160,10 +160,12 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
 	metadata = alias('HitMetaData')
 
 	def __init__(self, *args, **kwargs):
+		hits = kwargs.pop('Hits', None)
 		super(SearchResults, self).__init__(*args, **kwargs)
 		self._count = 0
 		self._hits = []
 		self._seen = set()
+		self.extend(hits or ())
 		self.HitMetaData = SearchHitMetaData()
 
 	def _raw_hits(self):
@@ -246,14 +248,16 @@ class SuggestResults(SearchResultsMixin, SchemaConfigured):
 	_words = ()
 
 	def __init__(self, *args, **kwargs):
+		suggestions = kwargs.pop('Suggestions', None)
 		super(SuggestResults, self).__init__(*args, **kwargs)
 		self._words = set()
+		self.extend(suggestions or ())
 
 	def _get_words(self):
 		return sorted(self._words)
 	def _set_words(self, words):
 		self._words.update(words or ())
-	suggestions = Suggestions = Hits = hits = property(_get_words, _set_words)
+	suggestions = Suggestions = property(_get_words, _set_words)
 
 	def add(self, item):
 		if isinstance(item, six.string_types):

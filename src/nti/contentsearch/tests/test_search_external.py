@@ -35,12 +35,12 @@ from nti.contentsearch.search_query import QueryObject
 from nti.contentsearch.search_query import DateTimeRange
 from nti.contentsearch import interfaces as search_interfaces
 
-import nti.dataserver.tests.mock_dataserver as mock_dataserver
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-
 from nti.contentsearch.tests import zanpakuto_commands
-from nti.contentsearch.tests import domain as domain_words
+
 from nti.contentsearch.tests import SharedConfiguringTestLayer
+
+from nti.dataserver.tests import mock_dataserver as mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 class TestSearchExternal(unittest.TestCase):
 
@@ -122,31 +122,31 @@ class TestSearchExternal(unittest.TestCase):
 # 		new_suggestions = list(new_results.Suggestions)
 # 		assert_that(new_suggestions, has_length(len(old_suggestions)))
 # 		assert_that(new_suggestions, equal_to(old_suggestions))
-# 
-# 	@WithMockDSTrans
-# 	def test_search_query(self):
-# 		creationTime = DateTimeRange(startTime=0, endTime=100)
-# 		qo = QueryObject.create("sode no shirayuki", sortOn='relevance', searchOn=('note',),
-# 								creationTime=creationTime, context={'theotokos':'Mater Dei'})
-# 		# externalize
-# 		eo = toExternalObject(qo)
-# 		assert_that(eo, has_entry(u'Class', u'SearchQuery'))
-# 		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.query'))
-# 		assert_that(eo, has_entry(u'sortOn', u'relevance'))
-# 		assert_that(eo, has_entry(u'term', u'sode no shirayuki'))
-# 		assert_that(eo, has_entry(u'searchOn', is_([u'note'])))
-# 		assert_that(eo, has_entry(u'context', has_entry('theotokos','Mater Dei')))
-# 		assert_that(eo, has_key(u'creationTime'))
-# 		entry = eo['creationTime']
-# 		assert_that(entry, has_entry(u'startTime', is_(0)))
-# 		assert_that(entry, has_entry(u'endTime', is_(100)))
-# 
-# 		# internalize
-# 		factory = find_factory_for(eo)
-# 		new_query = factory()
-# 		update_from_external_object(new_query, eo)
-# 		assert_that(new_query, has_property('term', 'sode no shirayuki'))
-# 		assert_that(new_query, has_property('sortOn', 'relevance'))
-# 		assert_that(new_query, has_property('searchOn', is_(['note'])))
-# 		assert_that(new_query, has_property('creationTime', is_(equal_to(qo.creationTime))))
-# 		assert_that(new_query, has_property('context', has_entry('theotokos','Mater Dei')))
+
+	@WithMockDSTrans
+	def test_search_query(self):
+		creationTime = DateTimeRange(startTime=0, endTime=100)
+		qo = QueryObject(term="sode no shirayuki", sortOn='relevance', searchOn=('note',),
+						 creationTime=creationTime, context={'theotokos':'Mater Dei'})
+		# externalize
+		eo = toExternalObject(qo)
+		assert_that(eo, has_entry(u'Class', u'SearchQuery'))
+		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.query'))
+		assert_that(eo, has_entry(u'sortOn', u'relevance'))
+		assert_that(eo, has_entry(u'term', u'sode no shirayuki'))
+		assert_that(eo, has_entry(u'searchOn', is_([u'note'])))
+		assert_that(eo, has_entry(u'context', has_entry('theotokos','Mater Dei')))
+		assert_that(eo, has_key(u'creationTime'))
+		entry = eo['creationTime']
+		assert_that(entry, has_entry(u'startTime', is_(0)))
+		assert_that(entry, has_entry(u'endTime', is_(100)))
+
+		# internalize
+		factory = find_factory_for(eo)
+		new_query = factory()
+		update_from_external_object(new_query, eo)
+		assert_that(new_query, has_property('term', 'sode no shirayuki'))
+		assert_that(new_query, has_property('sortOn', 'relevance'))
+		assert_that(new_query, has_property('searchOn', is_(['note'])))
+		assert_that(new_query, has_property('creationTime', is_(equal_to(qo.creationTime))))
+		assert_that(new_query, has_property('context', has_entry('theotokos','Mater Dei')))
