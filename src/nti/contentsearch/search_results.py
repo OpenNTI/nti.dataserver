@@ -155,7 +155,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
 	_sorted = False
 	HitMetaData = None
 
-	total = alias('NumFound')
+	Total = alias('NumFound')
 	metadata = alias('HitMetaData')
 
 	def __init__(self, *args, **kwargs):
