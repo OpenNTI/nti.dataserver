@@ -348,6 +348,12 @@ class ISearchResults(IBaseSearchResults, ILastModified):
 	def __iadd__(other):
 		pass
 
+	def __len__():
+		pass
+
+	def __iter__():
+		pass
+
 class ISuggestResults(IBaseSearchResults):
 
 	Suggestions = IndexedIterable(
@@ -367,6 +373,11 @@ class ISuggestResults(IBaseSearchResults):
 
 	add_suggestions = add
 
+	def __len__():
+		pass
+
+	def __iter__():
+		pass
 
 class ISearchResultsList(IIterable, IFiniteSequence):
 
