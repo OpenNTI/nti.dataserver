@@ -727,8 +727,8 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
 					return _create_failure_response(request,
 													error_factory=hexc.HTTPForbidden)
 
-				user_data = request.environ.get('REMOTE_USER_DATA', {})
-				__traceback_info__ = user_data, remote_user.username, desired_username
+				
+				user_data = {}
 				user_data['username'] = str(remote_user.username.lower())
 				request.environ['REMOTE_USER_DATA'] = user_data
 
