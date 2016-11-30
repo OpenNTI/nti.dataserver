@@ -20,20 +20,6 @@
 				provides="nti.contentsearch.interfaces.ISearchHitPredicate"
 				for="nti.dataserver.interfaces.IUserGeneratedData" />
 
-	<!-- Search pacakge resolvers -->
-	<configure zcml:condition="installed nti.contentlibrary">
-		<utility factory=".library._DefaultRootPackageResolver" />
-					
-		<subscriber factory=".library._DefaultSearchPacakgeResolver"
-					provides="nti.contentsearch.interfaces.ISearchPackageResolver"
-					for="nti.dataserver.interfaces.IUser" />
-					
-		<subscriber factory=".library._ContentUnitSearchHitPredicate"
-				provides="nti.contentsearch.interfaces.ISearchHitPredicate"
-				for="nti.contentlibrary.interfaces.IContentUnit" />
-
-	</configure>
-
 	<!-- Decorators -->
 	<subscriber factory=".decorators._SearchResultsDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
