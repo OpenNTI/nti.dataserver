@@ -17,7 +17,7 @@
 
 	<!-- Search filters -->
 	<subscriber factory=".predicates._AccessibleSearchPostProcessingPredicate"
-				provides="nti.contentsearch.interfaces.ISearchHitPostProcessingPredicate"
+				provides="nti.contentsearch.interfaces.ISearchHitPredicate"
 				for="nti.dataserver.interfaces.IUserGeneratedData" />
 
 	<!-- Search pacakge resolvers -->
@@ -27,6 +27,11 @@
 		<subscriber factory=".library._DefaultSearchPacakgeResolver"
 					provides="nti.contentsearch.interfaces.ISearchPackageResolver"
 					for="nti.dataserver.interfaces.IUser" />
+					
+		<subscriber factory=".library._AccessibleSearchPostProcessingPredicate"
+				provides="nti.contentsearch.interfaces.ISearchHitPredicate"
+				for="nti.contentlibrary.interfaces.IContentUnit" />
+
 	</configure>
 
 	<!-- Decorators -->

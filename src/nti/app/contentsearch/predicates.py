@@ -19,7 +19,9 @@ from nti.app.authentication import get_remote_user
 
 from nti.appserver.pyramid_authorization import has_permission
 
-from nti.contentsearch.interfaces import ISearchHitPostProcessingPredicate
+from nti.contentsearch.interfaces import ISearchHitPredicate
+
+from nti.contentsearch.predicates import DefaultSearchHitPredicate
 
 from nti.dataserver.authentication import effective_principals
 
@@ -35,15 +37,8 @@ from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 from nti.property.property import Lazy
 
 @component.adapter(IUserGeneratedData)
-@interface.implementer(ISearchHitPostProcessingPredicate)
-class _AccessibleSearchPostProcessingPredicate(object):
-	"""
-	A `ISearchHitPostProcessingPredicate` that only allows readable
-	items through.
-	"""
-
-	def __init__(self, *args):
-		pass
+@interface.implementer(ISearchHitPredicate)
+class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 
 	@Lazy
 	def request(self):
@@ -51,17 +46,19 @@ class _AccessibleSearchPostProcessingPredicate(object):
 
 	@Lazy
 	def user(self):
-		return get_remote_user(self.request)
+		return get_remote_user(self.principal.id) if self.principal is not None else None
 
 	@Lazy
 	def effective_principals(self):
-		return effective_principals(self.user.username, everyone=False, skip_cache=True)
+		return effective_principals(self.user.username,
+									everyone=False, 
+									skip_cache=True) if self.user is not None else ()
 
 	def _check_ugd_access(self, ugd_item):
 		result = False
-		if IReadableShared.providedBy(ugd_item):
+		if IReadableShared.providedBy(ugd_item) and self.user is not None:
 			result = ugd_item.isSharedDirectlyWith(self.user)
-		if not result:
+		if not result and self.user is not None:
 			to_check = ugd_item
 			if IHeadlinePost.providedBy(ugd_item):
 				to_check = to_check.__parent__

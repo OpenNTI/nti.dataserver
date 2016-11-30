@@ -275,17 +275,6 @@ class ISearchHitPredicate(interface.Interface):
 		allow a search hit into the results
 		"""
 
-class ISearchHitPostProcessingPredicate(interface.Interface):
-	"""
-	Search hit predicate filter meant to run after `ISearchHitPredicate`
-	subscribers.
-	"""
-	# XXX: Dupe ISearchHitPredicate for now
-	def allow(item, score=1.0, query=None):
-		"""
-		allow a search hit into the results
-		"""
-
 class ISearchHitMetaData(ILastModified):
 
 	TypeCount = Dict(ValidTextLine(title='type'),
