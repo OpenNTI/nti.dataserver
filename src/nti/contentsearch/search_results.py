@@ -41,8 +41,8 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 def get_search_hit_predicate(item):
 	predicates = list(component.subscribers((item,), ISearchHitPredicate))
-	def uber_filter(item, score):
-		return item is not None and all((p.allow(item, score) for p in predicates))
+	def uber_filter(item, score, query):
+		return item is not None and all((p.allow(item, score, query) for p in predicates))
 	return uber_filter
 
 def is_hit_allowed(item, score=1.0, query=None):
