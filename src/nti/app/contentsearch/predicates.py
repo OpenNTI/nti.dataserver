@@ -55,8 +55,10 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 									skip_cache=True) if self.user is not None else ()
 
 	def allow(self, item, score, query):
-		result = False
-		if self.user is not None:
+		if self.principal is None:
+			return True
+		else:
+			result = False
 			if IReadableShared.providedBy(item):
 				result = item.isSharedDirectlyWith(self.user)
 			if not result:
@@ -71,4 +73,4 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 				else:
 					result = has_permission(ACT_READ, item, self.request)
 			result = bool(result) and not IDeletedObjectPlaceholder.providedBy(item)
-		return result
+			return result
