@@ -35,7 +35,7 @@ from nti.dataserver.contenttypes.forums.board import DEFAULT_BOARD_NAME
 
 from nti.dataserver.contenttypes.forums.forum import DEFAULT_PERSONAL_BLOG_NAME
 
-from nti.dataserver.contenttypes.forums.interfaces import IForum
+from nti.dataserver.contenttypes.forums.interfaces import IForum, IBoard
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
@@ -53,6 +53,8 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.singleton import SingletonDecorator
 
 from nti.links.links import Link
+
+from nti.traversal.traversal import find_interface
 
 LINKS = StandardExternalFields.LINKS
 
@@ -159,7 +161,7 @@ class ForumObjectContentsLinkProvider(AbstractAuthenticatedRequestAwareDecorator
 		# without considering acquired info (NTIIDs from the User would mess
 		# up rendering)/
 		context = aq_base(context)
-		if context.__parent__ is None: # pragma: no cover
+		if context.__parent__ is None:  # pragma: no cover
 			return
 
 		# TODO: This can be generalized by using the component
@@ -180,7 +182,7 @@ class ForumObjectContentsLinkProvider(AbstractAuthenticatedRequestAwareDecorator
 		# our timestamp is also modified. We include the user asking just to be safe
 		# We also advertise that you can POST new items to this url, which is good for caching.
 		request = self.request
-		elements = (VIEW_CONTENTS, 
+		elements = (VIEW_CONTENTS,
 					md5_etag(context.lastModified,
 					 		 request.authenticated_userid).replace('/', '_'))
 
@@ -284,10 +286,6 @@ class BoardNTIIDDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	def _do_decorate_external(self, context, mapping):
 		if 'BoardNTIID' in mapping:
 			return
-
-		# hmm, no adapters setup to walk this chain already?
-		forum = getattr(context, '__parent__', None)
-		board = getattr(forum, '__parent__', None)
-
-		if board.NTIID:
+		board = find_interface(context, IBoard, strict=False)
+		if board is not None and board.NTIID:
 			mapping['BoardNTIID'] = board.NTIID
