@@ -20,7 +20,7 @@ from nti.contentprocessing import get_content_translation_table
 
 def get_collection_root(ntiid):
 	resolver = component.queryUtility(IRootPackageResolver)
-	return resolver.resolver(ntiid) if resolver is not None else None
+	return resolver.resolve(ntiid) if resolver is not None else None
 
 def get_collection_root_ntiid(ntiid):
 	croot = get_collection_root(ntiid)
