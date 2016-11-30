@@ -50,9 +50,7 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 
 	@Lazy
 	def effective_principals(self):
-		return effective_principals(self.user.username,
-									everyone=False, 
-									skip_cache=True) if self.user is not None else ()
+		return effective_principals(self.user.username, everyone=False, skip_cache=True)
 
 	def allow(self, item, score, query):
 		if self.principal is None:
