@@ -16,7 +16,7 @@
 				for="nti.dataserver.interfaces.IUser" />
 
 	<!-- Search filters -->
-	<subscriber factory=".predicates._AccessibleSearchPostProcessingPredicate"
+	<subscriber factory=".predicates._AccessibleSearchHitPredicate"
 				provides="nti.contentsearch.interfaces.ISearchHitPredicate"
 				for="nti.dataserver.interfaces.IUserGeneratedData" />
 
@@ -28,7 +28,7 @@
 					provides="nti.contentsearch.interfaces.ISearchPackageResolver"
 					for="nti.dataserver.interfaces.IUser" />
 					
-		<subscriber factory=".library._AccessibleSearchHitPredicate"
+		<subscriber factory=".library._ContentUnitSearchHitPredicate"
 				provides="nti.contentsearch.interfaces.ISearchHitPredicate"
 				for="nti.contentlibrary.interfaces.IContentUnit" />
 
