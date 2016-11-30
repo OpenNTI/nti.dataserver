@@ -54,27 +54,21 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 									everyone=False, 
 									skip_cache=True) if self.user is not None else ()
 
-	def _check_ugd_access(self, ugd_item):
-		result = False
-		if IReadableShared.providedBy(ugd_item) and self.user is not None:
-			result = ugd_item.isSharedDirectlyWith(self.user)
-		if not result and self.user is not None:
-			to_check = ugd_item
-			if IHeadlinePost.providedBy(ugd_item):
-				to_check = to_check.__parent__
-			if IPublishableTopic.providedBy(to_check):
-				result = has_permission(ACT_READ,
-										to_check,
-										self.user.username,
-										principals=self.effective_principals)
-			else:
-				result = has_permission(ACT_READ, ugd_item, self.request)
-		result = bool(result) and not IDeletedObjectPlaceholder.providedBy(ugd_item)
-		return result
-
 	def allow(self, item, score, query):
-		if IUserGeneratedData.providedBy(item):
-			result = self._check_ugd_access(item)
-		else:
-			result = has_permission(ACT_READ, item, self.request)
+		result = False
+		if self.user is not None:
+			if IReadableShared.providedBy(item):
+				result = item.isSharedDirectlyWith(self.user)
+			if not result:
+				to_check = item
+				if IHeadlinePost.providedBy(item):
+					to_check = to_check.__parent__
+				if IPublishableTopic.providedBy(to_check):
+					result = has_permission(ACT_READ,
+											to_check,
+											self.user.username,
+											principals=self.effective_principals)
+				else:
+					result = has_permission(ACT_READ, item, self.request)
+			result = bool(result) and not IDeletedObjectPlaceholder.providedBy(item)
 		return result
