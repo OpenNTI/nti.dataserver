@@ -17,6 +17,8 @@ from nti.contentsearch.interfaces import IDateTimeRange
 
 from nti.externalization.representation import WithRepr
 
+from nti.property.property import alias
+
 from nti.schema.eqhash import EqHash
 
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -48,6 +50,8 @@ class QueryObject(SchemaConfigured):
 	__external_class_name__ = 'SearchQuery'
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.query'
+
+	location = alias('origin')
 
 	@property
 	def query(self):
