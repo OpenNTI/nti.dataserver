@@ -70,8 +70,8 @@ def do_evolve(context, generation=generation):
 			with site(current_site):
 				result += _remover(current_site)
 
-		logger.info('Evolution %s done. %s item(s) removed',
-					generation, result)
+	component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
+	logger.info('Evolution %s done. %s item(s) removed', generation, result)
 	
 def evolve(context):
 	"""
