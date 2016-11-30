@@ -38,6 +38,7 @@ from nti.dataserver.contenttypes.forums.forum import DEFAULT_PERSONAL_BLOG_NAME
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -275,3 +276,18 @@ class SecurityAwareBoardForumCountDecorator(object):
 			if is_readable(x, request):
 				i += 1
 		mapping['ForumCount'] = i
+
+@interface.implementer(IExternalObjectDecorator)
+@component.adapter(ITopic)
+class BoardNTIIDDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	def _do_decorate_external(self, context, mapping):
+		if 'BoardNTIID' in mapping:
+			return
+
+		# hmm, no adapters setup to walk this chain already?
+		forum = getattr(context, '__parent__', None)
+		board = getattr(forum, '__parent__', None)
+
+		if board.NTIID:
+			mapping['BoardNTIID'] = board.NTIID
