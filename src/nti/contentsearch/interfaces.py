@@ -123,9 +123,6 @@ class ISearchQuery(interface.Interface):
 
 	sortOn = ValidTextLine(title="Field or function to sort by", required=False)
 
-	location = ValidTextLine(title="The reference NTIID where the search was invoked",
-							 required=False)
-
 	origin = ValidTextLine(title="The raw NTIID where the search was invoked", required=False)
 
 	sortOrder = ValidTextLine(title="descending or ascending  to sort order",

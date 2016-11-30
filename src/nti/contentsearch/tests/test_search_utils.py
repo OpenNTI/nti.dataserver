@@ -17,7 +17,7 @@ from hamcrest import greater_than_or_equal_to
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.interfaces import ISearchQuery
 
 from nti.contentsearch.search_utils import create_queryobject
 
@@ -32,32 +32,32 @@ class TestSearchUtils(unittest.TestCase):
 	@WithMockDSTrans
 	def test_create_query_object_accept(self):
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
-		params = {'accept':'application/vnd.nextthought.forums.personalblogentrypost,application/vnd.nextthought.note',
+		params = {'accept':'application/vnd.nextthought.note,application/vnd.nextthought.forums.personalblogentrypost',
 				  'batchSize':10, 'batchStart':0, 'term':'menos', 'ntiid':ntiid}
 
 		qo = create_queryobject('harribel@bleach.com', params)
-		assert_that(search_interfaces.ISearchQuery.providedBy(qo), is_(True))
+		assert_that(ISearchQuery.providedBy(qo), is_(True))
 		assert_that(qo.username, is_('harribel@bleach.com'))
 		assert_that(qo.term, is_('menos'))
-		assert_that(qo.location, is_(ntiid))
+		assert_that(qo.origin, is_(ntiid))
 		assert_that(qo.batchSize, is_(10))
 		assert_that(qo.batchStart, is_(0))
-		assert_that(sorted(qo.searchOn), is_(sorted((u'note', u'post'))))
+		assert_that(sorted(qo.searchOn), 
+					is_([u'application/vnd.nextthought.forums.personalblogentrypost',
+						 u'application/vnd.nextthought.note']))
 
 	@WithMockDSTrans
-	def test_create_query_object_exclude(self):
+	def test_create_query_object_sample(self):
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
-		params = {'exclude':'application/vnd.nextthought.forums.personalblogentrypost,application/vnd.nextthought.note',
-				  'batchSize':100, 'batchStart':3, 'term':'arrancar', 'ntiid':ntiid}
+		params = {'batchSize':100, 'batchStart':3, 'term':'arrancar', 'ntiid':ntiid}
 
 		qo = create_queryobject('ulquiorra@bleach.com', params)
-		assert_that(search_interfaces.ISearchQuery.providedBy(qo), is_(True))
+		assert_that(ISearchQuery.providedBy(qo), is_(True))
 		assert_that(qo.username, is_('ulquiorra@bleach.com'))
 		assert_that(qo.term, is_('arrancar'))
-		assert_that(qo.location, is_(ntiid))
+		assert_that(qo.origin, is_(ntiid))
 		assert_that(qo.batchSize, is_(100))
 		assert_that(qo.batchStart, is_(3))
-		assert_that(qo.searchOn, has_length(greater_than_or_equal_to(7)))
 
 	@WithMockDSTrans
 	def test_create_query_object_badnumbers(self):
@@ -100,7 +100,7 @@ class TestSearchUtils(unittest.TestCase):
 		qo = create_queryobject('ulquiorra@bleach.com', params)
 		assert_that(qo.username, is_('ulquiorra@bleach.com'))
 		assert_that(qo.term, is_('arrancar'))
-		assert_that(qo.location, is_(ntiid))
+		assert_that(qo.origin, is_(ntiid))
 		assert_that(qo.batchSize, is_(78))
 		assert_that(qo.batchStart, is_(5))
 		assert_that(qo.sortOn, 'relevance')

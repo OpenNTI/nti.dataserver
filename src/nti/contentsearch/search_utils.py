@@ -168,9 +168,9 @@ def create_queryobject(username, params, clazz=QueryObject):
 
 	# ILastModified fields
 	if creationTime is not None and 'createdTime' not in context:
-		args['createdTime'] = (creationTime.startTime, creationTime.endTime)
+		context['createdTime'] = (creationTime.startTime, creationTime.endTime)
 	if modificationTime is not None and 'lastModified' not in context:
-		args['lastModified'] = (modificationTime.startTime, modificationTime.endTime)
+		context['lastModified'] = (modificationTime.startTime, modificationTime.endTime)
 
 	result = clazz(**args)
 	return result
