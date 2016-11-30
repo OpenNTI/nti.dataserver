@@ -380,7 +380,7 @@ class ISearchCompletedEvent(interface.Interface):
 	query = Object(ISearchQuery, title="The search query")
 	user = Object(IEntity, title="The search entity")
 	results = Object(ISearchResultsList, title="The results")
-
+	
 @interface.implementer(ISearchCompletedEvent)
 class SearchCompletedEvent(ObjectEvent):
 
@@ -396,10 +396,6 @@ class SearchCompletedEvent(ObjectEvent):
 	@property
 	def query(self):
 		return self.results.Query
-
-	@property
-	def metadata(self):
-		return getattr(self.results, 'HitMetaData', None)
 
 class IResultTransformer(interface.Interface):
 	"""
