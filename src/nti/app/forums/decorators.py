@@ -35,10 +35,11 @@ from nti.dataserver.contenttypes.forums.board import DEFAULT_BOARD_NAME
 
 from nti.dataserver.contenttypes.forums.forum import DEFAULT_PERSONAL_BLOG_NAME
 
-from nti.dataserver.contenttypes.forums.interfaces import IForum, IBoard
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import IForum
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
-from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
