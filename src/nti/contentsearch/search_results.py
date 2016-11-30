@@ -274,6 +274,12 @@ class SuggestResults(SearchResultsMixin, SchemaConfigured):
 			self._words.update(other.suggestions)
 		return self
 
+	def __len__(self):
+		return len(self._words)
+	
+	def __iter__(self):
+		return iter(self._words)
+
 @interface.implementer(ISearchResultsList, IContentTypeAware)
 class SearchResultsList(SchemaConfigured):
 	createDirectFieldProperties(ISearchResultsList)
@@ -293,6 +299,10 @@ class SearchResultsList(SchemaConfigured):
 
 	def __len__(self):
 		return len(self.items)
+	
+	@property
+	def TotalHitCount(self):
+		return sum(map(lambda x:len(x), self.items))
 
 # sort
 

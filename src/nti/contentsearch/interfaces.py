@@ -376,9 +376,10 @@ class ISearchResultsList(IIterable, IFiniteSequence):
 # index events
 
 class ISearchCompletedEvent(interface.Interface):
+	hit_count = Int(title='total hit count')
 	elpased = Float(title="The search elapsed time")
-	query = Object(ISearchQuery, title="The search query")
 	user = Object(IEntity, title="The search entity")
+	query = Object(ISearchQuery, title="The search query")
 	results = Object(ISearchResultsList, title="The results")
 	
 @interface.implementer(ISearchCompletedEvent)
@@ -396,6 +397,11 @@ class SearchCompletedEvent(ObjectEvent):
 	@property
 	def query(self):
 		return self.results.Query
+	
+	@property
+	def hit_count(self):
+		return self.results.TotalHitCount
+	TotalHitCount = hit_count
 
 class IResultTransformer(interface.Interface):
 	"""
