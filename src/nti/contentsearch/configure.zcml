@@ -42,6 +42,10 @@
 				for=".interfaces.ISuggestResults"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
+	<subscriber factory=".decorators._SearchResultsListDecorator"
+				for=".interfaces.ISearchResultsList"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
 	<subscriber factory=".decorators._SearchHitMetaDataDecorator"
 				for=".interfaces.ISearchHitMetaData"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>

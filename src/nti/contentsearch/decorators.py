@@ -15,6 +15,7 @@ from zope import interface
 from nti.contentsearch.interfaces import ISearchResults
 from nti.contentsearch.interfaces import ISuggestResults
 from nti.contentsearch.interfaces import ISearchHitMetaData
+from nti.contentsearch.interfaces import ISearchResultsList
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
@@ -65,3 +66,11 @@ class _SearchHitMetaDataDecorator(object):
 
 	def decorateExternalObject(self, original, external):
 		external.pop(CREATED_TIME, None)
+
+@component.adapter(ISearchResultsList)
+class _SearchResultsListDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalObject(self, original, external):
+		external[TOTAL] = external[ITEM_COUNT] = len(original)
