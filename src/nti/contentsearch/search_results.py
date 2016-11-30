@@ -42,7 +42,7 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 def get_search_hit_predicate(item):
 	predicates = list(component.subscribers((item,), ISearchHitPredicate))
 	def uber_filter(item, score):
-		return all((p.allow(item, score) for p in predicates))
+		return item is not None and all((p.allow(item, score) for p in predicates))
 	return uber_filter
 
 def is_hit_allowed(item, score=1.0, query=None):
@@ -206,7 +206,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
 		return False
 
 	def _add(self, hit):
-		if True or is_hit_allowed(hit.Target, hit.Score, self.Query):
+		if is_hit_allowed(hit.Target, hit.Score, self.Query):
 			if self._add_hit(hit):
 				self.metadata.track(hit)
 				return True
