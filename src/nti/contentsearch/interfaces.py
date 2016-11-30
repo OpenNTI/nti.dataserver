@@ -852,6 +852,11 @@ class SearchCompletedEvent(component.interfaces.ObjectEvent):
 	@property
 	def metadata(self):
 		return getattr(self.results, 'HitMetaData', None)
+	
+	@property
+	def hit_count(self):
+		return self.metadata.TotalHitCount
+	TotalHitCount = hit_count
 
 class IResultTransformer(interface.Interface):
 	"""
