@@ -15,8 +15,6 @@ from zope import interface
 
 from pyramid.threadlocal import get_current_request
 
-from nti.app.authentication import get_remote_user
-
 from nti.appserver.pyramid_authorization import has_permission
 
 from nti.contentsearch.interfaces import ISearchHitPredicate
@@ -26,6 +24,8 @@ from nti.contentsearch.predicates import DefaultSearchHitPredicate
 from nti.dataserver.authentication import effective_principals
 
 from nti.dataserver.authorization import ACT_READ
+
+from nti.dataserver.users import User 
 
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IPublishableTopic
@@ -46,11 +46,11 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 
 	@Lazy
 	def user(self):
-		return get_remote_user(self.principal.id)
+		return User.get_user(self.principal.id)
 
 	@Lazy
 	def effective_principals(self):
-		return effective_principals(self.user.username, everyone=False, skip_cache=True)
+		return effective_principals(self.principal.id, everyone=False, skip_cache=True)
 
 	def allow(self, item, score, query):
 		if self.principal is None:
@@ -66,7 +66,7 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 				if IPublishableTopic.providedBy(to_check):
 					result = has_permission(ACT_READ,
 											to_check,
-											self.user.username,
+											self.principal.id,
 											principals=self.effective_principals)
 				else:
 					result = has_permission(ACT_READ, item, self.request)
