@@ -1124,39 +1124,6 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 			assert_that(search_res.json_body['Items'][0], has_entry('ID', publish_res.json_body['ID']))
 
 	@WithSharedApplicationMockDS
-	@time_monotonically_increases
-	def test_community_user_can_search_for_publish_unpublished_comments(self):
-		fixture = UserCommunityFixture(self)
-		self.testapp = fixture.testapp
-		testapp2 = fixture.testapp2
-		testapp3 = fixture.testapp3
-
-		publish_res, _ = self._POST_and_publish_topic_entry()
-		topic_url = publish_res.location
-
-		# non-creator can comment
-		comment_data = self._create_comment_data_for_POST()
-		comment_res = testapp2.post_json(topic_url, comment_data, status=201)
-
-		# Third user can search for the comment
-		search_res = self.search_user_rugd(self.forum_comment_unique, testapp=testapp3, username=fixture.user3_username)
-		assert_that(search_res.json_body, has_entry('Hit Count', 1))
-		assert_that(search_res.json_body, has_entry('Items', has_length(1)))
-		assert_that(search_res.json_body['Items'][0], has_entry('ID', comment_res.json_body['ID']))
-
-		# But when unpublished, third user cannot find it anymore
-		# though its creator still can
-		self.testapp.post(self.require_link_href_with_rel(publish_res.json_body, 'unpublish'))
-
-		search_res = self.search_user_rugd(self.forum_comment_unique, testapp=testapp3, username=fixture.user3_username)
-		assert_that(search_res.json_body, has_entry('Hit Count', 0))
-
-		search_res = self.search_user_rugd(self.forum_comment_unique, testapp=testapp2, username=fixture.user2_username)
-		assert_that(search_res.json_body, has_entry('Hit Count', 1))
-		assert_that(search_res.json_body, has_entry('Items', has_length(1)))
-		assert_that(search_res.json_body['Items'][0], has_entry('ID', comment_res.json_body['ID']))
-
-	@WithSharedApplicationMockDS
 	def test_post_canvas_image_in_headline_post_produces_fetchable_link(self):
 		fixture = UserCommunityFixture(self)
 		self.testapp = testapp = fixture.testapp
