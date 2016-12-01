@@ -40,6 +40,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -287,7 +288,7 @@ class BoardNTIIDDecorator(object):
 	__metaclass__ = SingletonDecorator
 	
 	def decorateExternalObject(self, context, mapping):
-		if 'BoardNTIID' in mapping:
+		if IPersonalBlogEntry.providedBy(context) or 'BoardNTIID' in mapping:
 			return
 		board = find_interface(context, IBoard, strict=False)
 		if board is not None and board.NTIID:
