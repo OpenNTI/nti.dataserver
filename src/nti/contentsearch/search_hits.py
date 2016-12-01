@@ -354,7 +354,8 @@ class WhooshAudioTranscriptSearchHit(WhooshMediaTranscriptSearchHit):
 			result = None
 		return result
 
-TranscriptSearchHit = WhooshVideoTranscriptSearchHit
+class TranscriptSearchHit(WhooshVideoTranscriptSearchHit):
+	pass
 
 @component.adapter(IWhooshNTICardContent)
 @interface.implementer(IWhooshNTICardSearchHit)
