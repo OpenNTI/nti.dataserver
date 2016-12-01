@@ -341,17 +341,6 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		self._do_test_user_can_POST_new_forum_entry(data)
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
-	def test_user_can_POST_new_forum_entry_and_search_for_it(self):
-		data = self._create_post_data_for_POST()
-
-		res = self._do_test_user_can_POST_new_forum_entry(data)
-
-		search_res = self.search_user_rugd(self.forum_headline_unique)
-		assert_that(search_res.json_body, has_entry('Hit Count', 1))
-		assert_that(search_res.json_body, has_entry('Items', has_length(1)))
-		assert_that(search_res.json_body['Items'][0], has_entry('ID', res.json_body['ID']))
-
-	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_user_can_POST_new_forum_entry_resulting_in_blog_being_sublocation(self):
 		# Creating a Blog causes it to be a sublocation of the entity
 		# This way deleting/moving the user correctly causes the blog to be deleted/moved

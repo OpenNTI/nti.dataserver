@@ -182,10 +182,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		# So all the locations 404
 		for res in forum_res, publish_res, comment_res:
 			self.testapp.get( res.location, status=404 )
-		# and nothing is searchable
-		for term in self.forum_comment_unique, self.forum_headline_unique:
-			search_res = self.search_user_rugd( term )
-			assert_that( search_res.json_body, has_entry( 'Hit Count', 0 ) )
 
 	def _do_test_user_can_POST_new_forum_entry( self, data, content_type=None, status_only=None, expected_data=None ):
 		# Override the method in super()
