@@ -1214,8 +1214,6 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		assert_that(res.json_body, has_entry('ID', ntiids.make_specific_safe(data['title'])))
 		entry_id = res.json_body['ID']
 		assert_that(entry_id, is_(not_none()))
-		board_id = res.json_body['BoardNTIID']
-		assert_that(board_id, is_(not_none()))
 		assert_that(res.json_body, has_entries(	'title', data['title'],
 												'href', self.forum_topic_href(entry_id)))
 
