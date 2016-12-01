@@ -588,12 +588,6 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		# And so is its mod time
 		assert_that(res.json_body, has_entry('Last Modified', greater_than(entry_mod_time)))
 
-		# The comment can be searched for
-		search_res = self.search_user_rugd(self.forum_comment_unique)
-		assert_that(search_res.json_body, has_entry('Hit Count', 1))
-		assert_that(search_res.json_body, has_entry('Items', has_length(1)))
-		assert_that(search_res.json_body['Items'][0], has_entry('ID', comment_res.json_body['ID']))
-
 		# The comment can be fetched directly
 		_check_comment_res(testapp.get(comment_res.location))
 		# and by ntiid
@@ -652,10 +646,6 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		# ... and a changed etag
 		assert_that(res.etag, is_not(orig_etag))
 		testapp.get(entry_contents_url, headers={b'If-None-Match': orig_etag}, status=200)
-
-		# and the comment can no longer be found by search
-		search_res = self.search_user_rugd(self.forum_comment_unique)
-		assert_that(search_res.json_body, has_entry('Hit Count', 0))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_creator_can_DELETE_existing_empty_forum_topic(self):
