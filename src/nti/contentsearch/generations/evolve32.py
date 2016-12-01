@@ -75,6 +75,6 @@ def do_evolve(context, generation=generation):
 	
 def evolve(context):
 	"""
-	Evolve generation 31 by removing registered contentsearcher objects in the root persistent site.
+	Evolve generation 32 by removing registered contentsearcher objects in the root persistent site.
 	"""
 	do_evolve(context)

@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import copy
-
 from zope import interface
 
 from zope.location.interfaces import IContained
@@ -43,9 +41,6 @@ class SearchHitMixin(object):
 	
 	def __init__(self, *args, **kwargs):
 		super(SearchHitMixin, self).__init__(*args, **kwargs)
-
-	def clone(self):
-		return copy.deepcopy(self)
 
 	def __eq__(self, other):
 		try:

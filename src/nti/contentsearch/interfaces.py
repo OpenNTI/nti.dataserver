@@ -244,11 +244,6 @@ class ISearchHit(ILastModified):
 	Target = Object(interface.Interface, title="the object hit", required=False)
 	Target.setTaggedValue('_ext_excluded_out', True)
 
-	def clone():
-		"""
-		Clone this object
-		"""
-
 class ITranscriptSearchHit(ISearchHit):
 	EndMilliSecs = Number(title="Media end timestamp", required=False)
 	StartMilliSecs = Number(title="Media start video timestamp", required=False)
