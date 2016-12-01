@@ -46,7 +46,7 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 
 	@Lazy
 	def user(self):
-		return get_remote_user(self.principal.id) if self.principal is not None else None
+		return get_remote_user(self.principal.id)
 
 	@Lazy
 	def effective_principals(self):
