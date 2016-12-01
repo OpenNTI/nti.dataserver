@@ -28,6 +28,8 @@ from nti.app.renderers.interfaces import IUncacheableInResponse
 from nti.contentsearch.interfaces import ISearcher 
 from nti.contentsearch.interfaces import SearchCompletedEvent
 
+from nti.contentsearch.search_results import SearchResultsList
+
 from nti.contentsearch.search_utils import create_queryobject
 
 from nti.dataserver.users import Entity
@@ -76,8 +78,10 @@ class BaseView(AbstractAuthenticatedView):
 class BaseSearchView(BaseView, BatchingUtilsMixin):
 
 	def _do_search(self, query):
-		searcher = ISearcher(self.remoteUser)
-		return searcher.search(query=query)
+		searcher = ISearcher(self.remoteUser, None)
+		if searcher is not None:
+			return searcher.search(query=query)
+		return SearchResultsList(Query=query)
 
 	def search(self, query):
 		now = time.time()
@@ -100,8 +104,10 @@ class SuggestView(BaseView):
 	name = 'Suggest'
 
 	def _do_search(self, query):
-		searcher = ISearcher(self.remoteUser)
-		return searcher.suggest(query=query)
+		searcher = ISearcher(self.remoteUser, None)
+		if searcher is not None:
+			return searcher.suggest(query=query)
+		return SearchResultsList(Query=query)
 
 	def search(self, query):
 		now = time.time()
