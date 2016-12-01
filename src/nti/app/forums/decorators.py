@@ -280,11 +280,13 @@ class SecurityAwareBoardForumCountDecorator(object):
 				i += 1
 		mapping['ForumCount'] = i
 
-@interface.implementer(IExternalObjectDecorator)
 @component.adapter(ITopic)
-class BoardNTIIDDecorator(AbstractAuthenticatedRequestAwareDecorator):
+@interface.implementer(IExternalObjectDecorator)
+class BoardNTIIDDecorator(object):
 
-	def _do_decorate_external(self, context, mapping):
+	__metaclass__ = SingletonDecorator
+	
+	def decorateExternalObject(self, context, mapping):
 		if 'BoardNTIID' in mapping:
 			return
 		board = find_interface(context, IBoard, strict=False)

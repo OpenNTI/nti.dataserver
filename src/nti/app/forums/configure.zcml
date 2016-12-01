@@ -116,9 +116,7 @@
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
 	<subscriber factory=".decorators.BoardNTIIDDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.ITopic
-					 pyramid.interfaces.IRequest" />
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
 	<!--
 		Decorate blog entries and forum topics. This is configured for modeled content in configure.zcml.
