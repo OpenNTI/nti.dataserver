@@ -45,6 +45,7 @@ from zope.intid.interfaces import IIntIdRemovedEvent
 from zope.location.interfaces import ISublocations
 
 from nti.testing.matchers import is_empty
+
 from nti.testing.time import time_monotonically_increases
 
 from nti.dataserver import users
@@ -53,17 +54,15 @@ from nti.ntiids import ntiids
 
 from nti.dataserver.tests import mock_dataserver
 
-try:
-	from nti.app.contentlibrary.forum import ContentForum
-except ImportError:
-	from nti.dataserver.contenttypes.forums.forum import GeneralForum as ContentForum
-
-from nti.appserver.policies.tests import test_application_censoring
-from nti.appserver.tests.test_application import TestApp as _TestApp
+from nti.app.testing.application_webtest import AppTestBaseMixin
 
 from nti.app.testing.base import TestBaseMixin
-from nti.app.testing.application_webtest import AppTestBaseMixin
+
 from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
+
+from nti.appserver.policies.tests import test_application_censoring
+
+from nti.appserver.tests.test_application import TestApp as _TestApp
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -1096,32 +1095,6 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		res = testapp.post(self.require_link_href_with_rel(comment_res.json_body, 'flag'))
 		assert_that(res.json_body['href'], is_(comment_res.json_body['href']))
 		self.require_link_href_with_rel(res.json_body, 'flag.metoo')
-
-	@WithSharedApplicationMockDS
-	@time_monotonically_increases
-	def test_community_user_can_search_for_published_topic(self):
-		fixture = UserCommunityFixture(self)
-		self.testapp = fixture.testapp
-		testapp2 = fixture.testapp2
-
-		publish_res, _ = self._POST_and_publish_topic_entry()
-
-		# Default published shares with everyone, which our user cannot see.
-		# If the topic is in a host site, that ends up in the sharedWith and
-		# visible from searches, but this test only validates a global library
-		# content topic, which will not be visible from a search.
-		search_res = self.search_user_rugd(self.forum_headline_unique, testapp=testapp2, username=fixture.user2_username)
-
-		# For ContentHeadlineTopics, we do not allow 'Everyone' access to view
-		# published topics; thus, they will not show up in saerch. This is an
-		# attempt to make sure published objects are only accessible to the site
-		# they're published in.
-		if self.forum_type == ContentForum:
-			assert_that(search_res.json_body, has_entry('Hit Count', 0))
-		else:
-			assert_that(search_res.json_body, has_entry('Hit Count', 1))
-			assert_that(search_res.json_body, has_entry('Items', has_length(1)))
-			assert_that(search_res.json_body['Items'][0], has_entry('ID', publish_res.json_body['ID']))
 
 	@WithSharedApplicationMockDS
 	def test_post_canvas_image_in_headline_post_produces_fetchable_link(self):
