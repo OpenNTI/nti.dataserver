@@ -462,9 +462,6 @@
 			 factory=".pyramid_auth.NextthoughtDotComAdmin"
 			 provides="nti.dataserver.interfaces.IGroupMember" />
 
-	<!-- Resolving metadata, used in the implementation of links -->
-	<adapter factory=".metadata_resolvers.ContentMetadataFromContentUnit" />
-
 	<utility name="tag"
 			 factory=".metadata_resolvers.TagURLHandler" />
 
