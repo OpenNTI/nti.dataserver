@@ -27,6 +27,8 @@ from zope.container.interfaces import IContentContainer
 
 from zope.dublincore.interfaces import IDCTimes
 
+from zope.interface.common.sequence import ISequence
+
 from zope.schema import Int
 
 from nti.common._compat import IAcquirer
@@ -199,6 +201,11 @@ class ITopic(IContentContainer,
 							  title="The newest post added to this object, if there is one",
 							  description="May be a IDeletedObjectPlaceholder",
 							  required=False)
+
+class ITopicList(ISequence):
+	"""
+	A marker interface for a sequence of topic objects
+	"""
 
 class IForum(IContentContainer,
 			 IContained,
