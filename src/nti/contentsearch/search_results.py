@@ -266,8 +266,7 @@ class SuggestResults(SearchResultsMixin, SchemaConfigured):
 	add_suggestions = add
 
 	def extend(self, items):
-		for item in items or ():
-			self._words.add(to_unicode(item))
+		self._words.update(to_unicode(x) for x in items or ())
 
 	def __iadd__(self, other):
 		if ISuggestResults.providedBy(other):
