@@ -55,7 +55,6 @@ class BaseView(AbstractAuthenticatedView):
 		params['username'] = username
 		params['term'] = request.matchdict.get('term', None)
 		params['ntiid'] = request.matchdict.get('ntiid', None)
-		params['site_names'] = getattr(request, 'possible_site_names', ()) or ('',)
 		result = create_queryobject(username, params)
 		return result
 
