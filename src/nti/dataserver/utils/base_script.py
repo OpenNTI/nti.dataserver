@@ -55,8 +55,9 @@ def create_context(env_dir=None, with_library=False, context=None, plugins=True)
 	if with_library:
 		library_zcml = os.path.join(etc, 'library.zcml')
 		if not os.path.exists(library_zcml):
-			raise IOError("Could not locate library zcml file %s", library_zcml)
-		xmlconfig.include(context, file=library_zcml, package='nti.appserver')
+			logger.warn("Could not locate library zcml file %s", library_zcml)
+		else:
+			xmlconfig.include(context, file=library_zcml, package='nti.appserver')
 
 	# Include zope.browserpage.meta.zcm for tales:expressiontype
 	# before including the products
