@@ -9,8 +9,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import sys
 import time
 
+from zope import component
 from zope import interface
 
 from zope.event import notify
@@ -21,12 +23,15 @@ from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.app.renderers.interfaces import IUncacheableInResponse
 
-from nti.contentsearch.interfaces import ISearcher 
+from nti.contentsearch.interfaces import ISearcher
 from nti.contentsearch.interfaces import SearchCompletedEvent
+from nti.contentsearch.interfaces import ISearchQueryValidator
 
 from nti.contentsearch.search_results import SearchResultsList
 
@@ -73,9 +78,35 @@ class BaseView(AbstractAuthenticatedView):
 			result = self.locate(result, self.request.root)
 			return result
 		except ValueError as e:
-			raise hexc.HTTPUnprocessableEntity(str(e))
+			exc_info = sys.exc_info()
+			raise_json_error(
+						self.request,
+					  	hexc.HTTPUnprocessableEntity,
+					  	{ 
+							'message': _('Cannot execute search query.'),
+							'field': 'term',
+							'code': e.__class__.__name__ 
+						},
+					  	exc_info[2])
 
 class BaseSearchView(BaseView, BatchingUtilsMixin):
+
+	def _validate(self, query):
+		try:
+			validator = component.queryUtility(ISearchQueryValidator)
+			if validator is not None:
+				validator.validate(query)
+		except Exception as e:
+			exc_info = sys.exc_info()
+			raise_json_error(
+						self.request,
+					  	hexc.HTTPUnprocessableEntity,
+					  	{ 
+							'message': _('Invalid search query.'),
+							'field': 'term',
+							'code': e.__class__.__name__ 
+						},
+					  	exc_info[2])
 
 	def _do_search(self, query):
 		searcher = ISearcher(self.remoteUser, None)
