@@ -38,7 +38,7 @@ PP_APP = PluginPoint('nti.app')
 PP_APP_SITES = PluginPoint('nti.app.sites')
 PP_APP_PRODUCTS = PluginPoint('nti.app.products')
 
-def create_context(env_dir=None, with_library=False, context=None):
+def create_context(env_dir=None, with_library=False, context=None, plugins=True):
 	etc = os.getenv('DATASERVER_ETC_DIR') or os.path.join(env_dir, 'etc')
 	etc = os.path.expanduser(etc)
 
@@ -63,9 +63,10 @@ def create_context(env_dir=None, with_library=False, context=None):
 	xmlconfig.include(context, file="meta.zcml", package=zope.browserpage)
 
 	# include plugins
-	includePluginsDirective(context, PP_APP)
-	includePluginsDirective(context, PP_APP_SITES)
-	includePluginsDirective(context, PP_APP_PRODUCTS)
+	if plugins:
+		includePluginsDirective(context, PP_APP)
+		includePluginsDirective(context, PP_APP_SITES)
+		includePluginsDirective(context, PP_APP_PRODUCTS)
 
 	return context
 
