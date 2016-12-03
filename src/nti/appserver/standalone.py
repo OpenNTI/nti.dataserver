@@ -24,20 +24,6 @@ SOCKET_IO_PATH = 'socket.io'
 
 _marker = object()
 
-_ZCML_LIBRARY_TEMPLATE = """
-<configure xmlns="http://namespaces.zope.org/zope"
-		   xmlns:zcml="http://namespaces.zope.org/zcml"
-		   xmlns:lib="http://nextthought.com/ntp/contentlibrary"
-		   i18n_domain='nti.dataserver'>
-
-	<include package="zope.component" />
-	<include package="nti.contentlibrary" file="meta.zcml" />
-
-	%s
-
-</configure>
-"""
-
 def configure_app(global_config,
 				  nti_create_ds=True,
 				  sync_changes=True,
