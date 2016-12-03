@@ -36,9 +36,12 @@ def list_sites():
 
 def remove_sites(names=(), verbose=True, library=True):
 	if library:
-		from nti.contentlibrary.interfaces import IContentPackageLibrary
-		pack_lib = component.queryUtility(IContentPackageLibrary)
-		getattr(pack_lib, 'contentPackages', None)
+		try:
+			from nti.contentlibrary.interfaces import IContentPackageLibrary
+			pack_lib = component.queryUtility(IContentPackageLibrary)
+			getattr(pack_lib, 'contentPackages', None)
+		except ImportError:
+			logger.warn("Cannot load library")
 	sites_folder = component.getUtility(IEtcNamespace, name='hostsites')
 	for name in names or ():
 		del sites_folder[name]
