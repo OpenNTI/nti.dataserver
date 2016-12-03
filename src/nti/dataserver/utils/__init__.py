@@ -7,6 +7,8 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import sys
 import logging
 import functools
@@ -366,7 +368,10 @@ def interactive_setup(root=".",
 		component.getGlobalSiteManager().registerUtility(dataserver)
 
 	if with_library:
-		from nti.contentlibrary.interfaces import IContentPackageLibrary
-		component.getUtility(IContentPackageLibrary).syncContentPackages()
+		try:
+			from nti.contentlibrary.interfaces import IContentPackageLibrary
+			component.getUtility(IContentPackageLibrary).syncContentPackages()
+		except ImportError:
+			logger.error("Library could not be loaded")
 
 	return (db, conn, root)

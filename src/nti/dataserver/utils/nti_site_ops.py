@@ -20,8 +20,6 @@ from zope.component.hooks import site as current_site
 
 from zope.traversing.interfaces import IEtcNamespace
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.utils.base_script import create_context
 
@@ -38,6 +36,7 @@ def list_sites():
 
 def remove_sites(names=(), verbose=True, library=True):
 	if library:
+		from nti.contentlibrary.interfaces import IContentPackageLibrary
 		pack_lib = component.queryUtility(IContentPackageLibrary)
 		getattr(pack_lib, 'contentPackages', None)
 	sites_folder = component.getUtility(IEtcNamespace, name='hostsites')
