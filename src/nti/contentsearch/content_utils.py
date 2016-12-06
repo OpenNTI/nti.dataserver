@@ -28,7 +28,7 @@ def get_collection_root_ntiid(ntiid):
 
 def get_content(text=None, language='en'):
 	result = ()
-	text = unicode(text) if text else None
+	text = to_unicode(text) if text else None
 	if text:
 		table = get_content_translation_table(language)
 		result = tokenize_content(text.translate(table), language)
