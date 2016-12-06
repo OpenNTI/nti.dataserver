@@ -33,7 +33,7 @@ from nti.contentsearch.interfaces import ISearcher
 from nti.contentsearch.interfaces import SearchCompletedEvent
 from nti.contentsearch.interfaces import ISearchQueryValidator
 
-from nti.contentsearch.search_results import SearchResultsList
+from nti.contentsearch.search_results import SearchResults
 
 from nti.contentsearch.search_utils import create_queryobject
 
@@ -111,7 +111,7 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 		searcher = ISearcher(self.remoteUser, None)
 		if searcher is not None:
 			return searcher.search(query=query)
-		return SearchResultsList(Query=query)
+		return SearchResults(Query=query)
 
 	def search(self, query):
 		now = time.time()
@@ -137,7 +137,7 @@ class SuggestView(BaseView):
 		searcher = ISearcher(self.remoteUser, None)
 		if searcher is not None:
 			return searcher.suggest(query=query)
-		return SearchResultsList(Query=query)
+		return SearchResults(Query=query)
 
 	def search(self, query):
 		now = time.time()

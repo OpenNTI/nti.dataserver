@@ -375,7 +375,7 @@ class ISearchCompletedEvent(interface.Interface):
 	elpased = Float(title="The search elapsed time")
 	user = Object(IEntity, title="The search entity")
 	query = Object(ISearchQuery, title="The search query")
-	results = Object(ISearchResultsList, title="The results")
+	results = Object(ISearchResults, title="The results")
 	
 @interface.implementer(ISearchCompletedEvent)
 class SearchCompletedEvent(ObjectEvent):
@@ -395,7 +395,7 @@ class SearchCompletedEvent(ObjectEvent):
 	
 	@property
 	def hit_count(self):
-		return self.results.TotalHitCount
+		return self.results.NumFound
 	TotalHitCount = hit_count
 
 class IResultTransformer(interface.Interface):
