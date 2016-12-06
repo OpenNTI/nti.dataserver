@@ -302,6 +302,7 @@ class SearchResultsList(SchemaConfigured):
 	@property
 	def TotalHitCount(self):
 		return sum(map(lambda x:len(x), self.items))
+	NumFound = TotalHitCount
 
 # sort
 
