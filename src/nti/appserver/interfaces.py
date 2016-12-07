@@ -689,7 +689,7 @@ class INTIIDRootResolver(interface.Interface):
 
 # UGD Query
 
-class IUserNTIIDContainers(interface.Interface):
+class IUserContainerQuerier(interface.Interface):
 	"""
 	A utility that given a user and ntiid returns all the user and library
 	containers for that ntiid

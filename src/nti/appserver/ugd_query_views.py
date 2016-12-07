@@ -38,7 +38,7 @@ from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.interfaces import INamedLinkView
 from nti.appserver.interfaces import IPrincipalUGDFilter
-from nti.appserver.interfaces import IUserNTIIDContainers
+from nti.appserver.interfaces import IUserContainerQuerier
 from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
@@ -1238,7 +1238,7 @@ class RecursiveUGDView(_UGDView):
 		return filters
 
 	def _get_containerids_for_id( self, user, ntiid ):
-		querier = component.queryUtility(IUserNTIIDContainers)
+		querier = component.queryUtility(IUserContainerQuerier)
 		if querier is not None:
 			result = querier.query(user, 
 								   ntiid, 
