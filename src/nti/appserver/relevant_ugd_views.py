@@ -21,10 +21,11 @@ from nti.appserver import httpexceptions as hexc
 from nti.appserver.interfaces import IContainerLeafResolver
 from nti.appserver.interfaces import IContainedObjectsQuerier
 
-from nti.appserver.ugd_query_views import Operator
-from nti.appserver.ugd_query_views import UGDView
 from nti.appserver.ugd_query_views import _RecursiveUGDView
 from nti.appserver.ugd_query_views import _combine_predicate
+
+from nti.appserver.ugd_query_views import UGDView
+from nti.appserver.ugd_query_views import Operator
 from nti.appserver.ugd_query_views import lists_and_dicts_to_ext_collection
 
 from nti.externalization.interfaces import StandardExternalFields
@@ -33,7 +34,6 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
-LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 
 union_operator = Operator.union
 intersection_operator = Operator.intersection
