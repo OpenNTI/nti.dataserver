@@ -31,11 +31,10 @@ from nti.contentfragments import censor
 from nti.contentfragments.interfaces import ICensoredContentPolicy
 from nti.contentfragments.interfaces import IUnicodeContentFragment
 
-from nti.contentlibrary.interfaces import IDelimitedHierarchyContentUnit
-
-from nti.dataserver.users import Entity
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
+
+from nti.dataserver.users import Entity
 
 from nti.socketio.interfaces import ISocketSessionCreatedObjectEvent
 
@@ -150,20 +149,6 @@ def coppa_user_censor_policy(user, content_unit):
 	no matter where they attempt to do something (IContentUnit
 	or IObjectNotTiedToContent).
 	"""
-	return censor.DefaultCensoredContentPolicy()
-
-@interface.implementer(ICensoredContentPolicy)
-@component.adapter(IUser, IDelimitedHierarchyContentUnit)
-def user_filesystem_censor_policy(user, file_content_unit):
-	"""
-	Profanity filtering may be turned off in specific content units
-	by the use of a '.nti_disable_censoring' flag file.
-	"""
-	# TODO: maybe this could be handled with an ACL entry? The permission
-	# to post uncensored things?
-
-	if file_content_unit.does_sibling_entry_exist('.nti_disable_censoring'):
-		return None
 	return censor.DefaultCensoredContentPolicy()
 
 # ##

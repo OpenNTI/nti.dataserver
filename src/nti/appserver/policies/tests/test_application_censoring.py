@@ -18,12 +18,10 @@ import anyjson as json
 
 from urllib import quote as UQ
 
-from zope import component
 from zope import interface
 
 from nti.appserver.policies import censor_policies
 
-import nti.contentfragments.censor
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.chatserver.messageinfo import MessageInfo
@@ -31,9 +29,7 @@ from nti.chatserver.presenceinfo import PresenceInfo
 
 from nti.contentrange import contentrange
 
-import nti.dataserver
 from nti.dataserver import contenttypes
-from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.externalization import to_external_object
 
@@ -51,10 +47,10 @@ from nti.dataserver.tests import mock_dataserver
 # class TestApplicationAssessment(ApplicationTestBase):
 #	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
 
-bad_val      =  'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' ).decode( 'utf-8' )
+bad_val      = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' ).decode( 'utf-8' )
 censored_val = u'This is ******* stupid, you ************ *******'
 
-bad_word      =  'shpxvat'.encode( 'rot13' ).decode( 'utf-8' )
+bad_word      = 'shpxvat'.encode( 'rot13' ).decode( 'utf-8' )
 censored_word = u'*******'
 
 class CensorTestMixin(object):
@@ -103,11 +99,8 @@ class CensorTestMixin(object):
 _CensorTestMixin = CensorTestMixin
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
-from nti.appserver.tests import ExLibraryApplicationTestLayer
 
 class TestApplicationCensoring(CensorTestMixin, ApplicationLayerTest):
-
-	# layer = ExLibraryApplicationTestLayer
 
 	@WithSharedApplicationMockDS
 	def test_censor_note_not_in_library_disabled_by_default(self):
@@ -231,37 +224,3 @@ class TestApplicationCensoring(CensorTestMixin, ApplicationLayerTest):
 
 			assert_that(args[0], is_(PresenceInfo))
 			assert_that(args[0], has_property('status', censored_val))
-
-class TestApplicationCensoringWithDefaultPolicyForAllUsers(_CensorTestMixin,ApplicationLayerTest):
-	layer = ExLibraryApplicationTestLayer
-
-	def setUp(self):
-		super(TestApplicationCensoringWithDefaultPolicyForAllUsers,self).setUp()
-		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
-								  adapts=(nti.dataserver.interfaces.IUser, None) )
-		component.provideAdapter(censor_policies.user_filesystem_censor_policy)
-
-	def tearDown(self):
-		gsm = component.getGlobalSiteManager()
-		gsm.unregisterAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
-							   required=(nti.dataserver.interfaces.IUser, None) )
-		gsm.unregisterAdapter(censor_policies.user_filesystem_censor_policy)
-
-	@WithSharedApplicationMockDS
-	def test_censoring_can_be_disabled_by_file_in_library( self ):
-		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
-								   censored=False )
-
-	@WithSharedApplicationMockDS
-	def test_censoring_cannot_be_disabled_for_kids( self ):
-		#"The ICoppaUser flag trumps the no-censoring flag"
-		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
-								   censored=True,
-								   extra_ifaces=(nti_interfaces.ICoppaUser,) )
-
-	@WithSharedApplicationMockDS
-	def test_censor_note_not_in_library_enabled_for_kids(self):
-		#"If we post a note to a container we don't recognize, we  get censored if we are a kid"
-		self._do_test_censor_note( 'tag:not_in_library',
-								   censored=True,
-								   extra_ifaces=(nti_interfaces.ICoppaUser,) )
