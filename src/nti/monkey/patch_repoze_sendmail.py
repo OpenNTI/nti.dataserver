@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import pkg_resources
 
-dist = pkg_resources.get_distribution('repoze.sendmai')
+dist = pkg_resources.get_distribution('repoze.sendmail')
 if not dist.version or dist.version <= '4.1':
 	import repoze.sendmail.delivery
 	from repoze.sendmail.delivery import DirectMailDelivery
