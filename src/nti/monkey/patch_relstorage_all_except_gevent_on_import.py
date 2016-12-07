@@ -9,9 +9,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from nti.monkey import patch_repoze_sendmail
 from nti.monkey import patch_nti_internal_on_import
 
 def patch():
+	patch_repoze_sendmail.patch()
 	patch_nti_internal_on_import.patch()
 	try:
 		__import__('MySQLdb')
