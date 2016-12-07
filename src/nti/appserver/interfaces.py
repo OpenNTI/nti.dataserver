@@ -677,6 +677,16 @@ class IEditLinkMaker(interface.Interface):
 		pass
 
 
+# Resolvers
+
+class INTIIDRootResolver(interface.Interface):
+	"""
+	A utility that returns the root of a [container] ntiid
+	"""
+	
+	def resolve(ntiid):
+		pass
+
 # UGD Query
 
 class IUserNTIIDContainers(interface.Interface):
