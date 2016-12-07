@@ -707,4 +707,4 @@ class IUserContainersQuerier(interface.Interface):
 	
 	def query(user, ntiid, include_stream=True, stream_only=True):
 		pass
-IUserNTIIDContainers = IUserContainersQuerier
+IUserNTIIDContainers = IUserContainerQuerier = IUserContainersQuerier
