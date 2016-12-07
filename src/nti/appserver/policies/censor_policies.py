@@ -20,7 +20,7 @@ from pyramid.traversal import find_interface
 
 from nti.app.authentication import get_remote_user
 
-from nti.appserver.interfaces import INTIIDRootResolver
+from nti.appserver.interfaces import IContainerRootResolver
 
 from nti.appserver.policies import site_policies
 
@@ -125,7 +125,7 @@ def creator_and_location_censor_policy(fragment, target, site_names=None):
 	if getattr(target, 'containerId', None):
 		# Try to find a location to put it in.
 		# See comments above about how this is starting to not be appropriate.
-		resolver = component.queryUtility(INTIIDRootResolver)
+		resolver = component.queryUtility(IContainerRootResolver)
 		location = resolver.resolve(target.containerId) if resolver else None
 
 	if location is None:
