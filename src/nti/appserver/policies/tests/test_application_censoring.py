@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-from __future__ import print_function, absolute_import, unicode_literals
+# -*- coding: utf-8 -*-
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from hamcrest import is_
 from hamcrest import none
@@ -11,12 +14,12 @@ from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import only_contains
 
-import os
 import anyjson as json
+
 from urllib import quote as UQ
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from nti.appserver.policies import censor_policies
 
@@ -26,27 +29,26 @@ from nti.contentfragments.interfaces import IPlainTextContentFragment
 from nti.chatserver.messageinfo import MessageInfo
 from nti.chatserver.presenceinfo import PresenceInfo
 
-
-
 from nti.contentrange import contentrange
 
 import nti.dataserver
 from nti.dataserver import contenttypes
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
+
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.socketio import session_consumer
 from nti.socketio import interfaces as sio_interfaces
 
-from nti.dataserver.tests import mock_dataserver
-
-
-from nti.app.testing.webtest import TestApp
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-#class TestApplicationAssessment(ApplicationTestBase):
+from nti.app.testing.webtest import TestApp
+
+from nti.dataserver.tests import mock_dataserver
+
+# class TestApplicationAssessment(ApplicationTestBase):
 #	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
 
 bad_val      =  'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' ).decode( 'utf-8' )
@@ -55,7 +57,7 @@ censored_val = u'This is ******* stupid, you ************ *******'
 bad_word      =  'shpxvat'.encode( 'rot13' ).decode( 'utf-8' )
 censored_word = u'*******'
 
-class _CensorTestMixin(object):
+class CensorTestMixin(object):
 
 	def _do_test_censor_note( self, containerId, censored=True, extra_ifaces=(), environ=None,
 							  bad_val=bad_val, censored_val=censored_val,
@@ -79,7 +81,6 @@ class _CensorTestMixin(object):
 
 		testapp = TestApp( self.app )
 
-
 		data = json.dumps( {'body': [bad_val],
 							'title': bad_val,
 							'tags': [bad_word]} )
@@ -99,12 +100,14 @@ class _CensorTestMixin(object):
 					 has_entries( 'body', only_contains( exp_val ),
 								  'title', exp_val,
 								  'tags', only_contains( exp_word )) )
+_CensorTestMixin = CensorTestMixin
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.appserver.tests import ExLibraryApplicationTestLayer
 
-class TestApplicationCensoring(_CensorTestMixin,ApplicationLayerTest):
-	layer = ExLibraryApplicationTestLayer
+class TestApplicationCensoring(CensorTestMixin, ApplicationLayerTest):
+
+	# layer = ExLibraryApplicationTestLayer
 
 	@WithSharedApplicationMockDS
 	def test_censor_note_not_in_library_disabled_by_default(self):
@@ -166,7 +169,6 @@ class TestApplicationCensoring(_CensorTestMixin,ApplicationLayerTest):
 		assert_that( res.json_body,
 					 has_entries( 'body', only_contains( u'\xe2\u20ac\u2039****' ) ) )
 
-
 	@WithSharedApplicationMockDS
 	def test_create_chat_object_events_copy_owner_from_session(self):
 
@@ -187,7 +189,7 @@ class TestApplicationCensoring(_CensorTestMixin,ApplicationLayerTest):
 		args[0].creator = self
 
 		assert_that(censor_policies.creator_and_location_censor_policy('', args[0]),
-					 is_( none() ) )
+					is_( none() ) )
 
 	@WithSharedApplicationMockDS
 	def test_chat_message_uses_sites_from_session(self):
@@ -208,7 +210,7 @@ class TestApplicationCensoring(_CensorTestMixin,ApplicationLayerTest):
 			assert_that( args[0], is_( MessageInfo ) )
 			assert_that( args[0], has_property( 'creator', Session.owner ) )
 
-			#nti.contentfragments.censor.censor_assign( [bad_val], args[0], 'body' )
+			# nti.contentfragments.censor.censor_assign( [bad_val], args[0], 'body' )
 
 			assert_that( args[0], has_property( 'body', only_contains( censored_val ) ) )
 
