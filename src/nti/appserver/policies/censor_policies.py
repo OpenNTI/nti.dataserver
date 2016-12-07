@@ -20,13 +20,17 @@ from pyramid.traversal import find_interface
 
 from nti.app.authentication import get_remote_user
 
+from nti.appserver.interfaces import INTIIDRootResolver
+
+from nti.appserver.policies import site_policies
+
 from nti.chatserver.interfaces import IMessageInfo
 
 from nti.contentfragments import censor
+
 from nti.contentfragments.interfaces import ICensoredContentPolicy
 from nti.contentfragments.interfaces import IUnicodeContentFragment
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IDelimitedHierarchyContentUnit
 
 from nti.dataserver.users import Entity
@@ -34,8 +38,6 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 
 from nti.socketio.interfaces import ISocketSessionCreatedObjectEvent
-
-from . import site_policies
 
 class IObjectNotTiedToContent(interface.Interface):
 	"""
@@ -124,9 +126,8 @@ def creator_and_location_censor_policy(fragment, target, site_names=None):
 	if getattr(target, 'containerId', None):
 		# Try to find a location to put it in.
 		# See comments above about how this is starting to not be appropriate.
-		library = component.queryUtility(IContentPackageLibrary)
-		content_units = library.pathToNTIID(target.containerId) if library is not None else None
-		location = content_units[-1] if content_units else None
+		resolver = component.queryUtility(INTIIDRootResolver)
+		location = resolver.resolve(target.containerId) if resolver else None
 
 	if location is None:
 		location = getattr(target, '__parent__', None)
