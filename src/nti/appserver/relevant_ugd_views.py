@@ -74,7 +74,7 @@ class _AbstractRelevantUGDView(object):
 	@classmethod
 	def get_contained(cls, container_ntiid):
 		resolver = component.queryUtility(IContainedObjectsQuerier)
-		return resolver.resolve(container_ntiid) if resolver is not None else ()
+		return resolver.query(container_ntiid) if resolver is not None else ()
 
 	def get_objects(self, container_ntiid):
 		# Get our nearest content unit, if available
