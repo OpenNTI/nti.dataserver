@@ -679,7 +679,7 @@ class IEditLinkMaker(interface.Interface):
 
 # Resolvers
 
-class INTIIDRootResolver(interface.Interface):
+class IContainerRootResolver(interface.Interface):
 	"""
 	A utility that returns the root of a [container] ntiid
 	"""
@@ -687,6 +687,14 @@ class INTIIDRootResolver(interface.Interface):
 	def resolve(ntiid):
 		pass
 
+class IContainerLeafResolver(interface.Interface):
+	"""
+	A utility that returns the leaf of a [container] ntiid
+	"""
+	
+	def resolve(ntiid):
+		pass
+	
 # UGD Query
 
 class IUserContainersQuerier(interface.Interface):

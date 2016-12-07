@@ -18,26 +18,18 @@ from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.appserver import httpexceptions as hexc
 
+from nti.appserver.interfaces import IContainerLeafResolver
+from nti.appserver.interfaces import IContainedObjectsQuerier
+
 from nti.appserver.ugd_query_views import Operator
 from nti.appserver.ugd_query_views import UGDView
 from nti.appserver.ugd_query_views import _RecursiveUGDView
 from nti.appserver.ugd_query_views import _combine_predicate
 from nti.appserver.ugd_query_views import lists_and_dicts_to_ext_collection
 
-from nti.contentlibrary.indexed_data import get_catalog as lib_catalog
-
-from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
-from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
-
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
-
-from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.site.site import get_component_hierarchy_names
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -45,25 +37,6 @@ LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 
 union_operator = Operator.union
 intersection_operator = Operator.intersection
-
-def _get_library_path(ntiid):
-	library = component.getUtility(IContentPackageLibrary)
-	paths = library.pathToNTIID(ntiid) if library else None
-	return paths[-1] if paths else None
-
-def _container_assessments(units, ntiid):
-	results = []
-	try:
-		from nti.assessment.interfaces import IQAssessmentItemContainer
-		for unit in units + [_get_library_path(ntiid)]:
-			container = IQAssessmentItemContainer(unit, None)
-			if not container:
-				continue
-			for asm_item in container.assessments():
-				results.append(asm_item)
-	except ImportError:
-		pass
-	return results
 
 class _AbstractRelevantUGDView(object):
 
@@ -93,53 +66,22 @@ class _AbstractRelevantUGDView(object):
 		predicate = _combine_predicate(filter_shared_with, predicate, operator=operator)
 		return predicate
 
-	def _scan_quizzes(self, ntiid):
-		library = component.getUtility(IContentPackageLibrary)
-		# Quizzes are often subcontainers, so we look at the parent and its children
-		# TODO Is this what we want for all implementations?
-		results = []
-		units = []
-		children = library.childrenOfNTIID(ntiid)
-		for unit in children:
-			unit = find_object_with_ntiid(unit)
-			if unit is not None:
-				units.append(unit)
+	@classmethod
+	def _get_container_leaf(clcs, ntiid):
+		resolver = component.queryUtility(IContainerLeafResolver)
+		return resolver.resolve(ntiid) if resolver is not None else None
 
-		results.extend(_container_assessments(units, ntiid))
-		return results
-
-	def _scan_media(self, ntiid):
-		results = []
-		unit = _get_library_path(ntiid)
-		if unit is None:
-			return results
-		for provided in (IVideoIndexedDataContainer, IAudioIndexedDataContainer):
-			for media_data in provided(unit).values():
-				results.append(media_data)
-		return results
-
-	def _get_legacy_contained(self, container_ntiid):
-		results = []
-		results.extend(self._scan_media(container_ntiid))
-		results.extend(self._scan_quizzes(container_ntiid))
-		return results
-
-	def get_contained(self, container_ntiid):
-		catalog = lib_catalog()
-		sites = get_component_hierarchy_names()
-		objects = catalog.search_objects(container_ntiids=(container_ntiid,),
-										 sites=sites)
-		if not objects:
-			# Needed for non-persistent courses
-			objects = self._get_legacy_contained(container_ntiid)
-		return objects
+	@classmethod
+	def get_contained(cls, container_ntiid):
+		resolver = component.queryUtility(IContainedObjectsQuerier)
+		return resolver.resolve(container_ntiid) if resolver is not None else ()
 
 	def get_objects(self, container_ntiid):
 		# Get our nearest content unit, if available
 		# Seems wrong to do this in all cases, was doing it just for
 		# assessment items before.
 		try:
-			unit = _get_library_path(container_ntiid)
+			unit = self._get_container_leaf(container_ntiid)
 			container_ntiid = unit.ntiid
 		except AttributeError:
 			pass
