@@ -11,21 +11,20 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import os
 import errno
-
-from pyramid.view import view_config
 
 from zope import component
 from zope import interface
 
 from pyramid.interfaces import IView
 
-from .. import httpexceptions as hexc
+from pyramid.view import view_config
 
-from ..interfaces import IApplicationSettings
+from nti.appserver import httpexceptions as hexc
 
-from . import site_policies
+from nti.appserver.interfaces import IApplicationSettings
+
+from nti.appserver.policies import site_policies
 
 class ISiteCSSMarker(interface.Interface):
 	pass
@@ -123,9 +122,10 @@ def _response_for_site_resource_with_marker(marker_interface, request, resource,
 		# the web root, fix it up.
 		settings = component.getUtility(IApplicationSettings)
 		web_root = settings.get('web_app_root', '/NextThoughtWebApp/')
-		if 	web_root != '/NextThoughtWebApp/' and \
-			request.environ['PATH_INFO'].startswith(web_root):
-			request.environ['PATH_INFO'] = request.environ['PATH_INFO'].replace(web_root, '/NextThoughtWebApp/')
+		if 	web_root != '/NextThoughtWebApp/' \
+			and request.environ['PATH_INFO'].startswith(web_root):
+			path_info = request.environ['PATH_INFO']
+			request.environ['PATH_INFO'] = path_info.replace(web_root, '/NextThoughtWebApp/')
 		return view(request.context, request)
 
 	# Extra legacy support...these markers are DEPRECATED
@@ -151,7 +151,6 @@ def site_css_view(request):
 	We should be registered as a view on a path to a CSS file, and
 	we will return responses within the directory enclosing that css file.
 	"""
-
 	return _response_for_site_resource_with_marker(ISiteCSSMarker, request, 'site.css', b'text/css')
 
 @view_config(route_name="logon.strings_js",
@@ -199,8 +198,9 @@ def landing_html_view(request):
 	# Send them a redirect to folder for this request (basically pop off the last bit)
 	new_path = request.path.split('/')[1:-1]
 
-	response = hexc.HTTPSeeOther(location=request.resource_path(request.context, *new_path, query=request.params))
-
+	response = hexc.HTTPSeeOther(location=request.resource_path(request.context,
+																*new_path, 
+																query=request.params))
 	if marker:
 		# Live for 5 minutes.  We really just want this long enough to get through the redirect
 		response.set_cookie(_SITE_LANDING_COOKIE_NAME, site_name.encode('utf-8'), 600)
@@ -213,8 +213,9 @@ import os
 
 import scss
 
-from pyramid.static import static_view
 from pyramid.path import caller_package
+
+from pyramid.static import static_view
 
 @interface.implementer(IView)
 class _StaticView(static_view):
@@ -251,6 +252,7 @@ class _CompilingSCSSView(_StaticView):
 		_css_dir = os.path.join(_my_dir, 'NextThoughtWebApp', 'resources', 'css')
 		_scss_file = os.path.join(_scss_dir, 'site.scss')
 		_css_file = os.path.join(_css_dir, 'site.css')
+
 		# Sadly, logging is ineffective at this time, we expect to be at the
 		# module level
 		if os.path.isfile(_scss_file) and os.stat(_scss_file).st_size:
@@ -260,7 +262,7 @@ class _CompilingSCSSView(_StaticView):
 					os.mkdir(_css_dir)
 				except OSError as e:
 					if e.errno == errno.EEXIST:
-						logger.warning( "Error creating directory %s. Directory already exists.  Running unit tests concurrently?", _css_dir )
+						logger.warning("Error creating directory %s. Directory already exists.  Running unit tests concurrently?", _css_dir )
 					else:
 						raise
 
