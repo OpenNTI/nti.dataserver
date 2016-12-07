@@ -8,6 +8,8 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 	
-	<adapter factory=".policies.site_policies.RequestAwareS3KeyHrefMapper" />
-
+	<configure zcml:condition="installed nti.app.contentlibrary">
+		<include package="nti.app.contentlibrary" file="overrides.zcml" />
+	</configure>
+	
 </configure>
