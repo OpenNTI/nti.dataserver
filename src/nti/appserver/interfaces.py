@@ -689,7 +689,7 @@ class INTIIDRootResolver(interface.Interface):
 
 # UGD Query
 
-class IUserContainerQuerier(interface.Interface):
+class IUserContainersQuerier(interface.Interface):
 	"""
 	A utility that given a user and ntiid returns all the user and library
 	containers for that ntiid
@@ -697,4 +697,4 @@ class IUserContainerQuerier(interface.Interface):
 	
 	def query(user, ntiid, include_stream=True, stream_only=True):
 		pass
-IUserNTIIDContainers = IUserContainerQuerier
+IUserNTIIDContainers = IUserContainerQuerier = IUserContainersQuerier
