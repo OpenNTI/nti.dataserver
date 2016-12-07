@@ -687,6 +687,14 @@ class INTIIDRootResolver(interface.Interface):
 	def resolve(ntiid):
 		pass
 
+class INTIIDLeafResolver(interface.Interface):
+	"""
+	A utility that returns the leaf of a [container] ntiid
+	"""
+	
+	def resolve(ntiid):
+		pass
+
 # UGD Query
 
 class IUserContainersQuerier(interface.Interface):
