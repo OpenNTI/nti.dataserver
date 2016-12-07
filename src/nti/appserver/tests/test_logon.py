@@ -8,10 +8,9 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import not_
 from hamcrest import all_of
 from hamcrest import has_key
-from hamcrest import contains
-from hamcrest import not_
 from hamcrest import equal_to
 from hamcrest import has_item
 from hamcrest import ends_with
@@ -48,9 +47,9 @@ import pyramid.httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
 
-from nti.appserver import logon
+from nti.appserver import interfaces as app_interfaces
 
-import nti.appserver.interfaces as app_interfaces
+from nti.appserver import logon
 
 from nti.appserver.logon import ROUTE_OPENID_RESPONSE
 
@@ -60,15 +59,12 @@ from nti.appserver.logon import _checksum
 from nti.appserver.logon import openid_login
 from nti.appserver.logon import password_logon
 from nti.appserver.logon import _openidcallback
-from nti.appserver.logon import _update_users_content_roles
 
 from nti.appserver.link_providers import flag_link_provider as user_link_provider
 
-from nti.dataserver import authorization as nauth
-
 from nti.dataserver import users
 
-import nti.dataserver.interfaces as nti_interfaces
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver.users import interfaces as user_interfaces
 
@@ -84,7 +80,7 @@ from nti.appserver.tests.test_application import TestApp
 from nti.appserver.tests.test_application import WithSharedApplicationMockDS
 
 from nti.dataserver.tests import mock_dataserver
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans  # , WithMockDS
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 class DummyView(object):
 	response = "Response"
@@ -219,10 +215,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 		# Now that we have the cookie, we should be able to request ourself
 		testapp.get('/dataserver2/users/sjohnson@nextthought.com')
 
-from nti.appserver.tests import ExLibraryApplicationTestLayer
-
 class TestLogonViews(ApplicationLayerTest):
-	layer = ExLibraryApplicationTestLayer
 
 	def setUp(self):
 		super(TestLogonViews, self).setUp()
@@ -285,7 +278,6 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that(create_link.target_mime_type, is_('application/vnd.nextthought.user'))
 		to_external_representation(result, EXT_FORMAT_JSON, name='wsgi')
 
-
 	@WithMockDSTrans
 	def test_authenticated_ping(self):
 		user = users.User.create_user(dataserver=self.ds, username='jason.madden@nextthought.com')
@@ -321,7 +313,6 @@ class TestLogonViews(ApplicationLayerTest):
 
 	@WithMockDSTrans
 	def test_fake_authenticated_handshake(self):
-
 		# A user that doesn't actually exist.
 		# Per current policy, the first link will be the generic password login
 		class Policy(object):
@@ -578,71 +569,6 @@ class TestLogonViews(ApplicationLayerTest):
 											  idurl="http://facebook.com",
 											  iface=nti_interfaces.IFacebookUser,
 											  user_factory=users.FacebookUser.create_user)
-	@WithMockDSTrans
-	def test_update_provider_content_access_not_in_library(self):
-		user = users.User.create_user(self.ds, username='jason.madden@nextthought.com', password='temp001')
-		content_roles = component.getAdapter(user, nti_interfaces.IGroupMember, nauth.CONTENT_ROLE_PREFIX)
-		# initially empty
-		assert_that(list(content_roles.groups), is_([]))
-
-		# add some from this provider
-		idurl = 'http://openid.nextthought.com/jmadden'
-		local_roles = ('ABCD',)
-		_update_users_content_roles(user, idurl, local_roles)
-		assert_that(content_roles.groups, contains(*[nauth.role_for_providers_content('nextthought', x) for x in local_roles]))
-
-
-		# add some more from this provider
-		local_roles += ('DEFG',)
-		_update_users_content_roles(user, idurl, local_roles)
-
-		assert_that(content_roles.groups, contains(*[nauth.role_for_providers_content('nextthought', x) for x in local_roles]))
-
-		# Suppose that this user has some other roles too from a different provider
-		aops_roles = [nauth.role_for_providers_content('aops', '1234')]
-		complete_roles = aops_roles + [nauth.role_for_providers_content('nextthought', x) for x in local_roles]
-		assert_that(complete_roles, has_length(3))
-		content_roles.setGroups(complete_roles)
-
-		# If we update NTI again...
-		_update_users_content_roles(user, idurl, local_roles)
-		# nothing changes.
-		assert_that(content_roles.groups, contains(*complete_roles))
-
-		# We can change up the NTI roles...
-		local_roles = ('HIJK',)
-		_update_users_content_roles(user, idurl, local_roles)
-		complete_roles = aops_roles + [nauth.role_for_providers_content('nextthought', x) for x in local_roles]
-		# and the aops roles are intact
-		assert_that(complete_roles, has_length(2))
-		assert_that(content_roles.groups, contains(*complete_roles))
-
-		# We can remove the NTI roles
-		_update_users_content_roles(user, idurl, None)
-		# leaving the other roles behind
-		assert_that(content_roles.groups, contains(*aops_roles))
-
-	@WithMockDSTrans
-	def test_update_provider_content_access_in_library(self):
-		# """If we supply the title of a work, the works actual NTIID gets used."""
-		# There are two things with the same title in the library, but different ntiids
-		# label="COSMETOLOGY" ntiid="tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology"
-		# label="COSMETOLOGY" ntiid="tag:nextthought.com,2011-10:MN-HTML-uncensored.cosmetology"
-
-		user = users.User.create_user(self.ds, username='jason.madden@nextthought.com', password='temp001')
-		content_roles = component.getAdapter(user, nti_interfaces.IGroupMember, nauth.CONTENT_ROLE_PREFIX)
-
-		# initially empty
-		assert_that(list(content_roles.groups), is_([]))
-
-		# Provider of course has to match
-		idurl = 'http://openid.mn.com/jmadden'
-		# The role is the title of the work
-		local_roles = ('cosmetology',)
-
-		_update_users_content_roles(user, idurl, local_roles)
-		assert_that(content_roles.groups, contains(nauth.role_for_providers_content('mn', 'MiladyCosmetology.cosmetology'),
-												   nauth.role_for_providers_content('mn', 'Uncensored.cosmetology')))
 
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent, IObjectModifiedEvent
 
