@@ -61,6 +61,6 @@ class SearchHit(SchemaConfigured, SearchHitMixin):
 
 @interface.implementer(ITranscriptSearchHit)
 class TranscriptSearchHit(SchemaConfigured, SearchHitMixin):
-	createDirectFieldProperties(ISearchHit)
+	createDirectFieldProperties(ITranscriptSearchHit)
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.transcriptsearchhit'
