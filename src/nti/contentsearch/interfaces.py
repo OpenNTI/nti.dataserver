@@ -31,6 +31,7 @@ from nti.dataserver.interfaces import ILastModified
 from nti.schema.field import Int
 from nti.schema.field import Bool
 from nti.schema.field import Dict
+from nti.schema.field import List
 from nti.schema.field import Float
 from nti.schema.field import Number
 from nti.schema.field import Object
@@ -217,11 +218,11 @@ class ISearcher(interface.Interface):
 
 class ISearchFragment(interface.Interface):
 	Field = ValidTextLine(title="Matching field", required=True)
-	Matches = ListOrTuple(value_type=ValidText(title='Snippet text'),
-						  title="Snippet text",
-						  min_length=0,
-						  required=True,
-						  default=())
+	Matches = List(value_type=ValidText(title='Snippet text'),
+				   title="Snippet text",
+				   min_length=0,
+				   required=True,
+				   default=None)
 # search results
 
 class ISearchHit(ILastModified):
