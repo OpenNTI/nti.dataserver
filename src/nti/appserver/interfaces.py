@@ -708,3 +708,11 @@ class IUserContainersQuerier(interface.Interface):
 	def query(user, ntiid, include_stream=True, stream_only=True):
 		pass
 IUserNTIIDContainers = IUserContainerQuerier = IUserContainersQuerier
+
+class IContainedObjectsQuerier(interface.Interface):
+	"""
+	A utility that given a ntiid returns all the [library] contained objects under it
+	"""
+	
+	def query(ntiid):
+		pass
