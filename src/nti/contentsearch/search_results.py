@@ -202,6 +202,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
 			self._sorted = False
 			self._hits.append(hit)
 			self._seen.add(hit.ID)
+			hit.__parent__ = self # ownership
 			return True
 		return False
 
