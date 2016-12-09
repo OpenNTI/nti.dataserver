@@ -17,6 +17,7 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.contentsearch.interfaces import ISearchHit
 from nti.contentsearch.interfaces import ITranscriptSearchHit
+from nti.contentsearch.interfaces import IContentUnitSearchHit
 
 from nti.externalization.representation import WithRepr
 
@@ -64,3 +65,9 @@ class TranscriptSearchHit(SchemaConfigured, SearchHitMixin):
 	createDirectFieldProperties(ITranscriptSearchHit)
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.transcriptsearchhit'
+
+@interface.implementer(IContentUnitSearchHit)
+class ContentUnitSearchHit(SchemaConfigured, SearchHitMixin):
+	createDirectFieldProperties(IContentUnitSearchHit)
+
+	mime_type = mimeType = 'application/vnd.nextthought.search.contentunitsearchhit'

@@ -249,6 +249,10 @@ class ITranscriptSearchHit(ISearchHit):
 	EndMilliSecs = Number(title="Media end timestamp", required=False)
 	StartMilliSecs = Number(title="Media start video timestamp", required=False)
 
+class IContentUnitSearchHit(ISearchHit):
+	EndMilliSecs = Number(title="Media end timestamp", required=False)
+	StartMilliSecs = Number(title="Media start video timestamp", required=False)
+
 class ISearchHitComparator(interface.Interface):
 
 	def compare(a, b):
