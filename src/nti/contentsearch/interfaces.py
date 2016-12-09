@@ -226,7 +226,9 @@ class ISearchFragment(interface.Interface):
 # search results
 
 class ISearchHit(ILastModified):
-	Query = Object(ISearchQuery, title="Search query", required=False)
+	Query = Object(ISearchQuery, title="Search query", required=False, readonly=True)
+	Query.setTaggedValue('_ext_excluded_out', True)
+	
 	Score = Number(title="hit relevance score", required=False, default=1.0, min=0.0)
 
 	ID = ValidTextLine(title="hit unique id", required=True)

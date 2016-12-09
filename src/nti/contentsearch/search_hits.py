@@ -43,6 +43,10 @@ class SearchHitMixin(object):
 	def __init__(self, *args, **kwargs):
 		super(SearchHitMixin, self).__init__(*args, **kwargs)
 
+	@property
+	def Query(self):
+		return getattr(self.__parent__, 'Query', None)
+
 	def __eq__(self, other):
 		try:
 			return self is other or self.ID == other.ID
