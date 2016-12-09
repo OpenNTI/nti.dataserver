@@ -673,6 +673,7 @@ class IContentSearchHit(ISearchHit):
 	"""
 	marker interface for content search hits
 	"""
+IContentUnitSearchHit = IContentSearchHit
 
 class IBookSearchHit(IContentSearchHit):
 	Title = ValidTextLine(title="Book title", required=False)
