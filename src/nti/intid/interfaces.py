@@ -17,6 +17,9 @@ from zope.interface import Interface
 from zope.interface import Attribute
 from zope.interface import implementer
 
+from zope.intid.interfaces import IntIdMissingError
+from zope.intid.interfaces import ObjectMissingError
+
 from zc.intid import IIntIds
 from zc.intid import IIntIdsSubclass
 
@@ -38,15 +41,9 @@ class IIntIds(IIntIds, IIntIdsSubclass, IContained):
 		unregistrations.
 		"""
 
-# The reason for the __str__ override bypassing KeyError
-# is to get usable exceptions printed from unit tests
-# See https://github.com/nose-devs/nose/issues/511
-class IntIdMissingError(KeyError):
-	"""
-	Raised by the utility when ``getId`` fails.
-	"""
-	def __str__(self):
-		return Exception.__str__( self )
+# alias for BWC
+IntIdMissingError = IntIdMissingError
+ObjectMissingError = ObjectMissingError
 
 class IntIdAlreadyInUseError(KeyError):
 	"""
@@ -54,13 +51,6 @@ class IntIdAlreadyInUseError(KeyError):
 	"""
 	def __str__(self):
 		return Exception.__str__(self)
-
-class ObjectMissingError(KeyError):
-	"""
-	Raised by the utility when ``getObject`` fails.
-	"""
-	def __str__(self):
-		return Exception.__str__( self )
 
 # The intid events, imported wholesale from
 # zope.intid, but fired at a different time (after
