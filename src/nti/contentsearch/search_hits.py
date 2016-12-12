@@ -284,6 +284,9 @@ class WhooshBookSearchHit(BaseSearchHit):
 	def get_oid(cls, hit):
 		return unicode(hit.ntiid) if hit is not None else None
 
+class ContentUnitSearchHit(WhooshBookSearchHit)
+	pass
+
 class WhooshMediaTranscriptSearchHit(BaseSearchHit):
 
 	TRANSCRIPT_TYPE = None
