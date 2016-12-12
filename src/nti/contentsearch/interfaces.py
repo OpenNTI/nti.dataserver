@@ -685,6 +685,7 @@ class IMediaTranscriptSearchHit(IContentSearchHit):
 	Title = ValidTextLine(title="Card title", required=False)
 	EndMilliSecs = Number(title="Video end video timestamp", required=False)
 	StartMilliSecs = Number(title="video start video timestamp", required=False)
+ITranscriptSearchHit = IMediaTranscriptSearchHit
 
 class IWhooshMediaTranscriptSearchHit(IMediaTranscriptSearchHit):
 	pass
