@@ -79,6 +79,7 @@ class BaseView(AbstractAuthenticatedView):
 			result = self.locate(result, self.request.root)
 			return result
 		except ValueError as e:
+			logger.exception("Cannot execute search query")
 			exc_info = sys.exc_info()
 			raise_json_error(
 						self.request,
@@ -98,6 +99,7 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 			if validator is not None:
 				validator.validate(query)
 		except Exception as e:
+			logger.exception("Invalid search query")
 			exc_info = sys.exc_info()
 			raise_json_error(
 						self.request,
