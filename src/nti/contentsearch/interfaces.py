@@ -251,8 +251,7 @@ class ITranscriptSearchHit(ISearchHit):
 	StartMilliSecs = Number(title="Media start video timestamp", required=False)
 
 class IContentUnitSearchHit(ISearchHit):
-	EndMilliSecs = Number(title="Media end timestamp", required=False)
-	StartMilliSecs = Number(title="Media start video timestamp", required=False)
+	pass
 
 class ISearchHitComparator(interface.Interface):
 
