@@ -25,5 +25,9 @@
 	<subscriber factory=".decorators._MostRecentReplyDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IThreadable" />
+				
+	<subscriber factory=".decorators._MostRecentReplyTopicDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.ITopic" />
 
 </configure>
