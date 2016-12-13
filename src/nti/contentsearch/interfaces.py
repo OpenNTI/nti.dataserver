@@ -231,6 +231,8 @@ class ISearchHit(ILastModified):
 	Score = Number(title="hit relevance score", required=False, default=1.0, min=0.0)
 
 	ID = ValidTextLine(title="hit unique id", required=True)
+	ID.setTaggedValue('_ext_excluded_out', True)
+	
 	NTIID = ValidTextLine(title="hit object ntiid", required=False)
 	Creator = ValidTextLine(title="Search hit target creator", required=False)
 	Containers = ListOrTuple(value_type=ValidTextLine(title="the ntiid"),
