@@ -650,6 +650,7 @@ class IUserDataSearchHit(ISearchHit):
 	"""
 	marker interface for user generated data search hits
 	"""
+IUserGeneratedDataSearchHit = IUserDataSearchHit
 
 class INoteSearchHit(IUserDataSearchHit):
 	pass

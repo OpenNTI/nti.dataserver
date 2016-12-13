@@ -258,6 +258,9 @@ class ForumSearchHit(SearchHit):
 		self.Title = get_field_value(adapted, "title")
 		return adapted
 
+class UserGeneratedDataSearchHit(SearchHit):
+	pass
+
 @component.adapter(IWhooshBookContent)
 @interface.implementer(IWhooshBookSearchHit)
 class WhooshBookSearchHit(BaseSearchHit):
