@@ -255,6 +255,9 @@ class ITranscriptSearchHit(ISearchHit):
 class IContentUnitSearchHit(ISearchHit):
 	pass
 
+class IUserGeneratedDataSearchHit(ISearchHit):
+	pass
+
 class ISearchHitComparator(interface.Interface):
 
 	def compare(a, b):

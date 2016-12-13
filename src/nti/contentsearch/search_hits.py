@@ -18,6 +18,7 @@ from zope.mimetype.interfaces import IContentTypeAware
 from nti.contentsearch.interfaces import ISearchHit
 from nti.contentsearch.interfaces import ITranscriptSearchHit
 from nti.contentsearch.interfaces import IContentUnitSearchHit
+from nti.contentsearch.interfaces import IUserGeneratedDataSearchHit
 
 from nti.externalization.representation import WithRepr
 
@@ -75,3 +76,9 @@ class ContentUnitSearchHit(SchemaConfigured, SearchHitMixin):
 	createDirectFieldProperties(IContentUnitSearchHit)
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.contentunitsearchhit'
+
+@interface.implementer(IUserGeneratedDataSearchHit)
+class UserGeneratedDataSearchHit(SchemaConfigured, SearchHitMixin):
+	createDirectFieldProperties(IUserGeneratedDataSearchHit)
+
+	mime_type = mimeType = 'application/vnd.nextthought.search.ugdsearchhit'
