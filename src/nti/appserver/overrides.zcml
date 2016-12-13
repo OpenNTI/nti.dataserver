@@ -7,9 +7,5 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="zope.security" />
-	
-	<configure zcml:condition="installed nti.app.contentlibrary">
-		<include package="nti.app.contentlibrary" file="overrides.zcml" />
-	</configure>
-	
+
 </configure>
