@@ -68,6 +68,8 @@ class _SearchHitHighlightDecorator(object):
 		for field, text in self.sources(query, hit, external):
 			hi = _word_fragments_highlight(query, text)
 			content_hi = hi if field == content_ else content_hi
+			for f in hi.fragments or ():
+				f.__parent__ = hit
 			if hi.match_count > 0:
 				external[FIELD] = field
 				self.set_snippet(hi, external)

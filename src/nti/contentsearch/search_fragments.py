@@ -15,6 +15,8 @@ from collections import namedtuple
 
 from zope import interface
 
+from zope.container.contained import Contained
+
 from zope.interface.common.sequence import IFiniteSequence
 
 from nti.externalization.representation import WithRepr
@@ -102,7 +104,7 @@ def create_from_terms(text, termset, check_word, punkt_pattern):
 @WithRepr
 @EqHash('text', 'matches')
 @interface.implementer(ISearchFragment, IFiniteSequence)
-class SearchFragment(object):
+class SearchFragment(Contained):
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.searchfragment'
 

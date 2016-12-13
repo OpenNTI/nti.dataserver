@@ -289,6 +289,7 @@ class _SearchResults(_BaseSearchResults):
 			self.sorted = False
 			self._hits.append(hit)
 			self._seen.add(hit.OID)
+			hit.__parent__ = self # ownership
 			return True
 		return False
 
