@@ -5,7 +5,6 @@ ZCML directives to grant roles and permissions. Just like
 those provided by :mod:`zcml.securitypolicy`, but not restricted
 to Python identifiers for names (e.g., allows email-style names).
 
-
 .. $Id$
 """
 
@@ -98,4 +97,3 @@ def grant_site(_context, principal=None, role=None):
             callable=_perform_site_role_grant,
             args=(role, principal),
         )
-

@@ -10,8 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 def is_impersonating(request):
-	# We know we are impersonating if we have a 'REMOTE_USER_DATA'
-	# value in the environ
+	# We know we are impersonating if we have a 'REMOTE_USER_DATA' value in the environ
 	environ = getattr(request, 'environ', {})
 	identity = environ.get('repoze.who.identity', {})
 	userdata = identity.get('userdata', {})

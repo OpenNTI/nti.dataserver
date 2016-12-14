@@ -136,6 +136,7 @@ ACT_CREATE = Permission('nti.actions.create')
 ACT_DELETE = Permission('nti.actions.delete')
 ACT_UPDATE = Permission('nti.actions.update')
 ACT_SEARCH = Permission('nti.actions.search')
+ACT_LIST = Permission('nti.actions.list')
 ACT_MODERATE = Permission('nti.actions.moderate')
 ACT_IMPERSONATE = Permission('nti.actions.impersonate')
 
