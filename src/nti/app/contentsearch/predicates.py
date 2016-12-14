@@ -21,8 +21,6 @@ from nti.contentsearch.interfaces import ISearchHitPredicate
 
 from nti.contentsearch.predicates import DefaultSearchHitPredicate
 
-from nti.dataserver.authentication import effective_principals
-
 from nti.dataserver.authorization import ACT_READ
 
 from nti.dataserver.users import User 
@@ -48,10 +46,6 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 	def user(self):
 		return User.get_user(self.principal.id)
 
-	@Lazy
-	def effective_principals(self):
-		return effective_principals(self.principal.id, everyone=False, skip_cache=True)
-
 	def allow(self, item, score, query):
 		if self.principal is None:
 			return True
@@ -66,8 +60,7 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 				if IPublishableTopic.providedBy(to_check):
 					result = has_permission(ACT_READ,
 											to_check,
-											self.principal.id,
-											principals=self.effective_principals)
+											self.request)
 				else:
 					result = has_permission(ACT_READ, item, self.request)
 			result = bool(result) and not IDeletedObjectPlaceholder.providedBy(item)
