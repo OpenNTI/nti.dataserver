@@ -24,6 +24,9 @@
 	<permission
 		id="nti.actions.search"
 		title="Search for objects" />
+	<permission 
+		id="nti.actions.list"
+		title="List contents of an object"/>
 	<permission
 		id="nti.actions.moderate"
 		title="Moderate existing objects" />
