@@ -194,7 +194,8 @@ class _AbstractForumPostView(PostUploadMixin,
 			lifecycleevent.added(topic_post)
 			
 			# The actual name isn't tremendously important,
-			# but we need to have one.
+			# but we need to have one so that the lineage is set
+			# correctly for when we're rendering links.
 			topic_post.__name__ = topic.generateId(prefix='comment')
 
 			# fail hard if no parent is set
