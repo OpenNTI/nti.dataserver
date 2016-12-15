@@ -99,17 +99,6 @@ class _AbstractUnsharedTopic(AcquireObjectsOnReadMixin,
 	id, containerId = _containerIds_from_parent()
 
 	sharingTargets = ()
-	
-	@property
-	def mostRecentReply(self):
-		"""
-		This is different than NewestDescendent in that it
-		returns the most recent top-level comment of a topic.
-		"""
-		top_level_replies = sorted([x for x in self.values() if not getattr(x, 'inReplyTo', None)],
-									key = lambda x: getattr(x, 'createdTime', 0),
-									reverse = True)
-		return top_level_replies and top_level_replies[0]
 
 	@property
 	def NewestDescendantCreatedTime(self):

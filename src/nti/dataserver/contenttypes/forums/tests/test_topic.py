@@ -230,31 +230,7 @@ class TestTopic(ForumLayerTest):
 									'headline', has_entry('Class', 'PersonalBlogEntryPost'),
 									'PostCount', 1,
 									'NewestDescendant', has_entry('Last Modified', 42))))
-		
-	def test_most_recent_reply(self):
-		
-		# If no comments on a topic, we should get nothing back. 
-		topic = Topic()
-		assert_that(topic.mostRecentReply, is_([]))
-		
-		# If we have a top-level comment, we should get it back.
-		top_level_post = Post()
-		top_level_post.inReplyTo = None
-		topic['k'] = top_level_post
-		assert_that(topic.mostRecentReply, is_(top_level_post))
 
-		# A newer top-level comment should come back if present		
-		newer_post = Post()
-		newer_post.inReplyTo = None
-		topic['l'] = newer_post
-		assert_that(topic.mostRecentReply, is_(newer_post))
-
-		# Replying to an existing comment should not
-		# affect what we get back.
-		non_top_level_post = Post()
-		non_top_level_post.inReplyTo = top_level_post
-		topic['m']= non_top_level_post
-		assert_that(topic.mostRecentReply, is_(newer_post))
 
 from nti.dataserver.users import Community
 

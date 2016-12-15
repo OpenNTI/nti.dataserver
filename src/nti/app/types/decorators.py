@@ -22,7 +22,6 @@ from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IThreadable
-from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
@@ -70,26 +69,9 @@ class _MostRecentReplyDecorator(object):
     __metaclass__ = SingletonDecorator
     
     def decorateExternalMapping(self, context, result):
-		_links = result.setdefault(StandardExternalFields.LINKS, [])
-		link = Link(context, rel='mostRecentReply', elements=('mostRecentReply',))
-		interface.alsoProvides(link, ILocation)
-		link.__name__ = ''
-		link.__parent__ = context
-		_links.append(link)
-		
-@component.adapter(ITopic)
-@interface.implementer(IExternalMappingDecorator)
-class _MostRecentReplyTopicDecorator(object):
-    """
-    Adds a link to get the most recent reply for a topic context
-    """
-    __metaclass__ = SingletonDecorator
-    
-    def decorateExternalMapping(self, context, result):
-		_links = result.setdefault(StandardExternalFields.LINKS, [])
-		link = Link(context, rel='mostRecentReply', elements=('mostRecentReply',))
-		interface.alsoProvides(link, ILocation)
-		link.__name__ = ''
-		link.__parent__ = context
-		_links.append(link)
-    		
+        _links = result.setdefault(StandardExternalFields.LINKS, [])
+        link = Link(context, rel='mostRecentReply', elements=('mostRecentReply',))
+        interface.alsoProvides(link, ILocation)
+        link.__name__ = ''
+        link.__parent__ = context
+        _links.append(link)

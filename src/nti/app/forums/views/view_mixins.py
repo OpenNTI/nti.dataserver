@@ -192,10 +192,6 @@ class _AbstractForumPostView(PostUploadMixin,
 			# it manually
 			lifecycleevent.created(topic_post)
 			lifecycleevent.added(topic_post)
-			
-			# The actual name isn't tremendously important,
-			# but we need to have one.
-			topic_post.__name__ = topic.generateId(prefix='comment')
 
 			# fail hard if no parent is set
 			assert topic_post.__parent__ == topic
