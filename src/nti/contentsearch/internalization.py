@@ -73,11 +73,6 @@ class _SearchResultsUpdater(object):
 			parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
 	
 		result = InterfaceObjectIO(self.obj, ISearchResults).updateFromExternalObject(parsed)
-
-		# make sure we restore the query object to the hits
-		for hit in self.obj._raw_hits():
-			hit.Query = self.obj.Query
-			hit.__parent__ = result
 		return result
 
 @interface.implementer(IInternalObjectUpdater)
