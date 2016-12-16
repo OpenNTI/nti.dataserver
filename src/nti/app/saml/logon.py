@@ -220,11 +220,12 @@ def acs_view(request):
 	except Exception as e:
 		logger.exception("An unknown error occurred processing saml response")
 
-		_failure = _make_location(error, state) if (error and state) else None
+		_failure = _make_location(error, state) if (error and state is not None) else None
 
+		error_str = str(e)
 		return _create_failure_response(request,
 										failure=_failure,
-										error="An unknown error occurred.")
+										error=(error_str if error_str else "An unknown error occurred."))
 
 import zope.deferredimport
 zope.deferredimport.initialize()
