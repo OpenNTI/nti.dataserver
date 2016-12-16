@@ -220,7 +220,7 @@ def acs_view(request):
 	except Exception as e:
 		logger.exception("An unknown error occurred processing saml response")
 
-		_failure = _make_location(error, state) if (error and state) else None
+		_failure = _make_location(error, state) if (error and state is not None) else None
 
 		return _create_failure_response(request,
 										failure=_failure,
