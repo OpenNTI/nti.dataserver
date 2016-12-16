@@ -87,11 +87,8 @@ class IDefinePrincipalDirective(_IDefinePrincipalDirective):
 		required=False)
 
 def _perform_site_role_grant(role, principal):
-	role_manager = component.queryUtility(ISiteRoleManager)
-	if role_manager is not None:
-		role_manager.assignRoleToPrincipal(role, principal, check=False)
-	else:
-		logger.warn("ISiteRoleManager has not been installed")
+	role_manager = component.getUtility(ISiteRoleManager)
+	role_manager.assignRoleToPrincipal(role, principal, check=False)
 
 def grant_site(_context, principal=None, role=None):
 	if principal and role:
