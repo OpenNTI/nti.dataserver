@@ -33,18 +33,18 @@ from nti.dataserver.users import User
 from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import is_ntiid_of_type
 
-_extractor_pe = re.compile('[?*]*(.*)')
+_extractor_pe = re.compile(r'[?*]*(.*)')
 
 def clean_search_query(query, language='en'):
-	temp = re.sub('[*?]', '', query)
-	result = unicode(query) if temp else u''
+	temp = re.sub(r'[*?]', '', query)
+	result = to_unicode(query) if temp else u''
 	if result:
 		m = _extractor_pe.search(result)
 		result = m.group() if m else u''
 
 	table = get_content_translation_table(language)
 	result = result.translate(table) if result else u''
-	result = unicode(result)
+	result = to_unicode(result)
 
 	# auto complete phrase search
 	if result.startswith('"') and not result.endswith('"'):
