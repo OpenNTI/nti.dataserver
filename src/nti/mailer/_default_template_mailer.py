@@ -195,6 +195,9 @@ def create_simple_html_text_email(base_template,
 		html_body, text_body = do_render(None)
 
 	# Email clients do not handle CSS well unless it's inlined.
+	# This can be expensive (~.4s per email) if users interactively
+	# trigger large numbers of emails. In that case, the email is
+	# probably better off created with inlined styles.
 	html_body = transform(html_body)
 
 	# PageTemplates (Chameleon and Z3c.pt) produce Unicode strings.
