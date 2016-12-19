@@ -220,8 +220,8 @@
 	</head>
 	<body class="normal-text">
 		<div metal:define-macro="header">
-			<div id="green-bar" class="green-bar"></div>
-			<div id="logo-bar">
+			<div id="green-bar" style="background-color: #89be3c; width: 100%; height: 5px;"></div>
+			<div id="logo-bar" style="margin-top: 20px; margin-bottom: 30px;">
 				<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
 					 alt="NextThought Logo" />
 			</div>
