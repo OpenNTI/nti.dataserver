@@ -11,10 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from nti.common.deprecated import moved
 
-def patch():
-	# content library
-	moved(str("nti.appserver.contentlibrary_views"), str("nti.app.contentlibrary.content_unit_preferences.adapters"))
-	
+def patch():	
 	# content search
 	moved(str("nti.contentsearch._content_utils"), str("nti.contentsearch._deprecated"))
 	moved(str("nti.contentsearch._discriminators"), str("nti.contentsearch._deprecated"))
