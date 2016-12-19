@@ -288,7 +288,7 @@ class DefaultBulkEmailProcessLoop(object):
 			self.redis.srem( self.names.source_name, member )
 			recipient_data.pop('template_args', None) # no need to repickle this
 			recipient_data['boto.ses.result'] = result
-			self.redis.sadd( self.names.dest_name, pickle.dumps( recipient_data, 
+			self.redis.sadd( self.names.dest_name, pickle.dumps( recipient_data,
 																 pickle.HIGHEST_PROTOCOL ) )
 			self.redis.expire( self.names.dest_name, _TTL )
 
@@ -302,7 +302,7 @@ class DefaultBulkEmailProcessLoop(object):
 		need to subclass this process and begin your transaction
 		around either this method (for bulk scope) or around
 		:meth:`process_one_recipient` (for fine-grained scope). The
-		later is recommended, otherwise it is likely that, for a long
+		latter is recommended, otherwise it is likely that, for a long
 		process, by the end of the run, the data is inconsistent with
 		the data at the beginning of the process.
 		"""

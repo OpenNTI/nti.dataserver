@@ -194,7 +194,7 @@ def create_simple_html_text_email(base_template,
 		# Ok, let's try to find the package.
 		html_body, text_body = do_render(None)
 
-	# Some clients (e.g. gmail) do not handle CSS well unless it's inlined.
+	# Email clients do not handle CSS well unless it's inlined.
 	html_body = transform(html_body)
 
 	# PageTemplates (Chameleon and Z3c.pt) produce Unicode strings.

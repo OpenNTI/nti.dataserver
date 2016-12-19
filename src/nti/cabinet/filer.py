@@ -191,7 +191,7 @@ class DirectoryFiler(object):
 	def key_name(self, identifier):
 		return os.path.split(identifier)[1]
 	keyName = key_name
-	
+
 	def get_external_link(self, item):
 		return item.filename if ISource.providedBy(item) else None
 	to_external_link = get_external_link

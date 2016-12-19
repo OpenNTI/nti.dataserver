@@ -6,54 +6,7 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>Notifications</title>
-		<style metal:use-macro="macro:style">
-			#green-bar {
-			background-color: #89be3c;
-			width: 100%;
-			height: 5px;
-			}
-			#logo-bar {
-			margin-top: 20px;
-			margin-bottom: 30px;
-			}
-			body {
-			margin-right: 0px;
-			font-family: Arial, sans-serif;
-			font-size: 14pt;
-			color: #757474;
-			}
-			table, th, td {
-		    border-collapse: collapse;
-			}
-			.avatar_initials {
-			    position: absolute;
-			    top: 0;
-			    bottom: 0;
-			    left: 0;
-			    right: 0;
-			    background-size: cover;
-			    background-position: center center;
-			    background-repeat: no-repeat;
-			    top: 50%;
-			    width: 100%;
-			    line-height: 4em;
-			    margin-top: -2em;
-			    font-weight: 600;
-			    font-size: 36px;
-			    font-weight: bold;
-			}
-			a {
-			text-decoration: none;
-			color: #3fb3f6;
-			}
-			.tterm, strong {
-			font-weight: bold;
-			color: #494949;
-			}
-			h1, h2, h3, h4, h5, h6 {
-			font-weight: bold;
-			color: #999;
-			}
+		<style>
 			<!-- http://stackoverflow.com/questions/12539697/iphone-5-css-media-query -->
 			@media screen and (max-width: 600px){
 				#wrapper{
@@ -83,7 +36,9 @@
 			}
 		</style>
 	</head>
-	<body>
+	<!-- For speed when sending large amounts of emails interactively, all styles are inlined below -->
+	<body style="margin-right: 0px; font-family: Arial, sans-serif;
+				font-size: 14pt;color: #757474;">
 		<div metal:use-macro="macro:header">
 		<div id="green-bar"></div>
 		<div id="logo-bar">
@@ -92,24 +47,28 @@
 		</div>
 		</div>
 
-		<table cellspacing="0" cellpadding="0" border="0"
-			style="color: #333; background: #EEF0F1; padding: 0; margin-left: 0px; margin:0;
-			width: 100%; font: 15px/1.25em 'Helvetica Neue', Arial,
-			Helvetica;">
+		<table cellspacing="0" cellpadding="0" style='border-collapse:collapse; background:#EEF0F1;
+													  color:#333; font:15px/1.25em "Helvetica Neue", Arial, Helvetica;
+													  margin:0; margin-left:0; padding:0; width:100%'>
 			<tbody>
-				<tr width="100%">
-					<td valign="top" align="left">
+				<tr width="100%" style="border-bottom:solid #e2e5e7 1px; color:#6d7d87; display:block;
+										font-size:12px; font-weight:bold; line-height:18px; padding-bottom:0;
+										padding-top:11px; vertical-align:top; width:100%">
+					<td valign="top" align="left" style="border-collapse:collapse; padding:15px; display: block">
 						<!-- White background -->
-						<table style="border: none; background:#fff; padding: 0 18px; width: 100%; margin-left: 0px;">
+						<table style="border-collapse:collapse; background:#fff; margin-left:0; padding:0 18px; width:100%">
 							<tbody>
-							<tr width="100%">
-								<td width="100%" style="border-collapse:collapse; margin-left: 0px; padding:15px">
+							<tr style="border-bottom:solid #e2e5e7 1px; color:#6d7d87; display: table-row;
+										font-size:12px; font-weight:bold; line-height:18px; padding-bottom:0;
+										vertical-align:top; width:100%">
+								<td width="100%" style="border-collapse:collapse; padding:15px; margin-left:0; display: table-cell">
 									<!-- Table with data -->
-									<table style="border-collapse:collapse; margin-left: 0px; align: center; width: 100%">
-										<tr width="100%">
-											<td valign="top" align="left" style="border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
-																				border-bottom: 1px solid #EFEFEF;
-																				margin-left: 0px; font-size: 22px; padding-left: 0px;">
+									<table style="border-collapse:collapse; margin-left:0; width:100%">
+										<tr style="border-bottom:1px solid #EFEFEF; color:#6d7d87; display:block;
+												   font-size:12px; font-weight:bold; line-height:18px; padding-bottom:0;
+												   padding-top:11px; vertical-align:top; width:100%" valign="top">
+											<td valign="top" align="left" style="border-collapse:collapse; padding:15px; border-bottom-left-radius:4px;
+																				 border-bottom-right-radius:4px; font-size:22px; margin-left:0; padding-left:0;">
 												<span>
 													<!--
 														Use the user's avatar if we have one. Otherwise, generate an
@@ -128,7 +87,7 @@
 														<!-- We do not have a style for this. We need to work out macro
 															style inheritance.
 														-->
-														<div class="avatar_initials"
+														<div
 															tal:define="sender_avatar_bg_color options/sender_avatar_bg_color"
 															style="font-size: 16px; width: 45px; height: 45px;
 														    		font-weight: bold; color: white; text-align: center;
@@ -142,37 +101,53 @@
 														</div>
 													</tal:block>
 												</span>
-												<span style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; padding-left: 8px;"
-													tal:content="options/sender_name">
-													Sender Name
-												</span>
-												<br />
-												<span style="font: 14px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4; padding-left: 8px;"
-													tal:content="options/context_display_name">
-													Group
-												</span>
+											</td>
+											<td valign="top" align="left" style="border-collapse:collapse; border-bottom-left-radius:4px;
+																				 border-bottom-right-radius:4px; font-size:22px; margin-left:0; padding-left:0;">
+												<table style="border-collapse:collapse; margin-left:0; width:100%">
+													<tr width="100%" style="color:#6d7d87; display: table-row; font-size:12px; font-weight:bold;
+																			line-height:18px; padding-bottom:0; vertical-align:top;
+																			width:100%">
+														<td valign="top" align="left" style="border-collapse:collapse; padding:15px; border-bottom-left-radius:4px;
+																							border-bottom-right-radius:4px; font-size:22px; margin-left:0; padding-left:0;
+																							display: block;">
+															<span style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; padding-left: 8px;"
+																 tal:content="options/sender_name">Sender Name
+															</span>
+															<br>
+															<span style="font: 14px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;
+																		padding-left: 8px;"
+																tal:content="options/context_display_name">Group Name
+															</span>
+														</td>
+													</tr>
+												</table>
 											</td>
 										</tr>
-										<tr width="100%">
-											<td valign="top" align="left" style="padding-left: 0px;">
+										<tr style="border-bottom:solid #e2e5e7 1px; color:#6d7d87; display:block; font-size:12px;
+												   font-weight:bold; line-height:18px; padding-bottom:0; padding-top:11px;
+												   vertical-align:top; width:100%" valign="top">
+											<td valign="top" align="left" style="border-collapse:collapse; padding:15px; padding-left:0">
 												<div style="font: 16px/2em 'Helvetica Neue',Arial,Helvetica; color:#a3a3a4;
-															white-space: pre-wrap; word-wrap: break-word; word-break: break-word;"
-													tal:content="structure options/body">
-													Email content.
+															white-space: pre-wrap; word-wrap: break-word; word-break: break-word;">
+													<p style="line-height: 1.4em" tal:content="structure options/body">user email</p>
 												</div>
 											</td>
 										</tr>
 									</table>
 								</td>
 							</tr>
-							<tr width="100%" style="color: #333; background: #EEF0F1; padding: 0; margin: 0;
-													width: 100%; font: 15px/1.25em 'Helvetica Neue', Arial,Helvetica;">
-								<td valign="top" align="left">
-									<p class="footer" style="font-size: smaller; margin-left: 0px; margin-right: 0px;">
+							<tr style='color:#333; display:block; font-size:12px; font-weight:bold; line-height:18px;
+									   padding-bottom:0; padding-top:11px; vertical-align:top; width:100%; background:#EEF0F1;
+									   font:15px/1.25em "Helvetica Neue", Arial, Helvetica; margin:0; padding:0' valign="top">
+								<td valign="top" align="left" style="border-collapse:collapse; padding:15px; display: block;">
+									<p style="color:#757474; font-family:Helvetica, Arial, sans-serif; font-size:smaller; line-height:12pt;
+											  margin-left:0; margin-right:0; margin-top:0; text-align:center" align="center">
 										<span>This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.</span>
 										<br />
 										If you feel this email was sent in error, or this account was created
-										without your consent, you may email <a href="mailto:support@nextthought.com"
+										without your consent, you may email <a style="text-decoration: none; color: #3fb3f6;"
+											href="mailto:support@nextthought.com"
 											tal:attributes="href string:mailto:${options/support_email|default}"
 											tal:content="options/support_email">support@nextthought.com</a>.
 									</p>
@@ -184,6 +159,5 @@
 				</tr>
 			</tbody>
 		</table>
-
 	</body>
 </html>
