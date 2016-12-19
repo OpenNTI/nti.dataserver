@@ -108,14 +108,15 @@ class IntIds(_ZCIntIds):
 	def getId(self, ob):
 		return _ZCIntIds.getId(self, aq_base(ob))
 
-	def forceRegister(self, uid, ob, check=True):
+	def force_register(self, uid, ob, check=True):
 		unwrapped = unwrap(aq_base(ob))
 		if check and uid in self.refs:
 			raise IntIdInUseError(ob)
 		self.refs[uid] = unwrapped
 		return uid
-
-	def forceUnregister(self, uid, ob=None, notify=False, removeAttribute=True):
+	forceRegister = force_register
+	
+	def force_unregister(self, uid, ob=None, notify=False, removeAttribute=True):
 		if not uid in self.refs:
 			raise KeyError(uid)
 
@@ -133,7 +134,8 @@ class IntIds(_ZCIntIds):
 
 		if notify and ob is not None:
 			notify(RemovedEvent(ob, self, uid))
-
+	forceUnregister = force_unregister
+	
 	def __repr__(self):
 		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__,
 									   self.__class__.__name__,
