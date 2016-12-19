@@ -16,11 +16,10 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from zope.event import notify
+from zope.event import notify as zope_notify
 
 from zope.security.proxy import removeSecurityProxy as unwrap
 
-from zc.intid.interfaces import AddedEvent
 from zc.intid.interfaces import RemovedEvent
 from zc.intid.interfaces import IntIdInUseError
 
@@ -76,34 +75,11 @@ class IntIds(_ZCIntIds):
 		"""
 		return _ZCIntIds.queryId(self, aq_base(ob), default=default)
 
-	def register(self, ob, event=True):
-		ob = unwrap(aq_base(ob))
-		uid = self.queryId(ob)
-		if uid is None:
-			uid = self.generateId(ob)
-			if uid in self.refs:
-				raise IntIdInUseError("id generator returned used id")
-		self.refs[uid] = ob
-		try:
-			setattr(ob, self.attribute, uid)
-		except:
-			# cleanup our mess
-			del self.refs[uid]
-			raise
-		if event:
-			notify(AddedEvent(ob, self, uid))
-		return uid
+	def register(self, ob, *args, **kwargs):
+		return _ZCIntIds.register(self, aq_base(ob))
 
-	def unregister(self, ob, event=True):
-		ob = unwrap(aq_base(ob))
-		uid = self.queryId(ob)
-		if uid is None:
-			return
-		# This should not raise KeyError, we checked that in queryId
-		del self.refs[uid]
-		setattr(ob, self.attribute, None)
-		if event:
-			notify(RemovedEvent(ob, self, uid))
+	def unregister(self, ob, *args, **kwargs):
+		return _ZCIntIds.unregister(self, aq_base(ob))
 
 	def getId(self, ob):
 		return _ZCIntIds.getId(self, aq_base(ob))
@@ -119,21 +95,17 @@ class IntIds(_ZCIntIds):
 	def force_unregister(self, uid, ob=None, notify=False, removeAttribute=True):
 		if not uid in self.refs:
 			raise KeyError(uid)
-
 		if ob is not None:
 			unwrapped = unwrap(aq_base(ob))
 			if self.refs[uid] is not unwrapped:
 				raise KeyError(ob)
-
 		del self.refs[uid]
-
 		if 		removeAttribute \
 			and ob is not None \
 			and getattr(ob, self.attribute, None) is not None:
 			setattr(ob, self.attribute, None)
-
 		if notify and ob is not None:
-			notify(RemovedEvent(ob, self, uid))
+			zope_notify(RemovedEvent(ob, self, uid))
 	forceUnregister = force_unregister
 	
 	def __repr__(self):
