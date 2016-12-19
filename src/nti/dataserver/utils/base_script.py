@@ -52,6 +52,9 @@ def create_context(env_dir=None, with_library=False, context=None, plugins=True,
 		context = xmlconfig.file('configure.zcml', package=package, context=context)
 		xmlconfig.include(context, files=os.path.join(slugs_dir, slugs_files),
 						  package='nti.appserver')
+		if slugs_files != "*.zcml": # include features
+			xmlconfig.include(context, files=os.path.join(slugs_dir, "*features.zcml"),
+						 	  package='nti.appserver')
 
 	if with_library:
 		library_zcml = os.path.join(etc, 'library.zcml')
