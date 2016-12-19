@@ -39,7 +39,7 @@ PP_APP_SITES = PluginPoint('nti.app.sites')
 PP_APP_PRODUCTS = PluginPoint('nti.app.products')
 
 def create_context(env_dir=None, with_library=False, context=None, plugins=True, 
-				   slugs=True, slugs_files="*.zcml"):
+				   slugs=True, slugs_files=("*.zcml",)):
 	etc = os.getenv('DATASERVER_ETC_DIR') or os.path.join(env_dir, 'etc')
 	etc = os.path.expanduser(etc)
 
@@ -50,12 +50,9 @@ def create_context(env_dir=None, with_library=False, context=None, plugins=True,
 	if slugs and os.path.exists(slugs_dir) and os.path.isdir(slugs_dir):
 		package = dottedname.resolve('nti.dataserver')
 		context = xmlconfig.file('configure.zcml', package=package, context=context)
-		xmlconfig.include(context, files=os.path.join(slugs_dir, slugs_files),
-						  package='nti.appserver')
-		if slugs_files != "*.zcml": # include features
-			xmlconfig.include(context, files=os.path.join(slugs_dir, "*features.zcml"),
-						 	  package='nti.appserver')
-
+		for name in slugs_files or ():
+			xmlconfig.include(context, files=os.path.join(slugs_dir, name),
+						  	 package='nti.appserver')
 	if with_library:
 		library_zcml = os.path.join(etc, 'library.zcml')
 		if not os.path.exists(library_zcml):
