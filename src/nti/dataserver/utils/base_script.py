@@ -38,18 +38,18 @@ PP_APP = PluginPoint('nti.app')
 PP_APP_SITES = PluginPoint('nti.app.sites')
 PP_APP_PRODUCTS = PluginPoint('nti.app.products')
 
-def create_context(env_dir=None, with_library=False, context=None, plugins=True):
+def create_context(env_dir=None, with_library=False, context=None, plugins=True, slugs=True):
 	etc = os.getenv('DATASERVER_ETC_DIR') or os.path.join(env_dir, 'etc')
 	etc = os.path.expanduser(etc)
 
 	context = context or config.ConfigurationMachine()
 	xmlconfig.registerCommonDirectives(context)
 
-	slugs = os.path.join(etc, 'package-includes')
-	if os.path.exists(slugs) and os.path.isdir(slugs):
+	slugs_dir = os.path.join(etc, 'package-includes')
+	if slugs and os.path.exists(slugs_dir) and os.path.isdir(slugs_dir):
 		package = dottedname.resolve('nti.dataserver')
 		context = xmlconfig.file('configure.zcml', package=package, context=context)
-		xmlconfig.include(context, files=os.path.join(slugs, '*.zcml'),
+		xmlconfig.include(context, files=os.path.join(slugs_dir, '*.zcml'),
 						  package='nti.appserver')
 
 	if with_library:
