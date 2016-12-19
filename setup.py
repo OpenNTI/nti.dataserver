@@ -335,7 +335,7 @@ setup(
 		'zc.catalog',
 		'zc.dict',	 # BTree based dicts that are subclassable
 		'zc.displayname', # Simple pluggable display name support
-		'zc.intid',
+		'zc.intid >= 2.0.0',
 		'zc.lockfile',
 		'zc.queue',
 		'zc.zlibstorage',	# compressed records. Will be built-in to newer ZODB
