@@ -858,12 +858,7 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 		if 'email' not in ext_value and '@' in ext_value.get('Username', ''):
 			ext_value['email'] = ext_value['Username']
 
-	def user_will_create(self, user, event):
-		"""
-		This policy verifies naming restraints.
-		"""
-		super(GenericAdultSitePolicyEventListener, self).user_will_create(user, event)
-
+	def _check_email(self, user):
 		profile = IUserProfile(user)
 		if '@' in user.username:
 			try:
@@ -881,6 +876,13 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 				elif user.username != email:
 					msg = "If you want to use an email address for the username, it must match the email address you enter"
 					raise AtInUsernameImpliesMatchingEmail(msg, 'Username', user.username)
+
+	def user_will_create(self, user, event):
+		"""
+		This policy verifies naming restraints.
+		"""
+		super(GenericAdultSitePolicyEventListener, self).user_will_create(user, event)
+		self._check_email(user)
 
 # Profiles for MC
 
