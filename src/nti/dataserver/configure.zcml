@@ -79,7 +79,6 @@
 
 	<!-- Int ids and persistent references by identity -->
 	<include package="nti.intid" />
-	<include package="nti.intid" file="subscribers.zcml" />
 
 	<!-- contentratings -->
 	<!-- It requires i18n support, but we disable its browser support -->

@@ -15,20 +15,16 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope import event as zope_event
 
-from zope.security.proxy import removeSecurityProxy
+from zope.event import notify
 
-from zc.intid.utility import AddedEvent
-from zc.intid.utility import RemovedEvent
+from zope.security.proxy import removeSecurityProxy as unwrap
+
+from zc.intid.interfaces import AddedEvent
+from zc.intid.interfaces import RemovedEvent
+from zc.intid.interfaces import IntIdInUseError
+
 from zc.intid.utility import IntIds as _ZCIntIds
-
-import BTrees
-
-from nti.intid.interfaces import IIntIds
-from nti.intid.interfaces import IntIdMissingError
-from nti.intid.interfaces import ObjectMissingError
-from nti.intid.interfaces import IntIdAlreadyInUseError
 
 try:
 	from Acquisition import aq_base
@@ -36,7 +32,9 @@ except ImportError:
 	def aq_base(o):
 		return o
 
-unwrap = removeSecurityProxy
+import BTrees
+
+from nti.intid.interfaces import IIntIds
 
 # Make pylint not complain about "badly implemented container"
 # pylint: disable=R0924
@@ -72,17 +70,21 @@ class IntIds(_ZCIntIds):
 		return _ZCIntIds.queryId(self, aq_base(ob), default=default)
 
 	def register(self, ob, event=True):
-		ob = aq_base(ob)
-		ob = unwrap(ob)
+		ob = unwrap(aq_base(ob))
 		uid = self.queryId(ob)
 		if uid is None:
 			uid = self.generateId(ob)
 			if uid in self.refs:
-				raise ValueError("id generator returned used id")
+				raise IntIdInUseError("id generator returned used id")
 		self.refs[uid] = ob
-		setattr(ob, self.attribute, uid)
+		try:
+			setattr(ob, self.attribute, uid)
+		except:
+			# cleanup our mess
+			del self.refs[uid]
+			raise
 		if event:
-			zope_event.notify(AddedEvent(ob, self, uid))
+			notify(AddedEvent(ob, self, uid))
 		return uid
 
 	def unregister(self, ob, event=True):
@@ -90,28 +92,19 @@ class IntIds(_ZCIntIds):
 		uid = self.queryId(ob)
 		if uid is None:
 			return
+		# This should not raise KeyError, we checked that in queryId
 		del self.refs[uid]
 		setattr(ob, self.attribute, None)
 		if event:
-			zope_event.notify(RemovedEvent(ob, self, uid))
+			notify(RemovedEvent(ob, self, uid))
 
 	def getId(self, ob):
-		ob = aq_base(ob)
-		try:
-			return _ZCIntIds.getId(self, ob)
-		except KeyError:
-			raise IntIdMissingError(ob, id(ob), self)
-
-	def getObject(self, ID):
-		try:
-			return _ZCIntIds.getObject(self, ID)
-		except KeyError:
-			raise ObjectMissingError(ID, self)
+		return _ZCIntIds.getId(self, aq_base(ob))
 
 	def forceRegister(self, uid, ob, check=True):
 		unwrapped = unwrap(aq_base(ob))
 		if check and uid in self.refs:
-			raise IntIdAlreadyInUseError(ob)
+			raise IntIdInUseError(ob)
 		self.refs[uid] = unwrapped
 		return uid
 
@@ -126,12 +119,13 @@ class IntIds(_ZCIntIds):
 
 		del self.refs[uid]
 
-		if 		ob is not None and removeAttribute \
+		if 		removeAttribute \
+			and ob is not None \
 			and getattr(ob, self.attribute, None) is not None:
 			setattr(ob, self.attribute, None)
 
 		if notify and ob is not None:
-			zope_event.notify(RemovedEvent(ob, self, uid))
+			notify(RemovedEvent(ob, self, uid))
 
 	def __repr__(self):
 		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__,

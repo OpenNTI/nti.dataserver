@@ -29,20 +29,10 @@
 	<include package="zope.keyreference" />
 
 	<!--
-	zc.intid fires a different set of events when objects gain/lose
-	intids.
+	zc.intid fires a different set of events when objects gain/lose intids.
 	-->
 	<include package="zc.intid" />
-
-	<!--
-		 This file has a bug (uses 'interface' instead of
-	     'implements'), so we replicate its effect manually.
-	-->
-	<!--
 	<include package="zc.intid" file="zope-intid.zcml" />
-	-->
-	<class class="zc.intid.utility.IntIds">
-		<implements interface="zope.intid.interfaces.IIntIds"/>
-	</class>
+	<include package="zc.intid" file="subscribers.zcml" />
 
 </configure>

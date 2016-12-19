@@ -15,6 +15,7 @@ from hamcrest import calling
 from hamcrest import has_length
 from hamcrest import assert_that
 does_not = is_not
+from nti.testing.matchers import verifiably_provides
 
 import struct
 
@@ -33,7 +34,6 @@ from nti.intid.utility import IntIds
 from nti.intid.interfaces import IIntIds
 
 from nti.testing.base import AbstractTestBase
-from nti.testing.matchers import verifiably_provides
 
 @interface.implementer(ILocation)
 class P(Persistent):

@@ -9,5 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.intid.interfaces import IntIdAddedEvent as NTIIntIdAddedEvent
-from nti.intid.interfaces import IntIdRemovedEvent as NTIIntIdRemovedEvent
+from zc.intid.interfaces import IAfterIdAddedEvent as INTIIntIdAddedEvent
+from zc.intid.interfaces import IBeforeIdRemovedEvent as INTIIntIdRemovedEvent
+
+from zc.intid.interfaces import AfterIdAddedEvent as NTIIntIdAddedEvent
+from zc.intid.interfaces import BeforeIdRemovedEvent as NTIIntIdRemovedEvent
