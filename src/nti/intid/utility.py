@@ -95,7 +95,7 @@ class IntIds(_ZCIntIds):
 		return uid
 
 	def unregister(self, ob, event=True):
-		ob = unwrap(ob)
+		ob = unwrap(aq_base(ob))
 		uid = self.queryId(ob)
 		if uid is None:
 			return
