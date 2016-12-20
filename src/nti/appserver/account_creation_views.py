@@ -30,6 +30,8 @@ from zope.schema.interfaces import ValidationError
 from z3c.password.interfaces import InvalidPassword
 from z3c.password.interfaces import IPasswordUtility
 
+from zope.intid.interfaces import IntIdMissingError
+
 from pyramid.view import view_config
 
 from nti.app.externalization import internalization as obj_io
@@ -67,8 +69,6 @@ from nti.dataserver.users.interfaces import UsernameCannotBeBlank
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
-
-from nti.intid.utility import IntIdMissingError
 
 from nti.schema.interfaces import InvalidValue
 from nti.schema.interfaces import find_most_derived_interface
