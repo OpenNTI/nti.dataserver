@@ -35,4 +35,9 @@
 	<include package="zc.intid" file="zope-intid.zcml" />
 	<include package="zc.intid" file="subscribers.zcml" />
 
+	<!--
+	reissue the event with component handle
+	-->
+	<subscriber handler=".subscribers.subscriberEventNotify" />
+
 </configure>
