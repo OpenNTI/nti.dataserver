@@ -15,9 +15,14 @@ from zope import component
 
 from zope.event import notify
 
+from zope.intid.interfaces import IntIdMissingError
+
 from zope.lifecycleevent import IObjectModifiedEvent
 
 from zope.security.management import queryInteraction
+
+from zc.intid.interfaces import IAfterIdAddedEvent
+from zc.intid.interfaces import IBeforeIdRemovedEvent
 
 from nti.dataserver.activitystream_change import Change
 
@@ -26,10 +31,6 @@ from nti.dataserver.interfaces import IContained
 from nti.dataserver.interfaces import TargetedStreamChangeEvent
 from nti.dataserver.interfaces import IObjectSharingModifiedEvent
 from nti.dataserver.interfaces import ISharingTargetEntityIterable
-
-from nti.intid.interfaces import IIntIdAddedEvent
-from nti.intid.interfaces import IntIdMissingError
-from nti.intid.interfaces import IIntIdRemovedEvent
 
 def _enqueue_change_to_target(target, change, accum=None):
 	"""
@@ -93,7 +94,7 @@ def _stream_preflight(contained):
 	except AttributeError:
 		return None
 
-@component.adapter(IContained, IIntIdRemovedEvent)
+@component.adapter(IContained, IBeforeIdRemovedEvent)
 def stream_willRemoveIntIdForContainedObject(contained, event):
 	# Make the containing owner broadcast the stream DELETED event /now/,
 	# while we can still get an ID, to keep catalogs and whatnot
@@ -110,7 +111,7 @@ def stream_willRemoveIntIdForContainedObject(contained, event):
 	for target in deletion_targets or ():
 		_enqueue_change_to_target(target, event, accum)
 
-@component.adapter(IContained, IIntIdAddedEvent)
+@component.adapter(IContained, IAfterIdAddedEvent)
 def stream_didAddIntIdForContainedObject(contained, event):
 	creation_targets = _stream_preflight(contained)
 	if creation_targets is None:
