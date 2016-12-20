@@ -14,9 +14,10 @@ from datetime import datetime
 
 from zope import component
 
+from pyramid import httpexceptions as hexc
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
-from pyramid import httpexceptions as hexc
 
 from nti.dataserver import authorization as nauth
 
@@ -152,7 +153,6 @@ class _BulkEmailView(object):
 
 import zope.testing.cleanup
 zope.testing.cleanup.addCleanUp( _BulkEmailView._cleanup )
-
 
 from .ses_notification_handler import process_sqs_queue
 

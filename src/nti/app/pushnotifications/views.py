@@ -11,21 +11,25 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 from itsdangerous import BadSignature
 
 from pyramid.view import view_config
+
 from pyramid import httpexceptions as hexc
 
 from zope import component
+
+from zope.preference.interfaces import IPreferenceGroup
+
 from zope.security.interfaces import IParticipation
 from zope.security.management import endInteraction
 from zope.security.management import newInteraction
 from zope.security.management import restoreInteraction
-from zope.preference.interfaces import IPreferenceGroup
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.pushnotifications import MessageFactory as _
+
 from nti.app.pushnotifications.utils import validate_signature
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
@@ -35,7 +39,9 @@ from nti.appserver.policies.site_policies import guess_site_display_name
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.authorization import ACT_READ
+
 from nti.dataserver.interfaces import IDataserverFolder
+
 from nti.dataserver.users.users import User
 
 def _do_unsubscribe( request, user ):

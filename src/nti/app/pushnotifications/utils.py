@@ -12,9 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 from urllib import urlencode
 from urlparse import urljoin
 
-import zope.intid
-
 from zope import component
+
+from zope.intid.interfaces import IIntIds
 
 from itsdangerous import JSONWebSignatureSerializer as SignatureSerializer
 
@@ -31,7 +31,7 @@ def validate_signature( user, signature, secret_key=None ):
 	an exception if the data does not match.
 	"""
 	username = user.username.lower()
-	intids = component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(IIntIds)
 
 	if not secret_key:
 		uid = intids.getId(user)
@@ -54,7 +54,7 @@ def generate_signature(user, secret_key=None):
 		raise ValueError("User not found")
 	username = user.username.lower()
 
-	intids = component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(IIntIds)
 
 	if not secret_key:
 		uid = intids.getId(user)

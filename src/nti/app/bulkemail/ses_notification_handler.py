@@ -51,13 +51,17 @@ import boto
 from boto.sqs.message import RawMessage
 
 from zope import component
+
 from zope.interface.exceptions import Invalid
 
-from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.account_recovery_views import find_users_with_email
 
+from nti.appserver.link_providers import flag_link_provider
+
 from nti.dataserver.interfaces import IDataserver
+
 from nti.dataserver.users.interfaces import IUserProfile
+
 from nti.dataserver.users.utils import unindex_email_verification
 
 from nti.dataserver.utils import run_with_dataserver

@@ -27,6 +27,7 @@ from zope import interface
 from zope.interface.interfaces import ComponentLookupError
 
 from zope.intid.interfaces import IIntIds
+from zope.intid.interfaces import IntIdMissingError
 
 from zope.security.interfaces import IParticipation
 from zope.security.management import endInteraction
@@ -43,10 +44,9 @@ from zc.displayname.interfaces import IDisplayNameGenerator
 
 from pyramid.traversal import find_interface
 
-from nti.appserver.interfaces import IApplicationSettings
+from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 
 from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
-from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 
 from nti.app.notabledata.interfaces import IUserNotableData
 
@@ -56,10 +56,17 @@ from nti.app.pushnotifications.utils import generate_unsubscribe_url
 
 from nti.appserver.context_providers import get_trusted_top_level_contexts
 
+from nti.appserver.interfaces import IApplicationSettings
+
 from nti.appserver.policies.site_policies import find_site_policy
 from nti.appserver.policies.site_policies import guess_site_display_name
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
+
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IUser
@@ -74,22 +81,14 @@ from nti.dataserver.users import Entity
 from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
-from nti.dataserver.contenttypes.forums.interfaces import ITopic
-from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
-
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.externalization.singleton import SingletonDecorator
-
-from nti.intid.interfaces import IntIdMissingError
 
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
 
 from nti.property.property import Lazy
-from nti.property.property import annotation_alias
 
 _ONE_WEEK = 7 * 24 * 60 * 60
 _TWO_WEEKS = _ONE_WEEK * 2
