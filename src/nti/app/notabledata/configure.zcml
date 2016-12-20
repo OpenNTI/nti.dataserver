@@ -15,7 +15,7 @@
 	<!-- When a circled event goes out, store the intid as notable -->
 	<subscriber handler=".subscribers.store_circled_event_notable"
 				for="nti.dataserver.interfaces.IStreamChangeCircledEvent
-					 nti.intid.interfaces.IIntIdAddedEvent" />
+					 zc.intid.interfaces.IAfterIdAddedEvent" />
 
 	<subscriber factory=".decorators._StreamChangeNotableDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
