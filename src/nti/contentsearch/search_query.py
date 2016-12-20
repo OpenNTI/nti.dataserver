@@ -9,8 +9,12 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+
 from zope import component
 from zope import interface
+
+from nti.common.string import to_unicode
 
 from nti.contentsearch.interfaces import ISearchQuery
 from nti.contentsearch.interfaces import IDateTimeRange
@@ -74,3 +78,31 @@ class QueryObject(SchemaConfigured):
 	def IsBatching(self):
 		return True if self.batchStart is not None and self.batchSize else False
 	is_batching = IsBatching
+
+	# ---------------
+
+	@classmethod
+	def create(cls, query, **kwargs):
+		if isinstance(query, six.string_types):
+			queryobject = QueryObject(term=query)
+		else:
+			if isinstance(query, QueryObject):
+				if kwargs:
+					queryobject = QueryObject()
+					queryobject.__dict__.update(query.__dict__)
+				else:
+					queryobject = query
+
+		if kwargs:
+			context = queryobject.context
+			if context is None:
+				context = queryobject.context = dict()
+			for k, v in kwargs.items():
+				if v is None:
+					continue
+				if k in ISearchQuery:
+					setattr(queryobject, k, v)
+				else:
+					v = to_unicode(v) if isinstance(v, six.string_types) else v
+					context[to_unicode(k)] = v
+		return queryobject
