@@ -71,13 +71,13 @@ class TestUtility(AbstractTestBase):
 		assert_that(u.unregister(obj), is_(none()))
 		assert_that(calling(u.getId).with_args(obj), raises(KeyError))
 
-	def _test_ops(self, event=True):
+	def _test_ops(self):
 		u = IntIds("_ds_id")
 
 		obj = P()
 		obj._p_jar = ConnectionStub()
 
-		count = 1 if event else 0
+		count = 1
 		assert_that(calling(u.getId).with_args(obj), raises(KeyError))
 		assert_that(calling(u.getId).with_args(P()), raises(KeyError))
 
@@ -87,23 +87,20 @@ class TestUtility(AbstractTestBase):
 		assert_that(u.queryObject(42), is_(none()))
 		assert_that(u.queryObject(42, obj), is_(obj))
 
-		uid = u.register(obj, event=event)
+		uid = u.register(obj)
 		assert_that(u.getObject(uid), is_(obj))
 		assert_that(u.queryObject(uid), is_(obj))
 		assert_that(u.getId(obj), is_(uid))
 		assert_that(u.queryId(obj), is_(uid))
 		assert_that(eventtesting.getEvents(IIdAddedEvent), has_length(count))
 
-		uid2 = u.register(obj, event=event)
+		uid2 = u.register(obj)
 		assert_that(uid, is_(uid2))
 
-		u.unregister(obj, event=event)
+		u.unregister(obj)
 		assert_that(calling(u.getObject).with_args(uid), raises(KeyError))
 		assert_that(calling(u.getId).with_args(obj), raises(KeyError))
 		assert_that(eventtesting.getEvents(IIdRemovedEvent), has_length(count))
 
 	def test_event(self):
-		self._test_ops(True)
-
-	def test_no_event(self):
-		self._test_ops(False)
+		self._test_ops()
