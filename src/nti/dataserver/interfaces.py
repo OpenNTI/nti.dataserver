@@ -95,16 +95,17 @@ checkCannotBeBlank = checkCannotBeBlank
 FieldCannotBeOnlyWhitespace = FieldCannotBeOnlyWhitespace
 
 # BWC exports
-from nti.coremetadata.interfaces import ICreatedTime
+from nti.base.interfaces import ICreatedTime
 from nti.coremetadata.interfaces import ILastModified
 
 ICreatedTime = ICreatedTime
 ILastModified = ILastModified
 
 # BWC exports
-from nti.dataserver_core.interfaces import IIdentity
+from nti.coremetadata.interfaces import IIdentity
+from nti.coremetadata.interfaces import IExternalService
+
 from nti.dataserver_core.interfaces import IDataserver
-from nti.dataserver_core.interfaces import IExternalService
 
 IIdentity = IIdentity
 IDataserver = IDataserver
@@ -258,7 +259,7 @@ from nti.dataserver_core.interfaces import IHTC_NEW_FACTORY
 IHTC_NEW_FACTORY = IHTC_NEW_FACTORY
 
 # BWC exports
-from nti.dataserver_core.interfaces import INamedContainer
+from nti.coremetadata.interfaces import INamedContainer
 INamedContainer = INamedContainer
 
 # BWC exports
@@ -266,14 +267,14 @@ from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 DCTimesLastModifiedMixin = DCTimesLastModifiedMixin
 
 # BWC exports
+from nti.base.interfaces import ILastViewed
 from nti.coremetadata.interfaces import ICreated
-from nti.coremetadata.interfaces import ILastViewed
 
 ICreated = ICreated
 ILastViewed = ILastViewed
 
 # BWC exports
-from nti.dataserver_core.interfaces import IContained
+from nti.coremetadata.interfaces import IContained
 
 IContained = IContained
 
@@ -923,9 +924,9 @@ ICalendarPublishable = ICalendarPublishable
 # Content interfaces
 
 # BWC exports
-from nti.dataserver_fragments.interfaces import ITitledContent
-from nti.dataserver_fragments.schema import CompoundModeledContentBody
-from nti.dataserver_fragments.schema import ExtendedCompoundModeledContentBody
+from nti.coremetadata.interfaces import ITitledContent
+from nti.coremetadata.schema import CompoundModeledContentBody
+from nti.coremetadata.schema import ExtendedCompoundModeledContentBody
 
 ITitledContent = ITitledContent
 CompoundModeledContentBody = CompoundModeledContentBody
@@ -950,12 +951,12 @@ class ITitledDescribedContent(ITitledContent, IDCDescriptiveProperties):
 	description = PlainText(title="The human-readable description of this object.")
 
 # BWC exports
-from nti.dataserver_fragments.interfaces import ITaggedContent
+from nti.coremetadata.interfaces import ITaggedContent
 IUserTaggedContent = ITaggedContent
 
 # BWC exports
-from nti.dataserver_core.interfaces import IModeledContent
-from nti.dataserver_core.interfaces import IEnclosedContent
+from nti.coremetadata.interfaces import IModeledContent
+from nti.coremetadata.interfaces import IEnclosedContent
 
 IEnclosedContent = IEnclosedContent
 
@@ -990,17 +991,17 @@ class ISimpleEnclosureContainer(interface.Interface):
 # Particular content types
 
 # BWC exports
-from nti.dataserver_core.interfaces import IThreadable
-from nti.dataserver_core.interfaces import IWeakThreadable
-from nti.dataserver_core.interfaces import IInspectableWeakThreadable
+from nti.coremetadata.interfaces import IThreadable
+from nti.coremetadata.interfaces import IWeakThreadable
+from nti.coremetadata.interfaces import IInspectableWeakThreadable
 
 IWeakThreadable = IWeakThreadable
 IInspectableWeakThreadable = IInspectableWeakThreadable
 
 # BWC exports
-from nti.dataserver_core.interfaces import IReadableShared
-from nti.dataserver_core.interfaces import IWritableShared
-from nti.dataserver_core.interfaces import IInspectableWeakThreadable
+from nti.coremetadata.interfaces import IReadableShared
+from nti.coremetadata.interfaces import IWritableShared
+from nti.coremetadata.interfaces import IInspectableWeakThreadable
 
 IReadableShared = IReadableShared
 IWritableShared = IWritableShared
@@ -1026,7 +1027,7 @@ class ObjectSharingModifiedEvent(ObjectModifiedEvent):
 		self.oldSharingTargets = kwargs.pop( 'oldSharingTargets', () )
 
 # BWC exports
-from nti.dataserver_core.interfaces import IShareableModeledContent
+from nti.coremetadata.interfaces import IShareableModeledContent
 
 IShareable = IWritableShared # bwc alias
 
@@ -1076,19 +1077,19 @@ class ITranscriptContainer(INamedContainer):
 	contains(ITranscript)
 
 # BWC exports
-from nti.dataserver_core.interfaces import ICanvas
-from nti.dataserver_core.interfaces import ICanvasShape
-from nti.dataserver_core.interfaces import ICanvasURLShape
+from nti.coremetadata.interfaces import ICanvas
+from nti.coremetadata.interfaces import ICanvasShape
+from nti.coremetadata.interfaces import ICanvasURLShape
 
 ICanvas = ICanvas
 ICanvasShape = ICanvasShape
 ICanvasURLShape = ICanvasURLShape
 
 # BWC exports
-from nti.dataserver_core.interfaces import IMedia
-from nti.dataserver_core.interfaces import IEmbeddedAudio
-from nti.dataserver_core.interfaces import IEmbeddedMedia
-from nti.dataserver_core.interfaces import IEmbeddedVideo
+from nti.coremetadata.interfaces import IMedia
+from nti.coremetadata.interfaces import IEmbeddedAudio
+from nti.coremetadata.interfaces import IEmbeddedMedia
+from nti.coremetadata.interfaces import IEmbeddedVideo
 
 IMedia = IMedia
 IEmbeddedAudio = IEmbeddedAudio
@@ -1096,7 +1097,7 @@ IEmbeddedMedia = IEmbeddedMedia
 IEmbeddedVideo = IEmbeddedVideo
 
 # BWC exports
-from nti.dataserver_core.interfaces import IModeledContentFile
+from nti.coremetadata.interfaces import IModeledContentFile
 IModeledContentFile = IModeledContentFile
 
 # BWC exports
