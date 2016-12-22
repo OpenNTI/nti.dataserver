@@ -134,7 +134,6 @@ setup(
 		'nti.contenttypes.presentation',
 		'nti.coremetadata',
 		'nti.dataserver_core',
-		'nti.dataserver_fragments',
 		'nti.dublincore',
 		'nti.externalization',
 		'nti.futures',
