@@ -23,7 +23,7 @@ from zope.keyreference.interfaces import IKeyReference
 
 from persistent import Persistent
 
-from nti.dataserver_core.mixins import ZContainedMixin
+from nti.coremetadata.mixins import ZContainedMixin
 
 from nti.externalization.oids import to_external_ntiid_oid
 

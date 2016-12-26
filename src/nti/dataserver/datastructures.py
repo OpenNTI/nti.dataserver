@@ -49,8 +49,8 @@ zope.deferredimport.deprecatedFrom(
 	"LinkNonExternalizableReplacer")
 
 zope.deferredimport.deprecatedFrom(
-	"Moved to nti.dataserver_core.mixins",
-	"nti.dataserver_core.mixins",
+	"Moved to nti.coremetadata.mixins",
+	"nti.coremetadata.mixins",
 	"_ContainedMixin",
 	"ContainedMixin",
 	"ZContainedMixin")

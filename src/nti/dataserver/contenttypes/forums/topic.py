@@ -40,6 +40,8 @@ from nti.containers.containers import AcquireObjectsOnReadMixin
 from nti.containers.containers import AbstractNTIIDSafeNameChooser
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
+from nti.coremetadata.mixins import ZContainedMixin
+
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
@@ -74,8 +76,6 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.sharing import ShareableMixin
 from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 from nti.dataserver.sharing import AbstractDefaultPublishableSharedWithMixin
-
-from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.dataserver.users import Entity
 

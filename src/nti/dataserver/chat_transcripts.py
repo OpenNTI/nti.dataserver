@@ -100,6 +100,8 @@ from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IUserTranscriptStorage
 from nti.chatserver.interfaces import IMessageInfoPostedToRoomEvent
 
+from nti.coremetadata.mixins import ZContainedMixin
+
 from nti.dataserver import users
 
 from nti.dataserver.interfaces import IUser
@@ -111,8 +113,6 @@ from nti.dataserver.interfaces import SYSTEM_USER_NAME
 from nti.dataserver.interfaces import ITranscriptSummary
 
 from nti.dataserver.activitystream_change import Change
-
-from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 

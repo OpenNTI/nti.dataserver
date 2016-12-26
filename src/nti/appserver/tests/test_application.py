@@ -60,7 +60,7 @@ import time
 import urllib
 from nti.dataserver import users
 from nti.ntiids import ntiids
-from nti.dataserver_core.mixins import ZContainedMixin
+from nti.coremetadata.mixins import ZContainedMixin
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
 from nti.contentrange import contentrange

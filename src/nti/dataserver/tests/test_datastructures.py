@@ -27,7 +27,7 @@ from ZODB.interfaces import IBroken
 from nti.dataserver import contenttypes
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.dataserver_core.mixins import ZContainedMixin
+from nti.coremetadata.mixins import ZContainedMixin
 
 from nti.datastructures.datastructures import ContainedStorage
 

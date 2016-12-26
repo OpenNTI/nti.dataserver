@@ -22,6 +22,8 @@ from zope.schema.fieldproperty import FieldProperty
 
 from nti.common._compat import Implicit
 
+from nti.coremetadata.mixins import ZContainedMixin
+
 from nti.dataserver.contenttypes.forums import _containerIds_from_parent
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
@@ -40,8 +42,6 @@ from nti.dataserver.contenttypes.note import BodyFieldProperty
 from nti.dataserver.contenttypes.threadable import ThreadableMixin
 
 from nti.dataserver.sharing import AbstractReadableSharedWithMixin
-
-from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 

@@ -45,7 +45,7 @@ import persistent.wref
 
 from nti.contentrange.contentrange import ContentRangeDescription
 
-from nti.dataserver_core.mixins import  ZContainedMixin as ContainedMixin
+from nti.coremetadata.mixins import  ZContainedMixin as ContainedMixin
 
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.interfaces import IFriendsList

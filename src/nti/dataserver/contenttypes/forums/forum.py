@@ -34,6 +34,8 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.containers.containers import AcquireObjectsOnReadMixin
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
+from nti.coremetadata.mixins import ZContainedMixin
+
 from nti.dataserver.contenttypes.forums import MessageFactory as _
 
 from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_DFL_FORUM
@@ -58,8 +60,6 @@ from nti.dataserver.contenttypes.forums import _CreatedIntIdNTIIDMixin as _Singl
 from nti.dataserver.contenttypes.forums import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
 
 from nti.dataserver.sharing import AbstractReadableSharedWithMixin
-
-from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 

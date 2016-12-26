@@ -26,7 +26,7 @@ import pyramid.httpexceptions as hexc
 
 from nti.dataserver import users
 
-from nti.dataserver_core.mixins import ZContainedMixin
+from nti.coremetadata.mixins import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.externalization.representation import to_external_representation

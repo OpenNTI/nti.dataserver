@@ -64,7 +64,7 @@ import nti.dataserver.contenttypes
 from nti.dataserver import users
 import nti.dataserver.interfaces as nti_interfaces
 
-from nti.dataserver_core.mixins import ZContainedMixin
+from nti.coremetadata.mixins import ZContainedMixin
 
 from nti.ntiids import ntiids
 
