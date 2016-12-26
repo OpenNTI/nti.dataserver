@@ -17,6 +17,8 @@ from zope import interface
 
 from zope.deprecation import deprecate
 
+from nti.coremetadata.mixins import ZContainedMixin
+
 from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import IWritableShared
 from nti.dataserver.interfaces import IUsernameIterable
@@ -26,8 +28,6 @@ from nti.dataserver.users import User
 from nti.dataserver.users import Entity
 
 from nti.dataserver.sharing import ShareableMixin
-
-from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 

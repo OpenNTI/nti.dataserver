@@ -18,8 +18,8 @@ from zope.annotation.factory import factory as an_factory
 
 from persistent import Persistent
 
-from ..interfaces import IContainerContext
-from ..interfaces import IContextAnnotatable
+from nti.dataserver.interfaces import IContainerContext
+from nti.dataserver.interfaces import IContextAnnotatable
 
 @component.adapter(IContextAnnotatable)
 @interface.implementer(IContainerContext)

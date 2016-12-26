@@ -22,6 +22,8 @@ from zope.schema.fieldproperty import FieldProperty
 
 from plone.namedfile.interfaces import IFile
 
+from nti.coremetadata.schema import BodyFieldProperty
+
 from nti.dataserver.contenttypes.base import _make_getitem
 
 from nti.dataserver.contenttypes.highlight import Highlight
@@ -35,8 +37,6 @@ from nti.dataserver.interfaces import IRatable
 from nti.dataserver.interfaces import ILikeable
 from nti.dataserver.interfaces import IFlaggable
 from nti.dataserver.interfaces import IFavoritable
-
-from nti.dataserver_core.schema import BodyFieldProperty
 
 from nti.externalization.internalization import update_from_external_object
 
