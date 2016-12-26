@@ -28,6 +28,8 @@ from nti.chatserver.interfaces import CHANNEL_DEFAULT
 
 from nti.chatserver.interfaces import IMessageInfo
 
+from nti.coremetadata.schema import MessageInfoBodyFieldProperty
+
 from nti.dataserver.contenttypes.base import _make_getitem
 from nti.dataserver.contenttypes.threadable import ThreadableMixin
 from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
@@ -35,8 +37,6 @@ from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 from nti.dataserver.sharing import AbstractReadableSharedMixin
 
 from nti.dataserver.users import entity
-
-from nti.dataserver_core.schema import MessageInfoBodyFieldProperty
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
