@@ -8,7 +8,6 @@ Only XHRPolling and WebSocket transports are supported. JSONP is not supported.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.socketio.persistent_session import AbstractSession
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -129,8 +128,6 @@ def _get_session(session_id):
 	"""
 	Returns a valid session to use, or raises HTTPNotFound.
 	"""
-	from IPython.core.debugger import Tracer; Tracer()()
-	return AbstractSession()
 	try:
 		session = component.getUtility(IDataserver).session_manager.get_session(session_id)
 	except (KeyError, ValueError):
