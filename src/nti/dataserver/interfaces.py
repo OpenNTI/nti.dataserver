@@ -1146,9 +1146,9 @@ class IPresentationPropertyHolder(interface.Interface):
 								  default=None)
 
 # BWC exports
-from nti.dataserver_core.interfaces import IContainerContext
-from nti.dataserver_core.interfaces import IUserGeneratedData
-from nti.dataserver_core.interfaces import IContextAnnotatable
+from nti.coremetadata.interfaces import IContainerContext
+from nti.coremetadata.interfaces import IUserGeneratedData
+from nti.coremetadata.interfaces import IContextAnnotatable
 
 IContainerContext = IContainerContext
 
@@ -1275,7 +1275,7 @@ INote.setTaggedValue('_ext_jsonschema', u'note')
 
 # BWC exports
 
-from nti.dataserver_core.interfaces import IDeletedObjectPlaceholder
+from nti.coremetadata.interfaces import IDeletedObjectPlaceholder
 IDeletedObjectPlaceholder = IDeletedObjectPlaceholder
 
 # Dynamic event handling
