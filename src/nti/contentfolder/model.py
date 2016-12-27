@@ -18,6 +18,8 @@ from zope.location.location import locate
 
 from zope.mimetype.interfaces import IContentTypeAware
 
+from ZODB.interfaces import IConnection
+
 from nti.coremetadata.interfaces import SYSTEM_USER_ID
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
@@ -88,11 +90,11 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 		checkValidId(key)
 		self._setitemf(key, value)
 		locate(value, parent=self, name=key)
-		if getattr(value, '_p_jar', None) is None and self._p_jar is not None:
-			self._p_jar.add(value)
+		if IConnection(value, None) is None and IConnection(self, None) is not None:
+			IConnection(self).add(value)
 		lifecycleevent.added(value, self, key)
 		self.updateLastMod()
-		self._p_changed = True
+		self._p_changed = True # changed
 
 	def __setitem__(self, key, value):
 		self._save(key, value)

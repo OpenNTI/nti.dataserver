@@ -21,8 +21,8 @@ from zope.dublincore.interfaces import IDCDescriptiveProperties
 
 from plone.namedfile.interfaces import INamed as IPloneNamed
 
-from nti.coremetadata.interfaces import ICreated
-from nti.coremetadata.interfaces import ILastModified
+from nti.base.interfaces import ICreated
+from nti.base.interfaces import ILastModified
 
 from nti.schema.field import Bool
 from nti.schema.field import ListOrTuple
