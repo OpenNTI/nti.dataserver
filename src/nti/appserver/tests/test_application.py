@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-from __future__ import print_function
+# -*- coding: utf-8 -*-
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from hamcrest import is_
 from hamcrest import none
@@ -28,8 +31,10 @@ from hamcrest import greater_than_or_equal_to
 does_not = is_not
 
 from nose.tools import assert_raises
-from nti.testing.time import time_monotonically_increases
+
 from nti.testing.matchers import is_empty
+from nti.testing.time import time_monotonically_increases
+
 import unittest
 
 import zope.deferredimport
@@ -49,36 +54,48 @@ zope.deferredimport.deprecatedFrom(
 	"ConfiguringTestBase",
 	"SharedConfiguringTestBase")
 
-from nti.contentlibrary import interfaces as lib_interfaces
+import time
+import urllib
+import datetime
+from urllib import quote as UQ
 
-from nti.externalization.representation import to_json_representation
+import anyjson as json
 
 import webob.datetime_utils
-import datetime
-import time
 
-import urllib
-from nti.dataserver import users
-from nti.ntiids import ntiids
-from nti.coremetadata.mixins import ZContainedMixin
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization.externalization import to_external_object
+from persistent import Persistent
+
+from zope import component
+from zope import interface
+
+from zope.keyreference.interfaces import IKeyReference
+
+from nti.contentlibrary import interfaces as lib_interfaces
+
 from nti.contentrange import contentrange
-from nti.links import links
+
+from nti.coremetadata.mixins import ZContainedMixin
 
 from nti.dataserver import contenttypes
+
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver import users
+
 from nti.dataserver.users.user_profile import Education
 from nti.dataserver.users.user_profile import ProfessionalPosition
 
-import anyjson as json
-from urllib import quote as UQ
-from persistent import Persistent
-from zope import interface
-from zope import component
+from nti.externalization.externalization import to_external_object
 
-from zope.keyreference.interfaces import IKeyReference
+from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.externalization.representation import to_json_representation
+
+from nti.links import links
+
+from nti.ntiids import ntiids
+
+from nti.dataserver.tests import mock_dataserver
 
 @interface.implementer(IKeyReference) # IF we don't, we won't get intids
 class ContainedExternal(ZContainedMixin):
@@ -93,13 +110,9 @@ class ContainedExternal(ZContainedMixin):
 	def to_container_key(self):
 		return to_external_ntiid_oid(self, default_oid=str(id(self)))
 
-
 class PersistentContainedExternal(ContainedExternal,Persistent):
 	pass
 
-
-from nti.app.testing.webtest import TestApp
-from nti.testing.layers import find_test
 from nti.app.testing.application_webtest import ApplicationTestLayer
 from nti.app.testing.application_webtest import NonDevmodeApplicationTestLayer
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -108,6 +121,9 @@ from nti.app.testing.application_webtest import NonDevmodeApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges
 
+from nti.app.testing.webtest import TestApp
+
+from nti.testing.layers import find_test
 
 class NonDevmodeButAnySiteApplicationTestLayer(NonDevmodeApplicationTestLayer):
 
@@ -132,9 +148,7 @@ class NonDevmodeButAnySiteApplicationTestLayer(NonDevmodeApplicationTestLayer):
 		# Must implement
 		pass
 
-
 class TestApplicationNonDevmode(NonDevmodeApplicationLayerTest):
-
 
 	@WithSharedApplicationMockDS(users=False,testapp=True)
 	def test_non_configured_site_raises_error_in_production(self):
@@ -142,8 +156,6 @@ class TestApplicationNonDevmode(NonDevmodeApplicationLayerTest):
 							   extra_environ={b'HTTP_ORIGIN': b'http://foo.bar.com'},
 							   status=400)
 		assert_that( res.text, contains_string('Invalid site') )
-
-
 
 class TestApplication(ApplicationLayerTest):
 
@@ -168,7 +180,6 @@ class TestApplication(ApplicationLayerTest):
 			render( 'nti.appserver.tests:templates/basic_mako_template.mak',
 					dict(),
 					request=self.request )
-
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_unauthenticated_userid(self):
@@ -1369,6 +1380,10 @@ class TestApplication(ApplicationLayerTest):
 		# Commonly seen on socketio XHR post. If
 		# the wsgi.input raises an IOError, we don't 500
 
+		username = 'aizen@bleach.com'
+		with mock_dataserver.mock_db_trans( self.ds ):
+			self._create_user( username )
+
 		class Input(object):
 			def read(self, *args):
 				raise IOError("unexpected end of file while reading request at position 0")
@@ -1378,18 +1393,13 @@ class TestApplication(ApplicationLayerTest):
 			def __iter__(self):
 				return []
 
-		environ = {b'wsgi.input': Input(),
-				   b'REQUEST_METHOD': 'POST',
-					}
-		request = self.testapp.RequestClass.blank( '/socket.io/1/xhr-polling/0x22b3caa6de7a12d2',
-												   environ )
-		self.testapp.do_request( request,
-								 status=400, # Bad Request
-								 expect_errors=False)
-
-
-
-
+		extra_environ=self._make_extra_environ(username=username)
+		extra_environ[b'wsgi.input'] = Input()
+		self.testapp.put('/dataserver2/users/%s' % username,
+						{"NotificationCount": 5 },
+						extra_environ=extra_environ,
+						status=400)
+		
 from pyramid import traversal
 
 class _ApplicationLibraryTestLayer(ApplicationTestLayer):
@@ -1660,15 +1670,16 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 		# Now there is modification
 		assert_that( res.last_modified, is_( greater_than_or_equal_to( now ) ) )
 
-
 import nti.appserver._util
 
 class TestUtil(unittest.TestCase):
+
 	def test_dump_info(self):
 		string = nti.appserver._util.dump_info()
 		assert_that( string, contains_string( 'dump_stacks' ) )
 
 class TestAppUtil(ApplicationLayerTest):
+	
 	@WithSharedApplicationMockDS
 	def test_database(self):
 		seq = nti.appserver._util.dump_database_cache(gc=True)
