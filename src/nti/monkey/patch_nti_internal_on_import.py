@@ -32,6 +32,10 @@ def patch():
 	
 	moved(str("nti.dataserver.fragments"), str("nti.coremetadata"))
 	moved(str("nti.dataserver.fragments.interfaces"), str("nti.coremetadata.interfaces"))
+	moved(str("nti.dataserver_fragments"), str("nti.coremetadata"))
+	moved(str("nti.dataserver_fragments.mixins"), str("nti.coremetadata.mixins"))
+	moved(str("nti.dataserver_fragments.schema"), str("nti.coremetadata.schema"))
+	moved(str("nti.dataserver_fragments.interfaces"), str("nti.coremetadata.interfaces"))
 
 	# deleted session_consumer module
 	moved(str("nti.dataserver.session_consumer"), str("nti.socketio.session_consumer"))
