@@ -135,7 +135,9 @@
 	<include package="nti.contentfolder" />
 	<include package="nti.datastructures" />
 	<include package="nti.contentfragments" />
+	
 	<include package="nti.namedfile" file="configure_named.zcml" />
+	<include package="nti.namedfile" file="configure_external.zcml" />
 		
 	<include package=".contenttypes" />
 

@@ -31,8 +31,6 @@
 	<include package="nti.externalization" />
 	<include package="nti.dataserver" />
 	<include package="nti.mailer" />
-
-	<include package="nti.namedfile" file="configure_external.zcml" />
 	
 	<include package="nti.app.authentication" file="meta.zcml" />
 	<securityPolicy component="zope.securitypolicy.zopepolicy.ZopeSecurityPolicy" />
