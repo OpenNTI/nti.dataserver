@@ -245,17 +245,17 @@ ILink = ILink
 ILined = ILinked
 ILinkExternalHrefOnly = ILinkExternalHrefOnly
 
-from nti.dataserver_core.interfaces import IContainer
-from nti.dataserver_core.interfaces import IContainerNamesContainer
-from nti.dataserver_core.interfaces import IZContainerNamesContainer
-from nti.dataserver_core.interfaces import IHomogeneousTypeContainer
+from nti.coremetadata.interfaces import IContainer
+from nti.coremetadata.interfaces import IContainerNamesContainer
+from nti.coremetadata.interfaces import IZContainerNamesContainer
+from nti.coremetadata.interfaces import IHomogeneousTypeContainer
 
 IContainer = IContainer
 IContainerNamesContainer = IContainerNamesContainer
 IZContainerNamesContainer = IZContainerNamesContainer
 IHomogeneousTypeContainer = IHomogeneousTypeContainer
 
-from nti.dataserver_core.interfaces import IHTC_NEW_FACTORY
+from nti.coremetadata.interfaces import IHTC_NEW_FACTORY
 IHTC_NEW_FACTORY = IHTC_NEW_FACTORY
 
 # BWC exports
@@ -290,7 +290,7 @@ class IAnchoredRepresentation(IContained):
 							 description="The default is an empty, unplaced anchor.")
 
 # BWC exports
-from nti.dataserver_core.interfaces import IContainerIterable
+from nti.coremetadata.interfaces import IContainerIterable
 IContainerIterable = IContainerIterable
 
 # Changes related to content objects/users
