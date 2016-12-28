@@ -275,7 +275,6 @@ ILastViewed = ILastViewed
 
 # BWC exports
 from nti.coremetadata.interfaces import IContained
-
 IContained = IContained
 
 class IAnchoredRepresentation(IContained):
