@@ -160,7 +160,9 @@ class ContainerEnumerationWorkspace(_ContainerWrapper):
 
 	@property
 	def collections(self):
-		return _collections(self, self._container.itercontainers())
+		if hasattr(self._container, "iter_containers"):
+			return _collections(self, self._container.iter_containers())
+		return _collections(self, self._container.itercontainers()) # legacy
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IHomogeneousTypeContainer)

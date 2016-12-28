@@ -774,14 +774,15 @@ class User(Principal):
 						seen.add(k)
 						yield k
 
-	def itercontainers(self):
+	def iter_containers(self):
 		# TODO: Not sure about this. Who should be responsible for
 		# the UGD containers? Should we have some different layout
 		# for that (probably).
 		return (v
 				for v in self.containers.containers.itervalues()
 				if INamedContainer.providedBy(v))
-
+	itercontainers = iter_containers
+	
 	def iter_objects(self, include_stream=True, stream_only=False,
 					 include_shared=False, only_ntiid_containers=False):
 

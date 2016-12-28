@@ -103,9 +103,8 @@ ILastModified = ILastModified
 
 # BWC exports
 from nti.coremetadata.interfaces import IIdentity
+from nti.coremetadata.interfaces import IDataserver
 from nti.coremetadata.interfaces import IExternalService
-
-from nti.dataserver_core.interfaces import IDataserver
 
 IIdentity = IIdentity
 IDataserver = IDataserver
@@ -234,7 +233,7 @@ class IOIDResolver(interface.Interface):
 		"""
 
 # BWC exports
-from nti.dataserver_core.interfaces import IEnvironmentSettings
+from nti.coremetadata.interfaces import IEnvironmentSettings
 IEnvironmentSettings = IEnvironmentSettings
 
 from nti.dataserver_core.interfaces import ILink

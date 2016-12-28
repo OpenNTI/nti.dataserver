@@ -97,9 +97,10 @@ class TestContainerEnumerationWorkspace(ApplicationLayerTest):
 	def test_collections(self):
 		class Iter(object):
 			conts = ()
-			def itercontainers(self):
+			def iter_containers(self):
 				return iter(self.conts)
-
+			itercontainers = iter_containers
+			
 		class ITestI(interface.Interface): pass
 
 		class C(object):
@@ -154,8 +155,10 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 			interface.implements(nti_interfaces.IUser)
 			__name__ = 'user@place'
 			username = 'user@place'
-			def itercontainers(self):
+			def iter_containers(self):
 				return iter( () )
+			itercontainers = iter_containers
+			
 			def iterntiids(self):
 				return iter( () )
 		uew = UEW( MockUser() )
