@@ -25,8 +25,9 @@ from zope.deprecation import deprecated
 
 from zope.interface.common.sequence import IFiniteSequence
 
+from nti.base.interfaces import ILastModified
+
 from nti.dataserver.interfaces import IEntity
-from nti.dataserver.interfaces import ILastModified
 
 from nti.schema.field import Int
 from nti.schema.field import Bool
