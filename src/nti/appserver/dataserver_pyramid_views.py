@@ -34,12 +34,12 @@ from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.workspaces.interfaces import IService
 from nti.appserver.workspaces.interfaces import ICollection
 
+from nti.coremetadata.interfaces import UNAUTHENTICATED_PRINCIPAL_NAME
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IPrincipal
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
-
-from nti.dataserver_core.interfaces import UNAUTHENTICATED_PRINCIPAL_NAME
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields

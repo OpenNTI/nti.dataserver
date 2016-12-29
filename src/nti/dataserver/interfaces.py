@@ -86,9 +86,9 @@ class ACLProxy(ProxyBase):
 		self.__acl__ = acl
 
 # BWC exports
-from nti.dataserver_core.interfaces import InvalidData
-from nti.dataserver_core.interfaces import checkCannotBeBlank
-from nti.dataserver_core.interfaces import FieldCannotBeOnlyWhitespace
+from nti.coremetadata.interfaces import InvalidData
+from nti.coremetadata.interfaces import checkCannotBeBlank
+from nti.coremetadata.interfaces import FieldCannotBeOnlyWhitespace
 
 _InvalidData = InvalidData
 checkCannotBeBlank = checkCannotBeBlank
@@ -383,9 +383,9 @@ class TargetedStreamChangeEvent(ObjectEvent):
 		self.entity = target
 
 # BWC exports
-from nti.dataserver_core.interfaces import IMutedInStream
-from nti.dataserver_core.interfaces import INeverStoredInSharedStream
-from nti.dataserver_core.interfaces import INotModifiedInStreamWhenContainerModified
+from nti.coremetadata.interfaces import IMutedInStream
+from nti.coremetadata.interfaces import INeverStoredInSharedStream
+from nti.coremetadata.interfaces import INotModifiedInStreamWhenContainerModified
 
 IMutedInStream = IMutedInStream
 INeverStoredInSharedStream = INeverStoredInSharedStream
@@ -418,13 +418,13 @@ from zope.security.management import system_user
 system_user = system_user
 
 # BWC exports
-from nti.dataserver_core.interfaces import ME_USER_ID
-from nti.dataserver_core.interfaces import SYSTEM_USER_ID
-from nti.dataserver_core.interfaces import SYSTEM_USER_NAME
-from nti.dataserver_core.interfaces import RESERVED_USER_IDS
-from nti.dataserver_core.interfaces import EVERYONE_GROUP_NAME
-from nti.dataserver_core.interfaces import LOWER_RESERVED_USER_IDS
-from nti.dataserver_core.interfaces import AUTHENTICATED_GROUP_NAME
+from nti.coremetadata.interfaces import ME_USER_ID
+from nti.coremetadata.interfaces import SYSTEM_USER_ID
+from nti.coremetadata.interfaces import SYSTEM_USER_NAME
+from nti.coremetadata.interfaces import RESERVED_USER_IDS
+from nti.coremetadata.interfaces import EVERYONE_GROUP_NAME
+from nti.coremetadata.interfaces import LOWER_RESERVED_USER_IDS
+from nti.coremetadata.interfaces import AUTHENTICATED_GROUP_NAME
 
 ME_USER_ID = ME_USER_ID
 SYSTEM_USER_ID = SYSTEM_USER_ID
@@ -433,7 +433,7 @@ EVERYONE_GROUP_NAME = EVERYONE_GROUP_NAME
 AUTHENTICATED_GROUP_NAME = AUTHENTICATED_GROUP_NAME
 LOWER_RESERVED_USER_IDS = _LOWER_RESERVED_USER_IDS = LOWER_RESERVED_USER_IDS
 
-from nti.dataserver_core.interfaces import username_is_reserved
+from nti.coremetadata.interfaces import username_is_reserved
 username_is_reserved = username_is_reserved
 
 # Exported policies
@@ -526,8 +526,8 @@ class IMutableGroupMember(IGroupMember):
 		"""
 
 # BWC exports
-from nti.dataserver_core.interfaces import valid_entity_username
-from nti.dataserver_core.interfaces import ICreatedUsername
+from nti.coremetadata.interfaces import valid_entity_username
+from nti.coremetadata.interfaces import ICreatedUsername
 
 valid_entity_username=valid_entity_username
 ICreatedUsername=ICreatedUsername
@@ -550,14 +550,14 @@ class DefaultCreatedUsername(object):
 			return None
 
 # BWC exports
-from nti.dataserver_core.interfaces import IUser
-from nti.dataserver_core.interfaces import IEntity
-from nti.dataserver_core.interfaces import ICommunity
-from nti.dataserver_core.interfaces import IMissingEntity
-from nti.dataserver_core.interfaces import IDynamicSharingTarget
-from nti.dataserver_core.interfaces import IUnscopedGlobalCommunity
-from nti.dataserver_core.interfaces import IShouldHaveTraversablePath
-from nti.dataserver_core.interfaces import IUsernameSubstitutionPolicy
+from nti.coremetadata.interfaces import IUser
+from nti.coremetadata.interfaces import IEntity
+from nti.coremetadata.interfaces import ICommunity
+from nti.coremetadata.interfaces import IMissingEntity
+from nti.coremetadata.interfaces import IDynamicSharingTarget
+from nti.coremetadata.interfaces import IUnscopedGlobalCommunity
+from nti.coremetadata.interfaces import IShouldHaveTraversablePath
+from nti.coremetadata.interfaces import IUsernameSubstitutionPolicy
 
 IUser = IUser
 IEntity = IEntity
@@ -567,7 +567,6 @@ IDynamicSharingTarget = IDynamicSharingTarget
 IUnscopedGlobalCommunity = IUnscopedGlobalCommunity
 IShouldHaveTraversablePath = IShouldHaveTraversablePath
 IUsernameSubstitutionPolicy = IUsernameSubstitutionPolicy
-
 
 class IEffectivePrincipalResolver(interface.Interface):
 	"""
@@ -930,11 +929,11 @@ ITitledContent = ITitledContent
 CompoundModeledContentBody = CompoundModeledContentBody
 
 # BWC exports
-from nti.dataserver_core.interfaces import IContent
+from nti.coremetadata.interfaces import IContent
 IContent = IContent
 
 # BWC exports
-from nti.dataserver_core.interfaces import IModeledContentBody
+from nti.coremetadata.interfaces import IModeledContentBody
 IModeledContentBody = IModeledContentBody
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
@@ -1031,9 +1030,9 @@ IShareable = IWritableShared # bwc alias
 
 # BWC exports
 
-from nti.dataserver_core.interfaces import IFriendsList
-from nti.dataserver_core.interfaces import IUseNTIIDAsExternalUsername
-from nti.dataserver_core.interfaces import IDynamicSharingTargetFriendsList
+from nti.coremetadata.interfaces import IFriendsList
+from nti.coremetadata.interfaces import IUseNTIIDAsExternalUsername
+from nti.coremetadata.interfaces import IDynamicSharingTargetFriendsList
 
 IUseNTIIDAsExternalUsername = IUseNTIIDAsExternalUsername
 IDynamicSharingTargetFriendsList = IDynamicSharingTargetFriendsList

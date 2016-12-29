@@ -11,8 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from nti.dataserver.interfaces import IDataserver
 from nti.dataserver_core.interfaces import ILink
-from nti.dataserver_core.interfaces import IDataserver
 
 from nti.traversal.traversal import find_nearest_site as nti_find_nearest_site
 

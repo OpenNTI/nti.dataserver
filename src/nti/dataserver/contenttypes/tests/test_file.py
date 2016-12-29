@@ -21,7 +21,7 @@ from hamcrest import only_contains
 from nti.dataserver.contenttypes.note import Note
 from nti.dataserver.contenttypes.file import ModeledContentFile
 
-from nti.dataserver_core.interfaces import IModeledContentFile
+from nti.coremetadata.interfaces import IModeledContentFile
 
 from nti.externalization.externalization import to_external_object
 
