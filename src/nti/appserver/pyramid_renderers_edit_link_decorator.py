@@ -20,8 +20,6 @@ from zope.location.interfaces import ILocation
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
-from nti.app.links.externalization import render_link
-
 from nti.appserver.interfaces import IEditLinkMaker
 
 from nti.appserver.pyramid_authorization import is_writable
@@ -40,6 +38,7 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.oids import to_external_ntiid_oid
 
+from nti.links import render_link
 from nti.links.links import Link
 
 from nti.property.property import Lazy

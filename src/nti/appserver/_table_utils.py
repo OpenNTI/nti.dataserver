@@ -47,8 +47,6 @@ from z3c.table import column
 import pyramid.interfaces
 from pyramid import traversal
 
-from nti.app.links.externalization import render_link
-
 from nti.chatserver.interfaces import IMessageInfo
 
 from nti.contentfragments.interfaces import IHTMLContentFragment
@@ -59,6 +57,8 @@ from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import ICanvas
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
+
+from nti.links.externalization import render_link
 
 from nti.ntiids import ntiids
 

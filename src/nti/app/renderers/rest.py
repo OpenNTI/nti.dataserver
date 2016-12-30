@@ -20,8 +20,6 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from perfmetrics import metric
 
-from nti.app.links.externalization import render_link
-
 from nti.dataserver.interfaces import IContent
 from nti.dataserver.interfaces import IEnclosedContent
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
@@ -31,6 +29,7 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import catch_replace_action
 from nti.externalization.representation import to_json_representation_externalized
 
+from nti.links import render_link
 from nti.links.links import Link
 
 from nti.mimetype.mimetype import nti_mimetype_from_object

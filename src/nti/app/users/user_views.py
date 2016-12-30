@@ -25,8 +25,6 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
-from nti.app.links.externalization import render_link
-
 from nti.app.users import MessageFactory as _
 
 from nti.appserver.dataserver_pyramid_views import GenericGetView
@@ -50,6 +48,8 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.links import render_link
 
 ITEMS = StandardExternalFields.ITEMS
 

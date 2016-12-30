@@ -35,8 +35,6 @@ from nti.app.contentfile import MessageFactory as _
 
 from nti.app.externalization.error import raise_json_error
 
-from nti.app.links.externalization import render_link
-
 from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfile.model import transform_to_blob
@@ -55,6 +53,7 @@ from nti.namedfile.interfaces import IInternalFileRef
 
 from nti.dataserver.interfaces import IModeledContentBody
 
+from nti.links import render_link
 from nti.links.links import Link
 
 from nti.ntiids.ntiids import TAG_NTC
