@@ -24,12 +24,12 @@ from persistent.list import PersistentList
 
 from nti.common import sets
 
+from nti.containers.containers import IntidResolvingIterable
+
 from nti.dataserver.interfaces import IThreadable
 from nti.dataserver.interfaces import IInspectableWeakThreadable
 
 from nti.externalization.oids import to_external_ntiid_oid
-
-from nti.intid.containers import IntidResolvingIterable
 
 from nti.wref.interfaces import IWeakRef
 from nti.wref.interfaces import IWeakRefToMissing
