@@ -236,9 +236,9 @@ class IOIDResolver(interface.Interface):
 from nti.coremetadata.interfaces import IEnvironmentSettings
 IEnvironmentSettings = IEnvironmentSettings
 
-from nti.dataserver_core.interfaces import ILink
-from nti.dataserver_core.interfaces import ILinked
-from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
+from nti.links.interfaces import ILink
+from nti.links.interfaces import ILinked
+from nti.links.interfaces import ILinkExternalHrefOnly
 
 ILink = ILink
 ILined = ILinked
