@@ -133,7 +133,6 @@ setup(
 		'nti.contentindexing',
 		'nti.contenttypes.presentation',
 		'nti.coremetadata',
-		'nti.dataserver_core',
 		'nti.dublincore',
 		'nti.externalization',
 		'nti.futures',
