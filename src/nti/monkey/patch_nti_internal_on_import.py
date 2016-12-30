@@ -27,8 +27,9 @@ def patch():
 	moved(str("nti.contentsearch.whoosh_storage"), str("nti.contentsearch._deprecated"))
 	
 	# deprecated core/fragments pkgs
-	moved(str("nti.dataserver.core"), str("nti.dataserver_core"))
+	moved(str("nti.dataserver.core"), str("nti.coremetadata"))
 	moved(str("nti.dataserver.core.interfaces"), str("nti.coremetadata.interfaces"))
+	moved(str("nti.dataserver_core"), str("nti.coremetadata"))
 	moved(str("nti.dataserver_core.mixins"), str("nti.coremetadata.mixins"))
 	moved(str("nti.dataserver_core.schema"), str("nti.coremetadata.schema"))
 	moved(str("nti.dataserver_core.interfaces"), str("nti.coremetadata.interfaces"))
