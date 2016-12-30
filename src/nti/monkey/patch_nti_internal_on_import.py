@@ -28,9 +28,10 @@ def patch():
 	
 	# deprecated core/fragments pkgs
 	moved(str("nti.dataserver.core"), str("nti.dataserver_core"))
-	moved(str("nti.dataserver.core.interfaces"), str("nti.dataserver_core.interfaces"))
+	moved(str("nti.dataserver.core.interfaces"), str("nti.coremetadata.interfaces"))
 	moved(str("nti.dataserver_core.mixins"), str("nti.coremetadata.mixins"))
 	moved(str("nti.dataserver_core.schema"), str("nti.coremetadata.schema"))
+	moved(str("nti.dataserver_core.interfaces"), str("nti.coremetadata.interfaces"))
 	
 	moved(str("nti.dataserver.fragments"), str("nti.coremetadata"))
 	moved(str("nti.dataserver.fragments.interfaces"), str("nti.coremetadata.interfaces"))
