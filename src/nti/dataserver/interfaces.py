@@ -96,7 +96,7 @@ FieldCannotBeOnlyWhitespace = FieldCannotBeOnlyWhitespace
 
 # BWC exports
 from nti.base.interfaces import ICreatedTime
-from nti.coremetadata.interfaces import ILastModified
+from nti.base.interfaces import ILastModified
 
 ICreatedTime = ICreatedTime
 ILastModified = ILastModified
