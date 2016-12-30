@@ -123,7 +123,6 @@
 	<include package="nti.externalization" />
 
 	<include package="nti.zodb" />
-	<include package="nti.links" />
 	<include package="nti.mimetype" />
 	<include package="nti.chatserver" />
 	<include package="nti.containers" />
