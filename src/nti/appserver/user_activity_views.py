@@ -23,12 +23,12 @@ from nti.app.renderers.interfaces import IUserActivityExternalCollection
 from nti.appserver.interfaces import IUserActivityStorage
 from nti.appserver.interfaces import IUserActivityProvider
 
+from nti.containers.containers import IntidContainedStorage
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.dataserver import authorization as nauth
-
-from nti.intid.containers import IntidContainedStorage
 
 from nti.ntiids import ntiids
 
