@@ -108,6 +108,7 @@ class _AbstractWeakRef(object):
 
 		from nti.ntiids.ntiids import TYPE_MISSING
 		from nti.ntiids.ntiids import make_ntiid
+
 		eid = self._entity_id
 		# This intid is probably no longer used, but we have no guarantee
 		# of that. We do some trivial manipulation on it to make it less
@@ -173,6 +174,6 @@ class ArbitraryOrderableWeakRef(WeakRef):
 			return NotImplemented
 
 class NoCachingArbitraryOrderableWeakRef(ArbitraryOrderableWeakRef):
-	
+
 		def __call__(self, allow_cached=False):
 			return ArbitraryOrderableWeakRef.__call__(self, allow_cached=False)
