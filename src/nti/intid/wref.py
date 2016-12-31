@@ -23,6 +23,11 @@ from zope import interface
 
 from zc.intid import IIntIds
 
+from nti.externalization.integer_strings import to_external_string
+
+from nti.ntiids.ntiids import TYPE_MISSING
+from nti.ntiids.ntiids import make_ntiid
+		
 from nti.wref.interfaces import ICachingWeakRef
 from nti.wref.interfaces import IWeakRefToMissing
 
@@ -104,11 +109,6 @@ class _AbstractWeakRef(object):
 							   self._entity_id)
 
 	def make_missing_ntiid(self):
-		from nti.externalization.integer_strings import to_external_string
-
-		from nti.ntiids.ntiids import TYPE_MISSING
-		from nti.ntiids.ntiids import make_ntiid
-
 		eid = self._entity_id
 		# This intid is probably no longer used, but we have no guarantee
 		# of that. We do some trivial manipulation on it to make it less
