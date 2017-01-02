@@ -16,6 +16,7 @@ from zope import component
 from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationSentEvent
 
+
 @component.adapter(IInvitation, IInvitationSentEvent)
 def _on_invitation_sent(invitation, event):
-	invitation.sent = time.time()
+    invitation.sent = time.time()
