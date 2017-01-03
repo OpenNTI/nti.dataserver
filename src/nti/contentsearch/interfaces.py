@@ -319,8 +319,6 @@ class ISearchResults(IBaseSearchResults, ILastModified):
 				required=True)
 
 	HitMetaData = Object(ISearchHitMetaData, title="Search hit metadata", required=False)
-
-	NumFound = Number(title="Number of docs found", required=False, default=0)
 	
 	def add(hit):
 		"""
