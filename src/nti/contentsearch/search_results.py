@@ -39,283 +39,302 @@ from nti.schema.field import SchemaConfigured
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+
 def get_search_hit_predicate(item):
-	predicates = list(component.subscribers((item,), ISearchHitPredicate))
-	def uber_filter(item, score, query):
-		return item is not None and all((p.allow(item, score, query) for p in predicates))
-	return uber_filter
+    predicates = list(component.subscribers((item,), ISearchHitPredicate))
+
+    def uber_filter(item, score, query):
+        return item is not None and all((p.allow(item, score, query) for p in predicates))
+    return uber_filter
+
 
 def is_hit_allowed(item, score=1.0, query=None):
-	score = score or 1.0
-	predicate = get_search_hit_predicate(item)
-	return predicate(item, score, query)
+    score = score or 1.0
+    predicate = get_search_hit_predicate(item)
+    return predicate(item, score, query)
+
 
 @interface.implementer(ISearchHitMetaData)
 class SearchHitMetaData(object):
 
-	unspecified_container = u'+++unspecified_container+++'
+    unspecified_container = u'+++unspecified_container+++'
 
-	__external_can_create__ = True
-	mime_type = mimeType = u"application/vnd.nextthought.search.searchhitmetadata"
+    __external_can_create__ = True
+    mime_type = mimeType = u"application/vnd.nextthought.search.searchhitmetadata"
 
-	filtered_count = 0
-	SearchTime = lastModified = createdTime = 0
+    filtered_count = 0
+    SearchTime = lastModified = createdTime = 0
 
-	def __init__(self):
-		self._ref = time.time()
-		self.type_count = collections.defaultdict(int)
-		self.container_count = collections.defaultdict(int)
+    def __init__(self):
+        self._ref = time.time()
+        self.type_count = collections.defaultdict(int)
+        self.container_count = collections.defaultdict(int)
 
-	def _get_type_count(self):
-		return dict(self.type_count)
-	def _set_type_count(self, tc):
-		self.type_count.update(tc or {})
-	TypeCount = property(_get_type_count, _set_type_count)
+    def _get_type_count(self):
+        return dict(self.type_count)
 
-	def _get_container_count(self):
-		return dict(self.container_count)
-	def _set_container_count(self, cc):
-		self.container_count.update(cc or {})
-	ContainerCount = property(_get_container_count, _set_container_count)
+    def _set_type_count(self, tc):
+        self.type_count.update(tc or {})
+    TypeCount = property(_get_type_count, _set_type_count)
 
-	@property
-	def TotalHitCount(self):
-		return sum(self.type_count.values())
+    def _get_container_count(self):
+        return dict(self.container_count)
 
-	def _get_filtered_count(self):
-		return self.filtered_count
-	def _set_filtered_count(self, count):
-		self.filtered_count = count
-	FilteredCount = property(_get_filtered_count, _set_filtered_count)
+    def _set_container_count(self, cc):
+        self.container_count.update(cc or {})
+    ContainerCount = property(_get_container_count, _set_container_count)
 
-	def track(self, hit):
-		self.SearchTime = time.time() - self._ref
+    @property
+    def TotalHitCount(self):
+        return sum(self.type_count.values())
 
-		# container count
-		containers = hit.Containers or (self.unspecified_container,)
-		for containerId in containers:
-			self.container_count[containerId] = self.container_count[containerId] + 1
+    def _get_filtered_count(self):
+        return self.filtered_count
 
-		lastModified = hit.lastModified or 0
-		self.lastModified = max(self.lastModified, lastModified or 0)
+    def _set_filtered_count(self, count):
+        self.filtered_count = count
+    FilteredCount = property(_get_filtered_count, _set_filtered_count)
 
-		# type count
-		type_name = hit.TargetMimeType or u'unknown'
-		self.type_count[type_name] = self.type_count[type_name] + 1
+    def track(self, hit):
+        self.SearchTime = time.time() - self._ref
 
-	def __iadd__(self, other):
-		# container count
-		for k, v in other.container_count.items():
-			self.container_count[k] = self.container_count[k] + v
+        # container count
+        containers = hit.Containers or (self.unspecified_container,)
+        for containerId in containers:
+            self.container_count[
+                containerId] = self.container_count[containerId] + 1
 
-		# last modified
-		self.lastModified = max(self.lastModified, other.lastModified)
+        lastModified = hit.lastModified or 0
+        self.lastModified = max(self.lastModified, lastModified or 0)
 
-		# type count
-		for k, v in other.type_count.items():
-			self.type_count[k] = self.type_count[k] + v
+        # type count
+        type_name = hit.TargetMimeType or u'unknown'
+        self.type_count[type_name] = self.type_count[type_name] + 1
 
-		# search time
-		self.SearchTime = max(self.SearchTime, other.SearchTime)
+    def __iadd__(self, other):
+        # container count
+        for k, v in other.container_count.items():
+            self.container_count[k] = self.container_count[k] + v
 
-		return self
+        # last modified
+        self.lastModified = max(self.lastModified, other.lastModified)
+
+        # type count
+        for k, v in other.type_count.items():
+            self.type_count[k] = self.type_count[k] + v
+
+        # search time
+        self.SearchTime = max(self.SearchTime, other.SearchTime)
+
+        return self
+
 
 class SearchResultsMixin(Contained):
 
-	sorted = False
-	parameters = {}
-	
-	Query = alias('query')
-	Name = name = alias('__name__')
+    sorted = False
+    parameters = {}
 
-	def __init__(self, *args, **kwargs):
-		super(SearchResultsMixin, self).__init__(*args, **kwargs)
+    Query = alias('query')
+    Name = name = alias('__name__')
 
-	def __repr__(self):
-		return '%s(hits=%s)' % (self.__class__.__name__, len(self))
-	__str__ = __repr__
+    def __init__(self, *args, **kwargs):
+        super(SearchResultsMixin, self).__init__(*args, **kwargs)
 
-	@property
-	def Hits(self):
-		return ()
+    def __repr__(self):
+        return '%s(hits=%s)' % (self.__class__.__name__, len(self))
+    __str__ = __repr__
 
-	def __len__(self):
-		return len(self.Hits)
+    @property
+    def Hits(self):
+        return ()
 
-	def __iter__(self):
-		return iter(self.Hits)
+    def __len__(self):
+        return len(self.Hits)
+
+    def __iter__(self):
+        return iter(self.Hits)
+
 
 @interface.implementer(ISearchResults, IContentTypeAware)
 class SearchResults(SearchResultsMixin, SchemaConfigured):
-	createDirectFieldProperties(ISearchResults)
+    createDirectFieldProperties(ISearchResults)
 
-	mime_type = mimeType = u"application/vnd.nextthought.search.searchresults"
-	
-	_hits = ()
-	_count = 0
-	_sorted = False
-	HitMetaData = None
+    mime_type = mimeType = u"application/vnd.nextthought.search.searchresults"
 
-	Total = alias('NumFound')
-	metadata = alias('HitMetaData')
+    _hits = ()
+    _count = 0
+    _sorted = False
+    HitMetaData = None
 
-	def __init__(self, *args, **kwargs):
-		hits = kwargs.pop('Hits', None)
-		super(SearchResults, self).__init__(*args, **kwargs)
-		self._count = 0
-		self._hits = []
-		self._seen = set()
-		self.extend(hits or ())
-		self.HitMetaData = SearchHitMetaData()
+    metadata = alias('HitMetaData')
 
-	def _raw_hits(self):
-		return self._hits
+    def __init__(self, *args, **kwargs):
+        hits = kwargs.pop('Hits', None)
+        super(SearchResults, self).__init__(*args, **kwargs)
+        self._count = 0
+        self._hits = []
+        self._seen = set()
+        self.extend(hits or ())
+        self.HitMetaData = SearchHitMetaData()
 
-	def _get_hits(self):
-		if not self._sorted:
-			self.sort()
-		return self._hits
-	def _set_hits(self, hits):
-		for hit in hits or ():
-			self._add_hit(hit)
-	Hits = hits = property(_get_hits, _set_hits)
+    def _raw_hits(self):
+        return self._hits
 
-	def _get_lastModified(self):
-		return self.HitMetaData.lastModified if self.HitMetaData else 0
-	def _set_lastModified(self, v):
-		pass
-	lastModified = property(_get_lastModified, _set_lastModified)
+    def _get_hits(self):
+        if not self._sorted:
+            self.sort()
+        return self._hits
 
-	def _get_createdTime(self):
-		return self.HitMetaData.createdTime if self.HitMetaData else 0
-	def _set_createdTime(self, v):
-		pass
-	createdTime = property(_get_createdTime, _set_createdTime)
+    def _set_hits(self, hits):
+        for hit in hits or ():
+            self._add_hit(hit)
+    Hits = hits = property(_get_hits, _set_hits)
 
-	@property
-	def _limit(self):
-		return getattr(self.query, 'limit', None) or sys.maxint
+    def _get_lastModified(self):
+        return self.HitMetaData.lastModified if self.HitMetaData else 0
 
-	def _add_hit(self, hit):
-		if hit.ID not in self._seen and self._count < self._limit:
-			self._count += 1
-			self._sorted = False
-			self._hits.append(hit)
-			self._seen.add(hit.ID)
-			hit.__parent__ = self # ownership
-			return True
-		return False
+    def _set_lastModified(self, v):
+        pass
+    lastModified = property(_get_lastModified, _set_lastModified)
 
-	def _add(self, hit):
-		if is_hit_allowed(hit.Target, hit.Score, self.Query):
-			if self._add_hit(hit):
-				self.metadata.track(hit)
-				return True
-		else:
-			self.metadata.filtered_count += 1
-		return False
+    def _get_createdTime(self):
+        return self.HitMetaData.createdTime if self.HitMetaData else 0
 
-	def add(self, hit):
-		self._add(hit)
+    def _set_createdTime(self, v):
+        pass
+    createdTime = property(_get_createdTime, _set_createdTime)
 
-	def extend(self, items):
-		for item in items or ():
-			self._add(item)
+    @property
+    def _limit(self):
+        return getattr(self.query, 'limit', None) or sys.maxint
 
-	def sort(self, sortOn=None):
-		sortOn = sortOn or (self.query.sortOn if self.query else u'')
-		factory = component.queryUtility(ISearchHitComparatorFactory, name=sortOn)
-		comparator = factory(self) if factory is not None else None
-		if comparator is not None:
-			self._sorted = True
-			reverse = not self.query.is_descending_sort_order
-			self._hits.sort(comparator.compare, reverse=reverse)
+    def _add_hit(self, hit):
+        if hit.ID not in self._seen and self._count < self._limit:
+            self._count += 1
+            self._sorted = False
+            self._hits.append(hit)
+            self._seen.add(hit.ID)
+            hit.__parent__ = self  # ownership
+            return True
+        return False
 
-	def __len__(self):
-		return self._count
+    def _add(self, hit):
+        if is_hit_allowed(hit.Target, hit.Score, self.Query):
+            if self._add_hit(hit):
+                self.metadata.track(hit)
+                return True
+        else:
+            self.metadata.filtered_count += 1
+        return False
 
-	def __iadd__(self, other):
-		if ISearchResults.providedBy(other):
-			self._set_hits(other._raw_hits())
-			self.HitMetaData += other.HitMetaData
-		return self
+    def add(self, hit):
+        self._add(hit)
+
+    def extend(self, items):
+        for item in items or ():
+            self._add(item)
+
+    def sort(self, sortOn=None):
+        sortOn = sortOn or (self.query.sortOn if self.query else u'')
+        factory = component.queryUtility(
+            ISearchHitComparatorFactory, name=sortOn)
+        comparator = factory(self) if factory is not None else None
+        if comparator is not None:
+            self._sorted = True
+            reverse = not self.query.is_descending_sort_order
+            self._hits.sort(comparator.compare, reverse=reverse)
+
+    def __len__(self):
+        return self._count
+
+    def __iadd__(self, other):
+        if ISearchResults.providedBy(other):
+            self._set_hits(other._raw_hits())
+            self.HitMetaData += other.HitMetaData
+        return self
+
 
 @interface.implementer(ISuggestResults, IContentTypeAware)
 class SuggestResults(SearchResultsMixin, SchemaConfigured):
-	createDirectFieldProperties(ISearchResults)
+    createDirectFieldProperties(ISearchResults)
 
-	mime_type = mimeType = u"application/vnd.nextthought.search.suggestresults"
+    mime_type = mimeType = u"application/vnd.nextthought.search.suggestresults"
 
-	_words = ()
+    _words = ()
 
-	def __init__(self, *args, **kwargs):
-		suggestions = kwargs.pop('Suggestions', None)
-		super(SuggestResults, self).__init__(*args, **kwargs)
-		self._words = set()
-		self.extend(suggestions or ())
+    def __init__(self, *args, **kwargs):
+        suggestions = kwargs.pop('Suggestions', None)
+        super(SuggestResults, self).__init__(*args, **kwargs)
+        self._words = set()
+        self.extend(suggestions or ())
 
-	def _get_words(self):
-		return sorted(self._words)
-	def _set_words(self, words):
-		self._words.update(words or ())
-	suggestions = Suggestions = property(_get_words, _set_words)
+    def _get_words(self):
+        return sorted(self._words)
 
-	def add(self, item):
-		if isinstance(item, six.string_types):
-			item = item.split()
-		self.extend(item)
-	add_suggestions = add
+    def _set_words(self, words):
+        self._words.update(words or ())
+    suggestions = Suggestions = property(_get_words, _set_words)
 
-	def extend(self, items):
-		self._words.update(to_unicode(x) for x in items or ())
+    def add(self, item):
+        if isinstance(item, six.string_types):
+            item = item.split()
+        self.extend(item)
+    add_suggestions = add
 
-	def __iadd__(self, other):
-		if ISuggestResults.providedBy(other):
-			self._words.update(other.suggestions)
-		return self
+    def extend(self, items):
+        self._words.update(to_unicode(x) for x in items or ())
 
-	def __len__(self):
-		return len(self._words)
-	
-	def __iter__(self):
-		return iter(self._words)
+    def __iadd__(self, other):
+        if ISuggestResults.providedBy(other):
+            self._words.update(other.suggestions)
+        return self
+
+    def __len__(self):
+        return len(self._words)
+
+    def __iter__(self):
+        return iter(self._words)
+
 
 @interface.implementer(ISearchResultsList, IContentTypeAware)
 class SearchResultsList(SchemaConfigured):
-	createDirectFieldProperties(ISearchResultsList)
+    createDirectFieldProperties(ISearchResultsList)
 
-	mime_type = mimeType = u"application/vnd.nextthought.search.searchresultslist"
-	
-	_items = None
+    mime_type = mimeType = u"application/vnd.nextthought.search.searchresultslist"
 
-	def _get_items(self):
-		return self._items or ()
-	def _set_items(self, items):
-		self._items = items
-	items = Items = property(_get_items, _set_items)
-	
-	def __getitem__(self, index):
-		return self.items[index]
+    _items = None
 
-	def __len__(self):
-		return len(self.items)
-	
-	@property
-	def TotalHitCount(self):
-		return sum(map(lambda x:len(x), self.items))
-	NumFound = TotalHitCount
+    def _get_items(self):
+        return self._items or ()
+
+    def _set_items(self, items):
+        self._items = items
+    items = Items = property(_get_items, _set_items)
+
+    def __getitem__(self, index):
+        return self.items[index]
+
+    def __len__(self):
+        return len(self.items)
+
+    @property
+    def TotalHitCount(self):
+        return sum(map(lambda x: len(x), self.items))
+    NumFound = TotalHitCount
 
 # sort
 
+
 def sort_hits(hits, reverse=False, sortOn=None):
-	comparator = component.queryUtility(ISearchHitComparator, name=sortOn) if sortOn else None
-	if comparator is not None:
-		if isinstance(hits, list):
-			hits.sort(comparator.compare, reverse=reverse)
-			return iter(hits)
-		else:
-			if reverse:
-				comparator = lambda x, y: comparator(y, x)
-			return isorted(hits, comparator)
-	else:
-		return reversed(hits) if reverse else iter(hits)
+    comparator = component.queryUtility(
+        ISearchHitComparator, name=sortOn) if sortOn else None
+    if comparator is not None:
+        if isinstance(hits, list):
+            hits.sort(comparator.compare, reverse=reverse)
+            return iter(hits)
+        else:
+            if reverse:
+                comparator = lambda x, y: comparator(y, x)
+            return isorted(hits, comparator)
+    else:
+        return reversed(hits) if reverse else iter(hits)

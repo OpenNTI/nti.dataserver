@@ -30,47 +30,49 @@ TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 CREATED_TIME = StandardExternalFields.CREATED_TIME
 
+
 @interface.implementer(IExternalObjectDecorator)
 class _ResultsDecorator(object):
 
-	__metaclass__ = SingletonDecorator
+    __metaclass__ = SingletonDecorator
 
-	def decorateCommon(self, original, external):
-		external.pop(CREATED_TIME, None)
-		external[SEARCH_QUERY] = external[QUERY]
-		external[QUERY] = original.Query.term
-		external[ITEM_COUNT] = len(external[ITEMS])
+    def decorateCommon(self, original, external):
+        external.pop(CREATED_TIME, None)
+        external[SEARCH_QUERY] = external[QUERY]
+        external[QUERY] = original.Query.term
+        external[ITEM_COUNT] = len(external[ITEMS])
 
-	def decorateExternalObject(self, original, external):
-		external[ITEMS] = external.pop('Hits', [])
-		self.decorateCommon(original, external)
+    def decorateExternalObject(self, original, external):
+        external[ITEMS] = external.pop('Hits', [])
+        self.decorateCommon(original, external)
+
 
 @component.adapter(ISearchResults)
 class _SearchResultsDecorator(_ResultsDecorator):
+    pass
 
-	def decorateExternalObject(self, original, external):
-		super(_SearchResultsDecorator, self).decorateExternalObject(original, external)
-		external[TOTAL] = external.pop('NumFound', 0)
 
 @component.adapter(ISuggestResults)
 class _SuggestResultsDecorator(_ResultsDecorator):
 
-	def decorateExternalObject(self, original, external):
-		external[ITEMS] = external.pop('Suggestions', [])
-		self.decorateCommon(original, external)
+    def decorateExternalObject(self, original, external):
+        external[ITEMS] = external.pop('Suggestions', [])
+        self.decorateCommon(original, external)
+
 
 @component.adapter(ISearchHitMetaData)
 class _SearchHitMetaDataDecorator(object):
 
-	__metaclass__ = SingletonDecorator
+    __metaclass__ = SingletonDecorator
 
-	def decorateExternalObject(self, original, external):
-		external.pop(CREATED_TIME, None)
+    def decorateExternalObject(self, original, external):
+        external.pop(CREATED_TIME, None)
+
 
 @component.adapter(ISearchResultsList)
 class _SearchResultsListDecorator(object):
 
-	__metaclass__ = SingletonDecorator
+    __metaclass__ = SingletonDecorator
 
-	def decorateExternalObject(self, original, external):
-		external[TOTAL] = external[ITEM_COUNT] = len(original)
+    def decorateExternalObject(self, original, external):
+        external[TOTAL] = external[ITEM_COUNT] = len(original)
