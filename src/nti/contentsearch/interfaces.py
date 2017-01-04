@@ -456,7 +456,7 @@ class SearchCompletedEvent(ObjectEvent):
 
     @property
     def hit_count(self):
-        return self.results.NumFound
+        return len(self.results)
     TotalHitCount = hit_count
 
 
