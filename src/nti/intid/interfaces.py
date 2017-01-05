@@ -15,38 +15,42 @@ from zope.container.interfaces import IContained
 
 from zc.intid.interfaces import IIntIds
 from zc.intid.interfaces import IIntIdsSubclass
-	
+
 import zope.deferredimport
 zope.deferredimport.initialize()
 
 zope.deferredimport.deprecated(
-	"Import from zope.intid.interfaces instead",
-	IntIdMissingError='zope.intid.interfaces:IntIdMissingError',
-	ObjectMissingError='zope.intid.interfaces:ObjectMissingError')
+    "Import from zope.intid.interfaces instead",
+    IntIdMissingError='zope.intid.interfaces:IntIdMissingError',
+    ObjectMissingError='zope.intid.interfaces:ObjectMissingError')
 
 zope.deferredimport.deprecated(
-	"Import from zc.intid.interfaces instead",
-	IntIdAlreadyInUseError='zc.intid.interfaces:IntIdInUseError',
-	IIntIdEvent='zc.intid.interfaces:ISubscriberEvent',
-	IIntIdAddedEvent='zc.intid.interfaces:IAfterIdAddedEvent',
-	IIntIdRemovedEvent='zc.intid.interfaces:IBeforeIdRemovedEvent',
-	IntIdAddedEvent='zc.intid.interfaces:AfterIdAddedEvent',
-	IntIdRemovedEvent='zc.intid.interfaces:BeforeIdRemovedEven')
+    "Import from zc.intid.interfaces instead",
+    IntIdAlreadyInUseError='zc.intid.interfaces:IntIdInUseError',
+    IIntIdEvent='zc.intid.interfaces:ISubscriberEvent',
+    IIntIdAddedEvent='zc.intid.interfaces:IAfterIdAddedEvent',
+    IIntIdRemovedEvent='zc.intid.interfaces:IBeforeIdRemovedEvent',
+    IntIdAddedEvent='zc.intid.interfaces:AfterIdAddedEvent',
+    IntIdRemovedEvent='zc.intid.interfaces:BeforeIdRemovedEven')
+
 
 class IIntIds(IIntIds, IIntIdsSubclass, IContained):
-	
-	def register(ob, event=True):
-		"""
-		Register an object and returns a unique id generated for it.
 
-		:param event. Flag to trigger a ``IIdAddedEvent`` for successful 
-		registrations.
-		"""
+    def force_register(uid, ob, check=True):
+        """
+        Register an object
 
-	def unregister(ob, event=True):
-		"""
-		Remove the object from the indexes.
+        :param uid. Registration id
+        :param ob. Object to register
+        :param check. Validation check flag
+        """
 
-		:param event. Flag to trigger an ``IIdRemovedEvent`` for successful
-		unregistrations.
-		"""
+    def force_unregister(self, uid, ob=None, notify=False, remove_attribute=True):
+        """
+        Unregister an object
+
+        :param uid. Id to unregister
+        :param ob. Obj to unregister [optional]
+        :param notify. Flag to trigger an ``IIdRemovedEvent``
+        :param notremove_attribute. Flag to remove intid attribute
+        """
