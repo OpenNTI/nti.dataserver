@@ -12,10 +12,12 @@ logger = __import__('logging').getLogger(__name__)
 from zc.intid.subscribers import addIntIdSubscriber
 from zc.intid.subscribers import removeIntIdSubscriber
 
+
 def addIntId(ob, event=None):
-	addIntIdSubscriber(ob, event)
-intid_register = addIntId
+    addIntIdSubscriber(ob, event)
+add_intid = addIntId
+
 
 def removeIntId(ob, event=None):
-	removeIntIdSubscriber(ob, event)
-intid_unregister = removeIntId
+    removeIntIdSubscriber(ob, event)
+remove_intid = removeIntId
