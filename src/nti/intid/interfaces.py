@@ -45,7 +45,7 @@ class IIntIds(IIntIds, IIntIdsSubclass, IContained):
         :param check. Validation check flag
         """
 
-    def force_unregister(self, uid, ob=None, notify=False, remove_attribute=True):
+    def force_unregister(uid, ob=None, notify=False, remove_attribute=True):
         """
         Unregister an object
 
