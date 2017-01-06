@@ -157,7 +157,7 @@ def create_queryobject(username, params, clazz=QueryObject):
                 packages.append(root_ntiid)
     args['packages'] = sorted(set(args['packages']))  # predictable order
 
-    fields = args.pop('fields', None) or args.pop('searchFields', None)
+    fields = args.pop('searchFields', None)
     if fields:
         fields = fields.split() if isinstance(
             fields, six.string_types) else fields
