@@ -443,6 +443,7 @@ setup(
 			'epydoc >= 3.0.1',	# auto-api docs
 			'httpie',
 			'jsonschema',
+			"nti.sphinxcontrib-programoutput", # replace sphinxcontrib-programoutput
 			# A development tool to measure, monitor and analyze the memory behavior of Python objects.
 			'pympler' if not IS_PYPY else '',
 			'mistune',
@@ -461,7 +462,6 @@ setup(
 			'ropemacs',
 			'snakefood', # dependency graphs
 			'sphinx',	# Narrative docs
-			"nti.sphinxcontrib-programoutput",
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv',
 			'virtualenvwrapper',
