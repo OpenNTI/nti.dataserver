@@ -140,9 +140,6 @@ class ISearchQuery(interface.Interface):
     searchOn = ListOrTuple(ValidTextLine(title="Content types to search on"),
                            required=False)
 
-    searchFields = ListOrTuple(ValidTextLine(title="Search fields"),
-                               required=False)
-
     creator = ValidTextLine(title="creator", required=False)
 
     creationTime = Object(IDateTimeRange, title="created date-time range",
