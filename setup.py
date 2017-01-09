@@ -461,7 +461,7 @@ setup(
 			'ropemacs',
 			'snakefood', # dependency graphs
 			'sphinx',	# Narrative docs
-			"sphinxcontrib-programoutput",
+			"nti.sphinxcontrib-programoutput",
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv',
 			'virtualenvwrapper',
