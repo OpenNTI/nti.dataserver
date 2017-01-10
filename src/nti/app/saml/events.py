@@ -12,12 +12,15 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope.event import notify
+
 from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 
 from nti.dataserver.interfaces import UserEvent
 
-from nti.dataserver.saml.interfaces import ISAMLProviderUserInfo
 from nti.dataserver.saml.interfaces import ISAMLIDPUserInfoBindings
+from nti.dataserver.saml.interfaces import ISAMLProviderUserInfo
+from nti.dataserver.saml.interfaces import ISAMLProviderUserInfoAttachedEvent
 
 @interface.implementer(ISAMLUserAuthenticatedEvent)
 class SAMLUserCreatedEvent(UserEvent):
@@ -27,6 +30,14 @@ class SAMLUserCreatedEvent(UserEvent):
 		self.idp_id = idp_id
 		self.user_info = user_info
 		self.request = request
+
+@interface.implementer(ISAMLProviderUserInfoAttachedEvent)
+class SAMLProviderInfoAttachedEvent(UserEvent):
+
+	def __init__(self, idp_id, user, provider_info):
+		super(SAMLProviderInfoAttachedEvent, self).__init__(user)
+		self.idp_id = idp_id
+		self.provider_user_info = provider_info
 
 @component.adapter(ISAMLUserAuthenticatedEvent)
 def _user_created(event):
@@ -43,6 +54,7 @@ def attach_idp_user_info(event):
 		if event.idp_id in idp_user_info_container:
 			del idp_user_info_container[event.idp_id]
 		idp_user_info_container[event.idp_id] = idp_user_info
+		notify(SAMLProviderInfoAttachedEvent(event.idp_id, event.user, idp_user_info))
 	else:
 		logger.warn('Failed to adapt "%s" to ISAMLProviderUserInfo for user "%s", event "%s"',
 					event.user_info,
