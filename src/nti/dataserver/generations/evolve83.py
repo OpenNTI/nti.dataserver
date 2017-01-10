@@ -18,27 +18,56 @@ from zope.component.hooks import setHooks
 
 from zope.intid.interfaces import IIntIds
 
-from nti.contentlibrary.indexed_data.catalog import install_library_catalog
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+
+from nti.dataserver.interfaces import IUser
+
+from nti.metadata import metadata_queue
+
+
+def add_2_queue(queue, obj, intids):
+    uid = intids.queryId(obj)
+    if uid is not None and obj is not None:
+        try:
+            queue.add(uid)
+        except TypeError:
+            pass
+
 
 def do_evolve(context):
-	setHooks()
-	conn = context.connection
-	root = conn.root()
-	ds_folder = root['nti.dataserver']
+    setHooks()
+    conn = context.connection
+    root = conn.root()
+    ds_folder = root['nti.dataserver']
 
-	with site(ds_folder):
-		assert  component.getSiteManager() == ds_folder.getSiteManager(), \
-				"Hooks not installed?"
+    with site(ds_folder):
+        assert  component.getSiteManager() == ds_folder.getSiteManager(), \
+            "Hooks not installed?"
 
-		lsm = ds_folder.getSiteManager()
-		intids = lsm.getUtility(IIntIds)
+        queue = metadata_queue()
+        if queue is None:
+            return
 
-		install_library_catalog(ds_folder, intids)
-		logger.info('Dataserver evolution %s done.', generation)
+        lsm = ds_folder.getSiteManager()
+        intids = lsm.getUtility(IIntIds)
+
+        dataserver_folder = conn.root()['nti.dataserver']
+        users_folder = dataserver_folder['users']
+        for user in users_folder.values():
+            if not IUser.providedBy(user):
+                continue
+            blog = IPersonalBlog(user)
+            add_2_queue(queue, blog, intids)
+            for topic in blog.values():
+                add_2_queue(queue, topic, intids)
+                for comment in topic.values():
+                    add_2_queue(queue, comment, intids)
+
+        logger.info('Dataserver evolution %s done.', generation)
+
 
 def evolve(context):
-	"""
-	Evolve to gen 82 by installing the new library asset catalog.
-	"""
-	# do_evolve(context)  XXX DON'T INSTALL YET
-	pass
+    """
+    Evolve to gen 83 by reindexing the personal blogs
+    """
+    do_evolve(context)
