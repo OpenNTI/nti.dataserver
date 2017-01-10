@@ -22,8 +22,11 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.dataserver.interfaces import IUser
 
-from nti.metadata import metadata_queue
+from nti.dataserver.metadata_index import IX_CREATOR
+from nti.dataserver.metadata_index import ValidatingCreatedUsername
 
+from nti.metadata import metadata_queue
+from nti.metadata import dataserver_metadata_catalog
 
 def add_2_queue(queue, obj, intids):
     uid = intids.queryId(obj)
@@ -47,6 +50,9 @@ def do_evolve(context):
         queue = metadata_queue()
         if queue is None:
             return
+        catalog = dataserver_metadata_catalog()
+        index = catalog[IX_CREATOR]
+        index.interface = ValidatingCreatedUsername
 
         lsm = ds_folder.getSiteManager()
         intids = lsm.getUtility(IIntIds)
