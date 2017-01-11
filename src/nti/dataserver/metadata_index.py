@@ -138,6 +138,7 @@ class ValidatingCreatedUsername(object):
         try:
             creator = created.creator
             username = getattr(creator, 'username', creator)
+            username = getattr(username, 'id', username) # in case of a principal
             if isinstance(username, six.string_types):
                 self.creator_username = username.lower()
         except (AttributeError, TypeError):
