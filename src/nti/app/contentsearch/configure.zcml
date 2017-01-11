@@ -18,12 +18,12 @@
 	<!-- Search filters -->
 	<subscriber factory=".predicates._AccessibleSearchHitPredicate"
 				provides="nti.contentsearch.interfaces.ISearchHitPredicate"
-				for="nti.dataserver.interfaces.IUserGeneratedData" />
+				for="*" />
 
 	<!-- Decorators -->
 	<subscriber factory=".decorators._SearchResultsDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.contentsearch.interfaces.ISearchResults
 					 pyramid.interfaces.IRequest"/>
-					
+
 </configure>
