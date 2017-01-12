@@ -56,8 +56,6 @@ import BTrees
 
 from nti.containers import containers as container
 
-from nti.contentlibrary.indexed_data import index as container_index
-
 from nti.dataserver import users
 from nti.dataserver import flagging
 from nti.dataserver import _Dataserver
@@ -174,7 +172,6 @@ def install_main(context):
         install_user_catalog(dataserver_folder, intids)
         install_metadata_catalog(dataserver_folder, intids)
         install_recorder_catalog(dataserver_folder, intids)
-        install_container_catalog(dataserver_folder, intids)
         install_invitations_catalog(dataserver_folder, intids)
 
         users_folder = dataserver_folder['users']
@@ -219,11 +216,6 @@ def install_user_catalog(dataserver_folder, intids):
 
 def install_metadata_catalog(dataserver_folder, intids):
     return metadata_index.install_metadata_catalog(dataserver_folder, intids)
-
-
-def install_container_catalog(dataserver_folder, intids):
-    return container_index.install_container_catalog(dataserver_folder, intids)
-
 
 def install_password_utility(dataserver_folder):
     lsm = dataserver_folder.getSiteManager()
