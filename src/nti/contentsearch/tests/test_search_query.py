@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import assert_that
+from hamcrest import has_property
 
 import unittest
 
@@ -16,11 +17,12 @@ from nti.contentsearch.search_query import QueryObject
 
 from nti.contentsearch.tests import SharedConfiguringTestLayer
 
+
 class TestSearchQuery(unittest.TestCase):
 
-	layer = SharedConfiguringTestLayer
+    layer = SharedConfiguringTestLayer
 
-	def test_queryobject_ctor(self):
-		qo = QueryObject(term=u'term')
-		assert_that(qo.term, is_(u'term'))
-		assert_that(qo.query, is_(u'term'))
+    def test_queryobject_ctor(self):
+        qo = QueryObject(term=u'term')
+        assert_that(qo, has_property('term', is_(u'term')))
+        assert_that(qo, has_property('query', is_(u'term')))

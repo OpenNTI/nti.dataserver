@@ -264,11 +264,12 @@ class ISearchHit(ILastModified):
     Query = interface.Attribute("Search query")
     Query.setTaggedValue('_ext_excluded_out', True)
 
-    Score = Number(
-        title="hit relevance score", required=False, default=1.0, min=0.0)
+    Score = Number(title="hit relevance score",
+                   required=False,
+                   default=1.0, 
+                   min=0.0)
 
     ID = ValidTextLine(title="hit unique id", required=True)
-    ID.setTaggedValue('_ext_excluded_out', True)
 
     NTIID = ValidTextLine(title="hit object ntiid", required=False)
     Creator = ValidTextLine(title="Search hit target creator", required=False)
@@ -282,15 +283,16 @@ class ISearchHit(ILastModified):
 
     TargetMimeType = ValidTextLine(title="Target mimetype", required=True)
 
-    Target = Object(
-        interface.Interface, title="the object hit", required=False)
+    Target = Object(interface.Interface, 
+                    title="the object hit", 
+                    required=False)
     Target.setTaggedValue('_ext_excluded_out', True)
 
 
 class ITranscriptSearchHit(ISearchHit):
     EndMilliSecs = Number(title="Media end timestamp", required=False)
-    StartMilliSecs = Number(
-        title="Media start video timestamp", required=False)
+    StartMilliSecs = Number(title="Media start video timestamp", 
+                            required=False)
 
 
 class IContentUnitSearchHit(ISearchHit):
@@ -336,7 +338,8 @@ class ISearchHitMetaData(ILastModified):
 
     ContainerCount = Dict(ValidTextLine(title='container'),
                           Int(title='count'),
-                          title="Cointainer hit type count", required=True)
+                          title="Cointainer hit type count", 
+                          required=False)
 
     TotalHitCount = Int(title='Total hit count', required=True,
                         readonly=True, default=0)

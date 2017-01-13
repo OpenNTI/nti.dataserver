@@ -326,8 +326,8 @@ class SearchResultsList(SchemaConfigured):
 
 
 def sort_hits(hits, reverse=False, sortOn=None):
-    comparator = component.queryUtility(
-        ISearchHitComparator, name=sortOn) if sortOn else None
+    comparator = component.queryUtility(ISearchHitComparator,
+                                        name=sortOn) if sortOn else None
     if comparator is not None:
         if isinstance(hits, list):
             hits.sort(comparator.compare, reverse=reverse)

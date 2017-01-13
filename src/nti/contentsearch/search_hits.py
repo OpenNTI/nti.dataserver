@@ -36,6 +36,7 @@ class SearchHitMixin(object):
 	__name__ = alias('ID')
 	__external_class_name__  = 'Hit'
 	
+	id = alias('ID')
 	ContainerId = alias('Containers')
 	createdTime = alias('lastModified')
 	

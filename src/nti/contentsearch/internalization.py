@@ -27,68 +27,75 @@ SEARCH_QUERY = 'SearchQuery'
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
 
+
 @component.adapter(ISearchQuery)
 @interface.implementer(IInternalObjectUpdater)
 class _QueryObjectUpdater(object):
 
-	__slots__ = ('obj',)
+    __slots__ = ('obj',)
 
-	def __init__(self, obj):
-		self.obj = obj
+    def __init__(self, obj):
+        self.obj = obj
 
-	def updateFromExternalObject(self, parsed, *args, **kwargs):
-		result = InterfaceObjectIO(self.obj, ISearchQuery).updateFromExternalObject(parsed)
-		return result
+    def updateFromExternalObject(self, parsed, *args, **kwargs):
+        result = InterfaceObjectIO(self.obj,
+								   ISearchQuery).updateFromExternalObject(parsed)
+        return result
+
 
 @component.adapter(ISearchHitMetaData)
 @interface.implementer(IInternalObjectUpdater)
 class _SearchHitMetaDataUpdater(object):
 
-	__slots__ = ('obj',)
+    __slots__ = ('obj',)
 
-	def __init__(self, obj):
-		self.obj = obj
+    def __init__(self, obj):
+        self.obj = obj
 
-	def updateFromExternalObject(self, parsed, *args, **kwargs):
-		result = InterfaceObjectIO(self.obj,
-								   ISearchHitMetaData).updateFromExternalObject(parsed)
-		return result
+    def updateFromExternalObject(self, parsed, *args, **kwargs):
+        parsed.pop('TotalHitCount', None)
+        result = InterfaceObjectIO(self.obj,
+                                   ISearchHitMetaData).updateFromExternalObject(parsed)
+        return result
+
 
 @interface.implementer(IInternalObjectUpdater)
 class _SearchResultsUpdater(object):
 
-	__slots__ = ('obj',)
+    __slots__ = ('obj',)
 
-	def __init__(self, obj):
-		self.obj = obj
+    def __init__(self, obj):
+        self.obj = obj
 
-	def updateFromExternalObject(self, parsed, *args, **kwargs):
-		if ITEMS in parsed:
-			parsed['Hits'] = parsed.pop(ITEMS, ())
+    def updateFromExternalObject(self, parsed, *args, **kwargs):
+        if ITEMS in parsed:
+            parsed['Hits'] = parsed.pop(ITEMS, ())
 
-		if TOTAL in parsed:
-			parsed['NumFound'] = parsed.pop(TOTAL, None)
+        if TOTAL in parsed:
+            parsed['NumFound'] = parsed.pop(TOTAL, None)
 
-		if SEARCH_QUERY in parsed:
-			parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
-	
-		result = InterfaceObjectIO(self.obj, ISearchResults).updateFromExternalObject(parsed)
-		return result
+        if SEARCH_QUERY in parsed:
+            parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
+
+        result = InterfaceObjectIO(self.obj,
+								   ISearchResults).updateFromExternalObject(parsed)
+        return result
+
 
 @interface.implementer(IInternalObjectUpdater)
 @component.adapter(ISuggestResults)
 class _SuggestResultsUpdater(object):
 
-	__slots__ = ('obj',)
+    __slots__ = ('obj',)
 
-	def __init__(self, obj):
-		self.obj = obj
+    def __init__(self, obj):
+        self.obj = obj
 
-	def updateFromExternalObject(self, parsed, *args, **kwargs):
-		if ITEMS in parsed:
-			parsed['Suggestions'] = parsed.pop(ITEMS, ())
-		if SEARCH_QUERY in parsed:
-			parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
-		result = InterfaceObjectIO(self.obj,
-								   ISuggestResults).updateFromExternalObject(parsed)
-		return result
+    def updateFromExternalObject(self, parsed, *args, **kwargs):
+        if ITEMS in parsed:
+            parsed['Suggestions'] = parsed.pop(ITEMS, ())
+        if SEARCH_QUERY in parsed:
+            parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
+        result = InterfaceObjectIO(self.obj,
+                                   ISuggestResults).updateFromExternalObject(parsed)
+        return result
