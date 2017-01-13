@@ -19,9 +19,11 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.contentsearch.interfaces import ISearchQuery
 from nti.contentsearch.interfaces import ISearchResults
+from nti.contentsearch.interfaces import ISuggestResults
 
 from nti.contentsearch.search_hits import SearchHit
 from nti.contentsearch.search_results import SearchResults
+from nti.contentsearch.search_results import SuggestResults
 
 from nti.contentsearch.tests import SharedConfiguringTestLayer
 
@@ -55,6 +57,24 @@ class TestSearchResults(unittest.TestCase):
         assert_that(count, is_(1))
 
     @WithMockDSTrans
+    def test_suggest_results(self):
+        qo = ISearchQuery("test")
+        sr = SuggestResults(Query=qo)
+        assert_that(sr, is_not(None))
+        assert_that(sr, verifiably_provides(ISuggestResults))
+        assert_that(sr, verifiably_provides(IContentTypeAware))
+
+        sr.add('item')
+        assert_that(sr, has_length(1))
+
+        count = 0
+        for n in sr.Suggestions:
+            assert_that(n, is_not(None))
+            count = count + 1
+
+        assert_that(count, is_(1))
+
+    @WithMockDSTrans
     def test_merge_search_results(self):
         qo = ISearchQuery("test")
         sr1 = SearchResults(Query=qo)
@@ -69,6 +89,18 @@ class TestSearchResults(unittest.TestCase):
         hit.ID = '2'
         hit.TargetMimeType = 'foo'
         sr2._add_hit(hit)
+
+        sr1 += sr2
+        assert_that(sr1, has_length(2))
+
+    @WithMockDSTrans
+    def test_merge_suggest_results(self):
+        qo = ISearchQuery("test")
+        sr1 = SuggestResults(Query=qo)
+        sr2 = SuggestResults(Query=qo)
+
+        sr1.add('american')
+        sr2.add('british')
 
         sr1 += sr2
         assert_that(sr1, has_length(2))

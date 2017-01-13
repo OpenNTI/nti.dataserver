@@ -13,13 +13,14 @@ from zope import interface
 
 from nti.contentsearch.interfaces import ISearchHitPredicate
 
+
 @interface.implementer(ISearchHitPredicate)
 class _DefaultSearchHitPredicate(object):
 
-	__slots__ = ()
+    __slots__ = ()
 
-	def __init__(self, *args):
-		pass
+    def __init__(self, *args):
+        pass
 
-	def allow(self, item, score=1.0, query=None):
-		return True
+    def allow(self, item, score=1.0, query=None):
+        return True

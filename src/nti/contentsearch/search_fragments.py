@@ -23,9 +23,10 @@ from nti.schema.field import SchemaConfigured
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+
 @WithRepr
 @interface.implementer(ISearchFragment)
 class SearchFragment(SchemaConfigured, Contained):
-	createDirectFieldProperties(ISearchFragment)
-	
-	mime_type = mimeType = 'application/vnd.nextthought.search.searchfragment'
+    createDirectFieldProperties(ISearchFragment)
+
+    mime_type = mimeType = 'application/vnd.nextthought.search.searchfragment'

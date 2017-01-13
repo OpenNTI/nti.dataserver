@@ -53,7 +53,7 @@ class _SearchHitMetaDataUpdater(object):
         self.obj = obj
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
-        parsed.pop('TotalHitCount', None)
+        parsed.pop('TotalHitCount', None) # readonly
         result = InterfaceObjectIO(self.obj,
                                    ISearchHitMetaData).updateFromExternalObject(parsed)
         return result

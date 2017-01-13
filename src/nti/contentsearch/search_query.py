@@ -29,80 +29,83 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 from nti.schema.schema import SchemaConfigured
 
+
 @interface.implementer(ISearchQuery)
 @component.adapter(basestring)
 def _default_query_adapter(query, *args, **kwargs):
-	if query is not None:
-		query = QueryObject.create(query, *args, **kwargs)
-	return query
+    if query is not None:
+        query = QueryObject.create(query, *args, **kwargs)
+    return query
+
 
 @WithRepr
 @EqHash('startTime', 'endTime')
 @interface.implementer(IDateTimeRange)
 class DateTimeRange(SchemaConfigured):
-	createDirectFieldProperties(IDateTimeRange)
+    createDirectFieldProperties(IDateTimeRange)
 
-	mime_type = mimeType = 'application/vnd.nextthought.search.datetimerange'
+    mime_type = mimeType = 'application/vnd.nextthought.search.datetimerange'
+
 
 @WithRepr
 @EqHash('term')
 @interface.implementer(ISearchQuery)
 class QueryObject(SchemaConfigured):
-	createDirectFieldProperties(ISearchQuery)
-	
-	__external_can_create__ = True
-	__external_class_name__ = 'SearchQuery'
+    createDirectFieldProperties(ISearchQuery)
 
-	mime_type = mimeType = 'application/vnd.nextthought.search.query'
+    __external_can_create__ = True
+    __external_class_name__ = 'SearchQuery'
 
-	location = alias('origin')
+    mime_type = mimeType = 'application/vnd.nextthought.search.query'
 
-	@property
-	def query(self):
-		return self.term
+    location = alias('origin')
 
-	@property
-	def IsEmpty(self):
-		return not self.term
-	is_empty = IsEmpty
-	
-	@property
-	def IsDescendingSortOrder(self):
-		return self.sortOrder == 'descending'
-	is_descending_sort_order = IsDescendingSortOrder
-				
-	def items(self):
-		return self.context.items() if self.context else ()
+    @property
+    def query(self):
+        return self.term
 
-	@property
-	def IsBatching(self):
-		return True if self.batchStart is not None and self.batchSize else False
-	is_batching = IsBatching
+    @property
+    def IsEmpty(self):
+        return not self.term
+    is_empty = IsEmpty
 
-	# ---------------
+    @property
+    def IsDescendingSortOrder(self):
+        return self.sortOrder == 'descending'
+    is_descending_sort_order = IsDescendingSortOrder
 
-	@classmethod
-	def create(cls, query, **kwargs):
-		if isinstance(query, six.string_types):
-			queryobject = QueryObject(term=query)
-		else:
-			if isinstance(query, QueryObject):
-				if kwargs:
-					queryobject = QueryObject()
-					queryobject.__dict__.update(query.__dict__)
-				else:
-					queryobject = query
+    def items(self):
+        return self.context.items() if self.context else ()
 
-		if kwargs:
-			context = queryobject.context
-			if context is None:
-				context = queryobject.context = dict()
-			for k, v in kwargs.items():
-				if v is None:
-					continue
-				if k in ISearchQuery:
-					setattr(queryobject, k, v)
-				else:
-					v = to_unicode(v) if isinstance(v, six.string_types) else v
-					context[to_unicode(k)] = v
-		return queryobject
+    @property
+    def IsBatching(self):
+        return True if self.batchStart is not None and self.batchSize else False
+    is_batching = IsBatching
+
+    # ---------------
+
+    @classmethod
+    def create(cls, query, **kwargs):
+        if isinstance(query, six.string_types):
+            queryobject = QueryObject(term=query)
+        else:
+            if isinstance(query, QueryObject):
+                if kwargs:
+                    queryobject = QueryObject()
+                    queryobject.__dict__.update(query.__dict__)
+                else:
+                    queryobject = query
+
+        if kwargs:
+            context = queryobject.context
+            if context is None:
+                context = queryobject.context = dict()
+            for k, v in kwargs.items():
+                if v is None:
+                    continue
+                if k in ISearchQuery:
+                    setattr(queryobject, k, v)
+                else:
+                    v = to_unicode(v) if isinstance(v, six.string_types) else v
+                    context[to_unicode(k)] = v
+        return queryobject

@@ -57,7 +57,7 @@ def clean_search_query(query, language='en'):
 
 accepted_keys = {'ntiid', 'accept',
                  'createdAfter', 'createdBefore',
-                                 'modifiedAfter', 'modifiedBefore'}
+                 'modifiedAfter', 'modifiedBefore'}
 
 
 def get_batch_size_start(params):
@@ -179,8 +179,8 @@ def create_queryobject(username, params, clazz=QueryObject):
     if creationTime is not None and 'createdTime' not in context:
         context['createdTime'] = (creationTime.startTime, creationTime.endTime)
     if modificationTime is not None and 'lastModified' not in context:
-        context['lastModified'] = (
-            modificationTime.startTime, modificationTime.endTime)
+        context['lastModified'] = (modificationTime.startTime,
+                                   modificationTime.endTime)
 
     result = clazz(**args)
     return result

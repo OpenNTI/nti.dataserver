@@ -29,6 +29,7 @@ from nti.contentsearch.search_query import QueryObject
 from nti.contentsearch.search_query import DateTimeRange
 
 from nti.contentsearch.search_results import SearchResults
+from nti.contentsearch.search_results import SuggestResults
 
 from nti.contentsearch.tests import SharedConfiguringTestLayer
 
@@ -64,6 +65,24 @@ class TestSearchExternal(unittest.TestCase):
         assert_that(new_results, has_property('Query',
                                               has_property('limit', is_(100))))
         assert_that(new_results, has_property('Hits', has_length(1)))
+        
+    @WithMockDSTrans
+    def test_externalize_suggest_results(self):
+        qo = QueryObject.create("wind")
+        results = SuggestResults(Query=qo)
+        results.add('aizen')
+
+        eo = to_external_object(results)
+        assert_that(eo, has_entry('Query', u'wind'))
+        assert_that(eo, has_entry('Items', has_length(1)))
+
+        # internalize
+        factory = find_factory_for(eo)
+        new_results = factory()
+        update_from_external_object(new_results, eo)
+
+        assert_that(new_results, has_property('Query', is_not(none())))
+        assert_that(new_results, has_property('Suggestions', has_length(1)))
 
     @WithMockDSTrans
     def test_search_query(self):

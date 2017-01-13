@@ -236,8 +236,8 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
 
     def sort(self, sortOn=None):
         sortOn = sortOn or (self.query.sortOn if self.query else u'')
-        factory = component.queryUtility(
-            ISearchHitComparatorFactory, name=sortOn)
+        factory = component.queryUtility(ISearchHitComparatorFactory,
+                                         name=sortOn)
         comparator = factory(self) if factory is not None else None
         if comparator is not None:
             self._sorted = True
@@ -256,7 +256,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
 
 @interface.implementer(ISuggestResults, IContentTypeAware)
 class SuggestResults(SearchResultsMixin, SchemaConfigured):
-    createDirectFieldProperties(ISearchResults)
+    createDirectFieldProperties(ISuggestResults)
 
     mime_type = mimeType = u"application/vnd.nextthought.search.suggestresults"
 

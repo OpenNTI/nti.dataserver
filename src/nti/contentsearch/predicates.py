@@ -15,11 +15,12 @@ from nti.contentsearch.interfaces import ISearchHitPredicate
 
 from nti.coremetadata.utils import current_principal
 
+
 @interface.implementer(ISearchHitPredicate)
 class DefaultSearchHitPredicate(object):
 
-	def __init__(self, *args):
-		self.principal = current_principal(False)
+    def __init__(self, *args):
+        self.principal = current_principal(False)
 
-	def allow(self, item, score=1.0, query=None):
-		return True
+    def allow(self, item, score=1.0, query=None):
+        return True

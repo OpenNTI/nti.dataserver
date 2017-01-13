@@ -44,74 +44,61 @@ from nti.schema.field import IndexedIterable
 # deprecated interfaes
 
 deprecated('IRepozeDataStore', 'Use lastest index implementation')
-
-
 class IRepozeDataStore(interface.Interface):
     pass
 
+
 deprecated('IRepozeEntityIndexManager', 'Use lastest index implementation')
-
-
 class IRepozeEntityIndexManager(interface.Interface):
     pass
 
+
 deprecated('IEntityIndexManager', 'Use lastest index implementation')
-
-
 class IEntityIndexManager(interface.Interface):
     pass
 
+
 deprecated('IEntityIndexController', 'Use lastest index implementation')
-
-
 class IEntityIndexController(interface.Interface):
     pass
 
+
 deprecated('IIndexManager', 'Use lastest index implementation')
-
-
 class IIndexManager(interface.Interface):
     pass
 
+
 deprecated('IWhooshIndexStorage', 'Use lastest index implementation')
-
-
 class IWhooshIndexStorage(interface.Interface):
     pass
 
+
 deprecated('IBookContent', 'Use lastest index implementation')
-
-
 class IBookContent(interface.Interface):
     pass
 
+
 deprecated('INTICardContent', 'Use lastest index implementation')
-
-
 class INTICardContent(interface.Interface):
     pass
 
+
 deprecated('IContainerIDResolver', 'Use lastest index implementation')
-
-
 class IContainerIDResolver(interface.Interface):
     pass
 
+
 deprecated('IAudioTranscriptContent', 'Use lastest index implementation')
-
-
 class IAudioTranscriptContent(interface.Interface):
     pass
 
+
 deprecated('IVideoTranscriptContent', 'Use lastest index implementation')
-
-
 class IVideoTranscriptContent(interface.Interface):
     pass
 
+
 deprecated('IContentSearcher', 'Use lastest index implementation')
-
-
 class IContentSearcher(interface.Interface):
     pass
 
