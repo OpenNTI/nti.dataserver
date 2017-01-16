@@ -19,6 +19,8 @@ from nti.coremetadata.utils import current_principal
 @interface.implementer(ISearchHitPredicate)
 class DefaultSearchHitPredicate(object):
 
+    __name__ = 'Default'
+
     def __init__(self, *args):
         self.principal = current_principal(False)
 

@@ -33,40 +33,43 @@ from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.property.property import Lazy
 
+
 @interface.implementer(ISearchHitPredicate)
 class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 
-	@Lazy
-	def request(self):
-		return get_current_request()
+    __name__ = 'AccessibleObject'
 
-	@Lazy
-	def user(self):
-		return User.get_user(self.principal.id)
+    @Lazy
+    def request(self):
+        return get_current_request()
 
-	def _check_ugd_access(self, item):
-		result = False
-		if IReadableShared.providedBy(item):
-			result = item.isSharedDirectlyWith(self.user)
-		if not result:
-			to_check = item
-			if IHeadlinePost.providedBy(item):
-				to_check = to_check.__parent__
-			if IPublishableTopic.providedBy(to_check):
-				result = has_permission(ACT_READ,
-										to_check,
-										self.request)
-			else:
-				result = has_permission(ACT_READ, item, self.request)
-		result = bool(result) and not IDeletedObjectPlaceholder.providedBy(item)
-		return result
+    @Lazy
+    def user(self):
+        return User.get_user(self.principal.id)
 
-	def allow(self, item, score, query):
-		if self.principal is None:
-			result = True
-		elif IUserGeneratedData.providedBy(item):
-			result = self._check_ugd_access(item)
-		else:
-			result = bool( has_permission(ACT_READ, item, self.request) )
-		return result
+    def _check_ugd_access(self, item):
+        result = False
+        if IReadableShared.providedBy(item):
+            result = item.isSharedDirectlyWith(self.user)
+        if not result:
+            to_check = item
+            if IHeadlinePost.providedBy(item):
+                to_check = to_check.__parent__
+            if IPublishableTopic.providedBy(to_check):
+                result = has_permission(ACT_READ,
+                                        to_check,
+                                        self.request)
+            else:
+                result = has_permission(ACT_READ, item, self.request)
+        result = bool(
+            result) and not IDeletedObjectPlaceholder.providedBy(item)
+        return result
 
+    def allow(self, item, score, query):
+        if self.principal is None:
+            result = True
+        elif IUserGeneratedData.providedBy(item):
+            result = self._check_ugd_access(item)
+        else:
+            result = bool(has_permission(ACT_READ, item, self.request))
+        return result

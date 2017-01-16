@@ -309,6 +309,8 @@ class ISearchHitPredicate(interface.Interface):
     Search hit filter - implemented as subscriber.
     """
 
+    __name__ = ValidTextLine(title='Predicate name', required=True)
+
     def allow(item, score=1.0, query=None):
         """
         allow a search hit into the results
