@@ -218,7 +218,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
     def _add(self, hit):
         result = True
         item, score, query = hit.Target, hit.Score, self.Query
-        for predicate in component.subscribers((item), ISearchHitPredicate):
+        for predicate in component.subscribers((item,), ISearchHitPredicate):
             if not predicate.allow(item, score, query):
                 result = False
                 self.metadata.filtered_count += 1
