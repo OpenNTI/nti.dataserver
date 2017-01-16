@@ -40,20 +40,6 @@ from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 
-def get_search_hit_predicate(item):
-    predicates = list(component.subscribers((item,), ISearchHitPredicate))
-
-    def uber_filter(item, score, query):
-        return item is not None and all((p.allow(item, score, query) for p in predicates))
-    return uber_filter
-
-
-def is_hit_allowed(item, score=1.0, query=None):
-    score = score or 1.0
-    predicate = get_search_hit_predicate(item)
-    return predicate(item, score, query)
-
-
 @interface.implementer(ISearchHitMetaData)
 class SearchHitMetaData(object):
 
@@ -67,6 +53,7 @@ class SearchHitMetaData(object):
 
     def __init__(self):
         self._ref = time.time()
+        self.filtering_predicates = set()
         self.type_count = collections.defaultdict(int)
         self.container_count = collections.defaultdict(int)
 
@@ -84,6 +71,14 @@ class SearchHitMetaData(object):
         self.container_count.update(cc or {})
     ContainerCount = property(_get_container_count, _set_container_count)
 
+    def _get_filtering_predicates(self):
+        return set(self.filtering_predicates)
+
+    def _set_filtering_predicates(self, cc):
+        self.filtering_predicates.update(cc or ())
+    FilteringPredicates = property(_get_filtering_predicates,
+                                   _set_filtering_predicates)
+
     @property
     def TotalHitCount(self):
         return sum(self.type_count.values())
@@ -100,9 +95,8 @@ class SearchHitMetaData(object):
 
         # container count
         containers = hit.Containers or (self.unspecified_container,)
-        for containerId in containers:
-            self.container_count[
-                containerId] = self.container_count[containerId] + 1
+        for cid in containers:
+            self.container_count[cid] = self.container_count[cid] + 1
 
         lastModified = hit.lastModified or 0
         self.lastModified = max(self.lastModified, lastModified or 0)
@@ -125,6 +119,9 @@ class SearchHitMetaData(object):
 
         # search time
         self.SearchTime = max(self.SearchTime, other.SearchTime)
+
+        # filtering predicates
+        self.filtering_predicates.update(other.filtering_predicates)
 
         return self
 
@@ -219,13 +216,21 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
         return False
 
     def _add(self, hit):
-        if is_hit_allowed(hit.Target, hit.Score, self.Query):
-            if self._add_hit(hit):
-                self.metadata.track(hit)
-                return True
+        result = True
+        item, score, query = hit.Target, hit.Score, self.Query
+        for predicate in component.subscribers((item), ISearchHitPredicate):
+            if not predicate.allow(item, score, query):
+                result = False
+                self.metadata.filtered_count += 1
+                name = getattr(predicate, '__name__', None) \
+                    or predicate.__class__.__name__
+                self.metadata.filtering_predicates.add(name)
+                break
+        if result and self._add_hit(hit):
+            self.metadata.track(hit)
         else:
-            self.metadata.filtered_count += 1
-        return False
+            result = False
+        return result
 
     def add(self, hit):
         self._add(hit)
@@ -235,9 +240,8 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
             self._add(item)
 
     def sort(self, sortOn=None):
-        sortOn = sortOn or (self.query.sortOn if self.query else u'')
-        factory = component.queryUtility(ISearchHitComparatorFactory,
-                                         name=sortOn)
+        name = sortOn or (self.query.sortOn if self.query else u'')
+        factory = component.queryUtility(ISearchHitComparatorFactory, name=name)
         comparator = factory(self) if factory is not None else None
         if comparator is not None:
             self._sorted = True
