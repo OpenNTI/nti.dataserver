@@ -45,109 +45,114 @@ from nti.externalization.interfaces import StandardExternalFields
 
 ITEMS = StandardExternalFields.ITEMS
 
+
 class BaseView(AbstractAuthenticatedView):
 
-	name = None
+    name = None
 
-	@classmethod
-	def construct_queryobject(cls, request):
-		username = request.matchdict.get('user', None)
-		username = username or request.authenticated_userid
-		params = dict(request.params)
-		params['username'] = username
-		params['term'] = request.matchdict.get('term', None)
-		params['ntiid'] = request.matchdict.get('ntiid', None)
-		result = create_queryobject(username, params)
-		return result
+    @classmethod
+    def construct_queryobject(cls, request):
+        username = request.matchdict.get('user', None)
+        username = username or request.authenticated_userid
+        params = dict(request.params)
+        params['username'] = username
+        params['term'] = request.matchdict.get('term', None)
+        params['ntiid'] = request.matchdict.get('ntiid', None)
+        result = create_queryobject(username, params)
+        return result
 
-	@property
-	def query(self):
-		return self.construct_queryobject(self.request)
+    @property
+    def query(self):
+        return self.construct_queryobject(self.request)
 
-	def locate(self, obj, parent):
-		locate(obj, parent, self.name)
-		interface.alsoProvides(obj, IUncacheableInResponse)
-		return obj
+    def locate(self, obj, parent):
+        locate(obj, parent, self.name)
+        interface.alsoProvides(obj, IUncacheableInResponse)
+        return obj
 
-	def search(self, query):
-		raise NotImplementedError()
+    def search(self, query):
+        raise NotImplementedError()
 
-	def __call__(self):
-		try:
-			query = self.query
-			result = self.search(query)
-			result = self.locate(result, self.request.root)
-			return result
-		except ValueError as e:
-			logger.exception("Cannot execute search query")
-			exc_info = sys.exc_info()
-			raise_json_error(
-						self.request,
-					  	hexc.HTTPUnprocessableEntity,
-					  	{
-							'message': _('Cannot execute search query.'),
-							'field': 'term',
-							'code': e.__class__.__name__
-						},
-					  	exc_info[2])
+    def __call__(self):
+        try:
+            query = self.query
+            result = self.search(query)
+            result = self.locate(result, self.request.root)
+            return result
+        except ValueError as e:
+            logger.exception("Cannot execute search query")
+            exc_info = sys.exc_info()
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    'message': _('Cannot execute search query.'),
+                    'field': 'term',
+                    'code': e.__class__.__name__
+                },
+                exc_info[2])
+
 
 class BaseSearchView(BaseView, BatchingUtilsMixin):
 
-	def _validate(self, query):
-		try:
-			validator = component.queryUtility(ISearchQueryValidator)
-			if validator is not None:
-				validator.validate(query)
-		except Exception as e:
-			logger.exception("Invalid search query")
-			exc_info = sys.exc_info()
-			raise_json_error(
-						self.request,
-					  	hexc.HTTPUnprocessableEntity,
-					  	{
-							'message': _('Invalid search query.'),
-							'field': 'term',
-							'code': e.__class__.__name__
-						},
-					  	exc_info[2])
+    def _validate(self, query):
+        try:
+            validator = component.queryUtility(ISearchQueryValidator)
+            if validator is not None:
+                validator.validate(query)
+        except Exception as e:
+            logger.exception("Invalid search query")
+            exc_info = sys.exc_info()
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    'message': _('Invalid search query.'),
+                    'field': 'term',
+                    'code': e.__class__.__name__
+                },
+                exc_info[2])
 
-	def _do_search(self, query):
-		searcher = ISearcher(self.remoteUser, None)
-		if searcher is not None:
-			return searcher.search(query=query)
-		return SearchResults(Query=query)
+    def _do_search(self, query):
+        searcher = ISearcher(self.remoteUser, None)
+        if searcher is not None:
+            return searcher.search(query=query)
+        return SearchResults(Query=query)
 
-	def search(self, query):
-		now = time.time()
-		result = self._do_search(query=query)
-		elapsed = time.time() - now
-		entity = Entity.get_entity(query.username)
-		notify(SearchCompletedEvent(entity, result, elapsed))
-		return result
+    def search(self, query):
+        now = time.time()
+        result = self._do_search(query=query)
+        elapsed = time.time() - now
+        entity = Entity.get_entity(query.username)
+        notify(SearchCompletedEvent(entity, result, elapsed))
+        return result
+
 
 class SearchView(BaseSearchView):
-	name = 'Search'
+    name = 'Search'
 
 Search = SearchView  # BWC
 
+
 class UserDataSearchView(BaseSearchView):
-	name = 'UserSearch'
+    name = 'UserSearch'
 UserSearch = UserDataSearchView  # BWC
 
+
 class SuggestView(BaseView):
-	name = 'Suggest'
+    name = 'Suggest'
 
-	def _do_search(self, query):
-		searcher = ISearcher(self.remoteUser, None)
-		if searcher is not None:
-			return searcher.suggest(query=query)
-		return SearchResults(Query=query)
+    def _do_search(self, query):
+        searcher = ISearcher(self.remoteUser, None)
+        if searcher is not None:
+            return searcher.suggest(query=query)
+        return SearchResults(Query=query)
 
-	def search(self, query):
-		now = time.time()
-		result = self._do_search(query)
-		elapsed = time.time() - now
-		entity = Entity.get_entity(query.username)
-		notify(SearchCompletedEvent(entity, result, elapsed))
-		return result
+    def search(self, query):
+        now = time.time()
+        result = self._do_search(query)
+        elapsed = time.time() - now
+        entity = Entity.get_entity(query.username)
+        notify(SearchCompletedEvent(entity, result, elapsed))
+        return result
 Suggest = SuggestView  # BWC
