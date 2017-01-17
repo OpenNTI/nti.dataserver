@@ -23,10 +23,16 @@ from ZODB.utils import u64
 
 import simplejson
 
+from pyramid import httpexceptions as hexc
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.forums import VIEW_CONTENTS
+
+from nti.app.forums.views import MessageFactory as _
 
 from nti.app.forums.views.view_mixins import ContentResolver
 
@@ -48,6 +54,8 @@ from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 
 from nti.cabinet.filer import transfer_to_native_file
 
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.common.random import generate_random_hex_string
 
 from nti.coremetadata.interfaces import ITitled
@@ -55,15 +63,25 @@ from nti.coremetadata.interfaces import IModeledContentBody
 
 from nti.contentprocessing.content_utils import clean_special_characters
 
+from nti.dataserver import authorization as nauth
+
+from nti.dataserver.contenttypes.forums.summaries import TopicParticipationSummary
+from nti.dataserver.contenttypes.forums.summaries import UserTopicParticipationSummary
+
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IUserTaggedContent
 
-from nti.dataserver import authorization as nauth
+from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
 
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
+
 from nti.namedfile.interfaces import INamedFile
+
+ITEMS = StandardExternalFields.ITEMS
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -372,6 +390,96 @@ class ExportObjectView(GenericGetView):
 			return response
 		finally:
 			shutil.rmtree(out_dir)
+
+class AbstractTopicParticipationView(AbstractAuthenticatedView):
+
+	def _get_results(self):
+		raise NotImplementedError()
+
+	def __call__(self):
+		try:
+			# See if we are something that maintains reliable modification dates
+			# including our children.
+			# (only ITopic is registered for this). If so, then we want to use
+			# this fact when we create the ultimate return ETag.
+			# We also want to bail now with 304 Not Modified if we can
+			controller = IPreRenderResponseCacheController(self.request.context)
+			controller(self.request.context, {'request': self.request})
+			self.result_iface = IUseTheRequestContextUGDExternalCollection
+		except TypeError:
+			pass
+		return self._get_results()
+
+@view_config(context=frm_interfaces.ITopic,
+			 name='TopicParticipationSummary')
+@view_defaults(name=VIEW_CONTENTS, **_r_view_defaults)
+class TopicParticipationSummaryView(AbstractTopicParticipationView):
+	"""
+	Returns a topic participation summary of the given context.
+	"""
+
+	def allow_user(self, user):
+		# Subclasses can override this.
+		return True
+
+	def _get_user_summaries(self):
+		agg_summary = TopicParticipationSummary()
+		user_dict = {}
+		for comment in self.context.values():
+			user = comment.creator
+			if not self.allow_user( user ):
+				continue
+			if user.username not in user_dict:
+				user_dict[user.username] = UserTopicParticipationSummary( user )
+			user_summary = user_dict[user.username]
+			user_summary.accumulate( comment )
+			agg_summary.accumulate( comment )
+		return agg_summary, user_dict
+
+	def _build_summary(self):
+		result = LocatedExternalDict()
+		# FIXME: Need to batch/page this.
+		agg_summary, user_dict = self._get_user_summaries()
+		result['AggregateSummary'] = agg_summary
+		# FIXME: sort
+		# FIXME: summary externalize
+		result[ITEMS] = user_dict
+		return result
+
+	def _get_results(self):
+		result = self._build_summary()
+		return result
+
+@view_config(context=frm_interfaces.ITopic,
+			 name='UserTopicParticipationSummary')
+@view_defaults(name=VIEW_CONTENTS, **_r_view_defaults)
+class UserTopicParticipationSummaryView(AbstractTopicParticipationView):
+	"""
+	Returns a topic summary of the given participation of the given `user`
+	in our context.
+	"""
+
+	def _build_user_summary(self, user):
+		user_comments = (x for x in self.context.values() if x.creator == user)
+		user_summary = UserTopicParticipationSummary( user )
+		for comment in user_comments:
+			user_summary.accumulate( comment )
+		return user_summary
+
+	def _get_user(self):
+		params = CaseInsensitiveDict( self.request.params )
+		username = params.get('user') or params.get('username')
+		user = None
+		if username:
+			user = User.get_user( username )
+		return user
+
+	def _get_results(self):
+		user = self._get_user()
+		if user is None:
+			raise hexc.HTTPUnprocessableEntity(_('Must provide user for topic participation summary.'))
+		result = self._build_user_summary( user )
+		return result
 
 del _view_defaults
 del _c_view_defaults

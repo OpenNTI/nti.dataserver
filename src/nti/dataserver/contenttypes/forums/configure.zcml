@@ -69,12 +69,15 @@
 	<include package="nti.externalization" />
 
 	<ext:registerAutoPackageIO
-		modules=".board .forum .post .topic .ace"
+		modules=".board .forum .post .topic .ace .summaries"
 		root_interfaces=".interfaces.IBoard
 						 .interfaces.IForum
 						 .interfaces.ITopic
 						 .interfaces.IPost
-						 .interfaces.IForumACE"
+						 .interfaces.IForumACE
+						 .interfaces.ITopicParticipationSummary
+						 .interfaces.IUserTopicParticipationContext
+						 .interfaces.IUserTopicParticipationSummary"
 		iobase=".externalization._MaybeThreadableForumObjectInternalObjectIO" />
 
 	<adapter factory=".externalization._BoardExporter"

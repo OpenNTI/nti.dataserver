@@ -63,6 +63,7 @@ from nti.schema.field import Object
 from nti.schema.field import Variant
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
+from nti.schema.field import IndexedIterable as TypedIterable
 
 # NTIID values
 
@@ -440,7 +441,7 @@ class IGeneralTopic(ITopic):
 	__parent__.required = False
 	contains(b".IGeneralForumComment")
 
-class IGeneralHeadlineTopic(IGeneralTopic, 
+class IGeneralHeadlineTopic(IGeneralTopic,
 							IHeadlineTopic,
 							ICreated,
 							IReadableShared,
@@ -502,15 +503,15 @@ def can_read(perm):
 	return perm in (ALL_PERMISSIONS, READ_PERMISSION, WRITE_PERMISSION)
 
 class IForumACE(interface.Interface):
-	Action = schema.Choice(vocabulary=ACTION_VOCABULARY, 
-						   title='ACE action', 
+	Action = schema.Choice(vocabulary=ACTION_VOCABULARY,
+						   title='ACE action',
 						   required=True)
 
 	Entities = ListOrTuple(value_type=ValidTextLine(title="entity id"),
 						   title="entities ids", required=True)
 
-	Permissions = ListOrTuple(value_type=schema.Choice(vocabulary=PERMISSIONS_VOCABULARY, 
-													   title='ACE permission'), 
+	Permissions = ListOrTuple(value_type=schema.Choice(vocabulary=PERMISSIONS_VOCABULARY,
+													   title='ACE permission'),
 							  required=True)
 
 class IACLEnabled(interface.Interface):
@@ -542,3 +543,43 @@ class IACLCommunityForum(IACLGeneralForum, ICommunityForum):
 	A community forum with its own ACL
 	"""
 IACLCommunityForum.setTaggedValue('__external_class_name__', "CommunityForum")
+
+class ITopicParticipationSummary(interface.Interface):
+	"""
+	An object that holds general topic participation information.
+	"""
+
+	TotalCount = Int(title="The numer of total comments in the topic",
+					 readonly=True)
+
+	TopLevelCount = Int(title="The numer of top-level comments (no replyTo)",
+					 	readonly=True)
+
+	ReplyToCount = Int(title="The numer of comments in reply-to another comment",
+					   readonly=True)
+
+class IUserTopicParticipationContext(interface.Interface):
+	"""
+	An object that holds user participation context.
+	"""
+	Context = Object(IGeneralForumComment, title="The user's comment",
+					 required=True)
+
+	ParentContext = Object(IGeneralForumComment,
+						   title="The in-reply-to comment.",
+					 	   required=False)
+
+class IUserTopicParticipationSummary(ITopicParticipationSummary):
+	"""
+	An object that holds user-specific topic participation information, including
+	the user participation contexts.
+	"""
+
+	NestedChildReplyCount = Int(title="The numer of nested replies underneath this user's comments.",
+					 			readonly=True)
+
+	DirectChildReplyCount = Int(title="The numer of direct replies to this user's comments.",
+					 		    readonly=True)
+
+	Contexts = TypedIterable(title="An iterable of the comment contexts.",
+							 value_type=Object(IUserTopicParticipationContext))
