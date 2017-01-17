@@ -29,8 +29,7 @@ entry_points = {
 		"nti_remove_user = nti.dataserver.utils.nti_remove_user:main",
 		"nti_export_entities = nti.dataserver.utils.nti_export_entities:main",
 		# appserver
-		"nti_index_listener = nti.appserver.application:index_listener_main",
-		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
+		"nti_content_search = nti.app.contentsearch.scripts.nti_content_search:main",
 		# NOTE: The command line tools are deprecated. Leave the setup.py entry points
 		# pointing to this package to get the deprecation notice
 		'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
