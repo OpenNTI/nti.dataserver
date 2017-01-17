@@ -100,8 +100,8 @@ _d_view_defaults.update(permission=nauth.ACT_DELETE,
 @view_config(context=frm_interfaces.IPost)
 @view_defaults(**_r_view_defaults)
 class ForumGetView(GenericGetView):
-	""" 
-	Support for simply returning the blog item 
+	"""
+	Support for simply returning the blog item
 	"""
 	def __call__(self):
 		result = super(ForumGetView, self).__call__()
@@ -290,7 +290,7 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 			# is weird.
 			# NOTE: Using the key= argument fails because it masks AttributeErrors and results in
 			# heterogenous comparisons
-			newest_time = max(getattr(x, 'NewestDescendantCreatedTime', 0) 
+			newest_time = max(getattr(x, 'NewestDescendantCreatedTime', 0)
 							  for x in self.request.context.values())
 			newest_time = max(result.lastModified, newest_time)
 			result.lastModified = newest_time
@@ -360,10 +360,10 @@ class ExportObjectView(GenericGetView):
 			with open(os.path.join(out_dir, 'data.json'), "wb") as fp:
 				simplejson.dump(result, fp, indent='\t', sort_keys=True)
 			self._process_files(self.context, out_dir)
-			
+
 			base_name = tempfile.mktemp() + "_" + generate_random_hex_string(6)
 			result = shutil.make_archive(base_name, 'zip', out_dir)
-		
+
 			response = self.request.response
 			response.content_encoding = str('identity')
 			response.content_type = str('application/x-gzip; charset=UTF-8')
@@ -372,7 +372,7 @@ class ExportObjectView(GenericGetView):
 			return response
 		finally:
 			shutil.rmtree(out_dir)
-	
+
 del _view_defaults
 del _c_view_defaults
 del _d_view_defaults

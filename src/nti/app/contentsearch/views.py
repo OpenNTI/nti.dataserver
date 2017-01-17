@@ -84,10 +84,10 @@ class BaseView(AbstractAuthenticatedView):
 			raise_json_error(
 						self.request,
 					  	hexc.HTTPUnprocessableEntity,
-					  	{ 
+					  	{
 							'message': _('Cannot execute search query.'),
 							'field': 'term',
-							'code': e.__class__.__name__ 
+							'code': e.__class__.__name__
 						},
 					  	exc_info[2])
 
@@ -104,10 +104,10 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 			raise_json_error(
 						self.request,
 					  	hexc.HTTPUnprocessableEntity,
-					  	{ 
+					  	{
 							'message': _('Invalid search query.'),
 							'field': 'term',
-							'code': e.__class__.__name__ 
+							'code': e.__class__.__name__
 						},
 					  	exc_info[2])
 

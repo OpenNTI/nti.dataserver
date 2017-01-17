@@ -30,14 +30,14 @@ from zope import component
 from zope.component import eventtesting
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
-from zope.lifecycleevent.interfaces import IObjectCreatedEvent 
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 
 import pyramid.httpexceptions as hexc
 
 from nti.appserver import interfaces as app_interfaces
 
-from nti.appserver.account_creation_views import account_create_view 
-from nti.appserver.account_creation_views import account_preflight_view 
+from nti.appserver.account_creation_views import account_create_view
+from nti.appserver.account_creation_views import account_preflight_view
 
 from nti.dataserver import users
 from nti.dataserver import shards
@@ -177,7 +177,8 @@ class _AbstractValidationViewBase(TestBaseMixin):
 			assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 
 		# last one is too short.
-		assert_that( e.exception.json_body, has_entry( 'message', contains_string('Username is too short' ) ) )
+		assert_that( e.exception.json_body, has_entry( 'message',
+														contains_string('Username is too short. Please use at least' ) ) )
 
 from nti.app.testing.layers import NonDevmodeNewRequestSharedConfiguringTestLayer
 
@@ -689,10 +690,10 @@ def main(email=None, uname=None, cname=None):
 	component.provideUtility( pyramid_mailer.Mailer.from_settings(
 				 {'mail.queue_path': '/tmp/ds_maildir',
 				  'mail.default_sender': 'no-reply@nextthought.com' } ), IMailer )
-	
+
 	from pyramid.interfaces import IRendererFactory
 	import nti.app.pyramid_zope.z3c_zpt
-	
+
 	component.provideUtility( nti.app.pyramid_zope.z3c_zpt.renderer_factory, IRendererFactory, name='.pt' )
 
 	import pyramid_chameleon.text
