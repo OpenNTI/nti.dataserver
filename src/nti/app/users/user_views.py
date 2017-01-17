@@ -168,8 +168,7 @@ class UserUpdateView(UGDPutView):
 				year = int(year)
 			except (ValueError):
 				return False
-		current_year = datetime.datetime.now().year
-		if year < 1900 or year > current_year:
+		if year < 1900:
 			return False
 		return True
 
