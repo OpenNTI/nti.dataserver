@@ -199,9 +199,13 @@ class UGDDeleteView(AbstractAuthenticatedView,
 	the object can DELETE it.
 	"""
 
-	def __call__(self):
+	def _get_object_to_delete(self):
 		context = self.request.context
 		theObject = getattr(context, 'resource', context)  # TODO: b/w/c that can vanish. just context.
+		return theObject
+
+	def __call__(self):
+		theObject = self._get_object_to_delete()
 		self._check_object_exists(theObject)
 
 		# Now that we know we've got an object, see if they sent
@@ -211,7 +215,8 @@ class UGDDeleteView(AbstractAuthenticatedView,
 		if self._do_delete_object(theObject) is None:  # Should fire lifecycleevent.removed
 			raise hexc.HTTPNotFound()
 
-		# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
+		# TS thinks this log message should be info not debug.  
+		# It exists to provide statistics not to debug.
 		logger.info("User '%s' deleted object '%s'/'%s' from container '%s'",
 					getattr(theObject, 'creator', None),
 					getattr(theObject, 'id', None),
