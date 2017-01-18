@@ -575,6 +575,8 @@ class IUserTopicParticipationSummary(ITopicParticipationSummary):
 	the user participation contexts.
 	"""
 
+	User = Object(IUser, title="The commenter.", required=True)
+
 	NestedChildReplyCount = Int(title="The numer of nested replies underneath this user's comments.",
 					 			readonly=True)
 

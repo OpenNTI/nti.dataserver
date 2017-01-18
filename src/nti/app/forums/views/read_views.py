@@ -30,6 +30,8 @@ from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
+
 from nti.app.forums import VIEW_CONTENTS
 
 from nti.app.forums.views import MessageFactory as _
@@ -413,14 +415,43 @@ class AbstractTopicParticipationView(AbstractAuthenticatedView):
 @view_config(context=frm_interfaces.ITopic,
 			 name='TopicParticipationSummary')
 @view_defaults(name=VIEW_CONTENTS, **_r_view_defaults)
-class TopicParticipationSummaryView(AbstractTopicParticipationView):
+class TopicParticipationSummaryView(AbstractTopicParticipationView,
+									BatchingUtilsMixin):
 	"""
 	Returns a topic participation summary of the given context.
 	"""
 
+	_DEFAULT_BATCH_SIZE = 20
+	_DEFAULT_BATCH_START = 0
+
 	def allow_user(self, user):
 		# Subclasses can override this.
 		return True
+
+	def _get_sort_key(self, sort_on):
+		# Sorting by last_name is default
+		sort_key = lambda x: x.last_name.lower() if x.last_name else ''
+
+		if sort_on:
+			sort_on = sort_on.lower()
+			if sort_on == 'alias':
+				sort_key = lambda x: x.alias.lower() if x.alias else ''
+			elif sort_on == 'username':
+				sort_key = lambda x: x.username.lower() if x.username else ''
+		return sort_key
+
+	def _set_result_set(self, user_dict, result_dict):
+		"""
+		Takes a dict of username -> summaries and
+		sorts and batches it; ascending is default.
+		"""
+		user_summaries = user_dict.values()
+		sort_on = self.request.params.get('sortOn')
+		sort_key = self._get_sort_key(sort_on)
+		sort_order = self.request.params.get('sortOrder')
+		sort_descending = bool(sort_order and sort_order.lower() == 'descending')
+		user_summaries = sorted(user_summaries, key=sort_key, reverse=sort_descending)
+		self._batch_items_iterable(result_dict, user_summaries)
 
 	def _get_user_summaries(self):
 		agg_summary = TopicParticipationSummary()
@@ -438,12 +469,10 @@ class TopicParticipationSummaryView(AbstractTopicParticipationView):
 
 	def _build_summary(self):
 		result = LocatedExternalDict()
-		# FIXME: Need to batch/page this.
 		agg_summary, user_dict = self._get_user_summaries()
-		result['AggregateSummary'] = agg_summary
-		# FIXME: sort
 		# FIXME: summary externalize
-		result[ITEMS] = user_dict
+		self._set_result_set(user_dict, result)
+		result['AggregateSummary'] = agg_summary
 		return result
 
 	def _get_results(self):
