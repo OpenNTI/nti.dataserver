@@ -24,11 +24,11 @@ from nti.dataserver.interfaces import IThreadable
 
 from nti.dataserver.contenttypes.base import UserContentRootInternalObjectIOMixin
 
-from nti.dataserver.contenttypes.forums.interfaces import IPost,\
-	IUserTopicParticipationSummary
+from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IUserTopicParticipationSummary
 
 from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
