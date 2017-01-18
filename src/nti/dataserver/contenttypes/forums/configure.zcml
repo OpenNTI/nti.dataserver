@@ -96,6 +96,11 @@
 			 for=".interfaces.IPost"
 			 name="exporter" />
 
+	<adapter factory=".externalization._UserTopicParticipationSummaryExternalizer"
+             for=".interfaces.IUserTopicParticipationSummary"
+             provides="nti.externalization.interfaces.IInternalObjectExternalizer"
+             name="summary" />
+
 	<!-- ACLs -->
 	<adapter factory=".acl._TopicACLProvider"
 			 for=".interfaces.IPersonalBlogEntry"/>

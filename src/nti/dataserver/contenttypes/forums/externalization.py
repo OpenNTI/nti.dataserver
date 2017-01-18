@@ -24,7 +24,8 @@ from nti.dataserver.interfaces import IThreadable
 
 from nti.dataserver.contenttypes.base import UserContentRootInternalObjectIOMixin
 
-from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import IPost,\
+	IUserTopicParticipationSummary
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
@@ -32,6 +33,8 @@ from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
 from nti.dataserver.users import Entity
+
+from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.externalization import to_external_object
 
@@ -206,3 +209,16 @@ class _BoardExporter(_BaseExporter):
 		if items:
 			result[ITEMS] = items
 		return self._remover(result)
+
+@component.adapter(IUserTopicParticipationSummary)
+@interface.implementer(IInternalObjectExternalizer)
+class _UserTopicParticipationSummaryExternalizer(InterfaceObjectIO):
+
+	_excluded_out_ivars_ = ('Contexts',)
+
+	_ext_iface_upper_bound = IUserTopicParticipationSummary
+
+	def toExternalObject(self, *args, **kwargs):
+		result = super(_UserTopicParticipationSummaryExternalizer, self).toExternalObject(*args, **kwargs)
+		result['IsSummary'] = True
+		return result

@@ -470,9 +470,10 @@ class TopicParticipationSummaryView(AbstractTopicParticipationView,
 	def _build_summary(self):
 		result = LocatedExternalDict()
 		agg_summary, user_dict = self._get_user_summaries()
-		# FIXME: summary externalize
 		self._set_result_set(user_dict, result)
 		result['AggregateSummary'] = agg_summary
+		items = result[ITEMS]
+		result[ITEMS] = [to_external_object( x, name="summary" ) for x in items]
 		return result
 
 	def _get_results(self):
