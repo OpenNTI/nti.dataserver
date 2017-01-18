@@ -115,7 +115,7 @@ def get_searchable_realname_parts(realname):
 			splits = realname.lower().split()
 			prefixes = np_all_prefixes().symmetric_difference(splits)
 			constants = np_constants(prefixes=prefixes, extra_suffixes=('cfa',))
-			name = nameparser.HumanName(realname, constants=constants())
+			name = nameparser.HumanName(realname, constants=constants)
 		# because we are cached, be sure to return an immutable value
 		return tuple([x for x in name[1:4] if x])
 
