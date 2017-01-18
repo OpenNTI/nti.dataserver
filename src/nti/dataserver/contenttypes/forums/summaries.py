@@ -16,8 +16,6 @@ import nameparser
 from zope import component
 from zope import interface
 
-from zope.intid.interfaces import IIntIds
-
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.dataserver.contenttypes.forums.interfaces import ITopicParticipationSummary
@@ -68,18 +66,24 @@ def replace_username(username):
 
 @interface.implementer(IUserTopicParticipationSummary)
 class UserTopicParticipationSummary(TopicParticipationSummary):
+	"""
+	XXX: Currently, we count user self-replies in the count.
+	"""
 
 	contexts = alias( 'Contexts' )
 	user = alias( 'User' )
-	nested_child_reply_count = alias( 'NestedChildReplyCount' )
 	direct_child_reply_count = alias( 'DirectChildReplyCount' )
 
 	def __init__(self, user):
 		self.user = user
 		self.contexts = []
-		self.nested_child_reply_count = 0
+		self._nested_replies = set()
 		self.direct_child_reply_count = 0
 		super(UserTopicParticipationSummary, self).__init__()
+
+	@property
+	def NestedChildReplyCount(self):
+		return len( self._nested_replies )
 
 	@Lazy
 	def alias(self):
@@ -106,22 +110,15 @@ class UserTopicParticipationSummary(TopicParticipationSummary):
 		username = self.user.username
 		return replace_username(username)
 
-	def _recur_get_child_reply_count(self, comment):
-		result = 0
+	def _recur_replies(self, comment):
 		for child_reply in comment.replies:
-			result += 1
-			result += self._recur_get_child_reply_count( child_reply )
-		return result
+			self._nested_replies.add(child_reply)
+			self._recur_replies( child_reply )
 
 	def accumulate(self, comment):
 		# For deleted comments, we include all spawned reply counts, but
-		# exclude the rest.
-		self.nested_child_reply_count += self._recur_get_child_reply_count( comment )
+		# exclude the other stats.
+		self._recur_replies( comment )
 		self.direct_child_reply_count += len( comment.replies )
-		# TODO: Do we need to de-dupe somehow...?
-		# TODO: Or do need a set of all these...plus it seems
-		# like we wanted to double count our replies (count all
-		# nested replies plus all nested replies of a child comment
-		# created by the same creator).
 		self.contexts.append( UserTopicParticipationContext( comment ) )
 		super(UserTopicParticipationSummary, self).accumulate( comment )
