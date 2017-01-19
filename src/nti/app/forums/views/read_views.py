@@ -33,6 +33,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.app.forums import VIEW_CONTENTS
+from nti.app.forums import VIEW_USER_TOPIC_PARTICIPATION
+from nti.app.forums import VIEW_TOPIC_PARTICIPATION_SUMMARY
 
 from nti.app.forums.views import MessageFactory as _
 
@@ -413,8 +415,8 @@ class AbstractTopicParticipationView(AbstractAuthenticatedView):
 		return self._get_results()
 
 @view_config(context=frm_interfaces.ITopic,
-			 name='TopicParticipationSummary')
-@view_defaults(name=VIEW_CONTENTS, **_r_view_defaults)
+			 name=VIEW_TOPIC_PARTICIPATION_SUMMARY)
+@view_defaults(**_r_view_defaults)
 class TopicParticipationSummaryView(AbstractTopicParticipationView,
 									BatchingUtilsMixin):
 	"""
@@ -481,8 +483,8 @@ class TopicParticipationSummaryView(AbstractTopicParticipationView,
 		return result
 
 @view_config(context=frm_interfaces.ITopic,
-			 name='UserTopicParticipationSummary')
-@view_defaults(name=VIEW_CONTENTS, **_r_view_defaults)
+			 name=VIEW_USER_TOPIC_PARTICIPATION)
+@view_defaults(**_r_view_defaults)
 class UserTopicParticipationSummaryView(AbstractTopicParticipationView):
 	"""
 	Returns a topic summary of the given participation of the given `user`

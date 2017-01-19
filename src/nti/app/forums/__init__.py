@@ -13,3 +13,5 @@ import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
 VIEW_CONTENTS = 'contents'
+VIEW_TOPIC_PARTICIPATION_SUMMARY = 'TopicParticipationSummary'
+VIEW_USER_TOPIC_PARTICIPATION = 'UserTopicParticipationSummary'

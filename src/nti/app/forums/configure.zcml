@@ -118,6 +118,11 @@
 	<subscriber factory=".decorators.BoardNTIIDDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
+	<subscriber factory=".decorators.TopicParticipationLinkDecorator"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for="nti.dataserver.contenttypes.forums.interfaces.ITopic
+                     pyramid.interfaces.IRequest"  />
+
 	<!--
 		Decorate blog entries and forum topics. This is configured for modeled content in configure.zcml.
 		This isn't quite right, as these aren't exactly editable, just deletable.

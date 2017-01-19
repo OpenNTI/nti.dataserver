@@ -21,6 +21,8 @@ from pyramid.threadlocal import get_current_request
 from nti.app.authentication import get_remote_user
 
 from nti.app.forums import VIEW_CONTENTS
+from nti.app.forums import VIEW_USER_TOPIC_PARTICIPATION
+from nti.app.forums import VIEW_TOPIC_PARTICIPATION_SUMMARY
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
@@ -286,10 +288,24 @@ class SecurityAwareBoardForumCountDecorator(object):
 class BoardNTIIDDecorator(object):
 
 	__metaclass__ = SingletonDecorator
-	
+
 	def decorateExternalObject(self, context, mapping):
 		if IPersonalBlogEntry.providedBy(context) or 'BoardNTIID' in mapping:
 			return
 		board = find_interface(context, IBoard, strict=False)
 		if board is not None and board.NTIID:
 			mapping['BoardNTIID'] = board.NTIID
+
+@component.adapter(ITopic)
+@interface.implementer(IExternalObjectDecorator)
+class TopicParticipationLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	def _do_decorate_external(self, context, result):
+		_links = result.setdefault(LINKS, [])
+		for rel in (VIEW_USER_TOPIC_PARTICIPATION, VIEW_TOPIC_PARTICIPATION_SUMMARY):
+			link = Link(context, rel=rel, elements=('@@%s' % rel,))
+			interface.alsoProvides(link, ILocation)
+			link.__name__ = ''
+			link.__parent__ = context
+			_links.append(link)
+		return link
