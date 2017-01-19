@@ -504,12 +504,14 @@ class UserTopicParticipationSummaryView(AbstractTopicParticipationView):
 		user = None
 		if username:
 			user = User.get_user( username )
+			if user is None:
+				raise hexc.HTTPUnprocessableEntity(_("User not found."))
+		else:
+			user = self.remoteUser
 		return user
 
 	def _get_results(self):
 		user = self._get_user()
-		if user is None:
-			raise hexc.HTTPUnprocessableEntity(_('Must provide user for topic participation summary.'))
 		result = self._build_user_summary( user )
 		return result
 
