@@ -25,8 +25,6 @@ from zope.catalog.interfaces import ICatalogIndex
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.base.interfaces import ICreated
-
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
@@ -134,9 +132,8 @@ class ValidatingCreatedUsername(object):
     __slots__ = (b'creator_username',)
 
     def __init__(self,  obj, default=None):
-        created = ICreated(obj, obj)
         try:
-            creator = created.creator
+            creator = obj.creator
             username = getattr(creator, 'username', creator)
             username = getattr(username, 'id', username) # in case of a principal
             if isinstance(username, six.string_types):
