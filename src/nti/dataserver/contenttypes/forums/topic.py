@@ -95,6 +95,8 @@ class _AbstractUnsharedTopic(AcquireObjectsOnReadMixin,
 							 ZContainedMixin,
 							 Implicit):
 
+	creator = None
+
 	tags = FieldProperty(IPost['tags'])
 	title = AdaptingFieldProperty(ITopic['title'])
 	description = AdaptingFieldProperty(IBoard['description'])
@@ -241,7 +243,6 @@ class GeneralHeadlineTopic(AbstractDefaultPublishableSharedWithMixin,
 						   _CreatedNamedNTIIDMixin):
 	headline = AcquisitionFieldProperty(IGeneralHeadlineTopic['headline'])
 
-	creator = None
 
 	_ntiid_type = NTIID_TYPE_GENERAL_TOPIC
 	_ntiid_include_parent_name = True

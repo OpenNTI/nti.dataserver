@@ -100,6 +100,7 @@ class Forum(Implicit,
 
 	__external_can_create__ = False
 
+	creator = None
 	sharingTargets = ()
 	title = AdaptingFieldProperty(IForum['title'])
 	description = AdaptingFieldProperty(IBoard['description'])
@@ -216,7 +217,6 @@ class PersonalBlog(Forum, _SingleInstanceNTIIDMixin):
 
 	__external_can_create__ = False
 
-	creator = None
 	__name__ = __blog_name__ = __default_name__ = DEFAULT_PERSONAL_BLOG_NAME
 	_ntiid_type = NTIID_TYPE_PERSONAL_BLOG
 
