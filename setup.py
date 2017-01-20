@@ -135,7 +135,6 @@ setup(
 		'nti.mimetype',
 		'nti.namedfile',
 		'nti.ntiids',
-		'nti.plasTeX',
 		'nti.transactions',
 		'nti.traversal',
 		'nti.schema',
