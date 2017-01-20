@@ -60,7 +60,6 @@ def do_evolve(context):
 				if intids.queryId(obj) is not None:
 					intids.unregister(obj)
 				lsm.unregisterUtility(obj, provided=ICatalog, name=name)
-				obj.__parent__ = None
 				continue
 
 			for index in catalog.values():
