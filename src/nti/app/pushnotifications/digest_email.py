@@ -119,19 +119,23 @@ class _TemplateArgs(object):
 
 	@Lazy
 	def assignment_name(self):
-		from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
-		item = find_interface(self._primary, IUsersCourseAssignmentHistoryItem)
-		asg_id = None
-		if item is not None:
-			asg_id = item.assignmentId
-		else:
-			# We could be a grade
-			asg_id = getattr(getattr(self._primary, 'object', None), 'AssignmentId', None)
-
-		if asg_id is not None:
+		try:
 			from nti.assessment.interfaces import IQAssignment
-			asg = component.queryUtility(IQAssignment, name=asg_id)
-			return getattr(asg, 'title', None)
+			from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
+			item = find_interface(self._primary, IUsersCourseAssignmentHistoryItem)
+			asg_id = None
+			if item is not None:
+				asg_id = item.assignmentId
+			else:
+				# We could be a grade
+				asg_id = getattr(getattr(self._primary, 'object', None), 'AssignmentId', None)
+	
+			if asg_id is not None:
+				asg = component.queryUtility(IQAssignment, name=asg_id)
+				return getattr(asg, 'title', None)
+		except ImportError:
+			pass
+		return None
 
 	@property
 	def snippet(self):
