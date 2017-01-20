@@ -20,3 +20,5 @@ CONTENT_BLOB_FILE_MIMETYPE = u'application/vnd.nextthought.contentblobfile'
 
 #: Content blob image mimetype
 CONTENT_BLOB_IMAGE_MIMETYPE = u'application/vnd.nextthought.contentblobimage'
+
+from nti.contentfile.model import transform_to_blob

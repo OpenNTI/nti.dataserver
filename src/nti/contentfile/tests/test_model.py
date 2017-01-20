@@ -27,7 +27,7 @@ from zope import interface
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.contentfile.model import ContentFile
-from nti.contentfile.model import transform_to_blob 
+from nti.contentfile.model import transform_to_blob
 
 from nti.contentfile.interfaces import IContentFile
 from nti.contentfile.interfaces import IContentBlobImage
@@ -43,68 +43,69 @@ from nti.externalization.tests import externalizes
 
 GIF_DATAURL = b'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 
+
 class TestModel(unittest.TestCase):
 
-	layer = SharedConfiguringTestLayer
+    layer = SharedConfiguringTestLayer
 
-	def test_interface(self):
-		assert_that(ContentFile(name="cc", contentType='xx'),
-				    verifiably_provides(IContentFile))
+    def test_interface(self):
+        assert_that(ContentFile(name="cc", contentType='xx'),
+                    verifiably_provides(IContentFile))
 
-	def test_name(self):
-		internal = ContentFile()
-		internal.name = 'ichigo'
-		assert_that(internal, has_property('name', is_('ichigo')))
-		assert_that(internal, has_property('__name__', is_('ichigo')))
-		
-		internal.name = 'aizen'
-		assert_that(internal, has_property('name', is_('aizen')))
-		assert_that(internal, has_property('__name__', is_('aizen')))
-		
-	def test_file(self):
-		ext_obj = {
-			'MimeType': 'application/vnd.nextthought.contentimage',
-			'value': GIF_DATAURL,
-			'filename': r'ichigo.gif'
-		}
+    def test_name(self):
+        internal = ContentFile()
+        internal.name = 'ichigo'
+        assert_that(internal, has_property('name', is_('ichigo')))
+        assert_that(internal, has_property('__name__', is_('ichigo')))
 
-		factory = find_factory_for(ext_obj)
-		assert_that(factory, is_not(none()))
+        internal.name = 'aizen'
+        assert_that(internal, has_property('name', is_('aizen')))
+        assert_that(internal, has_property('__name__', is_('aizen')))
 
-		internal = factory()
-		update_from_external_object(internal, ext_obj, require_updater=True)
+    def test_file(self):
+        ext_obj = {
+            'MimeType': 'application/vnd.nextthought.contentimage',
+            'value': GIF_DATAURL,
+            'filename': r'ichigo.gif'
+        }
 
-		assert_that(IContentTypeAware.providedBy(internal), is_(True))
+        factory = find_factory_for(ext_obj)
+        assert_that(factory, is_not(none()))
 
-		# value changed to URI
-		assert_that(ext_obj, has_key('url'))
-		assert_that(ext_obj, does_not(has_key('value')))
+        internal = factory()
+        update_from_external_object(internal, ext_obj, require_updater=True)
 
-		assert_that(internal, has_property('contentType', 'image/gif'))
-		assert_that(internal, has_property('filename', 'ichigo.gif'))
-		assert_that(internal, has_property('name', 'ichigo.gif'))
+        assert_that(IContentTypeAware.providedBy(internal), is_(True))
 
-		assert_that(internal.has_associations(), is_(False))
+        # value changed to URI
+        assert_that(ext_obj, has_key('url'))
+        assert_that(ext_obj, does_not(has_key('value')))
 
-		assert_that(internal,
-					externalizes(all_of(has_key('CreatedTime'),
-										has_key('Last Modified'),
-										has_entry('name', 'ichigo.gif'),
-										has_entry('FileMimeType', 'image/gif'),
-										has_entry('MimeType', 'application/vnd.nextthought.contentimage'))))
+        assert_that(internal, has_property('contentType', 'image/gif'))
+        assert_that(internal, has_property('filename', 'ichigo.gif'))
+        assert_that(internal, has_property('name', 'ichigo.gif'))
 
-		assert_that(internal, has_property('__name__', is_('ichigo.gif')))
-		internal.name = 'foo'
-		assert_that(internal, has_property('__name__', is_('foo')))
+        assert_that(internal.has_associations(), is_(False))
 
-		internal.reference = 'oid'
-		interface.alsoProvides(internal, IInternalFileRef)
-		blob = transform_to_blob(internal, associations=True)
-		assert_that(blob, verifiably_provides(IContentBlobImage))
-		assert_that(IInternalFileRef.providedBy(blob), is_(True))
-		assert_that(blob, has_property('reference', is_('oid')))
-		assert_that(blob, has_property('name', is_('foo')))
-		assert_that(blob, has_property('filename', is_('ichigo.gif')))
-		assert_that(blob, has_property('contentType', is_('image/gif')))
-		assert_that(blob, has_property('data', not_none()))
-		assert_that(blob, has_property('size', is_( 61 )))
+        assert_that(internal,
+                    externalizes(all_of(has_key('CreatedTime'),
+                                        has_key('Last Modified'),
+                                        has_entry('name', 'ichigo.gif'),
+                                        has_entry('FileMimeType', 'image/gif'),
+                                        has_entry('MimeType', 'application/vnd.nextthought.contentimage'))))
+
+        assert_that(internal, has_property('__name__', is_('ichigo.gif')))
+        internal.name = 'foo'
+        assert_that(internal, has_property('__name__', is_('foo')))
+
+        internal.reference = 'oid'
+        interface.alsoProvides(internal, IInternalFileRef)
+        blob = transform_to_blob(internal, associations=True)
+        assert_that(blob, verifiably_provides(IContentBlobImage))
+        assert_that(IInternalFileRef.providedBy(blob), is_(True))
+        assert_that(blob, has_property('reference', is_('oid')))
+        assert_that(blob, has_property('name', is_('foo')))
+        assert_that(blob, has_property('filename', is_('ichigo.gif')))
+        assert_that(blob, has_property('contentType', is_('image/gif')))
+        assert_that(blob, has_property('data', not_none()))
+        assert_that(blob, has_property('size', is_(61)))

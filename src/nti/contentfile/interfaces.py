@@ -22,47 +22,52 @@ from nti.namedfile.interfaces import INamedBlobImage
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 
+
 class IContentBaseFile(IFile, IAttributeAnnotatable, IContained):
 
-	tags = ListOrTuple(ValidTextLine(title="A single tag"), required=False)
+    tags = ListOrTuple(ValidTextLine(title="A single tag"), required=False)
 
-	name = ValidTextLine(title="Identifier for the file", required=True)
+    name = ValidTextLine(title="Identifier for the file", required=True)
 
-	def add_association(context):
-		"""
-		add a associatied object to this file
-		"""
+    def add_association(context):
+        """
+        add a associatied object to this file
+        """
 
-	def remove_association(context):
-		"""
-		remove an associatied object from this file
-		"""
+    def remove_association(context):
+        """
+        remove an associatied object from this file
+        """
 
-	def clear_associations():
-		"""
-		remove all associatied object from this file
-		"""
+    def clear_associations():
+        """
+        remove all associatied object from this file
+        """
 
-	def associations():
-		"""
-		return an iterable with the associatied objects
-		"""
+    def associations():
+        """
+        return an iterable with the associatied objects
+        """
 
-	def has_associations():
-		"""
-		return if this object has any associations
-		"""
-		
+    def has_associations():
+        """
+        return if this object has any associations
+        """
+
 IBaseFile = IContentBaseFile  # BWC
 
+
 class IContentFile(INamedFile, IContentBaseFile):
-	pass
+    pass
+
 
 class IContentImage(INamedImage, IContentBaseFile):
-	pass
+    pass
+
 
 class IContentBlobFile(INamedBlobFile, IContentBaseFile):
-	pass
+    pass
+
 
 class IContentBlobImage(INamedBlobImage, IContentBaseFile):
-	pass
+    pass

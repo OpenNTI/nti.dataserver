@@ -10,9 +10,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 try:
-	from cStringIO import StringIO
+    from cStringIO import StringIO
 except ImportError:
-	from StringIO import StringIO
+    from StringIO import StringIO
 
 from zope import interface
 
@@ -35,142 +35,148 @@ from nti.property.property import alias
 
 from nti.wref.interfaces import IWeakRef
 
+
 class BaseContentMixin(object):
 
-	tags = ()
-	creator = None
+    tags = ()
+    creator = None
 
-	path = None  # XXX BWC
+    path = None  # XXX BWC
 
-	__parent__ = None
-	__name__ = alias('name')
+    __parent__ = None
+    __name__ = alias('name')
 
-	def __init__(self, *args, **kwargs):
-		super(BaseContentMixin, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(BaseContentMixin, self).__init__(*args, **kwargs)
 
-	# associations
+    # associations
 
-	def _lazy_create_ootreeset_for_wref(self):
-		self._p_changed = True
-		result = OOTreeSet()
-		if self._p_jar:
-			self._p_jar.add(result)
-		return result
+    def _lazy_create_ootreeset_for_wref(self):
+        self._p_changed = True
+        result = OOTreeSet()
+        if self._p_jar:
+            self._p_jar.add(result)
+        return result
 
-	def discard(self, container, value):
-		try:
-			container.discard(value)
-		except AttributeError:
-			try:
-				container.remove(value)
-			except (KeyError, ValueError): 
-				pass
+    def discard(self, container, value):
+        try:
+            container.discard(value)
+        except AttributeError:
+            try:
+                container.remove(value)
+            except (KeyError, ValueError):
+                pass
 
-	def _remove_from_named_lazy_set_of_wrefs(self, name, context):
-		self._p_activate()
-		if name in self.__dict__:
-			jar = getattr(self, '_p_jar', None)
-			container = getattr(self, name)
-			if jar is not None:
-				jar.readCurrent(self)
-				container._p_activate()
-				jar.readCurrent(container)
-			wref = IWeakRef(context, None)
-			if wref is not None:
-				__traceback_info__ = context, wref
-				self.discard(container, wref)
+    def _remove_from_named_lazy_set_of_wrefs(self, name, context):
+        self._p_activate()
+        if name in self.__dict__:
+            jar = getattr(self, '_p_jar', None)
+            container = getattr(self, name)
+            if jar is not None:
+                jar.readCurrent(self)
+                container._p_activate()
+                jar.readCurrent(container)
+            wref = IWeakRef(context, None)
+            if wref is not None:
+                __traceback_info__ = context, wref
+                self.discard(container, wref)
 
-	@Lazy
-	def _associations(self):
-		return self._lazy_create_ootreeset_for_wref()
+    @Lazy
+    def _associations(self):
+        return self._lazy_create_ootreeset_for_wref()
 
-	def add_association(self, context):
-		wref = IWeakRef(context, None)
-		if wref is not None:
-			self._associations.add(wref)
-			return True
-		return False
+    def add_association(self, context):
+        wref = IWeakRef(context, None)
+        if wref is not None:
+            self._associations.add(wref)
+            return True
+        return False
 
-	def remove_association(self, context):
-		self._remove_from_named_lazy_set_of_wrefs('_associations', context)
+    def remove_association(self, context):
+        self._remove_from_named_lazy_set_of_wrefs('_associations', context)
 
-	def associations(self):
-		for wref in self._associations:
-			try:
-				obj = wref()
-				if obj is not None:
-					yield obj
-			except Exception:
-				logger.exception("Error while getting associatied object")
+    def associations(self):
+        for wref in self._associations:
+            try:
+                obj = wref()
+                if obj is not None:
+                    yield obj
+            except Exception:
+                logger.exception("Error while getting associatied object")
 
-	def has_associations(self):
-		result = False
-		if '_associations' in self.__dict__:
-			result = bool(list(self.associations()))
-		return result
-	
-	def clear_associations(self):
-		if '_associations' in self.__dict__:
-			self._associations.clear()
+    def has_associations(self):
+        result = False
+        if '_associations' in self.__dict__:
+            result = bool(list(self.associations()))
+        return result
 
-	# IFileReader
+    def clear_associations(self):
+        if '_associations' in self.__dict__:
+            self._associations.clear()
 
-	_v_fp = None
+    # IFileReader
 
-	def _get_v_fp(self):
-		self._v_fp = StringIO(self.data) if self._v_fp is None else self._v_fp
-		return self._v_fp
+    _v_fp = None
 
-	def read(self, size=-1):
-		return self._get_v_fp().read(size) if size != -1 else self.data
+    def _get_v_fp(self):
+        self._v_fp = StringIO(self.data) if self._v_fp is None else self._v_fp
+        return self._v_fp
 
-	def seek(self, offset, whence=0):
-		return self._get_v_fp().seek(offset, whence)
+    def read(self, size=-1):
+        return self._get_v_fp().read(size) if size != -1 else self.data
 
-	def tell(self):
-		return self._get_v_fp().tell()
+    def seek(self, offset, whence=0):
+        return self._get_v_fp().seek(offset, whence)
 
-	# compatible methods
+    def tell(self):
+        return self._get_v_fp().tell()
 
-	def readContents(self):
-		return self.data
+    # compatible methods
+
+    def readContents(self):
+        return self.data
 
 BaseMixin = BaseContentMixin  # BWC
 
+
 @interface.implementer(IContentFile)
 class ContentFile(BaseContentMixin, NamedFile):
-	pass
+    pass
+
 
 @interface.implementer(IContentBlobFile)
 class ContentBlobFile(BaseContentMixin, NamedBlobFile):
-	pass
+    pass
+
 
 @interface.implementer(IContentImage)
 class ContentImage(BaseContentMixin, NamedImage):
-	pass
+    pass
+
 
 @interface.implementer(IContentBlobImage)
 class ContentBlobImage(BaseContentMixin, NamedBlobImage):
-	pass
+    pass
+
 
 def transform_to_blob(context, associations=False):
-	if IContentFile.providedBy(context):
-		result = ContentBlobFile()
-	elif IContentImage.providedBy(context):
-		result = ContentBlobImage()
-	else:
-		result = context
-	if result is not context:
-		for key, value in context.__dict__.items():
-			if not key.startswith('_') and key != 'data':
-				try:
-					setattr(result, key, value)
-				except (AttributeError, TypeError): # ignore readonly
-					pass
-		result.data = context.data # be explicit
-		if IInternalFileRef.providedBy(context):
-			interface.alsoProvides(result, IInternalFileRef)
-			result.reference = getattr(context, 'reference', None)  # extra check
-		if context.has_associations() or associations:
-			[result.add_association(obj) for obj in context.associations()]
-	return result
+    if IContentFile.providedBy(context):
+        result = ContentBlobFile()
+    elif IContentImage.providedBy(context):
+        result = ContentBlobImage()
+    else:
+        result = context
+    if result is not context:
+        for key, value in context.__dict__.items():
+            if not key.startswith('_') and key != 'data':
+                try:
+                    setattr(result, key, value)
+                except (AttributeError, TypeError):  # ignore readonly
+                    pass
+        result.data = context.data  # be explicit
+        if IInternalFileRef.providedBy(context):
+            interface.alsoProvides(result, IInternalFileRef)
+            result.reference = getattr(context, 'reference', None)  # extra check
+        if context.has_associations() or associations:
+            [result.add_association(obj) for obj in context.associations()]
+    return result
