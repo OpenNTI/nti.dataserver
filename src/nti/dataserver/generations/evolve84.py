@@ -33,50 +33,52 @@ from nti.zope_catalog.interfaces import IKeywordIndex
 
 
 def do_evolve(context):
-	setHooks()
-	conn = context.connection
-	root = conn.root()
-	ds_folder = root['nti.dataserver']
+    setHooks()
+    conn = context.connection
+    root = conn.root()
+    ds_folder = root['nti.dataserver']
 
-	with site(ds_folder):
-		assert  component.getSiteManager() == ds_folder.getSiteManager(), \
-			"Hooks not installed?"
+    with site(ds_folder):
+        assert  component.getSiteManager() == ds_folder.getSiteManager(), \
+            "Hooks not installed?"
 
-		queue = metadata_queue()
-		if queue is None:
-			return
+        queue = metadata_queue()
+        if queue is None:
+            return
 
-		rest_ids = set()
-		creator_ids = set()
-		creator_index = dataserver_metadata_catalog()[IX_CREATOR]
-		for _, catalog in component.getUtilitiesFor(ICatalog):
-			for index in catalog.values():
-				if index is creator_index:
-					s = creator_ids
-				else:
-					s = rest_ids
+        rest_ids = set()
+        creator_ids = set()
+        creator_index = dataserver_metadata_catalog()[IX_CREATOR]
+        for _, catalog in component.getUtilitiesFor(ICatalog):
+            if not hasattr(catalog, "values"):
+                continue
+            for index in catalog.values():
+                if index is creator_index:
+                    s = creator_ids
+                else:
+                    s = rest_ids
 
-				if IIndexValues.providedBy(index):
-					s.update(index.ids())
-				elif IKeywordIndex.providedBy(index):
-					s.update(index.ids())
-				elif isinstance(index, TopicIndex):
-					for filter_index in index._filters.values():
-						if ITopicFilteredSet.providedBy(filter_index):
-							s.update(filter_index.getIds())
+                if IIndexValues.providedBy(index):
+                    s.update(index.ids())
+                elif IKeywordIndex.providedBy(index):
+                    s.update(index.ids())
+                elif isinstance(index, TopicIndex):
+                    for filter_index in index._filters.values():
+                        if ITopicFilteredSet.providedBy(filter_index):
+                            s.update(filter_index.getIds())
 
-		# index difference
-		for uid in rest_ids.difference(creator_ids):
-			try:
-				queue.add(uid)
-			except TypeError:
-				pass
+        # index difference
+        for uid in rest_ids.difference(creator_ids):
+            try:
+                queue.add(uid)
+            except TypeError:
+                pass
 
-		logger.info('Dataserver evolution %s done.', generation)
+        logger.info('Dataserver evolution %s done.', generation)
 
 
 def evolve(context):
-	"""
-	Evolve to gen 84 by reindexing the missing creators
-	"""
-	do_evolve(context)
+    """
+    Evolve to gen 84 by reindexing the missing creators
+    """
+    do_evolve(context)
