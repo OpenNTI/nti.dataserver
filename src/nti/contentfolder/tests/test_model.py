@@ -35,75 +35,76 @@ from nti.namedfile.file import NamedFile
 
 from nti.contentfolder.tests import SharedConfiguringTestLayer
 
+
 class TestModel(unittest.TestCase):
 
-	layer = SharedConfiguringTestLayer
+    layer = SharedConfiguringTestLayer
 
-	def test_interface(self):
-		assert_that(ContentFolder(name="cc"), validly_provides(IContentFolder))
-		assert_that(RootFolder(), validly_provides(IRootFolder))
+    def test_interface(self):
+        assert_that(ContentFolder(name="cc"), validly_provides(IContentFolder))
+        assert_that(RootFolder(), validly_provides(IRootFolder))
 
-	def test_container(self):
-		root = RootFolder()
-		f1 = root.add(ContentFolder(name='f1'))
-		f1.add(NamedFile(name="foo"))
-		assert_that('foo', is_in(f1))
-		self.assertRaises(Exception, f1.__setitem__, 'foo', object())
+    def test_container(self):
+        root = RootFolder()
+        f1 = root.add(ContentFolder(name='f1'))
+        f1.add(NamedFile(name="foo"))
+        assert_that('foo', is_in(f1))
+        self.assertRaises(Exception, f1.__setitem__, 'foo', object())
 
-		ext_obj = to_external_object(root)
-		assert_that(ext_obj,
-					has_entries(
-						u'MimeType', u'application/vnd.nextthought.contentrootfolder',
-						u'name', u'root'))
-		factory = find_factory_for(ext_obj)
-		assert_that(factory, is_(none()))
+        ext_obj = to_external_object(root)
+        assert_that(ext_obj,
+                    has_entries(
+                        u'MimeType', u'application/vnd.nextthought.contentrootfolder',
+                        u'name', u'root'))
+        factory = find_factory_for(ext_obj)
+        assert_that(factory, is_(none()))
 
-		ext_obj = to_external_object(f1)
-		assert_that(ext_obj,
-					has_entries(
-						u'MimeType', u'application/vnd.nextthought.contentfolder',
-						u'name', u'f1',
-						u'filename', u'f1'))
+        ext_obj = to_external_object(f1)
+        assert_that(ext_obj,
+                    has_entries(
+                        u'MimeType', u'application/vnd.nextthought.contentfolder',
+                        u'name', u'f1',
+                        u'filename', u'f1'))
 
-		factory = find_factory_for(ext_obj)
-		assert_that(factory, is_not(none()))
-		internal = factory()
-		update_from_external_object(internal, ext_obj)
-		assert_that(internal, has_property('name', is_('f1')))
-		assert_that(internal, has_property('filename', is_('f1')))
-		
-		del f1['foo']
-		assert_that('foo', is_not(is_in(f1)))
+        factory = find_factory_for(ext_obj)
+        assert_that(factory, is_not(none()))
+        internal = factory()
+        update_from_external_object(internal, ext_obj)
+        assert_that(internal, has_property('name', is_('f1')))
+        assert_that(internal, has_property('filename', is_('f1')))
 
-	def test_move(self):
-		root = RootFolder()
-		bleach = root.add(ContentFolder(name='bleach'))
-		ichigo = root.add(NamedFile(name="ichigo", data=b'shikai'))
+        del f1['foo']
+        assert_that('foo', is_not(is_in(f1)))
 
-		root.moveTo(ichigo, bleach, 'aizen')
-		assert_that('ichigo', does_not(is_in(root)))
-		assert_that('aizen', does_not(is_in(root)))
-		assert_that('aizen', is_in(bleach))
-	
-		aizen = bleach['aizen']
-		assert_that(aizen, has_property('__parent__', is_(bleach)))
-		assert_that(aizen, has_property('data', is_(b'shikai')))
+    def test_move(self):
+        root = RootFolder()
+        bleach = root.add(ContentFolder(name='bleach'))
+        ichigo = root.add(NamedFile(name="ichigo", data=b'shikai'))
 
-	def test_copy(self):
-		root = RootFolder()
-		bleach = root.add(ContentFolder(name='bleach'))
-		ichigo = root.add(NamedFile(name="ichigo", data=b'shikai'))
+        root.moveTo(ichigo, bleach, 'aizen')
+        assert_that('ichigo', does_not(is_in(root)))
+        assert_that('aizen', does_not(is_in(root)))
+        assert_that('aizen', is_in(bleach))
 
-		aizen = root.copyTo(ichigo, bleach, 'aizen')
-		assert_that(aizen, is_not(none()))
-		assert_that(aizen, is_not(ichigo))
-		assert_that(aizen, has_property('data', is_(b'shikai')))
+        aizen = bleach['aizen']
+        assert_that(aizen, has_property('__parent__', is_(bleach)))
+        assert_that(aizen, has_property('data', is_(b'shikai')))
 
-		same = root.copyTo(ichigo)
-		assert_that(same, is_not(none()))
-		assert_that(same, is_(ichigo))
+    def test_copy(self):
+        root = RootFolder()
+        bleach = root.add(ContentFolder(name='bleach'))
+        ichigo = root.add(NamedFile(name="ichigo", data=b'shikai'))
 
-		aizen = root.copyTo(ichigo, newName='aizen')
-		assert_that(aizen, is_not(none()))
-		assert_that(aizen, is_not(ichigo))
-		assert_that(aizen, has_property('data', is_(b'shikai')))
+        aizen = root.copyTo(ichigo, bleach, 'aizen')
+        assert_that(aizen, is_not(none()))
+        assert_that(aizen, is_not(ichigo))
+        assert_that(aizen, has_property('data', is_(b'shikai')))
+
+        same = root.copyTo(ichigo)
+        assert_that(same, is_not(none()))
+        assert_that(same, is_(ichigo))
+
+        aizen = root.copyTo(ichigo, newName='aizen')
+        assert_that(aizen, is_not(none()))
+        assert_that(aizen, is_not(ichigo))
+        assert_that(aizen, has_property('data', is_(b'shikai')))

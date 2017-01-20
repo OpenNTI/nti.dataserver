@@ -28,58 +28,69 @@ from nti.schema.field import Bool
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 
+
 class INamedContainer(IContained,
-					  IDCDescriptiveProperties,
-					  IContentContainer,
-					  ILastModified,
-					  ICreated):
-	tags = ListOrTuple(ValidTextLine(title="A single tag"), required=False)
-	name = ValidTextLine(title="Folder URL-safe name", required=True)
-	filename = ValidTextLine(title="Folder name", required=True)
+                      IDCDescriptiveProperties,
+                      IContentContainer,
+                      ILastModified,
+                      ICreated):
+    tags = ListOrTuple(ValidTextLine(title="A single tag"), required=False)
 
-	# dublin core
-	title = ValidTextLine(title="Folder title", required=False, default=None)
-	description = ValidTextLine(title="Folder description", required=False, default=None)
+    name = ValidTextLine(title="Folder URL-safe name", required=True)
 
-	use_blobs = Bool(title="Use blobs flag", required=True, default=True)
-	use_blobs.setTaggedValue('_ext_excluded_out', True)
+    filename = ValidTextLine(title="Folder name", required=True)
+
+    # dublin core
+    title = ValidTextLine(title="Folder title",
+                          required=False,
+                          default=None)
+
+    description = ValidTextLine(title="Folder description",
+                                required=False,
+                                default=None)
+
+    use_blobs = Bool(title="Use blobs flag", required=True, default=True)
+    use_blobs.setTaggedValue('_ext_excluded_out', True)
+
 
 class IContentFolder(INamedContainer, IAttributeAnnotatable):
 
-	containers(str('.INamedContainer'))
-	contains(str('.INamedContainer'),
-			 IPloneNamed)
+    containers(str('.INamedContainer'))
+    contains(str('.INamedContainer'),
+             IPloneNamed)
 
-	__parent__.required = False
-	__setitem__.__doc__ = None
+    __parent__.required = False
+    __setitem__.__doc__ = None
 
-	def add(obj):
-		"""
-		add an object to this container
-		"""
+    def add(obj):
+        """
+        add an object to this container
+        """
 
-	def remove(obj):
-		"""
-		remove the specified object from this container
-		"""
+    def remove(obj):
+        """
+        remove the specified object from this container
+        """
 
-	def rename(old, new):
-		"""
-		rename an stored item
-		"""
+    def rename(old, new):
+        """
+        rename an stored item
+        """
 
-	def moveTo(item, target, newName=None):
-		"""
-		move the specified item to the target with a possible new name
-		"""
+    def moveTo(item, target, newName=None):
+        """
+        move the specified item to the target with a possible new name
+        """
 
-	def copyTo(item, target, newName=None):
-		"""
-		copy the specified item to the target with a possible new name
-		"""
+    def copyTo(item, target, newName=None):
+        """
+        copy the specified item to the target with a possible new name
+        """
+
 
 class IRootFolder(IContentFolder):
-	pass
+    pass
+
 
 class ILockedFolder(IContentFolder):
-	pass
+    pass

@@ -17,10 +17,11 @@ from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfolder.interfaces import IContentFolder
 
+
 @component.adapter(IContentBaseFile, IObjectMovedEvent)
 def _on_content_file_moved(context, event):
-	if IContentFolder.providedBy(event.newParent):
-		try:
-			event.newParent.updateLastMod()
-		except AttributeError:
-			pass
+    if IContentFolder.providedBy(event.newParent):
+        try:
+            event.newParent.updateLastMod()
+        except AttributeError:
+            pass
