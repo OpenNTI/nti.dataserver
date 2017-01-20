@@ -124,7 +124,6 @@ setup(
 		'nti.common',
 		'nti.containers',
 		'nti.contentfragments',
-		'nti.contentindexing',
 		'nti.contenttypes.presentation',
 		'nti.coremetadata',
 		'nti.dublincore',

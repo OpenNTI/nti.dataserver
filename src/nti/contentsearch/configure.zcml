@@ -9,8 +9,6 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
-	<include package="nti.contentindexing" />
-
 	<!-- Database creation and migration -->
 	<utility factory=".generations.install._ContentSearchSchemaManager"
 			 name="nti.dataserver-contentsearch"
