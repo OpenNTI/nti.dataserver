@@ -53,6 +53,9 @@ patch_webob_cookie_escaping_on_import.patch()
 from nti.monkey import patch_random_seed_on_import
 patch_random_seed_on_import.patch()
 
+from nti.monkey import patch_pyramid_on_import
+patch_pyramid_on_import.patch()
+
 import sys
 from pkg_resources import load_entry_point, get_distribution
 
