@@ -15,6 +15,7 @@ from zope.component import handle
 
 from zc.intid.interfaces import ISubscriberEvent
 
+
 @component.adapter(ISubscriberEvent)
 def subscriberEventNotify(event):
     """
