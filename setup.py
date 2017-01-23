@@ -222,6 +222,7 @@ setup(
         # See also http://pypi.python.org/pypi/neoppod/ for a
         # completely different option
         'anyjson',
+        'appdirs>=1.4.0',
         # 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
         # See also blist for a tree-structured list
         # URL-safe "slugs" from arbitrary titles. Automatically
@@ -280,6 +281,7 @@ setup(
         # It also works to install it with buildout, which is the currently
         # supported mechanism. This is how we do it with pypy too.
         'numpy' if not IS_PYPY else '',
+        'packaging',
         'paste',
         'perfmetrics',  # easy statsd metrics.
         'plone.i18n',  # provides ISO3166 country/codes and flag images
