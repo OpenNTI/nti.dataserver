@@ -28,6 +28,7 @@ is_not = does_not
 
 import datetime
 import unittest
+from urllib import unquote
 from urllib import quote as UQ
 
 from pyquery import PyQuery
@@ -239,7 +240,8 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 			# We have a contents URL
 			contents_href = self.require_link_href_with_rel(res.json_body, 'contents')
 			# Make sure we're getting back pretty URLs...
-			assert_that(contents_href, starts_with(self.forum_pretty_contents_url))
+			assert_that(unquote(contents_href), 
+						starts_with(unquote(self.forum_pretty_contents_url)))
 			# which is empty...
 			testapp.get(contents_href, status=200)
 
@@ -369,7 +371,7 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		res = self._POST_topic_entry(data)
 
 		topic_url = res.location
-		assert_that(topic_url, contains_string(self.forum_pretty_url))
+		assert_that(unquote(topic_url), contains_string(unquote(self.forum_pretty_url)))
 		# I can PUT directly to the headline's edit URL
 		headline_url = self.require_link_href_with_rel(res.json_body['headline'], 'edit')
 		# Which is not 'pretty'
@@ -1164,7 +1166,7 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 
 		# Which creates a forum
 		assert_that(forum_res, has_property('content_type', self.forum_content_type))
-		forum_url = self.board_pretty_url + '/' + forum_res.json_body['ID']
+		forum_url = unquote(self.board_pretty_url + '/' + forum_res.json_body['ID'])
 		assert_that(forum_res.json_body, has_entry('href', forum_url))
 		assert_that(forum_res, has_property('location', 'http://localhost' + forum_url + '/'))
 		assert_that(forum_res.json_body, has_entry('ContainerId', self.board_ntiid_checker))
@@ -1191,13 +1193,13 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		assert_that(board_res, has_property('content_type', self.board_content_type))
 		assert_that(board_res.json_body, has_entry('MimeType', _plain(self.board_content_type)))
 		assert_that(board_res.json_body, has_entry('NTIID', self.board_ntiid_checker))
-		assert_that(board_res.json_body, has_entry('href', self.board_pretty_url))
+		assert_that(board_res.json_body, has_entry('href', unquote(self.board_pretty_url)))
 		__traceback_info__ = board_res.json_body
 		contents_href = self.require_link_href_with_rel(board_res.json_body, 'contents')
 		add = self.link_with_rel(board_res.json_body, 'add')
 		if add is not None:
 			assert_that(add, has_entry('method', 'POST'))
-			assert_that(contents_href, is_(add['href']))
+			assert_that(unquote(contents_href), is_(unquote(add['href'])))
 
 		contents_res = self.testapp.get(contents_href)
 		assert_that(contents_res.json_body, has_entry('Items', has_length(1)))
@@ -1215,7 +1217,7 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		entry_id = res.json_body['ID']
 		assert_that(entry_id, is_(not_none()))
 		assert_that(res.json_body, has_entries(	'title', data['title'],
-												'href', self.forum_topic_href(entry_id)))
+												'href', unquote(self.forum_topic_href(entry_id))))
 
 		ntiid = self.forum_topic_ntiid(entry_id)
 		if ntiid:
