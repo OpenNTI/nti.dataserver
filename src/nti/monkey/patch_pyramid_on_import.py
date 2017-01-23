@@ -17,13 +17,12 @@ if not dist.version or dist.version == '1.8':
     from pyramid.asset import resolve_asset_spec
     from pyramid.config import Configurator
 
-    class _Configuratory(Configurator):
+    class _Configurator(Configurator):
 
         def _split_spec(self, path_or_spec):
             return resolve_asset_spec(path_or_spec, self.package_name)
 
-    pyramid.config.Configurator = _Configuratory
-
+    pyramid.config.Configurator = _Configurator
 
 def patch():
     pass
