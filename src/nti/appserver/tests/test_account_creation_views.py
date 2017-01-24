@@ -25,6 +25,8 @@ import datetime
 import unittest
 import itertools
 
+from urllib import unquote
+
 from zope import component
 
 from zope.component import eventtesting
@@ -389,7 +391,8 @@ class TestCreateViewNotDevmode(unittest.TestCase,_AbstractNotDevmodeViewBase):
 		new_user = account_create_view( self.request )
 		assert_that( new_user, has_property( 'username', 'jason@test.nextthought.com' ) )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason Madden' ) )
-		assert_that( self.request.response, has_property( 'location', contains_string( '/dataserver2/users/jason%40test.nextthought.com' ) ) )
+		assert_that( self.request.response, has_property( 'location',
+												contains_string( unquote( '/dataserver2/users/jason%40test.nextthought.com' ) ) ))
 		assert_that( self.request.response, has_property( 'status_int', 201 ) )
 		#assert_that( self.request.response.headers, has_property( "what", "th" ) )
 
