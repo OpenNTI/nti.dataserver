@@ -65,7 +65,7 @@ class TestSearchExternal(unittest.TestCase):
         assert_that(new_results, has_property('Query',
                                               has_property('limit', is_(100))))
         assert_that(new_results, has_property('Hits', has_length(1)))
-        
+
     @WithMockDSTrans
     def test_externalize_suggest_results(self):
         qo = QueryObject.create("wind")
