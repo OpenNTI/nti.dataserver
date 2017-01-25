@@ -16,6 +16,8 @@ import zipfile
 import tempfile
 from urlparse import parse_qs
 from functools import partial
+from mimetypes import guess_type
+from mimetypes import guess_extension
 
 from zope import component
 from zope import interface
@@ -59,9 +61,6 @@ from nti.appserver.ugd_edit_views import UGDPutView
 from nti.common.file import safe_filename
 
 from nti.common.maps import CaseInsensitiveDict
-
-from nti.common.mimetypes import guess_type
-from nti.common.mimetypes import guess_extension
 
 from nti.common.random import generate_random_hex_string
 
