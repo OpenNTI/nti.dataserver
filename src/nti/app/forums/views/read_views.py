@@ -492,7 +492,9 @@ class UserTopicParticipationSummaryView(AbstractTopicParticipationView):
 	"""
 
 	def _build_user_summary(self, user):
+		# Store the comments sorted by createdTime ascending.
 		user_comments = (x for x in self.context.values() if x.creator == user)
+		user_comments = sorted( user_comments, key=lambda x: x.created )
 		user_summary = UserTopicParticipationSummary( user )
 		for comment in user_comments:
 			user_summary.accumulate( comment )
