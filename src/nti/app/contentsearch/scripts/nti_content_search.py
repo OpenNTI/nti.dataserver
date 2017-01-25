@@ -17,6 +17,11 @@ import simplejson
 
 from zope import component
 
+from zope.security.interfaces import IParticipation
+from zope.security.management import endInteraction
+from zope.security.management import newInteraction
+from zope.security.management import restoreInteraction
+
 from nti.common.string import to_unicode
 
 from nti.contentsearch.interfaces import ISearcher
@@ -33,6 +38,7 @@ from nti.dataserver.users import User
 from nti.externalization.externalization import to_external_object
 
 from nti.ntiids.ntiids import ROOT
+
 
 def search(query, username, types, location=None, site=None):
     set_site(site)
@@ -51,11 +57,16 @@ def search(query, username, types, location=None, site=None):
     params['accept'] = [to_unicode(x) for x in types or ()]
     query = create_queryobject(username, params)
 
-    # prepare searcher
-    searcher = ISearcher(user, None)
-    if searcher is not None:
-        return searcher.search(query=query)
-    return None
+    endInteraction()
+    try:
+        newInteraction(IParticipation(user))
+        searcher = ISearcher(user, None)
+        if searcher is not None:
+            return searcher.search(query=query)
+        return None
+    finally:
+        restoreInteraction()
+
 
 def _load_library():
     try:
@@ -66,6 +77,7 @@ def _load_library():
     except ImportError:
         pass
 
+
 def _process_args(args):
     _load_library()
     result = search(site=args.site,
@@ -73,13 +85,14 @@ def _process_args(args):
                     types=args.types,
                     username=args.username,
                     location=args.location)
-    
+
     if result is not None:
         result = to_external_object(result)
-        simplejson.dump(result, 
-                        sys.stderr, 
+        simplejson.dump(result,
+                        sys.stderr,
                         indent='\t',
                         sort_keys=True)
+
 
 def main():
     arg_parser = argparse.ArgumentParser(description="Content search")
