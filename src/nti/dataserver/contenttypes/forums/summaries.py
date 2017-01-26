@@ -49,8 +49,11 @@ class TopicParticipationSummary(object):
 		self.comment_top_level_count = 0
 		self.comment_reply_to_count = 0
 
+	def _allow_comment(self, comment):
+		return not IDeletedObjectPlaceholder.providedBy( comment )
+
 	def accumulate(self, comment):
-		if not IDeletedObjectPlaceholder.providedBy( comment ):
+		if self._allow_comment( comment ):
 			self.comment_total_count += 1
 			if comment.inReplyTo is not None:
 				self.comment_reply_to_count += 1
@@ -112,13 +115,19 @@ class UserTopicParticipationSummary(TopicParticipationSummary):
 
 	def _recur_replies(self, comment):
 		for child_reply in comment.replies:
-			self._nested_replies.add(child_reply)
+			# Exclude from our count, but still recursively gather
+			# the children.
+			if self._allow_comment( child_reply ):
+				self._nested_replies.add(child_reply)
 			self._recur_replies( child_reply )
 
+	def _get_direct_reply_count(self, comment):
+		return len([x for x in comment.replies if self._allow_comment(x)])
+
 	def accumulate(self, comment):
-		# For deleted comments, we include all spawned reply counts, but
-		# exclude the other stats.
+		# For deleted comments, we include all (non deleted) spawned reply
+		# counts, but exclude the other stats.
 		self._recur_replies( comment )
-		self.direct_child_reply_count += len( comment.replies )
+		self.direct_child_reply_count += self._get_direct_reply_count( comment )
 		self.contexts.append( UserTopicParticipationContext( comment ) )
 		super(UserTopicParticipationSummary, self).accumulate( comment )
