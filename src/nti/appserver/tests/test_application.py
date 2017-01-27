@@ -332,7 +332,6 @@ class TestApplication(ApplicationLayerTest):
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + container_id + ')/UserGeneratedData'
-		#path = urllib.quote( path )
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 
 		assert_that( res.body, contains_string( str(contained) ) )
@@ -416,7 +415,7 @@ class TestApplication(ApplicationLayerTest):
 		assert_that( res.status_int, is_( 201 ) )
 		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
 		href = res.json_body['href']
-		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
+		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson@nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
 
 		# The object can be found in the UGD sub-collection
@@ -473,13 +472,13 @@ class TestApplication(ApplicationLayerTest):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		body = res.json_body
 		links = body['Collection']['Links']
-		assert_that( links, has_item( has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) ) )
+		assert_that( links, has_item( has_entry( 'href', '/dataserver2/users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData' ) ) )
 		assert_that( body, has_entry( 'Items', has_length( 2 ) ) )
 		for item in body['Items']:
 			item_id = item['ID']
 			links = item['Links']
 			assert_that( links, has_item( has_entry( 'href',
-													 urllib.quote( '/dataserver2/users/sjohnson@nextthought.com/Pages(%s)/RecursiveStream' % item_id ) ) ) )
+													 '/dataserver2/users/sjohnson@nextthought.com/Pages(%s)/RecursiveStream' % item_id ) ) )
 
 		# I can now delete that item
 		testapp.delete( str(href), extra_environ=self._make_extra_environ())
@@ -547,7 +546,7 @@ class TestApplication(ApplicationLayerTest):
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 201 ) )
 		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
-		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
+		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson@nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
 
 
@@ -557,7 +556,7 @@ class TestApplication(ApplicationLayerTest):
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'Links',
 									  has_item( all_of(
-										  has_entry( 'href', contains_string( '/dataserver2/users/sjohnson%40nextthought.com/Objects/tag' ) ),
+										  has_entry( 'href', contains_string( '/dataserver2/users/sjohnson@nextthought.com/Objects/tag' ) ),
 										  has_entry( 'rel', 'edit' ) ) ) ))
 
 	@WithSharedApplicationMockDS
@@ -763,7 +762,7 @@ class TestApplication(ApplicationLayerTest):
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
 
 
-		assert_that( res.json_body, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) )
+		assert_that( res.json_body, has_entry( 'href', '/dataserver2/users/sjohnson@nextthought.com/FriendsLists/boom@nextthought.com' ) )
 
 	@WithSharedApplicationMockDS
 	def test_create_friends_list_post_user(self):
@@ -781,7 +780,7 @@ class TestApplication(ApplicationLayerTest):
 		assert_that( res.body, contains_string( '"boom@nextthought.com"' ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
 
-		assert_that( res.json_body, has_entry( 'href', is_('/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) ))
+		assert_that( res.json_body, has_entry( 'href', is_('/dataserver2/users/sjohnson@nextthought.com/FriendsLists/boom@nextthought.com' ) ))
 
 		testapp.delete( str(res.json_body['href']), extra_environ=self._make_extra_environ() )
 
@@ -980,8 +979,7 @@ class TestApplication(ApplicationLayerTest):
 		testapp = TestApp( self.app )
 		data = '{"body": ["text"]}'
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
-		path = urllib.quote( path )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % urllib.quote(n_ext_id)
 		res = testapp.put( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( json.loads(res.body), has_entry( 'href', path ) )
@@ -1002,7 +1000,6 @@ class TestApplication(ApplicationLayerTest):
 		testapp = TestApp( self.app )
 		data = ''
 		path = '/dataserver2/Objects/%s' % n_ext_id
-		path = urllib.quote( path )
 		# Initially, unliked, I get asked to like
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
@@ -1013,7 +1010,7 @@ class TestApplication(ApplicationLayerTest):
 								has_item(
 									has_entry(
 										'href',
-										'/dataserver2/Objects/' + urllib.quote( n_ext_id ) + '/@@like' ) ) ) )
+										'/dataserver2/Objects/%s/@@like' % urllib.quote(n_ext_id) ) ) ) )
 
 		# So I do
 		res = testapp.post( path + '/@@like', data, extra_environ=self._make_extra_environ() )
@@ -1048,7 +1045,6 @@ class TestApplication(ApplicationLayerTest):
 		testapp = TestApp( self.app )
 		data = ''
 		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
-		path = urllib.quote( path )
 		# Initially, unliked, I get asked to favorite
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
@@ -1146,10 +1142,10 @@ class TestApplication(ApplicationLayerTest):
 		testapp = TestApp( self.app )
 		data = '["Everyone"]'
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % urllib.quote(n_ext_id)
 		field_path = path + '/++fields++sharedWith' # The name of the external field
 
-		res = testapp.put( urllib.quote( field_path ),
+		res = testapp.put( field_path,
 						   data,
 						   extra_environ=self._make_extra_environ(),
 						   headers={"Content-Type": "application/json" } )
@@ -1157,7 +1153,7 @@ class TestApplication(ApplicationLayerTest):
 
 		assert_that( res.json_body, has_entry( "sharedWith", has_item( "Everyone" ) ) )
 
-		assert_that( res.json_body, has_entry( 'href', urllib.quote( path ) ) )
+		assert_that( res.json_body, has_entry( 'href', path ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
 
 	@WithSharedApplicationMockDS
@@ -1399,7 +1395,7 @@ class TestApplication(ApplicationLayerTest):
 						{"NotificationCount": 5 },
 						extra_environ=extra_environ,
 						status=400)
-		
+
 from pyramid import traversal
 
 class _ApplicationLibraryTestLayer(ApplicationTestLayer):
@@ -1521,8 +1517,7 @@ class TestApplicationLibraryBase(ApplicationLayerTest):
 
 			assert_that( res.json_body, has_entry( 'Links', has_item( all_of( has_entry( 'rel', self._stream_type ),
 																			  has_entry( 'href',
-																						 urllib.quote(
-																						 '/dataserver2/users/sjohnson@nextthought.com/Pages(' + self.child_ntiid + ')/' + self._stream_type ) ) ) ) ) )
+																						 '/dataserver2/users/sjohnson@nextthought.com/Pages(' + self.child_ntiid + ')/' + self._stream_type ) ) ) ) )
 
 
 class TestApplicationLibrary(TestApplicationLibraryBase):
@@ -1679,7 +1674,7 @@ class TestUtil(unittest.TestCase):
 		assert_that( string, contains_string( 'dump_stacks' ) )
 
 class TestAppUtil(ApplicationLayerTest):
-	
+
 	@WithSharedApplicationMockDS
 	def test_database(self):
 		seq = nti.appserver._util.dump_database_cache(gc=True)
