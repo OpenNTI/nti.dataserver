@@ -79,8 +79,9 @@ class IInvitation(IContained,
 
     accepted = Bool(title="Accepted flag.", default=False, required=True)
 
-    expiryTime = Number(
-        title="The expiry timestamp.", required=True, default=0)
+    expiryTime = Number(title="The expiry timestamp.", 
+                        required=True,
+                        default=0)
 
     sent = Number(title="The sent timestamp.", required=False)
     sent.setTaggedValue('_ext_excluded_out', True)
