@@ -17,22 +17,23 @@ from zope.securitypolicy.interfaces import IRolePermissionMap
 
 from zope.securitypolicy.securitymap import SecurityMap
 
+
 @interface.implementer(IRolePermissionMap)
 class PermissionGrantingRoleMap(SecurityMap):
-	"""
-	A basic role permission map that grants a set
-	of permissions to roles.
-	"""
+    """
+    A basic role permission map that grants a set
+    of permissions to roles.
+    """
 
-	def __init__(self, grants=()):
-		super(PermissionGrantingRoleMap, self).__init__()
-		for role in grants or ():
-			for perm in grants.get(role, ()):
-				self.addCell(perm, role, Allow)
+    def __init__(self, grants=()):
+        super(PermissionGrantingRoleMap, self).__init__()
+        for role in grants or ():
+            for perm in grants.get(role, ()):
+                self.addCell(perm, role, Allow)
 
-	getRolesForPermission = SecurityMap.getRow
-	getPermissionsForRole = SecurityMap.getCol
-	getRolesAndPermissions = SecurityMap.getAllCells
+    getRolesForPermission = SecurityMap.getRow
+    getPermissionsForRole = SecurityMap.getCol
+    getRolesAndPermissions = SecurityMap.getAllCells
 
-	def getSetting(self, permission_id, role_id, default=Unset):
-		return self.queryCell(permission_id, role_id, default)
+    def getSetting(self, permission_id, role_id, default=Unset):
+        return self.queryCell(permission_id, role_id, default)

@@ -16,10 +16,11 @@ from zope.securitypolicy.principalrole import principalRoleManager
 
 from nti.testing import base
 
+
 class TestZcml(base.ConfiguringTestBase):
 
-	def test_directives(self):
-		zcml = """
+    def test_directives(self):
+        zcml = """
 		<configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:sp="http://nextthought.com/ntp/securitypolicy"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
@@ -57,7 +58,7 @@ class TestZcml(base.ConfiguringTestBase):
 		</configure>
 		"""
 
-		self.configure_string(zcml)
+        self.configure_string(zcml)
 
-		assert_that(principalRoleManager.getRolesForPrincipal('grey.allman@nextthought.com'),
-					contains(('nti.roles.courseware.report_viewer', Allow)))
+        assert_that(principalRoleManager.getRolesForPrincipal('grey.allman@nextthought.com'),
+                    contains(('nti.roles.courseware.report_viewer', Allow)))
