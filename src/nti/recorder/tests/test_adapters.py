@@ -38,49 +38,56 @@ from nti.recorder.record import TransactionRecord
 
 from nti.recorder.tests import SharedConfiguringTestLayer
 
+
 @interface.implementer(IRecordable, IAttributeAnnotatable)
 class Foo(Persistent):
-	pass
+    pass
+
 
 class TestAdapters(unittest.TestCase):
 
-	layer = SharedConfiguringTestLayer
+    layer = SharedConfiguringTestLayer
 
-	def test_adapter(self):
-		f = Foo()
-		history = ITransactionRecordHistory(f, None)
-		assert_that(history, is_not(none()))
-		assert_that(history, has_length(0))
-		assert_that(history, has_property('__parent__', is_(f)))
-		assert_that(bool(history), is_(False))
-		record = TransactionRecord(tid='a', principal='ichigo', attributes=('foo',))
-		history.add(record)
-		assert_that(history, has_length(1))
-		assert_that(list(history.records()), is_([record]))
-		assert_that(bool(history), is_(True))
-		assert_that(record, has_property('__parent__', is_(history)))
-		r = history.clear(False)
-		assert_that(r, is_(1))
-		assert_that(history, has_length(0))
-		
-	def test_funcs(self):
-		f = Foo()
-		assert_that(has_transactions(f), is_(False))
-		history = ITransactionRecordHistory(f)
-		record = TransactionRecord(tid='a', principal='ichigo', attributes=('foo',))
-		history.add(record)
-		
-		records = list(history.records())
-		assert_that(records, has_length(1))
-		assert_that(has_transactions(f), is_(True))
-		
-		trxs = get_transactions(f)
-		assert_that(trxs, has_length(1))
-		assert_that(trxs[0], is_(record))
-		
-		f2 = Foo()
-		copy_records(f2, records)
-		assert_that(has_transactions(f2), is_(True))
-		
-		assert_that(remove_history(f), is_(1))
-		assert_that(f.__annotations__, does_not(has_key(TRX_RECORD_HISTORY_KEY)))
+    def test_adapter(self):
+        f = Foo()
+        history = ITransactionRecordHistory(f, None)
+        assert_that(history, is_not(none()))
+        assert_that(history, has_length(0))
+        assert_that(history, has_property('__parent__', is_(f)))
+        assert_that(bool(history), is_(False))
+        record = TransactionRecord(tid='a',
+                                   principal='ichigo',
+                                   attributes=('foo',))
+        history.add(record)
+        assert_that(history, has_length(1))
+        assert_that(list(history.records()), is_([record]))
+        assert_that(bool(history), is_(True))
+        assert_that(record, has_property('__parent__', is_(history)))
+        r = history.clear(False)
+        assert_that(r, is_(1))
+        assert_that(history, has_length(0))
+
+    def test_funcs(self):
+        f = Foo()
+        assert_that(has_transactions(f), is_(False))
+        history = ITransactionRecordHistory(f)
+        record = TransactionRecord(tid='a',
+                                   principal='ichigo',
+                                   attributes=('foo',))
+        history.add(record)
+
+        records = list(history.records())
+        assert_that(records, has_length(1))
+        assert_that(has_transactions(f), is_(True))
+
+        trxs = get_transactions(f)
+        assert_that(trxs, has_length(1))
+        assert_that(trxs[0], is_(record))
+
+        f2 = Foo()
+        copy_records(f2, records)
+        assert_that(has_transactions(f2), is_(True))
+
+        assert_that(remove_history(f), is_(1))
+        assert_that(f.__annotations__,
+                    does_not(has_key(TRX_RECORD_HISTORY_KEY)))

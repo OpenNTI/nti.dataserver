@@ -70,165 +70,189 @@ IX_CREATEDTIME = 'createdTime'
 IX_USERNAME = IX_PRINCIPAL = 'principal'
 
 deprecated('SiteIndex', 'No longer used')
+
+
 class SiteIndex(RawSetIndex):
-	pass
+    pass
 
 deprecated('TargetIntIDIndex', 'No longer used')
+
+
 class TargetIntIDIndex(IntegerAttributeIndex):
-	pass
+    pass
+
 
 class ValidatingMimeType(object):
 
-	__slots__ = (b'mimeType',)
+    __slots__ = (b'mimeType',)
 
-	def __init__(self, obj, default=None):
-		if ITransactionRecord.providedBy(obj):
-			source = find_interface(obj, IRecordable, strict=False)
-		elif IRecordable.providedBy(obj):
-			source = obj
-		else:
-			source = None
-		if source is not None:
-			source = IContentTypeAware(source, source)
-			self.mimeType = 	getattr(source, 'mimeType', None) \
-							or  getattr(source, 'mime_type', None)
-	def __reduce__(self):
-		raise TypeError()
+    def __init__(self, obj, default=None):
+        if ITransactionRecord.providedBy(obj):
+            source = find_interface(obj, IRecordable, strict=False)
+        elif IRecordable.providedBy(obj):
+            source = obj
+        else:
+            source = None
+        if source is not None:
+            source = IContentTypeAware(source, source)
+            self.mimeType = getattr(source, 'mimeType', None) \
+                         or getattr(source, 'mime_type', None)
+
+    def __reduce__(self):
+        raise TypeError()
+
 
 class MimeTypeIndex(AttributeValueIndex):
-	default_field_name = 'mimeType'
-	default_interface = ValidatingMimeType
+    default_field_name = 'mimeType'
+    default_interface = ValidatingMimeType
+
 
 class PrincipalRawIndex(RawValueIndex):
-	pass
+    pass
+
 
 def PrincipalIndex(family=None):
-	return NormalizationWrapper(field_name='principal',
-								interface=ITransactionRecord,
-								index=PrincipalRawIndex(family=family),
-								normalizer=StringTokenNormalizer())
+    return NormalizationWrapper(field_name='principal',
+                                interface=ITransactionRecord,
+                                index=PrincipalRawIndex(family=family),
+                                normalizer=StringTokenNormalizer())
+
 
 class TIDIndex(AttributeValueIndex):
-	default_field_name = 'tid'
-	default_interface = ITransactionRecord
+    default_field_name = 'tid'
+    default_interface = ITransactionRecord
+
 
 class TypeIndex(AttributeValueIndex):
-	default_field_name = 'type'
-	default_interface = ITransactionRecord
+    default_field_name = 'type'
+    default_interface = ITransactionRecord
+
 
 class CreatedTimeRawIndex(RawIntegerValueIndex):
-	pass
+    pass
+
 
 def CreatedTimeIndex(family=None):
-	return NormalizationWrapper(field_name='createdTime',
-								interface=ITransactionRecord,
-								index=CreatedTimeRawIndex(family=family),
-								normalizer=TimestampToNormalized64BitIntNormalizer())
+    return NormalizationWrapper(field_name='createdTime',
+                                interface=ITransactionRecord,
+                                index=CreatedTimeRawIndex(family=family),
+                                normalizer=TimestampToNormalized64BitIntNormalizer())
+
 
 class AttributeSetIndex(AttributeSetIndex):
-	default_field_name = 'attributes'
-	default_interface = ITransactionRecord
+    default_field_name = 'attributes'
+    default_interface = ITransactionRecord
+
 
 class ValidatingLocked(object):
 
-	__slots__ = (b'locked',)
+    __slots__ = (b'locked',)
 
-	def __init__(self, obj, default=None):
-		if ITransactionRecord.providedBy(obj):
-			source = find_interface(obj, IRecordable, strict=False)
-		elif IRecordable.providedBy(obj):
-			source = obj
-		else:
-			source = None
-		if source is not None:
-			self.locked = source.isLocked()
+    def __init__(self, obj, default=None):
+        if ITransactionRecord.providedBy(obj):
+            source = find_interface(obj, IRecordable, strict=False)
+        elif IRecordable.providedBy(obj):
+            source = obj
+        else:
+            source = None
+        if source is not None:
+            self.locked = source.isLocked()
 
-	def __reduce__(self):
-		raise TypeError()
+    def __reduce__(self):
+        raise TypeError()
+
 
 class LockedIndex(AttributeValueIndex):
-	field_name = default_field_name = 'locked'
-	interface = default_interface = ValidatingLocked
+    field_name = default_field_name = 'locked'
+    interface = default_interface = ValidatingLocked
+
 
 class ValidatingChildOrderLocked(object):
 
-	__slots__ = (b'child_order_locked',)
+    __slots__ = (b'child_order_locked',)
 
-	def __init__(self, obj, default=None):
-		if ITransactionRecord.providedBy(obj):
-			source = find_interface(obj, IRecordableContainer, strict=False)
-		elif IRecordableContainer.providedBy(obj):
-			source = obj
-		else:
-			source = None
-		if source is not None:
-			self.child_order_locked = source.isChildOrderLocked()
+    def __init__(self, obj, default=None):
+        if ITransactionRecord.providedBy(obj):
+            source = find_interface(obj, IRecordableContainer, strict=False)
+        elif IRecordableContainer.providedBy(obj):
+            source = obj
+        else:
+            source = None
+        if source is not None:
+            self.child_order_locked = source.isChildOrderLocked()
 
-	def __reduce__(self):
-		raise TypeError()
+    def __reduce__(self):
+        raise TypeError()
+
 
 class ChildOrderLockedIndex(AttributeValueIndex):
-	field_name = default_field_name = 'child_order_locked'
-	interface = default_interface = ValidatingChildOrderLocked
+    field_name = default_field_name = 'child_order_locked'
+    interface = default_interface = ValidatingChildOrderLocked
+
 
 @interface.implementer(IMetadataCatalog)
 class MetadataRecorderCatalog(Catalog):
 
-	super_index_doc = Catalog.index_doc
+    super_index_doc = Catalog.index_doc
 
-	def index_doc(self, docid, ob):
-		pass
+    def index_doc(self, docid, ob):
+        pass
 
-	def force_index_doc(self, docid, ob):
-		self.super_index_doc(docid, ob)
+    def force_index_doc(self, docid, ob):
+        self.super_index_doc(docid, ob)
+
 
 def create_recorder_catalog(catalog=None, family=None):
-	catalog = MetadataRecorderCatalog(family=family) if catalog is None else catalog
-	for name, clazz in ((IX_TID, TIDIndex),
-						(IX_TYPE, TypeIndex),
-						(IX_LOCKED, LockedIndex),
-						(IX_MIMETYPE, MimeTypeIndex),
-						(IX_PRINCIPAL, PrincipalIndex),
-						(IX_ATTRIBUTES, AttributeSetIndex),
-						(IX_CREATEDTIME, CreatedTimeIndex),
-						(IX_CHILD_ORDER_LOCKED, ChildOrderLockedIndex)):
-		index = clazz(family=family)
-		locate(index, catalog, name)
-		catalog[name] = index
-	return catalog
+    if catalog is None:
+        catalog = MetadataRecorderCatalog(family=family)
+    for name, clazz in ((IX_TID, TIDIndex),
+                        (IX_TYPE, TypeIndex),
+                        (IX_LOCKED, LockedIndex),
+                        (IX_MIMETYPE, MimeTypeIndex),
+                        (IX_PRINCIPAL, PrincipalIndex),
+                        (IX_ATTRIBUTES, AttributeSetIndex),
+                        (IX_CREATEDTIME, CreatedTimeIndex),
+                        (IX_CHILD_ORDER_LOCKED, ChildOrderLockedIndex)):
+        index = clazz(family=family)
+        locate(index, catalog, name)
+        catalog[name] = index
+    return catalog
+
 
 def get_catalog(registry=component):
-	catalog = registry.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
-	return catalog
+    catalog = registry.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
+    return catalog
+
 
 def install_recorder_catalog(site_manager_container, intids=None):
-	lsm = site_manager_container.getSiteManager()
-	intids = lsm.getUtility(IIntIds) if intids is None else intids
-	catalog = get_catalog(registry=lsm)
-	if catalog is not None:
-		return catalog
+    lsm = site_manager_container.getSiteManager()
+    intids = lsm.getUtility(IIntIds) if intids is None else intids
+    catalog = get_catalog(registry=lsm)
+    if catalog is not None:
+        return catalog
 
-	catalog = MetadataRecorderCatalog(family=intids.family)
-	locate(catalog, site_manager_container, CATALOG_NAME)
-	intids.register(catalog)
-	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
+    catalog = MetadataRecorderCatalog(family=intids.family)
+    locate(catalog, site_manager_container, CATALOG_NAME)
+    intids.register(catalog)
+    lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
 
-	catalog = create_recorder_catalog(catalog=catalog, family=intids.family)
-	for index in catalog.values():
-		intids.register(index)
-	return catalog
+    catalog = create_recorder_catalog(catalog=catalog, family=intids.family)
+    for index in catalog.values():
+        intids.register(index)
+    return catalog
+
 
 def get_recordables(catalog=None, intids=None, **kwargs):
-	"""
-	return the recordable objects in the catalog
-	"""
-	catalog = get_catalog() if catalog is None else catalog
-	intids = component.queryUtility(IIntIds) if intids is None else intids
-	locked_index = catalog[IX_LOCKED]
-	for uid in set(locked_index.documents_to_values.keys()):
-		if intids is None: # tests
-			yield uid
-		else:
-			obj = intids.queryObject(uid)
-			if IRecordable.providedBy(obj):
-				yield obj
+    """
+    return the recordable objects in the catalog
+    """
+    catalog = get_catalog() if catalog is None else catalog
+    intids = component.queryUtility(IIntIds) if intids is None else intids
+    locked_index = catalog[IX_LOCKED]
+    for uid in set(locked_index.documents_to_values.keys()):
+        if intids is None:  # tests
+            yield uid
+        else:
+            obj = intids.queryObject(uid)
+            if IRecordable.providedBy(obj):
+                yield obj

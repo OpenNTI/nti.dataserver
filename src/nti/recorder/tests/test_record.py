@@ -24,31 +24,37 @@ from nti.externalization.internalization import find_factory_for
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
-from nti.recorder.record import TransactionRecord
 from nti.recorder.interfaces import ITransactionRecord
+
+from nti.recorder.record import TransactionRecord
 
 from nti.recorder.tests import SharedConfiguringTestLayer
 
+
 class TestRecord(unittest.TestCase):
 
-	layer = SharedConfiguringTestLayer
+    layer = SharedConfiguringTestLayer
 
-	def test_record(self):
-		assert_that(TransactionRecord(), verifiably_provides(ITransactionRecord))
-		record = TransactionRecord(tid='a', principal='ichigo', attributes=('foo',))
-		ext = to_external_object(record)
-		assert_that(ext, has_entry('Class', is_('TransactionRecord')))
-		assert_that(ext, has_entry('principal', is_('ichigo')))
-		assert_that(ext, has_entry('CreatedTime', is_not(none())))
-		assert_that(ext, has_entry('attributes', is_(['foo'])))
-		assert_that(ext, has_entry('tid', is_('a')))
-		assert_that(ext, does_not(has_key('key')))
-		assert_that(ext, has_entry('MimeType', is_('application/vnd.nextthought.recorder.transactionrecord')))
+    def test_record(self):
+        assert_that(TransactionRecord(),
+                    verifiably_provides(ITransactionRecord))
+        record = TransactionRecord(tid='a',
+                                   principal='ichigo',
+                                   attributes=('foo',))
+        ext = to_external_object(record)
+        assert_that(ext, has_entry('Class', is_('TransactionRecord')))
+        assert_that(ext, has_entry('principal', is_('ichigo')))
+        assert_that(ext, has_entry('CreatedTime', is_not(none())))
+        assert_that(ext, has_entry('attributes', is_(['foo'])))
+        assert_that(ext, has_entry('tid', is_('a')))
+        assert_that(ext, does_not(has_key('key')))
+        assert_that(ext, has_entry('MimeType',
+                                   is_('application/vnd.nextthought.recorder.transactionrecord')))
 
-		factory = find_factory_for(ext)
-		assert_that(factory, is_not(none()))
-		obj = factory()
-		update_from_external_object(obj, ext)
-		assert_that(obj, has_property('tid', is_('a')))
-		assert_that(obj, has_property('attributes', is_(['foo'])))
-		assert_that(obj, has_property('principal', is_('ichigo')))
+        factory = find_factory_for(ext)
+        assert_that(factory, is_not(none()))
+        obj = factory()
+        update_from_external_object(obj, ext)
+        assert_that(obj, has_property('tid', is_('a')))
+        assert_that(obj, has_property('attributes', is_(['foo'])))
+        assert_that(obj, has_property('principal', is_('ichigo')))

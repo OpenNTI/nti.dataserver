@@ -21,5 +21,6 @@ from nti.recorder.record import remove_transaction_history
 
 from nti.zope_catalog.interfaces import IMetadataCatalog
 
+
 def get_recorder_catalog():
-	return component.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
+    return component.queryUtility(IMetadataCatalog, name=CATALOG_NAME)

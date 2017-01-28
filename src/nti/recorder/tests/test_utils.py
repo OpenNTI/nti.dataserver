@@ -33,52 +33,56 @@ from nti.recorder.utils import record_transaction
 
 from nti.recorder.tests import SharedConfiguringTestLayer
 
+
 @interface.implementer(IRecordable, IAttributeAnnotatable)
 class Recordable(Persistent):
-	locked = False
-	def lock(self):
-		self.locked = True
+    locked = False
+
+    def lock(self):
+        self.locked = True
+
 
 class TestSubscriber(unittest.TestCase):
 
-	layer = SharedConfiguringTestLayer
+    layer = SharedConfiguringTestLayer
 
-	def test_record_trax(self):
-		recordable = Recordable()
-		assert_that(recordable, has_property('locked', is_(False)))
+    def test_record_trax(self):
+        recordable = Recordable()
+        assert_that(recordable, has_property('locked', is_(False)))
 
-		record = record_transaction(recordable, principal="ichigo",
-							 		descriptions=('a',), ext_value={"a":"b"})
+        record = record_transaction(recordable, principal="ichigo",
+                                    descriptions=('a',), 
+                                    ext_value={"a": "b"})
 
-		assert_that(record, is_not(none()))
-		assert_that(record, has_property('attributes', is_(('a',))))
-		assert_that(record, has_property('principal', is_("ichigo")))
-		assert_that(record, has_property('type', is_("update")))
-		assert_that(record, has_property('external_value', is_not(none())))
+        assert_that(record, is_not(none()))
+        assert_that(record, has_property('attributes', is_(('a',))))
+        assert_that(record, has_property('principal', is_("ichigo")))
+        assert_that(record, has_property('type', is_("update")))
+        assert_that(record, has_property('external_value', is_not(none())))
 
-		ext_value = decompress(record.external_value)
-		assert_that(ext_value, is_({"a":"b"}))
+        ext_value = decompress(record.external_value)
+        assert_that(ext_value, is_({"a": "b"}))
 
-		# we are locked
-		assert_that(recordable, has_property('locked', is_(True)))
+        # we are locked
+        assert_that(recordable, has_property('locked', is_(True)))
 
-		# we have history
-		records = get_transactions(recordable)
-		assert_that(records, has_length(1))
+        # we have history
+        records = get_transactions(recordable)
+        assert_that(records, has_length(1))
 
-		# No useful attributes in an update means we will not record tx.
-		record = record_transaction(recordable, principal='aizen',
-								descriptions=('MimeType',))
-		assert_that(record, none())
+        # No useful attributes in an update means we will not record tx.
+        record = record_transaction(recordable, principal='aizen',
+                                    descriptions=('MimeType',))
+        assert_that(record, none())
 
-		records = get_transactions(recordable)
-		assert_that(records, has_length(1))
+        records = get_transactions(recordable)
+        assert_that(records, has_length(1))
 
-		record = record_transaction(recordable, principal='aizen', type_='xyz',
-									descriptions=('test_attribute',))
-		assert_that(record, is_not(none()))
-		assert_that(record, has_property('type', is_('xyz')))
-		assert_that(record, has_property('tid', is_(txn_id())))
+        record = record_transaction(recordable, principal='aizen', type_='xyz',
+                                    descriptions=('test_attribute',))
+        assert_that(record, is_not(none()))
+        assert_that(record, has_property('type', is_('xyz')))
+        assert_that(record, has_property('tid', is_(txn_id())))
 
-		records = get_transactions(recordable)
-		assert_that(records, has_length(2))
+        records = get_transactions(recordable)
+        assert_that(records, has_length(2))

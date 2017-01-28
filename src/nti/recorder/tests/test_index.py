@@ -23,15 +23,16 @@ from nti.recorder.index import create_recorder_catalog
 
 from nti.recorder.tests import SharedConfiguringTestLayer
 
+
 class TestAdapters(unittest.TestCase):
 
-	layer = SharedConfiguringTestLayer
+    layer = SharedConfiguringTestLayer
 
-	def test_get_recordables(self):
-		recordable = RecordableMixin()
-		recordable.lock()
-		catalog = create_recorder_catalog(family=BTrees.family64)
-		catalog.super_index_doc(1, recordable)
-		uids = list(get_recordables(catalog=catalog))
-		assert_that(uids, has_length(1))
-		assert_that(1, is_in(uids))
+    def test_get_recordables(self):
+        recordable = RecordableMixin()
+        recordable.lock()
+        catalog = create_recorder_catalog(family=BTrees.family64)
+        catalog.super_index_doc(1, recordable)
+        uids = list(get_recordables(catalog=catalog))
+        assert_that(uids, has_length(1))
+        assert_that(1, is_in(uids))

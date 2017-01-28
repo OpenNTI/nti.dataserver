@@ -27,17 +27,19 @@ from nti.recorder.record import remove_transaction_history
 
 from nti.recorder.utils import record_transaction
 
+
 @component.adapter(IRecordable, IObjectModifiedFromExternalEvent)
 def _record_modification(obj, event):
-	# XXX: don't process if batch update or new object
-	if queryInteraction() is None or IConnection(obj, None) is None:
-		return
-	history = ITransactionRecordHistory(obj)
-	record_transaction(recordable=obj,
-					   descriptions=event.descriptions,
-					   ext_value=event.external_value,
-					   history=history)
+    # XXX: don't process if batch update or new object
+    if queryInteraction() is None or IConnection(obj, None) is None:
+        return
+    history = ITransactionRecordHistory(obj)
+    record_transaction(recordable=obj,
+                       descriptions=event.descriptions,
+                       ext_value=event.external_value,
+                       history=history)
+
 
 @component.adapter(IRecordable, IObjectRemovedEvent)
 def _recordable_removed(obj, event):
-	remove_transaction_history(obj)
+    remove_transaction_history(obj)
