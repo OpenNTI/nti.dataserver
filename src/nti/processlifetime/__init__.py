@@ -17,19 +17,19 @@ from zope.processlifetime import IDatabaseOpened
 from zope.processlifetime import ProcessStarting
 from zope.processlifetime import IProcessStarting
 from zope.processlifetime import DatabaseOpenedWithRoot
-from zope.processlifetime import IDatabaseOpenedWithRoot 
+from zope.processlifetime import IDatabaseOpenedWithRoot
 
-from .interfaces import AfterDatabaseOpenedEvent
-from .interfaces import IAfterDatabaseOpenedEvent
-	
-from .interfaces import ProcessWillFork
-from .interfaces import IProcessWillFork
+from nti.processlifetime.interfaces import AfterDatabaseOpenedEvent
+from nti.processlifetime.interfaces import IAfterDatabaseOpenedEvent
 
-from .interfaces import ProcessDidFork
-from .interfaces import IProcessDidFork
+from nti.processlifetime.interfaces import ProcessWillFork
+from nti.processlifetime.interfaces import IProcessWillFork
 
-from .interfaces import ApplicationTransactionOpenedEvent
-from .interfaces import IApplicationTransactionOpenedEvent
+from nti.processlifetime.interfaces import ProcessDidFork
+from nti.processlifetime.interfaces import IProcessDidFork
 
-from .interfaces import ApplicationProcessStarting
-from .interfaces import IApplicationProcessStarting
+from nti.processlifetime.interfaces import ApplicationTransactionOpenedEvent
+from nti.processlifetime.interfaces import IApplicationTransactionOpenedEvent
+
+from nti.processlifetime.interfaces import ApplicationProcessStarting
+from nti.processlifetime.interfaces import IApplicationProcessStarting
