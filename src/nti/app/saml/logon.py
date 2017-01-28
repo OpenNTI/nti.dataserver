@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from collections import Mapping
+
 import urllib
 import urlparse
 
@@ -201,8 +203,12 @@ def acs_view(request):
 			nameid_bindings[idp_id] = user_info.nameid
 
 		logger.info("%s logging in through SAML", username)
-
 		user_data = request.environ.get('REMOTE_USER_DATA', {})
+		if not isinstance(user_data, Mapping):
+			logger.warn('Unexpected environ REMOTE_USER_DATA (%s)', user_data)
+			user_data = {}
+
+		user_data['username'] = username
 		user_data['nti.saml.idp'] = idp_id
 		user_data['nti.saml.response_id'] = saml_response.id()
 		user_data['nti.saml.session_id'] = saml_response.session_id()
