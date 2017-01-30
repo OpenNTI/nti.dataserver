@@ -27,31 +27,32 @@ from nti.dataserver.interfaces import ALL_PERMISSIONS
 
 from nti.property.property import Lazy
 
+
 @component.adapter(IContentBaseFile)
 @interface.implementer(IACLProvider)
 class ContentBaseFileACLProvider(object):
-	"""
-	Provides the basic ACL for a content folder.
-	"""
+    """
+    Provides the basic ACL for a content folder.
+    """
 
-	def __init__(self, context):
-		self.context = context
+    def __init__(self, context):
+        self.context = context
 
-	@property
-	def __parent__(self):
-		# See comments in nti.dataserver.authorization_acl:has_permission
-		return self.context.__parent__
+    @property
+    def __parent__(self):
+        # See comments in nti.dataserver.authorization_acl:has_permission
+        return self.context.__parent__
 
-	@Lazy
-	def __aces__(self):
-		aces = [ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, self),
-				ace_allowing(ROLE_CONTENT_ADMIN, ALL_PERMISSIONS, type(self))]
-		creator = IPrincipal(self.context.creator, None)
-		if creator is not None:
-			aces.append(ace_allowing(creator, ALL_PERMISSIONS, self))
-		return aces
-		
-	@Lazy
-	def __acl__(self):
-		result = acl_from_aces(self.__aces__)
-		return result
+    @Lazy
+    def __aces__(self):
+        aces = [ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, self),
+                ace_allowing(ROLE_CONTENT_ADMIN, ALL_PERMISSIONS, type(self))]
+        creator = IPrincipal(self.context.creator, None)
+        if creator is not None:
+            aces.append(ace_allowing(creator, ALL_PERMISSIONS, self))
+        return aces
+
+    @Lazy
+    def __acl__(self):
+        result = acl_from_aces(self.__aces__)
+        return result

@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from requests.structures import CaseInsensitiveDict
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -20,9 +22,9 @@ from nti.app.contentfile.view_mixins import file_contraints
 
 from nti.app.contentfolder import MessageFactory as _
 
-from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+from nti.app.externalization.error import raise_json_error
 
-from nti.common.maps import CaseInsensitiveDict
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.contentfile.interfaces import IContentBaseFile
 
@@ -43,69 +45,87 @@ TOTAL = StandardExternalFields.TOTAL
 NTIID = StandardExternalFields.NTIID
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
+
 @view_config(context=IContentBaseFile)
 @view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   permission=nauth.ACT_READ,
-			   request_method='GET')
+               renderer='rest',
+               permission=nauth.ACT_READ,
+               request_method='GET')
 class ContentFileGetView(AbstractAuthenticatedView):
 
-	def __call__(self):
-		result = to_external_object(self.request.context)
-		result.lastModified = self.request.context.lastModified
-		return result
+    def __call__(self):
+        result = to_external_object(self.request.context)
+        result.lastModified = self.request.context.lastModified
+        return result
+
 
 @view_config(context=IContentBaseFile)
 @view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   name='associations',
-			   permission=nauth.ACT_READ,
-			   request_method='GET')
+               renderer='rest',
+               name='associations',
+               permission=nauth.ACT_READ,
+               request_method='GET')
 class ContentFileAssociationsView(AbstractAuthenticatedView):
 
-	def __call__(self):
-		result = LocatedExternalDict()
-		result[ITEMS] = items = []
-		if self.context.has_associations():
-			items.extend(self.context.associations())
-		result[ITEM_COUNT] = result[TOTAL] = len(items)
-		return result
+    def __call__(self):
+        result = LocatedExternalDict()
+        result[ITEMS] = items = []
+        if self.context.has_associations():
+            items.extend(self.context.associations())
+        result[ITEM_COUNT] = result[TOTAL] = len(items)
+        return result
+
 
 @view_config(context=IContentBaseFile)
 @view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   name='associate',
-			   permission=nauth.ACT_UPDATE,
-			   request_method='POST')
+               renderer='rest',
+               name='associate',
+               permission=nauth.ACT_UPDATE,
+               request_method='POST')
 class ContentFileAssociateView(AbstractAuthenticatedView,
-							   ModeledContentUploadRequestUtilsMixin):
-	
-	def readInput(self, value=None):
-		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
-		return CaseInsensitiveDict(data)
+                               ModeledContentUploadRequestUtilsMixin):
 
-	def __call__(self):
-		values = self.readInput()
-		ntiid = values.get(NTIID) or values.get(OID) or values.get('target')
-		if not ntiid:
-			raise hexc.HTTPUnprocessableEntity(_("Must provide a valid context id."))
-		target = find_object_with_ntiid(ntiid)
-		if target is None:
-			raise hexc.HTTPUnprocessableEntity(_("Cannot find target object."))
-		if target is not self.context and target is not self.context.__parent__:
-			self.context.add_association(target)
-		return hexc.HTTPNoContent()
+    def readInput(self, value=None):
+        data = super(ContentFileAssociateView, self).readInput(value)
+        return CaseInsensitiveDict(data)
+
+    def __call__(self):
+        values = self.readInput()
+        ntiid = values.get(NTIID) or values.get(OID) or values.get('target')
+        if not ntiid:
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _('Must provide a valid context id.'),
+                    u'code': 'MustProvideValidContextID',
+                },
+                None)
+        target = find_object_with_ntiid(ntiid)
+        if target is None:
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _("Cannot find target object."),
+                    u'code': 'CannotFindTargetObject',
+                },
+                None)
+        if target is not self.context and target is not self.context.__parent__:
+            self.context.add_association(target)
+        return hexc.HTTPNoContent()
+
 
 @view_config(context=IFileConstrained)
 @view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   name='constrains',
-			   permission=nauth.ACT_READ,
-			   request_method='GET')
+               renderer='rest',
+               name='constrains',
+               permission=nauth.ACT_READ,
+               request_method='GET')
 class FileConstrainsGetView(AbstractAuthenticatedView):
 
-	def __call__(self):
-		result = file_contraints(self.context, self.remoteUser)
-		if result is None:
-			return hexc.HTTPNotFound()
-		return result
+    def __call__(self):
+        result = file_contraints(self.context, self.remoteUser)
+        if result is None:
+            return hexc.HTTPNotFound()
+        return result

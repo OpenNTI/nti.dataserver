@@ -35,43 +35,45 @@ OID = StandardExternalFields.OID
 LINKS = StandardExternalFields.LINKS
 NTIID = StandardExternalFields.NTIID
 
+
 @component.adapter(IFile)
 @interface.implementer(IExternalMappingDecorator)
 class _ContentFileDecorator(object):
 
-	__metaclass__ = SingletonDecorator
+    __metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping(self, item, ext_dict):
-		oid, link = to_external_oid_and_link(item, name=None, render=True)
-		if oid:
-			name = download_file_name(item)
-			for element, key in ('view', 'url'), ('download', 'download_url'):
-				href = link + '/@@' + element
-				if element == 'view':
-					href += ('/' + name if name else u'')
-				ext_dict[key] = href
-			# XXX: make sure we add OID/NTIID fields to signal this file
-			# can be marked as an internal ref if it's going to be updated
-			if OID not in ext_dict:
-				ext_dict[OID] = oid
-			if NTIID not in ext_dict:
-				ext_dict[NTIID] = oid
-		else:
-			ext_dict['url'] = None
-			ext_dict['download_url'] = None
-		ext_dict.pop('parameters', None)
-		ext_dict['value'] = ext_dict['url']
-		ext_dict['size'] = item.getSize()
+    def decorateExternalMapping(self, item, ext_dict):
+        oid, link = to_external_oid_and_link(item, name=None, render=True)
+        if oid:
+            name = download_file_name(item)
+            for element, key in ('view', 'url'), ('download', 'download_url'):
+                href = link + '/@@' + element
+                if element == 'view':
+                    href += ('/' + name if name else u'')
+                ext_dict[key] = href
+            # XXX: make sure we add OID/NTIID fields to signal this file
+            # can be marked as an internal ref if it's going to be updated
+            if OID not in ext_dict:
+                ext_dict[OID] = oid
+            if NTIID not in ext_dict:
+                ext_dict[NTIID] = oid
+        else:
+            ext_dict['url'] = None
+            ext_dict['download_url'] = None
+        ext_dict.pop('parameters', None)
+        ext_dict['value'] = ext_dict['url']
+        ext_dict['size'] = item.getSize()
+
 
 @component.adapter(IFileConstrained)
 @interface.implementer(IExternalObjectDecorator)
 class _FileConstrainedDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-	def _do_decorate_external(self, context, result):
-		_links = result.setdefault(LINKS, [])
-		link = Link(context, rel="FileConstrains", 
-					elements='@@constrains', method='GET')
-		interface.alsoProvides(link, ILocation)
-		link.__name__ = ''
-		link.__parent__ = context
-		_links.append(link)
+    def _do_decorate_external(self, context, result):
+        _links = result.setdefault(LINKS, [])
+        link = Link(context, rel="FileConstrains",
+                    elements='@@constrains', method='GET')
+        interface.alsoProvides(link, ILocation)
+        link.__name__ = ''
+        link.__parent__ = context
+        _links.append(link)
