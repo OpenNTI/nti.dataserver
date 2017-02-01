@@ -209,7 +209,6 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
 
         profile.email = email
         profile.email_verified = True
-        # XXX: This should use events
         verified = reindex_email_verification(user)
         assert verified
 
