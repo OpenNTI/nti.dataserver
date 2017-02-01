@@ -26,6 +26,8 @@ from pyramid.view import view_defaults
 
 from nti.app.authentication import get_remote_user
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.users import MessageFactory as _
@@ -99,7 +101,13 @@ class DFLDeleteView(UGDDeleteView):
     def _do_delete_object(self, theObject):
         members = list(theObject)  # resolve all members
         if members:
-            raise hexc.HTTPForbidden(_("Group is not empty"))
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             { 
+                                'message': _("Group is not empty"),
+                                'code': "DFLGroupIsNotEmpty"
+                             },
+                            None)
         return super(DFLDeleteView, self)._do_delete_object(theObject)
 
 
