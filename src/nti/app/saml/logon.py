@@ -159,8 +159,9 @@ def acs_view(request):
                     idp_id, success, error)
 
         # Component lookup error here would be a programmer or config error
-        user_info = component.getAdapter(
-            response, ISAMLUserAssertionInfo, idp_id)
+        user_info = component.getAdapter(response, 
+                                         ISAMLUserAssertionInfo, 
+                                         idp_id)
         logger.info('user_info parsed as %s', user_info)
 
         username = user_info.username
@@ -234,8 +235,7 @@ def acs_view(request):
     except SAMLError as e:
         logger.error("Invalid SAML Assertion")
         return _create_failure_response(request,
-                                        failure=_make_location(
-                                            e.error, e.state),
+                                        failure=_make_location(e.error, e.state),
                                         error=str(e))
     except Exception as e:
         logger.exception("An unknown error occurred processing saml response")
