@@ -89,7 +89,7 @@ class IDPEntityBindingsViews(AbstractAuthenticatedView):
         binding = entity_bindings.get(idp_entity_id, None)
         if binding:
             return binding
-        hexc.HTTPNotFound('idp_entity_id not found')
+        return hexc.HTTPNotFound('idp_entity_id not found')
 
     @view_config(request_method="DELETE",
                  request_param="idp_entity_id")
@@ -127,7 +127,7 @@ def provider_info_view(request):
     provider_info = ISAMLIDPUserInfoBindings(user).get(entity_id, None)
     if provider_info:
         return provider_info
-    hexc.HTTPNotFound('provider info not found')
+    return hexc.HTTPNotFound('provider info not found')
 
 
 @view_config(name=PROVIDER_INFO,
