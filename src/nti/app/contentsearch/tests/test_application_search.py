@@ -40,7 +40,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 @interface.implementer(IKeyReference) # IF we don't, we won't get intids
 class ContainedExternal(ZContainedMixin):
 	_str = None
-	
+
 	def __str__( self ):
 		if '_str' in self.__dict__:
 			return self._str
@@ -48,7 +48,7 @@ class ContainedExternal(ZContainedMixin):
 
 	def toExternalObject( self, **kwargs ):
 		return str(self)
-	
+
 	def to_container_key(self):
 		return to_external_ntiid_oid(self, default_oid=str(id(self)))
 
@@ -59,14 +59,14 @@ class TestApplicationSearch(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_search_empty_term_user_ugd_book(self):
-		
+
 		#"Searching with an empty term returns empty results"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			contained = ContainedExternal()
 			user = self._create_user()
 			user2 = self._create_user('foo@bar')
 			user2_username = user2.username
-			contained.containerId = ntiids.make_ntiid(provider='OU', 
+			contained.containerId = ntiids.make_ntiid(provider='OU',
 													  nttype=ntiids.TYPE_MEETINGROOM,
 													  specific='1234' )
 			user.addContainedObject( contained )
@@ -105,7 +105,7 @@ class TestApplicationSearch(ApplicationLayerTest):
 		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
 		href = res.json_body['href']
 		assert_that( res.headers, has_entry( 'Location',
-											 contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
+											 contains_string( 'http://localhost/dataserver2/users/sjohnson@nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
 		assert_that( res.headers, has_entry( 'Content-Type',
 											 contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
 

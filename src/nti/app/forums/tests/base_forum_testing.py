@@ -29,7 +29,6 @@ is_not = does_not
 import datetime
 import unittest
 from urllib import unquote
-from urllib import quote as UQ
 
 from pyquery import PyQuery
 
@@ -64,6 +63,8 @@ from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges 
 from nti.appserver.policies.tests import test_application_censoring
 
 from nti.appserver.tests.test_application import TestApp as _TestApp
+
+from nti.traversal.encode import url_quote as UQ
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -240,7 +241,7 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 			# We have a contents URL
 			contents_href = self.require_link_href_with_rel(res.json_body, 'contents')
 			# Make sure we're getting back pretty URLs...
-			assert_that(unquote(contents_href), 
+			assert_that(unquote(contents_href),
 						starts_with(unquote(self.forum_pretty_contents_url)))
 			# which is empty...
 			testapp.get(contents_href, status=200)
