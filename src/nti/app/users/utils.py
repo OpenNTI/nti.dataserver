@@ -52,185 +52,203 @@ from nti.mailer.interfaces import ITemplatedMailer
 _EMAIL_VERIFICATION_TIME_KEY = 'nti.app.users._EMAIL_VERIFICATION_TIME_KEY'
 _EMAIL_VERIFICATION_COUNT_KEY = 'nti.app.users._EMAIL_VERIFICATION_COUNT_KEY'
 
+
 def get_user(user):
-	result = user if IUser.providedBy(user) else User.get_user(str(user or ''))
-	return result
+    return user if IUser.providedBy(user) else User.get_user(str(user or ''))
+
 
 def _token(signature):
-	token = int(hashlib.sha1(signature).hexdigest(), 16) % (10 ** 8)
-	return token
+    return int(hashlib.sha1(signature).hexdigest(), 16) % (10 ** 8)
+
 
 def _signature_and_token(username, email, secret_key):
-	s = SignatureSerializer(secret_key)
-	signature = s.dumps({'email': email, 'username': username})
-	token = _token(signature)
-	return signature, token
+    s = SignatureSerializer(secret_key)
+    signature = s.dumps({'email': email, 'username': username})
+    token = _token(signature)
+    return signature, token
+
 
 def generate_mail_verification_pair(user, email=None, secret_key=None):
-	__traceback_info__ = user, email
-	user = get_user(user)
-	if user is None:
-		raise ValueError("User not found")
-	username = user.username.lower()
+    __traceback_info__ = user, email
+    user = get_user(user)
+    if user is None:
+        raise ValueError("User not found")
+    username = user.username.lower()
 
-	intids = component.getUtility(IIntIds)
-	profile = IUserProfile(user, None)
-	email = email or getattr(profile, 'email', None)
-	if not email:
-		raise ValueError("User does not have an mail")
-	email = email.lower()
+    intids = component.getUtility(IIntIds)
+    profile = IUserProfile(user, None)
+    email = email or getattr(profile, 'email', None)
+    if not email:
+        raise ValueError("User does not have an mail")
+    email = email.lower()
 
-	if not secret_key:
-		uid = intids.getId(user)
-		secret_key = unicode(uid)
+    if not secret_key:
+        uid = intids.getId(user)
+        secret_key = unicode(uid)
 
-	result = _signature_and_token(username, email, secret_key)
-	return result
+    result = _signature_and_token(username, email, secret_key)
+    return result
+
 
 def get_verification_signature_data(user, signature, params=None,
-									email=None, secret_key=None):
-	__traceback_info__ = user, email
-	user = get_user(user)
-	if user is None:
-		raise ValueError("User not found")
-	username = user.username.lower()
+                                    email=None, secret_key=None):
+    __traceback_info__ = user, email
+    user = get_user(user)
+    if user is None:
+        raise ValueError("User not found")
+    username = user.username.lower()
 
-	intids = component.getUtility(IIntIds)
-	profile = IUserProfile(user)
-	email = email or getattr(profile, 'email', None)
-	if not email:
-		raise ValueError("User does not have an email")
-	email = email.lower()
+    intids = component.getUtility(IIntIds)
+    profile = IUserProfile(user)
+    email = email or getattr(profile, 'email', None)
+    if not email:
+        raise ValueError("User does not have an email")
+    email = email.lower()
 
-	if not secret_key:
-		uid = intids.getId(user)
-		secret_key = unicode(uid)
+    if not secret_key:
+        uid = intids.getId(user)
+        secret_key = unicode(uid)
 
-	s = SignatureSerializer(secret_key)
-	data = s.loads(signature)
+    s = SignatureSerializer(secret_key)
+    data = s.loads(signature)
 
-	if data['username'] != username:
-		raise ValueError("Invalid token user")
+    if data['username'] != username:
+        raise ValueError("Invalid token user")
 
-	if data['email'] != email:
-		raise ValueError("Invalid token email")
-	return data
+    if data['email'] != email:
+        raise ValueError("Invalid token email")
+    return data
+
 
 def generate_verification_email_url(user, request=None, host_url=None,
-									email=None, secret_key=None):
-	try:
-		ds2 = request.path_info_peek() if request else "/dataserver2"
-	except AttributeError:
-		ds2 = "/dataserver2"
+                                    email=None, secret_key=None):
+    try:
+        ds2 = request.path_info_peek() if request else "/dataserver2"
+    except AttributeError:
+        ds2 = "/dataserver2"
 
-	try:
-		host_url = request.host_url if not host_url else None
-	except AttributeError:
-		host_url = None
+    try:
+        host_url = request.host_url if not host_url else None
+    except AttributeError:
+        host_url = None
 
-	signature, token = generate_mail_verification_pair(user=user,
-													   email=email,
-													   secret_key=secret_key)
-	params = urlencode({'username': user.username.lower(),
-						'signature': signature})
+    signature, token = generate_mail_verification_pair(user=user,
+                                                       email=email,
+                                                       secret_key=secret_key)
+    params = urlencode({'username': user.username.lower(),
+                        'signature': signature})
 
-	href = '%s/%s?%s' % (ds2, '@@' + VERIFY_USER_EMAIL_VIEW, params)
-	result = urljoin(host_url, href) if host_url else href
-	return result, token
+    href = '%s/%s?%s' % (ds2, '@@' + VERIFY_USER_EMAIL_VIEW, params)
+    result = urljoin(host_url, href) if host_url else href
+    return result, token
+
 
 def get_email_verification_time(user):
-	annotes = IAnnotations(user)
-	result = annotes.get(_EMAIL_VERIFICATION_TIME_KEY)
-	return result
+    annotes = IAnnotations(user)
+    result = annotes.get(_EMAIL_VERIFICATION_TIME_KEY)
+    return result
+
 
 def get_email_verification_count(user):
-	annotes = IAnnotations(user)
-	result = annotes.get(_EMAIL_VERIFICATION_COUNT_KEY)
-	return result or 0
+    annotes = IAnnotations(user)
+    result = annotes.get(_EMAIL_VERIFICATION_COUNT_KEY)
+    return result or 0
+
 
 def set_email_verification_time(user, now=None):
-	now = time.time() if now is None else math.fabs(now)
-	annotes = IAnnotations(user)
-	annotes[_EMAIL_VERIFICATION_TIME_KEY] = now
+    now = time.time() if now is None else math.fabs(now)
+    annotes = IAnnotations(user)
+    annotes[_EMAIL_VERIFICATION_TIME_KEY] = now
+
 
 def set_email_verification_count(user, count=None):
-	count = 0 if count is None else int(math.fabs(count))
-	annotes = IAnnotations(user)
-	annotes[_EMAIL_VERIFICATION_COUNT_KEY] = count
+    count = 0 if count is None else int(math.fabs(count))
+    annotes = IAnnotations(user)
+    annotes[_EMAIL_VERIFICATION_COUNT_KEY] = count
+
 
 def incr_email_verification_count(user):
-	count = get_email_verification_count(user)
-	set_email_verification_count(user, count + 1)
+    count = get_email_verification_count(user)
+    set_email_verification_count(user, count + 1)
+
 
 def _get_package(policy, template='email_verification_email'):
-	base_package = 'nti.app.users'
-	package = getattr(policy, 'PACKAGE', None)
-	if not package:
-		package = base_package
-	else:
-		package = dottedname.resolve(package)
-		path = os.path.join(os.path.dirname(package.__file__), 'templates')
-		if not os.path.exists(os.path.join(path, template + ".pt")):
-			package = base_package
-	return package
+    base_package = 'nti.app.users'
+    package = getattr(policy, 'PACKAGE', None)
+    if not package:
+        package = base_package
+    else:
+        package = dottedname.resolve(package)
+        path = os.path.join(os.path.dirname(package.__file__), 'templates')
+        if not os.path.exists(os.path.join(path, template + ".pt")):
+            package = base_package
+    return package
+
 
 def send_email_verification(user, profile, email, request=None, check=True):
-	if not request or not email:
-		logger.warn("Not sending email to %s because of no email or request", user)
-		return
+    if not request or not email:
+        logger.warn("Not sending email to %s because of no email or request", 
+                    user)
+        return
 
-	username = user.username
-	policy = component.getUtility(ISitePolicyUserEventListener)
+    username = user.username
+    policy = component.getUtility(ISitePolicyUserEventListener)
 
-	if check:
-		assert getattr(IPrincipal(profile, None), 'id', None) == user.username
-		assert getattr(IEmailAddressable(profile, None), 'email', None) == email
+    if check:
+        assert getattr(IPrincipal(profile, None), 'id', None) == user.username
+        assert getattr(IEmailAddressable(profile, None), 'email', None) == email
 
-	user_ext = to_external_object(user)
-	informal_username = user_ext.get('NonI18NFirstName', profile.realname) or username
+    user_ext = to_external_object(user)
+    informal_username = user_ext.get('NonI18NFirstName', profile.realname) 
+    informal_username = informal_username or username
 
-	site_alias = getattr(policy, 'COM_ALIAS', '')
-	support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
-	href, token = generate_verification_email_url(user, request=request)
+    site_alias = getattr(policy, 'COM_ALIAS', '')
+    support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
+    href, token = generate_verification_email_url(user, request=request)
 
-	args = {'user': user,
-			'href' : href,
-			'token': token,
-			'profile': profile,
-			'request': request,
-			'brand': policy.BRAND,
-			'site_alias': site_alias,
-			'support_email': support_email,
-			'informal_username': informal_username,
-			'today': isodate.date_isoformat(datetime.now()) }
+    args = {'user': user,
+            'href': href,
+            'token': token,
+            'profile': profile,
+            'request': request,
+            'brand': policy.BRAND,
+            'site_alias': site_alias,
+            'support_email': support_email,
+            'informal_username': informal_username,
+            'today': isodate.date_isoformat(datetime.now())}
 
-	template = 'email_verification_email'
-	package = _get_package(policy, template=template)
+    template = 'email_verification_email'
+    package = _get_package(policy, template=template)
 
-	logger.info("Sending email verification to %s", user)
+    logger.info("Sending email verification to %s", user)
 
-	mailer = component.getUtility(ITemplatedMailer)
-	mailer.queue_simple_html_text_email(
-				template,
-				subject=translate(_("Email Confirmation")),
-				recipients=[profile],
-				template_args=args,
-				request=request,
-				package=package)
+    mailer = component.getUtility(ITemplatedMailer)
+    mailer.queue_simple_html_text_email(
+                template,
+                subject=translate(_("Email Confirmation")),
+                recipients=[profile],
+                template_args=args,
+                request=request,
+                package=package)
 
-	# record time
-	set_email_verification_time(user)
-	incr_email_verification_count(user)
+    # record time
+    set_email_verification_time(user)
+    incr_email_verification_count(user)
+    return True
 
 def safe_send_email_verification(user, profile, email, request=None, check=True):
-	iids = component.getUtility(IIntIds)
-	if iids.queryId(user) is None:
-		logger.debug("Not sending email verification during account creation of %s", user)
-		return
+    iids = component.getUtility(IIntIds)
+    if iids.queryId(user) is None:
+        logger.debug("Not sending email verification during account creation of %s", 
+                     user)
+        return
 
-	try:
-		send_email_verification(user, profile, email, request=request, check=check)
-		return True
-	except Exception:
-		logger.exception("Cannot send email confirmation to %s.", user)
-		return False
+    try:
+        return send_email_verification(user, 
+                                       profile, 
+                                       email, 
+                                       request=request,
+                                       check=check)
+    except Exception:
+        logger.exception("Cannot send email confirmation to %s.", user)
+        return False
