@@ -250,20 +250,20 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
 
     def _find_object(self, name):
         if not is_valid_ntiid_string(name):
-            return False
+            return None
 
         # try current site
         result = find_object_with_ntiid(name)
         if result is not None:
-            return True
+            return  
 
         # look in other sites
         for site in get_all_host_sites():
             with current_site(site):
                 result = find_object_with_ntiid(name)
                 if result is not None:
-                    return True
-        return False
+                    return result
+        return None
 
     def _check_users_containers(self, usernames=()):
         for username in usernames or ():
@@ -276,10 +276,10 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
                 if name in self.exclude_containers:
                     continue
 
-                if not self._find_object(name):
+                target = self._find_object(name)
+                if target is None:
                     container = user.getContainer(name)
-                    usermap[name] = len(
-                        container) if container is not None else 0
+                    usermap[name] = len(container) if container else 0
             if usermap:
                 yield user.username, usermap
 
