@@ -15,12 +15,13 @@ from zope.container.contained import Contained
 
 from zope.traversing.interfaces import IPathAdapter
 
+
 @interface.implementer(IPathAdapter)
 class SAMLPathAdapter(Contained):
 
-	__name__ = 'saml'
+    __name__ = 'saml'
 
-	def __init__(self, context, request):
-		self.context = context
-		self.request = request
-		self.__parent__ = context
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.__parent__ = context

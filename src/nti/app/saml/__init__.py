@@ -12,7 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
-#: Assertion Consumer Service 
+#: Assertion Consumer Service
 ACS = 'acs'
 
 #: Single Logout Service

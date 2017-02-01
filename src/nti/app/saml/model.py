@@ -22,10 +22,11 @@ from nti.dataserver.interfaces import IUser
 
 SAML_IDP_BINDINGS_ANNOTATION_KEY = 'SAML_IDP_BINDINGS_ANNOTATION_KEY'
 
+
 @component.adapter(IUser)
 @interface.implementer(ISAMLIDPEntityBindings)
 class SAMLIDPEntityBindings(CheckingLastModifiedBTreeContainer):
-	pass
+    pass
 
 _SAMLIDEntityBindingsFactory = an_factory(SAMLIDPEntityBindings,
-										  SAML_IDP_BINDINGS_ANNOTATION_KEY)
+                                          SAML_IDP_BINDINGS_ANNOTATION_KEY)
