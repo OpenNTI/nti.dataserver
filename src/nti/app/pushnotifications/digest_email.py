@@ -129,7 +129,7 @@ class _TemplateArgs(object):
 			else:
 				# We could be a grade
 				asg_id = getattr(getattr(self._primary, 'object', None), 'AssignmentId', None)
-	
+
 			if asg_id is not None:
 				asg = component.queryUtility(IQAssignment, name=asg_id)
 				return getattr(asg, 'title', None)

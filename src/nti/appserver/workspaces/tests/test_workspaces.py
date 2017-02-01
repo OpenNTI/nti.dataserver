@@ -100,7 +100,7 @@ class TestContainerEnumerationWorkspace(ApplicationLayerTest):
 			def iter_containers(self):
 				return iter(self.conts)
 			itercontainers = iter_containers
-			
+
 		class ITestI(interface.Interface): pass
 
 		class C(object):
@@ -158,7 +158,7 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 			def iter_containers(self):
 				return iter( () )
 			itercontainers = iter_containers
-			
+
 			def iterntiids(self):
 				return iter( () )
 		uew = UEW( MockUser() )
@@ -298,13 +298,13 @@ class TestUserService(ApplicationLayerTest):
 		user_ws, = user_wss
 		assert_that( user_ws, has_entry( 'Title', user.username ) )
 		assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', 'Pages' ),
-																	has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Pages' ) ) ) ) )
+																	has_entry( 'href', '/dataserver2/users/sjohnson@nextthought.com/Pages' ) ) ) ) )
 		for membership_name in ('FriendsLists', 'Groups', 'Communities', 'DynamicMemberships'):
 			assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', membership_name ),
-																		has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/' + membership_name ) ) ) ) )
+																		has_entry( 'href', '/dataserver2/users/sjohnson@nextthought.com/' + membership_name ) ) ) ) )
 		assert_that( user_ws, has_entry( 'Items', has_item( has_entry( 'Links', has_item( has_entry('Class', 'Link')) ) ) ) )
 		assert_that( user_ws['Items'], has_item( has_entry( 'Links', has_item(
-			has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) ) ) ) )
+			has_entry( 'href', '/dataserver2/users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData' ) ) ) ) )
 
 		assert_that( user_ws['Items'], has_item( has_entry( 'Title', 'Boards' ) ) )
 
