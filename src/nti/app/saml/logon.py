@@ -208,7 +208,6 @@ def acs_view(request):
 			logger.warn('Unexpected environ REMOTE_USER_DATA (%s)', user_data)
 			user_data = {}
 
-		user_data['username'] = username
 		user_data['nti.saml.idp'] = idp_id
 		user_data['nti.saml.response_id'] = saml_response.id()
 		user_data['nti.saml.session_id'] = saml_response.session_id()
