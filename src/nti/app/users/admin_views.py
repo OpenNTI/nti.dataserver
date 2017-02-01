@@ -14,6 +14,8 @@ import isodate
 from urllib import unquote
 from datetime import datetime
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 
 from zope.component.hooks import site as current_site
@@ -33,8 +35,6 @@ from nti.app.users import all_usernames
 from nti.app.users import username_search
 
 from nti.app.users.utils import generate_mail_verification_pair
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver import authorization as nauth
 
