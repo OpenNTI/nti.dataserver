@@ -13,6 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 
 from zope.intid.interfaces import IIntIds
@@ -39,14 +41,14 @@ from nti.app.users.view_mixins import EntityActivityViewMixin
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
 
-from nti.common.maps import CaseInsensitiveDict
-
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+
+from nti.dataserver.metadata_index import IX_MIMETYPE
 
 from nti.dataserver.users import get_entity_catalog
 
@@ -57,90 +59,97 @@ ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
+
 def _authenticated_user_is_member(context, request):
-	"""
-	A predicate that can be applied to a view using a :class:`nti.dataserver.interfaces.IFriendsList`.
-	By using this as a predicate, we get back a 404 response instead of just relying
-	on the lack of permission in the ACL (which would generate a 403 response).
-	"""
-	user = get_remote_user(request)
-	return user is not None and user in context
+    """
+    A predicate that can be applied to a view using a :class:`nti.dataserver.interfaces.IFriendsList`.
+    By using this as a predicate, we get back a 404 response instead of just relying
+    on the lack of permission in the ACL (which would generate a 403 response).
+    """
+    user = get_remote_user(request)
+    return user is not None and user in context
+
 
 @view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 context=IDynamicSharingTargetFriendsList,
-			 permission=nauth.ACT_READ,
-			 request_method='DELETE',
-			 name=REL_MY_MEMBERSHIP,
-			 custom_predicates=(_authenticated_user_is_member,))
+             renderer='rest',
+             context=IDynamicSharingTargetFriendsList,
+             permission=nauth.ACT_READ,
+             request_method='DELETE',
+             name=REL_MY_MEMBERSHIP,
+             custom_predicates=(_authenticated_user_is_member,))
 def exit_dfl_view(context, request):
-	"""
-	Accept a ``DELETE`` request from a member of a DFL, causing that member to
-	no longer be a member.
-	"""
-	context.removeFriend(get_remote_user(request))  # We know we must be a member
-	# return the new object that we can no longer actually see but could just a moment ago
-	# TODO: Not sure what I really want to return
-	return context
+    """
+    Accept a ``DELETE`` request from a member of a DFL, causing that member to
+    no longer be a member.
+    """
+    user = get_remote_user(request)
+    context.removeFriend(user)  # We know we must be a member
+    # return the new object that we can no longer actually see but could just a moment ago
+    # TODO: Not sure what I really want to return
+    return context
+
 
 @view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 request_method='DELETE',
-			 context=IDynamicSharingTargetFriendsList,
-			 permission=nauth.ACT_DELETE)
+             renderer='rest',
+             request_method='DELETE',
+             context=IDynamicSharingTargetFriendsList,
+             permission=nauth.ACT_DELETE)
 class DFLDeleteView(UGDDeleteView):
 
-	def _do_delete_object(self, theObject):
-		members = list(theObject)  # resolve all members
-		if members:
-			raise hexc.HTTPForbidden(_("Group is not empty"))
-		return super(DFLDeleteView, self)._do_delete_object(theObject)
+    def _do_delete_object(self, theObject):
+        members = list(theObject)  # resolve all members
+        if members:
+            raise hexc.HTTPForbidden(_("Group is not empty"))
+        return super(DFLDeleteView, self)._do_delete_object(theObject)
+
 
 @view_config(route_name='objects.generic.traversal',
-			 name='Activity',
-			 request_method='GET',
-			 context=IDynamicSharingTargetFriendsList,
-			 permission=nauth.ACT_READ)
+             name='Activity',
+             request_method='GET',
+             context=IDynamicSharingTargetFriendsList,
+             permission=nauth.ACT_READ)
 class DFLActivityView(EntityActivityViewMixin):
 
-	@property
-	def _entity_board(self):
-		return IDFLBoard(self.request.context, None) or {}
+    @property
+    def _entity_board(self):
+        return IDFLBoard(self.request.context, None) or {}
 
-	@property
-	def _context_id(self):
-		return self.context.NTIID
+    @property
+    def _context_id(self):
+        return self.context.NTIID
+
 
 @view_config(name='ListDFLs')
 @view_config(name='list_dfls')
 @view_config(name='list.dfls')
 @view_defaults(route_name='objects.generic.traversal',
-			   request_method='GET',
-			   context=IDataserverFolder,
-			   permission=nauth.ACT_NTI_ADMIN)
+               request_method='GET',
+               context=IDataserverFolder,
+               permission=nauth.ACT_NTI_ADMIN)
 class ListDFLsView(AbstractAuthenticatedView):
 
-	def __call__(self):
-		request = self.request
-		values = CaseInsensitiveDict(**request.params)
-		usernames = values.get('usernames') or values.get('username')
-		if isinstance(usernames, six.string_types):
-			usernames = {x.lower() for x in usernames.split(",") if x}
+    DFL_MIMETYPE = u'application/vnd.nextthought.dynamicfriendslist'
 
-		intids = component.getUtility(IIntIds)
-		catalog = get_entity_catalog()
-		doc_ids = catalog['mimeType'].apply(
-						{'any_of': (u'application/vnd.nextthought.dynamicfriendslist',)})
+    def __call__(self):
+        request = self.request
+        values = CaseInsensitiveDict(**request.params)
+        usernames = values.get('usernames') or values.get('username')
+        if isinstance(usernames, six.string_types):
+            usernames = {x.lower() for x in usernames.split(",") if x}
 
-		result = LocatedExternalDict()
-		items = result[ITEMS] = []
-		for doc_id in doc_ids or ():
-			entity = intids.queryObject(doc_id)
-			if not IDynamicSharingTargetFriendsList.providedBy(entity):
-				continue
-			username = entity.username.lower()
-			if usernames and username not in usernames:
-				continue
-			items.append(entity)
-		result[TOTAL] = result[ITEM_COUNT] = len(items)
-		return result
+        intids = component.getUtility(IIntIds)
+        catalog = get_entity_catalog()
+        doc_ids = catalog[IX_MIMETYPE].apply({'any_of': (self.DFL_MIMETYPE,)})
+
+        result = LocatedExternalDict()
+        items = result[ITEMS] = []
+        for doc_id in doc_ids or ():
+            entity = intids.queryObject(doc_id)
+            if not IDynamicSharingTargetFriendsList.providedBy(entity):
+                continue
+            username = entity.username.lower()
+            if usernames and username not in usernames:
+                continue
+            items.append(entity)
+        result[TOTAL] = result[ITEM_COUNT] = len(items)
+        return result
