@@ -75,7 +75,7 @@ class IsolatedComponents(Persistent, Components):
 		self.utilities = IsolatedAdapterRegistry()
 
 	@property
- 	def __parent__(self):
+	def __parent__(self):
 		# So that IConnection(site_manager) can work.
 		return self.__bases__[0]
 

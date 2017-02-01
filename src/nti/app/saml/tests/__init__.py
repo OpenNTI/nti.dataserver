@@ -13,29 +13,29 @@ import tempfile
 
 from nti.app.testing.application_webtest import ApplicationTestLayer
 
+
 class SAMLTestLayer(ApplicationTestLayer):
 
-	set_up_packages = ('nti.app.saml.tests',)
+    set_up_packages = ('nti.app.saml.tests',)
 
-	@classmethod
-	def setUp(cls):
-		# We need to use configure_packages instead of setUpPackages
-		# to avoid having zope.eventtesting.events.append duplicated
-		# as a handler. This is poorly documented in nti.testing 1.0.0.
-		# Passing in our context is critical.
-		cls.configure_packages(set_up_packages=cls.set_up_packages,
+    @classmethod
+    def setUp(cls):
+        # We need to use configure_packages instead of setUpPackages
+        # to avoid having zope.eventtesting.events.append duplicated
+        # as a handler. This is poorly documented in nti.testing 1.0.0.
+        # Passing in our context is critical.
+        cls.configure_packages(set_up_packages=cls.set_up_packages,
                                features=cls.features,
                                context=cls.configuration_context)
 
+    @classmethod
+    def tearDown(cls):
+        pass
 
-	@classmethod
-	def tearDown(cls):
-		pass
+    @classmethod
+    def testSetUp(cls):
+        pass
 
-	@classmethod
-	def testSetUp(cls):
-		pass
-
-	@classmethod
-	def testTearDown(cls):
-		pass
+    @classmethod
+    def testTearDown(cls):
+        pass

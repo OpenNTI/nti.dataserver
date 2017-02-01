@@ -13,5 +13,6 @@ from nti.dataserver.saml.interfaces import ISAMLProviderUserInfo
 
 from nti.schema.field import TextLine
 
+
 class ITestSAMLProviderUserInfo(ISAMLProviderUserInfo):
-	test_id = TextLine(title='text id', required=True)
+    test_id = TextLine(title='text id', required=True)

@@ -10,4 +10,5 @@
 	<ext:registerAutoPackageIO
 		root_interfaces="nti.app.saml.tests.interfaces.ITestSAMLProviderUserInfo"
 		modules="nti.app.saml.tests.test_admin_views" />
+
 </configure>
