@@ -13,16 +13,17 @@ from zope import interface
 
 from nti.appserver.interfaces import ICreatableObjectFilter
 
+
 @interface.implementer(ICreatableObjectFilter)
 class _SearchContentObjectFilter(object):
 
-	PREFIX = 'application/vnd.nextthought.search'
+    PREFIX = 'application/vnd.nextthought.search'
 
-	def __init__(self, context=None):
-		pass
+    def __init__(self, context=None):
+        pass
 
-	def filter_creatable_objects(self, terms):
-		for name in tuple(terms):  # mutating
-			if name.startswith(self.PREFIX):
-				terms.pop(name, None)
-		return terms
+    def filter_creatable_objects(self, terms):
+        for name in tuple(terms):  # mutating
+            if name.startswith(self.PREFIX):
+                terms.pop(name, None)
+        return terms

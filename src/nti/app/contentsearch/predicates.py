@@ -61,8 +61,8 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
                                         self.request)
             else:
                 result = has_permission(ACT_READ, item, self.request)
-        result = bool(
-            result) and not IDeletedObjectPlaceholder.providedBy(item)
+        result = bool(result 
+                      and not IDeletedObjectPlaceholder.providedBy(item))
         return result
 
     def allow(self, item, score, query):

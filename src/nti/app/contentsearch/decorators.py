@@ -20,18 +20,21 @@ from nti.contentsearch.interfaces import ISearchResults
 
 from nti.externalization.interfaces import IExternalMappingDecorator
 
+
 @component.adapter(ISearchResults)
 @interface.implementer(IExternalMappingDecorator)
 class _SearchResultsDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-	def _do_decorate_external(self, context, external):
-		query = context.Query
-		if query is not None and query.IsBatching:
-			batchSize, batchStart = query.batchSize, query.batchStart
-			if len(context) > 0:
-				prev_batch_start, next_batch_start = \
-						BatchingUtilsMixin._batch_start_tuple(batchStart, batchSize)
-				BatchingUtilsMixin._create_batch_links(self.request, 
-													   external,
- 										 			   next_batch_start, 
- 										 			   prev_batch_start)
+    def _do_decorate_external(self, context, external):
+        query = context.Query
+        if query is not None and query.IsBatching:
+            batchSize, batchStart = query.batchSize, query.batchStart
+            if len(context) > 0:
+                prev_batch_start, next_batch_start = \
+                    BatchingUtilsMixin._batch_start_tuple(
+                        batchStart,
+                        batchSize)
+                BatchingUtilsMixin._create_batch_links(self.request,
+                                                       external,
+                                                       next_batch_start,
+                                                       prev_batch_start)
