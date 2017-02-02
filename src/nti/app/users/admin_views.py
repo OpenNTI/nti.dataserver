@@ -120,9 +120,9 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
     def __call__(self):
         values = CaseInsensitiveDict(self.readInput())
         usernames = values.get('user') \
-                 or values.get('users') \
-                 or values.get('username') \
-                 or values.get('usernames')
+            or values.get('users') \
+            or values.get('username') \
+            or values.get('usernames')
         if isinstance(usernames, six.string_types):
             usernames = usernames.split(",")
         if not usernames:
@@ -165,7 +165,7 @@ class GetEmailVerificationTokenView(AbstractAuthenticatedView):
         email = values.get('email') or profile.email
         if not email:
             raise hexc.HTTPUnprocessableEntity(
-                    _("Email address not provided."))
+                _("Email address not provided."))
 
         signature, token = generate_mail_verification_pair(user, email)
         result = LocatedExternalDict()
@@ -200,7 +200,7 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
         email = values.get('email') or profile.email
         if not email:
             raise hexc.HTTPUnprocessableEntity(
-                         _("Email address not provided."))
+                _("Email address not provided."))
         else:
             try:
                 checkEmailAddress(email)
@@ -255,7 +255,7 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
         # try current site
         result = find_object_with_ntiid(name)
         if result is not None:
-            return  
+            return
 
         # look in other sites
         for site in get_all_host_sites():

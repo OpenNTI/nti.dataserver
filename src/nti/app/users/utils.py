@@ -187,7 +187,7 @@ def _get_package(policy, template='email_verification_email'):
 
 def send_email_verification(user, profile, email, request=None, check=True):
     if not request or not email:
-        logger.warn("Not sending email to %s because of no email or request", 
+        logger.warn("Not sending email to %s because of no email or request",
                     user)
         return
 
@@ -199,7 +199,7 @@ def send_email_verification(user, profile, email, request=None, check=True):
         assert getattr(IEmailAddressable(profile, None), 'email', None) == email
 
     user_ext = to_external_object(user)
-    informal_username = user_ext.get('NonI18NFirstName', profile.realname) 
+    informal_username = user_ext.get('NonI18NFirstName', profile.realname)
     informal_username = informal_username or username
 
     site_alias = getattr(policy, 'COM_ALIAS', '')
@@ -224,29 +224,30 @@ def send_email_verification(user, profile, email, request=None, check=True):
 
     mailer = component.getUtility(ITemplatedMailer)
     mailer.queue_simple_html_text_email(
-                template,
-                subject=translate(_("Email Confirmation")),
-                recipients=[profile],
-                template_args=args,
-                request=request,
-                package=package)
+        template,
+        subject=translate(_("Email Confirmation")),
+        recipients=[profile],
+        template_args=args,
+        request=request,
+        package=package)
 
     # record time
     set_email_verification_time(user)
     incr_email_verification_count(user)
     return True
 
+
 def safe_send_email_verification(user, profile, email, request=None, check=True):
     iids = component.getUtility(IIntIds)
     if iids.queryId(user) is None:
-        logger.debug("Not sending email verification during account creation of %s", 
+        logger.debug("Not sending email verification during account creation of %s",
                      user)
         return
 
     try:
-        return send_email_verification(user, 
-                                       profile, 
-                                       email, 
+        return send_email_verification(user,
+                                       profile,
+                                       email,
                                        request=request,
                                        check=check)
     except Exception:

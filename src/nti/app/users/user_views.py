@@ -133,12 +133,12 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
             result = None
             if x == everyone:  # always
                 result = None
-            elif 	ICommunity.providedBy(x) \
+            elif     ICommunity.providedBy(x) \
                 and not IDisallowMembershipOperations.providedBy(x) \
                 and (x.public or self.remoteUser in x):
                 result = toExternalObject(x, name='summary')
-            elif 	IDynamicSharingTargetFriendsList.providedBy(x) \
-                    and (self.remoteUser in x or self.remoteUser == x.creator):
+            elif     IDynamicSharingTargetFriendsList.providedBy(x) \
+                and (self.remoteUser in x or self.remoteUser == x.creator):
                 result = toExternalObject(x)
             return result
 

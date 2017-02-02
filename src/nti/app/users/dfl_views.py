@@ -103,11 +103,11 @@ class DFLDeleteView(UGDDeleteView):
         if members:
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
-                             { 
+                             {
                                 'message': _("Group is not empty"),
                                 'code': "DFLGroupIsNotEmpty"
                              },
-                            None)
+                             None)
         return super(DFLDeleteView, self)._do_delete_object(theObject)
 
 
