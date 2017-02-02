@@ -19,26 +19,27 @@ from ZODB.interfaces import IConnection
 
 from nti.contentfolder.model import RootFolder
 
+
 @interface.implementer(IPathAdapter)
 class _OFSPathAdapter(Contained):
-	"""
-	XXX: Adapter to be used only in unit tests.
-	"""
+    """
+    XXX: Adapter to be used only in unit tests.
+    """
 
-	__name__ = "ofs"
+    __name__ = "ofs"
 
-	def __init__(self, context, request):
-		self.context = context
-		self.request = request
-		self.__parent__ = context
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.__parent__ = context
 
-	def __getitem__(self, key):
-		if key == 'root':
-			try:
-				result = self.context._ofs_root
-			except AttributeError:
-				result = self.context._ofs_root = RootFolder()
-				result.__parent__ = self.context
-				IConnection(self.context).add(result)
-			return result
-		raise KeyError(key)
+    def __getitem__(self, key):
+        if key == 'root':
+            try:
+                result = self.context._ofs_root
+            except AttributeError:
+                result = self.context._ofs_root = RootFolder()
+                result.__parent__ = self.context
+                IConnection(self.context).add(result)
+            return result
+        raise KeyError(key)

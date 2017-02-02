@@ -21,8 +21,9 @@ from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfolder.interfaces import IContentFolder
 
+
 @component.adapter(IContentBaseFile, IObjectAddedEvent)
 def _on_content_file_added(context, event):
-	if IContentFolder.providedBy(event.newParent):
-		user = get_remote_user()
-		validate_sources(user, event.newParent, sources=(context,))
+    if IContentFolder.providedBy(event.newParent):
+        user = get_remote_user()
+        validate_sources(user, event.newParent, sources=(context,))
