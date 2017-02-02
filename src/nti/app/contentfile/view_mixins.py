@@ -85,15 +85,15 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
         and constraints.max_files \
         and len(sources) > constraints.max_files:
         raise_json_error(
-				get_current_request(),
-				hexc.HTTPUnprocessableEntity,
-				{
-					u'message': _('Maximum number attachments exceeded.'),
-					u'code': 'MaxAttachmentsExceeded',
-					u'field': 'max_files',
-					u'constraint': constraints.max_files
-				},
-				None)
+                get_current_request(),
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _('Maximum number attachments exceeded.'),
+                    u'code': 'MaxAttachmentsExceeded',
+                    u'field': 'max_files',
+                    u'constraint': constraints.max_files
+                },
+                None)
 
     for source in sources or ():
         ctx = context if context is not None else source
@@ -105,46 +105,46 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
             size = getattr(source, 'size', None) or source.getSize()
             if size is not None and not validator.is_file_size_allowed(size):
                 raise_json_error(
-						get_current_request(),
-						hexc.HTTPUnprocessableEntity,
-						{
-							u'provided_bytes': size,
-							u'max_bytes': validator.max_file_size,
-							u'message': _('The uploaded file is too large.'),
-							u'code': 'MaxFileSizeUploadLimitError',
-							u'field': 'size'
-						},
-						None)
+                        get_current_request(),
+                        hexc.HTTPUnprocessableEntity,
+                        {
+                            u'provided_bytes': size,
+                            u'max_bytes': validator.max_file_size,
+                            u'message': _('The uploaded file is too large.'),
+                            u'code': 'MaxFileSizeUploadLimitError',
+                            u'field': 'size'
+                        },
+                        None)
         except AttributeError:
             pass
 
         contentType = getattr(source, 'contentType', None)
         if contentType and not validator.is_mime_type_allowed(contentType):
             raise_json_error(
-					get_current_request(),
-					hexc.HTTPUnprocessableEntity,
-					{
-						u'provided_mime_type': contentType,
-						u'allowed_mime_types': validator.allowed_mime_types,
-						u'message': _('Invalid content/MimeType type.'),
-						u'code': 'InvalidFileMimeType',
-						u'field': 'contentType'
-					},
-					None)
+                    get_current_request(),
+                    hexc.HTTPUnprocessableEntity,
+                    {
+                        u'provided_mime_type': contentType,
+                        u'allowed_mime_types': validator.allowed_mime_types,
+                        u'message': _('Invalid content/MimeType type.'),
+                        u'code': 'InvalidFileMimeType',
+                        u'field': 'contentType'
+                    },
+                    None)
 
         filename = getattr(source, 'filename', None)
         if filename and not validator.is_filename_allowed(filename):
             raise_json_error(
-					get_current_request(),
-					hexc.HTTPUnprocessableEntity,
-					{
+                    get_current_request(),
+                    hexc.HTTPUnprocessableEntity,
+                    {
                         u'provided_filename': filename,
-						u'allowed_extensions': validator.allowed_extensions,
-						u'message': _('Invalid file name.'),
-						u'code': 'InvalidFileExtension',
-						u'field': 'filename'
-					},
-					None)
+                        u'allowed_extensions': validator.allowed_extensions,
+                        u'message': _('Invalid file name.'),
+                        u'code': 'InvalidFileExtension',
+                        u'field': 'filename'
+                    },
+                    None)
 
 
 def transfer_data(source, target):
@@ -191,15 +191,15 @@ def read_multipart_sources(request, sources=()):
             source = get_source(request, name)
             if source is None:
                 raise_json_error(
-	                    get_current_request(),
-	                    hexc.HTTPUnprocessableEntity,
-	                    {
-	                        u'name': data.name,
-	                        u'message': _('Could not find multipart data.'),
-	                        u'code': 'CouldNotFindMultiPartData',
-	                        u'field': 'name'
-	                    },
-	                    None)
+                        get_current_request(),
+                        hexc.HTTPUnprocessableEntity,
+                        {
+                            u'name': data.name,
+                            u'message': _('Could not find multipart data.'),
+                            u'code': 'CouldNotFindMultiPartData',
+                            u'field': 'name'
+                        },
+                        None)
             data = transfer_data(source, data)
             result.append(data)
     return result

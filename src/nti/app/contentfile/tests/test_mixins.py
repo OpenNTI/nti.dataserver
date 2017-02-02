@@ -51,7 +51,7 @@ class TestMixins(unittest.TestCase):
         assert_that(n, is_(foo))
 
         n = get_file_from_oid_external_link(
-			'/dataserver2/Objects/xxx')
+            '/dataserver2/Objects/xxx')
         assert_that(n, is_(none()))
 
         n = get_file_from_oid_external_link(
