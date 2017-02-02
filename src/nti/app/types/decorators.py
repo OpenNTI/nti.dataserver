@@ -35,6 +35,7 @@ from nti.property.property import Lazy
 
 LINKS = StandardExternalFields.LINKS
 
+
 @component.adapter(INote)
 @interface.implementer(IExternalMappingDecorator)
 class _NoteRequestDecorator(AbstractAuthenticatedRequestAwareDecorator):
@@ -46,8 +47,8 @@ class _NoteRequestDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _predicate(self, context, result):
         return      self._acl_decoration \
-                and self._is_authenticated \
-                and has_permission(ACT_UPDATE, context, self.request)
+            and self._is_authenticated \
+            and has_permission(ACT_UPDATE, context, self.request)
 
     def _do_schema_link(self, context, result):
         _links = result.setdefault(LINKS, [])
@@ -60,23 +61,27 @@ class _NoteRequestDecorator(AbstractAuthenticatedRequestAwareDecorator):
     def _do_decorate_external(self, context, result):
         self._do_schema_link(context, result)
 
+
 @component.adapter(IThreadable)
 @interface.implementer(IExternalMappingDecorator)
 class _MostRecentReplyDecorator(object):
     """
     Adds a link to get the most recent reply for a threadable context
     """
-    
+
     __metaclass__ = SingletonDecorator
-    
+
     def decorateExternalMapping(self, context, result):
-		_links = result.setdefault(StandardExternalFields.LINKS, [])
-		link = Link(context, rel='mostRecentReply', elements=('mostRecentReply',))
-		interface.alsoProvides(link, ILocation)
-		link.__name__ = ''
-		link.__parent__ = context
-		_links.append(link)
-		
+        _links = result.setdefault(StandardExternalFields.LINKS, [])
+        link = Link(context,
+                    rel='mostRecentReply',
+                    elements=('mostRecentReply',))
+        interface.alsoProvides(link, ILocation)
+        link.__name__ = ''
+        link.__parent__ = context
+        _links.append(link)
+
+
 @component.adapter(ITopic)
 @interface.implementer(IExternalMappingDecorator)
 class _MostRecentReplyTopicDecorator(object):
@@ -84,12 +89,13 @@ class _MostRecentReplyTopicDecorator(object):
     Adds a link to get the most recent reply for a topic context
     """
     __metaclass__ = SingletonDecorator
-    
+
     def decorateExternalMapping(self, context, result):
-		_links = result.setdefault(StandardExternalFields.LINKS, [])
-		link = Link(context, rel='mostRecentReply', elements=('mostRecentReply',))
-		interface.alsoProvides(link, ILocation)
-		link.__name__ = ''
-		link.__parent__ = context
-		_links.append(link)
-    		
+        _links = result.setdefault(StandardExternalFields.LINKS, [])
+        link = Link(context,
+                    rel='mostRecentReply',
+                    elements=('mostRecentReply',))
+        interface.alsoProvides(link, ILocation)
+        link.__name__ = ''
+        link.__parent__ = context
+        _links.append(link)
