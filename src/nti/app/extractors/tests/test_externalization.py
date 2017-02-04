@@ -18,12 +18,14 @@ from nti.externalization.externalization import to_external_object
 
 from nti.app.testing.layers import AppLayerTest
 
+
 class TestExternalization(AppLayerTest):
 
-	def test_external(self):
-		data = ImageMetadata()
-		ext_obj = to_external_object(data)
-		assert_that(ext_obj, has_key('url'))
-		assert_that(ext_obj, has_key('width'))
-		assert_that(ext_obj, has_key('height'))
-		assert_that(ext_obj, has_entry('MimeType', is_('application/vnd.nextthought.metadata.imagemetadata')))
+    def test_external(self):
+        data = ImageMetadata()
+        ext_obj = to_external_object(data)
+        assert_that(ext_obj, has_key('url'))
+        assert_that(ext_obj, has_key('width'))
+        assert_that(ext_obj, has_key('height'))
+        assert_that(ext_obj, has_entry('MimeType',
+                                       is_('application/vnd.nextthought.metadata.imagemetadata')))

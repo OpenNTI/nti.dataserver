@@ -169,8 +169,8 @@ def process_source(source, default_content_type=DEFAULT_CONTENT_TYPE):
         source = StringIO(source)
         source.seek(0)
         source = SourceProxy(source,
-							 contentType='application/json', 
-							 length=length)
+                             contentType='application/json', 
+                             length=length)
     elif source is not None:
         length = getattr(source, 'length', None)
         if not length or length == -1:
