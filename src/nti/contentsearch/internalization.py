@@ -39,7 +39,7 @@ class _QueryObjectUpdater(object):
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
         result = InterfaceObjectIO(self.obj,
-								   ISearchQuery).updateFromExternalObject(parsed)
+                                   ISearchQuery).updateFromExternalObject(parsed)
         return result
 
 
@@ -79,7 +79,7 @@ class _SearchResultsUpdater(object):
             parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
 
         result = InterfaceObjectIO(self.obj,
-								   ISearchResults).updateFromExternalObject(parsed)
+                                   ISearchResults).updateFromExternalObject(parsed)
         return result
 
 

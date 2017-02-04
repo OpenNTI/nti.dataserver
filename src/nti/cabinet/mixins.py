@@ -91,11 +91,11 @@ class SourceProxy(ProxyBase):
     Source proxy for a io.file object
     """
     __parent__ = property(
-		lambda s: s.__dict__.get('_v__parent__'),
+        lambda s: s.__dict__.get('_v__parent__'),
         lambda s, v: s.__dict__.__setitem__('_v__parent__', v))
 
     length = property(
-		lambda s: s.__dict__.get('_v_length'),
+        lambda s: s.__dict__.get('_v_length'),
         lambda s, v: s.__dict__.__setitem__('_v_length', v))
 
     contentType = property(

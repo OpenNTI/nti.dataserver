@@ -48,7 +48,7 @@ class ContentFileObjectIO(NamedFileObjectIO):
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
         result = super(ContentFileObjectIO, 
-					   self).updateFromExternalObject(parsed, *args, **kwargs)
+                       self).updateFromExternalObject(parsed, *args, **kwargs)
         ext_self = self._ext_replacement()
         if 'tags' in parsed:
             ext_self.tags = parsed.get('tags') or ()
