@@ -24,6 +24,8 @@ from pyramid.threadlocal import get_current_request
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable
 
+from nti.mailer._default_template_mailer import _as_recipient_list
+
 from nti.securitypolicy.utils import is_impersonating
 
 @interface.implementer(ITemplatedMailer)
@@ -40,11 +42,6 @@ class _BaseFilteredMailer(object):
 
 	def __getattr__(self, name):
 		return getattr(self._default_mailer, name)
-
-def _as_recipient_list(recipients):
-	if recipients:
-		return recipients if is_nonstr_iter(recipients) else [recipients]
-	return ()
 
 class NextThoughtOnlyMailer(_BaseFilteredMailer):
 	"""
@@ -131,7 +128,6 @@ class ImpersonatedMailer(NextThoughtOnlyMailer):
 		_request = request
 		if _request is None or not hasattr(_request, 'environ'):  # In case we're zope proxied?
 			_request = get_current_request()
-
 		if is_impersonating(_request):
 			# This is how we know we are impersonated. In this case,
 			# we want to filter everything. (see nti.appserver.logon)
