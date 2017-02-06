@@ -64,7 +64,11 @@ from nti.appserver.policies.tests import test_application_censoring
 
 from nti.appserver.tests.test_application import TestApp as _TestApp
 
-from nti.traversal.encode import url_quote as UQ
+from nti.traversal.encode import url_quote
+
+def UQ(val):
+	# Pyramid is much more lenient with safe characters
+	return url_quote(val, safe='/@')
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is

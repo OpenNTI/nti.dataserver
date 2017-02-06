@@ -1175,7 +1175,15 @@ class RecursiveUGDView(_UGDView):
 		result.__data_owner__ = self.remoteUser
 
 		# Our starting set
+		uidutil = component.getUtility(IIntIds)
+		user_intid = uidutil.queryId( self.remoteUser )
 		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
+		if user_intid is not None:
+			try:
+				# Our remoteUser might end up in the result set; pop it.
+				intids_created_by_me.remove( user_intid )
+			except KeyError:
+				pass
 		result['TotalItemCount'] = len(intids_created_by_me)
 		result['FilteredTotalItemCount'] = result['TotalItemCount']
 
@@ -1184,7 +1192,7 @@ class RecursiveUGDView(_UGDView):
 		# actually be newer if we deleted data?)
 		last_mod_idx = catalog['lastModified']
 		newest_intids = last_mod_idx.sort(intids_created_by_me, limit=1, reverse=True)
-		uidutil = component.getUtility(IIntIds)
+
 		try:
 			newest_intid = next(iter(newest_intids))
 			newest_obj = uidutil.queryObject(newest_intid)
@@ -1240,8 +1248,8 @@ class RecursiveUGDView(_UGDView):
 	def _get_containerids_for_id( self, user, ntiid ):
 		querier = component.queryUtility(IUserContainersQuerier)
 		if querier is not None:
-			result = querier.query(user, 
-								   ntiid, 
+			result = querier.query(user,
+								   ntiid,
 								   self._iter_ntiids_include_stream,
 								   self._iter_ntiids_stream_only)
 		else:
