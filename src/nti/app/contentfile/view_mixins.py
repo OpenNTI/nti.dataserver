@@ -360,6 +360,7 @@ def to_external_download_oid_href(item):
         return external
     return None
 
+#: OID based view/download pattern
 pattern = re.compile('(.+)/%s(.+)/(@@)?[view|download](\/.*)?' % TAG_NTC,
                      re.UNICODE | re.IGNORECASE)
 
