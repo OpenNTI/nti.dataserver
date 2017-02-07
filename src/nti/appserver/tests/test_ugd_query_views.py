@@ -614,21 +614,21 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		assert_that(res.json_body, has_entry('Items', contains(has_entry('ID', top_n_id))))
 		assert_that(res.json_body, has_entry('Links',
 											   contains(
-												   has_entries('href', '/dataserver2/users/sjohnson%40nextthought.com/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=1&batchStart=1&sortOn=lastModified&sortOrder=ascending',
+												   has_entries('href', '/dataserver2/users/sjohnson@nextthought.com/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=1&batchStart=1&sortOn=lastModified&sortOrder=ascending',
 																'rel', 'batch-next'))))
 
 		# Capture the URL that's returned to us, and make sure it matches what we're told to come back to
 		# so that next and prev are symmetrical
 		# (Modulo some slightly different URL encoding)
 		prev_href = res.json_body['href']
-		prev_href = prev_href.replace("@", "%40").replace(':', '%3A')
+		prev_href = prev_href.replace(':', '%3A')
 
 		res = testapp.get(path, params={'batchSize': '1', 'batchStart': '1', 'sortOn': 'lastModified', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
 		assert_that(res.json_body, has_entry('Items', has_length(1)))
 		assert_that(res.json_body, has_entry('Items', contains(has_entry('ID', reply_n_id))))
 		assert_that(res.json_body, has_entry('Links',
 											   contains(
-												   has_entries('href', '/dataserver2/users/sjohnson%40nextthought.com/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=1&batchStart=0&sortOn=lastModified&sortOrder=ascending',
+												   has_entries('href', '/dataserver2/users/sjohnson@nextthought.com/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=1&batchStart=0&sortOn=lastModified&sortOrder=ascending',
 																'rel', 'batch-prev'))))
 
 		# FIXME: With hash randomization, this isn't guaranteed to match anymore. Can we use urldecode? urlparse?
@@ -1170,10 +1170,10 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		# Because we are in the middle of a batchSize page, we get a next that
 		# exactly matches, but doesn't generate a full page of data
 		batch_next = self.require_link_href_with_rel(ugd_res.json_body, 'batch-next')
-		assert_that(batch_next, is_('/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=14'))
+		assert_that(batch_next, is_('/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=14'))
 		# Likewise, prev matches exactly
 		batch_prev = self.require_link_href_with_rel(ugd_res.json_body, 'batch-prev')
-		assert_that(batch_prev, is_('/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=0'))
+		assert_that(batch_prev, is_('/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=0'))
 
 		expected_ntiids = ntiids[4:14]
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
@@ -1272,11 +1272,11 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		# Intuitively, there should not be a batch-next link, but
 		# I think we always force another link (not sure why).
 		batch_next = self.require_link_href_with_rel(ugd_res.json_body, 'batch-next')
-		assert_that(batch_next, is_('/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=20'))
+		assert_that(batch_next, is_('/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=20'))
 
 		# Prev is the first ten
 		batch_prev = self.require_link_href_with_rel(ugd_res.json_body, 'batch-prev')
-		assert_that(batch_prev, is_('/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=0'))
+		assert_that(batch_prev, is_('/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=0'))
 
 		expected_ntiids = ntiids[10:]
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
@@ -1349,14 +1349,14 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		# Links
 		batch_next = self.require_link_href_with_rel(ugd_res.json_body, 'batch-next')
 		batch_next_oid = external_oids[14]
-		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
+		batch_next_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
 						.format('batchAfterOID', batch_next_oid)
 		assert_that(batch_next, is_(batch_next_href))
 
 		# Prev
 		batch_prev = self.require_link_href_with_rel(ugd_res.json_body, 'batch-prev')
 		batch_prev_oid = external_oids[10]
-		batch_prev_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
+		batch_prev_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
 						.format('batchBeforeOID', batch_prev_oid)
 		assert_that(batch_prev, is_(batch_prev_href))
 
@@ -1371,14 +1371,14 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		# possibly newly created items.
 		batch_next = self.require_link_href_with_rel(ugd_res.json_body, 'batch-next')
 		batch_next_oid = external_oids[-1]
-		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=10' \
+		batch_next_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=10' \
 						.format('batchAfterOID', batch_next_oid)
 		assert_that(batch_next, is_(batch_next_href))
 
 		# Prev
 		batch_prev = self.require_link_href_with_rel(ugd_res.json_body, 'batch-prev')
 		batch_prev_oid = external_oids[11]
-		batch_prev_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=10' \
+		batch_prev_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=10' \
 						.format('batchBeforeOID', batch_prev_oid)
 		assert_that(batch_prev, is_(batch_prev_href))
 
@@ -1401,14 +1401,14 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		# Links
 		batch_next = self.require_link_href_with_rel(ugd_res.json_body, 'batch-next')
 		batch_next_oid = external_oids[3]
-		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
+		batch_next_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
 						.format('batchAfterOID', batch_next_oid)
 		assert_that(batch_next, is_(batch_next_href))
 
 		# Prev
 		batch_prev = self.require_link_href_with_rel(ugd_res.json_body, 'batch-prev')
 		batch_prev_oid = external_oids[1]
-		batch_prev_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
+		batch_prev_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
 						.format('batchBeforeOID', batch_prev_oid)
 
 		assert_that(batch_prev, is_(batch_prev_href))
@@ -1447,14 +1447,14 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		# Links
 		batch_next = self.require_link_href_with_rel(ugd_res.json_body, 'batch-next')
 		batch_next_oid = external_oids[14]
-		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
+		batch_next_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
 						.format('batchAfterOID', batch_next_oid)
 		assert_that(batch_next, is_(batch_next_href))
 
 		# Prev
 		batch_prev = self.require_link_href_with_rel(ugd_res.json_body, 'batch-prev')
 		batch_prev_oid = external_oids[10]
-		batch_prev_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
+		batch_prev_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
 						.format('batchBeforeOID', batch_prev_oid)
 		assert_that(batch_prev, is_(batch_prev_href))
 
@@ -1467,7 +1467,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		# Links
 		batch_next = self.require_link_href_with_rel(ugd_res.json_body, 'batch-next')
 		batch_next_oid = external_oids[9]
-		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=10' \
+		batch_next_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=10' \
 						.format('batchAfterOID', batch_next_oid)
 		assert_that(batch_next, is_(batch_next_href))
 
@@ -1507,7 +1507,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		# Links
 		batch_next = self.require_link_href_with_rel(ugd_res.json_body, 'batch-next')
 		batch_next_oid = external_oids[0]
-		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
+		batch_next_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
 						.format('batchAfterOID', batch_next_oid)
 		assert_that(batch_next, is_(batch_next_href))
 
@@ -1526,14 +1526,14 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		# Links
 		batch_next = self.require_link_href_with_rel(ugd_res.json_body, 'batch-next')
 		batch_next_oid = external_oids[-2]
-		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
+		batch_next_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
 						.format('batchAfterOID', batch_next_oid)
 		assert_that(batch_next, is_(batch_next_href))
 
 		# Prev
 		batch_prev = self.require_link_href_with_rel(ugd_res.json_body, 'batch-prev')
 		batch_prev_oid = external_oids[16]
-		batch_prev_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
+		batch_prev_href = '/dataserver2/users/sjohnson@nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
 						.format('batchBeforeOID', batch_prev_oid)
 		assert_that(batch_prev, is_(batch_prev_href))
 
