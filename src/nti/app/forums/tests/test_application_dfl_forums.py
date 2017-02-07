@@ -98,8 +98,8 @@ class TestApplicationDFLorums(ApplicationLayerTest, AbstractPostCreationMixin):
 			self.board_ntiid = 'tag:nextthought.com,2011-10:%s-Board:GeneralDFL-DiscussionBoard' % uid
 			self.board_ntiid_checker = self.board_ntiid
 
-			self.board_pretty_url = "/dataserver2/users/ichigo%40bleach/FriendsLists/Bleach/DiscussionBoard"
-			self.forum_pretty_url = '/dataserver2/users/ichigo%40bleach/FriendsLists/Bleach/' + self.forum_url_relative_to_user
+			self.board_pretty_url = "/dataserver2/users/ichigo@bleach/FriendsLists/Bleach/DiscussionBoard"
+			self.forum_pretty_url = '/dataserver2/users/ichigo@bleach/FriendsLists/Bleach/' + self.forum_url_relative_to_user
 
 		self.testapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username=self.user_username))
 		self.testapp2 = _TestApp(self.app, extra_environ=self._make_extra_environ(username=self.user2_username))
@@ -345,12 +345,12 @@ class TestApplicationDFLorums(ApplicationLayerTest, AbstractPostCreationMixin):
  												status=200)
 
 		assert_that(forum_contents_res3.json_body, has_entry(u'TotalItemCount', 2))
-	
+
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
 	def test_contents_of_forum_last_modified_changes_when_new_topic_title_changed(self):
 		self._user_dfl_fixture()
-		
+
 		topic_res, _ = self._POST_and_publish_topic_entry()
 		forum_res = self.testapp.get(self.forum_pretty_url)
 		forum_contents_href = self.require_link_href_with_rel(forum_res.json_body, 'contents')
