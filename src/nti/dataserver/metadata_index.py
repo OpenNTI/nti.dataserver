@@ -132,6 +132,9 @@ class ValidatingCreatedUsername(object):
     __slots__ = (b'creator_username',)
 
     def __init__(self,  obj, default=None):
+        # Don't want to index user objects.
+        if IUser.providedBy(obj):
+            return
         try:
             creator = obj.creator
             username = getattr(creator, 'username', creator)
