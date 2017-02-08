@@ -17,8 +17,6 @@ import rfc822
 from zope import component
 from zope import interface
 
-from pyramid.compat import is_nonstr_iter
-
 from pyramid.threadlocal import get_current_request
 
 from nti.mailer.interfaces import ITemplatedMailer
@@ -81,7 +79,7 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 		# gets directed through this method, so we only need to filter
 		# here.
 		recipients = _as_recipient_list(recipients)
-		bcc = _as_recipient_list(bcc)
+		bcc = _as_recipient_list(bcc) or ()
 		filtered_recip = [self._transform_recipient(addr) for addr in recipients]
 		filtered_recip = [addr for addr in filtered_recip if self._should_send_to_addr(addr)]
 
