@@ -160,7 +160,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		assert_that( sj, has_entry( 'Links',
 									has_item(
 										all_of(
-											has_entry( 'href', "/dataserver2/users/sjohnson%40nextthought.com" ),
+											has_entry( 'href', "/dataserver2/users/sjohnson@nextthought.com" ),
 											has_entry( 'rel', 'edit' ) ) ) ) )
 		# also the impersonate link
 		assert_that( sj, has_entry( 'Links',
@@ -350,7 +350,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
 		prof = self.require_link_href_with_rel( found, REL_ACCOUNT_PROFILE )
 		# At one time, we were double-nesting this link, hence the path check
-		assert_that( prof, is_( '/dataserver2/users/sjohnson%40nextthought.com/@@' + REL_ACCOUNT_PROFILE  ) )
+		assert_that( prof, is_( '/dataserver2/users/sjohnson@nextthought.com/@@' + REL_ACCOUNT_PROFILE  ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_search_empty_200(self):
@@ -375,7 +375,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		# When we traverse to ourself, we do the same thing
 		# as hitting ResolveUser for ourself, getting the different caching
 		# strategy
-		res = self.testapp.get( '/dataserver2/Objects/tag:nextthought.com,2011-10:system-namedentity:user-sjohnson%40nextthought.com' )
+		res = self.testapp.get( '/dataserver2/Objects/tag:nextthought.com,2011-10:system-namedentity:user-sjohnson@nextthought.com' )
 		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
 
 	@WithSharedApplicationMockDS
