@@ -86,9 +86,9 @@ def unindex_email_verification(user, catalog=None, intids=None):
     return False
 
 
-def force_email_verification(
-        user, profile=IUserProfile, catalog=None, intids=None):
-    profile = profile(user, None)
+def force_email_verification(user, profile=None, catalog=None, intids=None):
+    profile = IUserProfile if profile is None else profile
+    profile = profile(user, None) # adpat
     if profile is not None:
         profile.email_verified = True
         return reindex_email_verification(user, catalog=catalog, intids=intids)
