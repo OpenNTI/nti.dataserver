@@ -86,16 +86,13 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
         # Implementation wise, we know that all activity
         # gets directed through this method, so we only need to filter
         # here.
-        recipients = _as_recipient_list(recipients)
         bcc = _as_recipient_list(bcc) or ()
-        filtered_recip = [
-            self._transform_recipient(addr) for addr in recipients]
-        filtered_recip = [
-            addr for addr in filtered_recip if self._should_send_to_addr(addr)]
+        recipients = _as_recipient_list(recipients)
+        filtered_recip = [self._transform_recipient(a) for a in recipients]
+        filtered_recip = [a for a in filtered_recip if self._should_send_to_addr(a)]
 
-        filtered_bcc = [self._transform_recipient(addr) for addr in bcc]
-        filtered_bcc = [
-            addr for addr in filtered_bcc if self._should_send_to_addr(addr)]
+        filtered_bcc = [self._transform_recipient(a) for a in bcc]
+        filtered_bcc = [a for a in filtered_bcc if self._should_send_to_addr(a)]
 
         if '_level' in kwargs:
             kwargs['_level'] = kwargs['_level'] + 1
