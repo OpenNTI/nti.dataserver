@@ -895,6 +895,14 @@ class IACLProvider(interface.Interface):
 
 	__acl__ = interface.Attribute("An :class:`IACL`")
 
+class ISupplementalACLProvider(interface.Interface):
+	"""
+	Some that that can provide a supplemental ACL to the
+	primary :class:`IACLProvider` of an object.
+	"""
+
+	__acl__ = interface.Attribute("An :class:`IACL`")
+
 class IACLProviderCacheable(interface.Interface):
 	"""
 	A marker interface (usually added through configuration) that states
