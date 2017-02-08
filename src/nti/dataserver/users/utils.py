@@ -33,14 +33,24 @@ def get_catalog():
     return component.getUtility(ICatalog, name=CATALOG_NAME)
 
 
+def update_entity_catalog(user, intids=None):
+    intids = component.getUtility(IIntIds) if intids is None else intids
+    doc_id = intids.queryId(user)
+    if doc_id is not None:
+        catalog = get_catalog()
+        catalog.index_doc(doc_id, user)
+        return True
+    return False
+
+
 def verified_email_ids(email):
     email = email.lower()  # normalize
-    catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+    catalog = get_catalog()
 
     # all ids w/ this email
     email_idx = catalog[IX_EMAIL]
-    intids_emails = catalog.family.IF.Set(
-        email_idx._fwd_index.get(email) or ())
+    values = email_idx._fwd_index.get(email)
+    intids_emails = catalog.family.IF.Set(values or ())
     if not intids_emails:
         return catalog.family.IF.Set()
 
@@ -76,7 +86,8 @@ def unindex_email_verification(user, catalog=None, intids=None):
     return False
 
 
-def force_email_verification(user, profile=IUserProfile, catalog=None, intids=None):
+def force_email_verification(
+        user, profile=IUserProfile, catalog=None, intids=None):
     profile = profile(user, None)
     if profile is not None:
         profile.email_verified = True
