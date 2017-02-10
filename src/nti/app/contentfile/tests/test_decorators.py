@@ -19,6 +19,8 @@ from hamcrest import starts_with
 from hamcrest import has_property
 from hamcrest import contains_string
 
+from nti.app.contentfile.interfaces import IExternalLinkProvider
+
 from nti.app.contentfile.view_mixins import to_external_download_oid_href
 
 from nti.externalization.internalization import find_factory_for
@@ -71,24 +73,28 @@ class TestDecorators(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             ext_obj = self.ext_obj
             internal = find_factory_for(ext_obj)()
-            update_from_external_object(
-                internal, ext_obj, require_updater=True)
+            update_from_external_object(internal, 
+                                        ext_obj, 
+                                        require_updater=True)
             self.ds.root['name'] = internal
             href = to_external_download_oid_href(internal)
             assert_that(internal,
                         externalizes(all_of(has_key('OID'),
                                             has_entry('url',
                                                       contains_string('/Getting%20Started.pdf')))))
-
+            
+            adapted_href = IExternalLinkProvider(internal).link()
             ext_obj = self.global_obj
             internal = find_factory_for(ext_obj)()
-            update_from_external_object(
-                internal, ext_obj, require_updater=True)
+            update_from_external_object(internal,
+                                        ext_obj, 
+                                        require_updater=True)
             self.ds.root['name1'] = internal
             global_href = to_external_download_oid_href(internal)
 
-        assert_that(href, starts_with('/dataserver2/Objects/'))
-        assert_that(href, ends_with('/download/Getting%20Started.pdf'))
+        for link in (href, adapted_href):
+            assert_that(link, starts_with('/dataserver2/Objects/'))
+            assert_that(link, ends_with('/download/Getting%20Started.pdf'))
 
         res = self.testapp.get(href, status=200)
         assert_that(res, has_property('content_length', is_(61)))
