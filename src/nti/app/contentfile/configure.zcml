@@ -14,9 +14,14 @@
 	<adapter factory=".acl.ContentBaseFileACLProvider" />
 	
 	<adapter factory=".providers.DefaultExternalLinkProvider" 
-			 for="plone.namedfile.interfaces.IFile" 
-			 provides=".interfaces.IExternalLinkProvider" />
+			 provides=".interfaces.IExternalLinkProvider" 
+			 for="plone.namedfile.interfaces.IFile" />
 	
+	<adapter factory=".providers.DefaultExternalLinkProvider" 
+			 provides=".interfaces.IExternalLinkProvider"
+			 for="plone.namedfile.interfaces.IFile
+			 	  pyramid.interfaces.IRequest" />
+
 	<subscriber factory=".decorators._ContentFileDecorator"
 				for="plone.namedfile.interfaces.IFile"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
