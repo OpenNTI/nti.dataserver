@@ -16,14 +16,17 @@ from zope.location.interfaces import ILocation
 
 from plone.namedfile.interfaces import IFile
 
+from nti.app.contentfile.interfaces import IExternalLinkProvider
+
 from nti.app.contentfile.view_mixins import download_file_name
-from nti.app.contentfile.view_mixins import to_external_oid_and_link
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.externalization.singleton import SingletonDecorator
 
@@ -43,8 +46,9 @@ class _ContentFileDecorator(object):
     __metaclass__ = SingletonDecorator
 
     def decorateExternalMapping(self, item, ext_dict):
-        oid, link = to_external_oid_and_link(item, name=None, render=True)
-        if oid:
+        # get link. this should add objec to connection if required
+        link = IExternalLinkProvider(item).link()
+        if link:
             name = download_file_name(item)
             for element, key in ('view', 'url'), ('download', 'download_url'):
                 href = link + '/@@' + element
@@ -53,6 +57,7 @@ class _ContentFileDecorator(object):
                 ext_dict[key] = href
             # XXX: make sure we add OID/NTIID fields to signal this file
             # can be marked as an internal ref if it's going to be updated
+            oid = to_external_ntiid_oid(item)
             if OID not in ext_dict:
                 ext_dict[OID] = oid
             if NTIID not in ext_dict:
@@ -71,8 +76,10 @@ class _FileConstrainedDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, result):
         _links = result.setdefault(LINKS, [])
-        link = Link(context, rel="FileConstrains",
-                    elements='@@constrains', method='GET')
+        link = Link(context, 
+                    rel="FileConstrains",
+                    elements='@@constrains', 
+                    method='GET')
         interface.alsoProvides(link, ILocation)
         link.__name__ = ''
         link.__parent__ = context
