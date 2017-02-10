@@ -73,5 +73,4 @@ class ContentFolderACLProvider(object):
 
     @Lazy
     def __acl__(self):
-        result = acl_from_aces(self.__aces__)
-        return result
+        return acl_from_aces(self.__aces__)
