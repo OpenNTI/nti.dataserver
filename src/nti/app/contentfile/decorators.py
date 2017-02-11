@@ -52,7 +52,7 @@ class _ContentFileDecorator(object):
             name = download_file_name(item)
             for element, key in ('view', 'url'), ('download', 'download_url'):
                 href = link + '/@@' + element
-                if element == 'view':
+                if element == 'view' and not link.endswith(name):
                     href += ('/' + name if name else u'')
                 ext_dict[key] = href
             # XXX: make sure we add OID/NTIID fields to signal this file
