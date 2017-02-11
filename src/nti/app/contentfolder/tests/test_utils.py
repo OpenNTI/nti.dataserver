@@ -23,27 +23,31 @@ from plone.namedfile.interfaces import INamed
 from nti.app.contentfolder.utils import get_unique_file_name
 from nti.app.contentfolder.utils import get_file_from_cf_io_url
 
+
 class TestUtils(unittest.TestCase):
 
-	@fudge.patch('nti.app.contentfolder.utils.get_object')
-	def test_get_file_from_cf_io_url(self, mock_fon):
-		class Foo(object):
-			pass
-		foo = Foo()
-		interface.alsoProvides(foo, INamed)
-		mock_fon.is_callable().with_args().returns(foo)
+    @fudge.patch('nti.app.contentfolder.utils.get_object')
+    def test_get_file_from_cf_io_url(self, mock_fon):
+        class Foo(object):
+            pass
+        foo = Foo()
+        interface.alsoProvides(foo, INamed)
+        mock_fon.is_callable().with_args().returns(foo)
 
-		n = get_file_from_cf_io_url('/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323')
-		assert_that(n, is_(none()))
+        n = get_file_from_cf_io_url(
+            '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323')
+        assert_that(n, is_(none()))
 
-		n = get_file_from_cf_io_url('/dataserver2/cf.io/xrPH9')
-		assert_that(n, is_(foo))
+        n = get_file_from_cf_io_url('/dataserver2/cf.io/xrPH9')
+        assert_that(n, is_(foo))
 
-		n = get_file_from_cf_io_url('/dataserver2/cf.io/xrPH9/sample.dat')
-		assert_that(n, is_(foo))
+        n = get_file_from_cf_io_url('/dataserver2/cf.io/xrPH9/sample.dat')
+        assert_that(n, is_(foo))
 
-	def test_get_unique_file_name(self):
-		now = 123476490
-		container = ('ichigo.pdf', 'ichigo.21.01.30.1.pdf')
-		name, _ = get_unique_file_name("ichigo.pdf", container=container, now=now)
-		assert_that(name, 'ichigo.21.01.30.2.pdf')
+    def test_get_unique_file_name(self):
+        now = 123476490
+        container = ('ichigo.pdf', 'ichigo.21.01.30.1.pdf')
+        name, _ = get_unique_file_name("ichigo.pdf",
+                                       container=container,
+                                       now=now)
+        assert_that(name, 'ichigo.21.01.30.2.pdf')
