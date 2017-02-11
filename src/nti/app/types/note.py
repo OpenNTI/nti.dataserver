@@ -46,70 +46,77 @@ from nti.namedfile.constraints import FileConstraints
 
 from nti.namedfile.interfaces import IFileConstraints
 
+
 @component.adapter(IRequest, INote)
 @interface.implementer(INewObjectTransformer)
 def _note_transformer_factory(request, context):
-	result = partial(_note_transformer, request)
-	return result
+    result = partial(_note_transformer, request)
+    return result
+
 
 @component.adapter(IRequest, INote)
 @interface.implementer(IExceptionResponse)
 def _note_transformer(request, context):
-	sources = get_content_files(context)
-	if sources and request and request.POST:
-		read_multipart_sources(request, sources.values())
-	if sources:
-		validate_attachments(get_remote_user(), context, sources.values())
-	return context
+    sources = get_content_files(context)
+    if sources and request and request.POST:
+        read_multipart_sources(request, sources.values())
+    if sources:
+        validate_attachments(get_remote_user(), 
+                             context, 
+                             sources.values())
+    return context
+
 
 @view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 permission=nauth.ACT_UPDATE,
-			 context=INote,
-			 request_method='PUT')
+             renderer='rest',
+             permission=nauth.ACT_UPDATE,
+             context=INote,
+             request_method='PUT')
 class NotePutView(UGDPutView):
 
-	def updateContentObject(self, contentObject, externalValue, set_id=False, notify=True):
-		result = UGDPutView.updateContentObject(self,
-												contentObject=contentObject,
-												externalValue=externalValue,
-												set_id=set_id,
-												notify=notify)
-		sources = transfer_internal_content_data(contentObject,
-												 request=self.request,
-												 ownership=False)
-		if sources:
-			validate_attachments(self.remoteUser, contentObject, sources)
-		return result
+    def updateContentObject(self, contentObject, externalValue, set_id=False,
+                            notify=True, pre_hook=None, object_hook=None):
+        result = UGDPutView.updateContentObject(self,
+                                                contentObject=contentObject,
+                                                externalValue=externalValue,
+                                                set_id=set_id,
+                                                notify=notify)
+        sources = transfer_internal_content_data(contentObject,
+                                                 request=self.request,
+                                                 ownership=False)
+        if sources:
+            validate_attachments(self.remoteUser, contentObject, sources)
+        return result
+
 
 @view_config(context=INote)
 @view_defaults(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   permission=nauth.ACT_READ,
-			   request_method='GET',
-			   name="schema")
+               renderer='rest',
+               permission=nauth.ACT_READ,
+               request_method='GET',
+               name="schema")
 class NoteSchemaView(AbstractAuthenticatedView):
 
-	def __call__(self):
-		result = make_schema(INote, self.remoteUser)
-		constraints = file_contraints(self.context, self.remoteUser)
-		if constraints is not None:
-			result['Constraints']= to_external_object(constraints)
-		return result
+    def __call__(self):
+        result = make_schema(INote, self.remoteUser)
+        constraints = file_contraints(self.context, self.remoteUser)
+        if constraints is not None:
+            result['Constraints'] = to_external_object(constraints)
+        return result
+
 
 def validate_attachments(user, context, sources=()):
-	sources = sources or ()
+    sources = sources or ()
+    # check source contraints
+    validate_sources(user, context, sources)
+    # take ownership
+    for source in sources:
+        source.__parent__ = context
 
-	# check source contraints
-	validate_sources(user, context, sources)
-
-	# take ownership
-	for source in sources:
-		source.__parent__ = context
 
 @component.adapter(INote)
 @interface.implementer(IFileConstraints)
 def _NoteFileConstraints(note):
-	result = FileConstraints()
-	result.max_file_size = 10485760  # 10 MB
-	return result
+    result = FileConstraints()
+    result.max_file_size = 10485760  # 10 MB
+    return result

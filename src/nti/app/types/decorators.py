@@ -46,7 +46,7 @@ class _NoteRequestDecorator(AbstractAuthenticatedRequestAwareDecorator):
         return result
 
     def _predicate(self, context, result):
-        return      self._acl_decoration \
+        return  self._acl_decoration \
             and self._is_authenticated \
             and has_permission(ACT_UPDATE, context, self.request)
 
