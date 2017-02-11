@@ -61,11 +61,11 @@ class TestNote(ApplicationLayerTest):
         testapp = TestApp(self.app)
         path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/'
         res = testapp.post(
-                urllib.quote(path), 
+                urllib.quote(path),
                 data,
                 extra_environ=self._make_extra_environ(update_request=True),
                 headers={u"Content-Type": b"application/json"},
-                 status=201)
+                status=201)
         assert_that(res.json_body,
                     has_entry('body',
                               has_item(has_entries('Class', 'ContentBlobFile',
@@ -126,7 +126,7 @@ class TestNote(ApplicationLayerTest):
                 data,
                 extra_environ=self._make_extra_environ(update_request=True),
                 headers={u"Content-Type": b"application/json"},
-                 status=201)
+                status=201)
         path = res.json_body['href']
         durl = res.json_body['body'][1]['download_url']
         # Update
@@ -164,10 +164,10 @@ class TestNote(ApplicationLayerTest):
 
         data = {'__json__': to_json_representation(ext_obj)}
         res = self.testapp.post(
-                    urllib.quote(path),
-                    data,
-                    upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
-                    status=201)
+                urllib.quote(path),
+                data,
+                upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
+                status=201)
 
         durl = res.json_body['body'][1]['download_url']
 
