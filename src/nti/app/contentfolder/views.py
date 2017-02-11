@@ -749,16 +749,29 @@ class ClearContainerView(DeleteFolderView):
 
 class RenameMixin(object):
 
-    @classmethod
-    def do_rename(cls, theObject, new_name, old_key=None):
+    def do_rename(self, theObject, new_name, old_key=None):
         if not new_name:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify a valid name."))
+            raise_json_error(
+                    self.request,
+                    hexc.HTTPUnprocessableEntity,
+                    {
+                        u'message': _("Must specify a valid name."),
+                        u'code': 'EmptyFileName',
+                    },
+                    None)
 
         # get name/filename
         parent = theObject.__parent__
         new_key = safe_filename(new_name)
         if new_key in parent:
-            raise hexc.HTTPUnprocessableEntity(_("File already exists."))
+            raise_json_error(
+                    self.request,
+                    hexc.HTTPUnprocessableEntity,
+                    {
+                        u'message': _("File already exists."),
+                        u'code': 'FileAlreadyExists',
+                    },
+                    None)
 
         # replace name
         old_name = theObject.filename
@@ -786,11 +799,25 @@ class RenameView(UGDPutView, RenameMixin):
 
     def _check_object_constraints(self, theObject, externalValue=None):
         if IRootFolder.providedBy(theObject):
-            raise hexc.HTTPForbidden(_("Cannot rename root folder."))
+            raise_json_error(
+                    self.request,
+                    hexc.HTTPForbidden,
+                    {
+                        u'message': _("Cannot rename root folder."),
+                        u'code': 'CannotRenameRootFolder',
+                    },
+                    None)
 
         if      ILockedFolder.providedBy(theObject) \
             and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
-            raise hexc.HTTPForbidden(_("Cannot rename a locked folder."))
+            raise_json_error(
+                    self.request,
+                    hexc.HTTPForbidden,
+                    {
+                        u'message': _("Cannot rename a locked folder."),
+                        u'code': 'CannotRenameLockedFolder',
+                    },
+                    None)
 
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
@@ -839,11 +866,25 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 
     def _check_object_constraints(self, theObject, externalValue):
         if IRootFolder.providedBy(theObject):
-            raise hexc.HTTPForbidden(_("Cannot update root folder."))
+            raise_json_error(
+                    self.request,
+                    hexc.HTTPForbidden,
+                    {
+                        u'message': _("Cannot update root folder."),
+                        u'code': 'CannotUpdateRootFolder',
+                    },
+                    None)
 
         if      ILockedFolder.providedBy(theObject) \
             and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
-            raise hexc.HTTPForbidden(_("Cannot update a locked folder."))
+            raise_json_error(
+                    self.request,
+                    hexc.HTTPForbidden,
+                    {
+                        u'message': _("Cannot update a locked folder."),
+                        u'code': 'CannotUpdateLockedFolder',
+                    },
+                    None)
         self._clean_external(externalValue)
 
     def updateContentObject(self, contentObject, externalValue, set_id=False,
@@ -943,11 +984,25 @@ class MoveView(AbstractAuthenticatedView,
         theObject = self.context
         self._check_object_exists(theObject)
         if IRootFolder.providedBy(theObject):
-            raise hexc.HTTPForbidden(_("Cannot move root folder."))
+            raise_json_error(
+                    self.request,
+                    hexc.HTTPForbidden,
+                    {
+                        u'message': _("Cannot move root folder."),
+                        u'code': 'CannotMoveRootFolder',
+                    },
+                    None)
 
         if      ILockedFolder.providedBy(theObject) \
             and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
-            raise hexc.HTTPForbidden(_("Cannot move a locked folder."))
+            raise_json_error(
+                    self.request,
+                    hexc.HTTPForbidden,
+                    {
+                        u'message': _("Cannot move a locked folder."),
+                        u'code': 'CannotMoveLockedFolder',
+                    },
+                    None)
 
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
@@ -956,7 +1011,14 @@ class MoveView(AbstractAuthenticatedView,
         data = self.readInput()
         path = data.get('path')
         if not path:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify a valid path."))
+            raise_json_error(
+                    self.request,
+                    hexc.HTTPUnprocessableEntity,
+                    {
+                        u'message': _("Must specify a valid path."),
+                        u'code': 'InvalidPath',
+                    },
+                    None)
 
         parent, target, target_name = self._get_parent_target(theObject, path)
         if INamedContainer.providedBy(target):
@@ -997,7 +1059,14 @@ class CopyView(MoveView):
         data = self.readInput()
         path = data.get('path')
         if not path:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify a valid path."))
+            raise_json_error(
+                    self.request,
+                    hexc.HTTPUnprocessableEntity,
+                    {
+                        u'message': _("Must specify a valid path."),
+                        u'code': 'InvalidPath',
+                    },
+                    None)
 
         parent, target, target_name = self._get_parent_target(
             theObject, path, strict=False)
