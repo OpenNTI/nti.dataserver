@@ -72,25 +72,25 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         if has_permission(ACT_READ, context, request):
             _links.append(
                 _create_link(
-                    context, 
-                    "tree", 
+                    context,
+                    "tree",
                     "@@tree",
                     params={'flat': False}))
             _links.append(
                 _create_link(
-                    context, 
-                    "export", 
+                    context,
+                    "export",
                     "@@export"))
             _links.append(
                 _create_link(
-                    context, 
-                    "contents", 
+                    context,
+                    "contents",
                     "@@contents",
                     params={'depth': 0}))
             _links.append(
                 _create_link(
-                    context, 
-                    "search", 
+                    context,
+                    "search",
                     "@@search"))
 
         # update based ops
@@ -145,8 +145,8 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
             and not ILockedFolder.providedBy(context):
             _links.append(
                 _create_link(
-                    context, 
-                    rel="delete", 
+                    context,
+                    rel="delete",
                     method='DELETE'))
 
 
@@ -213,9 +213,9 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
             if IContentBaseFile.providedBy(context):
                 _links.append(
                     _create_link(
-                        context, 
+                        context,
                         rel="associate",
-                        name="@@associate", 
+                        name="@@associate",
                         method='POST'))
 
 
