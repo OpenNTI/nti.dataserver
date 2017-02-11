@@ -1122,12 +1122,16 @@ class CFIOView(AbstractAuthenticatedView):
             raise hexc.HTTPNotFound()
 
         view_name = '@@download'
-        content_disposition = request.headers.get("Content-Disposition")
-        if not content_disposition:
-            params = CaseInsensitiveDict(parse_qs(request.query_string or ''))
-            content_disposition = params.get('ContentDisposition')
-        if content_disposition and 'view' in content_disposition:
+        if '@@view' in request.url:
             view_name = '@@view'
+        else:
+            content_disposition = request.headers.get("Content-Disposition")
+            if not content_disposition:
+                query_string = request.query_string or ''
+                params = CaseInsensitiveDict(parse_qs(query_string))
+                content_disposition = params.get('ContentDisposition')
+            if content_disposition and 'view' in content_disposition:
+                view_name = '@@view'
 
         ntiid = to_external_ntiid_oid(context)
         path = b'/%s/Objects/%s/%s' % (get_ds2(),
