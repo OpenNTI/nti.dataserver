@@ -1128,8 +1128,9 @@ class CFIOView(AbstractAuthenticatedView):
             content_disposition = request.headers.get("Content-Disposition")
             if not content_disposition:
                 query_string = request.query_string or ''
-                params = CaseInsensitiveDict(parse_qs(query_string))
-                content_disposition = params.get('ContentDisposition')
+                if query_string:
+                    params = CaseInsensitiveDict(parse_qs(query_string))
+                    content_disposition = params.get('ContentDisposition')
             if content_disposition and 'view' in content_disposition:
                 view_name = '@@view'
 
@@ -1151,5 +1152,4 @@ class CFIOView(AbstractAuthenticatedView):
                     subrequest.environ[k] = request.environ[k]
 
         # invoke
-        result = request.invoke_subrequest(subrequest)
-        return result
+        return request.invoke_subrequest(subrequest)
