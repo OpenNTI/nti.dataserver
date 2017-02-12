@@ -39,13 +39,13 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 
 from nti.dataserver.contenttypes.note import BodyFieldProperty
 
-from nti.dataserver.contenttypes.threadable import ThreadableMixin
-
 from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
+
+from nti.threadable.threadable import Threadable as ThreadableMixin
 
 @interface.implementer(IPost, IAttributeAnnotatable)
 class Post(ZContainedMixin,

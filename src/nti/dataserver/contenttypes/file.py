@@ -20,9 +20,9 @@ from nti.contentfile.model import ContentBlobFile
 
 from nti.dataserver.contenttypes.base import UserContentRoot
 
-from nti.dataserver.contenttypes.threadable import ThreadableMixin
-
 from nti.dataserver.interfaces import IModeledContentFile
+
+from nti.threadable.threadable import Threadable as ThreadableMixin
 
 @interface.implementer(IModeledContentFile, IContained)
 class ModeledContentFile(ThreadableMixin,

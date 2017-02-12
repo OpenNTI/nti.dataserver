@@ -31,8 +31,6 @@ from nti.chatserver.interfaces import IMessageInfo
 from nti.coremetadata.schema import MessageInfoBodyFieldProperty
 
 from nti.dataserver.contenttypes.base import _make_getitem
-from nti.dataserver.contenttypes.threadable import ThreadableMixin
-from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
 from nti.dataserver.sharing import AbstractReadableSharedMixin
 
@@ -51,6 +49,10 @@ from nti.mimetype import mimetype
 
 from nti.property.property import alias 
 from nti.property.property import read_alias
+
+from nti.threadable.externalization import ThreadableExternalizableMixin
+
+from nti.threadable.threadable import Threadable as ThreadableMixin
 
 _BodyFieldProperty = MessageInfoBodyFieldProperty
 

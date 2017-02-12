@@ -18,8 +18,10 @@ from zope.intid.interfaces import IIntIds
 
 from ZODB.POSException import POSKeyError
 
-from nti.dataserver.contenttypes.threadable import ThreadableMixin
-from nti.dataserver.contenttypes.threadable import _threadable_added
+from nti.threadable.subscribers import _threadable_added
+
+from nti.threadable.threadable import Threadable as ThreadableMixin
+
 
 def evolve( context ):
 	"""

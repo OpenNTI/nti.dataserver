@@ -29,8 +29,6 @@ from nti.contentfragments.interfaces import IUnicodeContentFragment
 from nti.dataserver.contenttypes.base import _make_getitem
 from nti.dataserver.contenttypes.base import UserContentRoot
 
-from nti.dataserver.contenttypes.threadable import ThreadableMixin
-
 from nti.dataserver.interfaces import ICanvas
 from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import ICanvasShape
@@ -45,6 +43,8 @@ from nti.externalization.datastructures import ExternalizableInstanceDict
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.mimetype import mimetype
+
+from nti.threadable.threadable import Threadable as ThreadableMixin
 
 #####
 # Whiteboard shapes

@@ -13,10 +13,6 @@
 	<!-- Adapters -->
 	<adapter factory=".adapters._ContainerContext" />
 
-	<!-- Events for keeping replies and referents updated. -->
-	<subscriber handler=".threadable.threadable_added" />
-	<subscriber handler=".threadable.threadable_removed" />
-
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />

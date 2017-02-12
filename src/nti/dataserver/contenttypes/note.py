@@ -28,8 +28,6 @@ from nti.dataserver.contenttypes.base import _make_getitem
 
 from nti.dataserver.contenttypes.highlight import Highlight
 
-from nti.dataserver.contenttypes.threadable import ThreadableMixin
-
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IMedia
 from nti.dataserver.interfaces import ICanvas
@@ -41,6 +39,8 @@ from nti.dataserver.interfaces import IFavoritable
 from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.threadable.threadable import Threadable as ThreadableMixin
 
 # Ownership (containment) and censoring are already taken care of by the
 # event listeners on IBeforeSequenceAssignedEvent
