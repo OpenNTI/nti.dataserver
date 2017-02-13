@@ -18,6 +18,8 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.security.interfaces import IPrincipal
 
+from ZODB.interfaces import IConnection
+
 from nti.messaging import MAILBOX_ANNOTATION_KEY
 
 from nti.messaging.interfaces import IMailbox
@@ -35,12 +37,16 @@ from nti.messaging.storage import Mailbox
 def mailbox_for_annotable(annotable, create=True):
     mailbox = None
     annotations = IAnnotations(annotable)
+    connection = IConnection(annotable, None)
     try:
         mailbox = annotations[MAILBOX_ANNOTATION_KEY]
     except KeyError:
         if create:
             mailbox = Mailbox()
+            if connection is not None:
+                connection.add(mailbox)
             annotations[MAILBOX_ANNOTATION_KEY] = mailbox
+            mailbox.reset() # add containers
             mailbox.__parent__ = annotable
             mailbox.__name__ = MAILBOX_ANNOTATION_KEY
     return mailbox

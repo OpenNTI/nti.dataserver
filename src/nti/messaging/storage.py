@@ -96,6 +96,8 @@ class Mailbox(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 
     def __init__(self):
         super(Mailbox, self).__init__()
+
+    def reset(self):
         self.Sent = self['Sent'] = MessageContainer()
         self.Received = self['Received'] = ReceivedMessageContainer()
 
