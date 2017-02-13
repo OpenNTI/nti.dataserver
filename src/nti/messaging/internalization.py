@@ -40,8 +40,7 @@ class MessageIOBase(ThreadableExternalizableMixin, InterfaceObjectIO):
                 to = (to,)
             parsed['To'] = [self._principal(receipient) for receipient in to]
 
-        result = super(MessageIOBase,
-					   self).updateFromExternalObject(parsed, *args, **kwargs)
+        result = super(MessageIOBase, self).updateFromExternalObject(parsed, *args, **kwargs)
         return result
 
 
@@ -53,4 +52,5 @@ class PeerToPeerHousingMessage(MessageIOBase):
 
     def _principal(self, obj):
         username = getattr(obj, 'username', obj)
+        username = getattr(username, 'id', username)
         return IPrincipal(username)
