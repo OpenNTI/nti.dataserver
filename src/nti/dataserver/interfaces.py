@@ -398,11 +398,6 @@ from zope.security.interfaces import IPrincipal
 from zope.security.interfaces import IPermission
 from zope.security.interfaces import IGroupAwarePrincipal
 
-class ISystemUserPrincipal(IPrincipal):
-	"""
-	Marker for a system user principal
-	"""
-
 class IRole(IGroup):
 	"""
 	Marker for a type of group intended to be used to grant permissions.
@@ -430,6 +425,10 @@ RESERVED_USER_IDS = RESERVED_USER_IDS
 EVERYONE_GROUP_NAME = EVERYONE_GROUP_NAME
 AUTHENTICATED_GROUP_NAME = AUTHENTICATED_GROUP_NAME
 LOWER_RESERVED_USER_IDS = _LOWER_RESERVED_USER_IDS = LOWER_RESERVED_USER_IDS
+
+# BWC exports
+from nti.coremetadata.interfaces import ISystemUserPrincipal
+ISystemUserPrincipal = ISystemUserPrincipal
 
 from nti.coremetadata.interfaces import username_is_reserved
 username_is_reserved = username_is_reserved

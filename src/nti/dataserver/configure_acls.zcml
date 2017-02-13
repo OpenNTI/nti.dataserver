@@ -76,7 +76,4 @@
 	<adapter factory=".authorization_acl._ShareableModeledContentACLProvider" />
 	<adapter factory=".authorization_acl._CoppaUserWithoutAgreementACLProvider" />
 
-	<class class="zope.security.management.system_user">
-		<implements interface=".interfaces.ISystemUserPrincipal" />
-	</class>
 </configure>
