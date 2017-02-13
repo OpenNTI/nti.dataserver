@@ -118,6 +118,7 @@ class IReceivedMessage(IAttributeAnnotatable):
         Marks this message as having been forwarded.
         """
 
+
 class IReceivedMessageViewedEvent(IObjectEvent):
     """
     Fired when IReceivedHousingMessage is replied to
@@ -159,35 +160,6 @@ class IOwned(interface.Interface):
     """
     owner = interface.Attribute("The owner of this object.")
     owner.setTaggedValue('_ext_excluded_out', True)
-
-
-class IMailbox(IOwned, IContained):
-
-    Sent = interface.Attribute("sent messages.")
-    Sent.setTaggedValue('_ext_excluded_out', True)
-
-    Received = interface.Attribute("received messages.")
-    Received.setTaggedValue('_ext_excluded_out', True)
-
-    def send(message):
-        """
-        Handle storage of sent message
-        """
-
-    def receive(message):
-        """
-        Handle storage of received message
-        """
-
-    def get_received():
-        """
-        Return received messages
-        """
-
-    def get_sent():
-        """
-        Return sent messages
-        """
 
 
 class IMessageContainer(IContainer):
@@ -233,6 +205,27 @@ class IReceivedMessageContainer(IContainer):
     def delete_message(message):
         """
         Remove the provided message from the container
+        """
+
+
+class IMailbox(IOwned, IContained):
+
+    Sent = Object(IMessageContainer,
+                  title='Sent messages')
+    Sent.setTaggedValue('_ext_excluded_out', True)
+
+    Received = Object(IReceivedMessageContainer,
+                      title='Received messages')
+    Received.setTaggedValue('_ext_excluded_out', True)
+
+    def send(message):
+        """
+        Handle storage of sent message
+        """
+
+    def receive(message):
+        """
+        Handle storage of received message
         """
 
 

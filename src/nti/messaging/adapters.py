@@ -46,7 +46,6 @@ def mailbox_for_annotable(annotable, create=True):
             if connection is not None:
                 connection.add(mailbox)
             annotations[MAILBOX_ANNOTATION_KEY] = mailbox
-            mailbox.reset() # add containers
             mailbox.__parent__ = annotable
             mailbox.__name__ = MAILBOX_ANNOTATION_KEY
     return mailbox
@@ -74,7 +73,11 @@ def received_messages(received_message):
 @component.adapter(IMessage)
 @interface.implementer(IReceivedMessage)
 def received_message_factory(message):
-    return ReceivedMessage(Message=message) if message else None
+    if message is not None:
+        result = ReceivedMessage(Message=message)
+        result.id = message.id # copy key
+        return result
+    return None
 
 
 @interface.implementer(IPrincipal)

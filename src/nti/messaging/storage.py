@@ -27,6 +27,8 @@ from nti.messaging.interfaces import IReceivedMessage
 from nti.messaging.interfaces import IMessageContainer
 from nti.messaging.interfaces import IReceivedMessageContainer
 
+from nti.property.property import Lazy
+
 
 def save_in_container(container, key, value, event=True):
     if event:
@@ -36,7 +38,7 @@ def save_in_container(container, key, value, event=True):
         container._setitemf(key, value)
         locate(value, parent=container, name=key)
         if      IConnection(container, None) is not None \
-            and IConnection(value, None) is None:
+                and IConnection(value, None) is None:
             IConnection(container).add(value)
         lifecycleevent.added(value, container, key)
         try:
@@ -52,7 +54,7 @@ class MessageContainerBase(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 
     def __init__(self):
         CaseInsensitiveCheckingLastModifiedBTreeContainer.__init__(self)
-        
+
     def _build_key(self):
         return self.generateId("msg_")
 
@@ -85,6 +87,7 @@ class ReceivedMessageContainer(MessageContainerBase):
 class MessageContainer(MessageContainerBase):
     pass
 
+
 @interface.implementer(IMailbox)
 class Mailbox(CaseInsensitiveCheckingLastModifiedBTreeContainer,
               Contained):
@@ -97,9 +100,21 @@ class Mailbox(CaseInsensitiveCheckingLastModifiedBTreeContainer,
     def __init__(self):
         super(Mailbox, self).__init__()
 
-    def reset(self):
-        self.Sent = self['Sent'] = MessageContainer()
-        self.Received = self['Received'] = ReceivedMessageContainer()
+    @Lazy
+    def Sent(self):
+        self._p_changed = True
+        result = MessageContainer()
+        lifecycleevent.created(result)
+        self['Sent'] = result
+        return result
+
+    @Lazy
+    def Received(self):
+        self._p_changed = True
+        result = ReceivedMessageContainer()
+        lifecycleevent.created(result)
+        self['Received'] = result
+        return result
 
     @readproperty
     def creator(self):
@@ -109,7 +124,7 @@ class Mailbox(CaseInsensitiveCheckingLastModifiedBTreeContainer,
     def send(self, message):
         if not message.creator:
             message.creator = message.From.id  # principal id
-        self.Sent.append_message(message)
+        return self.Sent.append_message(message)
 
     def receive(self, message):
         received_message = IReceivedMessage(message)
