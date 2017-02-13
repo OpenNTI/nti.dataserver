@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from six import string_types
+
 from nti.dataserver.interfaces import ISystemUserPrincipal
 
 from nti.dataserver.users.users import User
@@ -17,4 +19,5 @@ from nti.dataserver.users.users import User
 def get_user(principal):
     if ISystemUserPrincipal.providedBy(principal):
         return principal
-    return User.get_user(principal.id)
+    pid = principal if isinstance(principal, string_types) else principal.id
+    return User.get_user(pid)

@@ -74,9 +74,7 @@ def received_messages(received_message):
 @interface.implementer(IReceivedMessage)
 def received_message_factory(message):
     if message is not None:
-        result = ReceivedMessage(Message=message)
-        result.id = message.id # copy key
-        return result
+        return ReceivedMessage(Message=message)
     return None
 
 

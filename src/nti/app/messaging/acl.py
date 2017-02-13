@@ -75,7 +75,7 @@ class MailboxACLProvider(object):
 
     @Lazy
     def __acl__(self):
-        aces = [ace_allowing(IPrincipal(self.creator), READ_CREATE_UPDATE, type(self)),
+        aces = [ace_allowing(IPrincipal(self.context.creator), READ_CREATE_UPDATE, type(self)),
                 ace_allowing(nauth.ROLE_ADMIN, ALL_PERMISSIONS, type(self)),
                 ACE_DENY_ALL]
         return acl_from_aces(aces)

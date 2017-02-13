@@ -133,3 +133,8 @@ class ReceivedMessage(SchemaConfigured,
         if should_notify:
             notify(RecievedMessageRepliedToEvent(self))
         lifecycleevent.modified(self)
+
+    def __setattr__(self, name, value):
+        if name.lower() == 'message' and value is not None:
+            super(ReceivedMessage, self).__setattr__('id', value.id)
+        PersistentCreatedModDateTrackingObject.__setattr__(self, name, value)
