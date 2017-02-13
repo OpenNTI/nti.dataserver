@@ -24,7 +24,8 @@ from zope.location import locate
 
 from ZODB.interfaces import IConnection
 
-from nti.base.interfaces import ILastModified
+from nti.base.interfaces import ICreated
+from nti.base.interfaces import ILastModified 
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
@@ -44,7 +45,7 @@ def save_in_container(container, key, value, event=True):
         container._setitemf(key, value)
         locate(value, parent=container, name=key)
         if      IConnection(container, None) is not None \
-                and IConnection(value, None) is None:
+            and IConnection(value, None) is None:
             IConnection(container).add(value)
         lifecycleevent.added(value, container, key)
         try:
@@ -55,6 +56,7 @@ def save_in_container(container, key, value, event=True):
     return value
 
 
+@interface.implementer(ICreated)
 class MessageContainerBase(CaseInsensitiveCheckingLastModifiedBTreeContainer,
                            Contained):
 
@@ -94,7 +96,7 @@ class MessageContainer(MessageContainerBase):
     pass
 
 
-@interface.implementer(IMailbox, ILastModified)
+@interface.implementer(IMailbox, ILastModified, ICreated)
 class Mailbox(BTreeContainer, Contained):
 
     __external_can_create__ = False
@@ -125,7 +127,10 @@ class Mailbox(BTreeContainer, Contained):
     @readproperty
     def creator(self):
         return self.__parent__
-    owner = creator
+    
+    @readproperty
+    def owner(self):
+        return self.creator
 
     def send(self, message):
         if not message.creator:
