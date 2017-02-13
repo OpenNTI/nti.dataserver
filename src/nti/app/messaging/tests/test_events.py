@@ -127,34 +127,3 @@
 # 																   'MimeType': 'application/vnd.nextthought.oubound.housing.ptphousingmessage'}),
 # 										   'MimeType': 'application/vnd.nextthought.oubound.housing.receivedhousingmessage'}))
 # 
-# class TestACLs(OUBoundTestCase):
-# 
-# 	@WithMockDSTrans
-# 	def test_message_acls(self):
-# 		username = 'user001'
-# 		username2 = 'test001'
-# 		username3 = "user003"
-# 		adminUser = 'testadmin001@nextthought.com'
-# 
-# 		User.create_user(username=username)
-# 		User.create_user(username=username2)
-# 		User.create_user(username=username3)
-# 		User.create_user(username=adminUser)
-# 
-# 		message = PeerToPeerHousingMessage(From=IPrincipal(username), To=[IPrincipal(username2)], Subject='b', body='Piano')
-# 		message.creator = username
-# 
-# 		for action in (nauth.ACT_CREATE, nauth.ACT_DELETE, nauth.ACT_UPDATE, nauth.ACT_READ):
-# 			assert_that(message, permits(username, action))
-# 
-# 		for action in (nauth.ACT_READ,):
-# 			assert_that(message, permits(username2, action))
-# 
-# 		for action in (nauth.ACT_CREATE, nauth.ACT_DELETE, nauth.ACT_UPDATE):
-# 			assert_that(message, not_(permits(username2, action)))
-# 
-# 		for action in (nauth.ACT_CREATE, nauth.ACT_DELETE, nauth.ACT_UPDATE, nauth.ACT_READ):
-# 			assert_that(message, not_(permits(username3, action)))
-# 
-# 		for action in (nauth.ACT_CREATE, nauth.ACT_DELETE, nauth.ACT_UPDATE, nauth.ACT_READ):
-# 			assert_that(message, not_(permits(adminUser, action)))
