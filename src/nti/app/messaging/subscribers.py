@@ -11,19 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.dataserver.interfaces import ISystemUserPrincipal
-
-from nti.dataserver.users.users import User
+from nti.app.messaging.utils import get_user
 
 from nti.messaging.interfaces import IMailbox
 from nti.messaging.interfaces import IDeliveryService
 from nti.messaging.interfaces import IReceivedMessageNotifier
-
-
-def get_user(principal):
-    if ISystemUserPrincipal.providedBy(principal):
-        return principal
-    return User.get_user(principal.id)
 
 
 def message_added(message, event):

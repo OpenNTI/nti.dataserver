@@ -14,7 +14,7 @@ from zope import interface
 
 from zope.security.interfaces import IPrincipal
 
-from nti.dataserver.users import User
+from nti.app.messaging.utils import get_user
 
 from nti.messaging.interfaces import IMailbox
 from nti.messaging.interfaces import IMessage
@@ -33,7 +33,7 @@ class DefaultDeliveryService(object):
         message = self.message if message is None else message
         for addressable in message.To or ():
             principal = IPrincipal(addressable)
-            user = User.get_user(principal.id)
+            user = get_user(principal.id)
             if user is not None:
                 mb = IMailbox(user)
                 mb.receive(message)

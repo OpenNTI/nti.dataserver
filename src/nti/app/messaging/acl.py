@@ -31,7 +31,7 @@ from nti.messaging.interfaces import IReceivedMessageContainer
 from nti.property.property import Lazy
 
 READ_CREATE_UPDATE = (nauth.ACT_READ, nauth.ACT_UPDATE, nauth.ACT_CREATE)
-CRUD = READ_CREATE_UPDATE + (nauth.ACT_DELETE,)
+CRUD_PERMISSIONS = READ_CREATE_UPDATE + (nauth.ACT_DELETE,)
 
 
 @component.adapter(IMessage)
@@ -61,7 +61,7 @@ class ReceivedMessageContainerACLProvider(object):
     def __acl__(self):
         owner = IPrincipal(self.__parent__.owner)
         aces = [ace_allowing(nauth.ROLE_ADMIN, ALL_PERMISSIONS, type(self)),
-                ace_allowing(owner, CRUD, type(self)),
+                ace_allowing(owner, CRUD_PERMISSIONS, type(self)),
                 ACE_DENY_ALL]
         return acl_from_aces(aces)
 
