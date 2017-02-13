@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 import time as tm
 
 from zope import interface
+from zope import lifecycleevent
 
 from zope.event import notify
 
@@ -113,7 +114,8 @@ class ReceivedMessage(SchemaConfigured,
     def mark_forwarded(self, time=None):
         time = tm.time() if time is None else time
         self.ForwardDate = time
-            
+        lifecycleevent.modified(self)
+
     def mark_viewed(self, time=None, should_notify=True, force=False):
         if self.ViewDate and not force:
             return
@@ -121,6 +123,7 @@ class ReceivedMessage(SchemaConfigured,
         self.ViewDate = time
         if should_notify:
             notify(ReceivedMessageViewedEvent(self))
+        lifecycleevent.modified(self)
 
     def mark_replied_to(self, time=None, should_notify=True, force=False):
         if self.ReplyDate and not force:
@@ -129,3 +132,4 @@ class ReceivedMessage(SchemaConfigured,
         self.ReplyDate = time
         if should_notify:
             notify(RecievedMessageRepliedToEvent(self))
+        lifecycleevent.modified(self)
