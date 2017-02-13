@@ -62,6 +62,23 @@
 			 factory=".conversations.ConversationProvider"
 			 provides=".interfaces.IConversationProvider" />
 
+	<!-- Decorators -->
+	<subscriber factory=".decorators.UserMailboxDecorator"
+				for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".decorators.MailboxConversationDecorator"
+				for="nti.messaging.interfaces.IMailbox pyramid.interfaces.IRequest"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".decorators.ConversationDecorator"
+				for=".interfaces.IConversation pyramid.interfaces.IRequest"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".decorators.OpenedLinkDecorator"
+				for="nti.messaging.interfaces.IMessage pyramid.interfaces.IRequest"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />			
+
 	<!-- Traversal -->
 	<adapter name="mailbox"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
