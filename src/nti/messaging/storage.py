@@ -77,11 +77,11 @@ class MessageContainerBase(CaseInsensitiveCheckingLastModifiedBTreeContainer,
     def append_message(self, message, event=False):
         key = message.__name__ or self._build_key()
         return save_in_container(self, key, message, event=event)
-    add = append_message
+    add = append = append_message
 
     def delete_message(self, message):
         del self[message.__name__]
-    delete = delete_message
+    remove = delete = delete_message
 
 
 @interface.implementer(IReceivedMessageContainer)

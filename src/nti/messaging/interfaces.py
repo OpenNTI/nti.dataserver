@@ -173,6 +173,7 @@ class IMessageContainer(IContainer):
         """
         Add the provided message into this container.
         """
+    add = append = append_message
 
     def get_message(ntiid):
         """
@@ -183,6 +184,7 @@ class IMessageContainer(IContainer):
         """
         Remove the provided message from the container
         """
+    remove = delete = delete_message
 
 
 class IReceivedMessageContainer(IContainer):
@@ -196,6 +198,7 @@ class IReceivedMessageContainer(IContainer):
         """
         Add the provided message into this container.
         """
+    add = append = append_message
 
     def get_message(ntiid):
         """
@@ -206,6 +209,7 @@ class IReceivedMessageContainer(IContainer):
         """
         Remove the provided message from the container
         """
+    remove = delete = append_message
 
 
 class IMailbox(IOwned, IContained):
@@ -244,3 +248,4 @@ class RecievedMessageRepliedToEvent(ObjectEvent):
     @property
     def ReceivedMessage(self):
         return self.object
+    message = ReceivedMessage
