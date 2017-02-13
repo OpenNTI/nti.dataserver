@@ -34,7 +34,6 @@ from nti.messaging.interfaces import ReceivedMessageViewedEvent
 from nti.messaging.interfaces import RecievedMessageRepliedToEvent
 
 from nti.property.property import alias
-from nti.property.property import read_alias
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
@@ -61,7 +60,7 @@ class Message(ThreadableMixin,
 
     title = FieldProperty(IMessage['title'])
 
-    id = read_alias('__name__')
+    id = alias('__name__')
 
     containerId = None
 
@@ -104,8 +103,8 @@ class ReceivedMessage(SchemaConfigured,
 
     mimeType = mime_type = 'application/vnd.nextthought.messaging.receivedmessage'
 
+    id = alias('__name__')
     message = alias('Message')
-    id = read_alias('__name__')
 
     def __init__(self, *args, **kwargs):
         SchemaConfigured.__init__(self, *args, **kwargs)

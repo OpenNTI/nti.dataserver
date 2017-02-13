@@ -9,16 +9,22 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+
 from zope import interface
 from zope import lifecycleevent
 
 from zope.cachedescriptors.property import readproperty
+
+from zope.container.btree import BTreeContainer
 
 from zope.container.contained import Contained
 
 from zope.location import locate
 
 from ZODB.interfaces import IConnection
+
+from nti.base.interfaces import ILastModified
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
@@ -88,9 +94,8 @@ class MessageContainer(MessageContainerBase):
     pass
 
 
-@interface.implementer(IMailbox)
-class Mailbox(CaseInsensitiveCheckingLastModifiedBTreeContainer,
-              Contained):
+@interface.implementer(IMailbox, ILastModified)
+class Mailbox(BTreeContainer, Contained):
 
     __external_can_create__ = False
     __external_class_name__ = 'Mailbox'
@@ -99,6 +104,7 @@ class Mailbox(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 
     def __init__(self):
         super(Mailbox, self).__init__()
+        self.createdTime = time.time()
 
     @Lazy
     def Sent(self):
@@ -129,12 +135,6 @@ class Mailbox(CaseInsensitiveCheckingLastModifiedBTreeContainer,
     def receive(self, message):
         received_message = IReceivedMessage(message)
         return self.Received.append_message(received_message)
-
-    def get_received(self):
-        return self.Received
-
-    def get_sent(self):
-        return self.Sent
 
     @property
     def lastModified(self):
