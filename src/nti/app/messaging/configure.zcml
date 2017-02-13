@@ -84,5 +84,10 @@
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 factory=".traversal._mailbox_path_adapter"
 			 provides="zope.traversing.interfaces.IPathAdapter" />
-			 
+
+	<!-- Externalization -->
+	<adapter factory=".externalization._ConversationExternalizer"
+			 for=".interfaces.IConversation"
+			 provides="nti.externalization.interfaces.IInternalObjectExternalizer "/>
+
 </configure>
