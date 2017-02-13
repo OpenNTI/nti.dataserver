@@ -266,15 +266,13 @@ from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 DCTimesLastModifiedMixin = DCTimesLastModifiedMixin
 
 # BWC exports
+from nti.base.interfaces import ICreated
 from nti.base.interfaces import ILastViewed
-from nti.coremetadata.interfaces import ICreated
 
-ICreated = ICreated
 ILastViewed = ILastViewed
 
 # BWC exports
 from nti.coremetadata.interfaces import IContained
-IContained = IContained
 
 class IAnchoredRepresentation(IContained):
 	"""
@@ -526,11 +524,10 @@ class IMutableGroupMember(IGroupMember):
 		"""
 
 # BWC exports
-from nti.coremetadata.interfaces import valid_entity_username
 from nti.coremetadata.interfaces import ICreatedUsername
+from nti.coremetadata.interfaces import valid_entity_username
 
 valid_entity_username=valid_entity_username
-ICreatedUsername=ICreatedUsername
 
 @interface.implementer(ICreatedUsername)
 @component.adapter(ICreated)
@@ -933,7 +930,6 @@ from nti.coremetadata.interfaces import ITitledContent
 from nti.coremetadata.schema import CompoundModeledContentBody
 from nti.coremetadata.schema import ExtendedCompoundModeledContentBody
 
-ITitledContent = ITitledContent
 CompoundModeledContentBody = CompoundModeledContentBody
 
 # BWC exports
@@ -996,9 +992,9 @@ class ISimpleEnclosureContainer(interface.Interface):
 # Particular content types
 
 # BWC exports
-from nti.coremetadata.interfaces import IThreadable
-from nti.coremetadata.interfaces import IWeakThreadable
-from nti.coremetadata.interfaces import IInspectableWeakThreadable
+from nti.threadable.interfaces import IThreadable
+from nti.threadable.interfaces import IWeakThreadable
+from nti.threadable.interfaces import IInspectableWeakThreadable
 
 IWeakThreadable = IWeakThreadable
 IInspectableWeakThreadable = IInspectableWeakThreadable
@@ -1006,7 +1002,6 @@ IInspectableWeakThreadable = IInspectableWeakThreadable
 # BWC exports
 from nti.coremetadata.interfaces import IReadableShared
 from nti.coremetadata.interfaces import IWritableShared
-from nti.coremetadata.interfaces import IInspectableWeakThreadable
 
 IReadableShared = IReadableShared
 IWritableShared = IWritableShared
@@ -1063,9 +1058,9 @@ class IDeviceContainer(INamedContainer):
 
 class ITranscriptSummary(IModeledContent):
 
-	Contributors = Set(	title="All the usernames of people who participated in the conversation",
-						value_type=DecodingValidTextLine(title="The username"),
-						readonly=True)
+	Contributors = Set(title="All the usernames of people who participated in the conversation",
+					   value_type=DecodingValidTextLine(title="The username"),
+					   readonly=True)
 	RoomInfo = interface.Attribute("The meeting where the conversation took place")
 
 class ITranscript(ITranscriptSummary):
@@ -1082,34 +1077,41 @@ class ITranscriptContainer(INamedContainer):
 	contains(ITranscript)
 
 # BWC exports
-from nti.coremetadata.interfaces import ICanvas
 from nti.coremetadata.interfaces import ICanvasShape
 from nti.coremetadata.interfaces import ICanvasURLShape
+from nti.coremetadata.interfaces import ICanvas as ICoreCanvas
 
-ICanvas = ICanvas
+class ICanvas(ICoreCanvas, IThreadable):
+	pass
+
 ICanvasShape = ICanvasShape
 ICanvasURLShape = ICanvasURLShape
 
 # BWC exports
-from nti.coremetadata.interfaces import IMedia
 from nti.coremetadata.interfaces import IEmbeddedAudio
 from nti.coremetadata.interfaces import IEmbeddedMedia
 from nti.coremetadata.interfaces import IEmbeddedVideo
+from nti.coremetadata.interfaces import IMedia as ICoreMedia
 
-IMedia = IMedia
+class IMedia(ICoreMedia, IThreadable):
+	pass
+
 IEmbeddedAudio = IEmbeddedAudio
 IEmbeddedMedia = IEmbeddedMedia
 IEmbeddedVideo = IEmbeddedVideo
 
 # BWC exports
-from nti.coremetadata.interfaces import IModeledContentFile
-IModeledContentFile = IModeledContentFile
+from nti.coremetadata.interfaces import IModeledContentFile as ICoreContentFile
+
+class IModeledContentFile(ICoreContentFile, IThreadable):
+	pass
 
 # BWC exports
 from nti.namedfile.interfaces import IInternalFileRef
 IInternalFileRef = IInternalFileRef
 
-class ISelectedRange(IShareableModeledContent, IAnchoredRepresentation,
+class ISelectedRange(IShareableModeledContent,
+					 IAnchoredRepresentation,
 					 IUserTaggedContent):
 	"""
 	A selected range of content that the user wishes to remember. This interface

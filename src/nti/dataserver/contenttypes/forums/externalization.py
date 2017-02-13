@@ -30,8 +30,6 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IUserTopicParticipationSummary
 
-from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
-
 from nti.dataserver.users import Entity
 
 from nti.externalization.datastructures import InterfaceObjectIO
@@ -45,6 +43,8 @@ from nti.externalization.interfaces import IInternalObjectExternalizer
 from nti.mimetype import decorateMimeType
 
 from nti.namedfile.interfaces import INamedFile
+
+from nti.threadable.externalization import ThreadableExternalizableMixin
 
 OID = StandardExternalFields.OID
 ITEMS = StandardExternalFields.ITEMS

@@ -103,7 +103,7 @@ class Canvas(ThreadableMixin, UserContentRoot):
 
 from nti.dataserver.contenttypes.base import UserContentRootInternalObjectIO
 
-from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
+from nti.threadable.externalization import ThreadableExternalizableMixin
 
 @component.adapter(ICanvas)
 class CanvasInternalObjectIO(ThreadableExternalizableMixin, 
@@ -120,7 +120,8 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin,
 	# We write shapes ourself for speed. The list is often long and only
 	# contains _CanvasShape "objects". Note that this means they cannot be decorated
 
-	_excluded_out_ivars_ = UserContentRootInternalObjectIO._excluded_out_ivars_.union(('shapeList', 'viewportRatio'))
+	_excluded_out_ivars_ = getattr(UserContentRootInternalObjectIO, '_excluded_out_ivars_').union(
+						   ('shapeList', 'viewportRatio'))
 
 	def updateFromExternalObject(self, ext_parsed, **kwargs):
 		canvas = self.context

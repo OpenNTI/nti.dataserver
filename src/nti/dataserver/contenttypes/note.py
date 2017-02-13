@@ -80,7 +80,8 @@ class Note(ThreadableMixin, Highlight):
 	__getitem__ = _make_getitem('body')
 
 from nti.dataserver.contenttypes.highlight import HighlightInternalObjectIO
-from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
+
+from nti.threadable.externalization import ThreadableExternalizableMixin
 
 @component.adapter(INote)
 class NoteInternalObjectIO(ThreadableExternalizableMixin, HighlightInternalObjectIO):

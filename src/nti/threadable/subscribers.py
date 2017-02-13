@@ -15,7 +15,7 @@ from zope.intid.interfaces import IIntIds
 from zope.intid.interfaces import IIntIdAddedEvent
 from zope.intid.interfaces import IIntIdRemovedEvent
 
-from nti.coremetadata.interfaces import IThreadable
+from nti.threadable.interfaces import IThreadable
 
 from nti.threadable.threadable import ThreadableMixin
 

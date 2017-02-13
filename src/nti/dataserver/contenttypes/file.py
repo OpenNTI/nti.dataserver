@@ -24,28 +24,30 @@ from nti.dataserver.interfaces import IModeledContentFile
 
 from nti.threadable.threadable import Threadable as ThreadableMixin
 
+
 @interface.implementer(IModeledContentFile, IContained)
 class ModeledContentFile(ThreadableMixin,
-				 		 UserContentRoot,
-				  		 ContentBlobFile):
+                         UserContentRoot,
+                         ContentBlobFile):
 
-	parameters = None
+    parameters = {}
 
-	def __init__(self, *args, **kwargs):
-		ThreadableMixin.__init__(self)
-		UserContentRoot.__init__(self)
-		ContentBlobFile.__init__(self, *args, **kwargs)
-		self.parameters = {}
+    def __init__(self, *args, **kwargs):
+        ThreadableMixin.__init__(self)
+        UserContentRoot.__init__(self)
+        ContentBlobFile.__init__(self, *args, **kwargs)
+
 
 @component.adapter(IModeledContentFile)
 class _ModeledContentFileObjectIO(ContentBlobFileObjectIO):
 
-	_ext_iface_upper_bound = IModeledContentFile
-	_excluded_in_ivars_ = {'download_url'}.union(ContentBlobFileObjectIO._excluded_in_ivars_)
+    _ext_iface_upper_bound = IModeledContentFile
+    _excluded_in_ivars_ = {'download_url'}.union(
+        ContentBlobFileObjectIO._excluded_in_ivars_)
 
-	def _ext_mimeType(self, obj):
-		return u'application/vnd.nextthought.modeledcontentfile'
+    def _ext_mimeType(self, obj):
+        return u'application/vnd.nextthought.modeledcontentfile'
+
 
 def _ModeledContentFileFactory(ext_obj):
-	factory = ModeledContentFile
-	return factory
+    return ModeledContentFile

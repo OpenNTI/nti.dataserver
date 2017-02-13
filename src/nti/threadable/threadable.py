@@ -17,7 +17,7 @@ from persistent.list import PersistentList
 
 from nti.containers.containers import IntidResolvingIterable
 
-from nti.coremetadata.interfaces import IInspectableWeakThreadable
+from nti.threadable.interfaces import IInspectableWeakThreadable
 
 from nti.wref.interfaces import IWeakRef
 
