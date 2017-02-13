@@ -29,7 +29,6 @@ from zope.security.interfaces import IPrincipal
 
 from nti.base.interfaces import ICreatedTime
 
-from nti.coremetadata.interfaces import ITitledContent
 from nti.coremetadata.interfaces import IUserGeneratedData
 from nti.coremetadata.interfaces import IModeledContentBody
 
@@ -72,7 +71,6 @@ class IMessageBase(interface.Interface):
 class IMessage(IMessageBase,
                IThreadable,
                ICreatedTime,
-               ITitledContent,
                IFileConstrained,
                IUserGeneratedData,
                IModeledContentBody):
@@ -113,7 +111,7 @@ class IReceivedMessage(IAttributeAnnotatable):
 
 class IReceivedMessageViewedEvent(IObjectEvent):
     """
-    Fired when IReceivedHousingMessage is replied to
+    Fired when IReceivedMessage is replied to
     """
     ReceivedMessage = Object(IReceivedMessage,
                              title="The message that was replied to")
@@ -121,7 +119,7 @@ class IReceivedMessageViewedEvent(IObjectEvent):
 
 class IReceivedMessageRepliedToEvent(IObjectEvent):
     """
-    Fired when IReceivedHousingMessage is replied to
+    Fired when IReceivedMessage is replied to
     """
     ReceivedMessage = Object(IReceivedMessage,
                              title="The message that was replied to")
