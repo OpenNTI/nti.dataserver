@@ -98,9 +98,6 @@ class IReceivedMessage(IAttributeAnnotatable):
     ReplyDate = Number(title="UTC timestamp when the message was replied to",
                        required=False)
 
-    ForwardDate = Number(title="UTC timestamp when the message was last forwarded",
-                         required=False)
-
     def mark_viewed(time=None):
         """
         Marks this message as having been viewed.
@@ -111,11 +108,6 @@ class IReceivedMessage(IAttributeAnnotatable):
         """
         Marks this message as having been replied to.
         Emits an IReceivedMessageRepliedToEvent
-        """
-
-    def mark_forwarded(time=None):
-        """
-        Marks this message as having been forwarded.
         """
 
 

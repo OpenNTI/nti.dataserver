@@ -72,14 +72,12 @@ class TestExternal(unittest.TestCase):
                                 'MimeType', u'application/vnd.nextthought.messaging.systemmessage'))
 
         message = ReceivedMessage(Message=message)
-        message.mark_forwarded()
         message.mark_viewed(should_notify=False)
         message.mark_replied_to(should_notify=False)
         ext_obj = to_external_object(message)
         assert_that(ext_obj,
                     has_entries('ViewDate', is_not(none()),
                                 'ReplyDate', is_not(none()),
-                                'ForwardDate', is_not(none()),
                                 'Class', u'ReceivedMessage',
                                 'MimeType', u'application/vnd.nextthought.messaging.receivedmessage',
                                 'Message', is_not(none())))

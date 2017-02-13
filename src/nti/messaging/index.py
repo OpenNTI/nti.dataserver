@@ -42,7 +42,6 @@ IX_MIMETYPE = 'mimeType'
 IX_VIEW_DATE = 'viewDate'
 IX_REPLY_DATE = 'replyDate'
 IX_FROM = IX_SENDER = 'sender'
-IX_FORWARD_DATE = 'forwardDate'
 IX_TO = IX_RECEIVER = 'receiver'
 IX_SENT = IX_CREATED_TIME = 'createdTime'
 
@@ -172,17 +171,6 @@ def ReplyDateIndex(family=None):
                                 normalizer=StringTokenNormalizer())
 
 
-class ForwardDateRawIndex(RawValueIndex):
-    pass
-
-
-def ForwardDateIndex(family=None):
-    return NormalizationWrapper(field_name='ForwardDate',
-                                interface=IReceivedMessage,
-                                index=ForwardDateRawIndex(family=family),
-                                normalizer=StringTokenNormalizer())
-
-
 @interface.implementer(IMetadataCatalog)
 class MessagingCatalog(Catalog):
 
@@ -204,7 +192,6 @@ def create_messaging_catalog(catalog=None, family=None):
                         (IX_VIEW_DATE, ViewDateIndex),
                         (IX_REPLY_DATE, ReplyDateIndex),
                         (IX_SENDER, MessageSenderIndex),
-                        (IX_FORWARD_DATE, ForwardDateIndex),
                         (IX_CREATED_TIME, CreatedTimeIndex),
                         (IX_RECEIVER, MessageReceiverIndex)):
         index = clazz(family=family)

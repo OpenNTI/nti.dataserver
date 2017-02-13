@@ -111,11 +111,6 @@ class ReceivedMessage(SchemaConfigured,
         SchemaConfigured.__init__(self, *args, **kwargs)
         PersistentCreatedModDateTrackingObject.__init__(self)
 
-    def mark_forwarded(self, time=None):
-        time = tm.time() if time is None else time
-        self.ForwardDate = time
-        lifecycleevent.modified(self)
-
     def mark_viewed(self, time=None, should_notify=True, force=False):
         if self.ViewDate and not force:
             return
