@@ -58,4 +58,14 @@
 			 for="nti.dataserver.interfaces.IUser 
 			 	  nti.messaging.interfaces.IMessage" />
 
+	<adapter for="nti.messaging.interfaces.IMailbox"
+			 factory=".conversations.ConversationProvider"
+			 provides=".interfaces.IConversationProvider" />
+
+	<!-- Traversal -->
+	<adapter name="mailbox"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+			 factory=".traversal._mailbox_path_adapter"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+			 
 </configure>
