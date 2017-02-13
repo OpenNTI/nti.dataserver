@@ -9,8 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+MAILBOX = u'mailbox'
 MESSAGE = u'Message'
 MESSAGING = u'Messaging'
 SYSTEM_MAILBOX_KEY = u'SYSTEM_MAILBOX'
 MAILBOX_ANNOTATION_KEY = u'PRINCIPAL_MAILBOX'
-NOTIFICATION_SETTINGS_ANNOTATION_KEY = u'MAIL_NOTIFICATION_SETTINGS'
