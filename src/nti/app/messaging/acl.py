@@ -59,7 +59,7 @@ class ReceivedMessageContainerACLProvider(object):
 
     @Lazy
     def __acl__(self):
-        owner = IPrincipal(self.__parent__.owner)
+        owner = IPrincipal(self.creator)
         aces = [ace_allowing(nauth.ROLE_ADMIN, ALL_PERMISSIONS, type(self)),
                 ace_allowing(owner, CRUD_PERMISSIONS, type(self)),
                 ACE_DENY_ALL]
