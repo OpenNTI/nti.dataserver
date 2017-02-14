@@ -43,6 +43,7 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.messaging.interfaces import IMailbox
 from nti.messaging.interfaces import IMessage
+from nti.messaging.interfaces import IReceivedMessage
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -144,3 +145,24 @@ class MailboxPOSTView(UGDPostView):
         mailbox.send(message)
         self.request.response.status_int = 201
         return Conversation(mailbox, message, (message,))
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             permission=nauth.ACT_UPDATE,
+             request_method='POST',
+             name="opened",
+             context=IReceivedMessage)
+class MarkOpenedView(AbstractAuthenticatedView):
+
+    def __call__(self):
+        if self.context.ViewDate is not None:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 u'message': _("Message already opened"),
+                                 u'code': 'MessageAlreadyOpened',
+                             },
+                             None)
+        self.context.mark_viewed()
+        return self.context.Message
