@@ -38,5 +38,4 @@ class DefaultDeliveryService(object):
                 mb = IMailbox(user)
                 mb.receive(message)
             else:
-                logger.warn("Cannot deliver message to %s",
-                            principal)
+                logger.warn("Cannot deliver message to %s", principal)
