@@ -19,7 +19,8 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.dataserver.tests import mock_dataserver
 
-class TestApplicationInvitationUserViews(ApplicationLayerTest):
+
+class TestMessagingViews(ApplicationLayerTest):
 
     def _link_with_rel(self, links, rel):
         for link in links:
@@ -28,7 +29,7 @@ class TestApplicationInvitationUserViews(ApplicationLayerTest):
         return None
 
     @WithSharedApplicationMockDS(users=True, testapp=True)
-    def testGetHousingMailbox(self):
+    def test_get_mailbox(self):
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user('ichigo')
             self._create_user('aizen')
@@ -36,19 +37,21 @@ class TestApplicationInvitationUserViews(ApplicationLayerTest):
 
         # users with a mailbox have the link to get it
         href = '/dataserver2/users/ichigo'
-        resp = self.testapp.get(href, status=200, 
+        resp = self.testapp.get(href, status=200,
                                 extra_environ=self._make_extra_environ(username=ichigo))
         resp = resp.json_body
-        assert_that(resp, has_entry('Links', has_item(has_entry('rel', 'mailbox'))))
+        assert_that(resp,
+                    has_entry('Links',
+                              has_item(has_entry('rel', 'mailbox'))))
 
         # fetching the link works for the owner
         href = self._link_with_rel(resp['Links'], 'mailbox')['href']
-        resp = self.testapp.get(href, status=200, 
+        resp = self.testapp.get(href, status=200,
                                 extra_environ=self._make_extra_environ(username=ichigo))
         resp = resp.json_body
-        assert_that(resp, 
+        assert_that(resp,
                     has_entry('MimeType', 'application/vnd.nextthought.messaging.mailbox'))
 
         # but you can't fetch someone elses
-        self.testapp.get(href, status=403, 
+        self.testapp.get(href, status=403,
                          extra_environ=self._make_extra_environ(username=aizen))
