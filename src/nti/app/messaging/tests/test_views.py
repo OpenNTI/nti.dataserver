@@ -18,11 +18,15 @@ from hamcrest import same_instance
 from hamcrest import has_properties
 does_not = is_not
 
+from zope import component
+
 from zope.security.interfaces import IPrincipal
 
-from nti.dataserver.users import User
+from nti.app.messaging.utils import get_user
 
 from nti.messaging.interfaces import IMailbox
+
+from nti.messaging.model import PeerToPeerMessage
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -40,14 +44,29 @@ class TestMessagingViews(ApplicationLayerTest):
         return None
 
     def _get_sent_messages(self, username):
-        user = User.get_user(username)
+        user = get_user(username)
         mailbox = IMailbox(user)
         return list(mailbox.Sent.values())
 
     def _get_received_messages(self, username):
-        user = User.get_user(username)
+        user = get_user(username)
         mailbox = IMailbox(user)
         return list(mailbox.Received.values())
+
+    def _new_messsage(self, sender, receiver,
+                      subject="Bleach", body="Bankai"):
+        if not isinstance(receiver, (tuple, list)):
+            receiver = [receiver]
+        sender = get_user(sender)
+        To = [IPrincipal(x) for x in receiver]
+        message = PeerToPeerMessage(To=To,
+                                    body=body,
+                                    Subject=subject,
+                                    From=IPrincipal(sender))
+        mailbox = component.getMultiAdapter((sender, message),
+                                            IMailbox)
+        mailbox.send(message)
+        return message
 
     @WithSharedApplicationMockDS(users=True, testapp=True)
     def test_get_mailbox(self):
@@ -127,3 +146,14 @@ class TestMessagingViews(ApplicationLayerTest):
             assert_that(received_messages, has_length(1))
             assert_that(received_messages[0].Message,
                         same_instance(sent_messages[0]))
+
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    def test_reply_message(self):
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user('ichigo')
+            self._create_user('aizen')
+
+        # creating a root IMessage
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._new_messsage("ichigo", "aizen")
+            # message_id = message.id

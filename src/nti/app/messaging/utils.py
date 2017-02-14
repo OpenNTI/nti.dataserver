@@ -12,17 +12,23 @@ logger = __import__('logging').getLogger(__name__)
 from six import string_types
 
 from nti.dataserver.interfaces import system_user
+
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ISystemUserPrincipal
 
 from nti.dataserver.users.users import User
 
 
 def get_user(principal):
-    if ISystemUserPrincipal.providedBy(principal):
+    if IUser.providedBy(principal):
+        return principal
+    elif ISystemUserPrincipal.providedBy(principal):
         return system_user
     if isinstance(principal, string_types):
         if principal == system_user.id:
             return system_user
         else:
             return User.get_user(principal)
-    return User.get_user(principal.id) if principal is not None else None
+    if principal is not None:
+        return User.get_user(principal.id)
+    return None
