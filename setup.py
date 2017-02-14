@@ -149,6 +149,7 @@ setup(
         'nti.mimetype',
         'nti.namedfile',
         'nti.ntiids',
+        'nti.threadable',
         'nti.transactions',
         'nti.traversal',
         'nti.schema',
