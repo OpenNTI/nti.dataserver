@@ -153,11 +153,40 @@ class TestMessagingViews(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user('ichigo')
             self._create_user('aizen')
+            self._create_user('rukia')
 
         # creating a root IMessage
         with mock_dataserver.mock_db_trans(self.ds):
-            self._new_messsage("ichigo", "aizen")
-            # message_id = message.id
+            message_id = self._new_messsage("ichigo", "aizen").id
+
+        # reply to the root IMessage
+        reply_url = "/dataserver2/users/%s/mailbox/Sent/%s/@@reply" % (
+            "ichigo", message_id)
+
+        ext_obj = {
+            "Subject": "second",
+            "From": "aizen",
+            "To": ["ichigo"],
+            "body": "how are you",
+            "MimeType": "application/vnd.nextthought.messaging.peertopeermessage"
+        }
+
+        # others except for the creator and receivers can't reply on the
+        # message.
+        self.testapp.post_json(reply_url,
+                               ext_obj,
+                               status=401,
+                               extra_environ=self._make_extra_environ(username=None))
+        self.testapp.post_json(reply_url,
+                               ext_obj,
+                               status=403,
+                               extra_environ=self._make_extra_environ(username="rukia"))
+
+        result = self.testapp.post_json(reply_url,
+                                        ext_obj,
+                                        status=201,
+                                        extra_environ=self._make_extra_environ(username="aizen"))
+        assert_that(result.json_body['Subject'], is_('second'))
 
     @WithSharedApplicationMockDS(users=True, testapp=True)
     def test_mark_opened(self):
@@ -171,4 +200,28 @@ class TestMessagingViews(ApplicationLayerTest):
             received_messages = self._get_received_messages('aizen')
             assert_that(received_messages, has_length(1))
             assert_that(received_messages[0].ViewDate, is_(none()))
-            # received_message_id = received_messages[0].Message.id
+            mid = received_messages[0].Message.id
+        href = "/dataserver2/users/%s/mailbox/Received/%s/@@opened" % ("aizen", mid)
+
+        # can't viewed the others' HousingReceivedMessages
+        self.testapp.post_json(href, {},
+                               status=401,
+                               extra_environ=self._make_extra_environ(username=None))
+
+        self.testapp.post_json(href, {},
+                               status=403,
+                               extra_environ=self._make_extra_environ(username="ichigo"))
+
+        self.testapp.post_json(href, {},
+                               status=200,
+                               extra_environ=self._make_extra_environ(username="aizen"))
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            received_messages = self._get_received_messages('aizen')
+            assert_that(received_messages, has_length(1))
+            assert_that(received_messages[0].ViewDate, is_not(none()))
+
+        # has been viewed.
+        self.testapp.post_json(href, {},
+                               status=422,
+                               extra_environ=self._make_extra_environ(username="aizen"))
