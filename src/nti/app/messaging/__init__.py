@@ -9,5 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import zope.i18nmessageid
+MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
+
 #: User notification settings
 NOTIFICATION_SETTINGS_ANNOTATION_KEY = u'MAIL_NOTIFICATION_SETTINGS'
