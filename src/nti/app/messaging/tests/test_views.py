@@ -7,6 +7,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_item
@@ -157,3 +158,17 @@ class TestMessagingViews(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             self._new_messsage("ichigo", "aizen")
             # message_id = message.id
+
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    def test_mark_opened(self):
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user('ichigo')
+            self._create_user('aizen')
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._new_messsage("ichigo", "aizen")
+
+            received_messages = self._get_received_messages('aizen')
+            assert_that(received_messages, has_length(1))
+            assert_that(received_messages[0].ViewDate, is_(none()))
+            # received_message_id = received_messages[0].Message.id
