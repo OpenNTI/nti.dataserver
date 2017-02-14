@@ -62,7 +62,7 @@
 			 factory=".conversations.ConversationProvider"
 			 provides=".interfaces.IConversationProvider" />
 
-	<adapter factory=".adapters._MessageFileConstraints"
+	<adapter factory=".adapters._message_file_constraints"
 			 for="nti.messaging.interfaces.IMessage"
 			 provides="nti.namedfile.interfaces.IFileConstraints" />
 

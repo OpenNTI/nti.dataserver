@@ -83,7 +83,7 @@ def message_for_user_received_message(user, message):
 
 @component.adapter(IMessage)
 @interface.implementer(IFileConstraints)
-def _MessageFileConstraints(note):
+def _message_file_constraints(message):
     result = FileConstraints()
     result.max_file_size = 10485760  # 10 MB
     return result
