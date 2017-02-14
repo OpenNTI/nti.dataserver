@@ -265,7 +265,7 @@ class ReplyView(AbstractAuthenticatedView,
 
         reply.inReplyTo = reply_to
         reply.addReference(reply_to)
-        for ref in reply_to.references:
+        for ref in reply_to.references or ():
             reply.addReference(ref)
 
         # distribute to mailbox.
