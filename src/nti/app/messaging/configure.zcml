@@ -62,11 +62,9 @@
 			 factory=".conversations.ConversationProvider"
 			 provides=".interfaces.IConversationProvider" />
 
-	<adapter factory=".views._MessageFileConstraints"
+	<adapter factory=".adapters._MessageFileConstraints"
 			 for="nti.messaging.interfaces.IMessage"
 			 provides="nti.namedfile.interfaces.IFileConstraints" />
-
-	<adapter factory=".views._message_transformer_factory" />
 
 	<!-- Decorators -->
 	<subscriber factory=".decorators.UserMailboxDecorator"

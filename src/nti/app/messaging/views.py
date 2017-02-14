@@ -10,18 +10,13 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
-from zope import interface
 from zope import lifecycleevent
 
 from zope.security.interfaces import IPrincipal
 
 from pyramid import httpexceptions as hexc
 
-from pyramid.interfaces import IRequest
-
 from pyramid.view import view_config
-
-from nti.app.authentication import get_remote_user
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -39,8 +34,6 @@ from nti.app.messaging.interfaces import IConversationProvider
 
 from nti.app.messaging.utils import get_user
 
-from nti.appserver.interfaces import INewObjectTransformer
-
 from nti.appserver.ugd_edit_views import UGDPostView
 
 from nti.dataserver import authorization as nauth
@@ -50,10 +43,6 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.messaging.interfaces import IMailbox
 from nti.messaging.interfaces import IMessage
-
-from nti.namedfile.constraints import FileConstraints
-
-from nti.namedfile.interfaces import IFileConstraints
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -100,10 +89,26 @@ class MailboxPOSTView(UGDPostView):
 
     content_predicate = IMessage.providedBy
 
+    def validate_attachments(self, user, context, sources=()):
+        sources = sources or ()
+        validate_sources(user, context, sources)
+        for source in sources:
+            source.__parent__ = context
+
+    def _validate(self, context):
+        sources = get_content_files(context)
+        if sources and self.request.POST:
+            read_multipart_sources(self.request, sources.values())
+        if sources:
+            self.validate_attachments(self.remoteUser,
+                                      context,
+                                      sources.values())
+        return context
+
     def __call__(self):
-        message = self.readCreateUpdateContentObject(self.remoteUser)
-        if hasattr(message, 'updateLastMod'):
-            message.updateLastMod()
+        message = self.readCreateUpdateContentObject(self.remoteUser,
+                                                     search_owner=False)
+        message = self._validate(message)
         if message.inReplyTo or message.references:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -113,8 +118,9 @@ class MailboxPOSTView(UGDPostView):
                              },
                              None)
 
+        message.updateLastMod()
         message.creator = self.remoteUser.username
-        message.From = IPrincipal(self.remoteUser)
+        message.From = IPrincipal(message.creator)
 
         # validate receivers
         receivers = set()
@@ -128,7 +134,7 @@ class MailboxPOSTView(UGDPostView):
                                      u'code': 'InvalidUser',
                                  },
                                  None)
-            receivers.add(IPrincipal(user))
+            receivers.add(IPrincipal(name))
         message.To = tuple(receivers)
 
         lifecycleevent.created(message)
@@ -138,31 +144,3 @@ class MailboxPOSTView(UGDPostView):
         mailbox.send(message)
         self.request.response.status_int = 201
         return Conversation(mailbox, message, (message,))
-
-
-@component.adapter(IRequest, IMessage)
-@interface.implementer(INewObjectTransformer)
-def _message_transformer_factory(request, context):
-    sources = get_content_files(context)
-    if sources and request and request.POST:
-        read_multipart_sources(request, sources.values())
-    if sources:
-        validate_attachments(get_remote_user(),
-                             context,
-                             sources.values())
-    return context
-
-
-def validate_attachments(user, context, sources=()):
-    sources = sources or ()
-    validate_sources(user, context, sources)
-    for source in sources:
-        source.__parent__ = context
-
-
-@component.adapter(IMessage)
-@interface.implementer(IFileConstraints)
-def _MessageFileConstraints(note):
-    result = FileConstraints()
-    result.max_file_size = 10485760  # 10 MB
-    return result

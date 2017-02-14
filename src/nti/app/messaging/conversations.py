@@ -43,10 +43,10 @@ class Conversation(object):
 
     mimeType = mime_type = 'application/vnd.nextthought.messaging.conversation'
 
-    def __init__(self, root, mailbox, messages=(), user=None):
-        self._reset(root, mailbox, messages, user)
+    def __init__(self, mailbox, root, messages=(), user=None):
+        self._reset(mailbox, root, messages, user)
 
-    def _reset(self, root, mailbox, messages=(), user=None):
+    def _reset(self, mailbox, root, messages=(), user=None):
         most_recent = None
         unopened_count = 0
         participants = set()
@@ -60,7 +60,7 @@ class Conversation(object):
             participants.update(message.To)
             recv_msg = component.queryMultiAdapter((mailbox, message),
                                                    IReceivedMessage)
-            if recv_msg and recv_msg.ViewDate is None:
+            if recv_msg is None or recv_msg.ViewDate is None:
                 unopened_count += 1
 
         self.RootMessage = root

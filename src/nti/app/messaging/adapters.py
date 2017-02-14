@@ -34,6 +34,10 @@ from nti.messaging.interfaces import IReceivedMessage
 
 from nti.messaging.storage import Mailbox
 
+from nti.namedfile.constraints import FileConstraints
+
+from nti.namedfile.interfaces import IFileConstraints
+
 
 @component.adapter(IUser)
 @component.adapter(IUser, IMessage)
@@ -75,3 +79,11 @@ def message_for_user_received_message(user, message):
     if mailbox is not None:
         return message_for_mailbox_received_message(mailbox, message)
     return None
+
+
+@component.adapter(IMessage)
+@interface.implementer(IFileConstraints)
+def _MessageFileConstraints(note):
+    result = FileConstraints()
+    result.max_file_size = 10485760  # 10 MB
+    return result
