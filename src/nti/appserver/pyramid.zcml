@@ -71,8 +71,6 @@
 	<include package="nti.app.contentfile" file="pyramid.zcml" />
 	<include package="nti.app.contentfolder" file="pyramid.zcml" />
 
-	<include package="nti.app.messaging" file="pyramid.zcml" zcml:condition="have devmode"/>
-
 	<!-- Util views -->
 	<include package=".utils.k20" file="pyramid.zcml" />
 	<pyramid:scan package='.utils.coppa.coppa_admin_views' />
