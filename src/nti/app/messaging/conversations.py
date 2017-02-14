@@ -88,12 +88,7 @@ class ConversationProvider(object):
         is a conversation.
         """
 
-        # Start by collecting all toplevel items we have sent or received
-        toplevels = []
-
-        # sents are easy they are raw messages
-        sent = [x for x in self.mailbox.Sent.values() if is_top_level(x)]
-        toplevels.extend(sent)
+        toplevels = [x for x in self.mailbox.Sent.values() if is_top_level(x)]
 
         # received needs unwrapped
         for received in self.mailbox.Received.values():
