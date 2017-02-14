@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from itertools import chain
+
 from zope import component
 from zope import lifecycleevent
 
@@ -26,6 +28,8 @@ from nti.app.contentfile import read_multipart_sources
 
 from nti.app.externalization.error import raise_json_error
 
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
 from nti.app.messaging import MessageFactory as _
 
 from nti.app.messaging.conversations import Conversation
@@ -33,6 +37,8 @@ from nti.app.messaging.conversations import Conversation
 from nti.app.messaging.interfaces import IConversationProvider
 
 from nti.app.messaging.utils import get_user
+
+from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.ugd_edit_views import UGDPostView
 
@@ -166,3 +172,113 @@ class MarkOpenedView(AbstractAuthenticatedView):
                              None)
         self.context.mark_viewed()
         return self.context.Message
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             permission=nauth.ACT_READ,
+             request_method='GET',
+             name="thread",
+             context=IMessage)
+class ThreadView(AbstractAuthenticatedView):
+    """
+    Returns all the messages in the current thread.  The
+    context should be the top level item (thread root)
+    """
+
+    def __call__(self):
+        messages = []
+        message = self.context
+        for x in chain((message,), message.referents or ()):
+            if has_permission(nauth.ACT_READ, x, self.request):
+                messages.append(x)
+        result = LocatedExternalDict()
+        result.__name__ = self.request.view_name
+        result.__parent__ = self.request.context
+        result[ITEMS] = messages
+        result[TOTAL] = result[ITEM_COUNT] = len(messages)
+        return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             permission=nauth.ACT_READ,  # if you can read you can reply
+             request_method='POST',
+             name="reply",
+             context=IMessage)
+class ReplyView(AbstractAuthenticatedView,
+                ModeledContentUploadRequestUtilsMixin):
+    """
+    Creates and dispatches a reply in this conversation. This api
+    is specialized to the way messaging currently working in the housing
+    app.  The threads are one long thread A<-B<-C.  Our context here
+    should be the top level.
+    """
+
+    def __call__(self):
+        message = self.context
+        if message.inReplyTo is not None:
+            raise_json_error(self.request,
+                             hexc.HTTPBadRequest,
+                             {
+                                 u'message': _("Expected top level message."),
+                                 u'code': 'TopLevelMessageExpected',
+                             },
+                             None)
+
+        # if nothing screwed up there should only be one message
+        # without a reply (one leaf). In the event we find more than one leaf
+        # we try to get things back on track by choosing the one that was created
+        # most recently.
+        all_messages = chain(message.referents or (), (message,))
+        leafs = [msg for msg in all_messages if not msg.replies]
+
+        if len(leafs) < 1:
+            __traceback_info__ = message, leafs
+            raise_json_error(self.request,
+                             hexc.HTTPBadRequest,
+                             {
+                                 u'message': _("Expected at least one leaf."),
+                                 u'code': 'ExpectedAtLeastOneLeaf',
+                             },
+                             None)
+
+        if len(leafs) > 1:
+            logger.warn('More than one leaf message found.  Bad client?',
+                        leafs)
+
+        reply_to = leafs[0]
+        reply = self.readCreateUpdateContentObject(self.remoteUser)
+
+        # make sure sender is set to creator (i.e. app can't change that)?
+        # anything else?
+        reply.From = IPrincipal(self.remoteUser)
+
+        to_principals = set()
+        to_principals.update(reply_to.To)
+        to_principals.add(reply_to.From)
+        to_principals.discard(reply.From)
+
+        reply.To = tuple(to_principals)
+        if not reply.Subject:
+            reply.Subject = reply_to.Subject
+
+        reply.inReplyTo = reply_to
+        reply.addReference(reply_to)
+        for ref in reply_to.references:
+            reply.addReference(ref)
+
+        # distribute to mailbox.
+        mailbox = component.getMultiAdapter((self.remoteUser, reply,),
+                                            IMailbox)
+        mailbox.send(reply)
+
+        # if we can get to a recieved message for us and what we are replying to,
+        # update its ReplyDate
+        received_msg = component.queryMultiAdapter((self.remoteUser, reply_to),
+                                                   IReceivedMessage)
+        if received_msg:
+            received_msg.mark_replied_to()
+
+        self.request.response.status_int = 201
+        return reply
