@@ -11,8 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from zope.location.interfaces import LocationError
-
 from zope.traversing.interfaces import IPathAdapter
 
 from nti.messaging.interfaces import IMailbox
@@ -20,7 +18,4 @@ from nti.messaging.interfaces import IMailbox
 
 @interface.implementer(IPathAdapter)
 def _mailbox_path_adapter(user, request):
-    mailbox = IMailbox(user, None)
-    if not mailbox:
-        raise LocationError(user.username)
-    return mailbox
+    return IMailbox(user)

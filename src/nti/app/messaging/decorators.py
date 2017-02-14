@@ -43,9 +43,6 @@ LINKS = StandardExternalFields.LINKS
 class UserMailboxDecorator(AbstractRequestAwareDecorator):
 
     def _do_decorate_external(self, context, external):
-        mailbox = IMailbox(context, None)
-        if not mailbox:
-            return
         _links = external.setdefault(LINKS, [])
         link = Link(context,
                     rel='mailbox',

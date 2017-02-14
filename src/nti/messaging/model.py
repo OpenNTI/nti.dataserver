@@ -18,7 +18,6 @@ from zope.event import notify
 
 from zope.container.contained import Contained
 
-from zope.schema.fieldproperty import FieldProperty
 from zope.schema.fieldproperty import createFieldProperties
 
 from nti.coremetadata.schema import BodyFieldProperty
@@ -58,8 +57,6 @@ class Message(ThreadableMixin,
     createDirectFieldProperties(IMessage, omit=('Date',))
 
     body = BodyFieldProperty(IMessage['body'])
-
-    title = FieldProperty(IMessage['title'])
 
     id = alias('__name__')
 

@@ -20,6 +20,7 @@ from zope.security.interfaces import IPrincipal
 
 from ZODB.interfaces import IConnection
 
+from nti.messaging import MAILBOX
 from nti.messaging import MAILBOX_ANNOTATION_KEY
 
 from nti.messaging.interfaces import IMailbox
@@ -46,8 +47,8 @@ def mailbox_for_annotable(annotable, create=True):
             if connection is not None:
                 connection.add(mailbox)
             annotations[MAILBOX_ANNOTATION_KEY] = mailbox
+            mailbox.__name__ = MAILBOX # traversable
             mailbox.__parent__ = annotable
-            mailbox.__name__ = MAILBOX_ANNOTATION_KEY
     return mailbox
 
 
