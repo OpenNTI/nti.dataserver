@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import not_
 from hamcrest import assert_that
-
-import unittest
 
 from zope.security.interfaces import IPrincipal
 
@@ -22,7 +20,7 @@ from nti.messaging.model import PeerToPeerMessage
 
 from nti.messaging.storage import Mailbox
 
-from nti.app.messaging.tests import SharedConfiguringTestLayer
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
@@ -30,9 +28,7 @@ from nti.dataserver.tests.test_authorization_acl import denies
 from nti.dataserver.tests.test_authorization_acl import permits
 
 
-class TestACLs(unittest.TestCase):
-
-    layer = SharedConfiguringTestLayer
+class TestACLs(ApplicationLayerTest):
 
     @WithMockDSTrans
     def test_message_acls(self):

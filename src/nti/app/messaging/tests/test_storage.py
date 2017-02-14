@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -15,8 +15,6 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import same_instance
 
-import unittest
-
 from zope.security.interfaces import IPrincipal
 
 from nti.messaging.interfaces import IReceivedMessage
@@ -27,15 +25,13 @@ from nti.messaging.model import ReceivedMessage
 from nti.messaging.storage import MessageContainer
 from nti.messaging.storage import ReceivedMessageContainer
 
-from nti.app.messaging.tests import SharedConfiguringTestLayer
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 
-class TestStorage(unittest.TestCase):
-
-    layer = SharedConfiguringTestLayer
+class TestStorage(ApplicationLayerTest):
 
     @WithMockDSTrans
     def test_message_container(self):
