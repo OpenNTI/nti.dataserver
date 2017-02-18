@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 import time
+import uuid
 from datetime import datetime
 
 from zope import component
@@ -20,8 +21,6 @@ from zope.event import notify
 from zope.intid.interfaces import IIntIds
 
 from BTrees.LFBTree import LFSet
-
-from nti.common.random import generate_random_string
 
 from nti.invitations.index import IX_ACCEPTED
 from nti.invitations.index import IX_RECEIVER
@@ -39,7 +38,7 @@ MAX_TS = time.mktime(datetime.max.timetuple())
 
 
 def get_random_invitation_code():
-    s = generate_random_string(10).upper()
+    s = str(uuid.uuid4()).split('-')[-1][:10].upper()
     result = s[0:3] + '-' + s[3:6] + '-' + s[6:]
     return result
 
