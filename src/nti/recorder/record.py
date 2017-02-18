@@ -76,9 +76,8 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
         except AttributeError:  # pragma: no cover
             return NotImplemented
 
+
 deprecated('TransactionRecordHistory', 'No longer used')
-
-
 class TransactionRecordHistory(Persistent, Contained):
     _records = ()
 
