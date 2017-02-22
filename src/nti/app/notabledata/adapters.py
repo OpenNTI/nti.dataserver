@@ -484,7 +484,6 @@ class UserNotableDataStorage(Persistent, Contained):
 
     def store_intid(self, intid, safe=False):
         s = self._safe_intid_set if safe else self._unsafe_intid_set
-
         added = s.add(intid)
         if added:
             return intid
