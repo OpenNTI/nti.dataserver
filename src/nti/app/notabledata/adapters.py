@@ -132,7 +132,8 @@ class UserNotableData(AbstractAuthenticatedView):
     @CachedProperty
     def _topics_created_by_me_intids(self):
         catalog = self._catalog
-        topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
+        topic_intids = catalog['mimeType'].apply(
+            {'any_of': (_TOPIC_MIMETYPE,)})
 
         topics_created_by_me_intids = catalog.family.IF.intersection(topic_intids,
                                                                      self._intids_created_by_me)
@@ -152,7 +153,8 @@ class UserNotableData(AbstractAuthenticatedView):
         # should have this as a container id.
         __topic_ntiids = self.__topic_ntiids()
         query = {'any_of': __topic_ntiids}
-        comments_in_my_topics_intids = self._catalog['containerId'].apply(query)
+        comments_in_my_topics_intids = self._catalog[
+            'containerId'].apply(query)
         return comments_in_my_topics_intids
 
     @CachedProperty
@@ -181,7 +183,7 @@ class UserNotableData(AbstractAuthenticatedView):
         all_comments = self._all_comments_in_my_topics_intids
         included_comments = self._only_included_comments_in_my_topics_intids
         # Everything that's in all_comments, but not in included_comments
-        comments_i_dont_want = self._catalog.family.IF.difference(all_comments, 
+        comments_i_dont_want = self._catalog.family.IF.difference(all_comments,
                                                                   included_comments)
         return comments_i_dont_want
 
@@ -211,7 +213,7 @@ class UserNotableData(AbstractAuthenticatedView):
     def _group_ntiids(self):
         # Return all friends list we own or are members of.
         results = (set(self.remoteUser.friendsLists.values()) |
-                   set(self.remoteUser.dynamic_memberships) )
+                   set(self.remoteUser.dynamic_memberships))
         return {x.NTIID for x in results if IFriendsList.providedBy(x)}
 
     @CachedProperty('_time_range')
@@ -223,8 +225,10 @@ class UserNotableData(AbstractAuthenticatedView):
         query = {'any_of': shared_with_ids}
         intids_shared_to_me = catalog['sharedWith'].apply(query)
 
-        toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
-        toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
+        toplevel_intids_extent = catalog[IX_TOPICS][
+            TP_TOP_LEVEL_CONTENT].getExtent()
+        toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(
+            intids_shared_to_me)
 
         # Blog posts are now top-level, exclude them. It's confusing when both
         # blogs and blog-posts are returned.
@@ -236,7 +240,7 @@ class UserNotableData(AbstractAuthenticatedView):
         # Any topics shared to me or my groups
         topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,
                                                              _DFL_TOPIC_MIMETYPE)})
-        topic_intids = catalog.family.IF.intersection(topic_intids, 
+        topic_intids = catalog.family.IF.intersection(topic_intids,
                                                       intids_shared_to_me)
 
         query = {'any_of': (self.remoteUser.username,)}
@@ -291,7 +295,7 @@ class UserNotableData(AbstractAuthenticatedView):
                                                                            as_principals=False):
             if IDynamicSharingTargetFriendsList.providedBy(membership):
                 tagged_to_usernames_or_intids.add(membership.NTIID)
-        
+
         query = {'any_of': tagged_to_usernames_or_intids}
         intids_tagged_to_me = catalog[IX_TAGGEDTO].apply(query)
 
@@ -347,7 +351,7 @@ class UserNotableData(AbstractAuthenticatedView):
                 continue
             questionable_obj = uidutil.queryObject(questionable_uid)
             if      questionable_obj is not None \
-                and security_check(questionable_obj):
+                    and security_check(questionable_obj):
                 safely_viewable_intids.add(questionable_uid)
 
         # 2015-07-11 Subtract any message info
@@ -363,7 +367,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
         # Make sure nothing that's deleted got in
         non_deleted_safely_viewable_intids = \
-                (safely_viewable_intids - deleted_intids_extent)
+            (safely_viewable_intids - deleted_intids_extent)
 
         return non_deleted_safely_viewable_intids
 

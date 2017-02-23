@@ -145,18 +145,6 @@ class IUserNotableProvider(interface.Interface):
         """
 
 
-class IUserPriorityCreatorNotableProvider(IUserNotableProvider):
-    """
-    Used to provide a set of objects created by priority creators.
-    """
-
-
-class IUserInstructorFeedbackNotableProvider(IUserNotableProvider):
-    """
-    Used to provide a set of objects created by users as feedback for instructors.
-    """
-
-
 class IUserNotableDataStorage(interface.Interface):
     """
     An implementation helper for objects which otherwise do not
