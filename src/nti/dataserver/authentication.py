@@ -16,6 +16,8 @@ import contextlib
 from zope import component
 from zope import interface
 
+from zope.authentication.interfaces import IUnauthenticatedPrincipal
+
 from zope.security.interfaces import IPrincipal
 
 from zope.securitypolicy.interfaces import Allow
@@ -31,6 +33,7 @@ from nti.dataserver.interfaces import IAuthenticationPolicy
 from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
+from nti.dataserver.interfaces import INoUserEffectivePrincipalResolver
 
 def dynamic_memberships_that_participate_in_security(user, as_principals=True):
 	# Add principals for all the communities that the user is in
@@ -156,6 +159,16 @@ def effective_principals(username,
 		request._v_nti_ds_authentication_eff_prin_cache[key] = result
 
 	return result
+
+@interface.implementer(INoUserEffectivePrincipalResolver)
+class _UnauthenticatedPrincipalProvider(object):
+
+	def __init__(self, request):
+		pass
+
+	def effective_principals(self, request):
+		principal = component.getUtility(IUnauthenticatedPrincipal)
+		return (principal, ) if principal else ()
 
 @interface.implementer(IAuthenticationPolicy)
 class _FixedUserAuthenticationPolicy(object):

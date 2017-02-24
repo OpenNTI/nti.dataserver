@@ -314,6 +314,11 @@
 			 name="system.Everyone"
 			 for="basestring" />
 
+	<!-- By default no user gets the anonymous principal in effective principals-->
+	<subscriber factory=".authentication._UnauthenticatedPrincipalProvider"
+				provides="nti.dataserver.interfaces.INoUserEffectivePrincipalResolver"
+				for="pyramid.interfaces.IRequest" />
+
 	<adapter factory=".interfaces.DefaultCreatedUsername" />
 
 	<!-- Notable filters -->
