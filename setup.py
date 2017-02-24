@@ -223,7 +223,7 @@ setup(
         # See also http://pypi.python.org/pypi/neoppod/ for a
         # completely different option
         'anyjson',
-        'appdirs>=1.4.0',
+        'appdirs',
         # 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
         # See also blist for a tree-structured list
         # URL-safe "slugs" from arbitrary titles. Automatically
