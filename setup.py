@@ -553,7 +553,6 @@ setup(
         ]
     },
     dependency_links=[
-        'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
         'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
         'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev2'
     ],
