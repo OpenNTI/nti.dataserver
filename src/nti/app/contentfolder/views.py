@@ -60,8 +60,6 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
-from nti.common.file import safe_filename
-
 from nti.common.random import generate_random_hex_string
 
 from nti.common.string import is_true
@@ -107,6 +105,8 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.links.links import Link
 
 from nti.mimetype.externalization import decorateMimeType
+
+from nti.namedfile.file import safe_filename
 
 from nti.namedfile.interfaces import INamedFile
 

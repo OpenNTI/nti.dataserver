@@ -9,11 +9,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import re
-
 from zope import lifecycleevent
 
 from nti.contentfolder.interfaces import IRootFolder
+
+from nti.namedfile.file import safe_filename
 
 from nti.traversal.traversal import find_interface
 
@@ -33,22 +33,6 @@ class NotDirectoryException(TraversalException):
 
 class NoSuchFileException(TraversalException):
     pass
-
-
-def safe_filename(s):
-    __traceback_info__ = s
-    if s:
-        try:
-            s = s.encode("ascii", 'xmlcharrefreplace')
-        except Exception:
-            pass
-        s = re.sub(r'[/<>:;"\\|#?*\s]+', '_', s)
-        s = re.sub(r'&', '_', s)
-        try:
-            s = unicode(s)
-        except UnicodeDecodeError:
-            s = s.decode('utf-8')
-    return s
 
 
 def traverse(current, path=None):
