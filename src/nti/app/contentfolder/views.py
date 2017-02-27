@@ -1103,7 +1103,7 @@ class ContentFileExternalView(MoveView):
                renderer='rest',
                request_method='GET',
                context=IDataserverFolder,
-               permission=nauth.ACT_NTI_ADMIN)
+               permission=nauth.ACT_READ)
 class CFIOView(AbstractAuthenticatedView):
 
     def _encode(self, s):
