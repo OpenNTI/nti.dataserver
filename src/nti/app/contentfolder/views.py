@@ -1124,7 +1124,7 @@ class CFIOView(AbstractAuthenticatedView):
         view_name = '@@download'
         if '@@view' in request.url:
             view_name = '@@view'
-        else:
+        elif not '@@download' in request.url:
             content_disposition = request.headers.get("Content-Disposition")
             if not content_disposition:
                 query_string = request.query_string or ''
