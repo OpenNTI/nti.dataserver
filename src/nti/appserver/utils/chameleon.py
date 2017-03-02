@@ -101,12 +101,10 @@ def setup_chameleon_cache(config=False):
             # statically creates a default loader at import time
             temp_mod = dottedname.resolve('chameleon.template')
             if temp_mod.CACHE_DIRECTORY != conf_mod.CACHE_DIRECTORY:
-
                 temp_mod.CACHE_DIRECTORY = conf_mod.CACHE_DIRECTORY
                 temp_mod.BaseTemplate.loader = temp_mod._make_module_loader()
 
             # Creating these guys with debug or autoreload, as Pyramid does when its
             # debug flags are set, will override this setting
-
     return cache_dir
 setupChameleonCache = setup_chameleon_cache
