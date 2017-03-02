@@ -54,6 +54,8 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 
+from nti.appserver.utils.chameleon import setupChameleonCache
+
 import nti.dataserver.users
 
 from nti.dataserver import authorization as nauth
@@ -66,8 +68,6 @@ import nti.dictserver.storage
 from nti.processlifetime import ApplicationProcessStarting
 from nti.processlifetime import ApplicationTransactionOpenedEvent
 from nti.processlifetime import IApplicationTransactionOpenedEvent
-
-from nti.common import setupChameleonCache
 
 ## Make the zope interface extend the pyramid interface
 ## Although this seems backward, it isn't. The zope location

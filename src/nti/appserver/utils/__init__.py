@@ -14,7 +14,8 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 import simplejson
 import collections
 
-from nti.common.maps import CaseInsensitiveDict
+from requests.structures import CaseInsensitiveDict
+
 
 class _JsonBodyView(object):
 
@@ -25,8 +26,8 @@ class _JsonBodyView(object):
         request = self.request
         if request.body:
             values = simplejson.loads(unicode(request.body, request.charset))
-            values = CaseInsensitiveDict(**values) \
-            if isinstance(values, collections.Mapping) else values
+            if isinstance(values, collections.Mapping):
+                values = CaseInsensitiveDict(**values)
         else:
             values = {}
         return values
