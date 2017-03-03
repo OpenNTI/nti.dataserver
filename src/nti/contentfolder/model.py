@@ -94,8 +94,8 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
         checkValidId(key)
         self._setitemf(key, value)
         locate(value, parent=self, name=key)
-        if        IConnection(value, None) is None \
-                and IConnection(self, None) is not None:
+        if      IConnection(value, None) is None \
+            and IConnection(self, None) is not None:
             IConnection(self).add(value)
         lifecycleevent.added(value, self, key)
         self.updateLastMod()
