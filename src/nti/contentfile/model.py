@@ -106,12 +106,23 @@ class BaseContentMixin(object):
         if '_associations' in self.__dict__:
             result = bool(list(self.associations()))
         return result
-    
+
     def count_associations(self):
         result = 0
         if '_associations' in self.__dict__:
             result = len(list(self.associations()))
         return result
+
+    def validate_associations(self):
+        if not '_associations' in self.__dict__:
+            return
+        for wref in list(self._associations):
+            try:
+                obj = wref()
+                if obj is None:
+                    self.discard(self._associations, wref)
+            except Exception:
+                logger.exception("Error while getting associatied object")
 
     def clear_associations(self):
         if '_associations' in self.__dict__:
@@ -179,7 +190,8 @@ def transform_to_blob(context, associations=False):
         result.data = context.data  # be explicit
         if IInternalFileRef.providedBy(context):
             interface.alsoProvides(result, IInternalFileRef)
-            result.reference = getattr(context, 'reference', None)  # extra check
+            result.reference = getattr(
+                context, 'reference', None)  # extra check
         if context.has_associations() or associations:
             [result.add_association(obj) for obj in context.associations()]
     return result
