@@ -106,6 +106,12 @@ class BaseContentMixin(object):
         if '_associations' in self.__dict__:
             result = bool(list(self.associations()))
         return result
+    
+    def count_associations(self):
+        result = 0
+        if '_associations' in self.__dict__:
+            result = len(list(self.associations()))
+        return result
 
     def clear_associations(self):
         if '_associations' in self.__dict__:
