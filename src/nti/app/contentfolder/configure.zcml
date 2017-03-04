@@ -34,10 +34,13 @@
 				for="nti.namedfile.interfaces.INamedFile
 					 pyramid.interfaces.IRequest" />
 
+	<!-- Adapters -->
+	<adapter factory=".adapters._contentfolder_site_adapter" />
+		
 	<configure zcml:condition="have testmode">
 		<adapter name="ofs"
 				 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
-				 factory="._adapters._OFSPathAdapter"
+				 factory=".adapters._OFSPathAdapter"
 				 provides="zope.traversing.interfaces.IPathAdapter" />
 	</configure>
 

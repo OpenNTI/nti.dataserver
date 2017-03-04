@@ -24,12 +24,12 @@ from nti.contentfile.interfaces import IContentBaseFile
 from nti.contentfile.interfaces import IContentBlobFile
 from nti.contentfile.interfaces import IContentBlobImage
 
+from nti.contentfolder.adapters import Site
 from nti.contentfolder.adapters import MimeType
 from nti.contentfolder.adapters import Associations
 
 from nti.contentfolder.adapters import name_adapter
 from nti.contentfolder.adapters import path_adapter
-from nti.contentfolder.adapters import site_adapter
 from nti.contentfolder.adapters import filename_adapter
 
 from nti.contentfolder.interfaces import INameAdapter
@@ -38,6 +38,10 @@ from nti.contentfolder.interfaces import ISiteAdapter
 from nti.contentfolder.interfaces import IFilenameAdapter
 from nti.contentfolder.interfaces import IMimeTypeAdapter
 from nti.contentfolder.interfaces import IAssociationsAdapter
+
+from nti.site.interfaces import IHostPolicyFolder
+
+from nti.traversal.traversal import find_interface
 
 
 @component.adapter(IContentBaseFile)
@@ -62,7 +66,8 @@ def _contentfile_mimeType_adapter(context):
 @component.adapter(IContentBaseFile)
 @interface.implementer(ISiteAdapter)
 def _contentfile_site_adapter(context):
-    return site_adapter(context)
+    folder = find_interface(context, IHostPolicyFolder, strict=False)
+    return Site(folder.__name__) if folder is not None else None
 
 
 @component.adapter(IContentBaseFile)
@@ -84,4 +89,4 @@ def _contentfile_associations_adapter(context):
     if intid is not None and context.has_associations():
         ids = {intid.queryId(x) for x in context.associations()}
         ids.discard(None)
-        return Associations(tuple(ids))
+        return Associations(tuple(ids)) if ids else None

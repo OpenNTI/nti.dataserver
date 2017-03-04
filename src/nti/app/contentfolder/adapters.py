@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
 
 from zope.container.contained import Contained
@@ -17,7 +18,23 @@ from zope.traversing.interfaces import IPathAdapter
 
 from ZODB.interfaces import IConnection
 
+from nti.contentfolder.adapters import Site
+
+from nti.contentfolder.interfaces import ISiteAdapter
+from nti.contentfolder.interfaces import INamedContainer
+
 from nti.contentfolder.model import RootFolder
+
+from nti.site.interfaces import IHostPolicyFolder
+
+from nti.traversal.traversal import find_interface
+
+
+@component.adapter(INamedContainer)
+@interface.implementer(ISiteAdapter)
+def _contentfolder_site_adapter(context):
+    folder = find_interface(context, IHostPolicyFolder, strict=False)
+    return Site(folder.__name__) if folder is not None else None
 
 
 @interface.implementer(IPathAdapter)
