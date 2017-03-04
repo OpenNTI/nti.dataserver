@@ -16,6 +16,8 @@ import datetime
 import nameparser
 import dateutil.parser
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 from zope import interface
 
@@ -34,8 +36,6 @@ from nti.appserver.policies import user_policies
 from nti.appserver.policies import site_policies
 
 from nti.appserver.utils import _JsonBodyView
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.common.string import is_true
 

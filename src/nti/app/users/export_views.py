@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 import six
 from collections import defaultdict
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 
 from zope.intid.interfaces import IIntIds
@@ -35,8 +37,6 @@ from nti.app.users import parse_mime_types
 
 from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IUserTranscriptStorage
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.common.string import is_true
 

@@ -19,6 +19,8 @@ import operator
 import tempfile
 from collections import Mapping
 
+from requests.structures import CaseInsensitiveDict
+
 from ZODB.utils import u64
 
 import simplejson
@@ -57,8 +59,6 @@ from nti.appserver.ugd_query_views import _combine_predicate
 from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 
 from nti.cabinet.filer import transfer_to_native_file
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.common.random import generate_random_hex_string
 

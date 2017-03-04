@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from requests.structures import CaseInsensitiveDict
+
 from itsdangerous import BadSignature
 
 from pyramid.view import view_config
@@ -35,8 +37,6 @@ from nti.app.pushnotifications.utils import validate_signature
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.appserver.policies.site_policies import guess_site_display_name
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.authorization import ACT_READ
 

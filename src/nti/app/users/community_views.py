@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 
 from zope.intid.interfaces import IIntIds
@@ -29,8 +31,6 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.app.users import MessageFactory as _
 
 from nti.app.users.view_mixins import EntityActivityViewMixin
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 

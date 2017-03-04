@@ -14,6 +14,8 @@ from io import BytesIO
 from datetime import datetime
 from functools import partial
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 from zope import interface
 
@@ -30,8 +32,6 @@ from pyramid.view import view_config
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.common.string import to_unicode
 

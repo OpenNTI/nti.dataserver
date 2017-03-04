@@ -14,6 +14,8 @@ import time
 import urllib
 from urlparse import urljoin
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 
 from pyramid import httpexceptions as hexc
@@ -51,8 +53,6 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.appserver.policies.site_policies import guess_site_display_name
 
 from nti.common._compat import sleep
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver import authorization as nauth
 

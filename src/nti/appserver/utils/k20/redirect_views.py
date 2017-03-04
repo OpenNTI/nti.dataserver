@@ -12,12 +12,12 @@ import urllib
 
 from urlparse import urlparse
 
+from requests.structures import CaseInsensitiveDict
+
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.users.users import User
 from nti.dataserver import authorization as nauth

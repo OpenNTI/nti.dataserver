@@ -13,6 +13,8 @@ from . import MessageFactory as _
 
 logger = __import__('logging').getLogger(__name__)
 
+from requests.structures import CaseInsensitiveDict
+
 import simplejson
 
 from zope import interface
@@ -24,8 +26,6 @@ from pyramid import httpexceptions as hexc
 
 from nti.app.renderers.caching import uncached_in_response
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.externalization.interfaces import IExternalMappingDecorator
 

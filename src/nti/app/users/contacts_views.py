@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 
 from zope.security.interfaces import IPrincipal
@@ -20,8 +22,6 @@ from pyramid.view import view_config
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.users import SUGGESTED_CONTACTS
-
-from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.authorization import ACT_READ
 
