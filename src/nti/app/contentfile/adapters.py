@@ -63,11 +63,15 @@ def _contentfile_mimeType_adapter(context):
     return MimeType(mimeType)
 
 
+def site_adapter(context):
+    folder = find_interface(context, IHostPolicyFolder, strict=False)
+    return Site(folder.__name__) if folder is not None else None
+
+
 @component.adapter(IContentBaseFile)
 @interface.implementer(ISiteAdapter)
 def _contentfile_site_adapter(context):
-    folder = find_interface(context, IHostPolicyFolder, strict=False)
-    return Site(folder.__name__) if folder is not None else None
+    return site_adapter(context)
 
 
 @component.adapter(IContentBaseFile)
