@@ -20,4 +20,14 @@
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._on_content_file_moved" />
 
+	<!-- Adapters -->
+	<adapter factory=".adapters._contentfile_path_adapter" />
+	<adapter factory=".adapters._contentfolder_path_adapter" />
+	
+	<adapter factory=".adapters._contentfile_mimeType_adapter" />
+	<adapter factory=".adapters._contentfolder_mimeType_adapter" />
+
+	<adapter factory=".adapters._contentfile_site_adapter" />
+	<adapter factory=".adapters._contentfolder_site_adapter" />
+	
 </configure>

@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
+
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.container.constraints import contains
@@ -94,3 +96,34 @@ class IRootFolder(IContentFolder):
 
 class ILockedFolder(IContentFolder):
     pass
+
+
+# Index adapters 
+
+
+class ISiteAdapter(interface.Interface):
+    """
+    Adapt resource objects to their site
+    """
+    site = interface.Attribute("site string")
+
+
+class IMimeTypeAdapter(interface.Interface):
+    """
+    Adapt resource objects to their mimetype
+    """
+    mimeType = interface.Attribute("MimeType string")
+
+
+class IContainerIdAdapter(interface.Interface):
+    """
+    Adapt resource objects to their containerId
+    """
+    containerId = interface.Attribute("containerId string")
+
+
+class IPathAdapter(interface.Interface):
+    """
+    Adapt resource objects to their path
+    """
+    path = interface.Attribute("site string")
