@@ -120,9 +120,9 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
     def __call__(self):
         values = CaseInsensitiveDict(self.readInput())
         usernames = values.get('user') \
-            or values.get('users') \
-            or values.get('username') \
-            or values.get('usernames')
+                 or values.get('users') \
+                 or values.get('username') \
+                 or values.get('usernames')
         if isinstance(usernames, six.string_types):
             usernames = usernames.split(",")
         if not usernames:
@@ -222,7 +222,8 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
                permission=nauth.ACT_NTI_ADMIN,
                request_method='POST',
                context=IDataserverFolder)
-class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
+class RemoveUserView(AbstractAuthenticatedView, 
+                     ModeledContentUploadRequestUtilsMixin):
 
     def __call__(self):
         values = CaseInsensitiveDict(self.readInput())
