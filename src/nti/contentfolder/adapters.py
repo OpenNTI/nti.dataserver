@@ -16,16 +16,11 @@ from nti.base._compat import unicode_
 
 from nti.contentfolder.interfaces import INameAdapter
 from nti.contentfolder.interfaces import IPathAdapter
-from nti.contentfolder.interfaces import ISiteAdapter
 from nti.contentfolder.interfaces import INamedContainer
 from nti.contentfolder.interfaces import IFilenameAdapter
 from nti.contentfolder.interfaces import IMimeTypeAdapter
 
 from nti.contentfolder.utils import compute_path
-
-from nti.site.interfaces import IHostPolicyFolder
-
-from nti.traversal.traversal import find_interface
 
 
 class Path(object):
@@ -68,17 +63,6 @@ class Site(object):
 
     def __init__(self, site):
         self.site = unicode_(site) if site else None
-
-
-def site_adapter(context):
-    folder = find_interface(context, IHostPolicyFolder, strict=False)
-    return Site(folder.__name__) if folder is not None else None
-
-
-@component.adapter(INamedContainer)
-@interface.implementer(ISiteAdapter)
-def _contentfolder_site_adapter(context):
-    return site_adapter(context)
 
 
 class Name(object):
