@@ -20,11 +20,14 @@ from nti.base._compat import unicode_
 
 from nti.contentfile.interfaces import IContentBaseFile
 
+from nti.contentfolder.interfaces import INameAdapter
 from nti.contentfolder.interfaces import IPathAdapter
 from nti.contentfolder.interfaces import ISiteAdapter
 from nti.contentfolder.interfaces import IContentFolder
 from nti.contentfolder.interfaces import IMimeTypeAdapter
+from nti.contentfolder.interfaces import IFilenameAdapter
 from nti.contentfolder.interfaces import IContainerIdAdapter
+from nti.contentfolder.interfaces import IAssociationsAdapter
 
 from nti.zope_catalog.catalog import Catalog
 
@@ -122,12 +125,25 @@ class ContentTypeIndex(AttributeValueIndex):
 
 class FilenameIndex(AttributeValueIndex):
     default_field_name = 'filename'
-    default_interface = IContentBaseFile
+    default_interface = IFilenameAdapter
 
 
 class NameIndex(AttributeValueIndex):
     default_field_name = 'name'
-    default_interface = IContentBaseFile
+    default_interface = INameAdapter
+
+
+class ValidatingCreatedTime(object):
+
+    __slots__ = (b'createdTime',)
+
+    def __init__(self, obj, default=None):
+        if    IContentBaseFile.providedBy(obj) \
+           or IContentFolder.providedBy(obj):
+            self.createdTime = obj.createdTime
+
+    def __reduce__(self):
+        raise TypeError()
 
 
 class CreatedTimeRawIndex(RawIntegerValueIndex):
@@ -136,9 +152,22 @@ class CreatedTimeRawIndex(RawIntegerValueIndex):
 
 def CreatedTimeIndex(family=None):
     return NormalizationWrapper(field_name='createdTime',
-                                interface=IContentBaseFile,
+                                interface=ValidatingCreatedTime,
                                 index=CreatedTimeRawIndex(family=family),
                                 normalizer=TimestampToNormalized64BitIntNormalizer())
+
+
+class ValidatingLastModified(object):
+
+    __slots__ = (b'lastModified',)
+
+    def __init__(self, obj, default=None):
+        if    IContentBaseFile.providedBy(obj) \
+           or IContentFolder.providedBy(obj):
+            self.lastModified = obj.lastModified
+
+    def __reduce__(self):
+        raise TypeError()
 
 
 class LastModififedRawIndex(RawIntegerValueIndex):
@@ -147,30 +176,14 @@ class LastModififedRawIndex(RawIntegerValueIndex):
 
 def LastModifiedIndex(family=None):
     return NormalizationWrapper(field_name='lastModified',
-                                interface=IContentBaseFile,
+                                interface=ValidatingLastModified,
                                 index=CreatedTimeRawIndex(family=family),
                                 normalizer=TimestampToNormalized64BitIntNormalizer())
 
 
-class ValidatingAssociations(object):
-
-    __slots__ = (b'associations',)
-
-    def __init__(self, obj, default=None):
-        if IContentBaseFile.providedBy(obj):
-            intid = component.queryUtility(IIntIds)
-            if intid is not None and obj.has_associations():
-                ids = {intid.queryId(x) for x in obj.associations()}
-                ids.discard(None)
-                self.associations = tuple(ids)
-
-    def __reduce__(self):
-        raise TypeError()
-
-
 class AssociationsIndex(AttributeSetIndex):
     default_field_name = 'associations'
-    default_interface = ValidatingAssociations
+    default_interface = IAssociationsAdapter
 
 
 @interface.implementer(IMetadataCatalog)

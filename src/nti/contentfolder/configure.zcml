@@ -30,4 +30,12 @@
 	<adapter factory=".adapters._contentfile_site_adapter" />
 	<adapter factory=".adapters._contentfolder_site_adapter" />
 	
+	<adapter factory=".adapters._contentfile_name_adapter" />
+	<adapter factory=".adapters._contentfolder_name_adapter" />
+	
+	<adapter factory=".adapters._contentfile_filename_adapter" />
+	<adapter factory=".adapters._contentfolder_filename_adapter" />
+	
+	<adapter factory=".adapters._contentfile_associations_adapter" />
+
 </configure>

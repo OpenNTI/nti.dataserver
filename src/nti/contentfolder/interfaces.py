@@ -98,7 +98,7 @@ class ILockedFolder(IContentFolder):
     pass
 
 
-# Index adapters 
+# Index adapters
 
 
 class ISiteAdapter(interface.Interface):
@@ -127,3 +127,24 @@ class IPathAdapter(interface.Interface):
     Adapt resource objects to their path
     """
     path = interface.Attribute("site string")
+
+
+class INameAdapter(interface.Interface):
+    """
+    Adapt resource objects to their name
+    """
+    name = interface.Attribute("name string")
+
+
+class IFilenameAdapter(interface.Interface):
+    """
+    Adapt resource objects to their filename
+    """
+    filename = interface.Attribute("filename string")
+
+
+class IAssociationsAdapter(interface.Interface):
+    """
+    Adapt resource objects to their associations
+    """
+    associations = interface.Attribute("Associations ids")
