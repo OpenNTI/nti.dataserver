@@ -18,8 +18,6 @@ from zope.location import locate
 
 from nti.base._compat import unicode_
 
-from nti.contentfile.interfaces import IContentBaseFile
-
 from nti.contentfolder.interfaces import INameAdapter
 from nti.contentfolder.interfaces import IPathAdapter
 from nti.contentfolder.interfaces import ISiteAdapter
@@ -28,6 +26,8 @@ from nti.contentfolder.interfaces import IMimeTypeAdapter
 from nti.contentfolder.interfaces import IFilenameAdapter
 from nti.contentfolder.interfaces import IContainerIdAdapter
 from nti.contentfolder.interfaces import IAssociationsAdapter
+
+from nti.namedfile.interfaces import IFile
 
 from nti.zope_catalog.catalog import Catalog
 
@@ -96,7 +96,7 @@ class ValidatingCreator(object):
     __slots__ = (b'creator',)
 
     def __init__(self, obj, default=None):
-        if    IContentBaseFile.providedBy(obj) \
+        if    IFile.providedBy(obj) \
            or IContentFolder.providedBy(obj):
             creator = getattr(obj, 'creator', None)
             creator = getattr(creator, 'username', creator)
@@ -120,7 +120,7 @@ class PathIndex(AttributeValueIndex):
 
 class ContentTypeIndex(AttributeValueIndex):
     default_field_name = 'contentType'
-    default_interface = IContentBaseFile
+    default_interface = IFile
 
 
 class FilenameIndex(AttributeValueIndex):
@@ -138,7 +138,7 @@ class ValidatingCreatedTime(object):
     __slots__ = (b'createdTime',)
 
     def __init__(self, obj, default=None):
-        if    IContentBaseFile.providedBy(obj) \
+        if    IFile.providedBy(obj) \
            or IContentFolder.providedBy(obj):
             self.createdTime = obj.createdTime
 
@@ -162,7 +162,7 @@ class ValidatingLastModified(object):
     __slots__ = (b'lastModified',)
 
     def __init__(self, obj, default=None):
-        if    IContentBaseFile.providedBy(obj) \
+        if    IFile.providedBy(obj) \
            or IContentFolder.providedBy(obj):
             self.lastModified = obj.lastModified
 
