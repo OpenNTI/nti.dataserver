@@ -21,21 +21,10 @@
 	<subscriber handler=".subscribers._on_content_file_moved" />
 
 	<!-- Adapters -->
-	<adapter factory=".adapters._contentfile_path_adapter" />
 	<adapter factory=".adapters._contentfolder_path_adapter" />
-	
-	<adapter factory=".adapters._contentfile_mimeType_adapter" />
-	<adapter factory=".adapters._contentfolder_mimeType_adapter" />
-
-	<adapter factory=".adapters._contentfile_site_adapter" />
 	<adapter factory=".adapters._contentfolder_site_adapter" />
-	
-	<adapter factory=".adapters._contentfile_name_adapter" />
 	<adapter factory=".adapters._contentfolder_name_adapter" />
-	
-	<adapter factory=".adapters._contentfile_filename_adapter" />
 	<adapter factory=".adapters._contentfolder_filename_adapter" />
-	
-	<adapter factory=".adapters._contentfile_associations_adapter" />
+	<adapter factory=".adapters._contentfolder_mimeType_adapter" />
 
 </configure>
