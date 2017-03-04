@@ -22,10 +22,9 @@ from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfolder.interfaces import IPathAdapter
 from nti.contentfolder.interfaces import ISiteAdapter
+from nti.contentfolder.interfaces import IContentFolder
 from nti.contentfolder.interfaces import IMimeTypeAdapter
 from nti.contentfolder.interfaces import IContainerIdAdapter
-
-from nti.namedfile.interfaces import IFile
 
 from nti.zope_catalog.catalog import Catalog
 
@@ -94,7 +93,8 @@ class ValidatingCreator(object):
     __slots__ = (b'creator',)
 
     def __init__(self, obj, default=None):
-        if IFile.providedBy(obj):
+        if    IContentBaseFile.providedBy(obj) \
+           or IContentFolder.providedBy(obj):
             creator = getattr(obj, 'creator', None)
             creator = getattr(creator, 'username', creator)
             creator = getattr(creator, 'id', creator)
@@ -117,17 +117,17 @@ class PathIndex(AttributeValueIndex):
 
 class ContentTypeIndex(AttributeValueIndex):
     default_field_name = 'contentType'
-    default_interface = IFile
+    default_interface = IContentBaseFile
 
 
 class FilenameIndex(AttributeValueIndex):
     default_field_name = 'filename'
-    default_interface = IFile
+    default_interface = IContentBaseFile
 
 
 class NameIndex(AttributeValueIndex):
     default_field_name = 'name'
-    default_interface = IFile
+    default_interface = IContentBaseFile
 
 
 class CreatedTimeRawIndex(RawIntegerValueIndex):
@@ -136,7 +136,7 @@ class CreatedTimeRawIndex(RawIntegerValueIndex):
 
 def CreatedTimeIndex(family=None):
     return NormalizationWrapper(field_name='createdTime',
-                                interface=IFile,
+                                interface=IContentBaseFile,
                                 index=CreatedTimeRawIndex(family=family),
                                 normalizer=TimestampToNormalized64BitIntNormalizer())
 
@@ -147,7 +147,7 @@ class LastModififedRawIndex(RawIntegerValueIndex):
 
 def LastModifiedIndex(family=None):
     return NormalizationWrapper(field_name='lastModified',
-                                interface=IFile,
+                                interface=IContentBaseFile,
                                 index=CreatedTimeRawIndex(family=family),
                                 normalizer=TimestampToNormalized64BitIntNormalizer())
 
@@ -220,11 +220,11 @@ def install_content_resources_catalog(site_manager_container, intids=None):
     catalog = ContentResourcesCatalog(family=intids.family)
     locate(catalog, site_manager_container, CATALOG_NAME)
     intids.register(catalog)
-    lsm.registerUtility(catalog, 
-                        provided=IMetadataCatalog, 
+    lsm.registerUtility(catalog,
+                        provided=IMetadataCatalog,
                         name=CATALOG_NAME)
 
-    catalog = create_content_resources_catalog(catalog=catalog, 
+    catalog = create_content_resources_catalog(catalog=catalog,
                                                family=intids.family)
     for index in catalog.values():
         intids.register(index)

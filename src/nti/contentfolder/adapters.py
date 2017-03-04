@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from nti.base._compat import unicode_
+
 from nti.contentfile import CONTENT_FILE_MIMETYPE
 from nti.contentfile import CONTENT_IMAGE_MIMETYPE
 from nti.contentfile import CONTENT_BLOB_FILE_MIMETYPE
@@ -92,7 +94,7 @@ class Site(object):
     __slots__ = (b'site',)
 
     def __init__(self, site):
-        self.site = site
+        self.site = unicode_(site) if site else None
 
 
 def site_adapter(context):
