@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from requests.structures import CaseInsensitiveDict
 
+from zope import lifecycleevent
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -113,6 +115,7 @@ class ContentFileAssociateView(AbstractAuthenticatedView,
                 None)
         if target is not self.context and target is not self.context.__parent__:
             self.context.add_association(target)
+            lifecycleevent.modified(self.context)
         return hexc.HTTPNoContent()
 
 

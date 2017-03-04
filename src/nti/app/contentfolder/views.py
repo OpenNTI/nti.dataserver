@@ -196,7 +196,7 @@ class SortMixin(object):
                context=INamedContainer,
                permission=nauth.ACT_READ,
                request_method='GET')
-class ContainerContentsView(AbstractAuthenticatedView, 
+class ContainerContentsView(AbstractAuthenticatedView,
                             BatchingUtilsMixin,
                             SortMixin):
 
@@ -355,7 +355,8 @@ class MkdirView(AbstractAuthenticatedView,
         return '% %' % (prefix, generate_random_hex_string())
 
     def readInput(self, value=None):
-        data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+        data = ModeledContentUploadRequestUtilsMixin.readInput(
+            self, value=value)
         data = CaseInsensitiveDict(data)
         if 'name' not in data:
             data['name'] = self.generate()
@@ -397,7 +398,8 @@ class MkdirsView(AbstractAuthenticatedView,
         return result
 
     def readInput(self, value=None):
-        data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+        data = ModeledContentUploadRequestUtilsMixin.readInput(
+            self, value=value)
         data = CaseInsensitiveDict(data)
         if 'name' in data:
             data['path'] = data.pop('name', None)
@@ -423,7 +425,8 @@ class UploadView(AbstractAuthenticatedView,
                  ModeledContentUploadRequestUtilsMixin):
 
     def readInput(self, value=None):
-        result = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+        result = ModeledContentUploadRequestUtilsMixin.readInput(
+            self, value=value)
         return CaseInsensitiveDict(result)
 
     @Lazy
@@ -483,6 +486,7 @@ class UploadView(AbstractAuthenticatedView,
                 self.context.add(target)
             items.append(target)
 
+        lifecycleevent.modified(self.context)
         self.request.response.status_int = 201
         result[ITEM_COUNT] = result[TOTAL] = len(items)
         return result
@@ -542,10 +546,9 @@ class ImportView(AbstractAuthenticatedView,
                     file_key = safe_filename(filename)
                     with zfile.open(info, "r") as source:
                         if filepath:
-                            folder = mkdirs(
-                                self.context,
-                                filepath,
-                                self.builder)
+                            folder = mkdirs(self.context,
+                                            filepath,
+                                            self.builder)
                         else:
                             folder = self.context
                         if file_key in folder:
@@ -553,10 +556,9 @@ class ImportView(AbstractAuthenticatedView,
                             target.data = source.read()
                             lifecycleevent.modified(target)
                         else:
-                            target = self.get_namedfile(
-                                source,
-                                file_key,
-                                filename)
+                            target = self.get_namedfile(source,
+                                                        file_key,
+                                                        filename)
                             target.creator = creator
                             lifecycleevent.created(target)
                             folder.add(target)
@@ -596,7 +598,8 @@ class ExportView(AbstractAuthenticatedView):
             response = self.request.response
             response.content_encoding = str('identity')
             response.content_type = str('application/x-gzip; charset=UTF-8')
-            response.content_disposition = str('attachment; filename="export.zip"')
+            response.content_disposition = str(
+                'attachment; filename="export.zip"')
             response.body_file = open(source, "rb")
             return response
         finally:
@@ -604,7 +607,7 @@ class ExportView(AbstractAuthenticatedView):
 
 
 def has_associations(theObject):
-    return      hasattr(theObject, 'has_associations') \
+    return  hasattr(theObject, 'has_associations') \
         and theObject.has_associations()
 
 
@@ -647,14 +650,14 @@ class DeleteMixin(AbstractAuthenticatedView,
                          params={'force': True}, method='DELETE'),
                 )
                 raise_json_error(
-                        self.request,
-                        hexc.HTTPConflict,
-                        {
-                            u'message': _('This file appears in viewable materials.'),
-                            u'code': 'ContentFileHasReferences',
-                            LINKS: to_external_object(links)
-                        },
-                        None)
+                    self.request,
+                    hexc.HTTPConflict,
+                    {
+                        u'message': _('This file appears in viewable materials.'),
+                        u'code': 'ContentFileHasReferences',
+                        LINKS: to_external_object(links)
+                    },
+                    None)
 
 
 @view_config(context=INamedFile)
@@ -752,26 +755,26 @@ class RenameMixin(object):
     def do_rename(self, theObject, new_name, old_key=None):
         if not new_name:
             raise_json_error(
-                    self.request,
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'message': _("Must specify a valid name."),
-                        u'code': 'EmptyFileName',
-                    },
-                    None)
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _("Must specify a valid name."),
+                    u'code': 'EmptyFileName',
+                },
+                None)
 
         # get name/filename
         parent = theObject.__parent__
         new_key = safe_filename(new_name)
         if new_key in parent:
             raise_json_error(
-                    self.request,
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'message': _("File already exists."),
-                        u'code': 'FileAlreadyExists',
-                    },
-                    None)
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _("File already exists."),
+                    u'code': 'FileAlreadyExists',
+                },
+                None)
 
         # replace name
         old_name = theObject.filename
@@ -786,6 +789,7 @@ class RenameMixin(object):
 
         # replace in folder
         parent.rename(old_key, new_key)
+        lifecycleevent.modified(theObject)
 
 
 @view_config(context=INamedFile)
@@ -800,24 +804,24 @@ class RenameView(UGDPutView, RenameMixin):
     def _check_object_constraints(self, theObject, externalValue=None):
         if IRootFolder.providedBy(theObject):
             raise_json_error(
-                    self.request,
-                    hexc.HTTPForbidden,
-                    {
-                        u'message': _("Cannot rename root folder."),
-                        u'code': 'CannotRenameRootFolder',
-                    },
-                    None)
+                self.request,
+                hexc.HTTPForbidden,
+                {
+                    u'message': _("Cannot rename root folder."),
+                    u'code': 'CannotRenameRootFolder',
+                },
+                None)
 
         if      ILockedFolder.providedBy(theObject) \
             and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(
-                    self.request,
-                    hexc.HTTPForbidden,
-                    {
-                        u'message': _("Cannot rename a locked folder."),
-                        u'code': 'CannotRenameLockedFolder',
-                    },
-                    None)
+                self.request,
+                hexc.HTTPForbidden,
+                {
+                    u'message': _("Cannot rename a locked folder."),
+                    u'code': 'CannotRenameLockedFolder',
+                },
+                None)
 
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
@@ -867,24 +871,24 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
     def _check_object_constraints(self, theObject, externalValue):
         if IRootFolder.providedBy(theObject):
             raise_json_error(
-                    self.request,
-                    hexc.HTTPForbidden,
-                    {
-                        u'message': _("Cannot update root folder."),
-                        u'code': 'CannotUpdateRootFolder',
-                    },
-                    None)
+                self.request,
+                hexc.HTTPForbidden,
+                {
+                    u'message': _("Cannot update root folder."),
+                    u'code': 'CannotUpdateRootFolder',
+                },
+                None)
 
         if      ILockedFolder.providedBy(theObject) \
             and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(
-                    self.request,
-                    hexc.HTTPForbidden,
-                    {
-                        u'message': _("Cannot update a locked folder."),
-                        u'code': 'CannotUpdateLockedFolder',
-                    },
-                    None)
+                self.request,
+                hexc.HTTPForbidden,
+                {
+                    u'message': _("Cannot update a locked folder."),
+                    u'code': 'CannotUpdateLockedFolder',
+                },
+                None)
         self._clean_external(externalValue)
 
     def updateContentObject(self, contentObject, externalValue, set_id=False,
@@ -946,7 +950,8 @@ class MoveView(AbstractAuthenticatedView,
                ModeledContentUploadRequestUtilsMixin):
 
     def readInput(self, value=None):
-        data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+        data = ModeledContentUploadRequestUtilsMixin.readInput(
+            self, value=value)
         data = CaseInsensitiveDict(data)
         if 'name' in data:
             data['path'] = data.pop('name', None)
@@ -957,22 +962,22 @@ class MoveView(AbstractAuthenticatedView,
         parent = current.__parent__
         if not path.startswith(u'/'):
             if INamedFile.providedBy(current):
-                current = current.__parent__ 
+                current = current.__parent__
         try:
             target_name = theObject.name
             target = traverse(current, path)
         except (TraversalException) as e:
             if     not isinstance(e, NoSuchFileException) \
-                or e.path \
-                or strict:
+                    or e.path \
+                    or strict:
                 exc_info = sys.exc_info()
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
                                  {
-                                    'message': _(str(e)),
-                                    'path': path,
-                                    'segment': e.segment,
-                                    'code': e.__class__.__name__
+                                     'message': _(str(e)),
+                                     'path': path,
+                                     'segment': e.segment,
+                                     'code': e.__class__.__name__
                                  },
                                  exc_info[2])
             else:
@@ -985,24 +990,24 @@ class MoveView(AbstractAuthenticatedView,
         self._check_object_exists(theObject)
         if IRootFolder.providedBy(theObject):
             raise_json_error(
-                    self.request,
-                    hexc.HTTPForbidden,
-                    {
-                        u'message': _("Cannot move root folder."),
-                        u'code': 'CannotMoveRootFolder',
-                    },
-                    None)
+                self.request,
+                hexc.HTTPForbidden,
+                {
+                    u'message': _("Cannot move root folder."),
+                    u'code': 'CannotMoveRootFolder',
+                },
+                None)
 
         if      ILockedFolder.providedBy(theObject) \
-            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(
-                    self.request,
-                    hexc.HTTPForbidden,
-                    {
-                        u'message': _("Cannot move a locked folder."),
-                        u'code': 'CannotMoveLockedFolder',
-                    },
-                    None)
+                self.request,
+                hexc.HTTPForbidden,
+                {
+                    u'message': _("Cannot move a locked folder."),
+                    u'code': 'CannotMoveLockedFolder',
+                },
+                None)
 
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
@@ -1012,13 +1017,13 @@ class MoveView(AbstractAuthenticatedView,
         path = data.get('path')
         if not path:
             raise_json_error(
-                    self.request,
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'message': _("Must specify a valid path."),
-                        u'code': 'InvalidPath',
-                    },
-                    None)
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _("Must specify a valid path."),
+                    u'code': 'InvalidPath',
+                },
+                None)
 
         parent, target, target_name = self._get_parent_target(theObject, path)
         if INamedContainer.providedBy(target):
@@ -1030,9 +1035,10 @@ class MoveView(AbstractAuthenticatedView,
         target_path = compute_path(new_parent)
         if from_path.lower() == target_path.lower():
             raise hexc.HTTPUnprocessableEntity(
-                    _("Cannot move object onto itself."))
+                _("Cannot move object onto itself."))
 
         parent.moveTo(theObject, new_parent, target_name)
+        lifecycleevent.modified(theObject)
 
         # XXX: externalize first
         self.request.response.status_int = 201
@@ -1060,16 +1066,17 @@ class CopyView(MoveView):
         path = data.get('path')
         if not path:
             raise_json_error(
-                    self.request,
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'message': _("Must specify a valid path."),
-                        u'code': 'InvalidPath',
-                    },
-                    None)
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _("Must specify a valid path."),
+                    u'code': 'InvalidPath',
+                },
+                None)
 
-        parent, target, target_name = self._get_parent_target(
-            theObject, path, strict=False)
+        parent, target, target_name = \
+            self._get_parent_target(theObject, path, strict=False)
+
         if INamedContainer.providedBy(target):
             result = parent.copyTo(theObject, target, target_name)
         else:
@@ -1145,7 +1152,8 @@ class CFIOView(AbstractAuthenticatedView):
         subrequest.possible_site_names = request.possible_site_names
         # prepare environ
         subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
-        subrequest.environ[b'repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
+        subrequest.environ[b'repoze.who.identity'] = \
+                            request.environ['repoze.who.identity'].copy()
         for k in request.environ:
             if k.startswith('paste.') or k.startswith('HTTP_'):
                 if k not in subrequest.environ:
