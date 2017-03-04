@@ -58,11 +58,15 @@ class TestAdapters(ApplicationLayerTest):
 
             assert_that(INameAdapter(obj, None),
                         has_property('name', is_('image2.gif')))
+
             assert_that(IFilenameAdapter(obj, None),
                         has_property('filename', is_('image.gif')))
+
             assert_that(IMimeTypeAdapter(obj, None),
                         has_property('mimeType', is_('application/vnd.nextthought.contentfile')))
+
             assert_that(ISiteAdapter(obj, None),
                         has_property('site', is_('bleach.org')))
+
             assert_that(IAssociationsAdapter(obj, None),
                         has_property('associations', has_length(1)))

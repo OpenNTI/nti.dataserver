@@ -30,11 +30,15 @@ from nti.site.interfaces import IHostPolicyFolder
 from nti.traversal.traversal import find_interface
 
 
+def site_adapter(context):
+    folder = find_interface(context, IHostPolicyFolder, strict=False)
+    return Site(folder.__name__) if folder is not None else None
+
+
 @component.adapter(INamedContainer)
 @interface.implementer(ISiteAdapter)
 def _contentfolder_site_adapter(context):
-    folder = find_interface(context, IHostPolicyFolder, strict=False)
-    return Site(folder.__name__) if folder is not None else None
+    return site_adapter(context)
 
 
 @interface.implementer(IPathAdapter)
