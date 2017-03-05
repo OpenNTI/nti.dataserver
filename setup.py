@@ -170,7 +170,6 @@ setup(
         # fallback plain-text template render. pulled in by pyramid,
         # but ensure latest version
         'Mako',
-        'Pillow',
         'RestrictedPython',
         'ZConfig',
         # Depending on the final release, we may need to explicitly
