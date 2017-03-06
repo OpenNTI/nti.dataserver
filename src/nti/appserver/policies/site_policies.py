@@ -56,7 +56,7 @@ from nti.appserver.interfaces import UserUpgradedEvent
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
 
-from nti.common.string import has_emoji_chars
+from nti.common.emoji import has_emoji_chars
 
 from nti.contentfragments import censor
 from nti.contentfragments.interfaces import ICensoredContentPolicy
