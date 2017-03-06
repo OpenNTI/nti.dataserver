@@ -23,7 +23,7 @@ from nti.base._compat import unicode_
 from nti.contentfolder.interfaces import INameAdapter
 from nti.contentfolder.interfaces import IPathAdapter
 from nti.contentfolder.interfaces import ISiteAdapter
-from nti.contentfolder.interfaces import IContentFolder
+from nti.contentfolder.interfaces import INamedContainer
 from nti.contentfolder.interfaces import IMimeTypeAdapter
 from nti.contentfolder.interfaces import IFilenameAdapter
 from nti.contentfolder.interfaces import IContainerIdAdapter
@@ -99,7 +99,7 @@ class ValidatingCreator(object):
 
     def __init__(self, obj, default=None):
         if    IFile.providedBy(obj) \
-           or IContentFolder.providedBy(obj):
+           or INamedContainer.providedBy(obj):
             creator = getattr(obj, 'creator', None)
             creator = getattr(creator, 'username', creator)
             creator = getattr(creator, 'id', creator)
@@ -141,7 +141,7 @@ class ValidatingCreatedTime(object):
 
     def __init__(self, obj, default=None):
         if    IFile.providedBy(obj) \
-           or IContentFolder.providedBy(obj):
+           or INamedContainer.providedBy(obj):
             self.createdTime = obj.createdTime
 
     def __reduce__(self):
@@ -165,7 +165,7 @@ class ValidatingLastModified(object):
 
     def __init__(self, obj, default=None):
         if    IFile.providedBy(obj) \
-           or IContentFolder.providedBy(obj):
+           or INamedContainer.providedBy(obj):
             self.lastModified = obj.lastModified
 
     def __reduce__(self):

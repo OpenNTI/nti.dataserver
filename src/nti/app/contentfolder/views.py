@@ -60,10 +60,11 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
+from nti.base._compat import unicode_ as common_unicode
+
 from nti.common.random import generate_random_hex_string
 
 from nti.common.string import is_true
-from nti.common.string import to_unicode as common_unicode
 
 from nti.contentfile.interfaces import IContentBaseFile
 
