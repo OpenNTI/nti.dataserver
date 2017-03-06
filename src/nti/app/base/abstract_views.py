@@ -12,8 +12,12 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-from six import StringIO
 from six import string_types
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from six import StringIO
 
 from requests.structures import CaseInsensitiveDict
 
@@ -169,7 +173,7 @@ def process_source(source, default_content_type=DEFAULT_CONTENT_TYPE):
         source = StringIO(source)
         source.seek(0)
         source = SourceProxy(source,
-                             contentType='application/json', 
+                             contentType='application/json',
                              length=length)
     elif source is not None:
         length = getattr(source, 'length', None)
@@ -187,8 +191,8 @@ def process_source(source, default_content_type=DEFAULT_CONTENT_TYPE):
 
 def get_safe_source_filename(source, default):
     result = getattr(source, 'filename', None) \
-          or getattr(source, 'name', None) \
-          or default
+        or getattr(source, 'name', None) \
+        or default
     result = safe_filename(name_finder(result))
     return result
 
