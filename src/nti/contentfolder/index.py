@@ -16,6 +16,8 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
+import BTrees
+
 from nti.base._compat import unicode_
 
 from nti.contentfolder.interfaces import INameAdapter
@@ -188,6 +190,8 @@ class AssociationsIndex(AttributeSetIndex):
 
 @interface.implementer(IMetadataCatalog)
 class ContentResourcesCatalog(Catalog):
+
+    family = BTrees.family64
 
     super_index_doc = Catalog.index_doc
 
