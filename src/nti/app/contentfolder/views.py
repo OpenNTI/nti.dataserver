@@ -355,8 +355,7 @@ class MkdirView(AbstractAuthenticatedView,
         return '% %' % (prefix, generate_random_hex_string())
 
     def readInput(self, value=None):
-        data = ModeledContentUploadRequestUtilsMixin.readInput(
-            self, value=value)
+        data = super(MkdirView, self).readInput(value)
         data = CaseInsensitiveDict(data)
         if 'name' not in data:
             data['name'] = self.generate()
@@ -398,8 +397,7 @@ class MkdirsView(AbstractAuthenticatedView,
         return result
 
     def readInput(self, value=None):
-        data = ModeledContentUploadRequestUtilsMixin.readInput(
-            self, value=value)
+        data = super(MkdirsView, self).readInput(value)
         data = CaseInsensitiveDict(data)
         if 'name' in data:
             data['path'] = data.pop('name', None)
@@ -425,8 +423,7 @@ class UploadView(AbstractAuthenticatedView,
                  ModeledContentUploadRequestUtilsMixin):
 
     def readInput(self, value=None):
-        result = ModeledContentUploadRequestUtilsMixin.readInput(
-            self, value=value)
+        result = super(UploadView, self).readInput(value)
         return CaseInsensitiveDict(result)
 
     @Lazy
@@ -950,8 +947,7 @@ class MoveView(AbstractAuthenticatedView,
                ModeledContentUploadRequestUtilsMixin):
 
     def readInput(self, value=None):
-        data = ModeledContentUploadRequestUtilsMixin.readInput(
-            self, value=value)
+        data = super(MoveView, self).readInput(value)
         data = CaseInsensitiveDict(data)
         if 'name' in data:
             data['path'] = data.pop('name', None)
