@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from ZODB.interfaces import IConnection
+
 from zope import component
 from zope import interface
 
@@ -78,3 +80,12 @@ class TransactionRecordContainer(BTreeContainer):
 
 _TransactionRecordHistoryFactory = an_factory(TransactionRecordContainer,
                                               TRX_RECORD_HISTORY_KEY)
+
+def TransactionRecordHistoryFactory(obj):
+    result = _TransactionRecordHistoryFactory(obj)
+    if result._p_jar is None:
+        try:
+            IConnection(obj).add(result)
+        except (TypeError, AttributeError):
+            pass
+    return result

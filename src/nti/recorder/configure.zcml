@@ -11,10 +11,10 @@
 	<include package="zope.security" />
 
 	<!-- Adapters -->
-	<adapter factory=".adapters._TransactionRecordHistoryFactory"
+	<adapter factory=".adapters.TransactionRecordHistoryFactory"
 			 provides=".interfaces.ITransactionRecordHistory"
 			 for="nti.coremetadata.interfaces.IRecordable" />
-			 
+
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
@@ -23,7 +23,7 @@
 		root_interfaces=".interfaces.ITransactionRecord"
 		modules=".record" />
 
-	<!-- Subscribers -->	
+	<!-- Subscribers -->
 	<subscriber handler=".subscribers._recordable_removed" />
 	<subscriber handler=".subscribers._record_modification" />
 
