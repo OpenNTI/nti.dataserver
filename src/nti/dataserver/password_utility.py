@@ -20,11 +20,12 @@ from persistent import Persistent
 
 from nti.dataserver.interfaces import IZContained
 
-@interface.implementer(IZContained)
-class HighSecurityPasswordUtility(Persistent, HighSecurityPasswordUtility):
-	"""
-	A password policy that is designed for persistent storage in the ZODB.
-	"""
-	__name__ = None
-	__parent__ = None
 
+@interface.implementer(IZContained)
+class HighSecurityPasswordUtility(Persistent, 
+                                  HighSecurityPasswordUtility):
+    """
+    A password policy that is designed for persistent storage in the ZODB.
+    """
+    __name__ = None
+    __parent__ = None
