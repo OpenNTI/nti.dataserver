@@ -1117,8 +1117,14 @@ class CFIOView(AbstractAuthenticatedView):
         request = self.request
         uid = request.subpath[0] if request.subpath else ''
         if uid is None:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify a valid URL"))
-
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _("Must specify a valid URL"),
+                    u'code': 'InvalidURL',
+                },
+                None)
         intids = component.getUtility(IIntIds)
         uid = from_external_string(uid)
         context = intids.queryObject(uid)
@@ -1150,11 +1156,10 @@ class CFIOView(AbstractAuthenticatedView):
         # prepare environ
         subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
         subrequest.environ[b'repoze.who.identity'] = \
-                            request.environ['repoze.who.identity'].copy()
+                           request.environ['repoze.who.identity'].copy()
         for k in request.environ:
             if k.startswith('paste.') or k.startswith('HTTP_'):
                 if k not in subrequest.environ:
                     subrequest.environ[k] = request.environ[k]
-
         # invoke
         return request.invoke_subrequest(subrequest)
