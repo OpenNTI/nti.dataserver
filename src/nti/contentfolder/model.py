@@ -18,9 +18,9 @@ from zope.location.location import locate
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from ZODB.interfaces import IConnection
+from zope.security.management import system_user
 
-from nti.coremetadata.interfaces import SYSTEM_USER_ID
+from ZODB.interfaces import IConnection
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
@@ -234,7 +234,7 @@ class RootFolder(ContentFolder):
 
     __external_can_create__ = False
 
-    creator = SYSTEM_USER_ID
+    creator = system_user.id
     mimeType = mime_type = str('application/vnd.nextthought.contentrootfolder')
 
     def __init__(self, *args, **kwargs):
