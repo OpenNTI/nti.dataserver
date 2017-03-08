@@ -9,14 +9,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from ZODB.interfaces import IConnection
-
 from zope import component
 from zope import interface
 
 from zope.annotation import factory as an_factory
 
 from zope.container.btree import BTreeContainer
+
+from ZODB.interfaces import IConnection
 
 from nti.coremetadata.interfaces import IRecordable
 
@@ -81,9 +81,10 @@ class TransactionRecordContainer(BTreeContainer):
 _TransactionRecordHistoryFactory = an_factory(TransactionRecordContainer,
                                               TRX_RECORD_HISTORY_KEY)
 
+
 def TransactionRecordHistoryFactory(obj):
     result = _TransactionRecordHistoryFactory(obj)
-    if result._p_jar is None:
+    if IConnection(result, None) is None:
         try:
             IConnection(obj).add(result)
         except (TypeError, AttributeError):
