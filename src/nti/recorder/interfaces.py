@@ -18,7 +18,6 @@ from nti.base.interfaces import ILastModified
 
 from nti.schema.field import Object
 from nti.schema.field import TextLine
-from nti.schema.field import ValidTextLine
 from nti.schema.field import IndexedIterable
 
 TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
@@ -31,17 +30,16 @@ TRX_TYPE_UPDATE = 'update'
 
 
 class ITransactionRecord(IContained, ICreated, ILastModified):
-    tid = ValidTextLine(title="The transaction/serial id", required=False)
+    tid = TextLine(title="The transaction/serial id", required=False)
 
-    type = ValidTextLine(title="The transaction type",
+    type = TextLine(title="The transaction type",
                          required=False,
                          default=TRX_TYPE_UPDATE)
 
-    principal = ValidTextLine(title="The principal id", required=True)
+    principal = TextLine(title="The principal id", required=True)
 
     attributes = IndexedIterable(title="The modifed attributes",
-                                 value_type=TextLine(
-                                     title="The attribute name"),
+                                 value_type=TextLine(title="The attribute name"),
                                  min_length=0,
                                  unique=True)
 

@@ -15,9 +15,6 @@ from io import BytesIO
 
 from zope import lifecycleevent
 
-from zope.security.interfaces import NoInteraction
-from zope.security.management import getInteraction
-
 import transaction
 try:
     from transaction._compat import get_thread_ident
@@ -29,6 +26,8 @@ from nti.base._compat import unicode_
 
 from nti.coremetadata.interfaces import IRecordable
 
+from nti.coremetadata.utils import current_principal
+
 from nti.externalization.externalization import isSyntheticKey
 
 from nti.recorder.interfaces import TRX_TYPE_CREATE
@@ -38,6 +37,8 @@ from nti.recorder.interfaces import ITransactionRecordHistory
 from nti.recorder.record import TransactionRecord
 
 from ZODB.utils import serial_repr
+
+principal = current_principal  # BWC
 
 
 def compress(obj):
@@ -59,14 +60,6 @@ def decompress(source):
     bio.seek(0)
     result = pickle.load(bio)
     return result
-
-
-def current_principal():
-    try:
-        return getInteraction().participations[0].principal
-    except (NoInteraction, IndexError, AttributeError):
-        return None
-principal = current_principal
 
 
 def is_created(obj):
@@ -122,10 +115,10 @@ def record_transaction(recordable, principal=None, descriptions=(),
     tid = unicode_(serial_repr(tid)) if tid else txn_id()
     tid = txn_id() if tid == u'0x00' else tid  # new object
 
-    principal = current_principal() if principal is None else principal
-    username = (    getattr(principal, 'id', None)
-                 or getattr(principal, 'usernane', None)
-                 or principal)
+    principal = current_principal(False) if principal is None else principal
+    username = (   getattr(principal, 'id', None)
+                or getattr(principal, 'usernane', None)
+                or principal)
 
     if username is None:
         # Tests
