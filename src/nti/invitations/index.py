@@ -41,13 +41,13 @@ IX_RECEIVER = 'receiver'
 #: Invitation accepted
 IX_ACCEPTED = 'accepted'
 
-#: Transaction time
+#: Invitation created time
 IX_CREATEDTIME = 'createdTime'
 
-#: Transaction time
+#: Invitation expiry time
 IX_EXPIRYTIME = 'expiryTime'
 
-#: Recordable object MimeType
+#: Invitation object MimeType
 IX_MIMETYPE = 'mimeType'
 
 
@@ -57,8 +57,8 @@ class ValidatingMimeType(object):
 
     def __init__(self, obj, default=None):
         if IInvitation.providedBy(obj):
-            self.mimeType =  getattr(obj, 'mimeType', None) \
-                or getattr(obj, 'mime_type', None)
+            self.mimeType = getattr(obj, 'mimeType', None) \
+                         or getattr(obj, 'mime_type', None)
 
     def __reduce__(self):
         raise TypeError()
