@@ -242,17 +242,28 @@ def install_recorder_catalog(site_manager_container, intids=None):
     return catalog
 
 
-def get_recordables(catalog=None, intids=None, **kwargs):
-    """
-    return the recordable objects in the catalog
-    """
+def get_objects(index=IX_LOCKED, provided=IRecordable, catalog=None, intids=None):
     catalog = get_catalog() if catalog is None else catalog
+    pivot_index = catalog[index]
     intids = component.queryUtility(IIntIds) if intids is None else intids
-    locked_index = catalog[IX_LOCKED]
-    for uid in set(locked_index.documents_to_values.keys()):
+    for uid in set(pivot_index.documents_to_values.keys()):
         if intids is None:  # tests
             yield uid
         else:
             obj = intids.queryObject(uid)
-            if IRecordable.providedBy(obj):
+            if provided.providedBy(obj):
                 yield obj
+
+
+def get_transactions(catalog=None, intids=None, **kwargs):
+    """
+    return the transaction records in the catalog
+    """
+    return get_objects(IX_TID, ITransactionRecord, catalog, intids)
+
+
+def get_recordables(catalog=None, intids=None, **kwargs):
+    """
+    return the recordable objects in the catalog
+    """
+    return get_objects(IX_LOCKED, IRecordable, catalog, intids)
