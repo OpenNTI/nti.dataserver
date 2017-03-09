@@ -58,21 +58,6 @@ zope.deferredimport.deprecatedFrom(
     "ZContainedMixin")
 
 zope.deferredimport.deprecatedFrom(
-    "Moved to nti.datastructures.datastructures",
-    "nti.datastructures.datastructures",
-    "_noop",
-    "_isMagicKey",
-    "_syntheticKeys",
-    "isSyntheticKey",
-    "check_contained_object_for_storage",
-    "_ContainedObjectValueError",
-    "_VolatileFunctionProperty",
-    "ContainedStorage",
-    "LastModifiedCopyingUserList",
-    "AbstractNamedLastModifiedBTreeContainer",
-    "AbstractCaseInsensitiveNamedLastModifiedBTreeContainer")
-
-zope.deferredimport.deprecatedFrom(
     "Moved to nti.dublincore.time_mixins",
     "nti.dublincore.time_mixins",
     "ModDateTrackingObject")
