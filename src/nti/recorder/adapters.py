@@ -12,9 +12,13 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope import lifecycleevent
+
 from zope.annotation import factory as an_factory
 
 from zope.container.btree import BTreeContainer
+
+from zope.location.location import locate
 
 from ZODB.interfaces import IConnection
 
@@ -35,9 +39,21 @@ class TransactionRecordContainer(BTreeContainer):
         return self.__parent__
     recordable = object
 
+    def _do_add(self, record):
+        key = record.key
+        self._setitemf(key, record)
+        locate(record, parent=self, name=key)
+        if IConnection(record, None) is None:
+            try:
+                IConnection(self.object).add(record)
+            except (TypeError, AttributeError):
+                pass
+        lifecycleevent.added(record, self, key)
+        self._p_changed = True
+
     def add(self, record):
         assert ITransactionRecord.providedBy(record)
-        self[record.key] = record
+        self._do_add(record)  # avoid dublin container
         return record
     append = add
 
