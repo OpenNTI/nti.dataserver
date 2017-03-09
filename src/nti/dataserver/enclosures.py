@@ -82,7 +82,6 @@ class SimplePersistentEnclosure(PersistentCreatedModDateTrackingObject):
         return result
 
 
-
 class SimpleEnclosureMixin(object):
     """
     Provides a basic level of support for enclosures to any object.
@@ -96,7 +95,7 @@ class SimpleEnclosureMixin(object):
     def __init__(self, *args, **kwargs):
         super(SimpleEnclosureMixin, self).__init__(*args, **kwargs)
 
-    # ## Enclosures
+    # Enclosures
     # The backing store, the _enclosures BTreeContainer, is created
     # on demand
 
