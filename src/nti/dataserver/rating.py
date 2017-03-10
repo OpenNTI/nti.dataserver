@@ -35,10 +35,6 @@ from contentratings.rating import NPRating
 
 from contentratings.storage import UserRatingStorage
 
-from nti.common._compat import patch_acquisition
-patch_acquisition()
-del patch_acquisition
-
 from nti.dataserver.interfaces import IRatable
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IMemcacheClient
