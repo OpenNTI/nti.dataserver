@@ -30,20 +30,12 @@ entry_points = {
         'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
         'nti_testing_mark_emails_bounced = nti.appserver.bounced_email_workflow:mark_emails_bounced',
         "nti_pserve = nti.appserver.nti_pserve:main",
-        "nti_runzeo = nti.monkey.nti_runzeo:main",
-        "nti_multi-zodb-gc = nti.monkey.nti_multi_zodb_gc:main",
-        "nti_multi-zodb-check-refs = nti.monkey.nti_multi_zodb_check_refs:main",
-        "nti_zodbconvert = nti.monkey.nti_zodbconvert:main",
         "nti_qp = nti.mailer.queue:run_console",
         # XXX: NOTE: The following technique is NOT reliable and fails
         # under buildout or any other scenario that results in this package
         # not being the /last/ package installed.
         # This script overrides the one from pyramid d
         "pserve = nti.appserver.nti_pserve:main",
-        # This script overrides the one from ZEO
-        "runzeo = nti.monkey.nti_runzeo:main",
-        # This script overrides the one from relstorage
-        "zodbconvert = nti.monkey.nti_zodbconvert:main",
     ],
     "paste.app_factory": [
         "main = nti.appserver.standalone:configure_app",
