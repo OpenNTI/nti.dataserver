@@ -75,6 +75,21 @@ class SiteIndex(RawSetIndex):
     pass
 
 
+class ValidatingRecordableIntID(object):
+
+    __slots__ = (b'intid',)
+
+    def __init__(self, obj, default=None):
+        if ITransactionRecord.providedBy(obj):
+            source = find_interface(obj, IRecordable, strict=False)
+            intids = component.queryUtility(IIntIds)  # test mode
+            if intids is not None and source is not None:
+                self.intid = intids.queryId(source)
+
+    def __reduce__(self):
+        raise TypeError()
+
+
 deprecated('TargetIntIDIndex', 'No longer used')
 class TargetIntIDIndex(IntegerAttributeIndex):
     pass
