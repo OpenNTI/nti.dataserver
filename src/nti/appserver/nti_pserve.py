@@ -27,8 +27,8 @@ import signal as _signal
 
 
 def _patched_signal(signalnum, handler):
-    if        signalnum == _signal.SIGCHLD \
-            and handler in (_signal.SIG_DFL, _signal.SIG_IGN):
+    if      signalnum == _signal.SIGCHLD \
+        and handler in (_signal.SIG_DFL, _signal.SIG_IGN):
         if gevent_getsignal(_signal.SIGCHLD) not in (_signal.SIG_DFL, _signal.SIG_IGN):
             # They tried to ignore/default action this signal (it's ignored by default)
             # and previous code was there, so make sure the previous code
@@ -39,25 +39,10 @@ def _patched_signal(signalnum, handler):
 gevent.signal.signal = _patched_signal
 
 # Note that we must not import *anything* before the patch
-from nti.monkey import patch_gevent_on_import
-patch_gevent_on_import.patch()
+from nti.monkey import patch_nti_pserve_on_import
+patch_nti_pserve_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
-
-from nti.monkey import patch_relstorage_all_on_import
-patch_relstorage_all_on_import.patch()
-
-from nti.monkey import patch_webob_cookie_escaping_on_import
-patch_webob_cookie_escaping_on_import.patch()
-
-from nti.monkey import patch_random_seed_on_import
-patch_random_seed_on_import.patch()
-
-from nti.monkey import patch_pyramid_on_import
-patch_pyramid_on_import.patch()
-
-from nti.monkey import patch_acquisition
-patch_acquisition.patch()
 
 import sys
 from pkg_resources import load_entry_point, get_distribution
