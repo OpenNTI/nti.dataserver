@@ -139,6 +139,7 @@ setup(
         'nti.links',
         'nti.metadata',
         'nti.mimetype',
+        'nti.monkey',
         'nti.namedfile',
         'nti.ntiids',
         'nti.threadable',
