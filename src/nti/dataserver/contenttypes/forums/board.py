@@ -21,7 +21,7 @@ from zope.container.interfaces import INameChooser
 
 from ZODB.interfaces import IConnection
 
-from nti.common._compat import Base
+from ExtensionClass import Base
 
 from nti.containers.containers import AcquireObjectsOnReadMixin
 from nti.containers.containers import AbstractNTIIDSafeNameChooser

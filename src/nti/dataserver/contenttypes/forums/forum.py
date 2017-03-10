@@ -24,7 +24,7 @@ from zope.intid.interfaces import IIntIdAddedEvent
 
 from ZODB.interfaces import IConnection
 
-from nti.common._compat import Implicit
+from Acquisition import Implicit
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity

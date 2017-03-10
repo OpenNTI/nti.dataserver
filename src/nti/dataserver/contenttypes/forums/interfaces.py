@@ -31,7 +31,7 @@ from zope.interface.common.sequence import ISequence
 
 from zope.schema import Int
 
-from nti.common._compat import IAcquirer
+from Acquisition.interfaces import IAcquirer
 
 from nti.dataserver.interfaces import ACE_ACT_DENY
 from nti.dataserver.interfaces import ACE_ACT_ALLOW

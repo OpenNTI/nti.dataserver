@@ -21,7 +21,7 @@ from pyramid.view import view_defaults
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
 
-from nti.common._compat import aq_base
+from Acquisition import aq_base
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder

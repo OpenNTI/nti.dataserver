@@ -20,7 +20,7 @@ from zope.lifecycleevent import IObjectModifiedEvent
 
 from zope.schema.fieldproperty import FieldProperty
 
-from nti.common._compat import Implicit
+from Acquisition import Implicit
 
 from nti.coremetadata.mixins import ZContainedMixin
 

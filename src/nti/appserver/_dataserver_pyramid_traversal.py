@@ -44,8 +44,8 @@ from nti.appserver.pyramid_authorization import is_readable
 
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
-from nti.common._compat import aq_base
-from nti.common._compat import IAcquirer
+from Acquisition import aq_base
+from Acquisition.interfaces import IAcquirer
 
 from nti.common.iterables import is_nonstr_iter
 

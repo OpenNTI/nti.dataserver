@@ -31,7 +31,7 @@ from nti.appserver._util import link_belongs_to_user
 from nti.appserver.pyramid_authorization import can_create
 from nti.appserver.pyramid_authorization import is_readable
 
-from nti.common._compat import aq_base
+from Acquisition import aq_base
 
 from nti.dataserver.contenttypes.forums.board import DEFAULT_BOARD_NAME
 

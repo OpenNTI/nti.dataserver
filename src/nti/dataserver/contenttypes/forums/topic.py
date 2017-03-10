@@ -34,7 +34,7 @@ from zope.schema.fieldproperty import FieldProperty
 
 from zope.security.interfaces import IPrincipal
 
-from nti.common._compat import Implicit
+from Acquisition import Implicit
 
 from nti.containers.containers import AcquireObjectsOnReadMixin
 from nti.containers.containers import AbstractNTIIDSafeNameChooser
