@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+
 from zope import component
 from zope import interface
 
@@ -85,14 +87,29 @@ class TransactionRecordContainer(BTreeContainer):
         return len(keys)
     reset = clear
 
-    def query(self, tid=None, principal=None, record_type=None):
-        results = []
-        for record in self.records():
-            if      (not tid or tid == record.tid) \
+    def query(self, tid=None, principal=None, record_type=None, 
+              start_time=None, end_time=None):
+
+        # filter by tid/pricipal/record_type
+        def _main_filter(record):
+            return  (not tid or tid == record.tid) \
                 and (not principal or principal == record.principal) \
-                and (not record_type or record_type == record.type):
-                results.append(record)
-        return results
+                and (not record_type or record_type == record.type)
+        result = filter(_main_filter, self.records())
+        
+        # filter by time
+        if start_time is not None or end_time is not None:
+            start_time = 0 if not start_time else start_time
+            end_time = time.time() if not end_time else end_time
+            
+            def _time_filter(record):
+                created = record.createdTime
+                return (created >= start_time and created <= end_time)
+            
+            result = filter(_time_filter, result)
+
+        # return
+        return result
 
 _TransactionRecordHistoryFactory = an_factory(TransactionRecordContainer,
                                               TRX_RECORD_HISTORY_KEY)

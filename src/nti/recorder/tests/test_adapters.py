@@ -24,10 +24,13 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from persistent.persistence import Persistent
 
+from nti.base._compat import unicode_
+
 from nti.coremetadata.interfaces import IRecordable
 
 from nti.recorder import TRX_RECORD_HISTORY_KEY
 
+from nti.recorder.interfaces import TRX_TYPE_UPDATE
 from nti.recorder.interfaces import ITransactionRecordHistory
 
 from nti.recorder.record import copy_records
@@ -91,3 +94,26 @@ class TestAdapters(unittest.TestCase):
         assert_that(remove_history(f), is_(1))
         assert_that(f.__annotations__,
                     does_not(has_key(TRX_RECORD_HISTORY_KEY)))
+        
+    def test_query(self):
+        f = Foo()
+        history = ITransactionRecordHistory(f, None)
+        for x in xrange(5):
+            current = (x+1) * 5
+            principal = 'ichigo' if x % 2 == 0 else 'aizen'
+            record = TransactionRecord(tid=unicode_(str(x)),
+                                       principal=principal,
+                                       attributes=('bankai',))
+            record.createdTime = record.lastModified = current
+            history.add(record)
+
+        assert_that(history.query(tid=u'0'), has_length(1))
+        assert_that(history.query(principal=u'ichigo'), has_length(3))
+        assert_that(history.query(principal=u'aizen'), has_length(2))
+        assert_that(history.query(record_type=TRX_TYPE_UPDATE), 
+                    has_length(5))
+
+        assert_that(history.query(start_time=10), has_length(4))
+        assert_that(history.query(start_time=5, end_time=10), has_length(2))
+        assert_that(history.query(end_time=7), has_length(1))
+        
