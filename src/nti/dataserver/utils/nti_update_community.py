@@ -21,7 +21,7 @@ import argparse
 
 from zope import interface
 
-from nti.common.string import safestr
+from nti.base._compat import unicode_
 
 from nti.dataserver.interfaces import ICommunity
 
@@ -37,8 +37,8 @@ def update_community(username, name=None, alias=None, public=False,
 					 joinable=False, profile=True, verbose=False):
 	__traceback_info__ = locals().items()
 
-	name = safestr(name) if name else name
-	alias = safestr(alias) if alias else alias
+	name = unicode_(name) if name else name
+	alias = unicode_(alias) if alias else alias
 
 	community = Community.get_community(username)
 	if community is None or not ICommunity.providedBy(community):
