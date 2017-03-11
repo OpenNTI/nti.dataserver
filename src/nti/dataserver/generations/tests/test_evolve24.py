@@ -30,7 +30,7 @@ from nti.dataserver.tests.mock_dataserver import  mock_db_trans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
 import fudge
 
-from nti.deprecated import hides_warnings
+from nti.common.deprecated import hides_warnings
 
 
 class TestEvolve24(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):

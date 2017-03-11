@@ -25,11 +25,7 @@ from zc.intid.interfaces import IntIdInUseError
 
 from zc.intid.utility import IntIds as _ZCIntIds
 
-try:
-    from Acquisition import aq_base
-except ImportError:
-    def aq_base(o):
-        return o
+from Acquisition import aq_base
 
 import BTrees
 

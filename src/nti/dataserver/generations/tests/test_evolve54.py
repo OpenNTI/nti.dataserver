@@ -21,7 +21,7 @@ from nti.dataserver.generations.evolve54 import evolve
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import  mock_db_trans, WithMockDS
 
-from nti.deprecated import hides_warnings
+from nti.common.deprecated import hides_warnings
 
 class TestEvolve54(mock_dataserver.DataserverLayerTest):
 

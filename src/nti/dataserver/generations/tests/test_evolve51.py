@@ -34,7 +34,7 @@ from nti.dataserver.contenttypes import Note
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import  mock_db_trans, WithMockDS
 
-from nti.deprecated import hides_warnings
+from nti.common.deprecated import hides_warnings
 
 from nti.dataserver.metadata_index import CATALOG_NAME
 

@@ -34,7 +34,7 @@ from nti.dataserver.tests.mock_dataserver import  mock_db_trans, WithMockDS
 
 import fudge
 
-from nti.deprecated import hides_warnings
+from nti.common.deprecated import hides_warnings
 
 
 

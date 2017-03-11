@@ -35,7 +35,7 @@ from nti.dataserver.users import index as user_index
 
 import fudge
 
-from nti.deprecated import hides_warnings
+from nti.common.deprecated import hides_warnings
 
 
 

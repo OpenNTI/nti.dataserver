@@ -11,7 +11,7 @@ from nti.dataserver.generations.evolve55 import evolve
 
 import fudge
 
-from nti.deprecated import hides_warnings
+from nti.common.deprecated import hides_warnings
 from nti.dataserver.utils.example_database_initializer import ExampleDatabaseInitializer
 
 import nti.dataserver.tests.mock_dataserver
