@@ -217,8 +217,8 @@ class site_tween(object):
             # It is very bad to raise an exception here, it interacts
             # badly with logging
             try:
-                assert (old_site is None or old_site is new_site,
-                        "Should not have a site already in place")
+                assert old_site is None or old_site is new_site, \
+                       "Should not have a site already in place"
             except AssertionError:
                 logger.debug("Should not have a site already in place: %s",
                              old_site, exc_info=True)
