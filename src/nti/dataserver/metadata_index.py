@@ -25,6 +25,8 @@ from zope.catalog.interfaces import ICatalogIndex
 
 from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.base._compat import unicode_
+
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
@@ -123,7 +125,7 @@ class ValidatingContainerId(object):
                 and not ICommentPost.providedBy(obj):
                 self.containerId = None
             else:
-                self.containerId = unicode(cid)
+                self.containerId = unicode_(cid)
 
     def __reduce__(self):
         raise TypeError()
