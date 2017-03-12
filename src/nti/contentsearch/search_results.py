@@ -21,9 +21,9 @@ from zope.container.contained import Contained
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.common.iterables import isorted
+from nti.base._compat import unicode_
 
-from nti.common.string import to_unicode
+from nti.common.iterables import isorted
 
 from nti.contentsearch.interfaces import ISearchResults
 from nti.contentsearch.interfaces import ISuggestResults
@@ -286,7 +286,7 @@ class SuggestResults(SearchResultsMixin, SchemaConfigured):
     add_suggestions = add
 
     def extend(self, items):
-        self._words.update(to_unicode(x) for x in items or ())
+        self._words.update(unicode_(x) for x in items or ())
 
     def __iadd__(self, other):
         if ISuggestResults.providedBy(other):

@@ -15,8 +15,9 @@ import time
 
 from zope import component
 
+from nti.base._compat import unicode_
+
 from nti.common.string import is_true
-from nti.common.string import to_unicode
 
 from nti.contentprocessing import get_content_translation_table
 
@@ -38,14 +39,14 @@ _extractor_pe = re.compile(r'[?*]*(.*)')
 
 def clean_search_query(query, language='en'):
     temp = re.sub(r'[*?]', '', query)
-    result = to_unicode(query) if temp else u''
+    result = unicode_(query) if temp else u''
     if result:
         m = _extractor_pe.search(result)
         result = m.group() if m else u''
 
     table = get_content_translation_table(language)
     result = result.translate(table) if result else u''
-    result = to_unicode(result)
+    result = unicode_(result)
 
     # auto complete phrase search
     if result.startswith('"') and not result.endswith('"'):
@@ -130,9 +131,9 @@ def create_queryobject(username, params, clazz=QueryObject):
         if name not in ISearchQuery and name not in accepted_keys:
             value = args[name]
             if value is not None:
-                value = to_unicode(value) if isinstance(
-                    value, six.string_types) else value
-                context[to_unicode(name)] = value
+                if isinstance(value, six.string_types):
+                    value = unicode_(value)
+                context[unicode_(name)] = value
             del args[name]
     # remove to be resetted
     for name in ('ntiid', 'term', 'username'):
@@ -141,7 +142,7 @@ def create_queryobject(username, params, clazz=QueryObject):
     args['context'] = context
 
     term = params.get('term', u'')
-    term = clean_search_query(to_unicode(term))
+    term = clean_search_query(unicode_(term))
     args['term'] = term
 
     args['username'] = username
