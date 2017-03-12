@@ -14,7 +14,7 @@ import six
 from zope import component
 from zope import interface
 
-from nti.common.string import to_unicode
+from nti.base._compat import unicode_
 
 from nti.contentsearch.interfaces import ISearchQuery
 from nti.contentsearch.interfaces import IDateTimeRange
@@ -106,6 +106,6 @@ class QueryObject(SchemaConfigured):
                 if k in ISearchQuery:
                     setattr(queryobject, k, v)
                 else:
-                    v = to_unicode(v) if isinstance(v, six.string_types) else v
-                    context[to_unicode(k)] = v
+                    v = unicode_(v) if isinstance(v, six.string_types) else v
+                    context[unicode_(k)] = v
         return queryobject
