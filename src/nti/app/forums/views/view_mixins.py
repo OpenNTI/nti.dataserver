@@ -249,19 +249,19 @@ class _AbstractTopicPostView(PostUploadMixin,
 
 import six
 
-from nti.common.string import to_unicode
+from nti.base._compat import unicode_
 
 from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import get_content_translation_table
 
 def get_content(text=None, language='en'):
 	result = ()
-	text = to_unicode(text) if text else None
+	text = unicode_(text) if text else None
 	if text:
 		table = get_content_translation_table(language)
 		result = tokenize_content(text.translate(table), language)
 	result = ' '.join(result)
-	return to_unicode(result)
+	return unicode_(result)
 
 class ContentResolver(object):
 	

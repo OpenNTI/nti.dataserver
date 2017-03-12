@@ -33,7 +33,7 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.common.string import to_unicode
+from nti.base._compat import unicode_
 
 from nti.common.string import is_true
 
@@ -386,7 +386,7 @@ class UserProfileUpdateView(AbstractAuthenticatedView,
 		for name, sch_def in fields.items():
 			value = values.get(name, None)
 			if value is not None:
-				value = to_unicode(value)
+				value = unicode_(value)
 				external[name] = sch_def.fromUnicode(unicode(value)) if value else None
 
 		restore_iface = False

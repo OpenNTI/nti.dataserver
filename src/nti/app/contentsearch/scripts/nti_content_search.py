@@ -22,7 +22,7 @@ from zope.security.management import endInteraction
 from zope.security.management import newInteraction
 from zope.security.management import restoreInteraction
 
-from nti.common.string import to_unicode
+from nti.base._compat import unicode_
 
 from nti.contentsearch.interfaces import ISearcher
 
@@ -47,14 +47,14 @@ def search(query, username, types, location=None, site=None):
     user = User.get_user(username or u'')
     if user is None:
         raise ValueError("Invalid user")
-    username = to_unicode(username)
+    username = unicode_(username)
 
     # create query
     params = dict()
     params['username'] = username
-    params['term'] = to_unicode(query)
-    params['ntiid'] = to_unicode(location or ROOT)
-    params['accept'] = [to_unicode(x) for x in types or ()]
+    params['term'] = unicode_(query)
+    params['ntiid'] = unicode_(location or ROOT)
+    params['accept'] = [unicode_(x) for x in types or ()]
     query = create_queryobject(username, params)
 
     endInteraction()
