@@ -75,6 +75,18 @@ from nti.zope_catalog.string import StringTokenNormalizer
 CATALOG_NAME = 'nti.dataserver.++etc++metadata-catalog'
 
 
+class ValidatingMimeType(object):
+
+    __slots__ = (b'mimeType',)
+
+    def __init__(self,  obj, default=None):
+        self.mimeType = getattr(obj, 'mimeType', None) \
+                     or getattr(obj, 'mime_type', None)
+
+    def __reduce__(self):
+        raise TypeError()
+
+
 class MimeTypeIndex(ValueIndex):
     default_field_name = 'mimeType'
     default_interface = IContentTypeAware
@@ -107,7 +119,7 @@ class ValidatingContainerId(object):
         contained = INTIContained(obj, default)
         if contained is not None:
             cid = contained.containerId
-            if	    is_ntiid_of_types(cid, self._IGNORED_TYPES) \
+            if      is_ntiid_of_types(cid, self._IGNORED_TYPES) \
                 and not ICommentPost.providedBy(obj):
                 self.containerId = None
             else:
@@ -138,7 +150,7 @@ class ValidatingCreatedUsername(object):
         try:
             creator = obj.creator
             username = getattr(creator, 'username', creator)
-            username = getattr(username, 'id', username) # in case of a principal
+            username = getattr(username, 'id', username)
             if isinstance(username, six.string_types):
                 self.creator_username = username.lower()
         except (AttributeError, TypeError):
@@ -445,15 +457,15 @@ def install_metadata_catalog(site_manager_container, intids=None):
     lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
 
     for name, clazz in ((IX_TOPICS, TopicIndex),
-						(IX_CREATOR, CreatorIndex),
-						(IX_MIMETYPE, MimeTypeIndex),
-						(IX_TAGGEDTO, TaggedToIndex),
-						(IX_SHAREDWITH, SharedWithIndex),
-						(IX_CONTAINERID, ContainerIdIndex),
+                        (IX_CREATOR, CreatorIndex),
+                        (IX_MIMETYPE, MimeTypeIndex),
+                        (IX_TAGGEDTO, TaggedToIndex),
+                        (IX_SHAREDWITH, SharedWithIndex),
+                        (IX_CONTAINERID, ContainerIdIndex),
                         (IX_CREATEDTIME, CreatedTimeIndex),
                         (IX_LASTMODIFIED, LastModifiedIndex),
                         (IX_REVSHAREDWITH, RevSharedWithIndex),
-						(IX_REPLIES_TO_CREATOR, CreatorOfInReplyToIndex)):
+                        (IX_REPLIES_TO_CREATOR, CreatorOfInReplyToIndex)):
         index = clazz(family=intids.family)
         assert ICatalogIndex.providedBy(index)
         intids.register(index)
@@ -469,8 +481,7 @@ def install_metadata_catalog(site_manager_container, intids=None):
 
     topic_index = catalog['topics']
     for filter_id, factory in ((TP_TOP_LEVEL_CONTENT, TopLevelContentExtentFilteredSet),
-                               (TP_USER_GENERATED_DATA,
-                                IsUserGeneratedDataExtentFilteredSet),
+                               (TP_USER_GENERATED_DATA, IsUserGeneratedDataExtentFilteredSet),
                                (TP_DELETED_PLACEHOLDER, DeletedObjectPlaceholderExtentFilteredSet)):
         the_filter = factory(filter_id, family=intids.family)
         topic_index.addFilter(the_filter)
