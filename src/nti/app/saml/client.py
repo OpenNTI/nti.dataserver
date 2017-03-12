@@ -37,7 +37,7 @@ from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLNameId
 from nti.app.saml.interfaces import ISAMLIDPInfo
 
-from nti.common.string import to_unicode
+from nti.base._compat import unicode_
 
 from nti.schema.fieldproperty import createFieldProperties
 
@@ -70,7 +70,7 @@ class _SAMLNameId(object):
     mimeType = mime_type = u'application/vnd.nextthought.saml.samlnameid'
 
     def __init__(self, name_id):
-        self.nameid = to_unicode(name_id.text)
+        self.nameid = unicode_(name_id.text)
         self.name_format = name_id.format
 
 
