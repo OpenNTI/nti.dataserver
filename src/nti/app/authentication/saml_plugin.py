@@ -30,6 +30,8 @@ from zope import component
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
+DEFAULT_SP_JSON = 'sp.json'
+
 # functions
 
 def normalize_path(path):
@@ -56,9 +58,9 @@ def etc_saml_dir(path=None):
 	path = normalize_path(path)
 	return path
 
-def find_sp_file(path=None):
+def find_sp_file(path=None, config_name=DEFAULT_SP_JSON):
 	path = etc_saml_dir(path)
-	path = os.path.join(path, 'sp.json') if path else path
+	path = os.path.join(path, config_name) if path else path
 	if path and os.path.exists(path):
 		return path
 	return None
@@ -68,12 +70,13 @@ def find_idp_files(path=None):
 	result = glob(os.path.join(path, 'idp*.xml')) if path else ()
 	return result
 
-def make_saml_client(path=None, 
+def make_saml_client(path=None,
+					 sp_config_name=DEFAULT_SP_JSON, 
 					 identity_cache="", 
 					 virtual_organization="",
 					 client_factory=BasicSAMLClient):
 	# find config files
-	sp = find_sp_file(path)
+	sp = find_sp_file(path, sp_config_name)
 	idps = find_idp_files(path)
 
 	# no service provider
