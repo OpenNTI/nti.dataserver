@@ -244,7 +244,7 @@ def image_to_dataurl(request):
 
 	if not accept_type or accept_type == b'text/plain':
 		response.content_type = b'text/plain'
-		response.body = data_url
+		response.text = data_url
 	else:
 		response.content_type = accept_type
 		width, height = named_image.getImageSize()
