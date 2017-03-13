@@ -72,13 +72,13 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 
     def __lt__(self, other):
         try:
-            return (self.principal, self.createdTime) < (self.principal, self.createdTime)
+            return (self.createdTime, self.principal) < (other.createdTime, other.principal)
         except AttributeError:  # pragma: no cover
             return NotImplemented
 
     def __gt__(self, other):
         try:
-            return (self.principal, self.createdTime) > (self.principal, self.createdTime)
+            return (self.createdTime, self.principal) > (other.createdTime, other.principal)
         except AttributeError:  # pragma: no cover
             return NotImplemented
 
@@ -109,7 +109,7 @@ def get_transactions(obj, sort=False, descending=True):
         if history:
             result.extend(history.records())
         if sort:
-            result.sort(key=lambda t: t.createdTime, reverse=descending)
+            result.sort(reverse=descending)
     except AttributeError:
         pass
     return result
