@@ -11,26 +11,27 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+
 class PingHandler(object):
-	"""
-	Handles the ``/_ops/ping`` url exactly.
-	"""
+    """
+    Handles the ``/_ops/ping`` url exactly.
+    """
 
-	def __init__(self, app):
-		self.captured = app
+    def __init__(self, app):
+        self.captured = app
 
-	def __call__(self, environ, start_response):
-		if environ['PATH_INFO'] == b'/_ops/ping':
-			start_response(b'200 OK', [(b'Content-Type', b'text/plain')])
-			result = (b"",)
-		else:
-			result = self.captured(environ, start_response)
-		return result
+    def __call__(self, environ, start_response):
+        if environ['PATH_INFO'] == b'/_ops/ping':
+            start_response(b'200 OK', [(b'Content-Type', b'text/plain')])
+            result = (b"",)
+        else:
+            result = self.captured(environ, start_response)
+        return result
+
 
 def ping_handler_factory(app, global_conf=None):
-	"""
-	Paste factory for :class:`PingHandler`
-	"""
-	result = PingHandler(app)
-	return result
-
+    """
+    Paste factory for :class:`PingHandler`
+    """
+    result = PingHandler(app)
+    return result
