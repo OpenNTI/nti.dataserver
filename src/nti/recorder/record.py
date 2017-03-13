@@ -83,9 +83,8 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
             return NotImplemented
 
 
+
 deprecated('TransactionRecordHistory', 'No longer used')
-
-
 class TransactionRecordHistory(Persistent, Contained):
     _records = ()
 
