@@ -121,8 +121,7 @@ def record_transaction(recordable, principal=None, descriptions=(),
                 or principal)
 
     if username is None:
-        # Tests
-        return
+        return # tests
 
     # create record
     ext_value = compress(ext_value) if ext_value is not None else None
@@ -131,10 +130,10 @@ def record_transaction(recordable, principal=None, descriptions=(),
                                external_value=ext_value)
     if createdTime is not None:
         record.lastModified = record.createdTime = createdTime
+
     lifecycleevent.created(record)
-    # add - gain intid
     history.add(record)
-    # mark locked
+
     if lock:
         if IRecordable.providedBy(recordable):
             recordable.lock()
