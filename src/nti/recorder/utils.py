@@ -101,7 +101,7 @@ def _get_attributes(descriptions):
 
 def record_transaction(recordable, principal=None, descriptions=(),
                        ext_value=None, type_=TRX_TYPE_UPDATE, history=None,
-                       lock=True):
+                       lock=True, createdTime=None):
     __traceback_info__ = recordable, principal, ext_value
     attributes = _get_attributes(descriptions)
     if not attributes and type_ == TRX_TYPE_UPDATE:
@@ -124,13 +124,17 @@ def record_transaction(recordable, principal=None, descriptions=(),
         # Tests
         return
 
+    # create record
     ext_value = compress(ext_value) if ext_value is not None else None
     record = TransactionRecord(principal=username, type=type_, tid=tid,
                                attributes=tuple(attributes),
                                external_value=ext_value)
+    if createdTime is not None:
+        record.lastModified = record.createdTime = createdTime
     lifecycleevent.created(record)
+    # add - gain intid
     history.add(record)
-
+    # mark locked
     if lock:
         if IRecordable.providedBy(recordable):
             recordable.lock()

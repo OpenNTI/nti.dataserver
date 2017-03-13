@@ -69,7 +69,8 @@ class ITransactionRecordHistory(IContained):
     def records():
         pass
 
-    def query(self, tid=None, principal=None, record_type=None):
+    def query(self, tid=None, principal=None, record_type=None,
+              start_time=None, end_time=None):
         """
         Query the transaction history for record(s) matching
         the given filters.
