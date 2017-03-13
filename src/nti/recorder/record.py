@@ -13,6 +13,8 @@ from functools import total_ordering
 
 from zope import interface
 
+from zope.cachedescriptors.property import readproperty
+
 from zope.container.contained import Contained
 
 from zope.deprecation import deprecated
@@ -64,6 +66,10 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
     def key(self):
         return "(%s,%s,%s)" % (self.createdTime, self.principal, self.tid)
 
+    @readproperty
+    def creator(self):
+        return self.principal
+
     def __lt__(self, other):
         try:
             return (self.principal, self.createdTime) < (self.principal, self.createdTime)
@@ -78,6 +84,8 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 
 
 deprecated('TransactionRecordHistory', 'No longer used')
+
+
 class TransactionRecordHistory(Persistent, Contained):
     _records = ()
 
