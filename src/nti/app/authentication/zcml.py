@@ -18,30 +18,31 @@ from zope.component.zcml import utility
 from zope.configuration.fields import Tokens
 from zope.configuration.fields import TextLine
 
-from .interfaces import ILogonWhitelist
+from nti.app.authentication.interfaces import ILogonWhitelist
+
 
 class ILogonWhitelistDirective(interface.Interface):
-	"""
-	A specific list of named users are allowed to login.
-	"""
+    """
+    A specific list of named users are allowed to login.
+    """
 
-	entities = Tokens(
-		title="The global usernames allowed to logon",
-		required=True,
-		value_type=TextLine(title="The entity identifier."),
-		)
+    entities = Tokens(
+        title="The global usernames allowed to logon",
+        required=True,
+        value_type=TextLine(title="The entity identifier."),
+    )
+
 
 def registerLogonWhitelist(_context, entities):
-	"""
-	Register a whitelist utility.
-	"""
+    """
+    Register a whitelist utility.
+    """
 
-	if not entities:
-		logger.warning("No one is allowed to logon")
+    if not entities:
+        logger.warning("No one is allowed to logon")
 
-	whitelist = frozenset(entities)
+    whitelist = frozenset(entities)
+    if len(whitelist) != len(entities):
+        logger.warning("Duplicate entities in list")
 
-	if len(whitelist) != len(entities):
-		logger.warning("Duplicate entities in list")
-
-	utility(_context, provides=ILogonWhitelist, component=whitelist)
+    utility(_context, provides=ILogonWhitelist, component=whitelist)
