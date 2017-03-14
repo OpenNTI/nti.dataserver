@@ -42,7 +42,7 @@ def _contentfolder_site_adapter(context):
 
 
 @interface.implementer(IPathAdapter)
-class _OFSPathAdapter(Contained):
+class __OFSPathAdapter(Contained):
     """
     XXX: Adapter to be used only in unit tests.
     """
