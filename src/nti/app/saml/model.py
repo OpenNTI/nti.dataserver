@@ -24,6 +24,7 @@ SAML_IDP_BINDINGS_ANNOTATION_KEY = 'SAML_IDP_BINDINGS_ANNOTATION_KEY'
 
 KEY_SEPERATOR = '|'
 
+
 @component.adapter(IUser)
 @interface.implementer(ISAMLIDPEntityBindings)
 class SAMLIDPEntityBindings(CheckingLastModifiedBTreeContainer):

@@ -21,8 +21,6 @@ from zope.component import getMultiAdapter
 
 from zope.event import notify
 
-from pyramid import httpexceptions as hexc
-
 from pyramid.view import view_config
 
 from saml2.response import SAMLError
@@ -32,14 +30,15 @@ from saml2.saml import NAMEID_FORMAT_PERSISTENT
 from nti.app.saml import ACS
 from nti.app.saml import SLS
 
-from nti.app.saml.interfaces import ExistingUserMismatchError
-from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLClient
-from nti.app.saml.interfaces import ISAMLExistingUserValidator
 from nti.app.saml.interfaces import ISAMLIDPInfo
-from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
+from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
+from nti.app.saml.interfaces import ISAMLExistingUserValidator
+from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
+
+from nti.app.saml.interfaces import ExistingUserMismatchError
 
 from nti.app.saml.views import SAMLPathAdapter
 
@@ -81,6 +80,7 @@ def _make_location(url, params=None):
 
     return urlparse.urlunparse(url_parts)
 
+
 @interface.implementer(ISAMLExistingUserValidator)
 class ExistingUserNameIdValidator(object):
     """
@@ -96,8 +96,8 @@ class ExistingUserNameIdValidator(object):
         try:
             nameid = bindings.binding(user_info.nameid, name_qualifier=idp)
         except KeyError:
-            #No binding so we can't validate
-            logger.warn('user %s exists but no preexisting saml bindings can be found %s', 
+            # No binding so we can't validate
+            logger.warn('user %s exists but no preexisting saml bindings can be found %s',
                         user.username, idp)
             return False
 
@@ -114,7 +114,8 @@ def _validate_idp_nameid(request, user, user_info, idp):
     up with what we stored.  If the nameids are a mismatch we raise an exception.  It is unclear
     if we should do the same if the user has an associated binding to a different idp already.
     """
-    validator = component.getAdapter(request, ISAMLExistingUserValidator, name='nameid')
+    validator = component.getAdapter(
+        request, ISAMLExistingUserValidator, name='nameid')
     if validator.validate(user, user_info, idp) is True:
         return
 
@@ -132,7 +133,8 @@ def _validate_idp_nameid(request, user, user_info, idp):
 
     # We aren't sure this is the same user. Raise a mismatch error to stop
     # the authentication
-    raise ExistingUserMismatchError('Unable to validate existing user ' + user.username)
+    raise ExistingUserMismatchError(
+        'Unable to validate existing user ' + user.username)
 
 
 @view_config(name=LOGIN_SAML_VIEW,
@@ -155,8 +157,8 @@ def saml_login(context, request):
     saml_client = component.queryUtility(ISAMLClient)
     success = request.params.get('success', '/')
     failure = request.params.get('failure', '/')
-    return saml_client.response_for_logging_in(success, 
-                                               failure, 
+    return saml_client.response_for_logging_in(success,
+                                               failure,
                                                entity_id=idp.entity_id)
 
 
@@ -173,12 +175,13 @@ class ACSLinkProvider(object):
 
 def _failure_response(request, msg, error, state):
     _failure = _make_location(error, state) if (
-            error and state is not None) else None
+        error and state is not None) else None
 
     error_str = msg
     return _create_failure_response(request,
                                     failure=_failure,
                                     error=(error_str if error_str else "An unknown error occurred."))
+
 
 @view_config(name=ACS,
              context=SAMLPathAdapter,
@@ -190,7 +193,7 @@ def acs_view(request):
         saml_client = component.queryUtility(ISAMLClient)
         logger.info('Received an acs request')
         saml_response, state, success, error = \
-                 saml_client.process_saml_acs_request(request)
+            saml_client.process_saml_acs_request(request)
 
         response = saml_response.session_info()
         logger.info('sessioninfo: %s', response)
@@ -200,8 +203,8 @@ def acs_view(request):
                     idp_id, success, error)
 
         # Component lookup error here would be a programmer or config error
-        user_info = component.getAdapter(response, 
-                                         ISAMLUserAssertionInfo, 
+        user_info = component.getAdapter(response,
+                                         ISAMLUserAssertionInfo,
                                          idp_id)
         logger.info('user_info parsed as %s', user_info)
 
@@ -255,17 +258,18 @@ def acs_view(request):
 
         nameid_bindings = ISAMLIDPEntityBindings(user)
         try:
-            nameid_bindings.store_binding(user_info.nameid, name_qualifier=idp_id)
+            nameid_bindings.store_binding(
+                user_info.nameid, name_qualifier=idp_id)
         except KeyError:
-            #Ignore existing binding for this user. We raise
-            #earlier in the function if the binding exists but doesn't
-            #match
+            # Ignore existing binding for this user. We raise
+            # earlier in the function if the binding exists but doesn't
+            # match
             pass
 
         logger.info("%s logging in through SAML", username)
         user_data = request.environ.get('REMOTE_USER_DATA', {})
         if not isinstance(user_data, Mapping):
-            logger.warn('Unexpected environ REMOTE_USER_DATA (%s)', 
+            logger.warn('Unexpected environ REMOTE_USER_DATA (%s)',
                         user_data)
             user_data = {}
 

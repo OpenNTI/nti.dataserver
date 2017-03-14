@@ -32,10 +32,10 @@ from pyramid import httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
 
-from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLNameId
 from nti.app.saml.interfaces import ISAMLIDPInfo
+from nti.app.saml.interfaces import ISAMLACSLinkProvider
 
 from nti.base._compat import unicode_
 
@@ -135,7 +135,7 @@ class BasicSAMLClient(object):
         signer = _make_signer(_get_signer_secret())
         return signer.dumps(state)
 
-    def response_for_logging_in(self, success, error, state={}, passive=False, 
+    def response_for_logging_in(self, success, error, state={}, passive=False,
                                 force_authn=False, entity_id=None, acs_link=None):
         if not entity_id:
             entity_id = self._pick_idp()
@@ -164,7 +164,7 @@ class BasicSAMLClient(object):
                 #     "key": req_key_str
                 # }
                 x509_certificate = ds.X509Certificate(text=cert_str)
-                x509_data=ds.X509Data(x509_certificate=x509_certificate)
+                x509_data = ds.X509Data(x509_certificate=x509_certificate)
                 spcertenc = SPCertEnc(x509_data=x509_data)
                 extension_elements = [element_to_extension_element(spcertenc)]
                 extensions = Extensions(extension_elements=extension_elements)
@@ -185,25 +185,25 @@ class BasicSAMLClient(object):
             if _cli.authn_requests_signed:
                 _sid = saml2.s_utils.sid()
                 req_id, msg_str = _cli.create_authn_request(
-                                                dest, 
-                                              vorg="", 
-                                              sign=_cli.authn_requests_signed,
-                                               message_id=_sid,
-                                               extensions=extensions, 
-                                               **extra_args)
+                    dest,
+                    vorg="",
+                    message_id=_sid,
+                    extensions=extensions,
+                    sign=_cli.authn_requests_signed,
+                    **extra_args)
                 _sid = req_id
             else:
                 req_id, req = _cli.create_authn_request(
-                                                dest, 
-                                                vorg="", 
-                                                sign=False, 
-                                                extensions=extensions, 
-                                                **extra_args)
+                    dest,
+                    vorg="",
+                    sign=False,
+                    extensions=extensions,
+                    **extra_args)
                 msg_str = "%s" % req
                 _sid = req_id
 
-            state = self._create_relay_state(state=state, 
-                                             success=success, 
+            state = self._create_relay_state(state=state,
+                                             success=success,
                                              error=error)
 
             ht_args = _cli.apply_binding(_binding, msg_str,
@@ -226,7 +226,7 @@ class BasicSAMLClient(object):
         logger.info('Processing SAML Authn Response')
         logger.info('response %s', saml_response)
 
-        authresp = self.saml_client.parse_authn_request_response(saml_response, 
+        authresp = self.saml_client.parse_authn_request_response(saml_response,
                                                                  binding)
 
         return authresp
@@ -234,8 +234,8 @@ class BasicSAMLClient(object):
     def process_saml_acs_request(self, request):
         for param in (SAML_RESPONSE, RELAY_STATE):
             if param not in request.params:
-                raise hexc.HTTPBadRequest(
-                    'Unexpected SAML Response. No %s', param)
+                raise hexc.HTTPBadRequest('Unexpected SAML Response. No %s', 
+                                          param)
 
         # parse out our relay state first so we have it
         state, success, error = self._extract_relay_state(
@@ -246,7 +246,10 @@ class BasicSAMLClient(object):
         # so we can get the user back to the proper place. Trap the error, and reraise
         # our exception to indicate a bad saml assertion
         try:
-            binding = BINDING_HTTP_POST if request.method == 'POST' else BINDING_HTTP_REDIRECT
+            if request.method == 'POST':
+                binding = BINDING_HTTP_POST
+            else:
+                binding = BINDING_HTTP_REDIRECT
             response = self._eval_authn_response(request.params[SAML_RESPONSE],
                                                  binding=binding)
         except SAMLError as e:
