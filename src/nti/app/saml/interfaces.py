@@ -69,6 +69,37 @@ class ISAMLClient(interface.Interface):
         """
         pass
 
+class ExistingUserMismatchError(ValueError):
+    """
+    Raised by ISAMLExistingUserValidator implementations
+    to indicate that the existig user does not match
+    the user identified by the saml assertion
+    """
+
+class ISAMLExistingUserValidator(interface.Interface):
+    """
+    An object capable of validating that an existing
+    user in the database matches the saml user_info
+    obtained from a saml assertion.  A default implementation
+    that verifies stored ISAMLNameId information is
+    registered as a named adapter on IRequest.
+
+    If ISAMLNameId information does not exist for the user
+    we look for an implementation of this interface
+    registered as an unnamed adapter on IRequest.
+    """
+
+    def validate(user, user_info, idp):
+        """
+        Validates that the provided user lines up with information
+        in user_info from the saml assertion from the provided idp.
+        Implementations should raise an ExistingUserMismatchError if
+        the user does not match the provided information from the idp.
+
+        :returns: True if the user is a confirmed match.
+        """
+        pass
+
 
 @interface.implementer(IBaseVocabulary)
 class SAMLNameIdFormatVocab(object):

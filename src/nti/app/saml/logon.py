@@ -32,8 +32,10 @@ from saml2.saml import NAMEID_FORMAT_PERSISTENT
 from nti.app.saml import ACS
 from nti.app.saml import SLS
 
+from nti.app.saml.interfaces import ExistingUserMismatchError
 from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLClient
+from nti.app.saml.interfaces import ISAMLExistingUserValidator
 from nti.app.saml.interfaces import ISAMLIDPInfo
 from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
@@ -79,28 +81,58 @@ def _make_location(url, params=None):
 
     return urlparse.urlunparse(url_parts)
 
+@interface.implementer(ISAMLExistingUserValidator)
+class ExistingUserNameIdValidator(object):
+    """
+    A default existing user validator that checks
+    the persisted ISAMLNameId information
+    """
 
-def _validate_idp_nameid(user, user_info, idp):
+    def __init__(self, request):
+        pass
+
+    def validate(self, user, user_info, idp):
+        bindings = ISAMLIDPEntityBindings(user)
+        try:
+            nameid = bindings.binding(user_info.nameid, name_qualifier=idp)
+        except KeyError:
+            #No binding so we can't validate
+            logger.warn('user %s exists but no preexisting saml bindings can be found %s', 
+                        user.username, idp)
+            return False
+
+        if nameid.nameid == user_info.nameid.nameid:
+            return True
+
+        raise ExistingUserMismatchError('SAML persistent nameid {} for user {} does not match idp returned nameid {}'.format(
+                                        nameid.nameid, user.username, user_info.nameid.nameid))
+
+
+def _validate_idp_nameid(request, user, user_info, idp):
     """
     If a user has a preexisting nameid for this idp, verifies the idp identifier matches
     up with what we stored.  If the nameids are a mismatch we raise an exception.  It is unclear
     if we should do the same if the user has an associated binding to a different idp already.
     """
-    bindings = ISAMLIDPEntityBindings(user)
-    try:
-        nameid = bindings.binding(user_info.nameid, name_qualifier=idp)
-    except KeyError:
-        logger.warn('user %s exists but has no prexisting saml bindings for %s. Dev environment?',
-                    user.username, idp)
+    validator = component.getAdapter(request, ISAMLExistingUserValidator, name='nameid')
+    if validator.validate(user, user_info, idp) is True:
         return
 
-    if nameid.nameid != user_info.nameid.nameid:
-        # if we have a binding it needs to match, if it doesn't that could mean our username
-        # was reused by the idp.  This shouldnt happen as we are asking for
-        # persistent nameids
-        logger.error('SAML persistent nameid %s for user %s does not match idp returned nameid %s',
-                     nameid.nameid, user.username, user_info.nameid.nameid)
-        raise hexc.HTTPBadRequest('SAML persistent nameid mismatch.')
+    # Our default nameid validator couldn't verify this user is the same
+    # as our assertion, but it also didn't raise.  This means we found
+    # a user with no nameid information for the appropriate name qualifiers.
+    #
+    # Adapt the request to a non-named ISAMLExistingUserValidator and if it
+    # exists give it a chance to validate.  If it affirms the user is the same
+    # then allow the authentication to go through.  If it doesn't explitly affirm
+    # raise a mismatch error
+    validator = component.queryAdapter(request, ISAMLExistingUserValidator)
+    if validator and validator.validate(user, user_info, idp) is True:
+        return
+
+    # We aren't sure this is the same user. Raise a mismatch error to stop
+    # the authentication
+    raise ExistingUserMismatchError('Unable to validate existing user ' + user.username)
 
 
 @view_config(name=LOGIN_SAML_VIEW,
@@ -138,6 +170,15 @@ class ACSLinkProvider(object):
         root = component.getUtility(IDataserver).dataserver_folder
         return request.resource_url(root, 'saml', '@@' + ACS)
 
+
+def _failure_response(request, msg, error, state):
+    _failure = _make_location(error, state) if (
+            error and state is not None) else None
+
+    error_str = msg
+    return _create_failure_response(request,
+                                    failure=_failure,
+                                    error=(error_str if error_str else "An unknown error occurred."))
 
 @view_config(name=ACS,
              context=SAMLPathAdapter,
@@ -181,7 +222,7 @@ def acs_view(request):
         # if user, verify saml nameid against idp
         if user is not None:
             logger.info('Found an existing user for %s', username)
-            _validate_idp_nameid(user, user_info, idp_id)
+            _validate_idp_nameid(request, user, user_info, idp_id)
             # should we update the email address here?  That might be nice
             # but we probably shouldn't do that if we allow them to change
             # it elsewhere
@@ -242,16 +283,12 @@ def acs_view(request):
         return _create_failure_response(request,
                                         failure=_make_location(e.error, e.state),
                                         error=str(e))
+    except ExistingUserMismatchError as e:
+        logger.exception('Unable to match assertion to existing user')
+        return _failure_response(request, 'User Mismatch', error, state)
     except Exception as e:
         logger.exception("An unknown error occurred processing saml response")
-
-        _failure = _make_location(error, state) if (
-            error and state is not None) else None
-
-        error_str = str(e)
-        return _create_failure_response(request,
-                                        failure=_failure,
-                                        error=(error_str if error_str else "An unknown error occurred."))
+        return _failure_response(request, None, error, state)
 
 
 import zope.deferredimport
