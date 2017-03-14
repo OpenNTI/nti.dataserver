@@ -13,6 +13,7 @@ import tempfile
 
 from nti.app.testing.application_webtest import ApplicationTestLayer
 
+from ..interfaces import NAMEID_FORMATS_SAML2_VALUES
 
 class SAMLTestLayer(ApplicationTestLayer):
 
@@ -39,3 +40,12 @@ class SAMLTestLayer(ApplicationTestLayer):
     @classmethod
     def testTearDown(cls):
         pass
+
+class MockNameId(object):
+    text = None
+    format = NAMEID_FORMATS_SAML2_VALUES[0]
+    name_qualifier = 'sso.nt.com'
+    sp_name_qualifier = 'sp.nt.com'
+
+    def __init__(self, text):
+        self.text = text

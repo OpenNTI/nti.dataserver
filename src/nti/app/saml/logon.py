@@ -86,15 +86,15 @@ def _validate_idp_nameid(user, user_info, idp):
     up with what we stored.  If the nameids are a mismatch we raise an exception.  It is unclear
     if we should do the same if the user has an associated binding to a different idp already.
     """
-    bindings = ISAMLIDPEntityBindings(user, {})
-    nameid = bindings.get(idp, None)
-
-    # if we have no binding something seems fishy. The user was created
-    # outside the saml process?
-    if nameid is None:
+    bindings = ISAMLIDPEntityBindings(user)
+    try:
+        nameid = bindings.binding(user_info.nameid, name_qualifier=idp)
+    except KeyError:
         logger.warn('user %s exists but has no prexisting saml bindings for %s. Dev environment?',
                     user.username, idp)
-    elif nameid.nameid != user_info.nameid.nameid:
+        return
+
+    if nameid.nameid != user_info.nameid.nameid:
         # if we have a binding it needs to match, if it doesn't that could mean our username
         # was reused by the idp.  This shouldnt happen as we are asking for
         # persistent nameids
@@ -213,8 +213,13 @@ def acs_view(request):
                                ISAMLUserAuthenticatedEvent))
 
         nameid_bindings = ISAMLIDPEntityBindings(user)
-        if idp_id not in nameid_bindings:
-            nameid_bindings[idp_id] = user_info.nameid
+        try:
+            nameid_bindings.store_binding(user_info.nameid, name_qualifier=idp_id)
+        except KeyError:
+            #Ignore existing binding for this user. We raise
+            #earlier in the function if the binding exists but doesn't
+            #match
+            pass
 
         logger.info("%s logging in through SAML", username)
         user_data = request.environ.get('REMOTE_USER_DATA', {})

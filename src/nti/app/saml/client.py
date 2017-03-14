@@ -72,6 +72,8 @@ class _SAMLNameId(object):
     def __init__(self, name_id):
         self.nameid = unicode_(name_id.text)
         self.name_format = name_id.format
+        self.name_qualifier = unicode_(name_id.name_qualifier)
+        self.sp_name_qualifier = unicode_(name_id.sp_name_qualifier)
 
 
 @interface.implementer(ISAMLClient)

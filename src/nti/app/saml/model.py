@@ -22,11 +22,38 @@ from nti.dataserver.interfaces import IUser
 
 SAML_IDP_BINDINGS_ANNOTATION_KEY = 'SAML_IDP_BINDINGS_ANNOTATION_KEY'
 
+KEY_SEPERATOR = '|'
 
 @component.adapter(IUser)
 @interface.implementer(ISAMLIDPEntityBindings)
 class SAMLIDPEntityBindings(CheckingLastModifiedBTreeContainer):
-    pass
+
+    def _key_for_qualifiers(self, name_qualifier, sp_name_qualifier=None):
+        if not name_qualifier:
+            raise ValueError('Must provide a name_qualifier')
+
+        if sp_name_qualifier:
+            return name_qualifier + KEY_SEPERATOR + sp_name_qualifier
+        return name_qualifier
+
+    def _key(self, name_id, name_qualifier, sp_name_qualifier):
+        nq = getattr(name_id, 'name_qualifier', name_qualifier)
+        nq = nq if nq else name_qualifier
+        spnq = getattr(name_id, 'sp_name_qualifier', sp_name_qualifier)
+        spnq = spnq if spnq else sp_name_qualifier
+        return self._key_for_qualifiers(nq, spnq)
+
+    def binding(self, name_id, name_qualifier=None, sp_name_qualifier=None):
+        key = self._key(name_id, name_qualifier, sp_name_qualifier)
+        return self[key]
+
+    def store_binding(self, name_id, name_qualifier=None, sp_name_qualifier=None):
+        key = self._key(name_id, name_qualifier, sp_name_qualifier)
+        self[key] = name_id
+
+    def clear_binding(self, name_id, name_qualifier=None, sp_name_qualifier=None):
+        key = self._key(name_id, name_qualifier, sp_name_qualifier)
+        del self[key]
 
 _SAMLIDEntityBindingsFactory = an_factory(SAMLIDPEntityBindings,
                                           SAML_IDP_BINDINGS_ANNOTATION_KEY)

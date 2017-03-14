@@ -61,11 +61,12 @@ class IDPEntityBindingsViews(AbstractAuthenticatedView):
             raise hexc.HTTPUnprocessableEntity(_("User not found."))
         return user
 
-    def _idp_entity_id_from_request(self):
-        idp_entity_id = self.request.params.get('idp_entity_id')
-        if not idp_entity_id:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify an idp_entity_id."))
-        return idp_entity_id
+    def _qualifiers_from_request(self):
+        nq = self.request.params.get('name_qualifier')
+        if not nq:
+            raise hexc.HTTPUnprocessableEntity(_("Must specify an name_qualifier."))
+        spnq = self.request.params.get('sp_name_qualifier')
+        return nq, spnq
 
     def _entity_bindings(self, user=None):
         user = user if user else self._user_from_request()
@@ -82,24 +83,26 @@ class IDPEntityBindingsViews(AbstractAuthenticatedView):
         return result
 
     @view_config(request_method="GET",
-                 request_param="idp_entity_id")
+                 request_param=('name_qualifier'))
     def entity_binding_with_id(self):
-        idp_entity_id = self._idp_entity_id_from_request()
-        entity_bindings = self._entity_bindings()
-        binding = entity_bindings.get(idp_entity_id, None)
-        if binding:
-            return binding
-        return hexc.HTTPNotFound('idp_entity_id not found')
-
-    @view_config(request_method="DELETE",
-                 request_param="idp_entity_id")
-    def delete_entity_binding(self):
-        idp_entity_id = self._idp_entity_id_from_request()
+        nq, spnq = self._qualifiers_from_request()
         entity_bindings = self._entity_bindings()
         try:
-            del entity_bindings[idp_entity_id]
+            binding = entity_bindings.binding(None, nq, spnq)
+            if binding:
+                return binding
         except KeyError:
-            raise hexc.HTTPNotFound(_('Entity not found.'))
+            return hexc.HTTPNotFound('nameid not found')
+
+    @view_config(request_method="DELETE",
+                 request_param="name_qualifier")
+    def delete_entity_binding(self):
+        nq, spnq = self._qualifiers_from_request()
+        entity_bindings = self._entity_bindings()
+        try:
+            entity_bindings.clear_binding(None, nq, spnq)
+        except KeyError:
+            raise hexc.HTTPNotFound(_('NameId not found.'))
 
         return hexc.HTTPNoContent()
 

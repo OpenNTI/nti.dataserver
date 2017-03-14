@@ -78,7 +78,9 @@ class TestSAMLProviderUserInfo:
 
 def assertion_info(provider_id, username, email, firstname, lastname):
     name_id = fudge.Fake('name_id').has_attr(nameid="testNameId",
-                                             name_format=NAMEID_FORMAT_PERSISTENT)
+                                             name_format=NAMEID_FORMAT_PERSISTENT,
+                                             name_qualifier=provider_id,
+                                             sp_name_qualifier=None)
     interface.alsoProvides(name_id, ISAMLNameId)
     return TestSAMLUserAssertionInfo({"provider_id": provider_id,
                                       "username": username,

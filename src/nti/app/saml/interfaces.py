@@ -88,6 +88,14 @@ class ISAMLNameId(interface.Interface):
                          vocabulary=SAMLNameIdFormatVocab(),
                          required=True)
 
+    name_qualifier = TextLine(title="SAML 2.0 NameQualifier",
+                              description="The SAML name qualifier for the entity",
+                              required=False)
+
+    sp_name_qualifier = TextLine(title="SAML 2.0 SPNameQualifier",
+                                 description="The SAML sp name qualifier for the entity",
+                                 required=False)
+
 
 class ISAMLIDPEntityBindings(IContainer):
     """
@@ -95,6 +103,30 @@ class ISAMLIDPEntityBindings(IContainer):
     that provided the assertion
     """
 
+    def binding(name_id, name_qualifier=None, sp_name_qualifier=None):
+      """
+      Returns the stored binding for the provided
+      name_id falling back to the provided name_qualifier
+      and sp_name_qualifier as necessary. the kwarg defined qualifiers are only
+      used in the event name_id doesn't propertly specify its own name_qualifier
+      and/or sp_name_qualifier
+      """
+
+    def store_binding(name_id, name_qualifier=None, sp_name_qualifier=None):
+      """
+      Stores the provided name_id falling back to the provided name_qualifier
+      and sp_name_qualifier as necessary. the kwarg defined qualifiers are only
+      used in the event name_id doesn't propertly specify its own name_qualifier
+      and/or sp_name_qualifier
+      """
+
+    def clear_binding(name_id, name_qualifier=None, sp_name_qualifier=None):
+      """
+      Clears the provided name_id falling back to the provided name_qualifier
+      and sp_name_qualifier as necessary. the kwarg defined qualifiers are only
+      used in the event name_id doesn't propertly specify its own name_qualifier
+      and/or sp_name_qualifier
+      """
 
 class ISAMLIDPInfo(interface.Interface):
     """
