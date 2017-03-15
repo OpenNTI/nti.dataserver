@@ -108,50 +108,18 @@ from nti.coremetadata.interfaces import IExternalService
 
 IIdentity = IIdentity
 IDataserver = IDataserver
+IExternalService = IExternalService
 
 class IDataserverClosedEvent(interface.interfaces.IObjectEvent):
 	"""
 	Fired when a dataserver is closed
 	"""
 
-class IRedisClient(IExternalService):
-	"""
-	A very poor abstraction of a :class:`redis.StrictRedis` client.
-	In general, this should only be used in the lowest low level code and
-	abstractions should be built on top of this.
+# BWC exports
+from nti.coremetadata.interfaces import IRedisClient
+from nti.coremetadata.interfaces import IMemcachedClient
 
-	When creating keys to use in the client, try to use traversal-friendly
-	keys, the same sorts of keys that can be found in the ZODB: unicode names
-	separated by the ``/`` character.
-	"""
-
-class IMemcachedClient(IExternalService):
-	"""
-	A very poor abstraction of a :class:`memcache.Client` client.
-	In general, this should only be used in the lowest low level code and
-	abstractions should be built on top of this.
-
-	When creating keys to use in the client, try to use traversal-friendly
-	keys, the same sorts of keys that can be found in the ZODB: unicode names
-	separated by the ``/`` character.
-
-	The values you set must be picklable.
-	"""
-
-	def get(key):
-		"""
-		Return the unpickled value, or None
-		"""
-
-	def set(key, value, time=0):
-		"""
-		Pickle the value and store it, returning True on success.
-		"""
-
-	def delete(key):
-		"""
-		Remove the key from the cache.
-		"""
+IRedisClient = IRedisClient
 IMemcacheClient = IMemcachedClient # BWC
 
 # BWC exports
