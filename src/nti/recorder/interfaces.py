@@ -28,6 +28,9 @@ TRX_TYPE_CREATE = 'create'
 #: Updated Transaction type
 TRX_TYPE_UPDATE = 'update'
 
+#: Imported Transaction type
+TRX_TYPE_IMPORT = 'import'
+
 
 class ITransactionRecord(IContained, ICreated, ILastModified):
     tid = TextLine(title="The transaction/serial id", required=False)
