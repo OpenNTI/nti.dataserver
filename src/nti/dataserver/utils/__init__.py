@@ -26,7 +26,8 @@ from zope.dottedname import resolve as dottedname
 import zope.exceptions.log
 from zope.exceptions.exceptionformatter import print_exception
 
-from nti.dataserver._Dataserver import Dataserver, MinimalDataserver
+from nti.dataserver._Dataserver import Dataserver
+from nti.dataserver._Dataserver import MinimalDataserver
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IDataserverTransactionRunner
