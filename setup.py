@@ -522,7 +522,7 @@ setup(
             'sphinx',
             'sphinxtheme.readability >= 0.0.6',
             # replace sphinxcontrib-programoutput
-            "nti.sphinxcontrib-programoutput",
+            "sphinxcontrib-programoutput",
             # virtualenv
             'virtualenv',
             'virtualenvwrapper',
