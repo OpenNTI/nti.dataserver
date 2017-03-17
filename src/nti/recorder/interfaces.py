@@ -36,13 +36,14 @@ class ITransactionRecord(IContained, ICreated, ILastModified):
     tid = TextLine(title="The transaction/serial id", required=False)
 
     type = TextLine(title="The transaction type",
-                         required=False,
-                         default=TRX_TYPE_UPDATE)
+                    required=False,
+                    default=TRX_TYPE_UPDATE)
 
     principal = TextLine(title="The principal id", required=True)
 
     attributes = IndexedIterable(title="The modifed attributes",
-                                 value_type=TextLine(title="The attribute name"),
+                                 value_type=TextLine(
+                                     title="The attribute name"),
                                  min_length=0,
                                  unique=True)
 
