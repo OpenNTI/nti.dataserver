@@ -71,7 +71,6 @@ class PresenceInfoInternalObjectIO(InterfaceObjectIO):
     _ext_iface_upper_bound = IPresenceInfo
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
-        super(PresenceInfoInternalObjectIO, self).updateFromExternalObject(
-            parsed, *args, **kwargs)
+        super(PresenceInfoInternalObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
         if LAST_MODIFIED in parsed:
             self._ext_self.lastModified = parsed[LAST_MODIFIED]
