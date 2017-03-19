@@ -179,7 +179,7 @@ class DirectoryFiler(object):
         for name in os.listdir(path):
             name = os.path.join(bucket, name) if bucket else name
             result.append(name)
-        return tuple(result)
+        return result
 
     def is_bucket(self, key):
         if not key.startswith(self.path):
