@@ -65,7 +65,7 @@ class ContentFolderACLProvider(object):
         creator = IPrincipal(self.context.creator, None)
         if creator is not None:
             if ILockedFolder.providedBy(self.context):
-                aces.append(ace_allowing(creator, ACT_READ, self))
+                aces.append(ace_allowing(creator, ACT_READ, type(self)))
                 aces.append(ace_allowing(creator, ACT_UPDATE, type(self)))
             else:
                 aces.append(ace_allowing(creator, ALL_PERMISSIONS, type(self)))

@@ -525,8 +525,7 @@ class ImportView(AbstractAuthenticatedView,
         result.name = name
         result.data = source.read()
         result.filename = filename or name
-        result.contentType = guess_type(
-            filename)[0] or u'application/octet-stream'
+        result.contentType = guess_type(filename)[0] or u'application/octet-stream'
         return result
 
     def _do_call(self):
@@ -596,8 +595,7 @@ class ExportView(AbstractAuthenticatedView):
             response = self.request.response
             response.content_encoding = str('identity')
             response.content_type = str('application/x-gzip; charset=UTF-8')
-            response.content_disposition = str(
-                'attachment; filename="export.zip"')
+            response.content_disposition = str('attachment; filename="export.zip"')
             response.body_file = open(source, "rb")
             return response
         finally:
