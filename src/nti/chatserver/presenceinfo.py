@@ -32,40 +32,46 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 from nti.property.property import alias
 
 from nti.schema.fieldproperty import createDirectFieldProperties
+
 from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
+
+LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
+
 
 @interface.implementer(IPresenceInfo)
 class PresenceInfo(SchemaConfigured):  # NOT persistent
-	createDirectFieldProperties(IUnattachedPresenceInfo)
-	createDirectFieldProperties(IPresenceInfo)
-	createDirectFieldProperties(ILastModified)
+    createDirectFieldProperties(IUnattachedPresenceInfo)
+    createDirectFieldProperties(IPresenceInfo)
+    createDirectFieldProperties(ILastModified)
 
-	createdTime = alias('lastModified')  # overwrite
+    createdTime = alias('lastModified')  # overwrite
 
-	__external_can_create__ = True
-	mimeType = nti_mimetype_with_class('presenceinfo')
+    __external_can_create__ = True
+    mimeType = nti_mimetype_with_class('presenceinfo')
 
-	def __init__(self, *args, **kwargs):
-		self.lastModified = time.time()
-		super(PresenceInfo, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        self.lastModified = time.time()
+        super(PresenceInfo, self).__init__(*args, **kwargs)
 
-	def isAvailable(self):
-		return self.type == 'available'
+    def isAvailable(self):
+        return self.type == 'available'
 
-	def __repr__(self):
-		return "%s(**%s)" % (self.__class__.__name__, self.__dict__)
+    def __repr__(self):
+        return "%s(**%s)" % (self.__class__.__name__, self.__dict__)
 
 PresenceInfoFactory = Factory(PresenceInfo)
 
+
 @component.adapter(IPresenceInfo)
 class PresenceInfoInternalObjectIO(InterfaceObjectIO):
-	"""
-	We are different in that we allow setting Last Modified from the external object. This is because
-	we tend to store this object in its JSON form in redis and would like to maintain that info.
-	"""
-	_ext_iface_upper_bound = IPresenceInfo
+    """
+    We are different in that we allow setting Last Modified from the external object. This is because
+    we tend to store this object in its JSON form in redis and would like to maintain that info.
+    """
+    _ext_iface_upper_bound = IPresenceInfo
 
-	def updateFromExternalObject(self, parsed, *args, **kwargs):
-		super(PresenceInfoInternalObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
-		if StandardExternalFields.LAST_MODIFIED in parsed:
-			self._ext_self.lastModified = parsed[StandardExternalFields.LAST_MODIFIED]
+    def updateFromExternalObject(self, parsed, *args, **kwargs):
+        super(PresenceInfoInternalObjectIO, self).updateFromExternalObject(
+            parsed, *args, **kwargs)
+        if LAST_MODIFIED in parsed:
+            self._ext_self.lastModified = parsed[LAST_MODIFIED]
