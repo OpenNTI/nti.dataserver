@@ -93,7 +93,7 @@ class TestFiler(unittest.TestCase):
             assert_that(ichigo, is_not(none()))
 
             listed = bucket.enumerateChildren()
-            assert_that(listed, is_((u'bleach/ichigo.xml',)))
+            assert_that(listed, is_([u'bleach/ichigo.xml']))
 
             foo = bucket.getChildNamed("foo.xml")
             assert_that(foo, is_(none()))
@@ -110,7 +110,7 @@ class TestFiler(unittest.TestCase):
             assert_that(filer.contains("ichigo.xml", "bleach/souls"), is_(True))
 
             listed = filer.list("bleach")
-            assert_that(listed, is_((u'bleach/ichigo.xml', u'bleach/souls')))
+            assert_that(listed, is_([u'bleach/ichigo.xml', u'bleach/souls']))
             assert_that(filer.is_bucket(u'bleach/souls'), is_(True))
             assert_that(filer.is_bucket(u'bleach/ichigo.xml'), is_(False))
 
