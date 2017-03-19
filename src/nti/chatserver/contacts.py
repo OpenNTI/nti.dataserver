@@ -25,8 +25,8 @@ from nti.dataserver.interfaces import IFollowerAddedEvent
 from nti.property.property import alias
 
 
-@interface.implementer(IContacts)
 @component.adapter(IUser)
+@interface.implementer(IContacts)
 class DefaultComputedContacts(object):
     """
     Dynamically computes the contact list for the user
@@ -63,7 +63,7 @@ def default_computed_contacts_change_when_follower_added(user_being_followed, ev
     When a follower is added to a user, that follower's default contacts change.
     """
     user_now_following = event.followed_by
-    if         IUser.providedBy(user_now_following) \
+    if      IUser.providedBy(user_now_following) \
         and IUser.providedBy(user_being_followed):
         notify(ContactISubscribeToAddedToContactsEvent(user_now_following,
                                                        user_being_followed))
