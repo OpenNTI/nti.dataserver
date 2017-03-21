@@ -1,0 +1,37 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+	
+	<include package="nti.contentfile" />
+
+	<!-- ACL -->
+	<adapter factory=".acl.ContentBaseFileACLProvider" />
+	
+	<adapter factory=".providers.DefaultExternalLinkProvider" 
+			 provides=".interfaces.IExternalLinkProvider" 
+			 for="plone.namedfile.interfaces.IFile" />
+	
+	<adapter factory=".providers.DefaultExternalLinkProvider" 
+			 provides=".interfaces.IExternalLinkProvider"
+			 for="plone.namedfile.interfaces.IFile
+			 	  pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._ContentFileDecorator"
+				for="plone.namedfile.interfaces.IFile"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
+
+	<!-- Adapters -->
+	<adapter factory=".adapters._contentfile_path_adapter" />
+	<adapter factory=".adapters._contentfile_site_adapter" />
+	<adapter factory=".adapters._contentfile_name_adapter" />
+	<adapter factory=".adapters._contentfile_filename_adapter" />
+	<adapter factory=".adapters._contentfile_mimeType_adapter" />
+	<adapter factory=".adapters._contentfile_associations_adapter" />
+
+</configure>

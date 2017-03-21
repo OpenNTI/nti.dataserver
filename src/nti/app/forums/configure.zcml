@@ -1,0 +1,274 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:cap="http://nextthought.com/ntp/capabilities"
+			i18n_domain='nti.dataserver'>
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="nti.appserver.capabilities" file="meta.zcml" />
+
+	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityStorageFactory" />
+
+	<!--
+		We are collecting both comments and community forum posts in
+		activity. There was a period of time when the app wasn't ready
+		for comments yet, though, so we didn't always provide them. That
+		has shifted now.
+	-->
+	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityProvider"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+			 zcml:condition="not-have disable_forum_comments_in_activity"/>
+
+	<adapter factory=".activity.NoCommentActivityProvider"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+			 zcml:condition="have disable_forum_comments_in_activity"/>
+
+	<cap:capability
+		id='nti.platform.blogging.createblogentry'
+		title="Create Blog Entry"
+		description='Can the user create new blog entries?' />
+
+	<cap:capability
+		id='nti.platform.forums.communityforums'
+		title="Participate in community forums"
+		description='Can the user participate in community forums?' />
+
+	<cap:capability
+		id='nti.platform.forums.dflforums'
+		title="Participate in DFL forums"
+		description='Can the user participate in DFL forums?' />
+
+	<!-- Entry in service doc -->
+	<subscriber factory=".workspaces._UserBlogCollectionFactory"
+				provides="nti.appserver.workspaces.interfaces.ICollection"
+				for="nti.appserver.workspaces.interfaces.IUserWorkspace" />
+
+	<!-- Object updating -->
+	<subscriber handler=".views.match_title_of_post_to_blog" />
+
+	<!-- Change broadcasting -->
+	<subscriber handler=".subscribers.notify_online_author_of_blog_comment" />
+	<subscriber handler=".subscribers.notify_online_author_of_topic_comment" />
+
+	<!-- Activity stream updating -->
+	<subscriber handler=".activity.store_created_object_in_global_activity"
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost
+					 zope.intid.interfaces.IIntIdAddedEvent"/>
+
+	<subscriber handler=".activity.unstore_created_object_from_global_activity"
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost
+					 zope.intid.interfaces.IIntIdRemovedEvent" />
+
+	<!--
+	Normal Blog entries are in /Activity automatically by dint of being stored as a user container.
+	We have to do something special to make other forum posts show up there.
+	-->
+	<subscriber handler=".activity.store_created_object_in_global_activity"
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralHeadlineTopic
+					 zope.intid.interfaces.IIntIdAddedEvent"/>
+
+	<subscriber handler=".activity.unstore_created_object_from_global_activity"
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralHeadlineTopic
+					 zope.intid.interfaces.IIntIdRemovedEvent" />
+
+	<!--
+	Anything that becomes a deleted placeholder should no longer be in /Activity.
+	-->
+	<subscriber handler=".activity.unstore_created_object_from_global_activity"
+				for="nti.dataserver.interfaces.IDeletedObjectPlaceholder
+					 zope.lifecycleevent.interfaces.IObjectModifiedEvent" />
+
+	<!-- Externalization -->
+	<subscriber factory=".decorators.BlogLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators.CommunityBoardLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".decorators.DFLBoardLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IBoard
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IForum
+					 pyramid.interfaces.IRequest"  />
+
+	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.ITopic
+					 pyramid.interfaces.IRequest"  />
+
+	<subscriber factory=".decorators.SecurityAwareForumTopicCountDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
+	<subscriber factory=".decorators.SecurityAwareBoardForumCountDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
+	<subscriber factory=".decorators.BoardNTIIDDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
+	<subscriber factory=".decorators.TopicParticipationLinkDecorator"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"
+                for="nti.dataserver.contenttypes.forums.interfaces.ITopic
+                     pyramid.interfaces.IRequest"  />
+
+	<!--
+		Decorate blog entries and forum topics. This is configured for modeled content in configure.zcml.
+		This isn't quite right, as these aren't exactly editable, just deletable.
+		But the presence of the 'edit' link is a shortcut the app uses to handle
+		permissioning.
+	-->
+	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralHeadlineTopic
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForum
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralBoard
+					 pyramid.interfaces.IRequest" />
+
+	<!--
+		 For caching purposes, we can treat topics like modeled content; they have
+		 a guaranteed-good last modified time
+	-->
+	<adapter factory="nti.app.renderers.caching._ModeledContentCacheController"
+			 for="nti.dataserver.contenttypes.forums.interfaces.ITopic" />
+
+	<!-- Traversal -->
+	<adapter factory=".traversal._PostFieldTraverser"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory=".traversal._PostFieldTraverser"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="nti.appserver._adapters.TitledDescribedExternalFieldTraverser"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IForum pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="nti.appserver._adapters.TitledDescribedExternalFieldTraverser"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IForum"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="nti.appserver._adapters.SharedWithExternalFieldTraverser"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="nti.appserver._adapters.SharedWithExternalFieldTraverser"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory=".traversal._DefaultForumBoardTraversable" />
+
+	<!-- Make certain classes Likeable/Flaggable/Favoritable. -->
+	<!--
+		Note that this is declared at leaf levels:
+		Since it is the blog entry that is DELETEd, and what shows up
+		when listing them, it is the blog entry that is likeable/favoritable.
+		The blog entry post (headline) is not likeable/favoritable.
+		Individual comments, however, are.
+		When this is opened up to general forums, the inheritance hierarchy
+		may need some tweaking to keep this true.
+	-->
+	<class class="nti.dataserver.contenttypes.forums.topic.PersonalBlogEntry">
+		<implements interface="nti.dataserver.interfaces.IRatable" />
+		<implements interface="nti.dataserver.interfaces.ILikeable" />
+		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+		<implements interface="nti.dataserver.interfaces.IFavoritable" />
+	</class>
+	<class class="nti.dataserver.contenttypes.forums.post.PersonalBlogComment">
+		<implements interface="nti.dataserver.interfaces.IRatable" />
+		<implements interface="nti.dataserver.interfaces.ILikeable" />
+		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+		<implements interface="nti.dataserver.interfaces.IFavoritable" />
+	</class>
+	<class class="nti.dataserver.contenttypes.forums.topic.GeneralHeadlineTopic">
+		<implements interface="nti.dataserver.interfaces.IRatable" />
+		<implements interface="nti.dataserver.interfaces.ILikeable" />
+		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+		<implements interface="nti.dataserver.interfaces.IFavoritable" />
+	</class>
+	<class class="nti.dataserver.contenttypes.forums.post.GeneralForumComment">
+		<implements interface="nti.dataserver.interfaces.IRatable" />
+		<implements interface="nti.dataserver.interfaces.ILikeable" />
+		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+		<implements interface="nti.dataserver.interfaces.IFavoritable" />
+	</class>
+
+	<!-- Storing favorite objects -->
+	<subscriber handler=".subscribers.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry
+					 contentratings.interfaces.IObjectRatedEvent"/>
+
+	<subscriber handler=".subscribers.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment
+					 contentratings.interfaces.IObjectRatedEvent"/>
+
+	<!-- Storing favorite objects -->
+	<subscriber handler=".subscribers.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralHeadlineTopic
+					 contentratings.interfaces.IObjectRatedEvent"/>
+
+	<subscriber handler=".subscribers.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForumComment
+					 contentratings.interfaces.IObjectRatedEvent"/>
+
+	<!-- Feeds -->
+	<adapter factory="nti.appserver._table_utils.HeadlineTopicContentProvider"
+			 provides="zope.contentprovider.interfaces.IContentProvider"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlineTopic
+				 *
+				 nti.appserver.ugd_feed_views.AbstractFeedView"/>
+
+	<!-- For comments, we can probably do better with titles -->
+	<adapter factory="nti.appserver._table_utils.TopicCommentContentProvider"
+			 provides="zope.contentprovider.interfaces.IContentProvider"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost
+				 *
+				 nti.appserver.ugd_feed_views.AbstractFeedView"/>
+
+	<!-- Adapters -->
+	<adapter factory=".adapters._PostFileConstraints"
+			 provides="nti.namedfile.interfaces.IFileConstraints"
+			 for="nti.dataserver.contenttypes.forums.interfaces.ITopic" />
+
+	<adapter factory=".adapters._PostFileConstraints"
+			 provides="nti.namedfile.interfaces.IFileConstraints"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
+
+	<adapter factory=".adapters._PostFileConstraints"
+			 provides="nti.namedfile.interfaces.IFileConstraints"
+			 for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost" />
+
+	<adapter factory=".adapters._PersonalBlogDisplayNameGenerator" />
+
+</configure>

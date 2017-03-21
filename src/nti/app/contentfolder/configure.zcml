@@ -1,0 +1,50 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="nti.contentfolder" />
+
+	<!-- ACL -->
+	<adapter factory=".acl.ContentFolderACLProvider" />
+		
+	<!-- Decorators -->
+	<subscriber factory=".decorators._NamedFolderLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.contentfolder.interfaces.INamedContainer
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._ContextPathDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.contentfolder.interfaces.INamedContainer
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._NamedFileLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.namedfile.interfaces.INamedFile
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._ContextPathDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.namedfile.interfaces.INamedFile
+					 pyramid.interfaces.IRequest" />
+
+	<!-- Adapters -->
+	<adapter factory=".adapters._contentfolder_site_adapter" />
+		
+	<configure zcml:condition="have testmode">
+		<adapter name="ofs"
+				 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
+				 factory=".adapters.__OFSPathAdapter"
+				 provides="zope.traversing.interfaces.IPathAdapter" />
+	</configure>
+
+	<!-- Subscribers -->
+	<subscriber handler=".subscribers._on_content_file_added" />
+
+</configure>

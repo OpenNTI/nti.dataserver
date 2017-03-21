@@ -1,0 +1,74 @@
+    {
+        "selectedText": "My selectedText",
+        "applicableRange": {
+            "MimeType": "application/vnd.nextthought.contentrange.domcontentrangedescription", 
+            "start": {
+                "MimeType": "application/vnd.nextthought.contentrange.textdomcontentpointer", 
+                "contexts": [
+                    {
+                        "MimeType": "application/vnd.nextthought.contentrange.textcontext", 
+                        "contextText": "To", 
+                        "Class": "TextContext", 
+                        "contextOffset": 60
+                    }
+                ], 
+                "role": "start", 
+                "edgeOffset": 0, 
+                "ancestor": {
+                    "MimeType": "application/vnd.nextthought.contentrange.elementdomcontentpointer", 
+                    "role": "ancestor", 
+                    "Class": "ElementDomContentPointer", 
+                    "elementId": "e15e5198c53c11b26463095e2e4da840", 
+                    "elementTagName": "P"
+                }, 
+                "Class": "TextDomContentPointer"
+            }, 
+            "ancestor": {
+                "MimeType": "application/vnd.nextthought.contentrange.elementdomcontentpointer", 
+                "role": "ancestor", 
+                "Class": "ElementDomContentPointer", 
+                "elementId": "e15e5198c53c11b26463095e2e4da840", 
+                "elementTagName": "P"
+            }, 
+            "end": {
+                "MimeType": "application/vnd.nextthought.contentrange.textdomcontentpointer", 
+                "contexts": [
+                    {
+                        "MimeType": "application/vnd.nextthought.contentrange.textcontext", 
+                        "contextText": "prealgebra?", 
+                        "Class": "TextContext", 
+                        "contextOffset": 10
+                    }, 
+                    {
+                        "MimeType": "application/vnd.nextthought.contentrange.textcontext", 
+                        "contextText": "arithmetic", 
+                        "Class": "TextContext", 
+                        "contextOffset": 0
+                    }, 
+                    {
+                        "MimeType": "application/vnd.nextthought.contentrange.textcontext", 
+                        "contextText": " and", 
+                        "Class": "TextContext", 
+                        "contextOffset": 0
+                    }, 
+                    {
+                        "MimeType": "application/vnd.nextthought.contentrange.textcontext", 
+                        "contextText": "algebra", 
+                        "Class": "TextContext", 
+                        "contextOffset": 0
+                    }
+                ], 
+                "role": "end", 
+                "edgeOffset": 3, 
+                "ancestor": {
+                    "MimeType": "application/vnd.nextthought.contentrange.elementdomcontentpointer", 
+                    "role": "ancestor", 
+                    "Class": "ElementDomContentPointer", 
+                    "elementId": "e15e5198c53c11b26463095e2e4da840", 
+                    "elementTagName": "P"
+                }, 
+                "Class": "TextDomContentPointer"
+            }, 
+            "Class": "DomContentRangeDescription"
+        }
+    }

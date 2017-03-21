@@ -1,0 +1,60 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:ext="http://nextthought.com/ntp/ext"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="zope">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<!-- Adapters -->
+	<adapter factory=".adapters._ContainerContext" />
+
+	<!-- Externalization -->
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+
+	<ext:registerMimeFactories module=".note" />
+	<ext:registerMimeFactories module=".media" />
+	<ext:registerMimeFactories module=".canvas" />
+	<ext:registerMimeFactories module=".bookmark" />
+	<ext:registerMimeFactories module=".highlight" />
+	<ext:registerMimeFactories module=".redaction" />
+
+	<adapter factory=".note.NoteInternalObjectIO" />
+	<adapter factory=".media.MediaInternalObjectIO" />
+	<adapter factory=".canvas.CanvasInternalObjectIO" />
+	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
+	<adapter factory=".highlight.HighlightInternalObjectIO" />
+	<adapter factory=".redaction.RedactionInternalObjectIO" />
+
+	<!-- Blob file URL storage for canvas images -->
+	<exclude package="zope.file" file="browser.zcml" />
+	<include package="zope.file" />
+
+	<include package="plone.namedfile" file="z3c-blobfile.zcml" />
+
+	<include package=".forums" />
+
+	<!-- Additional/plugin packages -->
+	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
+	<include package="z3c.autoinclude" file="meta.zcml" />
+	<includePlugins package="." />
+
+	<!-- File uploads -->
+	<adapter factory=".file._ModeledContentFileFactory"
+			 for="dolmen.builtins.IDict"
+			 provides="nti.externalization.interfaces.IMimeObjectFactory"
+			 name="application/vnd.nextthought.modeledcontentfile" />
+
+	<adapter factory=".file._ModeledContentFileObjectIO"
+			 for="..interfaces.IModeledContentFile"  />
+
+	<!-- Schema maker -->
+	<utility factory=".jsonschema.NoteJsonSchemaMaker" name="note" />
+
+</configure>
+

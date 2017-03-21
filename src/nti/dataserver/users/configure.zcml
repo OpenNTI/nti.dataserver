@@ -1,0 +1,199 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:ext="http://nextthought.com/ntp/ext"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="zope">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="zope.location" />
+
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+
+	<ext:registerMimeFactories module=".users" />
+	<ext:registerMimeFactories module=".communities" />
+	<ext:registerMimeFactories module=".friends_lists" />
+
+	<!-- Events -->
+	<subscriber handler=".users.onChange" />
+	<subscriber handler=".users._blacklist_username" />
+	<subscriber handler=".users.user_devicefeedback" />
+
+	<subscriber handler=".communities._add_member_to_community" />
+	<subscriber handler=".communities._remove_member_from_community" />
+	<subscriber handler=".communities._remove_all_members_when_community_deleted" />
+
+	<!-- Externalization -->
+	<adapter factory=".users_external._EntitySummaryExternalObject"
+			 name="summary" />
+
+	<adapter factory=".users_external._FriendListSummaryExternalObject"
+			 name="summary" />
+
+	<adapter factory=".users_external._DynamicFriendListSummaryExternalObject"
+			 name="summary" />
+
+	<adapter factory=".users_external._CommunityExternalObject"
+			 name="summary" />
+
+	<adapter factory=".users_external._EntityExternalObject" />
+	<adapter factory=".users_external._CommunityExternalObject" />
+	<adapter factory=".users_external._FriendsListExternalObject" />
+	<adapter factory=".users_external._DynamicFriendsListExternalObject" />
+
+	<adapter factory=".users_external._UserExternalObject" />
+	<adapter factory=".users_external._UserSummaryExternalObject"
+			 name="summary" />
+	<adapter factory=".users_external._UserPersonalSummaryExternalObject"
+			 name="personal-summary" />
+
+	<adapter factory=".users_external._CoppaUserExternalObject" />
+
+	<adapter factory=".users_external._CoppaUserSummaryExternalObject"
+			 name="summary" />
+
+	<adapter factory=".users_external._CoppaUserPersonalSummaryExternalObject"
+			 name="personal-summary" />
+
+	<adapter factory=".users_external._EntityExporterExternalObject"
+			 name="exporter" />
+
+	<ext:registerAutoPackageIO
+		root_interfaces=".interfaces.ISuggestedContact
+						 .interfaces.IEducation
+						 .interfaces.IProfessionalPosition"
+		modules=".suggested_contacts .user_profile" />
+
+	<!-- Groups and ACLs -->
+	<!-- First, make something that can store group names on the user -->
+	<class class=".entity.Entity">
+		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+	</class>
+	<class class=".friends_lists.FriendsList">
+		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+	</class>
+
+	<!-- FriendsLists can iterate usernames -->
+	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
+			 factory=".friends_lists._FriendsListUsernameIterable" />
+
+	<adapter factory=".friends_lists._FriendsListEntityIterable" />
+
+	<!-- DFLs do so specially -->
+	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
+			 factory=".friends_lists._DynamicFriendsListUsernameIterable" />
+
+	<adapter factory=".friends_lists._DynamicFriendsListEntityIterable" />
+
+	<!-- Communities can report memberships, iterate them, report length, iterate intids -->
+	<adapter provides="nti.dataserver.interfaces.ILengthEnumerableEntityContainer"
+			 factory=".communities.CommunityEntityContainer" />
+
+	<!-- WeakRefs to entity objects -->
+	<adapter factory=".wref.WeakRefFactory" />
+
+	<!-- Due to a mistake in inheritance
+	(IFriendsList extends IModeledContent,IEntity in that order)
+	to be sure we get the right behaviour where it is involved
+	we must specifically register for it.
+	-->
+	<adapter factory=".wref.WeakRef"
+			 for="nti.dataserver.interfaces.IFriendsList" />
+
+	<!-- Avatar URLs -->
+	<!-- Default -->
+	<adapter factory=".avatar_urls.AvatarURLFactory"
+			 provides=".interfaces.IAvatarURLProvider" />
+
+	<adapter factory=".avatar_urls.AvatarURLFactory"
+			 provides=".interfaces.IAvatarURL" />
+
+	<!-- Named fallback -->
+	<adapter factory=".avatar_urls.GravatarComputedAvatarURL"
+			 provides=".interfaces.IAvatarURLProvider"
+			 name="generated"
+			 zcml:condition="not-have no_avatar" />
+
+	<adapter factory=".avatar_urls.DefaultAvatarURL"
+			 provides=".interfaces.IAvatarURLProvider"
+			 name="generated"
+			 zcml:condition="have no_avatar" />
+
+	<!-- Default for Koppa Kids -->
+	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
+			 provides=".interfaces.IAvatarURLProvider"
+			 for="nti.dataserver.interfaces.ICoppaUser" />
+
+	<!-- Fallback for Koppa Kids, just in case -->
+	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
+			 provides=".interfaces.IAvatarURLProvider"
+			 for="nti.dataserver.interfaces.ICoppaUser"
+			 name="generated" />
+
+	<!-- Default choices for coppa users -->
+	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURLChoices"
+			 provides=".interfaces.IAvatarChoices"
+			 for="nti.dataserver.interfaces.ICoppaUser" />
+
+	<!-- And everyone -->
+	<adapter factory=".avatar_urls.EntityGravatarComputedAvatarURLChoices"
+			 provides=".interfaces.IAvatarChoices"
+			 for="nti.dataserver.interfaces.IEntity" />
+
+	<adapter factory=".avatar_urls.GravatarComputedAvatarURLChoices"
+			 provides=".interfaces.IAvatarChoices"
+			 for="nti.dataserver.interfaces.IUser" />
+
+	<!-- Background URLs -->
+	<!-- Default -->
+	<adapter factory=".avatar_urls.BackgroundURLFactory"
+			 provides=".interfaces.IBackgroundURLProvider" />
+
+	<adapter factory=".avatar_urls.BackgroundURLFactory"
+			 provides=".interfaces.IBackgroundURL" />
+
+	<!-- Named fallback -->
+	<adapter factory=".avatar_urls.DefaultBackgroundURL"
+			 provides=".interfaces.IBackgroundURLProvider"
+			 name="default" />
+
+	<!-- Entity profile info -->
+	<!-- Default -->
+	<adapter factory=".interfaces.FriendlyNamedSchemaProvider"
+			 for="nti.dataserver.interfaces.IEntity" />
+
+	<adapter factory=".interfaces.CommunitySchemaProvider"
+			 for="nti.dataserver.interfaces.ICommunity" />
+
+	<adapter factory=".user_profile.FriendlyNamedFactory" />
+	<adapter factory=".user_profile.RestrictedUserProfileWithContactEmailAddressable" />
+
+	<adapter factory=".user_profile.CommunityProfileFactory" />
+
+	<!-- In dev mode, we don't impose too many restrictions by default -->
+	<adapter factory=".user_profile.CompleteUserProfileFactory"
+			 zcml:condition="have devmode" />
+
+	<adapter factory=".user_profile.EmailRequiredUserProfileFactory"
+			 zcml:condition="not-have devmode" />
+
+	<!-- Profile to principal -->
+	<adapter factory=".user_profile._profile_to_principal" />
+
+	<!-- User digest_email times -->
+	<adapter factory=".users._UserDigestEmailMetadata" />
+
+	<!-- Hidden memberships -->
+	<adapter factory=".communities._HiddenMembershipFactory"
+			 for="nti.dataserver.interfaces.ICommunity"
+			 provides=".interfaces.IHiddenMembership" />
+
+	<!-- Suggested contacts -->
+	<utility factory=".suggested_contacts._SecondOrderContactProvider"
+			 provides=".interfaces.ISecondOrderSuggestedContactProvider" />
+
+</configure>

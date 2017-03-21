@@ -1,0 +1,32 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:z3c="http://namespaces.zope.org/z3c"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<adapter factory=".adapters.UserNotableData" />
+	<adapter factory=".adapters.UserNotableDataStorageFactory" />
+
+	<!-- When a circled event goes out, store the intid as notable -->
+	<subscriber handler=".subscribers.store_circled_event_notable"
+				for="nti.dataserver.interfaces.IStreamChangeCircledEvent
+					 zc.intid.interfaces.IAfterIdAddedEvent" />
+
+	<subscriber factory=".decorators._StreamChangeNotableDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
+	<!-- Notables -->
+	<subscriber factory=".notables.BlogNotableFilter"
+				provides="nti.dataserver.interfaces.INotableFilter"
+				for="*" />
+
+	<subscriber factory=".notables.TopLevelNotableFilter"
+				provides="nti.dataserver.interfaces.INotableFilter"
+				for="*" />
+
+</configure>

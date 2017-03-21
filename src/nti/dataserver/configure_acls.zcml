@@ -1,0 +1,79 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="nti.dataserver">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<!-- ACL/ACE permissions -->
+	<include file="meta.zcml" package="zope.security" />
+
+	<permission
+		id="nti.actions.create"
+		title="Create new object" />
+	<permission
+		id="nti.actions.delete"
+		title="Delete existing object" />
+	<permission
+		id="nti.actions.update"
+		title="Edit existing object" />
+	<permission
+		id="nti.actions.search"
+		title="Search for objects" />
+	<permission 
+		id="nti.actions.list"
+		title="List contents of an object"/>
+	<permission
+		id="nti.actions.moderate"
+		title="Moderate existing objects" />
+	<permission
+		id="nti.actions.coppa_admin"
+		title="Administer COPPA agreements" />
+	<permission
+		id="nti.actions.impersonate"
+		title="Impersonate another user" />
+
+	<!-- Defining roles and granting permissions to them globally -->
+	<include file="meta.zcml" package="zope.securitypolicy" />
+	<role
+		id="nti.roles.moderator"
+		title="Capable of performing moderation" />
+
+	<grant
+		role="nti.roles.moderator"
+		permission="nti.actions.moderate" />
+
+
+	<!-- Site admins.  These have a high level of permissions. -->
+	<role 	id="role:nti.dataserver.site-admin" 
+			title="A role given to site administrators"
+			description="Provides certain administrator type functionality in a given site."/>
+
+	<!-- 
+		Give site admins impersonation. We could give this permission to
+	 	the role on a site by site basis with a bit of work 
+	 -->
+	<grant	permission="nti.actions.impersonate"
+			role="role:nti.dataserver.site-admin"/>
+
+	<!-- Register an IPrincipalRoleManager for ISite objects -->
+	<adapter factory=".site.site_role_manager"
+			 for="zope.component.interfaces.ISite"
+			 provides="zope.securitypolicy.interfaces.IPrincipalRoleManager" />
+
+	<!-- ACL providers -->
+	<adapter factory=".authorization_acl._UserACLProvider" />
+	<adapter factory=".authorization_acl._EntityACLProvider" />
+	<adapter factory=".authorization_acl._CreatedACLProvider" />
+	<adapter factory=".authorization_acl._CommunityACLProvider" />
+	<adapter factory=".authorization_acl._FriendsListACLProvider" />
+	<adapter factory=".authorization_acl._EnclosedContentACLProvider" />
+	<adapter factory=".authorization_acl._DataserverFolderACLProvider" />
+	<adapter factory=".authorization_acl._ShareableModeledContentACLProvider" />
+	<adapter factory=".authorization_acl._CoppaUserWithoutAgreementACLProvider" />
+
+</configure>

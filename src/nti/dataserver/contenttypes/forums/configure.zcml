@@ -1,0 +1,146 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:ext="http://nextthought.com/ntp/ext"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="zope">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="nti.mimetype" />
+	<include package="nti.contentfragments" />
+
+	<!-- Adapters for creating the default objects -->
+	<adapter factory=".forum.PersonalBlogAdapter"
+			 provides=".interfaces.IPersonalBlog" />
+
+	<adapter factory=".forum.GeneralForumCommunityAdapter"
+			 provides=".interfaces.ICommunityForum" />
+
+	<adapter factory=".board.GeneralBoardCommunityAdapter"
+			 provides=".interfaces.ICommunityBoard" />
+
+	<adapter factory=".forum.GeneralForumDFLAdapter"
+			 provides=".interfaces.IDFLForum" />
+
+	<adapter factory=".board.GeneralBoardDFLAdapter"
+			 provides=".interfaces.IDFLBoard" />
+
+	<adapter provides="zope.location.interfaces.ISublocations"
+			 for=".interfaces.IHeadlineTopic"
+			 factory=".topic.HeadlineTopicSublocations" />
+
+	<adapter factory=".board.BoardNameChooser" />
+	<adapter factory=".topic.PersonalBlogEntryNameChooser" />
+	<adapter factory=".topic.GeneralForumEntryNameChooser" />
+
+	<!-- WeakRefs -->
+	<!-- (IPost is covered as IModeledContent) -->
+	<adapter factory="nti.intid.wref.ArbitraryOrderableWeakRef"
+			 provides="nti.wref.interfaces.IWeakRef"
+			 for=".interfaces.IForum" />
+
+	<adapter factory="nti.intid.wref.ArbitraryOrderableWeakRef"
+			 provides="nti.wref.interfaces.IWeakRef"
+			 for=".interfaces.ITopic" />
+
+	<!-- NTIID resolvers -->
+	<utility factory=".ntiids._BlogResolver" name="Forum:PersonalBlog" />
+	<utility factory=".ntiids._BlogEntryResolver" name="Topic:PersonalBlogEntry" />
+
+	<utility factory=".ntiids._CommunityBoardResolver" name="Board:GeneralCommunity" />
+	<utility factory=".ntiids._CommunityForumResolver" name="Forum:GeneralCommunity" />
+	<utility factory=".ntiids._CommunityTopicResolver" name="Topic:GeneralCommunity" />
+
+	<utility factory=".ntiids._DFLBoardResolver" name="Board:GeneralDFL" />
+	<utility factory=".ntiids._DFLForumResolver" name="Forum:GeneralDFL" />
+	<utility factory=".ntiids._DFLTopicResolver" name="Topic:GeneralDFL" />
+
+	<!-- Events -->
+	<subscriber handler=".topic._post_added_to_topic" />
+	<subscriber handler=".forum._post_added_to_topic" />
+	<subscriber handler=".forum._topic_added_to_forum" />
+	<subscriber handler=".post._update_forum_when_headline_modified" />
+
+	<!-- Externalization -->
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+
+	<ext:registerAutoPackageIO
+		modules=".board .forum .post .topic .ace .summaries"
+		root_interfaces=".interfaces.IBoard
+						 .interfaces.IForum
+						 .interfaces.ITopic
+						 .interfaces.IPost
+						 .interfaces.IForumACE
+						 .interfaces.ITopicParticipationSummary
+						 .interfaces.IUserTopicParticipationContext
+						 .interfaces.IUserTopicParticipationSummary"
+		iobase=".externalization._MaybeThreadableForumObjectInternalObjectIO" />
+
+	<adapter factory=".externalization._BoardExporter"
+			 for=".interfaces.IBoard"
+			 name="exporter" />
+
+	<adapter factory=".externalization._ForumExporter"
+			 for=".interfaces.IForum"
+			 name="exporter" />
+
+	<adapter factory=".externalization._TopicExporter"
+			 for=".interfaces.ITopic"
+			 name="exporter" />
+
+	<adapter factory=".externalization._PostExporter"
+			 for=".interfaces.IPost"
+			 name="exporter" />
+
+	<adapter factory=".externalization._UserTopicParticipationSummaryExternalizer"
+             for=".interfaces.IUserTopicParticipationSummary"
+             provides="nti.externalization.interfaces.IInternalObjectExternalizer"
+             name="summary" />
+
+	<!-- ACLs -->
+	<adapter factory=".acl._TopicACLProvider"
+			 for=".interfaces.IPersonalBlogEntry"/>
+
+	<adapter factory=".acl._TopicACLProvider"
+			 for=".interfaces.IGeneralHeadlineTopic"/>
+
+	<adapter factory=".acl._ForumACLProvider"
+			 for=".interfaces.IPersonalBlog"/>
+
+	<adapter factory=".acl._ForumACLProvider"
+			 for=".interfaces.IGeneralForum"/>
+
+	<adapter factory=".acl.CommunityForumACLProvider"
+			 for=".interfaces.ICommunityForum"/>
+
+	<adapter factory=".acl.CommunityBoardACLProvider"
+			 for=".interfaces.ICommunityBoard"/>
+
+	<adapter factory=".acl._DFLForumACLProvider"
+			 for=".interfaces.IDFLForum"/>
+
+	<adapter factory=".acl._DFLBoardACLProvider"
+			 for=".interfaces.IDFLBoard"/>
+
+	<adapter factory=".acl._PostACLProvider" />
+	<adapter factory=".acl._HeadlinePostACLProvider" />
+
+	<adapter factory=".acl._ACLCommunityBoardACLProvider"
+			 for=".interfaces.IACLCommunityBoard"/>
+
+	<adapter factory=".acl._ACLCommunityForumACLProvider"
+			 for=".interfaces.IACLCommunityForum"/>
+
+	<!-- Zope security -->
+	<adapter factory=".zope_security.BoardRolePermissionManager"
+			 provides="zope.securitypolicy.interfaces.IRolePermissionMap" />
+
+	<!-- Additional/plugin packages -->
+	<include package="z3c.autoinclude" file="meta.zcml" />
+	<includePlugins package="." />
+
+</configure>

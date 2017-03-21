@@ -1,0 +1,112 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import assert_that
+from nose.tools import assert_raises
+
+import fudge
+
+import os.path
+import anyjson as json
+
+from zope import component
+
+from nti.dictserver import lookup
+from nti.dictserver.term import DictionaryTerm as WordInfo
+from nti.dictserver.storage import TrivialExcelCSVDataStorage
+from nti.dictserver.storage import UncleanSQLiteJsonDictionaryTermStorage as Storage
+from nti.dictserver.storage import JsonDictionaryTermDataStorage as JsonDictionary
+
+import nti.testing.base
+
+class TestDictionary(nti.testing.base.ConfiguringTestBase):
+
+	# this test makes sure that when a dict is constructed without a lookup path,
+	# or other bad path of some sort, it fails
+	def test_badConstructorValues(self):
+		assert_raises(ValueError, Storage, '')
+		assert_raises(TypeError, Storage)
+		assert_raises(TypeError, Storage, None)
+
+	@fudge.patch('sqlite3.connect')
+	def test_no_lookup(self, sqlite3_connect):
+		fake_conn = sqlite3_connect.expects_call().returns_fake()
+		fake_cur = fake_conn.expects('execute').with_arg_count(2).returns_fake()
+		fake_cur.expects('fetchone').returns((None,))
+		fake_cur.expects('close')
+		json_dict = Storage(":memory:")
+
+		val = json_dict.lookup('word')
+		assert_that(val, is_not(none()))
+
+	@fudge.patch('sqlite3.connect')
+	def test_does_lookup(self, sqlite3_connect):
+		fake_conn = sqlite3_connect.expects_call().returns_fake()
+		fake_conn.expects('close')
+		fake_cur = fake_conn.expects('execute').with_arg_count(2).returns_fake()
+		fake_cur.expects('fetchone').returns(('text',))
+		fake_cur.expects('close')
+		json_dict = Storage(":memory:")
+
+		val = json_dict.lookup('word')
+		assert_that(val, is_('text'))
+
+		json_dict.close()
+
+	@fudge.patch('sqlite3.connect')
+	def test_lookup_through_api(self, sqlite3_connect):
+		fake_conn = sqlite3_connect.expects_call().returns_fake()
+		fake_conn.expects('close')
+		fake_cur = fake_conn.expects('execute').with_arg_count(2).returns_fake()
+		defn = {'meanings': [{'content': 'Content',
+							  'examples': ['ex1'],
+							  'type': 'noun' } ],
+				'synonyms': ['s1']
+				}
+		fake_cur.expects('fetchone').returns((json.dumps(defn),))
+		fake_cur.expects('close')
+		storage = Storage(":memory:")
+		json_dict = JsonDictionary(storage)
+		component.provideUtility(json_dict)
+		val = lookup('word')
+
+		assert_that(val, is_(WordInfo))
+		assert_that(val.toXMLString(), is_not(none()))
+		storage.close()
+
+	@fudge.patch('sqlite3.connect')
+	def test_lookup_bad_data_through_api(self, sqlite3_connect):
+		fake_conn = sqlite3_connect.expects_call().returns_fake()
+		fake_conn.expects('close')
+		fake_cur = fake_conn.expects('execute').with_arg_count(2).returns_fake()
+		fake_cur.expects('fetchone').returns(('CANNOT LOAD',))
+		fake_cur.expects('close')
+		storage = Storage(":memory:")
+		json_dict = JsonDictionary(storage)
+		component.provideUtility(json_dict)
+		val = lookup('word')
+
+		assert_that(val, is_(WordInfo))
+
+		storage.close()
+
+	def test_lookup_trivial_excel_through_api(self):
+		csv_dict = TrivialExcelCSVDataStorage(os.path.join(os.path.dirname(__file__), 'nti_content_glossary.csv'))
+		component.provideUtility(csv_dict)
+
+		val = lookup('Risk Limits')
+		assert_that(val, is_(WordInfo))
+		assert_that(val.toXMLString(), is_not(none()))
+
+		val = lookup('institutional theory')
+		assert_that(val, is_(WordInfo))
+		assert_that(val.toXMLString(), is_not(none()))

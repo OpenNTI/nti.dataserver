@@ -1,0 +1,38 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<!-- Traversal -->
+	<adapter name="Invitations"
+			 factory=".views.InvitationsPathAdapter"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+
+	<!-- ACL -->
+	<adapter factory=".acl.InvitationACLProvider" />
+
+	<!-- Workspaces -->
+	<subscriber factory=".workspaces.InvitationsWorkspace"
+				provides=".interfaces.IInvitationsWorkspace" />
+
+	<adapter factory=".workspaces.InvitationsWorkspace"
+			 provides=".interfaces.IInvitationsWorkspace" />
+
+	<subscriber	factory=".workspaces._DefaultUserInvitationsLinksProvider"
+				provides=".interfaces.IUserInvitationsLinkProvider"/>
+
+	<!-- Decorators -->
+	<subscriber	factory=".decorators.DFLGetInvitationLinkProvider"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
+
+	<subscriber factory=".decorators.LegacyAcceptInvitationsLinkProvider"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					 pyramid.interfaces.IRequest"/>
+	
+</configure>

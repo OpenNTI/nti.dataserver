@@ -1,0 +1,29 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="nti.contentsearch" />
+
+	<!-- Filters -->
+	<subscriber	factory=".filters._SearchContentObjectFilter"
+				provides="nti.appserver.interfaces.ICreatableObjectFilter"
+				for="nti.dataserver.interfaces.IUser" />
+
+	<!-- Search filters -->
+	<subscriber factory=".predicates._AccessibleSearchHitPredicate"
+				provides="nti.contentsearch.interfaces.ISearchHitPredicate"
+				for="*" />
+
+	<!-- Decorators -->
+	<subscriber factory=".decorators._SearchResultsDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.contentsearch.interfaces.ISearchResults
+					 pyramid.interfaces.IRequest"/>
+
+</configure>
