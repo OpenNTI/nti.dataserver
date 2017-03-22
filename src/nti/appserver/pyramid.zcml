@@ -91,6 +91,7 @@
 	<include package="nti.app.notabledata" file="pyramid.zcml" />
 	<include package="nti.app.pushnotifications" file="pyramid.zcml" />
 
+	<!-- Localization -->
 	<include package="nti.app.i18n" file="pyramid.zcml" />
 
 	<!-- Plugin packages -->
