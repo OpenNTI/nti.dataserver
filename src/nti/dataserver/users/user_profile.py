@@ -25,6 +25,9 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from persistent import Persistent
 
+from nti.common.nameparser import constants as np_constants
+from nti.common.nameparser import all_prefixes as np_all_prefixes
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
@@ -56,8 +59,6 @@ from nti.property.property import CachedProperty
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from nti.utils.nameparser import constants as np_constants
-from nti.utils.nameparser import all_prefixes as np_all_prefixes
 
 class _ExistingDictReadFieldPropertyStoredThroughField(FP):
 	"""
