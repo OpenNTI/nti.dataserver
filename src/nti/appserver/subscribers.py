@@ -17,13 +17,14 @@ from zope.component.event import objectEventNotify
 
 from pyramid.interfaces import INewRequest
 
+
 @component.adapter(INewRequest)
 def requestEventNotify(event):
-	"""
-	Just like :class:`zope.component.interfaces.IObjectEvent`,
-	an :class:`.INewRequest` event wraps an object
-	that may be of different types. This subscribers
-	does double-dispatch.
-	"""
-	event.object = event.request
-	objectEventNotify(event)
+    """
+    Just like :class:`zope.component.interfaces.IObjectEvent`,
+    an :class:`.INewRequest` event wraps an object
+    that may be of different types. This subscribers
+    does double-dispatch.
+    """
+    event.object = event.request
+    objectEventNotify(event)
