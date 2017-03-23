@@ -33,9 +33,9 @@ class position(object):
     @updating
     def set(self, node, offset):
         self.node, self.offset = node, offset
-        if     node is not None \
-           and node.nodeType == node.TEXT_NODE \
-           and self.offset > len(node.data):
+        if      node is not None \
+            and node.nodeType == node.TEXT_NODE \
+            and self.offset > len(node.data):
             self.offset = len(node.data)
 
     @updating
@@ -54,11 +54,11 @@ class position(object):
         if ancestor is None:
             # FIXME: This isn't right
             return NotImplemented
-        for i, c in enumerate(ancestor.childNodes):
+        for idx, c in enumerate(ancestor.childNodes):
             if is_ancestor(c, self.node):
-                self_index = i
+                self_index = idx
             if is_ancestor(c, other.node):
-                other_index = i
+                other_index = idx
         if is_ancestor(self.node, other.node):
             if other_index < self.offset:
                 return 1
