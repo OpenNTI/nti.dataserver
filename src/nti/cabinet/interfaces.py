@@ -15,7 +15,7 @@ from zope.file.interfaces import IFileReader
 
 from zope.location.interfaces import IContained
 
-from nti.base.interfaces import IFile
+from nti.base.interfaces import INamedFile
 
 from nti.schema.field import Number
 from nti.schema.field import TextLine
@@ -36,7 +36,7 @@ class ISourceBucket(IContained):
         """
 
 
-class ISource(IFileReader, IContained, IFile):
+class ISource(IFileReader, IContained, INamedFile):
 
     length = Number(title="Source length", required=False, default=None)
 
