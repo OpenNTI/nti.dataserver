@@ -18,13 +18,14 @@ from hamcrest import greater_than
 from hamcrest import has_property
 does_not = is_not
 
+from nti.testing.matchers import validly_provides
 from nti.testing.matchers import verifiably_provides
 
 import shutil
 import tempfile
 import unittest
 
-from StringIO import StringIO
+from six import StringIO
 
 from nti.cabinet.filer import DirectoryFiler
 
@@ -53,6 +54,7 @@ class TestFiler(unittest.TestCase):
 
             source = filer.get(href)
             assert_that(source, is_not(none()))
+            assert_that(source, validly_provides(ISource))
             assert_that(source, verifiably_provides(ISource))
             assert_that(source, has_property('length', is_(9)))
             assert_that(source, has_property('name', is_("ichigo.xml")))
@@ -61,6 +63,11 @@ class TestFiler(unittest.TestCase):
             assert_that(source, has_property('contentType', is_("text/xml")))
 
             assert_that(source.read(), is_("<ichigo/>"))
+            source.close()
+
+            source = filer.get(href)
+            source.data = b'aizen and ichigo'
+            assert_that(source.read(5), is_(b'aizen'))
             source.close()
 
             source = filer.get("/home/foo")

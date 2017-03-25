@@ -16,15 +16,14 @@ from six import StringIO
 from zope import interface
 
 from zope.cachedescriptors.property import readproperty
-
-from zope.container.contained import Contained
+from zope.cachedescriptors.property import CachedProperty
 
 from zope.proxy import ProxyBase
 
+from nti.base.interfaces import ILastModified
+
 from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceBucket
-
-from nti.coremetadata.interfaces import ILastModified
 
 from nti.property.property import alias
 
@@ -35,7 +34,10 @@ from nti.schema.eqhash import EqHash
 
 @EqHash('__name__')
 @interface.implementer(ISourceBucket)
-class SourceBucket(Contained):
+class SourceBucket(object):
+
+    __name__ = None
+    __parent__ = None
 
     name = alias('__name__')
 
@@ -144,23 +146,27 @@ class SourceProxy(ProxyBase):
 
     def readContents(self):
         return self.read()
+    
+    @property
+    def data(self):
+        return self.read()
 
 
 @EqHash('filename')
 @interface.implementer(ISource, ILastModified)
 class SourceFile(object):
 
+    __parent__ = None
+    
     _data = None
     _time = None
-    _v_fp = None
-    __parent__ = None
 
     def __init__(self, name, data=None, contentType=None,
                  createdTime=None, lastModified=None, path=None):
         self.name = name
         self.path = path or u''
         self._time = time.time()
-        self.contentType = contentType
+        self.contentType = contentType or u'application/octet-stream'
         if data is not None:
             self.data = data
         if createdTime is not None:
@@ -174,14 +180,13 @@ class SourceFile(object):
 
     def _getData(self):
         return self._data
-
     def _setData(self, data):
         self._data = data
     data = property(_getData, _setData)
 
     @readproperty
     def mode(self):
-        return "rb"
+        return b"rb"
 
     @readproperty
     def createdTime(self):
@@ -191,27 +196,25 @@ class SourceFile(object):
     def lastModified(self):
         return self._time
 
-    def _get_v_fp(self):
-        self._v_fp = StringIO(self.data) if self._v_fp is None else self._v_fp
-        return self._v_fp
+    @CachedProperty('data')
+    def _v_fp(self):
+        return StringIO(self.data)
 
     def read(self, size=-1):
-        return self._get_v_fp().read(size) if size != -1 else self.data
+        return self._v_fp.read(size) if size != -1 else self.data
 
     def seek(self, offset, whence=0):
-        return self._get_v_fp().seek(offset, whence)
+        return self._v_fp.seek(offset, whence)
 
     def tell(self):
-        return self._get_v_fp().tell()
+        return self._v_fp.tell()
 
     def close(self):
-        if self._v_fp is not None:
-            self._v_fp.close()
-        self._v_fp = None
+        pass
 
     @property
     def length(self):
-        result = str(self.data) if self.data is not None else u''
+        result = self.data if self.data is not None else u''
         return len(result)
     size = length
 
@@ -231,7 +234,7 @@ class SourceFile(object):
     @property
     def __name__(self):
         return self.name
-
+NamedSource = SourceFile
 
 @interface.implementer(ISource)
 class ReferenceSourceFile(SourceFile):
@@ -247,7 +250,6 @@ class ReferenceSourceFile(SourceFile):
     def _getData(self):
         with open(self.filename, "rb") as fp:
             return fp.read()
-
     def _setData(self, data):
         # close resources
         self.close()
@@ -256,13 +258,17 @@ class ReferenceSourceFile(SourceFile):
         # write to file
         with open(self.filename, "wb") as fp:
             fp.write(data)
-
     data = property(_getData, _setData)
 
-    def _get_v_fp(self):
-        self._v_fp = open(
-            self.filename, "rb") if self._v_fp is None else self._v_fp
+    @readproperty
+    def _v_fp(self):
+        self._v_fp = open(self.filename, "rb")
         return self._v_fp
+
+    def close(self):
+        if '_v_fp' in self.__dict__:
+            self._v_fp.close()
+            delattr(self, '_v_fp')
 
     def remove(self):
         self.close()

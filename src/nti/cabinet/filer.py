@@ -17,6 +17,8 @@ from datetime import datetime
 
 from zope import interface
 
+from nti.base._compat import unicode_
+
 from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceFiler
 
@@ -139,7 +141,7 @@ class DirectoryFiler(object):
             contentType = mimetypes.guess_type(name.lower())[0]
             result = ReferenceSourceFile(name=name,
                                          path=key_path,
-                                         contentType=contentType)
+                                         contentType=unicode_(contentType))
         result.__parent__ = parent
         return result
 
