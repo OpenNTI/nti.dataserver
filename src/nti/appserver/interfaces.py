@@ -69,19 +69,11 @@ zope.deferredimport.deprecatedFrom(
     "nti.app.contentlibrary.workspaces.interfaces",
     "ILibraryCollection")
 
-class ICreatableObjectFilter(interface.Interface):
-	"""
-	Object, usually registered as an adapter on a user, that serves
-	to filter the available list of objects that user is allowed to create.
-	"""
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.dataserver.interfaces",
+	"nti.dataserver.interfaces",
+	"ICreatableObjectFilter")
 
-	def filter_creatable_object_terms(terms):
-		"""
-		Given a dictionary of vocabulary terms, filter them to remove the objects
-		that are not acceptable.
-
-		:return: Dictionary of filtered terms.
-		"""
 
 class IUserCapabilityFilter(interface.Interface):
 

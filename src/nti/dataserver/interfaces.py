@@ -242,6 +242,21 @@ ILastViewed = ILastViewed
 # BWC exports
 from nti.coremetadata.interfaces import IContained
 
+
+class ICreatableObjectFilter(interface.Interface):
+	"""
+	Object, usually registered as an adapter on a principal, that serves
+	to filter the available list of objects that user is allowed to create.
+	"""
+
+	def filter_creatable_object_terms(terms):
+		"""
+		Given a dictionary of vocabulary terms, filter them to remove the objects
+		that are not acceptable.
+
+		:return: Dictionary of filtered terms.
+		"""
+
 class IAnchoredRepresentation(IContained):
 	"""
 	Something not only contained within a container, but that has a
