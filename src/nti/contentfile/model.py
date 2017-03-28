@@ -13,6 +13,8 @@ from six import StringIO
 
 from zope import interface
 
+from zope.cachedescriptors.property import CachedProperty
+
 from BTrees.OOBTree import OOTreeSet
 
 from nti.contentfile.interfaces import IContentFile
@@ -102,17 +104,8 @@ class BaseContentMixin(object):
                 logger.exception("Error while getting associatied object")
 
     def has_associations(self):
-        result = False
-        if '_associations' in self.__dict__:
-            for wref in self._associations:
-                try:
-                    obj = wref()
-                    if obj is not None:
-                        result = True
-                        break
-                except Exception:
-                    logger.exception("Error while getting associatied object")
-        return result
+        return  bool(   '_associations' in self.__dict__ 
+                     and self._associations)
 
     def count_associations(self):
         result = 0
@@ -136,27 +129,24 @@ class BaseContentMixin(object):
             self._associations.clear()
 
     # IFileReader
-
-    _v_fp = None
-
-    def _get_v_fp(self):
-        self._v_fp = StringIO(self.data) if self._v_fp is None else self._v_fp
-        return self._v_fp
+    
+    @CachedProperty('data')
+    def _v_fp(self):
+        return StringIO(self.data)
 
     def read(self, size=-1):
-        return self._get_v_fp().read(size) if size != -1 else self.data
+        return self._v_fp.read(size) if size != -1 else self.data
 
     def seek(self, offset, whence=0):
-        return self._get_v_fp().seek(offset, whence)
+        return self._v_fp.seek(offset, whence)
 
     def tell(self):
-        return self._get_v_fp().tell()
+        return self._v_fp.tell()
 
     # compatible methods
 
     def readContents(self):
         return self.data
-
 BaseMixin = BaseContentMixin  # BWC
 
 
