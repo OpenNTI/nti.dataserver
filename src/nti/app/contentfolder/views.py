@@ -133,6 +133,7 @@ def fileType_key(x):
             result = (extension, x.filename.lower())
     return result
 
+
 SORT_KEYS = CaseInsensitiveDict({
     'fileType': fileType_key,
     'name': lambda x: x.filename.lower(),
@@ -444,15 +445,13 @@ class UploadView(AbstractAuthenticatedView,
                 factory = ContentBlobFile if self.use_blobs else ContentFile
         return factory
 
-    def get_namedfile(self, source, name, filename=None):
+    def create_namedfile(self, source, name, filename=None):
         factory = self.factory(source)
         filename = filename or getattr(source, 'filename', None)
         contentType = getattr(source, 'contentType', None) \
                    or guess_type(filename)[0]
-
-        # transfer data
+        # create file
         result = factory()
-        result.data = source.read()
         result.name = to_unicode(name)
         result.filename = to_unicode(filename or name)
         result.contentType = contentType or u'application/octet-stream'
@@ -478,10 +477,11 @@ class UploadView(AbstractAuthenticatedView,
                 target.data = source.read()
                 lifecycleevent.modified(target)
             else:
-                target = self.get_namedfile(source, file_key, filename)
+                target = self.create_namedfile(source, file_key, filename)
                 target.creator = creator
                 lifecycleevent.created(target)
                 self.context.add(target)
+                target.data = source.read()  # set data after getting an iid
             items.append(target)
 
         lifecycleevent.modified(self.context)
@@ -519,11 +519,10 @@ class ImportView(AbstractAuthenticatedView,
             factory = ContentBlobFile if self.use_blobs else ContentFile
         return factory
 
-    def get_namedfile(self, source, name, filename=None):
+    def create_namedfile(self, source, name, filename=None):
         factory = self.factory(filename or name)
         result = factory()
         result.name = name
-        result.data = source.read()
         result.filename = filename or name
         result.contentType = guess_type(filename)[0] or u'application/octet-stream'
         return result
@@ -553,12 +552,13 @@ class ImportView(AbstractAuthenticatedView,
                             target.data = source.read()
                             lifecycleevent.modified(target)
                         else:
-                            target = self.get_namedfile(source,
-                                                        file_key,
-                                                        filename)
+                            target = self.create_namedfile(source,
+                                                           file_key,
+                                                           filename)
                             target.creator = creator
                             lifecycleevent.created(target)
                             folder.add(target)
+                            target.data = source.read()  # set data after getting an iid
                         items[name] = target
 
         self.request.response.status_int = 201
@@ -593,9 +593,9 @@ class ExportView(AbstractAuthenticatedView):
                     self._recur(item, zfile)
 
             response = self.request.response
-            response.content_encoding = str('identity')
-            response.content_type = str('application/x-gzip; charset=UTF-8')
-            response.content_disposition = str('attachment; filename="export.zip"')
+            response.content_encoding = b'identity'
+            response.content_type = b'application/x-gzip; charset=UTF-8'
+            response.content_disposition = b'attachment; filename="export.zip"'
             response.body_file = open(source, "rb")
             return response
         finally:
@@ -603,8 +603,8 @@ class ExportView(AbstractAuthenticatedView):
 
 
 def has_associations(theObject):
-    return  hasattr(theObject, 'has_associations') \
-        and theObject.has_associations()
+    return hasattr(theObject, 'has_associations') \
+       and theObject.has_associations()
 
 
 class DeleteMixin(AbstractAuthenticatedView,
@@ -779,7 +779,7 @@ class RenameMixin(object):
         theObject.filename = new_name  # filename is display name
         if hasattr(theObject, 'title') and theObject.title == old_name:
             theObject.title = new_name
-        if      hasattr( theObject, 'description' ) \
+        if      hasattr(theObject, 'description') \
             and theObject.description == old_name:
             theObject.description = new_name
 
@@ -892,7 +892,6 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
         # capture old key data
         old_key = getattr(contentObject, self.key_attr)
         old_name = getattr(contentObject, self.name_attr)
-
         # update
         result = UGDPutView.updateContentObject(self,
                                                 contentObject,
@@ -901,12 +900,10 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
                                                 notify=False,
                                                 pre_hook=pre_hook,
                                                 object_hook=object_hook)
-
         # check for rename
         new_name = getattr(contentObject, self.name_attr)
         if old_name.lower() is not new_name.lower():
             self.do_rename(contentObject, new_name=new_name, old_key=old_key)
-
         # notify
         lifecycleevent.modified(contentObject)
         return result
@@ -963,8 +960,8 @@ class MoveView(AbstractAuthenticatedView,
             target = traverse(current, path)
         except (TraversalException) as e:
             if     not isinstance(e, NoSuchFileException) \
-                    or e.path \
-                    or strict:
+                or e.path \
+                or strict:
                 exc_info = sys.exc_info()
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
@@ -994,7 +991,7 @@ class MoveView(AbstractAuthenticatedView,
                 None)
 
         if      ILockedFolder.providedBy(theObject) \
-                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(
                 self.request,
                 hexc.HTTPForbidden,
@@ -1154,7 +1151,7 @@ class CFIOView(AbstractAuthenticatedView):
         # prepare environ
         subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
         subrequest.environ[b'repoze.who.identity'] = \
-                           request.environ['repoze.who.identity'].copy()
+            request.environ['repoze.who.identity'].copy()
         for k in request.environ:
             if k.startswith('paste.') or k.startswith('HTTP_'):
                 if k not in subrequest.environ:
