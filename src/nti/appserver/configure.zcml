@@ -483,7 +483,6 @@
 	<include package="nti.app.saml" />
 	<include package="nti.app.types" />
 	<include package="nti.app.users" />
-	<include package="nti.app.recorder" />
 	<include package="nti.app.bulkemail" />
 	<include package="nti.app.extractors" />
 	<include package="nti.app.publishing" />
