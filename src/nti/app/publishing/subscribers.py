@@ -14,7 +14,6 @@ from zope import component
 from nti.app.publishing import TRX_TYPE_PUBLISH
 from nti.app.publishing import TRX_TYPE_UNPUBLISH
 
-from nti.coremetadata.interfaces import IRecordable
 from nti.coremetadata.interfaces import IPublishable
 from nti.coremetadata.interfaces import ICalendarPublishable
 from nti.coremetadata.interfaces import IObjectPublishedEvent
@@ -22,6 +21,8 @@ from nti.coremetadata.interfaces import IObjectUnpublishedEvent
 from nti.coremetadata.interfaces import ICalendarPublishableModifiedEvent
 
 from nti.externalization.internalization import notifyModified
+
+from nti.recorder.interfaces import IRecordable
 
 from nti.recorder.utils import record_transaction
 
