@@ -24,8 +24,8 @@ from nti.contentfolder.interfaces import INameAdapter
 from nti.contentfolder.interfaces import IPathAdapter
 from nti.contentfolder.interfaces import ISiteAdapter
 from nti.contentfolder.interfaces import INamedContainer
-from nti.contentfolder.interfaces import IMimeTypeAdapter
 from nti.contentfolder.interfaces import IFilenameAdapter
+from nti.contentfolder.interfaces import IMimeTypeAdapter
 from nti.contentfolder.interfaces import IContainerIdAdapter
 from nti.contentfolder.interfaces import IAssociationsAdapter
 
