@@ -20,9 +20,9 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
-from nti.coremetadata.interfaces import IRecordableContainer
-
 from nti.recorder.index import IX_CHILD_ORDER_LOCKED
+
+from nti.recorder.interfaces import IRecordableContainer
 
 from nti.recorder.index import get_recordables
 from nti.recorder.index import ChildOrderLockedIndex
