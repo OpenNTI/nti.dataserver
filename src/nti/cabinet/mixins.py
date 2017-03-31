@@ -146,7 +146,7 @@ class SourceProxy(ProxyBase):
 
     def readContents(self):
         return self.read()
-    
+
     @property
     def data(self):
         return self.read()
@@ -157,7 +157,7 @@ class SourceProxy(ProxyBase):
 class SourceFile(object):
 
     __parent__ = None
-    
+
     _data = None
     _time = None
 
@@ -180,6 +180,7 @@ class SourceFile(object):
 
     def _getData(self):
         return self._data
+
     def _setData(self, data):
         self._data = data
     data = property(_getData, _setData)
@@ -236,6 +237,7 @@ class SourceFile(object):
         return self.name
 NamedSource = SourceFile
 
+
 @interface.implementer(ISource)
 class ReferenceSourceFile(SourceFile):
 
@@ -250,6 +252,7 @@ class ReferenceSourceFile(SourceFile):
     def _getData(self):
         with open(self.filename, "rb") as fp:
             return fp.read()
+
     def _setData(self, data):
         # close resources
         self.close()
