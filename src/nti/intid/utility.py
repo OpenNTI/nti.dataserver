@@ -60,6 +60,12 @@ class IntIds(_ZCIntIds):
     # object, in which case queryId will take either the proxy or the wrapped object;
     # alternatively, they define __slots__ and forbid new attributes
 
+    def randomize(self):
+        """
+        Randomize the next id
+        """
+        self._v_nextid = self._randrange(0, self.family.maxint)
+
     def queryId(self, ob, default=None):
         """
         NOTE: if you pass a broken object (in the ZODB sense),
