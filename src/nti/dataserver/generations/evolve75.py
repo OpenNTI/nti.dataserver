@@ -20,9 +20,6 @@ from zope.intid.interfaces import IIntIds
 from zope.component.hooks import site
 from zope.component.hooks import setHooks
 
-from nti.assessment.interfaces import IQInquiry
-from nti.assessment.interfaces import IQAssessment
-
 from nti.contenttypes.presentation.interfaces import IPresentationAsset
 
 from nti.metadata import metadata_queue
@@ -43,12 +40,6 @@ def _index_assets(queue, intids):
         return False
 
     for _, item in component.getUtilitiesFor(IPresentationAsset):
-        _index_item(item)
-
-    for _, item in component.getUtilitiesFor(IQAssessment):
-        _index_item(item)
-
-    for _, item in component.getUtilitiesFor(IQInquiry):
         _index_item(item)
 
 
