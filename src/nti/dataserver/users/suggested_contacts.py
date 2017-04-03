@@ -35,158 +35,167 @@ from nti.schema.field import SchemaConfigured
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+
 @total_ordering
 @WithRepr
 @EqHash("username", "rank")
 @interface.implementer(ISuggestedContact)
 class SuggestedContact(SchemaConfigured, Contained):
-	createDirectFieldProperties(ISuggestedContact)
+    createDirectFieldProperties(ISuggestedContact)
 
-	@property
-	def provider(self):
-		return self.__dict__.get('_v_provider')
+    @property
+    def provider(self):
+        return self.__dict__.get('_v_provider')
 
-	@provider.setter
-	def provider(self, nv):
-		self.__dict__['_v_provider'] = nv
+    @provider.setter
+    def provider(self, nv):
+        self.__dict__['_v_provider'] = nv
 
-	def __lt__(self, other):
-		try:
-			return (self.rank, self.username) < (other.rank, other.username)
-		except AttributeError:
-			return NotImplemented
+    def __lt__(self, other):
+        try:
+            return (self.rank, self.username) < (other.rank, other.username)
+        except AttributeError:
+            return NotImplemented
 
-	def __gt__(self, other):
-		try:
-			return (self.rank, self.username) > (other.rank, other.username)
-		except AttributeError:
-			return NotImplemented
+    def __gt__(self, other):
+        try:
+            return (self.rank, self.username) > (other.rank, other.username)
+        except AttributeError:
+            return NotImplemented
+
 
 @interface.implementer(ISuggestedContactRankingPolicy)
 class SuggestedContactRankingPolicy(SchemaConfigured, Contained):
-	createDirectFieldProperties(ISuggestedContactRankingPolicy)
+    createDirectFieldProperties(ISuggestedContactRankingPolicy)
 
-	@classmethod
-	def sort(cls, contacts):
-		contacts = contacts or ()
-		return sorted(contacts, reverse=True)
+    @classmethod
+    def sort(cls, contacts):
+        contacts = contacts or ()
+        return sorted(contacts, reverse=True)
+
+
 DefaultSuggestedContactRankingPolicy = SuggestedContactRankingPolicy
+
 
 @interface.implementer(ISuggestedContactRankingPolicy)
 class NoOpSuggestedContactRankingPolicy(SchemaConfigured, Contained):
-	createDirectFieldProperties(ISuggestedContactRankingPolicy)
+    createDirectFieldProperties(ISuggestedContactRankingPolicy)
 
-	@classmethod
-	def sort(cls, contacts):
-		return contacts
+    @classmethod
+    def sort(cls, contacts):
+        return contacts
+
 
 @interface.implementer(ISuggestedContactsProvider)
 class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
-	createDirectFieldProperties(ISuggestedContactsProvider)
+    createDirectFieldProperties(ISuggestedContactsProvider)
 
-	@property
-	def priority(self):
-		result = getattr(self.ranking, 'priority', None) or 1
-		return result
+    @property
+    def priority(self):
+        result = getattr(self.ranking, 'priority', None) or 1
+        return result
 
-	def suggestions(self, user, source_user=None):
-		raise NotImplementedError()
+    def suggestions(self, user, source_user=None):
+        raise NotImplementedError()
 SuggestedContactsProvider = DefaultSuggestedContactsProvider
+
 
 @interface.implementer(ISecondOrderSuggestedContactProvider)
 class _SecondOrderContactProvider(object):
-	"""
-	For the given user, return the best second order contacts.
-	This is pretty cheap to do in-memory, for now.
-	"""
+    """
+    For the given user, return the best second order contacts.
+    This is pretty cheap to do in-memory, for now.
+    """
 
-	def __init__(self):
-		self.ranking = SuggestedContactRankingPolicy()
-		self.ranking.provider = self
+    def __init__(self):
+        self.ranking = SuggestedContactRankingPolicy()
+        self.ranking.provider = self
 
-	@classmethod
-	def _make_visibility_test(cls, user):
-		"""
-		For a given user, create a lambda that excludes those users
-		not visible from our user's communities. We also exclude
-		`nextthought.com` users.
-		"""
-		if user:
-			user_community_names = user.usernames_of_dynamic_memberships - set(('Everyone',))
-			def test(x):
-				try:
-					username = getattr(x, 'username')
-				except KeyError:  # pragma: no cover
-					# typically POSKeyError
-					logger.warning("Failed to filter entity with id %s", hex(u64(x._p_oid)))
-					return False
+    @classmethod
+    def _make_visibility_test(cls, user):
+        """
+        For a given user, create a lambda that excludes those users
+        not visible from our user's communities. We also exclude
+        `nextthought.com` users.
+        """
+        if user:
+            user_community_names = user.usernames_of_dynamic_memberships - \
+                                   set(('Everyone',))
 
-				# No one can see the Koppa Kids or nextthought users.
-				if 		ICoppaUserWithoutAgreement.providedBy(x) \
-					or 	username.endswith('@nextthought.com'):
-					return False
+            def test(x):
+                try:
+                    username = getattr(x, 'username')
+                except KeyError:  # pragma: no cover
+                    # typically POSKeyError
+                    logger.warning("Failed to filter entity with id %s", 
+                                   hex(u64(x._p_oid)))
+                    return False
 
-				# public comms can be searched
-				if ICommunity.providedBy(x) and x.public:
-					return True
+                # No one can see the Koppa Kids or nextthought users.
+                if     ICoppaUserWithoutAgreement.providedBy(x) \
+                    or username.endswith('@nextthought.com'):
+                    return False
 
-				# User can see dynamic memberships he's a member of
-				# or owns. First, the general case
-				container = IEntityContainer(x, None)
-				if container is not None:
-					return user in container or getattr(x, 'creator', None) is user
+                # public comms can be searched
+                if ICommunity.providedBy(x) and x.public:
+                    return True
 
-				# Otherwise, visible if it doesn't have dynamic memberships,
-				# or we share dynamic memberships
-				return 	not hasattr(x, 'usernames_of_dynamic_memberships') or \
-						x.usernames_of_dynamic_memberships.intersection(user_community_names)
-			return test
-		return lambda _: True
+                # User can see dynamic memberships he's a member of
+                # or owns. First, the general case
+                container = IEntityContainer(x, None)
+                if container is not None:
+                    return user in container or getattr(x, 'creator', None) is user
 
-	def _get_contacts(self, target, accum):
-		entities_followed = getattr(target, 'entities_followed', ())
-		for entity in entities_followed:
-			username = entity.username
-			if username in accum:
-				suggested_contact = accum[username]
-				suggested_contact.rank += 1
-			else:
-				accum[username] = SuggestedContact(username=username, rank=1)
+                # Otherwise, visible if it doesn't have dynamic memberships,
+                # or we share dynamic memberships
+                return not hasattr(x, 'usernames_of_dynamic_memberships') \
+                    or x.usernames_of_dynamic_memberships.intersection(user_community_names)
+            return test
+        return lambda _: True
 
-	def _get_suggestions_for_user(self, user):
-		"""
-		Pull all second order contacts for a user and rank them
-		according to frequency.
-		"""
-		accum = dict()
-		for target in user.entities_followed:
-			self._get_contacts(target, accum)
+    def _get_contacts(self, target, accum):
+        entities_followed = getattr(target, 'entities_followed', ())
+        for entity in entities_followed:
+            username = entity.username
+            if username in accum:
+                suggested_contact = accum[username]
+                suggested_contact.rank += 1
+            else:
+                accum[username] = SuggestedContact(username=username, rank=1)
 
-		existing_pool = {e.username for e in user.entities_followed}
-		existing_pool.add(user.username)
-		contacts = self.ranking.sort(accum.values())
-		return contacts
+    def _get_suggestions_for_user(self, user):
+        """
+        Pull all second order contacts for a user and rank them
+        according to frequency.
+        """
+        accum = dict()
+        for target in user.entities_followed:
+            self._get_contacts(target, accum)
 
-	def suggestions(self, user, source_user=None):
-		# Could we ever come across cross-site suggestions?
-		accept_filter = self._make_visibility_test(user)
-		existing_pool = {e.username for e in user.entities_followed}
-		existing_pool.add(user.username)
+        existing_pool = {e.username for e in user.entities_followed}
+        existing_pool.add(user.username)
+        contacts = self.ranking.sort(accum.values())
+        return contacts
 
-		if source_user is not None and user != source_user:
-			# Ok, we want suggestions for a user based on a
-			# another user. Add that user's friends.
-			contacts_iter = tuple( source_user.entities_followed )
-			existing_pool.add( source_user.username )
-		else:
-			# Suggestions based on just our given user.
-			contacts_iter = self._get_suggestions_for_user(user)
+    def suggestions(self, user, source_user=None):
+        # Could we ever come across cross-site suggestions?
+        accept_filter = self._make_visibility_test(user)
+        existing_pool = {e.username for e in user.entities_followed}
+        existing_pool.add(user.username)
 
-		for contact in contacts_iter:
-			target_name = contact.username
-			if target_name not in existing_pool:
-				target = User.get_user(target_name)
+        if source_user is not None and user != source_user:
+            # Ok, we want suggestions for a user based on a
+            # another user. Add that user's friends.
+            contacts_iter = tuple(source_user.entities_followed)
+            existing_pool.add(source_user.username)
+        else:
+            # Suggestions based on just our given user.
+            contacts_iter = self._get_suggestions_for_user(user)
 
-				if 		target is not None \
-					and accept_filter(target):
-					yield target
+        for contact in contacts_iter:
+            target_name = contact.username
+            if target_name not in existing_pool:
+                target = User.get_user(target_name)
+                if      target is not None \
+                    and accept_filter(target):
+                    yield target
