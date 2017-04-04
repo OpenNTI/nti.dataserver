@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
-import sys
 import time
 import collections
 
@@ -29,7 +28,6 @@ from nti.contentsearch.interfaces import ISearchResults
 from nti.contentsearch.interfaces import ISuggestResults
 from nti.contentsearch.interfaces import ISearchHitMetaData
 from nti.contentsearch.interfaces import ISearchResultsList
-from nti.contentsearch.interfaces import ISearchHitPredicate
 from nti.contentsearch.interfaces import ISearchHitComparator
 from nti.contentsearch.interfaces import ISearchHitComparatorFactory
 
@@ -201,12 +199,8 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
         pass
     createdTime = property(_get_createdTime, _set_createdTime)
 
-    @property
-    def _limit(self):
-        return getattr(self.query, 'limit', None) or sys.maxint
-
     def _add_hit(self, hit):
-        if hit.ID not in self._seen and self._count < self._limit:
+        if hit.ID not in self._seen:
             self._count += 1
             self._sorted = False
             self._hits.append(hit)
@@ -215,25 +209,20 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
             return True
         return False
 
+    def add_filter_record(self, predicate):
+        self.metadata.filtered_count += 1
+        name = getattr(predicate, '__name__', None) \
+            or predicate.__class__.__name__
+        self.metadata.filtering_predicates.add(name)
+
     def _add(self, hit):
-        result = True
-        item, score, query = hit.Target, hit.Score, self.Query
-        for predicate in component.subscribers((item,), ISearchHitPredicate):
-            if not predicate.allow(item, score, query):
-                result = False
-                self.metadata.filtered_count += 1
-                name = getattr(predicate, '__name__', None) \
-                    or predicate.__class__.__name__
-                self.metadata.filtering_predicates.add(name)
-                break
-        if result and self._add_hit(hit):
+        result = self._add_hit(hit)
+        if result:
             self.metadata.track(hit)
-        else:
-            result = False
         return result
 
     def add(self, hit):
-        self._add(hit)
+        return self._add(hit)
 
     def extend(self, items):
         for item in items or ():

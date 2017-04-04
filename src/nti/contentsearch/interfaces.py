@@ -226,6 +226,7 @@ class ISearcher(interface.Interface):
         search the content using the specified query
 
         :param query: Search query
+        :returns an iterator over the search results
         """
 
     def suggest(query, *args, **kwargs):
@@ -254,7 +255,7 @@ class ISearchHit(ILastModified):
 
     Score = Number(title="hit relevance score",
                    required=False,
-                   default=1.0, 
+                   default=1.0,
                    min=0.0)
 
     ID = ValidTextLine(title="hit unique id", required=True)
@@ -271,15 +272,15 @@ class ISearchHit(ILastModified):
 
     TargetMimeType = ValidTextLine(title="Target mimetype", required=True)
 
-    Target = Object(interface.Interface, 
-                    title="the object hit", 
+    Target = Object(interface.Interface,
+                    title="the object hit",
                     required=False)
     Target.setTaggedValue('_ext_excluded_out', True)
 
 
 class ITranscriptSearchHit(ISearchHit):
     EndMilliSecs = Number(title="Media end timestamp", required=False)
-    StartMilliSecs = Number(title="Media start video timestamp", 
+    StartMilliSecs = Number(title="Media start video timestamp",
                             required=False)
 
 
@@ -328,7 +329,7 @@ class ISearchHitMetaData(ILastModified):
 
     ContainerCount = Dict(ValidTextLine(title='container'),
                           Int(title='count'),
-                          title="Cointainer hit type count", 
+                          title="Cointainer hit type count",
                           required=False)
 
     TotalHitCount = Int(title='Total hit count', required=True,
@@ -337,7 +338,7 @@ class ISearchHitMetaData(ILastModified):
     FilteredCount = Int(title='Total hit filtered', required=True,
                         readonly=False, default=0)
 
-    FilteringPredicates = Set(title="Predicates that filter hits", 
+    FilteringPredicates = Set(title="Predicates that filter hits",
                               required=False)
 
     def track(hit):
@@ -377,6 +378,11 @@ class ISearchResults(IBaseSearchResults, ILastModified):
     def sort():
         """
         Sort the results based on the sortBy query param
+        """
+
+    def add_filter_record(predicate):
+        """
+        Indicates a record was filtered out by the given predicate.
         """
 
     def __iadd__(other):
