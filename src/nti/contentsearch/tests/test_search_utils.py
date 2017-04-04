@@ -34,8 +34,7 @@ class TestSearchUtils(unittest.TestCase):
     def test_create_query_object_accept(self):
         ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
         params = {'accept': 'application/vnd.nextthought.note,application/vnd.nextthought.forums.personalblogentrypost',
-                  'batchSize': 10, 'batchStart': 0, 'term': 'menos', 'ntiid': ntiid}
-
+                  'term': 'menos', 'ntiid': ntiid}
         qo = create_queryobject('harribel@bleach.com', params)
         assert_that(ISearchQuery.providedBy(qo), is_(True))
         assert_that(qo.username, is_('harribel@bleach.com'))
@@ -50,8 +49,7 @@ class TestSearchUtils(unittest.TestCase):
     @WithMockDSTrans
     def test_create_query_object_sample(self):
         ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
-        params = {'batchSize': 100, 'batchStart': 3,
-                  'term': 'arrancar', 'ntiid': ntiid}
+        params = {'term': 'arrancar', 'ntiid': ntiid}
 
         qo = create_queryobject('ulquiorra@bleach.com', params)
         assert_that(ISearchQuery.providedBy(qo), is_(True))
@@ -65,8 +63,7 @@ class TestSearchUtils(unittest.TestCase):
     def test_create_query_object_badnumbers(self):
 
         ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
-        params = {'batchSize': -100, 'batchStart': 3,
-                  'term': 'arrancar', 'ntiid': ntiid}
+        params = {'term': 'arrancar', 'ntiid': ntiid}
 
         try:
             create_queryobject('ulquiorra@bleach.com', params)
@@ -97,7 +94,6 @@ class TestSearchUtils(unittest.TestCase):
                   'application/vnd.nextthought.forums.personalblogcomment,application/vnd.nextthought.messageinfo',
                   'sortOn': 'relevance',
                   'sortOrder': 'descending',
-                  'batchSize': 78, 'batchStart': 5,
                   'term': 'arrancar', 'ntiid': ntiid}
         qo = create_queryobject('ulquiorra@bleach.com', params)
         assert_that(qo.username, is_('ulquiorra@bleach.com'))
