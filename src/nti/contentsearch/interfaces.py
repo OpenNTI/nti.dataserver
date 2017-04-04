@@ -155,10 +155,6 @@ class ISearchQuery(interface.Interface):
                                  required=True, readonly=True)
     IsDescendingSortOrder.setTaggedValue('_ext_excluded_out', True)
 
-    IsBatching = Bool(title="Returns true if this is a batch search",
-                      required=True, readonly=True)
-    IsBatching.setTaggedValue('_ext_excluded_out', True)
-
     context = Dict(ValidTextLine(title='name'),
                    Variant((Object(IString),
                             Object(IList),

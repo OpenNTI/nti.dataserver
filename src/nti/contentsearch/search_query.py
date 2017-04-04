@@ -77,11 +77,6 @@ class QueryObject(SchemaConfigured):
     def items(self):
         return self.context.items() if self.context else ()
 
-    @property
-    def IsBatching(self):
-        return True if self.batchStart is not None and self.batchSize else False
-    is_batching = IsBatching
-
     # ---------------
 
     @classmethod

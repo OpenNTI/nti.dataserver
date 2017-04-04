@@ -43,7 +43,6 @@ class TestSearchExternal(unittest.TestCase):
     @WithMockDSTrans
     def test_externalize_search_results(self):
         qo = QueryObject.create("wind")
-        qo.limit = 100
 
         hit = SearchHit()
         hit.ID = '1'
@@ -62,8 +61,6 @@ class TestSearchExternal(unittest.TestCase):
         update_from_external_object(new_results, eo)
 
         assert_that(new_results, has_property('Query', is_not(none())))
-        assert_that(new_results, has_property('Query',
-                                              has_property('limit', is_(100))))
         assert_that(new_results, has_property('Hits', has_length(1)))
 
     @WithMockDSTrans
