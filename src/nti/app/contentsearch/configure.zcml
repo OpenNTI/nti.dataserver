@@ -20,10 +20,4 @@
 				provides="nti.contentsearch.interfaces.ISearchHitPredicate"
 				for="*" />
 
-	<!-- Decorators -->
-	<subscriber factory=".decorators._SearchResultsDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.contentsearch.interfaces.ISearchResults
-					 pyramid.interfaces.IRequest"/>
-
 </configure>

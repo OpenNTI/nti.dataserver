@@ -32,14 +32,18 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.renderers.interfaces import IUncacheableInResponse
 
 from nti.contentsearch.interfaces import ISearcher
+from nti.contentsearch.interfaces import ISearchHitPredicate
 from nti.contentsearch.interfaces import SearchCompletedEvent
 from nti.contentsearch.interfaces import ISearchQueryValidator
 
 from nti.contentsearch.search_results import SearchResults
+from nti.contentsearch.search_results import SuggestResults
 
 from nti.contentsearch.search_utils import create_queryobject
 
 from nti.dataserver.users import Entity
+
+from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -47,6 +51,9 @@ ITEMS = StandardExternalFields.ITEMS
 
 
 class BaseView(AbstractAuthenticatedView):
+
+    _DEFAULT_BATCH_SIZE = 10
+    _DEFAULT_BATCH_START = 0
 
     name = None
 
@@ -113,19 +120,69 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
                 },
                 exc_info[2])
 
-    def _do_search(self, query):
+    def _search_func(self, searcher):
+        return searcher.search
+
+    def _do_search(self, query, batch_size, batch_start):
+        # First batch, we want all items up to batchSize (0 - batchSize).
+        # This will make sure our batchStart lines up, especially if
+        # we have multiple catalogs.
         searcher = ISearcher(self.remoteUser, None)
+        self.search_hit_count = 0
+        next_search_start = 0
         if searcher is not None:
-            return searcher.search(query=query)
+            search_func = self._search_func(searcher)
+            while True:
+                for item in search_func(query=query,
+                                        batch_start=next_search_start,
+                                        batch_size=batch_size):
+                    if self.search_hit_count >= batch_start:
+                        # Do not start returning until we get to our batchStart
+                        yield item
+                    self.search_hit_count += 1
+                if self.search_hit_count < next_search_start + batch_size:
+                    # Our searcher ran out of hits
+                    break
+                # Otherwise, fetch the next batch
+                next_search_start += batch_size
+
+    def _include_item(self, hit, search_results):
+        """
+        Ping our ISearchPredicates to see if this hit is
+        applicable to our remote user.
+        """
+        item, score, query = hit.Target, hit.Score, self.query
+        for predicate in component.subscribers((item,), ISearchHitPredicate):
+            if not predicate.allow(item, score, query):
+                search_results.add_filter_record(predicate)
+                return False
+        return search_results.add(hit)
+
+    def _get_results(self, query):
         return SearchResults(Query=query)
 
     def search(self, query):
         now = time.time()
-        result = self._do_search(query=query)
+        search_results = self._get_results(query)
+        batch_size, batch_start = self._get_batch_size_start()
+        for hit in self._do_search(query, batch_size, batch_start):
+            if self._include_item(hit, search_results):
+                if len( search_results ) >= batch_size:
+                    break
+
         elapsed = time.time() - now
         entity = Entity.get_entity(query.username)
-        notify(SearchCompletedEvent(entity, result, elapsed))
-        return result
+        notify(SearchCompletedEvent(entity, search_results, elapsed))
+        ext_obj = to_external_object( search_results )
+        # Since we index based on solr count, this makes it really hard
+        # to get the previous batch number (we could store our current
+        # batch-start on the 'next' link for future use).
+        if len(search_results) >= batch_size:
+            BatchingUtilsMixin._create_batch_links(self.request,
+                                                   ext_obj,
+                                                   self.search_hit_count + 1,
+                                                   None)
+        return ext_obj
 
 
 class SearchView(BaseSearchView):
@@ -142,17 +199,14 @@ UserSearch = UserDataSearchView  # BWC
 class SuggestView(BaseView):
     name = 'Suggest'
 
-    def _do_search(self, query):
-        searcher = ISearcher(self.remoteUser, None)
-        if searcher is not None:
-            return searcher.suggest(query=query)
-        return SearchResults(Query=query)
+    def _include_item(self, hit, search_results):
+        # No need to filter suggestions.
+        return search_results.add(hit)
 
-    def search(self, query):
-        now = time.time()
-        result = self._do_search(query)
-        elapsed = time.time() - now
-        entity = Entity.get_entity(query.username)
-        notify(SearchCompletedEvent(entity, result, elapsed))
-        return result
+    def _get_results(self, query):
+        return SuggestResults(Name="Suggestions", Query=query)
+
+    def _search_func(self, searcher):
+        return searcher.suggest
+
 Suggest = SuggestView  # BWC
