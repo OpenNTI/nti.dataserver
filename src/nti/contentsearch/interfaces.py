@@ -39,10 +39,11 @@ from nti.schema.field import Object
 from nti.schema.field import Variant
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
-from nti.schema.field import ValidTextLine
 from nti.schema.field import IndexedIterable
+from nti.schema.field import TextLine as ValidTextLine
 
 # deprecated interfaes
+
 
 deprecated('IRepozeDataStore', 'Use lastest index implementation')
 class IRepozeDataStore(interface.Interface):
@@ -120,8 +121,6 @@ class ISearchQuery(interface.Interface):
     language = ValidTextLine(title="Query search term language", required=False,
                              default='en')
 
-    limit = Int(title="search results limit", required=False, default=None)
-
     packages = ListOrTuple(ValidTextLine(title="Content NTIID to search on"),
                            required=False)
 
@@ -136,22 +135,17 @@ class ISearchQuery(interface.Interface):
     modificationTime = Object(IDateTimeRange, title="last modified time-date range",
                               required=False)
 
-    sortOn = ValidTextLine(
-        title="Field or function to sort by", required=False)
+    sortOn = ValidTextLine(title="Field or function to sort by",
+                           required=False)
 
-    origin = ValidTextLine(
-        title="The raw NTIID where the search was invoked", required=False)
+    origin = ValidTextLine(title="The raw NTIID where the search was invoked", 
+                           required=False)
 
     sortOrder = ValidTextLine(title="descending or ascending  to sort order",
                               default='descending', required=False)
 
     applyHighlights = Bool(title="Apply search hit hilights", required=False,
                            default=True)
-
-    batchSize = Int(title="page size", required=False)
-
-    batchStart = Int(title="The index of the first object to return, starting with zero",
-                     required=False, min=0)
 
     IsEmpty = Bool(title="Returns true if this is an empty search",
                    required=True, readonly=True)
@@ -357,13 +351,13 @@ class IBaseSearchResults(interface.Interface):
 
 class ISearchResults(IBaseSearchResults, ILastModified):
 
-    Hits = IndexedIterable(
-        value_type=Object(ISearchHit, description="A ISearchHit`"),
-        title="search hit objects",
-        required=True)
+    Hits = IndexedIterable(value_type=Object(ISearchHit, description="A ISearchHit`"),
+                           title="search hit objects",
+                           required=True)
 
-    HitMetaData = Object(
-        ISearchHitMetaData, title="Search hit metadata", required=False)
+    HitMetaData = Object(ISearchHitMetaData, 
+                         title="Search hit metadata", 
+                         required=False)
 
     def add(hit):
         """
@@ -380,7 +374,7 @@ class ISearchResults(IBaseSearchResults, ILastModified):
         Sort the results based on the sortBy query param
         """
 
-    def add_filter_record(predicate):
+    def add_filter_record(item, predicate):
         """
         Indicates a record was filtered out by the given predicate.
         """
@@ -397,10 +391,9 @@ class ISearchResults(IBaseSearchResults, ILastModified):
 
 class ISuggestResults(IBaseSearchResults):
 
-    Suggestions = IndexedIterable(
-        title="suggested words",
-        required=True,
-        value_type=ValidTextLine(title="suggested word"))
+    Suggestions = IndexedIterable(title="suggested words",
+                                  required=True,
+                                  value_type=ValidTextLine(title="suggested word"))
 
     def add(word):
         """
@@ -428,6 +421,7 @@ class ISearchResultsList(IIterable, IFiniteSequence):
     Items = IndexedIterable(value_type=Object(IBaseSearchResults, description="A search result"),
                             title="search reult",
                             required=False)
+
 
 # index events
 

@@ -61,22 +61,6 @@ accepted_keys = {'ntiid', 'accept',
                  'modifiedAfter', 'modifiedBefore'}
 
 
-def get_batch_size_start(params):
-    batch_size = params.get('batchSize', None)
-    batch_start = params.get('batchStart', None)
-    if batch_size is not None and batch_start is not None:
-        try:
-            batch_size = int(batch_size)
-            batch_start = int(batch_start)
-        except ValueError:
-            raise ValueError("Invalid batch size/start")
-        if batch_size <= 0 or batch_start < 0:
-            raise ValueError("Invalid batch size/start")
-    else:
-        batch_size = batch_start = None
-    return batch_size, batch_start
-
-
 def check_time(value):
     value = float(value)
     if value < 0:
@@ -166,11 +150,8 @@ def create_queryobject(username, params, clazz=QueryObject):
             accept.discard(None)
             args['searchOn'] = sorted(accept)
 
-    args['batchSize'], args['batchStart'] = get_batch_size_start(args)
-
     creationTime = _parse_dateRange(args, ('createdAfter', 'createdBefore',))
-    modificationTime = _parse_dateRange(
-        args, ('modifiedAfter', 'modifiedBefore'))
+    modificationTime = _parse_dateRange(args, ('modifiedAfter', 'modifiedBefore'))
 
     args['creationTime'] = creationTime
     args['modificationTime'] = modificationTime

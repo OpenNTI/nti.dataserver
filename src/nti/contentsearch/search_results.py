@@ -209,7 +209,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
             return True
         return False
 
-    def add_filter_record(self, predicate):
+    def add_filter_record(self, item, predicate):
         self.metadata.filtered_count += 1
         name = getattr(predicate, '__name__', None) \
             or predicate.__class__.__name__

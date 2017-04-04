@@ -127,9 +127,9 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
         # First batch, we want all items up to batchSize (0 - batchSize).
         # This will make sure our batchStart lines up, especially if
         # we have multiple catalogs.
-        searcher = ISearcher(self.remoteUser, None)
-        self.search_hit_count = 0
         next_search_start = 0
+        self.search_hit_count = 0
+        searcher = ISearcher(self.remoteUser, None)
         if searcher is not None:
             search_func = self._search_func(searcher)
             while True:
@@ -154,7 +154,7 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
         item, score, query = hit.Target, hit.Score, self.query
         for predicate in component.subscribers((item,), ISearchHitPredicate):
             if not predicate.allow(item, score, query):
-                search_results.add_filter_record(predicate)
+                search_results.add_filter_record(item, predicate)
                 return False
         return search_results.add(hit)
 
@@ -167,13 +167,13 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
         batch_size, batch_start = self._get_batch_size_start()
         for hit in self._do_search(query, batch_size, batch_start):
             if self._include_item(hit, search_results):
-                if len( search_results ) >= batch_size:
+                if len(search_results) >= batch_size:
                     break
 
         elapsed = time.time() - now
         entity = Entity.get_entity(query.username)
         notify(SearchCompletedEvent(entity, search_results, elapsed))
-        ext_obj = to_external_object( search_results )
+        ext_obj = to_external_object(search_results)
         # Since we index based on solr count, this makes it really hard
         # to get the previous batch number (we could store our current
         # batch-start on the 'next' link for future use).
@@ -187,7 +187,6 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 
 class SearchView(BaseSearchView):
     name = 'Search'
-
 Search = SearchView  # BWC
 
 
@@ -208,5 +207,4 @@ class SuggestView(BaseView):
 
     def _search_func(self, searcher):
         return searcher.suggest
-
 Suggest = SuggestView  # BWC
