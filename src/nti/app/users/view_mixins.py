@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from zope.cachedescriptors.property import CachedProperty
+
 from zope.intid.interfaces import IIntIds
 
 from pyramid import httpexceptions as hexc
@@ -29,8 +31,6 @@ from nti.dataserver.metadata_index import IX_TOPICS
 from nti.dataserver.metadata_index import IX_SHAREDWITH
 from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
 from nti.dataserver.metadata_index import TP_DELETED_PLACEHOLDER
-
-from nti.metadata import dataserver_metadata_catalog
 
 from nti.zope_catalog.catalog import ResultSet
 
@@ -72,11 +72,16 @@ class EntityActivityViewMixin(UGDView):
     def _entity_board(self):
         raise NotImplementedError()
 
+    @CachedProperty
+    def metadata_catalog(self):
+        from nti.metadata import dataserver_metadata_catalog
+        return dataserver_metadata_catalog()
+    
     def getObjectsForId(self, *args, **kwargs):
         context = self.request.context
         self.check_permission(context, self.remoteUser)
-
-        catalog = dataserver_metadata_catalog()
+        
+        catalog = self.metadata_catalog()
         if catalog is None:
             raise hexc.HTTPNotFound("No catalog")
         intids = component.getUtility(IIntIds)
