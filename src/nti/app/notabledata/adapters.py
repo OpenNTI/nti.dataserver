@@ -43,8 +43,6 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.invitations.utils import get_pending_invitation_ids
 
-from nti.metadata import dataserver_metadata_catalog
-
 from nti.property.property import CachedProperty
 from nti.property.property import annotation_alias
 
@@ -88,6 +86,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
     @CachedProperty
     def _catalog(self):
+        from nti.metadata import dataserver_metadata_catalog
         return dataserver_metadata_catalog()
 
     @CachedProperty
