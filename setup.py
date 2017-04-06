@@ -137,7 +137,6 @@ setup(
         'nti.futures',
         'nti.geventwebsocket',
         'nti.links',
-        'nti.metadata',
         'nti.mimetype',
         'nti.monkey',
         'nti.namedfile',
