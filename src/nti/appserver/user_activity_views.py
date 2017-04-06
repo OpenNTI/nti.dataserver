@@ -26,7 +26,7 @@ from nti.appserver.interfaces import IUserActivityProvider
 from nti.appserver.ugd_query_views import _toplevel_filter
 from nti.appserver.ugd_query_views import _RecursiveUGDView as RecursiveUGDQueryView
 
-from nti.containers.containers import IntidContainedStorage
+from nti.containers.datastructures import IntidContainedStorage
 
 from nti.dataserver import authorization as nauth
 
