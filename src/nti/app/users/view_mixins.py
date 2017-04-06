@@ -76,11 +76,11 @@ class EntityActivityViewMixin(UGDView):
     def metadata_catalog(self):
         from nti.metadata import dataserver_metadata_catalog
         return dataserver_metadata_catalog()
-    
+
     def getObjectsForId(self, *args, **kwargs):
         context = self.request.context
         self.check_permission(context, self.remoteUser)
-        
+
         catalog = self.metadata_catalog()
         if catalog is None:
             raise hexc.HTTPNotFound("No catalog")
