@@ -64,8 +64,6 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.externalization.proxy import removeAllProxies
 
-from nti.metadata import dataserver_metadata_catalog
-
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.property.property import Lazy
@@ -77,9 +75,15 @@ ITEMS = StandardExternalFields.ITEMS
 transcript_mime_type = u'application/vnd.nextthought.transcript'
 messageinfo_mime_type = u'application/vnd.nextthought.messageinfo'
 
+
+def metadata_catalog():
+	from nti.metadata import dataserver_metadata_catalog
+	return dataserver_metadata_catalog
+
+
 def get_user_objects(user, mime_types=()):
 	intids = component.getUtility(IIntIds)
-	catalog = dataserver_metadata_catalog()
+	catalog = metadata_catalog()
 
 	result_ids = None
 	created_ids = None
@@ -130,6 +134,7 @@ def get_user_objects(user, mime_types=()):
 		storage = IUserTranscriptStorage(user)
 		for transcript in storage.transcripts:
 			yield transcript
+
 
 @view_config(name='ExportUserObjects')
 @view_config(name='export_user_objects')
@@ -193,6 +198,7 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 		result['Total'] = result['ItemCount'] = total
 		return result
 
+
 @view_config(name='ExportObjectsSharedwith')
 @view_config(name='export_objects_sharedwith')
 @view_defaults(route_name='objects.generic.traversal',
@@ -210,7 +216,7 @@ class ExportObjectsSharedWithView(ExportUserObjectsView):
 			raise hexc.HTTPUnprocessableEntity('User not found')
 
 		intids = component.getUtility(IIntIds)
-		catalog = dataserver_metadata_catalog()
+		catalog = metadata_catalog()
 
 		sharedWith_ids = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
 
