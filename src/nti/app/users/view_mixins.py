@@ -80,19 +80,18 @@ class EntityActivityViewMixin(UGDView):
     def getObjectsForId(self, *args, **kwargs):
         context = self.request.context
         self.check_permission(context, self.remoteUser)
-
-        catalog = self.metadata_catalog()
-        if catalog is None:
-            raise hexc.HTTPNotFound("No catalog")
         intids = component.getUtility(IIntIds)
-
-        username = self._context_id
-        shared_intids = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
-
-        topics_idx = catalog[IX_TOPICS]
-        toplevel_intids_extent = topics_idx[TP_TOP_LEVEL_CONTENT].getExtent()
-        deleted_intids_extent = topics_idx[TP_DELETED_PLACEHOLDER].getExtent()
-        top_level_intids = toplevel_intids_extent.intersection(shared_intids)
+                
+        catalog = self.metadata_catalog()
+        if catalog is not None:
+            username = self._context_id
+            topics_idx = catalog[IX_TOPICS]
+            shared_intids = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
+            toplevel_intids_extent = topics_idx[TP_TOP_LEVEL_CONTENT].getExtent()
+            deleted_intids_extent = topics_idx[TP_DELETED_PLACEHOLDER].getExtent()
+            top_level_intids = toplevel_intids_extent.intersection(shared_intids)
+        else:
+            top_level_intids = intids.family.IF.LFSet()
 
         seen = set()
         for forum in self._entity_board.values():
