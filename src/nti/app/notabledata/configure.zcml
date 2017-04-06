@@ -9,8 +9,10 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
-	<adapter factory=".adapters.UserNotableData" />
-	<adapter factory=".adapters.UserNotableDataStorageFactory" />
+	<configure zcml:condition="installed nti.metadata">
+		<adapter factory=".adapters.UserNotableData" />
+		<adapter factory=".adapters.UserNotableDataStorageFactory" />
+	</configure>
 
 	<!-- When a circled event goes out, store the intid as notable -->
 	<subscriber handler=".subscribers.store_circled_event_notable"
@@ -20,13 +22,15 @@
 	<subscriber factory=".decorators._StreamChangeNotableDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
-	<!-- Notables -->
-	<subscriber factory=".notables.BlogNotableFilter"
-				provides="nti.dataserver.interfaces.INotableFilter"
-				for="*" />
+	<configure zcml:condition="installed nti.metadata">
+		<!-- Notables -->
+		<subscriber factory=".notables.BlogNotableFilter"
+					provides="nti.dataserver.interfaces.INotableFilter"
+					for="*" />
 
-	<subscriber factory=".notables.TopLevelNotableFilter"
-				provides="nti.dataserver.interfaces.INotableFilter"
-				for="*" />
+		<subscriber factory=".notables.TopLevelNotableFilter"
+					provides="nti.dataserver.interfaces.INotableFilter"
+					for="*" />
+	</configure>
 
 </configure>

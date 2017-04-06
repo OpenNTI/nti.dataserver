@@ -6,6 +6,8 @@
 
 	<include package="pyramid_zcml" />
 
-	<pyramid:scan package='.views' />
+	<configure zcml:condition="installed nti.metadata">
+		<pyramid:scan package='.views' />
+	</configure>
 
 </configure>
