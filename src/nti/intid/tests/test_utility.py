@@ -16,6 +16,7 @@ from hamcrest import has_length
 from hamcrest import assert_that
 does_not = is_not
 
+from nti.testing.matchers import validly_provides
 from nti.testing.matchers import verifiably_provides
 
 import struct
@@ -66,6 +67,7 @@ class TestUtility(AbstractTestBase):
         eventtesting.setUp()
 
     def test_interface(self):
+        assert_that(IntIds("_ds_id"), validly_provides(IIntIds))
         assert_that(IntIds("_ds_id"), verifiably_provides(IIntIds))
 
     def test_non_keyreferences(self):
