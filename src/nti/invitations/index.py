@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from zope.component.hooks import getSite
+
 from zope.catalog.interfaces import ICatalog
 
 from zope.intid.interfaces import IIntIds
@@ -32,6 +34,9 @@ from nti.zope_catalog.string import StringTokenNormalizer
 
 CATALOG_NAME = 'nti.dataserver.++etc++invitations-catalog'
 
+#: Invitation site
+IX_SITE = 'site'
+
 #: Invitation Sender
 IX_SENDER = 'sender'
 
@@ -41,14 +46,31 @@ IX_RECEIVER = 'receiver'
 #: Invitation accepted
 IX_ACCEPTED = 'accepted'
 
-#: Invitation created time
-IX_CREATEDTIME = 'createdTime'
+#: Invitation object MimeType
+IX_MIMETYPE = 'mimeType'
 
 #: Invitation expiry time
 IX_EXPIRYTIME = 'expiryTime'
 
-#: Invitation object MimeType
-IX_MIMETYPE = 'mimeType'
+#: Invitation created time
+IX_CREATEDTIME = 'createdTime'
+
+
+class ValidatingSite(object):
+
+    __slots__ = (b'site',)
+
+    def __init__(self, obj, default=None):
+        if IInvitation.providedBy(obj):
+            self.site = getSite().__name__
+
+    def __reduce__(self):
+        raise TypeError()
+
+
+class SiteIndex(AttributeValueIndex):
+    default_field_name = 'site'
+    default_interface = ValidatingSite
 
 
 class ValidatingMimeType(object):
@@ -136,7 +158,8 @@ class InvitationsCatalog(Catalog):
 
 def create_invitations_catalog(catalog=None, family=None):
     catalog = InvitationsCatalog(family=family) if catalog is None else catalog
-    for name, clazz in ((IX_SENDER, SenderIndex),
+    for name, clazz in ((IX_SITE, SiteIndex),
+                        (IX_SENDER, SenderIndex),
                         (IX_ACCEPTED, AcceptedIndex),
                         (IX_MIMETYPE, MimeTypeIndex),
                         (IX_RECEIVER, ReceiverIndex),
