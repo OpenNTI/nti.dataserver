@@ -82,7 +82,7 @@ class EntityActivityViewMixin(UGDView):
         self.check_permission(context, self.remoteUser)
         intids = component.getUtility(IIntIds)
                 
-        catalog = self.metadata_catalog()
+        catalog = self.metadata_catalog
         if catalog is not None:
             username = self._context_id
             topics_idx = catalog[IX_TOPICS]
