@@ -36,6 +36,11 @@ zope.deferredimport.deprecated(
 
 class IIntIds(IIntIds, IIntIdsSubclass, IContained):
 
+    def randomize():
+        """
+        Randomize the next id
+        """
+
     def force_register(uid, ob, check=True):
         """
         Register an object

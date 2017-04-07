@@ -61,9 +61,6 @@ class IntIds(_ZCIntIds):
     # alternatively, they define __slots__ and forbid new attributes
 
     def randomize(self):
-        """
-        Randomize the next id
-        """
         self._v_nextid = self._randrange(0, self.family.maxint)
 
     def queryId(self, ob, default=None):
