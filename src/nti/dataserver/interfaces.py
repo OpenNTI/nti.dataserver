@@ -381,6 +381,8 @@ from zope.security.interfaces import IPrincipal
 from zope.security.interfaces import IPermission
 from zope.security.interfaces import IGroupAwarePrincipal
 
+IPrincipal = IPrincipal
+
 class IRole(IGroup):
 	"""
 	Marker for a type of group intended to be used to grant permissions.
