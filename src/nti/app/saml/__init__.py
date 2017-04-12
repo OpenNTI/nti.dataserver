@@ -12,6 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
+import urllib
+import urlparse
+
 #: Assertion Consumer Service
 ACS = 'acs'
 
@@ -26,3 +29,17 @@ PROVIDER_INFO = 'ProviderUserInfo'
 
 #: Provider name ids
 IDP_NAME_IDS = 'NameIds'
+
+def make_location(url, params=None):
+    if not params:
+        return url
+
+    if not url:
+        return None
+
+    url_parts = list(urlparse.urlparse(url))
+    query = dict(urlparse.parse_qsl(url_parts[4]))
+    query.update(params)
+    url_parts[4] = urllib.urlencode(query)
+
+    return urlparse.urlunparse(url_parts)

@@ -43,6 +43,11 @@
 	<adapter factory=".logon.DefaultLogoutResponseProvider"
 			 provides="nti.appserver.interfaces.ILogoutForgettingResponseProvider"
 			 for="pyramid.interfaces.IRequest"/>
+			 
+	<adapter factory=".logon.DefaultLogoutResponseProvider"
+			 provides="nti.appserver.interfaces.ILogoutForgettingResponseProvider"
+			 for="pyramid.interfaces.IRequest"
+			 name="default"/>
 
 	<!-- Additional links for logged-in users -->
 	

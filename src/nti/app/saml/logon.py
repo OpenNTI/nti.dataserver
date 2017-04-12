@@ -11,8 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from collections import Mapping
 
-import urllib
-import urlparse
+from pyramid import security as sec
 
 from zope import component
 from zope import interface
@@ -42,6 +41,8 @@ from nti.app.saml.interfaces import ExistingUserMismatchError
 
 from nti.app.saml.views import SAMLPathAdapter
 
+from nti.appserver.interfaces import ILogoutForgettingResponseProvider
+
 from nti.appserver.logon import logout as _do_logout
 from nti.appserver.logon import _create_failure_response
 from nti.appserver.logon import _create_success_response
@@ -55,6 +56,8 @@ from nti.dataserver.users.interfaces import IRecreatableUser
 
 from nti.dataserver.users.utils import force_email_verification
 
+from . import make_location as _make_location
+
 LOGIN_SAML_VIEW = 'logon.saml'
 
 
@@ -65,21 +68,43 @@ def sls_view(request):
     response = _do_logout(request)
     return response
 
+@interface.implementer(ILogoutForgettingResponseProvider)
+class SAMLLogoutResponseProvider(object):
+    """
+    A saml logout response provider that bounces the user through the saml SLO
+    endpoint if they are authetnicated via saml. Sites that use SAML authentication
+    should register this in their site.
+    """
 
-def _make_location(url, params=None):
-    if not params:
-        return url
+    def __init__(self, request):
+        pass
 
-    if not url:
-        return None
+    def _do_default(self, request, redirect_param_name, redirect_value=None):
+        default_response_provider = component.getAdapter(request, ILogoutForgettingResponseProvider, name='default')
+        return default_response_provider.forgetting(request, redirect_param_name, redirect_value=redirect_value)
 
-    url_parts = list(urlparse.urlparse(url))
-    query = dict(urlparse.parse_qsl(url_parts[4]))
-    query.update(params)
-    url_parts[4] = urllib.urlencode(query)
+    def forgetting(self, request, redirect_param_name, redirect_value=None):
+        identity = request.environ.get('repoze.who.identity', {})
+        userdata = identity.get('userdata', {})
 
-    return urlparse.urlunparse(url_parts)
+        idp = userdata.get('nti.saml.idp')
+        resp_id = userdata.get('nti.saml.response_id')
+        if not idp or not resp_id:
+            return self._do_default(request, redirect_param_name, redirect_value=redirect_value)
 
+        if not redirect_value:
+            redirect_value = request.params.get(redirect_param_name)
+
+        # Unlike the default provider, where the redirect_value is relative to us,
+        # a third party is ultimately issuing this redirect so it needs to be made
+        # absolute
+        redirect_value = request.relative_url(redirect_value)
+
+        saml_client = component.queryUtility(ISAMLClient)
+        response = saml_client.response_for_logging_out(resp_id, redirect_value, redirect_value, idp)
+        response.headers.extend(sec.forget(request))
+        return response
+        
 
 @interface.implementer(ISAMLExistingUserValidator)
 class ExistingUserNameIdValidator(object):

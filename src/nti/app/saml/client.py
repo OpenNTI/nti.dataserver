@@ -11,6 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from itsdangerous import JSONWebSignatureSerializer
 
+import urllib
+import urlparse
+
 import saml2
 
 from saml2 import BINDING_HTTP_POST
@@ -20,6 +23,8 @@ from saml2 import xmldsig as ds
 from saml2 import element_to_extension_element
 
 from saml2.extension.pefim import SPCertEnc
+
+from saml2.mdstore import destinations
 
 from saml2.response import SAMLError
 
@@ -41,6 +46,8 @@ from nti.base._compat import unicode_
 
 from nti.schema.fieldproperty import createFieldProperties
 
+from . import make_location as _make_location
+
 RELAY_STATE = u'RelayState'
 SAML_RESPONSE = u'SAMLResponse'
 ERROR_STATE_PARAM = u'_nti_error'
@@ -60,7 +67,6 @@ def _get_signer_secret(default_secret='not-very-secure-secret'):
 
 def _make_signer(secret, salt='nti-saml-relay-state'):
     return JSONWebSignatureSerializer(secret, salt=salt)
-
 
 @interface.implementer(ISAMLNameId)
 class _SAMLNameId(object):
@@ -134,6 +140,23 @@ class BasicSAMLClient(object):
 
         signer = _make_signer(_get_signer_secret())
         return signer.dumps(state)
+
+    def response_for_logging_out(self, session_auth_id, success, error, entity_id=None):
+        if not entity_id:
+            entity_id = self._pick_idp()
+
+        if entity_id is None:
+            raise ValueError('Unable to find idp entity id for SAML')
+
+        _binding = BINDING_HTTP_REDIRECT
+        _cli = self.saml_client
+
+        logger.info("Generating SAML logout request for IDP %s", entity_id)
+        srvs = _cli.metadata.single_logout_service(entity_id, _binding, 'idpsso')
+        dest = destinations(srvs)[0]
+
+        return hexc.HTTPSeeOther(_make_location(dest, {'TargetResource': success, 'InErrorResource': success, 'SpSessionAuthn': session_auth_id}))
+
 
     def response_for_logging_in(self, success, error, state={}, passive=False,
                                 force_authn=False, entity_id=None, acs_link=None):
