@@ -26,13 +26,13 @@ from hamcrest import is_not as does_not
 from hamcrest import greater_than_or_equal_to
 is_not = does_not
 
-import datetime
 import unittest
+
 from urllib import unquote
 
 from pyquery import PyQuery
 
-import webob.datetime_utils
+from webob import datetime_utils
 
 import simplejson as json
 
@@ -745,8 +745,10 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		# Before its published, the second user can see nothing
 		res = testapp2.get(self.forum_pretty_contents_url)
 		assert_that(res.json_body['Items'], has_length(0))
-		content_last_mod = res.json_body['Last Modified']
-		assert_that(res.last_modified, is_(datetime.datetime.fromtimestamp(content_last_mod, webob.datetime_utils.UTC)))
+		content_last_mod_ts = res.json_body['Last Modified']
+		content_last_mod = datetime_utils.serialize_date(content_last_mod_ts)
+		content_last_mod = datetime_utils.parse_date(content_last_mod)
+		assert_that(res.last_modified, is_(content_last_mod))
 
 		res = testapp2.get(self.forum_pretty_url)
 		assert_that(res.json_body, has_entry('TopicCount', 0))
@@ -770,9 +772,11 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		assert_that(res.json_body['Items'][0], has_entry('headline', has_entry('body', topic_data['body'])))
 		assert_shared_with_community(res.json_body['Items'][0])
 		# ...Which has an updated last modified...
-		assert_that(res.json_body['Last Modified'], greater_than(content_last_mod))
+		assert_that(res.json_body['Last Modified'], greater_than(content_last_mod_ts))
 		content_last_mod = res.json_body['Last Modified']
-		assert_that(res.last_modified, is_(datetime.datetime.fromtimestamp(content_last_mod, webob.datetime_utils.UTC)))
+		content_last_mod = datetime_utils.serialize_date(content_last_mod)
+		content_last_mod = datetime_utils.parse_date(content_last_mod)
+		assert_that(res.last_modified, is_(content_last_mod))
 
 		# ...It can be fetched by pretty URL...
 		res = testapp2.get(self.forum_topic_href(topic_entry_id))
