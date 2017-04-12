@@ -64,9 +64,9 @@ def raise_json_error(request,
 
 	if isinstance(v, collections.Mapping):
 		# Make sure to translate our message, if we have one.
-		v['message'] = translate(v.get('message'), context=request)
+		v['message'] = message = translate(v.get('message'), context=request)
 	else:
-		v = translate(v, context=request)
+		v = message = translate(v, context=request)
 
 	if accept_type == b'application/json':
 		try:
@@ -76,7 +76,7 @@ def raise_json_error(request,
 	else:
 		v = unicode(v)
 
-	result = factory()
+	result = factory(message)
 	result.text = v
 	result.content_type = accept_type
 	raise result, None, tb
@@ -90,7 +90,7 @@ def _validation_error_to_dict(request, validation_error):
 	declared = None
 	field_name = None
 	field = getattr(validation_error, 'field', None)
-	
+
 	if field:
 		# handle FieldPropertyStoredThroughField via FieldValidationMixin
 		fixed_field_name = getattr(field, '__fixup_name__', None)
