@@ -7,14 +7,14 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import fudge
-
 from hamcrest import is_not
 from hamcrest import has_key
 from hamcrest import equal_to
 from hamcrest import assert_that
 from hamcrest import has_entries
 from nti.testing.matchers import validly_provides
+
+import fudge
 
 from saml2.saml import NAMEID_FORMAT_PERSISTENT
 
@@ -214,7 +214,6 @@ class TestEvents(ApplicationLayerTest):
 
             #######
             # Verify
-
             assert_that(ISAMLIDPUserInfoBindings(user),
                         is_not(has_key('disneyProvider')))
 

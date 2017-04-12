@@ -30,6 +30,7 @@ PROVIDER_INFO = 'ProviderUserInfo'
 #: Provider name ids
 IDP_NAME_IDS = 'NameIds'
 
+
 def make_location(url, params=None):
     if not params:
         return url

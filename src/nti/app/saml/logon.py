@@ -29,6 +29,8 @@ from saml2.saml import NAMEID_FORMAT_PERSISTENT
 from nti.app.saml import ACS
 from nti.app.saml import SLS
 
+from nti.app.saml import make_location as _make_location
+
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLIDPInfo
 from nti.app.saml.interfaces import ISAMLACSLinkProvider
@@ -56,8 +58,6 @@ from nti.dataserver.users.interfaces import IRecreatableUser
 
 from nti.dataserver.users.utils import force_email_verification
 
-from . import make_location as _make_location
-
 LOGIN_SAML_VIEW = 'logon.saml'
 
 
@@ -67,6 +67,7 @@ LOGIN_SAML_VIEW = 'logon.saml'
 def sls_view(request):
     response = _do_logout(request)
     return response
+
 
 @interface.implementer(ILogoutForgettingResponseProvider)
 class SAMLLogoutResponseProvider(object):
@@ -80,8 +81,12 @@ class SAMLLogoutResponseProvider(object):
         pass
 
     def _do_default(self, request, redirect_param_name, redirect_value=None):
-        default_response_provider = component.getAdapter(request, ILogoutForgettingResponseProvider, name='default')
-        return default_response_provider.forgetting(request, redirect_param_name, redirect_value=redirect_value)
+        default_response_provider = component.getAdapter(request,
+                                                         ILogoutForgettingResponseProvider,
+                                                         name='default')
+        return default_response_provider.forgetting(request,
+                                                    redirect_param_name,
+                                                    redirect_value=redirect_value)
 
     def forgetting(self, request, redirect_param_name, redirect_value=None):
         identity = request.environ.get('repoze.who.identity', {})
@@ -90,7 +95,9 @@ class SAMLLogoutResponseProvider(object):
         idp = userdata.get('nti.saml.idp')
         resp_id = userdata.get('nti.saml.response_id')
         if not idp or not resp_id:
-            return self._do_default(request, redirect_param_name, redirect_value=redirect_value)
+            return self._do_default(request,
+                                    redirect_param_name,
+                                    redirect_value=redirect_value)
 
         if not redirect_value:
             redirect_value = request.params.get(redirect_param_name)
@@ -101,10 +108,13 @@ class SAMLLogoutResponseProvider(object):
         redirect_value = request.relative_url(redirect_value)
 
         saml_client = component.queryUtility(ISAMLClient)
-        response = saml_client.response_for_logging_out(resp_id, redirect_value, redirect_value, idp)
+        response = saml_client.response_for_logging_out(resp_id,
+                                                        redirect_value,
+                                                        redirect_value,
+                                                        idp)
         response.headers.extend(sec.forget(request))
         return response
-        
+
 
 @interface.implementer(ISAMLExistingUserValidator)
 class ExistingUserNameIdValidator(object):
@@ -129,8 +139,9 @@ class ExistingUserNameIdValidator(object):
         if nameid.nameid == user_info.nameid.nameid:
             return True
 
-        raise ExistingUserMismatchError('SAML persistent nameid {} for user {} does not match idp returned nameid {}'.format(
-                                        nameid.nameid, user.username, user_info.nameid.nameid))
+        raise ExistingUserMismatchError(
+                    'SAML persistent nameid {} for user {} does not match idp returned nameid {}'.format(
+                    nameid.nameid, user.username, user_info.nameid.nameid))
 
 
 def _validate_idp_nameid(request, user, user_info, idp):
@@ -139,8 +150,9 @@ def _validate_idp_nameid(request, user, user_info, idp):
     up with what we stored.  If the nameids are a mismatch we raise an exception.  It is unclear
     if we should do the same if the user has an associated binding to a different idp already.
     """
-    validator = component.getAdapter(
-        request, ISAMLExistingUserValidator, name='nameid')
+    validator = component.getAdapter(request, 
+                                     ISAMLExistingUserValidator, 
+                                     name='nameid')
     if validator.validate(user, user_info, idp) is True:
         return
 
@@ -199,9 +211,7 @@ class ACSLinkProvider(object):
 
 
 def _failure_response(request, msg, error, state):
-    _failure = _make_location(error, state) if (
-        error and state is not None) else None
-
+    _failure = _make_location(error, state) if (error and state is not None) else None
     error_str = msg
     return _create_failure_response(request,
                                     failure=_failure,
