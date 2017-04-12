@@ -30,7 +30,7 @@ from urllib import quote as UQ
 
 from pyquery import PyQuery
 
-import webob.datetime_utils
+from webob import datetime_utils
 
 from zope import component
 from zope import interface
@@ -305,8 +305,10 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 		# Before its published, the second user can see nothing
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
 		assert_that( res.json_body['Items'], has_length( 0 ) )
-		content_last_mod = res.json_body['Last Modified']
-		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
+		content_last_mod_ts = res.json_body['Last Modified']
+		content_last_mod = datetime_utils.serialize_date(content_last_mod_ts)
+		content_last_mod = datetime_utils.parse_date(content_last_mod)
+		assert_that(res.last_modified, is_(content_last_mod))
 
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog' )
 		assert_that( res.json_body, has_entry( 'TopicCount', 0 ) )
@@ -328,9 +330,11 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 		assert_that( res.json_body['Items'][0], has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 		assert_shared_with_community( res.json_body['Items'][0] )
 		# ...Which has an updated last modified...
-		assert_that( res.json_body['Last Modified'], greater_than( content_last_mod ) )
-		content_last_mod = res.json_body['Last Modified']
-		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
+		assert_that( res.json_body['Last Modified'], greater_than( content_last_mod_ts ) )
+		content_last_mod_ts = res.json_body['Last Modified']
+		content_last_mod = datetime_utils.serialize_date(content_last_mod_ts)
+		content_last_mod = datetime_utils.parse_date(content_last_mod)
+		assert_that(res.last_modified, is_(content_last_mod))
 
 		# ...It can be fetched by pretty URL...
 		res = testapp2.get( UQ( '/dataserver2/users/original_user@foo/Blog/My_New_Blog' ) ) # Pretty URL
@@ -494,13 +498,17 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 		assert_that( res.json_body, has_entry( 'Items', is_empty() ) )
 		# All of the mod times were updated
 		assert_that( res.json_body['Last Modified'], is_( greater_than( user_activity_mod_time_body ) ) )
-		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( res.json_body['Last Modified'], webob.datetime_utils.UTC ) ) )
+		content_last_mod_ts = res.json_body['Last Modified']
+		content_last_mod = datetime_utils.serialize_date(content_last_mod_ts)
+		content_last_mod = datetime_utils.parse_date(content_last_mod)
+		assert_that(res.last_modified, is_(content_last_mod))
 		# and a conditional request works too
 
-		res = testapp2.get( UQ( '/dataserver2/users/' + user_username + '/Activity' ), headers={'If-Modified-Since': webob.datetime_utils.serialize_date(user_activity_mod_time)} )
+		res = testapp2.get( UQ( '/dataserver2/users/' + user_username + '/Activity' ),
+						    headers={'If-Modified-Since': datetime_utils.serialize_date(user_activity_mod_time)} )
 		assert_that( res.json_body, has_entry( 'Items', is_empty() ) )
 		testapp2.get( UQ( '/dataserver2/users/' + user_username + '/Activity' ),
-					  headers={'If-Modified-Since': webob.datetime_utils.serialize_date(res.last_modified)},
+					  headers={'If-Modified-Since': datetime_utils.serialize_date(res.last_modified)},
 					  status=304)
 
 
@@ -520,9 +528,11 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 
 
 		# ... changing last mod date again
-		assert_that( res.json_body['Last Modified'], greater_than( content_last_mod ) )
-		content_last_mod = res.json_body['Last Modified']
-		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
+		assert_that( res.json_body['Last Modified'], greater_than( content_last_mod_ts ) )
+		content_last_mod_ts = res.json_body['Last Modified']
+		content_last_mod = datetime_utils.serialize_date(content_last_mod_ts)
+		content_last_mod = datetime_utils.parse_date(content_last_mod)
+		assert_that(res.last_modified, is_(content_last_mod))
 
 		# and, if favorited, filtered to the favorites
 		for uname, app in ((user_username, testapp), (user2_username, testapp2)):
