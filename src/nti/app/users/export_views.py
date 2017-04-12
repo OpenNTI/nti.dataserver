@@ -78,7 +78,7 @@ messageinfo_mime_type = u'application/vnd.nextthought.messageinfo'
 
 def metadata_catalog():
 	from nti.metadata import dataserver_metadata_catalog
-	return dataserver_metadata_catalog
+	return dataserver_metadata_catalog()
 
 
 def get_user_objects(user, mime_types=()):
