@@ -40,14 +40,12 @@ zope.deferredimport.deprecatedFrom(
 	"datetime",
 	"unicode_literals",
 	"InvalidNTIIDError",
-	"TYPE_MEETINGROOM_CLASS",
 	"TYPE_MEETINGROOM_GROUP",
 	"TYPE_MEETINGROOM",
 	"TYPE_ROOM",
 	"DATE",
 	"TYPE_TRANSCRIPT_SUMMARY",
 	"validate_ntiid_string",
-	"TYPE_MEETINGROOM_SECT",
 	"TYPE_QUIZ",
 	"TYPE_OID",
 	"is_valid_ntiid_string",
@@ -63,7 +61,6 @@ zope.deferredimport.deprecatedFrom(
 	"time",
 	"make_ntiid",
 	"TYPE_HTML",
-	"TYPE_CLASS",
 	"find_object_with_ntiid")
 
 NTIID_ROOT = ROOT  # re-export
