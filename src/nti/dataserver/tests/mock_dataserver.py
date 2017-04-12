@@ -75,8 +75,7 @@ class ChangePassingMockDataserver(Dataserver):
 		return None
 
 	def _setup_dbs( self, *args ):
-		self.conf.zeo_uris = ["memory://1?database_name=Users&demostorage=true",
-							  ]
+		self.conf.zeo_uris = ["memory://1?database_name=Users&demostorage=true",]
 		self.conf.zeo_launched = True
 
 		if self._mock_database:

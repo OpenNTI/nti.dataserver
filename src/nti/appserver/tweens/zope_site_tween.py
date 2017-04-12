@@ -212,7 +212,7 @@ class site_tween(object):
         if __debug__:  # pragma: no cover
             old_site = getSite()
             # Not sure what circumstances lead to already having a site
-            # here. Have seen it at startup (also with some of the new test machinery). 
+            # here. Have seen it at startup (also with some of the new test machinery).
             # Force it back to none (?)
             # It is very bad to raise an exception here, it interacts
             # badly with logging

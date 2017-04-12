@@ -16,6 +16,8 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import greater_than
 
+import time
+
 from urllib import unquote
 from datetime import datetime
 
@@ -152,11 +154,10 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		lv = res.json_body['lastViewed']
 
 		res = self.testapp.get(lv_href)
-		assert_that( int(res.body), is_(lv) )
-		self.testapp.put_json( lv_href,
-							   1234 )
+		assert_that( float(res.body), is_(lv) )
+		self.testapp.put_json( lv_href, time.time() )
 		res = self.testapp.get(lv_href)
-		assert_that( int(res.body), is_(greater_than(lv) ) )
+		assert_that( float(res.body), is_(greater_than(lv) ) )
 
 
 		self._check_notable_data(length=2)
