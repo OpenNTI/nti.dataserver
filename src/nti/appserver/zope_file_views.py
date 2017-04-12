@@ -41,6 +41,8 @@ from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.interfaces import IFileViewedEvent
 
+from nti.base._compat import unicode_
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IDataserverFolder
@@ -257,7 +259,7 @@ def image_to_dataurl(request):
 
     if not accept_type or accept_type == b'text/plain':
         response.content_type = b'text/plain'
-        response.text = data_url
+        response.text = unicode_(data_url)
     else:
         response.content_type = accept_type
         width, height = named_image.getImageSize()
