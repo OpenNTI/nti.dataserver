@@ -8,6 +8,7 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import not_none
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import contains_string
@@ -54,7 +55,8 @@ class TestExcViews(unittest.TestCase):
 		view()
 		# Initially
 		assert_that(view, has_property('aux_called', True))
-		assert_that(view, has_property('_last_aux_time', 2))
+		original_last_aux = view._last_aux_time
+		assert_that(original_last_aux, not_none())
 		view.aux_called = False
 
 		# Now we have to step it two more times
@@ -62,12 +64,12 @@ class TestExcViews(unittest.TestCase):
 		assert_that(view, has_property('aux_called', False))
 
 		view()
-		assert_that(view, has_property('_last_aux_time', 2))
+		assert_that(view, has_property('_last_aux_time', original_last_aux))
 		assert_that(view, has_property('aux_called', False))
 
 		view()
 		assert_that(view, has_property('aux_called', True))
-		assert_that(view, has_property('_last_aux_time', 9))
+		assert_that(view, has_property('_last_aux_time', original_last_aux + 7))
 
 	def test_find_paste(self):
 
