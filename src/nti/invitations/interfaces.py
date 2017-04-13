@@ -34,9 +34,8 @@ from zope.schema import ValidationError
 from nti.base.interfaces import ICreated
 from nti.base.interfaces import ILastModified
 
-from nti.coremetadata.interfaces import SYSTEM_USER_NAME
-
 from nti.invitations import MessageFactory as _
+from nti.invitations import SYSTEM_USER_NAME
 
 from nti.property.property import alias
 
