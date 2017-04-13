@@ -27,6 +27,8 @@ import unittest
 import UserList
 from datetime import datetime
 
+from webob import datetime_utils
+
 from zope import interface
 from zope import component
 from zope import lifecycleevent
@@ -34,8 +36,6 @@ from zope import lifecycleevent
 from zope.intid.interfaces import IIntIds
 
 from zope.keyreference.interfaces import IKeyReference
-
-import webob.datetime_utils
 
 import persistent
 
@@ -1063,7 +1063,9 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		assert_that(res.body, contains_string(reply_note_ntiid))
 		assert_that(res.json_body['Items'], has_length(1))
 		assert_that(res.json_body['Last Modified'], is_(reply_note_last_modified))
-		assert_that(res.last_modified, is_(datetime.fromtimestamp(reply_note_last_modified, webob.datetime_utils.UTC)))
+		reply_note_last_modified = datetime_utils.serialize_date(reply_note_last_modified)
+		reply_note_last_modified = datetime_utils.parse_date(reply_note_last_modified)
+		assert_that(res.last_modified, is_(reply_note_last_modified))
 
 		# I can filter out things shared to the group
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + owner_note_containerId + ')/UserGeneratedData'

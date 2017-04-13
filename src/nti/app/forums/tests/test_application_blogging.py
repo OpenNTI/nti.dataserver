@@ -25,7 +25,6 @@ is_not = does_not
 from nti.testing.matchers import is_empty
 from nti.testing.time import time_monotonically_increases
 
-import datetime
 from urllib import quote as UQ
 
 from pyquery import PyQuery
