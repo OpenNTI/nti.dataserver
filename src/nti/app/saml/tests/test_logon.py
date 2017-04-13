@@ -15,20 +15,9 @@ from hamcrest import has_properties
 from hamcrest import is_
 from hamcrest import not_none
 
-from nti.app.saml.interfaces import ISAMLACSLinkProvider
-from nti.app.saml.interfaces import ISAMLClient
-from nti.app.saml.interfaces import ISAMLUserAssertionInfo
-from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
+import gc
 
-from nti.app.testing.application_webtest import ApplicationLayerTest
-
-from nti.dataserver.interfaces import IUser
-
-from nti.dataserver.tests import mock_dataserver
-
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-
-from nti.dataserver.users import users
+from persistent import Persistent
 
 from pyramid.interfaces import IRequest
 
@@ -44,12 +33,25 @@ from zope import component
 from zope import interface
 
 from zope.component.hooks import site
+
+from nti.app.saml.interfaces import ISAMLACSLinkProvider
+from nti.app.saml.interfaces import ISAMLClient
+from nti.app.saml.interfaces import ISAMLUserAssertionInfo
+from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
+
+from nti.app.saml.logon import acs_view
+
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.dataserver.interfaces import IUser
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
+from nti.dataserver.users import users
+
 from nti.site.transient import TrivialSite
-from persistent import Persistent
-
-from ..logon import acs_view
-
-import gc
 
 
 @interface.implementer(ISAMLUserAuthenticatedEvent)
@@ -61,12 +63,14 @@ class TestSAMLUserAuthenticatedEvent(object):
 		self.user_info = user_info
 		self.request = request
 
+
 class IsolatedAdapterRegistry(AdapterRegistry):
 
 	def _setBases(self, bases):
 		# Avoid using _addSubregistry to avoid leaving references around
 		# (and because it might not exist!)
 		BaseAdapterRegistry._setBases(self, bases)
+
 
 class IsolatedComponents(Persistent, Components):
 
@@ -78,6 +82,7 @@ class IsolatedComponents(Persistent, Components):
 	def __parent__(self):
 		# So that IConnection(site_manager) can work.
 		return self.__bases__[0]
+
 
 class TestACSLinkProvider(ApplicationLayerTest):
 
@@ -109,7 +114,8 @@ class TestEvents(ApplicationLayerTest):
 		gc.collect()
 
 	@WithMockDSTrans
-	@fudge.patch('nti.app.saml.logon._deal_with_external_account', 'nti.dataserver.users.users.User.get_entity')
+	@fudge.patch('nti.app.saml.logon._deal_with_external_account',
+				 'nti.dataserver.users.users.User.get_entity')
 	def test_user_creation_event(self, ext_acct_handler, get_entity):
 
 		########
@@ -128,7 +134,11 @@ class TestEvents(ApplicationLayerTest):
 				sm.registerUtility(saml_client, ISAMLClient)
 
 				nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
-				user_info = fudge.Fake().has_attr(username='testUser', nameid=nameid, email='test@user.com', firstname='test', lastname='user')
+				user_info = fudge.Fake().has_attr(username='testUser',
+												  nameid=nameid,
+												  email='test@user.com',
+												  firstname='test',
+												  lastname='user')
 				user_info_factory = fudge.Fake().is_callable().returns(user_info)
 				interface.alsoProvides(user_info, ISAMLUserAssertionInfo)
 				sm.registerAdapter(user_info_factory, required=(dict,), provided=ISAMLUserAssertionInfo, name="testIssuer")
@@ -148,7 +158,8 @@ class TestEvents(ApplicationLayerTest):
 
 				sm.registerHandler(user_creation_handler)
 
-				sm.registerAdapter(TestSAMLUserAuthenticatedEvent, [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
+				sm.registerAdapter(TestSAMLUserAuthenticatedEvent,
+								   [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
 
 				request = Request.blank('/')
 				request.registry = sm
@@ -167,9 +178,11 @@ class TestEvents(ApplicationLayerTest):
 																 "user_info":equal_to(user_info)}))
 
 	@WithMockDSTrans
-	@fudge.patch('nti.dataserver.users.users.User.get_entity')
-	def test_user_creation_event_existing_user(self, get_entity):
+	@fudge.patch('nti.dataserver.users.users.User.get_entity',
+				 'nti.app.saml.logon._validate_idp_nameid')
+	def test_user_creation_event_existing_user(self, get_entity, fake_validate_nameid):
 		with mock_dataserver.mock_db_trans(self.ds):
+			fake_validate_nameid.is_callable().returns(True)
 			with site(TrivialSite(IsolatedComponents('nti.app.saml.tests',
 													 bases=(component.getSiteManager(),)))):
 				########
@@ -185,10 +198,15 @@ class TestEvents(ApplicationLayerTest):
 				sm.registerUtility(saml_client, ISAMLClient)
 
 				nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
-				user_info = fudge.Fake().has_attr(username='testUser', nameid=nameid, email='test@user.com', firstname='test', lastname='user')
+				user_info = fudge.Fake().has_attr(username='testUser',
+												  nameid=nameid,
+												  email='test@user.com',
+												  firstname='test',
+												  lastname='user')
 				user_info_factory = fudge.Fake().is_callable().returns(user_info)
 				interface.alsoProvides(user_info, ISAMLUserAssertionInfo)
-				sm.registerAdapter(user_info_factory, required=(dict,), provided=ISAMLUserAssertionInfo, name="testIssuer")
+				sm.registerAdapter(user_info_factory, required=(dict,),
+								   provided=ISAMLUserAssertionInfo, name="testIssuer")
 
 				user = users.User.create_user(username='testUser')
 				get_entity.is_callable().returns(user)
@@ -203,7 +221,8 @@ class TestEvents(ApplicationLayerTest):
 
 				sm.registerHandler(user_creation_handler)
 
-				sm.registerAdapter(TestSAMLUserAuthenticatedEvent, [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
+				sm.registerAdapter(TestSAMLUserAuthenticatedEvent,
+								  [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
 
 				request = Request.blank('/')
 				request.registry = sm

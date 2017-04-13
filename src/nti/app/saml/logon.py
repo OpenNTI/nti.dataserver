@@ -150,8 +150,8 @@ def _validate_idp_nameid(request, user, user_info, idp):
     up with what we stored.  If the nameids are a mismatch we raise an exception.  It is unclear
     if we should do the same if the user has an associated binding to a different idp already.
     """
-    validator = component.getAdapter(request, 
-                                     ISAMLExistingUserValidator, 
+    validator = component.getAdapter(request,
+                                     ISAMLExistingUserValidator,
                                      name='nameid')
     if validator.validate(user, user_info, idp) is True:
         return
