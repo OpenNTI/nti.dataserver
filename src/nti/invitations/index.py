@@ -62,7 +62,9 @@ class ValidatingSite(object):
 
     def __init__(self, obj, default=None):
         if IInvitation.providedBy(obj):
-            self.site = getSite().__name__
+            site = getSite()
+            if site is not None:
+                self.site = site.__name__
 
     def __reduce__(self):
         raise TypeError()
