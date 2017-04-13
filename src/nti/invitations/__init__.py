@@ -14,6 +14,4 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
 from zope.security.management import system_user
 
-from nti.invitations.index import get_invitations_catalog
-
 SYSTEM_USER_NAME = getattr(system_user, 'title').lower()
