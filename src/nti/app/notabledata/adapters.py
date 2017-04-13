@@ -494,19 +494,21 @@ class UserNotableDataStorage(Persistent, Contained):
     def store_object(self, obj, safe=False, take_ownership=False):
         # Note we directly access the intid attribute
         if take_ownership:
-            if getattr(obj, '_ds_intid', None) is not None:
+            intids = component.queryUtility(IIntIds)
+            attribute = getattr(intids, 'attribute', '_ds_intid')
+            if getattr(obj, attribute, None) is not None:
                 # Programming error...somebody lost track of ownership
                 raise ValueError("Object already registered")
             lifecycleevent.created(obj)
-            assert getattr(obj, '_ds_intid', None) is None
+            assert getattr(obj, attribute, None) is None
             self._owned_objects.append(obj)
             if getattr(obj, '__parent__', None) is None:
                 obj.__parent__ = self
             lifecycleevent.added(obj, self, str(len(self._owned_objects)))
 
-        if getattr(obj, '_ds_intid', None) is None:
+        if getattr(obj, attribute, None) is None:
             raise ValueError("Object does not have intid")
-        return self.store_intid(getattr(obj, '_ds_intid'), safe=safe)
+        return self.store_intid(getattr(obj, attribute), safe=safe)
 
     def add_intids(self, ids, safe=False):
         """
