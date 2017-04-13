@@ -153,7 +153,7 @@ def _validate_idp_nameid(request, user, user_info, idp):
     validator = component.getAdapter(request,
                                      ISAMLExistingUserValidator,
                                      name='nameid')
-    if validator.validate(user, user_info, idp) is True:
+    if validator.validate(user, user_info, idp):
         return
 
     # Our default nameid validator couldn't verify this user is the same
@@ -165,7 +165,7 @@ def _validate_idp_nameid(request, user, user_info, idp):
     # then allow the authentication to go through.  If it doesn't explitly affirm
     # raise a mismatch error
     validator = component.queryAdapter(request, ISAMLExistingUserValidator)
-    if validator and validator.validate(user, user_info, idp) is True:
+    if validator and validator.validate(user, user_info, idp):
         return
 
     # We aren't sure this is the same user. Raise a mismatch error to stop
