@@ -14,6 +14,7 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
+from hamcrest import greater_than_or_equal_to
 
 from zope import component
 
@@ -252,7 +253,7 @@ class TestApplicationDFLorums(ApplicationLayerTest, AbstractPostCreationMixin):
  										params={'filter': 'MeOnly',
  												'accept': 'application/vnd.nextthought.forums.dflheadlinetopic'})
 		assert_that(res.json_body, has_entry('FilteredTotalItemCount', 1))
-		assert_that(res.json_body, has_entry('TotalItemCount', 3))  # Both topic and comment
+		assert_that(res.json_body, has_entry('TotalItemCount', greater_than_or_equal_to(3)))  # Both topic and comment
 		assert_that(res.json_body['Items'], has_item(has_entry('title', publish_res.json_body['title'])))
 
 		# Now, the non-creator has the topic in his stream as created
