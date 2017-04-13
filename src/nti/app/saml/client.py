@@ -11,9 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from itsdangerous import JSONWebSignatureSerializer
 
-import urllib
-import urlparse
-
 import saml2
 
 from saml2 import BINDING_HTTP_POST
@@ -67,6 +64,7 @@ def _get_signer_secret(default_secret='not-very-secure-secret'):
 
 def _make_signer(secret, salt='nti-saml-relay-state'):
     return JSONWebSignatureSerializer(secret, salt=salt)
+
 
 @interface.implementer(ISAMLNameId)
 class _SAMLNameId(object):
@@ -152,11 +150,15 @@ class BasicSAMLClient(object):
         _cli = self.saml_client
 
         logger.info("Generating SAML logout request for IDP %s", entity_id)
-        srvs = _cli.metadata.single_logout_service(entity_id, _binding, 'idpsso')
+        srvs = _cli.metadata.single_logout_service(entity_id,
+                                                   _binding, 
+                                                   'idpsso')
         dest = destinations(srvs)[0]
 
-        return hexc.HTTPSeeOther(_make_location(dest, {'TargetResource': success, 'InErrorResource': success, 'SpSessionAuthn': session_auth_id}))
-
+        return hexc.HTTPSeeOther(_make_location(dest, 
+                                                {'TargetResource': success,
+                                                 'InErrorResource': success, 
+                                                 'SpSessionAuthn': session_auth_id}))
 
     def response_for_logging_in(self, success, error, state={}, passive=False,
                                 force_authn=False, entity_id=None, acs_link=None):
@@ -197,8 +199,8 @@ class BasicSAMLClient(object):
 
             if not acs_link:
                 request = get_current_request()
-                provider = component.queryAdapter(
-                    request, ISAMLACSLinkProvider)
+                provider = component.queryAdapter(request, 
+                                                  ISAMLACSLinkProvider)
                 acs_link = provider.acs_link(request) if provider else None
 
             extra_args = {'force_authn': force,
@@ -248,16 +250,14 @@ class BasicSAMLClient(object):
     def _eval_authn_response(self, saml_response, binding=BINDING_HTTP_REDIRECT):
         logger.info('Processing SAML Authn Response')
         logger.info('response %s', saml_response)
-
         authresp = self.saml_client.parse_authn_request_response(saml_response,
                                                                  binding)
-
         return authresp
 
     def process_saml_acs_request(self, request):
         for param in (SAML_RESPONSE, RELAY_STATE):
             if param not in request.params:
-                raise hexc.HTTPBadRequest('Unexpected SAML Response. No %s', 
+                raise hexc.HTTPBadRequest('Unexpected SAML Response. No %s',
                                           param)
 
         # parse out our relay state first so we have it
