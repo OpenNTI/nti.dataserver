@@ -48,6 +48,7 @@ from nti.app.contentfolder.utils import to_external_cf_io_url
 from nti.app.contentfolder.utils import to_external_cf_io_href
 
 from nti.app.externalization.error import raise_json_error
+
 from nti.app.externalization.internalization import read_body_as_external_object
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin

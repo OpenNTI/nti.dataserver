@@ -20,6 +20,10 @@ from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.error import raise_json_error
+
+from nti.app.intids import MessageFactory as _
+
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
 
@@ -41,15 +45,36 @@ class IntIdResolverView(AbstractAuthenticatedView):
         request = self.request
         uid = request.subpath[0] if request.subpath else ''
         if uid is None:
-            raise hexc.HTTPUnprocessableEntity("Must specify a intid")
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _('Must specify a intid.'),
+                    u'code': 'MissingIntId',
+                },
+                None)
 
         try:
             uid = int(uid)
         except (ValueError, TypeError):
-            raise hexc.HTTPUnprocessableEntity("Must specify a valid intid")
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    u'message': _('Must specify a valid intid.'),
+                    u'code': 'InvalidIntId',
+                },
+                None)
 
         intids = component.getUtility(IIntIds)
         result = intids.queryObject(uid)
         if result is None:
-            raise hexc.HTTPNotFound()
+            raise_json_error(
+                self.request,
+                hexc.HTTPNotFound,
+                {
+                    u'message': _('Intid not found.'),
+                    u'code': 'IntIdNotFound',
+                },
+                None)
         return result
