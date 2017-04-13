@@ -493,9 +493,9 @@ class UserNotableDataStorage(Persistent, Contained):
 
     def store_object(self, obj, safe=False, take_ownership=False):
         # Note we directly access the intid attribute
+        intids = component.queryUtility(IIntIds)
+        attribute = getattr(intids, 'attribute', '_ds_intid')
         if take_ownership:
-            intids = component.queryUtility(IIntIds)
-            attribute = getattr(intids, 'attribute', '_ds_intid')
             if getattr(obj, attribute, None) is not None:
                 # Programming error...somebody lost track of ownership
                 raise ValueError("Object already registered")
