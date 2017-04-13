@@ -31,11 +31,12 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zope.schema import ValidationError
 
+from zope.security.management import system_user
+
 from nti.base.interfaces import ICreated
 from nti.base.interfaces import ILastModified
 
 from nti.invitations import MessageFactory as _
-from nti.invitations import SYSTEM_USER_NAME
 
 from nti.property.property import alias
 
@@ -45,6 +46,7 @@ from nti.schema.field import Object
 from nti.schema.field import ValidText
 from nti.schema.field import ValidTextLine
 
+SYSTEM_USER_NAME = getattr(system_user, 'title').lower()
 
 class IInvitation(IContained,
                   ICreated,

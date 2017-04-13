@@ -11,7 +11,3 @@ logger = __import__('logging').getLogger(__name__)
 
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
-
-from zope.security.management import system_user
-
-SYSTEM_USER_NAME = getattr(system_user, 'title').lower()
