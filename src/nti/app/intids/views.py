@@ -29,10 +29,30 @@ from nti.app.intids import MessageFactory as _
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
 
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
 INTID = StandardExternalFields.INTID
 NTIID = StandardExternalFields.NTIID
+
+
+@view_config(name='IntIdInfo')
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='GET',
+               context=IDataserverFolder,
+               permission=nauth.ACT_NTI_ADMIN)
+class IntIdInfoView(AbstractAuthenticatedView):
+
+    def __call__(self):
+        intids = component.getUtility(IIntIds)
+        result = LocatedExternalDict()
+        result.__name__ = self.request.view_name
+        result.__parent__ = self.request.context
+        result['size'] = len(intids)
+        result['nextid'] = getattr(intids, '_v_nextid', None)
+        result['attribute'] = getattr(intids, 'attribute', None)
+        return result
 
 
 @view_config(name='IntIdResolver')
