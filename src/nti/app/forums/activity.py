@@ -27,32 +27,35 @@ from nti.externalization.interfaces import LocatedExternalList
 # activity stream even when the blog is not published, but no one else will.
 # These should be registered for (ICreated, IIntId[Added|Removed]Event)
 
+
 def store_created_object_in_global_activity(comment, event):
-	storage = IUserActivityStorage(comment.creator, None)
-	# Put these in default storage
-	if storage is not None:
-		storage.addContainedObjectToContainer(comment, '')
+    storage = IUserActivityStorage(comment.creator, None)
+    # Put these in default storage
+    if storage is not None:
+        storage.addContainedObjectToContainer(comment, '')
+
 
 def unstore_created_object_from_global_activity(comment, event):
-	storage = IUserActivityStorage(comment.creator, None)
-	# Put these in default storage
-	if storage is not None:
-		storage.deleteEqualContainedObjectFromContainer(comment, '')
+    storage = IUserActivityStorage(comment.creator, None)
+    # Put these in default storage
+    if storage is not None:
+        storage.deleteEqualContainedObjectFromContainer(comment, '')
+
 
 @interface.implementer(IUserActivityProvider)
 class NoCommentActivityProvider(object):
 
-	def __init__(self, user, request):
-		self.user = user
+    def __init__(self, user, request):
+        self.user = user
 
-	def getActivity(self):
-		activity = IUserActivityStorage(self.user, None)
-		if activity is not None:
-			result = LocatedExternalList()
-			container = activity.getContainer('', ())
-			result.lastModified = getattr(container, 'lastModified', 0)
-			for x in container:
-				if 		not IPersonalBlogComment.providedBy(x) \
-					and not IGeneralForumComment.providedBy(x):
-					result.append(x)
-			return result
+    def getActivity(self):
+        activity = IUserActivityStorage(self.user, None)
+        if activity is not None:
+            result = LocatedExternalList()
+            container = activity.getContainer('', ())
+            result.lastModified = getattr(container, 'lastModified', 0)
+            for x in container:
+                if      not IPersonalBlogComment.providedBy(x) \
+                    and not IGeneralForumComment.providedBy(x):
+                    result.append(x)
+            return result

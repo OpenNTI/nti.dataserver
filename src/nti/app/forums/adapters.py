@@ -27,25 +27,27 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.namedfile.constraints import FileConstraints
 
+
 @interface.implementer_only(IDisplayNameGenerator)
 @component.adapter(IPersonalBlog, IRequest)
 class _PersonalBlogDisplayNameGenerator(BrowserView):
-	"""
-	Give's a better display name to the user's blog, which
-	would ordinarily just get their user name.
-	"""
+    """
+    Give's a better display name to the user's blog, which
+    would ordinarily just get their user name.
+    """
 
-	def __call__(self):
-		user = self.context.__parent__
-		user_display_name = component.getMultiAdapter((user, self.request),
-													  IDisplayNameGenerator)
-		user_display_name = user_display_name()
+    def __call__(self):
+        user = self.context.__parent__
+        user_display_name = component.getMultiAdapter((user, self.request),
+                                                      IDisplayNameGenerator)
+        user_display_name = user_display_name()
 
-		result = _("${username}'s Thoughts",
-				   mapping={'username': user_display_name})
+        result = _("${username}'s Thoughts",
+                   mapping={'username': user_display_name})
 
-		result = convertName(result, self.request, None)
-		return result
+        result = convertName(result, self.request, None)
+        return result
+
 
 class _PostFileConstraints(FileConstraints):
-	max_file_size = 10485760  # 10 MB
+    max_file_size = 10485760  # 10 MB

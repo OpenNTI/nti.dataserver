@@ -32,23 +32,24 @@ from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
 
 import zope.deferredimport
 zope.deferredimport.defineFrom(
-	"nti.app.forums.views.view_mixins",
-	"AbstractBoardPostView",
-	"_AbstractForumPostView",
-	"_AbstractTopicPostView")
+    "nti.app.forums.views.view_mixins",
+    "AbstractBoardPostView",
+    "_AbstractForumPostView",
+    "_AbstractTopicPostView")
 
 zope.deferredimport.defineFrom(
-	"nti.app.forums.views.create_views",
-	"_c_view_defaults")
+    "nti.app.forums.views.create_views",
+    "_c_view_defaults")
+
 
 @component.adapter(IPost, IObjectModifiedEvent)
-def match_title_of_post_to_blog( post, event ):
-	"""
-	When the main story of a story topic (blog post) is modified, match the titles
-	"""
+def match_title_of_post_to_blog(post, event):
+    """
+    When the main story of a story topic (blog post) is modified, match the titles
+    """
 
-	if 		IHeadlineTopic.providedBy( post.__parent__ ) \
-		and aq_base(post) is aq_base(post.__parent__.headline) \
-		and post.title != post.__parent__.title:
-		post.__parent__.title = post.title
-	return
+    if      IHeadlineTopic.providedBy(post.__parent__) \
+        and aq_base(post) is aq_base(post.__parent__.headline) \
+        and post.title != post.__parent__.title:
+        post.__parent__.title = post.title
+    return

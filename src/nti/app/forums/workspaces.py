@@ -22,31 +22,33 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 from nti.dataserver.contenttypes.forums.post import Post
 from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
 
+
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
 class _UserBlogCollection(object):
-	"""
-	Turns a User into a ICollection of data for their blog entries (individual containers).
-	"""
+    """
+    Turns a User into a ICollection of data for their blog entries (individual containers).
+    """
 
-	name = 'Blog'
-	__name__ = name
-	__parent__ = None
+    name = 'Blog'
+    __name__ = name
+    __parent__ = None
 
-	def __init__( self, user_workspace ):
-		self.__parent__ = user_workspace
+    def __init__(self, user_workspace):
+        self.__parent__ = user_workspace
 
-	@property
-	def container(self):
-		return IPersonalBlog( self.__parent__.user ).values() # ?
+    @property
+    def container(self):
+        return IPersonalBlog(self.__parent__.user).values()  # ?
 
-	@property
-	def accepts(self):
-		return (PersonalBlogEntryPost.mimeType, Post.mimeType)
+    @property
+    def accepts(self):
+        return (PersonalBlogEntryPost.mimeType, Post.mimeType)
+
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
 def _UserBlogCollectionFactory(workspace):
-	blog = IPersonalBlog( workspace.user, None )
-	if blog is not None:
-		return _UserBlogCollection( workspace )
+    blog = IPersonalBlog(workspace.user, None)
+    if blog is not None:
+        return _UserBlogCollection(workspace)
