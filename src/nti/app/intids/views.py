@@ -30,10 +30,6 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.interfaces import StandardExternalFields
-
-INTID = StandardExternalFields.INTID
-NTIID = StandardExternalFields.NTIID
 
 
 @view_config(name='IntIdInfo')
