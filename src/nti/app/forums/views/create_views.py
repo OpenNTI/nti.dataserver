@@ -12,7 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from pyramid.view import view_config
-from pyramid.view import view_defaults  # NOTE: Only usable on classes
+from pyramid.view import view_defaults
 
 from nti.app.forums import VIEW_CONTENTS
 
@@ -32,16 +32,16 @@ frm_ext = frm_ext
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 _view_defaults = dict(route_name='objects.generic.traversal',
-						renderer='rest')
+                      renderer='rest')
 _c_view_defaults = _view_defaults.copy()
 _c_view_defaults.update(permission=nauth.ACT_CREATE,
-						 request_method='POST')
+                        request_method='POST')
 _r_view_defaults = _view_defaults.copy()
 _r_view_defaults.update(permission=nauth.ACT_READ,
-						 request_method='GET')
+                        request_method='GET')
 _d_view_defaults = _view_defaults.copy()
 _d_view_defaults.update(permission=nauth.ACT_DELETE,
-						 request_method='DELETE')
+                        request_method='DELETE')
 
 # We allow POSTing comments/topics/forums to the actual objects, and also
 # to the /contents sub-URL (ignoring anything subpath after it)
@@ -50,52 +50,58 @@ _d_view_defaults.update(permission=nauth.ACT_DELETE,
 # (Of course this has the side-problem of not invalidating
 # a cache of the topic object itself...)
 
+
 @view_config(name='')
 @view_config(name=VIEW_CONTENTS)
 @view_defaults(context=frm_interfaces.IBoard,
-			   **_c_view_defaults)
+               **_c_view_defaults)
 class BoardPostView(AbstractBoardPostView):
-	"""
-	Given an incoming post, create a new forum.
-	"""
+    """
+    Given an incoming post, create a new forum.
+    """
+
 
 @view_config(name='')
 @view_config(name=VIEW_CONTENTS)
 @view_defaults(context=frm_interfaces.ICommunityBoard,
-			   **_c_view_defaults)
+               **_c_view_defaults)
 class CommunityBoardPostView(AbstractBoardPostView):
 
-	# XXX: We can do better
-	def _get_topic_creator(self):
-		return self.request.context.creator  # the community
+    # XXX: We can do better
+    def _get_topic_creator(self):
+        return self.request.context.creator  # the community
+
 
 @view_config(name='')
 @view_config(name=VIEW_CONTENTS)
 @view_defaults(context=frm_interfaces.IDFLBoard,
-			   **_c_view_defaults)
+               **_c_view_defaults)
 class DFLBoardPostView(AbstractBoardPostView):
 
-	# XXX: We can do better
-	def _get_topic_creator(self):
-		return self.request.context.creator  # the dfl
+    # XXX: We can do better
+    def _get_topic_creator(self):
+        return self.request.context.creator  # the dfl
+
 
 @view_config(name='')
 @view_config(name=VIEW_CONTENTS)
 @view_defaults(context=frm_interfaces.IForum,
-			   **_c_view_defaults)
+               **_c_view_defaults)
 class ForumPostView(_AbstractForumPostView):
-	"""
-	Given an incoming post, create a new topic.
-	"""
+    """
+    Given an incoming post, create a new topic.
+    """
+
 
 @view_config(name='')
 @view_config(name=VIEW_CONTENTS)
 @view_defaults(context=frm_interfaces.ITopic,
-				**_c_view_defaults)
+               **_c_view_defaults)
 class TopicPostView(_AbstractTopicPostView):
-	"""
-	Given an incoming post, create a new comment.
-	"""
+    """
+    Given an incoming post, create a new comment.
+    """
+
 
 del _view_defaults
 del _c_view_defaults

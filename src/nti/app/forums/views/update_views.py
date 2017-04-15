@@ -44,21 +44,23 @@ from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopi
 
 _view_defaults = dict(route_name='objects.generic.traversal', renderer='rest')
 
+
 @view_config(context=IGeneralForum)
 @view_defaults(permission=nauth.ACT_UPDATE,
-			   request_method='PUT',
-			   **_view_defaults)
+               request_method='PUT',
+               **_view_defaults)
 class ForumObjectPutView(UGDPutView):
-	"""
-	Editing an existing forum etc
-	"""
+    """
+    Editing an existing forum etc
+    """
 
-	def readInput(self):
-		externalValue = super(ForumObjectPutView, self).readInput()
-		# remove read only properties
-		for name in ('TopicCount', 'NewestDescendantCreatedTime', 'NewestDescendant'):
-			externalValue.pop(name, None)
-		return externalValue
+    def readInput(self):
+        externalValue = super(ForumObjectPutView, self).readInput()
+        # remove read only properties
+        for name in ('TopicCount', 'NewestDescendantCreatedTime', 'NewestDescendant'):
+            externalValue.pop(name, None)
+        return externalValue
+
 
 @view_config(context=IHeadlinePost)
 @view_config(context=IPersonalBlogEntry)
@@ -67,45 +69,49 @@ class ForumObjectPutView(UGDPutView):
 @view_config(context=IGeneralHeadlinePost)
 @view_config(context=IPersonalBlogEntryPost)
 @view_defaults(permission=nauth.ACT_UPDATE,
-			   request_method='PUT',
-			   **_view_defaults)
+               request_method='PUT',
+               **_view_defaults)
 class PostObjectPutView(UGDPutView):
-	"""
-	Editing an existing post, comments etc
-	"""
+    """
+    Editing an existing post, comments etc
+    """
 
-	def readInput(self):
-		externalValue = super(PostObjectPutView, self).readInput()
-		return externalValue
+    def readInput(self):
+        externalValue = super(PostObjectPutView, self).readInput()
+        return externalValue
 
-	def updateContentObject(self, contentObject, externalValue, set_id=False, notify=True):
-		result = UGDPutView.updateContentObject(self, 
-												contentObject=contentObject,
-												externalValue=externalValue,
-												set_id=set_id,
-												notify=notify)
-		sources = transfer_internal_content_data(contentObject, 
-												 request=self.request,
-												 ownership=False)
-		if sources:
-			validate_attachments(self.remoteUser, contentObject, sources)
-		return result
+    def updateContentObject(self, contentObject, externalValue, set_id=False, notify=True):
+        result = UGDPutView.updateContentObject(self,
+                                                contentObject=contentObject,
+                                                externalValue=externalValue,
+                                                set_id=set_id,
+                                                notify=notify)
+        sources = transfer_internal_content_data(contentObject,
+                                                 request=self.request,
+                                                 ownership=False)
+        if sources:
+            validate_attachments(self.remoteUser, contentObject, sources)
+        return result
+
 
 @view_config(context=IDFLHeadlineTopic)
 @view_config(context=IGeneralHeadlineTopic)
 @view_config(context=ICommunityHeadlineTopic)  # Needed?
 @view_defaults(permission=nauth.ACT_UPDATE,
-			   request_method='PUT',
-			   **_view_defaults)
+               request_method='PUT',
+               **_view_defaults)
 class CommunityTopicPutDisabled(object):
-	"""
-	Restricts PUT on topics to return 403. In pyramid 1.5 this otherwise
-	would find the PUT for the superclass of the object, but we don't want to
-	allow it. (In pyramid 1.4 it resulted in a 404)
-	"""
+    """
+    Restricts PUT on topics to return 403. In pyramid 1.5 this otherwise
+    would find the PUT for the superclass of the object, but we don't want to
+    allow it. (In pyramid 1.4 it resulted in a 404)
+    """
 
-	def __init__(self, request):
-		pass
+    def __init__(self, request):
+        pass
 
-	def __call__(self):
-		raise hexc.HTTPForbidden('Connot PUT to a topic')
+    def __call__(self):
+        raise hexc.HTTPForbidden('Connot PUT to a topic')
+
+
+del _view_defaults
