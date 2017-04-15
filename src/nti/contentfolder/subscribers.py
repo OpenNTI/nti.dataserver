@@ -17,6 +17,7 @@ from nti.contentfolder.interfaces import IContentFolder
 
 from nti.namedfile.interfaces import IFile
 
+
 @component.adapter(IFile, IObjectMovedEvent)
 def _on_content_file_moved(context, event):
     if IContentFolder.providedBy(event.newParent):
