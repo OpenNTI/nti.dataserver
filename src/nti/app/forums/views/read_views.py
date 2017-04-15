@@ -300,8 +300,7 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
         return param
 
     def _make_complete_predicate(self, *args, **kwargs):
-        predicate = super(ForumContentsGetView,
-                          self)._make_complete_predicate(*args, **kwargs)
+        predicate = super(ForumContentsGetView, self)._make_complete_predicate(*args, **kwargs)
         searchTerm = self._get_searchTerm()
         if searchTerm:
             def filter_searchTerm(x):
