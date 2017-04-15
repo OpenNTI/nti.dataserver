@@ -49,7 +49,7 @@ class IntIdResolverView(AbstractAuthenticatedView):
                 self.request,
                 hexc.HTTPUnprocessableEntity,
                 {
-                    u'message': _('Must specify a intid.'),
+                    u'message': _('Must specify an intid.'),
                     u'code': 'MissingIntId',
                 },
                 None)
