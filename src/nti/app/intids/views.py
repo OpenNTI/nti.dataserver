@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 import sys
 
 from zope import component
+from zope import interface
 
 from zope.intid.interfaces import IIntIds
 
@@ -25,6 +26,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.intids import MessageFactory as _
+
+from nti.app.renderers.interfaces import INoHrefInResponse
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
@@ -46,8 +49,10 @@ class IntIdInfoView(AbstractAuthenticatedView):
         result.__name__ = self.request.view_name
         result.__parent__ = self.request.context
         result['size'] = len(intids)
-        result['nextid'] = getattr(intids, '_v_nextid', None)
+        result['minKey'] = intids.refs.minKey()
+        result['maxKey'] = intids.refs.maxKey()
         result['attribute'] = getattr(intids, 'attribute', None)
+        interface.alsoProvides(result, INoHrefInResponse)
         return result
 
 

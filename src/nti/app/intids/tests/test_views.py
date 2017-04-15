@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import none
+from hamcrest import is_not
 from hamcrest import has_entry
 from hamcrest import assert_that
 
@@ -24,7 +26,7 @@ import nti.dataserver.tests.mock_dataserver as mock_dataserver
 class TestViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True)
-    def test_intid_resolver(self):
+    def test_views(self):
         with mock_dataserver.mock_db_trans(self.ds):
             user = self._get_user()
             intids = component.getUtility(IIntIds)
@@ -32,3 +34,10 @@ class TestViews(ApplicationLayerTest):
         path = '/dataserver2/@@IntIdResolver/%s' % uid
         res = self.testapp.get(path, status=200)
         assert_that(res.json_body, has_entry('Class', 'User'))
+        
+        path = '/dataserver2/@@IntIdInfo'
+        res = self.testapp.get(path, status=200)
+        assert_that(res.json_body, has_entry('size', is_not(none())))
+        assert_that(res.json_body, has_entry('minKey', is_not(none())))
+        assert_that(res.json_body, has_entry('maxKey', is_not(none())))
+        assert_that(res.json_body, has_entry('attribute', is_not(none())))
