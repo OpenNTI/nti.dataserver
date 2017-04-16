@@ -15,9 +15,6 @@ import sys
 if 'nti.monkey.patch_gevent_on_import' in sys.modules: # DON'T import this; it should already be imported if needed
 	sys.modules['nti.monkey.patch_gevent_on_import'].check_threadlocal_status()
 
-from nti.monkey import patch_webob_cookie_escaping_on_import
-patch_webob_cookie_escaping_on_import.patch()
-
 import os
 import time
 import warnings

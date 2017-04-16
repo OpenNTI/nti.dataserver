@@ -187,9 +187,6 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		import nti.monkey.patch_gevent_on_import
 		nti.monkey.patch_gevent_on_import.patch()
 
-		from nti.monkey import patch_webob_cookie_escaping_on_import
-		patch_webob_cookie_escaping_on_import.patch()
-
 	def __init__(self, *args, **kwargs):
 		# These objects are instantiated by the master process (arbiter)
 		# in the parent process, pre-fork, once for every worker
