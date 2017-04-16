@@ -36,6 +36,8 @@ def _patched_signal(signalnum, handler):
             return gevent_signal(signalnum, lambda *args: None)
         return
     return gevent_signal(signalnum, handler)
+
+
 gevent.signal.signal = _patched_signal
 
 # Note that we must not import *anything* before the patch
@@ -59,6 +61,7 @@ def main():
     sys.exit(
         load_entry_point('pyramid', 'console_scripts', 'pserve')()
     )
+
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -19,14 +19,15 @@ from nti.contentprocessing.interfaces import IContentMetadataURLHandler
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
+
 @interface.implementer(IContentMetadataURLHandler)
 class TagURLHandler(object):
-	"""
-	Registered as a URL handler for the NTIID URL scheme,
-	``tag:``. If something is found, adapts it to :class:`IContentMetadata`.
-	"""
+    """
+    Registered as a URL handler for the NTIID URL scheme,
+    ``tag:``. If something is found, adapts it to :class:`IContentMetadata`.
+    """
 
-	def __call__(self, url):
-		obj = find_object_with_ntiid(url)
-		if obj is not None:
-			return IContentMetadata(obj, None)
+    def __call__(self, url):
+        obj = find_object_with_ntiid(url)
+        if obj is not None:
+            return IContentMetadata(obj, None)

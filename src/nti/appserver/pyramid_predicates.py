@@ -9,14 +9,15 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+
 class ContentTypePredicate(object):
 
-	def __init__(self, val, config):
-		self.val = val
+    def __init__(self, val, config):
+        self.val = val
 
-	def text(self):
-		return 'content type = %s' % self.val
-	phash = text
+    def text(self):
+        return 'content type = %s' % self.val
+    phash = text
 
-	def __call__(self, context, request):
-		return request.content_type == self.val
+    def __call__(self, context, request):
+        return request.content_type == self.val
