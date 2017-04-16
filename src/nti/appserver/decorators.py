@@ -50,7 +50,8 @@ class _SiteNameAdder(object):
 
     def decorateExternalObject(self, context, mapping):
         site = getSite()
-        mapping['Site'] = site.__name__ if site is not None else None
+        if site is not None:
+            mapping['Site'] = site.__name__
 
 
 @component.adapter(IContextAnnotatable)
@@ -93,8 +94,8 @@ class _EnglishFirstAndLastNameDecorator(object):
         if preflangs and 'en' == (preflangs.getPreferredLanguages() or (None,))[0]:
             # FIXME: Duplicated from users.user_profile
             # CFA: another suffix we see from certain financial quorters
-            human_name = nameparser.HumanName(realname,
-                                              constants=np_constants(extra_suffixes=('cfa',)))
+            constants = np_constants(extra_suffixes=('cfa',))
+            human_name = nameparser.HumanName(realname, constants=constants)
             last = human_name.last or human_name.first
             first = human_name.first or human_name.last
             if first:
@@ -177,7 +178,7 @@ class _DeletedObjectPlaceholderDecorator(object):
             external[StandardExternalFields.LINKS] = links
 
         # Note that we are still externalizing with the original class and mimetype values;
-        # to do otherwise would almost certainly break client assumptions about the type 
+        # to do otherwise would almost certainly break client assumptions about the type
         # of data the APIs return.
         # But we do expose secondary information about this state:
         external['Deleted'] = True
