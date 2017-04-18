@@ -24,8 +24,9 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from ZODB.utils import u64
 
-from pyramid.view import view_config
 from pyramid.threadlocal import get_current_request
+
+from pyramid.view import view_config
 
 from nti.app.authentication import get_remote_user
 
