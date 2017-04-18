@@ -21,11 +21,13 @@ from persistent import Persistent
 from nti.dataserver.interfaces import IContainerContext
 from nti.dataserver.interfaces import IContextAnnotatable
 
+
 @component.adapter(IContextAnnotatable)
 @interface.implementer(IContainerContext)
 class _ContainerContextAnnotation(Persistent):
 
-	def __init__(self):
-		self.context_id = None
+    def __init__(self):
+        self.context_id = None
 
-_ContainerContext = an_factory(_ContainerContextAnnotation, 'container_context')
+_ContainerContext = an_factory(_ContainerContextAnnotation, 
+							   'container_context')

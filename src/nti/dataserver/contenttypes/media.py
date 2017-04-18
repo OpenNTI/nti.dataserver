@@ -31,25 +31,30 @@ from nti.schema.schema import SchemaConfigured
 
 from nti.threadable.threadable import Threadable as ThreadableMixin
 
+
 @interface.implementer(IMedia, IZContained)
 class Media(ThreadableMixin, UserContentRoot, Contained, SchemaConfigured):
-	AutoTags = ()  # not currently in any interface
+    AutoTags = ()  # not currently in any interface
 
-	def __init__(self):
-		super(Media, self).__init__()
+    def __init__(self):
+        super(Media, self).__init__()
+
 
 @interface.implementer(IEmbeddedMedia)
 class EmbeddedMedia(Media):
-	createDirectFieldProperties(IEmbeddedMedia)
+    createDirectFieldProperties(IEmbeddedMedia)
+
 
 @interface.implementer(IEmbeddedVideo)
 class EmbeddedVideo(EmbeddedMedia):
-	createDirectFieldProperties(IEmbeddedVideo)
+    createDirectFieldProperties(IEmbeddedVideo)
+
 
 @interface.implementer(IEmbeddedAudio)
 class EmbeddedAudio(EmbeddedMedia):
-	createDirectFieldProperties(IEmbeddedAudio)
+    createDirectFieldProperties(IEmbeddedAudio)
+
 
 @component.adapter(IMedia)
 class MediaInternalObjectIO(UserContentRootInternalObjectIO):
-	ext_iface_upper_bound = IMedia
+    ext_iface_upper_bound = IMedia

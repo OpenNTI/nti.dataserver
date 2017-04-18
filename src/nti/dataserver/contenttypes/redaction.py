@@ -21,11 +21,14 @@ from nti.dataserver.interfaces import IRedaction
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+
 @interface.implementer(IRedaction)
 class Redaction(SelectedRange):
-	createDirectFieldProperties(IRedaction)  # replacementContent, redactionExplanation
+    # replacementContent, redactionExplanation
+    createDirectFieldProperties(IRedaction)
+
 
 @component.adapter(IRedaction)
 class RedactionInternalObjectIO(SelectedRangeInternalObjectIO):
-	_ext_iface_upper_bound = IRedaction
-	validate_after_update = True
+    _ext_iface_upper_bound = IRedaction
+    validate_after_update = True

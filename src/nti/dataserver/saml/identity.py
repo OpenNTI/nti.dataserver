@@ -22,10 +22,10 @@ from nti.dataserver.saml.interfaces import ISAMLIDPUserInfoBindings
 
 SAML_IDP_USERINFO_BINDINGS_ANNOTATION_KEY = 'SAML_IDP_USERINFO_BINDINGS_ANNOTATION_KEY'
 
+
 @component.adapter(IUser)
 @interface.implementer(ISAMLIDPUserInfoBindings)
 class SAMLIDPUserInfoBindings(CheckingLastModifiedBTreeContainer):
-	pass
-
+    pass
 _SAMLIDPUserInfoBindingsFactory = an_factory(SAMLIDPUserInfoBindings,
-											 SAML_IDP_USERINFO_BINDINGS_ANNOTATION_KEY)
+                                             SAML_IDP_USERINFO_BINDINGS_ANNOTATION_KEY)

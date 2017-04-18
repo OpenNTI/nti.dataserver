@@ -42,8 +42,7 @@ class ModeledContentFile(ThreadableMixin,
 class _ModeledContentFileObjectIO(ContentBlobFileObjectIO):
 
     _ext_iface_upper_bound = IModeledContentFile
-    _excluded_in_ivars_ = {'download_url'}.union(
-        ContentBlobFileObjectIO._excluded_in_ivars_)
+    _excluded_in_ivars_ = {'download_url'}.union(ContentBlobFileObjectIO._excluded_in_ivars_)
 
     def _ext_mimeType(self, obj):
         return u'application/vnd.nextthought.modeledcontentfile'

@@ -17,13 +17,15 @@ from nti.dataserver.contenttypes.selectedrange import SelectedRangeInternalObjec
 
 from nti.dataserver.interfaces import IBookmark
 
+
 @interface.implementer(IBookmark)
 class Bookmark(SelectedRange):
-	"""
-	Implementation of a bookmark.
-	"""
-	pass
+    """
+    Implementation of a bookmark.
+    """
+    pass
+
 
 @component.adapter(IBookmark)
 class BookmarkInternalObjectIO(SelectedRangeInternalObjectIO):
-	pass
+    pass

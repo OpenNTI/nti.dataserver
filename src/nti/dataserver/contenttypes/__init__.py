@@ -22,40 +22,40 @@ logger = __import__('logging').getLogger(__name__)
 # from .threadable import ThreadableExternalizableMixin
 # from .base import UserContentRoot as _UserContentRoot
 
-from .bookmark import Bookmark
+from nti.dataserver.contenttypes.bookmark import Bookmark
 
-from .highlight import Highlight
+from nti.dataserver.contenttypes.canvas import Canvas
+from nti.dataserver.contenttypes.canvas import CanvasShape
+from nti.dataserver.contenttypes.canvas import CanvasUrlShape
+from nti.dataserver.contenttypes.canvas import CanvasPathShape
+from nti.dataserver.contenttypes.canvas import CanvasTextShape
+from nti.dataserver.contenttypes.canvas import CanvasCircleShape
+from nti.dataserver.contenttypes.canvas import CanvasPolygonShape
+from nti.dataserver.contenttypes.canvas import CanvasAffineTransform
 
-from .note import Note
+from nti.dataserver.contenttypes.canvas import NonpersistentCanvasShape
+from nti.dataserver.contenttypes.canvas import NonpersistentCanvasUrlShape
+from nti.dataserver.contenttypes.canvas import NonpersistentCanvasPathShape
+from nti.dataserver.contenttypes.canvas import NonpersistentCanvasTextShape
+from nti.dataserver.contenttypes.canvas import NonpersistentCanvasCircleShape
+from nti.dataserver.contenttypes.canvas import NonpersistentCanvasPolygonShape
 
-from .redaction import Redaction
+from nti.dataserver.contenttypes.highlight import Highlight
 
-from .media import Media
-from .media import EmbeddedMedia
-from .media import EmbeddedVideo
-from .media import EmbeddedAudio
+from nti.dataserver.contenttypes.media import Media
+from nti.dataserver.contenttypes.media import EmbeddedMedia
+from nti.dataserver.contenttypes.media import EmbeddedVideo
+from nti.dataserver.contenttypes.media import EmbeddedAudio
 
-from .canvas import Canvas
-from .canvas import CanvasAffineTransform
-from .canvas import CanvasCircleShape
-from .canvas import CanvasPathShape
-from .canvas import CanvasPolygonShape
-from .canvas import CanvasShape
-from .canvas import CanvasTextShape
-from .canvas import CanvasUrlShape
+from nti.dataserver.contenttypes.note import Note
 
-from .canvas import NonpersistentCanvasCircleShape
-from .canvas import NonpersistentCanvasPathShape
-from .canvas import NonpersistentCanvasPolygonShape
-from .canvas import NonpersistentCanvasShape
-from .canvas import NonpersistentCanvasTextShape
-from .canvas import NonpersistentCanvasUrlShape
+from nti.dataserver.contenttypes.redaction import Redaction
 
 # Support for legacy class names in creation
-import nti.externalization.internalization
-nti.externalization.internalization.register_legacy_search_module('nti.dataserver.contenttypes')
-nti.externalization.internalization.register_legacy_search_module('nti.dataserver.contenttypes.note')
-nti.externalization.internalization.register_legacy_search_module('nti.dataserver.contenttypes.canvas')
-nti.externalization.internalization.register_legacy_search_module('nti.dataserver.contenttypes.bookmark')
-nti.externalization.internalization.register_legacy_search_module('nti.dataserver.contenttypes.highlight')
-nti.externalization.internalization.register_legacy_search_module('nti.dataserver.contenttypes.redaction')
+from nti.externalization.internalization import register_legacy_search_module
+register_legacy_search_module('nti.dataserver.contenttypes')
+register_legacy_search_module('nti.dataserver.contenttypes.note')
+register_legacy_search_module('nti.dataserver.contenttypes.canvas')
+register_legacy_search_module('nti.dataserver.contenttypes.bookmark')
+register_legacy_search_module('nti.dataserver.contenttypes.highlight')
+register_legacy_search_module('nti.dataserver.contenttypes.redaction')
