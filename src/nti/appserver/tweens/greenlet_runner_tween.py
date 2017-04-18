@@ -35,45 +35,47 @@ from zope import interface
 from pyramid.httpexceptions import HTTPOk
 from pyramid.httpexceptions import HTTPException
 
+
 class IGreenletsToRun(interface.Interface):
-	greenlets = interface.Attribute("A sequence of greenlets to join")
-	response = interface.Attribute("The pyramid response to return")
+    greenlets = interface.Attribute("A sequence of greenlets to join")
+    response = interface.Attribute("The pyramid response to return")
+
 
 @interface.implementer(IGreenletsToRun)
 class HTTPOkGreenletsToRun(HTTPOk):
 
-	greenlets = ()
-	response = None
+    greenlets = ()
+    response = None
+
 
 class greenlet_runner_tween(object):
-	"""
-	The greenlet runner.
-	"""
+    """
+    The greenlet runner.
+    """
 
-	__slots__ = ('handler')
+    __slots__ = ('handler')
 
-	def __init__(self, handler, registry):
-		self.handler = handler
+    def __init__(self, handler, registry):
+        self.handler = handler
 
-	def __call__(self, request):
-		try:
-			result = self.handler(request)
-		except HTTPException as e:
-			if not IGreenletsToRun.providedBy(e):
-				raise
-			result = e
+    def __call__(self, request):
+        try:
+            result = self.handler(request)
+        except HTTPException as e:
+            if not IGreenletsToRun.providedBy(e):
+                raise
+            result = e
 
-		if not IGreenletsToRun.providedBy(result):
-			return result
+        if not IGreenletsToRun.providedBy(result):
+            return result
 
-		# Ok, our time to shine. First, drop our
-		# local reference to the request, just for GPs
-		del request
-		# Next, these are relatively rare, so this is a reasonable
-		# time to clean up weak refs and otherwise do gc
-		gc.collect()
-		# Finally, run the greenlets
-		gevent.joinall(result.greenlets)
-		return result.response
-
+        # Ok, our time to shine. First, drop our
+        # local reference to the request, just for GPs
+        del request
+        # Next, these are relatively rare, so this is a reasonable
+        # time to clean up weak refs and otherwise do gc
+        gc.collect()
+        # Finally, run the greenlets
+        gevent.joinall(result.greenlets)
+        return result.response
 greenlet_runner_tween_factory = greenlet_runner_tween

@@ -42,41 +42,44 @@ from zope.security.management import endInteraction
 from zope.security.management import newInteraction
 
 from nti.dataserver import users
+
 from nti.dataserver.interfaces import IDataserver
+
 
 class _interaction_tween(object):
 
-	__slots__ = ('handler',)
+    __slots__ = ('handler',)
 
-	def __init__(self, handler):
-		self.handler = handler
+    def __init__(self, handler):
+        self.handler = handler
 
-	def __call__(self, request):
-		uid = request.authenticated_userid
-		user = None
+    def __call__(self, request):
+        user = None
+        uid = request.authenticated_userid
 
-		if not uid:
-			user = component.getUtility(IUnauthenticatedPrincipal)
-		else:
-			dataserver = component.getUtility(IDataserver)
-			# We must have a user at this point...
-			user = users.User.get_user(uid, dataserver=dataserver)
-			# ...and all users must be IParticipation-capable
+        if not uid:
+            user = component.getUtility(IUnauthenticatedPrincipal)
+        else:
+            dataserver = component.getUtility(IDataserver)
+            # We must have a user at this point...
+            user = users.User.get_user(uid, dataserver=dataserver)
+            # ...and all users must be IParticipation-capable
 
-		if user is not None:
-			participation = IParticipation(user)
-			# newInteraction takes a list of participations.
-			# it's important that the first one be the main IPrincipal,
-			# but if we use this for more than preferences we probably
-			# need to include roles (effective principals?)
-			newInteraction(participation)
+        if user is not None:
+            participation = IParticipation(user)
+            # newInteraction takes a list of participations.
+            # it's important that the first one be the main IPrincipal,
+            # but if we use this for more than preferences we probably
+            # need to include roles (effective principals?)
+            newInteraction(participation)
 
-		try:
-			return self.handler(request)
-		finally:
-			# Whether or not we started one, it is always
-			# safe to end it
-			endInteraction()
+        try:
+            return self.handler(request)
+        finally:
+            # Whether or not we started one, it is always
+            # safe to end it
+            endInteraction()
+
 
 def security_interaction_tween_factory(handler, registry):
-	return _interaction_tween(handler)
+    return _interaction_tween(handler)

@@ -11,7 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope.annotation import IAnnotations
 
 from pyramid import httpexceptions as hexc
