@@ -20,126 +20,135 @@ from ZODB.interfaces import IConnection
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
-from .interfaces import IShardInfo
-from .interfaces import IShardLayout
-from .interfaces import INewUserPlacer
+from nti.dataserver.interfaces import IShardInfo
+from nti.dataserver.interfaces import IShardLayout
+from nti.dataserver.interfaces import INewUserPlacer
+
 
 @interface.implementer(IShardInfo)
 class ShardInfo(PersistentCreatedModDateTrackingObject, SiteManagerContainer):
-	"""
-	Something giving information about a database shard.
+    """
+    Something giving information about a database shard.
 
-	Shards may be :class:`zope.component.interfaces.ISite`.
+    Shards may be :class:`zope.component.interfaces.ISite`.
 
-	.. note:: As you can see, there's much more that needs to be done to this,
-		in addition to making use of the policies that might be installed for a specific
-		shard by making it a Site. For example, we might want to lock certain shards to
-		avoid putting new users in them; that state would need to be tracked here.
-	"""
+    .. note:: As you can see, there's much more that needs to be done to this,
+            in addition to making use of the policies that might be installed for a specific
+            shard by making it a Site. For example, we might want to lock certain shards to
+            avoid putting new users in them; that state would need to be tracked here.
+    """
+
 
 @interface.implementer(IShardLayout)
 @component.adapter(IConnection)
 class ShardLayout(object):
-	"""
-	An object with the knowledge of a dataserver (or shard) layout.
-	"""
+    """
+    An object with the knowledge of a dataserver (or shard) layout.
+    """
 
-	def __init__( self, root ):
-		"""
-		:param root: The root object of a ZODB connection, or a connection itself.
-		"""
-		self.root = root.root() if IConnection.providedBy( root ) else root
+    def __init__(self, root):
+        """
+        :param root: The root object of a ZODB connection, or a connection itself.
+        """
+        self.root = root.root() if IConnection.providedBy(root) else root
 
-	@property
-	def dataserver_folder(self):
-		return self.root['nti.dataserver']
+    @property
+    def dataserver_folder(self):
+        return self.root['nti.dataserver']
 
-	@property
-	def users_folder(self):
-		return self.dataserver_folder['users']
+    @property
+    def users_folder(self):
+        return self.dataserver_folder['users']
 
-	@property
-	def shards(self):
-		return self.dataserver_folder.get('shards')
+    @property
+    def shards(self):
+        return self.dataserver_folder.get('shards')
 
-	@property
-	def root_folder(self):
-		return self.root.get( 'nti.dataserver_root' )
+    @property
+    def root_folder(self):
+        return self.root.get('nti.dataserver_root')
+
 
 @interface.implementer(INewUserPlacer)
 class TrivialShardPlacer(object):
-	"""
-	A user placement policy that puts the user directly in the root database.
-	"""
+    """
+    A user placement policy that puts the user directly in the root database.
+    """
 
-	def placeNewUser( self, user, user_directory, shards ):
-		logger.info( "Assigning new user %s to root shard", user.username )
-		IConnection(user_directory).add( user )
-		# No need to put it in the directory, that's about to happen
+    def placeNewUser(self, user, user_directory, shards):
+        logger.info("Assigning new user %s to root shard", user.username)
+        IConnection(user_directory).add(user)
+        # No need to put it in the directory, that's about to happen
+
 
 class AbstractShardPlacer(object):
-	"""
-	Base class for :class:`nti.dataserver.interfaces.INewUserPlacer` objects that
-	will be placing users in particular named shards.
-	"""
+    """
+    Base class for :class:`nti.dataserver.interfaces.INewUserPlacer` objects that
+    will be placing users in particular named shards.
+    """
 
-	def place_user_in_shard_named( self, user, user_directory, shard_name ):
-		"""
-		Place the given user in a shard having the given name.
+    def place_user_in_shard_named(self, user, user_directory, shard_name):
+        """
+        Place the given user in a shard having the given name.
 
-		:return: A `True` value if we could place the user in the requested shard,
-			otherwise a `False` value.
-		"""
-		if not user or not shard_name:
-			return False
+        :return: A `True` value if we could place the user in the requested shard,
+                otherwise a `False` value.
+        """
+        if not user or not shard_name:
+            return False
 
-		root_conn = IConnection(user_directory)
-		# TODO: Handling the case where we can't get a connection
-		shard_conn = root_conn.get_connection(shard_name)
-		if shard_conn and shard_conn is not root_conn:
-			logger.info("Assigning new user %s to shard %s", user.username, shard_name)
-			shard_conn.add( user )
-			# Also put it in the root directory of this shard, so that this shard
-			# can get GC'd without fear of losing users
-			IShardLayout(shard_conn).users_folder[user.username] = user
-			return True
+        root_conn = IConnection(user_directory)
+        # TODO: Handling the case where we can't get a connection
+        shard_conn = root_conn.get_connection(shard_name)
+        if shard_conn and shard_conn is not root_conn:
+            logger.info("Assigning new user %s to shard %s",
+                        user.username, shard_name)
+            shard_conn.add(user)
+            # Also put it in the root directory of this shard, so that this shard
+            # can get GC'd without fear of losing users
+            IShardLayout(shard_conn).users_folder[user.username] = user
+            return True
+
 
 @interface.implementer(INewUserPlacer)
 class HashedShardPlacer(TrivialShardPlacer, AbstractShardPlacer):
-	"""
-	A user placement policy that maps the user into an existing shard
-	based on the hash of the username. The root shard will never be used
-	if there is at least one other possibility.
+    """
+    A user placement policy that maps the user into an existing shard
+    based on the hash of the username. The root shard will never be used
+    if there is at least one other possibility.
 
-	.. note:: Because the pointer (from the root database to the shard
-		database) stays accurate even if more shards are added, this
-		policy is not *fragile* (so long as shard names do not change).
-		However, it is also not *repeatable* as the database
-		configuration changes.
-	"""
+    .. note:: Because the pointer (from the root database to the shard
+            database) stays accurate even if more shards are added, this
+            policy is not *fragile* (so long as shard names do not change).
+            However, it is also not *repeatable* as the database
+            configuration changes.
+    """
 
-	def placeNewUser(self, user, user_directory, shards ):
-		# While the shards are the same, to get consistent results,
-		# we need the buckets to be the same too. Which means we must sort them.
-		shard_buckets = sorted(shards.keys())
-		# Removing the root shard, if it's present, since we fallback to that
-		# and we want to avoid going there
-		try:
-			shard_buckets.remove( IConnection(user_directory).db().database_name )
-		except ValueError: pass
+    def placeNewUser(self, user, user_directory, shards):
+        # While the shards are the same, to get consistent results,
+        # we need the buckets to be the same too. Which means we must sort
+        # them.
+        shard_buckets = sorted(shards.keys())
+        # Removing the root shard, if it's present, since we fallback to that
+        # and we want to avoid going there
+        try:
+            connection = IConnection(user_directory)
+            shard_buckets.remove(connection.db().database_name)
+        except ValueError:
+            pass
 
-		if not shard_buckets:
-			# We have no choice but to place in the root
-			TrivialShardPlacer.placeNewUser( self, user, user_directory, shards )
-		else:
-
-			shard_name = shard_buckets[hash(user.username) % len(shard_buckets)]
-
-			if not self.place_user_in_shard_named( user, user_directory, shard_name ):
-				# Narf. Going to have to go back to the root conn
-				# Note that we can't do that ourself, because the root shard uses a
-				# 'users' container that fires events, and the user object is probably not
-				# ready for that yet.
-				logger.debug("Failed to assign new user %s to shard %s out of %s",
-							 user.username, shard_name, shard_buckets)
-				TrivialShardPlacer.placeNewUser( self, user, user_directory, shards )
+        if not shard_buckets:
+            # We have no choice but to place in the root
+            TrivialShardPlacer.placeNewUser(self, user, user_directory, shards)
+        else:
+            index = hash(user.username) % len(shard_buckets)
+            shard_name = shard_buckets[index]
+            if not self.place_user_in_shard_named(user, user_directory, shard_name):
+                # Narf. Going to have to go back to the root conn
+                # Note that we can't do that ourself, because the root shard uses a
+                # 'users' container that fires events, and the user object is probably not
+                # ready for that yet.
+                logger.debug("Failed to assign new user %s to shard %s out of %s",
+                             user.username, shard_name, shard_buckets)
+                TrivialShardPlacer.placeNewUser(self, user, 
+                                                user_directory, shards)
