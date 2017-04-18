@@ -25,8 +25,9 @@ from nti.datastructures.datastructures import AbstractNamedLastModifiedBTreeCont
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
-from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
+
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
