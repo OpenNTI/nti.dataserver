@@ -443,11 +443,10 @@ class _SharedDynamicMembershipProviderDecorator(object):
         request = get_current_request()
         if request is not None:
             dataserver = request.registry.getUtility(IDataserver)
-            remote_user = get_remote_user(
-                request, dataserver) if dataserver else None
-            if remote_user is None or original == remote_user or \
-                    ICoppaUserWithoutAgreement.providedBy(original) or \
-                    not hasattr(original, 'usernames_of_dynamic_memberships'):
+            remote_user = get_remote_user(request, dataserver) if dataserver else None
+            if     remote_user is None or original == remote_user \
+                or ICoppaUserWithoutAgreement.providedBy(original) \
+                or not hasattr(original, 'usernames_of_dynamic_memberships'):
                 return
             remote_dmemberships = remote_user.usernames_of_dynamic_memberships
             remote_dmemberships = remote_dmemberships - set(('Everyone',))
