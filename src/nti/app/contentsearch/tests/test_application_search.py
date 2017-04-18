@@ -66,7 +66,7 @@ class TestApplicationSearch(ApplicationLayerTest):
 
         #"Searching with an empty term returns empty results"
         with mock_dataserver.mock_db_trans(self.ds):
-            contained = ContainedExternal()
+            contained = PersistentContainedExternal()
             user = self._create_user()
             user2 = self._create_user('foo@bar')
             user2_username = user2.username
@@ -74,16 +74,13 @@ class TestApplicationSearch(ApplicationLayerTest):
                                                       nttype=ntiids.TYPE_MEETINGROOM,
                                                       specific='1234')
             user.addContainedObject(contained)
-            assert_that(
-                user.getContainer(
-                    contained.containerId),
-                has_length(1))
+            assert_that(user.getContainer(contained.containerId),
+                        has_length(1))
 
         testapp = TestApp(self.app)
         # The results are not defined across the search types,
         # we just test that it doesn't raise a 404
-        for search_path in (
-                'users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData',):
+        for search_path in ('users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData',):
             for ds_path in ('dataserver2',):
                 path = '/' + ds_path + '/' + search_path + '/'
                 res = testapp.get(
@@ -94,14 +91,12 @@ class TestApplicationSearch(ApplicationLayerTest):
                 # And access is not allowed for a different user
                 testapp.get(
                     path,
-                    extra_environ=self._make_extra_environ(
-                        user=user2_username),
+                    extra_environ=self._make_extra_environ(user=user2_username),
                     status=403)
                 # Nor one that doesn't exist
                 testapp.get(
                     path,
-                    extra_environ=self._make_extra_environ(
-                        user='user_dne@biz'),
+                    extra_environ=self._make_extra_environ(user='user_dne@biz'),
                     status=401)
 
     @WithSharedApplicationMockDSWithChanges
@@ -111,57 +106,59 @@ class TestApplicationSearch(ApplicationLayerTest):
             _ = self._create_user()
             self._create_user(username='foo@bar')
             testapp = TestApp(self.app)
-            containerId = ntiids.make_ntiid(
-                provider='OU',
-                nttype=ntiids.TYPE_MEETINGROOM,
-                specific='1234')
-            data = json.serialize({'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
-                                   'ContainerId': containerId,
-                                   'selectedText': "This is the selected text",
-                                   'applicableRange': {'Class': 'ContentRangeDescription'}})
+            containerId = ntiids.make_ntiid(provider='OU',
+                                            nttype=ntiids.TYPE_MEETINGROOM,
+                                            specific='1234')
+            data = json.serialize( {
+                    'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
+                    'ContainerId': containerId,
+                    'selectedText': "This is the selected text",
+                    'applicableRange': {'Class': 'ContentRangeDescription'
+            }})
 
         path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
-        res = testapp.post(
-            path,
-            data,
-            extra_environ=self._make_extra_environ())
+        res = testapp.post(path,
+                           data,
+                           extra_environ=self._make_extra_environ())
         assert_that(res.status_int, is_(201))
-        assert_that(
-            res.body,
-            contains_string('"Class": "ContentRangeDescription"'))
+        assert_that(res.body,
+                    contains_string('"Class": "ContentRangeDescription"'))
         href = res.json_body['href']
-        assert_that(res.headers, has_entry('Location',
-                                           contains_string('http://localhost/dataserver2/users/sjohnson@nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID')))
-        assert_that(res.headers, has_entry('Content-Type',
-                                           contains_string('application/vnd.nextthought.highlight+json')))
+        assert_that(res.headers, 
+                    has_entry('Location',
+                              contains_string('http://localhost/dataserver2/users/sjohnson@nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID')))
+        assert_that(res.headers, 
+                    has_entry('Content-Type',
+                              contains_string('application/vnd.nextthought.highlight+json')))
 
         path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + \
-            containerId + ')/UserGeneratedData'
+                containerId + ')/UserGeneratedData'
         res = testapp.get(path, extra_environ=self._make_extra_environ())
-        assert_that(
-            res.body,
-            contains_string('"Class": "ContentRangeDescription"'))
+        assert_that(res.body,
+                    contains_string('"Class": "ContentRangeDescription"'))
 
         # I can share the item
         path = href + '/++fields++sharedWith'
         data = json.dumps(['foo@bar'])
-        res = testapp.put(
-            str(path),
-            data,
-            extra_environ=self._make_extra_environ())
-        assert_that(res.json_body, has_entry('sharedWith', ['foo@bar']))
+        res = testapp.put(str(path),
+                          data,
+                          extra_environ=self._make_extra_environ())
+        assert_that(res.json_body, 
+                    has_entry('sharedWith', ['foo@bar']))
 
         # And the recipient can see it
         path = '/dataserver2/users/foo@bar/Pages(' + \
-            containerId + ')/UserGeneratedData'
-        res = testapp.get(
-            str(path),
-            extra_environ=self._make_extra_environ(user=b'foo@bar'))
-        assert_that(res.body, contains_string("This is the selected text"))
+                containerId + ')/UserGeneratedData'
+        res = testapp.get(str(path),
+                          extra_environ=self._make_extra_environ(user=b'foo@bar'))
+        assert_that(res.body, 
+                    contains_string("This is the selected text"))
 
         # I can now delete that item
-        testapp.delete(str(href), extra_environ=self._make_extra_environ())
+        testapp.delete(str(href), 
+                       extra_environ=self._make_extra_environ())
 
         # And it is no longer available
-        res = testapp.get(str(path), extra_environ=self._make_extra_environ(user=b'foo@bar'),
+        res = testapp.get(str(path), 
+                          extra_environ=self._make_extra_environ(user=b'foo@bar'),
                           status=404)
