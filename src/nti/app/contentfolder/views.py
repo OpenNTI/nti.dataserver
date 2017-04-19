@@ -480,9 +480,9 @@ class UploadView(AbstractAuthenticatedView,
             else:
                 target = self.create_namedfile(source, file_key, filename)
                 target.creator = creator
+                target.data = source.read()
                 lifecycleevent.created(target)
                 self.context.add(target)
-                target.data = source.read()  # set data after getting an iid
             items.append(target)
 
         lifecycleevent.modified(self.context)
@@ -557,9 +557,9 @@ class ImportView(AbstractAuthenticatedView,
                                                            file_key,
                                                            filename)
                             target.creator = creator
+                            target.data = source.read()
                             lifecycleevent.created(target)
                             folder.add(target)
-                            target.data = source.read()  # set data after getting an iid
                         items[name] = target
 
         self.request.response.status_int = 201
