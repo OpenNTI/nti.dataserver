@@ -32,6 +32,8 @@ from nti.dataserver.interfaces import IDataserver
 
 from nti.externalization.oids import to_external_ntiid_oid
 
+from nti.namedfile.constraints import FileConstraints
+
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
@@ -365,3 +367,18 @@ class TestContentFolderViews(ApplicationLayerTest):
         assert_that(res.json_body,
                     has_entry('href',
                               starts_with('/dataserver2/cf.io/')))
+
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    @fudge.patch('nti.app.contentfile.view_mixins.file_contraints')
+    def test_file_constraints(self, mock_fs):
+        constraints = FileConstraints()
+        constraints.max_file_size = 1
+        mock_fs.is_callable().with_args().returns(constraints)
+        self.testapp.post('/dataserver2/ofs/root/@@upload',
+                          upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
+                          status=422)
+        
+        constraints.max_file_size = 100
+        self.testapp.post('/dataserver2/ofs/root/@@upload',
+                          upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
+                          status=201)
