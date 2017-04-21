@@ -95,10 +95,13 @@ def _handle_content_type(reader, input_data, request, content_type):
         # We return a dict with the form data
         result = dict()
         data = request.POST
-        for key, value in tuple(data.items()):  # mutating
+        for key, value in data.items():
             if (    isinstance(value, (cgi.FieldStorage, cgi.MiniFieldStorage))
                 or (hasattr(value, 'type') and hasattr(value, 'file'))):
-                pass  # ignore
+                # reset to 0
+                fp = getattr(value, "fp", None)
+                if fp is not None:
+                    fp.seek(0)
             elif key in ('__json__', '__input__'):  # special case for embedded json data
                 json_data = read_input_data(data[key], request)
                 assert isinstance(json_data, collections.Mapping)
