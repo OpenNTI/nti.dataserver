@@ -21,6 +21,7 @@ from pyramid.httpexceptions import HTTPNotFound
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+
 @view_config(route_name='webapp.i18n.strings_js',
 			 request_method='GET')
 class StringsLocalizer(AbstractAuthenticatedView):
@@ -29,20 +30,24 @@ class StringsLocalizer(AbstractAuthenticatedView):
 
 	def __call__(self):
 		try:
-			domain = component.getUtility(ITranslationDomain, name=self._DOMAIN)
+			domain = component.getUtility(ITranslationDomain,
+										  name=self._DOMAIN)
 		except LookupError:
 			logger.exception("WebApp strings not registered---misconfigured?")
 			raise HTTPNotFound('No translation domain')
 
 		# Negotiate the language to use
 		negotiator = component.getUtility(INegotiator)
-		# This will use a cookie/request param, non-default user setting, and finally
-		# HTTP Accept-Language
-		target_language = negotiator.getLanguage(domain.getCatalogsInfo(), self.request)
+		# This will use a cookie/request param, non-default user setting,
+		# and finally HTTP Accept-Language
+		target_language = negotiator.getLanguage(domain.getCatalogsInfo(),
+												 self.request)
 
 		if not target_language:
-			# Either they didn't specify, or we don't support the language they want
-			fallbacks = getattr(domain, '_fallbacks') # XXX accessing private attribute, but there's no other way
+			# Either they didn't specify, or we don't support the language
+			# they want
+			# XXX: accessing private attribute, but there's no other way
+			fallbacks = getattr(domain, '_fallbacks')
 			for lang in fallbacks:
 				if lang in domain.getCatalogsInfo():
 					target_language = lang
@@ -53,5 +58,7 @@ class StringsLocalizer(AbstractAuthenticatedView):
 
 		# Use the static URL so that we could have these served from
 		# nginx or a CDN transparently
-		return HTTPFound(self.request.static_url('nti.app.i18n:locales/%s/LC_MESSAGES/%s.js'
-												 % (target_language, self._DOMAIN)))
+		url = self.request.static_url(
+				'nti.app.i18n:locales/%s/LC_MESSAGES/%s.js'
+				% (target_language, self._DOMAIN))
+		return HTTPFound(url)

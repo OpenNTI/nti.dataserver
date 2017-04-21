@@ -12,6 +12,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import cgi
+
 from six import string_types
 
 try:
@@ -197,12 +199,20 @@ def get_safe_source_filename(source, default):
     return result
 
 
+def _is_file_source(value):
+    """
+    Determines if given input value is a possible file source.
+    """
+    return isinstance(value, (cgi.FieldStorage, cgi.MiniFieldStorage)) \
+        or (hasattr(value, 'type') and hasattr(value, 'file'))
+
+
 def get_source(request, *keys):
     source = None
     values = CaseInsensitiveDict(request.POST)
     for key in keys:
         source = values.get(key)
-        if source is not None:
+        if _is_file_source(source):
             break
     if source is not None:
         source = process_source(source)
@@ -213,8 +223,9 @@ def get_all_sources(request, default_content_type=DEFAULT_CONTENT_TYPE):
     result = CaseInsensitiveDict()
     values = CaseInsensitiveDict(request.POST)
     for name, source in values.items():
-        source = process_source(source, default_content_type)
-        result[name] = source
+        if _is_file_source(source):
+            source = process_source(source, default_content_type)
+            result[name] = source
     return result
 
 
