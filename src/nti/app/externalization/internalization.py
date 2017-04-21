@@ -95,10 +95,8 @@ def _handle_content_type(reader, input_data, request, content_type):
 				json_data = read_input_data(data[key], request)
 				assert isinstance(json_data, collections.Mapping)
 				result.update(json_data)
-				del data[key]
 			else:
 				result[_handle_unicode(key, request)] = data[key]
-				del data[key]
 	else:
 		# We need all string values to be unicode objects. simplejson (the usual implementation
 		# we get from anyjson) is different from the built-in json and returns strings
