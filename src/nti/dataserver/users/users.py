@@ -325,10 +325,13 @@ class User(Principal):
 	# The last login time is an number of seconds (as with time.time).
 	# When it gets reset, the number of outstanding notifications also
 	# resets. It is writable, number is not...
-	lastLoginTime = minmax.NumericPropertyDefaultingToZero(b'lastLoginTime', minmax.NumericMaximum, as_number=True)
+	lastLoginTime = minmax.NumericPropertyDefaultingToZero(str('lastLoginTime'), 
+														   minmax.NumericMaximum, 
+														   as_number=True)
 	# ...although, pending a more sophisticated notification tracking
 	# mechanism, we are allowing notification count to be set...
-	notificationCount = minmax.NumericPropertyDefaultingToZero(b'notificationCount', minmax.MergingCounter)
+	notificationCount = minmax.NumericPropertyDefaultingToZero(str('notificationCount'),
+															   minmax.MergingCounter)
 
 	# TODO: If no AvatarURL is set when externalizing,
 	# send back a gravatar URL for the primary email:
