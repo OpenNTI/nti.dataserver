@@ -44,6 +44,8 @@ from zope.intid.interfaces import IIntIdRemovedEvent
 
 from zope.location.interfaces import ISublocations
 
+from pyramid.encode import url_quote
+
 from nti.testing.matchers import is_empty
 
 from nti.testing.time import time_monotonically_increases
@@ -63,8 +65,6 @@ from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges 
 from nti.appserver.policies.tests import test_application_censoring
 
 from nti.appserver.tests.test_application import TestApp as _TestApp
-
-from nti.traversal.encode import url_quote
 
 def UQ(val):
 	# Pyramid is much more lenient with safe characters
