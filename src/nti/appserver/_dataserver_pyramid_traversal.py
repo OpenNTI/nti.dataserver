@@ -25,6 +25,8 @@ from zope.security.management import queryInteraction
 from zope.traversing.interfaces import IPathAdapter
 from zope.traversing.interfaces import ITraversable
 
+from pyramid.compat import is_nonstr_iter
+
 from pyramid.interfaces import IView
 from pyramid.interfaces import IRequest
 from pyramid.interfaces import IViewClassifier
@@ -46,8 +48,6 @@ from nti.appserver.workspaces.interfaces import IContainerCollection
 
 from Acquisition import aq_base
 from Acquisition.interfaces import IAcquirer
-
-from nti.common.iterables import is_nonstr_iter
 
 from nti.dataserver import authorization_acl as nacl
 
