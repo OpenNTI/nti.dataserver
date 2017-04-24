@@ -23,7 +23,7 @@ try:
 except ImportError:
     class IMailer(interface.Interface):
         pass
-IMailer = IMailer # [re]export, primarily for testing
+IMailer = IMailer  # [re]export, primarily for testing
 
 try:
     from repoze.sendmail.interfaces import IMailDelivery

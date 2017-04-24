@@ -89,10 +89,12 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
         bcc = _as_recipient_list(bcc) or ()
         recipients = _as_recipient_list(recipients)
         filtered_recip = [self._transform_recipient(a) for a in recipients]
-        filtered_recip = [a for a in filtered_recip if self._should_send_to_addr(a)]
+        filtered_recip = [
+            a for a in filtered_recip if self._should_send_to_addr(a)]
 
         filtered_bcc = [self._transform_recipient(a) for a in bcc]
-        filtered_bcc = [a for a in filtered_bcc if self._should_send_to_addr(a)]
+        filtered_bcc = [
+            a for a in filtered_bcc if self._should_send_to_addr(a)]
 
         if '_level' in kwargs:
             kwargs['_level'] = kwargs['_level'] + 1
@@ -134,8 +136,8 @@ class ImpersonatedMailer(NextThoughtOnlyMailer):
                                       text_template_extension='.txt',
                                       **kwargs):
         _request = request
-        if     _request is None \
-            or not hasattr(_request, 'environ'):  # In case we're zope proxied?
+        if _request is None \
+                or not hasattr(_request, 'environ'):  # In case we're zope proxied?
             _request = _get_current_request()
 
         if is_impersonating(_request):
@@ -144,7 +146,8 @@ class ImpersonatedMailer(NextThoughtOnlyMailer):
             # Hmm, maybe we want to redirect to the impersonating user?
             # That would couple us pretty tightly to the DS though right now
             # since we don't have an principal directory utility
-            mailer = super(ImpersonatedMailer, self).create_simple_html_text_email
+            mailer = super(ImpersonatedMailer,
+                           self).create_simple_html_text_email
         else:
             # Not impersonating, no need to filter
             mailer = self._default_mailer.create_simple_html_text_email
