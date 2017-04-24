@@ -33,7 +33,7 @@ from pyramid.events import ContextFound
 def adjust(request):
 	notify(ContextFound(request))
 
-from ..views import StringsLocalizer
+from nti.app.i18n.views import StringsLocalizer
 
 from pyramid.httpexceptions import HTTPNotFound
 

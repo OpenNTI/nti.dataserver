@@ -19,6 +19,7 @@ does_not = is_not
 import fudge
 import gevent
 import quopri
+import time
 
 from zope import component
 from zope import interface
@@ -117,7 +118,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 				top_n.containerId = self.CONTAINER_ID
 				top_n.body = ("Top is notable", str(i))
 				top_n.title = IPlainTextContentFragment( "NOTABLE NOTE" )
-				top_n.createdTime = 100 + i
+				top_n.createdTime = time.time()
 				top_n.creator = user
 				top_n.tags = contenttypes.Note.tags.fromObject([jason.NTIID])
 				top_n.addSharingTarget(jason)
@@ -132,7 +133,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 			# an event we don't have a classifier for
 			extra_notable = FakeNotable()
-			extra_notable.createdTime = 110
+			extra_notable.createdTime = time.time()
 			IUserNotableDataStorage(jason).store_object(extra_notable, safe=True, take_ownership=True)
 
 			assert component.getMultiAdapter((jason,self.request),IUserNotableData).is_object_notable(extra_notable)
@@ -161,7 +162,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( msg, contains_string('From: "NextThought" <no-reply@alerts.nextthought.com>') )
 		assert_that( msg, contains_string('NOTABLE NOTE'))
 		assert_that( msg, contains_string('shared a note'))
-		assert_that( msg, contains_string("Here's what you may have missed on Localhost since 12/31/69 6:00 PM."))
+		assert_that( msg, contains_string("Here's what you may have missed on Localhost since"))
 
 		assert_that( msg, contains_string('NOTABLE BLOG TITLE'))
 		assert_that( msg, contains_string('added you as a contact'))
