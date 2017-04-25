@@ -28,14 +28,12 @@ from nti.mailer.interfaces import IEmailAddressable
 
 
 def _get_signer_secret(default_secret="$Id$"):
-
     # TODO: Break these dependencies
     from nti.appserver.interfaces import IApplicationSettings
-
-    settings = component.getGlobalSiteManager().queryUtility(IApplicationSettings) or {}
+    site_manager = component.getGlobalSiteManager()
+    settings = site_manager.queryUtility(IApplicationSettings) or {}
     # XXX Reusing the cookie secret, we should probably have our own
     secret_key = settings.get('cookie_secret', default_secret)
-
     return secret_key
 
 
@@ -93,16 +91,17 @@ def _find_default_realname(request=None):
     """
     realname = None
     policy, policy_name = find_site_policy(request=request)
-    if policy is not None and policy_name and getattr(policy, 'DEFAULT_EMAIL_SENDER', None):
+    if      policy is not None \
+        and policy_name \
+        and getattr(policy, 'DEFAULT_EMAIL_SENDER', None):
         realname, _ = rfc822.parseaddr(policy.DEFAULT_EMAIL_SENDER)
         if realname is not None:
             realname = realname.strip()
-
     return realname or "NextThought"
 
 
 def __make_signer(default_key, **kwargs):
-    if not default_key :
+    if not default_key:
         return _make_signer(**kwargs) 
     else:
         return _make_signer(default_key=default_key, **kwargs)
@@ -136,7 +135,6 @@ def realname_from_recipients(fromaddr, recipients, request=None):
         raise ValueError("Invalid fromaddr", fromaddr)
     if not realname:
         realname = _find_default_realname(request=request)
-
     return rfc822.dump_address_pair((realname, addr))
 
 
@@ -145,10 +143,8 @@ def verp_from_recipients(fromaddr,
                          request=None,
                          default_key=None):
 
-    recipients = realname_from_recipients(fromaddr, 
-                                          recipients, 
-                                          request=request)
-    realname, addr = rfc822.parseaddr(recipients)
+    realname = realname_from_recipients(fromaddr, recipients, request=request)
+    realname, addr = rfc822.parseaddr(realname)
 
     # We could special case the common case of recipients of length
     # one if it is a string: that typically means we're sending to the current
@@ -200,13 +196,11 @@ def principal_ids_from_verp(fromaddr,
     decoded_pids = urllib.unquote(encoded_pids)
 
     signed = decoded_pids + signer.sep + sig
-
     try:
         pids = signer.unsign(signed)
     except itsdangerous.BadSignature:
         return ()
     else:
         return pids.split(',')
-
 
 interface.moduleProvides(IVERP)
