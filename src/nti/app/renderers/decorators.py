@@ -18,6 +18,7 @@ from abc import abstractmethod
 from zope import interface
 
 from zope.cachedescriptors.property import Lazy
+from zope.cachedescriptors.property import readproperty
 
 from zope.location.interfaces import ILocation
 
@@ -29,7 +30,6 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.links.links import Link
 
 from nti.property.property import alias
-from nti.property.property import readproperty
 
 StandardExternalFields_LINKS = StandardExternalFields.LINKS
 

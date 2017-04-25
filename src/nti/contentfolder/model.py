@@ -14,6 +14,7 @@ import six
 from zope import interface
 from zope import lifecycleevent
 
+from zope.cachedescriptors.property import readproperty
 from zope.cachedescriptors.property import CachedProperty
 
 from zope.location.location import locate
@@ -39,7 +40,6 @@ from nti.namedfile.file import get_file_name
 from nti.namedfile.interfaces import IFile
 
 from nti.property.property import alias
-from nti.property.property import readproperty
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 

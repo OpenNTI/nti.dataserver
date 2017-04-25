@@ -20,6 +20,7 @@ from zope import lifecycleevent
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.cachedescriptors.property import Lazy
+from zope.cachedescriptors.property import readproperty
 from zope.cachedescriptors.property import CachedProperty
 
 from zope.container.interfaces import INameChooser
@@ -81,8 +82,6 @@ from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 from nti.dataserver.sharing import AbstractDefaultPublishableSharedWithMixin
 
 from nti.dataserver.users import Entity
-
-from nti.property.property import readproperty
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.schema.fieldproperty import AcquisitionFieldProperty
