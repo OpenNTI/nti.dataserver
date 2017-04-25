@@ -15,6 +15,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.keyreference.interfaces import NotYet
 from zope.keyreference.interfaces import IKeyReference
 
@@ -36,8 +38,6 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ISessionServiceStorage
 
 from nti.intid import utility as intid_utility
-
-from nti.property.property import Lazy
 
 from nti.zodb import readCurrent
 

@@ -27,7 +27,7 @@ from repoze.sendmail.interfaces import IMailer
 
 from repoze.sendmail.queue import ConsoleApp as _ConsoleApp
 
-from nti.property.property import Lazy
+from zope.cachedescriptors.property import Lazy
 
 
 @interface.implementer(IMailer)

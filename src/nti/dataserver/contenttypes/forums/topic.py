@@ -19,6 +19,9 @@ from zope import lifecycleevent
 
 from zope.annotation.interfaces import IAttributeAnnotatable
 
+from zope.cachedescriptors.property import Lazy
+from zope.cachedescriptors.property import CachedProperty
+
 from zope.container.interfaces import INameChooser
 from zope.container.contained import ContainerSublocations
 from zope.container.contained import dispatchToSublocations
@@ -79,9 +82,7 @@ from nti.dataserver.sharing import AbstractDefaultPublishableSharedWithMixin
 
 from nti.dataserver.users import Entity
 
-from nti.property.property import Lazy
 from nti.property.property import readproperty
-from nti.property.property import CachedProperty
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.schema.fieldproperty import AcquisitionFieldProperty
@@ -105,7 +106,7 @@ class _AbstractUnsharedTopic(AcquireObjectsOnReadMixin,
 	id, containerId = _containerIds_from_parent()
 
 	sharingTargets = ()
-	
+
 	@property
 	def mostRecentReply(self):
 		"""

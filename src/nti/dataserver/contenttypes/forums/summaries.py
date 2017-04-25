@@ -16,6 +16,8 @@ import nameparser
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.dataserver.contenttypes.forums.interfaces import ITopicParticipationSummary
@@ -28,7 +30,7 @@ from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.property.property import alias
-from nti.property.property import Lazy
+
 
 @interface.implementer(IUserTopicParticipationContext)
 class UserTopicParticipationContext(object):
@@ -36,6 +38,7 @@ class UserTopicParticipationContext(object):
 	def __init__(self, comment):
 		self.Context = comment
 		self.ParentContext = comment.inReplyTo
+
 
 @interface.implementer(ITopicParticipationSummary)
 class TopicParticipationSummary(object):

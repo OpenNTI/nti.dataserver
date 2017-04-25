@@ -16,6 +16,8 @@ from zope import interface
 
 from zope.authentication.interfaces import IUnauthenticatedPrincipal
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.container.constraints import IContainerTypesConstraint
 
 from zope.container.contained import Contained
@@ -94,7 +96,6 @@ from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
 
-from nti.property.property import Lazy
 from nti.property.property import alias
 from nti.property.property import LazyOnClass
 
@@ -593,12 +594,12 @@ class NTIIDEntry(object):
 
 	link_provided = IPageContainerResource
 	recursive_stream_supports_feeds = True
-	
+
 	extra_links = ()
 	createdTime = 0
 	lastModified = 0
 	contentUnit = None # Legacy field
-	
+
 	def __init__(self, parent, ntiid):
 		self.__parent__ = parent
 		self.__name__ = ''
@@ -757,7 +758,7 @@ class Service(Contained):
 
 	__parent__ = None
 	__name__ = 'service'
-	
+
 	def __init__( self, principal ):
 		self.__parent__ = component.getUtility(IDataserver).root
 

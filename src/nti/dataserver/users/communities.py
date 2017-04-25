@@ -16,6 +16,7 @@ from zope.annotation.factory import factory as an_factory
 
 from zope.annotation.interfaces import IAnnotations
 
+from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import cachedIn
 
 from zope.intid.interfaces import IIntIdRemovedEvent
@@ -45,10 +46,10 @@ from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.ntiids.ntiids import TYPE_NAMED_ENTITY_COMMUNITY
 
-from nti.property.property import Lazy
 from nti.property.property import alias
 
 from nti.wref.interfaces import IWeakRef
+
 
 @interface.implementer(ICommunity, ISublocations)
 class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matters

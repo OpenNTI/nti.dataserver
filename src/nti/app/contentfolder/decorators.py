@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.location.interfaces import ILocation
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
@@ -36,8 +38,6 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.links.links import Link
 
 from nti.namedfile.interfaces import INamedFile
-
-from nti.property.property import Lazy
 
 LINKS = StandardExternalFields.LINKS
 

@@ -16,6 +16,8 @@ from requests.structures import CaseInsensitiveDict
 
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.intid.interfaces import IIntIds
 
 from ZODB.POSException import POSError
@@ -65,8 +67,6 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.proxy import removeAllProxies
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.property.property import Lazy
 
 OID = StandardExternalFields.OID
 CLASS = StandardExternalFields.CLASS

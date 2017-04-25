@@ -13,6 +13,7 @@ from six import StringIO
 
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import CachedProperty
 
 from BTrees.OOBTree import OOTreeSet
@@ -29,7 +30,6 @@ from nti.namedfile.file import NamedBlobImage
 
 from nti.namedfile.interfaces import IInternalFileRef
 
-from nti.property.property import Lazy
 from nti.property.property import alias
 
 from nti.wref.interfaces import IWeakRef
@@ -104,7 +104,7 @@ class BaseContentMixin(object):
                 logger.exception("Error while getting associatied object")
 
     def has_associations(self):
-        return  bool(   '_associations' in self.__dict__ 
+        return  bool(   '_associations' in self.__dict__
                      and self._associations)
 
     def count_associations(self):
@@ -129,7 +129,7 @@ class BaseContentMixin(object):
             self._associations.clear()
 
     # IFileReader
-    
+
     @CachedProperty('data')
     def _v_fp(self):
         return StringIO(self.data)
@@ -188,7 +188,7 @@ def transform_to_blob(context, associations=False):
         if IInternalFileRef.providedBy(context):
             interface.alsoProvides(result, IInternalFileRef)
             result.reference = getattr(context,
-                                       'reference', 
+                                       'reference',
                                        None)  # extra check
         if context.has_associations() or associations:
             [result.add_association(obj) for obj in context.associations()]

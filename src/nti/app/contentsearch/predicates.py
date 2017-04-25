@@ -14,6 +14,8 @@ from zope import interface
 
 from pyramid.threadlocal import get_current_request
 
+from zope.cachedescriptors.property import Lazy
+
 from nti.appserver.pyramid_authorization import has_permission
 
 from nti.contentsearch.interfaces import ISearchHitPredicate
@@ -30,8 +32,6 @@ from nti.dataserver.contenttypes.forums.interfaces import IPublishableTopic
 from nti.dataserver.interfaces import IReadableShared
 from nti.dataserver.interfaces import IUserGeneratedData
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
-
-from nti.property.property import Lazy
 
 
 @interface.implementer(ISearchHitPredicate)
@@ -61,7 +61,7 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
                                         self.request)
             else:
                 result = has_permission(ACT_READ, item, self.request)
-        result = bool(result 
+        result = bool(result
                       and not IDeletedObjectPlaceholder.providedBy(item))
         return result
 

@@ -16,6 +16,8 @@ from collections import Mapping
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.location.interfaces import ILocation
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
@@ -41,10 +43,9 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.links import render_link
 from nti.links.links import Link
 
-from nti.property.property import Lazy
-
 LINKS = StandardExternalFields.LINKS
 IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy
+
 
 @interface.implementer(IExternalObjectDecorator)
 class EditLinkRemoverDecorator(AbstractAuthenticatedRequestAwareDecorator):

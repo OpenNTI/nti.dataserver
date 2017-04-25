@@ -17,6 +17,8 @@ from abc import abstractmethod
 
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.location.interfaces import ILocation
 
 from nti.app.authentication import get_remote_user
@@ -26,7 +28,6 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.links.links import Link
 
-from nti.property.property import Lazy
 from nti.property.property import alias
 from nti.property.property import readproperty
 
@@ -167,12 +168,12 @@ class AbstractTwoStateViewLinkDecorator(AbstractAuthenticatedRequestAwareDecorat
         # path points to this exact object, even if moved/renamed
         target_ntiid = to_external_ntiid_oid(context)
         if target_ntiid is None:
-            logger.warn("Failed to get ntiid; not adding link %s for %s", 
+            logger.warn("Failed to get ntiid; not adding link %s for %s",
                         rel, context)
             return
 
-        link = Link(target_ntiid, 
-                    rel=rel, 
+        link = Link(target_ntiid,
+                    rel=rel,
                     elements=('@@' + rel,) + extra_elements)
         interface.alsoProvides(link, ILocation)
         link.__name__ = ''

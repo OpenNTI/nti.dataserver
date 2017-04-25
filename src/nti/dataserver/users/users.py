@@ -22,6 +22,7 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 
+from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import cachedIn
 
 from zope.deprecation import deprecated
@@ -206,8 +207,6 @@ if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 	print("users.py: WARN: Configuring with plain text passwords", file=sys.stderr)
 	Principal.password_manager_name = 'Plain Text'
 
-from nti.property.property import Lazy
-
 from .communities import Everyone
 
 from .entity import NOOPCM as _NOOPCM
@@ -325,8 +324,8 @@ class User(Principal):
 	# The last login time is an number of seconds (as with time.time).
 	# When it gets reset, the number of outstanding notifications also
 	# resets. It is writable, number is not...
-	lastLoginTime = minmax.NumericPropertyDefaultingToZero(str('lastLoginTime'), 
-														   minmax.NumericMaximum, 
+	lastLoginTime = minmax.NumericPropertyDefaultingToZero(str('lastLoginTime'),
+														   minmax.NumericMaximum,
 														   as_number=True)
 	# ...although, pending a more sophisticated notification tracking
 	# mechanism, we are allowing notification count to be set...
@@ -785,7 +784,7 @@ class User(Principal):
 				for v in self.containers.containers.itervalues()
 				if INamedContainer.providedBy(v))
 	itercontainers = iter_containers
-	
+
 	def iter_objects(self, include_stream=True, stream_only=False,
 					 include_shared=False, only_ntiid_containers=False):
 

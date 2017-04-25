@@ -25,6 +25,8 @@ from boto.ses.exceptions import SESMaxSendingRateExceededError
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.publisher.interfaces.browser import IBrowserRequest
 
 from nti.base._compat import unicode_
@@ -34,8 +36,6 @@ from nti.common._compat import sleep
 from nti.dataserver.interfaces import IRedisClient
 
 from nti.mailer.interfaces import ITemplatedMailer
-
-from nti.property.property import Lazy
 
 from nti.zodb.tokenbucket import PersistentTokenBucket
 

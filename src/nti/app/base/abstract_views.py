@@ -25,6 +25,8 @@ from requests.structures import CaseInsensitiveDict
 
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.intid.interfaces import IIntIds
 
 from nti.app.authentication import get_remote_user as _get_remote_user
@@ -37,8 +39,6 @@ from nti.dataserver.interfaces import IDataserver
 
 from nti.namedfile.file import name_finder
 from nti.namedfile.file import safe_filename
-
-from nti.property.property import Lazy
 
 DEFAULT_CONTENT_TYPE = u'application/octet-stream'
 

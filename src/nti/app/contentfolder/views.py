@@ -25,6 +25,8 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.intid.interfaces import IIntIds
 
 from pyramid import httpexceptions as hexc
@@ -111,8 +113,6 @@ from nti.mimetype.externalization import decorateMimeType
 from nti.namedfile.file import safe_filename
 
 from nti.namedfile.interfaces import INamedFile
-
-from nti.property.property import Lazy
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS

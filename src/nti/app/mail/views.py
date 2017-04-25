@@ -15,6 +15,8 @@ from nameparser import HumanName
 
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -41,8 +43,6 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable
-
-from nti.property.property import Lazy
 
 AVATAR_BG_COLORS = ["#5E35B1", "#3949AB", "#1E88E5", "#039BE5",
 					"#00ACC1", "#00897B", "#43A047", "#7CB342",

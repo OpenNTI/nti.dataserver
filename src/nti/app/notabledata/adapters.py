@@ -14,6 +14,8 @@ from array import array
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.intid.interfaces import IIntIds
 
 from BTrees.OOBTree import Set
@@ -448,8 +450,6 @@ from zope.container.contained import Contained
 
 from persistent import Persistent
 from persistent.list import PersistentList
-
-from nti.property.property import Lazy
 
 
 @component.adapter(IUser)

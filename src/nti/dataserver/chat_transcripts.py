@@ -82,10 +82,12 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
-import BTrees
 
 from zope import component
 from zope import interface
+
+from zope.cachedescriptors.property import Lazy
+from zope.cachedescriptors.property import CachedProperty
 
 from zope.intid.interfaces import IIntIds
 
@@ -126,9 +128,7 @@ from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
 from nti.ntiids import ntiids
 
-from nti.property.property import Lazy
 from nti.property.property import read_alias
-from nti.property.property import CachedProperty
 
 from nti.schema.field import Object
 
@@ -224,7 +224,7 @@ class _MeetingTranscriptStorage(Persistent, ZContainedMixin):
 @interface.implementer(_IMeetingTranscriptStorage)
 class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
 	"""
-	The storage for the transcript of a single session based on docids. 
+	The storage for the transcript of a single session based on docids.
 	Private object, not public.
 	"""
 

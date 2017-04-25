@@ -24,6 +24,8 @@ from nameparser import HumanName
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.interface.interfaces import ComponentLookupError
 
 from zope.intid.interfaces import IIntIds
@@ -88,8 +90,6 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
 
-from nti.property.property import Lazy
-
 _ONE_WEEK = 7 * 24 * 60 * 60
 _TWO_WEEKS = _ONE_WEEK * 2
 _ONE_MONTH = _TWO_WEEKS * 2
@@ -98,6 +98,7 @@ _TWO_MONTH = _ONE_MONTH * 2
 AVATAR_BG_COLORS = [ "#5E35B1","#3949AB","#1E88E5","#039BE5",
 					"#00ACC1","#00897B","#43A047","#7CB342",
 					"#C0CA33","#FDD835","#FFB300", "#FB8C00","#F4511E"]
+
 
 class _TemplateArgs(object):
 	"""
