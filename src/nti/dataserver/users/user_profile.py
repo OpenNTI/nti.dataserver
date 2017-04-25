@@ -19,6 +19,8 @@ from zope import interface
 
 from zope.annotation import factory as afactory
 
+from zope.cachedescriptors.property import CachedProperty
+
 from zope.location.interfaces import ILocation
 
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
@@ -53,8 +55,6 @@ from nti.dataserver.users.utils import AvatarUrlProperty as _AvatarUrlProperty
 from nti.dataserver.users.utils import BackgroundUrlProperty as _BackgrounUrlProperty
 
 from nti.externalization.representation import WithRepr
-
-from nti.property.property import CachedProperty
 
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties

@@ -14,6 +14,8 @@ import operator
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import CachedProperty
+
 from zope.component.factory import Factory
 
 from zope.container.contained import ContainerModifiedEvent
@@ -47,9 +49,9 @@ from nti.ntiids.ntiids import escape_provider
 from nti.ntiids.ntiids import TYPE_MEETINGROOM_GROUP
 
 from nti.property.property import alias
-from nti.property.property import CachedProperty
 
 from nti.wref.interfaces import IWeakRef
+
 
 _marker = object()
 

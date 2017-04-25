@@ -46,6 +46,8 @@ except ImportError:
 
 from zope import component
 
+from zope.cachedescriptors.property import CachedProperty as _CachedProperty
+
 from zope.intid.interfaces import IIntIds
 
 from nti.dataserver.contenttypes.forums.interfaces import IUseOIDForNTIID
@@ -58,7 +60,6 @@ from nti.ntiids.ntiids import DATE as _NTIID_DATE
 from nti.ntiids.ntiids import make_ntiid as _make_ntiid
 
 from nti.property.property import alias as _alias
-from nti.property.property import CachedProperty as _CachedProperty
 
 from nti.traversal.traversal import find_interface
 

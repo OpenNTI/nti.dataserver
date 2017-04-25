@@ -15,6 +15,7 @@ from zope import component
 from zope import interface
 
 from zope.cachedescriptors.property import Lazy
+from zope.cachedescriptors.property import CachedProperty
 
 from zope.intid.interfaces import IIntIds
 
@@ -45,7 +46,6 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.invitations.utils import get_pending_invitation_ids
 
-from nti.property.property import CachedProperty
 from nti.property.property import annotation_alias
 
 from nti.zope_catalog.catalog import ResultSet

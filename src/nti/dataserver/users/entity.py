@@ -20,6 +20,8 @@ from zope import lifecycleevent
 
 from zope.annotation.interfaces import IAttributeAnnotatable
 
+from zope.cachedescriptors.property import CachedProperty
+
 from zope.event import notify
 
 from zope.intid.interfaces import IIntIds
@@ -59,7 +61,6 @@ from nti.ntiids.ntiids import escape_provider
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.property.property import CachedProperty
 
 def get_shared_dataserver(context=None, default=None):
 	if default != None:
