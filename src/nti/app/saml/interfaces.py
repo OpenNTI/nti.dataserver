@@ -112,21 +112,21 @@ class SAMLNameIdFormatVocab(object):
 
 class ISAMLNameId(interface.Interface):
 
-    nameid = TextLine(title="SAML name id",
-                      description="The SAML nameid for the entity",
+    nameid = TextLine(title=u"SAML name id",
+                      description=u"The SAML nameid for the entity",
                       required=True)
 
-    name_format = Choice(title="SAML nameid format",
-                         description="SAML nameid format string",
+    name_format = Choice(title=u"SAML nameid format",
+                         description=u"SAML nameid format string",
                          vocabulary=SAMLNameIdFormatVocab(),
                          required=True)
 
-    name_qualifier = TextLine(title="SAML 2.0 NameQualifier",
-                              description="The SAML name qualifier for the entity",
+    name_qualifier = TextLine(title=u"SAML 2.0 NameQualifier",
+                              description=u"The SAML name qualifier for the entity",
                               required=False)
 
-    sp_name_qualifier = TextLine(title="SAML 2.0 SPNameQualifier",
-                                 description="The SAML sp name qualifier for the entity",
+    sp_name_qualifier = TextLine(title=u"SAML 2.0 SPNameQualifier",
+                                 description=u"The SAML sp name qualifier for the entity",
                                  required=False)
 
 
@@ -185,16 +185,16 @@ class ISAMLUserAssertionInfo(interface.Interface):
                                      required=True)
 
     nameid = Object(ISAMLNameId,
-                    title="SAML name id",
-                    description="The SAML name id or None if it is not persistent",
+                    title=u"SAML name id",
+                    description=u"The SAML name id or None if it is not persistent",
                     required=True)
 
     email = TextLine(title=u"The email",
                      description=u"The unvalidated email address for the user",
                      required=False)
 
-    realname = TextLine(title="The realname",
-                        description="The realname for the user",
+    realname = TextLine(title=u"The realname",
+                        description=u"The realname for the user",
                         required=False)
 
     firstname = TextLine(title=u"The user's firstname",  # move to ou specific?
