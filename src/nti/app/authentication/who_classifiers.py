@@ -31,9 +31,13 @@ CLASS_BROWSER_APP = 'application-browser'
 #: a browser being used interactively.
 CLASS_BROWSER = 'browser'
 
+CLASS_DAV = 'dav'
+
 #: A group of classifications that are meant to indicate a browser
 #: or browser-like environment being interacted with programatically
 APP_CLASSES = (CLASS_BROWSER_APP, )
+
+_RECLASSIFY_CLASSES = (CLASS_BROWSER, CLASS_DAV, )
 
 @interface.provider(IRequestClassifier)
 def application_request_classifier(environ):
@@ -47,7 +51,7 @@ def application_request_classifier(environ):
 	"""
 	result = default_request_classifier(environ)
 
-	if result == CLASS_BROWSER:
+	if result in _RECLASSIFY_CLASSES:
 		# Recall that WSGI values are specified as Python's native
 		# string type. On Py2, this is a byte string.
 		# The HTTP spec says that they should be encoded as ISO-8859-1.

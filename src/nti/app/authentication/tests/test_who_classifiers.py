@@ -24,6 +24,21 @@ from nti.app.authentication.who_classifiers import application_request_classifie
 
 class TestClassifier(unittest.TestCase):
 
+	def test_delete_is_not_dav(self):
+		assert_that(_nti_request_classifier, validly_provides(IRequestClassifier))
+
+		# By default requests get classified as dav
+		environ = {}
+		environ['REQUEST_METHOD'] = 'DELETE'
+
+		assert_that(_nti_request_classifier(environ), is_('dav'))
+
+		# But dav, like browser get's reclassified
+		environ['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest'
+		assert_that(_nti_request_classifier(environ),
+					 is_(CLASS_BROWSER_APP))
+
+
 	def test_request_classifier(self):
 
 		assert_that(_nti_request_classifier, validly_provides(IRequestClassifier))
