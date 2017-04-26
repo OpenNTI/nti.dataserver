@@ -141,6 +141,7 @@ setup(
         'nti.monkey',
         'nti.namedfile',
         'nti.ntiids',
+        'nti.property',
         'nti.publishing',
         'nti.threadable',
         'nti.transactions',
