@@ -73,7 +73,6 @@ from nti.dataserver.interfaces import IACE
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IWritableShared
-from nti.dataserver.interfaces import IDefaultPublished
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
@@ -82,6 +81,8 @@ from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 from nti.dataserver.sharing import AbstractDefaultPublishableSharedWithMixin
 
 from nti.dataserver.users import Entity
+
+from nti.publishing.interfaces import IDefaultPublished
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.schema.fieldproperty import AcquisitionFieldProperty

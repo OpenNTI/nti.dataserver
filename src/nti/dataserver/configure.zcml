@@ -128,6 +128,7 @@
 	<include package="nti.chatserver" />
 	<include package="nti.containers" />
 	<include package="nti.dublincore" />
+	<include package="nti.publishing" />
 	<include package="nti.threadable" />
 	<include package="nti.contentfile" />
 	<include package="nti.invitations" />

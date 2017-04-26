@@ -899,13 +899,15 @@ class IACLProviderCacheable(interface.Interface):
 	"""
 
 # BWC exports
-from nti.coremetadata.interfaces import IPublishable
-from nti.coremetadata.interfaces import IDefaultPublished
-from nti.coremetadata.interfaces import ICalendarPublishable
 
-IPublishable = IPublishable
-IDefaultPublished = IDefaultPublished
-ICalendarPublishable = ICalendarPublishable
+import zope.deferredimport
+zope.deferredimport.initialize()
+
+zope.deferredimport.deprecated(
+	"Import from nti.publishing.interfaces instead",
+	IPublishable='nti.publishing.interfaces:IPublishable',
+	IDefaultPublished='nti.publishing.interfaces:IDefaultPublished',
+	ICalendarPublishable='nti.publishing.interfaces:ICalendarPublishable')
 
 # Content interfaces
 

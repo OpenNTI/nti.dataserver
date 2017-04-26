@@ -40,7 +40,6 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICreated
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IThreadable
-from nti.dataserver.interfaces import IPublishable
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IMutedInStream
 from nti.dataserver.interfaces import ITitledContent
@@ -57,6 +56,8 @@ from nti.dataserver.interfaces import ExtendedCompoundModeledContentBody
 from nti.dataserver.interfaces import INotModifiedInStreamWhenContainerModified
 
 from nti.namedfile.interfaces import IFileConstrained
+
+from nti.publishing.interfaces import IPublishable
 
 from nti.schema.field import Number
 from nti.schema.field import Object
