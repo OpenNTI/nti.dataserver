@@ -273,6 +273,7 @@ def acs_view(request):
             # get realname
             firstName = user_info.firstname
             lastName = user_info.lastname
+            realname = user_info.realname
 
             factory = User.create_user
             user = _deal_with_external_account(request,
@@ -282,7 +283,8 @@ def acs_view(request):
                                                email=email,
                                                idurl=None,
                                                iface=None,
-                                               user_factory=factory)
+                                               user_factory=factory,
+                                               realname=realname)
             interface.alsoProvides(user, IRecreatableUser)
             if email_found:  # trusted source
                 force_email_verification(user)

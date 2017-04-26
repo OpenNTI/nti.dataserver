@@ -193,6 +193,10 @@ class ISAMLUserAssertionInfo(interface.Interface):
                      description=u"The unvalidated email address for the user",
                      required=False)
 
+    realname = TextLine(title="The realname",
+                        description="The realname for the user",
+                        required=False)
+
     firstname = TextLine(title=u"The user's firstname",  # move to ou specific?
                          description=u"The admittedly western firstname for the user",
                          required=False)
