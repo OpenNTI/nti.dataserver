@@ -68,6 +68,8 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.dataserver.users.interfaces import IFriendlyNamed
+
 from nti.externalization.externalization import EXT_FORMAT_JSON
 from nti.externalization.externalization import to_external_object
 from nti.externalization.representation import to_external_representation
@@ -337,7 +339,7 @@ class TestLogonViews(ApplicationLayerTest):
 	def test_handshake_no_user(self):
 		# No username param
 		result = handshake(get_current_request())
-		
+
 		password_link = self._get_link_by_rel(result.links, 'logon.nti.password')
 		assert_that(password_link.target, starts_with('/dataserver2/logon.nti.password'))
 
@@ -557,6 +559,22 @@ class TestLogonViews(ApplicationLayerTest):
 
 		# We created a new user during a request, so that event fired
 		assert_that(eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length(1))
+
+	@WithMockDSTrans
+	def test_external_takes_realname(self):
+		fb_user = logon._deal_with_external_account(request=get_current_request(),
+													username="jason.madden@nextthought.com",
+													fname="Jason",
+													lname="Madden",
+													email="jason.madden@nextthought.com",
+													idurl="http://facebook.com",
+													iface=nti_interfaces.IFacebookUser,
+													user_factory=users.FacebookUser.create_user,
+													realname='JA Madden')
+
+
+		names = IFriendlyNamed(fb_user)
+		assert_that(names.realname, is_('JA Madden'))
 
 	@WithMockDSTrans
 	def test_create_from_external_bad_data(self):

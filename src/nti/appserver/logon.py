@@ -389,8 +389,8 @@ def handshake(request):
 		# Use an IMissingUser so we find the right link providers.
 		# Now that we allow no username to be provided we could opt,
 		# in that case, for a INoUser object rather than an IMissingUser
-		# with no username.  This would, for example, give us an 
-		# easy way to not send back the logon.nti.password provider if 
+		# with no username.  This would, for example, give us an
+		# easy way to not send back the logon.nti.password provider if
 		# we wanted.
 		user = NoSuchUser(desired_username)
 
@@ -662,7 +662,7 @@ def _query_impersonation_decider(request, username, name=''):
 
 def _can_impersonate(request, username):
 	"""
-	Query a set of IImpersonationDeciders to 
+	Query a set of IImpersonationDeciders to
 	verify if impersonation of the given username should
 	be allowed for the request
 	"""
@@ -722,7 +722,7 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
 					return _create_failure_response(request,
 													error_factory=hexc.HTTPForbidden)
 
-				
+
 				user_data = {}
 				user_data['username'] = str(remote_user.username.lower())
 				request.environ['REMOTE_USER_DATA'] = user_data
@@ -999,7 +999,7 @@ def openid_login(context, request):
 		return _create_failure_response(request, error='Missing openid')
 	return _openid_login(context, request, request.params['openid'])
 
-def _deal_with_external_account(request, username, fname, lname, email, idurl, iface, user_factory):
+def _deal_with_external_account(request, username, fname, lname, email, idurl, iface, user_factory, realname=None):
 	"""
 	Finds or creates an account based on an external authentication.
 
@@ -1025,8 +1025,12 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 		# When creating, we go through the same steps as account_creation_views,
 		# guaranteeing the proper validation
 		external_value = { 'Username': username, 'email':email }
-		if fname and lname:
-			external_value['realname'] = fname + ' ' + lname
+		if not realname:
+			if fname and lname:
+				realname = fname + ' ' + lname
+
+		if realname:
+			external_value['realname'] = realname
 		if url_attr:
 			external_value[url_attr] = idurl
 
@@ -1096,12 +1100,12 @@ def _openidcallback(context, request, success_dict):
 	try:
 		# TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
 		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
-		the_user = _deal_with_external_account(request, 
-											   username=username, 
-											   fname=fname, 
-											   lname=lname, 
+		the_user = _deal_with_external_account(request,
+											   username=username,
+											   fname=fname,
+											   lname=lname,
 											   email=email,
-											   idurl=idurl, 
+											   idurl=idurl,
 											   iface=nti_interfaces.IOpenIdUser,
 											   user_factory=OpenIdUser.create_user)
 		notify(OpenIDUserCreatedEvent(the_user, idurl, content_roles))
