@@ -837,77 +837,30 @@ class IStudent(IUser):
 	A marker interface to denote a student
 	"""
 
-### ACLs
+# BWC exports
+from nti.coremetadata.interfaces import IACE
+from nti.coremetadata.interfaces import IACL
+from nti.coremetadata.interfaces import IACLProvider
+from nti.coremetadata.interfaces import IACLProviderCacheable
+from nti.coremetadata.interfaces import ISupplementalACLProvider
 
-class IACE(interface.Interface):
-	"""
-	An Access Control Entry (one item in an ACL).
+IACE = IACE
+IACL = IACL
+IACLProvider = IACLProvider
+IACLProviderCacheable = IACLProviderCacheable
+ISupplementalACLProvider = ISupplementalACLProvider
 
-	An ACE is an iterable holding three items: the
-	*action*, the *actor*, and the *permissions*. (Typically,
-	it is implemented as a three-tuple).
-
-	The *action* is either :const:`ACE_ACT_ALLOW` or :const:`ACE_ACT_DENY`. The former
-	specifically grants the actor the permission. The latter specifically denies
-	it (useful in a hierarchy of ACLs or actors [groups]). The *actor* is the
-	:class:`IPrincipal` that the ACE refers to. Finally, the *permissions* is one (or
-	a list of) :class:`IPermission`, or the special value :const:`ALL_PERMISSIONS`
-	"""
-
-	def __iter__():
-		"""
-		Returns three items.
-		"""
-
-class IACL(interface.Interface):
-	"""
-	Something that can iterate across :class:`IACE` objects.
-	"""
-
-	def __iter__():
-		"""
-		Iterates across :class:`IACE` objects.
-		"""
-
-class IACLProvider(interface.Interface):
-	"""
-	Something that can provide an ACL for itself.
-	"""
-
-	__acl__ = interface.Attribute("An :class:`IACL`")
-
-class ISupplementalACLProvider(interface.Interface):
-	"""
-	Some that that can provide a supplemental ACL to the
-	primary :class:`IACLProvider` of an object.
-	"""
-
-	__acl__ = interface.Attribute("An :class:`IACL`")
-
-class IACLProviderCacheable(interface.Interface):
-	"""
-	A marker interface (usually added through configuration) that states
-	that the results of adapting an object to an :class:`IACLProvider` can
-	be cached on the object itself, making it its own provider.
-
-	Do not do this for persistent objects or objects who's ACL provider
-	may differ in various sites due to configuration, or which makes decisions
-	to produce a partial ACL based on the current user (or anything else that
-	could be considered "current" such as a current request). In summary, it is
-	generally only safe to do when the ACL information comes from external sources
-	such as files or strings.
-	"""
 
 # BWC exports
 
-import zope.deferredimport
-zope.deferredimport.initialize()
+from nti.publishing.interfaces import IPublishable
+from nti.publishing.interfaces import IDefaultPublished
+from nti.publishing.interfaces import ICalendarPublishable
 
-zope.deferredimport.deprecated(
-	"Import from nti.publishing.interfaces instead",
-	IPublishable='nti.publishing.interfaces:IPublishable',
-	IDefaultPublished='nti.publishing.interfaces:IDefaultPublished',
-	ICalendarPublishable='nti.publishing.interfaces:ICalendarPublishable')
+IPublishable = IPublishable
+IDefaultPublished = IDefaultPublished
+ICalendarPublishable = ICalendarPublishable
+
 
 # Content interfaces
 
