@@ -138,7 +138,8 @@ class TestEvents(ApplicationLayerTest):
 												  nameid=nameid,
 												  email='test@user.com',
 												  firstname='test',
-												  lastname='user')
+												  lastname='user',
+												  realname=None)
 				user_info_factory = fudge.Fake().is_callable().returns(user_info)
 				interface.alsoProvides(user_info, ISAMLUserAssertionInfo)
 				sm.registerAdapter(user_info_factory, required=(dict,), provided=ISAMLUserAssertionInfo, name="testIssuer")

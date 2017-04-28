@@ -87,7 +87,8 @@ def assertion_info(provider_id, username, email, firstname, lastname):
                                       "nameid": name_id,
                                       "email": email,
                                       "firstname": firstname,
-                                      "lastname": lastname})
+                                      "lastname": lastname,
+                                      "realname": None})
 
 
 class TestEvents(ApplicationLayerTest):
