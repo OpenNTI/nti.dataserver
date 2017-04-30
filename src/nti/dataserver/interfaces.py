@@ -48,7 +48,6 @@ from nti.schema.field import Number
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
-from nti.schema.field import UniqueIterable
 from nti.schema.field import ValidSet as Set
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
