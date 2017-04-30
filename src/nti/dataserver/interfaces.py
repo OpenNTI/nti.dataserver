@@ -564,22 +564,14 @@ class INoUserEffectivePrincipalResolver(IEffectivePrincipalResolver):
 	as subscribers on IRequest
 	"""
 
-class IUserEvent(interface.interfaces.IObjectEvent):
-	"""
-	An object event where the object is a user.
-	"""
-	object = Object(IUser,
-					title="The User (an alias for user). You can add event listeners based on the interfaces of this object.")
-	user = Object(IUser,
-				  title="The User (an alias for object). You can add event listeners based on the interfaces of this object.")
+# BWC
 
-@interface.implementer(IUserEvent)
-class UserEvent(ObjectEvent):
+from nti.coremetadata.interfaces import UserEvent
+from nti.coremetadata.interfaces import IUserEvent
 
-	def __init__(self, user):
-		ObjectEvent.__init__(self, user)
+UserEvent = UserEvent
+IUserEvent = IUserEvent
 
-	user = alias('object')
 
 class IEntityFollowingEvent(interface.interfaces.IObjectEvent):
 	"""

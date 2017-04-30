@@ -41,5 +41,5 @@ class ISAMLProviderUserInfoAttachedEvent(IUserEvent):
                       required=True)
 
     provider_user_info = Object(ISAMLProviderUserInfo,
-                                title='Provider User Info',
+                                title=u'Provider User Info',
                                 required=True)
