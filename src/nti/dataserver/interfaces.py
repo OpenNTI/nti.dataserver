@@ -19,9 +19,6 @@ from zope import interface
 
 from zope.annotation.interfaces import IAnnotatable
 
-from zope.lifecycleevent import ObjectModifiedEvent
-from zope.lifecycleevent.interfaces import IObjectModifiedEvent
-
 from zope.location.location import LocationProxy
 
 from zope.mimetype.interfaces import IContentTypeAware
