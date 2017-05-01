@@ -20,24 +20,26 @@ from nti.schema.field import SchemaConfigured
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+
 class IEmail(interface.Interface):
-	"""
-	A generic email object.
-	"""
-	Copy = Bool(title="Whether the email author will receive a copy.",
-				default=False)
+    """
+    A generic email object.
+    """
+    Copy = Bool(title=u"Whether the email author will receive a copy.",
+                default=False)
 
-	NoReply = Bool(title="Whether the email will have a NoReply reply address",
-				   default=False)
+    NoReply = Bool(title=u"Whether the email will have a NoReply reply address",
+                   default=False)
 
-	Subject = TextLine(title="The subect line of the email.", required=False)
+    Subject = TextLine(title=u"The subect line of the email.", required=False)
 
-	Body = ValidText(title="The body of the message.", required=True)
+    Body = ValidText(title=u"The body of the message.", required=True)
+
 
 @WithRepr
 @interface.implementer(IEmail)
 class Email(SchemaConfigured):
-	createDirectFieldProperties(IEmail)
+    createDirectFieldProperties(IEmail)
 
-	__external_class_name__ = "Email"
-	mime_type = mimeType = 'application/vnd.nextthought.email'
+    __external_class_name__ = "Email"
+    mime_type = mimeType = 'application/vnd.nextthought.email'
