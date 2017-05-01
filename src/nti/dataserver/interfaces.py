@@ -685,49 +685,18 @@ class IIntIdIterable(interface.Interface):
 		Return an iterable across intids.
 		"""
 
-class IEntityUsernameIterable(interface.Interface):
-	"""
-	A specific way to iterate across usernames.
-	"""
+# BWC
+from nti.coremetadata.interfaces import IEntityIterable
+from nti.coremetadata.interfaces import IEntityContainer
+from nti.coremetadata.interfaces import IEntityUsernameIterable
+from nti.coremetadata.interfaces import ISharingTargetEntityIterable
 
-	def iter_usernames():
-		"""
-		Return an iterable across the usernames
-		of this object.
-		"""
-
-class IEntityIterable(interface.Interface):
-	"""
-	Something that can iterate across entities (usually but not always :class:`IUser`), typically
-	entities somehow contained in or stored in this object (or its context).
-	"""
-
-	def __iter__():
-		"""
-		Return iterator across entity objects.
-		"""
-
-class ISharingTargetEntityIterable(IEntityIterable):
-	"""
-	Something that can iterate across entities that should be expanded
-	for sharing purposes.
-	"""
 
 class IEntityIntIdIterable(IEntityIterable,
 						   IIntIdIterable):
 	"""
 	Iterate across both entities and their intids easily.
 	"""
-
-class IEntityContainer(interface.Interface):
-	"""
-	Something that can report whether an entity "belongs" to it.
-	"""
-
-	def __contains__(entity):
-		"""
-		Is the entity a member of this container?
-		"""
 
 class IEnumerableEntityContainer(IEntityContainer,
 								 IEntityIntIdIterable,
