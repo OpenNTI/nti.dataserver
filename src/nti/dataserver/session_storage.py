@@ -24,8 +24,6 @@ from zope.lifecycleevent import IObjectRemovedEvent
 
 from ZODB.interfaces import IConnection
 
-from ZODB.POSException import POSKeyError
-
 import BTrees
 
 import persistent
@@ -47,8 +45,8 @@ from nti.zodb import readCurrent
 # of what we're already doing in the intids `refs` btree
 # When we switched, we didn't delete annotations
 _OWNED_SESSIONS_KEY = __name__ + '.' + \
-    				  '_OwnerAnnotationBasedServiceStorage' + \
-    				  '.' + 'session_set'
+                      '_OwnerAnnotationBasedServiceStorage' + \
+                      '.' + 'session_set'
 
 
 def _read_current(obj, container=False):
@@ -71,14 +69,10 @@ class _OwnerSetMapping(persistent.Persistent):
             self.family = family
         self._by_owner = self.family.OO.BTree()
 
-    def set_for_owner(self, username, create=True, current=True):
+    def set_for_owner(self, username, create=True):
         username = _u(username)
-        if current:
-            _read_current(self._by_owner)
         try:
             result = self._by_owner[username]
-            if current:
-                _read_current(result)
         except KeyError:
             if create:
                 result = self._by_owner[username] = self.family.OO.Set()
@@ -87,7 +81,7 @@ class _OwnerSetMapping(persistent.Persistent):
         return result
 
     def add_session(self, session):
-        for_owner = self.set_for_owner(session.owner, current=False)
+        for_owner = self.set_for_owner(session.owner)
         try:
             ref = IKeyReference(session)
         except NotYet:
@@ -122,21 +116,15 @@ class _OwnerSetMapping(persistent.Persistent):
 
     def sessions_for_owner(self, session_owner):
         for_owner = self.set_for_owner(session_owner,
-                                       create=False,
-                                       current=False)
+                                       create=False)
 
         for ref in tuple(for_owner):
             result = ref()
-            try:
-                _read_current(result)
-            except POSKeyError:
-                # We've seen cases (alpha, prod) where
-                # sessions are in our structure, but not in the db.
-                # This may have something to do with partial (?)
-                # commits between multiple dbs that may occur
-                # during ds shutdown. We clean those up here.
-                discard(for_owner, ref)
-                continue
+            # We've seen cases (alpha, prod) where
+            # sessions are in our structure, but not in the db.
+            # This may have something to do with partial (?)
+            # commits between multiple dbs that may occur
+            # during ds shutdown. We (did) clean those up here.
             yield result
 
 
