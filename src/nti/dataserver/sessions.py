@@ -198,10 +198,14 @@ class SessionService(object):
                     logger.debug("Site setup not ready; trying to poll later")
                     continue
 
+                cleaned_count = 0
                 for sid, sess in sessions.items():
                     if sess is None:
+                        cleaned_count += 1
                         logger.log(TRACE, "Session %s died", sid)
                         self._watching_sessions.discard(sid)
+                logger.info( 'Cleaned up %s sessions (checked_count=%s)',
+                             cleaned_count, len(watching_sessions))
         return gevent.spawn(watchdog_sessions)
 
     def _dispatch_message_to_proxy(self, session_id, function_name, function_arg):
@@ -421,7 +425,7 @@ class SessionService(object):
             # We could just use this session, but we want to be sure its valid
             session_id = username.session_id
             username = username.owner
-            session = self.get_session_by_owner(username, 
+            session = self.get_session_by_owner(username,
 											    session_ids=(session_id,))
             if session is not None:
                 all_sessions = (session,)
@@ -430,7 +434,7 @@ class SessionService(object):
 
         if not all_sessions:  # pragma: no cover
             logger.log(TRACE,
-					   "No sessions for %s to send event %s to", 
+					   "No sessions for %s to send event %s to",
 					   username, name)
             return
 
@@ -557,7 +561,7 @@ class SessionService(object):
             def after_commit_or_abort(success=False):
                 if success:
                     return
-                logger.info("Pushing messages back onto %s on abort", 
+                logger.info("Pushing messages back onto %s on abort",
 						    queue_name)
                 msgs.reverse()
                 self._redis.lpush(queue_name, *msgs)
@@ -626,7 +630,7 @@ def _send_notification(user_notification_event):
     if sessions:
         for target in user_notification_event.targets:
             try:
-                sessions.send_event_to_user(target, 
+                sessions.send_event_to_user(target,
 										    user_notification_event.name,
 										    *user_notification_event.args)
             except AttributeError:  # pragma: no cover
