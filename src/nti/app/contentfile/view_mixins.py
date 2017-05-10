@@ -353,7 +353,7 @@ def to_external_download_oid_href(item):
     if target:
         name = download_file_name(item)
         name = name if name else 'file.dat'
-        elements = ('download', name)
+        elements = ('@@download', name)
         external = _to_external_link_impl(target,
                                           elements,
                                           contentType=contentType)

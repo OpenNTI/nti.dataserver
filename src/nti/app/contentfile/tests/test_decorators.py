@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import is_not
 from hamcrest import all_of
 from hamcrest import has_key
 from hamcrest import not_none
@@ -18,10 +19,13 @@ from hamcrest import assert_that
 from hamcrest import starts_with
 from hamcrest import has_property
 from hamcrest import contains_string
+does_not = is_not
 
 from nti.app.contentfile.interfaces import IExternalLinkProvider
 
 from nti.app.contentfile.view_mixins import to_external_download_oid_href
+
+from nti.externalization.externalization import to_external_object
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
@@ -73,8 +77,8 @@ class TestDecorators(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             ext_obj = self.ext_obj
             internal = find_factory_for(ext_obj)()
-            update_from_external_object(internal, 
-                                        ext_obj, 
+            update_from_external_object(internal,
+                                        ext_obj,
                                         require_updater=True)
             self.ds.root['name'] = internal
             href = to_external_download_oid_href(internal)
@@ -82,19 +86,25 @@ class TestDecorators(ApplicationLayerTest):
                         externalizes(all_of(has_key('OID'),
                                             has_entry('url',
                                                       contains_string('/Getting%20Started.pdf')))))
-            
+
             adapted_href = IExternalLinkProvider(internal).link()
             ext_obj = self.global_obj
             internal = find_factory_for(ext_obj)()
             update_from_external_object(internal,
-                                        ext_obj, 
+                                        ext_obj,
                                         require_updater=True)
             self.ds.root['name1'] = internal
             global_href = to_external_download_oid_href(internal)
+            external = to_external_object(internal)
+
+        url = external['url']
+        assert_that(url, ends_with('/@@view/file.pdf'))
+        assert_that(url, does_not(contains_string('download')))
+        assert_that(external['download_url'], ends_with('/@@download/file.pdf'))
 
         for link in (href, adapted_href):
             assert_that(link, starts_with('/dataserver2/Objects/'))
-            assert_that(link, ends_with('/download/Getting%20Started.pdf'))
+            assert_that(link, ends_with('/@@download/Getting%20Started.pdf'))
 
         res = self.testapp.get(href, status=200)
         assert_that(res, has_property('content_length', is_(61)))
