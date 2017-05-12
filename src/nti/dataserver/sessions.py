@@ -28,10 +28,14 @@ import simplejson as json
 
 import gevent
 
+from persistent import Persistent
+
 from zope import component
 from zope import interface
 
 from zope.cachedescriptors.property import Lazy
+
+from zope.deprecation import deprecated
 
 from zope.event import notify
 
@@ -186,7 +190,12 @@ class SessionService(object):
                     # a net loss as far as the DB goes. A few bigger transactions are more efficient, to a point
                     # although there is a higher risk of conflict
                     def _get_sessions():
-                        return {sid: self.get_session(sid) for sid in watching_sessions}
+                        t0 = time.time()
+                        result = {sid: self.get_session(sid) for sid in watching_sessions}
+                        logger.info('Performed maintenance on %s sessions (%s)',
+                                    len(result),
+                                    time.time() - t0 )
+                        return result
                     sessions = tx_runner(_get_sessions, retries=5, sleep=0.1)
                 except transaction.interfaces.TransientError:
                     # Try again later
@@ -499,7 +508,7 @@ class SessionService(object):
                             args=(queue_name, msg,))
 
     def _publish_msg(self, name, session_id, msg_str):
-        if msg_str is None:  # Disconnecting/kill(). These' don't need to go to the cluster, handled locally
+        if msg_str is None:  # Disconnecting/kill(). These don't need to go to the cluster, handled locally
             return
 
         assert isinstance(name, str)  # Not Unicode, only byte constants
@@ -543,7 +552,6 @@ class SessionService(object):
         self._publish_msg(b'queue_message_to_client', session_id, msg)
 
     def _get_msgs(self, q_name, session_id):
-        result = None
         queue_name = 'sessions/' + session_id + '/' + q_name
         # atomically read the current messages and then clear the state of the
         # queue.
@@ -551,28 +559,23 @@ class SessionService(object):
         					 .lrange( queue_name, 0, -1) \
         					 .delete(queue_name) \
         					 .execute()
-        # If the transaction aborts, got to put these back so they don't get
-        # lost
+        # If the transaction aborts, put these back so they don't get lost
+        result = ()
         if msgs:  # lpush requires at least one message
-            # By defaulting the success value to false, when
-            # called as a commit hook with one parameter, we do the right
-            # thing, and also do the right thing when called on abort with
-            # no parameter
+            # By defaulting the success value to false, when called as a commit
+            # hook with one parameter, we do the right thing, and also do the
+            # right thing when called on abort with no parameter
             def after_commit_or_abort(success=False):
-                if success:
-                    return
-                logger.info("Pushing messages back onto %s on abort",
-						    queue_name)
-                msgs.reverse()
-                self._redis.lpush(queue_name, *msgs)
+                if not success:
+                    logger.info("Pushing messages back onto %s on abort",
+    						    queue_name)
+                    msgs.reverse()
+                    self._redis.lpush(queue_name, *msgs)
             transaction.get().addAfterCommitHook(after_commit_or_abort)
             transaction.get().addAfterAbortHook(after_commit_or_abort)
             # unwrap None encoding, decompress strings. The result is a generator
             # because it's very rarely actually used
             result = (None if not x else zlib.decompress(x) for x in msgs)
-        else:
-            result = ()  # empty tuple for cheap
-
         return result
 
     def get_messages_to_client(self, session_id):
@@ -640,6 +643,7 @@ def _send_notification(user_notification_event):
                                  user_notification_event, target)
 
 
+# FIXME: Do we even need/use this?
 # We maintain some extra stats in redis about who has how many active sessions
 # Note that this is non-transactional; that may be an issue in case of many conflicts?
 # Have to try and see
@@ -659,9 +663,7 @@ def _decrement_count_for_dead_socket(session, event):
         redis.zincrby(_session_active_keys, session.owner, -1)
 
 
-from zope.deprecation import deprecated
 
-from persistent import Persistent
 
 
 deprecated('SessionServiceStorage', 'Use new session storage')
