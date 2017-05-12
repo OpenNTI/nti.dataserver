@@ -23,7 +23,6 @@ entry_points = {
         "nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",
         "nti_remove_user = nti.dataserver.utils.nti_remove_user:main",
         "nti_export_entities = nti.dataserver.utils.nti_export_entities:main",
-        "nti_session_maintenance = nti.dataserver.utils.nti_session_maintenance:main",
         # appserver
         "nti_content_search = nti.app.contentsearch.scripts.nti_content_search:main",
         # NOTE: The command line tools are deprecated. Leave the setup.py entry points
