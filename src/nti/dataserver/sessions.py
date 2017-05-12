@@ -192,7 +192,7 @@ class SessionService(object):
                     def _get_sessions():
                         t0 = time.time()
                         result = {sid: self.get_session(sid) for sid in watching_sessions}
-                        logger.info('Performed maintenance on %s sessions (%s)',
+                        logger.info('Performed maintenance on %s sessions (%.2f)',
                                     len(result),
                                     time.time() - t0 )
                         return result
