@@ -33,23 +33,23 @@ class TestUtils(unittest.TestCase):
 
     def test_get_pending_invitations(self):
         catalog = create_invitations_catalog(family=BTrees.family64)
-        i1 = Invitation(code='bleach',
-                        receiver='ichigo',
-                        sender='aizen',
+        i1 = Invitation(code=u'bleach',
+                        receiver=u'ichigo',
+                        sender=u'aizen',
                         accepted=False,
                         expiryTime=0.0)
         catalog.index_doc(1, i1)
 
-        i2 = Invitation(code='bleach2',
-                        receiver='ichigo',
-                        sender='aizen',
+        i2 = Invitation(code=u'bleach2',
+                        receiver=u'ichigo',
+                        sender=u'aizen',
                         accepted=False,
                         expiryTime=time.time() - 2000)
         catalog.index_doc(2, i2)
 
-        i3 = Invitation(code='bleach3',
-                        receiver='ichigo',
-                        sender='aizen',
+        i3 = Invitation(code=u'bleach3',
+                        receiver=u'ichigo',
+                        sender=u'aizen',
                         accepted=False,
                         expiryTime=time.time() + 1000)
         catalog.index_doc(3, i3)

@@ -38,9 +38,9 @@ class TestModel(unittest.TestCase):
         assert_that(Invitation(), verifiably_provides(IInvitation))
 
     def test_external(self):
-        invitation = Invitation(code='bleach',
-                                receiver='ichigo',
-                                sender='aizen',
+        invitation = Invitation(code=u'bleach',
+                                receiver=u'ichigo',
+                                sender=u'aizen',
                                 accepted=True)
         assert_that(invitation,
                     externalizes(all_of(has_entry('code', 'bleach'),
@@ -50,9 +50,9 @@ class TestModel(unittest.TestCase):
                                         has_entry('expiryTime', is_(0)))))
 
     def test_misc(self):
-        invitation = Invitation(code='bleach',
-                                receiver='ichigo',
-                                sender='aizen',
+        invitation = Invitation(code=u'bleach',
+                                receiver=u'ichigo',
+                                sender=u'aizen',
                                 accepted=True)
 
         assert_that(invitation.is_expired(), is_(False))
@@ -64,9 +64,9 @@ class TestModel(unittest.TestCase):
         assert_that(invitation.is_email(), is_(True))
 
     def test_container(self):
-        invitation = Invitation(code='bleach',
-                                receiver='ichigo',
-                                sender='aizen',
+        invitation = Invitation(code=u'bleach',
+                                receiver=u'ichigo',
+                                sender=u'aizen',
                                 accepted=True)
         container = InvitationsContainer()
         container.add(invitation)

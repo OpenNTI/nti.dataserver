@@ -28,9 +28,9 @@ class TestIndex(unittest.TestCase):
     layer = SharedConfiguringTestLayer
 
     def test_index(self):
-        invitation = Invitation(code='bleach',
-                                receiver='ichigo',
-                                sender='aizen',
+        invitation = Invitation(code=u'bleach',
+                                receiver=u'ichigo',
+                                sender=u'aizen',
                                 accepted=True)
         invitation.createdTime = invitation.lastModified = 100
         catalog = create_invitations_catalog(family=BTrees.family64)

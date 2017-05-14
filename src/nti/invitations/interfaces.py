@@ -44,9 +44,10 @@ from nti.schema.field import Bool
 from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import ValidText
-from nti.schema.field import ValidTextLine
+from nti.schema.field import TextLine as ValidTextLine
 
 SYSTEM_USER_NAME = getattr(system_user, 'title').lower()
+
 
 class IInvitation(IContained,
                   ICreated,
@@ -67,24 +68,24 @@ class IInvitation(IContained,
     applicable only to certain users (for example, a list of invited users).
     """
 
-    code = ValidTextLine(title="A unique code that identifies this invitation.",
+    code = ValidTextLine(title=u"A unique code that identifies this invitation.",
                          required=False)
 
-    receiver = ValidTextLine(title="Invitation receiver (username or email).",
+    receiver = ValidTextLine(title=u"Invitation receiver (username or email).",
                              required=True)
 
-    sender = ValidTextLine(title="Invitation sender.",
+    sender = ValidTextLine(title=u"Invitation sender.",
                            required=True, default=SYSTEM_USER_NAME)
 
-    message = ValidText(title="Invitation message.", required=False)
+    message = ValidText(title=u"Invitation message.", required=False)
 
-    accepted = Bool(title="Accepted flag.", default=False, required=True)
+    accepted = Bool(title=u"Accepted flag.", default=False, required=True)
 
-    expiryTime = Number(title="The expiry timestamp.", 
+    expiryTime = Number(title=u"The expiry timestamp.",
                         required=True,
                         default=0)
 
-    sent = Number(title="The sent timestamp.", required=False)
+    sent = Number(title=u"The sent timestamp.", required=False)
     sent.setTaggedValue('_ext_excluded_out', True)
 
     def is_email():
@@ -131,7 +132,6 @@ class IInvitationsContainer(IContained,
         such invitation.
         """
     getInvitationByCode = get_invitation_by_code
-
 IInvitations = IInvitationsContainer  # BWC
 
 
@@ -139,7 +139,7 @@ class IInvitationEvent(IObjectEvent):
     """
     An event specifically about an invitation.
     """
-    object = Object(IInvitation, title="The invitation.")
+    object = Object(IInvitation, title=u"The invitation.")
 
 
 class IInvitationSentEvent(IInvitationEvent):
@@ -186,22 +186,22 @@ class InvitationValidationError(ValidationError):
 
 
 class InvitationCodeError(InvitationValidationError):
-    __doc__ = _('The invitation is not valid.')
+    __doc__ = _(u'The invitation is not valid.')
     i18n_message = __doc__
 
 
 class InvitationExpiredError(InvitationValidationError):
-    __doc__ = _('The invitation has expired.')
+    __doc__ = _(u'The invitation has expired.')
     i18n_message = __doc__
 
 
 class InvitationAlreadyAcceptedError(InvitationValidationError):
-    __doc__ = _('Invitation already accepted.')
+    __doc__ = _(u'Invitation already accepted.')
     i18n_message = __doc__
 
 
 class InvitationActorError(InvitationValidationError):
-    __doc__ = _('The invitation does not have actor.')
+    __doc__ = _(u'The invitation does not have actor.')
     i18n_message = __doc__
 
 
