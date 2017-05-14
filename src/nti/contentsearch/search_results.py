@@ -20,7 +20,7 @@ from zope.container.contained import Contained
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.common.iterables import isorted
 
@@ -41,10 +41,10 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 @interface.implementer(ISearchHitMetaData)
 class SearchHitMetaData(object):
 
-    unspecified_container = u'+++unspecified_container+++'
+    unspecified_container = '+++unspecified_container+++'
 
     __external_can_create__ = True
-    mime_type = mimeType = u"application/vnd.nextthought.search.searchhitmetadata"
+    mime_type = mimeType = "application/vnd.nextthought.search.searchhitmetadata"
 
     filtered_count = 0
     SearchTime = lastModified = createdTime = 0
@@ -154,7 +154,7 @@ class SearchResultsMixin(Contained):
 class SearchResults(SearchResultsMixin, SchemaConfigured):
     createDirectFieldProperties(ISearchResults)
 
-    mime_type = mimeType = u"application/vnd.nextthought.search.searchresults"
+    mime_type = mimeType = "application/vnd.nextthought.search.searchresults"
 
     _hits = ()
     _count = 0
@@ -252,7 +252,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
 class SuggestResults(SearchResultsMixin, SchemaConfigured):
     createDirectFieldProperties(ISuggestResults)
 
-    mime_type = mimeType = u"application/vnd.nextthought.search.suggestresults"
+    mime_type = mimeType = "application/vnd.nextthought.search.suggestresults"
 
     _words = ()
 
@@ -276,7 +276,7 @@ class SuggestResults(SearchResultsMixin, SchemaConfigured):
     add_suggestions = add
 
     def extend(self, items):
-        self._words.update(unicode_(x) for x in items or ())
+        self._words.update(text_(x) for x in items or ())
 
     def __iadd__(self, other):
         if ISuggestResults.providedBy(other):
@@ -294,7 +294,7 @@ class SuggestResults(SearchResultsMixin, SchemaConfigured):
 class SearchResultsList(SchemaConfigured):
     createDirectFieldProperties(ISearchResultsList)
 
-    mime_type = mimeType = u"application/vnd.nextthought.search.searchresultslist"
+    mime_type = mimeType = "application/vnd.nextthought.search.searchresultslist"
 
     _items = None
 
