@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -100,7 +100,7 @@ class SearchHitMetaData(object):
         self.lastModified = max(self.lastModified, lastModified or 0)
 
         # type count
-        type_name = hit.TargetMimeType or u'unknown'
+        type_name = hit.TargetMimeType or 'unknown'
         self.type_count[type_name] = self.type_count[type_name] + 1
 
     def __iadd__(self, other):
@@ -229,7 +229,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
             self._add(item)
 
     def sort(self, sortOn=None):
-        name = sortOn or (self.query.sortOn if self.query else u'')
+        name = sortOn or (self.query.sortOn if self.query else '')
         factory = component.queryUtility(ISearchHitComparatorFactory, 
                                          name=name or '')
         comparator = factory(self) if factory is not None else None
@@ -316,12 +316,15 @@ class SearchResultsList(SchemaConfigured):
         return sum(map(lambda x: len(x), self.items))
     NumFound = TotalHitCount
 
+
 # sort
 
 
 def sort_hits(hits, reverse=False, sortOn=None):
-    comparator = component.queryUtility(ISearchHitComparator,
-                                        name=sortOn) if sortOn else None
+    if sortOn:
+        comparator = component.queryUtility(ISearchHitComparator, name=sortOn)
+    else:
+        comparator = None
     if comparator is not None:
         if isinstance(hits, list):
             hits.sort(comparator.compare, reverse=reverse)
