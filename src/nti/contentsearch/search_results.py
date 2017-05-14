@@ -230,7 +230,8 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
 
     def sort(self, sortOn=None):
         name = sortOn or (self.query.sortOn if self.query else u'')
-        factory = component.queryUtility(ISearchHitComparatorFactory, name=name)
+        factory = component.queryUtility(ISearchHitComparatorFactory, 
+                                         name=name or '')
         comparator = factory(self) if factory is not None else None
         if comparator is not None:
             self._sorted = True
