@@ -10,7 +10,7 @@ the object is removed from the intid catalog
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -91,7 +91,8 @@ class _AbstractWeakRef(object):
             return True
         try:
             if self._entity_id == other._entity_id:
-                return self._entity_oid == other._entity_oid or self._entity_oid is None
+                return self._entity_oid == other._entity_oid \
+                    or self._entity_oid is None
         except AttributeError:  # pragma: no cover
             return NotImplemented
 
