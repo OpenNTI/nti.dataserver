@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -14,7 +14,7 @@ import six
 from zope import component
 from zope import interface
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.contentsearch.interfaces import ISearchQuery
 from nti.contentsearch.interfaces import IDateTimeRange
@@ -101,6 +101,6 @@ class QueryObject(SchemaConfigured):
                 if k in ISearchQuery:
                     setattr(queryobject, k, v)
                 else:
-                    v = unicode_(v) if isinstance(v, six.string_types) else v
-                    context[unicode_(k)] = v
+                    v = text_(v) if isinstance(v, six.string_types) else v
+                    context[text_(k)] = v
         return queryobject

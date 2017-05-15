@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,8 +20,7 @@ from nti.externalization.interfaces import IInternalObjectIO
 class _SearchHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
     _excluded_in_ivars_ = {'Query'}
-    _excluded_out_ivars_ = {
-        'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
+    _excluded_out_ivars_ = {'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
 
     @classmethod
     def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):
