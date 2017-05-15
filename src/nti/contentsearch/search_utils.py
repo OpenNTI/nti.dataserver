@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,7 +15,7 @@ import time
 
 from zope import component
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.common.string import is_true
 
@@ -31,22 +31,23 @@ from nti.contentsearch.search_query import DateTimeRange
 
 from nti.dataserver.users import User
 
+from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import is_ntiid_of_type
 
 _extractor_pe = re.compile(r'[?*]*(.*)')
 
 
-def clean_search_query(query, language='en'):
+def clean_search_query(query, language=u'en'):
     temp = re.sub(r'[*?]', '', query)
-    result = unicode_(query) if temp else u''
+    result = text_(query) if temp else u''
     if result:
         m = _extractor_pe.search(result)
         result = m.group() if m else u''
 
     table = get_content_translation_table(language)
     result = result.translate(table) if result else u''
-    result = unicode_(result)
+    result =text_(result)
 
     # auto complete phrase search
     if result.startswith('"') and not result.endswith('"'):
@@ -55,6 +56,7 @@ def clean_search_query(query, language='en'):
         result = '"' + result
 
     return result
+
 
 accepted_keys = {'ntiid', 'accept',
                  'createdAfter', 'createdBefore',
@@ -116,8 +118,8 @@ def create_queryobject(username, params, clazz=QueryObject):
             value = args[name]
             if value is not None:
                 if isinstance(value, six.string_types):
-                    value = unicode_(value)
-                context[unicode_(name)] = value
+                    value = text_(value)
+                context[text_(name)] = value
             del args[name]
     # remove to be resetted
     for name in ('ntiid', 'term', 'username'):
@@ -126,32 +128,33 @@ def create_queryobject(username, params, clazz=QueryObject):
     args['context'] = context
 
     term = params.get('term', u'')
-    term = clean_search_query(unicode_(term))
+    term = clean_search_query(text_(term))
     args['term'] = term
 
     args['username'] = username
     packages = args['packages'] = list()
 
     ntiid = args['origin'] = params.get('ntiid', None)
-
-    package_ntiids = _resolve_package_ntiids(username, ntiid)
-    if package_ntiids:
-        for pid in package_ntiids:
-            root_ntiid = get_collection_root_ntiid(pid)
-            if root_ntiid is not None:
-                packages.append(root_ntiid)
+    if ntiid != ROOT:
+        package_ntiids = _resolve_package_ntiids(username, ntiid)
+        if package_ntiids:
+            for pid in package_ntiids:
+                root_ntiid = get_collection_root_ntiid(pid)
+                if root_ntiid is not None:
+                    packages.append(root_ntiid)
     args['packages'] = sorted(set(args['packages']))  # predictable order
 
     accept = args.pop('accept', None)
     if accept:
         accept = set(accept.split(','))
         if '*/*' not in accept:
-            accept.discard(u'')
+            accept.discard('')
             accept.discard(None)
             args['searchOn'] = sorted(accept)
 
     creationTime = _parse_dateRange(args, ('createdAfter', 'createdBefore',))
-    modificationTime = _parse_dateRange(args, ('modifiedAfter', 'modifiedBefore'))
+    modificationTime = _parse_dateRange(args,
+                                        ('modifiedAfter', 'modifiedBefore'))
 
     args['creationTime'] = creationTime
     args['modificationTime'] = modificationTime
