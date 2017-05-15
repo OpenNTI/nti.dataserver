@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -22,8 +22,8 @@ from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.interfaces import IInternalObjectUpdater
 from nti.externalization.interfaces import StandardExternalFields
 
-QUERY = 'Query'
-SEARCH_QUERY = 'SearchQuery'
+QUERY = u'Query'
+SEARCH_QUERY = u'SearchQuery'
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
 
@@ -53,10 +53,11 @@ class _SearchHitMetaDataUpdater(object):
         self.obj = obj
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
-        parsed.pop('TotalHitCount', None) # readonly
+        parsed.pop('TotalHitCount', None)  # readonly
         parsed['FilteringPredicates'] = set(parsed.pop('FilteringPredicates', ()))
-        result = InterfaceObjectIO(self.obj,
-                                   ISearchHitMetaData).updateFromExternalObject(parsed)
+        result = InterfaceObjectIO(
+                    self.obj,
+                    ISearchHitMetaData).updateFromExternalObject(parsed)
         return result
 
 
@@ -78,8 +79,9 @@ class _SearchResultsUpdater(object):
         if SEARCH_QUERY in parsed:
             parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
 
-        result = InterfaceObjectIO(self.obj,
-                                   ISearchResults).updateFromExternalObject(parsed)
+        result = InterfaceObjectIO(
+                    self.obj,
+                    ISearchResults).updateFromExternalObject(parsed)
         return result
 
 
@@ -97,6 +99,7 @@ class _SuggestResultsUpdater(object):
             parsed['Suggestions'] = parsed.pop(ITEMS, ())
         if SEARCH_QUERY in parsed:
             parsed[QUERY] = parsed.pop(SEARCH_QUERY, None)
-        result = InterfaceObjectIO(self.obj,
-                                   ISuggestResults).updateFromExternalObject(parsed)
+        result = InterfaceObjectIO(
+                    self.obj,
+                    ISuggestResults).updateFromExternalObject(parsed)
         return result
