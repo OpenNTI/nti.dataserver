@@ -15,7 +15,7 @@ from zope import component
 from zope import interface
 
 from zope.component.hooks import site
-from zope.component.hooks import getSite 
+from zope.component.hooks import getSite
 
 import zope.generations.generations
 
@@ -74,10 +74,10 @@ class ExampleDatabaseInitializer(object):
 		for uid in ('aaron.eskam', 'andrew.ligon', 'carlos.sanchez',
 					'chris.utz', 'greg.higgins', 'jason.madden',
 					'jeff.muehring', 'jonathan.grimes', 'josh.zuech', 'julie.zhu',
-					'kaley.white', 'ken.parker', 'pacifique.mahoro', 'peggy.sabatini',
+					'kaley.white', 'ken.parker',
 					'ray.hatfield', 'sean.jones', 'mary.enos',
 					'zachary.roux', 'bobby.hagen',
-					'rob.reynolds', 'ethan.berman'):
+					'austin.graham', 'ethan.berman'):
 			USERS.append((uid, uid.replace('.', ' ').title(), uid + '@nextthought.com'))
 
 		# Add test users
