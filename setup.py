@@ -51,9 +51,6 @@ entry_points = {
         "http = nti.appserver.standalone:server_runner",
         "gunicorn = nti.appserver.nti_gunicorn:paste_server_runner"
     ],
-    "zodbupdate": [  # Migrating class names through zodbupdate >= 0.5
-        "chatserver_meetings = nti.chatserver.meeting:_bwc_renames"
-    ]
 }
 
 import platform
@@ -524,8 +521,6 @@ setup(
             'zc.buildout >= 2.2.1',
             # unused/used imports; see also tl.eggdeps
             'z3c.dependencychecker >= 1.11',
-            #'zodbbrowser >= 0.11.2', leads to version conflicts due to its old deps
-            'zodbupdate >= 0.5',
             # Monitoring stats and instrumenting code
             # See above for python-statsd
             # 'graphite-web >= 0.9.10', # web front end. Requires the /opt/graphite directory. Pulls in twisted.

@@ -58,8 +58,8 @@ from nti.zodb.minmax import MergingCounter
 # from that location, as is anything contained there.)
 ####
 
-EVT_ENTERED_ROOM = 'chat_enteredRoom'
 EVT_EXITED_ROOM = 'chat_exitedRoom'
+EVT_ENTERED_ROOM = 'chat_enteredRoom'
 EVT_POST_MESSOGE = 'chat_postMessage'
 EVT_RECV_MESSAGE = 'chat_recvMessage'
 
@@ -71,27 +71,6 @@ def _discard(s, k):
 			s.remove(k)  # OOSet, list
 		except (KeyError, ValueError): pass
 
-# bwc with objects stored in the database.
-# NOTE: There's a zope utility to take care of movements like this
-# called zodbupdate. It needs to be run against raw storages, one at a time, though because
-# it operates at the record level. A tiny patch to it is necessary to make it work
-# correctly in the face of missing records (POSKeyError) if zlibstorage is being used:
-# If zlibstorage is being used, a zconf file must be used to load the storage,
-# and the instance is not FileStorage instance, so make update.py check hasattr(self.storage, '_index')
-# rather than use isinstance().
-# It also requires a small patch to work with relstorage, which
-# does not implement ZODB.interfaces.IStorageCurrentRecordIteration:
-# if not hasattr( self.storage, '_index'):
-# 	# Only FileStorage has _index (this is not an API defined attribute)
-# 	if not hasattr( self.storage, 'record_iternext' ):
-# 	# RelStorage is not IStorageCurrentRecordIteration
-# 		for trec in self.storage.iterator():
-# 			for rec in trec:
-# 				yield rec.oid, rec.tid, cStringIO.StringIO(rec.data)
-# 	return
-# 	while True:
-
-_bwc_renames = { 'nti.chatserver.meeting _ModeratedMeetingState': 'nti.chatserver._meeting_post_policy _ModeratedMeetingState' }
 
 @interface.implementer(IMeeting)
 class _Meeting(ThreadableMixin,
@@ -278,7 +257,9 @@ class _Meeting(ThreadableMixin,
 			self._addl_transcripts_to.update(new_targets)
 		except AttributeError: pass
 
-	__repr__ = make_repr(lambda self: "<%s %s %s>" % (self.__class__.__name__, self.ID, self._occupant_names))
+	__repr__ = make_repr(lambda self: "<%s %s %s>" % (self.__class__.__name__, 
+													  self.ID, 
+													  self._occupant_names))
 
 _ChatRoom = _Meeting
 deprecated('_ChatRoom', 'Prefer _Meeting')
