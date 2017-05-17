@@ -314,9 +314,6 @@ setup(
         # still in the 2.6 (2.4?) series
         'redis',
         'reportlab',
-        # There is a nice complete mock for it at fakeredis, installed
-        # for tests
-        'repoze.catalog',
         'repoze.lru',  # LRU caching. Dep of Pyramid
         'repoze.sendmail',  # trunk has some good binary changes
         'repoze.who',  #
