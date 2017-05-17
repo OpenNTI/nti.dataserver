@@ -123,7 +123,7 @@ class ImageUrlProperty(UrlProperty):
     def __get__(self, instance, owner):
         result = super(ImageUrlProperty, self).__get__(instance, owner)
         if not result and self.avatar_provider_interface is not None:
-            adapted = self.avatar_provider_interface(instance.context)
+            adapted = self.avatar_provider_interface(instance.context, None)
             result = getattr(adapted, self.avatar_field_name, None)
         return result
 
