@@ -364,7 +364,6 @@ setup(
         # plain 'blist'
         'zc.blist',
         'zc.catalog',
-        'zc.dict',     # BTree based dicts that are subclassable
         'zc.displayname',  # Simple pluggable display name support
         'zc.intid >= 2.0.0',
         'zc.lockfile',
