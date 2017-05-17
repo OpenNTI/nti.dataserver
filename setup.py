@@ -360,9 +360,6 @@ setup(
         'z3c.rml',
         'z3c.schema',
         'z3c.table',     # Flexible table rendering
-        # ZODB-friendly BTree-based list implementation. compare to
-        # plain 'blist'
-        'zc.blist',
         'zc.catalog',
         'zc.displayname',  # Simple pluggable display name support
         'zc.intid >= 2.0.0',
