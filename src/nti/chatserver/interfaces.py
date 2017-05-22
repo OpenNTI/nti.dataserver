@@ -27,11 +27,11 @@ from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import IUserGeneratedData
+from nti.dataserver.interfaces import IModeledContentBody
 from nti.dataserver.interfaces import IShareableModeledContent
 
 from nti.dataserver.interfaces import UserNotificationEvent
 from nti.dataserver.interfaces import CompoundModeledContentBody
-from nti.dataserver.interfaces import IModeledContentBody
 
 from nti.socketio.interfaces import ISocketEventHandler
 
@@ -58,23 +58,24 @@ class IChatEventHandler(ISocketEventHandler):
     on the combination ``(user, session, chatserver)``.
     """
 
-ACT_MODERATE = Permission('nti.chatserver.actions.moderate')
+
 ACT_ENTER = Permission('nti.chatserver.actions.enter')
+ACT_MODERATE = Permission('nti.chatserver.actions.moderate')
 ACT_ADD_OCCUPANT = Permission('nti.chatserver.actions.add_occupant')
 
-CHANNEL_DEFAULT = 'DEFAULT'
-CHANNEL_WHISPER = 'WHISPER'
-CHANNEL_CONTENT = 'CONTENT'
-CHANNEL_POLL = 'POLL'
-CHANNEL_META = 'META'
-CHANNEL_STATE = 'STATE'
+CHANNEL_POLL = u'POLL'
+CHANNEL_META = u'META'
+CHANNEL_STATE = u'STATE'
+CHANNEL_DEFAULT = u'DEFAULT'
+CHANNEL_WHISPER = u'WHISPER'
+CHANNEL_CONTENT = u'CONTENT'
 CHANNELS = (CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_CONTENT,
             CHANNEL_POLL, CHANNEL_META, CHANNEL_STATE)
 
-STATUS_INITIAL = 'st_INITIAL'
-STATUS_PENDING = 'st_PENDING'
-STATUS_POSTED = 'st_POSTED'
-STATUS_SHADOWED = 'st_SHADOWED'
+STATUS_POSTED = u'st_POSTED'
+STATUS_INITIAL = u'st_INITIAL'
+STATUS_PENDING = u'st_PENDING'
+STATUS_SHADOWED = u'st_SHADOWED'
 STATUSES = (STATUS_INITIAL, STATUS_PENDING, STATUS_POSTED, STATUS_SHADOWED)
 
 
@@ -87,25 +88,23 @@ class IMeeting(IModeledContent, IZContained):
     to be persistent and which is created on demand.
     """
 
-    creator = DecodingValidTextLine(
-        title="Meeting creator", description="User that started the meeting")
+    creator = DecodingValidTextLine(title=u"Meeting creator", 
+                                    description=u"User that started the meeting")
 
-    RoomId = DecodingValidTextLine(
-        title="Meeting identifier", description="Meeting identifier")
+    RoomId = DecodingValidTextLine(title=u"Meeting identifier", 
+                                   description=u"Meeting identifier")
 
-    CreatedTime = Float(
-        title="Meeting creation time", description="Meeting creation time")
+    CreatedTime = Float(title=u"Meeting creation time",
+                        description=u"Meeting creation time")
 
-    Moderated = Bool(title="Whether the meeting is being moderated or not.",
-                     description="Toggling this changes the policy in use.")
+    Moderated = Bool(title=u"Whether the meeting is being moderated or not.",
+                     description=u"Toggling this changes the policy in use.")
 
-    Active = Bool(title="Whether the meeting is currently active")
+    Active = Bool(title=u"Whether the meeting is currently active")
 
-    occupant_names = Set(
-        title="A set of the string names of members currently in the meeting; immutable.")
+    occupant_names = Set(title=u"A set of the string names of members currently in the meeting; immutable.")
 
-    historical_occupant_names = Set(
-        title="A set of the string names of anyone who has ever been a member of this meeting; immutable.")
+    historical_occupant_names = Set(title=u"A set of the string names of anyone who has ever been a member of this meeting; immutable.")
 
 
 class IMeetingShouldChangeModerationStateEvent(IObjectEvent):
@@ -113,7 +112,7 @@ class IMeetingShouldChangeModerationStateEvent(IObjectEvent):
     Emitted when the :class:`IMeeting` will be changing moderation state.
     """
 
-    moderated = Bool(title="Whether the meeting should become moderated")
+    moderated = Bool(title=u"Whether the meeting should become moderated")
 
 
 @interface.implementer(IMeetingShouldChangeModerationStateEvent)
@@ -158,33 +157,33 @@ class IMeetingPolicy(interface.Interface):
         :return: Boolean value indicating whether the username was shadowed.
         """
 
-    moderated_by_usernames = interface.Attribute(
-        "Iterable of names moderating this meeting.")
+    moderated_by_usernames = interface.Attribute("Iterable of names moderating this meeting.")
 
 
-class IMessageInfo(IShareableModeledContent, IUserGeneratedData, IZContained, IModeledContentBody):
+class IMessageInfo(IShareableModeledContent,
+                   IUserGeneratedData, 
+                   IZContained, 
+                   IModeledContentBody):
     # We have to be IShareableModeledContent if we want the same ACL provider to work for us
     # as works for Notes
-    channel = Choice(
-        title="The channel the message was sent to.",
-        values=CHANNELS)
+    channel = Choice(title=u"The channel the message was sent to.",
+                     values=CHANNELS)
 
-    Status = Choice(
-        title="The status of the message. Set by the server.",
-        values=STATUSES)
+    Status = Choice(title=u"The status of the message. Set by the server.",
+                    values=STATUSES)
 
-    Creator = DecodingValidTextLine(
-        title="Message creator", description="User that send this message")
+    Creator = DecodingValidTextLine(title=u"Message creator",
+                                    description=u"User that send this message")
 
     body = Variant((Dict(key_type=TextLine()),  # , value_type=schema.TextLine() ),
                     CompoundModeledContentBody()),
-                   description="The body is either a dictionary of string keys and values, or a Note body")
+                   description=u"The body is either a dictionary of string keys and values, or a Note body")
 
     recipients = UniqueIterable(
-        title="The names of all the recipients of the message.",
-        description="""The actual recipients of the message, whether or not they are
-			named in the message itself. Includes people who just get the transcript.""",
-        value_type=TextLine())
+                    title=u"The names of all the recipients of the message.",
+                    description=u"""The actual recipients of the message, whether or not they are "
+                    u"named in the message itself. Includes people who just get the transcript.""",
+                    value_type=TextLine())
 
 
 class IMessageInfoEvent(IObjectEvent):
@@ -203,14 +202,13 @@ class IMessageInfoPostedToRoomEvent(IMessageInfoEvent):
     A message has been delivered to a room.
     """
 
-    recipients = Set(
-        title="The names of all the recipients of the message.",
-        description="""The actual recipients of the message, whether or not they are
-			named in the message itself. Includes people who just get the transcript.""",
-        value_type=TextLine())
+    recipients = Set(title=u"The names of all the recipients of the message.",
+                     description=u"""The actual recipients of the message, whether or not they are
+                     named in the message itself. Includes people who just get the transcript.""",
+                     value_type=TextLine())
 
     room = Object(IMeeting,
-                  title="The room that the message was posted to")
+                  title=u"The room that the message was posted to")
 
 
 @interface.implementer(IMessageInfoPostedToRoomEvent)
@@ -339,8 +337,7 @@ class IUserTranscriptStorage(interface.Interface):
 
     transcripts = interface.Attribute("Return all Transcript objects")
 
-    transcript_summaries = interface.Attribute(
-        "Return all Transcript summary objects")
+    transcript_summaries = interface.Attribute("Return all Transcript summary objects")
 
     def transcript_for_meeting(meeting_id):
         pass
@@ -351,6 +348,7 @@ class IUserTranscriptStorage(interface.Interface):
     def remove_message(meeting, msg):
         pass
 
+
 # Presence
 
 
@@ -359,17 +357,17 @@ class IUnattachedPresenceInfo(interface.Interface):
     Basic description of what goes into generic presence info.
     """
 
-    type = Choice(title="What kind of presence this describes",
+    type = Choice(title=u"What kind of presence this describes",
                   values=('available', 'unavailable'),
                   default='available',
                   required=True)
 
-    show = Choice(title="A hint of how the UI should present the user",
+    show = Choice(title=u"A hint of how the UI should present the user",
                   values=('away', 'chat', 'dnd', 'xa'),
                   default='chat',
                   required=False)
 
-    status = PlainTextLine(title="Optional plain text status information",
+    status = PlainTextLine(title=u"Optional plain text status information",
                            required=False,
                            max_length=140)
 
@@ -378,8 +376,8 @@ class IPresenceInfo(IUnattachedPresenceInfo, ILastModified):
     """
     A description of the chat presence for a particular user.
     """
-    username = TextLine(title="The global username to which this presence applies.",
-                        description="If set when reading from external, may be ignored and replaced with canonical value.",
+    username = TextLine(title=u"The global username to which this presence applies.",
+                        description=u"If set when reading from external, may be ignored and replaced with canonical value.",
                         required=False)
 
     def isAvailable():
@@ -394,15 +392,15 @@ class IContacts(interface.Interface):
     to be used by adapting the entity to this interface.
     """
 
-    __parent__ = Object(IUser, title="The owner of this contact list")
+    __parent__ = Object(IUser, title=u"The owner of this contact list")
 
-    contactNamesSubscribedToMyPresenceUpdates = UniqueIterable(title="The usernames of buddies that should get updates when the owner's presence changes",
-                                                               description="Probably computed as a property",
-                                                               value_type=TextLine(title="A username"))
+    contactNamesSubscribedToMyPresenceUpdates = UniqueIterable(title=u"The usernames of buddies that should get updates when the owner's presence changes",
+                                                               description=u"Probably computed as a property",
+                                                               value_type=TextLine(title=u"A username"))
 
-    contactNamesISubscribeToPresenceUpdates = UniqueIterable(title="The usernames of buddies that the owner wants presence updates for",
-                                                             description="Probably computed as a property",
-                                                             value_type=TextLine(title="A username"))
+    contactNamesISubscribeToPresenceUpdates = UniqueIterable(title=u"The usernames of buddies that the owner wants presence updates for",
+                                                             description=u"Probably computed as a property",
+                                                             value_type=TextLine(title=u"A username"))
 
 
 class IContactsModifiedEvent(IObjectEvent):
@@ -411,8 +409,8 @@ class IContactsModifiedEvent(IObjectEvent):
     Specific subinterfaces should be listened to.
     """
 
-    object = Object(IUser, title="The user who's contacts changed.")
-    contacts = Object(IContacts, title="The contacts of the user")
+    object = Object(IUser, title=u"The user who's contacts changed.")
+    contacts = Object(IContacts, title=u"The contacts of the user")
 
 
 class IContactISubscribeToAddedToContactsEvent(IContactsModifiedEvent):
@@ -421,7 +419,7 @@ class IContactISubscribeToAddedToContactsEvent(IContactsModifiedEvent):
     about is added to my contacts.
     """
 
-    contact = Object(IUser, title="The user that I now want updates about.")
+    contact = Object(IUser, title=u"The user that I now want updates about.")
 
 
 @interface.implementer(IContactsModifiedEvent)
@@ -439,8 +437,7 @@ class ContactsModifiedEvent(ObjectEvent):
 class ContactISubscribeToAddedToContactsEvent(ContactsModifiedEvent):
 
     def __init__(self, contact_owner, contact_added):
-        super(ContactISubscribeToAddedToContactsEvent, self).__init__(
-            contact_owner)
+        super(ContactISubscribeToAddedToContactsEvent, self).__init__(contact_owner)
         self.contact = contact_added
 
 
@@ -453,8 +450,8 @@ class PresenceChangedUserNotificationEvent(UserNotificationEvent):
     proper argument dictionary.
     """
 
-    P_ONLINE = "Online"
-    P_OFFLINE = "Offline"
+    P_ONLINE = u"Online"
+    P_OFFLINE = u"Offline"
 
     __name__ = 'chat_setPresenceOfUsersTo'
 
@@ -465,24 +462,22 @@ class PresenceChangedUserNotificationEvent(UserNotificationEvent):
                 the new presence state of the user.
         """
         if new_presence == self.P_ONLINE:
-            ptype = 'available'
+            ptype = u'available'
         else:
-            ptype = 'unavailable'
+            ptype = u'unavailable'
 
-        info = component.createObject(
-            'PresenceInfo', type=ptype, username=sender)
+        info = component.createObject(u'PresenceInfo', 
+                                      type=ptype, 
+                                      username=sender)
         # Could also use getFactoriesFor to work with IPresenceInfo instead of
         # a name...
         args = {sender: info}
-
-        super(PresenceChangedUserNotificationEvent, self).__init__(self.__name__,
-                                                                   targets,
-                                                                   args)
+        super(PresenceChangedUserNotificationEvent, self).__init__(self.__name__, targets, args)
 
 
 class IUserRoomEvent(IObjectEvent):
-    object = TextLine(title="The user/username")
-    room_id = TextLine(title="The room id.")
+    object = TextLine(title=u"The user/username")
+    room_id = TextLine(title=u"The room id.")
 
 
 class IUserEnterRoomEvent(IUserRoomEvent):
@@ -507,7 +502,10 @@ class UserRoomEvent(ObjectEvent):
 
     @property
     def username(self):
-        return self.object if isinstance(self.object, six.string_types) else self.object.username
+        if isinstance(self.object, six.string_types):
+            return self.object
+        else:
+            return self.object.username
 
 
 @interface.implementer(IUserEnterRoomEvent)

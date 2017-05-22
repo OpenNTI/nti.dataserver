@@ -21,6 +21,7 @@ from zope.deprecation import deprecate
 from zope.dublincore import interfaces as dc_interfaces
 
 from persistent import Persistent
+
 from persistent.list import PersistentList
 
 from nti.chatserver.interfaces import STATUS_INITIAL
@@ -54,7 +55,7 @@ from nti.threadable.externalization import ThreadableExternalizableMixin
 
 from nti.threadable.threadable import Threadable as ThreadableMixin
 
-_BodyFieldProperty = MessageInfoBodyFieldProperty
+_BodyFieldProperty = MessageInfoBodyFieldProperty  # BWC
 
 # TODO: MessageInfo is a mess. Unify better with IContent
 # and the other content types.
@@ -80,9 +81,10 @@ class MessageInfo(AbstractReadableSharedMixin,
     sharedWith = ()
     channel = CHANNEL_DEFAULT
     body = _BodyFieldProperty(IMessageInfo['body'])
+
     recipients = ()
-    Creator = None  # aka Sender. Forcibly set by the handler
     containerId = None
+    Creator = None  # aka Sender. Forcibly set by the handler
 
     def __init__(self):
         super(MessageInfo, self).__init__()
@@ -127,6 +129,7 @@ class MessageInfo(AbstractReadableSharedMixin,
 
     createdTime = alias('CreatedTime')
     lastModified = alias('LastModified')
+
     Timestamp = alias('LastModified')  # bwc
 
     # IDCTimes
@@ -137,7 +140,9 @@ class MessageInfo(AbstractReadableSharedMixin,
                         lambda self, dt: self.updateLastModIfGreater(time.mktime(dt.timetuple())))
 
     def updateLastModIfGreater(self, t):  # copied from ModDateTrackingObject
-        "Only if the given time is (not None and) greater than this object's is this object's time changed."
+        """
+        Only if the given time is (not None and) greater than this object's is this object's time changed.
+        """
         if t is not None and t > self.lastModified:
             self.lastModified = t
         return self.lastModified
@@ -201,13 +206,16 @@ class MessageInfo(AbstractReadableSharedMixin,
 
 
 @component.adapter(IMessageInfo)
-class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, InterfaceObjectIO):
+class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, 
+                                  InterfaceObjectIO):
 
     _ext_iface_upper_bound = IMessageInfo
 
     # NOTE: inReplyTo and 'references' do not really belong here
-    _excluded_out_ivars_ = {'MessageId', 'flattenedSharingTargetNames', 'flattenedSharingTargets',
-                            'sharingTargets', 'inReplyTo', 'references'} | InterfaceObjectIO._excluded_out_ivars_
+    _excluded_out_ivars_ = {
+        'MessageId', 'flattenedSharingTargetNames', 'flattenedSharingTargets',
+        'sharingTargets', 'inReplyTo', 'references'
+    } | InterfaceObjectIO._excluded_out_ivars_
 
     def __init__(self, context):
         super(MessageInfoInternalObjectIO, self).__init__(context)
@@ -215,9 +223,11 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, InterfaceObject
     context = alias('_ext_self')
 
     _excluded_in_ivars_ = {
-        'MessageId', 'sharedWith'} | InterfaceObjectIO._excluded_in_ivars_
-    _update_accepts_type_attrs = True
+        'MessageId', 'sharedWith'
+    } | InterfaceObjectIO._excluded_in_ivars_
+
     _prefer_oid_ = False
+    _update_accepts_type_attrs = True
 
     def _ext_replacement(self):
         # TODO: The intid utility doesn't find objects if they are proxied. It unwraps
@@ -228,8 +238,7 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, InterfaceObject
         return removeAllProxies(self.context)
 
     def toExternalObject(self, mergeFrom=None, **kwargs):
-        result = super(MessageInfoInternalObjectIO, self).toExternalObject(
-            mergeFrom=mergeFrom, **kwargs)
+        result = super(MessageInfoInternalObjectIO, self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
         msg = self.context
         if msg.body is not None:
             # alias for old code.
@@ -241,9 +250,7 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, InterfaceObject
     def updateFromExternalObject(self, parsed, *args, **kwargs):
         if 'Body' in parsed and 'body' not in parsed:
             parsed['body'] = parsed['Body']
-
-        super(MessageInfoInternalObjectIO, self).updateFromExternalObject(
-            parsed, *args, **kwargs)
+        super(MessageInfoInternalObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
         msg = self.context
 
         # make recipients be stored as a persistent list.
