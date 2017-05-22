@@ -32,8 +32,6 @@ from nti.coremetadata.schema import MessageInfoBodyFieldProperty
 
 from nti.dataserver.contenttypes.base import _make_getitem
 
-from nti.dataserver.interfaces import IModeledContentBody
-
 from nti.dataserver.sharing import AbstractReadableSharedMixin
 
 from nti.dataserver.users import entity
@@ -64,7 +62,7 @@ _BodyFieldProperty = MessageInfoBodyFieldProperty
 # CreatedModDateTrackingObject)
 
 
-@interface.implementer(IMessageInfo, dc_interfaces.IDCTimes, IModeledContentBody)
+@interface.implementer(IMessageInfo, dc_interfaces.IDCTimes)
 class MessageInfo(AbstractReadableSharedMixin,
                   ThreadableMixin,
                   Persistent):
