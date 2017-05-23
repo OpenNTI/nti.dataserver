@@ -165,7 +165,6 @@ setup(
         'ZConfig',
         # Depending on the final release, we may need to explicitly
         # list each component.
-        'ZODB3',
         'ZODB',
         'BTrees',
         'zdaemon',
