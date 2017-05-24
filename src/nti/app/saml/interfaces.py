@@ -177,7 +177,7 @@ class ISAMLIDPInfo(interface.Interface):
 
 class ISAMLUserAssertionInfo(interface.Interface):
     """
-    Queried as a named adapter by idp entity id
+    Queried as a named adapter by idp entity id.
     """
 
     username = DecodingValidTextLine(title=u'The username',
@@ -204,6 +204,16 @@ class ISAMLUserAssertionInfo(interface.Interface):
     lastname = TextLine(title=u"The user's lastname",  # move to ou specific?
                         description=u"The admittedly western lastname for the user",
                         required=False)
+
+class IUserFactory(interface.Interface):
+    """
+    An object capable of creating a user account for a saml assertion.
+    Registered as a multiadapter on IRequest, ISAMLUserAssertionInfo
+    """
+    def create_user(user_info):
+        """
+        provisions a new user from the provided user_info
+        """
 
 
 class ISAMLUserAuthenticatedEvent(IUserEvent):

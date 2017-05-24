@@ -38,6 +38,7 @@ from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
 from nti.app.saml.interfaces import ISAMLExistingUserValidator
 from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
+from nti.app.saml.interfaces import IUserFactory
 
 from nti.app.saml.interfaces import ExistingUserMismatchError
 
@@ -51,6 +52,7 @@ from nti.appserver.logon import _create_success_response
 from nti.appserver.logon import _deal_with_external_account
 
 from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users import User
 
@@ -217,6 +219,51 @@ def _failure_response(request, msg, error, state):
                                     failure=_failure,
                                     error=(error_str if error_str else "An unknown error occurred."))
 
+def _existing_user(request, user_info):
+    username = user_info.username
+    if username is None:
+        raise ValueError("No username provided")
+    user = User.get_entity(username)
+    return user
+
+@interface.implementer(IUserFactory)
+class AssertionUserFactory(object):
+
+    def __init__(self, request, info):
+        self.request = request
+
+    def create_user(self, user_info):
+        username = user_info.username
+
+        if username is None:
+            raise ValueError("No username provided")
+
+        logger.info('Creating new user for %s', username)
+
+        email = user_info.email
+        email_found = bool(email)
+        email = email or username
+
+        # get realname
+        firstName = user_info.firstname
+        lastName = user_info.lastname
+        realname = user_info.realname
+
+        factory = User.create_user
+        user = _deal_with_external_account(self.request,
+                                           username=username,
+                                           fname=firstName,
+                                           lname=lastName,
+                                           email=email,
+                                           idurl=None,
+                                           iface=None,
+                                           user_factory=factory,
+                                           realname=realname)
+        interface.alsoProvides(user, IRecreatableUser)
+        if email_found:  # trusted source
+            force_email_verification(user)
+        return user
+
 
 @view_config(name=ACS,
              context=SAMLPathAdapter,
@@ -243,10 +290,6 @@ def acs_view(request):
                                          idp_id)
         logger.info('user_info parsed as %s', user_info)
 
-        username = user_info.username
-        if username is None:
-            raise ValueError("No username provided")
-
         nameid = user_info.nameid
         if nameid is None:
             raise ValueError("No nameid provided")
@@ -255,39 +298,14 @@ def acs_view(request):
             raise ValueError("Expected persistent nameid but was %s",
                              nameid.name_format)
 
-        user = User.get_entity(username)
+        user = component.queryMultiAdapter((request, user_info), IUser)
 
         # if user, verify saml nameid against idp
         if user is not None:
-            logger.info('Found an existing user for %s', username)
+            logger.info('Found an existing user for %s', user.username)
             _validate_idp_nameid(request, user, user_info, idp_id)
-            # should we update the email address here?  That might be nice
-            # but we probably shouldn't do that if we allow them to change
-            # it elsewhere
         else:
-            logger.info('Creating new user for %s', username)
-            email = user_info.email
-            email_found = bool(email)
-            email = email or username
-
-            # get realname
-            firstName = user_info.firstname
-            lastName = user_info.lastname
-            realname = user_info.realname
-
-            factory = User.create_user
-            user = _deal_with_external_account(request,
-                                               username=username,
-                                               fname=firstName,
-                                               lname=lastName,
-                                               email=email,
-                                               idurl=None,
-                                               iface=None,
-                                               user_factory=factory,
-                                               realname=realname)
-            interface.alsoProvides(user, IRecreatableUser)
-            if email_found:  # trusted source
-                force_email_verification(user)
+            user = component.getMultiAdapter((request, user_info), IUserFactory).create_user(user_info)
 
         # Manually fire event with SAML user info
         notify(getMultiAdapter((idp_id, user, user_info, request),
@@ -303,7 +321,7 @@ def acs_view(request):
             # match
             pass
 
-        logger.info("%s logging in through SAML", username)
+        logger.info("%s logging in through SAML", user.username)
         user_data = request.environ.get('REMOTE_USER_DATA', {})
         if not isinstance(user_data, Mapping):
             logger.warn('Unexpected environ REMOTE_USER_DATA (%s)',
@@ -316,7 +334,7 @@ def acs_view(request):
         request.environ['REMOTE_USER_DATA'] = user_data
 
         return _create_success_response(request,
-                                        userid=username,
+                                        userid=user.username,
                                         success=_make_location(success, state))
 
     except SAMLError as e:
