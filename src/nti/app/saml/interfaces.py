@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -59,7 +59,6 @@ class ISAMLClient(interface.Interface):
         success or error url.  Any state provided to this function will be provided to success or
         error as tbe `RelayState` param.
         """
-        pass
 
     def process_saml_acs_request(request):
         """
@@ -67,7 +66,6 @@ class ISAMLClient(interface.Interface):
         that encapsulates the saml assertion information for the user to be returned
         along with the RelayState that was initially provided to response_for_logging_in
         """
-        pass
 
 
 class ExistingUserMismatchError(ValueError):
@@ -100,7 +98,6 @@ class ISAMLExistingUserValidator(interface.Interface):
 
         :returns: True if the user is a confirmed match.
         """
-        pass
 
 
 @interface.implementer(IBaseVocabulary)
@@ -166,6 +163,7 @@ class ISAMLIDPInfo(interface.Interface):
     """
     Information about a SAML IDP. Typically registered as a utility
     """
+
     name = TextLine(title=u"name",
                     description=u"A displayable name for the IDP",
                     required=True)
@@ -211,6 +209,7 @@ class IUserFactory(interface.Interface):
     An object capable of creating a user account for a saml assertion.
     Registered as a multiadapter on IRequest, ISAMLUserAssertionInfo
     """
+
     def create_user(user_info):
         """
         provisions a new user from the provided user_info

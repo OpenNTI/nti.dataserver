@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,9 +20,9 @@ from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.dataserver.interfaces import IUser
 
-SAML_IDP_BINDINGS_ANNOTATION_KEY = 'SAML_IDP_BINDINGS_ANNOTATION_KEY'
+KEY_SEPERATOR = u'|'
 
-KEY_SEPERATOR = '|'
+SAML_IDP_BINDINGS_ANNOTATION_KEY = 'SAML_IDP_BINDINGS_ANNOTATION_KEY'
 
 
 @component.adapter(IUser)
@@ -55,6 +55,7 @@ class SAMLIDPEntityBindings(CheckingLastModifiedBTreeContainer):
     def clear_binding(self, name_id, name_qualifier=None, sp_name_qualifier=None):
         key = self._key(name_id, name_qualifier, sp_name_qualifier)
         del self[key]
+
 
 _SAMLIDEntityBindingsFactory = an_factory(SAMLIDPEntityBindings,
                                           SAML_IDP_BINDINGS_ANNOTATION_KEY)
