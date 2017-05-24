@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -126,7 +126,7 @@ class TestEvents(ApplicationLayerTest):
                                                  bases=(component.getSiteManager(),)))):
             ########
             # Setup
-            user = users.User.create_user(username='testUser')
+            user = users.User.create_user(username=u'testUser')
             user_assertion_info = assertion_info(u"pid2",
                                                  u"mickey@mouse.com",
                                                  u"mickey@mouse.com",
@@ -159,7 +159,7 @@ class TestEvents(ApplicationLayerTest):
                                                  bases=(component.getSiteManager(),)))):
             ########
             # Setup
-            user = users.User.create_user(username='testUser')
+            user = users.User.create_user(username=u'testUser')
             user_assertion_info = assertion_info(u"pid2",
                                                  u"mickey@mouse.com",
                                                  u"mickey@mouse.com",
@@ -204,7 +204,7 @@ class TestEvents(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             ########
             # Setup
-            user = users.User.create_user(username='testUser')
+            user = users.User.create_user(username=u'testUser')
             user_assertion_info = assertion_info(u"pid2",
                                                  u"mickey@mouse.com",
                                                  u"mickey@mouse.com",
@@ -230,7 +230,7 @@ class TestEvents(ApplicationLayerTest):
                                                  bases=(component.getSiteManager(),)))):
             ########
             # Setup
-            user = users.User.create_user(username='testUser')
+            user = users.User.create_user(username=u'testUser')
             user_assertion_info = assertion_info(u"pid2",
                                                  u"mickey@mouse.com",
                                                  u"mickey@mouse.com",
