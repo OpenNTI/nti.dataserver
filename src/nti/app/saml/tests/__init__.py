@@ -1,19 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import os
-import shutil
-import tempfile
-
 from nti.app.testing.application_webtest import ApplicationTestLayer
 
-from ..interfaces import NAMEID_FORMATS_SAML2_VALUES
 
 class SAMLTestLayer(ApplicationTestLayer):
 
@@ -41,11 +36,15 @@ class SAMLTestLayer(ApplicationTestLayer):
     def testTearDown(cls):
         pass
 
+
+from nti.app.saml.interfaces import NAMEID_FORMATS_SAML2_VALUES
+
+
 class MockNameId(object):
     text = None
-    format = NAMEID_FORMATS_SAML2_VALUES[0]
     name_qualifier = 'sso.nt.com'
     sp_name_qualifier = 'sp.nt.com'
+    format = NAMEID_FORMATS_SAML2_VALUES[0]
 
     def __init__(self, text):
         self.text = text

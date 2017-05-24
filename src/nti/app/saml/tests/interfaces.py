@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,4 +15,4 @@ from nti.schema.field import TextLine
 
 
 class ITestSAMLProviderUserInfo(ISAMLProviderUserInfo):
-    test_id = TextLine(title='text id', required=True)
+    test_id = TextLine(title=u'text id', required=True)
