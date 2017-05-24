@@ -33,12 +33,12 @@ from nti.app.saml import make_location as _make_location
 
 from nti.app.saml.interfaces import ISAMLClient
 from nti.app.saml.interfaces import ISAMLIDPInfo
+from nti.app.saml.interfaces import IUserFactory
 from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
 from nti.app.saml.interfaces import ISAMLExistingUserValidator
 from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
-from nti.app.saml.interfaces import IUserFactory
 
 from nti.app.saml.interfaces import ExistingUserMismatchError
 
@@ -51,8 +51,8 @@ from nti.appserver.logon import _create_failure_response
 from nti.appserver.logon import _create_success_response
 from nti.appserver.logon import _deal_with_external_account
 
-from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users import User
 
@@ -141,9 +141,10 @@ class ExistingUserNameIdValidator(object):
         if nameid.nameid == user_info.nameid.nameid:
             return True
 
-        raise ExistingUserMismatchError(
-                    'SAML persistent nameid {} for user {} does not match idp returned nameid {}'.format(
-                    nameid.nameid, user.username, user_info.nameid.nameid))
+        msg = 'SAML persistent nameid {} for user {} does not match idp returned nameid {}'
+        raise ExistingUserMismatchError(msg.format(nameid.nameid,
+                                                   user.username,
+                                                   user_info.nameid.nameid))
 
 
 def _validate_idp_nameid(request, user, user_info, idp):
@@ -213,11 +214,13 @@ class ACSLinkProvider(object):
 
 
 def _failure_response(request, msg, error, state):
-    _failure = _make_location(error, state) if (error and state is not None) else None
+    _failure = _make_location(error, state) if (
+        error and state is not None) else None
     error_str = msg
     return _create_failure_response(request,
                                     failure=_failure,
                                     error=(error_str if error_str else "An unknown error occurred."))
+
 
 def _existing_user(request, user_info):
     username = user_info.username
@@ -225,6 +228,7 @@ def _existing_user(request, user_info):
         raise ValueError("No username provided")
     user = User.get_entity(username)
     return user
+
 
 @interface.implementer(IUserFactory)
 class AssertionUserFactory(object):
@@ -305,7 +309,9 @@ def acs_view(request):
             logger.info('Found an existing user for %s', user.username)
             _validate_idp_nameid(request, user, user_info, idp_id)
         else:
-            user = component.getMultiAdapter((request, user_info), IUserFactory).create_user(user_info)
+            factory = component.getMultiAdapter((request, user_info), 
+                                                IUserFactory)
+            user = factory.create_user(user_info)
 
         # Manually fire event with SAML user info
         notify(getMultiAdapter((idp_id, user, user_info, request),
@@ -313,8 +319,8 @@ def acs_view(request):
 
         nameid_bindings = ISAMLIDPEntityBindings(user)
         try:
-            nameid_bindings.store_binding(
-                user_info.nameid, name_qualifier=idp_id)
+            nameid_bindings.store_binding(user_info.nameid, 
+                                          name_qualifier=idp_id)
         except KeyError:
             # Ignore existing binding for this user. We raise
             # earlier in the function if the binding exists but doesn't
@@ -340,7 +346,8 @@ def acs_view(request):
     except SAMLError as e:
         logger.error("Invalid SAML Assertion")
         return _create_failure_response(request,
-                                        failure=_make_location(e.error, e.state),
+                                        failure=_make_location(
+                                            e.error, e.state),
                                         error=str(e))
     except ExistingUserMismatchError as e:
         logger.exception('Unable to match assertion to existing user')

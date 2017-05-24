@@ -205,6 +205,7 @@ class ISAMLUserAssertionInfo(interface.Interface):
                         description=u"The admittedly western lastname for the user",
                         required=False)
 
+
 class IUserFactory(interface.Interface):
     """
     An object capable of creating a user account for a saml assertion.
