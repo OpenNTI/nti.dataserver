@@ -141,10 +141,10 @@ def delete_expired_invitations(receivers=None, now=None, catalog=None):
 
 def get_sent_invitation_ids(senders, accepted=False, catalog=None):
     if isinstance(senders, six.string_types):
-        receivers = set(senders.split(","))
-    elif receivers:
-        receivers = set(receivers)
-    receivers.discard(None)
+        senders = set(senders.split(","))
+    elif senders:
+        senders = set(senders)
+    senders.discard(None)
     catalog = get_invitations_catalog() if catalog is None else catalog
     query = {
         IX_SENDER: {'any_of': senders},
