@@ -445,7 +445,6 @@ setup(
         # >= 3.9)
         'zope.proxy',
         # DO NOT USED. Included as transitive for latest.
-        'zope.server',
         'zope.sequencesort',  # advanced locale aware sorting
         'zope.schema',
         # >= 4.0.0b1 gets PyPy support!
