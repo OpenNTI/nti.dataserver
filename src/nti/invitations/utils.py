@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -22,6 +22,7 @@ from zope.intid.interfaces import IIntIds
 
 from BTrees.LFBTree import LFSet
 
+from nti.invitations.index import IX_SENDER
 from nti.invitations.index import IX_ACCEPTED
 from nti.invitations.index import IX_RECEIVER
 from nti.invitations.index import IX_EXPIRYTIME
@@ -135,6 +136,32 @@ def delete_expired_invitations(receivers=None, now=None, catalog=None):
     for invitation in invitations:
         if container.remove(invitation):
             result.append(invitation)
+    return result
+
+
+def get_sent_invitation_ids(senders, accepted=False, catalog=None):
+    if isinstance(senders, six.string_types):
+        receivers = set(senders.split(","))
+    elif receivers:
+        receivers = set(receivers)
+    receivers.discard(None)
+    catalog = get_invitations_catalog() if catalog is None else catalog
+    query = {
+        IX_SENDER: {'any_of': senders},
+        IX_ACCEPTED: {'any_of': (accepted,)},
+    }
+    expired_ids = catalog.apply(query) or LFSet()
+    return expired_ids
+
+
+def get_sent_invitations(senders, accepted=False, catalog=None):
+    result = []
+    intids = component.getUtility(IIntIds)
+    doc_ids = get_sent_invitation_ids(senders, accepted, catalog)
+    for uid in doc_ids or ():
+        obj = intids.queryObject(uid)
+        if IInvitation.providedBy(obj):
+            result.append(obj)
     return result
 
 
