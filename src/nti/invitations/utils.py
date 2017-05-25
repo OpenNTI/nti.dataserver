@@ -22,6 +22,8 @@ from zope.intid.interfaces import IIntIds
 
 from BTrees.LFBTree import LFSet
 
+from nti.base._compat import text_
+
 from nti.invitations.index import IX_SENDER
 from nti.invitations.index import IX_ACCEPTED
 from nti.invitations.index import IX_RECEIVER
@@ -41,7 +43,7 @@ MAX_TS = time.mktime(datetime.max.timetuple())
 def get_random_invitation_code():
     s = str(uuid.uuid4()).split('-')[-1][:10].upper()
     result = s[0:3] + '-' + s[3:6] + '-' + s[6:]
-    return result
+    return text_(result)
 
 
 def get_invitation_actor(invitation, user=None):
