@@ -68,7 +68,7 @@ def get_pending_invitation_ids(receivers=None, now=None, catalog=None):
     # pending no expiry
     no_expire_ids = catalog.apply(query) or LFSet()
 
-    # peding with expiration
+    # pending with expiration
     now = time.time() if not now else now
     query[IX_EXPIRYTIME] = {'between': (now, MAX_TS)}
     in_between_ids = catalog.apply(query) or LFSet()
