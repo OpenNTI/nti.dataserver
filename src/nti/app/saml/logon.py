@@ -254,7 +254,10 @@ class AssertionUserFactory(object):
         realname = user_info.realname
 
         factory = factory if factory else User.create_user
-        user = _deal_with_external_account(self.request,
+        request = self.request
+        if request is not None:
+            request.is_saml = True 
+        user = _deal_with_external_account(request,
                                            username=username,
                                            fname=firstName,
                                            lname=lastName,
