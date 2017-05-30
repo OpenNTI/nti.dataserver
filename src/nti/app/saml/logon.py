@@ -236,7 +236,7 @@ class AssertionUserFactory(object):
     def __init__(self, request, info):
         self.request = request
 
-    def create_user(self, user_info):
+    def create_user(self, user_info, factory=None):
         username = user_info.username
 
         if username is None:
@@ -253,7 +253,7 @@ class AssertionUserFactory(object):
         lastName = user_info.lastname
         realname = user_info.realname
 
-        factory = User.create_user
+        factory = factory if factory else User.create_user
         user = _deal_with_external_account(self.request,
                                            username=username,
                                            fname=firstName,
@@ -309,7 +309,7 @@ def acs_view(request):
             logger.info('Found an existing user for %s', user.username)
             _validate_idp_nameid(request, user, user_info, idp_id)
         else:
-            factory = component.getMultiAdapter((request, user_info), 
+            factory = component.getMultiAdapter((request, user_info),
                                                 IUserFactory)
             user = factory.create_user(user_info)
 
@@ -319,7 +319,7 @@ def acs_view(request):
 
         nameid_bindings = ISAMLIDPEntityBindings(user)
         try:
-            nameid_bindings.store_binding(user_info.nameid, 
+            nameid_bindings.store_binding(user_info.nameid,
                                           name_qualifier=idp_id)
         except KeyError:
             # Ignore existing binding for this user. We raise
