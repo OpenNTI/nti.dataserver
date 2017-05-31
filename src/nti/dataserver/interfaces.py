@@ -1376,16 +1376,9 @@ class IJoinEntityInvitationActor(IInvitationActor):
 	"""
 
 # Site Roles
-class ISiteRoleManager(IPrincipalRoleManager):
-	"""
-	An IPrincipalRoleManager that can be used to grant
-	roles to principals on a site by site basis.  To grant
-	a role to a principal in a specific site, register an
-	instance of SIteRoleManager as a utility in a registerIn block
-	for this interface.  With the utilty registered, the
-	siteGrant zcml directive can be used to assign
-	roles to a principals within the context of that site.
-	"""
+
+from nti.coremetadata.interfaces import ISiteRoleManager
+ISiteRoleManager = ISiteRoleManager
 
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
