@@ -26,7 +26,7 @@ from zope.schema import TextLine
 
 from nti.base._compat import text_
 
-from nti.coremetadata.interfaces import ISiteRoleManager
+from nti.securitypolicy.interfaces import ISiteRoleManager
 
 
 class IGrantAllDirective(Interface):
