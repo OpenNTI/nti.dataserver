@@ -1291,16 +1291,6 @@ class DataChangedUserNotificationEvent(UserNotificationEvent):
 from nti.zope_catalog.interfaces import IMetadataCatalog
 IMetadataCatalog = IMetadataCatalog
 
-class IPrincipalMetadataObjects(IIntIdIterable):
-	"""
-	A predicate to return objects can be indexed in the metadata catalog
-	for a principal
-
-	These will typically be registered as subscription adapters
-	"""
-
-	def iter_objects():
-		pass
 
 class INotableFilter(interface.Interface):
 	"""
