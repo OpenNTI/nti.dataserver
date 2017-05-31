@@ -21,6 +21,8 @@ from nti.dataserver.metadata.index import IX_SHAREDWITH
 from nti.dataserver.metadata.index import IX_REVSHAREDWITH
 from nti.dataserver.metadata.index import IX_REPLIES_TO_CREATOR
 
+from nti.dataserver.metadata.interfaces import IPrincipalMetadataObjects
+
 from nti.zodb import isBroken
 
 from nti.zope_catalog.interfaces import IKeywordIndex
@@ -100,3 +102,20 @@ def clear_replies_to_creator(catalog, username):
     index = catalog[IX_REVSHAREDWITH]
     if IKeywordIndex.providedBy(index):
         index.remove_words((username,))
+
+
+def get_principal_metadata_objects(principal):
+    predicates = component.subscribers((principal,), IPrincipalMetadataObjects)
+    for predicate in list(predicates):
+        for obj in predicate.iter_objects():
+            if not isBroken(obj):
+                yield obj
+
+
+def get_principal_metadata_objects_intids(principal):
+    intids = component.getUtility(IIntIds)
+    for obj in get_principal_metadata_objects(principal):
+        if not isBroken(obj):
+            uid = get_iid(obj, intids=intids)
+            if uid is not None:
+                yield uid

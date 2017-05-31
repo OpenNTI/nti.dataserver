@@ -23,11 +23,11 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IIntIdIterable
 from nti.dataserver.interfaces import ISystemUserPrincipal
-from nti.dataserver.interfaces import IPrincipalMetadataObjects
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.metadata.utils import get_iid
+from nti.dataserver.metadata.interfaces import IPrincipalMetadataObjects
 
+from nti.dataserver.metadata.utils import get_iid
 from nti.dataserver.metadata.utils import user_messageinfo_iter_objects
 
 
