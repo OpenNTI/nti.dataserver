@@ -52,9 +52,10 @@ from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.dataserver.users import User
 
-from nti.dataserver.metadata_index import IX_CREATOR
-from nti.dataserver.metadata_index import IX_MIMETYPE
-from nti.dataserver.metadata_index import IX_SHAREDWITH
+from nti.dataserver.metadata.index import IX_CREATOR
+from nti.dataserver.metadata.index import IX_MIMETYPE
+from nti.dataserver.metadata.index import IX_SHAREDWITH
+from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import NonExternalizableObjectError
@@ -77,8 +78,7 @@ messageinfo_mime_type = u'application/vnd.nextthought.messageinfo'
 
 
 def metadata_catalog():
-	from nti.metadata import dataserver_metadata_catalog
-	return dataserver_metadata_catalog()
+	return get_metadata_catalog()
 
 
 def get_user_objects(user, mime_types=()):

@@ -34,12 +34,14 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.metadata_index import IX_TOPICS
-from nti.dataserver.metadata_index import IX_TAGGEDTO
-from nti.dataserver.metadata_index import IX_CREATEDTIME
-from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
-from nti.dataserver.metadata_index import TP_DELETED_PLACEHOLDER
+from nti.dataserver.metadata.index import IX_TOPICS
+from nti.dataserver.metadata.index import IX_TAGGEDTO
+from nti.dataserver.metadata.index import IX_CREATEDTIME
+from nti.dataserver.metadata.index import TP_TOP_LEVEL_CONTENT
+from nti.dataserver.metadata.index import TP_DELETED_PLACEHOLDER
 
+from nti.dataserver.metadata.index import get_metadata_catalog
+        
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.oids import to_external_ntiid_oid
@@ -88,8 +90,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
     @CachedProperty
     def _catalog(self):
-        from nti.metadata import dataserver_metadata_catalog
-        return dataserver_metadata_catalog()
+        return get_metadata_catalog()
 
     @CachedProperty
     def _notable_storage(self):

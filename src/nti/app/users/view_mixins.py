@@ -27,10 +27,12 @@ from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.metadata_index import IX_TOPICS
-from nti.dataserver.metadata_index import IX_SHAREDWITH
-from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
-from nti.dataserver.metadata_index import TP_DELETED_PLACEHOLDER
+from nti.dataserver.metadata.index import IX_TOPICS
+from nti.dataserver.metadata.index import IX_SHAREDWITH
+from nti.dataserver.metadata.index import TP_TOP_LEVEL_CONTENT
+from nti.dataserver.metadata.index import TP_DELETED_PLACEHOLDER
+
+from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.zope_catalog.catalog import ResultSet
 
@@ -74,8 +76,7 @@ class EntityActivityViewMixin(UGDView):
 
     @CachedProperty
     def metadata_catalog(self):
-        from nti.metadata import dataserver_metadata_catalog
-        return dataserver_metadata_catalog()
+        return get_metadata_catalog()
 
     def getObjectsForId(self, *args, **kwargs):
         context = self.request.context
