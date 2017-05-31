@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -20,7 +20,7 @@ from nti.testing import base
 class TestZcml(base.ConfiguringTestBase):
 
     def test_directives(self):
-        zcml = """
+        zcml = u"""
 		<configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:sp="http://nextthought.com/ntp/securitypolicy"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
