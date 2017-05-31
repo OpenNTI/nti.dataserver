@@ -25,7 +25,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 from nti.dataserver.interfaces import INotableFilter
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.metadata_index import isTopLevelContentObjectFilter
+from nti.dataserver.metadata.index import isTopLevelContentObjectFilter
 
 # We should not have to worry about deleted items, correct?
 # TODO: Seems like adapters.py grabs anything tagged, whereas we
