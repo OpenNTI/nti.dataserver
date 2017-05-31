@@ -30,8 +30,6 @@ from zope.site.interfaces import IRootFolder
 
 from zope.schema import Iterable
 
-from zope.securitypolicy.interfaces import IPrincipalRoleManager
-
 from contentratings.interfaces import IUserRatable
 
 from nti.contentfragments.schema import PlainText
@@ -1377,7 +1375,7 @@ class IJoinEntityInvitationActor(IInvitationActor):
 
 # Site Roles
 
-from nti.coremetadata.interfaces import ISiteRoleManager
+from nti.securitypolicy.interfaces import ISiteRoleManager
 ISiteRoleManager = ISiteRoleManager
 
 # XXX Now make all the interfaces previously
