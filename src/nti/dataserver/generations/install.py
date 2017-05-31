@@ -59,7 +59,6 @@ from nti.containers import containers as container
 from nti.dataserver import users
 from nti.dataserver import flagging
 from nti.dataserver import _Dataserver
-from nti.dataserver import metadata_index
 from nti.dataserver import session_storage
 from nti.dataserver import password_utility
 from nti.dataserver import shards as ds_shards
@@ -70,6 +69,8 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IGlobalFlagStorage
 from nti.dataserver.interfaces import ISessionServiceStorage
 from nti.dataserver.interfaces import IUserBlacklistedStorage
+
+from nti.dataserver.metadata.index import install_metadata_catalog
 
 from nti.dataserver.users import index as user_index
 from nti.dataserver.users.users import UserBlacklistedStorage
@@ -209,10 +210,6 @@ def install_intids(dataserver_folder):
 
 def install_user_catalog(dataserver_folder, intids):
     return user_index.install_user_catalog(dataserver_folder, intids)
-
-
-def install_metadata_catalog(dataserver_folder, intids):
-    return metadata_index.install_metadata_catalog(dataserver_folder, intids)
 
 def install_password_utility(dataserver_folder):
     lsm = dataserver_folder.getSiteManager()

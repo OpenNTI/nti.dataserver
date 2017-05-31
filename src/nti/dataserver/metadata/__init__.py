@@ -9,5 +9,4 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zope.deprecation
-zope.deprecation.moved('nti.dataserver.metadata.index')
+from nti.dataserver.metadata.index import get_metadata_catalog
