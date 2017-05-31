@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
-
-from nti.dataserver.tests.mock_dataserver import WithMockDS
-from nti.dataserver.tests.mock_dataserver import mock_db_trans
 
 from nti.testing.layers import find_test
 from nti.testing.layers import ZopeComponentLayer
@@ -18,31 +15,37 @@ from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
 
 import zope.testing.cleanup
 
-phrases = ("Yellow brown", "Blue red green render purple?",
-           "Alpha beta", "Gamma delta epsilon omega.",
-           "One two", "Three rendered four five.",
-           "Quick went", "Every red town.",
-           "Yellow uptown", "Interest rendering outer photo!",
-           "Preserving extreme", "Chicken hacker")
+phrases = (u"Yellow brown",
+           u"Blue red green render purple?",
+           u"Alpha beta",
+           u"Gamma delta epsilon omega.",
+           u"One two",
+           u"Three rendered four five.",
+           u"Quick went",
+           u"Every red town.",
+           u"Yellow uptown",
+           u"Interest rendering outer photo!",
+           u"Preserving extreme",
+           u"Chicken hacker")
 
-domain = ("alfa", "bravo", "charlie", "delta", "echo", "foxtrot",
-          "golf", "hotel", "india", "juliet", "kilo", "lima", "mike",
-          "november", "oscar", "papa", "quebec", "romeo", "sierra",
-          "tango", "uniform", "victor", "whiskey", "xray", "yankee",
-          "zulu")
+domain = (u"alfa", u"bravo", u"charlie", u"delta", u"echo", u"foxtrot",
+          u"golf", u"hotel", u"india", u"juliet", u"kilo", u"lima", u"mike",
+          u"november", u"oscar", u"papa", u"quebec", u"romeo", u"sierra",
+          u"tango", u"uniform", u"victor", u"whiskey", u"xray", u"yankee",
+          u"zulu")
 
-zanpakuto_commands = ("Shoot To Kill",
-                      "Bloom, Split and Deviate",
-                      "Rankle the Seas and the Skies",
-                      "Lightning Flash Flame Shell",
-                      "Flower Wind Rage and Flower God Roar, Heavenly Wind Rage and Heavenly Demon Sneer",
-                      "All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade",
-                      "Cry, Raise Your Head, Rain Without end",
-                      "Sting All Enemies To Death",
-                      "Reduce All Creation to Ash",
-                      "Sit Upon the Frozen Heavens",
-                      "Call forth the Twilight",
-                      "Multiplication and subtraction of fire and ice, show your might")
+zanpakuto_commands = (u"Shoot To Kill",
+                      u"Bloom, Split and Deviate",
+                      u"Rankle the Seas and the Skies",
+                      u"Lightning Flash Flame Shell",
+                      u"Flower Wind Rage and Flower God Roar, Heavenly Wind Rage and Heavenly Demon Sneer",
+                      u"All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade",
+                      u"Cry, Raise Your Head, Rain Without end",
+                      u"Sting All Enemies To Death",
+                      u"Reduce All Creation to Ash",
+                      u"Sit Upon the Frozen Heavens",
+                      u"Call forth the Twilight",
+                      u"Multiplication and subtraction of fire and ice, show your might")
 
 
 class SharedConfiguringTestLayer(ZopeComponentLayer,

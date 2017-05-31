@@ -4,14 +4,14 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.contentsearch.interfaces import IRootPackageResolver
 
@@ -31,9 +31,9 @@ def get_collection_root_ntiid(ntiid):
 
 def get_content(text=None, language='en'):
     result = ()
-    text = unicode_(text) if text else None
+    text = text_(text) if text else None
     if text:
         table = get_content_translation_table(language)
         result = tokenize_content(text.translate(table), language)
     result = ' '.join(result)
-    return unicode_(result)
+    return text_(result)

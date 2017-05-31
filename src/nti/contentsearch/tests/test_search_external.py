@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -19,10 +19,6 @@ from hamcrest import has_property
 
 import unittest
 
-from nti.externalization.internalization import find_factory_for
-from nti.externalization.externalization import to_external_object
-from nti.externalization.internalization import update_from_external_object
-
 from nti.contentsearch.search_hits import SearchHit
 
 from nti.contentsearch.search_query import QueryObject
@@ -31,27 +27,29 @@ from nti.contentsearch.search_query import DateTimeRange
 from nti.contentsearch.search_results import SearchResults
 from nti.contentsearch.search_results import SuggestResults
 
-from nti.contentsearch.tests import SharedConfiguringTestLayer
+from nti.externalization.externalization import to_external_object
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.externalization.internalization import find_factory_for
+from nti.externalization.internalization import update_from_external_object
+
+from nti.contentsearch.tests import SharedConfiguringTestLayer
 
 
 class TestSearchExternal(unittest.TestCase):
 
     layer = SharedConfiguringTestLayer
 
-    @WithMockDSTrans
     def test_externalize_search_results(self):
-        qo = QueryObject.create("wind")
+        qo = QueryObject.create(u"wind")
 
         hit = SearchHit()
-        hit.ID = '1'
-        hit.TargetMimeType = 'foo'
+        hit.ID = u'1'
+        hit.TargetMimeType = u'foo'
         results = SearchResults(Query=qo)
         results._add_hit(hit)  # force add it
 
         eo = to_external_object(results)
-        assert_that(eo, has_entry('Query', u'wind'))
+        assert_that(eo, has_entry('Query', 'wind'))
         assert_that(eo, has_entry('Items', has_length(1)))
         assert_that(eo, has_key('HitMetaData'))
 
@@ -63,14 +61,13 @@ class TestSearchExternal(unittest.TestCase):
         assert_that(new_results, has_property('Query', is_not(none())))
         assert_that(new_results, has_property('Hits', has_length(1)))
 
-    @WithMockDSTrans
     def test_externalize_suggest_results(self):
-        qo = QueryObject.create("wind")
+        qo = QueryObject.create(u"wind")
         results = SuggestResults(Query=qo)
-        results.add('aizen')
+        results.add(u'aizen')
 
         eo = to_external_object(results)
-        assert_that(eo, has_entry('Query', u'wind'))
+        assert_that(eo, has_entry('Query', 'wind'))
         assert_that(eo, has_entry('Items', has_length(1)))
 
         # internalize
@@ -81,25 +78,27 @@ class TestSearchExternal(unittest.TestCase):
         assert_that(new_results, has_property('Query', is_not(none())))
         assert_that(new_results, has_property('Suggestions', has_length(1)))
 
-    @WithMockDSTrans
     def test_search_query(self):
         creationTime = DateTimeRange(startTime=0, endTime=100)
-        qo = QueryObject(term="sode no shirayuki", sortOn='relevance', searchOn=('note',),
-                         creationTime=creationTime, context={'theotokos': 'Mater Dei'})
+        qo = QueryObject(term=u"sode no shirayuki", 
+                         sortOn=u'relevance', 
+                         searchOn=(u'note',),
+                         creationTime=creationTime, 
+                         context={u'theotokos': u'Mater Dei'})
         # externalize
         eo = to_external_object(qo)
-        assert_that(eo, has_entry(u'Class', u'SearchQuery'))
+        assert_that(eo, has_entry('Class', 'SearchQuery'))
         assert_that(eo,
-                    has_entry(u'MimeType', u'application/vnd.nextthought.search.query'))
-        assert_that(eo, has_entry(u'sortOn', u'relevance'))
-        assert_that(eo, has_entry(u'term', u'sode no shirayuki'))
-        assert_that(eo, has_entry(u'searchOn', is_([u'note'])))
-        assert_that(eo, has_entry(u'context',
+                    has_entry('MimeType', 'application/vnd.nextthought.search.query'))
+        assert_that(eo, has_entry('sortOn', 'relevance'))
+        assert_that(eo, has_entry('term', 'sode no shirayuki'))
+        assert_that(eo, has_entry('searchOn', is_([u'note'])))
+        assert_that(eo, has_entry('context',
                                   has_entry('theotokos', 'Mater Dei')))
-        assert_that(eo, has_key(u'creationTime'))
+        assert_that(eo, has_key('creationTime'))
         entry = eo['creationTime']
-        assert_that(entry, has_entry(u'startTime', is_(0)))
-        assert_that(entry, has_entry(u'endTime', is_(100)))
+        assert_that(entry, has_entry('startTime', is_(0)))
+        assert_that(entry, has_entry('endTime', is_(100)))
 
         # internalize
         factory = find_factory_for(eo)

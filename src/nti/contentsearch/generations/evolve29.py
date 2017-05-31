@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -62,8 +62,8 @@ def do_evolve(context, generation=generation):
                     if IDynamicSharingTargetFriendsList.providedBy(obj):
                         count += remove_user_index_data(user)
 
-    logger.info(
-        'Evolution %s done. %s catalog-indexes removed', generation, count)
+    logger.info('Evolution %s done. %s catalog-indexes removed', 
+                generation, count)
 
 
 def evolve(context):
