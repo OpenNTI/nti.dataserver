@@ -61,7 +61,7 @@ from nti.dataserver.interfaces import IThreadable
 from nti.dataserver.interfaces import IUsernameIterable
 from nti.dataserver.interfaces import IStreamChangeEvent
 
-from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
+from nti.dataserver.metadata.index import CATALOG_NAME as METADATA_CATALOG_NAME
 
 from nti.dataserver.sharing import SharingContextCache
 
