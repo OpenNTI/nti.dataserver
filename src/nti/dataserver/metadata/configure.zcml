@@ -14,21 +14,21 @@
 
 	<!-- Predicates -->
 	<subscriber	factory=".predicates._ContainedPrincipalObjects"
-				provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
+				provides=".interfaces.IPrincipalMetadataObjects" />
 		
 	<subscriber	factory=".predicates._FriendsListsPrincipalObjects"
-				provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
+				provides=".interfaces.IPrincipalMetadataObjects" />
 					
 	<subscriber	factory=".predicates._MessageInfoPrincipalObjects"
-				provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
+				provides=".interfaces.IPrincipalMetadataObjects" />
 		
 	<subscriber	factory=".predicates._MeetingPrincipalObjects"
-				provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
+				provides=".interfaces.IPrincipalMetadataObjects" />
 		
 	<subscriber	factory=".predicates._DFLBlogObjects"
-				provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
+				provides=".interfaces.IPrincipalMetadataObjects" />
 						
 	<subscriber	factory=".predicates._CommunityBlogObjects"
-				provides="nti.dataserver.interfaces.IPrincipalMetadataObjects" />
+				provides=".interfaces.IPrincipalMetadataObjects" />
 
 </configure>
