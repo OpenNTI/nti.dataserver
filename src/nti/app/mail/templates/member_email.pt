@@ -84,9 +84,6 @@
 															 />
 													</tal:block>
 													<tal:block 	tal:condition="not:options/sender_avatar_url">
-														<!-- We do not have a style for this. We need to work out macro
-															style inheritance.
-														-->
 														<div
 															tal:define="sender_avatar_bg_color options/sender_avatar_bg_color"
 															style="font-size: 16px; width: 45px; height: 45px;
