@@ -33,6 +33,8 @@ from zope.schema import Int
 
 from Acquisition.interfaces import IAcquirer
 
+from nti.contenttypes.reports.interfaces import IReportContext
+
 from nti.dataserver.interfaces import ACE_ACT_DENY
 from nti.dataserver.interfaces import ACE_ACT_ALLOW
 
@@ -414,7 +416,7 @@ class ICommunityBoard(IDefaultForumBoard, IShouldHaveTraversablePath):
 	contains(b'.ICommunityForum')
 	__setitem__.__doc__ = None
 
-class ICommunityForum(IGeneralForum, IShouldHaveTraversablePath):
+class ICommunityForum(IGeneralForum, IShouldHaveTraversablePath, IReportContext):
 	"""
 	A forum belonging to a particular community.
 	"""
@@ -457,7 +459,8 @@ class ICommunityHeadlinePost(IGeneralHeadlinePost):
 	__parent__.required = False
 
 class ICommunityHeadlineTopic(IGeneralHeadlineTopic,
-							  IPublishableTopic):
+							  IPublishableTopic,
+							  IReportContext):
 	containers(ICommunityForum)
 	__parent__.required = False
 	headline = Object(ICommunityHeadlinePost, title="The main, first post of this topic.")

@@ -295,14 +295,16 @@ def has_permission(permission, context, username, **kwargs):
 			return psecDenied("No ACL found")
 	else:
 		to_check = context
-
+	
 	policy = component.queryUtility(IAuthorizationPolicy)
 	if not policy:
 		return psecDenied("No IAuthorizationPolicy installed")
 
 	principals = kwargs.get('principals', None)
+	
 	if not principals:
 		principals = authentication.effective_principals(username, **kwargs)
+	
 	result = policy.permits(to_check, principals, permission)
 	return result
 
