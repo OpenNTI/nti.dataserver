@@ -231,7 +231,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 																  has_entry( 'Username', user2_username ) ) )
 
 		# We can search for the entry before us and only find it
-		path = '/dataserver2/UserSearch/' + user4_usernamef
+		path = '/dataserver2/UserSearch/' + user4_username
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 		assert_that( res.json_body['Items'], contains( has_entry( 'Username', user4_username ) ) )
