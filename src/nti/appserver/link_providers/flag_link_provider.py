@@ -19,7 +19,7 @@ Delete behaivour is provided automatically.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -47,7 +47,7 @@ from nti.dataserver.interfaces import IUser
 
 # We store links in an OOTreeSet annotation on the User object
 _PKG_ANNOTATION_KEY = 'nti.appserver.user_link_provider'
-_LINK_ANNOTATION_KEY = _PKG_ANNOTATION_KEY + '.LinkAnnotation'  # hardcoded name for BWC
+_LINK_ANNOTATION_KEY = _PKG_ANNOTATION_KEY + '.LinkAnnotation'  # BWC
 
 
 def add_link(user, link_name):
@@ -89,7 +89,6 @@ def delete_link(user, link_name):
     :return: A truthy value that will be true if the link
             existed and was discarded or false of the link didn't exist.
     """
-
     the_set = IAnnotations(user).get(_LINK_ANNOTATION_KEY)
     if the_set is None:
         return

@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -71,7 +71,6 @@ def unique_link_providers(user, request, with_links=False):
     """
     seen_names = set()
     providers = find_providers_and_links(user, request, True)
-
     # Subscribers are returned in REVERSE order, that is, from
     # all the bases FIRST...so to let the lower levels win, we reverse again
     # not pyramid.threadlocal.get_current_registry or request.registry, it
