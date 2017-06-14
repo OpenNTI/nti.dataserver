@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 Views for :mod:`zope.file` objects, and likewise
+
 :class:`zope.browserresource.interfaces.IFileResource`
 
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -41,7 +42,7 @@ from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.interfaces import IFileViewedEvent
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.dataserver import authorization as nauth
 
@@ -62,6 +63,7 @@ def _do_view(request, view, event=False):
     # Notify here, if necessary, before we may raise.
     if event:
         notify(FileViewedEvent(request, request.context))
+
     # Best we can do is try to get good cache headers. Check this before
     # opening a blob; if etags match it raises NotModified
     controller = IPreRenderResponseCacheController(request.context)
@@ -80,8 +82,8 @@ def _do_view(request, view, event=False):
         # configured correctly, typically on a new machine/new deployment.
         # The wrapping IFile object exists, but the underling blob
         # does not
-        logger.exception(
-            "A blob is missing. Is the blob-storage configured correctly?")
+        msg = "A blob is missing. Is the blob-storage configured correctly?"
+        logger.exception(msg)
         # 507. Not exactly right, but better than a 404 as it indicates
         # a transient situation and an error on the server
         raise hexc.HTTPInsufficientStorage()
@@ -96,19 +98,20 @@ def _do_view(request, view, event=False):
     # or at least not serving from the dataserver directly.
     return request.response
 
+
 class FilenameRespectingView(download.Inline):
     """
     A File View view that forces the inline content
     disposition header to avoid any oddities in the
     default content disposition among browsers
     """
-    
+
     def __call__(self):
         filename = getattr(self.context, 'filename', None)
         __traceback_info__ = filename,
         for k, v in download.getHeaders(self.context,
                                         downloadName=filename,
-                                        contentDisposition=b"inline"):
+                                        contentDisposition="inline"):
             self.request.response.setHeader(k, v)
         return download.DownloadResult(self.context)
 
@@ -128,6 +131,7 @@ def file_view(request):
     """
     result = _do_view(request, FilenameRespectingView, event=True)
     return result
+
 
 from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IBackgroundURL
@@ -191,7 +195,7 @@ class FilenameRespectingDownload(download.Download):
         __traceback_info__ = filename,
         for k, v in download.getHeaders(self.context,
                                         downloadName=filename,
-                                        contentDisposition=b"attachment"):
+                                        contentDisposition="attachment"):
             self.request.response.setHeader(k, v)
         return download.DownloadResult(self.context)
 
@@ -268,14 +272,14 @@ def image_to_dataurl(request):
     data_url = dataurl.encode(data, mime_type=named_image.contentType)
 
     response = request.response
-    mts = (b'text/plain', b'application/json')
-    accept_type = b'text/plain'
+    accept_type = 'text/plain'
+    mime_types = ('text/plain', 'application/json')
     if getattr(request, 'accept', None):
-        accept_type = request.accept.best_match(mts)
+        accept_type = request.accept.best_match(mime_types)
 
-    if not accept_type or accept_type == b'text/plain':
-        response.content_type = b'text/plain'
-        response.text = unicode_(data_url)
+    if not accept_type or accept_type == 'text/plain':
+        response.content_type = 'text/plain'
+        response.text = text_(data_url)
     else:
         response.content_type = accept_type
         width, height = named_image.getImageSize()
@@ -302,7 +306,7 @@ def image_to_dataurl_extjs(request):
 
     # To start with, it just /assumes/ that it's going to get json data back. Apparently
     # headers haven't been invented
-    request.accept = b'application/json'
+    request.accept = 'application/json'
     rsp = image_to_dataurl(request)
 
     # Then, it further assumes that there is a redundant 'success' value
@@ -314,6 +318,6 @@ def image_to_dataurl_extjs(request):
     # IE9 will prompt the user to save the response for application/*
     # content-types when not loading through a XHR, so we have to lie about
     # the response type, which confuses many tools but makes IE happy
-    rsp.content_type = b'text/plain'
+    rsp.content_type = 'text/plain'
     rsp.json_body = body
     return rsp
