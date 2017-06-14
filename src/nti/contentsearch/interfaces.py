@@ -9,14 +9,6 @@ Search interfaces.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from dolmen.builtins.interfaces import IDict
-from dolmen.builtins.interfaces import IList
-from dolmen.builtins.interfaces import ITuple
-from dolmen.builtins.interfaces import IString
-from dolmen.builtins.interfaces import INumeric
-from dolmen.builtins.interfaces import IUnicode
-from dolmen.builtins.interfaces import IIterable
-
 from zope import interface
 
 from zope.component.interfaces import ObjectEvent
@@ -25,6 +17,13 @@ from zope.deprecation import deprecated
 
 from zope.interface.common.sequence import IFiniteSequence
 
+from nti.base.interfaces import IDict
+from nti.base.interfaces import IList
+from nti.base.interfaces import ITuple
+from nti.base.interfaces import IString
+from nti.base.interfaces import INumeric
+from nti.base.interfaces import IUnicode
+from nti.base.interfaces import IIterable
 from nti.base.interfaces import ILastModified
 
 from nti.dataserver.interfaces import IEntity

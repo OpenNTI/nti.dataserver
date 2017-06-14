@@ -24,7 +24,7 @@ from zope.traversing.interfaces import ITraversable
 
 from pyramid.interfaces import IRequest
 
-from dolmen.builtins import IIterable
+from nti.base.interfaces import IIterable
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity

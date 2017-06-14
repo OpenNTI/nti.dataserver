@@ -17,22 +17,22 @@
 	<include package="nti.externalization" />
 
 	<adapter factory=".datastructures.ContentFileFactory"
-			 for="dolmen.builtins.IDict"
+			 for="nti.base.interfaces.IDict"
 			 provides="nti.externalization.interfaces.IMimeObjectFactory"
 			 name="application/vnd.nextthought.contentfile" />
 
 	<adapter factory=".datastructures.ContentImageFactory"
-			 for="dolmen.builtins.IDict"
+			 for="nti.base.interfaces.IDict"
 			 provides="nti.externalization.interfaces.IMimeObjectFactory"
 			 name="application/vnd.nextthought.contentimage" />
 			
 	<adapter factory=".datastructures.ContentBlobFileFactory"
-			 for="dolmen.builtins.IDict"
+			 for="nti.base.interfaces.IDict"
 			 provides="nti.externalization.interfaces.IMimeObjectFactory"
 			 name="application/vnd.nextthought.contentblobfile" />
  
  	<adapter factory=".datastructures.ContentBlobImageFactory"
-			 for="dolmen.builtins.IDict"
+			 for="nti.base.interfaces.IDict"
 			 provides="nti.externalization.interfaces.IMimeObjectFactory"
 			 name="application/vnd.nextthought.contentblobimage" />
 

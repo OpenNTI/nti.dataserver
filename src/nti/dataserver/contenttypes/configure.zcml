@@ -46,7 +46,7 @@
 
 	<!-- File uploads -->
 	<adapter factory=".file._ModeledContentFileFactory"
-			 for="dolmen.builtins.IDict"
+			 for="nti.base.interfaces.IDict"
 			 provides="nti.externalization.interfaces.IMimeObjectFactory"
 			 name="application/vnd.nextthought.modeledcontentfile" />
 

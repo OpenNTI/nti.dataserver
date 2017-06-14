@@ -69,19 +69,19 @@
 	-->
 	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
 			 name="description"
-			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+			 for="nti.base.interfaces.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
 
 	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
 			 name="location"
-			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+			 for="nti.base.interfaces.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
 
 	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
 			 name="affiliation"
-			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+			 for="nti.base.interfaces.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
 
 	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
 			 name="role"
-			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+			 for="nti.base.interfaces.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
 
 	<!--
 		 Make sure messages get the right censoring policy by

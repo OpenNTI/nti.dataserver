@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from dolmen.builtins.interfaces import IIterable
+from nti.base.interfaces import IIterable
 
 from nti.schema.field import Number
 

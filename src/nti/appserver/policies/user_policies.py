@@ -19,7 +19,6 @@ logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
 
 import time
-import dolmen.builtins
 
 from zope import component
 from zope import interface
@@ -36,6 +35,8 @@ from zope.schema.interfaces import ValidationError
 from z3c.rml import rml2pdf
 
 from pyramid.threadlocal import get_current_request
+
+from nti.base.interfaces import IUnicode
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
@@ -206,7 +207,7 @@ def send_consent_ack_email(user, event):
 												  package=dottedname.resolve('nti.appserver'),
 												  request=event.request)
 
-@component.adapter(dolmen.builtins.IUnicode, IRestrictedUserProfileWithContactEmail, IBeforeTextAssignedEvent)
+@component.adapter(IUnicode, IRestrictedUserProfileWithContactEmail, IBeforeTextAssignedEvent)
 def send_consent_request_when_contact_email_changes(new_email, profile, event):
 	"""
 	When users that are still pending an agreement change their contact email, we need to fire a consent

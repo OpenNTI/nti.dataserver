@@ -237,7 +237,6 @@ setup(
         # support for defining and evolving classes based on schemas
         # pulls in dm.reuse
         'dm.zope.schema',
-        'dolmen.builtins',     # interfaces for common python types
         'filechunkio',  # Req'd for multi-put in boto == 2.5.2
         # A very simple (one module, no deps) RSS and Atom feed generator.
         # 1.7 is a modern rewrite with much better unicode and Py3k
