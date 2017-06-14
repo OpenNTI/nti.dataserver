@@ -96,6 +96,22 @@ def _do_view(request, view, event=False):
     # or at least not serving from the dataserver directly.
     return request.response
 
+class FilenameRespectingView(download.Inline):
+    """
+    A File View view that forces the inline content
+    disposition header to avoid any oddities in the
+    default content disposition among browsers
+    """
+    
+    def __call__(self):
+        filename = getattr(self.context, 'filename', None)
+        __traceback_info__ = filename,
+        for k, v in download.getHeaders(self.context,
+                                        downloadName=filename,
+                                        contentDisposition=b"inline"):
+            self.request.response.setHeader(k, v)
+        return download.DownloadResult(self.context)
+
 
 @view_config(route_name='objects.generic.traversal',
              context=IFile,
@@ -110,7 +126,7 @@ def file_view(request):
 
     Some ACL in the parent hierarchy must make this readable.
     """
-    result = _do_view(request, download.Display, event=True)
+    result = _do_view(request, FilenameRespectingView, event=True)
     return result
 
 from nti.dataserver.users.interfaces import IAvatarURL
