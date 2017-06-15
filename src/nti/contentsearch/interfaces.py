@@ -20,11 +20,12 @@ from zope.interface.common.sequence import IFiniteSequence
 from nti.base.interfaces import IDict
 from nti.base.interfaces import IList
 from nti.base.interfaces import ITuple
-from nti.base.interfaces import IString
 from nti.base.interfaces import INumeric
-from nti.base.interfaces import IUnicode
 from nti.base.interfaces import IIterable
 from nti.base.interfaces import ILastModified
+
+from nti.contentfragments.interfaces import IString
+from nti.contentfragments.interfaces import IUnicode
 
 from nti.dataserver.interfaces import IEntity
 

@@ -36,7 +36,7 @@ from z3c.rml import rml2pdf
 
 from pyramid.threadlocal import get_current_request
 
-from nti.base.interfaces import IUnicode
+from nti.contentfragments.interfaces import IUnicode
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
