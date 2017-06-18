@@ -120,7 +120,7 @@ LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
-DEFAULT_CONTENT_TYPE = u'application/octet-stream'
+DEFAULT_CONTENT_TYPE = 'application/octet-stream'
 
 try:
     _xrange = xrange
