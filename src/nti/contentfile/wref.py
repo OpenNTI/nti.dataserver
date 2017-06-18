@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -35,10 +35,7 @@ from nti.wref.interfaces import IWeakRef
 @component.adapter(IContentBaseFile)
 class ContentFileWeakRef(object):
 
-    if six.PY2:
-        __slots__ = (b'_intid',)
-    else:
-        __slots__ = ('_intid',)
+    __slots__ = ('_intid',)
 
     intid = read_alias('_intid')
 

@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -25,9 +25,9 @@ from nti.schema.field import ValidTextLine
 
 class IContentBaseFile(IFile, IAttributeAnnotatable, IContained):
 
-    tags = ListOrTuple(ValidTextLine(title="A single tag"), required=False)
+    tags = ListOrTuple(ValidTextLine(title=u"A single tag"), required=False)
 
-    name = ValidTextLine(title="Identifier for the file", required=True)
+    name = ValidTextLine(title=u"Identifier for the file", required=True)
 
     def add_association(context):
         """
@@ -53,7 +53,6 @@ class IContentBaseFile(IFile, IAttributeAnnotatable, IContained):
         """
         return if this object has any associations
         """
-
 IBaseFile = IContentBaseFile  # BWC
 
 
