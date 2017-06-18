@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -34,7 +34,8 @@ from nti.contentfile.interfaces import IContentBaseFile
 from nti.externalization.integer_strings import to_external_string
 from nti.externalization.integer_strings import from_external_string
 
-pattern = re.compile('(.+)/%s/(.+)(\/.*)?' % CFIO, re.UNICODE | re.IGNORECASE)
+pattern = re.compile(r'(.+)/%s/(.+)(\/.*)?' % CFIO, 
+                     re.UNICODE | re.IGNORECASE)
 
 
 def get_ds2(request=None):
@@ -44,7 +45,7 @@ def get_ds2(request=None):
         result = request.path_info_peek() if request else None
     except AttributeError:  # in unit test we may see this
         result = None
-    return result or u"dataserver2"
+    return result or "dataserver2"
 
 
 def is_cf_io_href(link):
@@ -72,7 +73,7 @@ def to_external_cf_io_href(context, request=None):
         uid = intids.queryId(context) if context is not None else None
         if ds2 and uid is not None:
             code = to_external_string(uid)
-            href = u'/%s/%s/%s/%s' % (ds2, CFIO, code, safe_name)
+            href = '/%s/%s/%s/%s' % (ds2, CFIO, code, safe_name)
             return href
     return None
 get_cf_io_href = to_external_cf_io_href
@@ -124,11 +125,11 @@ def get_unique_file_name(name, container, now=None, filename=None):
             break
         else:
             counter += 1
-            hex_key = "%s.%s" % (now, counter)
-            newtext = "%s.%s%s" % (text_noe, hex_key, ext)
+            hex_key = u"%s.%s" % (now, counter)
+            newtext = u"%s.%s%s" % (text_noe, hex_key, ext)
 
     if hex_key:
         fn_noe, ext = os.path.splitext(filename)
-        filename = "%s.%s%s" % (fn_noe, hex_key, ext)
+        filename = u"%s.%s%s" % (fn_noe, hex_key, ext)
 
     return newtext, filename

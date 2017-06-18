@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -120,8 +120,7 @@ class TestContentFolderViews(ApplicationLayerTest):
     @WithSharedApplicationMockDS(users=True, testapp=True)
     def test_associate(self):
         self.testapp.post('/dataserver2/ofs/root/@@upload',
-                          upload_files=[
-                              ('ichigo.txt', 'ichigo.txt', b'ichigo')],
+                          upload_files=[('ichigo.txt', 'ichigo.txt', b'ichigo')],
                           status=201)
         with mock_dataserver.mock_db_trans(self.ds):
             user = self._get_user(self.default_username)
@@ -172,7 +171,8 @@ class TestContentFolderViews(ApplicationLayerTest):
                                 'Files', 4))
         assert_that(res.json_body,
                     has_entry('Items',
-                              is_([{u'bleach': [u'rukia.txt', u'zaraki.txt']}, u'aizen.txt', u'ichigo.txt'])))
+                              is_([{'bleach': ['rukia.txt', 'zaraki.txt']}, 
+                                   'aizen.txt', 'ichigo.txt'])))
 
     @WithSharedApplicationMockDS(users=True, testapp=True)
     def test_search(self):
@@ -274,7 +274,7 @@ class TestContentFolderViews(ApplicationLayerTest):
                                     {'filename': 'aizen',
                                      'tags': ('awesome',)},
                                     status=200)
-        assert_that(res.json_body, has_entry('tags', [u'awesome']))
+        assert_that(res.json_body, has_entry('tags', ['awesome']))
         assert_that(res.json_body, has_entry('name', is_('aizen')))
         assert_that(res.json_body, has_entry('filename', is_('aizen')))
 

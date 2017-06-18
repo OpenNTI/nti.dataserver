@@ -4,12 +4,13 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import six
 import sys
 import shutil
 import zipfile
@@ -35,6 +36,7 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from plone.namedfile.file import getImageInfo
+
 from plone.namedfile.interfaces import INamed
 
 from nti.app.base.abstract_views import get_all_sources
@@ -51,8 +53,6 @@ from nti.app.contentfolder.utils import to_external_cf_io_href
 
 from nti.app.externalization.error import raise_json_error
 
-from nti.app.externalization.internalization import read_body_as_external_object
-
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -63,7 +63,7 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
-from nti.base._compat import text_ as common_unicode
+from nti.base._compat import text_
 
 from nti.common.random import generate_random_hex_string
 
@@ -120,6 +120,7 @@ LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
+DEFAULT_CONTENT_TYPE = u'application/octet-stream'
 
 try:
     _xrange = xrange
@@ -129,12 +130,12 @@ except NameError:
 
 def fileType_key(x):
     if INamedContainer.providedBy(x):
-        result = (u'', x.filename.lower())
+        result = ('', x.filename.lower())
     else:
         contentType = getattr(x, 'contentType', None)
-        extension = (os.path.splitext(x.filename)[1] or u'').lower()
+        extension = (os.path.splitext(x.filename)[1] or '').lower()
         if contentType:
-            guessed = (guess_extension(contentType) or u'').lower()
+            guessed = (guess_extension(contentType) or '').lower()
             result = (guessed or extension, x.filename.lower())
         else:
             result = (extension, x.filename.lower())
@@ -153,7 +154,7 @@ SORT_KEYS['type'] = SORT_KEYS['fileType']
 
 def to_unicode(name, encoding='utf-8', err='strict'):
     try:
-        return common_unicode(name, encoding=encoding, err=err)
+        return text_(name, encoding=encoding, err=err)
     except Exception:
         return name.decode(encoding)
 
@@ -193,9 +194,9 @@ class SortMixin(object):
     def _sortKey(self, item):
         value = self._sortFunc(item)
         if INamedContainer.providedBy(item):
-            result = (u'a', value)
+            result = ('a', value)
         else:
-            result = (u'z', value)
+            result = ('z', value)
         return result
 
 
@@ -356,12 +357,12 @@ class MkdirView(AbstractAuthenticatedView,
     content_predicate = INamedContainer.providedBy
     default_folder_mime_type = ContentFolder.mimeType
 
-    def generate(self, prefix=_('Unnamed Folder')):
+    def generate(self, prefix=_(u'Unnamed Folder')):
         for x in _xrange(10000):
-            name = prefix + (u'' if x == 0 else ' %s' % x)
+            name = prefix + ('' if x == 0 else ' %s' % x)
             if safe_filename(name) not in self.context:
                 return name
-        return '% %' % (prefix, generate_random_hex_string())
+        return u'% %' % (prefix, generate_random_hex_string())
 
     def readInput(self, value=None):
         data = super(MkdirView, self).readInput(value)
@@ -371,8 +372,8 @@ class MkdirView(AbstractAuthenticatedView,
         if MIMETYPE not in data:
             data['tags'] = data.get('tags') or ()
             data['title'] = data.get('title') or data['name']
+            data[MIMETYPE] = text_(self.default_folder_mime_type)
             data['description'] = data.get('description') or data['name']
-            data[MIMETYPE] = self.default_folder_mime_type
         data['filename'] = data.get('filename') or data['name']
         return data
 
@@ -382,7 +383,13 @@ class MkdirView(AbstractAuthenticatedView,
         new_folder.creator = creator.username  # use username
         new_folder.name = safe_filename(new_folder.name)
         if new_folder.name in self.context:
-            raise hexc.HTTPUnprocessableEntity(_("Folder exists."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Folder exists.'),
+                                'code': 'FolderExists'
+                             },
+                             None)
         lifecycleevent.created(new_folder)
         self.context.add(new_folder)
         self.request.response.status_int = 201
@@ -416,7 +423,12 @@ class MkdirsView(AbstractAuthenticatedView,
         data = self.readInput()
         path = data.get('path')
         if not path:
-            raise hexc.HTTPUnprocessableEntity(_("Path not specified."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Path not specified.'),
+                             },
+                             None)
         result = mkdirs(self.context, path, self.builder)
         self.request.response.status_int = 201
         return result
@@ -456,12 +468,12 @@ class UploadView(AbstractAuthenticatedView,
         factory = self.factory(source)
         filename = filename or getattr(source, 'filename', None)
         contentType = getattr(source, 'contentType', None) \
-            or guess_type(filename)[0]
+                   or guess_type(filename)[0]
         # create file
         result = factory()
         result.name = to_unicode(name)
         result.filename = to_unicode(filename or name)
-        result.contentType = contentType or u'application/octet-stream'
+        result.contentType = contentType or DEFAULT_CONTENT_TYPE
         return result
 
     def _do_call(self):
@@ -531,8 +543,8 @@ class ImportView(AbstractAuthenticatedView,
         result = factory()
         result.name = name
         result.filename = filename or name
-        result.contentType = guess_type(
-            filename)[0] or u'application/octet-stream'
+        result.contentType = guess_type(filename)[0] \
+                          or DEFAULT_CONTENT_TYPE
         return result
 
     def _do_call(self):
@@ -599,11 +611,10 @@ class ExportView(AbstractAuthenticatedView):
             with zipfile.ZipFile(source, mode="w") as zfile:
                 for item in self.context.values():
                     self._recur(item, zfile)
-
             response = self.request.response
-            response.content_encoding = b'identity'
-            response.content_type = b'application/x-gzip; charset=UTF-8'
-            response.content_disposition = b'attachment; filename="export.zip"'
+            response.content_encoding = 'identity'
+            response.content_type = 'application/x-gzip; charset=UTF-8'
+            response.content_disposition = 'attachment; filename="export.zip"'
             response.body_file = open(source, "rb")
             return response
         finally:
@@ -611,16 +622,19 @@ class ExportView(AbstractAuthenticatedView):
 
 
 def has_associations(theObject):
-    return hasattr(theObject, 'has_associations') \
-        and theObject.has_associations()
+    try:
+        return theObject.has_associations()
+    except AttributeError:
+        return False
 
 
 class DeleteMixin(AbstractAuthenticatedView,
-                  ModeledContentEditRequestUtilsMixin):
+                  ModeledContentEditRequestUtilsMixin,
+                  ModeledContentUploadRequestUtilsMixin):
 
     def readInput(self, value=None):
         if self.request.body:
-            result = read_body_as_external_object(self.request)
+            result = super(DeleteMixin, self).readInput(value)
             result = CaseInsensitiveDict(result)
         else:
             result = CaseInsensitiveDict(self.request.params)
@@ -641,7 +655,12 @@ class DeleteMixin(AbstractAuthenticatedView,
     def _check_context(self, theObject):
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
-            raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Invalid context.'),
+                             },
+                             None)
         return parent
 
     def _check_associations(self, theObject):
@@ -653,15 +672,14 @@ class DeleteMixin(AbstractAuthenticatedView,
                     Link(self.request.path, rel='confirm',
                          params={'force': True}, method='DELETE'),
                 )
-                raise_json_error(
-                    self.request,
-                    hexc.HTTPConflict,
-                    {
-                        u'message': _('This file appears in viewable materials.'),
-                        u'code': 'ContentFileHasReferences',
-                        LINKS: to_external_object(links)
-                    },
-                    None)
+                raise_json_error(self.request,
+                                 hexc.HTTPConflict,
+                                 {
+                                    'message': _(u'This file appears in viewable materials.'),
+                                    'code': 'ContentFileHasReferences',
+                                    LINKS: to_external_object(links)
+                                 },
+                                 None)
 
 
 @view_config(context=INamedFile)
@@ -688,13 +706,23 @@ class DeleteFileView(DeleteMixin):
 class DeleteFolderView(DeleteMixin):
 
     def _check_locked(self, theObject):
-        if ILockedFolder.providedBy(theObject) \
-                and not has_permission(ACT_NTI_ADMIN, theObject, self.request):
-            raise hexc.HTTPForbidden(_("Cannot delete a locked folder."))
+        if      ILockedFolder.providedBy(theObject) \
+            and not has_permission(ACT_NTI_ADMIN, theObject, self.request):
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                'message': _(u'Cannot delete a locked folder.'),
+                             },
+                             None)
 
     def _check_context(self, theObject):
         if IRootFolder.providedBy(theObject):
-            raise hexc.HTTPForbidden(_("Cannot delete root folder."))
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                'message': _(u'Cannot delete root folder.'),
+                             },
+                             None)
         self._check_locked(theObject)
         DeleteMixin._check_context(self, theObject)
 
@@ -708,25 +736,23 @@ class DeleteFolderView(DeleteMixin):
                          params={'force': True}, method='DELETE'),
                 )
                 if INamedContainer.providedBy(theObject):
-                    raise_json_error(
-                        self.request,
-                        hexc.HTTPConflict,
-                        {
-                            u'message': _('This folder is not empty.'),
-                            u'code': 'FolderIsNotEmpty',
-                            LINKS: to_external_object(links)
-                        },
-                        None)
+                    raise_json_error(self.request,
+                                     hexc.HTTPConflict,
+                                     {
+                                        'message': _(u'This folder is not empty.'),
+                                        'code': 'FolderIsNotEmpty',
+                                        LINKS: to_external_object(links)
+                                     },
+                                     None)
                 else:
-                    raise_json_error(
-                        self.request,
-                        hexc.HTTPConflict,
-                        {
-                            u'message': _('This file appears in viewable materials.'),
-                            u'code': 'ContentFileHasReferences',
-                            LINKS: to_external_object(links)
-                        },
-                        None)
+                    raise_json_error(self.request,
+                                     hexc.HTTPConflict,
+                                     {
+                                        'message': _(u'This file appears in viewable materials.'),
+                                        'code': 'ContentFileHasReferences',
+                                        LINKS: to_external_object(links)
+                                     },
+                                     None)
 
     def __call__(self):
         theObject = self.context
@@ -758,27 +784,25 @@ class RenameMixin(object):
 
     def do_rename(self, theObject, new_name, old_key=None):
         if not new_name:
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _("Must specify a valid name."),
-                    u'code': 'EmptyFileName',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u"Must specify a valid name."),
+                                'code': 'EmptyFileName',
+                             },
+                             None)
 
         # get name/filename
         parent = theObject.__parent__
         new_key = safe_filename(new_name)
         if new_key in parent:
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _("File already exists."),
-                    u'code': 'FileAlreadyExists',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u"File already exists."),
+                                'code': 'FileAlreadyExists',
+                             },
+                             None)
 
         # replace name
         old_name = theObject.filename
@@ -787,8 +811,9 @@ class RenameMixin(object):
         theObject.filename = new_name  # filename is display name
         if hasattr(theObject, 'title') and theObject.title == old_name:
             theObject.title = new_name
-        if hasattr(theObject, 'description') \
-                and theObject.description == old_name:
+
+        if      hasattr(theObject, 'description') \
+            and theObject.description == old_name:
             theObject.description = new_name
 
         # replace in folder
@@ -807,44 +832,47 @@ class RenameView(UGDPutView, RenameMixin):
 
     def _check_object_constraints(self, theObject, externalValue=None):
         if IRootFolder.providedBy(theObject):
-            raise_json_error(
-                self.request,
-                hexc.HTTPForbidden,
-                {
-                    u'message': _("Cannot rename root folder."),
-                    u'code': 'CannotRenameRootFolder',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                'message': _(u"Cannot rename root folder."),
+                                'code': 'CannotRenameRootFolder',
+                             },
+                             None)
 
-        if ILockedFolder.providedBy(theObject) \
-                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
-            raise_json_error(
-                self.request,
-                hexc.HTTPForbidden,
-                {
-                    u'message': _("Cannot rename a locked folder."),
-                    u'code': 'CannotRenameLockedFolder',
-                },
-                None)
+        if      ILockedFolder.providedBy(theObject) \
+            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                'message': _(u"Cannot rename a locked folder."),
+                                'code': 'CannotRenameLockedFolder',
+                             },
+                             None)
 
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
-            raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u"Invalid context."),
+                                'code': 'InvalidContext',
+                             },
+                             None)
 
     def readInput(self, value=None):
-        data = read_body_as_external_object(self.request)
+        data = super(RenameView, self).readInput(value)
         return CaseInsensitiveDict(data)
 
     def __call__(self):
         theObject = self.context
         self._check_object_exists(theObject)
         self._check_object_unmodified_since(theObject)
-
+        # read and rename
         data = self.readInput()
         self._check_object_constraints(theObject, data)
         new_name = data.get('name') or data.get('filename')
         self.do_rename(theObject, new_name=new_name)
-
         # XXX: externalize first
         result = to_external_object(theObject)
         return result
@@ -857,14 +885,13 @@ class RenameView(UGDPutView, RenameMixin):
                request_method='PUT')
 class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 
-    key_attr = u'name'
-    name_attr = u'filename'
+    key_attr = 'name'
+    name_attr = 'filename'
 
     def _clean_external(self, externalValue):
         # remove readonly data
         for key in ('path', 'data'):
             externalValue.pop(key, None)
-
         # check / replace in case key is specified
         if self.key_attr in externalValue:
             name = externalValue.pop(self.key_attr, None)
@@ -874,25 +901,23 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 
     def _check_object_constraints(self, theObject, externalValue):
         if IRootFolder.providedBy(theObject):
-            raise_json_error(
-                self.request,
-                hexc.HTTPForbidden,
-                {
-                    u'message': _("Cannot update root folder."),
-                    u'code': 'CannotUpdateRootFolder',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                'message': _(u"Cannot update root folder."),
+                                'code': 'CannotUpdateRootFolder',
+                             },
+                             None)
 
-        if ILockedFolder.providedBy(theObject) \
-                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
-            raise_json_error(
-                self.request,
-                hexc.HTTPForbidden,
-                {
-                    u'message': _("Cannot update a locked folder."),
-                    u'code': 'CannotUpdateLockedFolder',
-                },
-                None)
+        if      ILockedFolder.providedBy(theObject) \
+            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                'message': _(u"Cannot update a locked folder."),
+                                'code': 'CannotUpdateLockedFolder',
+                             },
+                             None)
         self._clean_external(externalValue)
 
     def updateContentObject(self, contentObject, externalValue, set_id=False,
@@ -929,13 +954,18 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
                request_method='PUT')
 class ContentFilePutView(NamedContainerPutView):
 
-    key_attr = u'name'
-    name_attr = u'filename'
+    key_attr = 'name'
+    name_attr = 'filename'
 
     def _check_object_constraints(self, theObject, externalValue):
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
-            raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u"Invalid context."),
+                             },
+                             None)
         self._clean_external(externalValue)
 
 
@@ -967,9 +997,9 @@ class MoveView(AbstractAuthenticatedView,
             target_name = theObject.name
             target = traverse(current, path)
         except (TraversalException) as e:
-            if not isinstance(e, NoSuchFileException) \
-                    or e.path \
-                    or strict:
+            if     not isinstance(e, NoSuchFileException) \
+                or e.path \
+                or strict:
                 exc_info = sys.exc_info()
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
@@ -993,8 +1023,8 @@ class MoveView(AbstractAuthenticatedView,
                 self.request,
                 hexc.HTTPForbidden,
                 {
-                    u'message': _("Cannot move root folder."),
-                    u'code': 'CannotMoveRootFolder',
+                    'message': _(u"Cannot move root folder."),
+                    'code': 'CannotMoveRootFolder',
                 },
                 None)
 
@@ -1004,26 +1034,30 @@ class MoveView(AbstractAuthenticatedView,
                 self.request,
                 hexc.HTTPForbidden,
                 {
-                    u'message': _("Cannot move a locked folder."),
-                    u'code': 'CannotMoveLockedFolder',
+                    'message': _(u"Cannot move a locked folder."),
+                    'code': 'CannotMoveLockedFolder',
                 },
                 None)
 
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
-            raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u"Invalid context."),
+                             },
+                             None)
 
         data = self.readInput()
         path = data.get('path')
         if not path:
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _("Must specify a valid path."),
-                    u'code': 'InvalidPath',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u"Must specify a valid path."),
+                                'code': 'InvalidPath',
+                             },
+                             None)
 
         parent, target, target_name = self._get_parent_target(theObject, path)
         if INamedContainer.providedBy(target):
@@ -1034,8 +1068,12 @@ class MoveView(AbstractAuthenticatedView,
         from_path = compute_path(theObject)
         target_path = compute_path(new_parent)
         if from_path.lower() == target_path.lower():
-            raise hexc.HTTPUnprocessableEntity(
-                _("Cannot move object onto itself."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u"Cannot move object onto itself."),
+                             },
+                             None)
 
         parent.moveTo(theObject, new_parent, target_name)
         lifecycleevent.modified(theObject)
@@ -1060,23 +1098,27 @@ class CopyView(MoveView):
 
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
-            raise hexc.HTTPUnprocessableEntity(_("Invalid context."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u"Invalid context."),
+                             },
+                             None)
 
         data = self.readInput()
         path = data.get('path')
         if not path:
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _("Must specify a valid path."),
-                    u'code': 'InvalidPath',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u"Must specify a valid path."),
+                                'code': 'InvalidPath',
+                             },
+                             None)
 
-        parent, target, target_name = \
-            self._get_parent_target(theObject, path, strict=False)
-
+        parent, target, target_name = self._get_parent_target(theObject, 
+                                                              path, 
+                                                              strict=False)
         if INamedContainer.providedBy(target):
             result = parent.copyTo(theObject, target, target_name)
         else:
@@ -1114,20 +1156,19 @@ class ContentFileExternalView(MoveView):
 class CFIOView(AbstractAuthenticatedView):
 
     def _encode(self, s):
-        return s.encode('utf-8') if isinstance(s, unicode) else s
+        return s.encode('utf-8') if isinstance(s, six.text_type) else s
 
     def __call__(self):
         request = self.request
         uid = request.subpath[0] if request.subpath else ''
         if uid is None:
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _("Must specify a valid URL"),
-                    u'code': 'InvalidURL',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u"Must specify a valid URL."),
+                                'code': 'InvalidURL',
+                             },
+                             None)
         intids = component.getUtility(IIntIds)
         uid = from_external_string(uid)
         context = intids.queryObject(uid)
@@ -1148,18 +1189,18 @@ class CFIOView(AbstractAuthenticatedView):
                 view_name = '@@view'
 
         ntiid = to_external_ntiid_oid(context)
-        path = b'/%s/Objects/%s/%s' % (get_ds2(),
-                                       self._encode(ntiid),
-                                       view_name)
+        path = '/%s/Objects/%s/%s' % (get_ds2(),
+                                      self._encode(ntiid),
+                                      view_name)
 
         # set subrequest
         subrequest = request.blank(path)
-        subrequest.method = b'GET'
+        subrequest.method = 'GET'
         subrequest.possible_site_names = request.possible_site_names
         # prepare environ
-        subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
-        subrequest.environ[b'repoze.who.identity'] = \
-            request.environ['repoze.who.identity'].copy()
+        repoze_identity = request.environ['repoze.who.identity']
+        subrequest.environ['REMOTE_USER'] = request.environ['REMOTE_USER']
+        subrequest.environ['repoze.who.identity'] = repoze_identity.copy()
         for k in request.environ:
             if k.startswith('paste.') or k.startswith('HTTP_'):
                 if k not in subrequest.environ:

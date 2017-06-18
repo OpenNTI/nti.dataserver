@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -34,8 +34,8 @@ class TestUtils(unittest.TestCase):
         interface.alsoProvides(foo, INamed)
         mock_fon.is_callable().with_args().returns(foo)
 
-        n = get_file_from_cf_io_url(
-            '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323')
+        href = '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323'
+        n = get_file_from_cf_io_url(href)
         assert_that(n, is_(none()))
 
         n = get_file_from_cf_io_url('/dataserver2/cf.io/xrPH9')
@@ -50,4 +50,4 @@ class TestUtils(unittest.TestCase):
         name, _ = get_unique_file_name("ichigo.pdf",
                                        container=container,
                                        now=now)
-        assert_that(name, 'ichigo.21.01.30.2.pdf')
+        assert_that(name, is_('ichigo.21.01.30.2.pdf'))
