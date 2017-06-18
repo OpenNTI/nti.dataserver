@@ -63,7 +63,7 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
-from nti.base._compat import unicode_ as common_unicode
+from nti.base._compat import text_ as common_unicode
 
 from nti.common.random import generate_random_hex_string
 
@@ -119,6 +119,12 @@ ITEMS = StandardExternalFields.ITEMS
 LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
+
+
+try:
+    _xrange = xrange
+except NameError:
+    _xrange = range
 
 
 def fileType_key(x):
@@ -322,7 +328,7 @@ class SearchView(AbstractAuthenticatedView, BatchingUtilsMixin, SortMixin):
         # read params
         batching = self._isBatching()
         reverse = not self._isAscending()
-        name = (self._params.get('name') or u'').lower()
+        name = (self._params.get('name') or '').lower()
         recursive = is_true(self._params.get('recursive'))
         containers = is_true(self._params.get('containers'))
         # context is 'already' seen
@@ -351,7 +357,7 @@ class MkdirView(AbstractAuthenticatedView,
     default_folder_mime_type = ContentFolder.mimeType
 
     def generate(self, prefix=_('Unnamed Folder')):
-        for x in range(10000):
+        for x in _xrange(10000):
             name = prefix + (u'' if x == 0 else ' %s' % x)
             if safe_filename(name) not in self.context:
                 return name
@@ -450,7 +456,7 @@ class UploadView(AbstractAuthenticatedView,
         factory = self.factory(source)
         filename = filename or getattr(source, 'filename', None)
         contentType = getattr(source, 'contentType', None) \
-                   or guess_type(filename)[0]
+            or guess_type(filename)[0]
         # create file
         result = factory()
         result.name = to_unicode(name)
@@ -525,7 +531,8 @@ class ImportView(AbstractAuthenticatedView,
         result = factory()
         result.name = name
         result.filename = filename or name
-        result.contentType = guess_type(filename)[0] or u'application/octet-stream'
+        result.contentType = guess_type(
+            filename)[0] or u'application/octet-stream'
         return result
 
     def _do_call(self):
@@ -605,7 +612,7 @@ class ExportView(AbstractAuthenticatedView):
 
 def has_associations(theObject):
     return hasattr(theObject, 'has_associations') \
-       and theObject.has_associations()
+        and theObject.has_associations()
 
 
 class DeleteMixin(AbstractAuthenticatedView,
@@ -681,8 +688,8 @@ class DeleteFileView(DeleteMixin):
 class DeleteFolderView(DeleteMixin):
 
     def _check_locked(self, theObject):
-        if      ILockedFolder.providedBy(theObject) \
-            and not has_permission(ACT_NTI_ADMIN, theObject, self.request):
+        if ILockedFolder.providedBy(theObject) \
+                and not has_permission(ACT_NTI_ADMIN, theObject, self.request):
             raise hexc.HTTPForbidden(_("Cannot delete a locked folder."))
 
     def _check_context(self, theObject):
@@ -780,8 +787,8 @@ class RenameMixin(object):
         theObject.filename = new_name  # filename is display name
         if hasattr(theObject, 'title') and theObject.title == old_name:
             theObject.title = new_name
-        if      hasattr(theObject, 'description') \
-            and theObject.description == old_name:
+        if hasattr(theObject, 'description') \
+                and theObject.description == old_name:
             theObject.description = new_name
 
         # replace in folder
@@ -809,8 +816,8 @@ class RenameView(UGDPutView, RenameMixin):
                 },
                 None)
 
-        if      ILockedFolder.providedBy(theObject) \
-            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+        if ILockedFolder.providedBy(theObject) \
+                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(
                 self.request,
                 hexc.HTTPForbidden,
@@ -876,8 +883,8 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
                 },
                 None)
 
-        if      ILockedFolder.providedBy(theObject) \
-            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+        if ILockedFolder.providedBy(theObject) \
+                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(
                 self.request,
                 hexc.HTTPForbidden,
@@ -960,9 +967,9 @@ class MoveView(AbstractAuthenticatedView,
             target_name = theObject.name
             target = traverse(current, path)
         except (TraversalException) as e:
-            if     not isinstance(e, NoSuchFileException) \
-                or e.path \
-                or strict:
+            if not isinstance(e, NoSuchFileException) \
+                    or e.path \
+                    or strict:
                 exc_info = sys.exc_info()
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
@@ -991,8 +998,8 @@ class MoveView(AbstractAuthenticatedView,
                 },
                 None)
 
-        if      ILockedFolder.providedBy(theObject) \
-            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+        if ILockedFolder.providedBy(theObject) \
+                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(
                 self.request,
                 hexc.HTTPForbidden,
