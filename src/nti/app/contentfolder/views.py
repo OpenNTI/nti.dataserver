@@ -351,7 +351,7 @@ class MkdirView(AbstractAuthenticatedView,
     default_folder_mime_type = ContentFolder.mimeType
 
     def generate(self, prefix=_('Unnamed Folder')):
-        for x in xrange(10000):
+        for x in range(10000):
             name = prefix + (u'' if x == 0 else ' %s' % x)
             if safe_filename(name) not in self.context:
                 return name

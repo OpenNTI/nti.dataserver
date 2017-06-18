@@ -30,7 +30,7 @@ class TestNTIFollowEntities(ConfiguringTestBase):
 	def test_join_follow(self):
 		user = self._create_user()
 		comms = []
-		for x in xrange(1, 6):
+		for x in range(1, 6):
 			name = '%s_comm@nti.com' % x
 			comms.append(name)
 			self._create_comm(name)

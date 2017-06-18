@@ -26,7 +26,7 @@ class TestCreateFriendsLists(ConfiguringTestBase):
 	def test_simple_friendslist(self):
 		owner = self._create_user()
 		friends = []
-		for x in xrange(1, 5):
+		for x in range(1, 5):
 			username = 'friend%s@nti.com' % x
 			friends.append(username)
 			self._create_user(username)
@@ -41,7 +41,7 @@ class TestCreateFriendsLists(ConfiguringTestBase):
 	def test_simple_dfl(self):
 		owner = self._create_user()
 		friends = []
-		for x in xrange(1, 10):
+		for x in range(1, 10):
 			username = 'friend%s@nti.com' % x
 			friends.append(username)
 			self._create_user(username)

@@ -34,7 +34,7 @@ class TestUpdateCommunity(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_update_community(self):
 		comms = []
-		for x in xrange(1, 5):
+		for x in range(1, 5):
 			name = '%s_comm@nti.com' % x
 			comms.append(name)
 			self._create_comm(name)

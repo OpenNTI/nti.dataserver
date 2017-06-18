@@ -37,7 +37,7 @@ class TestCommunityMembers(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_get_member_info(self):
 		comm = self._create_comm()
-		for x in xrange(0, 5):
+		for x in range(0, 5):
 			name = '%s_user@nti.com' % x
 			user = self._create_user(name)
 			user.record_dynamic_membership(comm)
