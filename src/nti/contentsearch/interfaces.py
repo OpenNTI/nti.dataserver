@@ -138,7 +138,7 @@ class ISearchQuery(interface.Interface):
     sortOn = ValidTextLine(title="Field or function to sort by",
                            required=False)
 
-    origin = ValidTextLine(title="The raw NTIID where the search was invoked", 
+    origin = ValidTextLine(title="The raw NTIID where the search was invoked",
                            required=False)
 
     sortOrder = ValidTextLine(title="descending or ascending  to sort order",
@@ -351,8 +351,8 @@ class ISearchResults(IBaseSearchResults, ILastModified):
                            title="search hit objects",
                            required=True)
 
-    HitMetaData = Object(ISearchHitMetaData, 
-                         title="Search hit metadata", 
+    HitMetaData = Object(ISearchHitMetaData,
+                         title="Search hit metadata",
                          required=False)
 
     def add(hit):

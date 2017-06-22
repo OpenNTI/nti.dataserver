@@ -35,6 +35,8 @@ from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import is_ntiid_of_type
 
+from nti.site.site import get_component_hierarchy_names
+
 _extractor_pe = re.compile(r'[?*]*(.*)')
 
 
@@ -166,6 +168,7 @@ def create_queryobject(username, params, clazz=QueryObject):
     if modificationTime is not None and 'lastModified' not in context:
         context[u'lastModified'] = (modificationTime.startTime,
                                    modificationTime.endTime)
+    context[u'site'] = get_component_hierarchy_names()
 
     result = clazz(**args)
     return result
