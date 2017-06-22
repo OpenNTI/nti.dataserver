@@ -151,6 +151,8 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
         Ping our ISearchPredicates to see if this hit is
         applicable to our remote user.
         """
+        if hit is None:
+            return False
         item, score, query = hit.Target, hit.Score, self.query
         for predicate in component.subscribers((item,), ISearchHitPredicate):
             if not predicate.allow(item, score, query):
