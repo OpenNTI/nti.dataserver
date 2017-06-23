@@ -32,8 +32,6 @@ from zope.schema import Iterable
 
 from contentratings.interfaces import IUserRatable
 
-from nti.contentfragments.schema import PlainText
-
 from nti.contentrange import interfaces as rng_interfaces
 
 from nti.contentrange.contentrange import ContentRangeDescription
@@ -821,6 +819,10 @@ ICalendarPublishable = ICalendarPublishable
 
 # BWC exports
 from nti.coremetadata.interfaces import ITitledContent
+from nti.coremetadata.interfaces import ITitledDescribedContent
+
+ITitledDescribedContent = ITitledDescribedContent
+
 from nti.coremetadata.schema import CompoundModeledContentBody
 from nti.coremetadata.schema import ExtendedCompoundModeledContentBody
 
@@ -834,16 +836,6 @@ IContent = IContent
 from nti.coremetadata.interfaces import IModeledContentBody
 IModeledContentBody = IModeledContentBody
 
-from zope.dublincore.interfaces import IDCDescriptiveProperties
-
-class ITitledDescribedContent(ITitledContent, IDCDescriptiveProperties):
-	"""
-	Extend this class to add the ``title`` and ``description`` properties.
-	This class overrides the :mod:`zope.dublincore` properties with more specific
-	versions.
-	"""
-
-	description = PlainText(title="The human-readable description of this object.")
 
 # BWC exports
 from nti.coremetadata.interfaces import ITaggedContent
