@@ -132,6 +132,7 @@ setup(
         'nti.dublincore',
         'nti.externalization',
         'nti.futures',
+        'nti.geventwebsocket',
         'nti.links',
         'nti.mimetype',
         'nti.monkey',
