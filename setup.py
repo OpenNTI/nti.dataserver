@@ -132,7 +132,6 @@ setup(
         'nti.dublincore',
         'nti.externalization',
         'nti.futures',
-        'nti.geventwebsocket',
         'nti.links',
         'nti.mimetype',
         'nti.monkey',
@@ -531,7 +530,6 @@ setup(
         ]
     },
     dependency_links=[
-        'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
         'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev2'
     ],
     zip_safe=False,
