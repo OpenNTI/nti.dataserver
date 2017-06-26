@@ -151,6 +151,7 @@ REL_PRIVACY_POLICY_URL = 'content.direct_privacy_link'
 REL_PING = 'logon.ping'  # See :func:`ping`
 REL_HANDSHAKE = 'logon.handshake'  #: See :func:`handshake`
 REL_CONTINUE = 'logon.continue'
+REL_CONTINUE_ANONYMOUSLY = 'logon.continue-anonymously'
 
 REL_LOGIN_LOGOUT = 'logon.logout'  # See :func:`logout`
 REL_LOGIN_NTI_PASSWORD = 'logon.nti.password'  # See :func:`password_logon`
@@ -302,6 +303,19 @@ def _forgetting(request, redirect_param_name, no_param_class, redirect_value=Non
 				 response,
 				 response.headers)
 	return response
+
+@interface.implementer(IUnauthenticatedUserLinkProvider)
+class ContinueAnonymouslyLinkProvider(object):
+
+	def __init__(self, request):
+		self.request = request
+
+	def get_links(self):
+		continue_href = self.request.route_path('user.root.service', _='')
+		return (Link(continue_href,
+		             rel=REL_CONTINUE_ANONYMOUSLY,
+		             elements=('service',)), )
+
 
 @interface.implementer(ILogoutForgettingResponseProvider)
 class DefaultLogoutResponseProvider(object):
