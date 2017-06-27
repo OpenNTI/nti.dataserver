@@ -168,7 +168,12 @@ def create_queryobject(username, params, clazz=QueryObject):
     if modificationTime is not None and 'lastModified' not in context:
         context[u'lastModified'] = (modificationTime.startTime,
                                    modificationTime.endTime)
-    context[u'site'] = get_component_hierarchy_names()
+    sites = get_component_hierarchy_names()
+    sites = list(sites) if sites else list()
+    # We want to query for all globally registered objects as well (global
+    # via initialization probably).
+    sites.append('dataserver2')
+    context[u'site'] = sites
 
     result = clazz(**args)
     return result
