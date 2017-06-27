@@ -4,14 +4,12 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
-
-from zope.cachedescriptors.property import CachedProperty
 
 from zope.intid.interfaces import IIntIds
 
@@ -33,18 +31,6 @@ from nti.dataserver.metadata.index import TP_TOP_LEVEL_CONTENT
 from nti.dataserver.metadata.index import TP_DELETED_PLACEHOLDER
 
 from nti.dataserver.metadata.index import get_metadata_catalog
-
-from nti.zope_catalog.catalog import ResultSet
-
-
-class TraxResultSet(ResultSet):
-
-    def get_object(self, uid):
-        obj = super(TraxResultSet, self).getObject(uid)
-        if IHeadlinePost.providedBy(obj):
-            obj = obj.__parent__  # return entry
-        return obj
-    getObject = get_object
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -74,25 +60,31 @@ class EntityActivityViewMixin(UGDView):
     def _entity_board(self):
         raise NotImplementedError()
 
-    @CachedProperty
+    @property
     def metadata_catalog(self):
         return get_metadata_catalog()
 
+    def things(self, all_intids, intids):
+
+        for uid in all_intids or ():
+            obj = intids.queryObject(uid)
+            if obj is not None:
+                if IHeadlinePost.providedBy(obj):
+                    obj = obj.__parent__  # return entry
+                yield obj
+
     def getObjectsForId(self, *args, **kwargs):
         context = self.request.context
+        catalog = self.metadata_catalog
         self.check_permission(context, self.remoteUser)
         intids = component.getUtility(IIntIds)
-                
-        catalog = self.metadata_catalog
-        if catalog is not None:
-            username = self._context_id
-            topics_idx = catalog[IX_TOPICS]
-            shared_intids = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
-            toplevel_intids_extent = topics_idx[TP_TOP_LEVEL_CONTENT].getExtent()
-            deleted_intids_extent = topics_idx[TP_DELETED_PLACEHOLDER].getExtent()
-            top_level_intids = toplevel_intids_extent.intersection(shared_intids)
-        else:
-            top_level_intids = intids.family.IF.LFSet()
+        
+        username = self._context_id
+        topics_idx = catalog[IX_TOPICS]
+        shared_intids = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
+        toplevel_extent = topics_idx[TP_TOP_LEVEL_CONTENT].getExtent()
+        deleted_extent = topics_idx[TP_DELETED_PLACEHOLDER].getExtent()
+        top_level_intids = toplevel_extent.intersection(shared_intids)
 
         seen = set()
         for forum in self._entity_board.values():
@@ -101,6 +93,6 @@ class EntityActivityViewMixin(UGDView):
         topics_intids = intids.family.IF.LFSet(seen)
 
         all_intids = intids.family.IF.union(topics_intids, top_level_intids)
-        all_intids = all_intids - deleted_intids_extent
-        items = TraxResultSet(all_intids, intids, ignore_invalid=True)
+        all_intids = all_intids - deleted_extent
+        items = list(self.things(all_intids, intids))
         return (items,)
