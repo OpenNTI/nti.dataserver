@@ -35,6 +35,7 @@ class UsersAdapterTraversable(ContainerTraversable):
         self.context = context
         self.request = request
 
+    @property
     def authenticated_userid(self):
         try:
             return self.request.authenticated_userid
