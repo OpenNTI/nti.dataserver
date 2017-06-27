@@ -340,6 +340,7 @@ class Dataserver2RootTraversable(_PseudoTraversableMixin):
 	allowed_keys = ('users',)
 
 	def traverse(self, key, remaining_path):
+		from IPython.terminal.debugger import set_trace;set_trace()
 		if key in self.allowed_keys:
 			return self.context[key]  # Better be there. Otherwise, KeyError, which fails traversal
 
