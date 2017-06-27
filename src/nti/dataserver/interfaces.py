@@ -544,6 +544,9 @@ IShouldHaveTraversablePath = IShouldHaveTraversablePath
 IUsernameSubstitutionPolicy = IUsernameSubstitutionPolicy
 
 # BWC import
+from nti.coremetadata.interfaces import UNAUTHENTICATED_PRINCIPAL_NAME
+UNAUTHENTICATED_PRINCIPAL_NAME = UNAUTHENTICATED_PRINCIPAL_NAME
+
 from nti.coremetadata.interfaces import AnonymousUser
 AnonymousUser = AnonymousUser
 
