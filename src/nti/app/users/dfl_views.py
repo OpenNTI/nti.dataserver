@@ -6,7 +6,7 @@ Views and other objects relating to functions exposed for dynamic friends lists.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -50,7 +50,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.metadata_index import IX_MIMETYPE
+from nti.dataserver.metadata.index import IX_MIMETYPE
 
 from nti.dataserver.users import get_entity_catalog
 
@@ -86,8 +86,6 @@ def exit_dfl_view(context, request):
     """
     user = get_remote_user(request)
     context.removeFriend(user)  # We know we must be a member
-    # return the new object that we can no longer actually see but could just a moment ago
-    # TODO: Not sure what I really want to return
     return context
 
 
@@ -104,8 +102,8 @@ class DFLDeleteView(UGDDeleteView):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                'message': _("Group is not empty"),
-                                'code': "DFLGroupIsNotEmpty"
+                                 'message': _(u"Group is not empty"),
+                                 'code': "DFLGroupIsNotEmpty"
                              },
                              None)
         return super(DFLDeleteView, self)._do_delete_object(theObject)
@@ -136,18 +134,18 @@ class DFLActivityView(EntityActivityViewMixin):
                permission=nauth.ACT_NTI_ADMIN)
 class ListDFLsView(AbstractAuthenticatedView):
 
-    DFL_MIMETYPE = u'application/vnd.nextthought.dynamicfriendslist'
-
     def __call__(self):
         request = self.request
-        values = CaseInsensitiveDict(**request.params)
+        values = CaseInsensitiveDict(request.params)
         usernames = values.get('usernames') or values.get('username')
         if isinstance(usernames, six.string_types):
             usernames = {x.lower() for x in usernames.split(",") if x}
 
         intids = component.getUtility(IIntIds)
         catalog = get_entity_catalog()
-        doc_ids = catalog[IX_MIMETYPE].apply({'any_of': (self.DFL_MIMETYPE,)})
+        doc_ids = catalog[IX_MIMETYPE].apply(
+            {'any_of': ('application/vnd.nextthought.dynamicfriendslist',)
+        })
 
         result = LocatedExternalDict()
         items = result[ITEMS] = []
