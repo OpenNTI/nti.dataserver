@@ -526,6 +526,7 @@ class DefaultCreatedUsername(object):
 from nti.coremetadata.interfaces import IUser
 from nti.coremetadata.interfaces import IEntity
 from nti.coremetadata.interfaces import ICommunity
+from nti.coremetadata.interfaces import IAnonymousUser
 from nti.coremetadata.interfaces import IMissingEntity
 from nti.coremetadata.interfaces import IDynamicSharingTarget
 from nti.coremetadata.interfaces import IUnscopedGlobalCommunity
@@ -535,11 +536,17 @@ from nti.coremetadata.interfaces import IUsernameSubstitutionPolicy
 IUser = IUser
 IEntity = IEntity
 ICommunity = ICommunity
+IAnonymousUser = IAnonymousUser
 IMissingEntity = IMissingEntity
 IDynamicSharingTarget = IDynamicSharingTarget
 IUnscopedGlobalCommunity = IUnscopedGlobalCommunity
 IShouldHaveTraversablePath = IShouldHaveTraversablePath
 IUsernameSubstitutionPolicy = IUsernameSubstitutionPolicy
+
+# BWC import
+from nti.coremetadata.interfaces import AnonymousUser
+AnonymousUser = AnonymousUser
+
 
 class IEffectivePrincipalResolver(interface.Interface):
 	"""
