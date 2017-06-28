@@ -55,7 +55,7 @@ class DomContentRangeDescription(ContentRangeDescription):
 
     def __eq__(self, other):
         try:
-            return self is other or (     self.start == other.start
+            return self is other or (    self.start == other.start
                                      and self.end == other.end
                                      and self.ancestor == other.ancestor)
         except AttributeError:
