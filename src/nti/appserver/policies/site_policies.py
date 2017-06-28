@@ -19,7 +19,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import urllib
 import datetime
-import nameparser
 
 from zope import component
 from zope import interface
@@ -58,7 +57,10 @@ from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListe
 
 from nti.common.emoji import has_emoji_chars
 
+from nti.common.nameparser import human_name as np_human_name
+
 from nti.contentfragments import censor
+
 from nti.contentfragments.interfaces import ICensoredContentPolicy
 
 from nti.dataserver.interfaces import IUser
@@ -614,7 +616,7 @@ class AbstractSitePolicyEventListener(object):
 				raise BlankHumanNameError()
 			return  # Not required
 
-		human_name = nameparser.HumanName(names.realname)
+		human_name = np_human_name(names.realname)
 		if not human_name.first:
 			raise MissingFirstName(_("Please provide your first name."),
 								   'realname',
@@ -810,7 +812,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 
 		# We require a realname, at least the first name, it must already be given.
 		# parse it now. This raises BlankHumanName if missing. This was checked by super
-		human_name = nameparser.HumanName(names.realname)
+		human_name = np_human_name(names.realname)
 
 		# Disable username/realname dependency checking if we are using placeholder data
 		if user.username is not self.PLACEHOLDER_USERNAME:
