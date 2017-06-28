@@ -6,11 +6,10 @@
 			i18n_domain="zope">
 
 	<include package="zope.component" file="meta.zcml" />
-	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	<include package="zope.security" />
 	<include package="zope.location" />
 	
+	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
 	<!-- Externalization -->
@@ -22,7 +21,8 @@
 	<adapter factory=".externalization.TimeRangeDescriptionExternal" />
 	<adapter factory=".externalization.TranscriptContentPointerExternal" />
 	<adapter factory=".externalization.TranscriptRangeDescriptionExternal" />
-	
-	<include package="nti.externalization" file="meta.zcml" />
+
 	<ext:registerMimeFactories module=".timeline" />
+	<ext:registerMimeFactories module=".contentrange" />
+
 </configure>
