@@ -4,25 +4,27 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from . import interfaces
+from nti.contentrange.interfaces import ITextContext
+from nti.contentrange.interfaces import IDomContentPointer
+from nti.contentrange.interfaces import ITextDomContentPointer
+from nti.contentrange.interfaces import IContentRangeDescription
+from nti.contentrange.interfaces import IElementDomContentPointer
+from nti.contentrange.interfaces import IDomContentRangeDescription
 
 from nti.externalization.representation import WithRepr
 
 from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 
-# FIXME: Note that we are using the legacy class-based
-# functionality to create new internal objects from externals
-
 
 @WithRepr
-@interface.implementer(interfaces.IContentRangeDescription)
+@interface.implementer(IContentRangeDescription)
 class ContentRangeDescription(SchemaConfigured):
     """
     Implementation of :class:`interfaces.IContentRangeDescription`
@@ -44,7 +46,7 @@ class ContentRangeDescription(SchemaConfigured):
         return hash(ContentRangeDescription)
 
 
-@interface.implementer(interfaces.IDomContentRangeDescription)
+@interface.implementer(IDomContentRangeDescription)
 class DomContentRangeDescription(ContentRangeDescription):
 
     mime_type = 'application/vnd.nextthought.contentrange.domcontentrangedescription'
@@ -77,7 +79,7 @@ class ContentPointer(SchemaConfigured):
 
 
 @WithRepr
-@interface.implementer(interfaces.IDomContentPointer)
+@interface.implementer(IDomContentPointer)
 class DomContentPointer(ContentPointer):
 
     mime_type = 'application/vnd.nextthought.contentrange.domcontentpointer'
@@ -100,7 +102,7 @@ class DomContentPointer(ContentPointer):
         return hash((self.role,))
 
 
-@interface.implementer(interfaces.IElementDomContentPointer)
+@interface.implementer(IElementDomContentPointer)
 class ElementDomContentPointer(DomContentPointer):
 
     mime_type = 'application/vnd.nextthought.contentrange.elementdomcontentpointer'
@@ -121,7 +123,7 @@ class ElementDomContentPointer(DomContentPointer):
 
 
 @WithRepr
-@interface.implementer(interfaces.ITextContext)
+@interface.implementer(ITextContext)
 class TextContext(SchemaConfigured):
 
     __external_can_create__ = True
@@ -142,7 +144,7 @@ class TextContext(SchemaConfigured):
         return hash((self.contextText, self.contextOffset))
 
 
-@interface.implementer(interfaces.ITextDomContentPointer)
+@interface.implementer(ITextDomContentPointer)
 class TextDomContentPointer(DomContentPointer):
 
     mime_type = 'application/vnd.nextthought.contentrange.textdomcontentpointer'
