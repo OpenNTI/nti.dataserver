@@ -51,6 +51,8 @@ from nti.appserver.logon import _create_failure_response
 from nti.appserver.logon import _create_success_response
 from nti.appserver.logon import _deal_with_external_account
 
+from nti.base._compat import text_
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 
@@ -348,10 +350,10 @@ def acs_view(request):
 
     except SAMLError as e:
         logger.error("Invalid SAML Assertion")
+        error_msg = text_(repr(e))
         return _create_failure_response(request,
-                                        failure=_make_location(
-                                            e.error, e.state),
-                                        error=str(e))
+                                        failure=_make_location(e.error, e.state),
+                                        error=error_msg)
     except ExistingUserMismatchError as e:
         logger.exception('Unable to match assertion to existing user')
         return _failure_response(request, 'User Mismatch', error, state)
