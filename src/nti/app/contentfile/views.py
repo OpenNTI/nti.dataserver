@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -99,8 +99,8 @@ class ContentFileAssociateView(AbstractAuthenticatedView,
                 self.request,
                 hexc.HTTPUnprocessableEntity,
                 {
-                    u'message': _('Must provide a valid context id.'),
-                    u'code': 'MustProvideValidContextID',
+                    'message': _(u'Must provide a valid context id.'),
+                    'code': 'MustProvideValidContextID',
                 },
                 None)
         target = find_object_with_ntiid(ntiid)
@@ -109,8 +109,8 @@ class ContentFileAssociateView(AbstractAuthenticatedView,
                 self.request,
                 hexc.HTTPUnprocessableEntity,
                 {
-                    u'message': _("Cannot find target object."),
-                    u'code': 'CannotFindTargetObject',
+                    'message': _(u"Cannot find target object."),
+                    'code': 'CannotFindTargetObject',
                 },
                 None)
         if target is not self.context and target is not self.context.__parent__:

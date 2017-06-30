@@ -263,7 +263,7 @@ def transfer_internal_content_data(context, attr="body", request=None, ownership
             # if it has no data check in the multipart upload for a source
             if not target.getSize() and request is not None and request.POST:
                 name = get_context_name(target)
-                source = get_source(request, name or u'')
+                source = get_source(request, name or '')
                 if source is not None:
                     transfer_data(source, target)
             # add it result
@@ -335,7 +335,7 @@ def download_file_name(context):
 
 def safe_download_file_name(name):
     if not name:
-        result = 'file.dat'
+        result = u'file.dat'
     else:
         ext = os.path.splitext(name)[1]
         try:
@@ -343,7 +343,7 @@ def safe_download_file_name(name):
             # quote(name.encode('utf-8'))
             result = quote(name)
         except Exception:
-            result = 'file' + ext
+            result = u'file' + ext
     return result
 
 
@@ -361,7 +361,7 @@ def to_external_download_oid_href(item):
     return None
 
 #: OID based view/download pattern
-pattern = re.compile('(.+)/%s(.+)/(@@)?[view|download](\/.*)?' % TAG_NTC,
+pattern = re.compile(r'(.+)/%s(.+)/(@@)?[view|download](\/.*)?' % TAG_NTC,
                      re.UNICODE | re.IGNORECASE)
 
 

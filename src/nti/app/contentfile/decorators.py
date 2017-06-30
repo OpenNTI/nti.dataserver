@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -53,7 +53,7 @@ class _ContentFileDecorator(object):
         ext_dict['download_url'] = link if link else None
         view_parts = to_external_oid_and_link(item)
         if view_parts and view_parts[1]:
-            name = download_file_name(item) or u''
+            name = download_file_name(item) or ''
             view_url = '%s/%s' % (view_parts[1], name)
             ext_dict['url'] = view_url
         else:
