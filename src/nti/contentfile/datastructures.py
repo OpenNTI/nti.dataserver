@@ -11,8 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.coremetadata.interfaces import IModeledContentBody
-
 from nti.contentfile import CONTENT_FILE_MIMETYPE
 from nti.contentfile import CONTENT_IMAGE_MIMETYPE
 from nti.contentfile import CONTENT_BLOB_FILE_MIMETYPE
@@ -30,6 +28,7 @@ from nti.contentfile.model import ContentBlobImage
 
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.namedfile.datastructures import getContentType
 from nti.namedfile.datastructures import NamedFileObjectIO
 
 from nti.property.dataurl import DataURL
@@ -47,28 +46,35 @@ class ContentFileObjectIO(NamedFileObjectIO):
         return CONTENT_FILE_MIMETYPE
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
-        result = super(ContentFileObjectIO, 
-                       self).updateFromExternalObject(parsed, *args, **kwargs)
+        result = super(ContentFileObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
         ext_self = self._ext_replacement()
         if 'tags' in parsed:
             ext_self.tags = parsed.get('tags') or ()
         assert ext_self.name, 'must provide a content file name'
         return result
 
+    def _transform(self, the_file, ext_dict):
+        try:
+            from nti.coremetadata.interfaces import IModeledContentBody
+            # XXX: CS-20160426 For BWC we want to transform all content blob mimetype
+            # to regular files in IModeledContentBody objects.
+            # This cannot be done in a decorator since the external
+            # MimeType is set in the super class toExternalObject method
+            if IModeledContentBody.providedBy(the_file.__parent__):
+                mimeType = ext_dict.get(MIMETYPE)
+                if mimeType == CONTENT_BLOB_FILE_MIMETYPE:
+                    ext_dict[MIMETYPE] = CONTENT_FILE_MIMETYPE
+                elif mimeType == CONTENT_BLOB_IMAGE_MIMETYPE:
+                    ext_dict[MIMETYPE] = CONTENT_IMAGE_MIMETYPE
+        except ImportError:
+            pass
+        return ext_dict
+
     def toExternalObject(self, *args, **kwargs):
         ext_dict = super(ContentFileObjectIO, self).toExternalObject(*args, **kwargs)
         the_file = self._ext_replacement()
         ext_dict['tags'] = the_file.tags  # return tags
-        # XXX: CS-20160426 For BWC we want to transform all content blob mimetype
-        # to regular files in IModeledContentBody objects.
-        # This cannot be done in a decorator since the external
-        # MimeType is set in the super class toExternalObject method
-        if IModeledContentBody.providedBy(the_file.__parent__):
-            mimeType = ext_dict.get(MIMETYPE)
-            if mimeType == CONTENT_BLOB_FILE_MIMETYPE:
-                ext_dict[MIMETYPE] = CONTENT_FILE_MIMETYPE
-            elif mimeType == CONTENT_BLOB_IMAGE_MIMETYPE:
-                ext_dict[MIMETYPE] = CONTENT_IMAGE_MIMETYPE
+        self._transform(the_file, ext_dict)
         return ext_dict
 
 
@@ -97,9 +103,7 @@ def BaseFactory(ext_obj, file_factory, image_factory=None):
     factory = file_factory
     image_factory = image_factory or file_factory
     url = ext_obj.get('url') or ext_obj.get('value')
-    contentType = (    ext_obj.get('FileMimeType')
-                    or ext_obj.get('contentType')
-                    or ext_obj.get('content_type'))
+    contentType = getContentType(ext_obj)
     if url and url.startswith('data:'):
         ext_obj['url'] = DataURL(url)
         ext_obj.pop('value', None)

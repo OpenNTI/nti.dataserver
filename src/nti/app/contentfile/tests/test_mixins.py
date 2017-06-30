@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -28,53 +28,54 @@ class TestMixins(unittest.TestCase):
 
     @fudge.patch('nti.app.contentfile.view_mixins.find_object_with_ntiid')
     def test_get_file_from_oid_external_link(self, mock_fon):
+
         class Foo(object):
             pass
         foo = Foo()
         interface.alsoProvides(foo, INamed)
         mock_fon.is_callable().with_args().returns(foo)
 
-        n = get_file_from_oid_external_link(
-            '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323')
+        href = '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323'
+        n = get_file_from_oid_external_link(href)
         assert_that(n, is_(foo))
 
-        n = get_file_from_oid_external_link(
-            '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/@@view')
+        href = '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/@@view'
+        n = get_file_from_oid_external_link(href)
         assert_that(n, is_(foo))
 
-        n = get_file_from_oid_external_link(
-            '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/download')
+        href = '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/download'
+        n = get_file_from_oid_external_link(href)
         assert_that(n, is_(foo))
 
-        n = get_file_from_oid_external_link(
-            '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/download/foo.dat')
+        href = '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/download/foo.dat'
+        n = get_file_from_oid_external_link(href)
         assert_that(n, is_(foo))
 
-        n = get_file_from_oid_external_link(
-            '/dataserver2/Objects/xxx')
+        href = '/dataserver2/Objects/xxx'
+        n = get_file_from_oid_external_link(href)
         assert_that(n, is_(none()))
 
-        n = get_file_from_oid_external_link(
-            'http://x.org/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/@@view')
+        href = 'http://x.org/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/@@view'
+        n = get_file_from_oid_external_link(href)
         assert_that(n, is_not(none()))
 
-        n = get_file_from_oid_external_link(
-            'http://x.org/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/@@view')
+        href = 'http://x.org/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/@@view'
+        n = get_file_from_oid_external_link(href)
         assert_that(n, is_not(none()))
 
-        assert_that(get_file_from_oid_external_link(
-            '/dataserver2/Objects/tag%3Anextthought.com%2C2011-10%3Azope.security.management.system_user-OID-0x3fb1a3e4dc1691ea%3A5573657273%3Atux9jJFntYr/download/ichigo.xml'),
-            is_(foo))
+        href = '/dataserver2/Objects/tag%3Anextthought.com%2C2011-10%3Azope.security.management.system_user-OID-0x3fb1a3e4dc1691ea%3A5573657273%3Atux9jJFntYr/download/ichigo.xml'
+        assert_that(get_file_from_oid_external_link(href),
+                    is_(foo))
 
-        assert_that(get_file_from_oid_external_link(
-            '/dataserver2/Objects/tag%3Anextthought.com%2C2011-10%3Azope.security.management.system_user-OID-0x3fb1a3e4dc1691ea%3A5573657273%3Atux9jJFntYr'),
-            is_(foo))
+        href = '/dataserver2/Objects/tag%3Anextthought.com%2C2011-10%3Azope.security.management.system_user-OID-0x3fb1a3e4dc1691ea%3A5573657273%3Atux9jJFntYr'
+        assert_that(get_file_from_oid_external_link(href),
+                    is_(foo))
 
         interface.noLongerProvides(foo, INamed)
-        n = get_file_from_oid_external_link(
-            'http://x.org/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/@@view')
+        href = 'http://x.org/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/@@view'
+        n = get_file_from_oid_external_link(href)
         assert_that(n, is_(none()))
 
-        assert_that(is_oid_external_link(
-            '/dataserver2/Objects/tag%3Anextthought.com%2C2011-10%3Azope.security.management.system_user-OID-0x3fb1a3e4dc1691ea%3A5573657273%3Atux9jJFntYr/download/ichigo.xml'),
-            is_(True))
+        href = '/dataserver2/Objects/tag%3Anextthought.com%2C2011-10%3Azope.security.management.system_user-OID-0x3fb1a3e4dc1691ea%3A5573657273%3Atux9jJFntYr/download/ichigo.xml'
+        assert_that(is_oid_external_link(href),
+                    is_(True))

@@ -9,12 +9,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from six import StringIO
+from io import BytesIO
 
 from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import CachedProperty
+
+from zope.deprecation import deprecated
 
 from BTrees.OOBTree import OOTreeSet
 
@@ -132,7 +134,7 @@ class BaseContentMixin(object):
 
     @CachedProperty('data')
     def _v_fp(self):
-        return StringIO(self.data)
+        return BytesIO(self.data)
 
     def read(self, size=-1):
         return self._v_fp.read(size) if size != -1 else self.data
@@ -150,6 +152,7 @@ class BaseContentMixin(object):
 BaseMixin = BaseContentMixin  # BWC
 
 
+deprecated('ContentFile', 'DO NOT USE; Prefer ContentBlobFile')
 @interface.implementer(IContentFile)
 class ContentFile(BaseContentMixin, NamedFile):
     pass
@@ -160,6 +163,7 @@ class ContentBlobFile(BaseContentMixin, NamedBlobFile):
     pass
 
 
+deprecated('ContentImage', 'DO NOT USE; Prefer ContentBlobImage')
 @interface.implementer(IContentImage)
 class ContentImage(BaseContentMixin, NamedImage):
     pass

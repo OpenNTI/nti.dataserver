@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -54,5 +54,4 @@ class ContentBaseFileACLProvider(object):
 
     @Lazy
     def __acl__(self):
-        result = acl_from_aces(self.__aces__)
-        return result
+        return acl_from_aces(self.__aces__)

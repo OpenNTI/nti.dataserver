@@ -26,10 +26,10 @@ from zope import interface
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.contentfile.model import ContentFile
+from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import transform_to_blob
 
-from nti.contentfile.interfaces import IContentFile
+from nti.contentfile.interfaces import IContentBlobFile
 from nti.contentfile.interfaces import IContentBlobImage
 
 from nti.externalization.internalization import find_factory_for
@@ -49,11 +49,11 @@ class TestModel(unittest.TestCase):
     layer = SharedConfiguringTestLayer
 
     def test_interface(self):
-        assert_that(ContentFile(name=u"cc", contentType='xx'),
-                    verifiably_provides(IContentFile))
+        assert_that(ContentBlobFile(name=u"cc", contentType='xx'),
+                    verifiably_provides(IContentBlobFile))
 
     def test_name(self):
-        internal = ContentFile()
+        internal = ContentBlobFile()
         internal.name = u'ichigo'
         assert_that(internal, has_property('name', is_('ichigo')))
         assert_that(internal, has_property('__name__', is_('ichigo')))

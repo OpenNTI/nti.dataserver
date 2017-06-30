@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -44,17 +44,17 @@ GIF_DATAURL = b'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAA
 class TestDecorators(ApplicationLayerTest):
 
     ext_obj = {
-        'MimeType': 'application/vnd.nextthought.contentfile',
+        'MimeType': 'application/vnd.nextthought.contentblobfile',
         'value': GIF_DATAURL,
-        'filename': r'Getting Started.pdf',
-        'name': 'Getting Started.pdf'
+        'filename': u'Getting Started.pdf',
+        'name': u'Getting Started.pdf'
     }
 
     global_obj = {
-        'MimeType': 'application/vnd.nextthought.contentfile',
+        'MimeType': 'application/vnd.nextthought.contentblobfile',
         'value': GIF_DATAURL,
-        'filename': r'Getting ÀÀÀ.pdf',
-        'name': 'Getting ÀÀÀ.pdf'
+        'filename': u'Getting ÀÀÀ.pdf',
+        'name': u'Getting ÀÀÀ.pdf'
     }
 
     def test_content_file(self):

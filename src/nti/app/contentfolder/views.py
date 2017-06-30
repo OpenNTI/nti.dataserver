@@ -71,8 +71,6 @@ from nti.common.string import is_true
 
 from nti.contentfile.interfaces import IContentBaseFile
 
-from nti.contentfile.model import ContentFile
-from nti.contentfile.model import ContentImage
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
 
@@ -447,21 +445,17 @@ class UploadView(AbstractAuthenticatedView,
         result = super(UploadView, self).readInput(value)
         return CaseInsensitiveDict(result)
 
-    @Lazy
-    def use_blobs(self):
-        return self.context.use_blobs
-
     def factory(self, source):
         contentType = getattr(source, 'contentType', None)
         if contentType:
-            factory = ContentBlobFile if self.use_blobs else ContentFile
+            factory = ContentBlobFile
         else:
             contentType, _, _ = getImageInfo(source)
             source.seek(0)  # reset
             if contentType:  # is image
-                factory = ContentBlobImage if self.use_blobs else ContentImage
+                factory = ContentBlobImage
             else:
-                factory = ContentBlobFile if self.use_blobs else ContentFile
+                factory = ContentBlobFile
         return factory
 
     def create_namedfile(self, source, name, filename=None):
@@ -521,10 +515,6 @@ class ImportView(AbstractAuthenticatedView,
 
     folder_factory = ContentFolder
 
-    @Lazy
-    def use_blobs(self):
-        return self.context.use_blobs
-
     def builder(self):
         result = self.folder_factory()
         result.creator = self.remoteUser.username
@@ -533,9 +523,9 @@ class ImportView(AbstractAuthenticatedView,
     def factory(self, filename):
         contentType = guess_type(filename)[0]
         if contentType and contentType.startswith('image'):
-            factory = ContentBlobImage if self.use_blobs else ContentImage
+            factory = ContentBlobImage
         else:
-            factory = ContentBlobFile if self.use_blobs else ContentFile
+            factory = ContentBlobFile
         return factory
 
     def create_namedfile(self, source, name, filename=None):
