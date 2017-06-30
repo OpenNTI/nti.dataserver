@@ -39,6 +39,19 @@
 
 	<include package=".tweens" />
 	<include package=".capabilities" />
+	
+	<!-- Workspaces -->
+	<!-- A subscriber for enumeration -->
+	<subscriber factory=".site_admin_workspace.SiteAdminWorkspace"
+				provides=".interfaces.ISiteAdminWorkspace" />
+
+	<!-- And an adapter for direct access -->
+	<adapter factory=".site_admin_workspace.SiteAdminWorkspace"
+			 provides=".interfaces.ISiteAdminWorkspace" />
+	
+	<!-- Path Adapters -->
+	<adapter name="SiteAdmin"
+			 factory=".site_admin_workspace.SiteAdminWorkspacePathAdapter" />
 
 	<!-- apidoc -->
 	<!--

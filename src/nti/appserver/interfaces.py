@@ -24,6 +24,8 @@ from zope.traversing.interfaces import ITraversable
 
 from pyramid.interfaces import IRequest
 
+from nti.appserver.workspaces.interfaces import IWorkspace
+
 from nti.base.interfaces import IIterable
 
 from nti.dataserver.interfaces import IUser
@@ -705,3 +707,9 @@ class IContainedObjectsQuerier(interface.Interface):
 	
 	def query(ntiid):
 		pass
+	
+class ISiteAdminWorkspace(IWorkspace):
+	"""
+	Workspace for a particular site admin
+	"""
+
