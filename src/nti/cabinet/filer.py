@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -83,8 +83,8 @@ class DirectoryFiler(object):
         now = datetime.fromtimestamp(now).strftime("%H.%M.%S")
         while True:
             counter += 1
-            hex_key = "%s.%s" % (now, counter)
-            newtext = "%s.%s%s" % (key_noe, hex_key, ext)
+            hex_key = u"%s.%s" % (now, counter)
+            newtext = u"%s.%s%s" % (key_noe, hex_key, ext)
             newtext = os.path.join(path, newtext)
             if not os.path.exists(newtext):
                 break
