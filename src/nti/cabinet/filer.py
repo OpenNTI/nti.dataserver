@@ -19,6 +19,8 @@ from zope import interface
 
 from nti.base._compat import unicode_
 
+from nti.cabinet.interfaces import DEFAULT_MIME_TYPE
+
 from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceFiler
 
@@ -90,7 +92,7 @@ class DirectoryFiler(object):
 
     def save(self, key, source, contentType=None, bucket=None, overwrite=False,
              relative=True, **kwargs):
-        contentType = contentType or u'application/octet-stream'
+        contentType = contentType or DEFAULT_MIME_TYPE
         key = os.path.split(key)[1]  # proper name
 
         # get output directory

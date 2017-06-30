@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -34,6 +34,7 @@ from nti.cabinet.interfaces import ISourceBucket
 
 from nti.cabinet.tests import SharedConfiguringTestLayer
 
+
 class TestFiler(unittest.TestCase):
 
     layer = SharedConfiguringTestLayer
@@ -46,8 +47,8 @@ class TestFiler(unittest.TestCase):
         try:
             filer = DirectoryFiler(tmp_dir)
             data = self.get_data_source()
-            href = filer.save("ichigo.xml", data, relative=False,
-                              contentType="text/xml", overwrite=True)
+            href = filer.save(u"ichigo.xml", data, relative=False,
+                              contentType=u"text/xml", overwrite=True)
             assert_that(href, is_not(none()))
             assert_that(href, starts_with(tmp_dir))
             assert_that(filer.contains(href), is_(True))
@@ -59,7 +60,8 @@ class TestFiler(unittest.TestCase):
             assert_that(source, has_property('length', is_(9)))
             assert_that(source, has_property('name', is_("ichigo.xml")))
             assert_that(source, has_property('__parent__', is_not(none())))
-            assert_that(source, has_property('filename', ends_with("/ichigo.xml")))
+            assert_that(source, 
+                        has_property('filename', ends_with("/ichigo.xml")))
             assert_that(source, has_property('contentType', is_("text/xml")))
 
             assert_that(source.read(), is_("<ichigo/>"))
@@ -74,17 +76,17 @@ class TestFiler(unittest.TestCase):
             assert_that(source, is_(none()))
 
             data = self.get_data_source()
-            href = filer.save("ichigo.xml",
+            href = filer.save(u"ichigo.xml",
                               data,
-                              contentType="text/xml",
+                              contentType=u"text/xml",
                               overwrite=False)
             assert_that(href, does_not(ends_with("ichigo.xml")))
 
             data = self.get_data_source()
-            href = filer.save("ichigo.xml",
+            href = filer.save(u"ichigo.xml",
                               data,
-                              bucket="bleach",
-                              contentType="text/xml",
+                              bucket=u"bleach",
+                              contentType=u"text/xml",
                               overwrite=True)
             assert_that(href, ends_with("bleach/ichigo.xml"))
             assert_that(filer.is_bucket("bleach"), is_(True))
@@ -100,26 +102,27 @@ class TestFiler(unittest.TestCase):
             assert_that(ichigo, is_not(none()))
 
             listed = bucket.enumerateChildren()
-            assert_that(listed, is_([u'bleach/ichigo.xml']))
+            assert_that(listed, is_(['bleach/ichigo.xml']))
 
             foo = bucket.getChildNamed("foo.xml")
             assert_that(foo, is_(none()))
 
             data = self.get_data_source()
-            href = filer.save("ichigo.xml",
+            href = filer.save(u"ichigo.xml",
                               data,
-                              bucket="bleach/souls",
-                              contentType="text/xml",
+                              bucket=u"bleach/souls",
+                              contentType=u"text/xml",
                               overwrite=True)
             assert_that(href, ends_with("bleach/souls/ichigo.xml"))
 
             assert_that(filer.contains(href), is_(True))
-            assert_that(filer.contains("ichigo.xml", "bleach/souls"), is_(True))
+            assert_that(filer.contains("ichigo.xml", "bleach/souls"), 
+                        is_(True))
 
             listed = filer.list("bleach")
-            assert_that(listed, is_([u'bleach/ichigo.xml', u'bleach/souls']))
-            assert_that(filer.is_bucket(u'bleach/souls'), is_(True))
-            assert_that(filer.is_bucket(u'bleach/ichigo.xml'), is_(False))
+            assert_that(listed, is_(['bleach/ichigo.xml', 'bleach/souls']))
+            assert_that(filer.is_bucket('bleach/souls'), is_(True))
+            assert_that(filer.is_bucket('bleach/ichigo.xml'), is_(False))
 
             assert_that(filer.remove(href), is_(True))
             source = filer.get(href)

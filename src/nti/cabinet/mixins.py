@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -21,6 +21,8 @@ from zope.cachedescriptors.property import CachedProperty
 from zope.proxy import ProxyBase
 
 from nti.base.interfaces import ILastModified
+
+from nti.cabinet.interfaces import DEFAULT_MIME_TYPE
 
 from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceBucket
@@ -126,7 +128,7 @@ class SourceProxy(ProxyBase):
         self.filename = filename
         self.createdTime = createdTime or 0
         self.lastModified = lastModified or 0
-        self.contentType = contentType or u'application/octet-stream'
+        self.contentType = contentType or DEFAULT_MIME_TYPE
 
     @readproperty
     def mode(self):
@@ -166,7 +168,7 @@ class SourceFile(object):
         self.name = name
         self.path = path or u''
         self._time = time.time()
-        self.contentType = contentType or u'application/octet-stream'
+        self.contentType = contentType or DEFAULT_MIME_TYPE
         if data is not None:
             self.data = data
         if createdTime is not None:
