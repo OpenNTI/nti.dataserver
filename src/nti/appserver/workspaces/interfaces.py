@@ -106,3 +106,8 @@ zope.deferredimport.deprecatedFrom(
     "Moved to nti.app.contentlibrary.workspaces.interfaces ",
     "nti.app.contentlibrary.workspaces.interfaces",
     "ILibraryCollection")
+
+class ISiteAdminWorkspace(IWorkspace):
+    """
+    Workspace for a particular site admin
+    """

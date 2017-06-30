@@ -22,7 +22,7 @@ from zope.traversing.interfaces import IPathAdapter
 
 from nti.appserver import SITE_ADMIN
 
-from nti.appserver.interfaces import ISiteAdminWorkspace
+from nti.appserver.workspaces.interfaces import ISiteAdminWorkspace
 
 from nti.appserver.workspaces.interfaces import IUserService
 
