@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import time
-from six import StringIO
+from io import BytesIO
 
 from zope import interface
 
@@ -199,7 +199,7 @@ class SourceFile(object):
 
     @CachedProperty('data')
     def _v_fp(self):
-        return StringIO(self.data)
+        return BytesIO(self.data)
 
     def read(self, size=-1):
         return self._v_fp.read(size) if size != -1 else self.data
