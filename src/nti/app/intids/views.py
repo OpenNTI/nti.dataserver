@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -68,48 +68,41 @@ class IntIdResolverView(AbstractAuthenticatedView):
         request = self.request
         uid = request.subpath[0] if request.subpath else ''
         if uid is None:
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _('Must specify an intid.'),
-                    u'code': 'MissingIntId',
-                },
-                None)
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Must specify an intid.'),
+                                'code': 'MissingIntId',
+                             },
+                             None)
         try:
             uid = int(uid)
         except (ValueError, TypeError):
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _('Must specify a valid intid.'),
-                    u'code': 'InvalidIntId',
-                },
-                None)
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Must specify a valid intid.'),
+                                'code': 'InvalidIntId',
+                             },
+                             None)
         intids = component.getUtility(IIntIds)
         try:
             result = intids.queryObject(uid)
         except Exception as e:
             exc_info = sys.exc_info()
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': str(e),
-                    u'code': e.__class__.__name__,
-                },
-                exc_info[2])
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': str(e),
+                                'code': e.__class__.__name__,
+                             },
+                             exc_info[2])
         if result is None:
-            raise_json_error(
-                self.request,
-                hexc.HTTPNotFound,
-                {
-                    u'message': _('Intid not found.'),
-                    u'code': 'IntIdNotFound',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPNotFound,
+                             {
+                                'message': _(u'Intid not found.'),
+                                'code': 'IntIdNotFound',
+                             },
+                             None)
         return result
