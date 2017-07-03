@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -41,30 +41,30 @@ class TestModel(unittest.TestCase):
     layer = SharedConfiguringTestLayer
 
     def test_interface(self):
-        assert_that(ContentFolder(name="cc"), validly_provides(IContentFolder))
+        assert_that(ContentFolder(name=u"cc"), validly_provides(IContentFolder))
         assert_that(RootFolder(), validly_provides(IRootFolder))
 
     def test_container(self):
         root = RootFolder()
-        f1 = root.add(ContentFolder(name='f1'))
-        f1.add(NamedFile(name="foo"))
+        f1 = root.add(ContentFolder(name=u'f1'))
+        f1.add(NamedFile(name=u"foo"))
         assert_that('foo', is_in(f1))
         self.assertRaises(Exception, f1.__setitem__, 'foo', object())
 
         ext_obj = to_external_object(root)
         assert_that(ext_obj,
                     has_entries(
-                        u'MimeType', u'application/vnd.nextthought.contentrootfolder',
-                        u'name', u'root'))
+                        'MimeType', 'application/vnd.nextthought.contentrootfolder',
+                        'name', 'root'))
         factory = find_factory_for(ext_obj)
         assert_that(factory, is_(none()))
 
         ext_obj = to_external_object(f1)
         assert_that(ext_obj,
                     has_entries(
-                        u'MimeType', u'application/vnd.nextthought.contentfolder',
-                        u'name', u'f1',
-                        u'filename', u'f1'))
+                        'MimeType', 'application/vnd.nextthought.contentfolder',
+                        'name', 'f1',
+                        'filename', 'f1'))
 
         factory = find_factory_for(ext_obj)
         assert_that(factory, is_not(none()))
@@ -78,8 +78,8 @@ class TestModel(unittest.TestCase):
 
     def test_move(self):
         root = RootFolder()
-        bleach = root.add(ContentFolder(name='bleach'))
-        ichigo = root.add(NamedFile(name="ichigo", data=b'shikai'))
+        bleach = root.add(ContentFolder(name=u'bleach'))
+        ichigo = root.add(NamedFile(name=u"ichigo", data=b'shikai'))
 
         root.moveTo(ichigo, bleach, 'aizen')
         assert_that('ichigo', does_not(is_in(root)))
@@ -92,8 +92,8 @@ class TestModel(unittest.TestCase):
 
     def test_copy(self):
         root = RootFolder()
-        bleach = root.add(ContentFolder(name='bleach'))
-        ichigo = root.add(NamedFile(name="ichigo", data=b'shikai'))
+        bleach = root.add(ContentFolder(name=u'bleach'))
+        ichigo = root.add(NamedFile(name=u"ichigo", data=b'shikai'))
 
         aizen = root.copyTo(ichigo, bleach, 'aizen')
         assert_that(aizen, is_not(none()))
@@ -104,7 +104,7 @@ class TestModel(unittest.TestCase):
         assert_that(same, is_not(none()))
         assert_that(same, is_(ichigo))
 
-        aizen = root.copyTo(ichigo, newName='aizen')
+        aizen = root.copyTo(ichigo, newName=u'aizen')
         assert_that(aizen, is_not(none()))
         assert_that(aizen, is_not(ichigo))
         assert_that(aizen, has_property('data', is_(b'shikai')))

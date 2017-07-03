@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -18,7 +18,7 @@ from zope.location import locate
 
 import BTrees
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.contentfolder.interfaces import INameAdapter
 from nti.contentfolder.interfaces import IPathAdapter
@@ -95,7 +95,7 @@ class ContainerIdIndex(AttributeValueIndex):
 
 class ValidatingCreator(object):
 
-    __slots__ = (b'creator',)
+    __slots__ = ('creator',)
 
     def __init__(self, obj, default=None):
         if    IFile.providedBy(obj) \
@@ -104,7 +104,7 @@ class ValidatingCreator(object):
             creator = getattr(creator, 'username', creator)
             creator = getattr(creator, 'id', creator)
             if creator:
-                self.creator = unicode_(creator.lower())
+                self.creator = text_(creator.lower())
 
     def __reduce__(self):
         raise TypeError()
@@ -137,7 +137,7 @@ class NameIndex(AttributeValueIndex):
 
 class ValidatingCreatedTime(object):
 
-    __slots__ = (b'createdTime',)
+    __slots__ = ('createdTime',)
 
     def __init__(self, obj, default=None):
         if    IFile.providedBy(obj) \
@@ -161,7 +161,7 @@ def CreatedTimeIndex(family=None):
 
 class ValidatingLastModified(object):
 
-    __slots__ = (b'lastModified',)
+    __slots__ = ('lastModified',)
 
     def __init__(self, obj, default=None):
         if    IFile.providedBy(obj) \

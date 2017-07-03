@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -33,11 +33,11 @@ class TestUtils(unittest.TestCase):
 
     def test_traverse(self):
         root = RootFolder()
-        root.add(ContentFolder(name='home')) \
-            .add(ContentFolder(name='users')) \
-            .add(ContentFolder(name='ichigo')) \
-            .add(ContentFolder(name='bankai')) \
-            .add(NamedFile(name='info.pdf'))
+        root.add(ContentFolder(name=u'home')) \
+            .add(ContentFolder(name=u'users')) \
+            .add(ContentFolder(name=u'ichigo')) \
+            .add(ContentFolder(name=u'bankai')) \
+            .add(NamedFile(name=u'info.pdf'))
         assert_that(traverse(root), is_(root))
         assert_that(traverse(root, '/'), is_(root))
         assert_that(traverse(root, 'home'), has_property('name', 'home'))

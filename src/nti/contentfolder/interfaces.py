@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -36,29 +36,29 @@ class INamedContainer(IContained,
                       IContentContainer,
                       ILastModified,
                       ICreated):
-    tags = ListOrTuple(ValidTextLine(title="A single tag"), required=False)
+    tags = ListOrTuple(ValidTextLine(title=u"A single tag"), required=False)
 
-    name = ValidTextLine(title="Folder URL-safe name", required=True)
+    name = ValidTextLine(title=u"Folder URL-safe name", required=True)
 
-    filename = ValidTextLine(title="Folder name", required=True)
+    filename = ValidTextLine(title=u"Folder name", required=True)
 
     # dublin core
-    title = ValidTextLine(title="Folder title",
+    title = ValidTextLine(title=u"Folder title",
                           required=False,
                           default=None)
 
-    description = ValidTextLine(title="Folder description",
+    description = ValidTextLine(title=u"Folder description",
                                 required=False,
                                 default=None)
 
-    use_blobs = Bool(title="Use blobs flag", required=True, default=True)
+    use_blobs = Bool(title=u"Use blobs flag", required=True, default=True)
     use_blobs.setTaggedValue('_ext_excluded_out', True)
 
 
 class IContentFolder(INamedContainer, IAttributeAnnotatable):
 
-    containers(str('.INamedContainer'))
-    contains(str('.INamedContainer'),
+    containers('.INamedContainer')
+    contains('.INamedContainer',
              IPloneNamed)
 
     __parent__.required = False

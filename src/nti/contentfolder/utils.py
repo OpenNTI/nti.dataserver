@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -37,23 +37,23 @@ class NoSuchFileException(TraversalException):
 
 def traverse(current, path=None):
     root = find_interface(current, IRootFolder, strict=False)
-    if not path or path == u'/':
+    if not path or path == '/':
         return root
     __traceback_info__ = current, path
     if path.startswith('/'):
         current = root
         path = path[1:]
 
-    path = path.split(u'/')
+    path = path.split('/')
     if len(path) > 1 and not path[-1]:
         path.pop()
 
     path.reverse()
     while path:
         segment = path.pop()
-        if segment == u'.':
+        if segment == '.':
             continue
-        if segment == u'..':
+        if segment == '..':
             if root != current:
                 current = current.__parent__
             continue
@@ -71,23 +71,23 @@ def traverse(current, path=None):
 
 def mkdirs(current, path, factory):
     root = find_interface(current, IRootFolder, strict=False)
-    if not path or path == u'/':
+    if not path or path == '/':
         return root
     __traceback_info__ = current, path
     if path.startswith('/'):
         current = root
         path = path[1:]
 
-    path = path.split(u'/')
+    path = path.split('/')
     if len(path) > 1 and not path[-1]:
         path.pop()
 
     path.reverse()
     while path:
         segment = path.pop()
-        if segment == u'.':
+        if segment == '.':
             continue
-        if segment == u'..':
+        if segment == '..':
             if root != current:
                 current = current.__parent__
             continue
@@ -113,6 +113,6 @@ def compute_path(context):
         except AttributeError:
             break
     result.reverse()
-    result = '/'.join(result)
-    result = '/' + result if not result.startswith('/') else result
+    result = u'/'.join(result)
+    result = u'/' + result if not result.startswith('/') else result
     return result

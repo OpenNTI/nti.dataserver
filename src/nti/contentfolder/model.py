@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -49,8 +49,8 @@ def checkValidId(uid):
         raise ValueError('Empty or invalid id specified', uid)
 
     if uid in ('.', '..'):
-        raise ValueError(
-            'The id "%s" is invalid because it is not traversable.' % uid)
+        msg = 'The id "%s" is invalid because it is not traversable.' % uid
+        raise ValueError(msg)
 
     if '/' in uid:
         raise ValueError('The id "%s" contains characters illegal.' % uid)
@@ -70,12 +70,14 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
     createDirectFieldProperties(IContentFolder)
 
     __parent__ = None
+
     name = alias('__name__')
 
     tags = None
     creator = None
     parameters = {}
-    mimeType = mime_type = str('application/vnd.nextthought.contentfolder')
+
+    mimeType = mime_type = 'application/vnd.nextthought.contentfolder'
 
     path = None  # BWC
 
@@ -236,8 +238,8 @@ class RootFolder(ContentFolder):
     __external_can_create__ = False
 
     creator = system_user.id
-    mimeType = mime_type = str('application/vnd.nextthought.contentrootfolder')
+    mimeType = mime_type = 'application/vnd.nextthought.contentrootfolder'
 
     def __init__(self, *args, **kwargs):
-        kwargs['name'] = kwargs.get('name') or 'root'
+        kwargs['name'] = kwargs.get('name') or u'root'
         super(RootFolder, self).__init__(*args, **kwargs)

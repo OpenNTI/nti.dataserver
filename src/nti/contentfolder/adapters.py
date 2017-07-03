@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -12,7 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.contentfolder.interfaces import INameAdapter
 from nti.contentfolder.interfaces import IPathAdapter
@@ -25,7 +25,7 @@ from nti.contentfolder.utils import compute_path
 
 class Path(object):
 
-    __slots__ = (b'path',)
+    __slots__ = ('path',)
 
     def __init__(self, path):
         self.path = path
@@ -44,7 +44,7 @@ def _contentfolder_path_adapter(context):
 
 class MimeType(object):
 
-    __slots__ = (b'mimeType',)
+    __slots__ = ('mimeType',)
 
     def __init__(self, mimeType):
         self.mimeType = mimeType
@@ -59,18 +59,18 @@ def _contentfolder_mimeType_adapter(context):
 
 class Site(object):
 
-    __slots__ = (b'site',)
+    __slots__ = ('site',)
 
     def __init__(self, site):
-        self.site = unicode_(site) if site else None
+        self.site = text_(site) if site else None
 
 
 class Name(object):
 
-    __slots__ = (b'name',)
+    __slots__ = ('name',)
 
     def __init__(self, name):
-        self.name = unicode_(name) if name else None
+        self.name = text_(name) if name else None
 
 
 def name_adapter(context):
@@ -85,10 +85,10 @@ def _contentfolder_name_adapter(context):
 
 class Filename(object):
 
-    __slots__ = (b'filename',)
+    __slots__ = ('filename',)
 
     def __init__(self, name):
-        self.filename = unicode_(name) if name else None
+        self.filename = text_(name) if name else None
 
 
 def filename_adapter(context):
@@ -103,7 +103,7 @@ def _contentfolder_filename_adapter(context):
 
 class Associations(object):
 
-    __slots__ = (b'associations',)
+    __slots__ = ('associations',)
 
     def __init__(self, associations):
         self.associations = associations or ()
@@ -111,7 +111,7 @@ class Associations(object):
 
 class ContainerId(object):
 
-    __slots__ = (b'containerId',)
+    __slots__ = ('containerId',)
 
     def __init__(self, containerId):
         self.containerId = containerId
