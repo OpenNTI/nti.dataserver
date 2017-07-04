@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Search interfaces.
-
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import interface
@@ -104,58 +102,61 @@ deprecated('IContentSearcher', 'Use lastest index implementation')
 class IContentSearcher(interface.Interface):
     pass
 
+
 # search query
 
 
 class IDateTimeRange(interface.Interface):
-    endTime = Number(title="End date/time", required=False)
-    startTime = Number(title="Start date/time", required=False)
+
+    endTime = Number(title=u"End date/time", required=False)
+
+    startTime = Number(title=u"Start date/time", required=False)
 
 
 class ISearchQuery(interface.Interface):
 
-    term = ValidTextLine(title="Query search term", required=True)
+    term = ValidTextLine(title=u"Query search term", required=True)
 
-    username = ValidTextLine(title="User doing the search", required=False)
+    username = ValidTextLine(title=u"User doing the search", required=False)
 
-    language = ValidTextLine(title="Query search term language", required=False,
-                             default='en')
+    language = ValidTextLine(title=u"Query search term language", required=False,
+                             default=u'en')
 
-    packages = ListOrTuple(ValidTextLine(title="Content NTIID to search on"),
+    packages = ListOrTuple(ValidTextLine(title=u"Content NTIID to search on"),
                            required=False)
 
-    searchOn = ListOrTuple(ValidTextLine(title="Content types to search on"),
+    searchOn = ListOrTuple(ValidTextLine(title=u"Content types to search on"),
                            required=False)
 
-    creator = ValidTextLine(title="creator", required=False)
+    creator = ValidTextLine(title=u"creator", required=False)
 
-    creationTime = Object(IDateTimeRange, title="created date-time range",
+    creationTime = Object(IDateTimeRange, title=u"created date-time range",
                           required=False)
 
-    modificationTime = Object(IDateTimeRange, title="last modified time-date range",
+    modificationTime = Object(IDateTimeRange, title=u"last modified time-date range",
                               required=False)
 
-    sortOn = ValidTextLine(title="Field or function to sort by",
+    sortOn = ValidTextLine(title=u"Field or function to sort by",
                            required=False)
 
-    origin = ValidTextLine(title="The raw NTIID where the search was invoked",
+    origin = ValidTextLine(title=u"The raw NTIID where the search was invoked",
                            required=False)
 
-    sortOrder = ValidTextLine(title="descending or ascending  to sort order",
-                              default='descending', required=False)
+    sortOrder = ValidTextLine(title=u"descending or ascending  to sort order",
+                              default=u'descending', required=False)
 
-    applyHighlights = Bool(title="Apply search hit hilights", required=False,
+    applyHighlights = Bool(title=u"Apply search hit hilights", required=False,
                            default=True)
 
-    IsEmpty = Bool(title="Returns true if this is an empty search",
+    IsEmpty = Bool(title=u"Returns true if this is an empty search",
                    required=True, readonly=True)
     IsEmpty.setTaggedValue('_ext_excluded_out', True)
 
-    IsDescendingSortOrder = Bool(title="Returns true if the sortOrder is descending",
+    IsDescendingSortOrder = Bool(title=u"Returns true if the sortOrder is descending",
                                  required=True, readonly=True)
     IsDescendingSortOrder.setTaggedValue('_ext_excluded_out', True)
 
-    context = Dict(ValidTextLine(title='name'),
+    context = Dict(ValidTextLine(title=u'name'),
                    Variant((Object(IString),
                             Object(IList),
                             Object(IDict),
@@ -163,11 +164,16 @@ class ISearchQuery(interface.Interface):
                             Object(INumeric),
                             Object(IUnicode)),
                            variant_raise_when_schema_provided=True,
-                           title="The value"),
-                   title="Search query context", required=False, default={})
+                           title=u"The value"),
+                   title=u"Search query context", required=False, default={})
 
-    items = interface.Attribute('Attributes key/value in context')
+    items = interface.Attribute(u'Attributes key/value in context')
     items.setTaggedValue('_ext_excluded_out', True)
+
+    def get(key, deafult=None):
+        """
+        return the value associated with the key in context
+        """
 
 
 class ISearchQueryValidator(interface.Interface):
@@ -230,9 +236,11 @@ class ISearcher(interface.Interface):
 
 
 class ISearchFragment(interface.Interface):
-    Field = ValidTextLine(title="Matching field", required=True)
-    Matches = ListOrTuple(value_type=ValidText(title='Snippet text'),
-                          title="Snippet text",
+
+    Field = ValidTextLine(title=u"Matching field", required=True)
+
+    Matches = ListOrTuple(value_type=ValidText(title=u'Snippet text'),
+                          title=u"Snippet text",
                           min_length=0,
                           required=True,
                           default=None)
@@ -240,37 +248,41 @@ class ISearchFragment(interface.Interface):
 
 
 class ISearchHit(ILastModified):
-    Query = interface.Attribute("Search query")
+
+    Query = interface.Attribute(u"Search query")
     Query.setTaggedValue('_ext_excluded_out', True)
 
-    Score = Number(title="hit relevance score",
+    Score = Number(title=u"hit relevance score",
                    required=False,
                    default=1.0,
                    min=0.0)
 
-    ID = ValidTextLine(title="hit unique id", required=True)
+    ID = ValidTextLine(title=u"hit unique id", required=True)
 
-    NTIID = ValidTextLine(title="hit object ntiid", required=False)
-    Creator = ValidTextLine(title="Search hit target creator", required=False)
-    Containers = ListOrTuple(value_type=ValidTextLine(title="the ntiid"),
-                             title="The containers",
+    NTIID = ValidTextLine(title=u"hit object ntiid", required=False)
+
+    Creator = ValidTextLine(title=u"Search hit target creator", required=False)
+
+    Containers = ListOrTuple(value_type=ValidTextLine(title=u"the ntiid"),
+                             title=u"The containers",
                              required=False)
 
-    Fragments = ListOrTuple(value_type=Object(ISearchFragment, title="the fragment"),
-                            title="search fragments",
+    Fragments = ListOrTuple(value_type=Object(ISearchFragment, title=u"the fragment"),
+                            title=u"search fragments",
                             required=False)
 
-    TargetMimeType = ValidTextLine(title="Target mimetype", required=True)
+    TargetMimeType = ValidTextLine(title=u"Target mimetype", required=True)
 
     Target = Object(interface.Interface,
-                    title="the object hit",
+                    title=u"the object hit",
                     required=False)
     Target.setTaggedValue('_ext_excluded_out', True)
 
 
 class ITranscriptSearchHit(ISearchHit):
-    EndMilliSecs = Number(title="Media end timestamp", required=False)
-    StartMilliSecs = Number(title="Media start video timestamp",
+    EndMilliSecs = Number(title=u"Media end timestamp", required=False)
+
+    StartMilliSecs = Number(title=u"Media start video timestamp",
                             required=False)
 
 
@@ -301,7 +313,7 @@ class ISearchHitPredicate(interface.Interface):
     Search hit filter - implemented as subscriber.
     """
 
-    __name__ = ValidTextLine(title='Predicate name', required=True)
+    __name__ = ValidTextLine(title=u'Predicate name', required=True)
 
     def allow(item, score=1.0, query=None):
         """
@@ -311,24 +323,24 @@ class ISearchHitPredicate(interface.Interface):
 
 class ISearchHitMetaData(ILastModified):
 
-    TypeCount = Dict(ValidTextLine(title='type'),
-                     Int(title='count'),
-                     title="Search hit type count", required=True)
+    TypeCount = Dict(ValidTextLine(title=u'type'),
+                     Int(title=u'count'),
+                     title=u"Search hit type count", required=True)
 
-    SearchTime = Number(title='Search time', required=True, default=0)
+    SearchTime = Number(title=u'Search time', required=True, default=0)
 
-    ContainerCount = Dict(ValidTextLine(title='container'),
-                          Int(title='count'),
-                          title="Cointainer hit type count",
+    ContainerCount = Dict(ValidTextLine(title=u'container'),
+                          Int(title=u'count'),
+                          title=u"Cointainer hit type count",
                           required=False)
 
-    TotalHitCount = Int(title='Total hit count', required=True,
+    TotalHitCount = Int(title=u'Total hit count', required=True,
                         readonly=True, default=0)
 
-    FilteredCount = Int(title='Total hit filtered', required=True,
+    FilteredCount = Int(title=u'Total hit filtered', required=True,
                         readonly=False, default=0)
 
-    FilteringPredicates = Set(title="Predicates that filter hits",
+    FilteringPredicates = Set(title=u"Predicates that filter hits",
                               required=False)
 
     def track(hit):
@@ -341,18 +353,21 @@ class ISearchHitMetaData(ILastModified):
 
 
 class IBaseSearchResults(interface.Interface):
-    Name = ValidTextLine(title='Results name', required=False)
-    Query = Object(ISearchQuery, title="Search query", required=True)
+
+    Name = ValidTextLine(title=u'Results name', required=False)
+
+    Query = Object(ISearchQuery, title=u"Search query", required=True)
 
 
 class ISearchResults(IBaseSearchResults, ILastModified):
 
-    Hits = IndexedIterable(value_type=Object(ISearchHit, description="A ISearchHit`"),
-                           title="search hit objects",
+    Hits = IndexedIterable(value_type=Object(ISearchHit,
+                                             description=u"A ISearchHit`"),
+                           title=u"search hit objects",
                            required=True)
 
     HitMetaData = Object(ISearchHitMetaData,
-                         title="Search hit metadata",
+                         title=u"Search hit metadata",
                          required=False)
 
     def add(hit):
@@ -387,9 +402,9 @@ class ISearchResults(IBaseSearchResults, ILastModified):
 
 class ISuggestResults(IBaseSearchResults):
 
-    Suggestions = IndexedIterable(title="suggested words",
+    Suggestions = IndexedIterable(title=u"suggested words",
                                   required=True,
-                                  value_type=ValidTextLine(title="suggested word"))
+                                  value_type=ValidTextLine(title=u"suggested word"))
 
     def add(word):
         """
@@ -412,10 +427,11 @@ class ISuggestResults(IBaseSearchResults):
 
 class ISearchResultsList(IIterable, IFiniteSequence):
 
-    Query = Object(ISearchQuery, title="Search query", required=True)
+    Query = Object(ISearchQuery, title=u"Search query", required=True)
 
-    Items = IndexedIterable(value_type=Object(IBaseSearchResults, description="A search result"),
-                            title="search reult",
+    Items = IndexedIterable(value_type=Object(IBaseSearchResults,
+                                              description=u"A search result"),
+                            title=u"search reult",
                             required=False)
 
 
@@ -423,11 +439,16 @@ class ISearchResultsList(IIterable, IFiniteSequence):
 
 
 class ISearchCompletedEvent(interface.Interface):
-    hit_count = Int(title='total hit count')
-    elpased = Float(title="The search elapsed time")
-    user = Object(IEntity, title="The search entity")
-    query = Object(ISearchQuery, title="The search query")
-    results = Object(ISearchResults, title="The results")
+
+    hit_count = Int(title=u'total hit count')
+
+    elpased = Float(title=u"The search elapsed time")
+
+    user = Object(IEntity, title=u"The search entity")
+
+    query = Object(ISearchQuery, title=u"The search query")
+
+    results = Object(ISearchResults, title=u"The results")
 
 
 @interface.implementer(ISearchCompletedEvent)

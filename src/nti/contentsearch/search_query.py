@@ -77,6 +77,11 @@ class QueryObject(SchemaConfigured):
     def items(self):
         return self.context.items() if self.context else ()
 
+    def get(self, key, default=None):
+        if self.context:
+            return self.context.get(key, default)
+        return default
+
     # ---------------
 
     @classmethod
