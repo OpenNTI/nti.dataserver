@@ -21,8 +21,6 @@ from nti.common.string import is_true
 
 from nti.contentprocessing import get_content_translation_table
 
-from nti.contentsearch.content_utils import get_collection_root_ntiid
-
 from nti.contentsearch.interfaces import ISearchQuery
 from nti.contentsearch.interfaces import ISearchPackageResolver
 
@@ -138,13 +136,9 @@ def create_queryobject(username, params, clazz=QueryObject):
 
     ntiid = args['origin'] = params.get('ntiid', None)
     if ntiid != ROOT:
-        package_ntiids = _resolve_package_ntiids(username, ntiid)
-        if package_ntiids:
-            for pid in package_ntiids:
-                root_ntiid = get_collection_root_ntiid(pid)
-                if root_ntiid is not None:
-                    packages.append(root_ntiid)
-    args['packages'] = sorted(set(args['packages']))  # predictable order
+        ntiids = _resolve_package_ntiids(username, ntiid)
+        packages.extend(ntiids)
+    args['packages'] = sorted(args['packages'])  # predictable order
 
     accept = args.pop('accept', None)
     if accept:
@@ -170,8 +164,8 @@ def create_queryobject(username, params, clazz=QueryObject):
                                    modificationTime.endTime)
     sites = get_component_hierarchy_names()
     sites = list(sites) if sites else list()
-    # We want to query for all globally registered objects as well (global
-    # via initialization probably).
+    # We want to query for all globally registered objects as well 
+    # (global via initialization probably).
     sites.append('dataserver2')
     context[u'site'] = sites
 

@@ -194,16 +194,6 @@ class ISearchQueryParser(interface.Interface):
 # searcher
 
 
-class IRootPackageResolver(interface.Interface):
-    """
-    Interface for a registered utility that returns
-    the root of a specified ntiid
-    """
-
-    def resolve(user, ntiid):
-        pass
-
-
 class ISearchPackageResolver(interface.Interface):
     """
     Interface for registered subscribers that returns
