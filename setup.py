@@ -518,6 +518,7 @@ setup(
             'zc.buildout >= 2.2.1',
             # unused/used imports; see also tl.eggdeps
             'z3c.dependencychecker >= 1.11',
+            'z3c.recipe.sphinxdoc',
             # Monitoring stats and instrumenting code
             # See above for python-statsd
             # 'graphite-web >= 0.9.10', # web front end. Requires the /opt/graphite directory. Pulls in twisted.
