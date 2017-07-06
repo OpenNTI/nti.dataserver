@@ -81,8 +81,8 @@
 			 provides="zope.i18n.interfaces.IUserPreferredCharsets"
 			 zcml:condition="not-have in-apidoc" />
 
-	<!-- Country names, language names, flag resources -->
-	<include package="plone.i18n" />
+	<!-- Country resources -->
+	<include package="nti.i18n" />
 
 	<!-- Misc -->
 	<include package="nti.app.i18n" />

@@ -133,6 +133,7 @@ setup(
         'nti.externalization',
         'nti.futures',
         'nti.geventwebsocket',
+        'nti.i18n',
         'nti.links',
         'nti.mimetype',
         'nti.monkey',
@@ -273,7 +274,6 @@ setup(
         'packaging',
         'paste',
         'perfmetrics',  # easy statsd metrics.
-        'plone.i18n',  # provides ISO3166 country/codes and flag images
         'plone.scale',     # image scaling/storage based on PIL
         # much like zope.file, but some image-specific goodness.
         'plone.namedfile',

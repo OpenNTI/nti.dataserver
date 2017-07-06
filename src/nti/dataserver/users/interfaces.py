@@ -33,8 +33,6 @@ from z3c.password.interfaces import InvalidPassword
 
 from z3c.schema.email import isValidMailAddress
 
-from plone.i18n.locales.interfaces import ICcTLDInformation
-
 from nti.coremetadata.schema import ExtendedCompoundModeledContentBody
 
 from nti.dataserver.interfaces import InvalidData
@@ -42,6 +40,8 @@ from nti.dataserver.interfaces import checkCannotBeBlank
 from nti.dataserver.interfaces import FieldCannotBeOnlyWhitespace
 
 from nti.dataserver.users import MessageFactory as _
+
+from nti.i18n.locales.interfaces import ICcTLDInformation
 
 from nti.mailer.interfaces import IEmailAddressable
 
