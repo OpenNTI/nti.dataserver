@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -90,13 +90,13 @@ class Invitation(PersistentCreatedModDateTrackingObject,
 
     def __lt__(self, other):
         try:
-            return (self.code, self.createdTime) < (self.code, self.createdTime)
+            return (self.code, self.createdTime) < (other.code, other.createdTime)
         except AttributeError:  # pragma: no cover
             return NotImplemented
 
     def __gt__(self, other):
         try:
-            return (self.code, self.createdTime) > (self.code, self.createdTime)
+            return (self.code, self.createdTime) > (other.code, other.createdTime)
         except AttributeError:  # pragma: no cover
             return NotImplemented
 
@@ -135,7 +135,7 @@ def install_invitations_container(site_manager_container, intids=None):
     if registry is None:
         registry = InvitationsContainer()
         registry.__parent__ = site_manager_container
-        registry.__name__ = '++etc++invitations-container'
+        registry.__name__ = u'++etc++invitations-container'
         intids.register(registry)
         lsm.registerUtility(registry, provided=IInvitationsContainer)
     return registry

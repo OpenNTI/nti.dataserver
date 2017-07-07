@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -58,9 +58,9 @@ IX_CREATEDTIME = 'createdTime'
 
 class ValidatingSite(object):
 
-    __slots__ = (b'site',)
+    __slots__ = ('site',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, _=None):
         if IInvitation.providedBy(obj):
             site = getSite()
             if site is not None:
@@ -77,9 +77,9 @@ class SiteIndex(AttributeValueIndex):
 
 class ValidatingMimeType(object):
 
-    __slots__ = (b'mimeType',)
+    __slots__ = ('mimeType',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, _=None):
         if IInvitation.providedBy(obj):
             self.mimeType = getattr(obj, 'mimeType', None) \
                          or getattr(obj, 'mime_type', None)
@@ -117,9 +117,9 @@ def ReceiverIndex(family=None):
 
 class ValidatingAccepted(object):
 
-    __slots__ = (b'accepted',)
+    __slots__ = ('accepted',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, _=None):
         if IInvitation.providedBy(obj):
             self.accepted = obj.is_accepted()
 

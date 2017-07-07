@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -18,5 +18,5 @@ from nti.invitations.interfaces import IInvitationSentEvent
 
 
 @component.adapter(IInvitation, IInvitationSentEvent)
-def _on_invitation_sent(invitation, event):
+def _on_invitation_sent(invitation, _):
     invitation.sent = time.time()
