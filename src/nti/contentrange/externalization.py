@@ -17,19 +17,19 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
+from nti.contentrange.interfaces import ITextContext
+from nti.contentrange.interfaces import IDomContentPointer
+from nti.contentrange.interfaces import ITimeContentPointer
+from nti.contentrange.interfaces import ITimeRangeDescription
+from nti.contentrange.interfaces import IContentRangeDescription
+from nti.contentrange.interfaces import ITranscriptContentPointer
+from nti.contentrange.interfaces import ITranscriptRangeDescription
+
 from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.internalization import register_legacy_search_module
 register_legacy_search_module('nti.contentrange.contentrange')
-
-from .interfaces import ITextContext
-from .interfaces import IDomContentPointer
-from .interfaces import ITimeContentPointer
-from .interfaces import ITimeRangeDescription
-from .interfaces import IContentRangeDescription
-from .interfaces import ITranscriptContentPointer
-from .interfaces import ITranscriptRangeDescription
 
 
 @interface.implementer(IInternalObjectIO)
