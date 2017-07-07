@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -60,7 +60,7 @@ class TestModel(unittest.TestCase):
         assert_that(invitation.is_expired(), is_(True))
 
         assert_that(invitation.is_email(), is_(False))
-        invitation.receiver = 'ichigo@bleach.org'
+        invitation.receiver = u'ichigo@bleach.org'
         assert_that(invitation.is_email(), is_(True))
 
     def test_container(self):

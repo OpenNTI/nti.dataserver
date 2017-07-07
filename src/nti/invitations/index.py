@@ -11,8 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from zope.component.hooks import getSite
-
 from zope.catalog.interfaces import ICatalog
 
 from zope.intid.interfaces import IIntIds
@@ -62,9 +60,7 @@ class ValidatingSite(object):
 
     def __init__(self, obj, _=None):
         if IInvitation.providedBy(obj):
-            site = getSite()
-            if site is not None:
-                self.site = site.__name__
+            self.site = obj.site
 
     def __reduce__(self):
         raise TypeError()

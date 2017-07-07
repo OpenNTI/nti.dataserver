@@ -68,6 +68,9 @@ class IInvitation(IContained,
     applicable only to certain users (for example, a list of invited users).
     """
 
+    site = ValidTextLine(title=u"The site name.",
+                         required=False)
+
     code = ValidTextLine(title=u"A unique code that identifies this invitation.",
                          required=False)
 

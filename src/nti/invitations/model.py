@@ -17,6 +17,8 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.cachedescriptors.property import readproperty
 
+from zope.component.hooks import getSite
+
 from zope.container.contained import Contained
 
 from zope.intid.interfaces import IIntIds
@@ -70,6 +72,13 @@ class Invitation(PersistentCreatedModDateTrackingObject,
         SchemaConfigured.__init__(self, *args, **kwargs)
         PersistentCreatedModDateTrackingObject.__init__(self)
 
+    @readproperty
+    def site(self):
+        result = getattr(getSite(), '__name__', None)
+        if result:
+            self.site = result
+        return result
+    
     @readproperty
     def sender(self):
         return SYSTEM_USER_NAME
