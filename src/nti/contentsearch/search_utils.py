@@ -19,7 +19,7 @@ from nti.base._compat import text_
 
 from nti.common.string import is_true
 
-from nti.contentprocessing import get_content_translation_table
+from nti.contentprocessing.content_utils import get_content_translation_table
 
 from nti.contentsearch.interfaces import ISearchQuery
 from nti.contentsearch.interfaces import ISearchPackageResolver

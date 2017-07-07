@@ -264,8 +264,8 @@ import six
 
 from nti.base._compat import unicode_
 
-from nti.contentprocessing import tokenize_content
-from nti.contentprocessing import get_content_translation_table
+from nti.contentprocessing.content_utils import tokenize_content
+from nti.contentprocessing.content_utils import get_content_translation_table
 
 
 def get_content(text=None, language='en'):
