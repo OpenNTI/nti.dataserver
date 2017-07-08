@@ -40,7 +40,7 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import StandardInternalFields
 from nti.externalization.interfaces import IInternalObjectExternalizer
 
-from nti.mimetype import decorateMimeType
+from nti.mimetype.externalization import decorateMimeType
 
 from nti.namedfile.interfaces import INamedFile
 

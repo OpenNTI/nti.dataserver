@@ -57,7 +57,7 @@ from nti.externalization.proxy import removeAllProxies
 
 from nti.links.links import Link
 
-from nti.mimetype import decorateMimeType
+from nti.mimetype.externalization import decorateMimeType
 
 from nti.schema.interfaces import find_most_derived_interface
 
