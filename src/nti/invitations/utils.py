@@ -24,6 +24,7 @@ from BTrees.LFBTree import LFSet
 
 from nti.base._compat import text_
 
+from nti.invitations.index import IX_SITE
 from nti.invitations.index import IX_SENDER
 from nti.invitations.index import IX_ACCEPTED
 from nti.invitations.index import IX_RECEIVER
@@ -53,6 +54,42 @@ def get_invitation_actor(invitation, user=None):
     return actor
 
 
+def get_invitations_ids(sites=None, receivers=None, senders=None, catalog=None):
+    query = {}
+    catalog = get_invitations_catalog() if catalog is None else catalog
+
+    # add sites
+    if isinstance(sites, six.string_types):
+        sites = sites.split()
+    if sites:
+        query[IX_SITE] = {'any_of': sites}
+
+    # add senders and receivers
+    for name, values in ((IX_RECEIVER, receivers), (IX_SENDER, senders)):
+        if values:
+            if isinstance(values, six.string_types):
+                values = values.split()
+            query[name] = {'any_of': values}
+
+    # run query if available
+    if query:
+        doc_ids = catalog.apply(query) or ()
+    else:
+        doc_ids = list(catalog[IX_SITE].documents_to_values.keys())
+    return doc_ids
+
+
+def get_invitations(sites=None, receivers=None, senders=None, catalog=None):
+    result = []
+    intids = component.getUtility(IIntIds)
+    doc_ids = get_invitations_ids(sites, receivers, senders, catalog)
+    for uid in doc_ids or ():
+        obj = intids.queryObject(uid)
+        if IInvitation.providedBy(obj):
+            result.append(obj)
+    return result
+
+
 def get_pending_invitation_ids(receivers=None, now=None, catalog=None):
     if isinstance(receivers, six.string_types):
         receivers = set(receivers.split(","))
@@ -75,8 +112,8 @@ def get_pending_invitation_ids(receivers=None, now=None, catalog=None):
     query[IX_EXPIRYTIME] = {'between': (now, MAX_TS)}
     in_between_ids = catalog.apply(query) or LFSet()
 
-    result = catalog.family.IF.multiunion([no_expire_ids, in_between_ids])
-    return result
+    # return union
+    return catalog.family.IF.multiunion([no_expire_ids, in_between_ids])
 
 
 def get_pending_invitations(receivers=None, now=None, catalog=None):

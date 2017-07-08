@@ -20,6 +20,7 @@ from nti.invitations.index import create_invitations_catalog
 
 from nti.invitations.model import Invitation
 
+from nti.invitations.utils import get_invitations_ids
 from nti.invitations.utils import get_expired_invitation_ids
 from nti.invitations.utils import get_pending_invitation_ids
 from nti.invitations.utils import get_random_invitation_code
@@ -31,12 +32,13 @@ class TestUtils(unittest.TestCase):
 
     layer = SharedConfiguringTestLayer
 
-    def test_get_pending_invitations(self):
+    def create_invitations(self):
         catalog = create_invitations_catalog(family=BTrees.family64)
         i1 = Invitation(code=u'bleach',
                         receiver=u'ichigo',
                         sender=u'aizen',
                         accepted=False,
+                        site=u"dataserver2",
                         expiryTime=0.0)
         catalog.index_doc(1, i1)
 
@@ -44,6 +46,7 @@ class TestUtils(unittest.TestCase):
                         receiver=u'ichigo',
                         sender=u'aizen',
                         accepted=False,
+                        site=u"dataserver2",
                         expiryTime=time.time() - 2000)
         catalog.index_doc(2, i2)
 
@@ -51,8 +54,39 @@ class TestUtils(unittest.TestCase):
                         receiver=u'ichigo',
                         sender=u'aizen',
                         accepted=False,
+                        site=u"dataserver2",
                         expiryTime=time.time() + 1000)
         catalog.index_doc(3, i3)
+        return catalog
+
+    def test_get_invitations(self):
+        catalog = self.create_invitations()
+        invitations = get_invitations_ids(catalog=catalog)
+        assert_that(invitations, has_length(3))
+
+        invitations = get_invitations_ids(catalog=catalog)
+        assert_that(invitations, has_length(3))
+
+        invitations = get_invitations_ids(receivers="aizen", catalog=catalog)
+        assert_that(invitations, has_length(0))
+
+        invitations = get_invitations_ids(receivers="ichigo", catalog=catalog)
+        assert_that(invitations, has_length(3))
+
+        invitations = get_invitations_ids(senders="ichigo", catalog=catalog)
+        assert_that(invitations, has_length(0))
+
+        invitations = get_invitations_ids(senders="aizen", catalog=catalog)
+        assert_that(invitations, has_length(3))
+
+        invitations = get_invitations_ids(sites="xzy", catalog=catalog)
+        assert_that(invitations, has_length(0))
+
+        invitations = get_invitations_ids(sites="dataserver2", catalog=catalog)
+        assert_that(invitations, has_length(3))
+
+    def test_get_pending_invitations(self):
+        catalog = self.create_invitations()
 
         result = get_pending_invitation_ids("ichigo", catalog=catalog)
         assert_that(result, has_length(2))
