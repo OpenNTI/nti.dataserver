@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+import codecs
 from setuptools import setup, find_packages
 
 entry_points = {
@@ -88,24 +88,34 @@ TESTS_REQUIRE = [
     'nti.app.testing',
 ]
 
+
+def _read(fname):
+    with codecs.open(fname, encoding='utf-8') as f:
+        return f.read()
+
+
 setup(
     name='nti.dataserver',
-    version='0.0',
-    keywords='web pyramid pylons',
-    author='NTI',
-    author_email='jason.madden@nextthought.com',
+    version=_read('version.txt').strip(),
+    author='Jason Madden',
+    author_email='jason@nextthought.com',
     description='NextThought Dataserver',
-    long_description='Dataserver README',
+    long_description=(_read('README.rst') + '\n\n' + _read('CHANGES.rst')),
+    license='Apache',
+    keywords='web pyramid pylons',
     classifiers=[
+        'Intended Audience :: Developers :: Education',
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Framework :: Pylons :: ZODB :: Pyramid',
         "Development Status :: 4 - Beta",
-        "Intended Audience :: Developers :: Education",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2.7",
-        "Framework :: Pylons :: ZODB :: Pyramid",
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: Implementation :: CPython',
         "Internet :: WWW/HTTP",
-        "Natural Language :: English",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     ],
+    url="https://github.com/NextThought/nti.dataserver",
     # Support unit tests of package
     tests_require=TESTS_REQUIRE,  # Needed for e.g., tox
     setup_requires=[
@@ -540,5 +550,4 @@ setup(
     include_package_data=True,
     namespace_packages=['nti'],
     entry_points=entry_points,
-    test_suite='nose2.compat.unittest.collector'
 )
