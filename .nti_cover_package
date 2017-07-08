@@ -1,1 +1,18 @@
-apns, appserver, assessment, chatserver, contentfragments, contentlibrary, contentmanagement, contentprocessing, contentrange, contentrendering, contentsearch, dataserver, dictserver, externalization, intid, mimetype, monkey, ntiids, openmath, processlifetime, socketio, store, tests, utils, wref, zodb
+nti.apns
+nti.app
+nti.appserver
+nti.cabinet
+nti.chatserver
+nti.contentfile
+nti.contentfolder
+nti.contentrange
+nti.contentsearch
+nti.dataserver
+nti.datastructures
+nti.dictserver
+nti.intid
+nti.invitations
+nti.mailer
+nti.processlifetime
+nti.securitypolicy
+nti.socketio
