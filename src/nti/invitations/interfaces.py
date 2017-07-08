@@ -114,7 +114,7 @@ class IInvitationsContainer(IContained,
     A central registry of invitations. Intended to be used as a utility registered
     for the site.
     """
-    contains(str('.IInvitation'))
+    contains('.IInvitation')
 
     def add(invitation):
         """
