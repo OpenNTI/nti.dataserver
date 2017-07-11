@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_
 from hamcrest import contains
 from hamcrest import not_none
+from hamcrest import has_length
 from hamcrest import assert_that
 
 from nti.testing.matchers import is_empty
@@ -84,6 +85,10 @@ class TestMetadataIndex(DataserverLayerTest):
 
         assert_that(list(catalog.searchResults(topics='topLevelContent')),
                     contains(root_note))
+        
+        assert_that(list(catalog.searchResults(topics='isUserGeneratedData')),
+                    has_length(2))
+
 
     @WithMockDSTrans
     def test_deleting_creator_of_reply(self):
