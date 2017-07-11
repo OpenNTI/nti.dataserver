@@ -407,29 +407,29 @@ def RevSharedWithIndex(family=None):
                                  family=family)
 
 
-IX_TOPICS = u'topics'
-IX_CREATOR = u'creator'
-IX_MIMETYPE = u'mimeType'
-IX_TAGGEDTO = u'taggedTo'
-IX_SHAREDWITH = u'sharedWith'
-IX_CONTAINERID = u'containerId'
-IX_CREATEDTIME = u'createdTime'
-IX_LASTMODIFIED = u'lastModified'
-IX_REVSHAREDWITH = u'revSharedWith'
-IX_REPLIES_TO_CREATOR = u'repliesToCreator'
+IX_TOPICS = 'topics'
+IX_CREATOR = 'creator'
+IX_MIMETYPE = 'mimeType'
+IX_TAGGEDTO = 'taggedTo'
+IX_SHAREDWITH = 'sharedWith'
+IX_CONTAINERID = 'containerId'
+IX_CREATEDTIME = 'createdTime'
+IX_LASTMODIFIED = 'lastModified'
+IX_REVSHAREDWITH = 'revSharedWith'
+IX_REPLIES_TO_CREATOR = 'repliesToCreator'
 
 #: The name of the topic/group in the topics index
 #: that stores top-level content.
 #: See :class:`TopLevelContentExtentFilteredSet`
-TP_TOP_LEVEL_CONTENT = u'topLevelContent'
+TP_TOP_LEVEL_CONTENT = 'topLevelContent'
 
 #: The name of the topic/group in the topics index
 #: that stores deleted placeholders.
 #: See :class:`DeletedObjectPlaceholderExtentFilteredSet`
-TP_DELETED_PLACEHOLDER = u'deletedObjectPlaceholder'
+TP_DELETED_PLACEHOLDER = 'deletedObjectPlaceholder'
 
 #: See :class:`IUserGeneratedData`
-TP_USER_GENERATED_DATA = u'isUserGeneratedData'
+TP_USER_GENERATED_DATA = 'isUserGeneratedData'
 
 
 @interface.implementer(IMetadataCatalog)
@@ -467,7 +467,7 @@ def create_metadata_catalog(catalog=None, family=None):
         locate(index, catalog, name)
         catalog[name] = index
 
-    topic_index = catalog['topics']
+    topic_index = catalog[IX_TOPICS]
     for filter_id, factory in ((TP_TOP_LEVEL_CONTENT, TopLevelContentExtentFilteredSet),
                                (TP_USER_GENERATED_DATA, IsUserGeneratedDataExtentFilteredSet),
                                (TP_DELETED_PLACEHOLDER, DeletedObjectPlaceholderExtentFilteredSet)):
