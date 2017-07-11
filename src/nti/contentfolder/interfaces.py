@@ -21,8 +21,7 @@ from zope.container.interfaces import IContentContainer
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
-from plone.namedfile.interfaces import INamed as IPloneNamed
-
+from nti.base.interfaces import IFile
 from nti.base.interfaces import ICreated
 from nti.base.interfaces import ILastModified
 
@@ -59,7 +58,7 @@ class IContentFolder(INamedContainer, IAttributeAnnotatable):
 
     containers('.INamedContainer')
     contains('.INamedContainer',
-             IPloneNamed)
+             IFile)
 
     __parent__.required = False
     __setitem__.__doc__ = None
