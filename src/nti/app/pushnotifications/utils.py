@@ -18,6 +18,8 @@ from zope.intid.interfaces import IIntIds
 
 from itsdangerous import JSONWebSignatureSerializer as SignatureSerializer
 
+from nti.base._compat import text_
+
 from nti.dataserver.users import User
 
 def _signature(username, secret_key):
@@ -35,7 +37,7 @@ def validate_signature( user, signature, secret_key=None ):
 
 	if not secret_key:
 		uid = intids.getId(user)
-		secret_key = unicode(uid)
+		secret_key = text_(uid)
 
 	s = SignatureSerializer(secret_key)
 	data = s.loads(signature)

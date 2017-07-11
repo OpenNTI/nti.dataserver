@@ -35,11 +35,13 @@ from pyramid.threadlocal import get_current_request
 
 from nti.app.externalization import MessageFactory as _
 
+from nti.base._compat import text_
+
 
 def _json_error_map(o):
     if isinstance(o, set):
         return list(o)
-    return unicode(o)
+    return text_(o)
 
 
 def raise_json_error(request,
@@ -76,9 +78,9 @@ def raise_json_error(request,
         try:
             v = json.dumps(v, ensure_ascii=False, default=_json_error_map)
         except TypeError:
-            v = json.dumps({'UnrepresentableError': unicode(v)})
+            v = json.dumps({'UnrepresentableError': text_(v)})
     else:
-        v = unicode(v)
+        v = text_(v)
 
     result = factory(message)
     result.text = v

@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import cgi
+import six
 import sys
 import collections
 
@@ -68,13 +69,13 @@ def class_name_from_content_type(request):
 
 
 def _handle_unicode(value, request):
-    if isinstance(value, unicode):  # already unicode
+    if isinstance(value, six.text_type):  # already unicode
         return value
     try:
-        value = unicode(value, request.charset)
+        value = value.decode(request.charset)
     except UnicodeError:
         # Try the most common web encoding
-        value = unicode(value, 'iso-8859-1')
+        value = value.decode('iso-8859-1')
     return value
 
 

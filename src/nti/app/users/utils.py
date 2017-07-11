@@ -39,6 +39,8 @@ from nti.app.users import VERIFY_USER_EMAIL_VIEW
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
+from nti.base._compat import text_
+
 from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users import User
@@ -84,7 +86,7 @@ def generate_mail_verification_pair(user, email=None, secret_key=None):
 
     if not secret_key:
         uid = intids.getId(user)
-        secret_key = unicode(uid)
+        secret_key = text_(uid)
 
     result = _signature_and_token(username, email, secret_key)
     return result
@@ -107,7 +109,7 @@ def get_verification_signature_data(user, signature, params=None,
 
     if not secret_key:
         uid = intids.getId(user)
-        secret_key = unicode(uid)
+        secret_key = text_(uid)
 
     s = SignatureSerializer(secret_key)
     data = s.loads(signature)

@@ -29,7 +29,7 @@ from zope.cachedescriptors.property import Lazy
 
 from zope.publisher.interfaces.browser import IBrowserRequest
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.common._compat import sleep
 
@@ -318,12 +318,12 @@ class DefaultBulkEmailProcessLoop(object):
 				sleep( 10 ) # arbitrary sleep time
 			except SESDailyQuotaExceededError as e:
 				logger.warn( "Max daily quota exceeded; stopping process. Resume later. %s", e )
-				self.metadata.status = unicode(e)
+				self.metadata.status = text_(e)
 				self.metadata.save()
 				return
 			except (SESError,Exception) as e:
 				logger.exception( "Failed to send email for unknown reason" )
-				self.metadata.status = unicode(e)
+				self.metadata.status = text_(e)
 				self.metadata.save()
 				try:
 					del self.sesconn
@@ -365,5 +365,5 @@ class SiteTransactedBulkEmailProcessLoop(DefaultBulkEmailProcessLoop):
 	def process_one_recipient(self):
 		return self._runner(self._super_process_one_recipient,
 							site_names=self.possible_site_names,
-							job_name=unicode_(self.__name__),
+							job_name=text_(self.__name__),
 							side_effect_free=True)
