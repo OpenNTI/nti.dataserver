@@ -20,6 +20,8 @@ import BTrees
 
 from nti.base._compat import text_
 
+from nti.base.interfaces import IFile
+
 from nti.contentfolder.interfaces import INameAdapter
 from nti.contentfolder.interfaces import IPathAdapter
 from nti.contentfolder.interfaces import ISiteAdapter
@@ -28,8 +30,6 @@ from nti.contentfolder.interfaces import IFilenameAdapter
 from nti.contentfolder.interfaces import IMimeTypeAdapter
 from nti.contentfolder.interfaces import IContainerIdAdapter
 from nti.contentfolder.interfaces import IAssociationsAdapter
-
-from nti.namedfile.interfaces import IFile
 
 from nti.zope_catalog.catalog import Catalog
 
@@ -142,7 +142,7 @@ class ValidatingCreatedTime(object):
     def __init__(self, obj, default=None):
         if    IFile.providedBy(obj) \
            or INamedContainer.providedBy(obj):
-            self.createdTime = obj.createdTime
+            self.createdTime = getattr(obj, 'createdTime', None)
 
     def __reduce__(self):
         raise TypeError()
@@ -166,7 +166,7 @@ class ValidatingLastModified(object):
     def __init__(self, obj, default=None):
         if    IFile.providedBy(obj) \
            or INamedContainer.providedBy(obj):
-            self.lastModified = obj.lastModified
+            self.lastModified = getattr(obj, 'lastModified', None)
 
     def __reduce__(self):
         raise TypeError()
