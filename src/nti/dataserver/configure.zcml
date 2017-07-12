@@ -138,10 +138,10 @@
 	<include package="nti.datastructures" />
 	<include package="nti.contentfragments" />
 	<include package="nti.contentprocessing" />
-	
+
 	<include package="nti.namedfile" file="configure_named.zcml" />
 	<include package="nti.namedfile" file="configure_external.zcml" />
-		
+
 	<include package=".contenttypes" />
 
 	<include package=".saml" />
@@ -225,6 +225,11 @@
 			 provides=".interfaces.IMutableGroupMember"
 			 for=".interfaces.IUser"
 			 name="content-role:" />
+
+    <adapter factory=".authorization._content_role_member_factory"
+             provides=".interfaces.IMutableGroupMember"
+             for=".interfaces.ICommunity"
+             name="content-role:" />
 
 	<!-- Users can be principals and group aware principals -->
 	<adapter factory=".authorization._UserGroupAwarePrincipal"

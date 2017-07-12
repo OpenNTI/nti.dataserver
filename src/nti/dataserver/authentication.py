@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import contextlib
+import itertools
 
 from zope import component
 from zope import interface
@@ -35,22 +36,43 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 from nti.dataserver.interfaces import INoUserEffectivePrincipalResolver
 
-def dynamic_memberships_that_participate_in_security(user, as_principals=True):
+
+def _get_memberships(entity, registry):
+	result = set()
+	for _, adapter in registry.getAdapters((entity,), IGroupMember):
+		result.update(adapter.groups)
+	return result
+
+
+def dynamic_memberships_that_participate_in_security(user,
+													as_principals=True,
+													registry=component):
+	"""
+	Retrieves the dynamic memberships of the user. Also fetches group
+	memberships of these entities. Typically, this should only apply to
+	communities who have content access.
+	"""
 	# Add principals for all the communities that the user is in
 	# These are valid ACL targets because they are in the same namespace
 	# as users (so no need to prefix with community_ or something like that)
 	for membership in getattr(user, 'dynamic_memberships', ()):  # Mostly tests pass in a non-User user_factory
 		# Make sure it's a valid membership
 		if 		IDynamicSharingTargetFriendsList.providedBy(membership) \
-			or (	ICommunity.providedBy(membership) \
+			or (	ICommunity.providedBy(membership)  \
 				and not IUnscopedGlobalCommunity.providedBy(membership)):
-			yield IPrincipal(membership) if as_principals else membership
-			# This is a bit of a hack. Now that we store our principals in a
-			# set. We need hashes to collide when either an id or an NTIID
-			# match. So we return our community principal and the principal
-			# for our community username.
-			if as_principals:
-				yield IPrincipal(membership.username)
+			# We want any memberships of these communities/DFLs
+			entity_memberships = _get_memberships(membership, registry)
+			for entity in itertools.chain((membership,), entity_memberships):
+				yield IPrincipal(entity) if as_principals else entity
+				# This is a bit of a hack. Now that we store our principals in a
+				# set. We need hashes to collide when either an id or an NTIID
+				# match. So we return our community principal and the principal
+				# for our community username.
+				if as_principals:
+					try:
+						yield IPrincipal(entity.username)
+					except AttributeError:
+						pass
 	# This mimics the sharing target's xxx_intids_of_memberships_and_self
 	# which is used as an ACL optimization
 
@@ -110,9 +132,11 @@ def effective_principals(username,
 	result = set()
 	# Query all the available groups for this user,
 	# primary groups (unnamed adapter) and other groups (named adapters)
-	for _, adapter in registry.getAdapters((user,), IGroupMember):
-		result.update(adapter.groups)
-	result.update(_dynamic_memberships_that_participate_in_security(user))
+	memberships = _get_memberships(user, registry)
+	result.update(memberships)
+	dynamic_memberships = _dynamic_memberships_that_participate_in_security(
+													user, registry=registry)
+	result.update(dynamic_memberships)
 
 	# These last three will be duplicates of string-only versions
 	# Ensure that the user (and their NTIID) is in there as a IPrincipal.
