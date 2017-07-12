@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -47,14 +47,13 @@ zope.deferredimport.deprecatedFrom(
 
 
 @component.adapter(None, IModeledContent, IBeforeSequenceAssignedEvent)
-def contain_nested_objects(sequence, parent, event):
+def contain_nested_objects(sequence, parent, _):
     """
     New, incoming objects like a Canvas need to be added to the parent container
     when a sequence containing them is set. (e.g., the body of a Note)
     """
     if sequence is None:
         return
-
     for i, child in enumerate(sequence):
         if IContained.providedBy(child):
             name = getattr(child, '__name__', None) or unicode(i)
