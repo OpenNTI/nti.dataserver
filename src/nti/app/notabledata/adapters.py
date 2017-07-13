@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -41,7 +41,7 @@ from nti.dataserver.metadata.index import TP_TOP_LEVEL_CONTENT
 from nti.dataserver.metadata.index import TP_DELETED_PLACEHOLDER
 
 from nti.dataserver.metadata.index import get_metadata_catalog
-        
+
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.oids import to_external_ntiid_oid
@@ -50,25 +50,25 @@ from nti.invitations.utils import get_pending_invitation_ids
 
 from nti.property.property import annotation_alias
 
-from nti.zope_catalog.catalog import ResultSet
+from nti.zodb import isBroken
+
+_MESSAGEINFO_MYMETYPE = "application/vnd.nextthought.messageinfo"
+
+_DFL_TOPIC_MIMETYPE = "application/vnd.nextthought.forums.dflheadlinetopic"
+_TOPIC_MIMETYPE = "application/vnd.nextthought.forums.communityheadlinetopic"
+_TOPIC_COMMENT_MYMETYPE = "application/vnd.nextthought.forums.generalforumcomment"
 
 _BLOG_ENTRY_NTIID = "tag:nextthought.com,2011-10:%s-Topic:PersonalBlogEntry"
 _BLOG_ENTRY_MIMETYPE = "application/vnd.nextthought.forums.personalblogentry"
 _BLOG_COMMENT_MIMETYPE = "application/vnd.nextthought.forums.personalblogcomment"
 _BLOG_ENTRY_POST_MIMETYPE = "application/vnd.nextthought.forums.personalblogentrypost"
 
-_DFL_TOPIC_MIMETYPE = "application/vnd.nextthought.forums.dflheadlinetopic"
-_TOPIC_MIMETYPE = "application/vnd.nextthought.forums.communityheadlinetopic"
-_TOPIC_COMMENT_MYMETYPE = "application/vnd.nextthought.forums.generalforumcomment"
 
-_MESSAGEINFO_MYMETYPE = "application/vnd.nextthought.messageinfo"
-
-
-class SafeResultSet(ResultSet):
-
-    def __init__(self, uids, uidutil, *args, **kwargs):
-        ResultSet.__init__(self, uids, uidutil, True)
-
+def SafeResultSet(doc_ids, intids):
+    for doc_id in doc_ids or ():
+        obj = intids.queryObject(doc_id)
+        if not isBroken(obj, doc_id):
+            yield obj
 _SafeResultSet = SafeResultSet  # BWC
 
 
@@ -117,7 +117,6 @@ class UserNotableData(AbstractAuthenticatedView):
         container_ids = {
             container_id_idx.documents_to_values[x] for x in docids
         }
-
         return container_id_idx.apply({'any_of': container_ids})
 
     @CachedProperty
@@ -135,8 +134,8 @@ class UserNotableData(AbstractAuthenticatedView):
     def _topics_created_by_me_intids(self):
         catalog = self._catalog
         topic_intids = catalog['mimeType'].apply(
-            {'any_of': (_TOPIC_MIMETYPE,)})
-
+            {'any_of': (_TOPIC_MIMETYPE,)}
+        )
         topics_created_by_me_intids = catalog.family.IF.intersection(topic_intids,
                                                                      self._intids_created_by_me)
         return topics_created_by_me_intids
@@ -155,8 +154,7 @@ class UserNotableData(AbstractAuthenticatedView):
         # should have this as a container id.
         __topic_ntiids = self.__topic_ntiids()
         query = {'any_of': __topic_ntiids}
-        comments_in_my_topics_intids = self._catalog[
-            'containerId'].apply(query)
+        comments_in_my_topics_intids = self._catalog['containerId'].apply(query)
         return comments_in_my_topics_intids
 
     @CachedProperty
@@ -206,7 +204,6 @@ class UserNotableData(AbstractAuthenticatedView):
             # the filtering.
             logger.warn('Slow running query from time 0 to %s on large index.',
                         max_created_time)
-
         query = {'between': (min_created_time, max_created_time)}
         intids_in_time_range = self._catalog[IX_CREATEDTIME].apply(query)
         return intids_in_time_range
@@ -227,10 +224,8 @@ class UserNotableData(AbstractAuthenticatedView):
         query = {'any_of': shared_with_ids}
         intids_shared_to_me = catalog['sharedWith'].apply(query)
 
-        toplevel_intids_extent = catalog[IX_TOPICS][
-            TP_TOP_LEVEL_CONTENT].getExtent()
-        toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(
-            intids_shared_to_me)
+        toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
+        toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
 
         # Blog posts are now top-level, exclude them. It's confusing when both
         # blogs and blog-posts are returned.
@@ -249,8 +244,7 @@ class UserNotableData(AbstractAuthenticatedView):
         intids_replied_to_me = catalog['repliesToCreator'].apply(query)
 
         intids_blog_comments = self.__find_blog_comment_intids()
-        toplevel_intids_blog_comments = toplevel_intids_extent.intersection(
-            intids_blog_comments)
+        toplevel_intids_blog_comments = toplevel_intids_extent.intersection(intids_blog_comments)
 
         query = {'any_of': (_BLOG_ENTRY_MIMETYPE,)}
         blogentry_intids = catalog['mimeType'].apply(query)
@@ -267,8 +261,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
         self._notable_storage.add_intids(safely_viewable_intids, safe=True)
 
-        safely_viewable_intids = catalog.family.IF.multiunion(
-            safely_viewable_intids)
+        safely_viewable_intids = catalog.family.IF.multiunion(safely_viewable_intids)
         if self._intids_in_time_range is not None:
             safely_viewable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
                                                                     safely_viewable_intids)
@@ -283,10 +276,9 @@ class UserNotableData(AbstractAuthenticatedView):
         # TODO: See about optimizing this query plan. ZCatalog has a
         # CatalogPlanner object that we might could use.
         catalog = self._catalog
-        toplevel_intids_extent = catalog[IX_TOPICS][
-            TP_TOP_LEVEL_CONTENT].getExtent()
-        deleted_intids_extent = catalog[IX_TOPICS][
-            TP_DELETED_PLACEHOLDER].getExtent()
+        topics = catalog[IX_TOPICS]
+        toplevel_intids_extent = topics[TP_TOP_LEVEL_CONTENT].getExtent()
+        deleted_intids_extent = topics[TP_DELETED_PLACEHOLDER].getExtent()
 
         # Things tagged to me or my security-aware dynamic memberships
         # XXX: This is probably slow? How many unions does this wind up doing?
@@ -308,8 +300,7 @@ class UserNotableData(AbstractAuthenticatedView):
             intids_by_priority_creators.update(provider.get_notable_intids())
 
         # Top-level things by the instructors...
-        toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(
-            intids_by_priority_creators)
+        toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
 
         # 2014-06-10 - ...taking out blog comments because that might be
         # confusing
@@ -353,7 +344,7 @@ class UserNotableData(AbstractAuthenticatedView):
                 continue
             questionable_obj = uidutil.queryObject(questionable_uid)
             if      questionable_obj is not None \
-                    and security_check(questionable_obj):
+                and security_check(questionable_obj):
                 safely_viewable_intids.add(questionable_uid)
 
         # 2015-07-11 Subtract any message info
@@ -406,8 +397,7 @@ class UserNotableData(AbstractAuthenticatedView):
         # For large lists, an array is more memory efficient then a list,
         # since it uses native storage
         # Py3 porting issue, long went away?
-        array_type = 'l' if isinstance(
-            self._catalog.family.maxint, long) else 'i'
+        array_type = 'l' if isinstance(self._catalog.family.maxint, long) else 'i'
         return array(str(array_type), _sorted)
 
     def iter_notable_intids(self, notable_intids, ignore_missing=False):
@@ -431,8 +421,8 @@ class UserNotableData(AbstractAuthenticatedView):
 
     _NKEY = 'nti.appserver.ugd_query_views._NotableUGD_ExcludedOIDs'
     _not_notable_oids = annotation_alias(_NKEY, annotation_property='remoteUser',
-                                         doc="A set of OIDs to exclude (stored on the user)"
-                                         "We use OID instead of intid to guard against re-use.")
+                                         doc=u"A set of OIDs to exclude (stored on the user)"
+                                         u"We use OID instead of intid to guard against re-use.")
 
     def object_is_not_notable(self, maybe_notable):
         # Right now, we only support this and check it for
@@ -442,6 +432,7 @@ class UserNotableData(AbstractAuthenticatedView):
             if not_notable is None:
                 not_notable = self._not_notable_oids = Set()
             not_notable.add(to_external_ntiid_oid(maybe_notable))
+
 
 from zope import lifecycleevent
 
@@ -522,5 +513,4 @@ class UserNotableDataStorage(Persistent, Contained):
         s = '_safe_intid_set' if safe else '_unsafe_intid_set'
         if s in self.__dict__:  # has Lazy kicked in?
             ids.append(getattr(self, s))
-
 UserNotableDataStorageFactory = an_factory(UserNotableDataStorage)
