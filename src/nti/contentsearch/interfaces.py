@@ -28,7 +28,6 @@ from nti.contentfragments.interfaces import IUnicode
 from nti.dataserver.interfaces import IEntity
 
 from nti.schema.field import Int
-from nti.schema.field import Set
 from nti.schema.field import Bool
 from nti.schema.field import Dict
 from nti.schema.field import Float
@@ -330,8 +329,10 @@ class ISearchHitMetaData(ILastModified):
     FilteredCount = Int(title=u'Total hit filtered', required=True,
                         readonly=False, default=0)
 
-    FilteringPredicates = Set(title=u"Predicates that filter hits",
-                              required=False)
+    FilteringPredicates = Dict(ValidTextLine(title=u'Predicates'),
+                               Int(title=u'count'),
+                               title=u"Predicates that filter hits",
+                               required=False)
 
     def track(hit):
         """

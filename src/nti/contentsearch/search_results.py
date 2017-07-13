@@ -51,15 +51,16 @@ class SearchHitMetaData(object):
 
     def __init__(self):
         self._ref = time.time()
-        self.filtering_predicates = set()
         self.type_count = collections.defaultdict(int)
         self.container_count = collections.defaultdict(int)
+        self.filtering_predicates = collections.defaultdict(int)
 
     def _get_type_count(self):
         return dict(self.type_count)
 
-    def _set_type_count(self, tc):
-        self.type_count.update(tc or {})
+    def _set_type_count(self, data):
+        if data is not None:
+            self.type_count.update(data)
     TypeCount = property(_get_type_count, _set_type_count)
 
     def _get_container_count(self):
@@ -70,10 +71,11 @@ class SearchHitMetaData(object):
     ContainerCount = property(_get_container_count, _set_container_count)
 
     def _get_filtering_predicates(self):
-        return set(self.filtering_predicates)
+        return dict(self.filtering_predicates)
 
-    def _set_filtering_predicates(self, cc):
-        self.filtering_predicates.update(cc or ())
+    def _set_filtering_predicates(self, data):
+        if data is not None:
+            self.filtering_predicates.update(data)
     FilteringPredicates = property(_get_filtering_predicates,
                                    _set_filtering_predicates)
 
@@ -118,8 +120,9 @@ class SearchHitMetaData(object):
         # search time
         self.SearchTime = max(self.SearchTime, other.SearchTime)
 
-        # filtering predicates
-        self.filtering_predicates.update(other.filtering_predicates)
+        # filtering predicates count
+        for k, v in other.filtering_predicates.items():
+            self.filtering_predicates[k] = self.filtering_predicates[k] + v
 
         return self
 
@@ -213,7 +216,8 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
         self.metadata.filtered_count += 1
         name = getattr(predicate, '__name__', None) \
             or predicate.__class__.__name__
-        self.metadata.filtering_predicates.add(name)
+        predicates = self.metadata.filtering_predicates
+        predicates[name] = predicates[name] + 1
 
     def _add(self, hit):
         result = self._add_hit(hit)

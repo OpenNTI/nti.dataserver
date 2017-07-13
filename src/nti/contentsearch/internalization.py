@@ -54,7 +54,7 @@ class _SearchHitMetaDataUpdater(object):
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
         parsed.pop('TotalHitCount', None)  # readonly
-        parsed['FilteringPredicates'] = set(parsed.pop('FilteringPredicates', ()))
+        parsed['FilteringPredicates'] = dict(parsed.pop('FilteringPredicates', {}))
         result = InterfaceObjectIO(
                     self.obj,
                     ISearchHitMetaData).updateFromExternalObject(parsed)
