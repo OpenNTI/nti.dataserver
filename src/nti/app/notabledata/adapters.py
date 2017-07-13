@@ -96,6 +96,15 @@ class UserNotableData(AbstractAuthenticatedView):
     def _notable_storage(self):
         return IUserNotableDataStorage(self.remoteUser)
 
+    def _intersection(self, *ids):
+        return self._catalog.family.IF.intersection(*ids)
+
+    def _difference(self, a, b):
+        return self._catalog.family.IF.difference(a, b)
+
+    def _results(self, doc_ids):
+        return SafeResultSet(doc_ids or (), self._intids)
+        
     def __find_blog_comment_intids(self):
         # We know that blog comments have a container ID that is the
         # blog entry's NTIID. We know that the blog entry's NTIID is deterministic
@@ -136,13 +145,11 @@ class UserNotableData(AbstractAuthenticatedView):
         topic_intids = catalog['mimeType'].apply(
             {'any_of': (_TOPIC_MIMETYPE,)}
         )
-        topics_created_by_me_intids = catalog.family.IF.intersection(topic_intids,
-                                                                     self._intids_created_by_me)
-        return topics_created_by_me_intids
+        return self._intersection(topic_intids, self._intids_created_by_me)
 
     def __topic_ntiids(self, excluded_topic_oids=()):
         topic_ntiids = {
-            x.NTIID or None for x in SafeResultSet(self._topics_created_by_me_intids, self._intids)
+            x.NTIID or None for x in self._results(self._topics_created_by_me_intids)
             if to_external_ntiid_oid(x) not in excluded_topic_oids
         }
         topic_ntiids.discard(None)
@@ -154,8 +161,7 @@ class UserNotableData(AbstractAuthenticatedView):
         # should have this as a container id.
         __topic_ntiids = self.__topic_ntiids()
         query = {'any_of': __topic_ntiids}
-        comments_in_my_topics_intids = self._catalog['containerId'].apply(query)
-        return comments_in_my_topics_intids
+        return self._catalog['containerId'].apply(query)
 
     @CachedProperty
     def _only_included_comments_in_my_topics_intids(self):
@@ -183,9 +189,7 @@ class UserNotableData(AbstractAuthenticatedView):
         all_comments = self._all_comments_in_my_topics_intids
         included_comments = self._only_included_comments_in_my_topics_intids
         # Everything that's in all_comments, but not in included_comments
-        comments_i_dont_want = self._catalog.family.IF.difference(all_comments,
-                                                                  included_comments)
-        return comments_i_dont_want
+        return self._difference(all_comments, included_comments)
 
     @CachedProperty
     def _intids_created_by_me(self):
@@ -205,8 +209,7 @@ class UserNotableData(AbstractAuthenticatedView):
             logger.warn('Slow running query from time 0 to %s on large index.',
                         max_created_time)
         query = {'between': (min_created_time, max_created_time)}
-        intids_in_time_range = self._catalog[IX_CREATEDTIME].apply(query)
-        return intids_in_time_range
+        return self._catalog[IX_CREATEDTIME].apply(query)
 
     @CachedProperty
     def _group_ntiids(self):
@@ -231,14 +234,14 @@ class UserNotableData(AbstractAuthenticatedView):
         # blogs and blog-posts are returned.
         query = {'any_of': (_BLOG_ENTRY_POST_MIMETYPE,)}
         blog_post_intids = catalog['mimeType'].apply(query)
-        toplevel_intids_shared_to_me = catalog.family.IF.difference(toplevel_intids_shared_to_me,
-                                                                    blog_post_intids)
+        toplevel_intids_shared_to_me = self._difference(toplevel_intids_shared_to_me,
+                                                        blog_post_intids)
 
         # Any topics shared to me or my groups
-        topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,
-                                                             _DFL_TOPIC_MIMETYPE)})
-        topic_intids = catalog.family.IF.intersection(topic_intids,
-                                                      intids_shared_to_me)
+        topic_intids = catalog['mimeType'].apply(
+            {'any_of': (_TOPIC_MIMETYPE, _DFL_TOPIC_MIMETYPE)}
+        )
+        topic_intids = self._intersection(topic_intids, intids_shared_to_me)
 
         query = {'any_of': (self.remoteUser.username,)}
         intids_replied_to_me = catalog['repliesToCreator'].apply(query)
@@ -248,8 +251,8 @@ class UserNotableData(AbstractAuthenticatedView):
 
         query = {'any_of': (_BLOG_ENTRY_MIMETYPE,)}
         blogentry_intids = catalog['mimeType'].apply(query)
-        blogentry_intids_shared_to_me = catalog.family.IF.intersection(intids_shared_to_me,
-                                                                       blogentry_intids)
+        blogentry_intids_shared_to_me = self._intersection(intids_shared_to_me,
+                                                           blogentry_intids)
 
         toplevel_intids_forum_comments = self.__find_generalForum_comment_intids()
         safely_viewable_intids = [toplevel_intids_shared_to_me,
@@ -263,13 +266,11 @@ class UserNotableData(AbstractAuthenticatedView):
 
         safely_viewable_intids = catalog.family.IF.multiunion(safely_viewable_intids)
         if self._intids_in_time_range is not None:
-            safely_viewable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
-                                                                    safely_viewable_intids)
+            safely_viewable_intids = self._intersection(self._intids_in_time_range,
+                                                        safely_viewable_intids)
 
         # Subtract any comments that crept in that I don't want
-        safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids,
-                                                              self._topic_comment_intids_to_exclude)
-        return safely_viewable_intids
+        return self._difference(safely_viewable_intids, self._topic_comment_intids_to_exclude)
 
     @CachedProperty('_time_range')
     def _notable_intids(self):
@@ -300,12 +301,13 @@ class UserNotableData(AbstractAuthenticatedView):
             intids_by_priority_creators.update(provider.get_notable_intids())
 
         # Top-level things by the instructors...
-        toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
+        toplevel_intids_by_priority_creators = \
+            toplevel_intids_extent.intersection(intids_by_priority_creators)
 
         # 2014-06-10 - ...taking out blog comments because that might be
         # confusing
-        toplevel_intids_by_priority_creators = catalog.family.IF.difference(toplevel_intids_by_priority_creators,
-                                                                            self._all_blog_comment_intids)
+        toplevel_intids_by_priority_creators = \
+            self._difference(toplevel_intids_by_priority_creators, self._all_blog_comment_intids)
 
         # As-of fall 2014, auto-created topics are not created by the instuctor,
         # but instead a separate entity, so we want to return those too. In the past,
@@ -317,8 +319,8 @@ class UserNotableData(AbstractAuthenticatedView):
         # Now any topics by our a-listers, but only non-excluded topics
         query = {'any_of': (_TOPIC_MIMETYPE,)}
         topic_intids = catalog['mimeType'].apply(query)
-        topic_intids_by_priority_creators = catalog.family.IF.intersection(topic_intids,
-                                                                           intids_by_priority_creators)
+        topic_intids_by_priority_creators = self._intersection(topic_intids,
+                                                               intids_by_priority_creators)
 
         # Sadly, to be able to provide the "TotalItemCount" we have to
         # apply security to all the intids not guaranteed to be
@@ -334,8 +336,8 @@ class UserNotableData(AbstractAuthenticatedView):
         self._notable_storage.add_intids(questionable_intids, safe=False)
         questionable_intids = catalog.family.IF.multiunion(questionable_intids)
         if self._intids_in_time_range is not None:
-            questionable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
-                                                                 questionable_intids)
+            questionable_intids = self._intersection(self._intids_in_time_range,
+                                                     questionable_intids)
 
         uidutil = self._intids
         security_check = self.make_sharing_security_check()
@@ -350,24 +352,20 @@ class UserNotableData(AbstractAuthenticatedView):
         # 2015-07-11 Subtract any message info
         query = {'any_of': (_MESSAGEINFO_MYMETYPE,)}
         messageinfo_intids = catalog['mimeType'].apply(query)
-        safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids,
-                                                              messageinfo_intids)
+        safely_viewable_intids = self._difference(safely_viewable_intids,
+                                                  messageinfo_intids)
 
         # Make sure none of the stuff we created got in
         intids_created_by_me = self._intids_created_by_me
-        safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids,
-                                                              intids_created_by_me)
+        safely_viewable_intids = self._difference(safely_viewable_intids,
+                                                  intids_created_by_me)
 
         # Make sure nothing that's deleted got in
-        non_deleted_safely_viewable_intids = \
-            (safely_viewable_intids - deleted_intids_extent)
-
-        return non_deleted_safely_viewable_intids
+        return (safely_viewable_intids - deleted_intids_extent)
 
     def get_notable_intids(self, min_created_time=None, max_created_time=None):
         self._time_range = (min_created_time, max_created_time)
-        ids = self._notable_intids
-        return ids
+        return self._notable_intids
 
     def __len__(self):
         return len(self.get_notable_intids())
@@ -400,7 +398,7 @@ class UserNotableData(AbstractAuthenticatedView):
         array_type = 'l' if isinstance(self._catalog.family.maxint, long) else 'i'
         return array(str(array_type), _sorted)
 
-    def iter_notable_intids(self, notable_intids, ignore_missing=False):
+    def iter_notable_intids(self, notable_intids):
         return SafeResultSet(notable_intids, self._intids)
 
     _KEY = 'nti.appserver.ugd_query_views._NotableUGDLastViewed'
@@ -441,6 +439,7 @@ from zope.annotation.factory import factory as an_factory
 from zope.container.contained import Contained
 
 from persistent import Persistent
+
 from persistent.list import PersistentList
 
 

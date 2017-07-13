@@ -382,7 +382,7 @@ class DigestEmailCollector(object):
 		total_found = 0
 		# Since we are sorted by time, our notable groups will be sorted by time as well
 		# (groups with most recent events will come first).
-		for o in notable_data.iter_notable_intids(sorted_by_time, ignore_missing=True):
+		for o in notable_data.iter_notable_intids(sorted_by_time):
 			top_level_context = self._get_top_level_context( o )
 			class_dict = values.setdefault( top_level_context, collections.defaultdict( list ) )
 

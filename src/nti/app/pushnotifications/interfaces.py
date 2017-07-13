@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -13,27 +13,29 @@ from zope import interface
 
 from zope.viewlet.interfaces import IViewletManager
 
-class INotableDataEmailViewletManager(IViewletManager):
-	"""
-	Viewlet manager for notable data items in the push email.
 
-	This should be a ``ConditionalViewletManager`` to support
-	ordering and conditional inclusion of rows.
-	"""
+class INotableDataEmailViewletManager(IViewletManager):
+    """
+    Viewlet manager for notable data items in the push email.
+
+    This should be a ``ConditionalViewletManager`` to support
+    ordering and conditional inclusion of rows.
+    """
+
 
 class INotableDataEmailClassifier(interface.Interface):
-	"""
-	An object that knows how to give a named category
-	to some piece of notable data. These should be registered
-	as adapters from the particular kind of data they support.
+    """
+    An object that knows how to give a named category
+    to some piece of notable data. These should be registered
+    as adapters from the particular kind of data they support.
 
-	Typically there should be a viewlet having the same name
-	that can render the grouping in the email.
-	"""
+    Typically there should be a viewlet having the same name
+    that can render the grouping in the email.
+    """
 
-	def classify(notable_data):
-		"""
-		Return the name of the classification for the piece
-		of data. If no classification is found, return nothing
-		and the object will be ignored.
-		"""
+    def classify(notable_data):
+        """
+        Return the name of the classification for the piece
+        of data. If no classification is found, return nothing
+        and the object will be ignored.
+        """
