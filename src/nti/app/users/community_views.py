@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -23,6 +23,8 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
@@ -70,14 +72,22 @@ class CreateCommunityView(AbstractAuthenticatedView,
     def __call__(self):
         externalValue = self.readInput()
         username = externalValue.pop('username', None) \
-            or externalValue.pop('Username', None)
+                or externalValue.pop('Username', None)
         if not username:
-            raise hexc.HTTPUnprocessableEntity(_("Username not specified."))
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Must specify a username.'),
+                             },
+                             None)
         community = Community.get_community(username)
         if community is not None:
-            raise hexc.HTTPUnprocessableEntity(_("Community already exists."))
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Community already exists.'),
+                             },
+                             None)
         args = {'username': username}
         args['external_value'] = externalValue
         community = Community.create_community(**args)
@@ -124,7 +134,9 @@ class ListCommunitiesView(AbstractAuthenticatedView):
 
         intids = component.getUtility(IIntIds)
         catalog = get_entity_catalog()
-        query = {'any_of': (u'application/vnd.nextthought.community',)}
+        query = {
+            'any_of': (u'application/vnd.nextthought.community',)
+        }
         doc_ids = catalog['mimeType'].apply(query)
 
         result = LocatedExternalDict()
@@ -227,7 +239,6 @@ class CommunityMembersView(AbstractAuthenticatedView,
 
     def __call__(self):
         self._batch_params()
-
         community = self.request.context
         if not community.public and self.remoteUser not in community:
             raise hexc.HTTPForbidden()
