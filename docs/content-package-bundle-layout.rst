@@ -2,19 +2,19 @@
 On-Disk ContentPackageBundle Layout
 ===================================
 
-At the start of Nextthought, books mapped directly to ContentPackages.  Conceptually 
-all ContentPackages were thought of as books and all ContentPackages showed 
-up in the UI and could be browsed as if they were books.  With the introduction of courses 
-(specifically content based courses) it became no longer desired to have all 
-ContentPackages show up as “books”.  Those ContentPackages whose TOC 
-specified isCourse=true were presented as Courses, all other ContentPackages continued to 
-be presented as books.  As courses evolved and moved into the dataserver course’s 
-could theoretically reference multiple ContentPackages and those ContentPackages didn’t 
-necessarily need to specify isCourse=true.  The presented books then became the 
-set of ContentPackages not referenced by one of your CourseInstances’ ContentPackageBundles. 
+At the start of Nextthought, books mapped directly to ContentPackages.  Conceptually
+all ContentPackages were thought of as books and all ContentPackages showed
+up in the UI and could be browsed as if they were books.  With the introduction of courses
+(specifically content based courses) it became no longer desired to have all
+ContentPackages show up as "books".  Those ContentPackages whose TOC
+specified isCourse=true were presented as Courses, all other ContentPackages continued to
+be presented as books.  As courses evolved and moved into the dataserver course's
+could theoretically reference multiple ContentPackages and those ContentPackages didn’t
+necessarily need to specify isCourse=true.  The presented books then became the
+set of ContentPackages not referenced by one of your CourseInstances' ContentPackageBundles.
 
-At the time of writing this (October 2015), the hueristics that the UIs use to determine 
-what should be categorized as a book have become both complicated to 
+At the time of writing this (October 2015), the hueristics that the UIs use to determine
+what should be categorized as a book have become both complicated to
 understand and expensive to implement.  To simplify this process, moving forward,
 books in the UI will map directly to ContentPackageBundle objects.
 
@@ -36,7 +36,7 @@ or more content packages, presented as a viewable unit in the user interface.
 Synchronization
 ---------------
 
-ContentPackageBundle objects are part of the NTI Database. How do they get there in 
+ContentPackageBundle objects are part of the NTI Database. How do they get there in
 the first place, and how are they maintained if changes need to occur?
 
 One way would be to manage this through-the-web (with a Web UI).
@@ -138,8 +138,13 @@ bundle. This file is a standard bundle file as defined by
 	{
 		"NTIID": "tag:nextthought.com,2011-10:USSC-Bundle-LawBundle"
 	    "ContentPackages": ["tag:nextthought.com,2011-10:USSC-HTML-Cohen.cohen_v._california."],
-	    "title": "A Title"
-	}
+	    "title": "A Title",
+        "RestrictedAccess": false
+    }
+
+.. note:: ``RestrictedAccess`` defines whether this bundle should be visible
+          to admins/editors or everyone by default. It does not currently imply
+          anything about permissions to the underlying packages of the bundle.
 
 .. note:: Unlike course bundles, bundles beneath ``ContentPackageBundles`` are required to specify an
 		  NTIID.
