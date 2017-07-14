@@ -18,7 +18,8 @@ from zope.component.hooks import site as current_site
 
 from zope.intid.interfaces import IIntIds
 
-from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDataserver 
 from nti.dataserver.interfaces import IOIDResolver
 
 from nti.dataserver.users.index import IX_TOPICS
@@ -49,6 +50,7 @@ def do_evolve(context, generation=generation):
     mock_ds.root = ds_folder
     component.provideUtility(mock_ds, IDataserver)
 
+    count = 0
     with current_site(ds_folder):
         assert component.getSiteManager() == ds_folder.getSiteManager(), \
                "Hooks not installed?"
@@ -65,8 +67,16 @@ def do_evolve(context, generation=generation):
                                                       family=intids.family)
             topics.addFilter(the_filter)
 
+            _users = ds_folder['users']
+            for entity in _users.values():
+                if ICommunity.providedBy(entity):
+                    doc_id = intids.queryId(entity)
+                    if doc_id is not None:
+                        catalog.index_doc(doc_id, entity)
+                        count += 1
+
     component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
-    logger.info('Evolution %s done.', generation)
+    logger.info('Evolution %s done. %s object(s) indexed', generation, count)
 
 
 def evolve(context):
