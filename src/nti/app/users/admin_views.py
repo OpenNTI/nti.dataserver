@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,12 +20,17 @@ from zope import component
 
 from zope.component.hooks import site as current_site
 
+from zope.security.management import endInteraction
+from zope.security.management import restoreInteraction
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -76,19 +81,15 @@ ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 class GetUserBlacklistView(AbstractAuthenticatedView):
 
     def __call__(self):
-        user_blacklist = component.getUtility(IUserBlacklistedStorage)
-
         result = LocatedExternalDict()
         result.__name__ = self.request.view_name
         result.__parent__ = self.request.context
-        result[ITEMS] = vals = {}
-
-        count = 0
+        result[ITEMS] = items = {}
+        user_blacklist = component.getUtility(IUserBlacklistedStorage)
         for key, val in list(user_blacklist):
             val = datetime.fromtimestamp(bit64_int_to_time(val))
-            vals[key] = isodate.datetime_isoformat(val)
-            count += 1
-        result[TOTAL] = result[ITEM_COUNT] = count
+            items[key] = isodate.datetime_isoformat(val)
+        result[TOTAL] = result[ITEM_COUNT] = len(items)
         return result
 
 
@@ -126,18 +127,20 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
         if isinstance(usernames, six.string_types):
             usernames = usernames.split(",")
         if not usernames:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Must specify a username.'),
+                             },
+                             None)
         result = LocatedExternalDict()
         items = result[ITEMS] = []
         result.__name__ = self.request.view_name
         result.__parent__ = self.request.context
-
         user_blacklist = component.getUtility(IUserBlacklistedStorage)
         for username in set(usernames):
             if username and user_blacklist.remove_blacklist_for_user(username):
                 items.append(username)
-
         result[TOTAL] = result[ITEM_COUNT] = len(items)
         return result
 
@@ -155,18 +158,29 @@ class GetEmailVerificationTokenView(AbstractAuthenticatedView):
         values = CaseInsensitiveDict(self.request.params)
         username = values.get('username') or values.get('user')
         if not username:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Must specify a username.'),
+                             },
+                             None)
         user = User.get_user(username)
         if user is None or not IUser.providedBy(user):
-            raise hexc.HTTPUnprocessableEntity(_("User not found."))
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'User not found.'),
+                             },
+                             None)
         profile = IUserProfile(user)
         email = values.get('email') or profile.email
         if not email:
-            raise hexc.HTTPUnprocessableEntity(
-                _("Email address not provided."))
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Email address not provided.'),
+                             },
+                             None)
         signature, token = generate_mail_verification_pair(user, email)
         result = LocatedExternalDict()
         result.__name__ = self.request.view_name
@@ -190,23 +204,39 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
         values = CaseInsensitiveDict(self.readInput())
         username = values.get('username') or values.get('user')
         if not username:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Must specify a username.'),
+                             },
+                             None)
         user = User.get_user(username)
         if user is None or not IUser.providedBy(user):
-            raise hexc.HTTPUnprocessableEntity(_("User not found."))
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'User not found.'),
+                             },
+                             None)
         profile = IUserProfile(user)
         email = values.get('email') or profile.email
         if not email:
-            raise hexc.HTTPUnprocessableEntity(
-                _("Email address not provided."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Email address not provided.'),
+                             },
+                             None)
         else:
             try:
                 checkEmailAddress(email)
             except EmailAddressInvalid:
-                raise hexc.HTTPUnprocessableEntity(_("Invalid email address."))
-
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                    'message': _(u'Invalid email address.'),
+                                 },
+                                 None)
         profile.email = email
         profile.email_verified = True
         verified = reindex_email_verification(user)
@@ -222,20 +252,32 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
                permission=nauth.ACT_NTI_ADMIN,
                request_method='POST',
                context=IDataserverFolder)
-class RemoveUserView(AbstractAuthenticatedView, 
+class RemoveUserView(AbstractAuthenticatedView,
                      ModeledContentUploadRequestUtilsMixin):
 
     def __call__(self):
         values = CaseInsensitiveDict(self.readInput())
         username = values.get('username') or values.get('user')
         if not username:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
-
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Must specify a username.'),
+                             },
+                             None)
         user = User.get_user(username)
         if user is None or not IUser.providedBy(user):
-            raise hexc.HTTPUnprocessableEntity(_("User not found."))
-
-        User.delete_user(username)
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'User not found.'),
+                             },
+                             None)
+        endInteraction()
+        try:
+            User.delete_user(username)
+        finally:
+            restoreInteraction()
         return hexc.HTTPNoContent()
 
 
@@ -252,12 +294,10 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
     def _find_object(self, name):
         if not is_valid_ntiid_string(name):
             return None
-
         # try current site
         result = find_object_with_ntiid(name)
         if result is not None:
             return
-
         # look in other sites
         for site in get_all_host_sites():
             with current_site(site):
@@ -276,7 +316,6 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
             for name in method():
                 if name in self.exclude_containers:
                     continue
-
                 target = self._find_object(name)
                 if target is None:
                     container = user.getContainer(name)
@@ -294,8 +333,9 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
             usernames = set(unquote(usernames).split(","))
         else:
             usernames = all_usernames()
-
         result = LocatedExternalDict()
+        result.__name__ = self.request.view_name
+        result.__parent__ = self.request.context
         items = result[ITEMS] = {}
         for username, rmap in self._check_users_containers(usernames):
             items[username] = rmap
