@@ -6,10 +6,12 @@ Classes for indexing information related to users.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+from zope import component
 
 from zope.catalog.field import FieldIndex
 
@@ -24,6 +26,7 @@ from zope.intid.interfaces import IIntIds
 from zope.location.location import locate
 
 from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import ICommunity
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -36,6 +39,7 @@ from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
 from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex
 
 from nti.zope_catalog.topic import TopicIndex
+from nti.zope_catalog.topic import ExtentFilteredSet
 
 # Old name for BWC
 CaseInsensitiveFieldIndex = CaseInsensitiveAttributeFieldIndex
@@ -54,19 +58,20 @@ IX_REALNAME_PARTS = 'realname_parts'
 IX_CONTACT_EMAIL_RECOVERY_HASH = 'contact_email_recovery_hash'
 IX_PASSWORD_RECOVERY_EMAIL_HASH = 'password_recovery_email_hash'
 
+IX_IS_COMMUNITY = 'is_community'
 IX_EMAIL_VERIFIED = 'email_verified'
 IX_OPT_IN_EMAIL_COMMUNICATION = 'opt_in_email_communication'
 
 
 class ValidatingMimeType(object):
 
-    __slots__ = (b'mimeType',)
+    __slots__ = ('mimeType',)
 
     def __init__(self, obj, default=None):
         try:
             if IEntity.providedBy(obj):
                 self.mimeType = getattr(obj, 'mimeType', None) \
-                             or getattr(obj, 'mime_type', None)
+                    or getattr(obj, 'mime_type', None)
         except (AttributeError, TypeError):
             pass
 
@@ -171,46 +176,64 @@ class EmailVerifiedFilteredSet(FilteredSetBase):
             self.unindex_doc(docid)
 
 
-def install_entity_catalog(site_manager_container, intids=None):
-    lsm = site_manager_container.getSiteManager()
-    catalog = lsm.queryUtility(ICatalog, name=CATALOG_NAME)
-    if catalog is not None:
-        return catalog
+def isCommunity(extent, docid, document):
+    return ICommunity.providedBy(document)
 
-    intids = lsm.getUtility(IIntIds) if intids is None else intids
-    catalog = Catalog(family=intids.family)
-    catalog.__name__ = CATALOG_NAME
-    catalog.__parent__ = site_manager_container
-    intids.register(catalog)
-    lsm.registerUtility(catalog, provided=ICatalog, name=CATALOG_NAME)
+
+class IsCommunityExtentFilteredSet(ExtentFilteredSet):
+
+    def __init__(self, fid, family=None):
+        super(IsCommunityExtentFilteredSet, self).__init__(fid, isCommunity, family=family)
+
+
+def get_entity_catalog(registry=component):
+    return registry.queryUtility(ICatalog, name=CATALOG_NAME)
+
+
+def create_entity_catalog(catalog=None, family=None):
+    if catalog is None:
+        catalog = Catalog(family=family)
 
     for name, clazz in ((IX_ALIAS, AliasIndex),
                         (IX_EMAIL, EmailIndex),
+                        (IX_TOPICS, TopicIndex),
                         (IX_MIMETYPE, MimeTypeIndex),
                         (IX_REALNAME, RealnameIndex),
                         (IX_CONTACT_EMAIL, ContactEmailIndex),
                         (IX_REALNAME_PARTS, RealnamePartsIndex),
                         (IX_CONTACT_EMAIL_RECOVERY_HASH, ContactEmailRecoveryHashIndex),
                         (IX_PASSWORD_RECOVERY_EMAIL_HASH, PasswordRecoveryEmailHashIndex)):
-        index = clazz(family=intids.family)
-        intids.register(index)
+        index = clazz(family=family)
         locate(index, catalog, name)
         catalog[name] = index
 
-    opt_in_comm_set = OptInEmailCommunicationFilteredSet(IX_OPT_IN_EMAIL_COMMUNICATION,
-                                                         family=intids.family)
+    topic_index = catalog[IX_TOPICS]
+    for filter_id, factory in ((IX_EMAIL_VERIFIED, EmailVerifiedFilteredSet),
+                               (IX_IS_COMMUNITY, IsCommunityExtentFilteredSet),
+                               (IX_OPT_IN_EMAIL_COMMUNICATION, OptInEmailCommunicationFilteredSet)):
+        the_filter = factory(filter_id, family=family)
+        topic_index.addFilter(the_filter)
 
-    email_verified_set = EmailVerifiedFilteredSet(IX_EMAIL_VERIFIED,
-                                                  family=intids.family)
-
-    topics_index = TopicIndex(family=intids.family)
-    topics_index.addFilter(opt_in_comm_set)
-    topics_index.addFilter(email_verified_set)
-    intids.register(topics_index)
-
-    topics_index.__name__ = IX_TOPICS
-    topics_index.__parent__ = catalog
-    catalog[IX_TOPICS] = topics_index
     return catalog
 
-install_user_catalog = install_entity_catalog
+
+def install_entity_catalog(site_manager_container, intids=None):
+    lsm = site_manager_container.getSiteManager()
+    intids = lsm.getUtility(IIntIds) if intids is None else intids
+    catalog = get_entity_catalog(lsm)
+    if catalog is not None:
+        return catalog
+
+    catalog = create_entity_catalog(family=intids.family)
+    locate(catalog, site_manager_container, CATALOG_NAME)
+    intids.register(catalog)
+    lsm.registerUtility(catalog,
+                        provided=ICatalog,
+                        name=CATALOG_NAME)
+
+    for index in catalog.values():
+        intids.register(index)
+    return catalog
+
+
+install_user_catalog = install_entity_catalog  # BWC
