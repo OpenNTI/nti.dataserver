@@ -28,9 +28,10 @@ from nti.zodb import isBroken
 from nti.zope_catalog.interfaces import IKeywordIndex
 
 
-def get_iid(obj, intids=None):
+def queryId(obj, intids=None):
     intids = component.queryUtility(IIntIds) if intids is None else intids
     return intids.queryId(obj) if intids is not None else None
+get_iid = queryId
 
 
 def user_messageinfo_iter_objects(user, broken=None):

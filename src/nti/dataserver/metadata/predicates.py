@@ -27,20 +27,20 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.metadata.interfaces import IPrincipalMetadataObjects
 
-from nti.dataserver.metadata.utils import get_iid
+from nti.dataserver.metadata.utils import queryId
 from nti.dataserver.metadata.utils import user_messageinfo_iter_objects
 
 
 @interface.implementer(IIntIdIterable, IPrincipalMetadataObjects)
 class BasePrincipalObjects(object):
 
-    def __init__(self, user=None, *args, **kwargs):
+    def __init__(self, user=None):
         self.user = user
 
     def iter_intids(self, intids=None):
         seen = set()
         for obj in self.iter_objects():
-            uid = get_iid(obj, intids=intids)
+            uid = queryId(obj, intids=intids)
             if uid is not None and uid not in seen:
                 seen.add(uid)
                 yield uid
@@ -84,27 +84,33 @@ class _MeetingPrincipalObjects(BasePrincipalObjects):
             yield meeting
 
 
+class BoardObjectsMixin(object):
+
+    def board_objects(self, board):
+        yield board
+        for forum in list(board.values()):
+            yield forum
+            for topic in list(forum.values()):
+                yield topic
+                for comment in list(topic.values()):
+                    yield comment
+
+
 @component.adapter(IUser)
-class _DFLBlogObjects(BasePrincipalObjects):
+class _DFLBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
 
     def iter_objects(self):
         for membership in self.user.dynamic_memberships:
             if not IDynamicSharingTargetFriendsList.providedBy(membership):
                 continue
             board = IDFLBoard(membership, None)
-            if not board:
-                continue
-            yield board
-            for forum in board.values():
-                yield forum
-                for topic in forum.values():
-                    yield topic
-                    for comment in topic.values():
-                        yield comment
-
+            if board is not None:
+                for obj in self.board_objects(board):
+                    yield obj
+        
 
 @component.adapter(ISystemUserPrincipal)
-class _CommunityBlogObjects(BasePrincipalObjects):
+class _CommunityBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
 
     def iter_communities(self):
         dataserver = component.getUtility(IDataserver)
@@ -114,15 +120,9 @@ class _CommunityBlogObjects(BasePrincipalObjects):
                 continue
             yield entity
 
-    def iter_objects(self, intids=None):
-        for community in self.iter_communities():
+    def iter_objects(self):
+        for community in list(self.iter_communities()):
             board = ICommunityBoard(community, None)
-            if not board:
-                continue
-            yield board
-            for forum in board.values():
-                yield forum
-                for topic in forum.values():
-                    yield topic
-                    for comment in topic.values():
-                        yield comment
+            if board is not None:
+                for obj in self.board_objects(board):
+                    yield obj
