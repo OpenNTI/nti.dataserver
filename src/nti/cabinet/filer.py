@@ -17,7 +17,7 @@ from datetime import datetime
 
 from zope import interface
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.cabinet.interfaces import DEFAULT_MIME_TYPE
 
@@ -143,7 +143,7 @@ class DirectoryFiler(object):
             contentType = mimetypes.guess_type(name.lower())[0]
             result = ReferenceSourceFile(name=name,
                                          path=key_path,
-                                         contentType=unicode_(contentType))
+                                         contentType=text_(contentType))
         result.__parent__ = parent
         return result
 
