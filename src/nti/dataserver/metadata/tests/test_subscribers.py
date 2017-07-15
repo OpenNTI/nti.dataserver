@@ -18,6 +18,7 @@ from nti.contentfragments.interfaces import IPlainTextContentFragment
 from nti.dataserver.contenttypes import Note
 
 from nti.dataserver.metadata.index import IX_CREATOR
+from nti.dataserver.metadata.index import IX_SHAREDWITH
 from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.metadata.utils import delete_entity_metadata
@@ -47,13 +48,15 @@ class TestSubscribers(DataserverLayerTest):
         note.containerId = make_ntiid(nttype=u'bleach', specific=u'manga')
         return note
 
-    def _create_notes(self, user, notes):
+    def _create_notes(self, user, notes, sharedTo=None):
         connection = mock_dataserver.current_transaction
         for x in range(notes):
             title = u"title %s" % x
             message = u"body %s" % x
             note = self._create_note(message, user, title=title)
             connection.add(note)
+            if sharedTo is not None:
+                note.addSharingTarget(sharedTo)
             user.addContainedObject(note)
 
     @mock_dataserver.WithMockDSTrans
@@ -74,5 +77,27 @@ class TestSubscribers(DataserverLayerTest):
         deleted = delete_entity_metadata(catalog, username)
         assert_that(deleted, is_(notes))
 
+        results = catalog.searchResults(**query)
+        assert_that(results, has_length(0))
+        
+    @mock_dataserver.WithMockDSTrans
+    def test_clear_replies_to_creator(self):
+        notes = 5
+        ichigo_name = u'ichigo@bleach.org'
+        ichigo = self._create_user(ichigo_name)
+
+        aizen_name = u'aizen@bleach.org'
+        aizen = self._create_user(aizen_name)
+        
+        self._create_notes(ichigo, notes, aizen)
+
+        catalog = get_metadata_catalog()
+        query = {
+            IX_SHAREDWITH: {'any_of': (aizen_name,)}
+        }
+        results = catalog.searchResults(**query)
+        assert_that(results, has_length(notes))
+
+        User.delete_entity(aizen_name)
         results = catalog.searchResults(**query)
         assert_that(results, has_length(0))

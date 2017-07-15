@@ -46,7 +46,7 @@ def user_messageinfo_iter_objects(user, broken=None):
 
 def user_messageinfo_iter_intids(user, intids=None, broken=None):
     for message in user_messageinfo_iter_objects(user, broken=broken):
-        uid = get_iid(message, intids=intids)
+        uid = queryId(message, intids=intids)
         if uid is not None:
             yield uid
 
@@ -59,14 +59,13 @@ def delete_entity_metadata(catalog, username):
         query = {
             IX_CREATOR: {'any_of': (username,)}
         }
-        results = catalog.searchResults(**query)
-        for uid in results.uids:
+        for uid in catalog.apply(query) or ():
             index.unindex_doc(uid)
             result += 1
     return result
 
 
-def clear_replies_to_creator(catalog, username):
+def clear_replies_to_creator(catalog, username, intids=None):
     """
     When a creator is removed, all of the things that were direct
     replies to that creator are now \"orphans\", with a value
@@ -76,29 +75,28 @@ def clear_replies_to_creator(catalog, username):
     The same scenario holds for things that were shared directly
     to that user.
     """
-
     if catalog is None:
         # Not installed yet
         return
-
+    intids = component.getUtility(IIntIds) if intids is None else intids
     # These we can simply remove, this creator doesn't exist anymore
     for ix_name in (IX_REPLIES_TO_CREATOR, IX_TAGGEDTO):
         index = catalog[ix_name]
         query = {
             ix_name: {'any_of': (username,)}
         }
-        results = catalog.searchResults(**query)
-        for uid in results.uids or ():
-            index.unindex_doc(uid)
+        for doc_id in catalog.apply(query) or ():
+            index.unindex_doc(doc_id)
 
     # These, though, may still be shared, so we need to reindex them
     index = catalog[IX_SHAREDWITH]
-    results = catalog.searchResults(sharedWith={'all_of': (username,)})
-    intid_util = results.uidutil
-    for uid in list(results.uids or ()):
-        obj = intid_util.queryObject(uid)
+    query = {
+        IX_SHAREDWITH: {'any_of': (username,)}
+    }
+    for doc_id in catalog.apply(query) or ():
+        obj = intids.queryObject(doc_id)
         if obj is not None:
-            index.index_doc(uid, obj)
+            index.index_doc(doc_id, obj)
 
     index = catalog[IX_REVSHAREDWITH]
     if IKeywordIndex.providedBy(index):
@@ -117,6 +115,6 @@ def get_principal_metadata_objects_intids(principal):
     intids = component.getUtility(IIntIds)
     for obj in get_principal_metadata_objects(principal):
         if not isBroken(obj):
-            uid = get_iid(obj, intids=intids)
+            uid = queryId(obj, intids=intids)
             if uid is not None:
                 yield uid
