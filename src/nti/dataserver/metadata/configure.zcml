@@ -13,6 +13,9 @@
 	<subscriber handler=".subscribers._clear_replies_to_creator_when_creator_removed" />
 
 	<!-- Predicates -->
+	<subscriber	factory=".predicates._SelfUserObjects"
+				provides=".interfaces.IPrincipalMetadataObjects" />
+
 	<subscriber	factory=".predicates._ContainedPrincipalObjects"
 				provides=".interfaces.IPrincipalMetadataObjects" />
 		
@@ -29,6 +32,9 @@
 				provides=".interfaces.IPrincipalMetadataObjects" />
 						
 	<subscriber	factory=".predicates._CommunityBlogObjects"
+				provides=".interfaces.IPrincipalMetadataObjects" />
+
+	<subscriber	factory=".predicates._PersonalBlogObjects"
 				provides=".interfaces.IPrincipalMetadataObjects" />
 
 </configure>

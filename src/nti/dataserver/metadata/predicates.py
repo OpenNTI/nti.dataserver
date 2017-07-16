@@ -20,7 +20,8 @@ from nti.chatserver.interfaces import IUserTranscriptStorage
 from nti.coremetadata.interfaces import SYSTEM_USER_ID
 from nti.coremetadata.interfaces import SYSTEM_USER_NAME
 
-from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
+from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard,\
+    IPersonalBlog
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver.interfaces import IUser
@@ -116,14 +117,35 @@ class _MeetingPrincipalObjects(BasePrincipalObjects):
 
 class BoardObjectsMixin(object):
 
+    def forum_objects(self, forum):
+        yield forum
+        for topic in forum.values():
+            yield topic
+            for comment in topic.values():
+                yield comment
+
     def board_objects(self, board):
         yield board
         for forum in board.values():
-            yield forum
-            for topic in forum.values():
-                yield topic
-                for comment in topic.values():
-                    yield comment
+            for obj in self.forum_objects(forum):
+                yield obj
+
+
+@component.adapter(IUser)
+class _SelfUserObjects(BasePrincipalObjects):
+
+    def iter_objects(self):
+        yield self.user
+
+
+@component.adapter(IUser)
+class _PersonalBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
+
+    def iter_objects(self):
+        blog = IPersonalBlog(self.user, None)
+        if blog:
+            return self.forum_objects(blog)
+        return ()
 
 
 @component.adapter(IUser)
