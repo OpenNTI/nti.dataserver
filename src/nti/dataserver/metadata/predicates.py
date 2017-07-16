@@ -12,7 +12,13 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+from zope.cachedescriptors.property import CachedProperty
+
 from nti.chatserver.interfaces import IUserTranscriptStorage
+
+from nti.coremetadata.interfaces import SYSTEM_USER_ID
+from nti.coremetadata.interfaces import SYSTEM_USER_NAME
 
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
@@ -34,14 +40,32 @@ from nti.dataserver.metadata.utils import user_messageinfo_iter_objects
 @interface.implementer(IIntIdIterable, IPrincipalMetadataObjects)
 class BasePrincipalObjects(object):
 
+    system_users = (None, '', SYSTEM_USER_ID, SYSTEM_USER_NAME)
+
     def __init__(self, user=None):
         self.user = user
 
+    @Lazy
+    def username(self):
+        result = getattr(self.user, 'username', self.user)
+        return (getattr(result, 'id', result) or '').lower()
+
+    @CachedProperty
+    def users_folder(self):
+        dataserver = component.getUtility(IDataserver)
+        return IShardLayout(dataserver).users_folder
+
     def creator(self, item):
-        result = getattr(item, 'creator', item)
-        result = getattr(result, 'username', result)
-        result = getattr(result, 'id', result)
-        return None if result is item else (result.lower() if result else None)
+        creator = getattr(item, 'creator', item)
+        creator = getattr(creator, 'username', creator)
+        creator = getattr(creator, 'id', creator)
+        creator = None if creator is item else creator
+        if creator and creator in self.users_folder:
+            return creator.lower()
+        return None
+
+    def is_system_username(self, name):
+        return name in self.system_users
 
     def iter_intids(self, intids=None):
         seen = set()
@@ -94,11 +118,11 @@ class BoardObjectsMixin(object):
 
     def board_objects(self, board):
         yield board
-        for forum in list(board.values()):
+        for forum in board.values():
             yield forum
-            for topic in list(forum.values()):
+            for topic in forum.values():
                 yield topic
-                for comment in list(topic.values()):
+                for comment in topic.values():
                     yield comment
 
 
@@ -119,15 +143,13 @@ class _DFLBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
 class _CommunityBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
 
     def iter_communities(self):
-        dataserver = component.getUtility(IDataserver)
-        entities = IShardLayout(dataserver).users_folder
-        for entity in entities.values():
+        for entity in self.users_folder.values():
             if not ICommunity.providedBy(entity):
                 continue
             yield entity
 
     def iter_objects(self):
-        for community in list(self.iter_communities()):
+        for community in self.iter_communities():
             board = ICommunityBoard(community, None)
             if board is not None:
                 for obj in self.board_objects(board):
