@@ -103,18 +103,11 @@ def clear_replies_to_creator(catalog, username, intids=None):
         index.remove_words((username,))
 
 
-def get_principal_metadata_objects(principal):
+def get_principal_metadata_objects(principal, broken=None):
     predicates = component.subscribers((principal,), IPrincipalMetadataObjects)
     for predicate in list(predicates):
         for obj in predicate.iter_objects():
-            if not isBroken(obj):
+            if broken is not None and isBroken(obj):
+                broken.append(obj)
+            else:
                 yield obj
-
-
-def get_principal_metadata_objects_intids(principal):
-    intids = component.getUtility(IIntIds)
-    for obj in get_principal_metadata_objects(principal):
-        if not isBroken(obj):
-            uid = queryId(obj, intids=intids)
-            if uid is not None:
-                yield uid
