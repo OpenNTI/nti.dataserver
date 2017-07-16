@@ -121,6 +121,7 @@ class BoardObjectsMixin(object):
         yield forum
         for topic in forum.values():
             yield topic
+            yield topic.headline
             for comment in topic.values():
                 yield comment
 
