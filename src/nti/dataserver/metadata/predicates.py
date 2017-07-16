@@ -37,6 +37,12 @@ class BasePrincipalObjects(object):
     def __init__(self, user=None):
         self.user = user
 
+    def creator(self, item):
+        result = getattr(item, 'creator', item)
+        result = getattr(result, 'username', result)
+        result = getattr(result, 'id', result)
+        return None if result is item else (result.lower() if result else None)
+
     def iter_intids(self, intids=None):
         seen = set()
         for obj in self.iter_objects():
@@ -107,7 +113,7 @@ class _DFLBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
             if board is not None:
                 for obj in self.board_objects(board):
                     yield obj
-        
+
 
 @component.adapter(ISystemUserPrincipal)
 class _CommunityBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
