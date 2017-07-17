@@ -106,7 +106,6 @@ def _UserSearchView(request):
     # We tend to use this API as a user-resolution service, so
     # optimize for that case--avoid waking all other users up
     result = ()
-    #from IPython.terminal.debugger import set_trace;set_trace()
     if _is_valid_search(partialMatch, remote_user):
         # NOTE3: We have now stopped allowing this to work for user resolution.
         # This will probably break many assumptions in the UI about what and when usernames
