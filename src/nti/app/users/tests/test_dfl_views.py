@@ -20,7 +20,7 @@ does_not = is_not
 
 import urllib
 
-from nti.app.users.dfl_views import REL_MY_MEMBERSHIP
+from nti.app.users.views.dfl_views import REL_MY_MEMBERSHIP
 
 from nti.dataserver import users
 

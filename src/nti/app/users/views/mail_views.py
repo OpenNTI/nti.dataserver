@@ -103,7 +103,7 @@ class VerifyUserEmailView(AbstractAuthenticatedView):
 		reindex_email_verification(user)
 
 	def _do_render(self, template_args):
-		result = render("templates/email_verification_completion_page.pt",
+		result = render("../templates/email_verification_completion_page.pt",
 						 template_args,
 						 request=self.request)
 

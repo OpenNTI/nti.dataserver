@@ -36,9 +36,9 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
-from nti.app.users import username_search
-
 from nti.app.users.utils import generate_mail_verification_pair
+
+from nti.app.users.views import username_search
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 

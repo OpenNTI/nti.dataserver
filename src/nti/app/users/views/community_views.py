@@ -32,7 +32,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
-from nti.app.users.view_mixins import EntityActivityViewMixin
+from nti.app.users.views.view_mixins import EntityActivityViewMixin
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 

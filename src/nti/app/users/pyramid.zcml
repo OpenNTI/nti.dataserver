@@ -5,14 +5,6 @@
 			xmlns:pyramid="http://pylonshq.com/pyramid">
 
 	<include package="pyramid_zcml" />
-
-	<pyramid:scan package=".dfl_views" />
-	<pyramid:scan package=".user_views" />
-	<pyramid:scan package='.mail_views' />
-	<pyramid:scan package='.admin_views' />
-	<pyramid:scan package='.export_views' />
-	<pyramid:scan package='.profile_views' />
-	<pyramid:scan package='.contacts_views' />
-	<pyramid:scan package='.community_views' />
-
+	<include package=".views" file="pyramid.zcml" />
+	
 </configure>

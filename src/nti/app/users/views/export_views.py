@@ -33,9 +33,9 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.app.users import get_mime_type
-from nti.app.users import username_search
-from nti.app.users import parse_mime_types
+from nti.app.users.views import get_mime_type
+from nti.app.users.views import username_search
+from nti.app.users.views import parse_mime_types
 
 from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IUserTranscriptStorage
