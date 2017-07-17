@@ -20,8 +20,8 @@ from nti.chatserver.interfaces import IUserTranscriptStorage
 from nti.coremetadata.interfaces import SYSTEM_USER_ID
 from nti.coremetadata.interfaces import SYSTEM_USER_NAME
 
-from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard,\
-    IPersonalBlog
+from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver.interfaces import IUser
