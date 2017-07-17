@@ -69,11 +69,9 @@ class BasePrincipalObjects(object):
         return name in self.system_users
 
     def iter_intids(self, intids=None):
-        seen = set()
         for obj in self.iter_objects():
             uid = queryId(obj, intids=intids)
-            if uid is not None and uid not in seen:
-                seen.add(uid)
+            if uid is not None:
                 yield uid
 
     def iter_objects(self):
