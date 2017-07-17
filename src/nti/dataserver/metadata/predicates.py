@@ -148,16 +148,21 @@ class _PersonalBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
 
 
 @component.adapter(IUser)
-class _DFLBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
+class _MembershipBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
 
     def iter_objects(self):
         for membership in self.user.dynamic_memberships:
-            if not IDynamicSharingTargetFriendsList.providedBy(membership):
-                continue
-            board = IDFLBoard(membership, None)
-            if board is not None:
-                for obj in self.board_objects(board):
-                    yield obj
+            if IDynamicSharingTargetFriendsList.providedBy(membership):
+                board = IDFLBoard(membership, None)
+                if board is not None:
+                    for obj in self.board_objects(board):
+                        yield obj
+            elif ICommunity.providedBy(membership):
+                board = ICommunityBoard(membership, None)
+                if board is not None:
+                    for obj in self.board_objects(board):
+                        if self.creator(obj) == self.username:
+                            yield obj
 
 
 @component.adapter(ISystemUserPrincipal)
@@ -174,4 +179,19 @@ class _CommunityBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
             board = ICommunityBoard(community, None)
             if board is not None:
                 for obj in self.board_objects(board):
-                    yield obj
+                    if self.is_system_username(self.creator(obj)):
+                        yield obj
+
+
+@component.adapter(ISystemUserPrincipal)
+class _CommunityObjects(BasePrincipalObjects, BoardObjectsMixin):
+
+    def iter_communities(self):
+        for entity in self.users_folder.values():
+            if not ICommunity.providedBy(entity):
+                continue
+            yield entity
+
+    def iter_objects(self):
+        for community in self.iter_communities():
+            yield community

@@ -28,7 +28,10 @@
 	<subscriber	factory=".predicates._MeetingPrincipalObjects"
 				provides=".interfaces.IPrincipalMetadataObjects" />
 		
-	<subscriber	factory=".predicates._DFLBlogObjects"
+	<subscriber	factory=".predicates._MembershipBlogObjects"
+				provides=".interfaces.IPrincipalMetadataObjects" />
+
+	<subscriber	factory=".predicates._CommunityObjects"
 				provides=".interfaces.IPrincipalMetadataObjects" />
 						
 	<subscriber	factory=".predicates._CommunityBlogObjects"
