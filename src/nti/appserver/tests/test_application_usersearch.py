@@ -42,9 +42,9 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 	def test_user_search_has_dfl(self):
 
 		with mock_dataserver.mock_db_trans(self.ds):
-			user1 = self._create_user()
-			user2 = self._create_user(username='jason@nextthought.com' )
-			user_not_in_dfl = self._create_user(username='otheruser@nextthought.com')
+			user1 = self._create_user(username="sjohnson@nti.com")
+			user2 = self._create_user(username='jason@nti.com' )
+			user_not_in_dfl = self._create_user(username='otheruser@nti.com')
 			user_not_in_dfl_username = user_not_in_dfl.username
 			dfl = users.DynamicFriendsList( username='Friends' )
 			user_interfaces.IFriendlyNamed( dfl ).alias = "Close Associates"
@@ -55,15 +55,17 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
 		testapp = TestApp( self.app )
 		# We can search for ourself
-		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		path = '/dataserver2/UserSearch/sjohnson@nti.com'
+		res = testapp.get(path, 
+						  extra_environ=self._make_extra_environ(username="sjohnson@nti.com"))
 
 		ourself = res.json_body['Items'][0]
-		assert_that( ourself, has_entry( 'Username', 'sjohnson@nextthought.com' ) )
+		assert_that( ourself, has_entry( 'Username', 'sjohnson@nti.com' ) )
 
 		# we can search for our FL by username prefix
 		path = '/dataserver2/UserSearch/Friend'
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		res = testapp.get(path, 
+						  extra_environ=self._make_extra_environ(username="sjohnson@nti.com"))
 		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Friends' ) ) )
 		#assert_that( ourself, has_entry( 'FriendsLists', has_key( 'Friends' ) ) )
 
@@ -71,18 +73,20 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		for term in ('clo', 'ass'):
 			path = '/dataserver2/UserSearch/' + term
 			__traceback_info__ = path
-			res = testapp.get( path, extra_environ=self._make_extra_environ())
+			res = testapp.get(path, 
+							  extra_environ=self._make_extra_environ(username="sjohnson@nti.com"))
 			assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Friends' ) ) )
 
 
 		# We can search for the member, and we'll find our DFL listed in his
 		# communities
 
-		path = '/dataserver2/UserSearch/jason@nextthought.com'
-		res = testapp.get( path, extra_environ=self._make_extra_environ('jason@nextthought.com'))
+		path = '/dataserver2/UserSearch/jason@nti.com'
+		res = testapp.get(path, 
+						  extra_environ=self._make_extra_environ(username='jason@nti.com'))
 
 		member = res.json_body['Items'][0]
-		assert_that( member, has_entry( 'Username', 'jason@nextthought.com' ) )
+		assert_that( member, has_entry( 'Username', 'jason@nti.com' ) )
 		assert_that( member, has_entry( 'Communities', has_item( has_entry( 'Username', dfl_ntiid ) ) ) )
 
 		# We can also search for the DFL, by its lowercase NTIID
@@ -91,19 +95,22 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		# TODO: The security on this isn't very tight
 		path = '/dataserver2/ResolveUser/' + dfl_ntiid.lower()
 		# the owner can find it
-		res = testapp.get( str(path), extra_environ=self._make_extra_environ() )
+		res = testapp.get(str(path), 
+						  extra_environ=self._make_extra_environ(username='jason@nti.com') )
 		member = res.json_body['Items'][0]
 		assert_that( member, has_entry( 'Username', dfl_ntiid ) )
 
 		# a member can find it
-		res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com') )
+		res = testapp.get(str(path), 
+						  extra_environ=self._make_extra_environ(username='jason@nti.com') )
 		member = res.json_body['Items'][0]
 		assert_that( member, has_entry( 'Username', dfl_ntiid ) )
 
 		# And we can also search for their display names. Sigh.
 		for t in ("UserSearch", 'ResolveUser' ):
 			path = '/dataserver2/%s/Friends' % t
-			res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
+			res = testapp.get(str(path), 
+							  extra_environ=self._make_extra_environ(username='jason@nti.com'))
 
 			assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 			member = res.json_body['Items'][0]
@@ -112,19 +119,21 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		# UserSearch does prefix match, resolve is exact
 		for t, cnt in (("UserSearch",1), ('ResolveUser',0) ):
 			path = '/dataserver2/%s/Friend' % t
-			res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
+			res = testapp.get(str(path), 
+							  extra_environ=self._make_extra_environ(username='jason@nti.com'))
 			assert_that( res.json_body['Items'], has_length( cnt ) )
 
 		# The prefix match of usersearch can find the dfl the other user belongs to as well
 		path = '/dataserver2/UserSearch/f'
-		res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
+		res = testapp.get(str(path), 
+						  extra_environ=self._make_extra_environ(username='jason@nti.com'))
 		assert_that( res.json_body['Items'], has_length( 1 ) )
-		assert_that( res.json_body['Items'], has_items(
-														has_entry( 'alias', 'Close Associates' ) ) )
+		assert_that( res.json_body['Items'], has_items(has_entry( 'alias', 'Close Associates' ) ) )
 
 		# a non-member cannot find the dfl
 		path = '/dataserver2/ResolveUser/' + dfl_ntiid.lower()
-		res = testapp.get( str(path), extra_environ=self._make_extra_environ(user_not_in_dfl_username))
+		res = testapp.get(str(path), 
+						  extra_environ=self._make_extra_environ(user_not_in_dfl_username))
 		assert_that(res.json_body['Items'], has_length(0))
 
 
@@ -239,12 +248,12 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_user_search_communities(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			u1 = self._create_user()
+			u1 = self._create_user(username="sjo@nti.com")
 			user_interfaces.IFriendlyNamed( u1 ).realname = u"sjo"
 			modified( u1 )
-			u2 = self._create_user( username='sjo2@nextthought.com' )
+			u2 = self._create_user( username='sjo2@nti.com' )
 
-			self._create_user( username='sjo3@nextthought.com' )
+			self._create_user( username='sjo3@nti.com' )
 			community = users.Community.create_community( username='TheCommunity' )
 			user_interfaces.IFriendlyNamed( community ).alias = 'General People'
 			u1.record_dynamic_membership( community )
@@ -259,36 +268,41 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
 		# We can search for ourself
 		path = '/dataserver2/UserSearch/sjo'
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		res = testapp.get(path, 
+						  extra_environ=self._make_extra_environ(username="sjo@nti.com"))
 
 		# We only matched the two that were in the same community
 		assert_that( res.json_body['Items'], has_length( 2 ) )
-		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sjohnson@nextthought.com' ) ) )
-		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sjo2@nextthought.com' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sjo@nti.com' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sjo2@nti.com' ) ) )
 
 		# Getting a 'Class' value back here really confuses the iPad
 		assert_that( res.json_body, does_not( has_key( 'Class' ) ) )
 
 		# We can search for the community by username prefix...
 		path = '/dataserver2/UserSearch/TheComm'
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		res = testapp.get(path, 
+						  extra_environ=self._make_extra_environ(username="sjo@nti.com"))
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 
 		# ... but not by username substring
 		path = '/dataserver2/UserSearch/Comm'
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		res = testapp.get(path, 
+						  extra_environ=self._make_extra_environ(username="sjo@nti.com"))
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 
 		# However, we can find it by prefix of both parts of the display name
 		for term in ('gen', 'peo'):
 			path = '/dataserver2/UserSearch/' + term
 			__traceback_info__ = path
-			res = testapp.get( path, extra_environ=self._make_extra_environ())
+			res = testapp.get(path, 
+							  extra_environ=self._make_extra_environ(username="sjo@nti.com"))
 			assert_that( res.json_body['Items'], has_length( 1 ) )
 
 		# The user that's not in the community cannot find by username
 		path = '/dataserver2/UserSearch/TheComm'
-		res = testapp.get( path, extra_environ=self._make_extra_environ(username='sjo3@nextthought.com'))
+		res = testapp.get(path, 
+						  extra_environ=self._make_extra_environ(username='sjo3@nti.com'))
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 
 	@WithSharedApplicationMockDS
@@ -381,8 +395,8 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_fetch_other_by_ntiid(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			user1 = self._create_user()
-			user2 = self._create_user(username='jason@nextthought.com' )
+			user1 = self._create_user(username='sjohnson@nti.com')
+			user2 = self._create_user(username='jason@nti.com' )
 			dfl = users.DynamicFriendsList( username='Friends' )
 			dfl.creator = user1
 			user1.addContainedObject( dfl )
@@ -396,13 +410,16 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
 		# Traversal is denied due to permissioning until we share a community,
 		# whether by NTIID or by username
-		testapp.get( '/dataserver2/Objects/' + user2_ntiid, extra_environ=self._make_extra_environ(),
+		testapp.get( '/dataserver2/Objects/' + user2_ntiid, 
+					extra_environ=self._make_extra_environ(username='sjohnson@nti.com'),
 					 status=403 )
-		testapp.get( '/dataserver2/users/' + user2_username, extra_environ=self._make_extra_environ(),
-					 status=403 )
+		testapp.get('/dataserver2/users/' + user2_username, 
+					extra_environ=self._make_extra_environ(username='sjohnson@nti.com'),
+					status=403 )
 
 		# resolving "works" but returns no items
-		res = testapp.get( '/dataserver2/ResolveUser/' + user2_ntiid, extra_environ=self._make_extra_environ() )
+		res = testapp.get( '/dataserver2/ResolveUser/' + user2_ntiid, 
+						 extra_environ=self._make_extra_environ(username='sjohnson@nti.com') )
 		assert_that( res.json_body, has_entry( 'Items', [] ) )
 
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -412,8 +429,10 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 			user1.record_dynamic_membership( community )
 			user2.record_dynamic_membership( community )
 
-		res = testapp.get( '/dataserver2/Objects/' + user2_ntiid, extra_environ=self._make_extra_environ() )
+		res = testapp.get( '/dataserver2/Objects/' + user2_ntiid, 
+						  extra_environ=self._make_extra_environ(username='sjohnson@nti.com') )
 		assert_that( res.json_body, has_entry( 'Class', 'User' ) )
 
-		res = testapp.get( '/dataserver2/users/' + user2_username, extra_environ=self._make_extra_environ() )
+		res = testapp.get( '/dataserver2/users/' + user2_username, 
+						  extra_environ=self._make_extra_environ(username='sjohnson@nti.com') )
 		assert_that( res.json_body, has_entry( 'Class', 'User' ) )
