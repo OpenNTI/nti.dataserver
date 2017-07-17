@@ -79,6 +79,16 @@ class BasePrincipalObjects(object):
 
 
 @component.adapter(IUser)
+class _SelfUserObjects(BasePrincipalObjects):
+
+    def iter_objects(self):
+        yield self.user
+        yield self.user.containers
+        for change in self.user.circled_events:
+            yield change
+
+
+@component.adapter(IUser)
 class _ContainedPrincipalObjects(BasePrincipalObjects):
 
     def iter_objects(self):
@@ -128,13 +138,6 @@ class BoardObjectsMixin(object):
         for forum in board.values():
             for obj in self.forum_objects(forum):
                 yield obj
-
-
-@component.adapter(IUser)
-class _SelfUserObjects(BasePrincipalObjects):
-
-    def iter_objects(self):
-        yield self.user
 
 
 @component.adapter(IUser)

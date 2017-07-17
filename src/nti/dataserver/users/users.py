@@ -540,6 +540,12 @@ class User(Principal):
 		result = PersistentList()
 		result.__parent__ = self
 		return result
+	
+	@property
+	def circled_events(self):
+		if "_circled_events_storage" in self.__dict__:
+			return self._circled_events_storage
+		return ()
 
 	def accept_shared_data_from(self, source):
 		""" Accepts if not ignored; auto-follows as well.
