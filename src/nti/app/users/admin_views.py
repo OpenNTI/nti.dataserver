@@ -36,7 +36,6 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
-from nti.app.users import all_usernames
 from nti.app.users import username_search
 
 from nti.app.users.utils import generate_mail_verification_pair
@@ -378,8 +377,7 @@ class GetGhostContainersView(UserGhostContainersView):
             usermap = self._find_user_containers(user)
             yield user, usermap
 
-    def __call__(self):
-        values = CaseInsensitiveDict(self.request.params)
+    def _parse_usernames(self, values):
         term = values.get('term') or values.get('search')
         usernames = values.get('usernames') or values.get('username')
         if term:
@@ -387,12 +385,47 @@ class GetGhostContainersView(UserGhostContainersView):
         elif isinstance(usernames, six.string_types):
             usernames = set(unquote(usernames).split(","))
         else:
-            usernames = all_usernames()
+            usernames = ()
+        return usernames
+
+    def __call__(self):
+        values = CaseInsensitiveDict(self.request.params)
         result = LocatedExternalDict()
         result.__name__ = self.request.view_name
         result.__parent__ = self.request.context
         items = result[ITEMS] = {}
+        usernames = self._parse_usernames(values)
         for user, rmap in self._check_users_containers(usernames):
             items[user.username] = rmap
+        result[TOTAL] = result[ITEM_COUNT] = len(items)
+        return result
+
+
+@view_config(name='RemoveGhostContainers')
+@view_config(name='remove_ghost_containers')
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='POST',
+               context=IDataserverFolder,
+               permission=nauth.ACT_NTI_ADMIN)
+class RemoveGhostContainersView(GetGhostContainersView,
+                                ModeledContentUploadRequestUtilsMixin):
+
+    def readInput(self, value=None):
+        if self.request.body:
+            result = super(RemoveGhostContainersView, self).readInput(self, value)
+        else:
+            result = {}
+        return CaseInsensitiveDict(result)
+
+    def __call__(self):
+        result = LocatedExternalDict()
+        result.__name__ = self.request.view_name
+        result.__parent__ = self.request.context
+        items = result[ITEMS] = {}
+        usernames = self._parse_usernames(self.readInput())
+        for user, rmap in self._check_users_containers(usernames):
+            items[user.username] = rmap
+            self._delete_containers(user, rmap.keys())
         result[TOTAL] = result[ITEM_COUNT] = len(items)
         return result
