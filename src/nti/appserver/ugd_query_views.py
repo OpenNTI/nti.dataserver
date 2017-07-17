@@ -1246,15 +1246,12 @@ class RecursiveUGDView(_UGDView):
 		return filters
 
 	def _get_containerids_for_id( self, user, ntiid ):
-		querier = component.queryUtility(IUserContainersQuerier)
-		if querier is not None:
-			result = querier.query(user,
-								   ntiid,
-								   self._iter_ntiids_include_stream,
-								   self._iter_ntiids_stream_only)
-		else:
-			result = ('',)
-		return result
+		containers = set()
+		for querier in component.subscribers((user,), IUserContainersQuerier):
+			containers.update(querier.query(user, ntiid,
+										    self._iter_ntiids_include_stream,
+	   									    self._iter_ntiids_stream_only))
+		return tuple(containers)
 
 	def _filter_inaccessible_object(self, obj):
 		# XXX: HACK FOR "ACL" community topics. Make sure the object
