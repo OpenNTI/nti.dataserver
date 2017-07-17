@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -36,8 +36,7 @@ class TestAdminViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_blacklist_views(self):
-        username = 'user_one'
-
+        username = u'user_one'
         # Baseline
         path = '/dataserver2/GetUserBlacklist'
         res = self.testapp.get(path, None, status=200)
@@ -69,8 +68,7 @@ class TestAdminViews(ApplicationLayerTest):
         assert_that(body, has_entry('Total', is_(0)))
 
         with mock_dataserver.mock_db_trans(self.ds):
-            # Remove user
-            user_one = User.create_user(username='ichigo')
+            user_one = User.create_user(username=u'ichigo')
             lifecycleevent.removed(user_one)
 
         res = self.testapp.get(path, None, status=200)
@@ -84,8 +82,8 @@ class TestAdminViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_force_email_verification(self):
-        username = 'user_one'
-        email = 'user.one@foo.com'
+        username = u'user_one'
+        email = u'user.one@foo.com'
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.create_user(username=username,
                                     external_value={u'email': email})
@@ -106,8 +104,8 @@ class TestAdminViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_get_email_verification_token(self):
-        username = 'user_one'
-        email = 'user.one@foo.com'
+        username = u'user_one'
+        email = u'user.one@foo.com'
         with mock_dataserver.mock_db_trans(self.ds):
             User.create_user(username=username,
                              external_value={u'email': email})
@@ -121,7 +119,7 @@ class TestAdminViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_remove_user(self):
-        username = 'user_one'
+        username = u'user_one'
 
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.get_user(username=username)

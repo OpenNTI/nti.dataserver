@@ -41,6 +41,8 @@ from nti.app.users import username_search
 
 from nti.app.users.utils import generate_mail_verification_pair
 
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
@@ -290,7 +292,7 @@ class RemoveUserView(AbstractAuthenticatedView,
                permission=nauth.ACT_READ)
 class UserGhostContainersView(AbstractAuthenticatedView):
 
-    exclude_containers = ('Devices', 'FriendsLists', '', 'Blog', ROOT)
+    exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog', ROOT)
 
     def _find_object(self, name):
         if not is_valid_ntiid_string(name):
@@ -307,11 +309,17 @@ class UserGhostContainersView(AbstractAuthenticatedView):
                     return result
         return None
 
+    def _all_exclude(self, user):
+        blog = IPersonalBlog(user, None)
+        ntiid = (blog.NTIID,) if blog is not None else ()
+        return ntiid + self.exclude_containers
+
     def _find_user_containers(self, user):
         usermap = {}
+        to_exclude = self._all_exclude(user)
         method = getattr(user, 'getAllContainers', lambda: ())
         for name in method():
-            if name in self.exclude_containers:
+            if name in to_exclude:
                 continue
             target = self._find_object(name)
             if target is None:
@@ -342,7 +350,7 @@ class GetGhostContainersView(UserGhostContainersView):
     def _check_users_containers(self, usernames=()):
         for username in usernames or ():
             user = User.get_user(username)
-            if IUser.providedBy(user):
+            if not IUser.providedBy(user):
                 continue
             usermap = self._find_user_containers(user)
             yield user.username, usermap
