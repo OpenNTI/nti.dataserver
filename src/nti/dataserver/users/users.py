@@ -47,7 +47,8 @@ from persistent.persistence import Persistent
 
 from nti.apns import interfaces as apns_interfaces
 
-from nti.dataserver import dicts
+from nti.containers import dicts
+
 from nti.dataserver import sharing
 
 from nti.dataserver.interfaces import IUser
