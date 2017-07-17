@@ -9,12 +9,10 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import assert_that
 from hamcrest import contains
-from hamcrest import empty
 from hamcrest import is_
 from hamcrest import is_not
 
 from zope import component
-from zope import interface
 
 from zope.component.hooks import site
 from zope.component.hooks import getSite
@@ -25,6 +23,12 @@ from zope.securitypolicy.settings import Allow
 from nti.appserver.policies.sites import BASECOPPA as MATHCOUNTS
 
 from nti.dataserver.interfaces import ISiteRoleManager
+
+from nti.dataserver.authorization import ROLE_SITE_ADMIN_NAME
+
+from nti.dataserver.authorization import is_site_admin
+
+from nti.dataserver.users import User
 
 from nti.site.transient import TrivialSite as _TrivialSite
 
@@ -65,12 +69,14 @@ ZCML_STRING = """
 
 from z3c.baseregistry.baseregistry import BaseComponents
 _MYSITE = BaseComponents(MATHCOUNTS, name='test.components', bases=(MATHCOUNTS,))
+_MYSITE2 = BaseComponents(MATHCOUNTS, name='test.components2', bases=(MATHCOUNTS,))
 
 class TestSiteRoleManager(ConfiguringTestBase):
 
 	def test_site_role_manager(self):
 
 		self.configure_string(ZCML_STRING)
+		user = User('chris')
 
 		with site(_TrivialSite(_MYSITE)):
 			# we have ISiteRoleManager
@@ -82,6 +88,17 @@ class TestSiteRoleManager(ConfiguringTestBase):
 			site_prm = IPrincipalRoleManager(getSite())
 			assert_that(site_prm, is_(srm))
 
-			principals = site_prm.getPrincipalsForRole('role:nti.dataserver.site-admin')
+			principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
 			assert_that(principals, contains(('chris', Allow, )))
+
+			assert_that(is_site_admin(user), is_(True))
+
+		# Parent site not a site admin
+		with site(_TrivialSite(MATHCOUNTS)):
+			assert_that(is_site_admin(user), is_(False))
+
+		# Not an admin to sibling site either
+		with site(_TrivialSite(_MYSITE2)):
+			assert_that(is_site_admin(user), is_(False))
+
 

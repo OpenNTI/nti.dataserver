@@ -90,6 +90,8 @@ from zope.authentication.interfaces import IUnauthenticatedPrincipal
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.component.hooks import getSite
+
 from zope.container.contained import Contained
 
 from zope.security.permission import Permission
@@ -117,6 +119,8 @@ from nti.dataserver.interfaces import IMutableGroupMember
 from nti.dataserver.interfaces import IGroupAwarePrincipal
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+
+from nti.dataserver.site import site_role_manager
 
 from nti.externalization.interfaces import IExternalObject
 
@@ -378,6 +382,11 @@ ROLE_CONTENT_EDITOR = _StringRole(ROLE_CONTENT_EDITOR_NAME)
 ROLE_CONTENT_ADMIN_NAME = 'nti.roles.contentlibrary.admin'
 ROLE_CONTENT_ADMIN = _StringRole(ROLE_CONTENT_ADMIN_NAME)
 
+#: Name of the high-permission group that is expected to have
+#: administrative abilities within a site.
+ROLE_SITE_ADMIN_NAME = ROLE_PREFIX + 'nti.dataserver.site-admin'
+ROLE_SITE_ADMIN = _StringRole(ROLE_SITE_ADMIN_NAME)
+
 # We're now using the zope principal registry in
 # place of these home grown entities.  However, these are left
 # place as there is some concern we may have acls pickled as
@@ -599,3 +608,24 @@ def is_admin_or_content_admin(user):
     `ROLE_ADMIN` roles.
     """
     return is_admin(user) or is_content_admin(user)
+
+
+def is_site_admin(user):
+    """
+    Returns whether the user has the `ROLE_SITE_ADMIN` role.
+    """
+    result = False
+    srm = site_role_manager(getSite())
+    if srm is not None:
+        for role, access in srm.getRolesForPrincipal(user.username):
+            if role == ROLE_SITE_ADMIN.id and access == Allow:
+                return True
+    return result
+
+
+def is_admin_or_site_admin(user):
+    """
+    Returns whether the user has the `ROLE_SITE_ADMIN` or
+    `ROLE_ADMIN` roles.
+    """
+    return is_admin(user) or is_site_admin(user)

@@ -38,6 +38,6 @@ def site_role_manager(site):
 @interface.implementer(ISiteRoleManager)
 class SiteRoleManager(PrincipalRoleManager):
     """
-    Instances of this class should be registered as utlities inside
+    Instances of this class should be registered as utilities inside
     a site.
     """
