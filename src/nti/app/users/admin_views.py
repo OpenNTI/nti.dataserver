@@ -281,15 +281,16 @@ class RemoveUserView(AbstractAuthenticatedView,
         return hexc.HTTPNoContent()
 
 
-@view_config(name='GetUserGhostContainers')
-@view_config(name='get_user_ghost_containers')
+@view_config(name='GhostContainers')
+@view_config(name='ghost_containers')
 @view_defaults(route_name='objects.generic.traversal',
+               context=IUser,
                renderer='rest',
                request_method='GET',
-               permission=nauth.ACT_NTI_ADMIN)
-class GetUserGhostContainersView(AbstractAuthenticatedView):
+               permission=nauth.ACT_READ)
+class UserGhostContainersView(AbstractAuthenticatedView):
 
-    exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog', ROOT)
+    exclude_containers = ('Devices', 'FriendsLists', '', 'Blog', ROOT)
 
     def _find_object(self, name):
         if not is_valid_ntiid_string(name):
@@ -306,22 +307,45 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
                     return result
         return None
 
+    def _find_user_containers(self, user):
+        usermap = {}
+        method = getattr(user, 'getAllContainers', lambda: ())
+        for name in method():
+            if name in self.exclude_containers:
+                continue
+            target = self._find_object(name)
+            if target is None:
+                container = user.getContainer(name)
+                usermap[name] = len(container) if container else 0
+        return usermap
+
+    def __call__(self):
+        result = LocatedExternalDict()
+        result.__name__ = self.request.view_name
+        result.__parent__ = self.request.context
+        items = result[ITEMS] = self._find_user_containers(self.context)
+        result[TOTAL] = result[ITEM_COUNT] = len(items)
+        return result
+
+
+@view_config(name='GhostContainers')
+@view_config(name='ghost_containers')
+@view_config(name='GetUserGhostContainers')
+@view_config(name='get_user_ghost_containers')
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='GET',
+               context=IDataserverFolder,
+               permission=nauth.ACT_NTI_ADMIN)
+class GetGhostContainersView(UserGhostContainersView):
+
     def _check_users_containers(self, usernames=()):
         for username in usernames or ():
             user = User.get_user(username)
-            if user is None or not IUser.providedBy(user):
+            if IUser.providedBy(user):
                 continue
-            usermap = {}
-            method = getattr(user, 'getAllContainers', lambda: ())
-            for name in method():
-                if name in self.exclude_containers:
-                    continue
-                target = self._find_object(name)
-                if target is None:
-                    container = user.getContainer(name)
-                    usermap[name] = len(container) if container else 0
-            if usermap:
-                yield user.username, usermap
+            usermap = self._find_user_containers(user)
+            yield user.username, usermap
 
     def __call__(self):
         values = CaseInsensitiveDict(self.request.params)
