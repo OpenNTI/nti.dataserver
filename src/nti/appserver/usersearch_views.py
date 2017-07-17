@@ -42,6 +42,8 @@ from nti.base._compat import unicode_
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.authorization import is_admin_or_site_admin
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
@@ -302,6 +304,8 @@ def _provide_location(result, dataserver):
 
 
 def _authenticated_search(remote_user, dataserver, search_term):
+    # Match Users and Communities here. Do not match IFriendsLists, because
+    # that would get private objects from other users.
     def _selector(x):
         result = IUser.providedBy(x) \
               or (ICommunity.providedBy(x) and x.public)
@@ -309,21 +313,11 @@ def _authenticated_search(remote_user, dataserver, search_term):
 
     user_search_matcher = IUserSearchPolicy(remote_user)
     result = user_search_matcher.query(search_term,
-                                       # Match Users and Communities here. Do not match
-                                       # IFriendsLists, because that
-                                       # would
-                                       # get
-                                       # private
-                                       # objects
-                                       # from
-                                       # other
-                                       # users.
                                        provided=_selector)
 
+    # Filter to things that share a common community
     # FIXME: Hack in a policy of limiting searching to overlapping communities
     test = _make_visibility_test(remote_user)
-
-    # Filter to things that share a common community
     result = {x for x in result if test(x)}  # ensure a set
 
     # Add locally matching friends lists, etc. These don't need to go through the
@@ -394,7 +388,8 @@ def _search_scope_to_remote_user(remote_user, search_term, op=_scoped_search_pre
 
 def _make_visibility_test(remote_user):
     # TODO: Hook this up to the ACL support
-    if remote_user:
+    # Admin/SiteAdmins can see everything.
+    if remote_user and not is_admin_or_site_admin(remote_user):
         memberships = remote_user.usernames_of_dynamic_memberships
         remote_com_names = memberships - set(('Everyone',))
 
@@ -430,7 +425,7 @@ def _make_visibility_test(remote_user):
             return not hasattr(x, 'usernames_of_dynamic_memberships') \
                    or x.usernames_of_dynamic_memberships.intersection(remote_com_names)
         return test
-    return lambda x: True
+    return lambda unused_x: True
 
 
 @component.adapter(IUser)
@@ -450,7 +445,7 @@ class _SharedDynamicMembershipProviderDecorator(object):
                 return
             remote_dmemberships = remote_user.usernames_of_dynamic_memberships
             remote_dmemberships = remote_dmemberships - set(('Everyone',))
-            
+
             dynamic_memberships = original.usernames_of_dynamic_memberships
             shared_dmemberships = dynamic_memberships.intersection(remote_dmemberships)
             mapping['SharedDynamicMemberships'] = list(shared_dmemberships)
