@@ -305,7 +305,7 @@ class UserGhostContainersView(AbstractAuthenticatedView):
         # try current site
         result = find_object_with_ntiid(name)
         if result is not None:
-            return
+            return result
         # look in other sites
         for site in get_all_host_sites():
             with current_site(site):
