@@ -4,13 +4,12 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import six
-from collections import defaultdict
 
 from requests.structures import CaseInsensitiveDict
 
@@ -33,11 +32,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
 
-from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
-
 from nti.app.users import MessageFactory as _
 
-from nti.app.users.views import get_mime_type
 from nti.app.users.views import username_search
 from nti.app.users.views import parse_mime_types
 
@@ -58,7 +54,6 @@ from nti.dataserver.users import User
 
 from nti.dataserver.metadata.index import IX_CREATOR
 from nti.dataserver.metadata.index import IX_MIMETYPE
-from nti.dataserver.metadata.index import IX_SHAREDWITH
 from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.externalization.externalization import toExternalObject
@@ -180,7 +175,7 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 
     def __call__(self):
         request = self.request
-        values = CaseInsensitiveDict(**request.params)
+        values = CaseInsensitiveDict(request.params)
         term = values.get('term') or values.get('search')
         usernames = values.get('usernames') or values.get('username')
         if term:
@@ -196,7 +191,7 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
         items = result[ITEMS] = {}
         for username in usernames:
             user = User.get_user(username)
-            if user is None:
+            if not IUser.providedBy(user):
                 continue
             objects = items[username] = []
             for obj in get_user_objects(user, mime_types):
@@ -205,122 +200,6 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
                 total += 1
         result[TOTAL] = result[ITEM_COUNT] = total
         return result
-
-
-@view_config(name='ExportObjectsSharedwith')
-@view_config(name='export_objects_sharedwith')
-@view_defaults(route_name='objects.generic.traversal',
-               request_method='GET',
-               context=IDataserverFolder,
-               permission=nauth.ACT_NTI_ADMIN)
-class ExportObjectsSharedWithView(ExportUserObjectsView):
-
-    def __call__(self):
-        request = self.request
-        params = CaseInsensitiveDict(**request.params)
-        username = params.get('username') or self.remoteUser.username
-        user = User.get_user(username)
-        if not user:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                'message': _(u'User not found.'),
-                             },
-                             None)
-
-        catalog = metadata_catalog()
-        intids = component.getUtility(IIntIds)
-        sharedWith_ids = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
-
-        mime_types = params.get('mime_types') or params.get('mimeTypes') or u''
-        mime_types = parse_mime_types(mime_types)
-        if mime_types:
-            mime_types_intids = catalog[IX_MIMETYPE].apply({'any_of': mime_types})
-        else:
-            mime_types_intids = None
-
-        if mime_types_intids is None:
-            result_ids = sharedWith_ids
-        else:
-            result_ids = catalog.family.IF.intersection(sharedWith_ids,
-                                                        mime_types_intids)
-        result = LocatedExternalDict()
-        items = result[ITEMS] = []
-        for uid in result_ids or ():
-            obj = intids.queryObject(uid)
-            if obj is not None:
-                ext_obj = self._externalize(obj)
-                items.append(ext_obj)
-        result[TOTAL] = result[ITEM_COUNT] = len(items)
-        return result
-
-
-@view_config(name='DeleteUserObjects')
-@view_config(name='delete_user_objects')
-@view_defaults(route_name='objects.generic.traversal',
-               renderer='rest',
-               permission=nauth.ACT_NTI_ADMIN)
-class DeleteUserObjects(AbstractAuthenticatedView, 
-                        ModeledContentUploadRequestUtilsMixin):
-
-    def __call__(self):
-        values = CaseInsensitiveDict(self.readInput())
-        username = values.get('username') or values.get('user')
-        if not username:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                'message': _(u'Must specify a username.'),
-                             },
-                             None)
-        user = User.get_user(username)
-        if not user:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                'message': _(u'User not found.'),
-                             },
-                             None)
-
-        mime_types = values.get('mime_types') or values.get('mimeTypes') or u''
-        mime_types = parse_mime_types(mime_types)
-
-        broken_objects = set()
-        counter_map = defaultdict(int)
-        for obj in list(get_user_objects(user, mime_types)):
-            try:
-                try:
-                    objId = obj.id
-                    mime_type = get_mime_type(obj)
-                    containerId = obj.containerId
-                    obj = user.getContainedObject(containerId, objId)
-                    if obj is not None and user.deleteContainedObject(containerId, objId):
-                        counter_map[mime_type] = counter_map[mime_type] + 1
-                except AttributeError:
-                    pass
-            except (POSError, TypeError):
-                oid = getattr(obj, 'oid', None)
-                pid = getattr(obj, '_p_oid', None)
-                if pid:
-                    broken_objects.add(pid)
-                if oid:
-                    broken_objects.add(oid)
-        if broken_objects:
-            for container in list(user.containers.values()):
-                for _, obj in list(container.items()):
-                    oid = getattr(obj, 'oid', None)
-                    pid = getattr(obj, '_p_oid', None)
-                    broken = oid in broken_objects or pid in broken_objects
-                    if not broken:
-                        strong = obj if not callable(obj) else obj()
-                        broken = strong is not None \
-                             and oid in broken_objects \
-                             and pid in broken_objects
-                        obj = strong if broken else obj
-                    if broken:
-                        counter_map['broken'] = counter_map['broken'] + 1
-                        user.containers._v_removeFromContainer(container, obj)
-        return counter_map
 
 
 @view_config(name='ObjectResolver')
