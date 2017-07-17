@@ -413,7 +413,7 @@ class RemoveGhostContainersView(GetGhostContainersView,
 
     def readInput(self, value=None):
         if self.request.body:
-            result = super(RemoveGhostContainersView, self).readInput(self, value)
+            result = super(RemoveGhostContainersView, self).readInput(value)
         else:
             result = {}
         return CaseInsensitiveDict(result)
