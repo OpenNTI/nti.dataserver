@@ -158,3 +158,17 @@ class TestAdminViews(ApplicationLayerTest):
         assert_that(res.json_body,
                     has_entry('Items',
                               has_entry(username, has_length(1))))
+        
+        path = '/dataserver2/@@RemoveGhostContainers'
+        res = self.testapp.post_json(path, params, status=200)
+        assert_that(res.json_body, has_entry('Total', is_(1)))
+        assert_that(res.json_body,
+                    has_entry('Items',
+                              has_entry(username, has_length(1))))
+        
+        path = '/dataserver2/@@GhostContainers'
+        res = self.testapp.get(path, params, status=200)
+        assert_that(res.json_body,
+                    has_entry('Items',
+                              has_entry(username, has_length(0))))
+
