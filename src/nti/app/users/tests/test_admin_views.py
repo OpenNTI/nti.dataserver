@@ -141,7 +141,7 @@ class TestAdminViews(ApplicationLayerTest):
                                status=422)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-    def test_ghost_user_objects(self):
+    def test_ghost_objects(self):
         username = self.default_username.lower()
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.get_user(username)
@@ -151,7 +151,7 @@ class TestAdminViews(ApplicationLayerTest):
             note.containerId = u'mycontainer'
             note = user.addContainedObject(note)
 
-        path = '/dataserver2/@@GetUserGhostContainers'
+        path = '/dataserver2/@@GhostContainers'
         params = {"usernames": username}
         res = self.testapp.get(path, params, status=200)
         assert_that(res.json_body, has_entry('Total', is_(1)))

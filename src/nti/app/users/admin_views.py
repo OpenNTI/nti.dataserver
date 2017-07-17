@@ -294,6 +294,12 @@ class UserGhostContainersView(AbstractAuthenticatedView):
 
     exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog', ROOT)
 
+    def _check_access(self):
+        result = self.remoteUser == self.context \
+              or nauth.is_admin(self.remoteUser)
+        if not result:
+            raise hexc.HTTPForbidden()
+
     def _find_object(self, name):
         if not is_valid_ntiid_string(name):
             return None
@@ -317,8 +323,7 @@ class UserGhostContainersView(AbstractAuthenticatedView):
     def _find_user_containers(self, user):
         usermap = {}
         to_exclude = self._all_exclude(user)
-        method = getattr(user, 'getAllContainers', lambda: ())
-        for name in method():
+        for name in user.getAllContainers():
             if name in to_exclude:
                 continue
             target = self._find_object(name)
@@ -327,7 +332,12 @@ class UserGhostContainersView(AbstractAuthenticatedView):
                 usermap[name] = len(container) if container else 0
         return usermap
 
+    def _delete_containers(self, user, items):
+        for containerId in items or ():
+            user.deleteContainer(containerId)
+
     def __call__(self):
+        self._check_access()
         result = LocatedExternalDict()
         result.__name__ = self.request.view_name
         result.__parent__ = self.request.context
@@ -336,10 +346,23 @@ class UserGhostContainersView(AbstractAuthenticatedView):
         return result
 
 
+@view_config(name='RemoveGhostContainers')
+@view_config(name='remove_ghost_containers')
+@view_defaults(route_name='objects.generic.traversal',
+               context=IUser,
+               renderer='rest',
+               request_method='POST',
+               permission=nauth.ACT_READ)
+class RemoveUserGhostContainersView(UserGhostContainersView):
+
+    def __call__(self):
+        result = super(RemoveUserGhostContainersView, self).__call__()
+        self._delete_containers(self.context, result[ITEMS].keys())
+        return result
+
+
 @view_config(name='GhostContainers')
 @view_config(name='ghost_containers')
-@view_config(name='GetUserGhostContainers')
-@view_config(name='get_user_ghost_containers')
 @view_defaults(route_name='objects.generic.traversal',
                renderer='rest',
                request_method='GET',
@@ -353,7 +376,7 @@ class GetGhostContainersView(UserGhostContainersView):
             if not IUser.providedBy(user):
                 continue
             usermap = self._find_user_containers(user)
-            yield user.username, usermap
+            yield user, usermap
 
     def __call__(self):
         values = CaseInsensitiveDict(self.request.params)
@@ -369,7 +392,7 @@ class GetGhostContainersView(UserGhostContainersView):
         result.__name__ = self.request.view_name
         result.__parent__ = self.request.context
         items = result[ITEMS] = {}
-        for username, rmap in self._check_users_containers(usernames):
-            items[username] = rmap
+        for user, rmap in self._check_users_containers(usernames):
+            items[user.username] = rmap
         result[TOTAL] = result[ITEM_COUNT] = len(items)
         return result
