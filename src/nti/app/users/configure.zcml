@@ -52,7 +52,11 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList
 					pyramid.interfaces.IRequest" />
-
+	
+	<!-- Query -->
+	<subscriber	factory=".containers._UserContainersQuerier"
+				provides="nti.appserver.interfaces.IUserContainersQuerier"/>
+				
 	<!-- Traversal -->				
 	<adapter factory=".traversal.UsersAdapterTraversable"
 			 provides="zope.traversing.interfaces.ITraversable"
