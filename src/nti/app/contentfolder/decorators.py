@@ -20,6 +20,8 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.appserver.pyramid_authorization import has_permission
 
+from nti.base.interfaces import INamedFile
+
 from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfolder.interfaces import IRootFolder
@@ -36,8 +38,6 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 
 from nti.links.links import Link
-
-from nti.namedfile.interfaces import INamedFile
 
 LINKS = StandardExternalFields.LINKS
 
@@ -155,8 +155,7 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     @Lazy
     def _acl_decoration(self):
-        result = getattr(self.request, 'acl_decoration', True)
-        return result
+        return getattr(self.request, 'acl_decoration', True)
 
     def _predicate(self, context, result):
         parent = getattr(context, '__parent__', None)
@@ -225,5 +224,6 @@ class _ContextPathDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, result):
         path = result.get('path', None)
-        if not path and INamedContainer.providedBy(context.__parent__):
+        parent = getattr(context, '__parent__', None)
+        if not path and INamedContainer.providedBy(parent):
             result['path'] = compute_path(context)

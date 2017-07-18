@@ -18,7 +18,7 @@ import unittest
 
 from zope import interface
 
-from plone.namedfile.interfaces import INamed
+from nti.base.interfaces import INamedFile
 
 from nti.app.contentfolder.utils import get_unique_file_name
 from nti.app.contentfolder.utils import get_file_from_cf_io_url
@@ -31,7 +31,7 @@ class TestUtils(unittest.TestCase):
         class Foo(object):
             pass
         foo = Foo()
-        interface.alsoProvides(foo, INamed)
+        interface.alsoProvides(foo, INamedFile)
         mock_fon.is_callable().with_args().returns(foo)
 
         href = '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323'

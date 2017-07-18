@@ -28,16 +28,14 @@ from zope import lifecycleevent
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.file.upload import nameFinder
+
 from zope.intid.interfaces import IIntIds
 
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
-
-from plone.namedfile.file import getImageInfo
-
-from plone.namedfile.interfaces import INamed
 
 from nti.app.base.abstract_views import get_all_sources
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -64,6 +62,8 @@ from nti.appserver.pyramid_authorization import has_permission
 from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.base._compat import text_
+
+from nti.base.interfaces import INamedFile
 
 from nti.common.random import generate_random_hex_string
 
@@ -110,7 +110,8 @@ from nti.mimetype.externalization import decorateMimeType
 
 from nti.namedfile.file import safe_filename
 
-from nti.namedfile.interfaces import INamedFile
+from nti.namedfile.utils import getImageInfo
+
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
@@ -157,6 +158,10 @@ def to_unicode(name, encoding='utf-8', err='strict'):
         return name.decode(encoding)
 
 
+def displayName(context):
+    return getattr(context, 'name', None) or nameFinder(context)
+
+
 class SortMixin(object):
 
     _DEFAULT_SORT_ON = 'filename'
@@ -167,8 +172,7 @@ class SortMixin(object):
 
     @Lazy
     def _params(self):
-        values = CaseInsensitiveDict(self.request.params)
-        return values
+        return CaseInsensitiveDict(self.request.params)
 
     @Lazy
     def _sortOn(self):
@@ -253,7 +257,7 @@ class TreeView(AbstractAuthenticatedView, SortMixin):
         items = container.values()
         reverse = not self._isAscending()
         for value in sorted(items, key=self._sortKey, reverse=reverse):
-            name = value.name
+            name = displayName(value)
             if INamedContainer.providedBy(value):
                 folders += 1
                 if flat:
@@ -379,7 +383,7 @@ class MkdirView(AbstractAuthenticatedView,
         creator = self.remoteUser
         new_folder = self.readCreateUpdateContentObject(creator)
         new_folder.creator = creator.username  # use username
-        new_folder.name = safe_filename(new_folder.name)
+        new_folder.name = safe_filename(displayName(new_folder))
         if new_folder.name in self.context:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -446,6 +450,7 @@ class UploadView(AbstractAuthenticatedView,
         return CaseInsensitiveDict(result)
 
     def factory(self, source):
+        # TODO: Use adapter factory
         contentType = getattr(source, 'contentType', None)
         if contentType:
             factory = ContentBlobFile
@@ -590,8 +595,8 @@ class ExportView(AbstractAuthenticatedView):
             new_path = os.path.join(path, context.name)
             for item in context.values():
                 self._recur(item, zip_file, new_path)
-        elif INamed.providedBy(context):
-            filename = os.path.join(path, context.name)
+        elif INamedFile.providedBy(context):
+            filename = os.path.join(path, displayName(context))
             zip_file.writestr(filename, context.data)
 
     def __call__(self):
@@ -796,7 +801,7 @@ class RenameMixin(object):
 
         # replace name
         old_name = theObject.filename
-        old_key = old_key or theObject.name
+        old_key = old_key or displayName(theObject)
         theObject.name = new_key  # name is key
         theObject.filename = new_name  # filename is display name
         if hasattr(theObject, 'title') and theObject.title == old_name:
@@ -984,7 +989,7 @@ class MoveView(AbstractAuthenticatedView,
             if INamedFile.providedBy(current):
                 current = current.__parent__
         try:
-            target_name = theObject.name
+            target_name = displayName(theObject)
             target = traverse(current, path)
         except (TraversalException) as e:
             if     not isinstance(e, NoSuchFileException) \
@@ -1009,25 +1014,23 @@ class MoveView(AbstractAuthenticatedView,
         theObject = self.context
         self._check_object_exists(theObject)
         if IRootFolder.providedBy(theObject):
-            raise_json_error(
-                self.request,
-                hexc.HTTPForbidden,
-                {
-                    'message': _(u"Cannot move root folder."),
-                    'code': 'CannotMoveRootFolder',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                'message': _(u"Cannot move root folder."),
+                                'code': 'CannotMoveRootFolder',
+                             },
+                             None)
 
-        if ILockedFolder.providedBy(theObject) \
-                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
-            raise_json_error(
-                self.request,
-                hexc.HTTPForbidden,
-                {
-                    'message': _(u"Cannot move a locked folder."),
-                    'code': 'CannotMoveLockedFolder',
-                },
-                None)
+        if      ILockedFolder.providedBy(theObject) \
+            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+            raise_json_error(self.request,
+                             hexc.HTTPForbidden,
+                             {
+                                'message': _(u"Cannot move a locked folder."),
+                                'code': 'CannotMoveLockedFolder',
+                             },
+                             None)
 
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
@@ -1106,9 +1109,8 @@ class CopyView(MoveView):
                              },
                              None)
 
-        parent, target, target_name = self._get_parent_target(theObject, 
-                                                              path, 
-                                                              strict=False)
+        parent, target, target_name = \
+                self._get_parent_target(theObject, path, strict=False)
         if INamedContainer.providedBy(target):
             result = parent.copyTo(theObject, target, target_name)
         else:

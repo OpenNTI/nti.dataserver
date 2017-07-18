@@ -26,12 +26,12 @@
 
 	<subscriber factory=".decorators._NamedFileLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for="nti.namedfile.interfaces.INamedFile
+				for="nti.base.interfaces.INamedFile
 					 pyramid.interfaces.IRequest" />
 
 	<subscriber factory=".decorators._ContextPathDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
-				for="nti.namedfile.interfaces.INamedFile
+				for="nti.base.interfaces.INamedFile
 					 pyramid.interfaces.IRequest" />
 
 	<!-- Adapters -->

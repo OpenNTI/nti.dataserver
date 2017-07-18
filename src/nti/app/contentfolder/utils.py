@@ -25,11 +25,9 @@ from zope.intid.interfaces import IIntIds
 
 from pyramid.threadlocal import get_current_request
 
-from plone.namedfile.interfaces import INamed as IPloneNamed
-
 from nti.app.contentfolder import CFIO
 
-from nti.contentfile.interfaces import IContentBaseFile
+from nti.base.interfaces import INamedFile
 
 from nti.externalization.integer_strings import to_external_string
 from nti.externalization.integer_strings import from_external_string
@@ -67,7 +65,7 @@ def safe_download_file_name(name):
 def to_external_cf_io_href(context, request=None):
     ds2 = get_ds2(request)
     intids = component.getUtility(IIntIds)
-    context = IContentBaseFile(context, None)
+    context = INamedFile(context, None)
     if context is not None:
         safe_name = safe_download_file_name(context.filename)
         uid = intids.queryId(context) if context is not None else None
@@ -104,7 +102,7 @@ def get_file_from_cf_io_url(link, intids=None):
             uid = uid.split('/')[0] if '/' in uid else uid
             uid = from_external_string(uid)
             result = get_object(uid, intids=intids)
-            if not IPloneNamed.providedBy(result):
+            if not INamedFile.providedBy(result):
                 result = None
     except Exception:
         logger.error("Error while getting file from %s", link)
