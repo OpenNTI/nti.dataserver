@@ -14,7 +14,7 @@ from zope import interface
 
 from zope.location.interfaces import ILocation
 
-from plone.namedfile.interfaces import IFile
+from nti.base.interfaces import IFile
 
 from nti.app.contentfile.interfaces import IExternalLinkProvider
 
