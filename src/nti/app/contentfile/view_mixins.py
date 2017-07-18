@@ -170,8 +170,6 @@ def transfer_data(source, target):
         target.filename = nameFinder(source)
 
     return target
-
-
 transfer = transfer_data
 
 
