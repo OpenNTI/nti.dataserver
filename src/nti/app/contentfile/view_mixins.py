@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -26,14 +26,14 @@ from pyramid import httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
 
-from plone.namedfile.interfaces import IFile as IPloneFile
-from plone.namedfile.interfaces import INamed as IPloneNamed
-
 from nti.app.base.abstract_views import get_source
 
 from nti.app.contentfile import MessageFactory as _
 
 from nti.app.externalization.error import raise_json_error
+
+from nti.base.interfaces import IFile
+from nti.base.interfaces import INamedFile
 
 from nti.contentfile.interfaces import IContentBaseFile
 
@@ -47,7 +47,6 @@ from nti.externalization.externalization import to_external_ntiid_oid
 from nti.namedfile.file import NamedFileMixin
 from nti.namedfile.file import get_file_name as get_context_name
 
-from nti.namedfile.interfaces import IFile
 from nti.namedfile.interfaces import IFileConstraints
 from nti.namedfile.interfaces import IInternalFileRef
 
@@ -62,7 +61,7 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 
 def is_named_source(context):
-    return IFile.providedBy(context)
+    return INamedFile.providedBy(context)
 
 
 def file_contraints(context, user=None, constraint=IFileConstraints):
@@ -84,16 +83,15 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
     if      constraints is not None \
         and constraints.max_files \
         and len(sources) > constraints.max_files:
-        raise_json_error(
-                get_current_request(),
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _('Maximum number attachments exceeded.'),
-                    u'code': 'MaxAttachmentsExceeded',
-                    u'field': 'max_files',
-                    u'constraint': constraints.max_files
-                },
-                None)
+        raise_json_error(get_current_request(),
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                            'message': _(u'Maximum number attachments exceeded.'),
+                            'code': 'MaxAttachmentsExceeded',
+                            'field': 'max_files',
+                            'constraint': constraints.max_files
+                         },
+                         None)
 
     for source in sources or ():
         ctx = context if context is not None else source
@@ -104,47 +102,44 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
         try:
             size = getattr(source, 'size', None) or source.getSize()
             if size is not None and not validator.is_file_size_allowed(size):
-                raise_json_error(
-                        get_current_request(),
-                        hexc.HTTPUnprocessableEntity,
-                        {
-                            u'provided_bytes': size,
-                            u'max_bytes': validator.max_file_size,
-                            u'message': _('The uploaded file is too large.'),
-                            u'code': 'MaxFileSizeUploadLimitError',
-                            u'field': 'size'
-                        },
-                        None)
+                raise_json_error(get_current_request(),
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                    'message': _(u'The uploaded file is too large.'),
+                                    'provided_bytes': size,
+                                    'max_bytes': validator.max_file_size,
+                                    'code': 'MaxFileSizeUploadLimitError',
+                                    'field': 'size'
+                                 },
+                                 None)
         except AttributeError:
             pass
 
         contentType = getattr(source, 'contentType', None)
         if contentType and not validator.is_mime_type_allowed(contentType):
-            raise_json_error(
-                    get_current_request(),
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'provided_mime_type': contentType,
-                        u'allowed_mime_types': validator.allowed_mime_types,
-                        u'message': _('Invalid content/MimeType type.'),
-                        u'code': 'InvalidFileMimeType',
-                        u'field': 'contentType'
-                    },
-                    None)
+            raise_json_error(get_current_request(),
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Invalid content/MimeType type.'),
+                                'provided_mime_type': contentType,
+                                'allowed_mime_types': validator.allowed_mime_types,
+                                'code': 'InvalidFileMimeType',
+                                'field': 'contentType'
+                             },
+                             None)
 
         filename = getattr(source, 'filename', None)
         if filename and not validator.is_filename_allowed(filename):
-            raise_json_error(
-                    get_current_request(),
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'provided_filename': filename,
-                        u'allowed_extensions': validator.allowed_extensions,
-                        u'message': _('Invalid file name.'),
-                        u'code': 'InvalidFileExtension',
-                        u'field': 'filename'
-                    },
-                    None)
+            raise_json_error(get_current_request(),
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': _(u'Invalid file name.'),
+                                'provided_filename': filename,
+                                'allowed_extensions': validator.allowed_extensions,
+                                'code': 'InvalidFileExtension',
+                                'field': 'filename'
+                            },
+                            None)
 
 
 def transfer_data(source, target):
@@ -175,6 +170,8 @@ def transfer_data(source, target):
         target.filename = nameFinder(source)
 
     return target
+
+
 transfer = transfer_data
 
 
@@ -190,16 +187,16 @@ def read_multipart_sources(request, sources=()):
         if name:
             source = get_source(request, name)
             if source is None:
-                raise_json_error(
-                        get_current_request(),
-                        hexc.HTTPUnprocessableEntity,
-                        {
-                            u'name': data.name,
-                            u'message': _('Could not find multipart data.'),
-                            u'code': 'CouldNotFindMultiPartData',
-                            u'field': 'name'
-                        },
-                        None)
+                request = request or get_current_request()
+                raise_json_error(request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                    'message': _(u'Could not find multipart data.'),
+                                    'name': data.name,
+                                    'code': 'CouldNotFindMultiPartData',
+                                    'field': 'name'
+                                 },
+                                 None)
             data = transfer_data(source, data)
             result.append(data)
     return result
@@ -278,7 +275,7 @@ def transfer_internal_content_data(context, attr="body", request=None, ownership
         # copy its data.
         if IInternalFileRef.providedBy(target):
             source = find_object_with_ntiid(target.reference)
-            if IPloneFile.providedBy(source) and target != source:
+            if IFile.providedBy(source) and target != source:
                 # copy file data
                 target.data = source.data
                 target.filename = source.filename or target.filename
@@ -287,7 +284,7 @@ def transfer_internal_content_data(context, attr="body", request=None, ownership
                 interface.noLongerProvides(target, IInternalFileRef)
                 result.append(target)
 
-    if ownership: # take ownership
+    if ownership:  # take ownership
         for target in result:
             target.__parent__ = context
 
@@ -295,10 +292,8 @@ def transfer_internal_content_data(context, attr="body", request=None, ownership
 
 
 def _to_external_link_impl(target, elements, contentType=None, rel='data', render=True):
-    link = Link(target=target,
-                target_mime_type=contentType,
-                elements=elements,
-                rel=rel)
+    link = Link(target=target, target_mime_type=contentType,
+                elements=elements, rel=rel)
     interface.alsoProvides(link, ILinkExternalHrefOnly)
     if render:
         external = render_link(link)
@@ -326,9 +321,9 @@ def to_external_oid_and_link(item, name='view', rel='data', render=True):
 
 def download_file_name(context):
     result = None
-    if IPloneNamed.providedBy(context):
-        result = NamedFileMixin.nameFinder(context.filename) \
-              or context.filename
+    if INamedFile.providedBy(context):
+        filename = context.filename
+        result = NamedFileMixin.nameFinder(filename) or filename
     result = result or getattr(context, 'name', None)
     return safe_download_file_name(result)
 
@@ -360,6 +355,7 @@ def to_external_download_oid_href(item):
         return external
     return None
 
+
 #: OID based view/download pattern
 pattern = re.compile(r'(.+)/%s(.+)/(@@)?[view|download](\/.*)?' % TAG_NTC,
                      re.UNICODE | re.IGNORECASE)
@@ -381,10 +377,10 @@ def get_file_from_oid_external_link(link):
             ntiid = path
         else:
             path = link
-            ntiid = unquote(os.path.split(path)[1] or u'')  # last part of path
+            ntiid = unquote(os.path.split(path)[1] or '')  # last part of path
         if is_valid_ntiid_string(ntiid):
             result = find_object_with_ntiid(ntiid)
-            if not IPloneNamed.providedBy(result):
+            if not IFile.providedBy(result):
                 result = None
     except Exception:
         logger.exception("Error while getting file from %s", link)

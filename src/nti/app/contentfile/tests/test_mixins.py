@@ -18,7 +18,7 @@ import unittest
 
 from zope import interface
 
-from plone.namedfile.interfaces import INamed
+from nti.base.interfaces import INamedFile
 
 from nti.app.contentfile.view_mixins import is_oid_external_link
 from nti.app.contentfile.view_mixins import get_file_from_oid_external_link
@@ -32,7 +32,7 @@ class TestMixins(unittest.TestCase):
         class Foo(object):
             pass
         foo = Foo()
-        interface.alsoProvides(foo, INamed)
+        interface.alsoProvides(foo, INamedFile)
         mock_fon.is_callable().with_args().returns(foo)
 
         href = '/dataserver2/Objects/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323'
@@ -71,7 +71,7 @@ class TestMixins(unittest.TestCase):
         assert_that(get_file_from_oid_external_link(href),
                     is_(foo))
 
-        interface.noLongerProvides(foo, INamed)
+        interface.noLongerProvides(foo, INamedFile)
         href = 'http://x.org/tag:nextthought.com,2011-10:NTI-CourseInfo-Fall2015_CS_1323/@@view'
         n = get_file_from_oid_external_link(href)
         assert_that(n, is_(none()))

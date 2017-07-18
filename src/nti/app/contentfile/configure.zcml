@@ -15,15 +15,15 @@
 	
 	<adapter factory=".providers.DefaultExternalLinkProvider" 
 			 provides=".interfaces.IExternalLinkProvider" 
-			 for="plone.namedfile.interfaces.IFile" />
+			 for="nti.base.interfaces.IFile" />
 	
 	<adapter factory=".providers.DefaultExternalLinkProvider" 
 			 provides=".interfaces.IExternalLinkProvider"
-			 for="plone.namedfile.interfaces.IFile
+			 for="nti.base.interfaces.IFile
 			 	  pyramid.interfaces.IRequest" />
 
 	<subscriber factory=".decorators._ContentFileDecorator"
-				for="plone.namedfile.interfaces.IFile"
+				for="nti.base.interfaces.IFile"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
 
 	<!-- Adapters -->
