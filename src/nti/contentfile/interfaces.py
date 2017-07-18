@@ -13,7 +13,8 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.location.interfaces import IContained
 
-from nti.namedfile.interfaces import IFile
+from nti.base.interfaces import INamedFile as IBaseNamedFile
+
 from nti.namedfile.interfaces import INamedFile
 from nti.namedfile.interfaces import INamedImage
 from nti.namedfile.interfaces import INamedBlobFile
@@ -23,7 +24,7 @@ from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 
 
-class IContentBaseFile(IFile, IAttributeAnnotatable, IContained):
+class IContentBaseFile(IBaseNamedFile, IAttributeAnnotatable, IContained):
 
     tags = ListOrTuple(ValidTextLine(title=u"A single tag"), required=False)
 
