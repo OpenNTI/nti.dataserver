@@ -25,6 +25,8 @@ from zope.security.management import system_user
 
 from ZODB.interfaces import IConnection
 
+from nti.base.interfaces import IFile
+
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
 from nti.contentfolder.interfaces import IRootFolder
@@ -36,8 +38,6 @@ from nti.contentfolder.utils import compute_path
 from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 
 from nti.namedfile.file import get_file_name
-
-from nti.namedfile.interfaces import IFile
 
 from nti.property.property import alias
 
