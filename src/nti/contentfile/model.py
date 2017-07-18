@@ -13,12 +13,12 @@ from zope import interface
 
 from zope.deprecation import deprecated
 
-from nti.contentfile.mixins import BaseContentMixin
-
 from nti.contentfile.interfaces import IContentFile
 from nti.contentfile.interfaces import IContentImage
 from nti.contentfile.interfaces import IContentBlobFile
 from nti.contentfile.interfaces import IContentBlobImage
+
+from nti.contentfile.mixins import BaseContentMixin
 
 from nti.namedfile.file import NamedFile
 from nti.namedfile.file import NamedImage
