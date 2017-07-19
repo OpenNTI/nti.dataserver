@@ -41,15 +41,21 @@ class ContentBaseFileACLProvider(object):
     @property
     def __parent__(self):
         # See comments in nti.dataserver.authorization_acl:has_permission
-        return self.context.__parent__
+        try:
+            return self.context.__parent__
+        except AttributeError:
+            return None
 
     @Lazy
     def __aces__(self):
         aces = [ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, self),
                 ace_allowing(ROLE_CONTENT_ADMIN, ALL_PERMISSIONS, type(self))]
-        creator = IPrincipal(self.context.creator, None)
-        if creator is not None:
-            aces.append(ace_allowing(creator, ALL_PERMISSIONS, self))
+        try:
+            creator = IPrincipal(self.context.creator, None)
+            if creator is not None:
+                aces.append(ace_allowing(creator, ALL_PERMISSIONS, self))
+        except AttributeError:
+            pass
         return aces
 
     @Lazy
