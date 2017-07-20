@@ -24,7 +24,7 @@ from zope import component
 
 from zope.annotation.interfaces import IAnnotations
 
-import zope.schema.interfaces
+from zope.schema.interfaces import ValidationError
 
 from pyramid.view import view_config
 
@@ -94,7 +94,7 @@ def _preflight_email_based_request(request):
 
     try:
         checkEmailAddress(email_assoc_with_account)
-    except zope.schema.interfaces.ValidationError as e:
+    except ValidationError as e:
         handle_validation_error(request, e)
     return email_assoc_with_account
 
