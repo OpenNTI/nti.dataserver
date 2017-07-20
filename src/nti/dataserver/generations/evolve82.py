@@ -6,7 +6,7 @@ Generation 82
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,8 +20,8 @@ from zope.component.hooks import setHooks
 
 from nti.dataserver.interfaces import IUserDigestEmailMetadata
 
-_SENTKEY = 'nti.app.pushnotifications.digest_email.DigestEmailCollector.last_sent'
-_COLLECTEDKEY = 'nti.app.pushnotifications.digest_email.DigestEmailCollector.last_collected'
+_SENTKEY = u'nti.app.pushnotifications.digest_email.DigestEmailCollector.last_sent'
+_COLLECTEDKEY = u'nti.app.pushnotifications.digest_email.DigestEmailCollector.last_collected'
 
 
 def _delete_annotation(user):
@@ -44,8 +44,8 @@ def do_evolve(context):
 
     with site(ds_folder):
         users_folder = ds_folder['users']
-        logger.info(
-            'Updating digest meta storage for %s entities', len(users_folder))
+        logger.info('Updating digest meta storage for %s entities', 
+                    len(users_folder))
         for user in users_folder.values():
             collected, sent = _delete_annotation(user)
             user_meta = IUserDigestEmailMetadata(user, None)
