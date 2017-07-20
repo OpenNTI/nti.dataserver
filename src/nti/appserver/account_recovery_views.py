@@ -21,6 +21,8 @@ import urllib
 import datetime
 import urlparse
 
+from collections import namedtuple
+
 from zope import component
 
 from zope.annotation import interfaces as an_interfaces
@@ -98,14 +100,7 @@ def _create_mock_user(user):
         result = username
     return MockUser(result)
 
-
-class MockUser():
-    """
-    Fake user object to send to the email template
-    """
-
-    def __init__(self, username):
-        self.username = username
+MockUser = namedtuple('MockUser', ['username'])
 
 
 @view_config(route_name=REL_FORGOT_USERNAME,
