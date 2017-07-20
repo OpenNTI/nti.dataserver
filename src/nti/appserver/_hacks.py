@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -84,13 +84,13 @@ def echo_image_url(request):
     except requests.exceptions.RequestException as e:
         return hexc.HTTPBadRequest(*e.args)
 
-    if not image_response.headers.get('content-type', '').lower().startswith('image/'):
+    content_type = image_response.headers.get('content-type', '')
+    if not content_type.lower().startswith('image/'):
         return hexc.HTTPNotFound()
 
-    for header_name_to_copy in (b'Content-Type', b'ETag', b'Last-Modified', 'Content-Length'):
+    for header_name_to_copy in ('Content-Type', 'ETag', 'Last-Modified', 'Content-Length'):
         header_value = image_response.headers.get(header_name_to_copy)
         if header_value:
             request.response.headers[header_name_to_copy] = header_value
-
     request.response.app_iter = image_response.iter_content(chunk_size=256)
     return request.response

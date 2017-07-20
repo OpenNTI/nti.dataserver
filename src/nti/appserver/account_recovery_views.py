@@ -30,12 +30,12 @@ from pyramid.view import view_config
 
 from nti.appserver import MessageFactory as _
 
-from nti.dataserver import users
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users.interfaces import checkEmailAddress
+
+from nti.dataserver.users.users import User
 
 from nti.dataserver.users.user_profile import make_password_recovery_email_hash
 
@@ -390,7 +390,7 @@ def reset_passcode_view(request):
     # Return the same error message for no-such-user, bad-token, and expired-token.
     # To make it harder to phish in the system. The app can only say "start
     # over"
-    user = users.User.get_user(username)
+    user = User.get_user(username)
     value = (None, None)
     annotations = IAnnotations(user) if user else {}
     value = annotations.get(_KEY_PASSCODE_RESET, value)

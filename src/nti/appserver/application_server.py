@@ -6,7 +6,7 @@ Implementations of network servers.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -32,5 +32,5 @@ class WebSocketServer(gevent.pywsgi.WSGIServer):
         """
         super(WebSocketServer, self).__init__(*args, **kwargs)
         if not issubclass(self.handler_class, geventwebsocket.handler.WebSocketHandler):
-            raise ValueError("Unable to run with a handler that is not a type of %s", 
-							 WebSocketServer.handler_class)
+            raise ValueError("Unable to run with a handler that is not a type of %s",
+                             WebSocketServer.handler_class)
