@@ -9,32 +9,35 @@ password reset feature <http://www.troyhunt.com/2012/05/everything-you-ever-want
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
-from nti.appserver import MessageFactory as _
 
 import uuid
 import urllib
 import datetime
 import urlparse
-
 from collections import namedtuple
 
 from zope import component
 
-from zope.annotation import interfaces as an_interfaces
+from zope.annotation.interfaces import IAnnotations
 
 import zope.schema.interfaces
 
 from pyramid.view import view_config
 
+from nti.appserver import MessageFactory as _
+
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
-from nti.dataserver.users import user_profile
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserver
+
+from nti.dataserver.users.interfaces import checkEmailAddress
+
+from nti.dataserver.users.user_profile import make_password_recovery_email_hash
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
@@ -73,18 +76,26 @@ REL_RESET_PASSCODE = 'logon.reset.passcode'
 
 def _preflight_email_based_request(request):
     if request.authenticated_userid:
-        raise hexc.HTTPForbidden(
-            _("Cannot look for forgotten accounts while logged on."))
+        raise_json_error(request, 
+                         hexc.HTTPForbidden,
+                         {
+                            'message': _(u"Cannot look for forgotten accounts while logged on.")
+                         },
+                         None)
 
     email_assoc_with_account = request.params.get('email')
     if not email_assoc_with_account:
-        raise hexc.HTTPBadRequest(detail="Must provide email")
+        raise_json_error(request, 
+                         hexc.HTTPBadRequest,
+                         {
+                            'message': _(u"Must provide email.")
+                         },
+                         None)
 
     try:
-        user_interfaces.checkEmailAddress(email_assoc_with_account)
+        checkEmailAddress(email_assoc_with_account)
     except zope.schema.interfaces.ValidationError as e:
         handle_validation_error(request, e)
-
     return email_assoc_with_account
 
 
@@ -100,6 +111,7 @@ def _create_mock_user(user):
         result = username
     return MockUser(result)
 
+
 MockUser = namedtuple('MockUser', ['username'])
 
 
@@ -113,53 +125,55 @@ def forgot_username_view(request):
 
     Only if the request is invalid will this return an HTTP error; in all other cases,
     it will return HTTP success, having fired off (or queued) an email for sending.
-
     """
 
     email_assoc_with_account = _preflight_email_based_request(request)
-
-    matching_users = find_users_with_email(
-        email_assoc_with_account, request.registry.getUtility(nti_interfaces.IDataserver))
+    matching_users = find_users_with_email(email_assoc_with_account,
+                                           request.registry.getUtility(IDataserver))
     if matching_users:
         # ensure only real users, not profiles or other matches
-        matching_users = filter(
-            nti_interfaces.IUser.providedBy, matching_users)
+        matching_users = filter(IUser.providedBy, 
+                                matching_users)
         # create mock users for each user. This will let us apply the
         # username substitution policy to their usernames (for OU 4x4s)
         # without needing to modify the template.
-        matching_users = map(
-            lambda user: _create_mock_user(user), matching_users)
+        matching_users = map(lambda user: _create_mock_user(user), 
+                             matching_users)
 
     # Need to send both HTML and plain text if we send HTML, because
     # many clients still do not render HTML emails well (e.g., the popup notification on iOS
     # only works with a text part)
     policy = component.getUtility(ISitePolicyUserEventListener)
-    base_template = getattr(
-        policy, 'USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME', 'username_recovery_email')
+    base_template = getattr(policy, 
+                            'USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME', 
+                            'username_recovery_email')
 
     text_ext = ".mak"
     if not matching_users:
-        base_template = 'failed_' + base_template
         text_ext = ".txt"
+        base_template = 'failed_' + base_template
 
-    subject = getattr(
-        policy, 'USERNAME_RECOVERY_EMAIL_SUBJECT', 'NextThought Username Reminder')
+    subject = getattr(policy, 
+                      'USERNAME_RECOVERY_EMAIL_SUBJECT', 
+                      'NextThought Username Reminder')
+
     package = getattr(policy, 'PACKAGE', None)
-
     queue_simple_html_text_email(base_template, subject=_(subject),
                                  recipients=[email_assoc_with_account],
                                  template_args={
-                                     'users': matching_users, 'email': email_assoc_with_account},
+                                     'users': matching_users, 
+                                     'email': email_assoc_with_account
+                                 },
                                  request=request,
                                  package=package,
                                  text_template_extension=text_ext)
-
     return hexc.HTTPNoContent()
+
 
 # We store a tuple as an annotation of the user object for
 # password reset, and this is the key
 # (token, datetime, ???)
-_KEY_PASSCODE_RESET = __name__ + '.' + 'forgot_passcode_view_key'
+_KEY_PASSCODE_RESET = __name__ + '.' + u'forgot_passcode_view_key'
 
 
 @view_config(route_name=REL_FORGOT_PASSCODE,
@@ -187,28 +201,39 @@ def forgot_passcode_view(request):
     username = request.params.get('username') or ''
     username = username.strip()
     if not username:
-        return hexc.HTTPBadRequest(detail="Must provide username")
+        raise_json_error(request, 
+                         hexc.HTTPBadRequest,
+                         {
+                            'message': _(u"Must provide username.")
+                         },
+                         None)
     username = username.lower()  # normalize
 
     success_redirect_value = request.params.get('success')
     if not success_redirect_value:
-        return hexc.HTTPBadRequest(detail="Must provide success")
+        raise_json_error(request, 
+                         hexc.HTTPBadRequest,
+                         {
+                            'message': _(u"Must provide success.")
+                         },
+                         None)
 
     matching_users = find_users_with_email(email_assoc_with_account,
-                                           component.getUtility(
-                                               nti_interfaces.IDataserver),
-                                           username=username	)
+                                           component.getUtility(IDataserver),
+                                           username=username)
 
     policy = component.getUtility(ISitePolicyUserEventListener)
-    base_template = getattr(
-        policy, 'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME', 'password_reset_email')
+    base_template = getattr(policy, 
+                            'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME', 
+                            'password_reset_email')
+
     # Ok, we either got one user on no users
     if matching_users and len(matching_users) == 1:
         # We got one user. So we need to generate a token, and
         # store the timestamped value, while also invalidating any other
         # tokens we have for this user.
         matching_user = matching_users[0]
-        annotations = an_interfaces.IAnnotations(matching_user)
+        annotations = IAnnotations(matching_user)
 
         token = uuid.uuid4().hex
         now = datetime.datetime.utcnow()
@@ -220,12 +245,12 @@ def forgot_passcode_view(request):
         query = parsed_redirect[4]
         if query:
             query = query + '&username=' + \
-                urllib.quote(matching_user.username) + \
-                '&id=' + urllib.quote(token)
+                    urllib.quote(matching_user.username) + \
+                    '&id=' + urllib.quote(token)
         else:
             query = 'username=' + \
-                urllib.quote(matching_user.username) + \
-                '&id=' + urllib.quote(token)
+                    urllib.quote(matching_user.username) + \
+                    '&id=' + urllib.quote(token)
 
         parsed_redirect[4] = query
         success_redirect_value = urlparse.urlunparse(parsed_redirect)
@@ -240,26 +265,29 @@ def forgot_passcode_view(request):
         reset_url = None
         base_template = 'failed_' + base_template
 
-    subject = getattr(
-        policy, 'PASSWORD_RESET_EMAIL_SUBJECT', 'NextThought Password Reset')
+    subject = getattr(policy, 
+                      'PASSWORD_RESET_EMAIL_SUBJECT', 
+                      'NextThought Password Reset')
     package = getattr(policy, 'PACKAGE', None)
 
     queue_simple_html_text_email(base_template, subject=_(subject),
                                  recipients=[email_assoc_with_account],
-                                 template_args={'users': matching_users,
-                                                'user': matching_user,
-                                                'reset_url': reset_url,
-                                                'email': email_assoc_with_account},
+                                 template_args={
+                                    'users': matching_users,
+                                    'user': matching_user,
+                                    'reset_url': reset_url,
+                                    'email': email_assoc_with_account},
                                  package=package,
                                  request=request)
 
     return hexc.HTTPNoContent()
 
+
 from nti.dataserver.users import index as user_index
 from zope.catalog.interfaces import ICatalog
 
 
-def find_users_with_email(email, dataserver, username=None, match_info=False):
+def find_users_with_email(email, unused_dataserver, username=None, match_info=False):
     """
     Looks for and returns all users with an email or password recovery
     email hash (or parent/contact email hash) matching the given email.
@@ -273,9 +301,8 @@ def find_users_with_email(email, dataserver, username=None, match_info=False):
     :return: A sequence of the matched user objects.
     """
 
-    hashed_email = user_profile.make_password_recovery_email_hash(email)
-
     matches = set()
+    hashed_email = make_password_recovery_email_hash(email)
     ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
 
     for match_type, v in (('email', email),
@@ -292,13 +319,12 @@ def find_users_with_email(email, dataserver, username=None, match_info=False):
 
     if username:
         matches = ((u, match_type) for u, match_type in matches
-                   if nti_interfaces.IUser.providedBy(u) and u.username.lower() == username)
+                   if IUser.providedBy(u) and u.username.lower() == username)
 
     return [x[0] for x in matches] if not match_info else list(matches)
 
 
 def _is_link_expired(token_time):
-
     now = datetime.datetime.utcnow()
     # JZ - 2.2016 - 4 hour trial run (was 1 hour).
     delta = datetime.timedelta(hours=-4)
@@ -336,29 +362,46 @@ def reset_passcode_view(request):
 
     """
     if request.authenticated_userid:
-        raise hexc.HTTPForbidden(
-            _("Cannot look for forgotten accounts while logged on."))
+        raise_json_error(request, 
+                         hexc.HTTPForbidden,
+                         {
+                            'message': _(u"Cannot look for forgotten accounts while logged on.")
+                         },
+                         None)
 
     username = request.params.get('username')
     if not username:
-        return hexc.HTTPBadRequest(detail="Must provide username")
+        raise_json_error(request, 
+                         hexc.HTTPBadRequest,
+                         {
+                            'message': _(u"Must provide username.")
+                         },
+                         None)
 
     token = request.params.get('id')
     if not token:
-        return hexc.HTTPBadRequest(detail="Must provide id")
+        raise_json_error(request, 
+                         hexc.HTTPBadRequest,
+                         {
+                            'message': _(u"Must provide token id.")
+                         },
+                         None)
 
     # Return the same error message for no-such-user, bad-token, and expired-token.
     # To make it harder to phish in the system. The app can only say "start
     # over"
     user = users.User.get_user(username)
     value = (None, None)
-    annotations = an_interfaces.IAnnotations(user) if user else {}
+    annotations = IAnnotations(user) if user else {}
     value = annotations.get(_KEY_PASSCODE_RESET, value)
     if value[0] != token or _is_link_expired(value[1]):
         # expired, no user, bad token
-        raise_json_error(request, hexc.HTTPNotFound,
-                         {'code': 'InvalidOrMissingOrExpiredResetToken',
-                          'message': _("Your reset link is not valid. Please request a new one.")},
+        raise_json_error(request, 
+                         hexc.HTTPNotFound,
+                         {
+                            'code': 'InvalidOrMissingOrExpiredResetToken',
+                            'message': _(u"Your reset link is not valid. Please request a new one.")
+                         },
                          None)
 
     new_password = request.params.get('password')
@@ -372,8 +415,8 @@ def reset_passcode_view(request):
     if user.has_password():
         del user.password
 
-    update_object_from_external_object(
-        user, {'password': new_password}, notify=False, request=request)
+    update_object_from_external_object(user, {'password': new_password},
+                                       notify=False, request=request)
 
     # Great, it worked. Kill the annotation so that it CANNOT be used again
     # (otherwise the window of vulnerability is larger than it needs to be)
