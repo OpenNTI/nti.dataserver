@@ -25,6 +25,8 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location.location import locate
 
+import BTrees
+
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 
@@ -71,7 +73,7 @@ class ValidatingMimeType(object):
         try:
             if IEntity.providedBy(obj):
                 self.mimeType = getattr(obj, 'mimeType', None) \
-                    or getattr(obj, 'mime_type', None)
+                             or getattr(obj, 'mime_type', None)
         except (AttributeError, TypeError):
             pass
 
@@ -136,7 +138,7 @@ class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 
     EXPR = 'IUserProfile(context).opt_in_email_communication'
 
-    def __init__(self, iden, family=None):
+    def __init__(self, iden, family=BTrees.family64):
         super(OptInEmailCommunicationFilteredSet, self).__init__(iden, self.EXPR, family=family)
 
     def index_doc(self, docid, context):
@@ -158,7 +160,7 @@ class EmailVerifiedFilteredSet(FilteredSetBase):
 
     EXPR = 'IUserProfile(context).email_verified'
 
-    def __init__(self, iden, family=None):
+    def __init__(self, iden, family=BTrees.family64):
         super(EmailVerifiedFilteredSet, self).__init__(iden, self.EXPR, family=family)
 
     def index_doc(self, docid, context):
@@ -182,7 +184,7 @@ def isCommunity(extent, docid, document):
 
 class IsCommunityExtentFilteredSet(ExtentFilteredSet):
 
-    def __init__(self, fid, family=None):
+    def __init__(self, fid, family=BTrees.family64):
         super(IsCommunityExtentFilteredSet, self).__init__(fid, isCommunity, family=family)
 
 
@@ -190,7 +192,17 @@ def get_entity_catalog(registry=component):
     return registry.queryUtility(ICatalog, name=CATALOG_NAME)
 
 
-def create_entity_catalog(catalog=None, family=None):
+def add_catalog_filters(catalog, family=BTrees.family64):
+    topic_index = catalog[IX_TOPICS]
+    for filter_id, factory in ((IX_EMAIL_VERIFIED, EmailVerifiedFilteredSet),
+                               (IX_IS_COMMUNITY, IsCommunityExtentFilteredSet),
+                               (IX_OPT_IN_EMAIL_COMMUNICATION, OptInEmailCommunicationFilteredSet)):
+        the_filter = factory(filter_id, family=family)
+        topic_index.addFilter(the_filter)
+    return catalog
+
+
+def create_entity_catalog(catalog=None, family=BTrees.family64):
     if catalog is None:
         catalog = Catalog(family=family)
 
@@ -207,13 +219,7 @@ def create_entity_catalog(catalog=None, family=None):
         locate(index, catalog, name)
         catalog[name] = index
 
-    topic_index = catalog[IX_TOPICS]
-    for filter_id, factory in ((IX_EMAIL_VERIFIED, EmailVerifiedFilteredSet),
-                               (IX_IS_COMMUNITY, IsCommunityExtentFilteredSet),
-                               (IX_OPT_IN_EMAIL_COMMUNICATION, OptInEmailCommunicationFilteredSet)):
-        the_filter = factory(filter_id, family=family)
-        topic_index.addFilter(the_filter)
-
+    add_catalog_filters(catalog, family)
     return catalog
 
 
@@ -234,6 +240,4 @@ def install_entity_catalog(site_manager_container, intids=None):
     for index in catalog.values():
         intids.register(index)
     return catalog
-
-
 install_user_catalog = install_entity_catalog  # BWC

@@ -22,11 +22,11 @@ from zope import interface
 
 from zope.intid.interfaces import IIntIds
 
-from zope.catalog.interfaces import ICatalogIndex
-
 from zope.location import locate
 
 from zope.mimetype.interfaces import IContentTypeAware
+
+import BTrees
 
 from nti.base._compat import text_
 
@@ -168,7 +168,7 @@ class CreatorRawIndex(RawValueIndex):
     pass
 
 
-def CreatorIndex(family=None):
+def CreatorIndex(family=BTrees.family64):
     # We will use that with a string token normalizer
     return NormalizationWrapper(field_name='creator_username',
                                 interface=ValidatingCreatedUsername,
@@ -180,7 +180,7 @@ class SharedWithRawIndex(RawSetIndex):
     pass
 
 
-def SharedWithIndex(family=None):
+def SharedWithIndex(family=BTrees.family64):
     # SharedWith is a mixin property, currently,
     # the interface it is defined on is not really
     # the one we want, therefore we just ask for it from
@@ -247,7 +247,7 @@ class TaggedTo(object):
         return username_tags
 
 
-def TaggedToIndex(family=None):
+def TaggedToIndex(family=BTrees.family64):
     """
     Indexes the NTIIDs of entities mentioned in tags.
     """
@@ -284,7 +284,7 @@ class CreatorOfInReplyTo(object):
         raise TypeError()
 
 
-def CreatorOfInReplyToIndex(family=None):
+def CreatorOfInReplyToIndex(family=BTrees.family64):
     """
     Indexes all the replies to a particular user
     """
@@ -328,7 +328,7 @@ class TopLevelContentExtentFilteredSet(ExtentFilteredSet):
     A filter for a topic index that collects top-level objects.
     """
 
-    def __init__(self, fid, family=None):
+    def __init__(self, fid, family=BTrees.family64):
         super(TopLevelContentExtentFilteredSet, self).__init__(fid,
                                                                isTopLevelContentObjectFilter,
                                                                family=family)
@@ -344,7 +344,7 @@ class DeletedObjectPlaceholderExtentFilteredSet(ExtentFilteredSet):
     A filter for a topic index that collects deleted placeholders.
     """
 
-    def __init__(self, fid, family=None):
+    def __init__(self, fid, family=BTrees.family64):
         super(DeletedObjectPlaceholderExtentFilteredSet, self).__init__(fid,
                                                                         isDeletedObjectPlaceholder,
                                                                         family=family)
@@ -360,7 +360,7 @@ class IsUserGeneratedDataExtentFilteredSet(ExtentFilteredSet):
     A filter for a topic index that collects user generated data objects.
     """
 
-    def __init__(self, fid, family=None):
+    def __init__(self, fid, family=BTrees.family64):
         super(IsUserGeneratedDataExtentFilteredSet, self).__init__(fid,
                                                                    isUserGeneratedData,
                                                                    family=family)
@@ -370,7 +370,7 @@ class CreatedTimeRawIndex(RawIntegerValueIndex):
     pass
 
 
-def CreatedTimeIndex(family=None):
+def CreatedTimeIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='createdTime',
                                 interface=ICreatedTime,
                                 index=CreatedTimeRawIndex(family=family),
@@ -381,7 +381,7 @@ class LastModifiedRawIndex(RawIntegerValueIndex):
     pass
 
 
-def LastModifiedIndex(family=None):
+def LastModifiedIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='lastModified',
                                 interface=ILastModified,
                                 index=LastModifiedRawIndex(family=family),
@@ -401,7 +401,7 @@ class RevSharedWith(object):
         return None if not result else result
 
 
-def RevSharedWithIndex(family=None):
+def RevSharedWithIndex(family=BTrees.family64):
     return AttributeKeywordIndex(field_name='usernames',
                                  interface=RevSharedWith,
                                  family=family)
@@ -434,7 +434,9 @@ TP_USER_GENERATED_DATA = 'isUserGeneratedData'
 
 @interface.implementer(IMetadataCatalog)
 class MetadataCatalog(Catalog):
-
+    
+    family = BTrees.family64
+    
     super_index_doc = Catalog.index_doc
 
     def index_doc(self, docid, ob):
@@ -449,16 +451,17 @@ def get_metadata_catalog(registry=component):
     return catalog
 
 
-def add_catalog_filters(catalog, family):
+def add_catalog_filters(catalog, family=BTrees.family64):
     topic_index = catalog[IX_TOPICS]
     for filter_id, factory in ((TP_TOP_LEVEL_CONTENT, TopLevelContentExtentFilteredSet),
                                (TP_USER_GENERATED_DATA, IsUserGeneratedDataExtentFilteredSet),
                                (TP_DELETED_PLACEHOLDER, DeletedObjectPlaceholderExtentFilteredSet)):
         the_filter = factory(filter_id, family=family)
         topic_index.addFilter(the_filter)
+    return catalog
 
 
-def create_metadata_catalog(catalog=None, family=None):
+def create_metadata_catalog(catalog=None, family=BTrees.family64):
     if catalog is None:
         catalog = MetadataCatalog(family=family)
 
@@ -475,7 +478,7 @@ def create_metadata_catalog(catalog=None, family=None):
         index = clazz(family=family)
         locate(index, catalog, name)
         catalog[name] = index
-    
+
     add_catalog_filters(catalog, family)
     return catalog
 
@@ -498,6 +501,5 @@ def install_metadata_catalog(site_manager_container, intids=None):
                         name=CATALOG_NAME)
 
     for index in catalog.values():
-        assert ICatalogIndex.providedBy(index)
         intids.register(index)
     return catalog
