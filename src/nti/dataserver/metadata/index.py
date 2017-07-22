@@ -449,6 +449,15 @@ def get_metadata_catalog(registry=component):
     return catalog
 
 
+def add_catalog_filters(catalog, family):
+    topic_index = catalog[IX_TOPICS]
+    for filter_id, factory in ((TP_TOP_LEVEL_CONTENT, TopLevelContentExtentFilteredSet),
+                               (TP_USER_GENERATED_DATA, IsUserGeneratedDataExtentFilteredSet),
+                               (TP_DELETED_PLACEHOLDER, DeletedObjectPlaceholderExtentFilteredSet)):
+        the_filter = factory(filter_id, family=family)
+        topic_index.addFilter(the_filter)
+
+
 def create_metadata_catalog(catalog=None, family=None):
     if catalog is None:
         catalog = MetadataCatalog(family=family)
@@ -466,14 +475,8 @@ def create_metadata_catalog(catalog=None, family=None):
         index = clazz(family=family)
         locate(index, catalog, name)
         catalog[name] = index
-
-    topic_index = catalog[IX_TOPICS]
-    for filter_id, factory in ((TP_TOP_LEVEL_CONTENT, TopLevelContentExtentFilteredSet),
-                               (TP_USER_GENERATED_DATA, IsUserGeneratedDataExtentFilteredSet),
-                               (TP_DELETED_PLACEHOLDER, DeletedObjectPlaceholderExtentFilteredSet)):
-        the_filter = factory(filter_id, family=family)
-        topic_index.addFilter(the_filter)
-
+    
+    add_catalog_filters(catalog, family)
     return catalog
 
 
