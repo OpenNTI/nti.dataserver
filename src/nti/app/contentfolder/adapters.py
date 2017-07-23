@@ -66,6 +66,7 @@ class __OFSPathAdapter(Contained):
             return result
         raise KeyError(key)
 
+
 @interface.implementer(IPathAdapter)
 class __S3PathAdapter(Contained):
     """

@@ -73,9 +73,9 @@ class IContentBlobImage(INamedBlobImage, IContentBaseFile):
     pass
 
 
-class IS3File(INamedBlobFile, IContentBaseFile):
+class IS3File(IContentBaseFile, INamedBlobFile):
     pass
 
 
-class IS3Image(INamedBlobImage, IContentBaseFile):
+class IS3Image(IS3File, INamedBlobImage):
     pass

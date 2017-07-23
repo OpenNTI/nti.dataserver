@@ -11,26 +11,26 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from nti.contentfile import S3_FILE_MIMETYPE
+from nti.contentfile import S3_IMAGE_MIMETYPE
 from nti.contentfile import CONTENT_FILE_MIMETYPE
 from nti.contentfile import CONTENT_IMAGE_MIMETYPE
 from nti.contentfile import CONTENT_BLOB_FILE_MIMETYPE
 from nti.contentfile import CONTENT_BLOB_IMAGE_MIMETYPE
-from nti.contentfile import S3_FILE_MIMETYPE
-from nti.contentfile import S3_IMAGE_MIMETYPE
 
+from nti.contentfile.interfaces import IS3File
+from nti.contentfile.interfaces import IS3Image
 from nti.contentfile.interfaces import IContentFile
 from nti.contentfile.interfaces import IContentImage
 from nti.contentfile.interfaces import IContentBlobFile
 from nti.contentfile.interfaces import IContentBlobImage
-from nti.contentfile.interfaces import IS3File
-from nti.contentfile.interfaces import IS3Image
 
+from nti.contentfile.model import S3File
+from nti.contentfile.model import S3Image
 from nti.contentfile.model import ContentFile
 from nti.contentfile.model import ContentImage
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
-from nti.contentfile.model import S3File
-from nti.contentfile.model import S3Image
 
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -155,10 +155,10 @@ def ContentBlobImageFactory(ext_obj):
 
 
 def S3FileFactory(ext_obj):
-    result =  BaseFactory(ext_obj, S3File, S3File)
+    result = BaseFactory(ext_obj, S3File, S3File)
     return result
 
 
 def S3ImageFactory(ext_obj):
-    result =  BaseFactory(ext_obj, S3Image, S3Image)
+    result = BaseFactory(ext_obj, S3Image, S3Image)
     return result

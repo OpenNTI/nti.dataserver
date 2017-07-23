@@ -119,7 +119,6 @@ from nti.namedfile.file import safe_filename
 
 from nti.namedfile.utils import getImageInfo
 
-
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
 LINKS = StandardExternalFields.LINKS
@@ -842,8 +841,8 @@ class RenameView(UGDPutView, RenameMixin):
                              },
                              None)
 
-        if      ILockedFolder.providedBy(theObject) \
-            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+        if ILockedFolder.providedBy(theObject) \
+                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
@@ -1006,10 +1005,10 @@ class MoveView(AbstractAuthenticatedView,
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
                                  {
-                                     'message': _(str(e)),
-                                     'path': path,
-                                     'segment': e.segment,
-                                     'code': e.__class__.__name__
+                                    'message': _(str(e)),
+                                    'path': path,
+                                    'segment': e.segment,
+                                    'code': e.__class__.__name__
                                  },
                                  exc_info[2])
             else:
@@ -1029,8 +1028,8 @@ class MoveView(AbstractAuthenticatedView,
                              },
                              None)
 
-        if      ILockedFolder.providedBy(theObject) \
-            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+        if ILockedFolder.providedBy(theObject) \
+                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
@@ -1117,7 +1116,7 @@ class CopyView(MoveView):
                              None)
 
         parent, target, target_name = \
-                self._get_parent_target(theObject, path, strict=False)
+            self._get_parent_target(theObject, path, strict=False)
         if INamedContainer.providedBy(target):
             result = parent.copyTo(theObject, target, target_name)
         else:
@@ -1231,6 +1230,7 @@ class S3UploadView(UploadView):
                 factory = S3File
         return factory
 
+
 @view_config(context=IS3RootFolder)
 @view_config(context=IS3ContentFolder)
 @view_defaults(route_name='objects.generic.traversal',
@@ -1273,4 +1273,3 @@ class DeleteS3FolderView(DeleteFolderView):
         parent = theObject.__parent__
         parent.remove(theObject)
         return hexc.HTTPNoContent()
-

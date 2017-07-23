@@ -26,11 +26,13 @@ from zope import interface
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.contentfile.model import ContentBlobFile
-from nti.contentfile.model import transform_to_blob
-
+from nti.contentfile.interfaces import IS3File
+from nti.contentfile.interfaces import IS3Image
 from nti.contentfile.interfaces import IContentBlobFile
 from nti.contentfile.interfaces import IContentBlobImage
+
+from nti.contentfile.model import ContentBlobFile
+from nti.contentfile.model import transform_to_blob
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
@@ -123,6 +125,7 @@ class TestModel(unittest.TestCase):
         internal = factory()
         update_from_external_object(internal, ext_obj, require_updater=True)
 
+        assert_that(internal, verifiably_provides(IS3File))
         assert_that(IContentTypeAware.providedBy(internal), is_(True))
 
         # value changed to URI
@@ -141,10 +144,11 @@ class TestModel(unittest.TestCase):
 
         factory = find_factory_for(ext_obj)
         assert_that(factory, is_not(none()))
-
+         
         internal = factory()
         update_from_external_object(internal, ext_obj, require_updater=True)
 
+        assert_that(internal, verifiably_provides(IS3Image))
         assert_that(IContentTypeAware.providedBy(internal), is_(True))
 
         # value changed to URI

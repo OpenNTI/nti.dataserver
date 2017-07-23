@@ -9,11 +9,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import boto
-
 import os
-
 import six
+
+import boto
 
 from zope import interface
 from zope import lifecycleevent
@@ -34,10 +33,10 @@ from nti.base.interfaces import IFile
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
 from nti.contentfolder.interfaces import IRootFolder
+from nti.contentfolder.interfaces import IS3RootFolder
 from nti.contentfolder.interfaces import IContentFolder
 from nti.contentfolder.interfaces import INamedContainer
 from nti.contentfolder.interfaces import IS3ContentFolder
-from nti.contentfolder.interfaces import IS3RootFolder
 
 from nti.contentfolder.utils import compute_path
 
@@ -253,7 +252,7 @@ class RootFolder(ContentFolder):
 
 def get_key(context):
     path = []
-    max = 99
+    max_depth = 99
     current = context
     while current is not None:
         if IS3RootFolder.providedBy(current):
@@ -265,8 +264,8 @@ def get_key(context):
                 return ''
         path.append(current.__name__)
         current = current.__parent__
-        max -= 1
-        if max < 1:
+        max_depth -= 1
+        if max_depth < 1:
             raise TypeError("Maximum location depth exceeded, probably due to a a location cycle.")
 
     raise TypeError("Not enough context to determine location root")
@@ -286,6 +285,8 @@ def get_src_target_keys(srcParent, srcName, targetParent, targetName):
         targetKey = targetKey + '/'
     return srcKey, targetKey
 
+
+boto_s3 = getattr(boto, 's3')
 
 class BotoS3Mixin(object):
 
@@ -320,7 +321,7 @@ class BotoS3Mixin(object):
         connection = self._connection(debug)
         try:
             bucket = connection.get_bucket(self.bucket_name)
-            k = boto.s3.key.Key(bucket)
+            k = boto_s3.key.Key(bucket)
             k.key = key
             k.set_contents_from_string(data, policy=self.grant)
         finally:
@@ -392,7 +393,7 @@ class BotoS3Mixin(object):
         connection = self._connection(debug)
         try:
             bucket = connection.get_bucket(self.bucket_name, validate=False)
-            k = boto.s3.key.Key(bucket, key)
+            k = boto_s3.key.Key(bucket, key)
             return k.generate_url(expires_in=0, query_auth=False)
         finally:
             connection.close()
