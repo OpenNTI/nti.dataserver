@@ -13,6 +13,7 @@ from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import greater_than
 from hamcrest import has_property
 
 from zope import lifecycleevent
@@ -101,6 +102,13 @@ class TestAdminViews(ApplicationLayerTest):
             assert_that(IUserProfile(user), 
                         has_property('email_verified', is_(True)))
             assert_that(is_email_verified(email), is_(True))
+            
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    def test_rebuild_entity_catalog(self):
+        res = self.testapp.post('/dataserver2/@@RebuildEntityCatalog',
+                                status=200)
+        assert_that(res.json_body, 
+                    has_entry('Total', is_(greater_than(1))))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_get_email_verification_token(self):
@@ -171,4 +179,3 @@ class TestAdminViews(ApplicationLayerTest):
         assert_that(res.json_body,
                     has_entry('Items',
                               has_entry(username, has_length(0))))
-

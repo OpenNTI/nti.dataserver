@@ -20,6 +20,8 @@ from zope import component
 
 from zope.component.hooks import site as current_site
 
+from zope.intid.interfaces import IIntIds
+
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
@@ -45,10 +47,15 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.dataserver.users import User
+
+from nti.dataserver.users.index import get_entity_catalog
+from nti.dataserver.users.index import add_catalog_filters
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
@@ -428,4 +435,35 @@ class RemoveGhostContainersView(GetGhostContainersView,
             items[user.username] = rmap
             self._delete_containers(user, rmap.keys())
         result[TOTAL] = result[ITEM_COUNT] = len(items)
+        return result
+
+
+@view_config(name='RebuildEntityCatalog')
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='POST',
+               context=IDataserverFolder,
+               permission=nauth.ACT_NTI_ADMIN)
+class RebuildEntityCatalogView(AbstractAuthenticatedView):
+
+    def __call__(self):
+        intids = component.getUtility(IIntIds)
+        # clear indexes
+        catalog = get_entity_catalog()
+        for index in catalog.values():
+            index.clear()
+        # filters need to be added
+        add_catalog_filters(catalog, catalog.family)
+        # reindex
+        count = 0
+        dataserver = component.getUtility(IDataserver)
+        users_folder = IShardLayout(dataserver).users_folder
+        for obj in users_folder.values():
+            doc_id = intids.queryId(obj)
+            if doc_id is None:
+                continue
+            count += 1
+            catalog.index_doc(doc_id, obj)
+        result = LocatedExternalDict()
+        result[ITEM_COUNT] = result[TOTAL] = count
         return result
