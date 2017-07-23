@@ -9,10 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import os
 import six
-
-import boto
 
 from zope import interface
 from zope import lifecycleevent
@@ -31,6 +28,9 @@ from ZODB.interfaces import IConnection
 from nti.base.interfaces import IFile
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
+
+from nti.contentfolder.boto_s3 import get_key
+from nti.contentfolder.boto_s3 import BotoS3Mixin
 
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import IS3RootFolder
@@ -250,27 +250,6 @@ class RootFolder(ContentFolder):
         super(RootFolder, self).__init__(*args, **kwargs)
 
 
-def get_key(context):
-    path = []
-    max_depth = 99
-    current = context
-    while current is not None:
-        if IS3RootFolder.providedBy(current):
-            if path:
-                path.reverse()
-                result = ('/').join(path)
-                return result + u'/' if IS3ContentFolder.providedBy(context) else result
-            else:
-                return ''
-        path.append(current.__name__)
-        current = current.__parent__
-        max_depth -= 1
-        if max_depth < 1:
-            raise TypeError("Maximum location depth exceeded, probably due to a a location cycle.")
-
-    raise TypeError("Not enough context to determine location root")
-
-
 def get_src_target_keys(srcParent, srcName, targetParent, targetName):
     if srcParent == targetParent:
         parentKey = get_key(srcParent)
@@ -284,119 +263,6 @@ def get_src_target_keys(srcParent, srcName, targetParent, targetName):
         srcKey = srcKey + '/'
         targetKey = targetKey + '/'
     return srcKey, targetKey
-
-
-boto_s3 = getattr(boto, 's3')
-
-class BotoS3Mixin(object):
-
-    grant = 'public-read-write'
-
-    @readproperty
-    def settings(self):
-        return os.environ
-
-    @readproperty
-    def aws_access_key_id(self):
-        return self.settings.get('AWS_ACCESS_KEY_ID')
-
-    @readproperty
-    def aws_secret_access_key(self):
-        return self.settings.get('AWS_SECRET_ACCESS_KEY')
-
-    @readproperty
-    def bucket_name(self):
-        return self.settings.get('AWS_BUCKET_NAME')
-
-    def _connection(self, debug=True):
-        connection = boto.connect_s3(aws_access_key_id=self.aws_access_key_id,
-                                     aws_secret_access_key=self.aws_secret_access_key)
-        connection.debug = debug
-        return connection
-
-    def save_key(self, key, data='', debug=True):
-        """
-        Create file or Folder.
-        """
-        connection = self._connection(debug)
-        try:
-            bucket = connection.get_bucket(self.bucket_name)
-            k = boto_s3.key.Key(bucket)
-            k.key = key
-            k.set_contents_from_string(data, policy=self.grant)
-        finally:
-            connection.close()
-
-    def remove_key(self, key, debug=True):
-        """
-        Delete file or Folder, key starts with '/' represents folder.
-        """
-        connection = self._connection(debug)
-        try:
-            bucket = connection.get_bucket(self.bucket_name)
-            if key.endswith('/'):
-                keys = [x.key for x in bucket.list(prefix=key)]
-                bucket.delete_keys(keys)
-            else:
-                bucket.delete_key(key)
-        finally:
-            connection.close()
-        return True
-
-    def rename_key(self, oldKey, newKey, debug=True):
-        connection = self._connection(debug)
-        try:
-            bucket = connection.get_bucket(self.bucket_name)
-            k = bucket.lookup(oldKey)
-            if k:
-                if oldKey.endswith('/'):
-                    for k in bucket.list(prefix=oldKey):
-                        n = newKey + k.key[len(oldKey):]
-                        k.copy(self.bucket_name, n)
-                        k.delete()
-                else:
-                    k.copy(self.bucket_name, newKey)
-                    k.delete()
-        finally:
-            connection.close()
-
-    def move_key(self, srcKey, targetKey, debug=True):
-        connection = self._connection(debug)
-        try:
-            bucket = connection.get_bucket(self.bucket_name)
-            k = bucket.lookup(srcKey)
-            if k:
-                if srcKey.endswith('/'):
-                    for k in bucket.list(prefix=srcKey):
-                        n = targetKey + k.key[len(srcKey):]
-                        bucket.delete_key(n)
-                        k.copy(self.bucket_name, n)
-                        k.delete()
-                else:
-                    bucket.delete_key(targetKey)
-                    k.copy(self.bucket_name, targetKey)
-                    k.delete()
-        finally:
-            connection.close()
-
-    def clear_keys(self, parentKey, debug=True):
-        connection = self._connection(debug)
-        try:
-            bucket = connection.get_bucket(self.bucket_name)
-            keys = [x.key for x in bucket.list(prefix=parentKey) if x.key != parentKey]
-            bucket.delete_keys(keys)
-        finally:
-            connection.close()
-
-    def to_external_s3_href(self, key=None, obj=None, debug=True):
-        key = get_key(obj) if obj else key
-        connection = self._connection(debug)
-        try:
-            bucket = connection.get_bucket(self.bucket_name, validate=False)
-            k = boto_s3.key.Key(bucket, key)
-            return k.generate_url(expires_in=0, query_auth=False)
-        finally:
-            connection.close()
 
 
 @interface.implementer(IS3ContentFolder)
@@ -425,7 +291,6 @@ class S3ContentFolder(ContentFolder, BotoS3Mixin):
     def rename(self, old, new):
         oldName = get_context_name(old) or old
         super(S3ContentFolder, self).rename(oldName, new)
-
         oldKey, newKey = get_src_target_keys(self, oldName, self, new)
         self.rename_key(oldKey, newKey)
 
@@ -434,7 +299,8 @@ class S3ContentFolder(ContentFolder, BotoS3Mixin):
         newName = newName or name
         if super(S3ContentFolder, self).moveTo(item, target, newName):
             if self != target or name != newName:
-                srcKey, targetKey = get_src_target_keys(self, name, target, newName)
+                srcKey, targetKey = get_src_target_keys(self, name, 
+                                                        target, newName)
                 self.move_key(srcKey=srcKey,
                               targetKey=targetKey)
             return True
