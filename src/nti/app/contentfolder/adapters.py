@@ -24,6 +24,7 @@ from nti.contentfolder.interfaces import ISiteAdapter
 from nti.contentfolder.interfaces import INamedContainer
 
 from nti.contentfolder.model import RootFolder
+from nti.contentfolder.model import S3RootFolder
 
 from nti.site.interfaces import IHostPolicyFolder
 
@@ -60,6 +61,30 @@ class __OFSPathAdapter(Contained):
                 result = self.context._ofs_root
             except AttributeError:
                 result = self.context._ofs_root = RootFolder()
+                result.__parent__ = self.context
+                IConnection(self.context).add(result)
+            return result
+        raise KeyError(key)
+
+@interface.implementer(IPathAdapter)
+class __S3PathAdapter(Contained):
+    """
+    XXX: Adapter to be used only in unit tests.
+    """
+
+    __name__ = "s3"
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.__parent__ = context
+
+    def __getitem__(self, key):
+        if key == 's3root':
+            try:
+                result = self.context._s3_root
+            except AttributeError:
+                result = self.context._s3_root = S3RootFolder()
                 result.__parent__ = self.context
                 IConnection(self.context).add(result)
             return result

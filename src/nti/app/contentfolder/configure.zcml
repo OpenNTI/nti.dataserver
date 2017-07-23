@@ -42,6 +42,11 @@
 				 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
 				 factory=".adapters.__OFSPathAdapter"
 				 provides="zope.traversing.interfaces.IPathAdapter" />
+
+		<adapter name="s3"
+				 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
+				 factory=".adapters.__S3PathAdapter"
+				 provides="zope.traversing.interfaces.IPathAdapter" />
 	</configure>
 
 	<!-- Subscribers -->

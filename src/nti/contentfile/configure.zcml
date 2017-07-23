@@ -36,6 +36,16 @@
 			 provides="nti.externalization.interfaces.IMimeObjectFactory"
 			 name="application/vnd.nextthought.contentblobimage" />
 
+	<adapter factory=".datastructures.S3FileFactory"
+			 for="nti.base.interfaces.IDict"
+			 provides="nti.externalization.interfaces.IMimeObjectFactory"
+			 name="application/vnd.nextthought.s3file" />
+
+	<adapter factory=".datastructures.S3ImageFactory"
+			 for="nti.base.interfaces.IDict"
+			 provides="nti.externalization.interfaces.IMimeObjectFactory"
+			 name="application/vnd.nextthought.s3image" />
+
 	<adapter factory=".datastructures.ContentFileObjectIO"
 			 for=".interfaces.IContentFile"  />
 
@@ -47,5 +57,11 @@
 		
 	<adapter factory=".datastructures.ContentBlobImageObjectIO"
 			 for=".interfaces.IContentBlobImage"  />
+
+	<adapter factory=".datastructures.S3FileObjectIO"
+			 for=".interfaces.IS3File"  />
+
+	<adapter factory=".datastructures.S3ImageObjectIO"
+			 for=".interfaces.IS3Image"  />
 
 </configure>

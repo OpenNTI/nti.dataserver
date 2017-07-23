@@ -382,3 +382,18 @@ class TestContentFolderViews(ApplicationLayerTest):
         self.testapp.post('/dataserver2/ofs/root/@@upload',
                           upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
                           status=201)
+
+import unittest
+
+class TestS3ContentFolderViews(ApplicationLayerTest):
+
+    @unittest.SkipTest
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    def test_upload_multipart(self):
+        res = self.testapp.post('/dataserver2/s3/root/@@upload',
+                                upload_files=[('ichigo', 'ichigo.txt', b'ichigo'),
+                                              ('aizen', 'aizen.txt', b'aizen')],
+                                status=201)
+        assert_that(res.json_body,
+                    has_entries('ItemCount', is_(2),
+                                'Items', has_length(2)))

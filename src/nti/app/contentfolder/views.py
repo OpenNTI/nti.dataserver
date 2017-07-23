@@ -70,15 +70,22 @@ from nti.common.random import generate_random_hex_string
 from nti.common.string import is_true
 
 from nti.contentfile.interfaces import IContentBaseFile
+from nti.contentfile.interfaces import IS3File
+from nti.contentfile.interfaces import IS3Image
 
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
+from nti.contentfile.model import S3File
+from nti.contentfile.model import S3Image
 
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import ILockedFolder
 from nti.contentfolder.interfaces import INamedContainer
+from nti.contentfolder.interfaces import IS3ContentFolder
+from nti.contentfolder.interfaces import IS3RootFolder
 
 from nti.contentfolder.model import ContentFolder
+from nti.contentfolder.model import S3ContentFolder
 
 from nti.contentfolder.utils import mkdirs
 from nti.contentfolder.utils import traverse
@@ -1199,3 +1206,71 @@ class CFIOView(AbstractAuthenticatedView):
                     subrequest.environ[k] = request.environ[k]
         # invoke
         return request.invoke_subrequest(subrequest)
+
+
+@view_config(context=IS3RootFolder)
+@view_config(context=IS3ContentFolder)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='POST',
+               name='upload',
+               permission=nauth.ACT_UPDATE)
+class S3UploadView(UploadView):
+
+    def factory(self, source):
+        # TODO: Use adapter factory
+        contentType = getattr(source, 'contentType', None)
+        if contentType:
+            factory = S3File
+        else:
+            contentType, _, _ = getImageInfo(source)
+            source.seek(0)  # reset
+            if contentType:  # is image
+                factory = S3Image
+            else:
+                factory = S3File
+        return factory
+
+@view_config(context=IS3RootFolder)
+@view_config(context=IS3ContentFolder)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='POST',
+               name='mkdir',
+               permission=nauth.ACT_UPDATE)
+class S3MkdirView(MkdirView):
+
+    default_folder_mime_type = S3ContentFolder.mimeType
+
+    def readInput(self, value=None):
+        data = MkdirView.readInput(self, value=value)
+        data[MIMETYPE] = self.default_folder_mime_type
+        return data
+
+
+@view_config(context=IS3File)
+@view_config(context=IS3Image)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               permission=nauth.ACT_DELETE,
+               request_method='DELETE')
+class DeleteS3FileView(DeleteFileView):
+
+    def _do_delete(self, theObject):
+        parent = theObject.__parent__
+        parent.remove(theObject)
+        return hexc.HTTPNoContent()
+
+
+@view_config(context=IS3ContentFolder)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               permission=nauth.ACT_DELETE,
+               request_method='DELETE')
+class DeleteS3FolderView(DeleteFolderView):
+
+    def _do_delete(self, theObject):
+        parent = theObject.__parent__
+        parent.remove(theObject)
+        return hexc.HTTPNoContent()
+

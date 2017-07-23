@@ -97,6 +97,18 @@ class ILockedFolder(IContentFolder):
     pass
 
 
+class IS3ContentFolder(IContentFolder):
+    pass
+
+
+class IS3RootFolder(IS3ContentFolder, IRootFolder):
+    pass
+
+
+class IS3LockedFolder(IS3ContentFolder, ILockedFolder):
+    pass
+
+
 # Index adapters
 
 

@@ -27,3 +27,14 @@ class DefaultExternalLinkProvider(object):
 
     def link(self):
         return to_external_download_oid_href(self.context)
+
+@interface.implementer(IExternalLinkProvider)
+class S3ImageExternalinkProvider(object):
+
+    def __init__(self, context, request=None):
+        self.context = context
+        self.request = request or get_current_request()
+
+    def link(self):
+    	if self.context.__parent__:
+    	    return self.context.__parent__.to_external_s3_href(obj=self.context)

@@ -17,6 +17,8 @@ from nti.contentfile.interfaces import IContentFile
 from nti.contentfile.interfaces import IContentImage
 from nti.contentfile.interfaces import IContentBlobFile
 from nti.contentfile.interfaces import IContentBlobImage
+from nti.contentfile.interfaces import IS3File
+from nti.contentfile.interfaces import IS3Image
 
 from nti.contentfile.mixins import BaseContentMixin
 
@@ -49,6 +51,16 @@ class ContentImage(BaseContentMixin, NamedImage):
 
 @interface.implementer(IContentBlobImage)
 class ContentBlobImage(BaseContentMixin, NamedBlobImage):
+    pass
+
+
+@interface.implementer(IS3File)
+class S3File(BaseContentMixin, NamedBlobFile):
+    pass
+
+
+@interface.implementer(IS3Image)
+class S3Image(BaseContentMixin, NamedBlobImage):
     pass
 
 

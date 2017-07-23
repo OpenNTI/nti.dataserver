@@ -109,3 +109,47 @@ class TestModel(unittest.TestCase):
         assert_that(blob, has_property('contentType', is_('image/gif')))
         assert_that(blob, has_property('data', not_none()))
         assert_that(blob, has_property('size', is_(61)))
+
+    def test_s3_file(self):
+        ext_obj = {
+            'MimeType': 'application/vnd.nextthought.s3file',
+            'value': GIF_DATAURL,
+            'filename': u'ichigo.gif'
+        }
+
+        factory = find_factory_for(ext_obj)
+        assert_that(factory, is_not(none()))
+
+        internal = factory()
+        update_from_external_object(internal, ext_obj, require_updater=True)
+
+        assert_that(IContentTypeAware.providedBy(internal), is_(True))
+
+        # value changed to URI
+        assert_that(ext_obj, has_key('url'))
+
+        assert_that(internal, has_property('contentType', 'image/gif'))
+        assert_that(internal, has_property('filename', 'ichigo.gif'))
+        assert_that(internal, has_property('name', 'ichigo.gif'))
+
+    def test_s3_image(self):
+        ext_obj = {
+            'MimeType': 'application/vnd.nextthought.s3image',
+            'value': GIF_DATAURL,
+            'filename': u'ichigo.gif'
+        }
+
+        factory = find_factory_for(ext_obj)
+        assert_that(factory, is_not(none()))
+
+        internal = factory()
+        update_from_external_object(internal, ext_obj, require_updater=True)
+
+        assert_that(IContentTypeAware.providedBy(internal), is_(True))
+
+        # value changed to URI
+        assert_that(ext_obj, has_key('url'))
+
+        assert_that(internal, has_property('contentType', 'image/gif'))
+        assert_that(internal, has_property('filename', 'ichigo.gif'))
+        assert_that(internal, has_property('name', 'ichigo.gif'))

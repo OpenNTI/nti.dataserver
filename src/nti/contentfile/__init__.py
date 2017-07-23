@@ -20,3 +20,9 @@ CONTENT_BLOB_FILE_MIMETYPE = 'application/vnd.nextthought.contentblobfile'
 
 #: Content blob image mimetype
 CONTENT_BLOB_IMAGE_MIMETYPE = 'application/vnd.nextthought.contentblobimage'
+
+#: S3 file mimetype
+S3_FILE_MIMETYPE = 'application/vnd.nextthought.s3file'
+
+#: S3 image mimetype
+S3_IMAGE_MIMETYPE = 'application/vnd.nextthought.s3image'

@@ -71,3 +71,11 @@ class IContentBlobFile(INamedBlobFile, IContentBaseFile):
 
 class IContentBlobImage(INamedBlobImage, IContentBaseFile):
     pass
+
+
+class IS3File(INamedBlobFile, IContentBaseFile):
+    pass
+
+
+class IS3Image(INamedBlobImage, IContentBaseFile):
+    pass
