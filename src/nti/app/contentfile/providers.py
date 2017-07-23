@@ -17,6 +17,7 @@ from nti.app.contentfile.interfaces import IExternalLinkProvider
 
 from nti.app.contentfile.view_mixins import to_external_download_oid_href
 
+from nti.contentfolder.interfaces import IS3ContentFolder
 
 @interface.implementer(IExternalLinkProvider)
 class DefaultExternalLinkProvider(object):
@@ -28,6 +29,7 @@ class DefaultExternalLinkProvider(object):
     def link(self):
         return to_external_download_oid_href(self.context)
 
+
 @interface.implementer(IExternalLinkProvider)
 class S3ImageExternalinkProvider(object):
 
@@ -36,5 +38,5 @@ class S3ImageExternalinkProvider(object):
         self.request = request or get_current_request()
 
     def link(self):
-    	if self.context.__parent__:
-    	    return self.context.__parent__.to_external_s3_href(obj=self.context)
+        if IS3ContentFolder.providedBy(self.context.__parent__):
+            return self.context.__parent__.to_external_s3_href(obj=self.context)
