@@ -57,8 +57,8 @@ def _on_s3_file_removed(context, _):
 
 
 @component.adapter(IS3ContentFolder, IBeforeIdRemovedEvent)
-def _on_s3_folder_removed(context, _):
-    _on_s3_file_removed(context)
+def _on_s3_folder_removed(context, event):
+    _on_s3_file_removed(context, event)
 
 
 def _get_src_target_keys(source_parent, source_name, target_parent, target_name):
