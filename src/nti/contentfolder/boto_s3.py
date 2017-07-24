@@ -66,7 +66,7 @@ class BotoS3Mixin(object):
     def bucket_name(self):
         return self.settings.get('AWS_BUCKET_NAME')
 
-    def _connection(self, debug=True):
+    def _connection(self, debug=False):
         connection = boto.connect_s3(aws_access_key_id=self.aws_access_key_id,
                                      aws_secret_access_key=self.aws_secret_access_key)
         connection.debug = debug
@@ -75,7 +75,7 @@ class BotoS3Mixin(object):
     def get_key(self, context):
         return get_key(context)
 
-    def exists_key(self, key, debug=True):
+    def exists_key(self, key, debug=False):
         """
         Check if key exists
         """
@@ -91,7 +91,7 @@ class BotoS3Mixin(object):
         finally:
             connection.close()
 
-    def contents_key(self, key, encoding=None, debug=True):
+    def contents_key(self, key, encoding=None, debug=False):
         """
         Get the contents of key
         """
@@ -103,7 +103,7 @@ class BotoS3Mixin(object):
         finally:
             connection.close()
 
-    def size_key(self, key, debug=True):
+    def size_key(self, key, debug=False):
         """
         Get the content size of key
         """
@@ -115,7 +115,7 @@ class BotoS3Mixin(object):
         finally:
             connection.close()
 
-    def save_key(self, key, data='', debug=True):
+    def save_key(self, key, data='', debug=False):
         """
         Create file or Folder.
         """
@@ -127,7 +127,7 @@ class BotoS3Mixin(object):
         finally:
             connection.close()
 
-    def remove_key(self, key, debug=True):
+    def remove_key(self, key, debug=False):
         """
         Delete file or Folder, key ends with '/' represents folder.
         """
@@ -142,7 +142,7 @@ class BotoS3Mixin(object):
             connection.close()
         return True
 
-    def rename_key(self, oldKey, newKey, debug=True):
+    def rename_key(self, oldKey, newKey, debug=False):
         connection = self._connection(debug)
         try:
             bucket = connection.get_bucket(self.bucket_name)
@@ -159,7 +159,7 @@ class BotoS3Mixin(object):
         finally:
             connection.close()
 
-    def move_key(self, srcKey, targetKey, debug=True):
+    def move_key(self, srcKey, targetKey, debug=False):
         connection = self._connection(debug)
         try:
             bucket = connection.get_bucket(self.bucket_name)
@@ -178,7 +178,7 @@ class BotoS3Mixin(object):
         finally:
             connection.close()
 
-    def clear_keys(self, parentKey, debug=True):
+    def clear_keys(self, parentKey, debug=False):
         connection = self._connection(debug)
         try:
             bucket = connection.get_bucket(self.bucket_name)
@@ -189,7 +189,7 @@ class BotoS3Mixin(object):
         finally:
             connection.close()
 
-    def to_external_s3_href(self, key=None, obj=None, debug=True):
+    def to_external_s3_href(self, obj=None, key=None, debug=False):
         key = self.get_key(obj) if obj is not None else key
         connection = self._connection(debug)
         try:

@@ -101,11 +101,7 @@ class ILockedFolder(IContentFolder):
 
 
 class IS3ContentFolder(IContentFolder):
-
-    def to_external_s3_href(key=None, obj=None):
-        """
-        return the s3 href for the specified key or object
-        """
+    pass
 
 
 class IS3RootFolder(IS3ContentFolder, IRootFolder):

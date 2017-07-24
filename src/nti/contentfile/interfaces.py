@@ -137,3 +137,8 @@ class IS3FileIO(interface.Interface):
         """
         renames the object
         """
+
+    def to_external_s3_href(obj):
+        """
+        return the url/href for the specified object
+        """
