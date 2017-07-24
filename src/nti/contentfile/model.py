@@ -17,7 +17,7 @@ from zope.location.interfaces import IContained
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from persistent.persistence import Persistent
+from persistent import Persistent
 
 from nti.base.mixins import FileMixin
 
@@ -131,7 +131,6 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
         if not self._v_marked:
             s3 = IS3FileIO(self, None)
             if s3 is not None:
-                # We must attempt to execute after the rest of the transaction
                 transactions.do_near_end(target=self, call=s3.save)
                 self._v_marked = True
     data = property(_getData, _setData)
