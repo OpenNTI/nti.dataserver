@@ -31,9 +31,6 @@ from nti.base.interfaces import IFile
 
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
-from nti.contentfolder.boto_s3 import get_key
-from nti.contentfolder.boto_s3 import BotoS3Mixin
-
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import IS3RootFolder
 from nti.contentfolder.interfaces import IContentFolder
@@ -257,74 +254,25 @@ class RootFolder(ContentFolder):
         super(RootFolder, self).__init__(*args, **kwargs)
 
 
-def get_src_target_keys(srcParent, srcName, targetParent, targetName):
-    if srcParent == targetParent:
-        parentKey = get_key(srcParent)
-        srcKey = parentKey + srcName
-        targetKey = parentKey + targetName
-    else:
-        srcKey = get_key(srcParent) + srcName
-        targetKey = get_key(targetParent) + targetName
-
-    if IS3ContentFolder.providedBy(targetParent[targetName]):
-        srcKey = srcKey + '/'
-        targetKey = targetKey + '/'
-    return srcKey, targetKey
-
-
 @interface.implementer(IS3ContentFolder)
-class S3ContentFolder(ContentFolder, BotoS3Mixin):
-
+class S3ContentFolder(ContentFolder):
     createDirectFieldProperties(IS3ContentFolder)
 
     mimeType = mime_type = 'application/vnd.nextthought.s3contentfolder'
-
-    def __init__(self, *args, **kwargs):
-        super(S3ContentFolder, self).__init__(*args, **kwargs)
-
-    def add(self, obj):
-        obj = super(S3ContentFolder, self).add(obj)
-        self.save_key(key=get_key(obj),
-                      data=obj.data if not IS3ContentFolder.providedBy(obj) else '')
-        return obj
-
-    def remove(self, obj):
-        key = get_key(obj)
-        result = super(S3ContentFolder, self).remove(obj)
-        if key and result:
-            result = self.remove_key(key=key)
-        return result
 
     def rename(self, old, new):
         old_name = get_context_name(old) or old
         item = super(S3ContentFolder, self).rename(old_name, new)
         notify(S3ObjectRenamed(item, old_name, new))
-        oldKey, newKey = get_src_target_keys(self, old_name, self, new)
-        self.rename_key(oldKey, newKey)
         return item
-
-    def moveTo(self, item, target, newName=None):
-        name = get_context_name(item) or item
-        newName = newName or name
-        if super(S3ContentFolder, self).moveTo(item, target, newName):
-            if self != target or name != newName:
-                srcKey, targetKey = get_src_target_keys(self, name, 
-                                                        target, newName)
-                self.move_key(srcKey=srcKey,
-                              targetKey=targetKey)
-            return True
-        return False
 
     def clear(self):
         super(S3ContentFolder, self).clear()
         notify(S3ObjectCleared(self))
-        parentKey = get_key(self)
-        self.clear_keys(parentKey)
 
 
 @interface.implementer(IS3RootFolder)
 class S3RootFolder(S3ContentFolder, RootFolder):
-
     createDirectFieldProperties(IS3RootFolder)
 
     __external_can_create__ = False
