@@ -113,10 +113,6 @@ class S3FolderIO(S3FileIO):
         key = key or self.key()
         self.save_key(key, '', debug)
 
-    def remove(self, key=None, debug=True):
-        key = key or self.key()
-        self.clear_keys(key, debug)
-
 
 @interface.implementer(IS3FileIO)
 @component.adapter(IS3ContentFolder)
