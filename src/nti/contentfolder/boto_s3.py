@@ -21,7 +21,7 @@ from nti.contentfolder.interfaces import INamedContainer
 
 def get_key(context):
     path = []
-    result = u''
+    result = ''
     current = context
     while current is not None:
         if IRootFolder.providedBy(current):
@@ -33,9 +33,9 @@ def get_key(context):
             break
     if path:
         path.reverse()
-        result = u'/'.join(path)
+        result = '/'.join(path)
         if INamedContainer.providedBy(context):
-            result += u'/'
+            result += '/'
     return result
 
 
@@ -65,6 +65,21 @@ class BotoS3Mixin(object):
         connection.debug = debug
         return connection
 
+    def exists_key(self, key, debug=True):
+        """
+        Check if key exists
+        """
+        connection = self._connection(debug)
+        try:
+            bucket = connection.get_bucket(self.bucket_name)
+            k = boto.s3.key.Key(bucket, key)
+            return k.exists()
+        except Exception as e:
+            logger.error("Error while checking existence of key %s. %s", key, e)
+            return False
+        finally:
+            connection.close()
+
     def get_key(self, key, encoding=None, debug=True):
         """
         Get the contents of file
@@ -72,8 +87,7 @@ class BotoS3Mixin(object):
         connection = self._connection(debug)
         try:
             bucket = connection.get_bucket(self.bucket_name)
-            k = boto.s3.key.Key(bucket)
-            k.key = key
+            k = boto.s3.key.Key(bucket, key)
             return k.get_contents_as_string(encoding=encoding)
         finally:
             connection.close()
@@ -93,7 +107,7 @@ class BotoS3Mixin(object):
 
     def remove_key(self, key, debug=True):
         """
-        Delete file or Folder, key starts with '/' represents folder.
+        Delete file or Folder, key ends with '/' represents folder.
         """
         connection = self._connection(debug)
         try:
