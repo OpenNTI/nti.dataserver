@@ -39,6 +39,13 @@ def get_key(context):
     return result
 
 
+def check_boto(environ=None):
+    environ = os.environ if environ is None else environ
+    return bool(    environ.get('AWS_BUCKET_NAME')
+                and environ.get('AWS_ACCESS_KEY_ID')
+                and environ.get('AWS_SECRET_ACCESS_KEY'))
+
+
 class BotoS3Mixin(object):
 
     grant = 'public-read-write'
@@ -78,7 +85,8 @@ class BotoS3Mixin(object):
             k = boto.s3.key.Key(bucket, key)
             return k.exists()
         except Exception as e:
-            logger.error("Error while checking existence of key %s. %s", key, e)
+            logger.error(
+                "Error while checking existence of key %s. %s", key, e)
             return False
         finally:
             connection.close()
