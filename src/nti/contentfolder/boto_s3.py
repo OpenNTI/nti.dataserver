@@ -39,7 +39,7 @@ def get_key(context):
     return result
 
 
-def check_boto(environ=None):
+def is_boto_available(environ=None):
     environ = os.environ if environ is None else environ
     return bool(    environ.get('AWS_BUCKET_NAME')
                 and environ.get('AWS_ACCESS_KEY_ID')
