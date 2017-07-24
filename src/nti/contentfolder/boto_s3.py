@@ -137,8 +137,7 @@ class BotoS3Mixin(object):
             if key.endswith('/'):
                 keys = [x.key for x in bucket.list(prefix=key)]
                 bucket.delete_keys(keys)
-            else:
-                bucket.delete_key(key)
+            bucket.delete_key(key)
         finally:
             connection.close()
         return True
