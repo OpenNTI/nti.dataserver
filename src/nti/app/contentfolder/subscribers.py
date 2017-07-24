@@ -100,7 +100,8 @@ def _on_s3_folder_renamed(context, event):
 @component.adapter(IS3File, IObjectMovedEvent)
 def _on_s3_file_moved(context, event):
     if      IS3ContentFolder.providedBy(context.__parent__) \
-        and event.oldParent is not None:
+        and event.oldParent is not None \
+        and event.newParent is not None:
         s3 = IS3FileIO(context, None)
         if s3 is not None:
             source_key, target_key = _get_src_target_keys(event.oldParent, event.oldName,
