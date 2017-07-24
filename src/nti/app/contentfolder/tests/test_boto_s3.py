@@ -190,7 +190,8 @@ class TestBotoS3(ApplicationLayerTest):
             trash.clear()
 
         s3 = S3FileIO()
-        assert_that(s3.exists('trash/documents/'), is_(True))
+        assert_that(s3.exists('trash/'), is_(True))
+        assert_that(s3.exists('trash/documents/'), is_(False))
         assert_that(s3.exists('trash/documents/asauchi'), is_(False))
 
         # test delete directory
