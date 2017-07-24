@@ -21,6 +21,9 @@ from zope.container.interfaces import IContentContainer
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
+from zope.interface.interfaces import ObjectEvent
+from zope.interface.interfaces import IObjectEvent
+
 from nti.base.interfaces import IFile
 from nti.base.interfaces import ICreated
 from nti.base.interfaces import ILastModified
@@ -110,6 +113,48 @@ class IS3RootFolder(IS3ContentFolder, IRootFolder):
 
 
 class IS3LockedFolder(IS3ContentFolder, ILockedFolder):
+    pass
+
+
+# events
+
+
+class IS3ObjectAdded(IObjectEvent):
+    pass
+
+
+@interface.implementer(IS3ObjectAdded)
+class S3ObjectAdded(ObjectEvent):
+    pass
+
+
+class IS3ObjectRemoved(IObjectEvent):
+    pass
+
+
+@interface.implementer(IS3ObjectRemoved)
+class S3ObjectRemoved(ObjectEvent):
+    pass
+
+
+class IS3ObjectRenamed(IObjectEvent):
+    target = interface.Attribute("Target")
+
+
+@interface.implementer(IS3ObjectRemoved)
+class S3ObjectRenamed(ObjectEvent):
+
+    def __init__(self,  obj, target):
+        super(S3ObjectRenamed, self).__init__(obj)
+        self.target = target
+
+
+class IS3ObjectCleared(IObjectEvent):
+    pass
+
+
+@interface.implementer(IS3ObjectCleared)
+class S3ObjectCleared(ObjectEvent):
     pass
 
 
