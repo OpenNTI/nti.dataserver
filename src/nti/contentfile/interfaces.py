@@ -85,12 +85,17 @@ class IS3Object(interface.Interface):
     pass
 
 
-class IS3File(IS3Object, IContentBaseFile, INamedBlobFile):
+class IS3File(IS3Object, IContentBaseFile):
     pass
 
 
-class IS3Image(IS3File, INamedBlobImage):
-    pass
+class IS3Image(IS3File):
+
+    def getImageSize():
+        """
+        Return a tuple (x, y) that describes the dimensions of
+        the object.
+        """
 
 
 class IS3FileIO(interface.Interface):
@@ -123,12 +128,12 @@ class IS3FileIO(interface.Interface):
         saves contents of the object
         """
 
-    def remove():
+    def remove(key=None):
         """
-        Delete the object
+        Delete the object or the specified key
         """
 
-    def rename(target):
+    def rename(key, target):
         """
         renames the object
         """

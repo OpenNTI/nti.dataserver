@@ -17,6 +17,8 @@ from zope import lifecycleevent
 from zope.cachedescriptors.property import readproperty
 from zope.cachedescriptors.property import CachedProperty
 
+from zope.event import notify
+
 from zope.location.location import locate
 
 from zope.mimetype.interfaces import IContentTypeAware
@@ -37,6 +39,9 @@ from nti.contentfolder.interfaces import IS3RootFolder
 from nti.contentfolder.interfaces import IContentFolder
 from nti.contentfolder.interfaces import INamedContainer
 from nti.contentfolder.interfaces import IS3ContentFolder
+
+from nti.contentfolder.interfaces import S3ObjectCleared
+from nti.contentfolder.interfaces import S3ObjectRenamed
 
 from nti.contentfolder.utils import compute_path
 
@@ -157,6 +162,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
                 pass
         _update(item)
         _update(self)
+        return item
 
     def moveTo(self, item, target, newName=None):
         assert isinstance(item, six.string_types) \
@@ -290,10 +296,12 @@ class S3ContentFolder(ContentFolder, BotoS3Mixin):
         return result
 
     def rename(self, old, new):
-        oldName = get_context_name(old) or old
-        super(S3ContentFolder, self).rename(oldName, new)
-        oldKey, newKey = get_src_target_keys(self, oldName, self, new)
+        old_name = get_context_name(old) or old
+        item = super(S3ContentFolder, self).rename(old_name, new)
+        notify(S3ObjectRenamed(item, old_name, new))
+        oldKey, newKey = get_src_target_keys(self, old_name, self, new)
         self.rename_key(oldKey, newKey)
+        return item
 
     def moveTo(self, item, target, newName=None):
         name = get_context_name(item) or item
@@ -309,6 +317,7 @@ class S3ContentFolder(ContentFolder, BotoS3Mixin):
 
     def clear(self):
         super(S3ContentFolder, self).clear()
+        notify(S3ObjectCleared(self))
         parentKey = get_key(self)
         self.clear_keys(parentKey)
 

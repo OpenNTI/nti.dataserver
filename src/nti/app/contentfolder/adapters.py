@@ -18,10 +18,17 @@ from zope.traversing.interfaces import IPathAdapter
 
 from ZODB.interfaces import IConnection
 
+from nti.contentfile.interfaces import IS3File
+from nti.contentfile.interfaces import IS3FileIO
+
 from nti.contentfolder.adapters import Site
+
+from nti.contentfolder.boto_s3 import BotoS3Mixin
+from nti.contentfolder.boto_s3 import is_boto_available
 
 from nti.contentfolder.interfaces import ISiteAdapter
 from nti.contentfolder.interfaces import INamedContainer
+from nti.contentfolder.interfaces import IS3ContentFolder
 
 from nti.contentfolder.model import RootFolder
 from nti.contentfolder.model import S3RootFolder
@@ -29,6 +36,9 @@ from nti.contentfolder.model import S3RootFolder
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
+
+
+# Index adapters
 
 
 def site_adapter(context):
@@ -40,6 +50,77 @@ def site_adapter(context):
 @interface.implementer(ISiteAdapter)
 def _contentfolder_site_adapter(context):
     return site_adapter(context)
+
+
+# S3 adapters
+
+
+@component.adapter(IS3File)
+@interface.implementer(IS3FileIO)
+class S3FileIO(BotoS3Mixin):
+
+    def __init__(self, context):
+        self.context = context
+
+    def key(self):
+        return self.get_key(self.context)
+
+    def exists(self, debug=True):
+        return self.exists_key(self.key(), debug)
+
+    def contents(self, encoding=None, debug=True):
+        return self.get_contents(self.key(), encoding, debug)
+
+    def size(self, debug=True):
+        return self.size_key(self.key(), debug)
+
+    def save(self, debug=True):
+        self.save_key(self.key(), self.context.data, debug)
+
+    def remove(self, key=None, debug=True):
+        key = key or self.key()
+        self.remove_key(key, debug)
+
+    def rename(self, old_key, new_key, debug=True):
+        old_key = old_key or self.key()
+        self.rename_key(old_key, new_key, debug)
+
+
+@component.adapter(IS3File)
+@interface.implementer(IS3FileIO)
+def _s3_fileIO_adapter(context):
+    if is_boto_available():
+        return S3FileIO(context)
+    return None
+
+
+@interface.implementer(IS3FileIO)
+@component.adapter(IS3ContentFolder)
+class S3FolderIO(S3FileIO):
+
+    def contents(self):
+        return ''
+
+    def size(self):
+        return 0
+
+    def save(self, debug=True):
+        self.save_key(self.key(), '', debug)
+
+    def remove(self, key=None, debug=True):
+        key = key or self.key()
+        self.clear_keys(key, debug)
+
+
+@interface.implementer(IS3FileIO)
+@component.adapter(IS3ContentFolder)
+def _s3_folderIO_adapter(context):
+    if is_boto_available():
+        return S3FolderIO(context)
+    return None
+
+
+# Test adapters
 
 
 @interface.implementer(IPathAdapter)

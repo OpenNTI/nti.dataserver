@@ -119,34 +119,23 @@ class IS3LockedFolder(IS3ContentFolder, ILockedFolder):
 # events
 
 
-class IS3ObjectAdded(IObjectEvent):
-    pass
-
-
-@interface.implementer(IS3ObjectAdded)
-class S3ObjectAdded(ObjectEvent):
-    pass
-
-
-class IS3ObjectRemoved(IObjectEvent):
-    pass
-
-
-@interface.implementer(IS3ObjectRemoved)
-class S3ObjectRemoved(ObjectEvent):
-    pass
-
-
 class IS3ObjectRenamed(IObjectEvent):
-    target = interface.Attribute("Target")
+    source = interface.Attribute("Renamed object")
+    old_name = interface.Attribute("old name")
+    new_name = interface.Attribute("new name")
 
 
-@interface.implementer(IS3ObjectRemoved)
+@interface.implementer(IS3ObjectRenamed)
 class S3ObjectRenamed(ObjectEvent):
 
-    def __init__(self,  obj, target):
+    def __init__(self,  obj, old_name, new_name):
         super(S3ObjectRenamed, self).__init__(obj)
-        self.target = target
+        self.old_name = old_name
+        self.new_name = new_name
+
+    @property
+    def source(self):
+        return self.object
 
 
 class IS3ObjectCleared(IObjectEvent):
