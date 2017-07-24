@@ -59,22 +59,27 @@ def _contentfolder_site_adapter(context):
 @interface.implementer(IS3FileIO)
 class S3FileIO(BotoS3Mixin):
 
-    def __init__(self, context):
+    def __init__(self, context=None):
         self.context = context
 
     def key(self):
         return self.get_key(self.context)
 
-    def exists(self, debug=True):
-        return self.exists_key(self.key(), debug)
+    def exists(self, key=None, debug=True):
+        key = key or self.key()
+        return self.exists_key(key, debug)
 
-    def contents(self, encoding=None, debug=True):
-        return self.get_contents(self.key(), encoding, debug)
+    def contents(self, key=None, encoding=None, debug=True):
+        key = key or self.key()
+        return self.contents_key(key, encoding, debug)
 
-    def size(self, debug=True):
-        return self.size_key(self.key(), debug)
+    def size(self, key=None, debug=True):
+        key = key or self.key()
+        return self.size_key(key, debug)
 
-    def save(self, debug=True):
+    def save(self, key=None, data=None, debug=True):
+        key = key or self.key()
+        data = data if data is not None else self.context.data
         self.save_key(self.key(), self.context.data, debug)
 
     def remove(self, key=None, debug=True):
@@ -104,8 +109,9 @@ class S3FolderIO(S3FileIO):
     def size(self):
         return 0
 
-    def save(self, debug=True):
-        self.save_key(self.key(), '', debug)
+    def save(self, key=None, debug=True):
+        key = key or self.key()
+        self.save_key(key, '', debug)
 
     def remove(self, key=None, debug=True):
         key = key or self.key()
