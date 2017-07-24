@@ -86,7 +86,11 @@ class IS3Object(interface.Interface):
 
 
 class IS3File(IS3Object, IContentBaseFile):
-    pass
+
+    def invalidate():
+        """
+        Invalidate this object
+        """
 
 
 class IS3Image(IS3File):

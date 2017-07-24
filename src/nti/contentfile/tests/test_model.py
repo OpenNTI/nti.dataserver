@@ -134,6 +134,8 @@ class TestModel(unittest.TestCase):
         assert_that(internal, has_property('contentType', 'image/gif'))
         assert_that(internal, has_property('filename', 'ichigo.gif'))
         assert_that(internal, has_property('name', 'ichigo.gif'))
+        
+        internal.invalidate()
 
     def test_s3_image(self):
         ext_obj = {

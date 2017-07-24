@@ -152,6 +152,13 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
     def size(self, value):
         pass
 
+    def invalidate(self):
+        # If we think we have changes, we must pretend
+        # like we don't
+        for name in ('_v_data', '_v_marked'):
+            if hasattr(self, name):
+                delattr(self, name)
+
 
 @interface.implementer(IS3Image)
 class S3Image(S3File):
