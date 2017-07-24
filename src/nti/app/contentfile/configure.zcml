@@ -22,13 +22,13 @@
 			 for="nti.base.interfaces.IFile
 			 	  pyramid.interfaces.IRequest" />
 
-	<adapter factory=".providers.S3ImageExternalinkProvider" 
+	<adapter factory=".providers.S3FileExternalinkProvider" 
 			 provides=".interfaces.IExternalLinkProvider"
-			 for="nti.contentfile.interfaces.IS3Image pyramid.interfaces.IRequest" />
+			 for="nti.contentfile.interfaces.IS3File pyramid.interfaces.IRequest" />
 
-	<adapter factory=".providers.S3ImageExternalinkProvider" 
+	<adapter factory=".providers.S3FileExternalinkProvider" 
 			 provides=".interfaces.IExternalLinkProvider"
-			 for="nti.contentfile.interfaces.IS3Image" />
+			 for="nti.contentfile.interfaces.IS3File" />
 
 	<subscriber factory=".decorators._ContentFileDecorator"
 				for="nti.base.interfaces.IFile"

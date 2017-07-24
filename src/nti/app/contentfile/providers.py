@@ -33,7 +33,7 @@ class DefaultExternalLinkProvider(object):
 
 
 @interface.implementer(IExternalLinkProvider)
-class S3ImageExternalinkProvider(object):
+class S3FileExternalinkProvider(object):
 
     def __init__(self, context, request=None):
         self.context = context
