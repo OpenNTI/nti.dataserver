@@ -152,7 +152,7 @@ class CreatedTimeRawIndex(RawIntegerValueIndex):
     pass
 
 
-def CreatedTimeIndex(family=None):
+def CreatedTimeIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='createdTime',
                                 interface=ValidatingCreatedTime,
                                 index=CreatedTimeRawIndex(family=family),
@@ -176,7 +176,7 @@ class LastModififedRawIndex(RawIntegerValueIndex):
     pass
 
 
-def LastModifiedIndex(family=None):
+def LastModifiedIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='lastModified',
                                 interface=ValidatingLastModified,
                                 index=CreatedTimeRawIndex(family=family),
@@ -202,7 +202,7 @@ class ContentResourcesCatalog(Catalog):
         self.super_index_doc(docid, ob)
 
 
-def create_content_resources_catalog(catalog=None, family=None):
+def create_content_resources_catalog(catalog=None, family=BTrees.family64):
     if catalog is None:
         catalog = ContentResourcesCatalog(family=family)
     for name, clazz in ((IX_NAME, NameIndex),
