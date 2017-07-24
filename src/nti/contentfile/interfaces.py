@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
+
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.location.interfaces import IContained
@@ -57,6 +59,9 @@ class IContentBaseFile(IBaseNamedFile, IAttributeAnnotatable, IContained):
 IBaseFile = IContentBaseFile  # BWC
 
 
+# named objects
+
+
 class IContentFile(INamedFile, IContentBaseFile):
     pass
 
@@ -73,9 +78,57 @@ class IContentBlobImage(INamedBlobImage, IContentBaseFile):
     pass
 
 
-class IS3File(IContentBaseFile, INamedBlobFile):
+# s3 objects
+
+
+class IS3Object(interface.Interface):
+    pass
+
+
+class IS3File(IS3Object, IContentBaseFile, INamedBlobFile):
     pass
 
 
 class IS3Image(IS3File, INamedBlobImage):
     pass
+
+
+class IS3FileIO(interface.Interface):
+    """
+    An adapter to do basic operations on a :class:`.IS3Object`
+    """
+
+    def key():
+        """
+        return the key of the object
+        """
+
+    def exists():
+        """
+        return if object exists
+        """
+
+    def contents():
+        """
+        return the contents of the object
+        """
+        
+    def size():
+        """
+        return the contents size of the object
+        """
+
+    def save():
+        """
+        saves contents of the object
+        """
+
+    def remove():
+        """
+        Delete the object
+        """
+
+    def rename(target):
+        """
+        renames the object
+        """

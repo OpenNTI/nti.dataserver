@@ -42,7 +42,7 @@ from nti.contentfolder.utils import compute_path
 
 from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 
-from nti.namedfile.file import get_file_name
+from nti.namedfile.file import get_context_name as get_name
 
 from nti.property.property import alias
 
@@ -65,7 +65,7 @@ def get_context_name(context):
     if INamedContainer.providedBy(context):
         result = context.name
     else:
-        result = get_file_name(context)
+        result = get_name(context)
     return result
 
 
@@ -91,7 +91,8 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
         self.name = kwargs.get('name')
         self.title = kwargs.get('title') or self.name
         self.use_blobs = kwargs.get('use_blobs', True)
-        self.filename = kwargs.get('filename') or self.name
+        if kwargs.get('filename'):
+            self.filename = kwargs.get('filename')
         self.description = kwargs.get('description') or self.title
 
     @readproperty

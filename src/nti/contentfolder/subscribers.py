@@ -13,13 +13,13 @@ from zope import component
 
 from zope.lifecycleevent.interfaces import IObjectMovedEvent
 
-from nti.contentfolder.interfaces import IContentFolder
+from nti.base.interfaces import IFile
 
-from nti.namedfile.interfaces import IFile
+from nti.contentfolder.interfaces import IContentFolder
 
 
 @component.adapter(IFile, IObjectMovedEvent)
-def _on_content_file_moved(context, event):
+def _on_content_file_moved(unused_context, event):
     if IContentFolder.providedBy(event.newParent):
         try:
             event.newParent.updateLastMod()

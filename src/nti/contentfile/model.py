@@ -32,6 +32,9 @@ from nti.namedfile.interfaces import IInternalFileRef
 BaseMixin = BaseContentMixin  # BWC
 
 
+# named objects
+
+
 deprecated('ContentFile', 'DO NOT USE; Prefer ContentBlobFile')
 @interface.implementer(IContentFile)
 class ContentFile(BaseContentMixin, NamedFile):
@@ -51,16 +54,6 @@ class ContentImage(BaseContentMixin, NamedImage):
 
 @interface.implementer(IContentBlobImage)
 class ContentBlobImage(BaseContentMixin, NamedBlobImage):
-    pass
-
-
-@interface.implementer(IS3File)
-class S3File(BaseContentMixin, NamedBlobFile):
-    pass
-
-
-@interface.implementer(IS3Image)
-class S3Image(BaseContentMixin, NamedBlobImage):
     pass
 
 
@@ -87,3 +80,16 @@ def transform_to_blob(context, associations=False):
         if context.has_associations() or associations:
             [result.add_association(obj) for obj in context.associations()]
     return result
+
+
+# s3 objects
+
+
+@interface.implementer(IS3File)
+class S3File(BaseContentMixin, NamedBlobFile):
+    pass
+
+
+@interface.implementer(IS3Image)
+class S3Image(BaseContentMixin, NamedBlobImage):
+    pass

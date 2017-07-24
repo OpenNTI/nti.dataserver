@@ -65,6 +65,9 @@ class BotoS3Mixin(object):
         connection.debug = debug
         return connection
 
+    def get_key(self, context):
+        return get_key(context)
+
     def exists_key(self, key, debug=True):
         """
         Check if key exists
@@ -80,15 +83,27 @@ class BotoS3Mixin(object):
         finally:
             connection.close()
 
-    def get_key(self, key, encoding=None, debug=True):
+    def contents_key(self, key, encoding=None, debug=True):
         """
-        Get the contents of file
+        Get the contents of key
         """
         connection = self._connection(debug)
         try:
             bucket = connection.get_bucket(self.bucket_name)
             k = boto.s3.key.Key(bucket, key)
             return k.get_contents_as_string(encoding=encoding)
+        finally:
+            connection.close()
+
+    def size_key(self, key, debug=True):
+        """
+        Get the content size of key
+        """
+        connection = self._connection(debug)
+        try:
+            bucket = connection.get_bucket(self.bucket_name)
+            k = bucket.lookup(key)
+            return k.size
         finally:
             connection.close()
 
@@ -168,7 +183,7 @@ class BotoS3Mixin(object):
             connection.close()
 
     def to_external_s3_href(self, key=None, obj=None, debug=True):
-        key = get_key(obj) if obj is not None else key
+        key = self.get_key(obj) if obj is not None else key
         connection = self._connection(debug)
         try:
             bucket = connection.get_bucket(self.bucket_name, validate=False)
