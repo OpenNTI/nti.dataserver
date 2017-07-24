@@ -99,8 +99,7 @@ class BotoS3Mixin(object):
         connection = self._connection(debug)
         try:
             bucket = connection.get_bucket(self.bucket_name)
-            k = boto.s3.key.Key(bucket)
-            k.key = key
+            k = boto.s3.key.Key(bucket, key)
             k.set_contents_from_string(data, policy=self.grant)
         finally:
             connection.close()
@@ -169,7 +168,7 @@ class BotoS3Mixin(object):
             connection.close()
 
     def to_external_s3_href(self, key=None, obj=None, debug=True):
-        key = get_key(obj) if obj else key
+        key = get_key(obj) if obj is not None else key
         connection = self._connection(debug)
         try:
             bucket = connection.get_bucket(self.bucket_name, validate=False)
