@@ -1211,13 +1211,37 @@ class CFIOView(AbstractAuthenticatedView):
 @view_config(context=IS3ContentFolder)
 @view_defaults(route_name='objects.generic.traversal',
                renderer='rest',
+               name="import",
+               permission=nauth.ACT_UPDATE,
+               request_method='POST')
+class S3ImportView(ImportView):
+
+    folder_factory = S3ContentFolder
+
+    def builder(self):
+        result = self.folder_factory()
+        result.creator = self.remoteUser.username
+        return result
+
+    def factory(self, filename):
+        contentType = guess_type(filename)[0]
+        if contentType and contentType.startswith('image'):
+            factory = S3Image
+        else:
+            factory = S3File
+        return factory
+
+
+@view_config(context=IS3RootFolder)
+@view_config(context=IS3ContentFolder)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
                request_method='POST',
                name='upload',
                permission=nauth.ACT_UPDATE)
 class S3UploadView(UploadView):
 
     def factory(self, source):
-        # TODO: Use adapter factory
         contentType = getattr(source, 'contentType', None)
         if contentType:
             factory = S3File
