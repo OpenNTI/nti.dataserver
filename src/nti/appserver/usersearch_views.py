@@ -40,7 +40,7 @@ from nti.appserver.interfaces import IUserSearchPolicy
 
 from nti.appserver.policies.site_policies import find_site_policy
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.common.string import is_true
 
@@ -103,7 +103,7 @@ def _UserSearchView(request):
     assert remote_user is not None
 
     partialMatch = request.subpath[0] if request.subpath else ''
-    partialMatch = unicode_(partialMatch)
+    partialMatch = text_(partialMatch)
     partialMatch = unquote(partialMatch)
     partialMatch = partialMatch.lower()
 
@@ -188,7 +188,7 @@ def _ResolveUserView(request):
     exact_match = request.subpath[0] if request.subpath else ''
     if not exact_match:
         raise hexc.HTTPNotFound()
-    exact_match = unicode_(exact_match)
+    exact_match = text_(exact_match)
     exact_match = unquote(exact_match)
 
     result = _resolve_user(exact_match, remote_user)
@@ -258,10 +258,9 @@ interface.directlyProvides(_ResolveUsersView, INamedLinkView)
 
 
 def _resolve_user(exact_match, remote_user):
-    exact_match = unicode_(exact_match)
+    exact_match = text_(exact_match)
     # This does an NTIID lookup if needed, so we can't alter the case yet
     entity = Entity.get_entity(exact_match)
-
     # NOTE2: Going through this API lets some private objects be found if an NTIID is passed
     # (DynamicFriendsLists, specifically). We should probably lock that down
     if entity is None:
@@ -397,7 +396,7 @@ def _search_scope_to_remote_user(remote_user, search_term, op=_scoped_search_pre
     return result
 
 
-def _make_visibility_test(remote_user, community):
+def _make_visibility_test(remote_user, community=None):
     # TODO: Hook this up to the ACL support
     # Admin/SiteAdmins can see everything.
     if remote_user and not is_admin_or_site_admin(remote_user):
@@ -443,7 +442,6 @@ def _make_visibility_test(remote_user, community):
     if community is not None:
         def test_for_community(x):
             return community in x.communities
-
         return test_for_community
 
     # If there is no community, we default to allowing all users.
