@@ -81,11 +81,7 @@ class IContentBlobImage(INamedBlobImage, IContentBaseFile):
 # s3 objects
 
 
-class IS3Object(interface.Interface):
-    pass
-
-
-class IS3File(IS3Object, IContentBaseFile):
+class IS3File(IContentBaseFile):
 
     def invalidate():
         """
