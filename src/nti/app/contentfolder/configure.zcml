@@ -58,8 +58,10 @@
 	<subscriber handler=".subscribers._on_s3_file_moved" />
 	<subscriber handler=".subscribers._on_s3_folder_moved" />
 	<subscriber handler=".subscribers._on_s3_folder_added" />
+	<subscriber handler=".subscribers._on_s3_file_ejected" />
 	<subscriber handler=".subscribers._on_s3_file_removed" />
 	<subscriber handler=".subscribers._on_s3_file_renamed" />
+	<subscriber handler=".subscribers._on_s3_folder_ejected" />
 	<subscriber handler=".subscribers._on_s3_folder_removed" />
 	<subscriber handler=".subscribers._on_s3_folder_renamed" />
 

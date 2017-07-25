@@ -14,6 +14,8 @@ from zope import component
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectMovedEvent
 
+from zope.intid.interfaces import IIntIds
+
 from zc.intid.interfaces import IBeforeIdRemovedEvent
 
 from nti.app.contentfile.view_mixins import validate_sources
@@ -24,8 +26,11 @@ from nti.contentfile.interfaces import IS3File
 from nti.contentfile.interfaces import IS3FileIO
 from nti.contentfile.interfaces import IContentBaseFile
 
+from nti.contentfolder.index import get_content_resources_catalog
+
 from nti.contentfolder.interfaces import IContentFolder
 from nti.contentfolder.interfaces import IS3ContentFolder
+from nti.contentfolder.interfaces import IS3ObjectEjected
 from nti.contentfolder.interfaces import IS3ObjectRenamed
 
 from nti.transactions import transactions
@@ -114,3 +119,24 @@ def _on_s3_file_moved(context, event):
 @component.adapter(IS3ContentFolder, IObjectMovedEvent)
 def _on_s3_folder_moved(context, event):
     _on_s3_file_moved(context, event)
+
+
+@component.adapter(IS3File, IS3ObjectEjected)
+def _on_s3_file_ejected(context, _):
+    intids = component.getUtility(IIntIds)
+    # unindex
+    catalog = get_content_resources_catalog()
+    doc_id = intids.queryId(context)
+    if doc_id is not None:
+        catalog.unindex_doc(doc_id)
+        intids.unregister(context)
+    try:
+        from nti.metadata import queue_removed
+        queue_removed(context)
+    except ImportError:
+        pass
+
+
+@component.adapter(IS3ContentFolder, IS3ObjectEjected)
+def _on_s3_folder_ejected(context, event):
+    _on_s3_file_ejected(context, event)
