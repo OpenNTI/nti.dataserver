@@ -101,7 +101,11 @@ class ILockedFolder(IContentFolder):
 
 
 class IS3ContentFolder(IContentFolder):
-    pass
+
+    def eject(key):
+        """
+        remove the item with the specified key w/o generating a removed event
+        """
 
 
 class IS3RootFolder(IS3ContentFolder, IRootFolder):
@@ -140,6 +144,15 @@ class IS3ObjectCleared(IObjectEvent):
 
 @interface.implementer(IS3ObjectCleared)
 class S3ObjectCleared(ObjectEvent):
+    pass
+
+
+class IS3ObjectEjected(IObjectEvent):
+    pass
+
+
+@interface.implementer(IS3ObjectEjected)
+class S3ObjectEjected(ObjectEvent):
     pass
 
 

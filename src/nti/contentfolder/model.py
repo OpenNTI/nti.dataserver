@@ -38,6 +38,7 @@ from nti.contentfolder.interfaces import INamedContainer
 from nti.contentfolder.interfaces import IS3ContentFolder
 
 from nti.contentfolder.interfaces import S3ObjectCleared
+from nti.contentfolder.interfaces import S3ObjectEjected
 from nti.contentfolder.interfaces import S3ObjectRenamed
 
 from nti.contentfolder.utils import compute_path
@@ -125,10 +126,11 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
         return obj
     append = add
 
-    def _eject(self, key):
-        self._delitemf(key)
+    def _eject(self, key, event=True):
+        item = self._delitemf(key, event)
         self.updateLastMod()
         self._p_changed = True
+        return item
 
     def __delitem__(self, key):
         self._eject(key)
@@ -269,6 +271,13 @@ class S3ContentFolder(ContentFolder):
     def clear(self):
         super(S3ContentFolder, self).clear()
         notify(S3ObjectCleared(self))
+
+    def eject(self, key):
+        if key not in self:
+            raise KeyError(key)
+        item = self._eject(key, False)
+        notify(S3ObjectEjected(item))
+        return item
 
 
 @interface.implementer(IS3RootFolder)
