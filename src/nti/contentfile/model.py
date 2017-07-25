@@ -125,7 +125,7 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
         return self._v_data
 
     def _setData(self, value):
-        self._v_data = value
+        self._v_data = value or ''
         if not hasattr(self, '_v_marked'):
             self._v_marked = False
         if not self._v_marked:
