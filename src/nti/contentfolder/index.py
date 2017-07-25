@@ -97,7 +97,7 @@ class ValidatingCreator(object):
 
     __slots__ = ('creator',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, unused_default=None):
         if    IFile.providedBy(obj) \
            or INamedContainer.providedBy(obj):
             creator = getattr(obj, 'creator', None)
@@ -139,7 +139,7 @@ class ValidatingCreatedTime(object):
 
     __slots__ = ('createdTime',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, unused_default=None):
         if    IFile.providedBy(obj) \
            or INamedContainer.providedBy(obj):
             self.createdTime = getattr(obj, 'createdTime', None)
@@ -163,7 +163,7 @@ class ValidatingLastModified(object):
 
     __slots__ = ('lastModified',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, unused_default=None):
         if    IFile.providedBy(obj) \
            or INamedContainer.providedBy(obj):
             self.lastModified = getattr(obj, 'lastModified', None)
@@ -222,15 +222,16 @@ def create_content_resources_catalog(catalog=None, family=BTrees.family64):
     return catalog
 
 
-def get_catalog(registry=component):
+def get_content_resources_catalog(registry=component):
     catalog = registry.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
     return catalog
+get_catalog = get_content_resources_catalog # BWC
 
 
 def install_content_resources_catalog(site_manager_container, intids=None):
     lsm = site_manager_container.getSiteManager()
     intids = lsm.getUtility(IIntIds) if intids is None else intids
-    catalog = get_catalog(registry=lsm)
+    catalog = get_content_resources_catalog(registry=lsm)
     if catalog is not None:
         return catalog
 
