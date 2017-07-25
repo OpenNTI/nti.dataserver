@@ -50,18 +50,11 @@ class ContentFolderACLProvider(object):
     def __aces__(self):
         aces = [ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, type(self))]
         if ILockedFolder.providedBy(self.context):
-            aces.append(ace_allowing(ROLE_CONTENT_ADMIN, ACT_READ, type(self)))
-            aces.append(
-                ace_allowing(
-                    ROLE_CONTENT_ADMIN,
-                    ACT_UPDATE,
-                    type(self)))
+            for perm in (ACT_READ, ACT_UPDATE):
+                aces.append(ace_allowing(ROLE_CONTENT_ADMIN, perm, type(self)))
         else:
-            aces.append(
-                ace_allowing(
-                    ROLE_CONTENT_ADMIN,
-                    ALL_PERMISSIONS,
-                    type(self)))
+            ace = ace_allowing(ROLE_CONTENT_ADMIN, ALL_PERMISSIONS, type(self))
+            aces.append(ace)
         creator = IPrincipal(self.context.creator, None)
         if creator is not None:
             if ILockedFolder.providedBy(self.context):

@@ -60,7 +60,7 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
     def _acl_decoration(self):
         return getattr(self.request, 'acl_decoration', True)
 
-    def _predicate(self, context, result):
+    def _predicate(self, unused_context, unused_result):
         return self._acl_decoration and self._is_authenticated
 
     def _do_decorate_external(self, context, result):
@@ -69,84 +69,29 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
         # read based ops
         if has_permission(ACT_READ, context, request):
-            _links.append(
-                _create_link(
-                    context,
-                    "tree",
-                    "@@tree",
-                    params={'flat': False}))
-            _links.append(
-                _create_link(
-                    context,
-                    "export",
-                    "@@export"))
-            _links.append(
-                _create_link(
-                    context,
-                    "contents",
-                    "@@contents",
-                    params={'depth': 0}))
-            _links.append(
-                _create_link(
-                    context,
-                    "search",
-                    "@@search"))
+            for name, params in (('tree', {'flat': False}),
+                                 ('contents', {'depth': 0})):
+                _links.append(_create_link(context, name, "@@%s" % name,
+                                           params=params))
+
+            for name in ('export', 'search'):
+                _links.append(_create_link(context, name, "@@%s" % name))
 
         # update based ops
         if has_permission(ACT_UPDATE, context, request):
-            _links.append(
-                _create_link(
-                    context,
-                    "mkdir",
-                    "@@mkdir",
-                    method='POST'))
-            _links.append(
-                _create_link(
-                    context,
-                    "mkdirs",
-                    "@@mkdirs",
-                    method='POST'))
-            _links.append(
-                _create_link(
-                    context,
-                    "upload",
-                    "@@upload",
-                    method='POST'))
-            _links.append(
-                _create_link(
-                    context,
-                    "import",
-                    "@@import",
-                    method='POST'))
+            for name in ('mkdir', 'mkdirs', 'upload', 'import'):
+                _links.append(_create_link(context, name, "@@%s" % name,
+                                           method='POST'))
 
             if      not ILockedFolder.providedBy(context) \
                 and not IRootFolder.providedBy(context):
-                _links.append(
-                    _create_link(
-                        context,
-                        "move",
-                        "@@move",
-                        method='POST'))
-                _links.append(
-                    _create_link(
-                        context,
-                        "clear",
-                        "@@clear",
-                        method='POST'))
-                _links.append(
-                    _create_link(
-                        context,
-                        "rename",
-                        "@@rename",
-                        method='POST'))
+                for name in ('move', 'clear', 'rename',):
+                    _links.append(_create_link(context, name, "@@%s" % name,
+                                               method='POST'))
 
         if      has_permission(ACT_DELETE, context, request) \
             and not ILockedFolder.providedBy(context):
-            _links.append(
-                _create_link(
-                    context,
-                    rel="delete",
-                    method='DELETE'))
+            _links.append(_create_link(context, rel="delete", method='DELETE'))
 
 
 @component.adapter(INamedFile)
@@ -157,9 +102,9 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
     def _acl_decoration(self):
         return getattr(self.request, 'acl_decoration', True)
 
-    def _predicate(self, context, result):
+    def _predicate(self, context, unused_result):
         parent = getattr(context, '__parent__', None)
-        return  parent is not None \
+        return parent is not None \
             and self._acl_decoration \
             and self._is_authenticated \
             and INamedContainer.providedBy(parent)
@@ -169,52 +114,20 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         _links = result.setdefault(LINKS, [])
         if      IContentBaseFile.providedBy(context) \
             and has_permission(ACT_READ, context, request):
-            _links.append(
-                _create_link(
-                    context,
-                    rel="external",
-                    name="@@external",
-                    method='GET'))
-            _links.append(
-                _create_link(
-                    context,
-                    rel="associations",
-                    name="@@associations",
-                    method='GET'))
+            for name in ('external', 'associations',):
+                _links.append(_create_link(context, name, "@@%s" % name))
 
         if has_permission(ACT_DELETE, context, request):
-            _links.append(
-                _create_link(
-                    context,
-                    rel="delete",
-                    method='DELETE'))
+            _links.append(_create_link(context, rel="delete", method='DELETE'))
 
         if has_permission(ACT_UPDATE, context, request):
-            _links.append(
-                _create_link(
-                    context,
-                    rel="copy",
-                    name="@@copy",
-                    method="POST"))
-            _links.append(
-                _create_link(
-                    context,
-                    rel="move",
-                    name="@@move",
-                    method="POST"))
-            _links.append(
-                _create_link(
-                    context,
-                    rel="rename",
-                    name="@@rename",
-                    method='POST'))
+            for name in ('copy', 'move', 'rename'):
+                _links.append(_create_link(context, name, "@@%s" % name,
+                                           method='POST'))
+
             if IContentBaseFile.providedBy(context):
-                _links.append(
-                    _create_link(
-                        context,
-                        rel="associate",
-                        name="@@associate",
-                        method='POST'))
+                _links.append(_create_link(context, rel="associate",
+                                           name="@@associate", method='POST'))
 
 
 @component.adapter(INamedFile)
