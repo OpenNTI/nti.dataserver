@@ -1356,6 +1356,7 @@ class IUserDigestEmailMetadata(interface.Interface):
 from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationActor
 
+
 class IJoinEntityInvitation(IInvitation):
 	"""
 	Interface for a invitation to join entities
@@ -1363,10 +1364,28 @@ class IJoinEntityInvitation(IInvitation):
 
 	entity = ValidTextLine(title="The entity username", required=True)
 
+
 class IJoinEntityInvitationActor(IInvitationActor):
 	"""
 	Actor to join a user to an entity
 	"""
+
+
+class IAccessProvider(interface.Interface):
+	"""
+	Grants/removes access to the underlying context.
+	"""
+
+	def grant_access(self, entity):
+		"""
+		Grants entity access to this context.
+		"""
+
+	def remove_access(self, entity):
+		"""
+		Removes entity access to this context.
+		"""
+
 
 # Site Roles
 
