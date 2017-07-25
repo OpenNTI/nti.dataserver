@@ -38,7 +38,11 @@ from nti.appserver import httpexceptions as hexc
 from nti.appserver.interfaces import INamedLinkView
 from nti.appserver.interfaces import IUserSearchPolicy
 
+from nti.appserver.policies.site_policies import find_site_policy
+
 from nti.base._compat import unicode_
+
+from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
 
@@ -112,7 +116,8 @@ def _UserSearchView(request):
         # can be resolved
         # NOTE2: Going through this API lets some private objects be found
         # (DynamicFriendsLists, specifically). We should probably lock that down
-        result = _authenticated_search(remote_user, dataserver, partialMatch)
+        result = _authenticated_search(
+            remote_user, dataserver, partialMatch, request)
     elif partialMatch and remote_user:
         # Even if it's not a valid global search, we still want to
         # look at things local to the user
@@ -302,21 +307,28 @@ def _provide_location(result, dataserver):
     return result
 
 
-def _authenticated_search(remote_user, dataserver, search_term):
+def _authenticated_search(remote_user, dataserver, search_term, request):
     # Match Users and Communities here. Do not match IFriendsLists, because
     # that would get private objects from other users.
     def _selector(x):
         result = IUser.providedBy(x) \
-              or (ICommunity.providedBy(x) and x.public)
+            or (ICommunity.providedBy(x) and x.public)
         return result
 
     user_search_matcher = IUserSearchPolicy(remote_user)
     result = user_search_matcher.query(search_term,
                                        provided=_selector)
 
+    no_filter = request.params.get('no_filter') or ''
+    if is_true(no_filter):
+        community_username = None
+    else:
+        site_policy, _ = find_site_policy(request)
+        community_username = getattr(site_policy, 'COM_USERNAME', None)
+
     # Filter to things that share a common community
     # FIXME: Hack in a policy of limiting searching to overlapping communities
-    test = _make_visibility_test(remote_user)
+    test = _make_visibility_test(remote_user, community_username)
     result = {x for x in result if test(x)}  # ensure a set
 
     # Add locally matching friends lists, etc. These don't need to go through the
@@ -367,8 +379,8 @@ def _search_scope_to_remote_user(remote_user, search_term, op=_scoped_search_pre
         else:
             names = IFriendlyNamed(x, None)
             if names:
-                if (   (names.realname and op(names.realname.lower(), search_term))
-                    or (names.alias and op(names.alias.lower(), search_term)) ):
+                if ((names.realname and op(names.realname.lower(), search_term))
+                        or (names.alias and op(names.alias.lower(), search_term))):
                     result.add(x)
 
     if not ignore_fl:
@@ -385,7 +397,7 @@ def _search_scope_to_remote_user(remote_user, search_term, op=_scoped_search_pre
     return result
 
 
-def _make_visibility_test(remote_user):
+def _make_visibility_test(remote_user, community):
     # TODO: Hook this up to the ACL support
     # Admin/SiteAdmins can see everything.
     if remote_user and not is_admin_or_site_admin(remote_user):
@@ -422,8 +434,19 @@ def _make_visibility_test(remote_user):
             # Otherwise, visible if it doesn't have dynamic memberships,
             # or we share dynamic memberships
             return not hasattr(x, 'usernames_of_dynamic_memberships') \
-                   or x.usernames_of_dynamic_memberships.intersection(remote_com_names)
+                or x.usernames_of_dynamic_memberships.intersection(remote_com_names)
         return test
+
+    # For admins, we only want to return users who are part of
+    # the community being searched from, if there is a
+    # community.
+    if community is not None:
+        def test_for_community(x):
+            return community in x.communities
+
+        return test_for_community
+
+    # If there is no community, we default to allowing all users.
     return lambda unused_x: True
 
 
@@ -437,14 +460,16 @@ class _SharedDynamicMembershipProviderDecorator(object):
         request = get_current_request()
         if request is not None:
             dataserver = request.registry.getUtility(IDataserver)
-            remote_user = get_remote_user(request, dataserver) if dataserver else None
+            remote_user = get_remote_user(
+                request, dataserver) if dataserver else None
             if     remote_user is None or original == remote_user \
-                or ICoppaUserWithoutAgreement.providedBy(original) \
-                or not hasattr(original, 'usernames_of_dynamic_memberships'):
+                    or ICoppaUserWithoutAgreement.providedBy(original) \
+                    or not hasattr(original, 'usernames_of_dynamic_memberships'):
                 return
             remote_dmemberships = remote_user.usernames_of_dynamic_memberships
             remote_dmemberships = remote_dmemberships - set(('Everyone',))
 
             dynamic_memberships = original.usernames_of_dynamic_memberships
-            shared_dmemberships = dynamic_memberships.intersection(remote_dmemberships)
+            shared_dmemberships = dynamic_memberships.intersection(
+                remote_dmemberships)
             mapping['SharedDynamicMemberships'] = list(shared_dmemberships)
