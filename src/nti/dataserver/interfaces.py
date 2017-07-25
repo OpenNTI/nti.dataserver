@@ -1371,19 +1371,35 @@ class IJoinEntityInvitationActor(IInvitationActor):
 	"""
 
 
+class IGrantAccessException(interface.Interface):
+	"""
+	An exception with granting access to an object.
+	"""
+
+
+class IRemoveAccessException(interface.Interface):
+	"""
+	An exception with removing access to an object.
+	"""
+
+
 class IAccessProvider(interface.Interface):
 	"""
 	Grants/removes access to the underlying context.
 	"""
 
-	def grant_access(self, entity):
+	def grant_access(self, entity, access_context=None):
 		"""
 		Grants entity access to this context.
+
+		:raises: :class:`IGrantAccessException`
 		"""
 
 	def remove_access(self, entity):
 		"""
 		Removes entity access to this context.
+
+		:raises: :class:`IRemoveAccessException`
 		"""
 
 
