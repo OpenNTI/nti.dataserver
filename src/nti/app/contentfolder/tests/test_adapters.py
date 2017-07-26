@@ -9,7 +9,10 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import calling
+from hamcrest import raises
 from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import has_property
 
 import fudge
@@ -23,6 +26,8 @@ from nti.contentfolder.interfaces import IMimeTypeAdapter
 from nti.contentfolder.interfaces import IAssociationsAdapter
 
 from nti.contentfolder.model import ContentFolder
+
+from nti.app.contentfolder.adapters import build_s3_root
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -48,3 +53,21 @@ class TestAdapters(ApplicationLayerTest):
                     has_property('site', is_('bleach.org')))
 
         assert_that(IAssociationsAdapter(obj, None), is_(none()))
+
+    def test_build_s3_root(self):
+        assert_that(build_s3_root([]), is_({}))
+        assert_that(build_s3_root(['a']), is_({'a': None}))
+        assert_that(build_s3_root(['a/']), is_({'a': {}}))
+
+        assert_that(build_s3_root(['a/', 'a/']), is_({'a': {}}))
+        assert_that(calling(build_s3_root).with_args(['a', 'a']), raises(ValueError, pattern="Duplicate file or folder name exists on s3. 'a'"))
+        assert_that(calling(build_s3_root).with_args(['a', 'a/']), raises(ValueError, pattern="Duplicate file or folder name exists on s3. 'a'"))
+
+        assert_that(build_s3_root(['a/c/', 'a/c/']), is_({'a': {'c': {}}}))
+        assert_that(calling(build_s3_root).with_args(['a/c', 'a/c/']), raises(ValueError, pattern="Duplicate file or folder name exists on s3. 'c'"))
+        assert_that(calling(build_s3_root).with_args(['a/c', 'a/c']), raises(ValueError, pattern="Duplicate file or folder name exists on s3. 'c'"))
+
+        result = build_s3_root(['a/b', 'a/c/', 'b', 'd/'])
+        assert_that(result, has_entries({'a': {'b': None, 'c': {}},
+                                         'b': None,
+                                         'd': {}}))
