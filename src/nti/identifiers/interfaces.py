@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+
 class IExternalIdentifierUtility(interface.Interface):
     """
     A subscriber utility to fetch external identifiers given a user.
@@ -22,4 +23,3 @@ class IExternalIdentifierUtility(interface.Interface):
         appropriately namespaced so that there are not identifer collissions
         across providers/clients.
         """
-

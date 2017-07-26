@@ -72,9 +72,10 @@ class TestIndex(unittest.TestCase):
         """
         with mock_db_trans():
             User.create_user(self.ds, username="marko")
+
         with mock_db_trans():
             catalog = get_identifier_catalog()
-            assert_that( catalog, not_none() )
+            assert_that(catalog, not_none())
 
             user = User.get_user('marko')
             external_ids = get_external_ids_for_user(user)
@@ -83,7 +84,6 @@ class TestIndex(unittest.TestCase):
             # Empty case
             assert_that(get_user_for_external_id(None), none())
             assert_that(get_user_for_external_id('dneusername'), none())
-
 
         # Register utility
         with mock_db_trans():
@@ -109,4 +109,3 @@ class TestIndex(unittest.TestCase):
                 gsm = component.getGlobalSiteManager()
                 gsm.unregisterSubscriptionAdapter(TestExternalIdentifierUtilityA)
                 gsm.unregisterSubscriptionAdapter(TestExternalIdentifierUtilityB)
-
