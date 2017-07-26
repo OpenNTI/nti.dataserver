@@ -59,7 +59,6 @@ from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import Entity
-from nti.dataserver.users.communities import Community
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.externalization.externalization import toExternalObject
@@ -403,7 +402,6 @@ def _make_visibility_test(remote_user, filter_by_site_community=True):
     # Admin/SiteAdmins can see everything.
     if remote_user:
         is_admin = is_admin_or_site_admin(remote_user)
-        memberships = remote_user.usernames_of_dynamic_memberships
 
         if is_admin:
             # If we're an admin, we can search everyone unless
@@ -419,6 +417,7 @@ def _make_visibility_test(remote_user, filter_by_site_community=True):
                     remote_com_names = set((com_name,))
 
         else:
+            memberships = remote_user.usernames_of_dynamic_memberships
             remote_com_names = memberships - set(('Everyone',))
 
         def test(x):
