@@ -223,8 +223,7 @@ def create_content_resources_catalog(catalog=None, family=BTrees.family64):
 
 
 def get_content_resources_catalog(registry=component):
-    catalog = registry.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
-    return catalog
+    return registry.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
 get_catalog = get_content_resources_catalog # BWC
 
 

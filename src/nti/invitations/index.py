@@ -17,6 +17,8 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
+import BTrees
+
 from nti.invitations.interfaces import IInvitation
 
 from nti.zope_catalog.catalog import Catalog
@@ -93,7 +95,7 @@ class SenderRawIndex(RawValueIndex):
     pass
 
 
-def SenderIndex(family=None):
+def SenderIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='sender',
                                 interface=IInvitation,
                                 index=SenderRawIndex(family=family),
@@ -104,7 +106,7 @@ class ReceiverRawIndex(RawValueIndex):
     pass
 
 
-def ReceiverIndex(family=None):
+def ReceiverIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='receiver',
                                 interface=IInvitation,
                                 index=ReceiverRawIndex(family=family),
@@ -132,7 +134,7 @@ class CreatedTimeRawIndex(RawIntegerValueIndex):
     pass
 
 
-def CreatedTimeIndex(family=None):
+def CreatedTimeIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='createdTime',
                                 interface=IInvitation,
                                 index=CreatedTimeRawIndex(family=family),
@@ -143,7 +145,7 @@ class ExpiryTimeRawIndex(RawIntegerValueIndex):
     pass
 
 
-def ExpiryTimeIndex(family=None):
+def ExpiryTimeIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='expiryTime',
                                 interface=IInvitation,
                                 index=ExpiryTimeRawIndex(family=family),
@@ -154,7 +156,7 @@ class InvitationsCatalog(Catalog):
     pass
 
 
-def create_invitations_catalog(catalog=None, family=None):
+def create_invitations_catalog(catalog=None, family=BTrees.family64):
     catalog = InvitationsCatalog(family=family) if catalog is None else catalog
     for name, clazz in ((IX_SITE, SiteIndex),
                         (IX_SENDER, SenderIndex),
@@ -170,8 +172,7 @@ def create_invitations_catalog(catalog=None, family=None):
 
 
 def get_invitations_catalog(registry=component):
-    catalog = registry.queryUtility(ICatalog, name=CATALOG_NAME)
-    return catalog
+    return registry.queryUtility(ICatalog, name=CATALOG_NAME)
 
 
 def install_invitations_catalog(site_manager_container, intids=None):
