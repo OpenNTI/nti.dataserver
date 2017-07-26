@@ -71,6 +71,7 @@ from nti.common.string import is_true
 
 from nti.contentfile.interfaces import IContentBaseFile
 from nti.contentfile.interfaces import IS3File
+from nti.contentfile.interfaces import IS3FileIO
 from nti.contentfile.interfaces import IS3Image
 
 from nti.contentfile.model import ContentBlobFile
@@ -1297,3 +1298,24 @@ class DeleteS3FolderView(DeleteFolderView):
         parent = theObject.__parent__
         parent.remove(theObject)
         return hexc.HTTPNoContent()
+
+
+@view_config(context=IS3RootFolder)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='POST',
+               name='sync',
+               permission=nauth.ACT_UPDATE)
+class S3SyncView(AbstractAuthenticatedView):
+
+    folder_factory = S3ContentFolder
+    file_factory = S3File
+
+    def __call__(self):
+        try:
+            io = IS3FileIO(self.context, None)
+            if io is not None:
+                io.sync(self.folder_factory, self.file_factory)
+        except ValueError as e:
+            raise hexc.HTTPUnprocessableEntity(e)
+        return self.context

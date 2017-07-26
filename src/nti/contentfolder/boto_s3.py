@@ -72,6 +72,14 @@ class BotoS3Mixin(object):
         connection.debug = debug
         return connection
 
+    def get_all_keys(self, debug=False):
+        connection = self._connection(debug)
+        try:
+            bucket = connection.get_bucket(self.bucket_name)
+            return [x.key for x in bucket.list()]
+        finally:
+            connection.close()
+
     def get_key(self, context):
         return get_key(context)
 

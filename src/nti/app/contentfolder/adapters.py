@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from mimetypes import guess_type
+
 from zope import component
 from zope import interface
 
@@ -29,6 +31,7 @@ from nti.contentfolder.boto_s3 import is_boto_available
 from nti.contentfolder.interfaces import ISiteAdapter
 from nti.contentfolder.interfaces import INamedContainer
 from nti.contentfolder.interfaces import IS3ContentFolder
+from nti.contentfolder.interfaces import IS3RootFolder
 
 from nti.contentfolder.model import RootFolder
 from nti.contentfolder.model import S3RootFolder
@@ -37,6 +40,7 @@ from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
 
+DEFAULT_CONTENT_TYPE = 'application/octet-stream'
 
 # Index adapters
 
@@ -119,6 +123,64 @@ class S3FolderIO(S3FileIO):
 def _s3_folderIO_adapter(context):
     if is_boto_available():
         return S3FolderIO(context)
+    return None
+
+
+def _build_s3_root(keys):
+    root = {}
+    for key in keys:
+        parent = root
+        x = key.split('/')
+        for k in x[:-1]:
+            if k in parent and parent[k] is None:
+                raise ValueError("Duplicate file or folder name exists on s3. '%s'" % k)
+            if k not in parent:
+                parent[k] = {}
+            parent = parent[k]
+
+        if x[-1] != '':
+            k = x[-1]
+            if k in parent:
+                raise ValueError("Duplicate file or folder name exists on s3. '%s'" % k)
+            parent[k] = None
+    return root
+
+
+@interface.implementer(IS3FileIO)
+@component.adapter(IS3RootFolder)
+class S3RootFolderIO(S3FolderIO):
+
+    def _sync(self, parent, s3Parent, folder_factory, file_factory):
+        keys = set(parent.keys()) | set(s3Parent.keys())
+        for k in keys:
+            if k not in parent:
+                parent[k] = folder_factory(name=k, filename=k) if s3Parent[k] is not None else file_factory(name=k,
+                                                                                                            filename=k,
+                                                                                                            contentType=guess_type(k)[0] or DEFAULT_CONTENT_TYPE)
+                if s3Parent[k]:
+                    self._sync(parent[k], s3Parent[k], folder_factory, file_factory)
+            elif k not in s3Parent:
+                del parent[k]
+            else:
+                if     (s3Parent[k] is None and isinstance(parent[k], folder_factory)) \
+                    or (s3Parent[k] is not None and isinstance(parent[k], file_factory)):
+                    raise ValueError("The type of File/Folder on s3 and local is not matched, filename: '%s'" % k)
+                elif s3Parent[k] is not None:
+                    self._sync(parent[k], s3Parent[k], folder_factory, file_factory)
+
+    def sync(self, folder_factory, file_factory):
+        """
+        Syncing folders or files from s3 into this rootfolder,
+        """
+        s3_root = _build_s3_root(self.get_all_keys())
+        self._sync(self.context, s3_root, folder_factory, file_factory)
+
+
+@interface.implementer(IS3FileIO)
+@component.adapter(IS3RootFolder)
+def _s3_rootfolderIO_adapter(context):
+    if is_boto_available():
+        return S3RootFolderIO(context)
     return None
 
 

@@ -39,6 +39,7 @@
 	<!-- S3 -->
 	<adapter factory=".adapters._s3_fileIO_adapter" />
 	<adapter factory=".adapters._s3_folderIO_adapter" />
+	<adapter factory=".adapters._s3_rootfolderIO_adapter" />
 
 	<configure zcml:condition="have testmode">
 		<adapter name="ofs"
