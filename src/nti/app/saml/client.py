@@ -85,9 +85,9 @@ class BasicSAMLClient(object):
     """
     A basic implementation of ISAML client based on the saml2 client package.
     This is largerly based on the who middleware SAML2Plugin implementation
-    but in a format that fits better into our existing multi idp login process.  
-    While the underlying SAML client supports the full spec we support the basic 
-    minimum based of OU's current SAML idp implementation.  
+    but in a format that fits better into our existing multi idp login process.
+    While the underlying SAML client supports the full spec we support the basic
+    minimum based of OU's current SAML idp implementation.
     This can be expanded in the future.
 
     Notable omissions from the SAML2Plugin are:
@@ -151,13 +151,13 @@ class BasicSAMLClient(object):
 
         logger.info("Generating SAML logout request for IDP %s", entity_id)
         srvs = _cli.metadata.single_logout_service(entity_id,
-                                                   _binding, 
+                                                   _binding,
                                                    'idpsso')
         dest = destinations(srvs)[0]
 
-        return hexc.HTTPSeeOther(_make_location(dest, 
+        return hexc.HTTPSeeOther(_make_location(dest,
                                                 {'TargetResource': success,
-                                                 'InErrorResource': success, 
+                                                 'InErrorResource': success,
                                                  'SpSessionAuthn': session_auth_id}))
 
     def response_for_logging_in(self, success, error, state={}, passive=False,
@@ -199,7 +199,7 @@ class BasicSAMLClient(object):
 
             if not acs_link:
                 request = get_current_request()
-                provider = component.queryAdapter(request, 
+                provider = component.queryAdapter(request,
                                                   ISAMLACSLinkProvider)
                 acs_link = provider.acs_link(request) if provider else None
 
@@ -257,8 +257,8 @@ class BasicSAMLClient(object):
     def process_saml_acs_request(self, request):
         for param in (SAML_RESPONSE, RELAY_STATE):
             if param not in request.params:
-                raise hexc.HTTPBadRequest('Unexpected SAML Response. No %s',
-                                          param)
+                logger.warn('Unexpected saml response. No param named %s', param)
+                raise hexc.HTTPBadRequest()
 
         # parse out our relay state first so we have it
         state, success, error = self._extract_relay_state(
