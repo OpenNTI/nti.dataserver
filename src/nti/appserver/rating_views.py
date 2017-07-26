@@ -6,7 +6,7 @@ Views relating to rating objects.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -32,7 +32,7 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.appserver import MessageFactory as _
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.externalization.interfaces import IExternalMappingDecorator
 
@@ -57,33 +57,31 @@ class RatingLinkDecorator(AbstractTwoStateViewLinkDecorator):
              request_method='POST',
              name='rate')
 def _RateView(request):
-    data = unicode_(request.body, request.charset)
+    data = text_(request.body, request.charset)
     values = simplejson.loads(data) if request.body else {}
     values = CaseInsensitiveDict(**values)
     rating = values.get('rate', None) \
-          or values.get('rating', None) \
-          or values.get('ranking', None)
+         or values.get('rating', None) \
+         or values.get('ranking', None)
     if rating is None:
-        raise_json_error(
-                request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _('Rating not specified.'),
-                    u'code': 'RatingMissing',
-                },
-                None)
+        raise_json_error(request,
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                             'message': _(u'Rating not specified.'),
+                             'code': 'RatingMissing',
+                         },
+                         None)
 
     try:
         rating = float(rating)
     except ValueError:
-        raise_json_error(
-                request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    u'message': _('Invalid rating.'),
-                    u'code': 'Invalid Rating',
-                },
-                None)
+        raise_json_error(request,
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                             'message': _(u'Invalid rating.'),
+                             'code': 'Invalid Rating',
+                         },
+                         None)
 
     ranking.rate_object(request.context, request.authenticated_userid, rating)
     return uncached_in_response(request.context)

@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -33,8 +33,8 @@ HTTPUnsupportedMediaType = _hexc.HTTPUnsupportedMediaType
 def _copy_pyramid_exceptions():
     frame = sys._getframe(1)
     for k, v in _hexc.__dict__.items():
-        if 		isinstance(v, type) and issubclass(v, Exception) \
-        	and v.__module__ == _hexc.__name__:
+        if      isinstance(v, type) and issubclass(v, Exception) \
+            and v.__module__ == _hexc.__name__:
             frame.f_globals[k] = v
 _copy_pyramid_exceptions()
 
@@ -66,7 +66,6 @@ class HTTPUnprocessableEntity(_HTTPUnprocessableEntity):
         # The super-class simply echoes back self.detail, which
         # if not a string, causes str() to raise TypeError
         return str(super(HTTPUnprocessableEntity, self).__str__())
-
 _hexc.HTTPUnprocessableEntity = HTTPUnprocessableEntity
 
 del sys
