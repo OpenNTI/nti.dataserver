@@ -11,10 +11,12 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from zope.lifecycleevent.interfaces import IObjectAddedEvent
-from zope.lifecycleevent.interfaces import IObjectMovedEvent
+from zope.event import notify
 
 from zope.intid.interfaces import IIntIds
+
+from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from zope.lifecycleevent.interfaces import IObjectMovedEvent
 
 from zc.intid.interfaces import IBeforeIdRemovedEvent
 
@@ -140,3 +142,6 @@ def _on_s3_file_ejected(context, _):
 @component.adapter(IS3ContentFolder, IS3ObjectEjected)
 def _on_s3_folder_ejected(context, event):
     _on_s3_file_ejected(context, event)
+    if IS3ContentFolder.providedBy(context):
+        for child in context.values():
+            notify(event.__class__(child))
