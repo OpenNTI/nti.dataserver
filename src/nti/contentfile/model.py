@@ -9,13 +9,15 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from io import BytesIO
+
 from zope import interface
 
 from zope.deprecation import deprecated
 
-from zope.location.interfaces import IContained
+from zope.file.interfaces import IFile as IZopeFile
 
-from zope.mimetype.interfaces import IContentTypeAware
+from zope.location.interfaces import IContained
 
 from persistent import Persistent
 
@@ -102,7 +104,7 @@ def transform_to_blob(context, associations=False):
 # s3 objects
 
 
-@interface.implementer(IS3File, IContained, IContentTypeAware)
+@interface.implementer(IS3File, IContained, IZopeFile)
 class S3File(FileMixin, BaseContentMixin, Persistent):
     
     parameters = {}
@@ -143,7 +145,13 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
             if s3 is not None:
                 return s3.size()
         return 0
-                
+           
+    def open(self, mode="r"):
+        return BytesIO(self.data)
+
+    def openDetached(self):
+        return self.open()
+     
     @property
     def size(self):
         return self.getSize()
