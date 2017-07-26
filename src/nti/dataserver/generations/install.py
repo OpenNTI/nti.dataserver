@@ -77,6 +77,8 @@ from nti.dataserver.users.users import UserBlacklistedStorage
 
 from nti.intid import utility as intid_utility
 
+from nti.identifiers.index import install_identifiers_catalog
+
 from nti.invitations.index import install_invitations_catalog
 from nti.invitations.model import install_invitations_container
 
@@ -171,6 +173,7 @@ def install_main(context):
         install_user_catalog(dataserver_folder, intids)
         install_metadata_catalog(dataserver_folder, intids)
         install_invitations_catalog(dataserver_folder, intids)
+        install_identifiers_catalog(dataserver_folder, intids)
 
         users_folder = dataserver_folder['users']
         interface.alsoProvides(users_folder, IUsersFolder)
