@@ -35,6 +35,7 @@ from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 from nti.dataserver.tests.mock_dataserver import WithMockDS
 from nti.dataserver.tests.mock_dataserver import mock_db_trans
 
+
 class BaseTestExternalIdentifierUtility(object):
 
     TYPE = None
@@ -45,17 +46,20 @@ class BaseTestExternalIdentifierUtility(object):
     def get_namespaced_external_id(self, user):
         return '%s_site_%s' % (self.TYPE, user.username)
 
+
 @component.adapter(IUser)
 @interface.implementer(IExternalIdentifierUtility)
 class TestExternalIdentifierUtilityA(BaseTestExternalIdentifierUtility):
 
     TYPE = "TYPEA"
 
+
 @component.adapter(IUser)
 @interface.implementer(IExternalIdentifierUtility)
 class TestExternalIdentifierUtilityB(BaseTestExternalIdentifierUtility):
 
     TYPE = "TYPEB"
+
 
 class TestIndex(unittest.TestCase):
 
