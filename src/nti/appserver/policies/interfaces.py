@@ -74,6 +74,13 @@ class ICommunitySitePolicyUserEventListener(ISitePolicyUserEventListener):
 	COM_USERNAME = interface.Attribute('COM_USERNAME',
 									   "The globally resolvable name of a community, or None")
 
+class INoAccountCreationEmail(interface.Interface):
+	"""
+	A marker that indicates if an account creation email should be sent
+	upon a new account creation
+	"""
+
+
 import zope.deferredimport
 zope.deferredimport.initialize()
 zope.deferredimport.deprecatedFrom(

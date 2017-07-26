@@ -51,6 +51,8 @@ from nti.appserver.logon import _create_failure_response
 from nti.appserver.logon import _create_success_response
 from nti.appserver.logon import _deal_with_external_account
 
+from nti.appserver.policies.interfaces import INoAccountCreationEmail
+
 from nti.base._compat import text_
 
 from nti.dataserver.interfaces import IUser
@@ -258,7 +260,7 @@ class AssertionUserFactory(object):
         factory = factory if factory else User.create_user
         request = self.request
         if request is not None:
-            request.is_saml = True 
+            interface.alsoProvides(self.request, INoAccountCreationEmail)
         user = _deal_with_external_account(request,
                                            username=username,
                                            fname=firstName,
