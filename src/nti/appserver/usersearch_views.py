@@ -393,18 +393,31 @@ def _search_scope_to_remote_user(remote_user, search_term, op=_scoped_search_pre
     return result
 
 
+def _get_community_name_from_site():
+    policy = component.getUtility(ISitePolicyUserEventListener)
+    return getattr(policy, 'COM_USERNAME', None)
+
+
 def _make_visibility_test(remote_user, filter_by_site_community=True):
     # TODO: Hook this up to the ACL support
     # Admin/SiteAdmins can see everything.
-    is_admin = is_admin_or_site_admin(remote_user)
     if remote_user:
+        is_admin = is_admin_or_site_admin(remote_user)
         memberships = remote_user.usernames_of_dynamic_memberships
-        if filter_by_site_community and is_admin:
-            # Try to get the community for this site and policy, if we're
-            # going to filter by site and we're an admin.
-            policy = component.getUtility(ISitePolicyUserEventListener)
-            community = getattr(policy, 'COM_USERNAME', None)
-            remote_com_names = set((community,))
+
+        if is_admin:
+            # If we're an admin, we can search everyone unless
+            # we are filtering by site community.
+            remote_com_names = set(('Everyone',))
+
+            if filter_by_site_community:
+                # If we want to filter, we try to get a community for
+                # this site to filter our results. If a community can't
+                # be found, then we leave it as searching everyone.
+                com_name = _get_community_name_from_site()
+                if com_name is not None:
+                    remote_com_names = set((com_name,))
+
         else:
             remote_com_names = memberships - set(('Everyone',))
 
