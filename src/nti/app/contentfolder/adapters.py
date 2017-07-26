@@ -127,65 +127,68 @@ def _s3_folderIO_adapter(context):
     return None
 
 
-def _build_s3_root(keys):
+def build_s3_root(keys):
     root = {}
     for key in keys:
         parent = root
-        x = key.split('/')
-        for k in x[:-1]:
-            if k in parent and parent[k] is None:
+        splits = key.split('/')
+        for name in splits[:-1]:
+            if name in parent and parent[name] is None:
                 msg = "Duplicate file or folder name exists on s3. '%s'"
-                raise ValueError(msg % k)
-            if k not in parent:
-                parent[k] = {}
-            parent = parent[k]
+                raise ValueError(msg % name)
+            if name not in parent:
+                parent[name] = {}
+            parent = parent[name]
 
-        if x[-1] != '':
-            k = x[-1]
-            if k in parent:
+        if splits[-1] != '':
+            name = splits[-1]
+            if name in parent:
                 msg = "Duplicate file or folder name exists on s3. '%s'"
-                raise ValueError(msg % k)
-            parent[k] = None
+                raise ValueError(msg % name)
+            parent[name] = None
     return root
+_build_s3_root = build_s3_root # BWC
 
 
 @interface.implementer(IS3FileIO)
 @component.adapter(IS3RootFolder)
 class S3RootFolderIO(S3FolderIO):
 
+    def _guess_type(self, key):
+        return guess_type(key)[0] or DEFAULT_CONTENT_TYPE
+
     def _sync(self, parent, s3_parent, folder_factory, file_factory):
         keys = set(parent.keys()) | set(s3_parent.keys())
-        for k in keys:
-            if k not in parent:
-                if s3_parent[k] is not None:
-                    item = parent[k] = folder_factory()
-                    item.name = k
-                    item.filename = k
+        for key in keys:
+            if key not in parent:
+                if s3_parent[key] is not None:
+                    item = parent[key] = folder_factory()
+                    item.filename = item.name = key
                 else:
-                    item = parent[k] = file_factory()
-                    item.name = k
-                    item.filename = k
-                    item.contentType = guess_type(k)[0] or DEFAULT_CONTENT_TYPE
+                    item = parent[key] = file_factory()
+                    item.filename = item.name = key
+                    item.contentType = self.guess_type(key)
 
-                if s3_parent[k]:
-                    self._sync(parent[k], s3_parent[k],
+                if s3_parent[key]:
+                    self._sync(parent[key], s3_parent[key],
                                folder_factory, file_factory)
-            elif k not in s3_parent:
-                del parent[k]
-            else:
-                if     (s3_parent[k] is None and isinstance(parent[k], folder_factory)) \
-                    or (s3_parent[k] is not None and isinstance(parent[k], file_factory)):
-                    msg = "The type of File/Folder on s3 and local is not matched, filename: '%s'" 
-                    raise ValueError(msg % k)
-                elif s3_parent[k] is not None:
-                    self._sync(parent[k], s3_parent[k],
-                               folder_factory, file_factory)
+            elif key not in s3_parent:
+                del parent[key]
+            elif s3_parent[key] is None and isinstance(parent[key], folder_factory):
+                msg = "The type of Folder on s3 and local do not matched, filename: '%s'"
+                raise ValueError(msg % key)
+            elif s3_parent[key] is not None and isinstance(parent[key], file_factory):
+                msg = "The type of File on s3 and local do not matched, filename: '%s'"
+                raise ValueError(msg % key)
+            elif s3_parent[key] is not None:
+                self._sync(parent[key], s3_parent[key],
+                           folder_factory, file_factory)
 
     def sync(self, folder_factory, file_factory):
         """
         Syncing folders or files from s3 into this rootfolder,
         """
-        s3_root = _build_s3_root(self.get_all_keys())
+        s3_root = build_s3_root(self.get_all_keys())
         self._sync(self.context, s3_root, folder_factory, file_factory)
 
 
