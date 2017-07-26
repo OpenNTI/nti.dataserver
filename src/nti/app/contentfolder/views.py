@@ -540,7 +540,7 @@ class ImportView(AbstractAuthenticatedView,
             factory = ContentBlobFile
         return factory
 
-    def create_namedfile(self, source, name, filename=None):
+    def create_namedfile(self, unused_source, name, filename=None):
         factory = self.factory(filename or name)
         result = factory()
         result.name = name
@@ -832,7 +832,7 @@ class RenameMixin(object):
                name='rename')
 class RenameView(UGDPutView, RenameMixin):
 
-    def _check_object_constraints(self, theObject, externalValue=None):
+    def _check_object_constraints(self, theObject, unused_external_value=None):
         if IRootFolder.providedBy(theObject):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
@@ -1308,8 +1308,8 @@ class DeleteS3FolderView(DeleteFolderView):
                permission=nauth.ACT_UPDATE)
 class S3SyncView(AbstractAuthenticatedView):
 
-    folder_factory = S3ContentFolder
     file_factory = S3File
+    folder_factory = S3ContentFolder
 
     def __call__(self):
         try:
@@ -1317,5 +1317,12 @@ class S3SyncView(AbstractAuthenticatedView):
             if io is not None:
                 io.sync(self.folder_factory, self.file_factory)
         except ValueError as e:
-            raise hexc.HTTPUnprocessableEntity(e)
+            exc_info = sys.exc_info()
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                'message': str(e),
+                                'code': e.__class__.__name__,
+                             },
+                             exc_info[2])
         return self.context
