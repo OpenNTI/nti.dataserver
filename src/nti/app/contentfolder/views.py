@@ -395,8 +395,8 @@ class MkdirView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Folder exists.'),
-                                'code': 'FolderExists'
+                                 'message': _(u'Folder exists.'),
+                                 'code': 'FolderExists'
                              },
                              None)
         lifecycleevent.created(new_folder)
@@ -435,7 +435,7 @@ class MkdirsView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Path not specified.'),
+                                 'message': _(u'Path not specified.'),
                              },
                              None)
         result = mkdirs(self.context, path, self.builder)
@@ -660,7 +660,7 @@ class DeleteMixin(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Invalid context.'),
+                                 'message': _(u'Invalid context.'),
                              },
                              None)
         return parent
@@ -677,9 +677,9 @@ class DeleteMixin(AbstractAuthenticatedView,
                 raise_json_error(self.request,
                                  hexc.HTTPConflict,
                                  {
-                                    'message': _(u'This file appears in viewable materials.'),
-                                    'code': 'ContentFileHasReferences',
-                                    LINKS: to_external_object(links)
+                                     'message': _(u'This file appears in viewable materials.'),
+                                     'code': 'ContentFileHasReferences',
+                                     LINKS: to_external_object(links)
                                  },
                                  None)
 
@@ -713,7 +713,7 @@ class DeleteFolderView(DeleteMixin):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                'message': _(u'Cannot delete a locked folder.'),
+                                 'message': _(u'Cannot delete a locked folder.'),
                              },
                              None)
 
@@ -722,7 +722,7 @@ class DeleteFolderView(DeleteMixin):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                'message': _(u'Cannot delete root folder.'),
+                                 'message': _(u'Cannot delete root folder.'),
                              },
                              None)
         self._check_locked(theObject)
@@ -741,18 +741,18 @@ class DeleteFolderView(DeleteMixin):
                     raise_json_error(self.request,
                                      hexc.HTTPConflict,
                                      {
-                                        'message': _(u'This folder is not empty.'),
-                                        'code': 'FolderIsNotEmpty',
-                                        LINKS: to_external_object(links)
+                                         'message': _(u'This folder is not empty.'),
+                                         'code': 'FolderIsNotEmpty',
+                                         LINKS: to_external_object(links)
                                      },
                                      None)
                 else:
                     raise_json_error(self.request,
                                      hexc.HTTPConflict,
                                      {
-                                        'message': _(u'This file appears in viewable materials.'),
-                                        'code': 'ContentFileHasReferences',
-                                        LINKS: to_external_object(links)
+                                         'message': _(u'This file appears in viewable materials.'),
+                                         'code': 'ContentFileHasReferences',
+                                         LINKS: to_external_object(links)
                                      },
                                      None)
 
@@ -789,8 +789,8 @@ class RenameMixin(object):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u"Must specify a valid name."),
-                                'code': 'EmptyFileName',
+                                 'message': _(u"Must specify a valid name."),
+                                 'code': 'EmptyFileName',
                              },
                              None)
 
@@ -801,8 +801,8 @@ class RenameMixin(object):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u"File already exists."),
-                                'code': 'FileAlreadyExists',
+                                 'message': _(u"File already exists."),
+                                 'code': 'FileAlreadyExists',
                              },
                              None)
 
@@ -837,8 +837,8 @@ class RenameView(UGDPutView, RenameMixin):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                'message': _(u"Cannot rename root folder."),
-                                'code': 'CannotRenameRootFolder',
+                                 'message': _(u"Cannot rename root folder."),
+                                 'code': 'CannotRenameRootFolder',
                              },
                              None)
 
@@ -847,8 +847,8 @@ class RenameView(UGDPutView, RenameMixin):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                'message': _(u"Cannot rename a locked folder."),
-                                'code': 'CannotRenameLockedFolder',
+                                 'message': _(u"Cannot rename a locked folder."),
+                                 'code': 'CannotRenameLockedFolder',
                              },
                              None)
 
@@ -857,8 +857,8 @@ class RenameView(UGDPutView, RenameMixin):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u"Invalid context."),
-                                'code': 'InvalidContext',
+                                 'message': _(u"Invalid context."),
+                                 'code': 'InvalidContext',
                              },
                              None)
 
@@ -906,18 +906,18 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                'message': _(u"Cannot update root folder."),
-                                'code': 'CannotUpdateRootFolder',
+                                 'message': _(u"Cannot update root folder."),
+                                 'code': 'CannotUpdateRootFolder',
                              },
                              None)
 
-        if      ILockedFolder.providedBy(theObject) \
-            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+        if ILockedFolder.providedBy(theObject) \
+                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                'message': _(u"Cannot update a locked folder."),
-                                'code': 'CannotUpdateLockedFolder',
+                                 'message': _(u"Cannot update a locked folder."),
+                                 'code': 'CannotUpdateLockedFolder',
                              },
                              None)
         self._clean_external(externalValue)
@@ -965,7 +965,7 @@ class ContentFilePutView(NamedContainerPutView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u"Invalid context."),
+                                 'message': _(u"Invalid context."),
                              },
                              None)
         self._clean_external(externalValue)
@@ -999,17 +999,17 @@ class MoveView(AbstractAuthenticatedView,
             target_name = displayName(theObject)
             target = traverse(current, path)
         except (TraversalException) as e:
-            if     not isinstance(e, NoSuchFileException) \
+            if  not isinstance(e, NoSuchFileException) \
                 or e.path \
                 or strict:
                 exc_info = sys.exc_info()
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
                                  {
-                                    'message': _(str(e)),
-                                    'path': path,
-                                    'segment': e.segment,
-                                    'code': e.__class__.__name__
+                                     'message': _(str(e)),
+                                     'path': path,
+                                     'segment': e.segment,
+                                     'code': e.__class__.__name__
                                  },
                                  exc_info[2])
             else:
@@ -1024,8 +1024,8 @@ class MoveView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                'message': _(u"Cannot move root folder."),
-                                'code': 'CannotMoveRootFolder',
+                                 'message': _(u"Cannot move root folder."),
+                                 'code': 'CannotMoveRootFolder',
                              },
                              None)
 
@@ -1034,8 +1034,8 @@ class MoveView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
-                                'message': _(u"Cannot move a locked folder."),
-                                'code': 'CannotMoveLockedFolder',
+                                 'message': _(u"Cannot move a locked folder."),
+                                 'code': 'CannotMoveLockedFolder',
                              },
                              None)
 
@@ -1044,7 +1044,7 @@ class MoveView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u"Invalid context."),
+                                 'message': _(u"Invalid context."),
                              },
                              None)
 
@@ -1054,8 +1054,8 @@ class MoveView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u"Must specify a valid path."),
-                                'code': 'InvalidPath',
+                                 'message': _(u"Must specify a valid path."),
+                                 'code': 'InvalidPath',
                              },
                              None)
 
@@ -1071,7 +1071,7 @@ class MoveView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u"Cannot move object onto itself."),
+                                 'message': _(u"Cannot move object onto itself."),
                              },
                              None)
 
@@ -1101,7 +1101,7 @@ class CopyView(MoveView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u"Invalid context."),
+                                 'message': _(u"Invalid context."),
                              },
                              None)
 
@@ -1111,8 +1111,8 @@ class CopyView(MoveView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u"Must specify a valid path."),
-                                'code': 'InvalidPath',
+                                 'message': _(u"Must specify a valid path."),
+                                 'code': 'InvalidPath',
                              },
                              None)
 
@@ -1164,8 +1164,8 @@ class CFIOView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u"Must specify a valid URL."),
-                                'code': 'InvalidURL',
+                                 'message': _(u"Must specify a valid URL."),
+                                 'code': 'InvalidURL',
                              },
                              None)
         intids = component.getUtility(IIntIds)
@@ -1321,8 +1321,8 @@ class S3SyncView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': str(e),
-                                'code': e.__class__.__name__,
+                                 'message': str(e),
+                                 'code': e.__class__.__name__,
                              },
                              exc_info[2])
         return self.context
