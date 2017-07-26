@@ -38,7 +38,7 @@ from nti.appserver import httpexceptions as hexc
 from nti.appserver.interfaces import INamedLinkView
 from nti.appserver.interfaces import IUserSearchPolicy
 
-from nti.appserver.policies.site_policies import find_site_policy
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.base._compat import text_
 
@@ -59,6 +59,7 @@ from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import Entity
+from nti.dataserver.users.communities import Community
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.externalization.externalization import toExternalObject
@@ -318,16 +319,12 @@ def _authenticated_search(remote_user, dataserver, search_term, request):
     result = user_search_matcher.query(search_term,
                                        provided=_selector)
 
-    no_filter = request.params.get('no_filter') or ''
-    if is_true(no_filter):
-        community_username = None
-    else:
-        site_policy, _ = find_site_policy(request)
-        community_username = getattr(site_policy, 'COM_USERNAME', None)
+    filter_community_by_site = not is_true(
+        request.params.get('no_filter') or '')
 
     # Filter to things that share a common community
     # FIXME: Hack in a policy of limiting searching to overlapping communities
-    test = _make_visibility_test(remote_user, community_username)
+    test = _make_visibility_test(remote_user, filter_community_by_site)
     result = {x for x in result if test(x)}  # ensure a set
 
     # Add locally matching friends lists, etc. These don't need to go through the
@@ -396,12 +393,20 @@ def _search_scope_to_remote_user(remote_user, search_term, op=_scoped_search_pre
     return result
 
 
-def _make_visibility_test(remote_user, community=None):
+def _make_visibility_test(remote_user, filter_by_site_community=True):
     # TODO: Hook this up to the ACL support
     # Admin/SiteAdmins can see everything.
-    if remote_user and not is_admin_or_site_admin(remote_user):
+    is_admin = is_admin_or_site_admin(remote_user)
+    if remote_user:
         memberships = remote_user.usernames_of_dynamic_memberships
-        remote_com_names = memberships - set(('Everyone',))
+        if filter_by_site_community and is_admin:
+            # Try to get the community for this site and policy, if we're
+            # going to filter by site and we're an admin.
+            policy = component.getUtility(ISitePolicyUserEventListener)
+            community = getattr(policy, 'COM_USERNAME', None)
+            remote_com_names = set((community,))
+        else:
+            remote_com_names = memberships - set(('Everyone',))
 
         def test(x):
             try:
@@ -417,17 +422,17 @@ def _make_visibility_test(remote_user, community=None):
 
             # No one can see the Koppa Kids
             # FIXME: Hardcoding this site/user policy
-            if ICoppaUserWithoutAgreement.providedBy(x):
+            if ICoppaUserWithoutAgreement.providedBy(x) and not is_admin:
                 return False
 
             # public comms can be searched
-            if ICommunity.providedBy(x) and x.public:
+            if ICommunity.providedBy(x) and (x.public or is_admin):
                 return True
 
             # User can see dynamic memberships he's a member of
             # or owns. First, the general case
             container = IEntityContainer(x, None)
-            if container is not None:
+            if container is not None and not is_admin:
                 return remote_user in container or getattr(x, 'creator', None) is remote_user
 
             # Otherwise, visible if it doesn't have dynamic memberships,
@@ -436,16 +441,8 @@ def _make_visibility_test(remote_user, community=None):
                 or x.usernames_of_dynamic_memberships.intersection(remote_com_names)
         return test
 
-    # For admins, we only want to return users who are part of
-    # the community being searched from, if there is a
-    # community.
-    if community is not None:
-        def test_for_community(x):
-            return community in x.communities
-        return test_for_community
-
-    # If there is no community, we default to allowing all users.
-    return lambda unused_x: True
+    # Return false if we don't have a remote user for some reason
+    return lambda unused_x: False
 
 
 @component.adapter(IUser)
