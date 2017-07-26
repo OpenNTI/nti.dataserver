@@ -42,6 +42,7 @@ from nti.traversal.traversal import find_interface
 
 DEFAULT_CONTENT_TYPE = 'application/octet-stream'
 
+
 # Index adapters
 
 
@@ -133,7 +134,8 @@ def _build_s3_root(keys):
         x = key.split('/')
         for k in x[:-1]:
             if k in parent and parent[k] is None:
-                raise ValueError("Duplicate file or folder name exists on s3. '%s'" % k)
+                msg = "Duplicate file or folder name exists on s3. '%s'"
+                raise ValueError(msg % k)
             if k not in parent:
                 parent[k] = {}
             parent = parent[k]
@@ -141,7 +143,8 @@ def _build_s3_root(keys):
         if x[-1] != '':
             k = x[-1]
             if k in parent:
-                raise ValueError("Duplicate file or folder name exists on s3. '%s'" % k)
+                msg = "Duplicate file or folder name exists on s3. '%s'"
+                raise ValueError(msg % k)
             parent[k] = None
     return root
 
@@ -150,23 +153,33 @@ def _build_s3_root(keys):
 @component.adapter(IS3RootFolder)
 class S3RootFolderIO(S3FolderIO):
 
-    def _sync(self, parent, s3Parent, folder_factory, file_factory):
-        keys = set(parent.keys()) | set(s3Parent.keys())
+    def _sync(self, parent, s3_parent, folder_factory, file_factory):
+        keys = set(parent.keys()) | set(s3_parent.keys())
         for k in keys:
             if k not in parent:
-                parent[k] = folder_factory(name=k, filename=k) if s3Parent[k] is not None else file_factory(name=k,
-                                                                                                            filename=k,
-                                                                                                            contentType=guess_type(k)[0] or DEFAULT_CONTENT_TYPE)
-                if s3Parent[k]:
-                    self._sync(parent[k], s3Parent[k], folder_factory, file_factory)
-            elif k not in s3Parent:
+                if s3_parent[k] is not None:
+                    item = parent[k] = folder_factory()
+                    item.name = k
+                    item.filename = k
+                else:
+                    item = parent[k] = file_factory()
+                    item.name = k
+                    item.filename = k
+                    item.contentType = guess_type(k)[0] or DEFAULT_CONTENT_TYPE
+
+                if s3_parent[k]:
+                    self._sync(parent[k], s3_parent[k],
+                               folder_factory, file_factory)
+            elif k not in s3_parent:
                 del parent[k]
             else:
-                if     (s3Parent[k] is None and isinstance(parent[k], folder_factory)) \
-                    or (s3Parent[k] is not None and isinstance(parent[k], file_factory)):
-                    raise ValueError("The type of File/Folder on s3 and local is not matched, filename: '%s'" % k)
-                elif s3Parent[k] is not None:
-                    self._sync(parent[k], s3Parent[k], folder_factory, file_factory)
+                if     (s3_parent[k] is None and isinstance(parent[k], folder_factory)) \
+                    or (s3_parent[k] is not None and isinstance(parent[k], file_factory)):
+                    msg = "The type of File/Folder on s3 and local is not matched, filename: '%s'" 
+                    raise ValueError(msg % k)
+                elif s3_parent[k] is not None:
+                    self._sync(parent[k], s3_parent[k],
+                               folder_factory, file_factory)
 
     def sync(self, folder_factory, file_factory):
         """
