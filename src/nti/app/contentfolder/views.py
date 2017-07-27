@@ -1273,26 +1273,6 @@ class S3MkdirView(MkdirView):
         return data
 
 
-@view_config(name="import")
-@view_config(name="Import")
-@view_defaults(route_name='objects.generic.traversal',
-               renderer='rest',
-               context=IS3ContentFolder,
-               permission=nauth.ACT_UPDATE,
-               request_method='POST')
-class S3ImportView(ImportView):
-
-    folder_factory = S3ContentFolder
-
-    def factory(self, filename):
-        contentType = guess_type(filename)[0]
-        if contentType and contentType.startswith('image'):
-            factory = S3Image
-        else:
-            factory = S3File
-        return factory
-
-
 @view_config(context=IS3File)
 @view_config(context=IS3Image)
 @view_defaults(route_name='objects.generic.traversal',
