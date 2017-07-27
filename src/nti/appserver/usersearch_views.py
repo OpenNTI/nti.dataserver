@@ -92,6 +92,11 @@ def _is_valid_search(search_term, remote_user):
              request_method='GET')
 def _UserSearchView(request):
     """
+    :param bool no_filter: If given and true, then will return users from all sites
+    if the remoteUser in the request is an admin. Otherwise, only searches users who
+    belong to the community of the site in which the request is being performed. 
+    Searching in a site without a community will return users from all sites.
+
     .. note:: This is extremely inefficient.
 
     .. note:: Policies need to be applied to this. For example, one policy
