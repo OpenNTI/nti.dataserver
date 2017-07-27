@@ -326,6 +326,97 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS
     @fudge.patch('nti.appserver.usersearch_views._get_community_name_from_site')
+    def test_user_search_filtering_by_site(self, fake_site_community):
+
+        community_username = 'TheCommunity'
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            u1 = self._create_user()
+            u2 = self._create_user(username='sj2@nextthought.com')
+            user_interfaces.IFriendlyNamed(
+                u1).realname = u"Steve Johnson"
+            user_interfaces.IFriendlyNamed(
+                u2).realname = u"Stephen Jay Johnson"
+            modified(u1)
+            modified(u2)
+            community = users.Community.create_community(
+                username=community_username)
+            u1.record_dynamic_membership(community)
+            u2.record_dynamic_membership(community)
+
+        testapp = TestApp(self.app)
+        path = '/dataserver2/UserSearch/Stephen'
+
+        # If this site doesn't have a community set, we should get our user
+        # back
+        fake_site_community.is_callable().returns(None)
+        res = testapp.get(path, extra_environ=self._make_extra_environ())
+        assert_that(res.json_body['Items'], has_length(1))
+        assert_that(res.json_body['Items'], has_item(
+            has_entry('Username', 'sj2@nextthought.com')))
+        assert_that(res.json_body['Items'], has_item(
+            has_entry('realname', 'Stephen Jay Johnson')))
+
+        # If the site has a community that the user is in, we should still
+        # be able to get that user.
+        fake_site_community.is_callable().returns(community_username)
+        res = testapp.get(path, extra_environ=self._make_extra_environ())
+        assert_that(res.json_body['Items'], has_length(1))
+        assert_that(res.json_body['Items'], has_item(
+            has_entry('Username', 'sj2@nextthought.com')))
+
+        # If the user exists in a different site (in other words, they are
+        # not part of the community for this site), we don't get them back.
+        fake_site_community.is_callable().returns(
+            "Community for a different site")
+        res = testapp.get(path, extra_environ=self._make_extra_environ())
+        assert_that(res.json_body['Items'], has_length(0))
+
+        # We get them back again if we turn off filtering though.
+        res = testapp.get(
+            path + '?no_filter=True', extra_environ=self._make_extra_environ())
+        assert_that(res.json_body['Items'], has_length(1))
+        assert_that(res.json_body['Items'], has_item(
+            has_entry('Username', 'sj2@nextthought.com')))
+
+        # We should always be able to search for ourself though.
+        path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
+        res = testapp.get(path, extra_environ=self._make_extra_environ())
+        assert_that(res.json_body['Items'], has_length(1))
+        assert_that(res.json_body['Items'], has_item(
+            has_entry('Username', 'sjohnson@nextthought.com')))
+
+        # Even if searching for a term that should match both, if we're
+        # outside the site they're in, we only get ourself back
+        # and not the other matching user.
+        path = '/dataserver2/UserSearch/Johnson'
+        res = testapp.get(path, extra_environ=self._make_extra_environ())
+        assert_that(res.json_body['Items'], has_length(1))
+        assert_that(res.json_body['Items'], has_item(
+            has_entry('Username', 'sjohnson@nextthought.com')))
+
+        # If we search for the term that matches both, within the same site,
+        # we expect to get both back.
+        fake_site_community.is_callable().returns(community_username)
+        path = '/dataserver2/UserSearch/Johnson'
+        res = testapp.get(path, extra_environ=self._make_extra_environ())
+        assert_that(res.json_body['Items'], has_length(2))
+        assert_that(res.json_body['Items'], has_item(
+            has_entry('Username', 'sjohnson@nextthought.com')))
+        assert_that(res.json_body['Items'], has_item(
+            has_entry('Username', 'sj2@nextthought.com')))
+
+        # The same is true if our site doesn't have a community set.
+        fake_site_community.is_callable().returns(None)
+        res = testapp.get(path, extra_environ=self._make_extra_environ())
+        assert_that(res.json_body['Items'], has_length(2))
+        assert_that(res.json_body['Items'], has_item(
+            has_entry('Username', 'sjohnson@nextthought.com')))
+        assert_that(res.json_body['Items'], has_item(
+            has_entry('Username', 'sj2@nextthought.com')))
+
+    @WithSharedApplicationMockDS
+    @fudge.patch('nti.appserver.usersearch_views._get_community_name_from_site')
     def test_user_search_mathcounts_policy(self, fake_site_community):
         #"On the mathcounts site, we cannot search for realname or alias"
         with mock_dataserver.mock_db_trans(self.ds):
