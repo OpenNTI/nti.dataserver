@@ -157,7 +157,7 @@ class S3RootFolderIO(S3FolderIO):
     def _guess_type(self, key):
         return guess_type(key)[0] or DEFAULT_CONTENT_TYPE
 
-    def _sync(self, parent, s3_parent, folder_factory, file_factory):
+    def _sync(self, parent, s3_parent, folder_factory, file_factory, image_factory=None):
         keys = set(parent.keys()) | set(s3_parent.keys())
         for key in keys:
             if key not in parent:
@@ -165,13 +165,17 @@ class S3RootFolderIO(S3FolderIO):
                     item = parent[key] = folder_factory()
                     item.filename = item.name = key
                 else:
-                    item = parent[key] = file_factory()
+                    contentType = self._guess_type(key)
+                    if contentType and contentType.startswith('image') and image_factory:
+                        item = parent[key] = image_factory()
+                    else:
+                        item = parent[key] = file_factory()
                     item.filename = item.name = key
-                    item.contentType = self.guess_type(key)
+                    item.contentType = contentType
 
                 if s3_parent[key]:
                     self._sync(parent[key], s3_parent[key],
-                               folder_factory, file_factory)
+                               folder_factory, file_factory, image_factory)
             elif key not in s3_parent:
                 del parent[key]
             elif s3_parent[key] is None and isinstance(parent[key], folder_factory):
@@ -182,14 +186,14 @@ class S3RootFolderIO(S3FolderIO):
                 raise ValueError(msg % key)
             elif s3_parent[key] is not None:
                 self._sync(parent[key], s3_parent[key],
-                           folder_factory, file_factory)
+                           folder_factory, file_factory, image_factory)
 
-    def sync(self, folder_factory, file_factory):
+    def sync(self, folder_factory, file_factory, image_factory=None):
         """
         Syncing folders or files from s3 into this rootfolder,
         """
         s3_root = build_s3_root(self.get_all_keys())
-        self._sync(self.context, s3_root, folder_factory, file_factory)
+        self._sync(self.context, s3_root, folder_factory, file_factory, image_factory)
 
 
 @interface.implementer(IS3FileIO)

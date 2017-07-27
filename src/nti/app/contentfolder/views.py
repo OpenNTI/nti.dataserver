@@ -1309,13 +1309,14 @@ class DeleteS3FolderView(DeleteFolderView):
 class S3SyncView(AbstractAuthenticatedView):
 
     file_factory = S3File
+    image_factory = S3Image
     folder_factory = S3ContentFolder
 
     def __call__(self):
         try:
             io = IS3FileIO(self.context, None)
             if io is not None:
-                io.sync(self.folder_factory, self.file_factory)
+                io.sync(self.folder_factory, self.file_factory, self.image_factory)
         except ValueError as e:
             exc_info = sys.exc_info()
             raise_json_error(self.request,
