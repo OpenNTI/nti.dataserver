@@ -159,10 +159,10 @@ class BotoS3Mixin(object):
                 if oldKey.endswith('/'):
                     for k in bucket.list(prefix=oldKey):
                         n = newKey + k.key[len(oldKey):]
-                        k.copy(self.bucket_name, n)
+                        k.copy(self.bucket_name, n, preserve_acl=True)
                         k.delete()
                 else:
-                    k.copy(self.bucket_name, newKey)
+                    k.copy(self.bucket_name, newKey, preserve_acl=True)
                     k.delete()
         finally:
             connection.close()
@@ -177,11 +177,11 @@ class BotoS3Mixin(object):
                     for k in bucket.list(prefix=srcKey):
                         n = targetKey + k.key[len(srcKey):]
                         bucket.delete_key(n)
-                        k.copy(self.bucket_name, n)
+                        k.copy(self.bucket_name, n, preserve_acl=True)
                         k.delete()
                 else:
                     bucket.delete_key(targetKey)
-                    k.copy(self.bucket_name, targetKey)
+                    k.copy(self.bucket_name, targetKey, preserve_acl=True)
                     k.delete()
         finally:
             connection.close()
