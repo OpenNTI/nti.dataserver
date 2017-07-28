@@ -93,8 +93,8 @@ class BotoS3Mixin(object):
             k = boto.s3.key.Key(bucket, key)
             return k.exists()
         except Exception as e:
-            logger.error(
-                "Error while checking existence of key %s. %s", key, e)
+            logger.error("Error while checking existence of key %s. %s", 
+                         key, e)
             return False
         finally:
             connection.close()
@@ -119,7 +119,7 @@ class BotoS3Mixin(object):
         try:
             bucket = connection.get_bucket(self.bucket_name)
             k = bucket.lookup(key)
-            return k.size
+            return k.size if key is not None else None
         finally:
             connection.close()
 
