@@ -13,6 +13,8 @@ from zope import component
 
 from zope.intid.interfaces import IIntIds
 
+from nti.dataserver.interfaces import IUser
+
 from nti.identifiers.index import IX_EXTERNAL_IDS
 
 from nti.identifiers.index import get_identifier_catalog
@@ -48,7 +50,7 @@ def get_user_for_external_id(external_id):
     query = {IX_EXTERNAL_IDS: {'any_of': (external_id.lower(),)}}
     for uid in catalog.apply(query) or ():
         user = intids.queryObject(uid)
-        if user is not None:
+        if IUser.providedBy(user):
             result = user
             break
     return result
