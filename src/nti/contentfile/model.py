@@ -147,7 +147,7 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
         return 0
            
     def open(self, mode="r"):
-        if not mode:
+        if mode != "r":
             raise ValueError("Invalid mode")
         return BytesIO(self.data)
 
