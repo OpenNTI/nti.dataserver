@@ -23,8 +23,6 @@ from nti.app.contentfile.view_mixins import to_external_oid_and_link
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
-from nti.contentfile.interfaces import IS3File
-
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
@@ -68,9 +66,8 @@ class _ContentFileDecorator(object):
         if NTIID not in ext_dict:
             ext_dict[NTIID] = oid
         ext_dict.pop('parameters', None)
-        ext_dict['value'] = ext_dict['url']
-        if not IS3File.providedBy(item): 
-            ext_dict['size'] = item.getSize()
+        ext_dict['value'] = ext_dict['url'] 
+        ext_dict['size'] = item.getSize()
 
 
 @component.adapter(IFileConstrained)
