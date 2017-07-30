@@ -71,8 +71,8 @@ class IntIdResolverView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Must specify an intid.'),
-                                'code': 'MissingIntId',
+                                 'message': _(u'Must specify an intid.'),
+                                 'code': 'MissingIntId',
                              },
                              None)
         try:
@@ -81,8 +81,8 @@ class IntIdResolverView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Must specify a valid intid.'),
-                                'code': 'InvalidIntId',
+                                 'message': _(u'Must specify a valid intid.'),
+                                 'code': 'InvalidIntId',
                              },
                              None)
         intids = component.getUtility(IIntIds)
@@ -93,16 +93,16 @@ class IntIdResolverView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': str(e),
-                                'code': e.__class__.__name__,
+                                 'message': str(e),
+                                 'code': e.__class__.__name__,
                              },
                              exc_info[2])
         if result is None:
             raise_json_error(self.request,
                              hexc.HTTPNotFound,
                              {
-                                'message': _(u'Intid not found.'),
-                                'code': 'IntIdNotFound',
+                                 'message': _(u'Intid not found.'),
+                                 'code': 'IntIdNotFound',
                              },
                              None)
         return result
