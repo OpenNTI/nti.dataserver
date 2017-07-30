@@ -155,7 +155,7 @@ class BotoS3Mixin(object):
         try:
             bucket = connection.get_bucket(self.bucket_name)
             k = bucket.lookup(oldKey)
-            if k:
+            if k is not None:
                 if oldKey.endswith('/'):
                     for k in bucket.list(prefix=oldKey):
                         n = newKey + k.key[len(oldKey):]
@@ -172,7 +172,7 @@ class BotoS3Mixin(object):
         try:
             bucket = connection.get_bucket(self.bucket_name)
             k = bucket.lookup(srcKey)
-            if k:
+            if k is not None:
                 if srcKey.endswith('/'):
                     for k in bucket.list(prefix=srcKey):
                         n = targetKey + k.key[len(srcKey):]
