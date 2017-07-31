@@ -62,7 +62,7 @@ from nti.schema.interfaces import InvalidValue
 from nti.schema.jsonschema import TAG_UI_TYPE
 from nti.schema.jsonschema import TAG_HIDDEN_IN_UI
 from nti.schema.jsonschema import TAG_READONLY_IN_UI
-from nti.schema.jsonschema import TAG_REQUIRED_IN_UI 
+from nti.schema.jsonschema import TAG_REQUIRED_IN_UI
 
 class UsernameCannotBeBlank(FieldCannotBeOnlyWhitespace):
 
@@ -153,7 +153,7 @@ _VERBOTEN_PASSWORDS = _load_resource(__name__, 'verboten-passwords.txt')
 del _load_resource
 
 def _checkEmailAddress(address):
-	""" 
+	"""
 	Check email address.
 
 	This should catch most invalid but no valid addresses.
@@ -285,7 +285,7 @@ class IOpenIDUserCreatedEvent(IObjectEvent):
 	Fired after an OpenID user has been created
 	"""
 	idurl = interface.Attribute("The URL identifying the user on the external system")
-	content_roles =interface.Attribute("An iterable of strings naming provider-local content roles") 
+	content_roles =interface.Attribute("An iterable of strings naming provider-local content roles")
 
 @interface.implementer(IOpenIDUserCreatedEvent)
 class OpenIDUserCreatedEvent(ObjectEvent):
@@ -539,7 +539,7 @@ class IProfessionalPosition(interface.Interface):
 						  required=False)
 
 	# TODO: As with IEducation, need to do startYear <= endYear
-	# validation in a view. 
+	# validation in a view.
 	startYear = Int(title='Start year',
 					description=u'Start year',
 					required=False)
@@ -824,3 +824,15 @@ def get_all_suggested_contacts(user):
 		for suggestion in provider.suggestions(user):
 			suggestion.provider = provider
 			yield suggestion
+
+
+class IUsernameGeneratorUtility(Interface):
+	"""
+	Utility to generate a guaranteed unique username. By default, this username
+	is opaque.
+	"""
+
+	def generate_username():
+		"""
+		Return the guaranteed unique username.
+		"""

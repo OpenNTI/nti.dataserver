@@ -196,4 +196,8 @@
 	<utility factory=".suggested_contacts._SecondOrderContactProvider"
 			 provides=".interfaces.ISecondOrderSuggestedContactProvider" />
 
+    <!-- Username -->
+	<utility factory=".username.OpaqueUsernameGeneratorUtility"
+             provides=".interfaces.IUsernameGeneratorUtility" />
+
 </configure>
