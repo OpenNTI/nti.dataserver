@@ -53,8 +53,8 @@ class TestDecorators(ApplicationLayerTest):
     global_obj = {
         'MimeType': 'application/vnd.nextthought.contentblobfile',
         'value': GIF_DATAURL,
-        'filename': u'Getting ÀÀÀ.pdf',
-        'name': u'Getting ÀÀÀ.pdf'
+        'filename': u'file.pdf',
+        'name': u'file.pdf'
     }
 
     def test_content_file(self):
