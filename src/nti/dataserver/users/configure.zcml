@@ -48,6 +48,8 @@
 	<adapter factory=".users_external._UserExternalObject" />
 	<adapter factory=".users_external._UserSummaryExternalObject"
 			 name="summary" />
+	<adapter factory=".users_external._UserAdminSummaryExternalObject"
+             name="admin-summary" />
 	<adapter factory=".users_external._UserPersonalSummaryExternalObject"
 			 name="personal-summary" />
 

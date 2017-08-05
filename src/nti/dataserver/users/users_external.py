@@ -278,6 +278,7 @@ class _DynamicFriendsListExternalObject(_FriendsListExternalObject):
 		extDict['locked'] = extDict['Locked'] = self.entity.Locked
 		return extDict
 
+
 @component.adapter(IUser)
 class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 
@@ -301,11 +302,27 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 				extDict[f] = toExternalObject(val)
 		return extDict
 
+
+@component.adapter(IUser)
+class _UserAdminSummaryExternalObject(_UserSummaryExternalObject):
+	"""
+	For admins, return the fields exposed to all users plus a few
+	fields useful for administration.
+	"""
+
+	@property
+	def public_summary_profile_fields(self):
+		result = super(_UserAdminSummaryExternalObject, self).public_summary_profile_fields
+		result += ('email',)
+		return result
+
+
 @component.adapter(ICoppaUserWithoutAgreement)
 class _CoppaUserSummaryExternalObject(_UserSummaryExternalObject):
 	# Privacy is very important for the precious children. None of their profile
 	# fields are public to other people.
 	public_summary_profile_fields = ()
+
 
 @component.adapter(IEntity)
 @interface.implementer(IExternalObject)
@@ -326,7 +343,7 @@ class _EntityExporterExternalObject(object):
 		if IUseNTIIDAsExternalUsername.providedBy(self.entity):
 			result[StandardExternalFields.ID] = self.entity.NTIID
 		return result
-	
+
 # By default, when externalizing we send the minimum public data.
 # A few places exist, such as the resolve user api, that can
 # get the 'complete' data by asking for the registered 'personal'
