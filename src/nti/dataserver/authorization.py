@@ -629,3 +629,11 @@ def is_admin_or_site_admin(user):
     `ROLE_ADMIN` roles.
     """
     return is_admin(user) or is_site_admin(user)
+
+
+def is_admin_or_content_admin_or_site_admin(user):
+    """
+    Returns whether the user has the `ROLE_SITE_ADMIN`,
+    `ROLE_ADMIN` or `ROLE_CONTENT_ADMIN` roles.
+    """
+    return is_admin(user) or is_site_admin(user)

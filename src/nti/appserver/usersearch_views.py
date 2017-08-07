@@ -47,6 +47,7 @@ from nti.common.string import is_true
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.authorization import is_admin_or_site_admin
+from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
@@ -94,7 +95,7 @@ def _UserSearchView(request):
     """
     :param bool no_filter: If given and true, then will return users from all sites
     if the remoteUser in the request is an admin. Otherwise, only searches users who
-    belong to the community of the site in which the request is being performed. 
+    belong to the community of the site in which the request is being performed.
     Searching in a site without a community will return users from all sites.
 
     .. note:: This is extremely inefficient.
@@ -289,11 +290,17 @@ def _resolve_user(exact_match, remote_user):
 
 
 def _format_result(result, remote_user, dataserver):
-    # Since we are already looking in the object we might as well return the summary form
-    # For this reason, we are doing the externalization ourself.
-    result = [toExternalObject(user, name=('personal-summary'
-                                           if user == remote_user
-                                           else 'summary'))
+    def _get_ext_type(user_tocheck):
+        ext_type = 'summary'
+        if user_tocheck == remote_user:
+            # Since we are already looking in the object we might as well
+            # return the summary form.
+            ext_type = 'personal-summary'
+        elif is_admin_or_content_admin_or_site_admin(remote_user):
+            ext_type = 'admin-summary'
+        return ext_type
+
+    result = [toExternalObject(user, name=(_get_ext_type(user)))
               for user in result]
 
     # We have no good modification data for this list, due to changing Presence
