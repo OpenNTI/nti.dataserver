@@ -15,8 +15,8 @@ import sys
 import shutil
 import zipfile
 import tempfile
-from urlparse import parse_qs
 from functools import partial
+from urlparse import parse_qs
 from mimetypes import guess_type
 from mimetypes import guess_extension
 
@@ -43,6 +43,7 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.contentfolder import MessageFactory as _
 
 from nti.app.contentfolder import CFIO
+from nti.app.contentfolder import DEFAULT_CONTENT_TYPE
 
 from nti.app.contentfolder.utils import get_ds2
 from nti.app.contentfolder.utils import get_unique_file_name
@@ -69,21 +70,21 @@ from nti.common.random import generate_random_hex_string
 
 from nti.common.string import is_true
 
-from nti.contentfile.interfaces import IContentBaseFile
 from nti.contentfile.interfaces import IS3File
-from nti.contentfile.interfaces import IS3FileIO
 from nti.contentfile.interfaces import IS3Image
+from nti.contentfile.interfaces import IS3FileIO
+from nti.contentfile.interfaces import IContentBaseFile
 
-from nti.contentfile.model import ContentBlobFile
-from nti.contentfile.model import ContentBlobImage
 from nti.contentfile.model import S3File
 from nti.contentfile.model import S3Image
+from nti.contentfile.model import ContentBlobFile
+from nti.contentfile.model import ContentBlobImage
 
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import ILockedFolder
+from nti.contentfolder.interfaces import IS3RootFolder
 from nti.contentfolder.interfaces import INamedContainer
 from nti.contentfolder.interfaces import IS3ContentFolder
-from nti.contentfolder.interfaces import IS3RootFolder
 
 from nti.contentfolder.model import ContentFolder
 from nti.contentfolder.model import S3ContentFolder
@@ -125,8 +126,6 @@ ITEMS = StandardExternalFields.ITEMS
 LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
-
-DEFAULT_CONTENT_TYPE = 'application/octet-stream'
 
 try:
     _xrange = xrange
@@ -457,7 +456,6 @@ class UploadView(AbstractAuthenticatedView,
         return CaseInsensitiveDict(result)
 
     def factory(self, source):
-        # TODO: Use adapter factory
         contentType = getattr(source, 'contentType', None)
         if contentType:
             factory = ContentBlobFile
@@ -842,8 +840,8 @@ class RenameView(UGDPutView, RenameMixin):
                              },
                              None)
 
-        if ILockedFolder.providedBy(theObject) \
-                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+        if      ILockedFolder.providedBy(theObject) \
+            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
@@ -911,8 +909,8 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
                              },
                              None)
 
-        if ILockedFolder.providedBy(theObject) \
-                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+        if      ILockedFolder.providedBy(theObject) \
+            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {
@@ -1029,8 +1027,8 @@ class MoveView(AbstractAuthenticatedView,
                              },
                              None)
 
-        if ILockedFolder.providedBy(theObject) \
-                and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
+        if      ILockedFolder.providedBy(theObject) \
+            and not has_permission(ACT_NTI_ADMIN, self.context, self.request):
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
                              {

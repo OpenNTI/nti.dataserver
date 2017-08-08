@@ -20,6 +20,8 @@ from zope.traversing.interfaces import IPathAdapter
 
 from ZODB.interfaces import IConnection
 
+from nti.app.contentfolder import DEFAULT_CONTENT_TYPE
+
 from nti.contentfile.interfaces import IS3File
 from nti.contentfile.interfaces import IS3FileIO
 
@@ -39,8 +41,6 @@ from nti.contentfolder.model import S3RootFolder
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
-
-DEFAULT_CONTENT_TYPE = 'application/octet-stream'
 
 
 # Index adapters
