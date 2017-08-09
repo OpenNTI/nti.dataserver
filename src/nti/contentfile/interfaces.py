@@ -15,6 +15,10 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.location.interfaces import IContained
 
+from zope.schema import NativeStringLine
+
+from nti.base.interfaces import DEFAULT_CONTENT_TYPE
+
 from nti.base.interfaces import INamedFile as IBaseNamedFile
 
 from nti.namedfile.interfaces import INamedFile
@@ -22,15 +26,22 @@ from nti.namedfile.interfaces import INamedImage
 from nti.namedfile.interfaces import INamedBlobFile
 from nti.namedfile.interfaces import INamedBlobImage
 
-from nti.schema.field import ListOrTuple
+from nti.schema.field import Variant
 from nti.schema.field import ValidTextLine
+from nti.schema.field import IndexedIterable
 
 
 class IContentBaseFile(IBaseNamedFile, IAttributeAnnotatable, IContained):
 
-    tags = ListOrTuple(ValidTextLine(title=u"A single tag"), required=False)
+    tags = IndexedIterable(ValidTextLine(title=u"A single tag"),
+                           required=False)
 
-    name = ValidTextLine(title=u"Identifier for the file", required=True)
+    name = ValidTextLine(title=u"Identifier for the file",
+                         required=True)
+
+    contentType = Variant((ValidTextLine(), NativeStringLine()),
+                          title=u'content type', required=False,
+                          default=DEFAULT_CONTENT_TYPE)
 
     def add_association(context):
         """
@@ -56,25 +67,27 @@ class IContentBaseFile(IBaseNamedFile, IAttributeAnnotatable, IContained):
         """
         return if this object has any associations
         """
+
+
 IBaseFile = IContentBaseFile  # BWC
 
 
 # named objects
 
 
-class IContentFile(INamedFile, IContentBaseFile):
+class IContentFile(IContentBaseFile, INamedFile):
     pass
 
 
-class IContentImage(INamedImage, IContentBaseFile):
+class IContentImage(IContentBaseFile, INamedImage):
     pass
 
 
-class IContentBlobFile(INamedBlobFile, IContentBaseFile):
+class IContentBlobFile(IContentBaseFile, INamedBlobFile):
     pass
 
 
-class IContentBlobImage(INamedBlobImage, IContentBaseFile):
+class IContentBlobImage(IContentBaseFile, INamedBlobImage):
     pass
 
 
@@ -117,7 +130,7 @@ class IS3FileIO(interface.Interface):
         """
         return the contents of the object
         """
-        
+
     def size():
         """
         return the contents size of the object
