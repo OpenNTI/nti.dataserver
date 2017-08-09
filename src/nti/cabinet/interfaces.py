@@ -25,6 +25,7 @@ from nti.schema.field import Number
 from nti.schema.field import Variant
 from nti.schema.field import TextLine
 
+
 class ISourceBucket(IContained):
 
     name = interface.Attribute("Bucket name")
