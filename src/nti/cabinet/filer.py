@@ -19,7 +19,7 @@ from zope import interface
 
 from nti.base._compat import text_
 
-from nti.cabinet.interfaces import DEFAULT_MIME_TYPE
+from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
 from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceFiler
@@ -92,7 +92,7 @@ class DirectoryFiler(object):
 
     def save(self, key, source, contentType=None, bucket=None, overwrite=False,
              relative=True, **kwargs):
-        contentType = contentType or DEFAULT_MIME_TYPE
+        contentType = contentType or DEFAULT_CONTENT_TYPE
         key = os.path.split(key)[1]  # proper name
 
         # get output directory

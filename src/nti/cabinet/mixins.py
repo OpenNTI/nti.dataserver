@@ -20,9 +20,11 @@ from zope.cachedescriptors.property import CachedProperty
 
 from zope.proxy import ProxyBase
 
+from nti.base.interfaces import DEFAULT_CONTENT_TYPE
+
 from nti.base.interfaces import ILastModified
 
-from nti.cabinet.interfaces import DEFAULT_MIME_TYPE
+from nti.base.mixins import CreatedAndModifiedTimeMixin
 
 from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceBucket
@@ -30,6 +32,10 @@ from nti.cabinet.interfaces import ISourceBucket
 from nti.property.property import alias
 
 from nti.schema.eqhash import EqHash
+
+from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 # Buckets
 
@@ -64,6 +70,7 @@ class SourceBucket(object):
     def enumerateChildren(self):
         return self.filer.list(self.bucket)
 
+
 # Key Sources
 
 
@@ -94,6 +101,7 @@ class SourceProxy(ProxyBase):
     """
     Source proxy for a io.file object
     """
+
     __parent__ = property(
         lambda s: s.__dict__.get('_v__parent__'),
         lambda s, v: s.__dict__.__setitem__('_v__parent__', v))
@@ -118,7 +126,7 @@ class SourceProxy(ProxyBase):
         lambda s: s.__dict__.get('_v_lastModified'),
         lambda s, v: s.__dict__.__setitem__('_v_lastModified', v))
 
-    def __new__(cls, base, *args, **kwargs):
+    def __new__(cls, base, *unused_args, **unused_kwargs):
         return ProxyBase.__new__(cls, base)
 
     def __init__(self, base, filename=None, contentType=None, length=None,
@@ -128,7 +136,7 @@ class SourceProxy(ProxyBase):
         self.filename = filename
         self.createdTime = createdTime or 0
         self.lastModified = lastModified or 0
-        self.contentType = contentType or DEFAULT_MIME_TYPE
+        self.contentType = contentType or DEFAULT_CONTENT_TYPE
 
     @readproperty
     def mode(self):
@@ -155,20 +163,26 @@ class SourceProxy(ProxyBase):
 
 
 @EqHash('filename')
-@interface.implementer(ISource, ILastModified)
-class SourceFile(object):
+@interface.implementer(ISource)
+class SourceFile(CreatedAndModifiedTimeMixin, SchemaConfigured):
+    createDirectFieldProperties(ISource)
 
     __parent__ = None
 
     _data = None
     _time = None
 
-    def __init__(self, name, data=None, contentType=None,
-                 createdTime=None, lastModified=None, path=None):
-        self.name = name
-        self.path = path or u''
+    def __init__(self, *args, **kwargs):
+        data = kwargs.pop('data', None)
+        self.name = kwargs.pop('name', None)
+        self.path  = kwargs.pop('path', None) or u''
+        createdTime = kwargs.pop('createdTime', None)
+        lastModified = kwargs.pop('lastModified', None)
+        CreatedAndModifiedTimeMixin.__init__(self, *args, **kwargs)
+        self._reset(data, createdTime, lastModified)
+
+    def _reset(self, data, createdTime, lastModified):
         self._time = time.time()
-        self.contentType = contentType or DEFAULT_MIME_TYPE
         if data is not None:
             self.data = data
         if createdTime is not None:
@@ -189,7 +203,7 @@ class SourceFile(object):
 
     @readproperty
     def mode(self):
-        return b"rb"
+        return "rb"
 
     @readproperty
     def createdTime(self):
@@ -231,7 +245,7 @@ class SourceFile(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self):
         self.close()
 
     @property
@@ -242,14 +256,6 @@ NamedSource = SourceFile
 
 @interface.implementer(ISource)
 class ReferenceSourceFile(SourceFile):
-
-    def __init__(self, path, name, contentType=None,
-                 createdTime=None, lastModified=None):
-        super(ReferenceSourceFile, self).__init__(name,
-                                                  path=path,
-                                                  contentType=contentType,
-                                                  createdTime=createdTime,
-                                                  lastModified=lastModified)
 
     def _getData(self):
         with open(self.filename, "rb") as fp:

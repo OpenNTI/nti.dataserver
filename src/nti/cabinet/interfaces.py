@@ -15,13 +15,15 @@ from zope.file.interfaces import IFileReader
 
 from zope.location.interfaces import IContained
 
+from zope.schema import NativeStringLine
+
+from nti.base.interfaces import DEFAULT_CONTENT_TYPE
+
 from nti.base.interfaces import INamedFile
 
 from nti.schema.field import Number
+from nti.schema.field import Variant
 from nti.schema.field import TextLine
-
-DEFAULT_MIME_TYPE = u'application/octet-stream'
-
 
 class ISourceBucket(IContained):
 
@@ -42,8 +44,9 @@ class ISource(IFileReader, IContained, INamedFile):
 
     length = Number(title=u"Source length", required=False, default=None)
 
-    contentType = TextLine(title=u"content type", required=False,
-                           default=DEFAULT_MIME_TYPE)
+    contentType = Variant((TextLine(), NativeStringLine()),
+                          title=u'content type', required=False,
+                          default=DEFAULT_CONTENT_TYPE)
 
     filename = TextLine(title=u"source file name", required=False)
 
