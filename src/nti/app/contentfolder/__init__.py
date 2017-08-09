@@ -23,6 +23,3 @@ IMAGES_FOLDER = 'Images'
 
 #: Folder for storing documents
 DOCUMENTS_FOLDER = 'Documents'
-
-#: Default content type
-DEFAULT_CONTENT_TYPE = 'application/octet-stream'

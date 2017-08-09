@@ -6,7 +6,7 @@ Abstract classes to be used as pyramid view callables.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -31,6 +31,10 @@ from zope.intid.interfaces import IIntIds
 
 from nti.app.authentication import get_remote_user as _get_remote_user
 
+from nti.base._compat import text_
+
+from nti.base.interfaces import DEFAULT_CONTENT_TYPE
+
 from nti.cabinet.interfaces import ISourceFiler
 
 from nti.cabinet.mixins import SourceProxy
@@ -39,8 +43,6 @@ from nti.dataserver.interfaces import IDataserver
 
 from nti.namedfile.file import name_finder
 from nti.namedfile.file import safe_filename
-
-DEFAULT_CONTENT_TYPE = u'application/octet-stream'
 
 
 def _check_creator(remote_user, obj):
@@ -175,7 +177,7 @@ def process_source(source, default_content_type=DEFAULT_CONTENT_TYPE):
         source = StringIO(source)
         source.seek(0)
         source = SourceProxy(source,
-                             contentType='application/json',
+                             contentType=u'application/json',
                              length=length)
     elif source is not None:
         length = getattr(source, 'length', None)
@@ -184,7 +186,7 @@ def process_source(source, default_content_type=DEFAULT_CONTENT_TYPE):
         filename = getattr(source, 'filename', None)
         contentType = getattr(source, 'type', None) \
                    or getattr(source, 'contentType', None)
-        contentType = contentType or default_content_type
+        contentType = text_(contentType or default_content_type)
         source = source.file
         source.seek(0)
         source = SourceProxy(source, filename, contentType, length)
@@ -193,8 +195,8 @@ def process_source(source, default_content_type=DEFAULT_CONTENT_TYPE):
 
 def get_safe_source_filename(source, default):
     result = getattr(source, 'filename', None) \
-        or getattr(source, 'name', None) \
-        or default
+          or getattr(source, 'name', None) \
+          or default
     result = safe_filename(name_finder(result))
     return result
 

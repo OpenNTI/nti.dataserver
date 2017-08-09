@@ -20,7 +20,9 @@ from zope.traversing.interfaces import IPathAdapter
 
 from ZODB.interfaces import IConnection
 
-from nti.app.contentfolder import DEFAULT_CONTENT_TYPE
+from nti.base._compat import text_
+
+from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
 from nti.contentfile.interfaces import IS3File
 from nti.contentfile.interfaces import IS3FileIO
@@ -171,7 +173,7 @@ class S3RootFolderIO(S3FolderIO):
                     else:
                         item = parent[key] = file_factory()
                     item.filename = item.name = key
-                    item.contentType = contentType
+                    item.contentType = text_(contentType)
 
                 if s3_parent[key]:
                     self._sync(parent[key], s3_parent[key],

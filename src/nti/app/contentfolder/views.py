@@ -43,7 +43,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.contentfolder import MessageFactory as _
 
 from nti.app.contentfolder import CFIO
-from nti.app.contentfolder import DEFAULT_CONTENT_TYPE
 
 from nti.app.contentfolder.utils import get_ds2
 from nti.app.contentfolder.utils import get_unique_file_name
@@ -63,6 +62,8 @@ from nti.appserver.pyramid_authorization import has_permission
 from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.base._compat import text_
+
+from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
 from nti.base.interfaces import INamedFile
 
@@ -477,7 +478,7 @@ class UploadView(AbstractAuthenticatedView,
         result = factory()
         result.name = to_unicode(name)
         result.filename = to_unicode(filename or name)
-        result.contentType = contentType or DEFAULT_CONTENT_TYPE
+        result.contentType = text_(contentType or DEFAULT_CONTENT_TYPE)
         return result
 
     def _do_call(self):
@@ -543,8 +544,7 @@ class ImportView(AbstractAuthenticatedView,
         result = factory()
         result.name = name
         result.filename = filename or name
-        result.contentType = guess_type(filename)[0] \
-                          or DEFAULT_CONTENT_TYPE
+        result.contentType = text_(guess_type(filename)[0] or DEFAULT_CONTENT_TYPE)
         return result
 
     def _do_call(self):

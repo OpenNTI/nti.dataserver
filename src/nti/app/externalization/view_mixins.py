@@ -42,6 +42,10 @@ from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.internalization import create_modeled_content_object
 from nti.app.externalization.internalization import update_object_from_external_object
 
+from nti.base._compat import text_
+
+from nti.base.interfaces import DEFAULT_CONTENT_TYPE
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
@@ -411,7 +415,7 @@ class UploadRequestUtilsMixin(object):
 		field = self._find_file_field()
 		if field is not None:
 			return field.type
-		return self.request.content_type or b'application/octet-stream'
+		return self.request.content_type or text_(DEFAULT_CONTENT_TYPE)
 
 	def _get_body_name(self):
 		"""
