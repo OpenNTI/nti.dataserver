@@ -46,7 +46,8 @@ class ISource(IFileReader, IContained, INamedFile):
 
     contentType = Variant((TextLine(), NativeStringLine()),
                           title=u'content type', required=False,
-                          default=DEFAULT_CONTENT_TYPE)
+                          default=DEFAULT_CONTENT_TYPE,
+                          missing_value=DEFAULT_CONTENT_TYPE)
 
     filename = TextLine(title=u"source file name", required=False)
 
