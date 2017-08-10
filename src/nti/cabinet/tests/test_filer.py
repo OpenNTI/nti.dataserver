@@ -28,6 +28,8 @@ import unittest
 
 from six import StringIO
 
+from nti.base.interfaces import DEFAULT_CONTENT_TYPE
+
 from nti.cabinet.filer import DirectoryFiler
 
 from nti.cabinet.interfaces import ISource
@@ -61,6 +63,10 @@ class TestFiler(unittest.TestCase):
             assert_that(source, has_property('length', is_(9)))
             assert_that(source, has_property('name', is_("ichigo.xml")))
             assert_that(source, has_property('__parent__', is_not(none())))
+            assert_that(source, 
+                        has_property('createdTime', greater_than(0)))
+            assert_that(source, 
+                        has_property('lastModified', greater_than(0)))
             assert_that(source,
                         has_property('filename', ends_with("/ichigo.xml")))
             assert_that(source, has_property('contentType', is_("text/xml")))
@@ -141,8 +147,16 @@ class TestFiler(unittest.TestCase):
             assert_that(filer.contains("ichigo", "bleach/souls/missing_type"),
                         is_(True))
             bleh = filer.get(href)
-            assert_that(bleh, not_none())
-
+            assert_that(bleh, is_(not_none()))
+            assert_that(bleh, 
+                        has_property('contentType', is_(DEFAULT_CONTENT_TYPE)))
+            # test no effect
+            bleh.createdTime = bleh.lastModified = 0
+            assert_that(bleh, 
+                        has_property('createdTime', greater_than(0)))
+            assert_that(bleh, 
+                        has_property('lastModified', greater_than(0)))
+            
             assert_that(filer.remove(href), is_(True))
             source = filer.get(href)
             assert_that(source, is_(none()))

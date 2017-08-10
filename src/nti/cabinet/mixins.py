@@ -264,11 +264,9 @@ class ReferenceSourceFile(SourceFile):
     def _setData(self, data):
         # close resources
         self.close()
-        if data is None and os.path.exists(self.filename):
-            data = b''  # 0 byte file
         # write to file
         with open(self.filename, "wb") as fp:
-            fp.write(data)
+            fp.write(data or b'')
     data = property(_getData, _setData)
 
     @readproperty
@@ -295,10 +293,18 @@ class ReferenceSourceFile(SourceFile):
         return self.length
     size = getSize
 
-    @readproperty
+    @property
     def createdTime(self):
         return get_file_createdTime(self.filename) or 0
-
-    @readproperty
+    
+    @createdTime.setter
+    def createdTime(self, value):
+        pass
+        
+    @property
     def lastModified(self):
         return get_file_lastModified(self.filename) or 0
+
+    @lastModified.setter
+    def lastModified(self, value):
+        pass
