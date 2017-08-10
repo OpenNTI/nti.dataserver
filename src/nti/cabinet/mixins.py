@@ -176,6 +176,7 @@ class SourceFile(CreatedAndModifiedTimeMixin, SchemaConfigured):
         data = kwargs.pop('data', None)
         self.name = kwargs.pop('name', None)
         self.path  = kwargs.pop('path', None) or u''
+        self.contentType = kwargs.pop('contentType', None) or DEFAULT_CONTENT_TYPE
         createdTime = kwargs.pop('createdTime', None)
         lastModified = kwargs.pop('lastModified', None)
         CreatedAndModifiedTimeMixin.__init__(self, *args, **kwargs)

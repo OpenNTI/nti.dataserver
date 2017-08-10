@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
+from hamcrest import not_none
 from hamcrest import ends_with
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -60,7 +61,7 @@ class TestFiler(unittest.TestCase):
             assert_that(source, has_property('length', is_(9)))
             assert_that(source, has_property('name', is_("ichigo.xml")))
             assert_that(source, has_property('__parent__', is_not(none())))
-            assert_that(source, 
+            assert_that(source,
                         has_property('filename', ends_with("/ichigo.xml")))
             assert_that(source, has_property('contentType', is_("text/xml")))
 
@@ -116,13 +117,31 @@ class TestFiler(unittest.TestCase):
             assert_that(href, ends_with("bleach/souls/ichigo.xml"))
 
             assert_that(filer.contains(href), is_(True))
-            assert_that(filer.contains("ichigo.xml", "bleach/souls"), 
+            assert_that(filer.contains("ichigo.xml", "bleach/souls"),
                         is_(True))
 
             listed = filer.list("bleach")
             assert_that(listed, is_(['bleach/ichigo.xml', 'bleach/souls']))
             assert_that(filer.is_bucket('bleach/souls'), is_(True))
             assert_that(filer.is_bucket('bleach/ichigo.xml'), is_(False))
+
+            assert_that(filer.remove(href), is_(True))
+            source = filer.get(href)
+            assert_that(source, is_(none()))
+            assert_that(filer.contains(href), is_(False))
+
+            # No type
+            href = filer.save(u"ichigo",
+                              data,
+                              bucket=u"bleach/souls/missing_type",
+                              overwrite=True)
+            assert_that(href, ends_with("bleach/souls/missing_type/ichigo"))
+
+            assert_that(filer.contains(href), is_(True))
+            assert_that(filer.contains("ichigo", "bleach/souls/missing_type"),
+                        is_(True))
+            bleh = filer.get(href)
+            assert_that(bleh, not_none())
 
             assert_that(filer.remove(href), is_(True))
             source = filer.get(href)
