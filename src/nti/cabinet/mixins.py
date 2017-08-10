@@ -24,8 +24,6 @@ from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
 from nti.base.interfaces import ILastModified
 
-from nti.base.mixins import CreatedAndModifiedTimeMixin
-
 from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceBucket
 
@@ -163,8 +161,8 @@ class SourceProxy(ProxyBase):
 
 
 @EqHash('filename')
-@interface.implementer(ISource)
-class SourceFile(CreatedAndModifiedTimeMixin, SchemaConfigured):
+@interface.implementer(ISource, ILastModified)
+class SourceFile(SchemaConfigured):
     createDirectFieldProperties(ISource)
 
     __parent__ = None
@@ -176,14 +174,15 @@ class SourceFile(CreatedAndModifiedTimeMixin, SchemaConfigured):
         data = kwargs.pop('data', None)
         self.name = kwargs.pop('name', None)
         self.path  = kwargs.pop('path', None) or u''
-        self.contentType = kwargs.pop('contentType', None) or DEFAULT_CONTENT_TYPE
+        contentType = kwargs.pop('contentType', None)
         createdTime = kwargs.pop('createdTime', None)
         lastModified = kwargs.pop('lastModified', None)
-        CreatedAndModifiedTimeMixin.__init__(self, *args, **kwargs)
-        self._reset(data, createdTime, lastModified)
+        SchemaConfigured.__init__(self, *args, **kwargs)
+        self.reset(contentType, data, createdTime, lastModified)
 
-    def _reset(self, data, createdTime, lastModified):
+    def reset(self, contentType, data, createdTime, lastModified):
         self._time = time.time()
+        self.contentType = contentType or DEFAULT_CONTENT_TYPE
         if data is not None:
             self.data = data
         if createdTime is not None:
@@ -246,7 +245,7 @@ class SourceFile(CreatedAndModifiedTimeMixin, SchemaConfigured):
     def __enter__(self):
         return self
 
-    def __exit__(self):
+    def __exit__(self, *unused_args):
         self.close()
 
     @property
