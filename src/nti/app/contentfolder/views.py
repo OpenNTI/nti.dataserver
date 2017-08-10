@@ -478,7 +478,7 @@ class UploadView(AbstractAuthenticatedView,
         result = factory()
         result.name = to_unicode(name)
         result.filename = to_unicode(filename or name)
-        result.contentType = text_(contentType or DEFAULT_CONTENT_TYPE)
+        result.contentType = contentType or DEFAULT_CONTENT_TYPE
         return result
 
     def _do_call(self):
@@ -544,7 +544,7 @@ class ImportView(AbstractAuthenticatedView,
         result = factory()
         result.name = name
         result.filename = filename or name
-        result.contentType = text_(guess_type(filename)[0] or DEFAULT_CONTENT_TYPE)
+        result.contentType = guess_type(filename)[0] or DEFAULT_CONTENT_TYPE
         return result
 
     def _do_call(self):
