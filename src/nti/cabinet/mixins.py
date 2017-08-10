@@ -172,13 +172,13 @@ class SourceFile(CreatedAndModifiedTimeMixin, SchemaConfigured):
     _data = None
     _time = None
 
-    def __init__(self, *unused_args, **kwargs):
+    def __init__(self, *args, **kwargs):
         data = kwargs.pop('data', None)
         self.name = kwargs.pop('name', None)
         self.path  = kwargs.pop('path', None) or u''
         createdTime = kwargs.pop('createdTime', None)
         lastModified = kwargs.pop('lastModified', None)
-        CreatedAndModifiedTimeMixin.__init__(self, **kwargs)
+        CreatedAndModifiedTimeMixin.__init__(self, *args, **kwargs)
         self._reset(data, createdTime, lastModified)
 
     def _reset(self, data, createdTime, lastModified):
