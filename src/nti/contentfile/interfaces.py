@@ -15,7 +15,7 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.location.interfaces import IContained
 
-from zope.schema import NativeStringLine
+from zope.schema import BytesLine
 
 from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
@@ -39,7 +39,7 @@ class IContentBaseFile(IBaseNamedFile, IAttributeAnnotatable, IContained):
     name = ValidTextLine(title=u"Identifier for the file",
                          required=True)
 
-    contentType = Variant((ValidTextLine(), NativeStringLine()),
+    contentType = Variant((ValidTextLine(), BytesLine()),
                           title=u'content type', required=False,
                           default=DEFAULT_CONTENT_TYPE,
                           missing_value=DEFAULT_CONTENT_TYPE)
