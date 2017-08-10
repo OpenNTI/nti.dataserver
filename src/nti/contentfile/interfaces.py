@@ -41,7 +41,8 @@ class IContentBaseFile(IBaseNamedFile, IAttributeAnnotatable, IContained):
 
     contentType = Variant((ValidTextLine(), NativeStringLine()),
                           title=u'content type', required=False,
-                          default=DEFAULT_CONTENT_TYPE)
+                          default=DEFAULT_CONTENT_TYPE,
+                          missing_value=DEFAULT_CONTENT_TYPE)
 
     def add_association(context):
         """
