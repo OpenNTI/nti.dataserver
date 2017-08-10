@@ -31,8 +31,6 @@ from zope.intid.interfaces import IIntIds
 
 from nti.app.authentication import get_remote_user as _get_remote_user
 
-from nti.base._compat import text_
-
 from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
 from nti.cabinet.interfaces import ISourceFiler
@@ -177,8 +175,8 @@ def process_source(source, default_content_type=DEFAULT_CONTENT_TYPE):
         source = StringIO(source)
         source.seek(0)
         source = SourceProxy(source,
-                             contentType=u'application/json',
-                             length=length)
+                             length=length,
+                             contentType='application/json')
     elif source is not None:
         length = getattr(source, 'length', None)
         if not length or length == -1:
@@ -186,7 +184,7 @@ def process_source(source, default_content_type=DEFAULT_CONTENT_TYPE):
         filename = getattr(source, 'filename', None)
         contentType = getattr(source, 'type', None) \
                    or getattr(source, 'contentType', None)
-        contentType = text_(contentType or default_content_type)
+        contentType = contentType or default_content_type
         source = source.file
         source.seek(0)
         source = SourceProxy(source, filename, contentType, length)
