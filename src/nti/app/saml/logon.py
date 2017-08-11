@@ -4,14 +4,10 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
-from collections import Mapping
-
-from pyramid import security as sec
 
 from zope import component
 from zope import interface
@@ -19,6 +15,8 @@ from zope import interface
 from zope.component import getMultiAdapter
 
 from zope.event import notify
+
+from pyramid import security as sec
 
 from pyramid.view import view_config
 
@@ -37,8 +35,8 @@ from nti.app.saml.interfaces import IUserFactory
 from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
-from nti.app.saml.interfaces import ISAMLAuthenticationResponse
 from nti.app.saml.interfaces import ISAMLExistingUserValidator
+from nti.app.saml.interfaces import ISAMLAuthenticationResponse
 from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 
 from nti.app.saml.interfaces import ExistingUserMismatchError
@@ -186,7 +184,7 @@ def _validate_idp_nameid(request, user, user_info, idp):
              context=SAMLPathAdapter,
              request_method="GET",
              route_name='objects.generic.traversal')
-def saml_login(context, request):
+def saml_login(unused_context, request):
     if 'idp_id' not in request.params:
         return _create_failure_response(request, error='Missing idp_id')
 
@@ -227,7 +225,7 @@ def _failure_response(request, msg, error, state):
                                     error=(error_str if error_str else "An unknown error occurred."))
 
 
-def _existing_user(request, user_info):
+def _existing_user(unused_request, user_info):
     username = user_info.username
     if username is None:
         raise ValueError("No username provided")
@@ -238,7 +236,7 @@ def _existing_user(request, user_info):
 @interface.implementer(IUserFactory)
 class AssertionUserFactory(object):
 
-    def __init__(self, request, info):
+    def __init__(self, request, unused_info):
         self.request = request
 
     def create_user(self, user_info, factory=None):
@@ -286,9 +284,8 @@ def acs_view(request):
     try:
         saml_client = component.queryUtility(ISAMLClient)
         logger.info('Received an acs request')
-        saml_response, state, success, error = \
-            saml_client.process_saml_acs_request(request)
-
+        response = saml_client.process_saml_acs_request(request)
+        saml_response, state, success, error = response
         interface.alsoProvides(saml_response, ISAMLAuthenticationResponse)
 
         response = saml_response.session_info()
@@ -338,7 +335,7 @@ def acs_view(request):
 
         # Manually fire event with SAML user info
         event = getMultiAdapter((idp_id, user, user_info, request),
-                               ISAMLUserAuthenticatedEvent)
+                                ISAMLUserAuthenticatedEvent)
         event.saml_response = saml_response
         notify(event)
 
@@ -349,8 +346,9 @@ def acs_view(request):
     except SAMLError as e:
         logger.error("Invalid SAML Assertion")
         error_msg = text_(repr(e))
+        failure = _make_location(e.error, e.state)
         return _create_failure_response(request,
-                                        failure=_make_location(e.error, e.state),
+                                        failure=failure,
                                         error=error_msg)
     except ExistingUserMismatchError as e:
         logger.exception('Unable to match assertion to existing user')
