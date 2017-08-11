@@ -48,9 +48,10 @@
 			 for="pyramid.interfaces.IRequest .interfaces.ISAMLUserAssertionInfo"/>
 
 	<!-- Subscribers -->
+	<subscriber handler=".events._attach_remote_userdata" />
 	<subscriber handler=".events._user_created" />
 	<subscriber handler=".events._user_removed" />
-	
+
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />

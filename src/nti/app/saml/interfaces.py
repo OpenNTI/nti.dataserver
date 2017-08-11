@@ -13,6 +13,8 @@ from saml2.saml import NAMEID_FORMATS_SAML2
 
 from zope import interface
 
+from zope.interface.common.mapping import IMapping
+
 from zope.container.interfaces import IContainer
 
 from zope.schema.interfaces import IBaseVocabulary
@@ -215,6 +217,19 @@ class IUserFactory(interface.Interface):
         provisions a new user from the provided user_info
         """
 
+class ISAMLResponse(interface.Interface):
+    """
+    A response from a saml assertion
+    """
+
+class ISAMLAuthenticationResponse(ISAMLResponse):
+    """
+    A response for a saml authentication request
+    """
+
+    ava = Object(IMapping,
+                 title=u"The assertion attributes",
+                 required=True)
 
 class ISAMLUserAuthenticatedEvent(IUserEvent):
     """
@@ -234,3 +249,7 @@ class ISAMLUserAuthenticatedEvent(IUserEvent):
                      title=u"Request",
                      description=u"SAML ACS Request",
                      required=True)
+
+    saml_response = Object(ISAMLAuthenticationResponse,
+                           title=u"The authentication respones received",
+                           required=True)

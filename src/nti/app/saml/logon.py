@@ -37,6 +37,7 @@ from nti.app.saml.interfaces import IUserFactory
 from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLIDPEntityBindings
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
+from nti.app.saml.interfaces import ISAMLAuthenticationResponse
 from nti.app.saml.interfaces import ISAMLExistingUserValidator
 from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 
@@ -288,6 +289,8 @@ def acs_view(request):
         saml_response, state, success, error = \
             saml_client.process_saml_acs_request(request)
 
+        interface.alsoProvides(saml_response, ISAMLAuthenticationResponse)
+
         response = saml_response.session_info()
         logger.info('sessioninfo: %s', response)
 
@@ -320,10 +323,6 @@ def acs_view(request):
                                                 IUserFactory)
             user = factory.create_user(user_info)
 
-        # Manually fire event with SAML user info
-        notify(getMultiAdapter((idp_id, user, user_info, request),
-                               ISAMLUserAuthenticatedEvent))
-
         nameid_bindings = ISAMLIDPEntityBindings(user)
         try:
             nameid_bindings.store_binding(user_info.nameid,
@@ -335,16 +334,13 @@ def acs_view(request):
             pass
 
         logger.info("%s logging in through SAML", user.username)
-        user_data = request.environ.get('REMOTE_USER_DATA', {})
-        if not isinstance(user_data, Mapping):
-            logger.warn('Unexpected environ REMOTE_USER_DATA (%s)',
-                        user_data)
-            user_data = {}
+        request.environ['REMOTE_USER_DATA'] = {}
 
-        user_data['nti.saml.idp'] = idp_id
-        user_data['nti.saml.response_id'] = saml_response.id()
-        user_data['nti.saml.session_id'] = saml_response.session_id()
-        request.environ['REMOTE_USER_DATA'] = user_data
+        # Manually fire event with SAML user info
+        event = getMultiAdapter((idp_id, user, user_info, request),
+                               ISAMLUserAuthenticatedEvent)
+        event.saml_response = saml_response
+        notify(event)
 
         return _create_success_response(request,
                                         userid=user.username,

@@ -57,8 +57,8 @@ def attach_idp_user_info(event):
         if event.idp_id in idp_user_info_container:
             del idp_user_info_container[event.idp_id]
         idp_user_info_container[event.idp_id] = idp_user_info
-        notify(SAMLProviderInfoAttachedEvent(event.idp_id, 
-                                             event.user, 
+        notify(SAMLProviderInfoAttachedEvent(event.idp_id,
+                                             event.user,
                                              idp_user_info))
     else:
         msg = 'Failed to adapt "%s" to ISAMLProviderUserInfo for user "%s", event "%s"'
@@ -72,6 +72,16 @@ def attach_idp_user_info(event):
 def _user_created(event):
     attach_idp_user_info(event)
 
+@component.adapter(ISAMLUserAuthenticatedEvent)
+def _attach_remote_userdata(event):
+    request = event.request
+    saml_response = event.saml_response
+
+    user_data = request.environ.get('REMOTE_USER_DATA', {})
+    user_data['nti.saml.idp'] = event.idp_id
+    user_data['nti.saml.response_id'] = saml_response.id()
+    user_data['nti.saml.session_id'] = saml_response.session_id()
+    request.environ['REMOTE_USER_DATA'] = user_data
 
 @component.adapter(IUser, IObjectRemovedEvent)
 def _user_removed(user, event):
