@@ -31,11 +31,12 @@ from nti.dataserver.saml.interfaces import ISAMLProviderUserInfoAttachedEvent
 @interface.implementer(ISAMLUserAuthenticatedEvent)
 class SAMLUserCreatedEvent(UserEvent):
 
-    def __init__(self, idp_id, user, user_info, request):
+    def __init__(self, idp_id, user, user_info, request, saml_response=None):
         super(SAMLUserCreatedEvent, self).__init__(user)
         self.idp_id = idp_id
-        self.user_info = user_info
         self.request = request
+        self.user_info = user_info
+        self.saml_response = saml_response
 
 
 @interface.implementer(ISAMLProviderUserInfoAttachedEvent)
@@ -72,6 +73,7 @@ def attach_idp_user_info(event):
 def _user_created(event):
     attach_idp_user_info(event)
 
+
 @component.adapter(ISAMLUserAuthenticatedEvent)
 def _attach_remote_userdata(event):
     request = event.request
@@ -83,8 +85,9 @@ def _attach_remote_userdata(event):
     user_data['nti.saml.session_id'] = saml_response.session_id()
     request.environ['REMOTE_USER_DATA'] = user_data
 
+
 @component.adapter(IUser, IObjectRemovedEvent)
-def _user_removed(user, event):
+def _user_removed(user, unused_event):
     try:
         annotations = user.__annotations__
         containers = annotations[SAML_IDP_BINDINGS_ANNOTATION_KEY]
