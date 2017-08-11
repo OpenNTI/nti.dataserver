@@ -15,7 +15,7 @@ from zope.file.interfaces import IFileReader
 
 from zope.location.interfaces import IContained
 
-from zope.schema import NativeStringLine
+from zope.schema import BytesLine
 
 from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
@@ -45,7 +45,7 @@ class ISource(IFileReader, IContained, INamedFile):
 
     length = Number(title=u"Source length", required=False, default=None)
 
-    contentType = Variant((TextLine(), NativeStringLine()),
+    contentType = Variant((TextLine(), BytesLine()),
                           title=u'content type', required=False,
                           default=DEFAULT_CONTENT_TYPE,
                           missing_value=DEFAULT_CONTENT_TYPE)
