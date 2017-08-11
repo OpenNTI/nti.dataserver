@@ -78,11 +78,12 @@ def _user_created(event):
 def _attach_remote_userdata(event):
     request = event.request
     saml_response = event.saml_response
-    user_data = request.environ.get('REMOTE_USER_DATA', {})
+    environ = getattr(request, 'environ', {})
+    user_data = environ.get('REMOTE_USER_DATA', {})
     user_data['nti.saml.idp'] = event.idp_id
     user_data['nti.saml.response_id'] = saml_response.id()
     user_data['nti.saml.session_id'] = saml_response.session_id()
-    request.environ['REMOTE_USER_DATA'] = user_data
+    environ['REMOTE_USER_DATA'] = user_data
 
 
 @component.adapter(IUser, IObjectRemovedEvent)
