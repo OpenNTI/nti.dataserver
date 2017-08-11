@@ -7,15 +7,17 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import fudge
-
-from hamcrest import assert_that
-from hamcrest import equal_to
-from hamcrest import has_properties
 from hamcrest import is_
+from hamcrest import equal_to
 from hamcrest import not_none
+from hamcrest import assert_that
+from hamcrest import has_properties
 
 import gc
+
+import fudge
+
+from saml2.saml import NAMEID_FORMAT_PERSISTENT
 
 from persistent import Persistent
 
@@ -23,45 +25,45 @@ from pyramid.interfaces import IRequest
 
 from pyramid.request import Request
 
-from saml2.saml import NAMEID_FORMAT_PERSISTENT
-
 from zope.interface.registry import Components
-from zope.interface.adapter import BaseAdapterRegistry
+
 from zope.interface.adapter import AdapterRegistry
+from zope.interface.adapter import BaseAdapterRegistry
 
 from zope import component
 from zope import interface
 
 from zope.component.hooks import site
 
-from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLClient
+from nti.app.saml.interfaces import ISAMLACSLinkProvider
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
 from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 
 from nti.app.saml.logon import acs_view
 
-from nti.app.testing.application_webtest import ApplicationLayerTest
-
 from nti.dataserver.interfaces import IUser
-
-from nti.dataserver.tests import mock_dataserver
-
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.dataserver.users import users
 
 from nti.site.transient import TrivialSite
 
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
 
 @interface.implementer(ISAMLUserAuthenticatedEvent)
 class TestSAMLUserAuthenticatedEvent(object):
+
 	def __init__(self, idp_id, user, user_info, request):
-		self.idp_id = idp_id
 		self.user = user
 		self.object = user
-		self.user_info = user_info
+		self.idp_id = idp_id
 		self.request = request
+		self.user_info = user_info
 
 
 class IsolatedAdapterRegistry(AdapterRegistry):
@@ -88,15 +90,10 @@ class TestACSLinkProvider(ApplicationLayerTest):
 
 	@WithMockDSTrans
 	def test_acs_location(self):
-
 		request = Request.blank('/')
-
 		link_provider = ISAMLACSLinkProvider(request)
-
 		assert_that(link_provider, not_none())
-
 		link = link_provider.acs_link(request)
-
 		assert_that(link, is_('http://localhost/dataserver2/saml/@@acs'))
 
 
@@ -128,7 +125,9 @@ class TestEvents(ApplicationLayerTest):
 
 				saml_response = fudge.Fake('saml_response')
 				saml_response.provides('session_info').returns({"issuer":"testIssuer"})
-
+				saml_response.provides('id').returns("fakesamlid")
+				saml_response.provides('session_id').returns("fakesamlsessionid")
+				
 				saml_client = fudge.Fake('saml_client')
 				saml_client.provides('process_saml_acs_request').returns((saml_response,None,None,None))
 				sm.registerUtility(saml_client, ISAMLClient)
@@ -193,9 +192,13 @@ class TestEvents(ApplicationLayerTest):
 
 				saml_response = fudge.Fake('saml_response')
 				saml_response.provides('session_info').returns({"issuer":"testIssuer"})
+				saml_response.provides('id').returns("fakesamlid")
+				saml_response.provides('session_id').returns("fakesamlsessionid")
 
 				saml_client = fudge.Fake('saml_client')
-				saml_client.provides('process_saml_acs_request').returns((saml_response,None,None,None))
+				saml_client.provides('process_saml_acs_request').returns(
+					(saml_response,None,None,None)
+				)
 				sm.registerUtility(saml_client, ISAMLClient)
 
 				nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
