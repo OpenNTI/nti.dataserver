@@ -217,10 +217,12 @@ class IUserFactory(interface.Interface):
         provisions a new user from the provided user_info
         """
 
+
 class ISAMLResponse(interface.Interface):
     """
     A response from a saml assertion
     """
+
 
 class ISAMLAuthenticationResponse(ISAMLResponse):
     """
@@ -230,6 +232,7 @@ class ISAMLAuthenticationResponse(ISAMLResponse):
     ava = Object(IMapping,
                  title=u"The assertion attributes",
                  required=True)
+
 
 class ISAMLUserAuthenticatedEvent(IUserEvent):
     """
@@ -252,4 +255,4 @@ class ISAMLUserAuthenticatedEvent(IUserEvent):
 
     saml_response = Object(ISAMLAuthenticationResponse,
                            title=u"The authentication respones received",
-                           required=True)
+                           required=False)
