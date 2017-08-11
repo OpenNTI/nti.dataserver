@@ -255,4 +255,4 @@ class ISAMLUserAuthenticatedEvent(IUserEvent):
 
     saml_response = Object(ISAMLAuthenticationResponse,
                            title=u"The authentication respones received",
-                           required=False)
+                           required=True)

@@ -19,14 +19,16 @@ import fudge
 
 from saml2.saml import NAMEID_FORMAT_PERSISTENT
 
-from zope.event import notify
-
 from zope import component
 from zope import interface
 
 from zope.component.hooks import site
 
+from zope.event import notify
+
 from pyramid.request import Request
+
+from persistent.mapping import PersistentMapping
 
 from nti.app.saml.events import SAMLUserCreatedEvent
 
@@ -35,6 +37,7 @@ from nti.app.saml.events import _user_removed
 
 from nti.app.saml.interfaces import ISAMLNameId
 from nti.app.saml.interfaces import ISAMLUserAssertionInfo
+from nti.app.saml.interfaces import ISAMLAuthenticationResponse
 from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 
 from nti.dataserver.saml.interfaces import ISAMLProviderUserInfo
@@ -56,7 +59,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 
 @interface.implementer(ISAMLUserAssertionInfo)
-class TestSAMLUserAssertionInfo:
+class TestSAMLUserAssertionInfo(object):
 
     def __init__(self, saml_response):
         for k, v in saml_response.items():
@@ -71,12 +74,12 @@ class TestSAMLUserAssertionInfo:
 class TestSAMLProviderUserInfo:
 
     def __init__(self, user_assertion_info):
-        self.provider_id = user_assertion_info.provider_id
-        self.username = user_assertion_info.username
-        self.nameid = user_assertion_info.nameid
         self.email = user_assertion_info.email
-        self.firstname = user_assertion_info.firstname
+        self.nameid = user_assertion_info.nameid
         self.lastname = user_assertion_info.lastname
+        self.username = user_assertion_info.username
+        self.firstname = user_assertion_info.firstname
+        self.provider_id = user_assertion_info.provider_id
 
 
 def assertion_info(provider_id, username, email, firstname, lastname):
@@ -110,10 +113,19 @@ class TestEvents(ApplicationLayerTest):
                                              u"bradley@maycomb.com",
                                              u"Boo",
                                              u"Radley")
+
+        saml_response = fudge.Fake('saml_response')
+        saml_response.has_property(ava=PersistentMapping)
+        saml_response.provides('id').returns(u"fakesamlid")
+        saml_response.provides('session_id').returns(u"fakesamlsessionid")
+        saml_response.provides('session_info').returns({u"issuer": u"testIssuer"})
+        interface.alsoProvides(saml_response, ISAMLAuthenticationResponse)
+
         user_created_event = SAMLUserCreatedEvent(u'harperProvider',
                                                   user,
                                                   user_assertion_info,
-                                                  request)
+                                                  request,
+                                                  saml_response)
 
         #######
         # Verify
@@ -133,10 +145,17 @@ class TestEvents(ApplicationLayerTest):
                                                  u"Mickey",
                                                  u"Mouse")
             request = Request.blank('/')
+
+            saml_response = fudge.Fake('saml_response')
+            saml_response.provides('id').returns(u"fakesamlid")
+            saml_response.provides('session_id').returns(u"fakesamlsessionid")
+            saml_response.provides('session_info').returns( {u"issuer": u"testIssuer"})
+
             event = SAMLUserCreatedEvent(u'disneyProvider',
                                          user,
                                          user_assertion_info,
-                                         request)
+                                         request,
+                                         saml_response)
 
             self.registerComponents()
 
@@ -155,6 +174,7 @@ class TestEvents(ApplicationLayerTest):
 
     @WithMockDSTrans
     def test_existing_user_creation_event(self):
+
         with site(TrivialSite(IsolatedComponents('nti.app.saml.tests',
                                                  bases=(component.getSiteManager(),)))):
             ########
@@ -165,11 +185,18 @@ class TestEvents(ApplicationLayerTest):
                                                  u"mickey@mouse.com",
                                                  u"Mickey",
                                                  u"Mouse")
+
+            saml_response = fudge.Fake('saml_response')
+            saml_response.provides('id').returns(u"fakesamlid")
+            saml_response.provides('session_id').returns(u"fakesamlsessionid")
+            saml_response.provides('session_info').returns({u"issuer": u"testIssuer"})
+
             request = Request.blank('/')
             event = SAMLUserCreatedEvent('disneyProvider',
                                          user,
                                          user_assertion_info,
-                                         request)
+                                         request,
+                                         saml_response)
 
             self.registerComponents()
 
@@ -184,7 +211,6 @@ class TestEvents(ApplicationLayerTest):
 
             #######
             # Test
-            #
 
             # Ensure we get appropriate info (i.e. not idp_user_info2)
             _user_created(event)
@@ -201,6 +227,7 @@ class TestEvents(ApplicationLayerTest):
 
     @WithMockDSTrans
     def test_failure_to_adapt(self):
+
         with mock_dataserver.mock_db_trans(self.ds):
             ########
             # Setup
@@ -211,12 +238,13 @@ class TestEvents(ApplicationLayerTest):
                                                  u"Mickey",
                                                  u"Mouse")
             request = Request.blank('/')
-            event = component.getMultiAdapter(('disneyProvider', user, user_assertion_info, request),
-                                              ISAMLUserAuthenticatedEvent)
+            event = component.getMultiAdapter(
+                ('disneyProvider', user, user_assertion_info, request),
+                ISAMLUserAuthenticatedEvent
+            )
 
             #######
             # Test
-            #
             _user_created(event)
 
             #######
@@ -226,6 +254,7 @@ class TestEvents(ApplicationLayerTest):
 
     @WithMockDSTrans
     def test_handler_registration(self):
+
         with site(TrivialSite(IsolatedComponents('nti.app.saml.tests',
                                                  bases=(component.getSiteManager(),)))):
             ########
@@ -237,19 +266,25 @@ class TestEvents(ApplicationLayerTest):
                                                  u"Mickey",
                                                  u"Mouse")
             request = Request.blank('/')
-            event = component.getMultiAdapter(('disneyProvider', user, user_assertion_info, request),
-                                              ISAMLUserAuthenticatedEvent)
+            event = component.getMultiAdapter(
+                ('disneyProvider', user, user_assertion_info, request),
+                ISAMLUserAuthenticatedEvent
+            )
+
+            saml_response = fudge.Fake('saml_response')
+            saml_response.provides('id').returns(u"fakesamlid")
+            saml_response.provides('session_id').returns(u"fakesamlsessionid")
+            saml_response.provides('session_info').returns({u"issuer": u"testIssuer"})
+            event.saml_response = saml_response
 
             self.registerComponents()
 
             #######
             # Test
-            #
             notify(event)
 
             #######
             # Verify
-
             expected_info = TestSAMLProviderUserInfo(user_assertion_info)
             actual_info = ISAMLIDPUserInfoBindings(user)['disneyProvider']
             assert_that(actual_info.__dict__,
