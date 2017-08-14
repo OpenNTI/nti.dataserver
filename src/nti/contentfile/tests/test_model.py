@@ -58,12 +58,18 @@ class TestModel(unittest.TestCase):
         internal = ContentBlobFile()
         internal.filename = u'ichigo'
         assert_that(internal, has_property('name', is_('ichigo')))
+        assert_that(internal, has_property('filename', is_('ichigo')))
         assert_that(internal, has_property('__name__', is_('ichigo')))
 
-        internal.filename = u'aizen'
-        assert_that(internal, has_property('name', is_('aizen')))
+        internal.__name__ = u'aizen'
+        assert_that(internal, has_property('filename', is_('aizen')))
         assert_that(internal, has_property('__name__', is_('aizen')))
-
+        
+        internal.name = u'zaraki'
+        assert_that(internal, has_property('name', is_('zaraki')))
+        assert_that(internal, has_property('filename', is_('aizen')))
+        assert_that(internal, has_property('__name__', is_('aizen')))
+        
     def test_file(self):
         ext_obj = {
             'MimeType': 'application/vnd.nextthought.contentimage',
