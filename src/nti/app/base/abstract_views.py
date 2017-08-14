@@ -27,6 +27,8 @@ from zope import component
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.file.upload import nameFinder
+
 from zope.intid.interfaces import IIntIds
 
 from nti.app.authentication import get_remote_user as _get_remote_user
@@ -39,7 +41,6 @@ from nti.cabinet.mixins import SourceProxy
 
 from nti.dataserver.interfaces import IDataserver
 
-from nti.namedfile.file import name_finder
 from nti.namedfile.file import safe_filename
 
 
@@ -192,10 +193,8 @@ def process_source(source, default_content_type=DEFAULT_CONTENT_TYPE):
 
 
 def get_safe_source_filename(source, default):
-    result = getattr(source, 'filename', None) \
-          or getattr(source, 'name', None) \
-          or default
-    result = safe_filename(name_finder(result))
+    result = nameFinder(source) or getattr(source, 'name', None)
+    result = safe_filename(result or default)
     return result
 
 
