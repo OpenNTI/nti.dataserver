@@ -255,6 +255,8 @@ class TreeView(AbstractAuthenticatedView, SortMixin):
 
     def external(self, context):
         ext_obj = to_external_object(context, decorate=False)
+        if 'name' not in ext_obj:
+            ext_obj['name'] = context.name
         decorateMimeType(context, ext_obj)
         return ext_obj
 
@@ -321,7 +323,7 @@ class SearchView(AbstractAuthenticatedView, BatchingUtilsMixin, SortMixin):
 
     def _search(self, context, name, recursive, containers, items, seen):
         for v in list(context.values()):
-            if name in v.filename.lower():
+            if name in v.name.lower():
                 items.append(v)
                 if containers and INamedContainer.providedBy(context):
                     path = self._get_path(context)
@@ -383,14 +385,14 @@ class MkdirView(AbstractAuthenticatedView,
             data['title'] = data.get('title') or data['name']
             data[MIMETYPE] = text_(self.default_folder_mime_type)
             data['description'] = data.get('description') or data['name']
-        data['filename'] = data.get('filename') or data['name']
+        data['filename'] = data['name'] # BWC
         return data
 
     def _do_call(self):
         creator = self.remoteUser
         new_folder = self.readCreateUpdateContentObject(creator)
         new_folder.creator = creator.username  # use username
-        new_folder.name = safe_filename(displayName(new_folder))
+        new_folder.name = displayName(new_folder)
         if new_folder.name in self.context:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -469,15 +471,15 @@ class UploadView(AbstractAuthenticatedView,
                 factory = ContentBlobFile
         return factory
 
-    def create_namedfile(self, source, name, filename=None):
+    def create_namedfile(self, source, filename, name=None):
         factory = self.factory(source)
-        filename = filename or getattr(source, 'filename', None)
         contentType = getattr(source, 'contentType', None) \
                    or guess_type(filename)[0]
         # create file
         result = factory()
-        result.name = to_unicode(name)
-        result.filename = to_unicode(filename or name)
+        result.filename = to_unicode(filename)
+        if name and result.filename != name:
+            result.name = to_unicode(name)
         result.contentType = contentType or DEFAULT_CONTENT_TYPE
         return result
 
@@ -489,19 +491,17 @@ class UploadView(AbstractAuthenticatedView,
         overwrite = is_true(values.get('overwrite'))
         sources = get_all_sources(self.request, None)
         for name, source in sources.items():
-            filename = getattr(source, 'filename', None)
-            file_key = safe_filename(name)
-            if not overwrite and file_key in self.context:
-                file_key, filename = get_unique_file_name(file_key,
-                                                          filename=filename,
-                                                          container=self.context)
+            name = to_unicode(name)
+            filename = to_unicode(nameFinder(source) or name)
+            if not overwrite and filename in self.context:
+                filename = get_unique_file_name(filename, self.context)
 
-            if file_key in self.context:
-                target = self.context[file_key]
+            if filename in self.context:
+                target = self.context[filename]
                 target.data = source.read()
                 lifecycleevent.modified(target)
             else:
-                target = self.create_namedfile(source, file_key, filename)
+                target = self.create_namedfile(source, filename, name)
                 target.creator = creator
                 target.data = source.read()
                 lifecycleevent.created(target)
@@ -539,11 +539,10 @@ class ImportView(AbstractAuthenticatedView,
             factory = ContentBlobFile
         return factory
 
-    def create_namedfile(self, unused_source, name, filename=None):
-        factory = self.factory(filename or name)
+    def create_namedfile(self, filename):
+        factory = self.factory(filename)
         result = factory()
-        result.name = name
-        result.filename = filename or name
+        result.filename = filename
         result.contentType = guess_type(filename)[0] or DEFAULT_CONTENT_TYPE
         return result
 
@@ -555,11 +554,9 @@ class ImportView(AbstractAuthenticatedView,
         for source in sources.values():
             with zipfile.ZipFile(source) as zfile:
                 for info in zfile.infolist():
-                    name = to_unicode(info.filename)
-                    filepath, filename = os.path.split(name)
+                    filepath, filename = os.path.split(info.filename)
                     if info.file_size == 0:  # folder
                         continue
-                    file_key = safe_filename(filename)
                     with zfile.open(info, "r") as source:
                         if filepath:
                             folder = mkdirs(self.context,
@@ -567,19 +564,18 @@ class ImportView(AbstractAuthenticatedView,
                                             self.builder)
                         else:
                             folder = self.context
-                        if file_key in folder:
-                            target = folder[file_key]
+                        filename = to_unicode(filename)
+                        if filename in folder:
+                            target = folder[filename]
                             target.data = source.read()
                             lifecycleevent.modified(target)
                         else:
-                            target = self.create_namedfile(source,
-                                                           file_key,
-                                                           filename)
+                            target = self.create_namedfile(filename)
                             target.creator = creator
                             target.data = source.read()
                             lifecycleevent.created(target)
                             folder.add(target)
-                        items[name] = target
+                        items[filename] = target
 
         self.request.response.status_int = 201
         result[ITEM_COUNT] = result[TOTAL] = len(items)
@@ -597,11 +593,11 @@ class ExportView(AbstractAuthenticatedView):
 
     def _recur(self, context, zip_file, path=''):
         if INamedContainer.providedBy(context):
-            new_path = os.path.join(path, context.name)
+            new_path = os.path.join(path, context.filename)
             for item in context.values():
                 self._recur(item, zip_file, new_path)
         elif INamedFile.providedBy(context):
-            filename = os.path.join(path, displayName(context))
+            filename = os.path.join(path, context.filename)
             zip_file.writestr(filename, context.data)
 
     def __call__(self):
@@ -794,8 +790,7 @@ class RenameMixin(object):
 
         # get name/filename
         parent = theObject.__parent__
-        new_key = safe_filename(new_name)
-        if new_key in parent:
+        if new_name in parent:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
@@ -805,19 +800,10 @@ class RenameMixin(object):
                              None)
 
         # replace name
-        old_name = theObject.filename
-        old_key = old_key or displayName(theObject)
-        theObject.name = new_key  # name is key
-        theObject.filename = new_name  # filename is display name
-        if hasattr(theObject, 'title') and theObject.title == old_name:
-            theObject.title = new_name
-
-        if      hasattr(theObject, 'description') \
-            and theObject.description == old_name:
-            theObject.description = new_name
-
+        old_key = old_key or theObject.__name__
+        theObject.filename = theObject.name = new_name
         # replace in folder
-        parent.rename(old_key, new_key)
+        parent.rename(old_key, new_name)
         lifecycleevent.modified(theObject)
 
 
@@ -872,7 +858,7 @@ class RenameView(UGDPutView, RenameMixin):
         data = self.readInput()
         self._check_object_constraints(theObject, data)
         new_name = data.get('name') or data.get('filename')
-        self.do_rename(theObject, new_name=new_name)
+        self.do_rename(theObject, new_name)
         # XXX: externalize first
         result = to_external_object(theObject)
         return result
@@ -885,16 +871,16 @@ class RenameView(UGDPutView, RenameMixin):
                request_method='PUT')
 class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
 
-    key_attr = 'name'
+    disp_attr = 'name'
     name_attr = 'filename'
 
     def _clean_external(self, externalValue):
         # remove readonly data
         for key in ('path', 'data'):
             externalValue.pop(key, None)
-        # check / replace in case key is specified
-        if self.key_attr in externalValue:
-            name = externalValue.pop(self.key_attr, None)
+        # check / replace in case display attr is specified
+        if self.disp_attr in externalValue:
+            name = externalValue.pop(self.disp_attr, None)
             if self.name_attr not in externalValue:
                 externalValue[self.name_attr] = name
         return externalValue
@@ -923,8 +909,7 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
     def updateContentObject(self, contentObject, externalValue, set_id=False,
                             notify=False, pre_hook=None, object_hook=None):
         # capture old key data
-        old_key = getattr(contentObject, self.key_attr)
-        old_name = getattr(contentObject, self.name_attr)
+        old_name = contentObject.filename
         # update
         result = UGDPutView.updateContentObject(self,
                                                 contentObject,
@@ -934,9 +919,9 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
                                                 pre_hook=pre_hook,
                                                 object_hook=object_hook)
         # check for rename
-        new_name = getattr(contentObject, self.name_attr)
-        if old_name.lower() is not new_name.lower():
-            self.do_rename(contentObject, new_name=new_name, old_key=old_key)
+        new_name = contentObject.filename
+        if old_name.lower() != new_name.lower():
+            self.do_rename(contentObject, new_name, old_name)
         # notify
         lifecycleevent.modified(contentObject)
         return result
@@ -953,9 +938,6 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
                permission=nauth.ACT_UPDATE,
                request_method='PUT')
 class ContentFilePutView(NamedContainerPutView):
-
-    key_attr = 'name'
-    name_attr = 'filename'
 
     def _check_object_constraints(self, theObject, externalValue):
         parent = theObject.__parent__

@@ -14,7 +14,6 @@ import six
 from zope import interface
 from zope import lifecycleevent
 
-from zope.cachedescriptors.property import readproperty
 from zope.cachedescriptors.property import CachedProperty
 
 from zope.event import notify
@@ -45,8 +44,6 @@ from nti.contentfolder.utils import compute_path
 
 from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 
-from nti.namedfile.file import get_context_name as get_name
-
 from nti.property.property import alias
 
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -65,11 +62,7 @@ def checkValidId(uid):
 
 
 def get_context_name(context):
-    if INamedContainer.providedBy(context):
-        result = context.name
-    else:
-        result = get_name(context)
-    return result
+    return getattr(context, 'filename', None) or context
 
 
 @interface.implementer(IContentFolder, IContentTypeAware)
@@ -79,7 +72,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 
     __parent__ = None
 
-    name = alias('__name__')
+    filename = name = alias('__name__')
 
     tags = None
     creator = None
@@ -89,18 +82,11 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 
     path = None  # BWC
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self,  **kwargs):
         super(ContentFolder, self).__init__()
-        self.name = kwargs.get('name')
+        self.name = kwargs.get('name') or kwargs.get('filename')
         self.title = kwargs.get('title') or self.name
-        self.use_blobs = kwargs.get('use_blobs', True)
-        if kwargs.get('filename'):
-            self.filename = kwargs.get('filename')
         self.description = kwargs.get('description') or self.title
-
-    @readproperty
-    def filename(self):
-        return self.name
 
     def _save(self, key, value):
         checkValidId(key)
@@ -119,7 +105,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
     def add(self, obj):
         name = get_context_name(obj)
         if not name:
-            raise ValueError("Cannot get file name")
+            raise ValueError("Cannot get a file name")
         if name in self:
             del self[name]
         self[name] = obj
@@ -149,7 +135,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
             or INamedContainer.providedBy(old) \
             or IFile.providedBy(old)
 
-        name = get_context_name(old) or old
+        name = get_context_name(old)
         item = self._delitemf(name, event=False)
         item.__name__ = item.name = new  # set new name
         self._setitemf(new, item)
@@ -173,7 +159,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
             return False
 
         # check item exists in this continer
-        name = get_context_name(item) or item
+        name = get_context_name(item)
         if name not in self:
             return False
         newName = newName or name
@@ -196,7 +182,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
         assert INamedContainer.providedBy(target)
 
         # check item exists in this continer
-        name = get_context_name(item) or item
+        name = get_context_name(item)
         if name not in self:
             raise KeyError("Could not find source file")
         newName = newName or name
@@ -214,7 +200,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
                     setattr(newObject, key, value)
                 except (AttributeError, TypeError):  # ignore readonly
                     pass
-        newObject.name = newName  # set name
+        newObject.__name__ = newObject.name = newName  # set name
         newObject.data = item.data  # set data
         target.add(newObject)
         return newObject
@@ -224,7 +210,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
         return compute_path(self)
 
     def __str__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.name)
+        return "%s(%r)" % (self.__class__.__name__, self.__name__)
     __repr__ = __str__
 
     # compatible methods
@@ -252,7 +238,7 @@ class RootFolder(ContentFolder):
     mimeType = mime_type = 'application/vnd.nextthought.contentrootfolder'
 
     def __init__(self, *args, **kwargs):
-        kwargs['name'] = kwargs.get('name') or u'root'
+        kwargs['filename'] = kwargs.get('filename') or kwargs.get('name') or u'root'
         super(RootFolder, self).__init__(*args, **kwargs)
 
 
@@ -263,7 +249,7 @@ class S3ContentFolder(ContentFolder):
     mimeType = mime_type = 'application/vnd.nextthought.s3contentfolder'
 
     def rename(self, old, new):
-        old_name = get_context_name(old) or old
+        old_name = get_context_name(old)
         item = super(S3ContentFolder, self).rename(old_name, new)
         notify(S3ObjectRenamed(item, old_name, new))
         return item
@@ -290,5 +276,5 @@ class S3RootFolder(S3ContentFolder, RootFolder):
     mimeType = mime_type = 'application/vnd.nextthought.s3contentrootfolder'
 
     def __init__(self, *args, **kwargs):
-        kwargs['name'] = kwargs.get('name') or u'root'
+        kwargs['filename'] = kwargs.get('filename') or kwargs.get('name') or u'root'
         super(S3RootFolder, self).__init__(*args, **kwargs)

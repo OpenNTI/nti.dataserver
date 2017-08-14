@@ -47,7 +47,5 @@ class TestUtils(unittest.TestCase):
     def test_get_unique_file_name(self):
         now = 123476490
         container = ('ichigo.pdf', 'ichigo.21.01.30.1.pdf')
-        name, _ = get_unique_file_name("ichigo.pdf",
-                                       container=container,
-                                       now=now)
+        name = get_unique_file_name("ichigo.pdf", container, now)
         assert_that(name, is_('ichigo.21.01.30.2.pdf'))

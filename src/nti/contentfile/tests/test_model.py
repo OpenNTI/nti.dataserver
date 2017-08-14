@@ -56,11 +56,11 @@ class TestModel(unittest.TestCase):
 
     def test_name(self):
         internal = ContentBlobFile()
-        internal.name = u'ichigo'
+        internal.filename = u'ichigo'
         assert_that(internal, has_property('name', is_('ichigo')))
         assert_that(internal, has_property('__name__', is_('ichigo')))
 
-        internal.name = u'aizen'
+        internal.filename = u'aizen'
         assert_that(internal, has_property('name', is_('aizen')))
         assert_that(internal, has_property('__name__', is_('aizen')))
 
@@ -97,7 +97,8 @@ class TestModel(unittest.TestCase):
                                         has_entry('MimeType', 'application/vnd.nextthought.contentimage'))))
 
         assert_that(internal, has_property('__name__', is_('ichigo.gif')))
-        internal.name = 'foo'
+        internal.filename = u'foo'
+        internal.name = u'ichigo.gif'
         assert_that(internal, has_property('__name__', is_('foo')))
 
         internal.reference = 'oid'
@@ -106,8 +107,8 @@ class TestModel(unittest.TestCase):
         assert_that(blob, verifiably_provides(IContentBlobImage))
         assert_that(IInternalFileRef.providedBy(blob), is_(True))
         assert_that(blob, has_property('reference', is_('oid')))
-        assert_that(blob, has_property('name', is_('foo')))
-        assert_that(blob, has_property('filename', is_('ichigo.gif')))
+        assert_that(blob, has_property('name', is_('ichigo.gif')))
+        assert_that(blob, has_property('filename', is_('foo')))
         assert_that(blob, has_property('contentType', is_('image/gif')))
         assert_that(blob, has_property('data', not_none()))
         assert_that(blob, has_property('size', is_(61)))
@@ -130,7 +131,6 @@ class TestModel(unittest.TestCase):
 
         # value changed to URI
         assert_that(ext_obj, has_key('url'))
-
         assert_that(internal, has_property('contentType', 'image/gif'))
         assert_that(internal, has_property('filename', 'ichigo.gif'))
         assert_that(internal, has_property('name', 'ichigo.gif'))

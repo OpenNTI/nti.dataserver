@@ -44,7 +44,6 @@ from nti.dataserver.interfaces import ILinkExternalHrefOnly
 from nti.externalization.externalization import to_external_object
 from nti.externalization.externalization import to_external_ntiid_oid
 
-from nti.namedfile.file import NamedFileMixin
 from nti.namedfile.file import get_file_name as get_context_name
 
 from nti.namedfile.interfaces import IFileConstraints
@@ -320,8 +319,7 @@ def to_external_oid_and_link(item, name='view', rel='data', render=True):
 def download_file_name(context):
     result = None
     if INamedFile.providedBy(context):
-        filename = context.filename
-        result = NamedFileMixin.nameFinder(filename) or filename
+        result = nameFinder(context)
     result = result or getattr(context, 'name', None)
     return safe_download_file_name(result)
 

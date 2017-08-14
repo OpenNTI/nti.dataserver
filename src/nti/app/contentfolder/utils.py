@@ -109,14 +109,13 @@ def get_file_from_cf_io_url(link, intids=None):
     return result
 
 
-def get_unique_file_name(name, container, now=None, filename=None):
+def get_unique_file_name(name, container, now=None):
     counter = 0
-    hex_key = 0
+    hex_key = None
     newtext = name
-    filename = filename or name
+    now = now or time.time()
     slugified = slugify_filename(name)
     text_noe, ext = os.path.splitext(slugified)
-    now = now or time.time()  # current time
     now = datetime.fromtimestamp(now).strftime("%H.%M.%S")
     while True:
         if newtext not in container:
@@ -125,9 +124,4 @@ def get_unique_file_name(name, container, now=None, filename=None):
             counter += 1
             hex_key = u"%s.%s" % (now, counter)
             newtext = u"%s.%s%s" % (text_noe, hex_key, ext)
-
-    if hex_key:
-        fn_noe, ext = os.path.splitext(filename)
-        filename = u"%s.%s%s" % (fn_noe, hex_key, ext)
-
-    return newtext, filename
+    return newtext

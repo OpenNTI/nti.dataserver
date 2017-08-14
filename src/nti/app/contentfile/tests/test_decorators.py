@@ -40,14 +40,16 @@ from nti.dataserver.tests import mock_dataserver
 
 GIF_DATAURL = b'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 
+GETTING_STARTED = u'Getting Started.pdf'
+
 
 class TestDecorators(ApplicationLayerTest):
 
     ext_obj = {
         'MimeType': 'application/vnd.nextthought.contentblobfile',
         'value': GIF_DATAURL,
-        'filename': u'Getting Started.pdf',
-        'name': u'Getting Started.pdf'
+        'filename': GETTING_STARTED,
+        'name': GETTING_STARTED
     }
 
     global_obj = {
@@ -80,7 +82,7 @@ class TestDecorators(ApplicationLayerTest):
             update_from_external_object(internal,
                                         ext_obj,
                                         require_updater=True)
-            self.ds.root['name'] = internal
+            self.ds.root[GETTING_STARTED] = internal
             href = to_external_download_oid_href(internal)
             assert_that(internal,
                         externalizes(all_of(has_key('OID'),
@@ -88,12 +90,16 @@ class TestDecorators(ApplicationLayerTest):
                                                       contains_string('/Getting%20Started.pdf')))))
 
             adapted_href = IExternalLinkProvider(internal).link()
+            for link in (href, adapted_href):
+                assert_that(link, starts_with('/dataserver2/Objects/'))
+                assert_that(link, ends_with('/@@download/Getting%20Started.pdf'))
+            
             ext_obj = self.global_obj
             internal = find_factory_for(ext_obj)()
             update_from_external_object(internal,
                                         ext_obj,
                                         require_updater=True)
-            self.ds.root['name1'] = internal
+            self.ds.root['file.pdf'] = internal
             global_href = to_external_download_oid_href(internal)
             external = to_external_object(internal)
 
@@ -101,10 +107,6 @@ class TestDecorators(ApplicationLayerTest):
         assert_that(url, ends_with('/@@view/file.pdf'))
         assert_that(url, does_not(contains_string('download')))
         assert_that(external['download_url'], ends_with('/@@download/file.pdf'))
-
-        for link in (href, adapted_href):
-            assert_that(link, starts_with('/dataserver2/Objects/'))
-            assert_that(link, ends_with('/@@download/Getting%20Started.pdf'))
 
         res = self.testapp.get(href, status=200)
         assert_that(res, has_property('content_length', is_(61)))

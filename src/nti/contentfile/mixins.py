@@ -29,7 +29,7 @@ class BaseContentMixin(object):
     path = None  # XXX BWC
 
     __parent__ = None
-    __name__ = alias('name')
+    __name__ = alias('filename')  # to be compatible w/ zope files
 
     def __init__(self, *args, **kwargs):
         super(BaseContentMixin, self).__init__(*args, **kwargs)
@@ -90,8 +90,8 @@ class BaseContentMixin(object):
                 logger.exception("Error while getting associatied object")
 
     def has_associations(self):
-        return  bool(   '_associations' in self.__dict__
-                     and self._associations)
+        return bool('_associations' in self.__dict__
+                    and self._associations)
 
     def count_associations(self):
         result = 0

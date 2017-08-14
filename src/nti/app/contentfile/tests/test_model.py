@@ -79,7 +79,7 @@ class TestModel(ApplicationLayerTest):
                                         self.ext_obj,
                                         require_updater=True)
             assert_that(obj, has_property('name', is_('IMGAGE_2.gif')))
-            assert_that(obj, has_property('__name__', is_('IMGAGE_2.gif')))
+            assert_that(obj, has_property('__name__', is_('image.gif')))
             assert_that(obj.__dict__, does_not(has_key('__name__')))
             self.ds.root['image'] = obj
 
@@ -88,10 +88,10 @@ class TestModel(ApplicationLayerTest):
             assert_that(image.__dict__, does_not(has_key('__name__')))
             image.__name__ = u'image.gif'
             assert_that(image.__dict__, does_not(has_key('__name__')))
-            assert_that(image, has_property('name', is_('image.gif')))
+            assert_that(image, has_property('filename', is_('image.gif')))
         
         with mock_dataserver.mock_db_trans(self.ds):
             image = self.ds.root['image']
             assert_that(image, has_property('__name__', is_('image.gif')))
-            assert_that(image, has_property('name', is_('image.gif')))
+            assert_that(image, has_property('filename', is_('image.gif')))
             assert_that(image.__dict__, does_not(has_key('__name__')))

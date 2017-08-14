@@ -13,9 +13,13 @@ from io import BytesIO
 
 from zope import interface
 
+from zope.cachedescriptors.property import readproperty
+
 from zope.deprecation import deprecated
 
 from zope.file.interfaces import IFile as IZopeFile
+
+from zope.file.upload import nameFinder
 
 from zope.location.interfaces import IContained
 
@@ -38,8 +42,6 @@ from nti.namedfile.file import NamedImage
 from nti.namedfile.file import NamedBlobFile
 from nti.namedfile.file import NamedBlobImage
 
-from nti.namedfile.file import nameFinder
-
 from nti.namedfile.interfaces import IInternalFileRef
 
 from nti.namedfile.utils import getImageInfo
@@ -47,8 +49,6 @@ from nti.namedfile.utils import getImageInfo
 from nti.property.property import alias
 
 from nti.transactions import transactions
-
-BaseMixin = BaseContentMixin  # BWC
 
 
 # named objects
@@ -112,11 +112,16 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
     
     def __init__(self, data='', contentType='', filename=None, name=None):
         self.filename = filename
-        self.name = name or nameFinder(self.filename)
+        if name:
+            self.name = name
         if data:
             self.data = data
         if contentType:
             self.contentType = contentType
+
+    @readproperty
+    def name(self):
+        return nameFinder(self)
 
     def _getData(self):
         if not hasattr(self, '_v_data'):

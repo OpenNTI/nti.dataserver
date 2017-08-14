@@ -28,7 +28,6 @@ from nti.base.interfaces import IFile
 from nti.base.interfaces import ICreated
 from nti.base.interfaces import ILastModified
 
-from nti.schema.field import Bool
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 
@@ -40,8 +39,6 @@ class INamedContainer(IContained,
                       ICreated):
     tags = ListOrTuple(ValidTextLine(title=u"A single tag"), required=False)
 
-    name = ValidTextLine(title=u"Folder URL-safe name", required=True)
-
     filename = ValidTextLine(title=u"Folder name", required=True)
 
     # dublin core
@@ -52,9 +49,6 @@ class INamedContainer(IContained,
     description = ValidTextLine(title=u"Folder description",
                                 required=False,
                                 default=None)
-
-    use_blobs = Bool(title=u"Use blobs flag", required=True, default=True)
-    use_blobs.setTaggedValue('_ext_excluded_out', True)
 
 
 class IContentFolder(INamedContainer, IAttributeAnnotatable):

@@ -43,8 +43,8 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 OID = StandardExternalFields.OID
 ITEMS = StandardExternalFields.ITEMS
-TOTAL = StandardExternalFields.TOTAL
 NTIID = StandardExternalFields.NTIID
+TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 
@@ -95,24 +95,22 @@ class ContentFileAssociateView(AbstractAuthenticatedView,
         values = self.readInput()
         ntiid = values.get(NTIID) or values.get(OID) or values.get('target')
         if not ntiid:
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    'message': _(u'Must provide a valid context id.'),
-                    'code': 'MustProvideValidContextID',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Must provide a valid context id.'),
+                                 'code': 'MustProvideValidContextID',
+                             },
+                             None)
         target = find_object_with_ntiid(ntiid)
         if target is None:
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    'message': _(u"Cannot find target object."),
-                    'code': 'CannotFindTargetObject',
-                },
-                None)
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Cannot find target object."),
+                                 'code': 'CannotFindTargetObject',
+                             },
+                             None)
         if target is not self.context and target is not self.context.__parent__:
             self.context.add_association(target)
             lifecycleevent.modified(self.context)

@@ -56,7 +56,7 @@ class ContentFileObjectIO(NamedFileObjectIO):
         ext_self = self._ext_replacement()
         if 'tags' in parsed:
             ext_self.tags = parsed.get('tags') or ()
-        assert ext_self.name, 'must provide a content file name'
+        assert ext_self.filename, 'must provide a content file name'
         return result
 
     def _transform(self, the_file, ext_dict):

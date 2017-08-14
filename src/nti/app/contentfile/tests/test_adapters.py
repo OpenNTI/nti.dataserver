@@ -53,7 +53,7 @@ class TestAdapters(ApplicationLayerTest):
             update_from_external_object(obj,
                                         ext_obj,
                                         require_updater=True)
-            self.ds.root[obj.name] = obj
+            self.ds.root[obj.filename] = obj
             obj.add_association(obj)  # add itself
 
             assert_that(INameAdapter(obj, None),

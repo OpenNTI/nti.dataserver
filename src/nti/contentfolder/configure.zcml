@@ -24,4 +24,9 @@
 	<adapter factory=".adapters._contentfolder_filename_adapter" />
 	<adapter factory=".adapters._contentfolder_mimeType_adapter" />
 
+	<!-- Decorators -->
+	<subscriber factory=".decorators._NamedContainerDecorator"
+				for=".interfaces.INamedContainer"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
 </configure>
