@@ -672,53 +672,57 @@ def _create_success_response(request, userid=None, success=None):
 def _query_impersonation_decider(request, username, name=''):
 	decider = component.queryAdapter(request, IImpersonationDecider, name)
 	if decider:
-		decider.validate_impersonation_target(username)
+		return decider.validate_impersonation_target(username)
 
 def _can_impersonate(request, username):
 	"""
 	Query a set of IImpersonationDeciders to
 	verify if impersonation of the given username should
 	be allowed for the request
+
+	Returns user if user was implicitly created during the process
 	"""
 
 	#verify by domain first
+	user = None
 	if '@' in username:
 		domain = username.split('@', 1)[-1]
 		if domain:
 			# May want to consider prefixing this
-			_query_impersonation_decider(request, username, name=domain)
+			user = _query_impersonation_decider(request, username, name=domain)
 
 	#now by username
-	_query_impersonation_decider(request, username, name=username)
+	user = _query_impersonation_decider(request, username, name=username) or user
 
 	#now by global adapter
-	_query_impersonation_decider(request, username)
+	user = _query_impersonation_decider(request, username) or user
 
+	return user
 
-
-def _specified_username_logon(request, allow_no_username=True, require_matching_username=True, audit=False):
+def _specified_username_logon(request, allow_no_username=True, require_matching_username=True, audit=False, desired_username=None):
 	# This code handles both an existing logged on user and not
 	remote_user = _authenticated_user(request)
 	if not remote_user:
 		return _create_failure_response(request)  # not authenticated or does not exist
 
-	try:
-		desired_usernames = request.params.getall('username') or []
-	except AttributeError:
-		# Nark. For test code. It's hard to always be able to use a real MultiDict
-		desired_usernames = request.params.get('username', ())
+	if not desired_username:
+		try:
+			desired_usernames = request.params.getall('username') or []
+		except AttributeError:
+			# Nark. For test code. It's hard to always be able to use a real MultiDict
+			desired_usernames = request.params.get('username', ())
+			if desired_usernames:
+				desired_usernames = [desired_usernames]
+
+		if len(desired_usernames) > 1:
+			return _create_failure_response(request, error_factory=hexc.HTTPBadRequest, error=_('Multiple usernames'))
+
 		if desired_usernames:
-			desired_usernames = [desired_usernames]
-
-	if len(desired_usernames) > 1:
-		return _create_failure_response(request, error_factory=hexc.HTTPBadRequest, error=_('Multiple usernames'))
-
-	if desired_usernames:
-		desired_username = desired_usernames[0].lower()
-	elif allow_no_username:
-		desired_username = remote_user.username.lower()
-	else:
-		return _create_failure_response(request, error_factory=hexc.HTTPBadRequest, error=_('No username'))
+			desired_username = desired_usernames[0].lower()
+		elif allow_no_username:
+			desired_username = remote_user.username.lower()
+		else:
+			return _create_failure_response(request, error_factory=hexc.HTTPBadRequest, error=_('No username'))
 
 	if require_matching_username and desired_username != remote_user.username.lower():
 		response = _create_failure_response(request)  # Usually a cookie/param mismatch
@@ -728,10 +732,11 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
 			# This will later show up in the environment and error/feedback
 			# reports. This is a pretty basic version of that; if we use
 			# it for anything more than display, we need to formalize it more.
+			user = None
 			if desired_username != remote_user.username.lower():
 				#check if we are allowed to impersonate first
 				try:
-					_can_impersonate(request, desired_username)
+					user = _can_impersonate(request, desired_username)
 				except ValueError:
 					return _create_failure_response(request,
 													error_factory=hexc.HTTPForbidden)
@@ -741,7 +746,8 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
 				user_data['username'] = str(remote_user.username.lower())
 				request.environ['REMOTE_USER_DATA'] = user_data
 
-			response = _create_success_response(request, desired_username)
+			effective_username = user.username if user else desired_username
+			response = _create_success_response(request, effective_username)
 		except ValueError as e:
 			return _create_failure_response(request,
 											error_factory=hexc.HTTPNotFound,
