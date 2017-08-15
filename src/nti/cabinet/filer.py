@@ -47,10 +47,11 @@ def transfer_to_storage_file(source, target):
 
 
 def transfer_to_native_file(source, target):
+    from IPython.terminal.debugger import set_trace;set_trace()
     with open(target, "wb") as fp:
         data = read_source(source)
         if data is not None:
-            fp.write(source)
+            fp.write(data)
 
 
 @interface.implementer(ISourceFiler)
