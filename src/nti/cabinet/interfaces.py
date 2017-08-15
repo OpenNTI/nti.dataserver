@@ -68,6 +68,8 @@ IMultipartSource = ISource
 
 class ISourceFiler(interface.Interface):
 
+    default_bucket = interface.Attribute("Default bucket")
+      
     def key_name(self, identifier):
         """
         return the key name for the specified identifier
