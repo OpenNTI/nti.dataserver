@@ -28,29 +28,28 @@ from nti.cabinet.mixins import SourceBucket
 from nti.cabinet.mixins import ReferenceSourceFile
 
 
-def transfer_to_storage_file(source, target):
+def read_source(source):
     if hasattr(source, 'read'):
-        target.data = source.read()
+        result = source.read()
     elif hasattr(source, 'readContents'):
-        target.data = source.readContents()
+        result = source.readContents()
     elif hasattr(source, 'data'):
-        target.data = source.data
+        result = source.data
     else:
-        target.data = source
+        result = source
+    return result
 
+
+def transfer_to_storage_file(source, target):
+    target.data = read_source(source)
     if getattr(source, 'contentType', None):
         target.contentType = source.contentType
 
 
 def transfer_to_native_file(source, target):
     with open(target, "wb") as fp:
-        if hasattr(source, 'read'):
-            fp.write(source.read())
-        elif hasattr(source, 'readContents'):
-            fp.write(source.readContents())
-        elif hasattr(source, 'data'):
-            fp.write(source.data)
-        elif source is not None:
+        data = read_source(source)
+        if data is not None:
             fp.write(source)
 
 
@@ -96,7 +95,7 @@ class DirectoryFiler(object):
              relative=True, **unused_kwargs):
         contentType = contentType or DEFAULT_CONTENT_TYPE
         key = os.path.split(key)[1]  # proper name
-        
+
         bucket = bucket or self.default_bucket
 
         # get output directory
