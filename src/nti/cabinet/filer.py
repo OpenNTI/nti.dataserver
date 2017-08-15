@@ -57,6 +57,8 @@ def transfer_to_native_file(source, target):
 @interface.implementer(ISourceFiler)
 class DirectoryFiler(object):
 
+    default_bucket = None
+
     def __init__(self, path):
         self.path = self.prepare(path) if path else None
 
@@ -91,9 +93,11 @@ class DirectoryFiler(object):
         return newtext
 
     def save(self, key, source, contentType=None, bucket=None, overwrite=False,
-             relative=True, **kwargs):
+             relative=True, **unused_kwargs):
         contentType = contentType or DEFAULT_CONTENT_TYPE
         key = os.path.split(key)[1]  # proper name
+        
+        bucket = bucket or self.default_bucket
 
         # get output directory
         out_dir = os.path.join(self.path, bucket) if bucket else self.path
