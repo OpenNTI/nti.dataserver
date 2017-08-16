@@ -22,7 +22,7 @@ from zope.component.hooks import site, setHooks
 
 from zope.intid.interfaces import IIntIds
 
-from nti.app.contentlibrary.subscribers import _update_indices_when_content_changes
+from nti.app.contentlibrary.synchronize.subscribers import _update_indices_when_content_changes
 
 from nti.contentlibrary.indexed_data.index import NTIIDIndex
 from nti.contentlibrary.indexed_data.index import install_container_catalog
