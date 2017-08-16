@@ -35,7 +35,9 @@ class CreatableMimeObjectVocabulary(UtilityVocabulary):
     interface = IMimeObjectFactory
 
     def __init__(self, context):
-        super(CreatableMimeObjectVocabulary, self).__init__(context)
+        # We want all the mime factories visible from our current site, and
+        # to only use our context to exclude items.
+        super(CreatableMimeObjectVocabulary, self).__init__(None)
         for subs in component.subscribers((context,), ICreatableObjectFilter):
             self._terms = subs.filter_creatable_objects(self._terms)
 _CreatableMimeObjectVocabulary = CreatableMimeObjectVocabulary
