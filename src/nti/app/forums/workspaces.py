@@ -6,7 +6,7 @@ Integration of workspaces for forum objects, in particular, user blogs.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -30,7 +30,7 @@ class _UserBlogCollection(object):
     Turns a User into a ICollection of data for their blog entries (individual containers).
     """
 
-    name = 'Blog'
+    name = u'Blog'
     __name__ = name
     __parent__ = None
 

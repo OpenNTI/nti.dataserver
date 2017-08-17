@@ -6,7 +6,7 @@ Event subscribers.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -29,7 +29,7 @@ from nti.traversal.traversal import find_interface
 
 
 @component.adapter(IPersonalBlogComment, IObjectAddedEvent)
-def notify_online_author_of_blog_comment(comment, event):
+def notify_online_author_of_blog_comment(comment, unused_event):
     """
     When a comment is added to a blog post, notify the blog's
     author.
@@ -42,7 +42,7 @@ def notify_online_author_of_blog_comment(comment, event):
 
 
 @component.adapter(IGeneralForumComment, IObjectAddedEvent)
-def notify_online_author_of_topic_comment(comment, event):
+def notify_online_author_of_topic_comment(comment, unused_event):
     """
     When a comment is added to a community forum topic,
     notify the forum topic's author.
@@ -84,8 +84,7 @@ def _notify_online_author_of_comment(comment, topic_author):
 # Favoriting.
 # TODO: Under heavy construction
 
-
-from nti.dataserver import users
+from nti.dataserver.users.users import User
 
 from nti.dataserver.liking import FAVR_CAT_NAME
 
@@ -93,8 +92,7 @@ from nti.dataserver.liking import FAVR_CAT_NAME
 def temp_store_favorite_object(modified_object, event):
     if event.category != FAVR_CAT_NAME:
         return
-
-    user = users.User.get_user(event.rating.userid)
+    user = User.get_user(event.rating.userid)
     if not user:
         return
     if bool(event.rating):

@@ -6,7 +6,7 @@ Views and other functions related to forums and blogs.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -90,7 +90,7 @@ class PostUploadMixin(AuthenticatedViewMixin,
         # (If we try to set the wrong one, it messes with some events and some
         # KeyError detection in the containers)
         # containedObject.__parent__ = owner
-        owner_jar = IConnection(self.request.context)
+        owner_jar = IConnection(self.request.context, None)
         if owner_jar and IConnection(containedObject, None) is None:
             owner_jar.add(containedObject)
 
@@ -158,7 +158,7 @@ class _AbstractForumPostView(PostUploadMixin,
             headline_factories = list(component.getFactoriesFor(headline_iface))
             headline_mimetype = headline_factories[0][0]
         else:
-            headline_mimetype = 'application/vnd.nextthought.forums.post'
+            headline_mimetype = u'application/vnd.nextthought.forums.post'
 
         topic_post, external_value = self._read_incoming_post(headline_mimetype,
                                                               headline_constraint)
@@ -203,7 +203,7 @@ class _AbstractForumPostView(PostUploadMixin,
             # The actual name isn't tremendously important,
             # but we need to have one so that the lineage is set
             # correctly for when we're rendering links.
-            topic_post.__name__ = topic.generateId(prefix='comment')
+            topic_post.__name__ = topic.generateId(prefix=u'comment')
 
             # fail hard if no parent is set
             assert topic_post.__parent__ == topic
@@ -241,7 +241,7 @@ class _AbstractTopicPostView(PostUploadMixin,
                                                     comment_iface.providedBy)
 
         # The actual name of these isn't tremendously important
-        name = topic.generateId(prefix='comment')
+        name = topic.generateId(prefix=u'comment')
 
         lifecycleevent.created(incoming_post)
         # incoming_post.id and containerId are set automatically when it is added
@@ -262,7 +262,7 @@ class _AbstractTopicPostView(PostUploadMixin,
 
 import six
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.contentprocessing.content_utils import tokenize_content
 from nti.contentprocessing.content_utils import get_content_translation_table
@@ -270,17 +270,17 @@ from nti.contentprocessing.content_utils import get_content_translation_table
 
 def get_content(text=None, language='en'):
     result = ()
-    text = unicode_(text) if text else None
+    text = text_(text) if text else None
     if text:
         table = get_content_translation_table(language)
         result = tokenize_content(text.translate(table), language)
-    result = ' '.join(result)
-    return unicode_(result)
+    result = u' '.join(result)
+    return text_(result)
 
 
 class ContentResolver(object):
 
-    def __init__(self, context, default=None):
+    def __init__(self, context, unused_default=None):
         self.context = context
 
     @property
@@ -289,7 +289,7 @@ class ContentResolver(object):
             result = []
             for x in self.context.body:
                 if isinstance(x, six.string_types):
-                    result.append(get_content(x) or '')
-            return ''.join(result)
+                    result.append(get_content(x) or u'')
+            return u''.join(result)
         except AttributeError:
             return None

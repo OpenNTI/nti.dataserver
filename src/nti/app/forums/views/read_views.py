@@ -6,7 +6,7 @@ Views and other functions related to forums and blogs.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -21,9 +21,9 @@ from collections import Mapping
 
 from requests.structures import CaseInsensitiveDict
 
-from ZODB.utils import u64
-
 import simplejson
+
+from ZODB.utils import u64
 
 from pyramid import httpexceptions as hexc
 
@@ -114,9 +114,12 @@ _d_view_defaults.update(permission=nauth.ACT_DELETE,
 @view_config(context=frm_interfaces.IGeneralForum)
 @view_config(context=frm_interfaces.IGeneralBoard)
 @view_config(context=frm_interfaces.IPersonalBlog)  # need to re-list this one
-@view_config(context=frm_interfaces.IPersonalBlogEntry) # need to re-list this one
-@view_config(context=frm_interfaces.IPersonalBlogComment) # need to re-list this one
-@view_config(context=frm_interfaces.IPersonalBlogEntryPost) # need to re-list this one
+# need to re-list this one
+@view_config(context=frm_interfaces.IPersonalBlogEntry)
+# need to re-list this one
+@view_config(context=frm_interfaces.IPersonalBlogComment)
+# need to re-list this one
+@view_config(context=frm_interfaces.IPersonalBlogEntryPost)
 @view_config(context=frm_interfaces.IGeneralHeadlineTopic)  # need to re-list
 @view_config(context=frm_interfaces.IGeneralHeadlinePost)  # need to re-list
 @view_config(context=frm_interfaces.IGeneralForumComment)  # need to re-list
@@ -210,13 +213,13 @@ class ForumsContainerContentsGetView(UGDQueryView):
         return result
 
     def _make_complete_predicate(self, operator=Operator.intersection):
-        predicate = super(ForumsContainerContentsGetView,self)._make_complete_predicate(operator)
-        predicate = _combine_predicate(self._is_readable, 
+        predicate = super(ForumsContainerContentsGetView, self)._make_complete_predicate(operator)
+        predicate = _combine_predicate(self._is_readable,
                                        predicate,
                                        Operator.intersection)
         return predicate
 
-    def getObjectsForId(self, *args):
+    def getObjectsForId(self, *unused_args):
         return (self.request.context,)
 
 
@@ -285,9 +288,9 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
         # get content
         content = []
         for iface, name, default, method in (
-                            (ITitled, 'title', u'', content.append),
-                            (IUserTaggedContent, 'tags', (), content.extend),
-                            (ContentResolver, 'content', u'', content.append)):
+            (ITitled, 'title', u'', content.append),
+            (IUserTaggedContent, 'tags', (), content.extend),
+            (ContentResolver, 'content', u'', content.append)):
             resolver = iface(x, None)
             value = getattr(resolver, name, None) or default
             method(value)
@@ -405,9 +408,9 @@ class ExportObjectView(GenericGetView):
             result = shutil.make_archive(base_name, 'zip', out_dir)
 
             response = self.request.response
-            response.content_encoding = str('identity')
-            response.content_type = str('application/x-gzip; charset=UTF-8')
-            response.content_disposition = str('attachment; filename="export.zip"')
+            response.content_encoding = 'identity'
+            response.content_type = 'application/x-gzip; charset=UTF-8'
+            response.content_disposition = 'attachment; filename="export.zip"'
             response.body_file = open(result, "rb")
             return response
         finally:
@@ -446,7 +449,7 @@ class TopicParticipationSummaryView(AbstractTopicParticipationView,
     _DEFAULT_BATCH_SIZE = 20
     _DEFAULT_BATCH_START = 0
 
-    def allow_user(self, user):
+    def allow_user(self, unused_user):
         # Subclasses can override this.
         return True
 
@@ -459,7 +462,7 @@ class TopicParticipationSummaryView(AbstractTopicParticipationView,
             if sort_on == 'alias':
                 def sort_key(x): return x.alias.lower() if x.alias else ''
             elif sort_on == 'username':
-                def sort_key(x): 
+                def sort_key(x):
                     return x.username.lower() if x.username else ''
         return sort_key
 
@@ -474,7 +477,7 @@ class TopicParticipationSummaryView(AbstractTopicParticipationView,
         sort_order = self.request.params.get('sortOrder')
         sort_descending = bool(sort_order and sort_order.lower() == 'descending')
         user_summaries = sorted(user_summaries,
-                                key=sort_key, 
+                                key=sort_key,
                                 reverse=sort_descending)
         self._batch_items_iterable(result_dict, user_summaries)
 

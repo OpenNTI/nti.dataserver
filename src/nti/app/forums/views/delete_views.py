@@ -6,7 +6,7 @@ Views and other functions related to forums and blogs.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -17,9 +17,9 @@ from zope import lifecycleevent
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
-from nti.appserver.ugd_edit_views import UGDDeleteView
-
 from Acquisition import aq_base
+
+from nti.appserver.ugd_edit_views import UGDDeleteView
 
 from nti.dataserver import authorization as nauth
 
@@ -116,7 +116,6 @@ class CommentDeleteView(UGDDeleteView):
     def _do_delete_object(self, theObject):
         deleting = aq_base(theObject)
         interface.alsoProvides(deleting, IDeletedObjectPlaceholder)
-
         # TODO: Events need to fire to unindex, once we figure
         # out what those are?
         # We are I18N as externalization time

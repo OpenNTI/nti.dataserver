@@ -6,7 +6,7 @@ Views and other functions related to forums and blogs.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -43,7 +43,7 @@ zope.deferredimport.defineFrom(
 
 
 @component.adapter(IPost, IObjectModifiedEvent)
-def match_title_of_post_to_blog(post, event):
+def match_title_of_post_to_blog(post, unused_event):
     """
     When the main story of a story topic (blog post) is modified, match the titles
     """

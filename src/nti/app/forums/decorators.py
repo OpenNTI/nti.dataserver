@@ -6,7 +6,7 @@ External decorators to provide access to the things exposed through this package
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -89,7 +89,6 @@ class CommunityBoardLinkDecorator(object):
             # The global communities that do not participate in security
             # (e.g., Everyone) do not get a forum
             return
-
         # TODO: This may be slow, if the forum doesn't persistently
         # exist and we keep creating it and throwing it away (due to
         # not commiting on GET)
@@ -173,7 +172,6 @@ class ForumObjectContentsLinkProvider(AbstractAuthenticatedRequestAwareDecorator
         context = aq_base(context)
         if context.__parent__ is None:  # pragma: no cover
             return
-
         # TODO: This can be generalized by using the component
         # registry in the same way Pyramid itself does. With a lookup like
         #   adapters.lookupAll( (IViewClassifier, request.request_iface, context_iface), IView )
@@ -284,7 +282,6 @@ class SecurityAwareBoardForumCountDecorator(object):
         if not mapping['ForumCount']:
             # Nothing to do if its already empty
             return
-
         i = 0
         request = get_current_request()
         for x in context.values():
