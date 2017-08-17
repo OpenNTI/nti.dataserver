@@ -19,10 +19,10 @@ from nti.coremetadata.utils import current_principal
 @interface.implementer(ISearchHitPredicate)
 class DefaultSearchHitPredicate(object):
 
-    __name__ = 'Default'
+    __name__ = u'Default'
 
-    def __init__(self, *args):
+    def __init__(self, *unused_args):
         self.principal = current_principal(False)
 
-    def allow(self, item, score=1.0, query=None):
+    def allow(self, *unused_args, **unused_kwargs):
         return True
