@@ -68,7 +68,7 @@ def class_name_from_content_type(request):
     return nti_mimetype_class(content_type)
 
 
-def _handle_unicode(value, request):
+def handle_unicode(value, request):
     if isinstance(value, six.text_type):  # already unicode
         return value
     try:
@@ -77,6 +77,7 @@ def _handle_unicode(value, request):
         # Try the most common web encoding
         value = value.decode('iso-8859-1')
     return value
+_handle_unicode = handle_unicode
 
 
 def read_input_data(input_data, request, reader=None, ext_format='json'):
@@ -84,7 +85,7 @@ def read_input_data(input_data, request, reader=None, ext_format='json'):
         reader = component.getUtility(IExternalRepresentationReader,
 									  name=ext_format)
     __traceback_info__ = input_data
-    value = _handle_unicode(input_data, request)
+    value = handle_unicode(input_data, request)
     result = reader.load(value)
     return result
 
@@ -108,7 +109,7 @@ def _handle_content_type(reader, input_data, request, content_type):
                 assert isinstance(json_data, collections.Mapping)
                 result.update(json_data)
             else:
-                result[_handle_unicode(key, request)] = data[key]
+                result[handle_unicode(key, request)] = data[key]
     else:
         # We need all string values to be unicode objects. simplejson (the usual implementation
         # we get from anyjson) is different from the built-in json and returns strings
