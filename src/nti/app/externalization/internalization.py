@@ -6,7 +6,7 @@ Support functions for reading objects.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -34,7 +34,7 @@ from nti.externalization.internalization import update_from_external_object
 from nti.mimetype.mimetype import nti_mimetype_class
 
 
-def create_modeled_content_object(dataserver, owner, datatype, externalValue, creator):
+def create_modeled_content_object(unused_dataserver, owner, datatype, externalValue, unused_creator):
     """
     :param owner: The entity which will contain the object.
     :param creator: The user attempting to create the object. Possibly separate from the
@@ -155,7 +155,7 @@ def read_body_as_external_object(request, input_data=None,
         # We're officially dropping support for plist values.
         # primarily due to the lack of support for null values, and
         # unsure about encoding issues
-        raise hexc.HTTPUnsupportedMediaType('XML no longer supported.')
+        raise hexc.HTTPUnsupportedMediaType(_(u"XML no longer supported."))
 
     try:
         value = _handle_content_type(reader, value, request, content_type)
@@ -175,7 +175,7 @@ def read_body_as_external_object(request, input_data=None,
         # so be careful not to try to log it as a string
         logger.exception("Failed to parse/transform value %r", value)
         tb = sys.exc_info()[2]
-        ex = hexc.HTTPBadRequest(_("Failed to parse/transform input"))
+        ex = hexc.HTTPBadRequest(_(u"Failed to parse/transform input"))
         raise ex, None, tb
 
 
