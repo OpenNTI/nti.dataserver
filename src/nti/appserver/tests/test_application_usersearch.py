@@ -102,7 +102,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
         member = res.json_body['Items'][0]
         assert_that(member, has_entry('Username', 'jason@nti.com'))
-        assert_that(member, 
+        assert_that(member,
                     has_entry('Communities', has_item(has_entry('Username', dfl_ntiid))))
 
         # We can also search for the DFL, by its lowercase NTIID
@@ -145,7 +145,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         res = testapp.get(path,
                           extra_environ=self._make_extra_environ(username=u'jason@nti.com'))
         assert_that(res.json_body['Items'], has_length(1))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_items(has_entry('alias', 'Close Associates')))
 
         # a non-member cannot find the dfl
@@ -162,7 +162,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
             IFriendlyNamed(user).realname = u"Steve Johnson"
 
         testapp = TestApp(self.app)
-        res = testapp.get('/dataserver2', 
+        res = testapp.get('/dataserver2',
                           extra_environ=self._make_extra_environ())
         # The service doc contains all the links
         glob_ws, = [
@@ -263,7 +263,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         path = '/dataserver2/UserSearch/' + user4_username
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.json_body['Items'], has_length(1))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     contains(has_entry('Username', user4_username)))
 
     @WithSharedApplicationMockDS
@@ -294,9 +294,9 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
         # We only matched the two that were in the same community
         assert_that(res.json_body['Items'], has_length(2))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sjo@nti.com')))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sjo2@nti.com')))
 
         # Getting a 'Class' value back here really confuses the iPad
@@ -353,9 +353,9 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         fake_site_community.is_callable().returns(None)
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.json_body['Items'], has_length(1))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sj2@nextthought.com')))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('realname', 'Stephen Jay Johnson')))
 
         # If the site has a community that the user is in, we should still
@@ -363,7 +363,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         fake_site_community.is_callable().returns(community_username)
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.json_body['Items'], has_length(1))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sj2@nextthought.com')))
 
         # If the user exists in a different site (in other words, they are
@@ -373,17 +373,18 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         assert_that(res.json_body['Items'], has_length(0))
 
         # We get them back again if we turn off filtering though.
-        res = testapp.get(path + '?no_filter=True', 
+        res = testapp.get(path,
+                          params = {'filter_by_site_community': False},
                           extra_environ=self._make_extra_environ())
         assert_that(res.json_body['Items'], has_length(1))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sj2@nextthought.com')))
 
         # We should always be able to search for ourself though.
         path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.json_body['Items'], has_length(1))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sjohnson@nextthought.com')))
 
         # Even if searching for a term that should match both, if we're
@@ -392,7 +393,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         path = '/dataserver2/UserSearch/Johnson'
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.json_body['Items'], has_length(1))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sjohnson@nextthought.com')))
 
         # If we search for the term that matches both, within the same site,
@@ -401,18 +402,18 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         path = '/dataserver2/UserSearch/Johnson'
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.json_body['Items'], has_length(2))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sjohnson@nextthought.com')))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sj2@nextthought.com')))
 
         # The same is true if our site doesn't have a community set.
         fake_site_community.is_callable().returns(None)
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.json_body['Items'], has_length(2))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sjohnson@nextthought.com')))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sj2@nextthought.com')))
 
     @WithSharedApplicationMockDS
@@ -440,22 +441,22 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         path = '/dataserver2/UserSearch/steve'  # alias
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.json_body['Items'], has_length(1))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sj2@nextthought.com')))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('alias', 'Steve')))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('realname', 'Stephen Jay Johnson')))
 
         # realname, this case the middlename
         path = '/dataserver2/UserSearch/JAY'
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.json_body['Items'], has_length(1))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('Username', 'sj2@nextthought.com')))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('alias', 'Steve')))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('realname', 'Stephen Jay Johnson')))
 
         # MC search is locked down to be only the username
@@ -469,18 +470,18 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         # alias is set to the username
         environ = self._make_extra_environ()
         environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
-        res = testapp.get('/dataserver2/UserSearch/sj2@nextthought.com', 
+        res = testapp.get('/dataserver2/UserSearch/sj2@nextthought.com',
                           extra_environ=environ)
         assert_that(res.json_body['Items'], has_length(1))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('alias', 'sj2@nextthought.com')))
-        assert_that(res.json_body['Items'], 
+        assert_that(res.json_body['Items'],
                     has_item(has_entry('realname', none())))
 
         # But if the hit was us, we get back some special links to the privacy
         # policy
         environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
-        res = testapp.get('/dataserver2/UserSearch/' + u1_username, 
+        res = testapp.get('/dataserver2/UserSearch/' + u1_username,
                           extra_environ=environ)
         assert_that(res.json_body['Items'], has_length(1))
         found = res.json_body['Items'][0]
@@ -488,7 +489,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
         prof = self.require_link_href_with_rel(found, REL_ACCOUNT_PROFILE)
         # At one time, we were double-nesting this link, hence the path check
-        assert_that(prof, 
+        assert_that(prof,
                     is_('/dataserver2/users/sjohnson@nextthought.com/@@' + REL_ACCOUNT_PROFILE))
 
     @WithSharedApplicationMockDS(users=True, testapp=True)

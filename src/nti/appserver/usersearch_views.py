@@ -44,7 +44,7 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.base._compat import text_
 
-from nti.common.string import is_true
+from nti.common.string import is_false
 
 from nti.dataserver import authorization as nauth
 
@@ -328,12 +328,12 @@ def _authenticated_search(remote_user, search_term, request):
     result = user_search_matcher.query(search_term,
                                        provided=_selector)
 
-    # By default, do not filter communities for admins.
-    admin_filter_community = is_true(request.params.get('filter_communities'))
+    # By default, filter by site community for admins.
+    admin_filter_by_site_community = not is_false(request.params.get('filter_by_site_community'))
 
     # Filter to things that share a common community
     # FIXME: Hack in a policy of limiting searching to overlapping communities
-    test = _make_visibility_test(remote_user, admin_filter_community)
+    test = _make_visibility_test(remote_user, admin_filter_by_site_community)
     result = {x for x in result if test(x)}  # ensure a set
 
     # Add locally matching friends lists, etc. These don't need to go through the
@@ -407,7 +407,7 @@ def _get_community_name_from_site():
     return getattr(policy, 'COM_USERNAME', None)
 
 
-def _make_visibility_test(remote_user, admin_filter_community=True):
+def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
     # TODO: Hook this up to the ACL support
     # Admin/SiteAdmins/ContentAdmins can see everything.
     if remote_user:
@@ -418,10 +418,8 @@ def _make_visibility_test(remote_user, admin_filter_community=True):
             # we are filtering by site community.
             remote_com_names = set(('Everyone',))
 
-            if admin_filter_community:
-                # If we want to filter, we try to get a community for
-                # this site to filter our results. If a community can't
-                # be found, then we leave it as searching everyone.
+            if admin_filter_by_site_community:
+                # Try to filter by site community.
                 com_name = _get_community_name_from_site()
                 if com_name is not None:
                     remote_com_names = set((com_name,))
