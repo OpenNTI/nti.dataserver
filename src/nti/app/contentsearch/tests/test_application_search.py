@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -31,10 +31,10 @@ from nti.ntiids import ntiids
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
-from nti.app.testing.webtest import TestApp
-
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
+
+from nti.app.testing.webtest import TestApp
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -48,7 +48,7 @@ class ContainedExternal(ZContainedMixin):
             return self._str
         return "<%s %s>" % (self.__class__.__name__, self.to_container_key())
 
-    def toExternalObject(self, **kwargs):
+    def toExternalObject(self, **unused_kwargs):
         return str(self)
 
     def to_container_key(self):
@@ -68,11 +68,11 @@ class TestApplicationSearch(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             contained = PersistentContainedExternal()
             user = self._create_user()
-            user2 = self._create_user('foo@bar')
+            user2 = self._create_user(u'foo@bar')
             user2_username = user2.username
-            contained.containerId = ntiids.make_ntiid(provider='OU',
+            contained.containerId = ntiids.make_ntiid(provider=u'OU',
                                                       nttype=ntiids.TYPE_MEETINGROOM,
-                                                      specific='1234')
+                                                      specific=u'1234')
             user.addContainedObject(contained)
             assert_that(user.getContainer(contained.containerId),
                         has_length(1))
@@ -83,38 +83,35 @@ class TestApplicationSearch(ApplicationLayerTest):
         for search_path in ('users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData',):
             for ds_path in ('dataserver2',):
                 path = '/' + ds_path + '/' + search_path + '/'
-                res = testapp.get(
-                    path,
-                    extra_environ=self._make_extra_environ())
+                res = testapp.get(path,
+                                  extra_environ=self._make_extra_environ())
                 assert_that(res.status_int, is_(200))
 
                 # And access is not allowed for a different user
-                testapp.get(
-                    path,
-                    extra_environ=self._make_extra_environ(user=user2_username),
-                    status=403)
+                testapp.get(path,
+                            extra_environ=self._make_extra_environ(user=user2_username),
+                            status=403)
                 # Nor one that doesn't exist
-                testapp.get(
-                    path,
-                    extra_environ=self._make_extra_environ(user='user_dne@biz'),
-                    status=401)
+                testapp.get(path,
+                            extra_environ=self._make_extra_environ(user='user_dne@biz'),
+                            status=401)
 
     @WithSharedApplicationMockDSWithChanges
     def test_post_share_delete_highlight(self):
 
         with mock_dataserver.mock_db_trans(self.ds):
             _ = self._create_user()
-            self._create_user(username='foo@bar')
+            self._create_user(username=u'foo@bar')
             testapp = TestApp(self.app)
-            containerId = ntiids.make_ntiid(provider='OU',
+            containerId = ntiids.make_ntiid(provider=u'OU',
                                             nttype=ntiids.TYPE_MEETINGROOM,
-                                            specific='1234')
-            data = json.serialize( {
-                    'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
+                                            specific=u'1234')
+            data = json.serialize({
+                    'Class': 'Highlight', 
+                    'MimeType': 'application/vnd.nextthought.highlight',
                     'ContainerId': containerId,
                     'selectedText': "This is the selected text",
-                    'applicableRange': {'Class': 'ContentRangeDescription'
-            }})
+                    'applicableRange': {'Class': 'ContentRangeDescription'}})
 
         path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
         res = testapp.post(path,
@@ -131,8 +128,7 @@ class TestApplicationSearch(ApplicationLayerTest):
                     has_entry('Content-Type',
                               contains_string('application/vnd.nextthought.highlight+json')))
 
-        path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + \
-                containerId + ')/UserGeneratedData'
+        path = '/dataserver2/users/sjohnson@nextthought.com/Pages(%s)/UserGeneratedData' % containerId
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.body,
                     contains_string('"Class": "ContentRangeDescription"'))
@@ -147,10 +143,9 @@ class TestApplicationSearch(ApplicationLayerTest):
                     has_entry('sharedWith', ['foo@bar']))
 
         # And the recipient can see it
-        path = '/dataserver2/users/foo@bar/Pages(' + \
-                containerId + ')/UserGeneratedData'
+        path = '/dataserver2/users/foo@bar/Pages(%s)/UserGeneratedData' % containerId
         res = testapp.get(str(path),
-                          extra_environ=self._make_extra_environ(user=b'foo@bar'))
+                          extra_environ=self._make_extra_environ(user='foo@bar'))
         assert_that(res.body, 
                     contains_string("This is the selected text"))
 
@@ -160,5 +155,5 @@ class TestApplicationSearch(ApplicationLayerTest):
 
         # And it is no longer available
         res = testapp.get(str(path), 
-                          extra_environ=self._make_extra_environ(user=b'foo@bar'),
+                          extra_environ=self._make_extra_environ(user='foo@bar'),
                           status=404)

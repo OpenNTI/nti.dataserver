@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -89,15 +89,14 @@ class BaseView(AbstractAuthenticatedView):
         except ValueError as e:
             logger.exception("Cannot execute search query")
             exc_info = sys.exc_info()
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    'message': _('Cannot execute search query.'),
-                    'field': 'term',
-                    'code': e.__class__.__name__
-                },
-                exc_info[2])
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Cannot execute search query.'),
+                                 'field': 'term',
+                                 'code': e.__class__.__name__
+                             },
+                             exc_info[2])
 
 
 class BaseSearchView(BaseView, BatchingUtilsMixin):
@@ -110,15 +109,14 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
         except Exception as e:
             logger.exception("Invalid search query")
             exc_info = sys.exc_info()
-            raise_json_error(
-                self.request,
-                hexc.HTTPUnprocessableEntity,
-                {
-                    'message': _('Invalid search query.'),
-                    'field': 'term',
-                    'code': e.__class__.__name__
-                },
-                exc_info[2])
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Invalid search query.'),
+                                 'field': 'term',
+                                 'code': e.__class__.__name__
+                             },
+                             exc_info[2])
 
     def _search_func(self, searcher):
         return searcher.search
@@ -188,17 +186,21 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 
 
 class SearchView(BaseSearchView):
-    name = 'Search'
+    name = u'Search'
+
+
 Search = SearchView  # BWC
 
 
 class UserDataSearchView(BaseSearchView):
-    name = 'UserSearch'
+    name = u'UserSearch'
+
+
 UserSearch = UserDataSearchView  # BWC
 
 
 class SuggestView(BaseView):
-    name = 'Suggest'
+    name = 'uSuggest'
 
     def _include_item(self, hit, search_results):
         # No need to filter suggestions.
@@ -209,4 +211,6 @@ class SuggestView(BaseView):
 
     def _search_func(self, searcher):
         return searcher.suggest
+
+
 Suggest = SuggestView  # BWC

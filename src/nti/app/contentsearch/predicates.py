@@ -4,8 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -37,7 +36,7 @@ from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 @interface.implementer(ISearchHitPredicate)
 class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
 
-    __name__ = 'AccessibleObject'
+    __name__ = u'AccessibleObject'
 
     @Lazy
     def request(self):
@@ -65,7 +64,7 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
                       and not IDeletedObjectPlaceholder.providedBy(item))
         return result
 
-    def allow(self, item, score, query):
+    def allow(self, item, unused_score, unused_query):
         if self.principal is None:
             result = True
         elif IUserGeneratedData.providedBy(item):
