@@ -46,7 +46,6 @@ from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.authorization import is_admin_or_site_admin
 from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
@@ -122,8 +121,7 @@ def _UserSearchView(request):
         # can be resolved
         # NOTE2: Going through this API lets some private objects be found
         # (DynamicFriendsLists, specifically). We should probably lock that down
-        result = _authenticated_search(
-            remote_user, dataserver, partialMatch, request)
+        result = _authenticated_search(remote_user, partialMatch, request)
     elif partialMatch and remote_user:
         # Even if it's not a valid global search, we still want to
         # look at things local to the user
@@ -318,7 +316,7 @@ def _provide_location(result, dataserver):
     return result
 
 
-def _authenticated_search(remote_user, dataserver, search_term, request):
+def _authenticated_search(remote_user, search_term, request):
     # Match Users and Communities here. Do not match IFriendsLists, because
     # that would get private objects from other users.
     def _selector(x):
@@ -330,12 +328,12 @@ def _authenticated_search(remote_user, dataserver, search_term, request):
     result = user_search_matcher.query(search_term,
                                        provided=_selector)
 
-    filter_community_by_site = not is_true(
-        request.params.get('no_filter') or '')
+    # By default, do not filter communities for admins.
+    admin_filter_community = is_true(request.params.get('filter_communities'))
 
     # Filter to things that share a common community
     # FIXME: Hack in a policy of limiting searching to overlapping communities
-    test = _make_visibility_test(remote_user, filter_community_by_site)
+    test = _make_visibility_test(remote_user, admin_filter_community)
     result = {x for x in result if test(x)}  # ensure a set
 
     # Add locally matching friends lists, etc. These don't need to go through the
@@ -409,18 +407,18 @@ def _get_community_name_from_site():
     return getattr(policy, 'COM_USERNAME', None)
 
 
-def _make_visibility_test(remote_user, filter_by_site_community=True):
+def _make_visibility_test(remote_user, admin_filter_community=True):
     # TODO: Hook this up to the ACL support
-    # Admin/SiteAdmins can see everything.
+    # Admin/SiteAdmins/ContentAdmins can see everything.
     if remote_user:
-        is_admin = is_admin_or_site_admin(remote_user)
+        is_admin = is_admin_or_content_admin_or_site_admin(remote_user)
 
         if is_admin:
             # If we're an admin, we can search everyone unless
             # we are filtering by site community.
             remote_com_names = set(('Everyone',))
 
-            if filter_by_site_community:
+            if admin_filter_community:
                 # If we want to filter, we try to get a community for
                 # this site to filter our results. If a community can't
                 # be found, then we leave it as searching everyone.
