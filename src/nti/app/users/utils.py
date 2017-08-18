@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -22,6 +22,8 @@ import isodate
 from zope import component
 
 from zope.annotation.interfaces import IAnnotations
+
+from zope.component.hooks import getSite
 
 from zope.dottedname import resolve as dottedname
 
@@ -51,6 +53,10 @@ from nti.externalization.externalization import to_external_object
 
 from nti.mailer.interfaces import ITemplatedMailer
 
+from nti.site.hostpolicy import get_host_site
+
+
+_CREATION_SITE_KEY = 'nti.app.users._CREATION_SITE_KEY'
 _EMAIL_VERIFICATION_TIME_KEY = 'nti.app.users._EMAIL_VERIFICATION_TIME_KEY'
 _EMAIL_VERIFICATION_COUNT_KEY = 'nti.app.users._EMAIL_VERIFICATION_COUNT_KEY'
 
@@ -94,7 +100,7 @@ def generate_mail_verification_pair(user, email=None, secret_key=None):
 
 def get_verification_signature_data(user, signature, params=None,
                                     email=None, secret_key=None):
-    __traceback_info__ = user, email
+    __traceback_info__ = user, email, params
     user = get_user(user)
     if user is None:
         raise ValueError("User not found")
@@ -226,12 +232,12 @@ def send_email_verification(user, profile, email, request=None, check=True):
 
     mailer = component.getUtility(ITemplatedMailer)
     mailer.queue_simple_html_text_email(
-        template,
-        subject=translate(_("Email Confirmation")),
-        recipients=[profile],
-        template_args=args,
-        request=request,
-        package=package)
+                template,
+                subject=translate(_(u"Email Confirmation")),
+                recipients=[profile],
+                template_args=args,
+                request=request,
+                package=package)
 
     # record time
     set_email_verification_time(user)
@@ -242,8 +248,8 @@ def send_email_verification(user, profile, email, request=None, check=True):
 def safe_send_email_verification(user, profile, email, request=None, check=True):
     iids = component.getUtility(IIntIds)
     if iids.queryId(user) is None:
-        logger.debug("Not sending email verification during account creation of %s",
-                     user)
+        logger.debug("Not sending email verification during account "
+                     "creation of %s", user)
         return
 
     try:
@@ -255,3 +261,22 @@ def safe_send_email_verification(user, profile, email, request=None, check=True)
     except Exception:
         logger.exception("Cannot send email confirmation to %s.", user)
         return False
+
+
+def get_user_creation_site(user):
+    annotations = IAnnotations(user, None) or {}
+    name = annotations.get(_CREATION_SITE_KEY) or ''
+    return get_host_site(name)
+
+
+def set_user_creation_site(user, site=None):
+    site = site or getSite()
+    name = getattr(site, '__name__', None) or site
+    if name and name != 'dataserver2':
+        annotations = IAnnotations(user, None) or {}
+        annotations[_CREATION_SITE_KEY] = name
+
+
+def remove_user_creation_site(user):
+    annotations = IAnnotations(user, None) or {}
+    annotations.pop(_CREATION_SITE_KEY, None)

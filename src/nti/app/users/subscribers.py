@@ -11,8 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from zope.lifecycleevent.interfaces import IObjectAddedEvent
+
 from pyramid.threadlocal import get_current_request
 
+from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import set_email_verification_time
 from nti.app.users.utils import safe_send_email_verification
 
@@ -28,7 +31,7 @@ from nti.dataserver.users.utils import reindex_email_verification
 
 
 @component.adapter(IUser, IWillCreateNewEntityEvent)
-def _new_user_is_not_blacklisted(user, event):
+def _new_user_is_not_blacklisted(user, unused_event):
     """
     Verify that this new user does not exist in our blacklist of former users.
     """
@@ -53,3 +56,8 @@ def _user_modified_from_external_event(user, event):
             safe_send_email_verification(user, profile, email,
                                          request=request,
                                          check=False)
+
+
+@component.adapter(IUser, IObjectAddedEvent)
+def _on_user_created(user, unused_event):
+    set_user_creation_site(user)

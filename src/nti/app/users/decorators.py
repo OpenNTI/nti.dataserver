@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -51,7 +51,7 @@ LINKS = StandardExternalFields.LINKS
 @interface.implementer(IExternalMappingDecorator)
 class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def _predicate(self, context, result):
+    def _predicate(self, context, unused_result):
         profile = IUserProfile(context, None)
         result = bool(    self._is_authenticated
                       and self.remoteUser == context
@@ -75,7 +75,7 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 @interface.implementer(IExternalMappingDecorator)
 class _UserMembershipsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def _predicate(self, context, result):
+    def _predicate(self, unused_context, unused_result):
         result = self._is_authenticated
         return result
 
@@ -89,7 +89,7 @@ class _UserMembershipsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 @interface.implementer(IExternalMappingDecorator)
 class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def _predicate(self, context, result):
+    def _predicate(self, unused_context, unused_result):
         result = bool(self._is_authenticated)
         return result
 
@@ -125,7 +125,7 @@ class _DFLGetMembershipLinkProvider(AbstractTwoStateViewLinkDecorator):
 
     true_view = REL_MY_MEMBERSHIP
 
-    def link_predicate(self, context, current_username):
+    def link_predicate(self, context, unused_current_username):
         user = self.remoteUser
         result = user is not None and user in context and not context.Locked
         return result
@@ -135,7 +135,7 @@ class _DFLGetMembershipLinkProvider(AbstractTwoStateViewLinkDecorator):
 @interface.implementer(IExternalMappingDecorator)
 class _DFLLinksDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def _predicate(self, context, result):
+    def _predicate(self, context, unused_result):
         result = bool(self._is_authenticated
                       and (   self.remoteUser in context
                            or self.remoteUser == context.creator))
@@ -189,7 +189,7 @@ class _UserSuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 @interface.implementer(IExternalMappingDecorator)
 class _CommunitySuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def _predicate(self, context, result):
+    def _predicate(self, context, unused_result):
         # Should we check for public here? It's false by default.
         result = bool(self._is_authenticated
                       and not IDisallowSuggestedContacts.providedBy(context)
@@ -209,9 +209,9 @@ class _CommunitySuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAware
 @interface.implementer(IExternalMappingDecorator)
 class _DFLSuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def _predicate(self, context, result):
+    def _predicate(self, context, unused_result):
         result = bool(self._is_authenticated
-                      and (self.remoteUser in context
+                      and (   self.remoteUser in context
                            or self.remoteUser == context.creator))
         return result
 
