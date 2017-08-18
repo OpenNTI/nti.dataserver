@@ -7,7 +7,7 @@ missing, presumably due to deletion.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -40,11 +40,11 @@ class _TransientMissingEntity(object):
 
     __external_class_name__ = 'MissingEntity'
 
-    alias = _('Missing Entity')
-    realname = _('Deleted Entity')
+    alias = _(u'Missing Entity')
+    realname = _(u'Deleted Entity')
     # spaces are illegal in real usernames so this can never resolve
-    username = 'Missing Entity'
-    avatarURL = create_gravatar_url('Missing Entity@alias.nextthought.com')
+    username = u'Missing Entity'
+    avatarURL = create_gravatar_url(u'Missing Entity@alias.nextthought.com')
 
     __name__ = username
     __parent__ = None
@@ -59,11 +59,12 @@ class _TransientMissingUser(_TransientMissingEntity):
 
     __external_class_name__ = 'MissingUser'
 
-    alias = _('Missing User')
-    realname = _('Deleted User')
+    alias = _(u'Missing User')
+    realname = _(u'Deleted User')
+
     # spaces are illegal in real usernames so this can never resolve
-    username = 'Missing User'
-    avatarURL = create_gravatar_url('Missing User@alias.nextthought.com')
+    username = u'Missing User'
+    avatarURL = create_gravatar_url(u'Missing User@alias.nextthought.com')
 
     lastLoginTime = minmax.ConstantZeroValue()
     notificationCount = minmax.ConstantZeroValue()
@@ -74,14 +75,14 @@ class _TransientMissingUser(_TransientMissingEntity):
     accepting_shared_data_from = ()
 
 
-def MissingEntity(username):
+def MissingEntity(_):
     """
     Return a missing entity proxy for the given username.
     """
     return _TransientMissingEntity()  # Not cacheable due to annotations
 
 
-def MissingUser(username):
+def MissingUser(_):
     """
     Return a missing user proxy for the given username.
     """
