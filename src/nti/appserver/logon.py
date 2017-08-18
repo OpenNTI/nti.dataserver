@@ -672,32 +672,27 @@ def _create_success_response(request, userid=None, success=None):
 def _query_impersonation_decider(request, username, name=''):
 	decider = component.queryAdapter(request, IImpersonationDecider, name)
 	if decider:
-		return decider.validate_impersonation_target(username)
+		decider.validate_impersonation_target(username)
 
 def _can_impersonate(request, username):
 	"""
 	Query a set of IImpersonationDeciders to
 	verify if impersonation of the given username should
 	be allowed for the request
-
-	Returns user if user was implicitly created during the process
 	"""
 
 	#verify by domain first
-	user = None
 	if '@' in username:
 		domain = username.split('@', 1)[-1]
 		if domain:
 			# May want to consider prefixing this
-			user = _query_impersonation_decider(request, username, name=domain)
+			_query_impersonation_decider(request, username, name=domain)
 
 	#now by username
-	user = _query_impersonation_decider(request, username, name=username) or user
+	_query_impersonation_decider(request, username, name=username)
 
 	#now by global adapter
-	user = _query_impersonation_decider(request, username) or user
-
-	return user
+	_query_impersonation_decider(request, username)
 
 def _specified_username_logon(request, allow_no_username=True, require_matching_username=True, audit=False, desired_username=None):
 	# This code handles both an existing logged on user and not
@@ -732,11 +727,10 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
 			# This will later show up in the environment and error/feedback
 			# reports. This is a pretty basic version of that; if we use
 			# it for anything more than display, we need to formalize it more.
-			user = None
 			if desired_username != remote_user.username.lower():
 				#check if we are allowed to impersonate first
 				try:
-					user = _can_impersonate(request, desired_username)
+					_can_impersonate(request, desired_username)
 				except ValueError:
 					return _create_failure_response(request,
 													error_factory=hexc.HTTPForbidden)
@@ -746,8 +740,7 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
 				user_data['username'] = str(remote_user.username.lower())
 				request.environ['REMOTE_USER_DATA'] = user_data
 
-			effective_username = user.username if user else desired_username
-			response = _create_success_response(request, effective_username)
+			response = _create_success_response(request, desired_username)
 		except ValueError as e:
 			return _create_failure_response(request,
 											error_factory=hexc.HTTPNotFound,
