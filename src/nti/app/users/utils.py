@@ -55,8 +55,6 @@ from nti.mailer.interfaces import ITemplatedMailer
 
 from nti.site.hostpolicy import get_host_site
 
-from nti.site.transient import TrivialSite
-
 
 _CREATION_SITE_KEY = 'nti.app.users._CREATION_SITE_KEY'
 _EMAIL_VERIFICATION_TIME_KEY = 'nti.app.users._EMAIL_VERIFICATION_TIME_KEY'
@@ -273,9 +271,7 @@ def get_user_creation_site(user):
 
 def set_user_creation_site(user, site=None):
     site = site or getSite()
-    if isinstance(site, TrivialSite):
-        return
-    name = getattr(site, '__name__', None) or site
+    name = getattr(site, '__name__', None) or str(site)
     if name and name != 'dataserver2':
         annotations = IAnnotations(user, None) or {}
         annotations[_CREATION_SITE_KEY] = name
