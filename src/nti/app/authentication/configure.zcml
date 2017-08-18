@@ -1,7 +1,6 @@
 <!-- -*- mode: nxml -*- -->
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
-			xmlns:z3c="http://namespaces.zope.org/z3c"
 			xmlns:zcml="http://namespaces.zope.org/zcml">
 
 	<include package="zope.component" file="meta.zcml" />
@@ -27,6 +26,12 @@
 	sub-site to change that 
 	-->
 	<utility factory=".interfaces.EveryoneLogonWhitelist" />
+
+	<!-- 
+	By default, everyone can logon. Use logon:whitelist in a
+	sub-site to change that 
+	-->
+	<utility factory=".interfaces.EveryoneSiteLogonWhitelist" />
 
 	<adapter factory=".who_classifiers.application_request_classifier_for_request" />
 

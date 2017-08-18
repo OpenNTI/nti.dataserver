@@ -7,6 +7,12 @@
 			name="whitelist"
 			schema=".zcml.ILogonWhitelistDirective"
 			handler=".zcml.registerLogonWhitelist" />
+		
+		<meta:directive
+			name="sites"
+			schema=".zcml.ISiteLogonWhitelistDirective"
+			handler=".zcml.registerSiteLogonWhitelist" />
+			
 	</meta:directives>
 
 </configure>

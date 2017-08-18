@@ -6,7 +6,7 @@ Directives to be used in ZCML.
 ..  $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -19,6 +19,7 @@ from zope.configuration.fields import Tokens
 from zope.configuration.fields import TextLine
 
 from nti.app.authentication.interfaces import ILogonWhitelist
+from nti.app.authentication.interfaces import ISiteLogonWhitelist
 
 
 class ILogonWhitelistDirective(interface.Interface):
@@ -27,9 +28,9 @@ class ILogonWhitelistDirective(interface.Interface):
     """
 
     entities = Tokens(
-        title="The global usernames allowed to logon",
+        title=u"The global usernames allowed to logon",
         required=True,
-        value_type=TextLine(title="The entity identifier."),
+        value_type=TextLine(title=u"The entity identifier."),
     )
 
 
@@ -46,3 +47,30 @@ def registerLogonWhitelist(_context, entities):
         logger.warning("Duplicate entities in list")
 
     utility(_context, provides=ILogonWhitelist, component=whitelist)
+
+
+class ISiteLogonWhitelistDirective(interface.Interface):
+    """
+    A specific list of named sites users are allowed to login.
+    """
+
+    sites = Tokens(
+        title=u"The global sites users are allowed to logon",
+        required=True,
+        value_type=TextLine(title=u"The site identifier."),
+    )
+
+
+def registerSiteLogonWhitelist(_context, sites):
+    """
+    Register a site whitelist utility.
+    """
+
+    if not sites:
+        logger.warning("No one is allowed to logon")
+
+    whitelist = frozenset(sites)
+    if len(whitelist) != len(sites):
+        logger.warning("Duplicate sites in list")
+
+    utility(_context, provides=ISiteLogonWhitelist, component=whitelist)
