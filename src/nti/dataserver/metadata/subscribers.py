@@ -22,12 +22,12 @@ from nti.dataserver.metadata.utils import clear_replies_to_creator
 
 
 @component.adapter(IEntity, IObjectRemovedEvent)
-def _on_entity_removed(entity, event):
+def _on_entity_removed(entity, _):
     username = entity.username
     logger.info("Removing metadata data for user %s", username)
     delete_entity_metadata(get_metadata_catalog(), username)
 
 
 @component.adapter(IEntity, IObjectRemovedEvent)
-def _clear_replies_to_creator_when_creator_removed(entity, event):
+def _clear_replies_to_creator_when_creator_removed(entity, _):
     clear_replies_to_creator(get_metadata_catalog(), entity.username)

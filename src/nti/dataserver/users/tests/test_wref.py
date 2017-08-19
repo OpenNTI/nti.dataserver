@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -15,93 +15,102 @@ from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
 
+from nti.testing.matchers import verifiably_provides
+
 import cPickle
 import unittest
 
 import BTrees.OOBTree
 
-from nti.dataserver import users
-from nti.dataserver.users import wref
-from nti.dataserver.users import missing_user
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IMissingUser
+from nti.dataserver.interfaces import IMissingEntity
+
+from nti.dataserver.users.wref import NotYet
+from nti.dataserver.users.wref import WeakRef
+
+from nti.dataserver.users.missing_user import MissingUser
+
+from nti.dataserver.users.users import User
 
 from nti.externalization.externalization import to_external_object
 
-from nti.wref import interfaces as wref_interfaces
-
-from nti.testing.matchers import verifiably_provides
+from nti.wref.interfaces import IWeakRef
+from nti.wref.interfaces import ICachingWeakRef
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 
+
 class TestWref(unittest.TestCase):
 
-	layer = SharedConfiguringTestLayer
+    layer = SharedConfiguringTestLayer
 
-	@WithMockDSTrans
-	def test_missing_intid(self):
-		user = users.User.create_user(username='sjohnson@nextthought.com')
-		del user._ds_intid
+    @WithMockDSTrans
+    def test_missing_intid(self):
+        user = User.create_user(username=u'sjohnson@nextthought.com')
+        del user._ds_intid
 
-		assert_that(calling(wref.WeakRef).with_args(user),
-					 raises(wref.NotYet))
+        assert_that(calling(WeakRef).with_args(user),
+                    raises(NotYet))
 
-		assert_that(calling(wref_interfaces.IWeakRef).with_args(user),
-					 raises(TypeError))
+        assert_that(calling(IWeakRef).with_args(user),
+                    raises(TypeError))
 
-		assert_that(wref_interfaces.IWeakRef(user, None),
-					 is_(none()))
+        assert_that(IWeakRef(user, None), is_(none()))
 
-	@WithMockDSTrans
-	def test_pickle(self):
-		user = users.User.create_user(username='sjohnson@nextthought.com')
+    @WithMockDSTrans
+    def test_pickle(self):
+        user = User.create_user(username=u'sjohnson@nextthought.com')
 
-		ref = wref.WeakRef(user)
+        ref = WeakRef(user)
 
-		assert_that(ref, has_property('_v_entity_cache', user))
+        assert_that(ref, has_property('_v_entity_cache', user))
 
-		copy = cPickle.loads(cPickle.dumps(ref))
+        copy = cPickle.loads(cPickle.dumps(ref))
 
-		assert_that(copy, has_property('_v_entity_cache', none()))
+        assert_that(copy, has_property('_v_entity_cache', none()))
 
-		assert_that(copy(), is_(user))
-		assert_that(ref, is_(copy))
-		assert_that(copy, is_(ref))
-		assert_that(repr(copy), is_(repr(ref)))
-		assert_that(hash(copy), is_(hash(ref)))
+        assert_that(copy(), is_(user))
+        assert_that(ref, is_(copy))
+        assert_that(copy, is_(ref))
+        assert_that(repr(copy), is_(repr(ref)))
+        assert_that(hash(copy), is_(hash(ref)))
 
-		assert_that(ref, verifiably_provides(wref_interfaces.ICachingWeakRef))
+        assert_that(ref, verifiably_provides(ICachingWeakRef))
 
-	@WithMockDSTrans
-	def test_missing(self):
-		user = users.User.create_user(username='sjohnson@nextthought.com')
+    @WithMockDSTrans
+    def test_missing(self):
+        user = User.create_user(username=u'sjohnson@nextthought.com')
 
-		ref = wref.WeakRef(user)
-		setattr(ref, '_v_entity_cache', None)
-		setattr(ref, '_entity_id', -1)
+        ref = WeakRef(user)
+        setattr(ref, '_v_entity_cache', None)
+        setattr(ref, '_entity_id', -1)
 
-		assert_that(ref(), is_(none()))
+        assert_that(ref(), is_(none()))
 
-		assert_that(ref(True), verifiably_provides(nti_interfaces.IMissingEntity))
-		assert_that(ref(missing_user.MissingUser), verifiably_provides(nti_interfaces.IMissingUser))
+        assert_that(ref(True),
+                    verifiably_provides(IMissingEntity))
 
-		ext_obj = to_external_object(ref(missing_user.MissingUser), name='summary')
-		assert_that(ext_obj, has_entry('Class', 'MissingUser'))
+        assert_that(ref(MissingUser),
+                    verifiably_provides(IMissingUser))
 
-	@WithMockDSTrans
-	def test_in_btree(self):
-		user = users.User.create_user(username='sjohnson@nextthought.com')
-		user2 = users.User.create_user(username='sjohnson2@nextthought.com')
+        ext_obj = to_external_object(ref(MissingUser),  name='summary')
+        assert_that(ext_obj, has_entry('Class', 'MissingUser'))
 
-		bt = BTrees.OOBTree.OOBTree()
+    @WithMockDSTrans
+    def test_in_btree(self):
+        user = User.create_user(username=u'sjohnson@nextthought.com')
+        user2 = User.create_user(username=u'sjohnson2@nextthought.com')
 
-		ref = wref.WeakRef(user)
-		ref2 = wref.WeakRef(user2)
+        bt = BTrees.OOBTree.OOBTree()
 
-		bt[ref] = 1
-		bt[ref2] = 2
+        ref = WeakRef(user)
+        ref2 = WeakRef(user2)
 
-		assert_that(bt[ref], is_(1))
-		assert_that(bt[ref2], is_(2))
+        bt[ref] = 1
+        bt[ref2] = 2
 
-		assert_that(bt.get('foo'), is_(none()))
+        assert_that(bt[ref], is_(1))
+        assert_that(bt[ref2], is_(2))
+
+        assert_that(bt.get('foo'), is_(none()))

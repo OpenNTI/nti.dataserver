@@ -84,7 +84,7 @@ class ValidatingMimeType(object):
 
     __slots__ = ('mimeType',)
 
-    def __init__(self,  obj, default=None):
+    def __init__(self,  obj, unused_default=None):
         self.mimeType = getattr(obj, 'mimeType', None) \
             or getattr(obj, 'mime_type', None)
 
@@ -147,7 +147,7 @@ class ValidatingCreatedUsername(object):
 
     __slots__ = ('creator_username',)
 
-    def __init__(self,  obj, default=None):
+    def __init__(self,  obj, unused_default=None):
         # Don't want to index user objects.
         if IUser.providedBy(obj):
             return
@@ -215,7 +215,7 @@ class TaggedTo(object):
     _ENTITY_TYPES = {TYPE_NAMED_ENTITY, TYPE_NAMED_ENTITY.lower(),
                      TYPE_MEETINGROOM, TYPE_MEETINGROOM.lower()}
 
-    def __init__(self, context, default):
+    def __init__(self, context, unused_default):
         self.context = IUserTaggedContent(context, None)
 
     @property
@@ -270,7 +270,7 @@ class CreatorOfInReplyTo(object):
 
     __slots__ = ('context',)
 
-    def __init__(self, context, default):
+    def __init__(self, context, unused_default):
         self.context = context
 
     @property
@@ -295,7 +295,7 @@ def CreatorOfInReplyToIndex(family=BTrees.family64):
                                 interface=CreatorOfInReplyTo)
 
 
-def isTopLevelContentObjectFilter(extent, docid, document):
+def isTopLevelContentObjectFilter(unused_extent, unused_docid, document):
     # TODO: This is messy
     # NOTE: This is referenced by persistent objects, must stay
     if getattr(document, '__is_toplevel_content__', False):
@@ -334,7 +334,7 @@ class TopLevelContentExtentFilteredSet(ExtentFilteredSet):
                                                                family=family)
 
 
-def isDeletedObjectPlaceholder(extent, docid, document):
+def isDeletedObjectPlaceholder(unused_extent, unused_docid, document):
     # NOTE: This is referenced by persistent objects, must stay.
     return IDeletedObjectPlaceholder.providedBy(document)
 
@@ -350,7 +350,7 @@ class DeletedObjectPlaceholderExtentFilteredSet(ExtentFilteredSet):
                                                                         family=family)
 
 
-def isUserGeneratedData(extent, docid, document):
+def isUserGeneratedData(unused_extent, unused_docid, document):
     # NOTE: This is referenced by persistent objects, must stay.
     return IUserGeneratedData.providedBy(document)
 
@@ -392,7 +392,7 @@ class RevSharedWith(object):
 
     __slots__ = ('context',)
 
-    def __init__(self, context, default=None):
+    def __init__(self, context, unused_default=None):
         self.context = context
 
     @property

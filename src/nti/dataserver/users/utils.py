@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -25,6 +25,7 @@ from nti.dataserver.users.interfaces import IAvatarURLProvider
 from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
 from nti.property.urlproperty import UrlProperty
+
 
 # email
 
@@ -88,7 +89,7 @@ def unindex_email_verification(user, catalog=None, intids=None):
 
 def force_email_verification(user, profile=None, catalog=None, intids=None):
     profile = IUserProfile if profile is None else profile
-    profile = profile(user, None) # adpat
+    profile = profile(user, None)  # adpat
     if profile is not None:
         profile.email_verified = True
         return reindex_email_verification(user, catalog=catalog, intids=intids)
@@ -98,6 +99,7 @@ def force_email_verification(user, profile=None, catalog=None, intids=None):
 def is_email_verified(email):
     result = verified_email_ids(email)
     return bool(result)
+
 
 # properties
 
@@ -112,12 +114,11 @@ class ImageUrlProperty(UrlProperty):
     """
 
     max_file_size = None
-    avatar_field_name = u''
+    avatar_field_name = ''
     avatar_provider_interface = None
     ignore_url_with_missing_host = True
 
     # TODO: Should we be scaling this now?
-    # TODO: Should we be enforcing constraints on this? Like max size,
     # ensuring it really is an image, etc? With arbitrary image uploading, we risk
     # being used as a dumping ground for illegal/copyright infringing material
     def __get__(self, instance, owner):

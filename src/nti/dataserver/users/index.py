@@ -69,7 +69,7 @@ class ValidatingMimeType(object):
 
     __slots__ = ('mimeType',)
 
-    def __init__(self, obj, default=None):
+    def __init__(self, obj, unused_default=None):
         try:
             if IEntity.providedBy(obj):
                 self.mimeType = getattr(obj, 'mimeType', None) \
@@ -178,7 +178,7 @@ class EmailVerifiedFilteredSet(FilteredSetBase):
             self.unindex_doc(docid)
 
 
-def isCommunity(extent, docid, document):
+def isCommunity(unused_extent, unused_docid, document):
     return ICommunity.providedBy(document)
 
 

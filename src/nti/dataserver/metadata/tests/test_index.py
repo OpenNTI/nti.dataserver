@@ -175,9 +175,8 @@ class TestMetadataIndex(DataserverLayerTest):
     def test_circled_events(self):
         greg = users.User.create_user(dataserver=self.ds,
                                       username=u'greg.higgins@nextthought.com')
-        jason = users.User.create_user(
-            dataserver=self.ds,
-            username=u'jason.madden@nextthought.com')
+        jason = users.User.create_user(dataserver=self.ds,
+                                       username=u'jason.madden@nextthought.com')
 
         change = jason.accept_shared_data_from(greg)
         assert_that(change, is_(not_none()))
