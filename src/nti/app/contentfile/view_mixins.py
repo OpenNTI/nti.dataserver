@@ -35,6 +35,8 @@ from nti.app.externalization.error import raise_json_error
 from nti.base.interfaces import IFile
 from nti.base.interfaces import INamedFile
 
+from nti.cabinet.filer import read_source
+
 from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.contentfile.model import transform_to_blob
@@ -85,10 +87,10 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
         raise_json_error(get_current_request(),
                          hexc.HTTPUnprocessableEntity,
                          {
-                            'message': _(u'Maximum number attachments exceeded.'),
-                            'code': 'MaxAttachmentsExceeded',
-                            'field': 'max_files',
-                            'constraint': constraints.max_files
+                             'message': _(u'Maximum number attachments exceeded.'),
+                             'code': 'MaxAttachmentsExceeded',
+                             'field': 'max_files',
+                             'constraint': constraints.max_files
                          },
                          None)
 
@@ -104,11 +106,11 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
                 raise_json_error(get_current_request(),
                                  hexc.HTTPUnprocessableEntity,
                                  {
-                                    'message': _(u'The uploaded file is too large.'),
-                                    'provided_bytes': size,
-                                    'max_bytes': validator.max_file_size,
-                                    'code': 'MaxFileSizeUploadLimitError',
-                                    'field': 'size'
+                                     'message': _(u'The uploaded file is too large.'),
+                                     'provided_bytes': size,
+                                     'max_bytes': validator.max_file_size,
+                                     'code': 'MaxFileSizeUploadLimitError',
+                                     'field': 'size'
                                  },
                                  None)
         except AttributeError:
@@ -119,11 +121,11 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
             raise_json_error(get_current_request(),
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Invalid content/MimeType type.'),
-                                'provided_mime_type': contentType,
-                                'allowed_mime_types': validator.allowed_mime_types,
-                                'code': 'InvalidFileMimeType',
-                                'field': 'contentType'
+                                 'message': _(u'Invalid content/MimeType type.'),
+                                 'provided_mime_type': contentType,
+                                 'allowed_mime_types': validator.allowed_mime_types,
+                                 'code': 'InvalidFileMimeType',
+                                 'field': 'contentType'
                              },
                              None)
 
@@ -132,13 +134,13 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
             raise_json_error(get_current_request(),
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Invalid file name.'),
-                                'provided_filename': filename,
-                                'allowed_extensions': validator.allowed_extensions,
-                                'code': 'InvalidFileExtension',
-                                'field': 'filename'
-                            },
-                            None)
+                                 'message': _(u'Invalid file name.'),
+                                 'provided_filename': filename,
+                                 'allowed_extensions': validator.allowed_extensions,
+                                 'code': 'InvalidFileExtension',
+                                 'field': 'filename'
+                             },
+                             None)
 
 
 def transfer_data(source, target):
@@ -147,16 +149,7 @@ def transfer_data(source, target):
     from the source to the target
     """
     # copy data
-    if hasattr(source, 'read'):
-        target.data = source.read()
-    elif hasattr(source, 'readContents'):
-        target.data = source.readContents()
-    elif hasattr(source, 'read_contents'):
-        target.data = source.read_contents()
-    elif hasattr(source, 'data'):
-        target.data = source.data
-    else:
-        target.data = source
+    target.data = read_source(source)
 
     # copy contentType if available
     if      not getattr(target, 'contentType', None) \
@@ -164,8 +157,8 @@ def transfer_data(source, target):
         target.contentType = source.contentType
 
     # copy filename if available
-    if      not getattr(target, 'filename', None) \
-        and getattr(source, 'filename', None):
+    if       not getattr(target, 'filename', None) \
+         and getattr(source, 'filename', None):
         target.filename = nameFinder(source)
 
     return target
@@ -176,7 +169,7 @@ def read_multipart_sources(request, sources=()):
     """
     return a list of data sources from the specified multipart request
 
-    :param sources: Iterable of :class:`.IPloneFile' objects
+    :param sources: Iterable of :class:`.IFile' objects
     """
     result = []
     for data in sources or ():
@@ -188,10 +181,10 @@ def read_multipart_sources(request, sources=()):
                 raise_json_error(request,
                                  hexc.HTTPUnprocessableEntity,
                                  {
-                                    'message': _(u'Could not find multipart data.'),
-                                    'name': data.name,
-                                    'code': 'CouldNotFindMultiPartData',
-                                    'field': 'name'
+                                     'message': _(u'Could not find multipart data.'),
+                                     'name': data.name,
+                                     'code': 'CouldNotFindMultiPartData',
+                                     'field': 'name'
                                  },
                                  None)
             data = transfer_data(source, data)
@@ -219,7 +212,7 @@ def get_content_files_from_modeled_content_body(context):
 
 def get_content_files(context, attr="body"):
     """
-    return a list of :class:`.IPloneFile' objects from the specified context
+    return a list of :class:`.IFile' objects from the specified context
 
     :param context: Source object
     :param attr attribute name to check in context (optional)

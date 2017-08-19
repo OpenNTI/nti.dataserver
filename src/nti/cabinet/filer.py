@@ -33,6 +33,8 @@ def read_source(source):
         result = source.read()
     elif hasattr(source, 'readContents'):
         result = source.readContents()
+    elif hasattr(source, 'read_contents'):
+        result = source.read_contents()
     elif hasattr(source, 'data'):
         result = source.data
     else:

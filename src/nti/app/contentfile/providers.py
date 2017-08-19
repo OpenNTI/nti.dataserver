@@ -21,6 +21,7 @@ from nti.contentfile.interfaces import IS3FileIO
 
 from nti.contentfolder.interfaces import IS3ContentFolder
 
+
 @interface.implementer(IExternalLinkProvider)
 class DefaultExternalLinkProvider(object):
 
