@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
-from hamcrest import contains
 from hamcrest import is_
 from hamcrest import is_not
+from hamcrest import contains
+from hamcrest import assert_that
 
 from zope import component
 
@@ -18,87 +18,95 @@ from zope.component.hooks import site
 from zope.component.hooks import getSite
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
 from zope.securitypolicy.settings import Allow
 
-from nti.appserver.policies.sites import BASECOPPA as MATHCOUNTS
+from z3c.baseregistry.baseregistry import BaseComponents
 
-from nti.dataserver.interfaces import ISiteRoleManager
+from nti.appserver.policies.sites import BASECOPPA as MATHCOUNTS
 
 from nti.dataserver.authorization import ROLE_SITE_ADMIN_NAME
 
 from nti.dataserver.authorization import is_site_admin
 
-from nti.dataserver.users import User
+from nti.dataserver.interfaces import ISiteRoleManager
+
+from nti.dataserver.users.users import User
 
 from nti.site.transient import TrivialSite as _TrivialSite
 
-from nti.testing.base import ConfiguringTestBase
 
 ZCML_STRING = """
-		<configure xmlns="http://namespaces.zope.org/zope"
-			xmlns:zcml="http://namespaces.zope.org/zcml"
-			xmlns:link="http://nextthought.com/ntp/link_providers"
-			xmlns:sp="http://nextthought.com/ntp/securitypolicy"
-			i18n_domain='nti.dataserver'>
+    <configure xmlns="http://namespaces.zope.org/zope"
+        xmlns:zcml="http://namespaces.zope.org/zcml"
+        xmlns:link="http://nextthought.com/ntp/link_providers"
+        xmlns:sp="http://nextthought.com/ntp/securitypolicy"
+        i18n_domain='nti.dataserver'>
 
-		<include package="zope.component" />
-		<include package="zope.annotation" />
-		<include package="z3c.baseregistry" file="meta.zcml" />
-		<include package="nti.securitypolicy" file="meta.zcml" />
-		<include package="nti.dataserver"/>
+        <include package="zope.component" />
+        <include package="zope.annotation" />
 
-		<utility
-			component="nti.dataserver.tests.test_site._MYSITE"
-			provides="zope.component.interfaces.IComponents"
-			name="mytest.nextthought.com" />
+        <include package="z3c.baseregistry" file="meta.zcml" />
 
-		<utility
-			component="nti.appserver.policies.sites.BASECOPPA"
-			provides="zope.component.interfaces.IComponents"
-			name="mathcounts.nextthought.com" />
+        <include package="nti.securitypolicy" file="meta.zcml" />
+        <include package="nti.dataserver"/>
 
-		<registerIn registry="nti.dataserver.tests.test_site._MYSITE">
-			<!-- Setup some site level admins -->
-			<utility factory="nti.dataserver.site.SiteRoleManager"
-				 	 provides="nti.dataserver.interfaces.ISiteRoleManager" />
+        <utility
+            component="nti.dataserver.tests.test_site._MYSITE"
+            provides="zope.component.interfaces.IComponents"
+            name="mytest.nextthought.com" />
 
-			<sp:grantSite role="role:nti.dataserver.site-admin" principal="chris"/>
-		</registerIn>
-		</configure>
-		"""
+        <utility
+            component="nti.appserver.policies.sites.BASECOPPA"
+            provides="zope.component.interfaces.IComponents"
+            name="mathcounts.nextthought.com" />
 
-from z3c.baseregistry.baseregistry import BaseComponents
-_MYSITE = BaseComponents(MATHCOUNTS, name='test.components', bases=(MATHCOUNTS,))
-_MYSITE2 = BaseComponents(MATHCOUNTS, name='test.components2', bases=(MATHCOUNTS,))
+        <registerIn registry="nti.dataserver.tests.test_site._MYSITE">
+            <!-- Setup some site level admins -->
+            <utility factory="nti.dataserver.site.SiteRoleManager"
+                      provides="nti.dataserver.interfaces.ISiteRoleManager" />
+
+            <sp:grantSite role="role:nti.dataserver.site-admin" principal="chris"/>
+        </registerIn>
+    </configure>
+"""
+
+_MYSITE = BaseComponents(MATHCOUNTS, name='test.components', 
+                         bases=(MATHCOUNTS,))
+
+_MYSITE2 = BaseComponents(MATHCOUNTS, name='test.components2', 
+                          bases=(MATHCOUNTS,))
+
+
+from nti.testing.base import ConfiguringTestBase
+
 
 class TestSiteRoleManager(ConfiguringTestBase):
 
-	def test_site_role_manager(self):
+    def test_site_role_manager(self):
 
-		self.configure_string(ZCML_STRING)
-		user = User('chris')
+        self.configure_string(ZCML_STRING)
+        user = User(u'chris')
 
-		with site(_TrivialSite(_MYSITE)):
-			# we have ISiteRoleManager
-			srm = component.queryUtility(ISiteRoleManager)
-			assert_that(srm, is_not(None))
+        with site(_TrivialSite(_MYSITE)):
+            # we have ISiteRoleManager
+            srm = component.queryUtility(ISiteRoleManager)
+            assert_that(srm, is_not(None))
 
-			# which is what we get when we adapt our site to
-			# an IPrincipalRoleManager
-			site_prm = IPrincipalRoleManager(getSite())
-			assert_that(site_prm, is_(srm))
+            # which is what we get when we adapt our site to
+            # an IPrincipalRoleManager
+            site_prm = IPrincipalRoleManager(getSite())
+            assert_that(site_prm, is_(srm))
 
-			principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
-			assert_that(principals, contains(('chris', Allow, )))
+            principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
+            assert_that(principals, contains(('chris', Allow, )))
 
-			assert_that(is_site_admin(user), is_(True))
+            assert_that(is_site_admin(user), is_(True))
 
-		# Parent site not a site admin
-		with site(_TrivialSite(MATHCOUNTS)):
-			assert_that(is_site_admin(user), is_(False))
+        # Parent site not a site admin
+        with site(_TrivialSite(MATHCOUNTS)):
+            assert_that(is_site_admin(user), is_(False))
 
-		# Not an admin to sibling site either
-		with site(_TrivialSite(_MYSITE2)):
-			assert_that(is_site_admin(user), is_(False))
-
-
+        # Not an admin to sibling site either
+        with site(_TrivialSite(_MYSITE2)):
+            assert_that(is_site_admin(user), is_(False))
