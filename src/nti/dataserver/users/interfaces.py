@@ -87,7 +87,7 @@ class UsernameContainsIllegalChar(InvalidData):
         if not allowed_chars:
             allowed_chars = u'no special characters'
         self.i18n_message = _(
-            u'Username contains an illegal character. Only letters, digits,'
+            u'Username contains an illegal character. Only letters, digits, '
             u'and ${allowed_chars} are allowed.',
             mapping={'allowed_chars': allowed_chars}
         )
