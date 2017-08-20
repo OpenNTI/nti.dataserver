@@ -5,12 +5,12 @@ zope.generations installer for nti.dataserver
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 88
+generation = 89
 
 # Allow going forward/backward for testing
 import os
@@ -25,15 +25,17 @@ class _DataserverSchemaManager(SchemaManager):
     """
 
     def __init__(self):
-        super(_DataserverSchemaManager, self).__init__(generation=generation,
-                                                       minimum_generation=generation,
-                                                       package_name='nti.dataserver.generations')
+        super(_DataserverSchemaManager, self).__init__(
+            generation=generation,
+            minimum_generation=generation,
+            package_name='nti.dataserver.generations')
 
 
 def evolve(context):
     result = install_main(context)
     install_chat(context)
     return result
+
 
 from zope import component
 from zope import interface
@@ -55,6 +57,8 @@ import z3c.password.interfaces
 import BTrees
 
 from nti.containers import containers as container
+
+from nti.contentfolder.index import install_content_resources_catalog
 
 from nti.dataserver import users
 from nti.dataserver import flagging
@@ -124,8 +128,8 @@ def install_main(context):
     assert ISite.providedBy(dataserver_folder)
 
     with site(dataserver_folder):
-        assert component.getSiteManager(
-        ) is lsm, "Component hooks must have been reset"
+        assert component.getSiteManager() is lsm, \
+               "Component hooks must have been reset"
         # from now on, operate in the site we're setting up.
         # The first thing that needs to happen is that we get
         # proper intid utilities set up so everything else
@@ -171,6 +175,7 @@ def install_main(context):
         install_user_catalog(dataserver_folder, intids)
         install_metadata_catalog(dataserver_folder, intids)
         install_invitations_catalog(dataserver_folder, intids)
+        install_content_resources_catalog(dataserver_folder, intids)
 
         users_folder = dataserver_folder['users']
         interface.alsoProvides(users_folder, IUsersFolder)
@@ -211,6 +216,7 @@ def install_intids(dataserver_folder):
 def install_user_catalog(dataserver_folder, intids):
     return user_index.install_user_catalog(dataserver_folder, intids)
 
+
 def install_password_utility(dataserver_folder):
     lsm = dataserver_folder.getSiteManager()
     policy = password_utility.HighSecurityPasswordUtility()
@@ -220,8 +226,8 @@ def install_password_utility(dataserver_folder):
     policy.minLength = 6
     # TODO: The group max interferes with pass phrases, which we like
     policy.groupMax = 50
-    lsm.registerUtility(
-        policy, provided=z3c.password.interfaces.IPasswordUtility)
+    lsm.registerUtility(policy,
+                        provided=z3c.password.interfaces.IPasswordUtility)
 
 
 def install_flag_storage(dataserver_folder):
@@ -239,6 +245,7 @@ def install_root_folders(parent_folder,
         parent_folder[key] = folder_type()
         parent_folder[key].__name__ = key
 
+
 from zope.traversing.interfaces import IEtcNamespace
 
 from nti.site.folder import HostSitesFolder
@@ -253,7 +260,9 @@ def install_sites_folder(dataserver_folder):
     sites = HostSitesFolder()
     dataserver_folder['++etc++hostsites'] = sites
     lsm = dataserver_folder.getSiteManager()
-    lsm.registerUtility(sites, provided=IEtcNamespace, name='hostsites')
+    lsm.registerUtility(sites,
+                        provided=IEtcNamespace, name='hostsites')
+
 
 from nti.dataserver.interfaces import IShardLayout
 

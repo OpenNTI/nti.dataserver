@@ -13,7 +13,4 @@ generation = 87
 
 
 def evolve(context):
-    """
-    Defunct evolve to install identifiers catalog
-    """
     pass

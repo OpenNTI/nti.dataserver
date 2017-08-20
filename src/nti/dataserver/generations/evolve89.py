@@ -9,20 +9,16 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 88
+generation = 89
 
 from zope import component
-
-from zope.catalog.interfaces import ICatalog
 
 from zope.component.hooks import site
 from zope.component.hooks import setHooks
 
 from zope.intid.interfaces import IIntIds
 
-ID_CATALOG_NAME = 'nti.dataserver.++etc++external-identifier-catalog'
-
-IX_EXTERNAL_IDS = 'externalIds'
+from nti.contentfolder.index import install_content_resources_catalog
 
 
 def do_evolve(context):
@@ -37,20 +33,12 @@ def do_evolve(context):
 
 		lsm = ds_folder.getSiteManager()
 		intids = lsm.getUtility(IIntIds)
-		catalog = lsm.queryUtility(ICatalog, name=ID_CATALOG_NAME)
-		if catalog is not None:
-			idx = catalog[IX_EXTERNAL_IDS]
-			for obj in (catalog, idx):
-				if intids.queryId(obj) is not None:
-					intids.unregister(obj)
-			lsm.unregisterUtility(catalog,
-								  provided=ICatalog,
-								  name=ID_CATALOG_NAME)
+		install_content_resources_catalog(ds_folder, intids)
 
 	logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):
 	"""
-	Evolve to 88 by unregistering unused catalog
+	Evolve to gen 89 by registering the content resources catalog
 	"""
 	do_evolve(context)
