@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -44,9 +44,9 @@ class _ModeledContentFileObjectIO(ContentBlobFileObjectIO):
     _ext_iface_upper_bound = IModeledContentFile
     _excluded_in_ivars_ = {'download_url'}.union(ContentBlobFileObjectIO._excluded_in_ivars_)
 
-    def _ext_mimeType(self, obj):
-        return u'application/vnd.nextthought.modeledcontentfile'
+    def _ext_mimeType(self, _):
+        return 'application/vnd.nextthought.modeledcontentfile'
 
 
-def _ModeledContentFileFactory(ext_obj):
+def _ModeledContentFileFactory(_):
     return ModeledContentFile
