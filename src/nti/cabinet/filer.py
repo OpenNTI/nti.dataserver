@@ -120,6 +120,7 @@ class DirectoryFiler(object):
         return out_file
 
     def get(self, key, bucket=None):
+        bucket = bucket or self.default_bucket
         if bucket:
             if not bucket.startswith(self.path):
                 bucket = os.path.join(self.path, bucket)
@@ -168,6 +169,7 @@ class DirectoryFiler(object):
         return False
 
     def contains(self, key, bucket=None):
+        bucket = bucket or self.default_bucket
         if bucket:
             if not bucket.startswith(self.path):
                 bucket = os.path.join(self.path, bucket)
@@ -180,6 +182,7 @@ class DirectoryFiler(object):
         return result
 
     def list(self, bucket=None):
+        bucket = bucket or self.default_bucket
         path = os.path.join(self.path, bucket) if bucket else self.path
         path = os.path.normpath(path)
         if not path.startswith(self.path) or not os.path.isdir(path):
