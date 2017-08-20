@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
 
 from zope.annotation.interfaces import IAttributeAnnotatable
@@ -200,3 +201,21 @@ class IAssociationsAdapter(interface.Interface):
     Adapt resource objects to their associations
     """
     associations = interface.Attribute("Associations ids")
+
+
+class IContentResources(interface.Interface):
+    """
+    An interface to return content resource objects 
+
+    These will typically be registered as named utilities
+    """
+
+    def iter_objects():
+        pass
+
+
+def get_content_resources():
+    predicates = component.getUtilitiesFor(IContentResources)
+    for _, predicate in list(predicates):
+        for obj in predicate.iter_objects():
+            yield obj
