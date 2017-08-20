@@ -35,8 +35,6 @@
 	<exclude package="zope.file" file="browser.zcml" />
 	<include package="zope.file" />
 
-	<include package="plone.namedfile" file="z3c-blobfile.zcml" />
-
 	<include package=".forums" />
 
 	<!-- Additional/plugin packages -->

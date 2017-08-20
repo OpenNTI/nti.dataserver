@@ -125,6 +125,7 @@
 	<include package="nti.zodb" />
 	<include package="nti.links" />
 	<include package="nti.mimetype" />
+	<include package="nti.namedfile" />
 	<include package="nti.chatserver" />
 	<include package="nti.containers" />
 	<include package="nti.dublincore" />
@@ -138,9 +139,6 @@
 	<include package="nti.datastructures" />
 	<include package="nti.contentfragments" />
 	<include package="nti.contentprocessing" />
-
-	<include package="nti.namedfile" file="configure_named.zcml" />
-	<include package="nti.namedfile" file="configure_external.zcml" />
 
 	<include package=".contenttypes" />
 
