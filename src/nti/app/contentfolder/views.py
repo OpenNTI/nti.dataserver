@@ -28,6 +28,8 @@ from zope import lifecycleevent
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.component.hooks import site as current_site
+
 from zope.file.upload import nameFinder
 
 from zope.intid.interfaces import IIntIds
@@ -81,11 +83,15 @@ from nti.contentfile.model import S3Image
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
 
+from nti.contentfolder.index import get_content_resources_catalog
+
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import ILockedFolder
 from nti.contentfolder.interfaces import IS3RootFolder
 from nti.contentfolder.interfaces import INamedContainer
 from nti.contentfolder.interfaces import IS3ContentFolder
+
+from nti.contentfolder.interfaces import get_content_resources
 
 from nti.contentfolder.model import ContentFolder
 from nti.contentfolder.model import S3ContentFolder
@@ -121,6 +127,8 @@ from nti.mimetype.externalization import decorateMimeType
 from nti.namedfile.file import safe_filename
 
 from nti.namedfile.utils import getImageInfo
+
+from nti.site.hostpolicy import get_all_host_sites
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
@@ -1307,3 +1315,40 @@ class S3SyncView(AbstractAuthenticatedView):
                              },
                              exc_info[2])
         return self.context
+
+
+@view_config(context=IDataserverFolder)
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='POST',
+               name="RebuildContentResourcesCatalog",
+               permission=nauth.ACT_NTI_ADMIN)
+class RebuildContentResourcesCatalogView(AbstractAuthenticatedView):
+
+    def _process_meta(self, package):
+        try:
+            from nti.metadata import queue_add
+            queue_add(package)
+        except ImportError:
+            pass
+
+    def __call__(self):
+        intids = component.getUtility(IIntIds)
+        # remove indexes
+        catalog = get_content_resources_catalog()
+        for index in catalog.values():
+            index.clear()
+        # reindex
+        seen = set()
+        for host_site in get_all_host_sites():  # check all sites
+            with current_site(host_site):
+                for item in get_content_resources():
+                    doc_id = intids.queryId(item)
+                    if doc_id is None or doc_id in seen:
+                        continue
+                    seen.add(doc_id)
+                    catalog.index_doc(doc_id, item)
+                    self._process_meta(item)
+        result = LocatedExternalDict()
+        result[ITEM_COUNT] = result[TOTAL] = len(seen)
+        return result
