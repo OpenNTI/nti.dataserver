@@ -48,6 +48,7 @@ def is_boto_available(environ=None):
 
 class BotoS3Mixin(object):
 
+    delimiter = '/'
     grant = 'public-read-write'
 
     @readproperty
@@ -143,7 +144,7 @@ class BotoS3Mixin(object):
         try:
             bucket = connection.get_bucket(self.bucket_name)
             if key.endswith('/'):
-                keys = [x.key for x in bucket.list(prefix=key)]
+                keys = [x.key for x in bucket.list(key, self.delimiter)]
                 bucket.delete_keys(keys)
             bucket.delete_key(key)
         finally:
@@ -157,7 +158,7 @@ class BotoS3Mixin(object):
             k = bucket.lookup(oldKey)
             if k is not None:
                 if oldKey.endswith('/'):
-                    for k in bucket.list(prefix=oldKey):
+                    for k in bucket.list(oldKey, self.delimiter):
                         n = newKey + k.key[len(oldKey):]
                         k.copy(self.bucket_name, n, preserve_acl=True)
                         k.delete()
@@ -174,7 +175,7 @@ class BotoS3Mixin(object):
             k = bucket.lookup(srcKey)
             if k is not None:
                 if srcKey.endswith('/'):
-                    for k in bucket.list(prefix=srcKey):
+                    for k in bucket.list(srcKey, self.delimiter):
                         n = targetKey + k.key[len(srcKey):]
                         bucket.delete_key(n)
                         k.copy(self.bucket_name, n, preserve_acl=True)
@@ -191,7 +192,7 @@ class BotoS3Mixin(object):
         try:
             bucket = connection.get_bucket(self.bucket_name)
             keys = [
-                x.key for x in bucket.list(prefix=parentKey) if x.key != parentKey
+                x.key for x in bucket.list(parentKey, self.delimiter) if x.key != parentKey
             ]
             bucket.delete_keys(keys)
         finally:
