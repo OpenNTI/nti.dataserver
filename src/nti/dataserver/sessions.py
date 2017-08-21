@@ -192,9 +192,10 @@ class SessionService(object):
                     def _get_sessions():
                         t0 = time.time()
                         result = {sid: self.get_session(sid) for sid in watching_sessions}
-                        logger.info('Performed maintenance on %s sessions (%.2f)',
-                                    len(result),
-                                    time.time() - t0 )
+                        if result:
+                            logger.info('Performed maintenance on %s sessions (%.2f)',
+                                        len(result),
+                                        time.time() - t0 )
                         return result
                     sessions = tx_runner(_get_sessions, retries=5, sleep=0.1)
                 except transaction.interfaces.TransientError:
@@ -213,8 +214,9 @@ class SessionService(object):
                         cleaned_count += 1
                         logger.log(TRACE, "Session %s died", sid)
                         self._watching_sessions.discard(sid)
-                logger.info( 'Cleaned up %s sessions (checked_count=%s)',
-                             cleaned_count, len(watching_sessions))
+                if cleaned_count:
+                    logger.info( 'Cleaned up %s sessions (checked_count=%s)',
+                                 cleaned_count, len(watching_sessions))
         return gevent.spawn(watchdog_sessions)
 
     def _dispatch_message_to_proxy(self, session_id, function_name, function_arg):
@@ -661,10 +663,6 @@ def _decrement_count_for_dead_socket(session, event):
     redis = component.getUtility(IRedisClient)
     if redis.zscore(_session_active_keys, session.owner):
         redis.zincrby(_session_active_keys, session.owner, -1)
-
-
-
-
 
 deprecated('SessionServiceStorage', 'Use new session storage')
 class SessionServiceStorage(Persistent):
