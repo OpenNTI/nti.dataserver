@@ -18,10 +18,11 @@ from pyramid.threadlocal import get_current_request
 from nti.app.authentication.interfaces import ILogonWhitelist
 from nti.app.authentication.interfaces import ISiteLogonWhitelist
 
-from nti.app.users.utils import get_user_creation_site
+from nti.app.users.utils import get_user_creation_sitename
 
 from nti.dataserver.authorization import is_admin_or_site_admin
 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users.users import User
@@ -41,12 +42,21 @@ def get_remote_user(request=None, dataserver=None):
     return result
 
 
-def user_can_login(username, check_sites=False):
+def user_can_login_in_site(user):
+    if not IUser.providedBy(user):
+        user = User.get_user(str(user))
+    result = user is not None  # validate
+    if result and not is_admin_or_site_admin(user):
+        sitelist = component.getUtility(ISiteLogonWhitelist)
+        site = get_user_creation_sitename(user)
+        result = bool(not site or site in sitelist)
+    return result
+
+
+def user_can_login(username, check_sites=True):
     whitelist = component.getUtility(ILogonWhitelist)
     user = User.get_user(username)
     result = username in whitelist and user is not None
-    if check_sites and result and not is_admin_or_site_admin(user):
-        sitelist = component.getUtility(ISiteLogonWhitelist)
-        site = get_user_creation_site(user)
-        result = not site or site in sitelist
+    if result and check_sites:
+        result = user_can_login_in_site(user)
     return result
