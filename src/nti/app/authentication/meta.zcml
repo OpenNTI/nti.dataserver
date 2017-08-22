@@ -9,7 +9,7 @@
 			handler=".zcml.registerLogonWhitelist" />
 		
 		<meta:directive
-			name="sites"
+			name="sitelist"
 			schema=".zcml.ISiteLogonWhitelistDirective"
 			handler=".zcml.registerSiteLogonWhitelist" />
 			
