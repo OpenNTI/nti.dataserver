@@ -18,6 +18,8 @@ from hamcrest import has_property
 
 from zope import lifecycleevent
 
+from nti.app.users.utils import get_user_creation_sitename
+
 from nti.dataserver.contenttypes import Note
 
 from nti.dataserver.users import User
@@ -25,6 +27,8 @@ from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.dataserver.users.utils import is_email_verified
+
+from nti.site.hostpolicy import get_all_host_sites
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -130,14 +134,21 @@ class TestAdminViews(ApplicationLayerTest):
         username = u'ichigo'
         with mock_dataserver.mock_db_trans(self.ds):
             User.create_user(username=username)
+            sites = list(get_all_host_sites())
+            sitename = sites[0].__name__ if sites else 'dataserver2'
 
         self.testapp.post_json('/dataserver2/@@SetUserCreationSite',
                                {'username': username, 'site':'invalid_site'},
                                status=422)
 
         self.testapp.post_json('/dataserver2/@@SetUserCreationSite',
-                               {'username': username, 'site':'dataserver2'},
+                               {'username': username, 'site':sitename},
                                status=204)
+        
+        with mock_dataserver.mock_db_trans(self.ds):
+            creation_site = get_user_creation_sitename(username)
+            if sitename != 'dataserver2':
+                assert_that(creation_site, is_(sitename))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_remove_user(self):

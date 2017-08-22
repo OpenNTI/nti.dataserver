@@ -295,9 +295,6 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
                                  None)
 
         set_user_creation_site(user, site)
-        verified = reindex_email_verification(user)
-        assert verified
-
         return hexc.HTTPNoContent()
 
 

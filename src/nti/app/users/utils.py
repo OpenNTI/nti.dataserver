@@ -275,19 +275,18 @@ def get_user_creation_sitename(user):
     return site.__name__ if site is not None else None
 
 
+def remove_user_creation_site(user):
+    user = get_user(user)
+    annotations = IAnnotations(user, None) or {}
+    annotations.pop(_CREATION_SITE_KEY, None)
+
+
 def set_user_creation_site(user, site=None):
     user = get_user(user)
     site = getSite() if site is None else site
     name = getattr(site, '__name__', None) or str(site)
     if name == 'dataserver2':
-        annotations = IAnnotations(user, None) or {}
-        annotations.pop(_CREATION_SITE_KEY, None)
+        remove_user_creation_site(user)
     elif name:
         annotations = IAnnotations(user, None) or {}
         annotations[_CREATION_SITE_KEY] = name
-
-
-def remove_user_creation_site(user):
-    user = get_user(user)
-    annotations = IAnnotations(user, None) or {}
-    annotations.pop(_CREATION_SITE_KEY, None)
