@@ -265,8 +265,13 @@ def safe_send_email_verification(user, profile, email, request=None, check=True)
 
 def get_user_creation_site(user):
     annotations = IAnnotations(user, None) or {}
-    name = annotations.get(_CREATION_SITE_KEY) or ''
-    return get_host_site(name)
+    name = annotations.get(_CREATION_SITE_KEY, None)
+    return get_host_site(name, True) if name else name
+
+
+def get_user_creation_sitename(user):
+    site = get_user_creation_site(user)
+    return site.__name__ if site is not None else None
 
 
 def set_user_creation_site(user, site=None):
