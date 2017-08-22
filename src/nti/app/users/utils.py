@@ -264,6 +264,7 @@ def safe_send_email_verification(user, profile, email, request=None, check=True)
 
 
 def get_user_creation_site(user):
+    user = get_user(user)
     annotations = IAnnotations(user, None) or {}
     name = annotations.get(_CREATION_SITE_KEY, None)
     return get_host_site(name, True) if name else name
@@ -275,7 +276,8 @@ def get_user_creation_sitename(user):
 
 
 def set_user_creation_site(user, site=None):
-    site = site or getSite()
+    user = get_user(user)
+    site = getSite() if site is None else site
     name = getattr(site, '__name__', None) or str(site)
     if name == 'dataserver2':
         annotations = IAnnotations(user, None) or {}
@@ -286,5 +288,6 @@ def set_user_creation_site(user, site=None):
 
 
 def remove_user_creation_site(user):
+    user = get_user(user)
     annotations = IAnnotations(user, None) or {}
     annotations.pop(_CREATION_SITE_KEY, None)
