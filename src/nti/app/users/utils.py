@@ -277,7 +277,10 @@ def get_user_creation_sitename(user):
 def set_user_creation_site(user, site=None):
     site = site or getSite()
     name = getattr(site, '__name__', None) or str(site)
-    if name and name != 'dataserver2':
+    if name == 'dataserver2':
+        annotations = IAnnotations(user, None) or {}
+        annotations.pop(_CREATION_SITE_KEY, None)
+    elif name:
         annotations = IAnnotations(user, None) or {}
         annotations[_CREATION_SITE_KEY] = name
 
