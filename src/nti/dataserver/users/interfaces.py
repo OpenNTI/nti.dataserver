@@ -534,6 +534,10 @@ class ISocialMediaProfile(Interface):
     linkedIn = ValidURI(title=u'linkedIn',
                         description=u'The LinkedIn URL',
                         required=False)
+    
+    instagram = ValidURI(title=u'instagram',
+                         description=u'The Instagram URL',
+                         required=False)
 
 
 class IEducation(Interface):
@@ -743,8 +747,6 @@ class ICommunitySchema(IFriendlyNamed, IAboutProfile):
 
 class ICommunityProfile(IUserProfile, ICommunitySchema):
     pass
-
-
 ICommunityProfile['avatarURL']._type = (str, six.text_type)  # relax
 ICommunityProfile['backgroundURL']._type = (str, six.text_type)  # relax
 
