@@ -6,7 +6,7 @@ Subscribers for various authentication-related events.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -25,7 +25,7 @@ from pyramid.request import Request
 
 
 @component.adapter(IRequest, IObjectCreatedEvent)
-def _decode_username_request_event(request, event):
+def _decode_username_request_event(request, unused_event):
     """
     Decodes %40 in a Basic Auth username into an @, and canonizes the
     incoming username to lower case. Modifies the request if
@@ -50,23 +50,23 @@ def _decode_username_request_event(request, event):
 
 def _decode_username_request(request):
     authmeth, auth = request.authorization or ('', '')
-    if authmeth.lower() != b'basic':
+    if authmeth.lower() != 'basic':
         return (None, None)
 
     # Remember here we're working with byte headers
     try:
-        username, password = auth.strip().decode('base64').split(b':', 1)
+        username, password = auth.strip().decode('base64').split(':', 1)
     except (ValueError, binascii.Error):  # pragma: no cover
         return (None, None)
 
     # we only get here with two strings, although either could be empty
     if username:
-        canonical_username = username.lower().replace(b'%40', b'@').strip()
+        canonical_username = username.lower().replace('%40', '@').strip()
     else:
         canonical_username = username
     if canonical_username != username:
         username = canonical_username
-        auth = (username + b':' + password).encode('base64').strip()
+        auth = (username + ':' + password).encode('base64').strip()
         request.authorization = (authmeth, auth)
         request.remote_user = username
 

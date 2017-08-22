@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -31,6 +31,7 @@ from nti.app.saml.client import BasicSAMLClient
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 DEFAULT_SP_JSON = 'sp.json'
+
 
 # functions
 
@@ -224,6 +225,7 @@ def make_plugin(path=None,
     finally:
         os.chdir(cwd)
 
+
 # classes
 
 
@@ -240,9 +242,9 @@ class SAML2Plugin(_SAML2Plugin):
         try:
             environ['wsgi.input'].seek(0)  # allow reading
             wsgi_input = environ['wsgi.input'].read()  # copy
-            return wsgi_input or b''
+            return wsgi_input or ''
         except Exception:
-            return b''
+            return ''
 
     def identify(self, environ):
         # allow SAML2Plugin to consume input
