@@ -16,10 +16,15 @@ from zope import component
 from pyramid.threadlocal import get_current_request
 
 from nti.app.authentication.interfaces import ILogonWhitelist
+from nti.app.authentication.interfaces import ISiteLogonWhitelist
 
-from nti.dataserver.users.users import User
+from nti.app.users.utils import get_user_creation_site
+
+from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IDataserver
+
+from nti.dataserver.users.users import User
 
 
 def get_remote_user(request=None, dataserver=None):
@@ -31,11 +36,17 @@ def get_remote_user(request=None, dataserver=None):
     request = get_current_request() if request is None else request
     dataserver = dataserver or component.queryUtility(IDataserver)
     if request is not None and dataserver is not None:
-        username = request.authenticated_userid or u''
+        username = request.authenticated_userid or ''
         result = User.get_user(username, dataserver=dataserver)
     return result
 
 
-def user_can_login(username):
+def user_can_login(username, check_sites=False):
     whitelist = component.getUtility(ILogonWhitelist)
-    return username in whitelist and User.get_user(username) is not None
+    user = User.get_user(username)
+    result = username in whitelist and user is not None
+    if check_sites and result and not is_admin_or_site_admin(user):
+        sitelist = component.getUtility(ISiteLogonWhitelist)
+        site = get_user_creation_site(user)
+        result = not site or site in sitelist
+    return result
