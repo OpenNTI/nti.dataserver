@@ -15,7 +15,9 @@ from zope import component
 
 from pyramid.threadlocal import get_current_request
 
-from nti.dataserver import users
+from nti.app.authentication.interfaces import ILogonWhitelist
+
+from nti.dataserver.users.users import User
 
 from nti.dataserver.interfaces import IDataserver
 
@@ -30,5 +32,10 @@ def get_remote_user(request=None, dataserver=None):
     dataserver = dataserver or component.queryUtility(IDataserver)
     if request is not None and dataserver is not None:
         username = request.authenticated_userid or u''
-        result = users.User.get_user(username, dataserver=dataserver)
+        result = User.get_user(username, dataserver=dataserver)
     return result
+
+
+def user_can_login(username):
+    whitelist = component.getUtility(ILogonWhitelist)
+    return username in whitelist and User.get_user(username) is not None

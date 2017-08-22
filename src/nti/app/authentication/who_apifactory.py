@@ -19,7 +19,7 @@ from zope import component
 from repoze.who.api import APIFactory
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 
-from nti.app.authentication.interfaces import ILogonWhitelist
+from nti.app.authentication import user_can_login
 
 from nti.app.authentication.who_authenticators import KnownUrlTokenBasedAuthenticator
 from nti.app.authentication.who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
@@ -33,8 +33,6 @@ from nti.app.authentication.who_classifiers import forbidden_or_missing_challeng
 from nti.app.authentication.who_redirector import BrowserRedirectorPlugin
 
 from nti.appserver.interfaces import IApplicationSettings
-
-from nti.dataserver.users import User
 
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
@@ -66,10 +64,6 @@ def create_who_apifactory(secure_cookies=True,
     # but the native string type.
     basicauth = BasicAuthPlugin('NTI')
     basicauth_interactive = ApplicationBasicAuthPlugin('NTI')
-
-    def user_can_login(username):
-        whitelist = component.getUtility(ILogonWhitelist)
-        return username in whitelist and User.get_user(username) is not None
 
     auth_tkt = AuthTktCookiePlugin(cookie_secret,
                                    'nti.auth_tkt',

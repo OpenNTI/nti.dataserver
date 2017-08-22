@@ -11,7 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
 from zope import interface
 
 from zope.authentication.interfaces import ILoginPassword
@@ -19,7 +18,7 @@ from zope.authentication.interfaces import ILoginPassword
 from zope.pluggableauth.factories import PrincipalInfo
 from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
-from nti.app.authentication.interfaces import ILogonWhitelist
+from nti.app.authentication import user_can_login
 
 from nti.dataserver.users import User
 
@@ -47,8 +46,7 @@ class DataserverUsersAuthenticatorPlugin(object):
             login = credentials.get('login')
             password = credentials.get('password')
 
-        whitelist = component.getUtility(ILogonWhitelist)
-        if login not in whitelist:
+        if not user_can_login(login):
             return None
 
         user = User.get_user(login)
