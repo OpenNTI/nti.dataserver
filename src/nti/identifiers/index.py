@@ -13,12 +13,14 @@ from nti.zope_catalog.catalog import Catalog
 
 from nti.zope_catalog.index import AttributeSetIndex
 
+
 class ValidatingExternalIdentifiers(object):
     pass
+
 
 class ExternalIdIndex(AttributeSetIndex):
     pass
 
+
 class ExternalIdentifierCatalog(Catalog):
     pass
-
