@@ -126,6 +126,20 @@ class TestAdminViews(ApplicationLayerTest):
         assert_that(res.json_body, has_entry('Token', is_(int)))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_set_user_creation_site(self):
+        username = u'ichigo'
+        with mock_dataserver.mock_db_trans(self.ds):
+            User.create_user(username=username)
+
+        self.testapp.post_json('/dataserver2/@@SetUserCreationSite',
+                               {'username': username, 'site':'invalid_site'},
+                               status=422)
+
+        self.testapp.post_json('/dataserver2/@@SetUserCreationSite',
+                               {'username': username, 'site':'dataserver2'},
+                               status=204)
+
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_remove_user(self):
         username = u'user_one'
 

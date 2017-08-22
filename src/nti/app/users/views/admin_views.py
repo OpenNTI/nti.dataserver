@@ -18,6 +18,7 @@ from requests.structures import CaseInsensitiveDict
 
 from zope import component
 
+from zope.component.hooks import getSite
 from zope.component.hooks import site as current_site
 
 from zope.intid.interfaces import IIntIds
@@ -38,6 +39,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
+from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import generate_mail_verification_pair
 
 from nti.app.users.views import username_search
@@ -70,7 +72,7 @@ from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.site.hostpolicy import get_all_host_sites
+from nti.site.hostpolicy import get_all_host_sites, get_host_site
 
 from nti.zodb.containers import bit64_int_to_time
 
@@ -138,7 +140,7 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Must specify a username.'),
+                                 'message': _(u'Must specify a username.'),
                              },
                              None)
         result = LocatedExternalDict()
@@ -169,7 +171,7 @@ class GetEmailVerificationTokenView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Must specify a username.'),
+                                 'message': _(u'Must specify a username.'),
                              },
                              None)
         user = User.get_user(username)
@@ -177,7 +179,7 @@ class GetEmailVerificationTokenView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'User not found.'),
+                                 'message': _(u'User not found.'),
                              },
                              None)
         profile = IUserProfile(user)
@@ -186,7 +188,7 @@ class GetEmailVerificationTokenView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Email address not provided.'),
+                                 'message': _(u'Email address not provided.'),
                              },
                              None)
         signature, token = generate_mail_verification_pair(user, email)
@@ -215,15 +217,15 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Must specify a username.'),
+                                 'message': _(u'Must specify a username.'),
                              },
                              None)
         user = User.get_user(username)
-        if user is None or not IUser.providedBy(user):
+        if not IUser.providedBy(user):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'User not found.'),
+                                 'message': _(u'User not found.'),
                              },
                              None)
         profile = IUserProfile(user)
@@ -232,7 +234,7 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Email address not provided.'),
+                                 'message': _(u'Email address not provided.'),
                              },
                              None)
         else:
@@ -242,11 +244,57 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
                                  {
-                                    'message': _(u'Invalid email address.'),
+                                     'message': _(u'Invalid email address.'),
                                  },
                                  None)
         profile.email = email
         profile.email_verified = True
+        verified = reindex_email_verification(user)
+        assert verified
+
+        return hexc.HTTPNoContent()
+
+
+@view_config(name='SetUserCreationSite')
+@view_config(name='set_user_creation_site')
+@view_defaults(route_name='objects.generic.traversal',
+               request_method='POST',
+               context=IDataserverFolder,
+               renderer='rest',
+               permission=nauth.ACT_NTI_ADMIN)
+class SetUserCreationSiteView(AbstractAuthenticatedView,
+                              ModeledContentUploadRequestUtilsMixin):
+
+    def __call__(self):
+        values = CaseInsensitiveDict(self.readInput())
+        username = values.get('username') or values.get('user')
+        if not username:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Must specify a username.'),
+                             },
+                             None)
+        user = User.get_user(username)
+        if not IUser.providedBy(user):
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'User not found.'),
+                             },
+                             None)
+        site = values.get('site') or getattr(getSite(), '__name__', None)
+        if site != 'dataserver2':
+            site = get_host_site(site, True) if site else None
+            if site is None:
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Invalid site.'),
+                                 },
+                                 None)
+
+        set_user_creation_site(user, site)
         verified = reindex_email_verification(user)
         assert verified
 
@@ -270,7 +318,7 @@ class RemoveUserView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Must specify a username.'),
+                                 'message': _(u'Must specify a username.'),
                              },
                              None)
         user = User.get_user(username)
@@ -278,7 +326,7 @@ class RemoveUserView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'User not found.'),
+                                 'message': _(u'User not found.'),
                              },
                              None)
         endInteraction()
