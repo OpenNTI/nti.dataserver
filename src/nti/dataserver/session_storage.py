@@ -7,7 +7,7 @@ Storage for sessions, providing an implementation of
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -30,10 +30,10 @@ import persistent
 
 from nti.common.sets import discard
 
-from nti.dataserver import users
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ISessionServiceStorage
+
+from nti.dataserver.users.users import User
 
 from nti.intid import utility as intid_utility
 
@@ -44,9 +44,10 @@ from nti.zodb import readCurrent
 # an LLTreeSet to hold session_ids. But that was a duplicate
 # of what we're already doing in the intids `refs` btree
 # When we switched, we didn't delete annotations
-_OWNED_SESSIONS_KEY = __name__ + '.' + \
-                      '_OwnerAnnotationBasedServiceStorage' + \
-                      '.' + 'session_set'
+_OWNED_SESSIONS_KEY = __name__ + '.' \
+                    + '_OwnerAnnotationBasedServiceStorage' \
+                    + '.' \
+                    + 'session_set'
 
 
 def _read_current(obj, container=False):
@@ -87,7 +88,7 @@ class _OwnerSetMapping(persistent.Persistent):
         except NotYet:
             # ok, can we find an owner user? Fallback is us
             # TODO Why are we doing this?
-            user = users.User.get_user(session.owner)
+            user = User.get_user(session.owner)
             for o in user, self:
                 try:
                     IConnection(o, None).add(session)
@@ -214,7 +215,7 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 
 
 @component.adapter(IUser, IObjectRemovedEvent)
-def _remove_sessions_for_removed_user(user, event):
+def _remove_sessions_for_removed_user(user, unused_event):
     storage = component.queryUtility(ISessionServiceStorage)
     # This is tightly coupled to OwnerBasedAnnotationSessionServiceStorage
     if hasattr(storage, 'unregister_all_sessions_for_owner'):
