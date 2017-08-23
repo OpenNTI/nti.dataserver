@@ -12,14 +12,14 @@ The previous system, libACL, made a distinction between three axis of
 security:
 
 *Authentication*
-	Are you who you say you are?
+    Are you who you say you are?
 
 *Authorization*
-	Can you take the action you are proposing?
+    Can you take the action you are proposing?
 
 *Access Control*
-	If you are who you say you are, and you can generally perform the
-	action, can you perform it to this specific bit of data?
+    If you are who you say you are, and you can generally perform the
+    action, can you perform it to this specific bit of data?
 
 Authorization was provided by a system of *capabilities* would could
 be assigned to individual users, groups, or roles. A user could belong
@@ -68,7 +68,7 @@ sub-types of roles may have a prefix to that, such as ``content-role:``.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -103,6 +103,8 @@ from persistent import Persistent
 
 from BTrees.OOBTree import OOSet
 
+from nti.base._compat import text_
+
 from nti.dataserver.interfaces import system_user
 from nti.dataserver.interfaces import IGroupMember
 
@@ -132,7 +134,7 @@ if not '__str__' in Permission.__dict__:
 
 if not '__repr__' in Permission.__dict__:
     Permission.__repr__ = lambda x: "%s('%s','%s','%s')" % \
-        (x.__class__.__name__, x.id, x.title, x.description)
+                          (x.__class__.__name__, x.id, x.title, x.description)
 
 if not '__eq__' in Permission.__dict__:
     Permission.__eq__ = lambda x, y: x.id == getattr(y, 'id', Permission)
@@ -145,7 +147,9 @@ ACT_CREATE = Permission('nti.actions.create')
 ACT_DELETE = Permission('nti.actions.delete')
 ACT_UPDATE = Permission('nti.actions.update')
 ACT_SEARCH = Permission('nti.actions.search')
+
 ACT_LIST = Permission('nti.actions.list')
+
 ACT_MODERATE = Permission('nti.actions.moderate')
 ACT_IMPERSONATE = Permission('nti.actions.impersonate')
 
@@ -200,6 +204,7 @@ class _PersistentGroupMember(Persistent,
 
     def hasGroups(self):
         return '_groups' in self.__dict__ and len(self._groups)
+
 
 # This factory is registered for the default annotation
 _persistent_group_member_factory = afactory(_PersistentGroupMember)
@@ -291,7 +296,7 @@ class _AbstractPrincipal(object):
 
     def __repr__(self):
         return "%s('%s')" % (self.__class__.__name__,
-                             unicode(self.id).encode('unicode_escape'))
+                             text_(self.id).encode('unicode_escape'))
 
 
 @component.adapter(basestring)
@@ -314,20 +319,21 @@ def _system_user_factory(s):
     return system_user
 
 
-def _zope_unauth_user_factory(s):
+def _zope_unauth_user_factory(_):
     return component.getUtility(IUnauthenticatedPrincipal)
 
 
-def _zope_unauth_group_factory(s):
+def _zope_unauth_group_factory(_):
     return component.getUtility(IUnauthenticatedGroup)
 
 
-def _zope_auth_group_factory(s):
+def _zope_auth_group_factory(_):
     return component.getUtility(IAuthenticatedGroup)
 
 
-def _zope_everyone_group_factory(s):
+def _zope_everyone_group_factory(_):
     return component.getUtility(IEveryoneGroup)
+
 
 # Let the system user externalize
 system_user.toExternalObject = \
@@ -361,6 +367,7 @@ def role_for_providers_content(provider, local_part):
     and having the local (specific) part of an NTIID matching ``local_part``
     """
     return IRole(CONTENT_ROLE_PREFIX + provider.lower() + ':' + local_part.lower())
+
 
 #: Name of the super-user group that is expected to have full rights
 #: in certain areas
@@ -404,7 +411,7 @@ class _EveryoneGroup(_StringGroup):
 
     def __init__(self, string):
         assert string == self.REQUIRED_NAME
-        super(_EveryoneGroup, self).__init__(unicode(string))
+        super(_EveryoneGroup, self).__init__(text_(string))
         self.title = self.description
 
     username = alias('id')
@@ -426,17 +433,16 @@ class _EveryoneGroup(_StringGroup):
     # overriding __eq__ blocks inheritance of __hash__ in py3
     __hash__ = _StringGroup.__hash__
 
-    def toExternalObject(self, *args, **kwargs):
+    def toExternalObject(self, *unused_args, **unused_kwargs):
         return {'Class': 'Entity', 'Username': self.id}
-
 _EveryoneGroup.description = _EveryoneGroup.__doc__
 
 
 class _AuthenticatedGroup(_EveryoneGroup):
-    "The subset of everyone that is authenticated"
-
+    """
+    The subset of everyone that is authenticated
+    """
     REQUIRED_NAME = AUTHENTICATED_GROUP_NAME
-
 _AuthenticatedGroup.description = _AuthenticatedGroup.__doc__
 
 
@@ -508,8 +514,8 @@ class _UserPrincipal(_AbstractPrincipal):
         # Only set NTIID if our context is marked as not
         # being unique by only the username.
         if IUseNTIIDAsExternalUsername.providedBy(user):
-            self.NTIID = getattr(user, 'NTIID', None) or getattr(
-                user, 'ntiid', None)
+            self.NTIID = getattr(user, 'NTIID', None) \
+                      or getattr(user, 'ntiid', None)
 
     username = alias('id')
     title = alias('id')
@@ -532,7 +538,7 @@ class _UserGroupAwarePrincipal(_UserPrincipal):
 
 
 # optional multi-adapt
-def _UserGroupAwarePrincipalAnnotations(_ugaware_principal, *args):
+def _UserGroupAwarePrincipalAnnotations(_ugaware_principal, *unused_args):
     return IAnnotations(_ugaware_principal.context)
 
 # Reverses that back to externalization
@@ -554,13 +560,14 @@ class _DFLPrincipal(_UserPrincipal):
     pass
 _DFLGroup = _DFLPrincipal
 
+
 from zope.security.interfaces import IParticipation
 
 
 @interface.implementer(IParticipation)
 class _Participation(object):
 
-    __slots__ = b'interaction', b'principal'  # XXX: Py3
+    __slots__ = ('interaction', 'principal')
 
     def __init__(self, principal):
         self.interaction = None
@@ -637,5 +644,5 @@ def is_admin_or_content_admin_or_site_admin(user):
     `ROLE_ADMIN` or `ROLE_CONTENT_ADMIN` roles.
     """
     return is_admin(user) \
-    	or is_content_admin(user) \
-    	or is_site_admin(user)
+        or is_content_admin(user) \
+        or is_site_admin(user)
