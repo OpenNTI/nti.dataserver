@@ -6,7 +6,7 @@ Constants and types for dealing with our unique IDs.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -160,6 +160,7 @@ class AbstractAdaptingUserBasedResolver(AbstractUserBasedResolver):
     default_value = None
 
     def _resolve(self, ntiid, user):
+        __traceback_info__ = ntiid, user
         return component.queryAdapter(user, self.adapt_to, default=self.default_value)
 
 

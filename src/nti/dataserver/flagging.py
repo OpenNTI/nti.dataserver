@@ -6,7 +6,7 @@ Support for flagging modeled content.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -33,7 +33,7 @@ from nti.dataserver.interfaces import ObjectFlaggedEvent
 from nti.dataserver.interfaces import ObjectUnflaggedEvent
 
 
-def flag_object(context, username):
+def flag_object(context, unused_username=None):
     """
     Cause `username` to flag the object `context` for moderation action.
 
@@ -49,7 +49,7 @@ def flag_object(context, username):
         return False
 
 
-def flags_object(context, username):
+def flags_object(context, unused_username=None):
     """
     Returns whether the `context` object has been flagged. This may or may not
     take into account the username who is asking.
@@ -64,7 +64,7 @@ def flags_object(context, username):
         return None
 
 
-def unflag_object(context, username):
+def unflag_object(context, unused_username=None):
     """
     Removes the flag status of the username.
 
@@ -77,17 +77,16 @@ def unflag_object(context, username):
 
 
 @component.adapter(IFlaggable, IIntIdRemovedEvent)
-def _delete_flagged_object(flaggable, event):
+def _delete_flagged_object(flaggable, unused_event):
     unflag_object(flaggable, None)
 
 
-@interface.implementer(IGlobalFlagStorage)
 @component.adapter(IFlaggable)
-def FlaggableGlobalFlagStorageFactory(context):
+@interface.implementer(IGlobalFlagStorage)
+def FlaggableGlobalFlagStorageFactory(unused_context):
     """
     Finds the global flag storage as a registered utility
     """
-
     return component.getUtility(IGlobalFlagStorage)
 
 
@@ -123,8 +122,8 @@ class IntIdGlobalFlagStorage(Persistent):
         iid = self._intids.queryId(context)
         if iid is None:  # pragma: no cover
             # We've seen this during moderation; how did that happen?
-            logger.warn(
-                "Context %s has no intid, cannot be un/flagged", context)
+            logger.warn("Context %s has no intid, cannot be un/flagged",
+                        context)
             return
 
         if sets.discard_p(self.flagged, iid):

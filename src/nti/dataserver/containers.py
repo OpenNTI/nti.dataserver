@@ -13,7 +13,7 @@ from zope import component
 
 from zope.container.contained import contained
 
-from zope.container.interfaces import IContained
+from zope.location.interfaces import IContained
 
 from ZODB.interfaces import IConnection
 

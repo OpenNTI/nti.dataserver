@@ -271,7 +271,7 @@ class _ChangeExternalObject(object):
     def __init__(self, change):
         self.change = change
 
-    def toExternalObject(self, *args, **kwargs):
+    def toExternalObject(self, *unused_args, **kwargs):
         kwargs.pop('name', None)
         change = self.change
         wrapping = change.object

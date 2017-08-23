@@ -6,7 +6,7 @@ An implementation of rating adapters.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -143,7 +143,7 @@ def cached_decorator(key_func):
                         if cached is not None:
                             return cached
                     except Exception as e:
-                        logger.error("Cannot get Memcache value for key %s. %s", 
+                        logger.error("Cannot get Memcache value for key %s. %s",
                                      key, e)
                         cached = None
 
@@ -213,7 +213,7 @@ class RatingDecorator(object):
                 mapping['Rating'] = float(rating)
 
 
-def update_last_mod(modified_object, event):
+def update_last_mod(modified_object, unused_event=None):
     """
     When an object is rated (or unrated), its last modified time, and
     that of its parent, should be updated.

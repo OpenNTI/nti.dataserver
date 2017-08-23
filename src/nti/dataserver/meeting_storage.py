@@ -6,7 +6,7 @@ Dataserver-specific storage for :mod:`nti.chatserver` :class:`nti.chatserver.mee
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -31,7 +31,7 @@ from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.dataserver.interfaces import IEntity
 
-from nti.dataserver.users import Entity
+from nti.dataserver.users.entity import Entity
 
 from nti.datastructures.datastructures import check_contained_object_for_storage
 
@@ -62,7 +62,7 @@ class CreatorBasedAnnotationMeetingStorage(object):
     to somehow work in the intid value, but we don't have that.)
     """
 
-    def __init__(self):
+    def __init__(self, *args):
         pass
 
     def __delitem__(self, room_id):
@@ -85,7 +85,7 @@ class CreatorBasedAnnotationMeetingStorage(object):
             return result
         if result is not None:
             logger.debug("Attempted to use chatserver to find non-meeting with id %s",
-						 room_id)
+                         room_id)
 
     def add_room(self, room):
         check_contained_object_for_storage(room)
@@ -103,8 +103,8 @@ class CreatorBasedAnnotationMeetingStorage(object):
         if IConnection(room, None) is None:
             IConnection(creator).add(room)
 
-        room.id = to_external_ntiid_oid(
-            room, default_oid=None, add_to_intids=True)
+        room.id = to_external_ntiid_oid(room, default_oid=None,
+                                        add_to_intids=True)
         if room.id is None:
             __traceback_info__ = creator, meeting_container, room
             raise ValueError("Unable to get OID for room")

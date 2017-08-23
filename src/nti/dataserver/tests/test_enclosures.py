@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -13,56 +13,60 @@ from hamcrest import is_not
 from hamcrest import has_entry
 from hamcrest import assert_that
 
+from nti.testing.matchers import implements
+
 import unittest
 
-from .. import enclosures
-from .. import interfaces
+from nti.dataserver import enclosures
+from nti.dataserver import interfaces
 
-from . import implements
+from nti.dataserver.tests import mock_dataserver
 
-from . import mock_dataserver
 
 class TestSimpleEnclosureMixin(unittest.TestCase):
 
-	layer = mock_dataserver.SharedConfiguringTestLayer
-	def test_iface(self):
-		assert_that( enclosures.SimplePersistentEnclosure, implements( interfaces.IEnclosedContent ))
+    layer = mock_dataserver.SharedConfiguringTestLayer
 
-	def test_add_enclosure(self):
-		sem = enclosures.SimpleEnclosureMixin()
+    def test_iface(self):
+        assert_that(enclosures.SimplePersistentEnclosure,
+                    implements(interfaces.IEnclosedContent))
 
-		# enclosures created on demand
-		assert_that( '_enclosures', is_not( is_in( sem.__dict__ ) ) )
-		assert_that( list(sem.iterenclosures()), is_( [] ) )
+    def test_add_enclosure(self):
+        sem = enclosures.SimpleEnclosureMixin()
 
-		# accepts None gracefully
-		sem.add_enclosure( None )
-		assert_that( '_enclosures', is_not( is_in( sem.__dict__ ) ) )
+        # enclosures created on demand
+        assert_that('_enclosures', is_not(is_in(sem.__dict__)))
+        assert_that(list(sem.iterenclosures()), is_([]))
 
-		with self.assertRaises(AttributeError):
-			sem.add_enclosure( '' )
+        # accepts None gracefully
+        sem.add_enclosure(None)
+        assert_that('_enclosures', is_not(is_in(sem.__dict__)))
 
-		class Content(object): pass
-		content = Content()
-		content.name = 'Name'
+        with self.assertRaises(AttributeError):
+            sem.add_enclosure('')
 
-		sem.add_enclosure( content )
-		# alias this object to ensure that it doesn't accidentally
-		# get overwritten
-		sem.enclosures = getattr( sem, '_enclosures' )
-		assert_that( content.name, is_( 'Name' ) )
-		assert_that( sem.enclosures, has_entry( 'Name', content ) )
-		assert_that( list( sem.iterenclosures() ), is_( [content] ) )
+        class Content(object):
+            pass
+        content = Content()
+        content.name = 'Name'
 
-		# Chooses names
-		content2 = Content()
-		content2.name = 'Name'
+        sem.add_enclosure(content)
+        # alias this object to ensure that it doesn't accidentally
+        # get overwritten
+        sem.enclosures = getattr(sem, '_enclosures')
+        assert_that(content.name, is_('Name'))
+        assert_that(sem.enclosures, has_entry('Name', content))
+        assert_that(list(sem.iterenclosures()), is_([content]))
 
-		sem._enclosures._v_nextid = 1 # deterministic ids
-		sem.add_enclosure( content2 )
-		assert_that( content.name, is_('Name') )
-		assert_that( sem.enclosures, has_entry( 'Name', content ) )
-		assert_that( content2.name, is_( 'Name.1' ) )
-		assert_that( sem.enclosures, has_entry( 'Name.1', content2 ) )
+        # Chooses names
+        content2 = Content()
+        content2.name = 'Name'
 
-		assert_that( list( sem.iterenclosures() ), is_( [content,content2] ) )
+        sem._enclosures._v_nextid = 1  # deterministic ids
+        sem.add_enclosure(content2)
+        assert_that(content.name, is_('Name'))
+        assert_that(sem.enclosures, has_entry('Name', content))
+        assert_that(content2.name, is_('Name.1'))
+        assert_that(sem.enclosures, has_entry('Name.1', content2))
+
+        assert_that(list(sem.iterenclosures()), is_([content, content2]))

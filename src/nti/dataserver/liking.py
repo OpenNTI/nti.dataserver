@@ -5,14 +5,15 @@ An implementation of liking and liking adapters.
 
 The primary implementation here is built on the :mod:`contentratings`
 package, but takes care to not create persistent objects
-for read-only requests (e.g., viewing the likes of an object). [TODO: An alternate
+for read-only requests (e.g., viewing the likes of an object).
+[TODO: An alternate
 approach is to create these objects when the object is created by adapting it
 directly.]
 
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -51,8 +52,7 @@ def _lookup_like_rating_for_write(context, cat_name=LIKE_CAT_NAME):
 
 
 def _rates_object(context, username, cat_name, safe=False):
-    result = ranking.get_object_rating(context, username, cat_name, safe=safe,
-                                       default=False)
+    result = ranking.get_object_rating(context, username, cat_name, safe, False)
     return result
 
 # We define likes simply as a rating of 1, and unlikes remove
@@ -163,6 +163,7 @@ def unfavorite_object(context, username):
 
 
 def _favorites_object_cache_key(context, username, safe=False):
+    __traceback_info__ = username, safe
     return ranking.generic_cache_key(context, FAVR_CAT_NAME, username)
 
 
@@ -182,7 +183,7 @@ def favorites_object(context, username, safe=False):
     :return: An object with a boolean value; if the user likes the object, the value
             is True-y.
     """
-    return _rates_object(context, username, FAVR_CAT_NAME, safe=safe)
+    return _rates_object(context, username, FAVR_CAT_NAME, safe)
 
 
 @interface.implementer(IExternalMappingDecorator)
@@ -197,6 +198,7 @@ class LikeDecorator(object):
     def decorateExternalMapping(self, context, mapping):
         # go through the function to be safe
         mapping['LikeCount'] = like_count(context)
+
 
 from zope.container.contained import Contained
 
@@ -261,7 +263,7 @@ class _BinaryUserRatings(Contained, Persistent):
         self._length.change(-1)
         return NPRating(0, username)
 
-    def all_user_ratings(self, include_anon=False):
+    def all_user_ratings(self, unused_include_anon=False):
         """
         :param bool include_anon: Ignored.
         """
@@ -285,7 +287,6 @@ class _BinaryUserRatings(Contained, Persistent):
         with the given session_key rated the object.
         """
         raise NotImplementedError()  # pragma: no cover
-        # return datetime.utcnow()
 
     @property
     def most_recent(self):

@@ -6,7 +6,7 @@ Functions and architecture for general activity streams.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -51,7 +51,6 @@ class ReplyToNotableFilter(object):
         obj_creator = getattr(obj, 'creator', None)
         obj_parent = getattr(obj, 'inReplyTo', None)
         parent_creator = getattr(obj_parent, 'creator', None)
-
         if      obj_creator is not None \
             and obj_parent is not None \
             and obj_creator != user \

@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -30,7 +30,7 @@ from nti.dataserver.interfaces import ISiteRoleManager
 from nti.externalization.persistence import NoPickle
 
 
-def site_role_manager(site):
+def site_role_manager(unused_site):
     return component.queryUtility(ISiteRoleManager)
 
 
