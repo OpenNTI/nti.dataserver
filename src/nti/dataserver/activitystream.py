@@ -102,7 +102,7 @@ def _stream_preflight(contained):
 
 
 @component.adapter(IContained, IBeforeIdRemovedEvent)
-def stream_willRemoveIntIdForContainedObject(contained, event):
+def stream_willRemoveIntIdForContainedObject(contained, _):
     # Make the containing owner broadcast the stream DELETED event /now/,
     # while we can still get an ID, to keep catalogs and whatnot
     # up-to-date.
@@ -120,7 +120,7 @@ def stream_willRemoveIntIdForContainedObject(contained, event):
 
 
 @component.adapter(IContained, IAfterIdAddedEvent)
-def stream_didAddIntIdForContainedObject(contained, event):
+def stream_didAddIntIdForContainedObject(contained, _):
     creation_targets = _stream_preflight(contained)
     if creation_targets is None:
         return
