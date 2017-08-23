@@ -241,8 +241,7 @@ class _FriendsListExternalObject(_EntityExternalObject):
     _BACKGROUND_URL = False
 
     def _do_toExternalObject(self, **kwargs):
-        extDict = super(_FriendsListExternalObject,
-                        self)._do_toExternalObject(**kwargs)
+        extDict = super(_FriendsListExternalObject, self)._do_toExternalObject(**kwargs)
         theFriends = []
         for friend in iter(self.entity):  # iter self to weak refs and dups
             if isinstance(friend, users.Entity):
