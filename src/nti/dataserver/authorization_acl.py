@@ -689,11 +689,11 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
         # might pull in the wrong permissions, depending on how the nesting
         # goes (?)
         parent = getattr(self.context, '__parent__', None)
-        if IReadableShared.providedBy(parent) \
-                or IModeledContentBody.providedBy(parent):
+        if     IReadableShared.providedBy(parent) \
+            or IModeledContentBody.providedBy(parent):
             result = _ACL()
-            self._extend_with_admin_privs(
-                result, 'Nested _ShareableModeledContentACLProvider')
+            self._extend_with_admin_privs(result, 
+                                          'Nested _ShareableModeledContentACLProvider')
             return result
         return super(_ShareableModeledContentACLProvider, self).__acl__
 

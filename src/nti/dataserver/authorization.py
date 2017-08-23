@@ -354,8 +354,8 @@ class _StringRole(_StringGroup):
     pass
 StringRole = _StringRole
 
-ROLE_PREFIX = 'role:'
-CONTENT_ROLE_PREFIX = 'content-role:'
+ROLE_PREFIX = u'role:'
+CONTENT_ROLE_PREFIX = u'content-role:'
 
 _content_role_member_factory = _make_group_member_factory(CONTENT_ROLE_PREFIX,
                                                           _PersistentRoleMember)
@@ -371,27 +371,27 @@ def role_for_providers_content(provider, local_part):
 
 #: Name of the super-user group that is expected to have full rights
 #: in certain areas
-ROLE_ADMIN_NAME = ROLE_PREFIX + 'nti.admin'
+ROLE_ADMIN_NAME = ROLE_PREFIX + u'nti.admin'
 ROLE_ADMIN = _StringRole(ROLE_ADMIN_NAME)
 
 #: Name of the high-permission group that is expected to have certain
 #: moderation-like rights in certain areas
-ROLE_MODERATOR_NAME = ROLE_PREFIX + 'nti.moderator'
+ROLE_MODERATOR_NAME = ROLE_PREFIX + u'nti.moderator'
 ROLE_MODERATOR = _StringRole(ROLE_MODERATOR_NAME)
 
 #: Name of the high-permission group that is expected to have certain
 #: content-edit-like rights in certain areas
-ROLE_CONTENT_EDITOR_NAME = ROLE_PREFIX + 'nti.content.editor'
+ROLE_CONTENT_EDITOR_NAME = ROLE_PREFIX + u'nti.content.editor'
 ROLE_CONTENT_EDITOR = _StringRole(ROLE_CONTENT_EDITOR_NAME)
 
 #: Name of the high-permission group that is expected to have certain
 #: content-edit-like rights globally.
-ROLE_CONTENT_ADMIN_NAME = 'nti.roles.contentlibrary.admin'
+ROLE_CONTENT_ADMIN_NAME = u'nti.roles.contentlibrary.admin'
 ROLE_CONTENT_ADMIN = _StringRole(ROLE_CONTENT_ADMIN_NAME)
 
 #: Name of the high-permission group that is expected to have
 #: administrative abilities within a site.
-ROLE_SITE_ADMIN_NAME = ROLE_PREFIX + 'nti.dataserver.site-admin'
+ROLE_SITE_ADMIN_NAME = ROLE_PREFIX + u'nti.dataserver.site-admin'
 ROLE_SITE_ADMIN = _StringRole(ROLE_SITE_ADMIN_NAME)
 
 # We're now using the zope principal registry in
