@@ -140,28 +140,28 @@ if not '__eq__' in Permission.__dict__:
     Permission.__eq__ = lambda x, y: x.id == getattr(y, 'id', Permission)
 
 #: zope basic
-ACT_READ = Permission('zope.View')
+ACT_READ = Permission(u'zope.View')
 
 #: These are also registered in configure.zcml
-ACT_CREATE = Permission('nti.actions.create')
-ACT_DELETE = Permission('nti.actions.delete')
-ACT_UPDATE = Permission('nti.actions.update')
-ACT_SEARCH = Permission('nti.actions.search')
+ACT_CREATE = Permission(u'nti.actions.create')
+ACT_DELETE = Permission(u'nti.actions.delete')
+ACT_UPDATE = Permission(u'nti.actions.update')
+ACT_SEARCH = Permission(u'nti.actions.search')
 
-ACT_LIST = Permission('nti.actions.list')
+ACT_LIST = Permission(u'nti.actions.list')
 
-ACT_MODERATE = Permission('nti.actions.moderate')
-ACT_IMPERSONATE = Permission('nti.actions.impersonate')
+ACT_MODERATE = Permission(u'nti.actions.moderate')
+ACT_IMPERSONATE = Permission(u'nti.actions.impersonate')
 
 #: admin
-ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
+ACT_COPPA_ADMIN = Permission(u'nti.actions.coppa_admin')
 ACT_NTI_ADMIN = ACT_COPPA_ADMIN  # alias
 
 #: sync lib
-ACT_SYNC_LIBRARY = Permission('nti.actions.contentlibrary.sync_library')
+ACT_SYNC_LIBRARY = Permission(u'nti.actions.contentlibrary.sync_library')
 
 #: content edit
-ACT_CONTENT_EDIT = Permission('nti.actions.contentedit')
+ACT_CONTENT_EDIT = Permission(u'nti.actions.contentedit')
 
 
 @interface.implementer(IMutableGroupMember)
