@@ -140,28 +140,28 @@ if not '__eq__' in Permission.__dict__:
     Permission.__eq__ = lambda x, y: x.id == getattr(y, 'id', Permission)
 
 #: zope basic
-ACT_READ = Permission(u'zope.View')
+ACT_READ = Permission('zope.View')
 
 #: These are also registered in configure.zcml
-ACT_CREATE = Permission(u'nti.actions.create')
-ACT_DELETE = Permission(u'nti.actions.delete')
-ACT_UPDATE = Permission(u'nti.actions.update')
-ACT_SEARCH = Permission(u'nti.actions.search')
+ACT_CREATE = Permission('nti.actions.create')
+ACT_DELETE = Permission('nti.actions.delete')
+ACT_UPDATE = Permission('nti.actions.update')
+ACT_SEARCH = Permission('nti.actions.search')
 
-ACT_LIST = Permission(u'nti.actions.list')
+ACT_LIST = Permission('nti.actions.list')
 
-ACT_MODERATE = Permission(u'nti.actions.moderate')
-ACT_IMPERSONATE = Permission(u'nti.actions.impersonate')
+ACT_MODERATE = Permission('nti.actions.moderate')
+ACT_IMPERSONATE = Permission('nti.actions.impersonate')
 
 #: admin
-ACT_COPPA_ADMIN = Permission(u'nti.actions.coppa_admin')
+ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
 ACT_NTI_ADMIN = ACT_COPPA_ADMIN  # alias
 
 #: sync lib
-ACT_SYNC_LIBRARY = Permission(u'nti.actions.contentlibrary.sync_library')
+ACT_SYNC_LIBRARY = Permission('nti.actions.contentlibrary.sync_library')
 
 #: content edit
-ACT_CONTENT_EDIT = Permission(u'nti.actions.contentedit')
+ACT_CONTENT_EDIT = Permission('nti.actions.contentedit')
 
 
 @interface.implementer(IMutableGroupMember)
@@ -237,7 +237,7 @@ class _AbstractPrincipal(object):
     """
     Root for all actual :class:`IPrincipal` implementations.
     """
-    id = ''
+    id = u''
 
     def __eq__(self, other):
         try:
@@ -305,7 +305,7 @@ class _StringPrincipal(_AbstractPrincipal):
     """
     Allows any string to be an IPrincipal.
     """
-    description = ''
+    description = u''
 
     def __init__(self, name):
         super(_StringPrincipal, self).__init__()
@@ -354,8 +354,8 @@ class _StringRole(_StringGroup):
     pass
 StringRole = _StringRole
 
-ROLE_PREFIX = u'role:'
-CONTENT_ROLE_PREFIX = u'content-role:'
+ROLE_PREFIX = 'role:'
+CONTENT_ROLE_PREFIX = 'content-role:'
 
 _content_role_member_factory = _make_group_member_factory(CONTENT_ROLE_PREFIX,
                                                           _PersistentRoleMember)
@@ -371,27 +371,27 @@ def role_for_providers_content(provider, local_part):
 
 #: Name of the super-user group that is expected to have full rights
 #: in certain areas
-ROLE_ADMIN_NAME = ROLE_PREFIX + u'nti.admin'
+ROLE_ADMIN_NAME = ROLE_PREFIX + 'nti.admin'
 ROLE_ADMIN = _StringRole(ROLE_ADMIN_NAME)
 
 #: Name of the high-permission group that is expected to have certain
 #: moderation-like rights in certain areas
-ROLE_MODERATOR_NAME = ROLE_PREFIX + u'nti.moderator'
+ROLE_MODERATOR_NAME = ROLE_PREFIX + 'nti.moderator'
 ROLE_MODERATOR = _StringRole(ROLE_MODERATOR_NAME)
 
 #: Name of the high-permission group that is expected to have certain
 #: content-edit-like rights in certain areas
-ROLE_CONTENT_EDITOR_NAME = ROLE_PREFIX + u'nti.content.editor'
+ROLE_CONTENT_EDITOR_NAME = ROLE_PREFIX + 'nti.content.editor'
 ROLE_CONTENT_EDITOR = _StringRole(ROLE_CONTENT_EDITOR_NAME)
 
 #: Name of the high-permission group that is expected to have certain
 #: content-edit-like rights globally.
-ROLE_CONTENT_ADMIN_NAME = u'nti.roles.contentlibrary.admin'
+ROLE_CONTENT_ADMIN_NAME = 'nti.roles.contentlibrary.admin'
 ROLE_CONTENT_ADMIN = _StringRole(ROLE_CONTENT_ADMIN_NAME)
 
 #: Name of the high-permission group that is expected to have
 #: administrative abilities within a site.
-ROLE_SITE_ADMIN_NAME = ROLE_PREFIX + u'nti.dataserver.site-admin'
+ROLE_SITE_ADMIN_NAME = ROLE_PREFIX + 'nti.dataserver.site-admin'
 ROLE_SITE_ADMIN = _StringRole(ROLE_SITE_ADMIN_NAME)
 
 # We're now using the zope principal registry in
