@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+
 from zope import component
 from zope import interface
 
@@ -265,7 +267,7 @@ def _make_min_max_btree_range(search_term):
 	# Get all the keys up to the next one that is alphabetically after this
 	# one....note because it is a range we need to increment the *last*
 	# character in the prefix
-	max_exclusive = search_term[0:-1] + unichr(ord(search_term[-1]) + 1)
+	max_exclusive = search_term[0:-1] + six.unichr(ord(search_term[-1]) + 1)
 	return min_inclusive, max_exclusive
 
 def _intids_to_provided(intids, provided, matches):
