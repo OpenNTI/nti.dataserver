@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
-
-import urllib
 
 from hamcrest import is_
 from hamcrest import none
@@ -27,13 +25,15 @@ from nti.externalization.representation import to_json_representation
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.dataserver.tests import mock_dataserver
-
-from nti.app.testing.webtest import TestApp
-from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
-GIF_DATAURL = b'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.app.testing.webtest import TestApp
+
+from nti.dataserver.tests import mock_dataserver
+
+GIF_DATAURL = 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 
 
 class TestNote(ApplicationLayerTest):
@@ -59,13 +59,11 @@ class TestNote(ApplicationLayerTest):
 
         data = to_json_representation(ext_obj)
         testapp = TestApp(self.app)
-        path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/'
-        res = testapp.post(
-                urllib.quote(path),
-                data,
-                extra_environ=self._make_extra_environ(update_request=True),
-                headers={u"Content-Type": b"application/json"},
-                status=201)
+        path = '/dataserver2/users/sjohnson@nextthought.com/Objects/'
+        res = testapp.post(path, data,
+                           extra_environ=self._make_extra_environ(update_request=True),
+                           headers={"Content-Type": "application/json"},
+                           status=201)
         assert_that(res.json_body,
                     has_entry('body',
                               has_item(has_entries('Class', 'ContentBlobFile',
@@ -120,13 +118,11 @@ class TestNote(ApplicationLayerTest):
 
         data = to_json_representation(ext_obj)
         testapp = TestApp(self.app)
-        path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/'
-        res = testapp.post(
-                urllib.quote(path),
-                data,
-                extra_environ=self._make_extra_environ(update_request=True),
-                headers={u"Content-Type": b"application/json"},
-                status=201)
+        path = '/dataserver2/users/sjohnson@nextthought.com/Objects/'
+        res = testapp.post(path, data,
+                           extra_environ=self._make_extra_environ(update_request=True),
+                           headers={"Content-Type": "application/json"},
+                           status=201)
         path = res.json_body['href']
         durl = res.json_body['body'][1]['download_url']
         # Update
@@ -135,7 +131,7 @@ class TestNote(ApplicationLayerTest):
         data = to_json_representation(ext_obj)
         res = testapp.put(path, data,
                           extra_environ=self._make_extra_environ(),
-                          headers={u"Content-Type": b"application/json"},
+                          headers={"Content-Type": "application/json"},
                           status=200)
 
         res = testapp.get(durl,
@@ -160,14 +156,13 @@ class TestNote(ApplicationLayerTest):
                    "body": ['ichigo', ext_file],
                    "title": "bleach"}
 
-        path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/'
+        path = '/dataserver2/users/sjohnson@nextthought.com/Objects/'
 
         data = {'__json__': to_json_representation(ext_obj)}
-        res = self.testapp.post(
-                urllib.quote(path),
-                data,
-                upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
-                status=201)
+        res = self.testapp.post(path,
+                                data,
+                                upload_files=[('ichigo', 'ichigo.txt', b'ichigo')],
+                                status=201)
 
         durl = res.json_body['body'][1]['download_url']
 
@@ -183,7 +178,7 @@ class TestNote(ApplicationLayerTest):
         ext_file3['name'] = 'ichigo3'
         ext_obj['body'] = ['ichigo', ext_file, ext_file2, ext_file3]
         data = {'__json__': to_json_representation(ext_obj)}
-        res = self.testapp.post(urllib.quote(path),
+        res = self.testapp.post(path,
                                 data,
                                 upload_files=[
                                     ('ichigo', 'ichigo.txt', b'ichigo'),

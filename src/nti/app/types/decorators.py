@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -22,9 +22,10 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.dataserver.authorization import ACT_UPDATE
 
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IThreadable
-from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
@@ -45,7 +46,7 @@ class _NoteRequestDecorator(AbstractAuthenticatedRequestAwareDecorator):
         result = getattr(self.request, 'acl_decoration', True)
         return result
 
-    def _predicate(self, context, result):
+    def _predicate(self, context, unused_result):
         return  self._acl_decoration \
             and self._is_authenticated \
             and has_permission(ACT_UPDATE, context, self.request)

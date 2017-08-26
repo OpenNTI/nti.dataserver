@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -49,7 +49,7 @@ from nti.namedfile.interfaces import IFileConstraints
 
 @component.adapter(IRequest, INote)
 @interface.implementer(INewObjectTransformer)
-def _note_transformer_factory(request, context):
+def _note_transformer_factory(request, unused_context):
     result = partial(_note_transformer, request)
     return result
 
@@ -61,8 +61,8 @@ def _note_transformer(request, context):
     if sources and request and request.POST:
         read_multipart_sources(request, sources.values())
     if sources:
-        validate_attachments(get_remote_user(), 
-                             context, 
+        validate_attachments(get_remote_user(),
+                             context,
                              sources.values())
     return context
 
@@ -75,7 +75,7 @@ def _note_transformer(request, context):
 class NotePutView(UGDPutView):
 
     def updateContentObject(self, contentObject, externalValue, set_id=False,
-                            notify=True, pre_hook=None, object_hook=None):
+                            notify=True, *unused_args, **unused_kwargs):
         result = UGDPutView.updateContentObject(self,
                                                 contentObject=contentObject,
                                                 externalValue=externalValue,
@@ -116,7 +116,7 @@ def validate_attachments(user, context, sources=()):
 
 @component.adapter(INote)
 @interface.implementer(IFileConstraints)
-def _NoteFileConstraints(note):
+def _NoteFileConstraints(unused_note):
     result = FileConstraints()
     result.max_file_size = 10485760  # 10 MB
     return result
