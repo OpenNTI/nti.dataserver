@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -15,15 +15,17 @@ __docformat__ = "restructuredtext en"
 from nti.dataserver.tests.mock_dataserver import DataserverTestLayer
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
+
 class UsersTestLayer(DataserverTestLayer):
 
-	@classmethod
-	def setUp(cls):
-		pass
-	tearDown = setUp
-	setUpTest= setUp
-	tearDownTest = setUp
+    @classmethod
+    def setUp(cls):
+        pass
+
+    tearDown = setUp
+    setUpTest = setUp
+    tearDownTest = setUp
+
 
 class UsersLayerTest(DataserverLayerTest):
-
-	layer = UsersTestLayer
+    layer = UsersTestLayer

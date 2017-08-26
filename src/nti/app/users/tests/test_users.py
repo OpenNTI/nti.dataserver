@@ -20,12 +20,14 @@ from zope import lifecycleevent
 
 from nti.dataserver.interfaces import IDataserver
 
-from nti.dataserver.users import User
-from nti.dataserver.users import Community
-from nti.dataserver.users import DynamicFriendsList
+from nti.dataserver.users.communities import Community
+
+from nti.dataserver.users.friends_lists import DynamicFriendsList
 
 from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
+
+from nti.dataserver.users.users import User
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -39,6 +41,7 @@ class TestUsers(ApplicationLayerTest):
 
     @WithSharedApplicationMockDSWithChanges
     def test_user_blacklist(self):
+
         username = u'lazarus'
         with mock_dataserver.mock_db_trans(self.ds):
             # Create user

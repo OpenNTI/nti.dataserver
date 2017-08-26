@@ -125,9 +125,8 @@ class DFLActivityView(EntityActivityViewMixin):
         return self.context.NTIID
 
 
-@view_config(name='ListDFLs')
-@view_config(name='list_dfls')
 @view_config(name='list.dfls')
+@view_config(name='list_dfls')
 @view_defaults(route_name='objects.generic.traversal',
                request_method='GET',
                context=IDataserverFolder,

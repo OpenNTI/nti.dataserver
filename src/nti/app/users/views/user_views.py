@@ -6,7 +6,7 @@ Generic views for any user (or sometimes, entities).
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -36,7 +36,7 @@ from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUsersFolder
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.users import Entity
+from nti.dataserver.users.entity import Entity
 
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
@@ -53,7 +53,7 @@ from nti.links import render_link
 ITEMS = StandardExternalFields.ITEMS
 
 
-def _image_view(context, request, func):
+def _image_view(context, unused_request, func):
     """
     Redirects to the location of the actual image.
     """
@@ -127,17 +127,17 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
         memberships = set(context.dynamic_memberships)
         memberships.update(set(context.friendsLists.values()))
 
-        everyone = Entity.get_entity(u'Everyone')
+        everyone = Entity.get_entity('Everyone')
 
         def _selector(x):
             result = None
             if x == everyone:  # always
                 result = None
-            elif     ICommunity.providedBy(x) \
+            elif    ICommunity.providedBy(x) \
                 and not IDisallowMembershipOperations.providedBy(x) \
                 and (x.public or self.remoteUser in x):
                 result = toExternalObject(x, name='summary')
-            elif     IDynamicSharingTargetFriendsList.providedBy(x) \
+            elif    IDynamicSharingTargetFriendsList.providedBy(x) \
                 and (self.remoteUser in x or self.remoteUser == x.creator):
                 result = toExternalObject(x)
             return result
@@ -185,64 +185,58 @@ class UserUpdateView(UGDPutView):
             start_year = education.get('startYear', None)
             end_year = education.get('endYear', None)
             if start_year and not self.is_valid_year(start_year):
-                raise_json_error(
-                    self.request,
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'message': _('Invalid education start year.'),
-                        u'code': 'InvalidStartYear',
-                    },
-                    None)
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Invalid education start year.'),
+                                     'code': 'InvalidStartYear',
+                                 },
+                                 None)
             if end_year and not self.is_valid_year(end_year):
-                raise_json_error(
-                    self.request,
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'message': _('Invalid education end year.'),
-                        u'code': 'InvalidEndYear',
-                    },
-                    None)
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Invalid education end year.'),
+                                     'code': 'InvalidEndYear',
+                                 },
+                                 None)
             if start_year and end_year and not start_year <= end_year:
-                raise_json_error(
-                    self.request,
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'message': _('Invalid education year range.'),
-                        u'code': 'InvalidYearRange',
-                    },
-                    None)
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Invalid education year range.'),
+                                     'code': 'InvalidYearRange',
+                                 },
+                                 None)
 
         # Same thing for professional experience
         for position in source.get('positions') or ():
             start_year = position.get('startYear', None)
             end_year = position.get('endYear', None)
             if start_year and not self.is_valid_year(start_year):
-                raise_json_error(
-                    self.request,
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'message': _('Invalid position start year.'),
-                        u'code': 'InvalidStartYear',
-                    },
-                    None)
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Invalid position start year.'),
+                                     'code': 'InvalidStartYear',
+                                 },
+                                 None)
             if end_year and not self.is_valid_year(end_year):
-                raise_json_error(
-                    self.request,
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'message': _('Invalid position end year.'),
-                        u'code': 'InvalidEndYear',
-                    },
-                    None)
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Invalid position end year.'),
+                                     'code': 'InvalidEndYear',
+                                 },
+                                 None)
             if start_year and end_year and not start_year <= end_year:
-                raise_json_error(
-                    self.request,
-                    hexc.HTTPUnprocessableEntity,
-                    {
-                        u'message': _('Invalid position year range.'),
-                        u'code': 'InvalidYearRange',
-                    },
-                    None)
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Invalid position year range.'),
+                                     'code': 'InvalidYearRange',
+                                 },
+                                 None)
         return True
 
 

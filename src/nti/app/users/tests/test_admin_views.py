@@ -20,11 +20,11 @@ from zope import lifecycleevent
 
 from nti.app.users.utils import get_user_creation_sitename
 
-from nti.dataserver.contenttypes import Note
-
-from nti.dataserver.users import User
+from nti.dataserver.contenttypes.note import Note
 
 from nti.dataserver.users.interfaces import IUserProfile
+
+from nti.dataserver.users.users import User
 
 from nti.dataserver.users.utils import is_email_verified
 

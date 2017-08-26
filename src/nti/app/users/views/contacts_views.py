@@ -29,14 +29,14 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.users import User
-
 from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowSuggestedContacts
 from nti.dataserver.users.interfaces import get_all_suggested_contacts
 from nti.dataserver.users.interfaces import ISecondOrderSuggestedContactProvider
 
 from nti.dataserver.users.suggested_contacts import SuggestedContact
+
+from nti.dataserver.users.users import User
 
 from nti.externalization.externalization import toExternalObject
 
@@ -169,7 +169,7 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
         fill_in_count = self.result_count - len(intermediate_contacts)
         intermediate_usernames = {x.username for x in intermediate_contacts}
         for contact in get_all_suggested_contacts(self.context):
-            if         contact.username not in intermediate_usernames \
+            if      contact.username not in intermediate_usernames \
                 and contact.username not in self.existing_pool \
                 and not contact.username.endswith('@nextthought.com'):
                 contact = User.get_user(contact.username)
@@ -190,7 +190,7 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
         results[CLASS] = SUGGESTED_CONTACTS
         results[MIMETYPE] = SUGGESTED_CONTACTS_MIMETYPE
         # Only return anything if we meet our minimum requirements.
-        if         len(fill_in_contacts) >= self.MIN_FILL_COUNT \
+        if      len(fill_in_contacts) >= self.MIN_FILL_COUNT \
             and len(limited_contacts) + len(fill_in_contacts) >= self.MIN_RESULT_COUNT:
             result_list = []
             result_list.extend(limited_contacts)

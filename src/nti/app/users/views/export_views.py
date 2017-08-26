@@ -50,7 +50,7 @@ from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 from nti.dataserver.metadata.index import IX_CREATOR
 from nti.dataserver.metadata.index import IX_MIMETYPE
@@ -66,12 +66,15 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.externalization.proxy import removeAllProxies
 
+from nti.mimetype.externalization import decorateMimeType
+
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 OID = StandardExternalFields.OID
 CLASS = StandardExternalFields.CLASS
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
+MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 INTID = 'IntId'
@@ -108,7 +111,9 @@ def get_user_objects(user, mime_types=()):
 
         if mime_types:
             mime_types = tuple(mime_types)
-            mime_types_intids = catalog[IX_MIMETYPE].apply({'any_of': mime_types})
+            mime_types_intids = catalog[IX_MIMETYPE].apply(
+                {'any_of': mime_types}
+            )
         else:
             created_ids = ()  # mark so we don't query the catalog
     else:
@@ -120,7 +125,8 @@ def get_user_objects(user, mime_types=()):
     if mime_types_intids is None:
         result_ids = created_ids
     elif created_ids:
-        result_ids = catalog.family.IF.intersection(created_ids, mime_types_intids)
+        result_ids = catalog.family.IF.intersection(created_ids, 
+                                                    mime_types_intids)
 
     for uid in result_ids or ():
         try:
@@ -156,6 +162,8 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
     def _externalize(self, obj, decorate=False):
         try:
             result = toExternalObject(obj, decorate=decorate)
+            if MIMETYPE not in result:
+                decorateMimeType(obj, result)
         except NonExternalizableObjectError:
             result = {
                 CLASS: 'NonExternalizableObject',
@@ -185,7 +193,9 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
         else:
             usernames = ()
         total = 0
-        mime_types = values.get('mime_types') or values.get('mimeTypes') or ''
+        mime_types = values.get('accept') \
+                  or values.get('mime_types') \
+                  or values.get('mimeTypes') or ''
         mime_types = parse_mime_types(mime_types)
         result = LocatedExternalDict()
         items = result[ITEMS] = {}
@@ -218,7 +228,7 @@ class ObjectResolverView(AbstractAuthenticatedView):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Must specify a ntiid.'),
+                                 'message': _(u'Must specify a ntiid.'),
                              },
                              None)
         intids = component.getUtility(IIntIds)
@@ -253,6 +263,7 @@ class ObjectResolverView(AbstractAuthenticatedView):
 
 
 @view_config(name='ExportUsers')
+@view_config(name='export.users')
 @view_config(name='export_users')
 @view_defaults(route_name='objects.generic.traversal',
                renderer='rest',
@@ -275,7 +286,7 @@ class ExportUsersView(AbstractAuthenticatedView):
         items = result[ITEMS] = {}
         for username in usernames or ():
             user = User.get_user(username)
-            if user and IUser.providedBy(user):
+            if IUser.providedBy(user):
                 username = user.username
                 if summary:
                     items[username] = toExternalObject(user, name='summary')

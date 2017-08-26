@@ -18,9 +18,9 @@ from zope import interface
 
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
-from nti.dataserver.users import User
-
 from nti.dataserver.users.interfaces import IFriendlyNamed
+
+from nti.dataserver.users.users import User
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -36,17 +36,17 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
     @WithSharedApplicationMockDS
     def test_user_info_extract(self):
         with mock_dataserver.mock_db_trans(self.ds):
-            self._create_user(external_value={u'email': u"nti@nt.com",
-                                              u'realname': u'steve johnson',
-                                              u'alias': u'citadel'})
+            self._create_user(external_value={'email': u"nti@nt.com",
+                                              'realname': u'steve johnson',
+                                              'alias': u'citadel'})
             self._create_user(username=u'rukia@nt.com',
-                              external_value={u'email': u'rukia@nt.com',
-                                              u'realname': u'rukia foo',
-                                              u'alias': u'sode no shirayuki'})
+                              external_value={'email': u'rukia@nt.com',
+                                              'realname': u'rukia foo',
+                                              'alias': u'sode no shirayuki'})
             self._create_user(username=u'ichigo@nt.com',
-                              external_value={u'email': u'ichigo@nt.com',
-                                              u'realname': u'ichigo bar',
-                                              u'alias': u'zangetsu'})
+                              external_value={'email': u'ichigo@nt.com',
+                                              'realname': u'ichigo bar',
+                                              'alias': u'zangetsu'})
         testapp = TestApp(self.app)
 
         path = '/dataserver2/@@user_info_extract'
@@ -63,14 +63,14 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
     @WithSharedApplicationMockDS
     def test_inactive_accounts(self):
         with mock_dataserver.mock_db_trans(self.ds):
-            self._create_user(external_value={u'email': u"nti@nt.com",
-                                              u'realname': u'steve johnson'})
+            self._create_user(external_value={'email': u"nti@nt.com",
+                                              'realname': u'steve johnson'})
             self._create_user(username=u'rukia@nt.com',
-                              external_value={u'email': u'rukia@nt.com',
-                                              u'realname': u'rukia foo'})
+                              external_value={'email': u'rukia@nt.com',
+                                              'realname': u'rukia foo'})
             self._create_user(username=u'ichigo@nt.com',
-                              external_value={u'email': u'ichigo@nt.com',
-                                              u'realname': u'ichigo kurosaki'})
+                              external_value={'email': u'ichigo@nt.com',
+                                              'realname': u'ichigo kurosaki'})
         testapp = TestApp(self.app)
 
         path = '/dataserver2/@@inactive_accounts'
@@ -87,18 +87,18 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
     @WithSharedApplicationMockDS
     def test_opt_in_comm(self):
         with mock_dataserver.mock_db_trans(self.ds):
-            u = self._create_user(external_value={u'email': u"nti@nt.com",
-                                                  u'opt_in_email_communication': True})
+            u = self._create_user(external_value={'email': u"nti@nt.com",
+                                                  'opt_in_email_communication': True})
             interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
             u = self._create_user(username=u'rukia@nt.com',
-                                  external_value={u'email': u'rukia@nt.com',
-                                                  u'opt_in_email_communication': True})
+                                  external_value={'email': u'rukia@nt.com',
+                                                  'opt_in_email_communication': True})
             interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
             u = self._create_user(username=u'ichigo@nt.com',
-                                  external_value={u'email': u'ichigo@nt.com',
-                                                  u'opt_in_email_communication': True})
+                                  external_value={'email': u'ichigo@nt.com',
+                                                  'opt_in_email_communication': True})
             interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
         testapp = TestApp(self.app)
@@ -120,18 +120,18 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
     @WithSharedApplicationMockDS
     def test_emailed_verfied(self):
         with mock_dataserver.mock_db_trans(self.ds):
-            u = self._create_user(external_value={u'email': u"nti@nt.com",
-                                                  u'email_verified': True})
+            u = self._create_user(external_value={'email': u"nti@nt.com",
+                                                  'email_verified': True})
             interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
             u = self._create_user(username=u'rukia@nt.com',
-                                  external_value={u'email': u'rukia@nt.com',
-                                                  u'email_verified': True})
+                                  external_value={'email': u'rukia@nt.com',
+                                                  'email_verified': True})
             interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
             u = self._create_user(username=u'ichigo@nt.com',
-                                  external_value={u'email': u'ichigo@nt.com',
-                                                  u'email_verified': True})
+                                  external_value={'email': u'ichigo@nt.com',
+                                                  'email_verified': True})
             interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
         testapp = TestApp(self.app)
@@ -151,13 +151,13 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
     @WithSharedApplicationMockDS
     def test_profile_info(self):
         with mock_dataserver.mock_db_trans(self.ds):
-            u = self._create_user(external_value={u'email': u"nti@nt.com",
-                                                  u'opt_in_email_communication': True})
+            u = self._create_user(external_value={'email': u"nti@nt.com",
+                                                  'opt_in_email_communication': True})
             interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
             u = self._create_user(username=u'ichigo@nt.com',
-                                  external_value={u'email': u'ichigo@nt.com',
-                                                  u'opt_in_email_communication': True})
+                                  external_value={'email': u'ichigo@nt.com',
+                                                  'opt_in_email_communication': True})
 
         testapp = TestApp(self.app)
 
@@ -174,7 +174,8 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
     def test_update_profile(self):
         with mock_dataserver.mock_db_trans(self.ds):
             u = self._create_user(username=u'ichigo@nt.com',
-                                  external_value={u'email': u"ichigo@nt.com", u'alias': u'foo'})
+                                  external_value={'email': u"ichigo@nt.com", 
+                                                  'alias': u'foo'})
             assert_that(IFriendlyNamed(u), has_property('alias', 'foo'))
 
         post_data = {'username': 'ichigo@nt.com', 'alias': 'Ichigo'}

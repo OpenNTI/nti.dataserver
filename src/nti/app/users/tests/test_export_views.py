@@ -68,8 +68,10 @@ class TestUserExportViews(ApplicationLayerTest):
             storage.add_message(meet, msg)
 
         path = '/dataserver2/@@export_user_objects'
-        params = {"usernames": self.default_username,
-                  "mimeTypes": 'application/vnd.nextthought.note,application/vnd.nextthought.transcript'}
+        params = {
+            "usernames": self.default_username,
+            "mimeTypes": 'application/vnd.nextthought.note,application/vnd.nextthought.transcript'
+        }
         res = self.testapp.get(path, params, status=200)
         assert_that(res.json_body, has_entry('Total', is_(2)))
         assert_that(res.json_body,
@@ -77,8 +79,10 @@ class TestUserExportViews(ApplicationLayerTest):
                               has_entry(self.default_username, has_length(2))))
 
         path = '/dataserver2/@@export_user_objects'
-        params = {"usernames": self.default_username,
-                  "mimeTypes": 'application/vnd.nextthought.messageinfo'}
+        params = {
+            "usernames": self.default_username,
+            "mimeTypes": 'application/vnd.nextthought.messageinfo'
+        }
         res = self.testapp.get(path, params, status=200)
         assert_that(res.json_body, has_entry('Total', is_(1)))
         assert_that(res.json_body,
@@ -86,8 +90,10 @@ class TestUserExportViews(ApplicationLayerTest):
                               has_entry(self.default_username, has_length(1))))
 
         path = '/dataserver2/@@export_user_objects'
-        params = {"usernames": self.default_username,
-                  "mimeTypes": 'application/vnd.nextthought.note'}
+        params = {
+            "usernames": self.default_username,
+            "mimeTypes": 'application/vnd.nextthought.note'
+        }
         res = self.testapp.get(path, params, status=200)
         assert_that(res.json_body, has_entry('Total', is_(1)))
         assert_that(res.json_body,
@@ -156,4 +162,4 @@ class TestUserExportViews(ApplicationLayerTest):
 					has_entry('Object', has_entry('Class', is_('Note'))))
 
         path = '/dataserver2/@@ObjectResolver/foo'
-        res = self.testapp.get(path, status=404)
+        self.testapp.get(path, status=404)

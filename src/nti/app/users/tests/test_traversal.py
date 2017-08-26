@@ -33,6 +33,7 @@ class TestTraversal(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=False, testapp=False)
     def test_anonymous_user(self):
+
         with mock_dataserver.mock_db_trans(self.ds):
             dataserver = component.getUtility(IDataserver)
             users_folder = IShardLayout(dataserver).users_folder

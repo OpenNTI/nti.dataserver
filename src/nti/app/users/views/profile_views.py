@@ -48,11 +48,13 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
-from nti.dataserver.users import User
 from nti.dataserver.users.index import CATALOG_NAME
+
 from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
+
+from nti.dataserver.users.users import User
 
 from nti.externalization.externalization import to_external_object
 

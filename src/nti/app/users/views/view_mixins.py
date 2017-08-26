@@ -44,11 +44,11 @@ class EntityActivityViewMixin(UGDView):
     user must be a member of the given entity.
     """
 
-    def _set_user_and_ntiid(self, *args, **kwargs):
+    def _set_user_and_ntiid(self, *unused_args, **unusedkwargs):
         self.ntiid = u''
         self.user = self.remoteUser
 
-    def check_permission(self, context, user):
+    def check_permission(self, context, unused_user):
         if self.remoteUser != context.creator and self.remoteUser not in context:
             raise hexc.HTTPForbidden()
 
@@ -73,7 +73,7 @@ class EntityActivityViewMixin(UGDView):
                     obj = obj.__parent__  # return entry
                 yield obj
 
-    def getObjectsForId(self, *args, **kwargs):
+    def getObjectsForId(self, *unused_args, **unused_kwargs):
         context = self.request.context
         catalog = self.metadata_catalog
         self.check_permission(context, self.remoteUser)

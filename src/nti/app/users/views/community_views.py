@@ -59,7 +59,6 @@ TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 
-@view_config(name='CreateCommunity')
 @view_config(name='create_community')
 @view_config(name='create.community')
 @view_defaults(route_name='objects.generic.traversal',
@@ -90,13 +89,14 @@ class CreateCommunityView(AbstractAuthenticatedView,
                              None)
         args = {'username': username}
         args['external_value'] = externalValue
+        self.request.response.status_int = 201  # created
         community = Community.create_community(**args)
         return community
 
 
 def _make_min_max_btree_range(search_term):
     min_inclusive = search_term  # start here
-    max_exclusive = search_term[0:-1] + unichr(ord(search_term[-1]) + 1)
+    max_exclusive = search_term[0:-1] + six.unichr(ord(search_term[-1]) + 1)
     return min_inclusive, max_exclusive
 
 
@@ -113,9 +113,8 @@ def username_search(search_term=None):
     return usernames
 
 
-@view_config(name='ListCommunities')
-@view_config(name='list_communities')
 @view_config(name='list.communities')
+@view_config(name='list_communities')
 @view_defaults(route_name='objects.generic.traversal',
                request_method='GET',
                context=IDataserverFolder,
@@ -301,12 +300,12 @@ class UnhideCommunityMembershipView(AbstractAuthenticatedView):
              permission=nauth.ACT_READ)
 class CommunityActivityView(EntityActivityViewMixin):
 
-    def _set_user_and_ntiid(self, *args, **kwargs):
+    def _set_user_and_ntiid(self, *unused_args, **unused_kwargs):
         self.ntiid = u''
         self.user = self.remoteUser
 
     def _get_security_check(self):
-        def security_check(x):
+        def security_check(unused_x):
             return True
         return False, security_check
 

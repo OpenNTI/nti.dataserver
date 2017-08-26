@@ -54,14 +54,14 @@ from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
-from nti.dataserver.users import User
-
 from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.index import add_catalog_filters
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
+
+from nti.dataserver.users.users import User
 
 from nti.dataserver.users.utils import reindex_email_verification
 

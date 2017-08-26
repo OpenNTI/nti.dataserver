@@ -66,6 +66,6 @@ def parse_mime_types(value):
     if '*/*' in mime_types:
         mime_types = ()
     elif mime_types:
-        mime_types = {e.strip().lower() for e in mime_types}
+        mime_types = {e.strip().lower() for e in mime_types if e}
         mime_types.discard('')
     return tuple(mime_types) if mime_types else ()
