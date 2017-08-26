@@ -178,14 +178,7 @@ class _WebSocketPinger(_AbstractWebSocketOperator):
 
 	def __init__( self, *args, **kwargs ):
 		super(_WebSocketPinger,self).__init__( *args )
-		self.ping_sleep = kwargs.get( 'ping_sleep', 5.0 )
-
-	def _do_ping(self):
-		session = self.get_session()
-		if session and session.connected:
-			session.socket.send_heartbeat()
-			return True
-		return False
+		self.ping_sleep = kwargs.get( 'ping_sleep', 30.0 )
 
 	def _do_ping_direct( self ):
 		# Short cut everything to reduce DB activity
@@ -193,7 +186,8 @@ class _WebSocketPinger(_AbstractWebSocketOperator):
 			self.websocket.send( b"2::" )
 			return True
 		except Exception as e:
-			logger.debug( "Stopping sending pings to '%s' on %s", self.session_id, e )
+			logger.debug( "Stopping sending pings to '%s' on %s",
+						self.session_id, e )
 			return False
 
 	def _run(self):
@@ -201,8 +195,6 @@ class _WebSocketPinger(_AbstractWebSocketOperator):
 			sleep( self.ping_sleep )
 			if not self.run_loop:
 				break
-			# FIXME: Make time a config?
-			#self.run_loop &= run_job_in_site( self._do_ping, retries=5, sleep=0.1 )
 			self.run_loop &= self._do_ping_direct()
 
 class _WebSocketGreenlet(Greenlet):
@@ -229,8 +221,7 @@ class WebsocketTransport(BaseTransport):
 		super(WebsocketTransport,self).__init__(request)
 
 
-	def connect(self, session, request_method, ping_sleep=5.0 ):
-
+	def connect(self, session, request_method, ping_sleep=30.0 ):
 		websocket = self.request.environ['wsgi.websocket']
 		websocket.send( session.socket.protocol.make_connect() )
 		self.websocket = websocket

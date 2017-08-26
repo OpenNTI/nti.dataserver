@@ -72,6 +72,9 @@ POSSIBLE_TRANSPORTS = {'websocket', 'flashsocket', 'xhr-polling', 'jsonp-polling
 SUPPORTED_TRANSPORTS = {'websocket': 1,
 						'xhr-polling': 2}
 
+#: Twice as long as our ping time
+CLIENT_TIMEOUT_IN_SECONDS = 60
+
 @view_config(route_name=RT_HANDSHAKE)  # POST or GET
 def _handshake_view(request):
 	"""
@@ -86,7 +89,12 @@ def _handshake_view(request):
 														  nti.socketio.interfaces.ISocketIOTransport)
 					 if x[0] in SUPPORTED_TRANSPORTS]
 	handler_types = sorted(handler_types, key=lambda x: SUPPORTED_TRANSPORTS.get(x, -1))
-	data = "%s:15:10:%s" % (session.session_id, ",".join(handler_types))
+	# The two client side timeouts (heartbeat/close) essentially act the same;
+	# if either fires, the client will request a new session for the server.
+	data = "%s:%s:%s:%s" % (session.session_id,
+							CLIENT_TIMEOUT_IN_SECONDS,
+							CLIENT_TIMEOUT_IN_SECONDS,
+							",".join(handler_types))
 	data = data.encode('ascii')
 	# NOTE: We are not handling JSONP here. It should not be a registered transport
 
@@ -172,7 +180,7 @@ def _connect_view(request):
 
 	# Create a transport and handle the request likewise
 	try:
-		transport = component.getAdapter(request, 
+		transport = component.getAdapter(request,
 										 nti.socketio.interfaces.ISocketIOTransport,
 										 name=transport)
 	except LookupError:
