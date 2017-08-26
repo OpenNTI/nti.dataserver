@@ -134,7 +134,7 @@ class ListCommunitiesView(AbstractAuthenticatedView):
         intids = component.getUtility(IIntIds)
         catalog = get_entity_catalog()
         query = {
-            'any_of': (u'application/vnd.nextthought.community',)
+            'any_of': ('application/vnd.nextthought.community',)
         }
         doc_ids = catalog['mimeType'].apply(query)
 
