@@ -263,16 +263,15 @@ def safe_send_email_verification(user, profile, email, request=None, check=True)
         return False
 
 
-def get_user_creation_site(user):
+def get_user_creation_sitename(user):
     user = get_user(user)
     annotations = IAnnotations(user, None) or {}
-    name = annotations.get(_CREATION_SITE_KEY, None)
-    return get_host_site(name, True) if name else name
+    return annotations.get(_CREATION_SITE_KEY, None)
 
 
-def get_user_creation_sitename(user):
-    site = get_user_creation_site(user)
-    return site.__name__ if site is not None else None
+def get_user_creation_site(user):
+    name = get_user_creation_sitename(user)
+    return get_host_site(name, True) if name else None
 
 
 def remove_user_creation_site(user):
@@ -290,3 +289,4 @@ def set_user_creation_site(user, site=None):
     elif name:
         annotations = IAnnotations(user, None) or {}
         annotations[_CREATION_SITE_KEY] = name
+    return name
