@@ -41,8 +41,6 @@ from z3c.password import interfaces as pwd_interfaces
 
 from persistent.list import PersistentList
 
-from persistent.mapping import PersistentMapping
-
 from persistent.persistence import Persistent
 
 from nti.apns import interfaces as apns_interfaces
@@ -62,7 +60,6 @@ from nti.dataserver.interfaces import IContainerIterable
 from nti.dataserver.interfaces import ITranscriptContainer
 from nti.dataserver.interfaces import IDynamicSharingTarget
 from nti.dataserver.interfaces import IUserBlacklistedStorage
-from nti.dataserver.interfaces import IUserDigestEmailMetadata
 from nti.dataserver.interfaces import ITargetedStreamChangeEvent
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -81,8 +78,6 @@ from nti.dataserver.activitystream_change import Change
 from nti.datastructures import datastructures
 
 from nti.ntiids import ntiids
-
-from nti.property.property import annotation_alias
 
 from nti.zodb import minmax
 from nti.zodb import isBroken
@@ -1030,74 +1025,8 @@ def _blacklist_username(user, event):
 		user_blacklist.blacklist_user(user)
 		logger.info("Black-listing username %s", username)
 
-@component.adapter(IUser)
-@interface.implementer(IUserDigestEmailMetadata)
-class _UserDigestEmailMetadata(object):
-	"""
-	Holds digest email user metadata times.
-	"""
 
-	def __init__(self, user):
-		self.parent = user.__parent__
-		self.user_key = self._get_user_key( user )
-
-	def _get_user_key(self, user):
-		intids = component.getUtility(IIntIds)
-		user_intid = intids.getId( user )
-		return user_intid
-
-	_DIGEST_META_KEY = 'nti.dataserver.users.UsersDigestEmailMetadata'
-	_user_meta_storage = annotation_alias(_DIGEST_META_KEY,
-										annotation_property='parent',
-										doc="The time metadata storage on the users folder")
-
-	def _get_meta_storage(self):
-		if not self._user_meta_storage:
-			self._user_meta_storage = PersistentMapping()
-		return self._user_meta_storage
-
-	def _get_last_collected(self):
-		# last_collected is index 0
-		meta_storage = self._get_meta_storage()
-		try:
-			result = meta_storage[self.user_key]
-			result = result[0]
-		except KeyError:
-			result = 0
-		return result
-
-	def _set_last_collected(self, update_time):
-		meta_storage = self._get_meta_storage()
-		try:
-			user_data = meta_storage[self.user_key]
-			user_data = (update_time, user_data[1])
-		except KeyError:
-			user_data = (update_time, 0)
-		meta_storage[self.user_key] = user_data
-
-	def _get_last_sent(self):
-		# last_sent is index 1
-		meta_storage = self._get_meta_storage()
-		try:
-			result = meta_storage[self.user_key]
-			result = result[1]
-		except KeyError:
-			result = 0
-		return result
-
-	def _set_last_sent(self, update_time):
-		meta_storage = self._get_meta_storage()
-		try:
-			user_data = meta_storage[self.user_key]
-			user_data = (user_data[0], update_time)
-		except KeyError:
-			user_data = (0, update_time)
-		meta_storage[self.user_key] = user_data
-
-	last_sent = property(_get_last_sent, _set_last_sent)
-	last_collected = property(_get_last_collected, _set_last_collected)
-
-@component.adapter(IUser, IObjectRemovedEvent)
-def _digest_email_remove_user(user, unused_event):
-	user_metadata = component.getUtility(IUserDigestEmailMetadata)
-	user_metadata.remove_user_data(user)
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.dataserver.users.digest",
+	"nti.dataserver.users.digest",
+	"_UserDigestEmailMetadata")
