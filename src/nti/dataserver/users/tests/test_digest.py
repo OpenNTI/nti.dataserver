@@ -30,7 +30,7 @@ class TestDigest(unittest.TestCase):
 
     @WithMockDSTrans
     def test_storage(self):
-        user = User.create_user(username=u'ichigo@bleach.org')
+        user = User.create_user(username='ichigo@bleach.org')
         meta = IUserDigestEmailMetadata(user, None)
         assert_that(meta, is_not(none()))
         assert_that(meta, has_property('last_sent', is_(0)))
@@ -40,5 +40,5 @@ class TestDigest(unittest.TestCase):
         assert_that(meta, has_property('last_sent', is_(100)))
         assert_that(meta, has_property('last_collected', is_(80)))
         assert_that(meta, has_length(1))
-        User.delete_entity(u'ichigo@bleach.org')
+        User.delete_entity('ichigo@bleach.org')
         assert_that(meta, has_length(0))
