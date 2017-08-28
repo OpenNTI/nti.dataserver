@@ -18,8 +18,8 @@
 
 	<!-- Events -->
 	<subscriber handler=".users.onChange" />
-	<subscriber handler=".users._blacklist_username" />
 	<subscriber handler=".users.user_devicefeedback" />
+	<subscriber handler=".black_list._on_user_removed" />
 
 	<subscriber handler=".communities._add_member_to_community" />
 	<subscriber handler=".communities._remove_member_from_community" />

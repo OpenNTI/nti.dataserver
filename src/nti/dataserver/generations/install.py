@@ -77,7 +77,8 @@ from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.metadata.index import install_metadata_catalog
 
 from nti.dataserver.users import index as user_index
-from nti.dataserver.users.users import UserBlacklistedStorage
+
+from nti.dataserver.users.black_list import UserBlacklistedStorage
 
 from nti.intid import utility as intid_utility
 

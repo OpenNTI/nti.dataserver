@@ -29,8 +29,6 @@ from zope.deprecation import deprecated
 
 from zope.intid.interfaces import IIntIds
 
-from zope.lifecycleevent.interfaces import IObjectRemovedEvent
-
 from zope.location.interfaces import ISublocations
 
 from zope.password.interfaces import IPasswordManager
@@ -41,8 +39,6 @@ from z3c.password import interfaces as pwd_interfaces
 
 from persistent.list import PersistentList
 
-from persistent.persistence import Persistent
-
 from nti.apns import interfaces as apns_interfaces
 
 from nti.containers import dicts
@@ -52,14 +48,12 @@ from nti.dataserver import sharing
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IOpenIdUser
 from nti.dataserver.interfaces import ITranscript
-from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import IFacebookUser
 from nti.dataserver.interfaces import IIntIdIterable
 from nti.dataserver.interfaces import INamedContainer
 from nti.dataserver.interfaces import IContainerIterable
 from nti.dataserver.interfaces import ITranscriptContainer
 from nti.dataserver.interfaces import IDynamicSharingTarget
-from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.interfaces import ITargetedStreamChangeEvent
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -67,7 +61,6 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.users.entity import Entity
 from nti.dataserver.users.entity import get_shared_dataserver
 
-from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users.interfaces import _VERBOTEN_PASSWORDS
 from nti.dataserver.users.interfaces import InsecurePasswordIsForbidden
 from nti.dataserver.users.interfaces import PasswordCannotConsistOfOnlyWhitespace
@@ -81,8 +74,6 @@ from nti.ntiids import ntiids
 
 from nti.zodb import minmax
 from nti.zodb import isBroken
-
-from nti.zodb.containers import time_to_64bit_int
 
 # Starts as none, which matches what get_shared_dataserver takes as its
 # clue to use get instead of query. But set to False or 0 to use
@@ -970,61 +961,11 @@ def onChange(event):
 			pass
 		entity._noticeChange(msg)
 
-@interface.implementer(IZContained)
-@interface.implementer(IUserBlacklistedStorage)
-class UserBlacklistedStorage(Persistent):
-	"""
-	Stores deleted/blacklisted usernames case-insensitively in a btree
-	to their int-encoded delete times.
-	"""
 
-	def __init__(self):
-		self._storage = BTrees.OLBTree.BTree()
-
-	def _get_user_key(self, user):
-		username = getattr(user, 'username', user)
-		return username.lower()
-
-	def blacklist_user(self, user):
-		now = time.time()
-		user_key = self._get_user_key(user)
-		self._storage[user_key] = time_to_64bit_int(now)
-	add = blacklist_user
-
-	def is_user_blacklisted(self, user):
-		user_key = self._get_user_key(user)
-		return user_key in self._storage
-	__contains__ = is_user_blacklisted
-
-	def remove_blacklist_for_user(self, username):
-		result = False
-		try:
-			del self._storage[username]
-			result = True
-		except KeyError:
-			pass
-		return result
-	remove = remove_blacklist_for_user
-
-	def clear(self):
-		self._storage.clear()
-	reset = clear
-
-	def __iter__(self):
-		return iter(self._storage.items())
-
-	def __len__(self):
-		return len(self._storage)
-
-@component.adapter(IUser, IObjectRemovedEvent)
-def _blacklist_username(user, event):
-	username = user.username
-	if 		not IRecreatableUser.providedBy(user) \
-		and not username.lower().endswith('@nextthought.com'):
-		user_blacklist = component.getUtility(IUserBlacklistedStorage)
-		user_blacklist.blacklist_user(user)
-		logger.info("Black-listing username %s", username)
-
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.dataserver.users.black_list",
+	"nti.dataserver.users.black_list",
+	"UserBlacklistedStorage")
 
 zope.deferredimport.deprecatedFrom(
 	"Moved to nti.dataserver.users.digest",
