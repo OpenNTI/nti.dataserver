@@ -284,7 +284,6 @@ setup(
         'perfmetrics',  # easy statsd metrics.
         'plone.scale',     # image scaling/storage based on PIL
         # much like zope.file, but some image-specific goodness.
-        'plone.namedfile',
         'premailer',  # inline css for html emails
         'pyparsing',  # used by rdflib
         # Pure python PDF reading and manipulation library.

@@ -31,8 +31,6 @@ from pyramid.security import NO_PERMISSION_REQUIRED
 
 from pyramid.view import view_config
 
-from plone.namedfile import NamedImage
-
 from nti.app.externalization.view_mixins import UploadRequestUtilsMixin
 
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
@@ -47,6 +45,8 @@ from nti.base._compat import text_
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IDataserverFolder
+
+from nti.namedfile.utils import getImageInfo
 
 from nti.property import dataurl
 
@@ -181,9 +181,9 @@ def background_file_view(request):
 
 class FilenameRespectingDownload(download.Download):
     """
-    A File Download view that uses 'filename' from plone.namedfile.INamedFile
+    A File Download view that uses 'filename' from nti.base.interfaces.IFile
     if present rather than __name__.  Because zope file, which we monkey patch
-    plone.namedfile to extend, is an ILocation, __name__ must be unique and therefore
+    to extend, is an ILocation, __name__ must be unique and therefore
     doesn't always map to the originally provided filename.  A good example of
     this is course assets that sluggify the incoming filename and use that for the
     __name__.  For downloads we prefer to provide the original name in 'filename'
@@ -265,11 +265,11 @@ def image_to_dataurl(request):
     # Now, sniff the data with the named image type. If we don't get
     # an image type back, regardless of what they uploaded, then it's not valid
     # TODO: We could insert scaling or other manipulations here
-    named_image = NamedImage(data=data, filename=filename)
-    if not named_image.contentType or not named_image.contentType.startswith('image'):
+    contentType, width, height = getImageInfo(data)
+    if not contentType or not contentType.startswith('image'):
         raise hexc.HTTPBadRequest(_("Not an image upload"))
 
-    data_url = dataurl.encode(data, mime_type=named_image.contentType)
+    data_url = dataurl.encode(data, mime_type=contentType)
 
     response = request.response
     accept_type = 'text/plain'
@@ -282,12 +282,12 @@ def image_to_dataurl(request):
         response.text = text_(data_url)
     else:
         response.content_type = accept_type
-        width, height = named_image.getImageSize()
-        file_size = named_image.getSize()
+        file_size = len(data)
         response.json_body = {'dataurl': data_url,
                               'width_px': width,
                               'height_px': height,
-                              'file_size': file_size}
+                              'file_size': file_size,
+                              'filename': filename}
     return response
 
 
