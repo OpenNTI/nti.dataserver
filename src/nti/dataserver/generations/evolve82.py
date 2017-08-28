@@ -18,6 +18,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.component.hooks import site
 from zope.component.hooks import setHooks
 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserDigestEmailMetadata
 
 _SENTKEY = u'nti.app.pushnotifications.digest_email.DigestEmailCollector.last_sent'
@@ -44,9 +45,11 @@ def do_evolve(context):
 
     with site(ds_folder):
         users_folder = ds_folder['users']
-        logger.info('Updating digest meta storage for %s entities', 
+        logger.info('Updating digest meta storage for %s entities',
                     len(users_folder))
         for user in users_folder.values():
+            if not IUser.providedBy(user):
+                continue
             collected, sent = _delete_annotation(user)
             user_meta = IUserDigestEmailMetadata(user, None)
             if user_meta is not None:
