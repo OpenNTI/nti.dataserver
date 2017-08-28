@@ -9,9 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import os
 import six
-import sys
 import time
 import BTrees
 import numbers
@@ -23,7 +21,6 @@ from zope import interface
 from zope import lifecycleevent
 
 from zope.cachedescriptors.property import Lazy
-from zope.cachedescriptors.property import cachedIn
 
 from zope.deprecation import deprecated
 
@@ -43,6 +40,8 @@ from nti.containers import dicts
 
 from nti.dataserver import sharing
 
+from nti.dataserver.activitystream_change import Change
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IOpenIdUser
 from nti.dataserver.interfaces import ITranscript
@@ -56,17 +55,11 @@ from nti.dataserver.interfaces import ITargetedStreamChangeEvent
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.users.entity import Entity
 from nti.dataserver.users.entity import get_shared_dataserver
 
-from nti.dataserver.users.interfaces import _VERBOTEN_PASSWORDS
-from nti.dataserver.users.interfaces import InsecurePasswordIsForbidden
-from nti.dataserver.users.interfaces import PasswordCannotConsistOfOnlyWhitespace
 from nti.dataserver.users.interfaces import OldPasswordDoesNotMatchCurrentPassword
 
-from nti.dataserver.users.password import Password as _Password
-
-from nti.dataserver.activitystream_change import Change
+from nti.dataserver.users.principal import Principal 
 
 from nti.datastructures import datastructures
 
@@ -89,69 +82,6 @@ deprecated('SharingSource', 'Prefer sharing.SharingSourceMixin')
 DynamicSharingTarget = sharing.DynamicSharingTargetMixin
 deprecated('DynamicSharingTarget', 'Prefer sharing.DynamicSharingTargetMixin')
 
-from .entity import named_entity_ntiid
-
-
-class Principal(sharing.SharingSourceMixin, Entity):  # order matters
-	""" A Principal represents a set of credentials that has access to the system.
-
-	.. py:attribute:: username
-
-		 The username.
-	.. py:attribute:: password
-
-		A password object. Not comparable, only supports a `checkPassword` operation.
-	"""
-
-	# TODO: Continue migrating this towards zope.security.principal, the zope principalfolder
-	# concept.
-	password_manager_name = 'bcrypt'
-
-	def __init__(self,
-				 username=None,
-				 password=None,
-				 parent=None):
-
-		super(Principal, self).__init__(username,
-									   parent=parent)
-		if password:
-			self.password = password
-
-	def has_password(self):
-		return bool(self.password)
-
-	def _get_password(self):
-		return self.__dict__.get('password', None)
-	def _set_password(self, np):
-		# TODO: Names for these?
-		component.getUtility(pwd_interfaces.IPasswordUtility).verify(np)
-		# NOTE: The password policy objects do not have an option to forbid
-		# all whitespace, so we implement that manually here.
-		# TODO: Subclass the policy and implement one that does, install that and migrate
-		if np and not np.strip():  # but do allow leading/trailing whitespace
-			raise PasswordCannotConsistOfOnlyWhitespace()
-		# NOTE: The password policy objects do not have an option to forbid
-		# specific passwords from a list, so we implement that manually here.
-		# TODO: Subclass the policy and implement one that does, as per above
-		if np and np.strip().upper() in _VERBOTEN_PASSWORDS:
-			raise InsecurePasswordIsForbidden(np)
-
-		self.__dict__['password'] = _Password(np, self.password_manager_name)
-		# otherwise, no change
-	def _del_password(self):
-		del self.__dict__['password']
-	password = property(_get_password, _set_password, _del_password)
-
-	NTIID_TYPE = None
-	NTIID = cachedIn('_v_ntiid')(named_entity_ntiid)
-
-if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
-	# For use by nti_run_integration_tests, nti_run_general_purpose_tests;
-	# plain text passwords are much faster than bcrpyt, and since
-	# the tests use HTTP Basic Auth, this makes a difference
-	print("users.py: WARN: Configuring with plain text passwords", file=sys.stderr)
-	Principal.password_manager_name = 'Plain Text'
-
 from .communities import Everyone
 
 from .entity import NOOPCM as _NOOPCM
@@ -172,6 +102,11 @@ zope.deferredimport.deprecatedFrom(
 	"nti.dataserver.users.friends_lists",
 	"DynamicFriendsList",
 	"_FriendsListUsernameIterable")
+
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.dataserver.users.password",
+	"nti.dataserver.users.password",
+	"_Password")
 
 ShareableMixin = sharing.ShareableMixin
 deprecated('ShareableMixin', 'Prefer sharing.ShareableMixin')
