@@ -29,7 +29,7 @@ class TestDigest(unittest.TestCase):
     layer = SharedConfiguringTestLayer
 
     @WithMockDSTrans
-    def test_is_email_verfied(self):
+    def test_storage(self):
         user = User.create_user(username=u'ichigo@bleach.org')
         meta = IUserDigestEmailMetadata(user, None)
         assert_that(meta, is_not(none()))

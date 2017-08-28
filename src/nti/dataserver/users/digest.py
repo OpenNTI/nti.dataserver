@@ -16,12 +16,23 @@ from zope.intid.interfaces import IIntIds
 
 from zc.intid.interfaces import IBeforeIdRemovedEvent
 
-from persistent.mapping import PersistentMapping
+import BTrees
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserDigestEmailMetadata
 
 from nti.property.property import annotation_alias
+
+_DIGEST_META_KEY = 'nti.dataserver.users.UsersDigestEmailMetadata'
+
+
+def _get_family():
+    intids = component.queryUtility(IIntIds)
+    return getattr(intids, 'family', None) or BTrees.family64
+
+
+def _storage():
+    return _get_family().IO.LOBTree()
 
 
 @component.adapter(IUser)
@@ -40,14 +51,13 @@ class _UserDigestEmailMetadata(object):
         user_intid = intids.getId(user)
         return user_intid
 
-    _DIGEST_META_KEY = 'nti.dataserver.users.UsersDigestEmailMetadata'
     _user_meta_storage = annotation_alias(_DIGEST_META_KEY,
                                           annotation_property='parent',
                                           doc=u"The time metadata storage on the users folder")
 
     def _get_meta_storage(self):
-        if not self._user_meta_storage:
-            self._user_meta_storage = PersistentMapping()
+        if self._user_meta_storage is None:
+            self._user_meta_storage = _storage()
         return self._user_meta_storage
 
     def _get_last_collected(self):
