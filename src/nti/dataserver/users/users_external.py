@@ -19,7 +19,6 @@ from zope import interface
 
 from ZODB.POSException import POSError
 
-from nti.dataserver import users
 from nti.dataserver import authorization_acl as auth
 
 from nti.dataserver.interfaces import IUser
@@ -42,6 +41,8 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IRestrictedUserProfile
+
+from nti.dataserver.users.entity import Entity
 
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import decorate_external_mapping
@@ -244,7 +245,7 @@ class _FriendsListExternalObject(_EntityExternalObject):
         extDict = super(_FriendsListExternalObject, self)._do_toExternalObject(**kwargs)
         theFriends = []
         for friend in iter(self.entity):  # iter self to weak refs and dups
-            if isinstance(friend, users.Entity):
+            if isinstance(friend, Entity):
                 # NOTE: We've got a potential infinite recursion here. Normally
                 # users cannot be their own friends. But a DFL might make it
                 # appear that way. The DFL would show up in the communities of the
