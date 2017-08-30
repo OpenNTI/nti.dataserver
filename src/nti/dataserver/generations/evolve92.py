@@ -55,7 +55,7 @@ def do_evolve(context, generation=generation):
 
         catalog = get_metadata_catalog()
         index = catalog[IX_MIMETYPE]
-        index.interface = MimeTypeIndex.ValidatingMimeType
+        index.interface = MimeTypeIndex.default_interface
 
     component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
     logger.info('Dataserver evolution %s done.', generation)
