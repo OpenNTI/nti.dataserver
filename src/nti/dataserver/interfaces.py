@@ -6,7 +6,7 @@ Dataserver interfaces
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -48,34 +48,38 @@ from nti.schema.field import ValidSet as Set
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
 
+
 class ACLLocationProxy(LocationProxy):
-	"""
-	Like :class:`LocationProxy` but also adds transparent storage
-	for an __acl__ attribute
-	"""
-	__slots__ = ('__acl__',) + LocationProxy.__slots__
+    """
+    Like :class:`LocationProxy` but also adds transparent storage
+    for an __acl__ attribute
+    """
+    __slots__ = ('__acl__',) + LocationProxy.__slots__
 
-	def __new__(cls, backing, container=None, name=None, acl=()):
-		return LocationProxy.__new__(cls, backing, container=container, name=name)
+    def __new__(cls, backing, container=None, name=None, unused_acl=()):
+        return LocationProxy.__new__(cls, backing, container=container, name=name)
 
-	def __init__(self, backing, container=None, name=None, acl=()):
-		LocationProxy.__init__(self, backing, container=container, name=name)
-		if backing is None: raise TypeError("Cannot wrap None")  # Programmer error
-		self.__acl__ = acl
+    def __init__(self, backing, container=None, name=None, acl=()):
+        LocationProxy.__init__(self, backing, container=container, name=name)
+        if backing is None:
+            raise TypeError("Cannot wrap None")  # Programmer error
+        self.__acl__ = acl
+
 
 class ACLProxy(ProxyBase):
-	"""
-	Like :class:`ProxyBase` but also adds transparent storage
-	for an __acl__ attribute
-	"""
-	__slots__ = ('__acl__',)
+    """
+    Like :class:`ProxyBase` but also adds transparent storage
+    for an __acl__ attribute
+    """
+    __slots__ = ('__acl__',)
 
-	def __new__(cls, backing, acl=()):
-		return ProxyBase.__new__(cls, backing)
+    def __new__(cls, backing, unused_acl=()):
+        return ProxyBase.__new__(cls, backing)
 
-	def __init__(self, backing, acl=()):
-		ProxyBase.__init__(self, backing)
-		self.__acl__ = acl
+    def __init__(self, backing, acl=()):
+        ProxyBase.__init__(self, backing)
+        self.__acl__ = acl
+
 
 # BWC exports
 from nti.coremetadata.interfaces import InvalidData
@@ -102,17 +106,19 @@ IIdentity = IIdentity
 IDataserver = IDataserver
 IExternalService = IExternalService
 
+
 class IDataserverClosedEvent(interface.interfaces.IObjectEvent):
-	"""
-	Fired when a dataserver is closed
-	"""
+    """
+    Fired when a dataserver is closed
+    """
+
 
 # BWC exports
 from nti.coremetadata.interfaces import IRedisClient
 from nti.coremetadata.interfaces import IMemcachedClient
 
 IRedisClient = IRedisClient
-IMemcacheClient = IMemcachedClient # BWC
+IMemcacheClient = IMemcachedClient  # BWC
 
 # BWC exports
 from nti.site.interfaces import IHostSitesFolder
@@ -131,66 +137,73 @@ from zope.component.interfaces import IPossibleSite
 
 from zope.container.interfaces import IContained as IContainerContained
 
+
 class IShardInfo(IPossibleSite, IContainerContained):
-	"""
-	Information about a database shared.
+    """
+    Information about a database shared.
 
-	.. py:attribute:: __name__
+    .. py:attribute:: __name__
 
-		The name of this object is also the name of the shard and the name of the
-		database.
-	"""
+            The name of this object is also the name of the shard and the name of the
+            database.
+    """
+
 
 class IShardLayout(interface.Interface):
 
-	dataserver_folder = Object(IDataserverFolder,
-							   title="The root folder for the dataserver in this shard")
+    dataserver_folder = Object(IDataserverFolder,
+                               title=u"The root folder for the dataserver in this shard")
 
-	users_folder = Object(IFolder,
-						  title="The folder containing users that live in this shard.")
+    users_folder = Object(IFolder,
+                          title=u"The folder containing users that live in this shard.")
 
-	shards = Object( IContainerContained,
-					 title="The root shard will contain a shards folder.",
-					 required=False)
+    shards = Object(IContainerContained,
+                    title=u"The root shard will contain a shards folder.",
+                    required=False)
 
-	root_folder = Object( IRootFolder,
-						  title="The root shard will contain the root folder",
-						  required=False)
+    root_folder = Object(IRootFolder,
+                         title=u"The root shard will contain the root folder",
+                         required=False)
+
 
 class INewUserPlacer(interface.Interface):
 
-	def placeNewUser(user, root_users_folder, shards):
-		"""
-		Put the `user` into an :class:`ZODB.interfaces.IConnection`, thus establishing
-		the home database of the user.
+    def placeNewUser(user, root_users_folder, shards):
+        """
+        Put the `user` into an :class:`ZODB.interfaces.IConnection`, thus establishing
+        the home database of the user.
 
-		:param user: A new user.
-		:param root_users_folder: The main users folder. This will ultimately become the parent
-			of this user; this method should not establish a parent relationship for the object.
-		:param shards: A folder/map of :class:`IShardInfo` objects describing
-			all known shards. They may or may not all be available and active at this time.
-		:return: Undefined.
-		"""
+        :param user: A new user.
+        :param root_users_folder: The main users folder. This will ultimately become the parent
+                of this user; this method should not establish a parent relationship for the object.
+        :param shards: A folder/map of :class:`IShardInfo` objects describing
+                all known shards. They may or may not all be available and active at this time.
+        :return: Undefined.
+        """
+
 
 class IUsersFolder(IFolder):
-	"""
-	Marker interface for the users forlder
-	"""
+    """
+    Marker interface for the users forlder
+    """
+
 
 # BWC exports
 from nti.site.interfaces import ISiteTransactionRunner
 IDataserverTransactionRunner = ISiteTransactionRunner
 
+
 class IOIDResolver(interface.Interface):
 
-	def get_object_by_oid(oid_string, ignore_creator=False):
-		"""
-		Given an object id string as found in an OID value
-		in an external dictionary, returns the object in the that matches that
-		id, or None.
-		:param ignore_creator: If True, then creator access checks will be
-			bypassed.
-		"""
+    def get_object_by_oid(oid_string, ignore_creator=False):
+        """
+        Given an object id string as found in an OID value
+        in an external dictionary, returns the object in the that matches that
+        id, or None.
+        :param ignore_creator: If True, then creator access checks will be
+                bypassed.
+        """
+
 
 # BWC exports
 from nti.coremetadata.interfaces import IEnvironmentSettings
@@ -236,66 +249,70 @@ from nti.coremetadata.interfaces import IContained
 
 
 class ICreatableObjectFilter(interface.Interface):
-	"""
-	Object, usually registered as an adapter on a principal, that serves
-	to filter the available list of objects that user is allowed to create.
-	"""
+    """
+    Object, usually registered as an adapter on a principal, that serves
+    to filter the available list of objects that user is allowed to create.
+    """
 
-	def filter_creatable_object_terms(terms):
-		"""
-		Given a dictionary of vocabulary terms, filter them to remove the objects
-		that are not acceptable.
+    def filter_creatable_object_terms(terms):
+        """
+        Given a dictionary of vocabulary terms, filter them to remove the objects
+        that are not acceptable.
 
-		:return: Dictionary of filtered terms.
-		"""
+        :return: Dictionary of filtered terms.
+        """
+
 
 class IAnchoredRepresentation(IContained):
-	"""
-	Something not only contained within a container, but that has a
-	specific position within the rendered representation of that
-	container.
-	"""
-	applicableRange = Object(rng_interfaces.IContentRangeDescription,
-							 default=ContentRangeDescription(),
-							 title="The range of content to which this representation applies or is anchored.",
-							 description="The default is an empty, unplaced anchor.")
+    """
+    Something not only contained within a container, but that has a
+    specific position within the rendered representation of that
+    container.
+    """
+    applicableRange = Object(rng_interfaces.IContentRangeDescription,
+                             default=ContentRangeDescription(),
+                             title=u"The range of content to which this representation applies or is anchored.",
+                             description=u"The default is an empty, unplaced anchor.")
+
 
 # BWC exports
 from nti.coremetadata.interfaces import IContainerIterable
 IContainerIterable = IContainerIterable
 
 # Changes related to content objects/users
-SC_SHARED = "Shared"
-SC_CREATED = "Created"
-SC_DELETED = "Deleted"
-SC_CIRCLED = "Circled"
-SC_MODIFIED = "Modified"
+SC_SHARED = u"Shared"
+SC_CREATED =u"Created"
+SC_DELETED = u"Deleted"
+SC_CIRCLED = u"Circled"
+SC_MODIFIED = u"Modified"
 
-SC_CHANGE_TYPES = set( (SC_CREATED, SC_MODIFIED, SC_DELETED, SC_SHARED, SC_CIRCLED) )
+SC_CHANGE_TYPES = set((SC_CREATED, SC_MODIFIED, SC_DELETED, SC_SHARED, SC_CIRCLED))
 SC_CHANGE_TYPE_MAP = dict()
 
+
 class IStreamChangeEvent(interface.interfaces.IObjectEvent,
-						 ILastModified,
-						 IContentTypeAware):
-	"""
-	A change that goes in the activity stream for a user. If the
-	object was :class:`IContained`, then this object will be as well.
+                         ILastModified,
+                         IContentTypeAware):
+    """
+    A change that goes in the activity stream for a user. If the
+    object was :class:`IContained`, then this object will be as well.
 
-	See the description for the ``type`` field. In particular, if you
-	define new sub-interfaces, give them the tagged value
-	``SC_CHANGE_TYPE`` corresponding to their human readable name, and
-	place them in the ``SC_CHANGE_TYPE_MAP``. (In the future, we may
-	use the ZCA to handle this.) Please use the :func:`make_stream_change_event_interface`
-	to create these objects.
-	"""
+    See the description for the ``type`` field. In particular, if you
+    define new sub-interfaces, give them the tagged value
+    ``SC_CHANGE_TYPE`` corresponding to their human readable name, and
+    place them in the ``SC_CHANGE_TYPE_MAP``. (In the future, we may
+    use the ZCA to handle this.) Please use the :func:`make_stream_change_event_interface`
+    to create these objects.
+    """
 
-	type = DecodingValidTextLine(title="The human-readable name of this kind of change",
-								 description="There are some standard values declared in "
-								 ":const:`SC_CHANGE_TYPES`, and each of these have a corresponding "
-								 "sub-interface of this interface. However, do not assume that "
-								 "these are the only change types; new ones may be added at any time")
+    type = DecodingValidTextLine(title=u"The human-readable name of this kind of change",
+                                 description=u"There are some standard values declared in "
+                                 ":const:`SC_CHANGE_TYPES`, and each of these have a corresponding "
+                                 "sub-interface of this interface. However, do not assume that "
+                                 "these are the only change types; new ones may be added at any time")
 
 # statically define some names to keep pylint from complaining
+
 
 IStreamChangeSharedEvent = None
 IStreamChangeCircledEvent = None
@@ -303,57 +320,65 @@ IStreamChangeCreatedEvent = None
 IStreamChangeDeletedEvent = None
 IStreamChangeModifiedEvent = None
 
+
 def make_stream_change_event_interface(event_name,
-									   bases=(),
-									   __module__=None):
-	bases = (IStreamChangeEvent,) + bases
-	if __module__ is None:
-		frame = sys._getframe(1)
-		__module__ = frame.f_globals['__name__']
+                                       bases=(),
+                                       __module__=None):
+    bases = (IStreamChangeEvent,) + bases
+    if __module__ is None:
+        frame = sys._getframe(1)
+        __module__ = frame.f_globals['__name__']
 
-	tname = str('IStreamChange' + event_name + 'Event')
-	# Due to use of metaclasses, cannot use type()
-	iface = interface.interface.InterfaceClass(tname,
-											   bases=bases,
-											   __module__=__module__)
-	iface.setTaggedValue('SC_CHANGE_TYPE', event_name)
+    tname = str('IStreamChange' + event_name + 'Event')
+    # Due to use of metaclasses, cannot use type()
+    iface = interface.interface.InterfaceClass(tname,
+                                               bases=bases,
+                                               __module__=__module__)
+    iface.setTaggedValue('SC_CHANGE_TYPE', event_name)
 
-	SC_CHANGE_TYPE_MAP[event_name] = iface
-	SC_CHANGE_TYPES.add(event_name)
-	return iface, tname
+    SC_CHANGE_TYPE_MAP[event_name] = iface
+    SC_CHANGE_TYPES.add(event_name)
+    return iface, tname
+
 
 def _make_stream_subclasses():
-	frame = sys._getframe(1)
-	mod = frame.f_globals['__name__']
-	for name in list(SC_CHANGE_TYPES):
+    frame = sys._getframe(1)
+    mod = frame.f_globals['__name__']
+    for name in list(SC_CHANGE_TYPES):
 
-		iface, tname = make_stream_change_event_interface(name, __module__=mod)
-		frame.f_globals[tname] = iface
+        iface, tname = make_stream_change_event_interface(name, __module__=mod)
+        frame.f_globals[tname] = iface
+
 
 _make_stream_subclasses()
 del _make_stream_subclasses
 
-class ITargetedStreamChangeEvent(interface.interfaces.IObjectEvent):
-	"""
-	An object event wrapping up a :class:`IStreamChangeEvent`, along
-	with a specific targeted sharing entity. While the original stream change
-	event will be emitted one time, this wrapper may be emitted many
-	times for the same change event, but each time the targeted entity
-	will be different.
-	"""
 
-	entity = interface.Attribute("The specific entity that should see this change")
+class ITargetedStreamChangeEvent(interface.interfaces.IObjectEvent):
+    """
+    An object event wrapping up a :class:`IStreamChangeEvent`, along
+    with a specific targeted sharing entity. While the original stream change
+    event will be emitted one time, this wrapper may be emitted many
+    times for the same change event, but each time the targeted entity
+    will be different.
+    """
+
+    entity = interface.Attribute(
+        "The specific entity that should see this change")
+
 
 from zope.interface.interfaces import ObjectEvent
+
 
 @interface.implementer(ITargetedStreamChangeEvent)
 class TargetedStreamChangeEvent(ObjectEvent):
 
-	target = alias('entity')
+    target = alias('entity')
 
-	def __init__(self, change, target):
-		ObjectEvent.__init__(self, change)
-		self.entity = target
+    def __init__(self, change, target):
+        ObjectEvent.__init__(self, change)
+        self.entity = target
+
 
 # BWC exports
 from nti.coremetadata.interfaces import IMutedInStream
@@ -375,10 +400,12 @@ from zope.security.interfaces import IGroupAwarePrincipal
 
 IPrincipal = IPrincipal
 
+
 class IRole(IGroup):
-	"""
-	Marker for a type of group intended to be used to grant permissions.
-	"""
+    """
+    Marker for a type of group intended to be used to grant permissions.
+    """
+
 
 # BWC exports
 from zope.location.interfaces import IContained as IZContained
@@ -433,47 +460,50 @@ from nti.externalization import oids
 
 oids.DEFAULT_EXTERNAL_CREATOR = SYSTEM_USER_NAME
 
+
 class IImpersonatedAuthenticationPolicy(IAuthenticationPolicy):
-	"""
-	Authentication policy that can be divorced from the request and instead
-	act on behalf of some other fixed user. When this impersonation is active,
-	the :meth:`IAuthenticationPolicy.remember` and :meth:`forget` methods will raise
-	:class:`NotImplementedError`.
+    """
+    Authentication policy that can be divorced from the request and instead
+    act on behalf of some other fixed user. When this impersonation is active,
+    the :meth:`IAuthenticationPolicy.remember` and :meth:`forget` methods will raise
+    :class:`NotImplementedError`.
 
-	The primary authentication policy is registered as a utility object in ZCA;
-	due to performance and design concerns we do not switch out or dynamically derive
-	new component registeries from the main ZCA. This interface, then, is implemented by the
-	main utility to allow it to provide thread-aware context-sensitive principals for
-	portions of the app that need it.
+    The primary authentication policy is registered as a utility object in ZCA;
+    due to performance and design concerns we do not switch out or dynamically derive
+    new component registeries from the main ZCA. This interface, then, is implemented by the
+    main utility to allow it to provide thread-aware context-sensitive principals for
+    portions of the app that need it.
 
-	.. note:: Much of this could probably be better handled with :mod:`zope.security`.
-	"""
+    .. note:: Much of this could probably be better handled with :mod:`zope.security`.
+    """
 
-	def impersonating_userid(userid):
-		"""
-		Use this method in a ``with`` statement to make a thread (greenlet) local
-		authentication change. With this in place, the return from :meth:`authenticated_userid`
-		and :meth:`effective_principals` will be for the given userid, *not* the value
-		found in the ``request`` parameter.
+    def impersonating_userid(userid):
+        """
+        Use this method in a ``with`` statement to make a thread (greenlet) local
+        authentication change. With this in place, the return from :meth:`authenticated_userid`
+        and :meth:`effective_principals` will be for the given userid, *not* the value
+        found in the ``request`` parameter.
 
-		:return: A context manager callable.
-		"""
+        :return: A context manager callable.
+        """
+
 
 class IGroupMember(interface.Interface):
-	"""
-	Something that can report on the groups it belongs to.
+    """
+    Something that can report on the groups it belongs to.
 
-	In general, it is expected that :class:`IUser` can be adapted to this
-	interface or its descendent :class:`zope.security.interfaces.IGroupAwarePrincipal` to return the
-	"primary" groups the user is a member of. Named adapters may be registered
-	to return specific "types" of groups (e.g, roles) the user is a member of; these
-	are not primary groups.
+    In general, it is expected that :class:`IUser` can be adapted to this
+    interface or its descendent :class:`zope.security.interfaces.IGroupAwarePrincipal` to return the
+    "primary" groups the user is a member of. Named adapters may be registered
+    to return specific "types" of groups (e.g, roles) the user is a member of; these
+    are not primary groups.
 
-	See :func:`nti.dataserver.authentication.effective_principals` for
-	details on how groups and memberships are used to determine permissions.
-	"""
+    See :func:`nti.dataserver.authentication.effective_principals` for
+    details on how groups and memberships are used to determine permissions.
+    """
 
-	groups = Iterable(title=u'Iterate across the IGroups belonged to.')
+    groups = Iterable(title=u'Iterate across the IGroups belonged to.')
+
 
 # zope.security defines IPrincipal and IGroupAwarePrincipal which extends IPrincipal.
 # It does not offer the concept of something which simply offers a list of groups;
@@ -482,45 +512,50 @@ class IGroupMember(interface.Interface):
 # IPrincipal   IGroupMember
 #   \              /
 #  IGroupAwarePrincipal
-IGroupAwarePrincipal.__bases__ = IGroupAwarePrincipal.__bases__ + (IGroupMember,)
+IGroupAwarePrincipal.__bases__ = IGroupAwarePrincipal.__bases__ + \
+    (IGroupMember,)
+
 
 class IMutableGroupMember(IGroupMember):
-	"""
-	Something that can change the groups it belongs to. See :class:`zope.security.interfaces.IMemberAwareGroup`
-	for inspiration.
-	"""
+    """
+    Something that can change the groups it belongs to. See :class:`zope.security.interfaces.IMemberAwareGroup`
+    for inspiration.
+    """
 
-	def setGroups(value):
-		"""
-		Causes this object to report itself (only) as members of the groups
-		in the argument.
+    def setGroups(value):
+        """
+        Causes this object to report itself (only) as members of the groups
+        in the argument.
 
-		:param value: An iterable of either IGroup objects or strings naming the groups
-			to which the member now belongs.
-		"""
+        :param value: An iterable of either IGroup objects or strings naming the groups
+                to which the member now belongs.
+        """
+
 
 # BWC exports
 from nti.coremetadata.interfaces import ICreatedUsername
 from nti.coremetadata.interfaces import valid_entity_username
 
-valid_entity_username=valid_entity_username
+valid_entity_username = valid_entity_username
 
-@interface.implementer(ICreatedUsername)
+
 @component.adapter(ICreated)
+@interface.implementer(ICreatedUsername)
 class DefaultCreatedUsername(object):
 
-	def __init__(self, context):
-		self.context = context
+    def __init__(self, context):
+        self.context = context
 
-	@property
-	def creator_username(self):
-		try:
-			creator = self.context.creator
-			username = getattr(creator, 'username', creator)
-			if isinstance(username, six.string_types):
-				return username.lower()
-		except (AttributeError,TypeError):
-			return None
+    @property
+    def creator_username(self):
+        try:
+            creator = self.context.creator
+            username = getattr(creator, 'username', creator)
+            if isinstance(username, six.string_types):
+                return username.lower()
+        except (AttributeError, TypeError):
+            return None
+
 
 # BWC exports
 from nti.coremetadata.interfaces import IUser
@@ -555,24 +590,26 @@ AnonymousUser = AnonymousUser
 
 
 class IEffectivePrincipalResolver(interface.Interface):
-	"""
-	Something that can provide a set of effective principals
-	"""
+    """
+    Something that can provide a set of effective principals
+    """
 
-	def effective_principals(request):
-		"""
-		:return: An iterable of nti.dataserver.interfaces.IPrincipal
-		objects.
-		"""
+    def effective_principals(request):
+        """
+        :return: An iterable of nti.dataserver.interfaces.IPrincipal
+        objects.
+        """
+
 
 class INoUserEffectivePrincipalResolver(IEffectivePrincipalResolver):
-	"""
-	An IEffectivePrincipalResolver used to generate an effective principal
-	set when no user is provided.  Implementations of this can be registered
-	as subscribers on IRequest
-	"""
+    """
+    An IEffectivePrincipalResolver used to generate an effective principal
+    set when no user is provided.  Implementations of this can be registered
+    as subscribers on IRequest
+    """
 
 # BWC
+
 
 from nti.coremetadata.interfaces import UserEvent
 from nti.coremetadata.interfaces import IUserEvent
@@ -582,117 +619,139 @@ IUserEvent = IUserEvent
 
 
 class IEntityFollowingEvent(interface.interfaces.IObjectEvent):
-	"""
-	Fired when an entity begins following another entity.
-	The ``object`` is the entity that is now following the other entity.
-	"""
+    """
+    Fired when an entity begins following another entity.
+    The ``object`` is the entity that is now following the other entity.
+    """
 
-	object = Object(IEntity, title="The entity now following the other entity")
-	now_following = Object(IEntity, title="The entity that is now being followed by the object.")
+    object = Object(IEntity, 
+                    title=u"The entity now following the other entity")
+
+    now_following = Object(IEntity, 
+                           title=u"The entity that is now being followed by the object.")
+
 
 class IFollowerAddedEvent(interface.interfaces.IObjectEvent):
-	"""
-	Fired when an entity is followed by another entity.
+    """
+    Fired when an entity is followed by another entity.
 
-	The ``object`` is the entity that is now being followed.
-	"""
+    The ``object`` is the entity that is now being followed.
+    """
 
-	object = Object(IEntity, title="The entity now being followed.")
-	followed_by = Object(IEntity, title="The entity that is now following the object.")
+    object = Object(IEntity, title=u"The entity now being followed.")
+
+    followed_by = Object(IEntity, 
+                         title=u"The entity that is now following the object.")
+
 
 @interface.implementer(IEntityFollowingEvent)
 class EntityFollowingEvent(ObjectEvent):
 
-	def __init__( self, entity, now_following ):
-		ObjectEvent.__init__(self, entity)
-		self.now_following = now_following
+    def __init__(self, entity, now_following):
+        ObjectEvent.__init__(self, entity)
+        self.now_following = now_following
+
 
 @interface.implementer(IFollowerAddedEvent)
 class FollowerAddedEvent(ObjectEvent):
 
-	def __init__( self, entity, followed_by ):
-		ObjectEvent.__init__(self, entity)
+    def __init__(self, entity, followed_by):
+        ObjectEvent.__init__(self, entity)
+        self.followed_by = followed_by
 
-		self.followed_by = followed_by
 
 class IStopFollowingEvent(interface.interfaces.IObjectEvent):
-	"""
-	Fired when an entity stop following another entity.
-	The ``object`` is the entity that is no longer follows the other entity.
-	"""
-	object = Object(IEntity, title="The entity not longer following the other entity")
-	not_following = Object(IEntity, title="The entity that is no longer being followed by the object.")
+    """
+    Fired when an entity stop following another entity.
+    The ``object`` is the entity that is no longer follows the other entity.
+    """
+    object = Object(IEntity, 
+                     title=u"The entity not longer following the other entity")
+
+    not_following = Object(IEntity, 
+                           title=u"The entity that is no longer being followed by the object.")
+
 
 @interface.implementer(IStopFollowingEvent)
 class StopFollowingEvent(ObjectEvent):
 
-	def __init__(self, entity, not_following):
-		ObjectEvent.__init__(self, entity)
-		self.not_following = not_following
+    def __init__(self, entity, not_following):
+        ObjectEvent.__init__(self, entity)
+        self.not_following = not_following
+
 
 class IStartDynamicMembershipEvent(interface.interfaces.IObjectEvent):
-	"""
-	Fired when an dynamic membershis (i.e. join a community is recorded)
-	The ``object`` is the entity that is is recording the membership.
-	"""
-	object = Object(IEntity, title="The entity joining the dynamic target")
-	target = Object(IDynamicSharingTarget, title="The dynamic target to join")
+    """
+    Fired when an dynamic membershis (i.e. join a community is recorded)
+    The ``object`` is the entity that is is recording the membership.
+    """
+    object = Object(IEntity, title=u"The entity joining the dynamic target")
+    target = Object(IDynamicSharingTarget, title=u"The dynamic target to join")
+
 
 @interface.implementer(IStartDynamicMembershipEvent)
 class StartDynamicMembershipEvent(ObjectEvent):
 
-	def __init__(self, entity, target):
-		ObjectEvent.__init__(self, entity)
-		self.target = target
+    def __init__(self, entity, target):
+        ObjectEvent.__init__(self, entity)
+        self.target = target
+
 
 class IStopDynamicMembershipEvent(interface.interfaces.IObjectEvent):
-	"""
-	Fired when an dynamic membershis (i.e. unjoin a community) is removed
-	The ``object`` is the entity that is is leaving the membership.
-	"""
-	object = Object(IEntity, title="The entity unjoining the dynamic target")
-	target = Object(IDynamicSharingTarget, title="The dynamic target to be leaving")
+    """
+    Fired when an dynamic membershis (i.e. unjoin a community) is removed
+    The ``object`` is the entity that is is leaving the membership.
+    """
+    object = Object(IEntity, title=u"The entity unjoining the dynamic target")
+
+    target = Object(IDynamicSharingTarget,
+                    title=u"The dynamic target to be leaving")
+
 
 @interface.implementer(IStopDynamicMembershipEvent)
 class StopDynamicMembershipEvent(ObjectEvent):
 
-	def __init__(self, entity, target):
-		ObjectEvent.__init__(self, entity)
-		self.target = target
+    def __init__(self, entity, target):
+        ObjectEvent.__init__(self, entity)
+        self.target = target
+
 
 class IMissingUser(IMissingEntity):
-	"""
-	A proxy object for a missing user.
-	"""
+    """
+    A proxy object for a missing user.
+    """
+
 
 class IUsernameIterable(interface.Interface):
-	"""
-	Something that can iterate across usernames belonging to system :class:`IUser`, typically
-	usernames somehow contained in or stored in this object (or its context).
-	"""
+    """
+    Something that can iterate across usernames belonging to system :class:`IUser`, typically
+    usernames somehow contained in or stored in this object (or its context).
+    """
 
-	def __iter__():
-		"""
-		Return iterator across username strings. The usernames may refer to users
-		that have already been deleted.
-		"""
+    def __iter__():
+        """
+        Return iterator across username strings. The usernames may refer to users
+        that have already been deleted.
+        """
+
 
 class IIntIdIterable(interface.Interface):
-	"""
-	Something that can iterate across intids.
-	Typically this will be used as a mixin interface,
-	with the containing object defining what sort of
-	reference the intid will be to.
+    """
+    Something that can iterate across intids.
+    Typically this will be used as a mixin interface,
+    with the containing object defining what sort of
+    reference the intid will be to.
 
-	In general, the caller cannot assume that the intids
-	are entirely valid, and should use ``queryObject``
-	instead of ``getObject``.
-	"""
+    In general, the caller cannot assume that the intids
+    are entirely valid, and should use ``queryObject``
+    instead of ``getObject``.
+    """
 
-	def iter_intids():
-		"""
-		Return an iterable across intids.
-		"""
+    def iter_intids():
+        """
+        Return an iterable across intids.
+        """
+
 
 # BWC
 from nti.coremetadata.interfaces import IEntityIterable
@@ -702,106 +761,119 @@ from nti.coremetadata.interfaces import ISharingTargetEntityIterable
 
 
 class IEntityIntIdIterable(IEntityIterable,
-						   IIntIdIterable):
-	"""
-	Iterate across both entities and their intids easily.
-	"""
+                           IIntIdIterable):
+    """
+    Iterate across both entities and their intids easily.
+    """
+
 
 class IEnumerableEntityContainer(IEntityContainer,
-								 IEntityIntIdIterable,
-								 IEntityUsernameIterable):
-	"""
-	Something that can enumerate and report on entity memberships.
+                                 IEntityIntIdIterable,
+                                 IEntityUsernameIterable):
+    """
+    Something that can enumerate and report on entity memberships.
 
-	Often, iterating the usernames may be more efficient than extracting
-	the usernames from iterating the entities.
-	"""
+    Often, iterating the usernames may be more efficient than extracting
+    the usernames from iterating the entities.
+    """
+
 
 class ILengthEnumerableEntityContainer(IEnumerableEntityContainer):
-	"""
-	Something that can report on (approximately) how many entities
-	it contains. (The implementation is allowed to be loose in the case
-	of weakrefs.)
-	"""
+    """
+    Something that can report on (approximately) how many entities
+    it contains. (The implementation is allowed to be loose in the case
+    of weakrefs.)
+    """
 
-	def __len__():
-		"""
-		About how many entities in this container?
-		"""
+    def __len__():
+        """
+        About how many entities in this container?
+        """
+
 
 class ISharingTargetEnumerableIntIdEntityContainer(ILengthEnumerableEntityContainer,
-												   IEntityIntIdIterable,
-												   ISharingTargetEntityIterable):
-	"""
-	Unify the super-interfaces for ease of registration.
-	"""
+                                                   IEntityIntIdIterable,
+                                                   ISharingTargetEntityIterable):
+    """
+    Unify the super-interfaces for ease of registration.
+    """
+
 
 class IOpenIdUser(IUser):
-	"""
-	A user of the system with a known OpenID identity URL.
-	"""
+    """
+    A user of the system with a known OpenID identity URL.
+    """
 
-	identity_url = DecodingValidTextLine(title=u"The user's claimed identity URL")
+    identity_url = DecodingValidTextLine(title=u"The user's claimed identity URL")
+
 
 class IFacebookUser(IUser):
-	"""
-	A user of the system with a known Facebook identity URL.
-	"""
+    """
+    A user of the system with a known Facebook identity URL.
+    """
 
-	facebook_url = DecodingValidTextLine(title=u"The user's claimed identity URL")
+    facebook_url = DecodingValidTextLine(title=u"The user's claimed identity URL")
+
 
 class IGoogleUser(IUser):
-	"""
-	A google user.
-	"""
+    """
+    A google user.
+    """
+
 
 class ICoppaUser(IUser):
-	"""
-	A marker interface to denote users to whom the United States COPPA
-	policy should apply.
+    """
+    A marker interface to denote users to whom the United States COPPA
+    policy should apply.
 
-	As this is a temporary, age-based condition, it should not be applied at a class
-	level. Instead, it should either be available through an adapter (when we know
-	the user's age) or added and removed via :func:`interface.alsoProvides`
-	and :func:`interface.noLongerProvides`.
+    As this is a temporary, age-based condition, it should not be applied at a class
+    level. Instead, it should either be available through an adapter (when we know
+    the user's age) or added and removed via :func:`interface.alsoProvides`
+    and :func:`interface.noLongerProvides`.
 
-	Typically, one of the sub-interfaces :class:`ICoppaUserWithAgreement` or
-	:class:`ICoppaUserWithoutAgreement` will be used instead.
-	"""
+    Typically, one of the sub-interfaces :class:`ICoppaUserWithAgreement` or
+    :class:`ICoppaUserWithoutAgreement` will be used instead.
+    """
+
 
 class ICoppaUserWithAgreement(ICoppaUser):
-	"""
-	A user to which COPPA applies, and that our organization has
-	a parental agreement with. In general, users will transition from
-	:class:`ICoppaUserWithoutAgreement` to this state, and the two states are mutually
-	exclusive.
-	"""
+    """
+    A user to which COPPA applies, and that our organization has
+    a parental agreement with. In general, users will transition from
+    :class:`ICoppaUserWithoutAgreement` to this state, and the two states are mutually
+    exclusive.
+    """
+
 
 class ICoppaUserWithAgreementUpgraded(ICoppaUserWithAgreement):
-	"""
-	A interface for a user that has been upgraded from class:`ICoppaUserWithoutAgreement`
-	we create this class (inheriting from  class:`ICoppaUserWithAgreement`) to distinguish
-	from users (students) over 13 that automatically get class:`ICoppaUserWithAgreement` when
-	created.
-	"""
+    """
+    A interface for a user that has been upgraded from class:`ICoppaUserWithoutAgreement`
+    we create this class (inheriting from  class:`ICoppaUserWithAgreement`) to distinguish
+    from users (students) over 13 that automatically get class:`ICoppaUserWithAgreement` when
+    created.
+    """
+
 
 class ICoppaUserWithoutAgreement(ICoppaUser):
-	"""
-	A user to which COPPA applies, and that our organization *does not have*
-	a parental agreement with. In general, users will begin in this state, and
-	then transition to :class:`ICoppaUserWithAgreement`,
-	and the two states are mutually exclusive.
-	"""
+    """
+    A user to which COPPA applies, and that our organization *does not have*
+    a parental agreement with. In general, users will begin in this state, and
+    then transition to :class:`ICoppaUserWithAgreement`,
+    and the two states are mutually exclusive.
+    """
+
 
 class IInstructor(IUser):
-	"""
-	A marker interface to denote an instructor
-	"""
+    """
+    A marker interface to denote an instructor
+    """
+
 
 class IStudent(IUser):
-	"""
-	A marker interface to denote a student
-	"""
+    """
+    A marker interface to denote a student
+    """
+
 
 # BWC exports
 from nti.coremetadata.interfaces import IACE
@@ -860,35 +932,37 @@ from nti.coremetadata.interfaces import IEnclosedContent
 
 IEnclosedContent = IEnclosedContent
 
+
 class ISimpleEnclosureContainer(interface.Interface):
 
-	"""
-	Something that contains enclosures.
-	"""
+    """
+    Something that contains enclosures.
+    """
 
-	def add_enclosure(enclosure):
-		"""
-		Adds the given :class:`IContent` as an enclosure.
-		"""
+    def add_enclosure(enclosure):
+        """
+        Adds the given :class:`IContent` as an enclosure.
+        """
 
-	def get_enclosure(name):
-		"""
-		Return an enclosure having the given name.
-		:raises KeyError: If no such enclosure exists.
-		"""
+    def get_enclosure(name):
+        """
+        Return an enclosure having the given name.
+        :raises KeyError: If no such enclosure exists.
+        """
 
-	def del_enclosure(name):
-		"""
-		Delete the enclosure having the given name.
-		:raises KeyError: If no such enclosure exists.
-		"""
-	def iterenclosures():
-		"""
- 		:return: An iteration across the :class:`IContent` contained
- 			within this object.
- 		"""
+    def del_enclosure(name):
+        """
+        Delete the enclosure having the given name.
+        :raises KeyError: If no such enclosure exists.
+        """
+    def iterenclosures():
+        """
+        :return: An iteration across the :class:`IContent` contained
+                within this object.
+        """
 
 # Particular content types
+
 
 # BWC exports
 from nti.threadable.interfaces import IThreadable
@@ -912,7 +986,7 @@ IObjectSharingModifiedEvent = IObjectSharingModifiedEvent
 # BWC exports
 from nti.coremetadata.interfaces import IShareableModeledContent
 
-IShareable = IWritableShared # bwc alias
+IShareable = IWritableShared  # bwc alias
 
 # BWC exports
 
@@ -925,47 +999,56 @@ IDynamicSharingTargetFriendsList = IDynamicSharingTargetFriendsList
 
 from zope.container.constraints import contains
 
-class IFriendsListContainer(INamedContainer):
-	"""
-	A named, homogeneously typed container holding just :class:`IFriendsList`
-	objects.
-	"""
 
-	contains(IFriendsList)
+class IFriendsListContainer(INamedContainer):
+    """
+    A named, homogeneously typed container holding just :class:`IFriendsList`
+    objects.
+    """
+
+    contains(IFriendsList)
+
 
 class IDevice(IModeledContent):
-	pass
+    pass
+
 
 class IDeviceContainer(INamedContainer):
-	contains(IDevice)
+    contains(IDevice)
+
 
 class ITranscriptSummary(IModeledContent):
 
-	Contributors = Set(title="All the usernames of people who participated in the conversation",
-					   value_type=DecodingValidTextLine(title="The username"),
-					   readonly=True)
-	RoomInfo = interface.Attribute("The meeting where the conversation took place")
+    Contributors = Set(title=u"All the usernames of people who participated in the conversation",
+                       value_type=DecodingValidTextLine(title=u"The username"),
+                       readonly=True)
+    RoomInfo = interface.Attribute("The meeting where the conversation took place")
+
 
 class ITranscript(ITranscriptSummary):
 
-	Messages = ListOrTuple(	title="All the messages contained in the conversation",
-							readonly=True)
+    Messages = ListOrTuple(title=u"All the messages contained in the conversation",
+                           readonly=True)
 
-	def get_message(msg_id):
-		"""
-		Return a message with that id
-		"""
+    def get_message(msg_id):
+        """
+        Return a message with that id
+        """
+
 
 class ITranscriptContainer(INamedContainer):
-	contains(ITranscript)
+    contains(ITranscript)
+
 
 # BWC exports
 from nti.coremetadata.interfaces import ICanvasShape
 from nti.coremetadata.interfaces import ICanvasURLShape
 from nti.coremetadata.interfaces import ICanvas as ICoreCanvas
 
+
 class ICanvas(ICoreCanvas, IThreadable):
-	pass
+    pass
+
 
 ICanvasShape = ICanvasShape
 ICanvasURLShape = ICanvasURLShape
@@ -976,8 +1059,10 @@ from nti.coremetadata.interfaces import IEmbeddedMedia
 from nti.coremetadata.interfaces import IEmbeddedVideo
 from nti.coremetadata.interfaces import IMedia as ICoreMedia
 
+
 class IMedia(ICoreMedia, IThreadable):
-	pass
+    pass
+
 
 IEmbeddedAudio = IEmbeddedAudio
 IEmbeddedMedia = IEmbeddedMedia
@@ -986,54 +1071,60 @@ IEmbeddedVideo = IEmbeddedVideo
 # BWC exports
 from nti.coremetadata.interfaces import IModeledContentFile as ICoreContentFile
 
+
 class IModeledContentFile(ICoreContentFile, IThreadable):
-	pass
+    pass
+
 
 # BWC exports
 from nti.namedfile.interfaces import IInternalFileRef
 IInternalFileRef = IInternalFileRef
 
+
 class ISelectedRange(IShareableModeledContent,
-					 IAnchoredRepresentation,
-					 IUserTaggedContent):
-	"""
-	A selected range of content that the user wishes to remember. This interface
-	attaches no semantic meaning to the selection; subclasses will do that.
-	"""
-	# TODO: A field class that handles HTML validation/stripping?
-	selectedText = ValidText(title="The string representation of the DOM Range the user selected, possibly empty.",
-							 default='')
+                     IAnchoredRepresentation,
+                     IUserTaggedContent):
+    """
+    A selected range of content that the user wishes to remember. This interface
+    attaches no semantic meaning to the selection; subclasses will do that.
+    """
+    # TODO: A field class that handles HTML validation/stripping?
+    selectedText = ValidText(title=u"The string representation of the DOM Range the user selected, possibly empty.",
+                             default=u'')
+
 
 class IBookmark(ISelectedRange):
-	"""
-	A marker that the user places in the content. The selected text
-	is used mostly as a reminder (and may not actually be created by the user
-	but automatically selected by the application).
-	"""
+    """
+    A marker that the user places in the content. The selected text
+    is used mostly as a reminder (and may not actually be created by the user
+    but automatically selected by the application).
+    """
+
 
 class IPresentationPropertyHolder(interface.Interface):
-	"""
-	Something that can hold UI-specific presentation properties.
+    """
+    Something that can hold UI-specific presentation properties.
 
-	Presentation properties are a small simple dictionary of keys and values
-	uninterpreted by the server. Their meaning is assigned by consensus of the
-	various user interface clients.
+    Presentation properties are a small simple dictionary of keys and values
+    uninterpreted by the server. Their meaning is assigned by consensus of the
+    various user interface clients.
 
-	In order to prevent abuse, we are careful to limit the quantity
-	and type of values that can be stored here (there's a tradeoff
-	between coupling and abuse protection).
-	"""
+    In order to prevent abuse, we are careful to limit the quantity
+    and type of values that can be stored here (there's a tradeoff
+    between coupling and abuse protection).
+    """
 
-	# Initially we choose fairly small limits; in the future, if needed,
-	# this could be expanded to (small) lists of (small) strings, numbers,
-	# and booleans.
+    # Initially we choose fairly small limits; in the future, if needed,
+    # this could be expanded to (small) lists of (small) strings, numbers,
+    # and booleans.
 
-	presentationProperties = Dict(title="The presentation properties",
-								  key_type=ValidTextLine(min_length=1,max_length=40),
-								  value_type=ValidTextLine(min_length=1,max_length=40),
-								  max_length=40,
-								  required=False,
-								  default=None)
+    presentationProperties = Dict(title=u"The presentation properties",
+                                  key_type=ValidTextLine(min_length=1, max_length=40),
+                                  value_type=ValidTextLine(min_length=1, max_length=40),
+                                  max_length=40,
+                                  required=False,
+                                  default=None)
+
 
 # BWC exports
 from nti.coremetadata.interfaces import IContainerContext
@@ -1042,125 +1133,141 @@ from nti.coremetadata.interfaces import IContextAnnotatable
 
 IContainerContext = IContainerContext
 
+
 class IHighlight(IPresentationPropertyHolder,
-				 ISelectedRange,
-				 IContextAnnotatable,
-				 IUserGeneratedData):
-	"""
-	A highlighted portion of content the user wishes to remember.
-	"""
-	style = Choice(
-		title='The style of the highlight',
-		values=('plain', 'suppressed'),
-		default="plain")
+                 ISelectedRange,
+                 IContextAnnotatable,
+                 IUserGeneratedData):
+    """
+    A highlighted portion of content the user wishes to remember.
+    """
+    style = Choice(title=u'The style of the highlight',
+                   values=('plain', 'suppressed'),
+                   default=u"plain")
+
 
 from nti.contentfragments.schema import TextUnicodeContentFragment
 
+
 class IRedaction(ISelectedRange, IContextAnnotatable, IUserGeneratedData):
-	"""
-	A portion of the content the user wishes to ignore or 'un-publish'.
-	It may optionally be provided with an (inline) :attr:`replacementContent`
-	and/or on (out-of-line) :attr:`redactionExplanation`.
-	"""
+    """
+    A portion of the content the user wishes to ignore or 'un-publish'.
+    It may optionally be provided with an (inline) :attr:`replacementContent`
+    and/or on (out-of-line) :attr:`redactionExplanation`.
+    """
 
-	replacementContent = TextUnicodeContentFragment(
-		title="""The replacement content.""",
-		description="Content to render in place of the redacted content.\
-			This may be fully styled (e.g,\
-			an :class:`nti.contentfragments.interfaces.ISanitizedHTMLContentFragment`, \
-			and should be presented 'seamlessly' with the original content",
-		default="",
-		required=False)
+    replacementContent = TextUnicodeContentFragment(
+                                title=u"""The replacement content.""",
+                                description=u"Content to render in place of the redacted content.\
+                                This may be fully styled (e.g,\
+                                an :class:`nti.contentfragments.interfaces.ISanitizedHTMLContentFragment`, \
+                                and should be presented 'seamlessly' with the original content",
+                                default=u"",
+                                required=False)
 
-	redactionExplanation = TextUnicodeContentFragment(
-		title="""An explanation or summary of the redacted content.""",
-		description="Content to render out-of-line of the original content, explaining \
-			the reason for the redaction and/or summarizing the redacted material in more \
-			depth than is desirable in the replacement content.",
-		default="",
-		required=False)
+    redactionExplanation = TextUnicodeContentFragment(
+                                title=u"""An explanation or summary of the redacted content.""",
+                                description=u"Content to render out-of-line of the original content, explaining \
+                                the reason for the redaction and/or summarizing the redacted material in more \
+                                depth than is desirable in the replacement content.",
+                                default=u"",
+                                required=False)
+
 
 class ILikeable(IAnnotatable):
-	"""
-	Marker interface that promises that an implementing object may be
-	liked by users using the :class:`contentratings.interfaces.IUserRating` interface.
-	"""
+    """
+    Marker interface that promises that an implementing object may be
+    liked by users using the :class:`contentratings.interfaces.IUserRating` interface.
+    """
+
 
 class IFavoritable(IAnnotatable):
-	"""
-	Marker interface that promises that an implementing object may be
-	favorited by users using the :class:`contentratings.interfaces.IUserRating` interface.
-	"""
+    """
+    Marker interface that promises that an implementing object may be
+    favorited by users using the :class:`contentratings.interfaces.IUserRating` interface.
+    """
+
 
 class IFlaggable(IAnnotatable):
-	"""
-	Marker interface that promises that an implementing object
-	can be flagged for moderation. Typically, this will be applied
-	to a class of objects.
-	"""
+    """
+    Marker interface that promises that an implementing object
+    can be flagged for moderation. Typically, this will be applied
+    to a class of objects.
+    """
+
 
 class IRatable(IAnnotatable, IUserRatable):
-	"""
-	Marker interface that promises that an implementing object may be
-	rated by users using the :class:`contentratings.interfaces.IUserRating` interface.
-	"""
+    """
+    Marker interface that promises that an implementing object may be
+    rated by users using the :class:`contentratings.interfaces.IUserRating` interface.
+    """
+
 
 class IGlobalFlagStorage(interface.Interface):
 
-	def flag(context):
-		"""
-		Cause `context`, which should be IFLaggable, to be marked as flagged.
-		"""
+    def flag(context):
+        """
+        Cause `context`, which should be IFLaggable, to be marked as flagged.
+        """
 
-	def unflag(context):
-		"""
-		Cause `context` to no longer be marked as flagged (if it was)
-		"""
+    def unflag(context):
+        """
+        Cause `context` to no longer be marked as flagged (if it was)
+        """
 
-	def is_flagged(context):
-		"""
-		Return a truth value indicating whether the context object has been flagged.
-		"""
+    def is_flagged(context):
+        """
+        Return a truth value indicating whether the context object has been flagged.
+        """
 
-	def iterflagged():
-		"""
-		Return an iterator across the flagged objects in
-		this storage.
-		"""
+    def iterflagged():
+        """
+        Return an iterator across the flagged objects in
+        this storage.
+        """
+
 
 class IObjectFlaggingEvent(interface.interfaces.IObjectEvent):
-	"""
-	The kind of event when objects are flagged.
-	"""
-	# Note that this is not an ObjectModifiedEvent. This is perhaps debatable, but is
-	# consistent with contentratings.interfaces.IObjectRatedEvent
+    """
+    The kind of event when objects are flagged.
+    """
+    # Note that this is not an ObjectModifiedEvent. This is perhaps debatable, but is
+    # consistent with contentratings.interfaces.IObjectRatedEvent
+
 
 class IObjectFlaggedEvent(IObjectFlaggingEvent):
-	"""
-	Sent when an object is initially flagged.
-	"""
+    """
+    Sent when an object is initially flagged.
+    """
+
 
 class IObjectUnflaggedEvent(IObjectFlaggingEvent):
-	"""
-	Sent when an object is unflagged.
-	"""
+    """
+    Sent when an object is unflagged.
+    """
+
 
 @interface.implementer(IObjectFlaggedEvent)
 class ObjectFlaggedEvent(interface.interfaces.ObjectEvent):
-	pass
+    pass
+
 
 @interface.implementer(IObjectUnflaggedEvent)
 class ObjectUnflaggedEvent(interface.interfaces.ObjectEvent):
-	pass
+    pass
+
 
 from nti.namedfile.interfaces import IFileConstrained
 
-class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody, IFileConstrained):
-	"""
-	A user-created note attached to other content.
-	"""
 
-	body = ExtendedCompoundModeledContentBody()
+class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody, IFileConstrained):
+    """
+    A user-created note attached to other content.
+    """
+
+    body = ExtendedCompoundModeledContentBody()
+
+
 INote.setTaggedValue('_ext_jsonschema', u'note')
 
 # BWC exports
@@ -1171,126 +1278,135 @@ IDeletedObjectPlaceholder = IDeletedObjectPlaceholder
 # Dynamic event handling
 from nti.socketio.interfaces import ISocketIOChannel
 
+
 class ISocketProxySession(ISocketIOChannel):
-	pass
+    pass
+
 
 class ISessionService(interface.Interface):
-	"""
-	Manages the open sessions within the system.
+    """
+    Manages the open sessions within the system.
 
-	Keeps a dictionary of `proxy_session` objects that will have
-	messages copied to them whenever anything happens to the real
-	session.
-	"""
+    Keeps a dictionary of `proxy_session` objects that will have
+    messages copied to them whenever anything happens to the real
+    session.
+    """
 
-	def set_proxy_session(session_id, session=None):
-		"""
-		:param session: An :class:`ISocketProxySession` (something
-			with `queue_message_from_client` and `queue_message_to_client` methods). If
-			`None`, then a proxy session for the `session_id` will be
-			removed (if any)
-		"""
+    def set_proxy_session(session_id, session=None):
+        """
+        :param session: An :class:`ISocketProxySession` (something
+                with `queue_message_from_client` and `queue_message_to_client` methods). If
+                `None`, then a proxy session for the `session_id` will be
+                removed (if any)
+        """
 
-	def create_session(session_class=None, **kwargs):
-		"""
-		This method serves as a factory for :class:`ISocketSession` objects.
-		One is created and stored persistently by this method, and returned.
-		"""
+    def create_session(session_class=None, **kwargs):
+        """
+        This method serves as a factory for :class:`ISocketSession` objects.
+        One is created and stored persistently by this method, and returned.
+        """
 
-	def get_session(session_id):
-		"""
-		Returns an existing, probably alive :class:`ISocketSession` having the
-		given ID.
-		"""
+    def get_session(session_id):
+        """
+        Returns an existing, probably alive :class:`ISocketSession` having the
+        given ID.
+        """
+
 
 class ISessionServiceStorage(interface.Interface):
-	"""
-	The data stored by the session service.
-	"""
+    """
+    The data stored by the session service.
+    """
 
-	def register_session(session):
-		"""
-		Register the given session for storage. When this method
-		returns, the ``session`` will have a unique, ASCII string, ``id``
-		value. It will be retrievable from :meth:`get_session` and
-		:meth:`get_sessions_by_owner`. See also :meth:`unregister_session`.
+    def register_session(session):
+        """
+        Register the given session for storage. When this method
+        returns, the ``session`` will have a unique, ASCII string, ``id``
+        value. It will be retrievable from :meth:`get_session` and
+        :meth:`get_sessions_by_owner`. See also :meth:`unregister_session`.
 
-		:param session: The session to register.
-		:type session: :class:`nti.socketio.interfaces.ISocketSession`
-		:return: Undefined.
-		"""
+        :param session: The session to register.
+        :type session: :class:`nti.socketio.interfaces.ISocketSession`
+        :return: Undefined.
+        """
 
-	def unregister_session(session):
-		"""
-		Cause the given session to no longer be registered with this object.
-		It will no longer be retrievable from :meth:`get_session` and
-		:meth:`get_sessions_by_owner`. If the session was not actually registered
-		with this object, has no effect.
+    def unregister_session(session):
+        """
+        Cause the given session to no longer be registered with this object.
+        It will no longer be retrievable from :meth:`get_session` and
+        :meth:`get_sessions_by_owner`. If the session was not actually registered
+        with this object, has no effect.
 
-		:param session: The session to unregister.
-		:type session: :class:`nti.socketio.interfaces.ISocketSession`
-		:return: Undefined.
-		"""
+        :param session: The session to unregister.
+        :type session: :class:`nti.socketio.interfaces.ISocketSession`
+        :return: Undefined.
+        """
 
-	def get_session(session_id):
-		"""
-		Return a :class:`nti.socketio.interfaces.ISocketSession` registered with this object
-		whose ``id`` property matches the `session_id`.
+    def get_session(session_id):
+        """
+        Return a :class:`nti.socketio.interfaces.ISocketSession` registered with this object
+        whose ``id`` property matches the `session_id`.
 
-		:param str session_id: The session ID to find. This is the value of ``session.id``
-			after the session was registered with :meth:`register_session`
-		:return: The :class:`nti.socketio.interfaces.ISocketSession` for that session id,
-			or, if not registered, None.
-		"""
+        :param str session_id: The session ID to find. This is the value of ``session.id``
+                after the session was registered with :meth:`register_session`
+        :return: The :class:`nti.socketio.interfaces.ISocketSession` for that session id,
+                or, if not registered, None.
+        """
 
-	def get_sessions_by_owner(session_owner):
-		"""
-		Return a sequence of session objects registered with this object
-		for the given owner.
+    def get_sessions_by_owner(session_owner):
+        """
+        Return a sequence of session objects registered with this object
+        for the given owner.
 
-		:param str session_owner: The name of the session owner. If the owner
-			does not exist or otherwise has no sessions registered, returns an empty
-			sequence.
-		:return: A sequence (possibly a generator) of session objects belonging to
-			the given user. These are returned in no particular order.
-		"""
+        :param str session_owner: The name of the session owner. If the owner
+                does not exist or otherwise has no sessions registered, returns an empty
+                sequence.
+        :return: A sequence (possibly a generator) of session objects belonging to
+                the given user. These are returned in no particular order.
+        """
+
 
 class IUserNotificationEvent(interface.Interface):
-	"""
-	An event that is emitted with the intent of resulting in
-	a notification to one or more end users.
+    """
+    An event that is emitted with the intent of resulting in
+    a notification to one or more end users.
 
-	The chatserver will not produce these events, but it will listen
-	for them and attempt to deliver them to the connected target users.
-	"""
+    The chatserver will not produce these events, but it will listen
+    for them and attempt to deliver them to the connected target users.
+    """
 
-	targets = Iterable( title="Iterable of usernames to attempt delivery to." )
-	name = DecodingValidTextLine( title="The name of the event to deliver" )
-	args = Iterable( title="Iterable of objects to externalize and send as arguments." )
+    targets = Iterable(title=u"Iterable of usernames to attempt delivery to.")
+    name = DecodingValidTextLine(title=u"The name of the event to deliver")
+    args = Iterable(title=u"Iterable of objects to externalize and send as arguments.")
 
-@interface.implementer( IUserNotificationEvent )
+
+@interface.implementer(IUserNotificationEvent)
 class UserNotificationEvent(object):
-	"Base class for user notification events"
+    """
+    Base class for user notification events
+    """
 
-	def __init__( self, name, targets, *args ):
-		self.name = name
-		self.targets = targets
-		self.args = args
+    def __init__(self, name, targets, *args):
+        self.name = name
+        self.targets = targets
+        self.args = args
 
-	def __repr__( self ):
-		return "<%s.%s %s %s %s>" % (type(self).__module__, type(self).__name__,
-									 self.name, self.targets, self.args)
+    def __repr__(self):
+        return "<%s.%s %s %s %s>" % (type(self).__module__, type(self).__name__,
+                                     self.name, self.targets, self.args)
+
 
 class DataChangedUserNotificationEvent(UserNotificationEvent):
-	"""
-	Pre-defined type of user notification for a change in data.
-	"""
+    """
+    Pre-defined type of user notification for a change in data.
+    """
 
-	def __init__( self, targets, change ):
-		"""
-		:param change: An object representing the change.
-		"""
-		super(DataChangedUserNotificationEvent,self).__init__( "data_noticeIncomingChange", targets, change )
+    def __init__(self, targets, change):
+        """
+        :param change: An object representing the change.
+        """
+        super(DataChangedUserNotificationEvent, self).__init__("data_noticeIncomingChange", targets, change)
+
 
 # BWC exports
 from nti.zope_catalog.interfaces import IMetadataCatalog
@@ -1298,59 +1414,63 @@ IMetadataCatalog = IMetadataCatalog
 
 
 class INotableFilter(interface.Interface):
-	"""
-	A filter to determine if an object is a notable
+    """
+    A filter to determine if an object is a notable
 
-	These will typically be registered as subscription adapters
-	"""
+    These will typically be registered as subscription adapters
+    """
 
-	def is_notable(notable, user=None):
-		"""
-		Given an objet and possible a user and returns True if the
-		objet is a notable
-		"""
+    def is_notable(notable, user=None):
+        """
+        Given an objet and possible a user and returns True if the
+        objet is a notable
+        """
+
 
 def get_notable_filter(obj):
-	filters = list(component.subscribers((obj,), INotableFilter))
-	def uber_filter(user=None):
-		return any((f.is_notable(obj, user) for f in filters))
-	return uber_filter
+    filters = list(component.subscribers((obj,), INotableFilter))
+    def uber_filter(user=None):
+        return any((f.is_notable(obj, user) for f in filters))
+    return uber_filter
+
 
 class IUserBlacklistedStorage(interface.Interface):
-	"""
-	Stores blacklisted users.
-	"""
+    """
+    Stores blacklisted users.
+    """
 
-	def is_user_blacklisted(user):
-		"""
-		For the given user, return a bool whether the user is blacklisted or not.
-		Useful during user creation time.
-		"""
+    def is_user_blacklisted(user):
+        """
+        For the given user, return a bool whether the user is blacklisted or not.
+        Useful during user creation time.
+        """
 
-	def blacklist_user(user):
-		"""
-		Blacklists the given user.
-		"""
-	add = blacklist_user
+    def blacklist_user(user):
+        """
+        Blacklists the given user.
+        """
+    add = blacklist_user
 
-	def remove_blacklist_for_user(username):
-		"""
-		Remove the given username from the blacklist.
-		"""
-	remove = remove_blacklist_for_user
+    def remove_blacklist_for_user(username):
+        """
+        Remove the given username from the blacklist.
+        """
+    remove = remove_blacklist_for_user
 
-	def clear():
-		"""
-		Clear all entries in this storage
-		"""
-	reset = clear
+    def clear():
+        """
+        Clear all entries in this storage
+        """
+    reset = clear
+
 
 class IUserDigestEmailMetadata(interface.Interface):
-	"""
-	Stores user digest email metadata.
-	"""
-	last_collected = Number( title="The last time the digest data was collected for this user." )
-	last_sent = Number( title="The last time the digest data was sent for this user." )
+    """
+    Stores user digest email metadata.
+    """
+    last_collected = Number(title=u"The last time the digest data was collected for this user.")
+    last_sent = Number(title=u"The last time the digest data was sent for this user.")
+
 
 # Invitations
 from nti.invitations.interfaces import IInvitation
@@ -1358,49 +1478,49 @@ from nti.invitations.interfaces import IInvitationActor
 
 
 class IJoinEntityInvitation(IInvitation):
-	"""
-	Interface for a invitation to join entities
-	"""
+    """
+    Interface for a invitation to join entities
+    """
 
-	entity = ValidTextLine(title="The entity username", required=True)
+    entity = ValidTextLine(title=u"The entity username", required=True)
 
 
 class IJoinEntityInvitationActor(IInvitationActor):
-	"""
-	Actor to join a user to an entity
-	"""
+    """
+    Actor to join a user to an entity
+    """
 
 
 class IGrantAccessException(interface.Interface):
-	"""
-	An exception with granting access to an object.
-	"""
+    """
+    An exception with granting access to an object.
+    """
 
 
 class IRemoveAccessException(interface.Interface):
-	"""
-	An exception with removing access to an object.
-	"""
+    """
+    An exception with removing access to an object.
+    """
 
 
 class IAccessProvider(interface.Interface):
-	"""
-	Grants/removes access to the underlying context.
-	"""
+    """
+    Grants/removes access to the underlying context.
+    """
 
-	def grant_access(self, entity, access_context=None):
-		"""
-		Grants entity access to this context.
+    def grant_access(self, entity, access_context=None):
+        """
+        Grants entity access to this context.
 
-		:raises: :class:`IGrantAccessException`
-		"""
+        :raises: :class:`IGrantAccessException`
+        """
 
-	def remove_access(self, entity):
-		"""
-		Removes entity access to this context.
+    def remove_access(self, entity):
+        """
+        Removes entity access to this context.
 
-		:raises: :class:`IRemoveAccessException`
-		"""
+        :raises: :class:`IRemoveAccessException`
+        """
 
 
 # Site Roles
@@ -1411,14 +1531,17 @@ ISiteRoleManager = ISiteRoleManager
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?
+
+
 def __setup_interfaces():
-	from nti.mimetype.mimetype import nti_mimetype_with_class
-	for x in sys.modules['nti.dataserver.interfaces'].__dict__.itervalues():
-		if interface.interfaces.IInterface.providedBy( x ):
-			if x.extends( IModeledContent ) and not IContentTypeAware.providedBy( x ):
-				name = x.__name__[1:] # strip the leading I
-				x.mime_type = nti_mimetype_with_class( name )
-				interface.alsoProvides( x, IContentTypeAware )
+    from nti.mimetype.mimetype import nti_mimetype_with_class
+    for x in sys.modules['nti.dataserver.interfaces'].__dict__.itervalues():
+        if interface.interfaces.IInterface.providedBy(x):
+            if x.extends(IModeledContent) and not IContentTypeAware.providedBy(x):
+                name = x.__name__[1:]  # strip the leading I
+                x.mime_type = nti_mimetype_with_class(name)
+                interface.alsoProvides(x, IContentTypeAware)
+
 
 __setup_interfaces()
 del __setup_interfaces
@@ -1429,11 +1552,11 @@ import zope.deferredimport
 zope.deferredimport.initialize()
 
 zope.deferredimport.deprecatedFrom(
-	"Moved to nti.wref.interfaces",
-	"nti.wref.interfaces",
-	"IWeakRef",
-	"IWeakRefToMissing",
-	"ICachingWeakRef")
+    "Moved to nti.wref.interfaces",
+    "nti.wref.interfaces",
+    "IWeakRef",
+    "IWeakRefToMissing",
+    "ICachingWeakRef")
 
 # deprecations
 
@@ -1441,8 +1564,9 @@ from zope.deprecation import deprecated
 
 deprecated('IEnrolledContainer', 'No longer used')
 class IEnrolledContainer(interface.Interface):
-	pass
+    pass
+
 
 deprecated('ISectionInfoContainer', 'No longer used')
 class ISectionInfoContainer(interface.Interface):
-	pass
+    pass
