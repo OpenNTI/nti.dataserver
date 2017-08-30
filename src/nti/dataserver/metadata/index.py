@@ -24,8 +24,6 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
-from zope.mimetype.interfaces import IContentTypeAware
-
 import BTrees
 
 from nti.base._compat import text_
@@ -94,7 +92,7 @@ class ValidatingMimeType(object):
 
 class MimeTypeIndex(ValueIndex):
     default_field_name = 'mimeType'
-    default_interface = IContentTypeAware
+    default_interface = interface.Interface
 
 
 class ValidatingContainerId(object):
