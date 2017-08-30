@@ -14,6 +14,8 @@ from zope import interface
 
 from nti.base._compat import text_
 
+from nti.base.interfaces import INamedFile
+
 from nti.contentfolder.interfaces import INameAdapter
 from nti.contentfolder.interfaces import IPathAdapter
 from nti.contentfolder.interfaces import INamedContainer
@@ -93,6 +95,12 @@ class Filename(object):
 
 def filename_adapter(context):
     return Filename(getattr(context, 'filename', None))
+
+
+@component.adapter(INamedFile)
+@interface.implementer(IFilenameAdapter)
+def _namedfile_filename_adapter(context):
+    return filename_adapter(context)
 
 
 @component.adapter(INamedContainer)

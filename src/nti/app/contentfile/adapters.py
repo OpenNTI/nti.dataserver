@@ -14,6 +14,8 @@ from zope import interface
 
 from zope.intid.interfaces import IIntIds
 
+from nti.base.interfaces import IFile
+
 from nti.contentfile import S3_FILE_MIMETYPE
 from nti.contentfile import S3_IMAGE_MIMETYPE
 from nti.contentfile import CONTENT_FILE_MIMETYPE
@@ -57,8 +59,9 @@ def _contentfile_path_adapter(context):
 @component.adapter(IContentBaseFile)
 @interface.implementer(IMimeTypeAdapter)
 def _contentfile_mimeType_adapter(context):
-    mimeType = CONTENT_FILE_MIMETYPE
-    if IContentBlobImage.providedBy(context):
+    if hasattr(context, '__external_mimeType__'):
+        mimeType = context.__external_mimeType__
+    elif IContentBlobImage.providedBy(context):
         mimeType = CONTENT_BLOB_IMAGE_MIMETYPE
     elif IContentBlobFile.providedBy(context):
         mimeType = CONTENT_BLOB_FILE_MIMETYPE
@@ -68,6 +71,8 @@ def _contentfile_mimeType_adapter(context):
         mimeType = S3_FILE_MIMETYPE
     elif IS3Image.providedBy(context):
         mimeType = S3_IMAGE_MIMETYPE
+    else:
+        mimeType = CONTENT_FILE_MIMETYPE
     return MimeType(mimeType)
 
 
@@ -76,7 +81,7 @@ def site_adapter(context):
     return Site(folder.__name__) if folder is not None else None
 
 
-@component.adapter(IContentBaseFile)
+@component.adapter(IFile)
 @interface.implementer(ISiteAdapter)
 def _contentfile_site_adapter(context):
     return site_adapter(context)

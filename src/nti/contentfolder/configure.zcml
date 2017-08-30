@@ -19,6 +19,7 @@
 	<subscriber handler=".subscribers._on_content_file_moved" />
 
 	<!-- Adapters -->
+	<adapter factory=".adapters._namedfile_filename_adapter" />
 	<adapter factory=".adapters._contentfolder_name_adapter" />
 	<adapter factory=".adapters._contentfolder_path_adapter" />
 	<adapter factory=".adapters._contentfolder_filename_adapter" />
