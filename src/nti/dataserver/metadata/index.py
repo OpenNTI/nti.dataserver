@@ -86,7 +86,7 @@ class ValidatingMimeType(object):
 
     def __init__(self,  obj, unused_default=None):
         self.mimeType = getattr(obj, 'mimeType', None) \
-            or getattr(obj, 'mime_type', None)
+                     or getattr(obj, 'mime_type', None)
 
     def __reduce__(self):
         raise TypeError()
