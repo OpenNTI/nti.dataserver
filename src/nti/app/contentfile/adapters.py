@@ -16,19 +16,7 @@ from zope.intid.interfaces import IIntIds
 
 from nti.base.interfaces import IFile
 
-from nti.contentfile import S3_FILE_MIMETYPE
-from nti.contentfile import S3_IMAGE_MIMETYPE
-from nti.contentfile import CONTENT_FILE_MIMETYPE
-from nti.contentfile import CONTENT_IMAGE_MIMETYPE
-from nti.contentfile import CONTENT_BLOB_FILE_MIMETYPE
-from nti.contentfile import CONTENT_BLOB_IMAGE_MIMETYPE
-
-from nti.contentfile.interfaces import IS3File
-from nti.contentfile.interfaces import IS3Image
-from nti.contentfile.interfaces import IContentImage
 from nti.contentfile.interfaces import IContentBaseFile
-from nti.contentfile.interfaces import IContentBlobFile
-from nti.contentfile.interfaces import IContentBlobImage
 
 from nti.contentfolder.adapters import Site
 from nti.contentfolder.adapters import MimeType
@@ -59,21 +47,11 @@ def _contentfile_path_adapter(context):
 @component.adapter(IContentBaseFile)
 @interface.implementer(IMimeTypeAdapter)
 def _contentfile_mimeType_adapter(context):
-    if hasattr(context, '__external_mimeType__'):
+    try:
         mimeType = context.__external_mimeType__
-    elif IContentBlobImage.providedBy(context):
-        mimeType = CONTENT_BLOB_IMAGE_MIMETYPE
-    elif IContentBlobFile.providedBy(context):
-        mimeType = CONTENT_BLOB_FILE_MIMETYPE
-    elif IContentImage.providedBy(context):
-        mimeType = CONTENT_IMAGE_MIMETYPE
-    elif IS3File.providedBy(context):
-        mimeType = S3_FILE_MIMETYPE
-    elif IS3Image.providedBy(context):
-        mimeType = S3_IMAGE_MIMETYPE
-    else:
-        mimeType = CONTENT_FILE_MIMETYPE
-    return MimeType(mimeType)
+        return MimeType(mimeType)
+    except AttributeError:
+        return None
 
 
 def site_adapter(context):
