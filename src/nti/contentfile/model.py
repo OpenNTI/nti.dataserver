@@ -27,6 +27,13 @@ from persistent import Persistent
 
 from nti.base.mixins import FileMixin
 
+from nti.contentfile import S3_FILE_MIMETYPE
+from nti.contentfile import S3_IMAGE_MIMETYPE
+from nti.contentfile import CONTENT_FILE_MIMETYPE
+from nti.contentfile import CONTENT_IMAGE_MIMETYPE
+from nti.contentfile import CONTENT_BLOB_FILE_MIMETYPE
+from nti.contentfile import CONTENT_BLOB_IMAGE_MIMETYPE
+
 from nti.contentfile.interfaces import IS3File
 from nti.contentfile.interfaces import IS3Image
 from nti.contentfile.interfaces import IS3FileIO
@@ -57,23 +64,23 @@ from nti.transactions import transactions
 deprecated('ContentFile', 'DO NOT USE; Prefer ContentBlobFile')
 @interface.implementer(IContentFile)
 class ContentFile(BaseContentMixin, NamedFile):
-    pass
-
-
-@interface.implementer(IContentBlobFile)
-class ContentBlobFile(BaseContentMixin, NamedBlobFile):
-    pass
+    __external_mimeType__ = CONTENT_FILE_MIMETYPE
 
 
 deprecated('ContentImage', 'DO NOT USE; Prefer ContentBlobImage')
 @interface.implementer(IContentImage)
 class ContentImage(BaseContentMixin, NamedImage):
-    pass
+    __external_mimeType__ = CONTENT_IMAGE_MIMETYPE
+
+
+@interface.implementer(IContentBlobFile)
+class ContentBlobFile(BaseContentMixin, NamedBlobFile):
+    __external_mimeType__ = CONTENT_BLOB_FILE_MIMETYPE
 
 
 @interface.implementer(IContentBlobImage)
 class ContentBlobImage(BaseContentMixin, NamedBlobImage):
-    pass
+    __external_mimeType__ = CONTENT_BLOB_IMAGE_MIMETYPE
 
 
 def transform_to_blob(context, associations=False):
@@ -110,6 +117,8 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
     parameters = {}
     mimeType = alias('contentType')
     
+    __external_mimeType__ = S3_FILE_MIMETYPE
+
     def __init__(self, data='', contentType='', filename=None, name=None):
         self.filename = filename
         if name:
@@ -178,6 +187,8 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
 @interface.implementer(IS3Image)
 class S3Image(S3File):
     
+    __external_mimeType__ = S3_IMAGE_MIMETYPE
+
     def __init__(self, data='', contentType='', filename=None, name=None):
         S3File.__init__(self, data, contentType, filename, name)
         if contentType:
