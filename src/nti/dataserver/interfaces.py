@@ -550,9 +550,10 @@ class DefaultCreatedUsername(object):
     def creator_username(self):
         try:
             creator = self.context.creator
-            username = getattr(creator, 'username', creator)
-            if isinstance(username, six.string_types):
-                return username.lower()
+            creator = getattr(creator, 'username', creator)
+            creator = getattr(creator, 'id', creator)
+            if isinstance(creator, six.string_types):
+                return creator.lower()
         except (AttributeError, TypeError):
             return None
 
