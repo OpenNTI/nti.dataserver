@@ -128,8 +128,8 @@ class ValidatingContainerId(object):
         contained = INTIContained(obj, default)
         if contained is not None:
             cid = contained.containerId
-            if is_ntiid_of_types(cid, self._IGNORED_TYPES) \
-                    and not ICommentPost.providedBy(obj):
+            if      is_ntiid_of_types(cid, self._IGNORED_TYPES) \
+                and not ICommentPost.providedBy(obj):
                 self.containerId = None
             else:
                 self.containerId = text_(cid)
