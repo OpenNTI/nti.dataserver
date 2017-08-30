@@ -24,6 +24,8 @@ from nti.dataserver.interfaces import IModeledContentFile
 
 from nti.threadable.threadable import Threadable as ThreadableMixin
 
+EXTERNAL_MIMETYPE = 'application/vnd.nextthought.modeledcontentfile'
+
 
 @interface.implementer(IModeledContentFile, IContained)
 class ModeledContentFile(ThreadableMixin,
@@ -31,6 +33,8 @@ class ModeledContentFile(ThreadableMixin,
                          ContentBlobFile):
 
     parameters = {}
+
+    __external_mimeType__ = EXTERNAL_MIMETYPE
 
     def __init__(self, *args, **kwargs):
         ThreadableMixin.__init__(self)
@@ -45,7 +49,7 @@ class _ModeledContentFileObjectIO(ContentBlobFileObjectIO):
     _excluded_in_ivars_ = {'download_url'}.union(ContentBlobFileObjectIO._excluded_in_ivars_)
 
     def _ext_mimeType(self, _):
-        return 'application/vnd.nextthought.modeledcontentfile'
+        return EXTERNAL_MIMETYPE
 
 
 def _ModeledContentFileFactory(_):
