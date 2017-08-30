@@ -98,7 +98,7 @@ class ValidatingMimeType(object):
 
 class MimeTypeIndex(ValueIndex):
     default_field_name = 'mimeType'
-    default_interface = interface.Interface
+    default_interface = ValidatingMimeType
 
 
 class ValidatingContainerId(object):
