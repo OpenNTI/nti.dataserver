@@ -109,7 +109,7 @@ class _UserDigestEmailMetadata(object):
             pass
 
     def __len__(self):
-        return 0 if not self._user_meta_storage else len(self._user_meta_storage)
+        return 0 if self._user_meta_storage is None else len(self._user_meta_storage)
 
     def __bool__(self):
         return True
