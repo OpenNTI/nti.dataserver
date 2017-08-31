@@ -102,6 +102,7 @@ setup(
     license='Apache',
     keywords='web pyramid pylons',
     classifiers=[
+        "Internet :: WWW/HTTP",
         'Intended Audience :: Developers :: Education',
         'Natural Language :: English',
         'Operating System :: OS Independent',
@@ -110,7 +111,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: Implementation :: CPython',
-        "Internet :: WWW/HTTP",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     ],
     url="https://github.com/NextThought/nti.dataserver",
@@ -227,6 +227,7 @@ setup(
         # URL-safe "slugs" from arbitrary titles. Automatically
         # deals with several non-ASCII scripts
         'awesome-slugify',
+        'bcrypt',
         'boto',     # amazon
         'brownie',     # Common utilities
         'cffi',  # Foreign Function Interface, libffi required
