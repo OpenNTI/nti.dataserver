@@ -253,9 +253,9 @@ setup(
         'feedgenerator',
         'futures',
         # We have a branch for this, installed in buildout.cfg
-        'gevent' if not IS_PYPY else '',
+        'gevent',
         # pypy has its own greenlet implementation
-        'greenlet' if not IS_PYPY else '',
+        'greenlet',
         'gunicorn',
         # Redis C parser (almost certainly an anti-optimization on
         # PyPy)
