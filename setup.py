@@ -237,7 +237,6 @@ setup(
         # (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
         # requires small patch to work without acquisition
         'contentratings',
-        'cryptacular',     # see z3c.crypt
         # 'cryptography', # oauthlib
         'cssselect',  # Used by pyquery
         'cython',
@@ -345,7 +344,6 @@ setup(
         'z3c.batching',     # result paging. Pulled in by z3c.table
         # bcrypt/pbkdf2 for zope.password
         # adds cryptacular and pbkdf2
-        'z3c.bcrypt',
         # PageTemplate access to macros through zope.component
         # as opposed to traversal (which is good for us; Zope
         # pulls *all* templates into memory/ZODB so they are traversable,
