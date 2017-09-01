@@ -580,7 +580,8 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
 
         if result is not None and not ignore_creator:
             creator = getattr(result, 'creator', None)
-            creator_name = getattr(creator, 'username', creator)
+            creator = getattr(creator, 'username', creator)
+            creator_name = getattr(creator, 'id', creator)
             # Only the creator can access something it created.
             # Only the system user can access anything without a creator
             # (TODO: Should that change?)
