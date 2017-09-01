@@ -31,7 +31,7 @@ zope.deferredimport.deprecated(
     IIntIdAddedEvent='zc.intid.interfaces:IAfterIdAddedEvent',
     IIntIdRemovedEvent='zc.intid.interfaces:IBeforeIdRemovedEvent',
     IntIdAddedEvent='zc.intid.interfaces:AfterIdAddedEvent',
-    IntIdRemovedEvent='zc.intid.interfaces:BeforeIdRemovedEven')
+    IntIdRemovedEvent='zc.intid.interfaces:BeforeIdRemovedEvent')
 
 
 class IIntIds(IIntIds, IIntIdsSubclass, IContained):
