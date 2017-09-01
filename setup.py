@@ -342,12 +342,6 @@ setup(
         # ZCML configurable local component registries
         'z3c.baseregistry',
         'z3c.batching',     # result paging. Pulled in by z3c.table
-        # bcrypt/pbkdf2 for zope.password
-        # adds cryptacular and pbkdf2
-        # PageTemplate access to macros through zope.component
-        # as opposed to traversal (which is good for us; Zope
-        # pulls *all* templates into memory/ZODB so they are traversable,
-        # but we haven't done that).
         'z3c.macro',
         'z3c.pagelet',
         'z3c.password',  # password policies
