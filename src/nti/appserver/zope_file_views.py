@@ -42,9 +42,13 @@ from nti.appserver.interfaces import IFileViewedEvent
 
 from nti.base._compat import text_
 
+from nti.base.interfaces import INamedFile
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IDataserverFolder
+
+from nti.externalization.externalization import to_external_object
 
 from nti.namedfile.utils import getImageInfo
 
@@ -321,3 +325,13 @@ def image_to_dataurl_extjs(request):
     rsp.content_type = 'text/plain'
     rsp.json_body = body
     return rsp
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=INamedFile,
+             permission=nauth.ACT_NTI_ADMIN,
+             request_method='GET',
+             name="export")
+def named_file_export(request):
+    context = request.context
+    return to_external_object(context, name='exporter')
