@@ -569,11 +569,17 @@ class User(Principal):
         stored_value = self.containers.getContainer(containerId, defaultValue)
         return stored_value
 
-    def deleteContainer(self, containerId, remove_contained=True):
-        if remove_contained:
-            containers = self.containers.getContainer(containerId)
-            containers.clear()
+    def deleteContainer(self, containerId):
+        try:
+            self.containers._p_activate()
+            self.containers._p_jar.readCurrent(self.containers)
+        except AttributeError:
+            pass
+        container = self.getContainer(containerId)
+        result = len(container)
+        container.clear()  # fire removed event
         self.containers.deleteContainer(containerId)
+        return result
 
     def getAllContainers(self):
         """ 
