@@ -545,12 +545,15 @@ class User(Principal):
         result = self.containers.addContainedObject(contained)
         return result
 
-    def deleteContainedObject(self, containerId, containedId):
+    def _activate_containers(self):
         try:
             self.containers._p_activate()
             self.containers._p_jar.readCurrent(self.containers)
         except AttributeError:
             pass
+
+    def deleteContainedObject(self, containerId, containedId):
+        self._activate_containers()
         return self.containers.deleteContainedObject(containerId, containedId)
 
     # TODO: Could/Should we use proxy objects to automate
@@ -570,15 +573,14 @@ class User(Principal):
         return stored_value
 
     def deleteContainer(self, containerId):
-        try:
-            self.containers._p_activate()
-            self.containers._p_jar.readCurrent(self.containers)
-        except AttributeError:
-            pass
+        self._activate_containers()
         container = self.getContainer(containerId)
-        result = len(container)
-        container.clear()  # fire removed event
-        self.containers.deleteContainer(containerId)
+        if container is not None:
+            result = len(container)
+            container.clear()  # fire removed event
+            self.containers.deleteContainer(containerId)
+        else:
+            result = 0
         return result
 
     def getAllContainers(self):
