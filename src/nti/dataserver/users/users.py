@@ -569,6 +569,12 @@ class User(Principal):
         stored_value = self.containers.getContainer(containerId, defaultValue)
         return stored_value
 
+    def deleteContainer(self, containerId, remove_contained=True):
+        if remove_contained:
+            containers = self.containers.getContainer(containerId)
+            containers.clear()
+        self.containers.deleteContainer(containerId)
+
     def getAllContainers(self):
         """ 
         Returns all containers, as a map from containerId to container.
