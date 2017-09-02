@@ -328,10 +328,11 @@ def image_to_dataurl_extjs(request):
 
 
 @view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             name="Export",
              context=INamedFile,
              permission=nauth.ACT_NTI_ADMIN,
-             request_method='GET',
-             name="export")
+             request_method='GET')
 def named_file_export(request):
     context = request.context
-    return to_external_object(context, name='exporter')
+    return to_external_object(context, name='exporter', decorate=False)
