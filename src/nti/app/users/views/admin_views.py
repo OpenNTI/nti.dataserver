@@ -385,7 +385,7 @@ class UserGhostContainersView(AbstractAuthenticatedView):
 
     def _delete_containers(self, user, items):
         for containerId in items or ():
-            user.containers.deleteContainer(containerId)
+            user.deleteContainer(containerId)
 
     def __call__(self):
         self._check_access()
