@@ -35,9 +35,11 @@ if gunicorn.version_info not in ((19, 6, 0), (19, 7, 0), (19, 7, 1)):
 
 from gevent import getcurrent
 
-# Monkey patch the Gunicorn logger: Make the 'u' variable actually do
-# something, plus a custom atom (G) to get the greenlet id and pid
-# into the message, just like in normal log messages.
+# Monkey patch the Gunicorn logger:
+#  * Make the 'u' variable actually do something
+#  * Add a custom atom (G) to get the greenlet id and pid
+#    into the message, just like in normal log messages.
+#  * Add a custom atom (C) to get the client identifer and version
 #
 # Loggers are instantiated earlier, so we need to do this by swizzling
 # the class rather than subclassing it, unfortunately.
@@ -47,6 +49,10 @@ def _glogging_atoms(self, resp, req, environ, request_time):
 	atoms = glogging_Logger_atoms(self, resp, req, environ, request_time)
 	atoms['u'] = environ.get('REMOTE_USER', '-')
 	atoms['G'] = "[%d:%d]" % (id(getcurrent()), os.getpid())
+
+	client_app_id = environ.get('HTTP_X_NTI_CLIENT_APP', '-')
+	client_version = environ.get('HTTP_X_NTI_CLIENT_VERSION', '-')
+	atoms['C'] = "%s@%s" % (client_app_id, client_version)
 	return atoms
 glogging.Logger.atoms = _glogging_atoms
 
@@ -251,7 +257,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# microsecond value is between 0 and one whole second; we need to properly set
 		# formatting field width to account for this)
 		# (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
-		self.cfg.settings['access_log_format'].set(str(self.cfg.access_log_format) + b" %(G)s %(T)s.%(D)06ds")
+		self.cfg.settings['access_log_format'].set(str(self.cfg.access_log_format) + b" \"%(C)s\" %(G)s %(T)s.%(D)06ds")
 		# Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
 		# Then the default propagation settings mean we get two copies of access logging.
 		# make that stop.
