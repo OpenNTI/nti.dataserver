@@ -34,6 +34,7 @@ from nti.threadable.threadable import Threadable as ThreadableMixin
 
 @interface.implementer(IMedia, IZContained)
 class Media(ThreadableMixin, UserContentRoot, Contained, SchemaConfigured):
+
     AutoTags = ()  # not currently in any interface
 
     def __init__(self):
