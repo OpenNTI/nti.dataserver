@@ -439,7 +439,7 @@ class _CanvasUrlShape(_CanvasShape):
         if IFile.providedBy(url):
             self._file = url
             self._file.__parent__ = self.__parent__ # may not be set
-        elif isinstance(url, six.string_types):
+        else:
             self.url = url
 
     url = UrlProperty(data_name=_DATA_NAME,
