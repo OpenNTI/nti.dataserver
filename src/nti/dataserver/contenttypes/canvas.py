@@ -27,6 +27,8 @@ from persistent.list import PersistentList
 
 from nti.base._compat import text_
 
+from nti.base.interfaces import IFile
+
 from nti.contentfragments.interfaces import IUnicodeContentFragment
 
 from nti.dataserver.contenttypes.base import _make_getitem
@@ -38,16 +40,19 @@ from nti.dataserver.interfaces import ICanvasShape
 from nti.dataserver.interfaces import ICanvasURLShape
 from nti.dataserver.interfaces import ILinkExternalHrefOnly
 
+from nti.externalization.datastructures import ExternalizableInstanceDict
+
+from nti.externalization.externalization import toExternalObject
+
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
-
-from nti.externalization.datastructures import ExternalizableInstanceDict
 
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.mimetype import mimetype
 
 from nti.threadable.threadable import Threadable as ThreadableMixin
+
 
 #####
 # Whiteboard shapes
@@ -171,7 +176,7 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin,
 
     def toExternalObject(self, mergeFrom=None, **kwargs):
         result = super(CanvasInternalObjectIO, self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
-        result['shapeList'] = [x.toExternalObject() for x in self.context.shapeList]
+        result['shapeList'] = [x.toExternalObject(**kwargs) for x in self.context.shapeList]
         result['viewportRatio'] = self.context.viewportRatio
         return result
 
@@ -408,7 +413,7 @@ class _CanvasTextShape(_CanvasShape):
 											 name='text')
 
 
-from nti.links import links
+from nti.links.links import Link
 
 from nti.property.urlproperty import UrlProperty
 
@@ -428,8 +433,14 @@ class _CanvasUrlShape(_CanvasShape):
         super(_CanvasUrlShape, self).__init__()
         self.url = url
 
-    def updateFromExternalObject(self, *args, **kwargs):
-        super(_CanvasUrlShape, self).updateFromExternalObject(*args, **kwargs)
+    def updateFromExternalObject(self, parsed, *args, **kwargs):
+        url = parsed.pop('url', None)
+        super(_CanvasUrlShape, self).updateFromExternalObject(parsed, *args, **kwargs)
+        if IFile.providedBy(url):
+            self._file = url
+            self._file.__parent__ = self.__parent__ # may not be set
+        elif isinstance(url, six.string_types):
+            self.url = url
 
     url = UrlProperty(data_name=_DATA_NAME,
                       url_attr_name='url',
@@ -445,20 +456,23 @@ class _CanvasUrlShape(_CanvasShape):
             # TODO: This is pretty tightly coupled to the app layer
             # TODO: If we wanted to be clever, we would have a cutoff point based on the size
             # to determine when to return a link vs the data URL.
-
             # We do not want to rely on traversal to this object, so we give the exact
             # NTIID path to the file. (Traversal works for pure canvas, and canvas-in-note, but breaks
             # for canvas-in-chat-message)
-            target = to_external_ntiid_oid(self._file, add_to_connection=True)
-            if target:
-                link = links.Link(target=target,
-                                  target_mime_type=self._file.mimeType,
-                                  elements=('@@view',), rel="data")
-                interface.alsoProvides(link, ILinkExternalHrefOnly)
-                result['url'] = link
+            if kwargs.get('name', None) == 'exporter':
+                result['url'] = toExternalObject(self._file, name='exporter',
+                                                 decorate=False)
             else:
-                logger.warn("Unable to produce URL for file data in %s", self)
-                result['url'] = self.url
+                target = to_external_ntiid_oid(self._file, add_to_connection=True)
+                if target:
+                    link = Link(target=target,
+                                target_mime_type=self._file.mimeType,
+                                elements=('@@view',), rel="data")
+                    interface.alsoProvides(link, ILinkExternalHrefOnly)
+                    result['url'] = link
+                else:
+                    logger.warn("Unable to produce URL for file data in %s", self)
+                    result['url'] = self.url
         else:
             result['url'] = self.url
         return result
