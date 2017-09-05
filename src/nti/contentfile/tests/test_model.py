@@ -100,7 +100,7 @@ class TestModel(unittest.TestCase):
                                         has_key('Last Modified'),
                                         has_entry('name', 'ichigo.gif'),
                                         has_entry('FileMimeType', 'image/gif'),
-                                        has_entry('MimeType', 'application/vnd.nextthought.contentimage'))))
+                                        has_entry('MimeType', 'application/vnd.nextthought.contentblobimage'))))
 
         assert_that(internal, has_property('__name__', is_('ichigo.gif')))
         internal.filename = u'foo'
