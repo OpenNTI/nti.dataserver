@@ -279,7 +279,7 @@ class IImpersonationDecider(interface.Interface):
 
 class ILogoutForgettingResponseProvider(interface.Interface):
     """
-    An object capable of producing a response to forget a 
+    An object capable of producing a response to forget a
     user on logout.  Register this as an adapter on IRequest
     """
 
@@ -391,6 +391,18 @@ class UserUpgradedEvent(_UserEventWithRequest):
         for k in UserUpgradedEvent.__dict__:
             if k in locals() and locals()[k]:
                 setattr(self, k, locals()[k])
+
+
+class IUserPasswordRecoveryTemplateProvider(interface.Interface):
+    """
+    An object capable of providing the password-recovery email templates
+    suitable for specific users.
+    """
+    def get_password_recovery_template(user):
+        """
+        :param user: The user for whom to provide a password-recovery email template.
+        :return: The password-recovery email template suitable for the given user.
+        """
 
 # Dealing with responses
 # Data rendering
