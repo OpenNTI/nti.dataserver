@@ -27,8 +27,6 @@ from nti.contentfile.interfaces import IContentBlobImage
 
 from nti.contentfile.model import S3File
 from nti.contentfile.model import S3Image
-from nti.contentfile.model import ContentFile
-from nti.contentfile.model import ContentImage
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
 
@@ -135,30 +133,24 @@ def BaseFactory(ext_obj, file_factory, image_factory=None):
 
 
 def ContentFileFactory(ext_obj):
-    result = BaseFactory(ext_obj, ContentFile, ContentFile)
-    return result
+    return BaseFactory(ext_obj, ContentBlobFile, ContentBlobFile)
 
 
 def ContentImageFactory(ext_obj):
-    result = BaseFactory(ext_obj, ContentImage, ContentImage)
-    return result
+    return BaseFactory(ext_obj, ContentBlobImage, ContentBlobImage)
 
 
 def ContentBlobFileFactory(ext_obj):
-    result = BaseFactory(ext_obj, ContentBlobFile, ContentBlobImage)
-    return result
+    return BaseFactory(ext_obj, ContentBlobFile, ContentBlobImage)
 
 
 def ContentBlobImageFactory(ext_obj):
-    result = BaseFactory(ext_obj, ContentBlobImage, ContentBlobImage)
-    return result
+    return BaseFactory(ext_obj, ContentBlobImage, ContentBlobImage)
 
 
 def S3FileFactory(ext_obj):
-    result = BaseFactory(ext_obj, S3File, S3File)
-    return result
+    return BaseFactory(ext_obj, S3File, S3File)
 
 
 def S3ImageFactory(ext_obj):
-    result = BaseFactory(ext_obj, S3Image, S3Image)
-    return result
+    return BaseFactory(ext_obj, S3Image, S3Image)
