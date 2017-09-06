@@ -411,6 +411,8 @@ class _CanvasTextShape(_CanvasShape):
 
 from nti.links.links import Link
 
+from nti.property.property import alias
+
 from nti.property.urlproperty import UrlProperty
 
 
@@ -422,6 +424,7 @@ class _CanvasUrlShape(_CanvasShape):
     _ext_primitive_out_ivars_ = _CanvasShape._ext_primitive_out_ivars_.union({'url'})
 
     _file = None
+    file = alias('_file')
 
     _DATA_NAME = 'data'
 
@@ -434,7 +437,7 @@ class _CanvasUrlShape(_CanvasShape):
         super(_CanvasUrlShape, self).updateFromExternalObject(parsed, *args, **kwargs)
         if IFile.providedBy(url):
             self._file = url
-            self._file.__parent__ = self.__parent__ # may not be set
+            self._file.__parent__ = self.__parent__
         else:
             self.url = url
 
