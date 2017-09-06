@@ -158,7 +158,6 @@ class EnclosurePutView(AbstractAuthenticatedView,
     def __call__(self):
         context = self.request.context
         assert IEnclosedContent.providedBy(context)
-
         # How should we be dealing with changes to Content-Type?
         # Changes to Slug are not allowed because that would change the URL
         # Not modeled # TODO: Check IModeledContent.providedBy( context.data )?
