@@ -29,6 +29,7 @@ from zope.intid.interfaces import IIntIds
 from zope.keyreference.interfaces import IKeyReference
 
 from ZODB.interfaces import IConnection
+
 from ZODB.POSException import ConnectionStateError
 
 import transaction
