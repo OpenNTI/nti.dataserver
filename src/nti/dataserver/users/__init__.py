@@ -28,7 +28,8 @@ from nti.dataserver.users.friends_lists import _FriendsListUsernameIterable
 
 from nti.dataserver.users.index import get_entity_catalog
 
-from nti.dataserver.users.users import _Password
+from nti.dataserver.users.password import Password as _Password
+
 from nti.dataserver.users.users import _DevicesMap
 from nti.dataserver.users.users import _TranscriptsMap
 from nti.dataserver.users.users import _FriendsListMap
