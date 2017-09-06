@@ -18,6 +18,8 @@ from urllib import quote as urlquote
 from zope import component
 from zope import interface
 
+from zope.location.interfaces import IContained
+
 from zope.schema.interfaces import WrongType
 from zope.schema.interfaces import WrongContainedType
 
@@ -35,7 +37,6 @@ from nti.dataserver.contenttypes.base import _make_getitem
 from nti.dataserver.contenttypes.base import UserContentRoot
 
 from nti.dataserver.interfaces import ICanvas
-from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import ICanvasShape
 from nti.dataserver.interfaces import ICanvasURLShape
 from nti.dataserver.interfaces import ILinkExternalHrefOnly
@@ -59,7 +60,7 @@ from nti.threadable.threadable import Threadable as ThreadableMixin
 #####
 
 
-@interface.implementer(ICanvas, IZContained)
+@interface.implementer(ICanvas, IContained)
 class Canvas(ThreadableMixin, UserContentRoot):
 
     # TODO: We're not trying to resolve any incoming external
@@ -69,8 +70,8 @@ class Canvas(ThreadableMixin, UserContentRoot):
     # of shapes into this object as a "container"? Right now, we have disabled
     # persistence of individual shapes so it doesn't do us much good. We do at least
     # preserve the PersistentList, when possible.
-    __parent__ = None
     __name__ = None
+    __parent__ = None
 
     viewportRatio = 1.0
 
@@ -258,8 +259,8 @@ from nti.dataserver.contenttypes.color import updateColorFromExternalValue
 @interface.implementer(ICanvasShape, IExternalObject)
 class _CanvasShape(ExternalizableInstanceDict):
 
-    __parent__ = None
     __name__ = None
+    __parent__ = None
     __metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
     # We generate the affine transform on demand; we don't store it
