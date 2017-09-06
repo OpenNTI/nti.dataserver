@@ -285,6 +285,7 @@ setup(
         'plone.scale',     # image scaling/storage based on PIL
         # much like zope.file, but some image-specific goodness.
         'premailer',  # inline css for html emails
+        'psutil' if not IS_PYPY else '',
         'pyparsing',  # used by rdflib
         # Pure python PDF reading and manipulation library.
         'pyPDF2',

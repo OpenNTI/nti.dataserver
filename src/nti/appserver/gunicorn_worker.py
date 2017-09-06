@@ -26,7 +26,6 @@ from gevent.monkey import get_original
 
 from gunicorn.workers.ggevent import GeventPyWSGIWorker
 
-
 logger = logging.getLogger("mozsvc.gunicorn_worker")
 
 # Take references to un-monkey-patched versions of stuff we need.
@@ -63,7 +62,8 @@ MEMORY_DUMP_FILE = os.environ.get("MOZSVC_MEMORY_DUMP_FILE",
 
 
 class MozSvcGeventWorker(GeventPyWSGIWorker):
-    """Custom gunicorn worker with extra operational niceties.
+    """
+    Custom gunicorn worker with extra operational niceties.
 
     This is a custom gunicorn worker class, based on the standard gevent worker
     but with some extra operational- and debugging-related features:
@@ -101,11 +101,11 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
         self._switch_trace = os.environ.get('gevent_switch_trace', False)
 
         self._max_blocking_time = os.environ.get('gevent_max_blocking_time',
-                                            DEFAULT_MAX_BLOCKING_TIME)
+                                                 DEFAULT_MAX_BLOCKING_TIME)
         self._max_blocking_time = float(self._max_blocking_time)
 
         self._loop_callback_interval = os.environ.get('gevent_loop_callback_interval',
-                                                 DEFAULT_LOOP_CALLBACK_INTERVAL)
+                                                      DEFAULT_LOOP_CALLBACK_INTERVAL)
         self._loop_callback_interval = float(self._loop_callback_interval)
 
         # Set up a greenlet tracing hook to monitor for event-loop blockage,
@@ -150,7 +150,8 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
             return super(MozSvcGeventWorker, self).handle_request(*args)
 
     def _greenlet_switch_tracer(self, what, (origin, target)):
-        """Callback method executed on every greenlet switch.
+        """
+        Callback method executed on every greenlet switch.
 
         The worker arranges for this method to be called on every greenlet
         switch.  It keeps track of which greenlet is currently active and
@@ -167,7 +168,8 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
             #logger.info('Switching greenlet context')
 
     def _process_monitoring_thread(self):
-        """Method run in background thread that monitors our execution.
+        """
+        Method run in background thread that monitors our execution.
 
         This method is an endless loop that gets executed in a background
         thread.  It periodically wakes up and checks:
@@ -248,8 +250,9 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
                     self.alive = False
             self._last_memory_check_time = time.time()
 
-    def _dump_memory_usage(self, *args):
-        """Dump memory usage data to a file.
+    def _dump_memory_usage(self, *unused_args):
+        """
+        Dump memory usage data to a file.
 
         This method writes out memory usage data for the current process into
         a timestamped file.  By default the data is written to a file named
@@ -265,7 +268,7 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
             filename = "%s.%d.%d" % (MEMORY_DUMP_FILE, os.getpid(), now)
             from meliae import scanner
             scanner.dump_all_objects(filename)
-        except Exception:
+        except (ImportError, Exception):
             filename = "%s.error.%d.%d" % (MEMORY_DUMP_FILE, os.getpid(), now)
             with open(filename, "w") as f:
                 f.write("ERROR DUMPING MEMORY USAGE\n\n")
