@@ -28,6 +28,7 @@ from pyramid.threadlocal import get_current_request
 import gunicorn
 import gunicorn.http.wsgi
 import gunicorn.workers.ggevent as ggevent
+
 from gunicorn.app.pasterapp import PasterServerApplication
 
 if gunicorn.version_info not in ((19, 6, 0), (19, 7, 0), (19, 7, 1)):
@@ -62,6 +63,8 @@ import gevent.socket
 from paste.deploy import loadwsgi
 
 from .application_server import WebSocketServer
+
+from nti.appserver.gunicorn_worker import MozSvcGeventWorker
 
 class _DummyApp(object):
 	global_conf = None
@@ -167,7 +170,7 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class, ggevent.PyWSGIHandl
 
 		return environ
 
-class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
+class GeventApplicationWorker(MozSvcGeventWorker):
 	"""
 	Our application worker.
 	"""
@@ -267,7 +270,8 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 
 		self.server_class = _ServerFactory(self)
 
-		if False:  # pragma: no cover
+		gevent_trace = os.environ.get('gevent_trace')
+		if gevent_trace:  # pragma: no cover
 			def print_stacks():
 				from nti.appserver._util import dump_stacks
 				import sys
