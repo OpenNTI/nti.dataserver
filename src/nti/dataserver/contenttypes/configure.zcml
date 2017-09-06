@@ -23,11 +23,16 @@
 	<ext:registerMimeFactories module=".redaction" />
 
 	<adapter factory=".note.NoteInternalObjectIO" />
-	<adapter factory=".media.MediaInternalObjectIO" />
 	<adapter factory=".canvas.CanvasInternalObjectIO" />
 	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
 	<adapter factory=".highlight.HighlightInternalObjectIO" />
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
+
+	<adapter factory=".media.MediaInternalObjectIO" />
+	<adapter factory=".media._MediaExporter"
+			 for="nti.dataserver.interfaces.IMedia"
+			 provides="nti.externalization.interfaces.IInternalObjectExternalizer"
+			 name="exporter" />
 
 	<!-- Blob file URL storage for canvas images -->
 	<exclude package="zope.file" file="browser.zcml" />

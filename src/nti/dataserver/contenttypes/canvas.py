@@ -132,24 +132,22 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin,
     # contains _CanvasShape "objects". Note that this means they cannot be
     # decorated
 
-    _excluded_out_ivars_ = getattr(UserContentRootInternalObjectIO, '_excluded_out_ivars_').union(
-        				   ('shapeList', 'viewportRatio'))
+    _user_root_excluded_out_ivars_ = getattr(UserContentRootInternalObjectIO, '_excluded_out_ivars_')
+    _excluded_out_ivars_ = _user_root_excluded_out_ivars_.union(('shapeList', 'viewportRatio'))
 
     def updateFromExternalObject(self, ext_parsed, **kwargs):
         canvas = self.context
-
         # Special handling of shapeList to preserve the PersistentList.
         # (Though this may or may not matter. See the note at the top of the class)
         shapeList = ext_parsed.pop('shapeList', self)
         viewportRatio = ext_parsed.pop('viewportRatio', self)
-
         super(CanvasInternalObjectIO, self).updateFromExternalObject(ext_parsed, **kwargs)
-
+        # check viewportRatio
         if 		isinstance(viewportRatio, numbers.Real) \
             and viewportRatio > 0 \
             and viewportRatio != canvas.viewportRatio:
             canvas.viewportRatio = viewportRatio
-
+        # check files
         if shapeList is not self:
             # Save existing files, if we can detect for sure that
             # it's the same image
@@ -165,12 +163,10 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin,
                     for existing_shape in canvas.shapeList:
                         if adopt(existing_shape):
                             break
-
             del canvas.shapeList[:]
             if shapeList:
                 for shape in shapeList:
                     canvas.append(shape)
-
             # be polite and put it back
             ext_parsed['shapeList'] = list(self.context.shapeList)
 
