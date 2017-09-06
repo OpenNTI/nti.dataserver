@@ -12,7 +12,7 @@ of these locks while a previous greenlet already has it.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # Before doing any monkey patching, patch gevent.signal.signal
@@ -33,7 +33,7 @@ def _patched_signal(signalnum, handler):
             # They tried to ignore/default action this signal (it's ignored by default)
             # and previous code was there, so make sure the previous code
             # doesn't run
-            return gevent_signal(signalnum, lambda *args: None)
+            return gevent_signal(signalnum, lambda *unused_args: None)
         return
     return gevent_signal(signalnum, handler)
 

@@ -6,7 +6,7 @@ Views relating to user activity.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -113,7 +113,7 @@ class UserActivityGetView(RecursiveUGDQueryView):
         excludes.add('application/vnd.nextthought.assessment.assessedquestionset')
         return excludes
 
-    def _check_for_not_found(self, items, exc_info):
+    def _check_for_not_found(self, *unused_args, **unused_kwargs):
         """
         Override to never throw.
         """
@@ -154,7 +154,7 @@ DefaultUserActivityStorageFactory = an_factory(DefaultUserActivityStorage)
 @interface.implementer(IUserActivityProvider)
 class DefaultUserActivityProvider(object):
 
-    def __init__(self, user, request=None):
+    def __init__(self, user, unused_request=None):
         self.user = user
 
     def getActivity(self):

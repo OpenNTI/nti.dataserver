@@ -48,8 +48,6 @@ from nti.common.string import is_false
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.authorization import is_admin_or_content_admin_or_site_admin
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
@@ -60,7 +58,8 @@ from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.users import Entity
+from nti.dataserver.users.entity import Entity
+
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.externalization.externalization import toExternalObject
@@ -294,7 +293,7 @@ def _format_result(result, remote_user, dataserver):
             # Since we are already looking in the object we might as well
             # return the summary form.
             ext_type = 'personal-summary'
-        elif is_admin_or_content_admin_or_site_admin(remote_user):
+        elif nauth.is_admin_or_content_admin_or_site_admin(remote_user):
             ext_type = 'admin-summary'
         return ext_type
 
@@ -411,7 +410,7 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
     # TODO: Hook this up to the ACL support
     # Admin/SiteAdmins/ContentAdmins can see everything.
     if remote_user:
-        is_admin = is_admin_or_content_admin_or_site_admin(remote_user)
+        is_admin = nauth.is_admin_or_content_admin_or_site_admin(remote_user)
 
         if is_admin:
             # If we're an admin, we can search everyone unless

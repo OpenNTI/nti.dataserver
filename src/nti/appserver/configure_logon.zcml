@@ -6,9 +6,7 @@
 		   xmlns:link="http://nextthought.com/ntp/link_providers">
 
 	<include package="zope.component" file="meta.zcml" />
-	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	<include package="zope.security" />
 	
 	<include package=".link_providers" file="meta.zcml" />
 

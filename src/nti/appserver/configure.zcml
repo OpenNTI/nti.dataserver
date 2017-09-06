@@ -363,6 +363,7 @@
 			 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
 			 factory=".account_creation_views.AccountCreatePathAdapter"
 			 provides="zope.traversing.interfaces.IPathAdapter" />
+
 	<adapter name="account.preflight.create"
 			 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
 			 factory=".account_creation_views.AccountCreatePreflightPathAdapter"

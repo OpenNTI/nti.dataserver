@@ -76,19 +76,19 @@ REL_RESET_PASSCODE = 'logon.reset.passcode'
 
 def _preflight_email_based_request(request):
     if request.authenticated_userid:
-        raise_json_error(request, 
+        raise_json_error(request,
                          hexc.HTTPForbidden,
                          {
-                            'message': _(u"Cannot look for forgotten accounts while logged on.")
+                             'message': _(u"Cannot look for forgotten accounts while logged on.")
                          },
                          None)
 
     email_assoc_with_account = request.params.get('email')
     if not email_assoc_with_account:
-        raise_json_error(request, 
+        raise_json_error(request,
                          hexc.HTTPBadRequest,
                          {
-                            'message': _(u"Must provide email.")
+                             'message': _(u"Must provide email.")
                          },
                          None)
 
@@ -132,20 +132,20 @@ def forgot_username_view(request):
                                            request.registry.getUtility(IDataserver))
     if matching_users:
         # ensure only real users, not profiles or other matches
-        matching_users = filter(IUser.providedBy, 
+        matching_users = filter(IUser.providedBy,
                                 matching_users)
         # create mock users for each user. This will let us apply the
         # username substitution policy to their usernames (for OU 4x4s)
         # without needing to modify the template.
-        matching_users = map(lambda user: _create_mock_user(user), 
+        matching_users = map(lambda user: _create_mock_user(user),
                              matching_users)
 
     # Need to send both HTML and plain text if we send HTML, because
     # many clients still do not render HTML emails well (e.g., the popup notification on iOS
     # only works with a text part)
     policy = component.getUtility(ISitePolicyUserEventListener)
-    base_template = getattr(policy, 
-                            'USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME', 
+    base_template = getattr(policy,
+                            'USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME',
                             'username_recovery_email')
 
     text_ext = ".mak"
@@ -153,15 +153,15 @@ def forgot_username_view(request):
         text_ext = ".txt"
         base_template = 'failed_' + base_template
 
-    subject = getattr(policy, 
-                      'USERNAME_RECOVERY_EMAIL_SUBJECT', 
+    subject = getattr(policy,
+                      'USERNAME_RECOVERY_EMAIL_SUBJECT',
                       'NextThought Username Reminder')
 
     package = getattr(policy, 'PACKAGE', None)
     queue_simple_html_text_email(base_template, subject=_(subject),
                                  recipients=[email_assoc_with_account],
                                  template_args={
-                                     'users': matching_users, 
+                                     'users': matching_users,
                                      'email': email_assoc_with_account
                                  },
                                  request=request,
@@ -201,20 +201,20 @@ def forgot_passcode_view(request):
     username = request.params.get('username') or ''
     username = username.strip()
     if not username:
-        raise_json_error(request, 
+        raise_json_error(request,
                          hexc.HTTPBadRequest,
                          {
-                            'message': _(u"Must provide username.")
+                             'message': _(u"Must provide username.")
                          },
                          None)
     username = username.lower()  # normalize
 
     success_redirect_value = request.params.get('success')
     if not success_redirect_value:
-        raise_json_error(request, 
+        raise_json_error(request,
                          hexc.HTTPBadRequest,
                          {
-                            'message': _(u"Must provide success.")
+                             'message': _(u"Must provide success.")
                          },
                          None)
 
@@ -223,8 +223,8 @@ def forgot_passcode_view(request):
                                            username=username)
 
     policy = component.getUtility(ISitePolicyUserEventListener)
-    base_template = getattr(policy, 
-                            'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME', 
+    base_template = getattr(policy,
+                            'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
                             'password_reset_email')
 
     # Ok, we either got one user on no users
@@ -244,13 +244,13 @@ def forgot_passcode_view(request):
         parsed_redirect = list(parsed_redirect)
         query = parsed_redirect[4]
         if query:
-            query = query + '&username=' + \
-                    urllib.quote(matching_user.username) + \
-                    '&id=' + urllib.quote(token)
+            query =   query + '&username=' \
+                    + urllib.quote(matching_user.username) \
+                    + '&id=' + urllib.quote(token)
         else:
-            query = 'username=' + \
-                    urllib.quote(matching_user.username) + \
-                    '&id=' + urllib.quote(token)
+            query =  'username=' \
+                   + urllib.quote(matching_user.username) \
+                   + '&id=' + urllib.quote(token)
 
         parsed_redirect[4] = query
         success_redirect_value = urlparse.urlunparse(parsed_redirect)
@@ -265,8 +265,8 @@ def forgot_passcode_view(request):
         reset_url = None
         base_template = 'failed_' + base_template
 
-    subject = getattr(policy, 
-                      'PASSWORD_RESET_EMAIL_SUBJECT', 
+    subject = getattr(policy,
+                      'PASSWORD_RESET_EMAIL_SUBJECT',
                       'NextThought Password Reset')
     package = getattr(policy, 'PACKAGE', None)
 
@@ -362,28 +362,28 @@ def reset_passcode_view(request):
 
     """
     if request.authenticated_userid:
-        raise_json_error(request, 
+        raise_json_error(request,
                          hexc.HTTPForbidden,
                          {
-                            'message': _(u"Cannot look for forgotten accounts while logged on.")
+                             'message': _(u"Cannot look for forgotten accounts while logged on.")
                          },
                          None)
 
     username = request.params.get('username')
     if not username:
-        raise_json_error(request, 
+        raise_json_error(request,
                          hexc.HTTPBadRequest,
                          {
-                            'message': _(u"Must provide username.")
+                             'message': _(u"Must provide username.")
                          },
                          None)
 
     token = request.params.get('id')
     if not token:
-        raise_json_error(request, 
+        raise_json_error(request,
                          hexc.HTTPBadRequest,
                          {
-                            'message': _(u"Must provide token id.")
+                             'message': _(u"Must provide token id.")
                          },
                          None)
 
@@ -396,11 +396,11 @@ def reset_passcode_view(request):
     value = annotations.get(_KEY_PASSCODE_RESET, value)
     if value[0] != token or _is_link_expired(value[1]):
         # expired, no user, bad token
-        raise_json_error(request, 
+        raise_json_error(request,
                          hexc.HTTPNotFound,
                          {
-                            'code': 'InvalidOrMissingOrExpiredResetToken',
-                            'message': _(u"Your reset link is not valid. Please request a new one.")
+                             'code': 'InvalidOrMissingOrExpiredResetToken',
+                             'message': _(u"Your reset link is not valid. Please request a new one.")
                          },
                          None)
 

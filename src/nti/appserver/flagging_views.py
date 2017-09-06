@@ -6,7 +6,7 @@ Views relating to flagging and moderating flagged objects.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -14,7 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from zc import intid as zc_intid
+from zope.intid.interfaces import IIntIds
 
 from pyramid import httpexceptions as hexc
 
@@ -35,11 +35,10 @@ from nti.appserver import MessageFactory as _
 from nti.appserver.interfaces import IModeratorDealtWithFlag  # BWC export
 
 from nti.dataserver import flagging
+from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IFlaggable
 from nti.dataserver.interfaces import IGlobalFlagStorage
-
-from nti.dataserver import authorization as nauth
 
 from nti.externalization.internalization import update_from_external_object
 
@@ -53,8 +52,8 @@ UNFLAG_VIEW = 'unflag'
 FLAG_AGAIN_VIEW = 'flag.metoo'
 
 
-@interface.implementer(IExternalMappingDecorator)
 @component.adapter(IFlaggable, IRequest)
+@interface.implementer(IExternalMappingDecorator)
 class FlagLinkDecorator(AbstractTwoStateViewLinkDecorator):
     """
     Adds the appropriate flag links. Note that once something is flagged,
@@ -66,7 +65,7 @@ class FlagLinkDecorator(AbstractTwoStateViewLinkDecorator):
     true_view = FLAG_AGAIN_VIEW
     link_predicate = staticmethod(flagging.flags_object)
 
-    def _predicate(self, context, mapping):
+    def _predicate(self, context, unused_mapping):
         # Flagged and handled once. Cannot be flagged again. This
         # is only used on IMessageInfo objects which are otherwise
         # immutable. TODO: This probably needs handled differently.
@@ -127,6 +126,7 @@ def _UnFlagView(request):
     """
     return _do_flag(flagging.unflag_object, request)
 
+
 ########
 # Right here is code for a moderation view:
 # There is a static template that views all
@@ -143,7 +143,7 @@ from nti.appserver.ugd_query_views import lists_and_dicts_to_ext_collection
 
 
 def _moderation_table(request):
-    intids = component.getUtility(zc_intid.IIntIds)
+    intids = component.getUtility(IIntIds)
     content = list(component.getUtility(IGlobalFlagStorage).iterflagged())
     content_dict = lists_and_dicts_to_ext_collection((content,),
                                                      predicate=intids.queryId,
@@ -214,7 +214,7 @@ def moderation_admin_post(request):
             # in this way, ACT_MODERATE automatically implies ACT_DELETE.
             # TODO: We could also use the nti.dataserver.authentication policy?
             if hasattr(item.creator, 'username'):
-                creator = item.creator.username 
+                creator = item.creator.username
             else:
                 creator = item.creator
             subrequest.environ['REMOTE_USER'] = creator

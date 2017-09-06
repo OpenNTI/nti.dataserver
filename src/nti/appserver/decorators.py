@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -24,10 +24,10 @@ from pyramid.threadlocal import get_current_request
 
 from nti.appserver import MessageFactory as _
 
-from nti.appserver.link_providers import provide_links
-
 from nti.appserver.interfaces import ILogonPong
 from nti.appserver.interfaces import IModeratorDealtWithFlag
+
+from nti.appserver.link_providers import provide_links
 
 from nti.common.nameparser import constants as np_constants
 
@@ -36,10 +36,11 @@ from nti.dataserver.interfaces import IContainerContext
 from nti.dataserver.interfaces import IContextAnnotatable
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.externalization.singleton import SingletonDecorator
 
 
 @component.adapter(ILogonPong)
@@ -48,7 +49,7 @@ class _SiteNameAdder(object):
 
     __metaclass__ = SingletonDecorator
 
-    def decorateExternalObject(self, context, mapping):
+    def decorateExternalObject(self, unused_context, mapping):
         site = getSite()
         if site is not None:
             mapping['Site'] = site.__name__
@@ -137,9 +138,9 @@ class _DeletedObjectPlaceholderDecorator(object):
     Cleans up some other data too that we don't want out.
     """
 
-    _message = _("This item has been deleted.")
+    _message = _(u"This item has been deleted.")
 
-    _moderator_message = _("This item has been deleted by the moderator.")
+    _moderator_message = _(u"This item has been deleted by the moderator.")
 
     __metaclass__ = SingletonDecorator
 
@@ -158,7 +159,6 @@ class _DeletedObjectPlaceholderDecorator(object):
             external['description'] = message
         if 'body' in external:
             external['body'] = [message]
-
         if 'tags' in external:
             external['tags'] = ()
 

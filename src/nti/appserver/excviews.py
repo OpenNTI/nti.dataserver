@@ -35,7 +35,7 @@ General notes on exception views:
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -81,7 +81,7 @@ class AbstractRateLimitedExceptionView(object):
 
     _last_aux_time = property(lambda self: getattr(type(self), '_last_aux_time_', 0),
                               lambda self, nv: setattr(type(self), '_last_aux_time_', nv),
-                              doc="The last time we called the aux action. This is kept per-class.")
+                              doc=u"The last time we called the aux action. This is kept per-class.")
 
     def __call__(self):
         now = time.time()
@@ -151,7 +151,7 @@ class EmailReportingExceptionView(AbstractRateLimitedExceptionView):
 
         # Best we can do now is report it to the logs; we're in
         # the throttled block here, so this shouldn't be overwhelming
-        def failed(exc_info, environ):
+        def failed(exc_info, unused_environ):
             fmt = format_exception(*exc_info)
             fmt = [x.decode('ascii', 'ignore') if isinstance(x, bytes) else x
                    for x in fmt]

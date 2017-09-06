@@ -404,6 +404,7 @@ class IUserPasswordRecoveryTemplateProvider(interface.Interface):
         :return: The password-recovery email template suitable for the given user.
         """
 
+
 # Dealing with responses
 # Data rendering
 
@@ -469,6 +470,7 @@ class INamedLinkPathAdapter(IPathAdapter):
 
 @interface.implementer(IContained)
 class NamedLinkPathAdapter(object):
+
     __name__ = None
 
     def __init__(self, context, request):
@@ -495,6 +497,7 @@ class INamedLinkView(interface.Interface):
     Similar to INamedLinkPathAdapter, implement this (provide this)
     from views that should be taken as named links.
     """
+
 
 # Resources.
 # This is mostly a migration thing
@@ -580,6 +583,7 @@ class INewObjectTransformer(interface.Interface):
                 appropriately.
         """
 
+
 # Policies
 
 
@@ -611,6 +615,7 @@ class IIntIdUserSearchPolicy(IUserSearchPolicy):
         :return: A (BTree) set of intids of entities that match.
         """
 
+
 # Additional indexed data storage
 
 
@@ -634,6 +639,7 @@ class IUserActivityProvider(interface.Interface):
 
         The returned value should have a proper ``lastModified`` value.
         """
+
 
 # Misc
 
@@ -743,6 +749,7 @@ class IEditLinkMaker(interface.Interface):
 
 # Resolvers
 
+
 class IContainerRootResolver(interface.Interface):
     """
     A utility that returns the root of a [container] ntiid
@@ -759,6 +766,7 @@ class IContainerLeafResolver(interface.Interface):
 
     def resolve(ntiid):
         pass
+
 
 # UGD Query
 

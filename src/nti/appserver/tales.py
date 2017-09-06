@@ -11,7 +11,7 @@ title).
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -53,7 +53,7 @@ class Currency(object):
         request = request or get_current_request()
         if request is None:
             # Use a USD default
-            result = '$ %s' % '{:20,.2f}'.format(decimal)
+            result = u'$ %s' % u'{:20,.2f}'.format(decimal)
             return result
 
         locale = IBrowserRequest(request).locale
@@ -65,17 +65,16 @@ class Currency(object):
         # >>> print format_currency(10.50, 'USD', locale='en_AU')
         # US$10.50
         currency_format = locale.numbers.getFormatter('currency')
-
         if currency is None:
             try:
                 currency = locale.getDefaultCurrency()
             except AttributeError:
-                currency = 'USD'
+                currency = u'USD'
         currency = locale.numbers.currencies[currency]
         formatted = currency_format.format(decimal)
         # Replace the currency symbol placeholder with its real value.
         # see  http://www.mail-archive.com/zope3-users@zope.org/msg04721.html
-        formatted = formatted.replace('\xa4', currency.symbol)
+        formatted = formatted.replace(u'\xa4', currency.symbol)
         return formatted
 
     def formatted(self):
@@ -112,7 +111,6 @@ class Currency(object):
             attr = getattr(self.context, name[16:])
             self.currency = getattr(self.context, 'Currency')
             self.context = attr
-
             return self.format_with_currency
 
         if name == 'CURRENCY':

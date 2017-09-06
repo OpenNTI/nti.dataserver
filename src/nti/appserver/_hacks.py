@@ -66,13 +66,11 @@ def echo_image_url(request):
 
     Accepts one ``GET`` paramater, ``image_url``.
     """
-
     # TODO: This should do some more verification on the request.
     # TODO: Detect that the image URL comes from our CDN
     # and map it back to the original S3 bucket and return the data from
     # that. That would be internal traffic whereas the CDN request is going to be
     # external traffic and we'll pay data transfer charges.
-
     try:
         # stream=False: Download whole body
         image_response = requests.get(request.params['image_url'], stream=True)
