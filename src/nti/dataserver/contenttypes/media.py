@@ -24,10 +24,10 @@ from nti.dataserver.interfaces import IEmbeddedMedia
 from nti.dataserver.interfaces import IEmbeddedAudio
 from nti.dataserver.interfaces import IEmbeddedVideo
 
+from nti.externalization.datastructures import InterfaceObjectIO
+
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IInternalObjectExternalizer
-
-from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.mimetype.externalization import decorateMimeType
 

@@ -41,18 +41,26 @@ from nti.dataserver.interfaces import ICanvasShape
 from nti.dataserver.interfaces import ICanvasURLShape
 from nti.dataserver.interfaces import ILinkExternalHrefOnly
 
+from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.datastructures import ExternalizableInstanceDict
 
 from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IInternalObjectExternalizer
 
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.mimetype import mimetype
 
+from nti.mimetype.externalization import decorateMimeType
+
 from nti.threadable.threadable import Threadable as ThreadableMixin
+
+OID = StandardExternalFields.OID
+NTIID = StandardExternalFields.NTIID
 
 
 #####
@@ -175,6 +183,26 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin,
         result = super(CanvasInternalObjectIO, self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
         result['shapeList'] = [x.toExternalObject(**kwargs) for x in self.context.shapeList]
         result['viewportRatio'] = self.context.viewportRatio
+        return result
+
+
+@component.adapter(ICanvas)
+@interface.implementer(IInternalObjectExternalizer)
+class _CanvasExporter(InterfaceObjectIO):
+
+    _ext_iface_upper_bound = ICanvas
+
+    def toExternalObject(self, **kwargs):
+        context = self._ext_replacement()
+        [kwargs.pop(x, None) for x in ('name', 'decorate')]
+        adapter = IInternalObjectExternalizer(context, None)
+        if adapter is not None:
+            result = adapter.toExternalObject(decorate=False, **kwargs)
+        else:
+            result = super(_CanvasExporter, self).toExternalObject(decorate=False, 
+                                                                  **kwargs)
+            decorateMimeType(context, result)
+        [result.pop(x, None) for x in (OID, NTIID)]
         return result
 
 

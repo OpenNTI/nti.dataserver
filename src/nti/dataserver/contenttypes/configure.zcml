@@ -23,11 +23,16 @@
 	<ext:registerMimeFactories module=".redaction" />
 
 	<adapter factory=".note.NoteInternalObjectIO" />
-	<adapter factory=".canvas.CanvasInternalObjectIO" />
 	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
 	<adapter factory=".highlight.HighlightInternalObjectIO" />
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
 
+	<adapter factory=".canvas.CanvasInternalObjectIO" />
+	<adapter factory=".canvas._CanvasExporter"
+			 for="nti.dataserver.interfaces.ICanvas"
+			 provides="nti.externalization.interfaces.IInternalObjectExternalizer"
+			 name="exporter" />
+			 
 	<adapter factory=".media.MediaInternalObjectIO" />
 	<adapter factory=".media._MediaExporter"
 			 for="nti.dataserver.interfaces.IMedia"
