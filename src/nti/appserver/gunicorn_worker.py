@@ -18,9 +18,12 @@ import time
 import signal
 import logging
 import traceback
+import threading
 
 import greenlet
 import gevent.hub
+
+from datetime import datetime
 
 from gevent.monkey import get_original
 
@@ -163,9 +166,11 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
         self._active_greenlet = target
         self._greenlet_switch_counter += 1
         if self._switch_trace:
-            pass
-            # XXX: Might have blocking issues if we log here...
-            #logger.info('Switching greenlet context')
+            now = datetime.now()
+            now = now.strftime('%Y-%m-%d %H:%M:%S,%f')
+            thread = threading.current_thread()
+            print('%s [%s:%s] [%s] Switched greenlet context'
+			      % (now, thread.ident, os.getpid(), thread.getName()))
 
     def _process_monitoring_thread(self):
         """
