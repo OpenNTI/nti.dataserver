@@ -38,7 +38,7 @@ from nti.dataserver.interfaces import IDataserverFolder
              request_method='GET',
              context=IDataserverFolder,
              name='URLMetaDataExtractor',
-             permission=nauth.ACT_CONTENT_EDIT)
+             permission=nauth.ACT_READ)
 class _URLMetaDataExtractor(AbstractAuthenticatedView):
 
     max_age = 3600  # one hour
@@ -78,7 +78,7 @@ def _is_hop_by_hop(header, connection=None):
              request_method='GET',
              context=IDataserverFolder,
              name='safeimage',
-             permission=nauth.ACT_CONTENT_EDIT)
+             permission=nauth.ACT_READ)
 class _URLMetaDataSafeImageProxy(AbstractAuthenticatedView):
 
     _via = '1.1 NT'
