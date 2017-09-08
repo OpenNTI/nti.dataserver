@@ -216,8 +216,8 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
             if active_greenlet not in (None, self._active_hub):
                 frame = sys._current_frames()[self._main_thread_id]
                 stack = traceback.format_stack(frame)
-                err_log = ["Greenlet appears to be blocked\n"] + stack
-                logger.error("".join(err_log))
+                err_log = ["Greenlet blocked (cpu bound?)\n"] + stack
+                logger.warn("".join(err_log))
         # Reset the count to zero.
         # This might race with it being incremented in the main thread,
         # but not often enough to cause a false positive.
