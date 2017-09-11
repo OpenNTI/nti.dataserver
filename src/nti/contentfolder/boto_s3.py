@@ -122,7 +122,7 @@ class BotoS3Mixin(object):
         try:
             bucket = connection.get_bucket(self.bucket_name)
             k = bucket.lookup(key)
-            return k.size if key is not None else None
+            return k.size if k is not None else None
         finally:
             connection.close()
 
