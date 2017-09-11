@@ -123,6 +123,7 @@
 
 	<include package="nti.zodb" />
 	<include package="nti.links" />
+	<include package="nti.ntiids" />
 	<include package="nti.mimetype" />
 	<include package="nti.namedfile" />
 	<include package="nti.chatserver" />
