@@ -121,6 +121,9 @@
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
+	<include package="nti.common" file="meta.zcml" />
+	<include package="nti.common" />
+
 	<include package="nti.zodb" />
 	<include package="nti.links" />
 	<include package="nti.ntiids" />
