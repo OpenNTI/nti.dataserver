@@ -15,9 +15,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import uuid
-import urllib
 import datetime
-import urlparse
 from collections import namedtuple
 
 from zope import component
@@ -28,7 +26,22 @@ from zope.schema.interfaces import ValidationError
 
 from pyramid.view import view_config
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
+from nti.app.externalization.error import raise_json_error
+from nti.app.externalization.error import handle_validation_error
+
+from nti.app.externalization.internalization import update_object_from_external_object
+
+from nti.appserver._email_utils import queue_simple_html_text_email
+
 from nti.appserver import MessageFactory as _
+
+from nti.appserver import httpexceptions as hexc
+
+from nti.appserver.interfaces import IUserAccountRecoveryUtility
+
+from nti.coremetadata.interfaces import IUsernameSubstitutionPolicy
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
@@ -38,18 +51,6 @@ from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.users import User
 
 from nti.dataserver.users.user_profile import make_password_recovery_email_hash
-
-from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
-
-from nti.app.externalization.error import raise_json_error
-from nti.app.externalization.error import handle_validation_error
-from nti.app.externalization.internalization import update_object_from_external_object
-
-from nti.appserver._email_utils import queue_simple_html_text_email
-
-import nti.appserver.httpexceptions as hexc
-
-from nti.coremetadata.interfaces import IUsernameSubstitutionPolicy
 
 #: The link relationship type for a link used to recover a username,
 #: given an email address. Also serves as a route name for that same
@@ -226,7 +227,6 @@ def forgot_passcode_view(request):
     base_template = getattr(policy,
                             'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
                             'password_reset_email')
-
     # Ok, we either got one user on no users
     if matching_users and len(matching_users) == 1:
         # We got one user. So we need to generate a token, and
@@ -234,20 +234,17 @@ def forgot_passcode_view(request):
         # tokens we have for this user.
         matching_user = matching_users[0]
         annotations = IAnnotations(matching_user)
-
         token = uuid.uuid4().hex
         now = datetime.datetime.utcnow()
         value = (token, now)
         annotations[_KEY_PASSCODE_RESET] = value
-
-        recovery_utility = component.getUtility(IUserAccountRecoveryUtility)
-        reset_url = recovery_utility.get_password_reset_url(matching_user)
-
-        parsed_redirect[4] = query
-        success_redirect_value = urlparse.urlunparse(parsed_redirect)
-
-        reset_url = success_redirect_value
-
+        recovery_utility = component.queryUtility(IUserAccountRecoveryUtility)
+        if recovery_utility is not None:
+            reset_url = recovery_utility.get_password_reset_url(matching_user)
+        else:
+            logger.warn("No recovery url found for username '%s' and email '%s'",
+                        username, email_assoc_with_account)
+            reset_url = None
     else:
         logger.warn("Failed to find user with username '%s' and email '%s': %s",
                     username, email_assoc_with_account, matching_users)
