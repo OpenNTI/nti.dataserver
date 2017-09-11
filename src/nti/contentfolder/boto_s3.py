@@ -9,11 +9,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import os
-
 import boto.s3.key
 
+from zope import component
+
 from zope.cachedescriptors.property import readproperty
+
+from nti.common.interfaces import IAWSKey
 
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import INamedContainer
@@ -39,34 +41,33 @@ def get_key(context):
     return result
 
 
-def is_boto_available(environ=None):
-    environ = os.environ if environ is None else environ
-    return bool(    environ.get('AWS_BUCKET_NAME')
-                and environ.get('AWS_ACCESS_KEY_ID')
-                and environ.get('AWS_SECRET_ACCESS_KEY'))
+def is_boto_available():
+    return component.queryUtility(IAWSKey, name="S3") is not None
 
 
 class BotoS3Mixin(object):
 
     delimiter = '/' # flat namespace
 
-    grant = 'public-read-write'
-
     @readproperty
-    def settings(self):
-        return os.environ
+    def aws_key(self):
+        return component.queryUtility(IAWSKey, name="S3")
+    
+    @readproperty
+    def grant(self):
+        return self.aws_key.Grant
 
     @readproperty
     def aws_access_key_id(self):
-        return self.settings.get('AWS_ACCESS_KEY_ID')
+        return self.aws_key.PublicAccessKey
 
     @readproperty
     def aws_secret_access_key(self):
-        return self.settings.get('AWS_SECRET_ACCESS_KEY')
+        return self.aws_key.SecretAccessKey
 
     @readproperty
     def bucket_name(self):
-        return self.settings.get('AWS_BUCKET_NAME')
+        return self.aws_key.BucketName
 
     def _connection(self, debug=False):
         connection = boto.connect_s3(aws_access_key_id=self.aws_access_key_id,
