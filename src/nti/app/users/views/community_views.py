@@ -38,6 +38,8 @@ from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.authorization import is_admin_or_site_admin
+
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
@@ -224,7 +226,7 @@ def _replace_username(username):
              request_method='GET',
              context=ICommunity,
              permission=nauth.ACT_READ)
-class CommunityMembersView(AbstractAuthenticatedView, 
+class CommunityMembersView(AbstractAuthenticatedView,
                            BatchingUtilsMixin):
 
     _DEFAULT_BATCH_SIZE = 50
@@ -239,7 +241,9 @@ class CommunityMembersView(AbstractAuthenticatedView,
     def __call__(self):
         self._batch_params()
         community = self.request.context
-        if not community.public and self.remoteUser not in community:
+        if      not community.public \
+            and self.remoteUser not in community \
+            and not is_admin_or_site_admin(self.remoteUser):
             raise hexc.HTTPForbidden()
 
         result = LocatedExternalDict()

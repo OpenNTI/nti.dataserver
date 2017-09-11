@@ -22,6 +22,8 @@ from nti.app.users import SUGGESTED_CONTACTS
 from nti.app.users import REQUEST_EMAIL_VERFICATION_VIEW
 from nti.app.users import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
 
+from nti.dataserver.authorization import is_admin_or_site_admin
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserverFolder
@@ -96,6 +98,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
     def _do_decorate_external(self, context, result):
         _links = result.setdefault(LINKS, [])
         in_community = self.remoteUser in context
+        is_admin = is_admin_or_site_admin(self.remoteUser)
         if context.joinable:
             if not in_community:
                 link = Link(context, elements=('@@join',), rel="join")
@@ -103,7 +106,8 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
                 link = Link(context, elements=('@@leave',), rel="leave")
             _links.append(link)
 
-        if not IDisallowMembersLink.providedBy(context) and (context.public or in_community):
+        if      not IDisallowMembersLink.providedBy(context) \
+            and (context.public or in_community or is_admin):
             link = Link(context, elements=('@@members',), rel="members")
             _links.append(link)
 
@@ -199,8 +203,8 @@ class _CommunitySuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAware
 
     def _do_decorate_external(self, context, result):
         _links = result.setdefault(LINKS, [])
-        link = Link(context, 
-                    rel=SUGGESTED_CONTACTS, 
+        link = Link(context,
+                    rel=SUGGESTED_CONTACTS,
                     elements=(SUGGESTED_CONTACTS,))
         _links.append(link)
 

@@ -65,7 +65,6 @@ class EntityActivityViewMixin(UGDView):
         return get_metadata_catalog()
 
     def things(self, all_intids, intids):
-
         for uid in all_intids or ():
             obj = intids.queryObject(uid)
             if obj is not None:
@@ -78,7 +77,7 @@ class EntityActivityViewMixin(UGDView):
         catalog = self.metadata_catalog
         self.check_permission(context, self.remoteUser)
         intids = component.getUtility(IIntIds)
-        
+
         username = self._context_id
         topics_idx = catalog[IX_TOPICS]
         shared_intids = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
