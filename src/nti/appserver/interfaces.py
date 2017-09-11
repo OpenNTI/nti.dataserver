@@ -393,15 +393,19 @@ class UserUpgradedEvent(_UserEventWithRequest):
                 setattr(self, k, locals()[k])
 
 
-class IUserPasswordRecoveryTemplateProvider(interface.Interface):
+class IUserAccountRecoveryUtility(interface.Interface):
     """
-    An object capable of providing the password-recovery email templates
-    suitable for specific users.
+    A utility that provides specialized account-recovery behavior for clients
+    who need to be handled differently during account recovery.
+    In order words, this utility provides overrides for the default account-recovery
+    behavior on a client-basis.
     """
-    def get_password_recovery_template(user):
+
+    def get_password_reset_url(user):
         """
-        :param user: The user for whom to provide a password-recovery email template.
-        :return: The password-recovery email template suitable for the given user.
+        :param user: The user for whom to provide a password-reset URL.
+        :return: The specialized password-reset URL to provide to the user,
+            or None if the default URL should be used.
         """
 
 
