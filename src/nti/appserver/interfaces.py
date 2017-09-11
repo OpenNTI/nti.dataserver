@@ -192,7 +192,7 @@ class ILogonOptionLinkProvider(interface.Interface):
     rel = schema.TextLine(title=u"The link rel that this object may produce.")
 
     priority = interface.Attribute("The priority of this provider among all providers "
-								   "that share a rel. Optional")
+                                   "that share a rel. Optional")
 
     def __call__():
         """
@@ -393,19 +393,17 @@ class UserUpgradedEvent(_UserEventWithRequest):
                 setattr(self, k, locals()[k])
 
 
-class IUserAccountRecoveryUtility(interface.Interface):
+class IUserPasswordRecoveryTemplateProvider(interface.Interface):
     """
-    A utility that provides specialized account-recovery behavior for clients
-    who need to be handled differently during account recovery.
-    In order words, this utility provides overrides for the default account-recovery
-    behavior on a client-basis.
+    An object capable of providing the password-recovery email templates
+    suitable for specific users.
     """
-    def get_password_reset_url(user):
+    def get_password_recovery_template(user):
         """
-        :param user: The user for whom to provide a password-reset URL.
-        :return: The specialized password-reset URL to provide to the user,
-            or None if the default URL should be used.
+        :param user: The user for whom to provide a password-recovery email template.
+        :return: The password-recovery email template suitable for the given user.
         """
+
 
 # Dealing with responses
 # Data rendering

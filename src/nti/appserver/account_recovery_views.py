@@ -46,7 +46,6 @@ from nti.app.externalization.error import handle_validation_error
 from nti.app.externalization.internalization import update_object_from_external_object
 
 from nti.appserver._email_utils import queue_simple_html_text_email
-from nti.appserver.interfaces import IUserAccountRecoveryUtility
 
 import nti.appserver.httpexceptions as hexc
 
@@ -236,37 +235,27 @@ def forgot_passcode_view(request):
         matching_user = matching_users[0]
         annotations = IAnnotations(matching_user)
 
-        #template_provider = component.queryUtility(IUserPasswordRecoveryTemplateProvider)
-        #if template_provider is not None:
-        #    new_base_template = template_provider.get_password_recovery_template(matching_user)
-        #    if new_base_template is not None:
-        #        base_template = new_base_template
-
         token = uuid.uuid4().hex
         now = datetime.datetime.utcnow()
         value = (token, now)
         annotations[_KEY_PASSCODE_RESET] = value
 
-        recovery_utility = component.queryUtility(IUserAccountRecoveryUtility)
-        reset_url = recovery_utility.get_password_reset_url(matching_user)
+        parsed_redirect = urlparse.urlparse(success_redirect_value)
+        parsed_redirect = list(parsed_redirect)
+        query = parsed_redirect[4]
+        if query:
+            query =   query + '&username=' \
+                    + urllib.quote(matching_user.username) \
+                    + '&id=' + urllib.quote(token)
+        else:
+            query =  'username=' \
+                   + urllib.quote(matching_user.username) \
+                   + '&id=' + urllib.quote(token)
 
-        if reset_url is None:
-            parsed_redirect = urlparse.urlparse(success_redirect_value)
-            parsed_redirect = list(parsed_redirect)
-            query = parsed_redirect[4]
-            if query:
-                query =   query + '&username=' \
-                        + urllib.quote(matching_user.username) \
-                        + '&id=' + urllib.quote(token)
-            else:
-                query =  'username=' \
-                       + urllib.quote(matching_user.username) \
-                       + '&id=' + urllib.quote(token)
+        parsed_redirect[4] = query
+        success_redirect_value = urlparse.urlunparse(parsed_redirect)
 
-            parsed_redirect[4] = query
-            success_redirect_value = urlparse.urlunparse(parsed_redirect)
-
-            reset_url = success_redirect_value
+        reset_url = success_redirect_value
 
     else:
         logger.warn("Failed to find user with username '%s' and email '%s': %s",
