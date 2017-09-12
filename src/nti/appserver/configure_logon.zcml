@@ -85,7 +85,7 @@
 	</configure>
 	
 	<!-- Google -->
-	<include package="nti.utils" file="meta.zcml" />
+	<include package="nti.common" file="meta.zcml" />
 	<oauth:registerOAuthKeys
 			apiKey="621475736574-dfgpfgdojhmli7otmhdu4qss4jo9n0b8.apps.googleusercontent.com"
 			secretKey="IgsnDiIOYx0GMDVpVCp+Vhw+JS5zFwEH"
