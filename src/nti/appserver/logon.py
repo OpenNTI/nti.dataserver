@@ -101,12 +101,12 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver.interfaces import IGoogleUser
 
-from nti.dataserver.users import User
-from nti.dataserver.users import OpenIdUser
-from nti.dataserver.users import FacebookUser
-
 from nti.dataserver.users.interfaces import GoogleUserCreatedEvent
 from nti.dataserver.users.interfaces import OpenIDUserCreatedEvent
+
+from nti.dataserver.users.users import User
+from nti.dataserver.users.users import OpenIdUser
+from nti.dataserver.users.users import FacebookUser
 
 from nti.dataserver.users.utils import force_email_verification
 
@@ -180,664 +180,704 @@ AX_TYPE_CONTENT_ROLES = 'tag:nextthought.com,2011:ax/contentroles/1'
 #: the authentication process
 _REQUEST_TIMEOUT = 0.5
 
+
 def _authenticated_user(request):
-	"""
-	Returns the User object authenticated by the request, or
-	None if there is no user object authenticated by the request (which
-	means either the credentials were invalid, or they are valid, but
-	reference a user that no longer or doesn't exist; this can happen during
-	testing when mixing site names up.)
-	"""
-	remote_user_name = request.authenticated_userid
-	if remote_user_name:
-		remote_user = User.get_user(remote_user_name)
-		return remote_user
+    """
+    Returns the User object authenticated by the request, or
+    None if there is no user object authenticated by the request (which
+    means either the credentials were invalid, or they are valid, but
+    reference a user that no longer or doesn't exist; this can happen during
+    testing when mixing site names up.)
+    """
+    remote_user_name = request.authenticated_userid
+    if remote_user_name:
+        remote_user = User.get_user(remote_user_name)
+        return remote_user
+
 
 def _links_for_authenticated_users(request):
-	"""
-	If a request is authenticated, returns links that should
-	go to the user. Shared between ping and handshake.
-	"""
-	links = ()
-	remote_user = _authenticated_user(request)
-	if remote_user:
-		logger.debug("Found authenticated user %s", remote_user)
+    """
+    If a request is authenticated, returns links that should
+    go to the user. Shared between ping and handshake.
+    """
+    links = ()
+    remote_user = _authenticated_user(request)
+    if remote_user:
+        logger.debug("Found authenticated user %s", remote_user)
 
-		# They are already logged in, provide a continue link
-		continue_href = request.route_path('user.root.service', _='')
-		links = [ Link(continue_href, rel=REL_CONTINUE, elements=('service',)) ]
+        # They are already logged in, provide a continue link
+        continue_href = request.route_path('user.root.service', _='')
+        links = [Link(continue_href, rel=REL_CONTINUE, elements=('service',))]
 
-		logout_href = request.route_path(REL_LOGIN_LOGOUT)
-		links.append(Link(logout_href, rel=REL_LOGIN_LOGOUT))
+        logout_href = request.route_path(REL_LOGIN_LOGOUT)
+        links.append(Link(logout_href, rel=REL_LOGIN_LOGOUT))
 
-		for _, prov_links in unique_link_providers(remote_user, request, True):
-			links.extend(prov_links)
+        for _, prov_links in unique_link_providers(remote_user, request, True):
+            links.extend(prov_links)
 
-	links = tuple(links) if links else ()
-	return links
+    links = tuple(links) if links else ()
+    return links
+
 
 def _links_for_unauthenticated_users(request):
-	"""
-	If a request is unauthenticated, returns links that should
-	go to anonymous users.
+    """
+    If a request is unauthenticated, returns links that should
+    go to anonymous users.
 
-	In particular, this will provide a link to be able to create accounts.
-	"""
-	links = ()
-	remote_user = _authenticated_user(request)
-	if not remote_user:
+    In particular, this will provide a link to be able to create accounts.
+    """
+    links = ()
+    remote_user = _authenticated_user(request)
+    if not remote_user:
 
-		forgot_username = Link(request.route_path(REL_FORGOT_USERNAME),
-							   rel=REL_FORGOT_USERNAME)
+        forgot_username = Link(request.route_path(REL_FORGOT_USERNAME),
+                               rel=REL_FORGOT_USERNAME)
 
-		forgot_passcode = Link(request.route_path(REL_FORGOT_PASSCODE),
-							   rel=REL_FORGOT_PASSCODE)
+        forgot_passcode = Link(request.route_path(REL_FORGOT_PASSCODE),
+                               rel=REL_FORGOT_PASSCODE)
 
-		reset_passcode = Link(request.route_path(REL_RESET_PASSCODE),
-							  rel=REL_RESET_PASSCODE)
+        reset_passcode = Link(request.route_path(REL_RESET_PASSCODE),
+                              rel=REL_RESET_PASSCODE)
 
-		links = [forgot_username, forgot_passcode, reset_passcode]
+        links = [forgot_username, forgot_passcode, reset_passcode]
 
-		# These may be security controlled
-		root = component.getUtility(nti_interfaces.IDataserver).root_folder
-		for rel in REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT:
-			route = request.route_path('objects.generic.traversal', traverse=(rel,))
-			resource = ztraversing.traverse(root, route, request=request)
-			try:
-				yes = has_permission(nauth.ACT_CREATE, resource, request)
-			except ValueError:  # Test cases that don't have a complete policy setup
-				yes = False
+        # These may be security controlled
+        root = component.getUtility(nti_interfaces.IDataserver).root_folder
+        for rel in REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT:
+            route = request.route_path('objects.generic.traversal', traverse=(rel,))
+            resource = ztraversing.traverse(root, route, request=request)
+            try:
+                yes = has_permission(nauth.ACT_CREATE, resource, request)
+            except ValueError:  # Test cases that don't have a complete policy setup
+                yes = False
 
-			if yes:
-				links.append(Link(route, rel=rel,
-								  target_mime_type=mimetype.nti_mimetype_from_object(User)))
+            if yes:
+                links.append(Link(route, rel=rel,
+                                  target_mime_type=mimetype.nti_mimetype_from_object(User)))
 
+        for provider in component.subscribers((request,), IUnauthenticatedUserLinkProvider):
+            links.extend(provider.get_links())
 
-		for provider in component.subscribers((request,), IUnauthenticatedUserLinkProvider):
-			links.extend(provider.get_links())
+    links = tuple(links) if links else ()
+    return links
 
-	links = tuple(links) if links else ()
-	return links
 
 def _forgetting(request, redirect_param_name, no_param_class, redirect_value=None, error=None):
-	"""
-	:param redirect_param_name: The name of the request parameter we look for to provide
-		a redirect URL.
-	:param no_param_class: A factory to use to produce a response if no redirect
-		has been specified. Commonly :class:`pyramid.httpexceptions.HTTPNoContent`
-		or :class:`pyramid.httpexceptions.HTTPUnauthorized`.
-	:type no_param_class: Callable of no arguments
-	:keyword redirect_value: If given, this will be the redirect URL to use; `redirect_param_name`
-		will be ignored.
-	:keyword error: A string to add to the redirect URL as the ``error`` parameter.
-	:return: The response object, set up for the redirect. The view (our caller) will return
-		this.
-	"""
-	response = None
-	if not redirect_value:
-		redirect_value = request.params.get(redirect_param_name)
+    """
+    :param redirect_param_name: The name of the request parameter we look for to provide
+            a redirect URL.
+    :param no_param_class: A factory to use to produce a response if no redirect
+            has been specified. Commonly :class:`pyramid.httpexceptions.HTTPNoContent`
+            or :class:`pyramid.httpexceptions.HTTPUnauthorized`.
+    :type no_param_class: Callable of no arguments
+    :keyword redirect_value: If given, this will be the redirect URL to use; `redirect_param_name`
+            will be ignored.
+    :keyword error: A string to add to the redirect URL as the ``error`` parameter.
+    :return: The response object, set up for the redirect. The view (our caller) will return
+            this.
+    """
+    response = None
+    if not redirect_value:
+        redirect_value = request.params.get(redirect_param_name)
 
-	if redirect_value:
-		if error:
-			parsed = urlparse.urlparse(redirect_value)
-			parsed = list(parsed)
-			query = parsed[4]
-			if query:
-				query = query + '&error=' + urllib.quote(error)
-			else:
-				query = 'error=' + urllib.quote(error)
-			parsed[4] = query
-			redirect_value = urlparse.urlunparse(parsed)
+    if redirect_value:
+        if error:
+            parsed = urlparse.urlparse(redirect_value)
+            parsed = list(parsed)
+            query = parsed[4]
+            if query:
+                query = query + '&error=' + urllib.quote(error)
+            else:
+                query = 'error=' + urllib.quote(error)
+            parsed[4] = query
+            redirect_value = urlparse.urlunparse(parsed)
 
-		response = hexc.HTTPSeeOther(location=redirect_value)
-	else:
-		response = no_param_class()
-	# Clear any cookies they sent that failed.
-	response.headers.extend(sec.forget(request))
-	if error:
-		# TODO: Sending multiple warnings
-		response.headers[b'Warning'] = error.encode('utf-8')
+        response = hexc.HTTPSeeOther(location=redirect_value)
+    else:
+        response = no_param_class()
+    # Clear any cookies they sent that failed.
+    response.headers.extend(sec.forget(request))
+    if error:
+        # TODO: Sending multiple warnings
+        response.headers[b'Warning'] = error.encode('utf-8')
 
-	logger.debug("Forgetting user %s with %s (%s)",
-				 request.authenticated_userid,
-				 response,
-				 response.headers)
-	return response
+    logger.debug("Forgetting user %s with %s (%s)",
+                 request.authenticated_userid,
+                 response,
+                 response.headers)
+    return response
+
 
 @interface.implementer(IUnauthenticatedUserLinkProvider)
 class ContinueAnonymouslyLinkProvider(object):
 
-	def __init__(self, request):
-		self.request = request
+    def __init__(self, request):
+        self.request = request
 
-	def get_links(self):
-		continue_href = self.request.route_path('user.root.service', _='')
-		return (Link(continue_href,
-		             rel=REL_CONTINUE_ANONYMOUSLY,
-		             elements=('service',)), )
+    def get_links(self):
+        continue_href = self.request.route_path('user.root.service', _='')
+        return (Link(continue_href,
+                     rel=REL_CONTINUE_ANONYMOUSLY,
+                     elements=('service',)), )
 
 
 @interface.implementer(ILogoutForgettingResponseProvider)
 class DefaultLogoutResponseProvider(object):
 
-	def __init__(self, request):
-		pass
+    def __init__(self, request):
+        pass
 
-	def forgetting(self, request, redirect_param_name, redirect_value=None):
-		return _forgetting(request, redirect_param_name, hexc.HTTPNoContent, redirect_value=redirect_value)
+    def forgetting(self, request, redirect_param_name, redirect_value=None):
+        return _forgetting(request, redirect_param_name, 
+                           hexc.HTTPNoContent, redirect_value=redirect_value)
+
 
 @view_config(route_name=REL_LOGIN_LOGOUT, request_method='GET')
 def logout(request):
-	"Cause the response to the request to terminate the authentication."
+    "Cause the response to the request to terminate the authentication."
 
-	# Terminate any sessions they have open
-	# TODO: We need to associate the socket.io session somehow
-	# so we can terminate just that one session (we cannot terminate all,
-	# multiple logins are allowed )
-	logout_response_provider = ILogoutForgettingResponseProvider(request)
-	response = logout_response_provider.forgetting(request, 'success')
-	username = request.authenticated_userid
-	user = User.get_user(username)
-	notify(UserLogoutEvent(user, request))
-	return response
+    # Terminate any sessions they have open
+    # TODO: We need to associate the socket.io session somehow
+    # so we can terminate just that one session (we cannot terminate all,
+    # multiple logins are allowed )
+    logout_response_provider = ILogoutForgettingResponseProvider(request)
+    response = logout_response_provider.forgetting(request, 'success')
+    username = request.authenticated_userid
+    user = User.get_user(username)
+    notify(UserLogoutEvent(user, request))
+    return response
+
 
 @view_config(route_name=REL_PING, request_method='GET', renderer='rest')
 def ping(request):
-	"""
-	The first step in authentication.
+    """
+    The first step in authentication.
 
-	:return: An externalizable object containing a link to the handshake URL, and potentially
-		to the continue URL if authentication was provided and valid.
-	"""
-	links = []
-	handshake_href = request.route_path(REL_HANDSHAKE)
-	links.append(Link(handshake_href, rel=REL_HANDSHAKE))
-	links.extend(_links_for_authenticated_users(request))
-	links.extend(_links_for_unauthenticated_users(request))
-	links.sort()  # for tests
+    :return: An externalizable object containing a link to the handshake URL, and potentially
+            to the continue URL if authentication was provided and valid.
+    """
+    links = []
+    handshake_href = request.route_path(REL_HANDSHAKE)
+    links.append(Link(handshake_href, rel=REL_HANDSHAKE))
+    links.extend(_links_for_authenticated_users(request))
+    links.extend(_links_for_unauthenticated_users(request))
+    links.sort()  # for tests
 
-	username = request.authenticated_userid
-	result = _Pong(links)
-	if username:
-		result['AuthenticatedUsername'] = username
-	return result
+    username = request.authenticated_userid
+    result = _Pong(links)
+    if username:
+        result['AuthenticatedUsername'] = username
+    return result
+
 
 @interface.implementer(ILogonPong,
-					   IExternalObject,
-					   IPrivateUncacheableInResponse)
+                       IExternalObject,
+                       IPrivateUncacheableInResponse)
 class _Pong(dict):
 
-	__external_class_name__ = 'Pong'
-	mime_type = mimetype.nti_mimetype_with_class('pong')
+    __external_class_name__ = 'Pong'
+    mime_type = mimetype.nti_mimetype_with_class('pong')
 
-	def __init__(self, lnks):
-		dict.__init__(self)
-		self.links = lnks
+    def __init__(self, lnks):
+        dict.__init__(self)
+        self.links = lnks
+
 
 @interface.implementer(IMissingUser)
 class NoSuchUser(object):
 
-	def __init__(self, username):
-		self.username = username
+    def __init__(self, username):
+        self.username = username
 
-	def has_password(self):
-		"We pretend to have a password so we can offer that login option."
-		return True
+    def has_password(self):
+        """
+        We pretend to have a password so we can offer that login option.
+        """
+        return True
+
 
 @view_config(route_name=REL_HANDSHAKE, request_method='POST', renderer='rest')
 def handshake(request):
-	"""
-	The second step in authentication. Inspects provided credentials
-	to decide what sort of logins are possible.
-	"""
-	desired_username = request.params.get('username', '')
+    """
+    The second step in authentication. Inspects provided credentials
+    to decide what sort of logins are possible.
+    """
+    desired_username = request.params.get('username', '')
 
-	# TODO: Check for existence in the database before generating these.
-	# We also need to be validating whether we can do a openid login, etc.
-	user = None
-	if desired_username:
-		user = User.get_user(username=desired_username,
-							 dataserver=component.getUtility(nti_interfaces.IDataserver))
+    # TODO: Check for existence in the database before generating these.
+    # We also need to be validating whether we can do a openid login, etc.
+    user = None
+    if desired_username:
+        user = User.get_user(username=desired_username,
+                             dataserver=component.getUtility(nti_interfaces.IDataserver))
 
-	if user is None:
-		# Use an IMissingUser so we find the right link providers.
-		# Now that we allow no username to be provided we could opt,
-		# in that case, for a INoUser object rather than an IMissingUser
-		# with no username.  This would, for example, give us an
-		# easy way to not send back the logon.nti.password provider if
-		# we wanted.
-		user = NoSuchUser(desired_username)
+    if user is None:
+        # Use an IMissingUser so we find the right link providers.
+        # Now that we allow no username to be provided we could opt,
+        # in that case, for a INoUser object rather than an IMissingUser
+        # with no username.  This would, for example, give us an
+        # easy way to not send back the logon.nti.password provider if
+        # we wanted.
+        user = NoSuchUser(desired_username)
 
-	links = {}
-	# First collect the providers, then sort them, putting them in
-	# priority order by link type, basically. This is because the order of subscribers
-	# is non-deterministic when multiple registries are involved.
-	# If any provider raises the NotImplementedError when called, that link
-	# type will be dropped if it hasn't been seen yet.
-	providers = []
-	for provider in component.subscribers((user, request), ILogonLinkProvider):
-		providers.append((provider.rel, getattr(provider, 'priority', 0), provider))
+    links = {}
+    # First collect the providers, then sort them, putting them in
+    # priority order by link type, basically. This is because the order of subscribers
+    # is non-deterministic when multiple registries are involved.
+    # If any provider raises the NotImplementedError when called, that link
+    # type will be dropped if it hasn't been seen yet.
+    providers = []
+    for provider in component.subscribers((user, request), ILogonLinkProvider):
+        providers.append((provider.rel, getattr(provider, 'priority', 0), provider))
 
-	ignored = set()
-	for rel, _, provider in sorted(providers, reverse=True):
-		if rel in links or rel in ignored:
-			continue
+    ignored = set()
+    for rel, _, provider in sorted(providers, reverse=True):
+        if rel in links or rel in ignored:
+            continue
 
-		try:
-			link = provider()
-		except NotImplementedError:
-			ignored.add(rel)
-		else:
-			if link is not None:
-				links[link.rel] = link
+        try:
+            link = provider()
+        except NotImplementedError:
+            ignored.add(rel)
+        else:
+            if link is not None:
+                links[link.rel] = link
 
-	links = list(links.values())
-	links.extend(_links_for_authenticated_users(request))
-	links.extend(_links_for_unauthenticated_users(request))
-	links.sort()
+    links = list(links.values())
+    links.extend(_links_for_authenticated_users(request))
+    links.extend(_links_for_unauthenticated_users(request))
+    links.sort()
 
-	username = request.authenticated_userid
-	result = _Handshake(links)
-	if username:
-		result['AuthenticatedUsername'] = username
-	return result
+    username = request.authenticated_userid
+    result = _Handshake(links)
+    if username:
+        result['AuthenticatedUsername'] = username
+    return result
+
 
 @interface.implementer(ILogonLinkProvider)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class _SimpleExistingUserLinkProvider(object):
 
-	rel = REL_LOGIN_NTI_PASSWORD
+    rel = REL_LOGIN_NTI_PASSWORD
 
-	def __init__(self, user, req):
-		self.request = req
-		self.user = user
+    def __init__(self, user, req):
+        self.request = req
+        self.user = user
 
-	def __call__(self):
-		if self.user.has_password():
-			return Link(self.request.route_path(self.rel, _query={'username': self.user.username}),
-						rel=self.rel)
+    def __call__(self):
+        if self.user.has_password():
+            return Link(self.request.route_path(self.rel, _query={'username': self.user.username}),
+                        rel=self.rel)
 
 
 @interface.implementer(IAuthenticatedUserLinkProvider)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class _OnlinePolicyLinkProvider (object):
 
-	tos_rel = REL_TOS_URL
-	privacy_rel = REL_PRIVACY_POLICY_URL
+    tos_rel = REL_TOS_URL
+    privacy_rel = REL_PRIVACY_POLICY_URL
 
-	def __init__ (self, user, req):
-		self.request = req
-		self.user = user
+    def __init__(self, user, req):
+        self.request = req
+        self.user = user
 
-	def get_links (self):
-		return (Link (target=TOS_URL, rel=self.tos_rel),
-				Link (target=PRIVACY_POLICY_URL, rel=self.privacy_rel),)
+    def get_links(self):
+        return (Link(target=TOS_URL, rel=self.tos_rel),
+                Link(target=PRIVACY_POLICY_URL, rel=self.privacy_rel),)
+
 
 @interface.implementer(ILogonLinkProvider)
 @component.adapter(IMissingUser, pyramid.interfaces.IRequest)
 class _SimpleMissingUserFacebookLinkProvider(object):
 
-	rel = REL_LOGIN_FACEBOOK
+    rel = REL_LOGIN_FACEBOOK
 
-	def __init__(self, user, req):
-		self.request = req
-		self.user = user
+    def __init__(self, user, req):
+        self.request = req
+        self.user = user
 
-	def __call__(self):
-		if not self.user.username:
-			return None
-		return Link(self.request.route_path('logon.facebook.oauth1', _query={'username': self.user.username}),
-					rel=self.rel)
+    def __call__(self):
+        if not self.user.username:
+            return None
+        return Link(self.request.route_path('logon.facebook.oauth1', 
+                    _query={'username': self.user.username}),
+                    rel=self.rel)
+
 
 @component.adapter(nti_interfaces.IFacebookUser, pyramid.interfaces.IRequest)
 class _SimpleExistingUserFacebookLinkProvider(_SimpleMissingUserFacebookLinkProvider):
-	pass
+    pass
+
 
 def _prepare_oid_link(request, username, rel, params=()):
-	query = dict(params)
-	query['oidcsum'] = _checksum(username) if 'oidcsum' not in query else query['oidcsum']
-	query['username'] = username
+    query = dict(params)
+    query['oidcsum'] = _checksum(username) if 'oidcsum' not in query else query['oidcsum']
+    query['username'] = username
 
-	title = None
-	if 'openid' in query:
-		# We have to derive the title, we can't supply it from
-		# the link provider because the link provider changes
-		# when IMissingUser becomes a real user, and it's just one
-		# for all open ids
-		idurl_domain = urlparse.urlparse(query['openid']).netloc
-		if idurl_domain:
-			# Strip down to just the root domain. This assumes
-			# we get a valid domain, at least 'example.com'
-			idurl_domain = '.'.join(idurl_domain.split('.')[-2:])
-			title = _('Sign in with ${domain}',
-					   mapping={'domain': idurl_domain})
-			title = translate(title, context=request)  # TODO: Make this automatic
+    title = None
+    if 'openid' in query:
+        # We have to derive the title, we can't supply it from
+        # the link provider because the link provider changes
+        # when IMissingUser becomes a real user, and it's just one
+        # for all open ids
+        idurl_domain = urlparse.urlparse(query['openid']).netloc
+        if idurl_domain:
+            # Strip down to just the root domain. This assumes
+            # we get a valid domain, at least 'example.com'
+            idurl_domain = '.'.join(idurl_domain.split('.')[-2:])
+            title = _(u'Sign in with ${domain}',
+                      mapping={'domain': idurl_domain})
+            # TODO: Make this automatic
+            title = translate(title, context=request)
 
-	try:
-		return Link(request.route_path(rel, _query=query),
-					rel=rel,
-					title=title)
-	except KeyError:
-		# This is really a programmer/configuration error,
-		# but we let it pass for tests
-		logger.exception("Unable to direct to route %s", rel)
-		return
+    try:
+        return Link(request.route_path(rel, _query=query),
+                    rel=rel,
+                    title=title)
+    except KeyError:
+        # This is really a programmer/configuration error,
+        # but we let it pass for tests
+        logger.exception("Unable to direct to route %s", rel)
+        return
+
 
 @interface.implementer(ILogonLinkProvider)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class WhitelistedDomainLinkProviderMixin(object):
-	"""
-	Provides a login link for a predefined list of domains.
-	"""
-	rel = None
+    """
+    Provides a login link for a predefined list of domains.
+    """
+    rel = None
 
-	def __init__(self, user, req):
-		self.user = user
-		self.request = req
+    def __init__(self, user, req):
+        self.user = user
+        self.request = req
 
-	# TODO: We are never checking that the user we get actually comes
-	# from one of these domains. Should we? Does it matter?
-	domains = ('nextthought.com', 'gmail.com')
+    # TODO: We are never checking that the user we get actually comes
+    # from one of these domains. Should we? Does it matter?
+    domains = ('nextthought.com', 'gmail.com')
 
-	def __call__(self):
-		if getattr(self.user, 'identity_url', None) is not None:
-			# They have a specific ID already, they don't need this
-			return None
+    def __call__(self):
+        if getattr(self.user, 'identity_url', None) is not None:
+            # They have a specific ID already, they don't need this
+            return None
 
-		domain = self.user.username.split('@')[-1]
-		if domain in self.domains:
-			return _prepare_oid_link(self.request,
-									 self.user.username,
-									 self.rel,
-									 params=self.params_for(self.user))
+        domain = self.user.username.split('@')[-1]
+        if domain in self.domains:
+            return _prepare_oid_link(self.request,
+                                     self.user.username,
+                                     self.rel,
+                                     params=self.params_for(self.user))
 
-	def params_for(self, user):
-		return ()
+    def params_for(self, user):
+        return ()
+
 
 @component.adapter(IMissingUser, pyramid.interfaces.IRequest)
 class MissingUserWhitelistedLinkProviderMixin(WhitelistedDomainLinkProviderMixin):
-	"""
-	Provides a Google login link for a predefined list of domains
-	when an account needs to be created.
-	"""
+    """
+    Provides a Google login link for a predefined list of domains
+    when an account needs to be created.
+    """
+
 
 class _MissingUserAopsLoginLinkProvider(MissingUserWhitelistedLinkProviderMixin):
-	"""
-	Offer OpenID for accounts coming from aops.com. Once they successfully
-	login they will just be normal OpenID users.
-	"""
+    """
+    Offer OpenID for accounts coming from aops.com. Once they successfully
+    login they will just be normal OpenID users.
+    """
 
-	# TODO: Should we use openid.aops.com? That way its consistent all the way
-	# around
-	domains = ('aops.com',)
-	rel = REL_LOGIN_OPENID
+    # TODO: Should we use openid.aops.com? That way its consistent all the way
+    # around
+    domains = ('aops.com',)
+    rel = REL_LOGIN_OPENID
 
-	def params_for(self, user):
-		aops_username = self.user.username.split('@')[0]
-		# Larry says:
-		# > http://<username>.openid.artofproblemsolving.com
-		# > http://openid.artofproblemsolving.com/<username>
-		# > http://<username>.openid.aops.com
-		# > http://openid.aops.com/<username>
-		# But 3 definitely doesn't work. 1 and 4 do. We use 4
-		return {'openid': 'http://openid.aops.com/%s' % aops_username }
+    def params_for(self, user):
+        aops_username = self.user.username.split('@')[0]
+        # Larry says:
+        # > http://<username>.openid.artofproblemsolving.com
+        # > http://openid.artofproblemsolving.com/<username>
+        # > http://<username>.openid.aops.com
+        # > http://openid.aops.com/<username>
+        # But 3 definitely doesn't work. 1 and 4 do. We use 4
+        return {'openid': 'http://openid.aops.com/%s' % aops_username}
 
-	def getUsername(self, idurl, extra_info=None):
-		# reverse the process by tacking @aops.com back on
-		username = idurl.split('/')[-1]
-		username = username + '@' + self.domains[0]
-		return username
+    def getUsername(self, idurl, extra_info=None):
+        # reverse the process by tacking @aops.com back on
+        username = idurl.split('/')[-1]
+        username = username + '@' + self.domains[0]
+        return username
+
 
 class _MissingUserMallowstreetLoginLinkProvider(MissingUserWhitelistedLinkProviderMixin):
-	"""
-	Offer OpenID for accounts coming from mallowstreet.com (which themselves are probably already
-	in the form of email addresses, so our incoming username may be 'first.last@example.com@mallowstreet.com').
-	Following successful account creation they will just be normal OpenID users.
-	"""
+    """
+    Offer OpenID for accounts coming from mallowstreet.com (which themselves are probably already
+    in the form of email addresses, so our incoming username may be 'first.last@example.com@mallowstreet.com').
+    Following successful account creation they will just be normal OpenID users.
+    """
 
-	domains = ('mallowstreet.com',)
-	rel = REL_LOGIN_OPENID
+    domains = ('mallowstreet.com',)
+    rel = REL_LOGIN_OPENID
 
-	#: When we go to production, this will change to
-	#: secure....
-	_BASE_URL = 'https://demo.mallowstreet.com/Mallowstreet/OpenID/User.aspx/%s'
+    #: When we go to production, this will change to
+    #: secure....
+    _BASE_URL = 'https://demo.mallowstreet.com/Mallowstreet/OpenID/User.aspx/%s'
 
-	def params_for(self, user):
-		# strip the trailing '@mallowstreet.com', preserving any previous
-		# portion that looked like an email
-		mallow_username = '@'.join(user.username.split('@')[0:-1])
-		return {'openid': self._BASE_URL % mallow_username }
+    def params_for(self, user):
+        # strip the trailing '@mallowstreet.com', preserving any previous
+        # portion that looked like an email
+        mallow_username = '@'.join(user.username.split('@')[0:-1])
+        return {'openid': self._BASE_URL % mallow_username}
 
-	def getUsername(self, idurl, extra_info=None):
-		# reverse the process by tacking @mallowstreet.com back on
-		username = idurl.split('/')[-1]
-		username = username + '@' + self.domains[0]
-		return username
+    def getUsername(self, idurl, extra_info=None):
+        # reverse the process by tacking @mallowstreet.com back on
+        username = idurl.split('/')[-1]
+        username = username + '@' + self.domains[0]
+        return username
+
 
 @component.adapter(nti_interfaces.IOpenIdUser, pyramid.interfaces.IRequest)
 class _ExistingOpenIdUserLoginLinkProvider(object):
 
-	rel = REL_LOGIN_OPENID
+    rel = REL_LOGIN_OPENID
 
-	def __init__(self, user, req):
-		self.request = req
-		self.user = user
+    def __init__(self, user, req):
+        self.request = req
+        self.user = user
 
-	def __call__(self):
-		return _prepare_oid_link(self.request, self.user.username, self.rel,
-								 params={'openid': self.user.identity_url})
+    def __call__(self):
+        return _prepare_oid_link(self.request, self.user.username, self.rel,
+                                 params={'openid': self.user.identity_url})
+
 
 @interface.implementer(IExternalObject,
-					   IPrivateUncacheableInResponse)
+                       IPrivateUncacheableInResponse)
 class _Handshake(dict):
 
-	__external_class_name__ = 'Handshake'
-	mime_type = mimetype.nti_mimetype_with_class('handshake')
+    __external_class_name__ = 'Handshake'
+    mime_type = mimetype.nti_mimetype_with_class('handshake')
 
-	def __init__(self, lnks):
-		dict.__init__(self)
-		self.links = lnks
+    def __init__(self, lnks):
+        dict.__init__(self)
+        self.links = lnks
+
 
 def _create_failure_response(request, failure=None, error=None, error_factory=hexc.HTTPUnauthorized):
-	return _forgetting(request, 'failure', error_factory, redirect_value=failure, error=error)
+    return _forgetting(request, 'failure', error_factory, redirect_value=failure, error=error)
+
 
 def _create_success_response(request, userid=None, success=None):
-	"""
-	Called when authentication was accepted. Returns a response
-	that will remember the `userid` and optionally redirect
-	to the `success` argument or request argument.
+    """
+    Called when authentication was accepted. Returns a response
+    that will remember the `userid` and optionally redirect
+    to the `success` argument or request argument.
 
-	:param userid: If given, the user id we will remember. If not given,
-		then we will remember the currently authenticated user.
-	:param success: If given, a path we will redirect to. If not given, then
-		we will look for a HTTP param of the same name.
-	"""
-	redirect_to = success
-	if redirect_to is None:
-		redirect_to = request.params.get('success')
+    :param userid: If given, the user id we will remember. If not given,
+            then we will remember the currently authenticated user.
+    :param success: If given, a path we will redirect to. If not given, then
+            we will look for a HTTP param of the same name.
+    """
+    redirect_to = success
+    if redirect_to is None:
+        redirect_to = request.params.get('success')
 
-	if redirect_to:
-		response = hexc.HTTPSeeOther(location=redirect_to)
-	else:
-		response = hexc.HTTPNoContent()
+    if redirect_to:
+        response = hexc.HTTPSeeOther(location=redirect_to)
+    else:
+        response = hexc.HTTPNoContent()
 
-	request.response = response  # Make it the same to avoid confusing things that only get the request, e.g., event listeners
+    # Make it the same to avoid confusing things that only get the request,
+    # e.g., event listeners
+    request.response = response
+    userid = userid or request.authenticated_userid
+    logon_userid_with_request(userid, request, response)
+    return response
 
-	userid = userid or request.authenticated_userid
-
-	logon_userid_with_request(userid, request, response)
-
-	return response
 
 def _query_impersonation_decider(request, username, name=''):
-	decider = component.queryAdapter(request, IImpersonationDecider, name)
-	if decider:
-		decider.validate_impersonation_target(username)
+    decider = component.queryAdapter(request, IImpersonationDecider, name)
+    if decider:
+        decider.validate_impersonation_target(username)
+
 
 def _can_impersonate(request, username):
-	"""
-	Query a set of IImpersonationDeciders to
-	verify if impersonation of the given username should
-	be allowed for the request
-	"""
+    """
+    Query a set of IImpersonationDeciders to
+    verify if impersonation of the given username should
+    be allowed for the request
+    """
 
-	#verify by domain first
-	if '@' in username:
-		domain = username.split('@', 1)[-1]
-		if domain:
-			# May want to consider prefixing this
-			_query_impersonation_decider(request, username, name=domain)
+    # verify by domain first
+    if '@' in username:
+        domain = username.split('@', 1)[-1]
+        if domain:
+            # May want to consider prefixing this
+            _query_impersonation_decider(request, username, name=domain)
 
-	#now by username
-	_query_impersonation_decider(request, username, name=username)
+    # now by username
+    _query_impersonation_decider(request, username, name=username)
 
-	#now by global adapter
-	_query_impersonation_decider(request, username)
-
-def _specified_username_logon(request, allow_no_username=True, require_matching_username=True, audit=False, desired_username=None):
-	# This code handles both an existing logged on user and not
-	remote_user = _authenticated_user(request)
-	if not remote_user:
-		return _create_failure_response(request)  # not authenticated or does not exist
-
-	if not desired_username:
-		try:
-			desired_usernames = request.params.getall('username') or []
-		except AttributeError:
-			# Nark. For test code. It's hard to always be able to use a real MultiDict
-			desired_usernames = request.params.get('username', ())
-			if desired_usernames:
-				desired_usernames = [desired_usernames]
-
-		if len(desired_usernames) > 1:
-			return _create_failure_response(request, error_factory=hexc.HTTPBadRequest, error=_('Multiple usernames'))
-
-		if desired_usernames:
-			desired_username = desired_usernames[0].lower()
-		elif allow_no_username:
-			desired_username = remote_user.username.lower()
-		else:
-			return _create_failure_response(request, error_factory=hexc.HTTPBadRequest, error=_('No username'))
-
-	if require_matching_username and desired_username != remote_user.username.lower():
-		response = _create_failure_response(request)  # Usually a cookie/param mismatch
-	else:
-		try:
-			# If we're impersonating, record that fact in the cookie.
-			# This will later show up in the environment and error/feedback
-			# reports. This is a pretty basic version of that; if we use
-			# it for anything more than display, we need to formalize it more.
-			if desired_username != remote_user.username.lower():
-				#check if we are allowed to impersonate first
-				try:
-					_can_impersonate(request, desired_username)
-				except ValueError:
-					return _create_failure_response(request,
-													error_factory=hexc.HTTPForbidden)
+    # now by global adapter
+    _query_impersonation_decider(request, username)
 
 
-				user_data = {}
-				user_data['username'] = str(remote_user.username.lower())
-				request.environ['REMOTE_USER_DATA'] = user_data
+def _specified_username_logon(request, allow_no_username=True, require_matching_username=True, 
+                              audit=False, desired_username=None):
+    # This code handles both an existing logged on user and not
+    remote_user = _authenticated_user(request)
+    if not remote_user:
+        # not authenticated or does not exist
+        return _create_failure_response(request)
 
-			response = _create_success_response(request, desired_username)
-		except ValueError as e:
-			return _create_failure_response(request,
-											error_factory=hexc.HTTPNotFound,
-											error=e.args[0])  # No such user
+    if not desired_username:
+        try:
+            desired_usernames = request.params.getall('username') or []
+        except AttributeError:
+            # Nark. For test code. It's hard to always be able to use a real
+            # MultiDict
+            desired_usernames = request.params.get('username', ())
+            if desired_usernames:
+                desired_usernames = [desired_usernames]
 
-		if audit:
-			# TODO: some real auditing scheme
-			logger.info("[AUDIT] User %s has impersonated %s at %s",
-						remote_user, desired_username, request)
+        if len(desired_usernames) > 1:
+            return _create_failure_response(request, 
+                                            error_factory=hexc.HTTPBadRequest, 
+                                            error=_(u'Multiple usernames'))
 
-	# Mark this response up as if it were entirely private and not to be cached
-	private_data = _Handshake(())
-	IResponseCacheController(private_data)(private_data, {'request': request})
+        if desired_usernames:
+            desired_username = desired_usernames[0].lower()
+        elif allow_no_username:
+            desired_username = remote_user.username.lower()
+        else:
+            return _create_failure_response(request, 
+                                            error_factory=hexc.HTTPBadRequest, 
+                                            error=_(u'No username'))
 
-	return response
+    if require_matching_username and desired_username != remote_user.username.lower():
+        # Usually a cookie/param mismatch
+        response = _create_failure_response(request)
+    else:
+        try:
+            # If we're impersonating, record that fact in the cookie.
+            # This will later show up in the environment and error/feedback
+            # reports. This is a pretty basic version of that; if we use
+            # it for anything more than display, we need to formalize it more.
+            if desired_username != remote_user.username.lower():
+                # check if we are allowed to impersonate first
+                try:
+                    _can_impersonate(request, desired_username)
+                except ValueError:
+                    return _create_failure_response(request,
+                                                    error_factory=hexc.HTTPForbidden)
+                user_data = {}
+                user_data['username'] = str(remote_user.username.lower())
+                request.environ['REMOTE_USER_DATA'] = user_data
+
+            response = _create_success_response(request, desired_username)
+        except ValueError as e:
+            return _create_failure_response(request,
+                                            error_factory=hexc.HTTPNotFound,
+                                            error=e.args[0])  # No such user
+
+        if audit:
+            # TODO: some real auditing scheme
+            logger.info("[AUDIT] User %s has impersonated %s at %s",
+                        remote_user, desired_username, request)
+
+    # Mark this response up as if it were entirely private and not to be cached
+    private_data = _Handshake(())
+    IResponseCacheController(private_data)(private_data, {'request': request})
+    return response
+
 
 @interface.implementer(IImpersonationDecider)
 class DenyImpersonation(object):
-	"""
-	An impersonation decider that always denies
-	"""
-	def __init__(self, request):
-		pass
+    """
+    An impersonation decider that always denies
+    """
 
-	def validate_impersonation_target(self, userid):
-		raise ValueError()
+    def __init__(self, request):
+        pass
+
+    def validate_impersonation_target(self, userid):
+        raise ValueError()
+
 
 @view_config(route_name=REL_LOGIN_NTI_PASSWORD, request_method='GET', renderer='rest')
 def password_logon(request):
-	"""
-	Found at the path in :const:`REL_LOGIN_NTI_PASSWORD`, this takes authentication credentials
-	(typically basic auth, but anything the app is configured to accept) and logs the user in
-	or
+    """
+    Found at the path in :const:`REL_LOGIN_NTI_PASSWORD`, this takes authentication credentials
+    (typically basic auth, but anything the app is configured to accept) and logs the user in
+    or
 
-	For extra assurance, the desired username may be sent as the request parameter `username`;
-	if so, it must match the authenticated credentials. Any problems, including failure to authenticate,
-	will result in an HTTP 40x response and may have a ``Warning`` header with
-	additional details.
+    For extra assurance, the desired username may be sent as the request parameter `username`;
+    if so, it must match the authenticated credentials. Any problems, including failure to authenticate,
+    will result in an HTTP 40x response and may have a ``Warning`` header with
+    additional details.
 
-	The request parameter `success` can be used to indicate a redirection upon successful logon.
-	Likewise, the parameter `failure` can be used for redirection on a failed attempt.
-	"""
-	# Note that this also accepts the authentication cookie, not just the Basic auth
-	return _specified_username_logon(request)
+    The request parameter `success` can be used to indicate a redirection upon successful logon.
+    Likewise, the parameter `failure` can be used for redirection on a failed attempt.
+    """
+    # Note that this also accepts the authentication cookie, not just the
+    # Basic auth
+    return _specified_username_logon(request)
+
 
 @view_config(route_name=REL_LOGIN_IMPERSONATE,
-			 request_method='GET',
-			 permission=nauth.ACT_IMPERSONATE,
-			 renderer='rest')
+             request_method='GET',
+             permission=nauth.ACT_IMPERSONATE,
+             renderer='rest')
 def impersonate_user(request):
-	"""
-	Users with the correct role for the site can get impersonation tickets
-	for other users. (At this writing in Feb 2013, that means any @nextthought.com
-	account can impersonate any user on any site.) The parameters and results
-	are the same as for a normal logon (the authentication cookie is set, and the
-	username cookie is set, both for the newly impersonated user).
+    """
+    Users with the correct role for the site can get impersonation tickets
+    for other users. (At this writing in Feb 2013, that means any @nextthought.com
+    account can impersonate any user on any site.) The parameters and results
+    are the same as for a normal logon (the authentication cookie is set, and the
+    username cookie is set, both for the newly impersonated user).
 
-	This should be easy to manually activate in the browser by visiting a URL such as
-	``/dataserver2/logon.nti.impersonate?username=FOO&success=/``
+    This should be easy to manually activate in the browser by visiting a URL such as
+    ``/dataserver2/logon.nti.impersonate?username=FOO&success=/``
 
-	.. note :: This is currently a one-time thing. After you have impersonated, you will
-		need to log out to log back in as your original account.
+    .. note :: This is currently a one-time thing. After you have impersonated, you will
+            need to log out to log back in as your original account.
 
-	See :func:`password_logon`.
-	"""
+    See :func:`password_logon`.
+    """
 
-	# TODO: auditing
-	# TODO: This does the real logon steps for the impersonated user, including firing the events.
-	# Is that what we want? We may want to do some things differently, such as causing some of the
-	# profile links to not be sent back, thus bypassing the app's attempt to request new emails.
-	# Need to think through this some more. Might be able to use the metadata providers in repoze.who,
-	# or sessions to accomplish this.
-	return _specified_username_logon(request,
-									 allow_no_username=False,
-									 require_matching_username=False,
-									 audit=True)
+    # TODO: auditing
+    # TODO: This does the real logon steps for the impersonated user, including firing the events.
+    # Is that what we want? We may want to do some things differently, such as causing some of the
+    # profile links to not be sent back, thus bypassing the app's attempt to request new emails.
+    # Need to think through this some more. Might be able to use the metadata providers in repoze.who,
+    # or sessions to accomplish this.
+    return _specified_username_logon(request,
+                                     allow_no_username=False,
+                                     require_matching_username=False,
+                                     audit=True)
 
 
 @interface.implementer(IAuthenticatedUserLinkProvider)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class ImpersonationLinkProvider(object):
-	"""
-	Add the impersonation link if available.
-	"""
-	rel = REL_LOGIN_IMPERSONATE
+    """
+    Add the impersonation link if available.
+    """
 
-	def __init__(self, user, req):
-		self.request = req
-		self.user = user
+    rel = REL_LOGIN_IMPERSONATE
 
-	def get_links(self):
-		# check on the parent of the user, because users typically get
-		# the AllPermission on themselves
-		if has_permission(nauth.ACT_IMPERSONATE, self.user.__parent__, self.request):
-			return (Link(self.request.route_path(self.rel),
-						 rel=self.rel),)
-		return ()
+    def __init__(self, user, req):
+        self.request = req
+        self.user = user
+
+    def get_links(self):
+        # check on the parent of the user, because users typically get
+        # the AllPermission on themselves
+        if has_permission(nauth.ACT_IMPERSONATE, self.user.__parent__, self.request):
+            return (Link(self.request.route_path(self.rel),
+                         rel=self.rel),)
+        return ()
+
 
 import pyramid_openid.view
 
@@ -849,43 +889,50 @@ from zope.proxy.decorator import SpecificationDecoratorBase
 # virtual sites or for different users. Thus, we proxy the path to
 # request.registry.settings.
 
+
 class _PyramidOpenidRegistryProxy(SpecificationDecoratorBase):
 
-	def __init__(self, base):
-		SpecificationDecoratorBase.__init__(self, base)
-		self._settings = dict(base.settings)
+    def __init__(self, base):
+        SpecificationDecoratorBase.__init__(self, base)
+        self._settings = dict(base.settings)
 
-	@non_overridable
-	@property
-	def settings(self):
-		return self._settings
+    @non_overridable
+    @property
+    def settings(self):
+        return self._settings
+
 
 class _PyramidOpenidRequestProxy(SpecificationDecoratorBase):
 
-	def __init__(self, base):
-		SpecificationDecoratorBase.__init__(self, base)
-		self.registry = _PyramidOpenidRegistryProxy(base.registry)
+    def __init__(self, base):
+        SpecificationDecoratorBase.__init__(self, base)
+        self.registry = _PyramidOpenidRegistryProxy(base.registry)
+
 
 _OPENID_FIELD_NAME = 'openid2'
-def _openid_configure(request):
-	"""
-	Configure the settings needed for pyramid_openid on this request.
-	"""
-	# Here, we set up the sreg and ax values
 
-	settings = { 'openid.param_field_name': _OPENID_FIELD_NAME,
-				 'openid.success_callback': 'nti.appserver.logon:_openidcallback',
-				 # Previously, google used a weird mix of namespaces, requiring openid.net
-				 # for email. Now it seems to accept axschema for everything. See:
-				 # https://developers.google.com/accounts/docs/OpenID#endpoint
-				 'openid.ax_required': 'email=http://axschema.org/contact/email firstname=http://axschema.org/namePerson/first lastname=http://axschema.org/namePerson/last',
-				 'openid.ax_optional': 'content_roles=' + AX_TYPE_CONTENT_ROLES,
-				 # See _openidcallback: Sreg isn't used anywhere right now, so it's disabled
-				 # Note that there is an sreg value for 'nickname' that could serve as
-				 # our 'alias' if we wanted to try to ask for it.
-				 # 'openid.sreg_required': 'email fullname nickname language'
-	}
-	request.registry.settings.update(settings)
+
+def _openid_configure(request):
+    """
+    Configure the settings needed for pyramid_openid on this request.
+    """
+    # Here, we set up the sreg and ax values
+
+    settings = {
+        'openid.param_field_name': _OPENID_FIELD_NAME,
+        'openid.success_callback': 'nti.appserver.logon:_openidcallback',
+        # Previously, google used a weird mix of namespaces, requiring openid.net
+        # for email. Now it seems to accept axschema for everything. See:
+        # https://developers.google.com/accounts/docs/OpenID#endpoint
+        'openid.ax_required': 'email=http://axschema.org/contact/email firstname=http://axschema.org/namePerson/first lastname=http://axschema.org/namePerson/last',
+        'openid.ax_optional': 'content_roles=' + AX_TYPE_CONTENT_ROLES,
+        # See _openidcallback: Sreg isn't used anywhere right now, so it's disabled
+        # Note that there is an sreg value for 'nickname' that could serve as
+        # our 'alias' if we wanted to try to ask for it.
+        # 'openid.sreg_required': 'email fullname nickname language'
+    }
+    request.registry.settings.update(settings)
+
 
 from openid.extensions import ax
 
@@ -893,354 +940,383 @@ from openid.extensions import ax
 assert pyramid_openid.view.ax is ax
 assert 'AttrInfo' not in pyramid_openid.view.__dict__
 
-class _AttrInfo(ax.AttrInfo):
-	"""
-	Pyramid_openid provides no way to specify the 'count' value, but we
-	need to set it to unlimited for :const:`AX_TYPE_CONTENT_ROLES` (because the default
-	is one and the provider is not supposed to return more than that). So we subclass
-	and monkey patch to change the value. (Subclassing ensures that isinstance checks continue
-	to work)
-	"""
 
-	def __init__(self, type_uri, **kwargs):
-		if type_uri == AX_TYPE_CONTENT_ROLES:
-			kwargs['count'] = ax.UNLIMITED_VALUES
-		super(_AttrInfo, self).__init__(type_uri, **kwargs)
+class _AttrInfo(ax.AttrInfo):
+    """
+    Pyramid_openid provides no way to specify the 'count' value, but we
+    need to set it to unlimited for :const:`AX_TYPE_CONTENT_ROLES` (because the default
+    is one and the provider is not supposed to return more than that). So we subclass
+    and monkey patch to change the value. (Subclassing ensures that isinstance checks continue
+    to work)
+    """
+
+    def __init__(self, type_uri, **kwargs):
+        if type_uri == AX_TYPE_CONTENT_ROLES:
+            kwargs['count'] = ax.UNLIMITED_VALUES
+        super(_AttrInfo, self).__init__(type_uri, **kwargs)
+
 
 ax.AttrInfo = _AttrInfo
 
+
 def _openid_login(context, request, openid=None, params=None):
-	"""
-	Wrapper around :func:`pyramid_openid.view.verify_openid` that takes care of some error handling
-	and settings.
-	"""
-	if params is None:
-		params = request.params
-	if 'oidcsum' not in params:
-		logger.warn("oidcsum not present in %s at %s", params, request)
-		return _create_failure_response(request, error="Invalid params; missing oidcsum")
-	if openid is None:
-		openid = params.get('openid.identity', params.get('openid')) or 'https://www.google.com/accounts/o8/id'
+    """
+    Wrapper around :func:`pyramid_openid.view.verify_openid` that takes care of some error handling
+    and settings.
+    """
+    if params is None:
+        params = request.params
+    if 'oidcsum' not in params:
+        logger.warn("oidcsum not present in %s at %s", params, request)
+        return _create_failure_response(request, error="Invalid params; missing oidcsum")
+    if openid is None:
+        openid = params.get('openid.identity', params.get('openid')) \
+             or 'https://www.google.com/accounts/o8/id'
 
-	openid_field = _OPENID_FIELD_NAME
-	# pyramid_openid routes back to whatever URL we initially came from;
-	# we always want it to be from our response wrapper
-	nenviron = request.environ.copy()
-	nenviron.pop('PATH_INFO', '')
-	nenviron.pop('RAW_URI', '')
-	nenviron.pop('webob._parsed_post_vars', '')
-	nenviron.pop('webob._parsed_query_vars', '')
-	post = {openid_field: openid}
-	if request.POST:
-		# Some providers ask the browser to do a form submission
-		# via POST instead of having all params in the query string,
-		# so we must support both
-		post = request.POST.copy()
-		post[openid_field] = openid
+    openid_field = _OPENID_FIELD_NAME
+    # pyramid_openid routes back to whatever URL we initially came from;
+    # we always want it to be from our response wrapper
+    nenviron = request.environ.copy()
+    nenviron.pop('PATH_INFO', '')
+    nenviron.pop('RAW_URI', '')
+    nenviron.pop('webob._parsed_post_vars', '')
+    nenviron.pop('webob._parsed_query_vars', '')
+    post = {openid_field: openid}
+    if request.POST:
+        # Some providers ask the browser to do a form submission
+        # via POST instead of having all params in the query string,
+        # so we must support both
+        post = request.POST.copy()
+        post[openid_field] = openid
 
-	if request.params.get('openid.mode') == 'id_res':
-		# If the openid is provided, it takes precedence over openid.mode,
-		# potentially leading to an infinite loop
-		del post[openid_field]
+    if request.params.get('openid.mode') == 'id_res':
+        # If the openid is provided, it takes precedence over openid.mode,
+        # potentially leading to an infinite loop
+        del post[openid_field]
 
-	nrequest = pyramid.request.Request.blank(request.route_url(ROUTE_OPENID_RESPONSE, _query=params),
-											 environ=nenviron,
-											 # In theory, if we're constructing the URL correctly, this is enough
-											 # to carry through HTTPS info
-											 base_url=request.host_url,
-											 headers=request.headers,
-											 POST=post)
-	nrequest.registry = request.registry
-	nrequest.possible_site_names = getattr(request, 'possible_site_names', ())
-	nrequest = _PyramidOpenidRequestProxy(nrequest)
-	assert request.registry is not nrequest.registry
-	assert request.registry.settings is not nrequest.registry.settings
-	_openid_configure(nrequest)
-	logger.debug("Directing pyramid request to %s", nrequest)
+    nrequest = pyramid.request.Request.blank(request.route_url(ROUTE_OPENID_RESPONSE, _query=params),
+                                             environ=nenviron,
+                                             # In theory, if we're constructing the URL correctly, this is enough
+                                             # to
+                                             # carry
+                                             # through
+                                             # HTTPS
+                                             # info
+                                             base_url=request.host_url,
+                                             headers=request.headers,
+                                             POST=post)
+    nrequest.registry = request.registry
+    nrequest.possible_site_names = getattr(request, 'possible_site_names', ())
+    nrequest = _PyramidOpenidRequestProxy(nrequest)
+    assert request.registry is not nrequest.registry
+    assert request.registry.settings is not nrequest.registry.settings
+    _openid_configure(nrequest)
+    logger.debug("Directing pyramid request to %s", nrequest)
 
-	# If the discover process fails, the view will do two things:
-	# (1) Flash a message in the session queue request.settings.get('openid.error_flash_queue', '')
-	# (2) redirect to request.settings.get( 'openid.errordestination', '/' )
-	# We have a better way to return errors, and we want to use it,
-	# so we scan for the error_flash.
-	# NOTE: We are assuming that neither of these is configured, and that
-	# nothing else uses the flash queue
-	q_name = request.registry.settings.get('openid.error_flash_queue', '')
-	q_b4 = nrequest.session.pop_flash(q_name)
-	assert len(q_b4) == 0
+    # If the discover process fails, the view will do two things:
+    # (1) Flash a message in the session queue request.settings.get('openid.error_flash_queue', '')
+    # (2) redirect to request.settings.get( 'openid.errordestination', '/' )
+    # We have a better way to return errors, and we want to use it,
+    # so we scan for the error_flash.
+    # NOTE: We are assuming that neither of these is configured, and that
+    # nothing else uses the flash queue
+    q_name = request.registry.settings.get('openid.error_flash_queue', '')
+    q_b4 = nrequest.session.pop_flash(q_name)
+    assert len(q_b4) == 0
 
-	result = pyramid_openid.view.verify_openid(context, nrequest)
+    result = pyramid_openid.view.verify_openid(context, nrequest)
 
-	q_after = nrequest.session.pop_flash(q_name)
-	if result is None:
-		# This is a programming/configuration error in 0.3.4, meaning we have
-		# failed to pass required params. For example, the openid_param_name might not match
-		raise AssertionError("Failure to get response object; check configs")
-	elif q_after != q_b4:
-		# Error
-		result = _create_failure_response(request, error=q_after[0])
-	return result
+    q_after = nrequest.session.pop_flash(q_name)
+    if result is None:
+        # This is a programming/configuration error in 0.3.4, meaning we have
+        # failed to pass required params. For example, the openid_param_name
+        # might not match
+        raise AssertionError("Failure to get response object; check configs")
+    elif q_after != q_b4:
+        # Error
+        result = _create_failure_response(request, error=q_after[0])
+    return result
+
 
 @view_config(route_name=ROUTE_OPENID_RESPONSE)  # , request_method='GET')
 def _openid_response(context, request):
-	"""
-	Process an OpenID response. This exists as a wrapper around
-	:func:`pyramid_openid.view.verify_openid` because that function
-	does nothing on failure, but we need to know about failure. (This is as-of
-	0.3.4; it is fixed in trunk.)
-	"""
-	response = None
-	openid_mode = request.params.get('openid.mode', None)
-	if openid_mode != 'id_res':
-		# Failure.
-		error = None
-		if openid_mode == 'error':
-			error = request.params.get('openid.error', None)
-		if not error:
-			if openid_mode == 'cancel':  # Hmm. Take a guess
-				error = _("The request was canceled by the remote server.")
-		response = _create_failure_response(request, error=error)
-	else:
-		# If we call directly, we miss the ax settings
-		# response = pyramid_openid.view.verify_openid( context, request )
-		response = _openid_login(context, request)
-	return response
+    """
+    Process an OpenID response. This exists as a wrapper around
+    :func:`pyramid_openid.view.verify_openid` because that function
+    does nothing on failure, but we need to know about failure. (This is as-of
+    0.3.4; it is fixed in trunk.)
+    """
+    response = None
+    openid_mode = request.params.get('openid.mode', None)
+    if openid_mode != 'id_res':
+        # Failure.
+        error = None
+        if openid_mode == 'error':
+            error = request.params.get('openid.error', None)
+        if not error:
+            if openid_mode == 'cancel':  # Hmm. Take a guess
+                error = _(u"The request was canceled by the remote server.")
+        response = _create_failure_response(request, error=error)
+    else:
+        # If we call directly, we miss the ax settings
+        # response = pyramid_openid.view.verify_openid( context, request )
+        response = _openid_login(context, request)
+    return response
+
 
 @view_config(route_name=REL_LOGIN_OPENID, request_method="GET")
 def openid_login(context, request):
-	if 'openid' not in request.params:
-		return _create_failure_response(request, error='Missing openid')
-	return _openid_login(context, request, request.params['openid'])
+    if 'openid' not in request.params:
+        return _create_failure_response(request, error='Missing openid')
+    return _openid_login(context, request, request.params['openid'])
 
-def _deal_with_external_account(request, username, fname, lname, email, idurl, iface, user_factory, realname=None):
-	"""
-	Finds or creates an account based on an external authentication.
 
-	:param username: The login name the user typed. Must be globally unique, and
-		should be in the form of an email.
-	:param email: The email the user provides. Should be an email. Not required.
-	:param idul: The URL that identifies the user on the external system.
-	:param iface: The interface that the user object will implement.
-	:return: The user object
-	"""
-	dataserver = component.getUtility(nti_interfaces.IDataserver)
-	user = User.get_user(username=username, dataserver=dataserver)
-	url_attr = iface.names()[0] if iface and iface.names() and idurl else None
-	if user:
-		if iface and not iface.providedBy(user):
-			interface.alsoProvides(user, iface)
-			if url_attr:
-				setattr(user, url_attr, idurl)
-				lifecycleevent.modified(user, lifecycleevent.Attributes(iface, url_attr))
-		if url_attr:
-			assert getattr(user, url_attr) == idurl
-	else:
-		# When creating, we go through the same steps as account_creation_views,
-		# guaranteeing the proper validation
-		external_value = { 'Username': username, 'email':email }
-		if not realname:
-			if fname and lname:
-				realname = fname + ' ' + lname
+def _deal_with_external_account(request, username, fname, lname, email, idurl, iface, 
+                                user_factory, realname=None):
+    """
+    Finds or creates an account based on an external authentication.
 
-		if realname:
-			external_value['realname'] = realname
-		if url_attr:
-			external_value[url_attr] = idurl
+    :param username: The login name the user typed. Must be globally unique, and
+            should be in the form of an email.
+    :param email: The email the user provides. Should be an email. Not required.
+    :param idul: The URL that identifies the user on the external system.
+    :param iface: The interface that the user object will implement.
+    :return: The user object
+    """
+    dataserver = component.getUtility(nti_interfaces.IDataserver)
+    user = User.get_user(username=username, dataserver=dataserver)
+    url_attr = iface.names()[0] if iface and iface.names() and idurl else None
+    if user:
+        if iface and not iface.providedBy(user):
+            interface.alsoProvides(user, iface)
+            if url_attr:
+                setattr(user, url_attr, idurl)
+                lifecycleevent.modified(user, 
+                                        lifecycleevent.Attributes(iface, url_attr))
+        if url_attr:
+            assert getattr(user, url_attr) == idurl
+    else:
+        # When creating, we go through the same steps as account_creation_views,
+        # guaranteeing the proper validation
+        external_value = {'Username': username, 'email': email}
+        if not realname:
+            if fname and lname:
+                realname = fname + ' ' + lname
 
-		require_password = False
-		from .account_creation_views import _create_user  # XXX A bit scuzzy
+        if realname:
+            external_value['realname'] = realname
+        if url_attr:
+            external_value[url_attr] = idurl
 
-		# This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
-		# will be None
-		user = _create_user(request, external_value, require_password=require_password, user_factory=user_factory)
-		__traceback_info__ = request, user_factory, iface, user
+        require_password = False
+        from .account_creation_views import _create_user  # XXX A bit scuzzy
 
-		if url_attr:
-			assert getattr(user, url_attr) is None  # doesn't get read from the external value right now
-			setattr(user, url_attr, idurl)
-			assert getattr(user, url_attr) == idurl
-		if iface:
-			assert iface.providedBy(user)
-		# We manually fire the user_created event. See account_creation_views
-		notify(UserCreatedWithRequestEvent(user, request))
-	return user
+        # This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
+        # will be None
+        user = _create_user(request, external_value,
+                            require_password=require_password, 
+                            user_factory=user_factory)
+        __traceback_info__ = request, user_factory, iface, user
+
+        if url_attr:
+            # doesn't get read from the external value right now
+            assert getattr(user, url_attr) is None
+            setattr(user, url_attr, idurl)
+            assert getattr(user, url_attr) == idurl
+        if iface:
+            assert iface.providedBy(user)
+        # We manually fire the user_created event. See account_creation_views
+        notify(UserCreatedWithRequestEvent(user, request))
+    return user
+
 
 from zlib import crc32
+
+
 def _checksum(username):
-	return str(crc32(username))  # must be stable across machines
+    return str(crc32(username))  # must be stable across machines
+
 
 def _openidcallback(context, request, success_dict):
-	# It seems that the identity_url is actually
-	# ignored by google and we get back identifying information for
-	# whatever user is currently signed in. This can have strange consequences
-	# with mismatched URLs and emails (you are signed in, but not as who you
-	# indicated you wanted to be signed in as): It's not a security problems because
-	# we use the credentials you actually authenticated with, its just confusing.
-	# To try to prevent this, we are using a basic checksum approach to see if things
-	# match: oidcsum. In some cases we can't do that, though
-	idurl = success_dict['identity_url']
-	oidcsum = request.params.get('oidcsum')
+    # It seems that the identity_url is actually
+    # ignored by google and we get back identifying information for
+    # whatever user is currently signed in. This can have strange consequences
+    # with mismatched URLs and emails (you are signed in, but not as who you
+    # indicated you wanted to be signed in as): It's not a security problems because
+    # we use the credentials you actually authenticated with, its just confusing.
+    # To try to prevent this, we are using a basic checksum approach to see if things
+    # match: oidcsum. In some cases we can't do that, though
+    idurl = success_dict['identity_url']
+    oidcsum = request.params.get('oidcsum')
 
-	# Google only supports AX, sreg is ignored.
-	# AoPS gives us back nothing, ignoring both AX and sreg.
-	# So right now, even though we ask for both, we are also totally ignoring
-	# sreg
+    # Google only supports AX, sreg is ignored.
+    # AoPS gives us back nothing, ignoring both AX and sreg.
+    # So right now, even though we ask for both, we are also totally ignoring
+    # sreg
 
-	# In AX, there can be 0 or more values; the openid library always represents
-	# this using a list (see openid.extensions.ax.AXKeyValueMessage.get and pyramid_openid.view.process_provider_response)
-	ax_dict = success_dict.get('ax', {})
-	fname = ax_dict.get('firstname', ('',))[0]
-	lname = ax_dict.get('lastname', ('',))[0]
-	email = ax_dict.get('email', ('',))[0]
-	content_roles = ax_dict.get('content_roles', ())
+    # In AX, there can be 0 or more values; the openid library always represents
+    # this using a list (see openid.extensions.ax.AXKeyValueMessage.get and
+    # pyramid_openid.view.process_provider_response)
+    ax_dict = success_dict.get('ax', {})
+    fname = ax_dict.get('firstname', ('',))[0]
+    lname = ax_dict.get('lastname', ('',))[0]
+    email = ax_dict.get('email', ('',))[0]
+    content_roles = ax_dict.get('content_roles', ())
 
-	idurl_domain = urlparse.urlparse(idurl).netloc
-	username_provider = component.queryMultiAdapter((None, request),
-													ILogonUsernameFromIdentityURLProvider,
-													name=idurl_domain)
-	if username_provider:
-		username = username_provider.getUsername(idurl, success_dict)
-	elif email:
-		username = email
-	else:
-		return _create_failure_response(request, error='Unable to derive username')
+    idurl_domain = urlparse.urlparse(idurl).netloc
+    username_provider = component.queryMultiAdapter((None, request),
+                                                    ILogonUsernameFromIdentityURLProvider,
+                                                    name=idurl_domain)
+    if username_provider:
+        username = username_provider.getUsername(idurl, success_dict)
+    elif email:
+        username = email
+    else:
+        return _create_failure_response(request, 
+                                        error=_('Unable to derive username.'))
 
-	if _checksum(username) != oidcsum:
-		logger.warn("Checksum mismatch. Logged in multiple times? %s %s username=%s prov=%s",
-					oidcsum, success_dict, username, username_provider)
-		return _create_failure_response(request, error='Username/Email checksum mismatch')
+    if _checksum(username) != oidcsum:
+        logger.warn("Checksum mismatch. Logged in multiple times? %s %s username=%s prov=%s",
+                    oidcsum, success_dict, username, username_provider)
+        return _create_failure_response(request, error='Username/Email checksum mismatch')
 
-	try:
-		# TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
-		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
-		the_user = _deal_with_external_account(request,
-											   username=username,
-											   fname=fname,
-											   lname=lname,
-											   email=email,
-											   idurl=idurl,
-											   iface=nti_interfaces.IOpenIdUser,
-											   user_factory=OpenIdUser.create_user)
-		notify(OpenIDUserCreatedEvent(the_user, idurl, content_roles))
-	except hexc.HTTPError:
-		raise
-	except Exception as e:
-		return _create_failure_response(request, error=str(e))
+    try:
+        # TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
+        # That way we can automatically assign an IAoPSUser and use a
+        # users.AoPSUser
+        the_user = _deal_with_external_account(request,
+                                               username=username,
+                                               fname=fname,
+                                               lname=lname,
+                                               email=email,
+                                               idurl=idurl,
+                                               iface=nti_interfaces.IOpenIdUser,
+                                               user_factory=OpenIdUser.create_user)
+        notify(OpenIDUserCreatedEvent(the_user, idurl, content_roles))
+    except hexc.HTTPError:
+        raise
+    except Exception as e:
+        return _create_failure_response(request, error=str(e))
 
+    return _create_success_response(request, userid=the_user.username)
 
-	return _create_success_response(request, userid=the_user.username)
 
 @component.adapter(nti_interfaces.IUser, IUserLogonEvent)
 def _user_did_logon(user, event):
-	request = event.request
-	request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
-	if not user.lastLoginTime:
-		# First time logon, notify the client
-		flag_link_provider.add_link(user, 'first_time_logon')
-	user.update_last_login_time()
+    request = event.request
+    request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
+    if not user.lastLoginTime:
+        # First time logon, notify the client
+        flag_link_provider.add_link(user, 'first_time_logon')
+    user.update_last_login_time()
 
 # TODO: The two facebook methods below could be radically simplified using
 # requests-facebook. As of 0.1.1, it adds no dependencies.
 # (However, it also has no tests in its repo)
 # http://pypi.python.org/pypi/requests-facebook/0.1.1
 
+
 FB_DIAG_OAUTH = 'https://www.facebook.com/dialog/oauth'
+
 
 @view_config(route_name='logon.facebook.oauth1', request_method='GET')
 def facebook_oauth1(request):
-	app_id = request.registry.settings.get('facebook.app.id')
-	our_uri = urllib.quote(request.route_url('logon.facebook.oauth2'))
-	# We seem incapable of sending any parameters with the redirect_uri. If we do,
-	# then the validation step 400's. Thus we resort to the session
-	for k in ('success', 'failure'):
-		if request.params.get(k):
-			request.session['facebook.' + k] = request.params.get(k)
+    app_id = request.registry.settings.get('facebook.app.id')
+    our_uri = urllib.quote(request.route_url('logon.facebook.oauth2'))
+    # We seem incapable of sending any parameters with the redirect_uri. If we do,
+    # then the validation step 400's. Thus we resort to the session
+    for k in ('success', 'failure'):
+        if request.params.get(k):
+            request.session['facebook.' + k] = request.params.get(k)
 
-	request.session['facebook.username'] = request.params.get('username')
-	redir_to = '%s?client_id=%s&redirect_uri=%s&scope=email' % (FB_DIAG_OAUTH, app_id, our_uri)
-	return hexc.HTTPSeeOther(location=redir_to)
+    request.session['facebook.username'] = request.params.get('username')
+    redir_to = '%s?client_id=%s&redirect_uri=%s&scope=email' % (FB_DIAG_OAUTH, app_id, our_uri)
+    return hexc.HTTPSeeOther(location=redir_to)
+
 
 @view_config(route_name='logon.facebook.oauth2', request_method='GET')
 def facebook_oauth2(request):
 
-	if 'error' in request.params:
-		return _create_failure_response(request,
-										request.session.get('facebook.failure'),
-										error=request.params.get('error'))
+    if 'error' in request.params:
+        return _create_failure_response(request,
+                                        request.session.get('facebook.failure'),
+                                        error=request.params.get('error'))
 
-	code = request.params['code']
-	app_id = request.registry.settings.get('facebook.app.id')
-	our_uri = request.route_url('logon.facebook.oauth2')
-	app_secret = request.registry.settings.get('facebook.app.secret')
+    code = request.params['code']
+    app_id = request.registry.settings.get('facebook.app.id')
+    our_uri = request.route_url('logon.facebook.oauth2')
+    app_secret = request.registry.settings.get('facebook.app.secret')
 
-	auth = requests.get('https://graph.facebook.com/oauth/access_token',
-						params={'client_id': app_id,
-								'redirect_uri': our_uri,
-								'client_secret': app_secret,
-								'code': code},
-						timeout=_REQUEST_TIMEOUT)
+    auth = requests.get('https://graph.facebook.com/oauth/access_token',
+                        params={'client_id': app_id,
+                                'redirect_uri': our_uri,
+                                'client_secret': app_secret,
+                                'code': code},
+                        timeout=_REQUEST_TIMEOUT)
 
-	try:
-		auth.raise_for_status()
-	except RequestException as req_ex:
-		logger.exception("Failed facebook login %s", auth.text)
-		return _create_failure_response(request,
-										request.session.get('facebook.failure'),
-										error=str(req_ex))
+    try:
+        auth.raise_for_status()
+    except RequestException as req_ex:
+        logger.exception("Failed facebook login %s", auth.text)
+        return _create_failure_response(request,
+                                        request.session.get('facebook.failure'),
+                                        error=str(req_ex))
 
-	# The facebook return value is in ridiculous format.
-	# Are we supposed to try to treat this like a url query value or
-	# something? Yick.
-	# TODO: try urlparse.parse_qsl. We need test cases!
-	text = auth.text
-	token = None
-	for x in text.split('&'):
-		if x.startswith('access_token='):
-			token = x[len('access_token='):]
-			break
+    # The facebook return value is in ridiculous format.
+    # Are we supposed to try to treat this like a url query value or
+    # something? Yick.
+    # TODO: try urlparse.parse_qsl. We need test cases!
+    text = auth.text
+    token = None
+    for x in text.split('&'):
+        if x.startswith('access_token='):
+            token = x[len('access_token='):]
+            break
 
-	data = requests.get('https://graph.facebook.com/me',
-						 params={'access_token': token},
-						 timeout=_REQUEST_TIMEOUT)
-	data = json.loads(data.text)
-	if data['email'] != request.session.get('facebook.username'):
-		logger.warn("Facebook username returned different emails %s != %s",
-					data['email'], request.session.get('facebook.username'))
-		return _create_failure_response(request,
-										request.session.get('facebook.failure'),
-										error='Facebook resolved to different username')
+    data = requests.get('https://graph.facebook.com/me',
+                        params={'access_token': token},
+                        timeout=_REQUEST_TIMEOUT)
+    data = json.loads(data.text)
+    if data['email'] != request.session.get('facebook.username'):
+        logger.warn("Facebook username returned different emails %s != %s",
+                    data['email'], request.session.get('facebook.username'))
+        return _create_failure_response(request,
+                                        request.session.get('facebook.failure'),
+                                        error='Facebook resolved to different username')
 
-	# TODO: Assuming email address == username
-	user = _deal_with_external_account(request, username=data['email'],
-									   fname=data['first_name'], lname=data['last_name'],
-									   email=data['email'], idurl=data['link'],
-									   iface=nti_interfaces.IFacebookUser,
-									   user_factory=FacebookUser.create_user)
+    # TODO: Assuming email address == username
+    user = _deal_with_external_account(request, username=data['email'],
+                                       fname=data['first_name'], lname=data['last_name'],
+                                       email=data['email'], idurl=data['link'],
+                                       iface=nti_interfaces.IFacebookUser,
+                                       user_factory=FacebookUser.create_user)
 
-	# For the data formats, see here:
-	# https://developers.facebook.com/docs/reference/api/user/
-	# Fire off requests for the user's data that we want, plus
-	# the address of his picture.
-	pic_rsp = requests.get('https://graph.facebook.com/me/picture',
-							params={'access_token': token},
-							allow_redirects=False,  # This should return a 302, we want the location, not the data
-							timeout=_REQUEST_TIMEOUT,
-							return_response=False)
-							# TODO: Used to support 'config={safe_mode':True}' to "catch all errors"
-							# config={'safe_mode': True} )
-	# Do we have a facebook picture to use? If so, snag it and use it.
-	# TODO: Error handling. TODO: We could do this more async.
-	if pic_rsp.status_code == 302:
-		pic_location = pic_rsp.headers['Location']
-		if pic_location and pic_location != user.avatarURL:
-			user.avatarURL = pic_location
+    # For the data formats, see here:
+    # https://developers.facebook.com/docs/reference/api/user/
+    # Fire off requests for the user's data that we want, plus
+    # the address of his picture.
+    pic_rsp = requests.get('https://graph.facebook.com/me/picture',
+                           params={'access_token': token},
+                           allow_redirects=False,  # This should return a 302, we want the location, not the data
+                           timeout=_REQUEST_TIMEOUT,
+                           return_response=False)
+    # TODO: Used to support 'config={safe_mode':True}' to "catch all errors"
+    # config={'safe_mode': True} )
+    # Do we have a facebook picture to use? If so, snag it and use it.
+    # TODO: Error handling. TODO: We could do this more async.
+    if pic_rsp.status_code == 302:
+        pic_location = pic_rsp.headers['Location']
+        if pic_location and pic_location != user.avatarURL:
+            user.avatarURL = pic_location
 
-	result = _create_success_response(request,
-									  userid=data['email'],
-									  success=request.session.get('facebook.success'))
-	return result
+    result = _create_success_response(request,
+                                      userid=data['email'],
+                                      success=request.session.get('facebook.success'))
+    return result
+
 
 # google
+
 
 import os
 import hashlib
@@ -1257,155 +1333,161 @@ DEFAULT_TOKEN_URL = 'https://www.googleapis.com/oauth2/v4/token'
 DEFAULT_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 DISCOVERY_DOC_URL = 'https://accounts.google.com/.well-known/openid-configuration'
 
+
 def redirect_google_oauth2_uri(request):
-	root = request.route_path('objects.generic.traversal', traverse=())
-	root = root[:-1] if root.endswith('/') else root
-	target = urljoin(request.application_url, root)
-	target = target + '/' if not target.endswith('/') else target
-	target = urljoin(target, LOGON_GOOGLE_OAUTH2)
-	return target
+    root = request.route_path('objects.generic.traversal', traverse=())
+    root = root[:-1] if root.endswith('/') else root
+    target = urljoin(request.application_url, root)
+    target = target + '/' if not target.endswith('/') else target
+    target = urljoin(target, LOGON_GOOGLE_OAUTH2)
+    return target
 _redirect_uri = redirect_google_oauth2_uri
 
+
 def get_openid_configuration():
-	global OPENID_CONFIGURATION
-	if not OPENID_CONFIGURATION:
-		s = requests.get(DISCOVERY_DOC_URL)
-		OPENID_CONFIGURATION = s.json() if s.status_code == 200 else {}
-	return OPENID_CONFIGURATION
+    global OPENID_CONFIGURATION
+    if not OPENID_CONFIGURATION:
+        s = requests.get(DISCOVERY_DOC_URL)
+        OPENID_CONFIGURATION = s.json() if s.status_code == 200 else {}
+    return OPENID_CONFIGURATION
+
 
 def redirect_google_oauth2_params(request, state=None, auth_keys=None):
-	auth_keys = component.getUtility(IOAuthKeys, name="google") if auth_keys is None else auth_keys
-	state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
-	params = {'state': state,
-			  'scope': 'openid email profile',
-			  'response_type': 'code',
-			  'client_id':auth_keys.APIKey,
-			  'redirect_uri':_redirect_uri(request)}
-	return params
+    auth_keys = component.getUtility(IOAuthKeys, name="google") if auth_keys is None else auth_keys
+    state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
+    params = {'state': state,
+              'scope': 'openid email profile',
+              'response_type': 'code',
+              'client_id': auth_keys.APIKey,
+              'redirect_uri': _redirect_uri(request)}
+    return params
+
 
 @view_config(route_name=REL_LOGIN_GOOGLE, request_method='GET')
 def google_oauth1(request, success=None, failure=None, state=None):
-	state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
-	config = get_openid_configuration()
-	params = redirect_google_oauth2_params(request, state)
-	auth_url = config.get("authorization_endpoint", DEFAULT_AUTH_URL)
+    state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
+    config = get_openid_configuration()
+    params = redirect_google_oauth2_params(request, state)
+    auth_url = config.get("authorization_endpoint", DEFAULT_AUTH_URL)
 
-	hosted_domain = None
-	login_config = component.queryUtility(IGoogleLogonSettings)
-	if login_config is not None:
-		hosted_domain = login_config.hd
-	if hosted_domain:
-		params['hd'] = hosted_domain
+    hosted_domain = None
+    login_config = component.queryUtility(IGoogleLogonSettings)
+    if login_config is not None:
+        hosted_domain = login_config.hd
+    if hosted_domain:
+        params['hd'] = hosted_domain
 
-	for key, value in (('success', success), ('failure', failure)):
-		value = value or request.params.get(key)
-		if value:
-			request.session['google.' + key] = value
+    for key, value in (('success', success), ('failure', failure)):
+        value = value or request.params.get(key)
+        if value:
+            request.session['google.' + key] = value
 
-	# save state for validation
-	request.session['google.state'] = state
+    # save state for validation
+    request.session['google.state'] = state
 
-	# redirect
-	target = auth_url[:-1] if auth_url.endswith('/') else auth_url
-	target = '%s?%s' % (target, urllib.urlencode(params))
-	response = hexc.HTTPSeeOther(location=target)
-	return response
+    # redirect
+    target = auth_url[:-1] if auth_url.endswith('/') else auth_url
+    target = '%s?%s' % (target, urllib.urlencode(params))
+    response = hexc.HTTPSeeOther(location=target)
+    return response
+
 
 @view_config(route_name=LOGON_GOOGLE_OAUTH2, request_method='GET')
 def google_oauth2(request):
-	params = request.params
-	auth_keys = component.getUtility(IOAuthKeys, name="google")
+    params = request.params
+    auth_keys = component.getUtility(IOAuthKeys, name="google")
 
-	# check for errors
-	if 'error' in params or 'errorCode' in params:
-		error = params.get('error') or params.get('errorCode')
-		return _create_failure_response(request,
-										request.session.get('google.failure'),
-										error=error)
+    # check for errors
+    if 'error' in params or 'errorCode' in params:
+        error = params.get('error') or params.get('errorCode')
+        return _create_failure_response(request,
+                                        request.session.get('google.failure'),
+                                        error=error)
 
-	# Confirm code
-	if 'code' not in params:
-		return _create_failure_response(request,
-										request.session.get('google.failure'),
-										error=_('Could not find code parameter.'))
-	code = params.get('code')
+    # Confirm code
+    if 'code' not in params:
+        return _create_failure_response(request,
+                                        request.session.get('google.failure'),
+                                        error=_(u'Could not find code parameter.'))
+    code = params.get('code')
 
-	# Confirm anti-forgery state token
-	if 'state' not in params:
-		return _create_failure_response(request,
-										request.session.get('google.failure'),
-										error=_('Could not find state parameter.'))
-	params_state = params.get('state')
-	session_state = request.session.get('google.state')
-	if params_state != session_state:
-		return _create_failure_response(request,
-										request.session.get('google.failure'),
-										error=_('Incorrect state values.'))
+    # Confirm anti-forgery state token
+    if 'state' not in params:
+        return _create_failure_response(request,
+                                        request.session.get('google.failure'),
+                                        error=_(u'Could not find state parameter.'))
+    params_state = params.get('state')
+    session_state = request.session.get('google.state')
+    if params_state != session_state:
+        return _create_failure_response(request,
+                                        request.session.get('google.failure'),
+                                        error=_(u'Incorrect state values.'))
 
-	# Exchange code for access token and ID token
-	config = get_openid_configuration()
-	token_url = config.get('token_endpoint', DEFAULT_TOKEN_URL)
+    # Exchange code for access token and ID token
+    config = get_openid_configuration()
+    token_url = config.get('token_endpoint', DEFAULT_TOKEN_URL)
 
-	try:
-		data = {'code':code,
-				'client_id':auth_keys.APIKey,
-				'grant_type':'authorization_code',
-				'client_secret':auth_keys.SecretKey,
-				'redirect_uri':_redirect_uri(request)}
-		response = requests.post(token_url, data)
-		if response.status_code != 200:
-			return _create_failure_response(
-								request,
-								request.session.get('google.failure'),
-								error=_('Invalid response while getting access token.'))
+    try:
+        data = {'code': code,
+                'client_id': auth_keys.APIKey,
+                'grant_type': 'authorization_code',
+                'client_secret': auth_keys.SecretKey,
+                'redirect_uri': _redirect_uri(request)}
+        response = requests.post(token_url, data)
+        if response.status_code != 200:
+            return _create_failure_response(
+                request,
+                request.session.get('google.failure'),
+                error=_('Invalid response while getting access token.'))
 
-		data = response.json()
-		if 'access_token' not in data:
-			return _create_failure_response(request,
-											request.session.get('google.failure'),
-											error=_('Could not find access token.'))
-		if 'id_token' not in data:
-			return _create_failure_response(request,
-											request.session.get('google.failure'),
-											error=_('Could not find id token.'))
+        data = response.json()
+        if 'access_token' not in data:
+            return _create_failure_response(request,
+                                            request.session.get('google.failure'),
+                                            error=_(u'Could not find access token.'))
+        if 'id_token' not in data:
+            return _create_failure_response(request,
+                                            request.session.get('google.failure'),
+                                            error=_(u'Could not find id token.'))
 
-		# id_token = data['id_token'] #TODO:Validate id token
-		access_token = data['access_token']
-		logger.debug("Getting user profile")
-		userinfo_url = config.get('userinfo_endpoint', DEFAULT_USERINFO_URL)
-		response = requests.get(userinfo_url, params={"access_token":access_token})
-		if response.status_code != 200:
-			return _create_failure_response(request,
-											request.session.get('google.failure'),
-											error=_('Invalid access token.'))
-		profile = response.json()
-		username = profile['email']
-		user = User.get_entity(username)
-		if user is None:
-			firstName = profile.get('given_name', 'unspecified')
-			lastName = profile.get('family_name', 'unspecified')
-			email_verified = profile.get('email_verified', 'false')
+        # id_token = data['id_token'] #TODO:Validate id token
+        access_token = data['access_token']
+        logger.debug("Getting user profile")
+        userinfo_url = config.get('userinfo_endpoint', DEFAULT_USERINFO_URL)
+        response = requests.get(userinfo_url, params={
+                                "access_token": access_token})
+        if response.status_code != 200:
+            return _create_failure_response(request,
+                                            request.session.get('google.failure'),
+                                            error=_(u'Invalid access token.'))
+        profile = response.json()
+        username = profile['email']
+        user = User.get_entity(username)
+        if user is None:
+            firstName = profile.get('given_name', 'unspecified')
+            lastName = profile.get('family_name', 'unspecified')
+            email_verified = profile.get('email_verified', 'false')
 
-			user = _deal_with_external_account(request,
-											   username=username,
-											   fname=firstName,
-											   lname=lastName,
-											   email=username,
-											   idurl=None,
-											   iface=None,
-											   user_factory=User.create_user)
-			interface.alsoProvides(user, IGoogleUser)
-			notify(GoogleUserCreatedEvent(user, request))
-			if is_true(email_verified):
-				force_email_verification(user)  # trusted source
-			request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
+            user = _deal_with_external_account(request,
+                                               username=username,
+                                               fname=firstName,
+                                               lname=lastName,
+                                               email=username,
+                                               idurl=None,
+                                               iface=None,
+                                               user_factory=User.create_user)
+            interface.alsoProvides(user, IGoogleUser)
+            notify(GoogleUserCreatedEvent(user, request))
+            if is_true(email_verified):
+                force_email_verification(user)  # trusted source
+            request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
 
-		response = _create_success_response(request,
-											userid=username,
-											success=request.session.get('google.success'))
-	except Exception as e:
-		logger.exception('Failed to login with google')
-		response = _create_failure_response(request,
-											request.session.get('google.failure'),
-											error=str(e))
-	return response
+        response = _create_success_response(request,
+                                            userid=username,
+                                            success=request.session.get('google.success'))
+    except Exception as e:
+        logger.exception('Failed to login with google')
+        response = _create_failure_response(request,
+                                            request.session.get('google.failure'),
+                                            error=str(e))
+    return response
