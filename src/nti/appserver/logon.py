@@ -1248,7 +1248,7 @@ from urlparse import urljoin
 
 from nti.appserver.interfaces import IGoogleLogonSettings
 
-from nti.utils.interfaces import IOAuthKeys
+from nti.common.interfaces import IOAuthKeys
 
 OPENID_CONFIGURATION = None
 LOGON_GOOGLE_OAUTH2 = 'logon.google.oauth2'
