@@ -243,7 +243,7 @@ def forgot_passcode_view(request):
         annotations[_KEY_PASSCODE_RESET] = value
         recovery_utility = component.queryUtility(IUserAccountRecoveryUtility)
         if recovery_utility is not None:
-            reset_url = recovery_utility.get_password_reset_url(matching_user)
+            reset_url = recovery_utility.get_password_reset_url(matching_user, request)
         if not reset_url:
             parsed_redirect = urlparse.urlparse(success_redirect_value)
             parsed_redirect = list(parsed_redirect)
@@ -258,7 +258,7 @@ def forgot_passcode_view(request):
                         + '&id=' + urllib.quote(token)
 
             parsed_redirect[4] = query
-            success_redirect_value = urlparse.urlunparse(parsed_redirect)    
+            success_redirect_value = urlparse.urlunparse(parsed_redirect)
             reset_url = success_redirect_value
         if not reset_url:
             logger.warn("No recovery url found for username '%s' and email '%s'",
