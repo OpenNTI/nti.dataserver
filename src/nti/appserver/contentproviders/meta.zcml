@@ -2,10 +2,13 @@
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:meta="http://namespaces.zope.org/meta">
 
+	<include package="zope.component" file="meta.zcml" />
+
 	<meta:directives namespace="http://nextthought.com/ntp/contentproviders">
 		<meta:directive
 			name="pyramidTemplate"
 			schema=".zcml.IPyramidRendererDirective"
 			handler=".zcml.registerPyramidRenderer" />
 	</meta:directives>
+
 </configure>
