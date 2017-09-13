@@ -83,7 +83,8 @@ class LinkProvider(object):
         return link
 
     def __repr__(self):
-        return "<%s %s %s>" % (self.__class__.__name__, self.__name__, self.url)
+        return "<%s %s %s>" % (self.__class__.__name__, 
+                               self.__name__, self.url)
 
 
 @interface.implementer(IDeletableLinkProvider)
