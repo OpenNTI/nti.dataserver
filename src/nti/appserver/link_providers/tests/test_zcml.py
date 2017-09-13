@@ -40,54 +40,55 @@ from nti.site.transient import TrivialSite as _TrivialSite
 
 import nti.testing.base
 
-ZCML_STRING = """
+ZCML_STRING = u"""
 <configure xmlns="http://namespaces.zope.org/zope"
-		   xmlns:zcml="http://namespaces.zope.org/zcml"
-		   xmlns:link="http://nextthought.com/ntp/link_providers"
-		   i18n_domain='nti.dataserver'>
+           xmlns:zcml="http://namespaces.zope.org/zcml"
+           xmlns:link="http://nextthought.com/ntp/link_providers"
+           i18n_domain='nti.dataserver'>
 
-	<include package="zope.component" />
-	<include package="zope.annotation" />
-	<include package="z3c.baseregistry" file="meta.zcml" />
-	<include package="." file="meta.zcml" />
-	
-	<utility
-		component="nti.appserver.policies.sites.BASECOPPA"
-		provides="zope.component.interfaces.IComponents"
-		name="mathcounts.nextthought.com" />
-	
-	<registerIn registry="nti.appserver.policies.sites.BASECOPPA">
-		<link:userLink
-			name='foo.bar'
-			minGeneration='1234'
-			url='/relative/path'
-			for='nti.dataserver.interfaces.ICoppaUser' />
-		<link:userLink
-			named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
-			url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
-			mimeType='text/html'
-			for='nti.appserver.link_providers.tests.test_zcml.IMarker' />
-	</registerIn>
-	
-	<utility
-		component="nti.appserver.link_providers.tests.test_zcml._MYSITE"
-		provides="zope.component.interfaces.IComponents"
-		name="mytest.nextthought.com" />
-	
-	<registerIn registry="nti.appserver.link_providers.tests.test_zcml._MYSITE">
-		<link:userLink
-			named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
-			url='https://this/link/overrides/the/parent'
-			mimeType='text/html'
-			for='nti.appserver.link_providers.tests.test_zcml.IMarker' />
-	</registerIn>
+    <include package="zope.component" />
+    <include package="zope.annotation" />
+    <include package="z3c.baseregistry" file="meta.zcml" />
+    <include package="." file="meta.zcml" />
+    
+    <utility
+        component="nti.appserver.policies.sites.BASECOPPA"
+        provides="zope.component.interfaces.IComponents"
+        name="mathcounts.nextthought.com" />
+    
+    <registerIn registry="nti.appserver.policies.sites.BASECOPPA">
+        <link:userLink
+            name='foo.bar'
+            minGeneration='1234'
+            url='/relative/path'
+            for='nti.dataserver.interfaces.ICoppaUser' />
+        <link:userLink
+            named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
+            url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
+            mimeType='text/html'
+            for='nti.appserver.link_providers.tests.test_zcml.IMarker' />
+    </registerIn>
+    
+    <utility
+        component="nti.appserver.link_providers.tests.test_zcml._MYSITE"
+        provides="zope.component.interfaces.IComponents"
+        name="mytest.nextthought.com" />
+    
+    <registerIn registry="nti.appserver.link_providers.tests.test_zcml._MYSITE">
+        <link:userLink
+            named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
+            url='https://this/link/overrides/the/parent'
+            mimeType='text/html'
+            for='nti.appserver.link_providers.tests.test_zcml.IMarker' />
+    </registerIn>
 
 </configure>
 """
 
 from z3c.baseregistry.baseregistry import BaseComponents
-_MYSITE = BaseComponents(
-    MATHCOUNTS, name='test.components', bases=(MATHCOUNTS,))
+_MYSITE = BaseComponents(MATHCOUNTS, 
+                         name='test.components', 
+                         bases=(MATHCOUNTS,))
 
 
 class IMarker(IUser):
@@ -101,7 +102,6 @@ from nti.appserver.link_providers import unique_link_providers
 class TestZcml(nti.testing.base.ConfiguringTestBase):
 
     def test_site_registrations(self):
-
         self.configure_string(ZCML_STRING)
         assert_that(MATHCOUNTS.__bases__,
                     is_((component.globalSiteManager,)))
