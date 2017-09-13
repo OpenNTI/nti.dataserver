@@ -4,9 +4,7 @@
 			xmlns:zcml="http://namespaces.zope.org/zcml">
 
 	<include package="zope.component" file="meta.zcml" />
-	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	<include package="zope.security" />
 
 	<include package="zope.vocabularyregistry" />
 
@@ -15,4 +13,5 @@
 	<utility component=".vocabulary.CapabilityNameTokenVocabulary"
 			 provides="zope.schema.interfaces.IVocabularyFactory"
 			 name="nti.appserver.capabilities.vocabulary" />
+
 </configure>
