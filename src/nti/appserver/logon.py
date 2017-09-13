@@ -27,7 +27,7 @@ the function :func:`impersonate_user` for more details.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import logging
@@ -120,25 +120,25 @@ from nti.mimetype import mimetype
 #: Fetching the href of this link returns either a content page
 #: or PageInfo structure. The client is expected to DELETE
 #: this link once the user has viewed it.
-REL_INITIAL_WELCOME_PAGE = "content.initial_welcome_page"
+REL_INITIAL_WELCOME_PAGE = u"content.initial_welcome_page"
 
 #: Link relationship indicating a welcome page
 #: The client is expected to make this relationship
 #: available to the end user at all times. It is NOT a deletable
 #: link.
-REL_PERMANENT_WELCOME_PAGE = 'content.permanent_welcome_page'
+REL_PERMANENT_WELCOME_PAGE = u'content.permanent_welcome_page'
 
 #: Link relationship indicating the Terms-of-service page
 #: Fetching the href of this link returns either a content page
 #: or PageInfo structure. The client is expected to DELETE
 #: this link once the user has viewed it and accepted it.
-REL_INITIAL_TOS_PAGE = "content.initial_tos_page"
+REL_INITIAL_TOS_PAGE = u"content.initial_tos_page"
 
 #: Link relationship indicating a the Terms-of-service page
 #: The client is expected to make this relationship
 #: available to the end user at all times for review. It is NOT a deletable
 #: link.
-REL_PERMANENT_TOS_PAGE = 'content.permanent_tos_page'
+REL_PERMANENT_TOS_PAGE = u'content.permanent_tos_page'
 
 TOS_URL = 'https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
 PRIVACY_POLICY_URL = 'https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gvacXOStsfmUz5TjyDYYy3CVJ2SmM'
@@ -299,7 +299,7 @@ def _forgetting(request, redirect_param_name, no_param_class, redirect_value=Non
     response.headers.extend(sec.forget(request))
     if error:
         # TODO: Sending multiple warnings
-        response.headers[b'Warning'] = error.encode('utf-8')
+        response.headers['Warning'] = error.encode('utf-8')
 
     logger.debug("Forgetting user %s with %s (%s)",
                  request.authenticated_userid,
@@ -334,8 +334,9 @@ class DefaultLogoutResponseProvider(object):
 
 @view_config(route_name=REL_LOGIN_LOGOUT, request_method='GET')
 def logout(request):
-    "Cause the response to the request to terminate the authentication."
-
+    """
+    Cause the response to the request to terminate the authentication.
+    """
     # Terminate any sessions they have open
     # TODO: We need to associate the socket.io session somehow
     # so we can terminate just that one session (we cannot terminate all,
@@ -376,6 +377,7 @@ def ping(request):
 class _Pong(dict):
 
     __external_class_name__ = 'Pong'
+
     mime_type = mimetype.nti_mimetype_with_class('pong')
 
     def __init__(self, lnks):
@@ -467,8 +469,8 @@ class _SimpleExistingUserLinkProvider(object):
 
     def __call__(self):
         if self.user.has_password():
-            return Link(self.request.route_path(self.rel, _query={'username': self.user.username}),
-                        rel=self.rel)
+            path = self.request.route_path(self.rel, _query={'username': self.user.username})
+            return Link(path, rel=self.rel)
 
 
 @interface.implementer(IAuthenticatedUserLinkProvider)
@@ -484,7 +486,7 @@ class _OnlinePolicyLinkProvider (object):
 
     def get_links(self):
         return (Link(target=TOS_URL, rel=self.tos_rel),
-                Link(target=PRIVACY_POLICY_URL, rel=self.privacy_rel),)
+                Link(target=PRIVACY_POLICY_URL, rel=self.privacy_rel))
 
 
 @interface.implementer(ILogonLinkProvider)
@@ -570,7 +572,7 @@ class WhitelistedDomainLinkProviderMixin(object):
                                      self.rel,
                                      params=self.params_for(self.user))
 
-    def params_for(self, user):
+    def params_for(self, *unused_args, **unused_kwargs):
         return ()
 
 
@@ -593,7 +595,7 @@ class _MissingUserAopsLoginLinkProvider(MissingUserWhitelistedLinkProviderMixin)
     domains = ('aops.com',)
     rel = REL_LOGIN_OPENID
 
-    def params_for(self, user):
+    def params_for(self, *unused_args, **unused_kwargs):
         aops_username = self.user.username.split('@')[0]
         # Larry says:
         # > http://<username>.openid.artofproblemsolving.com
@@ -603,7 +605,7 @@ class _MissingUserAopsLoginLinkProvider(MissingUserWhitelistedLinkProviderMixin)
         # But 3 definitely doesn't work. 1 and 4 do. We use 4
         return {'openid': 'http://openid.aops.com/%s' % aops_username}
 
-    def getUsername(self, idurl, extra_info=None):
+    def getUsername(self, idurl, *unused_args, **unused_kwargs):
         # reverse the process by tacking @aops.com back on
         username = idurl.split('/')[-1]
         username = username + '@' + self.domains[0]
@@ -630,7 +632,7 @@ class _MissingUserMallowstreetLoginLinkProvider(MissingUserWhitelistedLinkProvid
         mallow_username = '@'.join(user.username.split('@')[0:-1])
         return {'openid': self._BASE_URL % mallow_username}
 
-    def getUsername(self, idurl, extra_info=None):
+    def getUsername(self, idurl, *unused_args, **unused_kwargs):
         # reverse the process by tacking @mallowstreet.com back on
         username = idurl.split('/')[-1]
         username = username + '@' + self.domains[0]
@@ -656,6 +658,7 @@ class _ExistingOpenIdUserLoginLinkProvider(object):
 class _Handshake(dict):
 
     __external_class_name__ = 'Handshake'
+
     mime_type = mimetype.nti_mimetype_with_class('handshake')
 
     def __init__(self, lnks):
@@ -955,7 +958,6 @@ class _AttrInfo(ax.AttrInfo):
             kwargs['count'] = ax.UNLIMITED_VALUES
         super(_AttrInfo, self).__init__(type_uri, **kwargs)
 
-
 ax.AttrInfo = _AttrInfo
 
 
@@ -1137,7 +1139,7 @@ def _checksum(username):
     return str(crc32(username))  # must be stable across machines
 
 
-def _openidcallback(context, request, success_dict):
+def _openidcallback(unused_context, request, success_dict):
     # It seems that the identity_url is actually
     # ignored by google and we get back identifying information for
     # whatever user is currently signed in. This can have strange consequences
@@ -1204,7 +1206,7 @@ def _openidcallback(context, request, success_dict):
 @component.adapter(nti_interfaces.IUser, IUserLogonEvent)
 def _user_did_logon(user, event):
     request = event.request
-    request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
+    request.environ['nti.request_had_transaction_side_effects'] = 'True'
     if not user.lastLoginTime:
         # First time logon, notify the client
         flag_link_provider.add_link(user, 'first_time_logon')
@@ -1480,7 +1482,7 @@ def google_oauth2(request):
             notify(GoogleUserCreatedEvent(user, request))
             if is_true(email_verified):
                 force_email_verification(user)  # trusted source
-            request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
+            request.environ['nti.request_had_transaction_side_effects'] = 'True'
 
         response = _create_success_response(request,
                                             userid=username,
