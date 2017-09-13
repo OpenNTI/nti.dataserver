@@ -244,7 +244,8 @@ def _links_for_unauthenticated_users(request):
         # These may be security controlled
         root = component.getUtility(nti_interfaces.IDataserver).root_folder
         for rel in REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT:
-            route = request.route_path('objects.generic.traversal', traverse=(rel,))
+            route = request.route_path('objects.generic.traversal',
+                                       traverse=(rel,))
             resource = ztraversing.traverse(root, route, request=request)
             try:
                 yes = has_permission(nauth.ACT_CREATE, resource, request)
@@ -328,7 +329,7 @@ class DefaultLogoutResponseProvider(object):
         pass
 
     def forgetting(self, request, redirect_param_name, redirect_value=None):
-        return _forgetting(request, redirect_param_name, 
+        return _forgetting(request, redirect_param_name,
                            hexc.HTTPNoContent, redirect_value=redirect_value)
 
 
@@ -430,7 +431,9 @@ def handshake(request):
     # type will be dropped if it hasn't been seen yet.
     providers = []
     for provider in component.subscribers((user, request), ILogonLinkProvider):
-        providers.append((provider.rel, getattr(provider, 'priority', 0), provider))
+        providers.append((provider.rel,
+                          getattr(provider, 'priority', 0),
+                          provider))
 
     ignored = set()
     for rel, _, provider in sorted(providers, reverse=True):
@@ -469,7 +472,8 @@ class _SimpleExistingUserLinkProvider(object):
 
     def __call__(self):
         if self.user.has_password():
-            path = self.request.route_path(self.rel, _query={'username': self.user.username})
+            path = self.request.route_path(self.rel,
+                                           _query={'username': self.user.username})
             return Link(path, rel=self.rel)
 
 
@@ -502,8 +506,8 @@ class _SimpleMissingUserFacebookLinkProvider(object):
     def __call__(self):
         if not self.user.username:
             return None
-        return Link(self.request.route_path('logon.facebook.oauth1', 
-                    _query={'username': self.user.username}),
+        return Link(self.request.route_path('logon.facebook.oauth1',
+                                            _query={'username': self.user.username}),
                     rel=self.rel)
 
 
@@ -514,7 +518,8 @@ class _SimpleExistingUserFacebookLinkProvider(_SimpleMissingUserFacebookLinkProv
 
 def _prepare_oid_link(request, username, rel, params=()):
     query = dict(params)
-    query['oidcsum'] = _checksum(username) if 'oidcsum' not in query else query['oidcsum']
+    if 'oidcsum' not in query:
+        query['oidcsum'] = _checksum(username)
     query['username'] = username
 
     title = None
@@ -667,7 +672,8 @@ class _Handshake(dict):
 
 
 def _create_failure_response(request, failure=None, error=None, error_factory=hexc.HTTPUnauthorized):
-    return _forgetting(request, 'failure', error_factory, redirect_value=failure, error=error)
+    return _forgetting(request, 'failure', error_factory,
+                       redirect_value=failure, error=error)
 
 
 def _create_success_response(request, userid=None, success=None):
@@ -725,7 +731,7 @@ def _can_impersonate(request, username):
     _query_impersonation_decider(request, username)
 
 
-def _specified_username_logon(request, allow_no_username=True, require_matching_username=True, 
+def _specified_username_logon(request, allow_no_username=True, require_matching_username=True,
                               audit=False, desired_username=None):
     # This code handles both an existing logged on user and not
     remote_user = _authenticated_user(request)
@@ -744,8 +750,8 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
                 desired_usernames = [desired_usernames]
 
         if len(desired_usernames) > 1:
-            return _create_failure_response(request, 
-                                            error_factory=hexc.HTTPBadRequest, 
+            return _create_failure_response(request,
+                                            error_factory=hexc.HTTPBadRequest,
                                             error=_(u'Multiple usernames'))
 
         if desired_usernames:
@@ -753,8 +759,8 @@ def _specified_username_logon(request, allow_no_username=True, require_matching_
         elif allow_no_username:
             desired_username = remote_user.username.lower()
         else:
-            return _create_failure_response(request, 
-                                            error_factory=hexc.HTTPBadRequest, 
+            return _create_failure_response(request,
+                                            error_factory=hexc.HTTPBadRequest,
                                             error=_(u'No username'))
 
     if require_matching_username and desired_username != remote_user.username.lower():
@@ -958,6 +964,7 @@ class _AttrInfo(ax.AttrInfo):
             kwargs['count'] = ax.UNLIMITED_VALUES
         super(_AttrInfo, self).__init__(type_uri, **kwargs)
 
+
 ax.AttrInfo = _AttrInfo
 
 
@@ -973,7 +980,7 @@ def _openid_login(context, request, openid=None, params=None):
         return _create_failure_response(request, error="Invalid params; missing oidcsum")
     if openid is None:
         openid = params.get('openid.identity', params.get('openid')) \
-             or 'https://www.google.com/accounts/o8/id'
+              or 'https://www.google.com/accounts/o8/id'
 
     openid_field = _OPENID_FIELD_NAME
     # pyramid_openid routes back to whatever URL we initially came from;
@@ -1073,7 +1080,7 @@ def openid_login(context, request):
     return _openid_login(context, request, request.params['openid'])
 
 
-def _deal_with_external_account(request, username, fname, lname, email, idurl, iface, 
+def _deal_with_external_account(request, username, fname, lname, email, idurl, iface,
                                 user_factory, realname=None):
     """
     Finds or creates an account based on an external authentication.
@@ -1093,8 +1100,8 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
             interface.alsoProvides(user, iface)
             if url_attr:
                 setattr(user, url_attr, idurl)
-                lifecycleevent.modified(user, 
-                                        lifecycleevent.Attributes(iface, url_attr))
+                descriptions = lifecycleevent.Attributes(iface, url_attr)
+                lifecycleevent.modified(user, descriptions)
         if url_attr:
             assert getattr(user, url_attr) == idurl
     else:
@@ -1116,7 +1123,7 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
         # This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
         # will be None
         user = _create_user(request, external_value,
-                            require_password=require_password, 
+                            require_password=require_password,
                             user_factory=user_factory)
         __traceback_info__ = request, user_factory, iface, user
 
@@ -1174,8 +1181,8 @@ def _openidcallback(unused_context, request, success_dict):
     elif email:
         username = email
     else:
-        return _create_failure_response(request, 
-                                        error=_('Unable to derive username.'))
+        return _create_failure_response(request,
+                                        error=_(u'Unable to derive username.'))
 
     if _checksum(username) != oidcsum:
         logger.warn("Checksum mismatch. Logged in multiple times? %s %s username=%s prov=%s",
@@ -1232,7 +1239,8 @@ def facebook_oauth1(request):
             request.session['facebook.' + k] = request.params.get(k)
 
     request.session['facebook.username'] = request.params.get('username')
-    redir_to = '%s?client_id=%s&redirect_uri=%s&scope=email' % (FB_DIAG_OAUTH, app_id, our_uri)
+    data = (FB_DIAG_OAUTH, app_id, our_uri)
+    redir_to = '%s?client_id=%s&redirect_uri=%s&scope=email' % data
     return hexc.HTTPSeeOther(location=redir_to)
 
 
@@ -1241,7 +1249,8 @@ def facebook_oauth2(request):
 
     if 'error' in request.params:
         return _create_failure_response(request,
-                                        request.session.get('facebook.failure'),
+                                        request.session.get(
+                                            'facebook.failure'),
                                         error=request.params.get('error'))
 
     code = request.params['code']
@@ -1261,7 +1270,8 @@ def facebook_oauth2(request):
     except RequestException as req_ex:
         logger.exception("Failed facebook login %s", auth.text)
         return _create_failure_response(request,
-                                        request.session.get('facebook.failure'),
+                                        request.session.get(
+                                            'facebook.failure'),
                                         error=str(req_ex))
 
     # The facebook return value is in ridiculous format.
@@ -1283,7 +1293,8 @@ def facebook_oauth2(request):
         logger.warn("Facebook username returned different emails %s != %s",
                     data['email'], request.session.get('facebook.username'))
         return _create_failure_response(request,
-                                        request.session.get('facebook.failure'),
+                                        request.session.get(
+                                            'facebook.failure'),
                                         error='Facebook resolved to different username')
 
     # TODO: Assuming email address == username
@@ -1343,6 +1354,8 @@ def redirect_google_oauth2_uri(request):
     target = target + '/' if not target.endswith('/') else target
     target = urljoin(target, LOGON_GOOGLE_OAUTH2)
     return target
+
+
 _redirect_uri = redirect_google_oauth2_uri
 
 
@@ -1355,7 +1368,8 @@ def get_openid_configuration():
 
 
 def redirect_google_oauth2_params(request, state=None, auth_keys=None):
-    auth_keys = component.getUtility(IOAuthKeys, name="google") if auth_keys is None else auth_keys
+    if auth_keys is None:
+        auth_keys = component.getUtility(IOAuthKeys, name="google")
     state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
     params = {'state': state,
               'scope': 'openid email profile',
