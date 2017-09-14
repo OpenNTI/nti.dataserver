@@ -28,8 +28,8 @@ from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _H
 from nti.dataserver.contenttypes import Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
 from nti.dataserver.contenttypes import EmbeddedVideo
 from nti.dataserver.contenttypes import NonpersistentCanvasPathShape
-from nti.ntiids.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
+from nti.ntiids.oids import to_external_ntiid_oid
 import nti.dataserver.users as users
 
 import zope.schema.interfaces
