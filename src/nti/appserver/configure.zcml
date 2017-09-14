@@ -31,7 +31,7 @@
 	<include package="nti.externalization" />
 	<include package="nti.dataserver" />
 	<include package="nti.mailer" />
-	
+
 	<include package="nti.app.authentication" file="meta.zcml" />
 	<securityPolicy component="zope.securitypolicy.zopepolicy.ZopeSecurityPolicy" />
 
@@ -152,7 +152,7 @@
 	<adapter factory=".pyramid_renderers_edit_link_decorator.DefaultEditLinkMaker"
 			 provides=".interfaces.IEditLinkMaker"
 			 for="*"/>
-			 
+
 	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IModeledContent pyramid.interfaces.IRequest" />
@@ -183,12 +183,14 @@
 
 	<!-- Events -->
 	<subscriber handler=".application._sync_host_policies" />
-	
+
 	<subscriber handler=".account_creation_views.link_removed_on_user" />
 	<subscriber handler=".account_creation_views.request_profile_update_on_user_upgrade" />
 
 	<!-- Logon -->
 	<include package="." file="configure_logon.zcml" />
+
+	<utility factory=".account_recovery_views.UserAccountRecoveryUtility" />
 
 	<!-- Individual field updates -->
 	<!-- Normal traversing of the fields namespace, both with and without request -->
@@ -405,7 +407,7 @@
 		<subscriber handler=".nti_gunicorn._process_did_fork_will_exec" />
 	</configure>
 	<subscriber handler=".application._configure_zodb_tween" />
-	
+
 	<include package="nti.socketio" />
 	<include package="nti.contentrange" />
 	<include package="nti.contentfragments" />
@@ -478,7 +480,7 @@
 				for="nti.dataserver.interfaces.IContextAnnotatable" />
 
 	<!-- Additional -->
-	<!-- The ones directly mentioned are part of this distribution 
+	<!-- The ones directly mentioned are part of this distribution
 		 until they get moved out -->
 	<include package="nti.app.mail" />
 	<include package="nti.app.saml" />

@@ -395,18 +395,14 @@ class UserUpgradedEvent(_UserEventWithRequest):
 
 class IUserAccountRecoveryUtility(interface.Interface):
     """
-    A utility that provides specialized account-recovery behavior for clients
-    who need to be handled differently during account recovery.
-    In order words, this utility provides overrides for the default account-recovery
-    behavior on a client-basis.
+    A utility that provides account-recovery services.
     """
 
     def get_password_reset_url(user, request):
         """
         :param user: The user for whom to provide a password-reset URL.
         :param request: The password-reset request.
-        :return: The specialized password-reset URL to provide to the user,
-            or None if the default URL should be used.
+        :return: The password-reset URL for the given user and request.
         """
 
 

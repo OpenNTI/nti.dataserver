@@ -21,6 +21,7 @@ import urlparse
 from collections import namedtuple
 
 from zope import component
+from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
@@ -173,6 +174,48 @@ def forgot_username_view(request):
     return hexc.HTTPNoContent()
 
 
+
+@interface.implementer(IUserAccountRecoveryUtility)
+class UserAccountRecoveryUtility(object):
+
+    def get_password_reset_url(self, user, request):
+        if not request:
+            return None
+
+        success_redirect_value = request.params.get('success')
+        if not success_redirect_value:
+            raise_json_error(request,
+                             hexc.HTTPBadRequest,
+                             {
+                                 'message': _(u"Must provide success.")
+                             },
+                             None)
+            return None
+
+        # We need to generate a token and store the timestamped value,
+        # while also invalidating any other tokens we have for this user.
+        annotations = IAnnotations(user)
+        token = uuid.uuid4().hex
+        now = datetime.datetime.utcnow()
+        value = (token, now)
+        annotations[_KEY_PASSCODE_RESET] = value
+
+        parsed_redirect = urlparse.urlparse(success_redirect_value)
+        parsed_redirect = list(parsed_redirect)
+        query = parsed_redirect[4]
+        if query:
+            query =  query + '&username=' \
+                    + urllib.quote(user.username) \
+                    + '&id=' + urllib.quote(token)
+        else:
+            query =  'username=' \
+                    + urllib.quote(user.username) \
+                    + '&id=' + urllib.quote(token)
+
+        parsed_redirect[4] = query
+        success_redirect_value = urlparse.urlunparse(parsed_redirect)
+        return success_redirect_value
+
 # We store a tuple as an annotation of the user object for
 # password reset, and this is the key
 # (token, datetime, ???)
@@ -231,35 +274,10 @@ def forgot_passcode_view(request):
                             'password_reset_email')
     # Ok, we either got one user on no users
     if matching_users and len(matching_users) == 1:
-        # We got one user. So we need to generate a token, and
-        # store the timestamped value, while also invalidating any other
-        # tokens we have for this user.
-        reset_url = None
+        # We got one user.
         matching_user = matching_users[0]
-        annotations = IAnnotations(matching_user)
-        token = uuid.uuid4().hex
-        now = datetime.datetime.utcnow()
-        value = (token, now)
-        annotations[_KEY_PASSCODE_RESET] = value
-        recovery_utility = component.queryUtility(IUserAccountRecoveryUtility)
-        if recovery_utility is not None:
-            reset_url = recovery_utility.get_password_reset_url(matching_user, request)
-        if not reset_url:
-            parsed_redirect = urlparse.urlparse(success_redirect_value)
-            parsed_redirect = list(parsed_redirect)
-            query = parsed_redirect[4]
-            if query:
-                query =  query + '&username=' \
-                        + urllib.quote(matching_user.username) \
-                        + '&id=' + urllib.quote(token)
-            else:
-                query =  'username=' \
-                        + urllib.quote(matching_user.username) \
-                        + '&id=' + urllib.quote(token)
-
-            parsed_redirect[4] = query
-            success_redirect_value = urlparse.urlunparse(parsed_redirect)
-            reset_url = success_redirect_value
+        recovery_utility = component.getUtility(IUserAccountRecoveryUtility)
+        reset_url = recovery_utility.get_password_reset_url(matching_user, request)
         if not reset_url:
             logger.warn("No recovery url found for username '%s' and email '%s'",
                         username, email_assoc_with_account)
