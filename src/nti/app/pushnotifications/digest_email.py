@@ -78,17 +78,19 @@ from nti.dataserver.interfaces import IAuthenticationPolicy
 from nti.dataserver.interfaces import IUserDigestEmailMetadata
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 
-from nti.dataserver.users import User
-from nti.dataserver.users import Entity
+from nti.dataserver.users.entity import Entity
+
 from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.dataserver.users.users import User
 
 from nti.externalization.singleton import SingletonDecorator
 
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 _ONE_WEEK = 7 * 24 * 60 * 60
 _TWO_WEEKS = _ONE_WEEK * 2

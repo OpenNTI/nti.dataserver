@@ -68,8 +68,9 @@ from nti.coremetadata.mixins import ZContainedMixin
 
 from nti.ntiids import ntiids
 
-from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.representation import to_json_representation as to_external_representation
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS

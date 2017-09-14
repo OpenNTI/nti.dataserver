@@ -30,11 +30,11 @@ from nti.app.contentfolder.utils import get_cf_io_href
 
 from nti.dataserver.interfaces import IDataserver
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.namedfile.constraints import FileConstraints
 
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 

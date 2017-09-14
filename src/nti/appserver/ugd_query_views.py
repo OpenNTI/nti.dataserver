@@ -65,8 +65,9 @@ from nti.dataserver.metadata.index import CATALOG_NAME as METADATA_CATALOG_NAME
 
 from nti.dataserver.sharing import SharingContextCache
 
-from nti.dataserver.users import User
-from nti.dataserver.users import Entity
+from nti.dataserver.users.entity import Entity
+
+from nti.dataserver.users.users import User
 
 from nti.externalization.externalization import to_standard_external_created_time
 from nti.externalization.externalization import to_standard_external_last_modified_time
@@ -74,8 +75,6 @@ from nti.externalization.externalization import to_standard_external_last_modifi
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
-
-from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.links.links import Link
 
@@ -85,6 +84,8 @@ from nti.mimetype.mimetype import nti_mimetype_from_object
 from nti.ntiids import ntiids
 
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.zope_catalog.catalog import ResultSet
 

@@ -15,7 +15,7 @@ from hamcrest import assert_that
 from hamcrest import contains_string
 does_not = is_not
 
-import anyjson as json
+import simplejson as json
 
 from zope import interface
 
@@ -25,9 +25,11 @@ from persistent import Persistent
 
 from nti.coremetadata.mixins import ZContainedMixin
 
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.ntiids.ntiids import TYPE_MEETINGROOM
 
-from nti.ntiids import ntiids
+from nti.ntiids.ntiids import make_ntiid
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -70,9 +72,9 @@ class TestApplicationSearch(ApplicationLayerTest):
             user = self._create_user()
             user2 = self._create_user(u'foo@bar')
             user2_username = user2.username
-            contained.containerId = ntiids.make_ntiid(provider=u'OU',
-                                                      nttype=ntiids.TYPE_MEETINGROOM,
-                                                      specific=u'1234')
+            contained.containerId = make_ntiid(provider=u'OU',
+                                               nttype=TYPE_MEETINGROOM,
+                                               specific=u'1234')
             user.addContainedObject(contained)
             assert_that(user.getContainer(contained.containerId),
                         has_length(1))
@@ -103,10 +105,10 @@ class TestApplicationSearch(ApplicationLayerTest):
             _ = self._create_user()
             self._create_user(username=u'foo@bar')
             testapp = TestApp(self.app)
-            containerId = ntiids.make_ntiid(provider=u'OU',
-                                            nttype=ntiids.TYPE_MEETINGROOM,
-                                            specific=u'1234')
-            data = json.serialize({
+            containerId = make_ntiid(provider=u'OU',
+                                     nttype=TYPE_MEETINGROOM,
+                                     specific=u'1234')
+            data = json.dumps({
                     'Class': 'Highlight', 
                     'MimeType': 'application/vnd.nextthought.highlight',
                     'ContainerId': containerId,

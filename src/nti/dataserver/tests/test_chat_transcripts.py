@@ -14,9 +14,15 @@ from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 
+from nti.testing.matchers import validly_provides
+from nti.testing.matchers import verifiably_provides
+
 import unittest
 
-import cPickle as pickle
+try:
+	import cPickle as pickle
+except ImportError:
+	import pickle
 
 from zope import component
 from zope import interface
@@ -41,12 +47,11 @@ from nti.dataserver import users
 from nti.dataserver import chat_transcripts
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.externalization import oids
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import to_external_object
 
-from nti.testing.matchers import validly_provides
-from nti.testing.matchers import verifiably_provides
+from nti.ntiids import oids
+
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 from nti.dataserver.tests.mock_dataserver import  WithMockDS, mock_db_trans
 

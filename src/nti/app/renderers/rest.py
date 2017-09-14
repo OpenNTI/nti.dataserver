@@ -24,7 +24,6 @@ from nti.dataserver.interfaces import IContent
 from nti.dataserver.interfaces import IEnclosedContent
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
 
-from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import catch_replace_action
 from nti.externalization.representation import to_json_representation_externalized
@@ -34,6 +33,8 @@ from nti.links.links import Link
 
 from nti.mimetype.mimetype import nti_mimetype_from_object
 from nti.mimetype.mimetype import MIME_BASE_JSON, MIME_EXT_JSON, MIME_BASE
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.traversal import traversal as nti_traversal
 

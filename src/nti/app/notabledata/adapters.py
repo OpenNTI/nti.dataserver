@@ -44,9 +44,9 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users.interfaces import IUserProfile
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.invitations.utils import get_pending_invitation_ids
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.property.property import annotation_alias
 

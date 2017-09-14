@@ -44,7 +44,6 @@ from nti.contentfile.model import transform_to_blob
 from nti.dataserver.interfaces import ILinkExternalHrefOnly
 
 from nti.externalization.externalization import to_external_object
-from nti.externalization.externalization import to_external_ntiid_oid
 
 from nti.namedfile.file import get_file_name as get_context_name
 
@@ -59,6 +58,8 @@ from nti.links.links import Link
 from nti.ntiids.ntiids import TAG_NTC
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 
 def is_named_source(context):

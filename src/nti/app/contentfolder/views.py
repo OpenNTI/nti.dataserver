@@ -118,8 +118,6 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.links.links import Link
 
 from nti.mimetype.externalization import decorateMimeType
@@ -127,6 +125,8 @@ from nti.mimetype.externalization import decorateMimeType
 from nti.namedfile.file import safe_filename
 
 from nti.namedfile.utils import getImageInfo
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.site.hostpolicy import get_all_host_sites
 

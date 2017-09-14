@@ -85,13 +85,13 @@ from nti.dataserver.users.user_profile import ProfessionalPosition
 
 from nti.externalization.externalization import to_external_object
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.externalization.representation import to_json_representation
 
 from nti.links import links
 
 from nti.ntiids import ntiids
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.dataserver.tests import mock_dataserver
 

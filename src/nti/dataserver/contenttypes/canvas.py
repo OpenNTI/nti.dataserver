@@ -51,11 +51,11 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IInternalObjectExternalizer
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.mimetype import mimetype
 
 from nti.mimetype.externalization import decorateMimeType
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.threadable.threadable import Threadable as ThreadableMixin
 

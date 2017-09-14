@@ -48,7 +48,7 @@ from nti.dataserver.interfaces import IStreamChangeEvent
 
 from nti.dataserver.users.interfaces import IUserProfile
 
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.ntiids.oids import to_external_ntiid_oid
 
 
 class _BetterDateAtom1Feed(feedgenerator.Atom1Feed):

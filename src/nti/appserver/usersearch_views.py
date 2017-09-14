@@ -67,11 +67,11 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.externalization.singleton import SingletonDecorator
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 
 def _is_valid_search(search_term, remote_user):

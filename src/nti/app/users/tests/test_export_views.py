@@ -26,9 +26,9 @@ from nti.chatserver.meeting import _Meeting as Meet
 
 from nti.dataserver.contenttypes import Note
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
-from nti.externalization.externalization import to_external_ntiid_oid
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 

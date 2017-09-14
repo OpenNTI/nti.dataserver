@@ -35,9 +35,10 @@ from nti.dataserver import chat_transcripts
 from nti.dataserver import contenttypes, users
 from nti.dataserver.meeting_storage import CreatorBasedAnnotationMeetingStorage
 
-from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.dataserver.tests import mock_dataserver
 

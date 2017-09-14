@@ -38,9 +38,9 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.links import render_link
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.links.links import Link
 

@@ -34,9 +34,10 @@ from nti.datastructures.datastructures import ContainedStorage
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
 from nti.externalization.oids import toExternalOID
-from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.ntiids import ntiids
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 

@@ -52,13 +52,13 @@ from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.externalization.proxy import removeAllProxies
 
 from nti.links.links import Link
 
 from nti.mimetype.externalization import decorateMimeType
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.schema.interfaces import find_most_derived_interface
 

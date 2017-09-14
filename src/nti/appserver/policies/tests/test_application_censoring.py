@@ -33,7 +33,7 @@ from nti.dataserver import contenttypes
 
 from nti.externalization.externalization import to_external_object
 
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.socketio import session_consumer
 from nti.socketio import interfaces as sio_interfaces

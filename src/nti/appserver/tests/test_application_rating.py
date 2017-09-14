@@ -21,7 +21,7 @@ from nti.contentrange import contentrange
 
 from nti.dataserver import contenttypes
 
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 

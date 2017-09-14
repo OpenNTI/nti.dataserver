@@ -24,10 +24,11 @@ from zope.location.interfaces import ILocation
 
 from nti.app.authentication import get_remote_user
 
-from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.links.links import Link
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.property.property import alias
 

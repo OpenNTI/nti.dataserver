@@ -30,11 +30,12 @@ from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.contentrange import contentrange
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.ntiids import ntiids
 
+from nti.ntiids.oids import to_external_ntiid_oid
+
 from nti.dataserver import contenttypes
+
 from nti.dataserver.users.users import User
 
 from nti.dataserver.tests import mock_dataserver

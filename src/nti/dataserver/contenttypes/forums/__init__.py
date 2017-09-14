@@ -26,10 +26,10 @@ from nti.dataserver.contenttypes.forums.interfaces import IUseOIDForNTIID
 
 from nti.dataserver.interfaces import IPrincipal
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.ntiids.ntiids import DATE as _NTIID_DATE
 from nti.ntiids.ntiids import make_ntiid as _make_ntiid
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.property.property import alias as _alias
 

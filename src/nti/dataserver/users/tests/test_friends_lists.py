@@ -26,16 +26,19 @@ from nti.contentrange.contentrange import ContentRangeDescription
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.users import User
-from nti.dataserver.users import users
-from nti.dataserver.users import FriendsList
-from nti.dataserver.users import DynamicFriendsList
-
 from nti.dataserver.contenttypes import Note
 
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.dataserver.users import users
+
+from nti.dataserver.users.friends_lists import FriendsList
+from nti.dataserver.users.friends_lists import DynamicFriendsList
+
+from nti.dataserver.users.users import User
+
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from zope.component import eventtesting
 

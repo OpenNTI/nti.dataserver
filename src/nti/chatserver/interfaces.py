@@ -288,7 +288,7 @@ class IMeetingStorage(interface.Interface):
         """
         Stores a room in this object. Sets the room's (an IContained)
         ``id`` property to be in the form produced by
-        :func:`nti.externalization.oids.to_external_ntiid_oid` (or,
+        :func:`nti.ntiids.oids.to_external_ntiid_oid` (or,
         at a minimum, to be a valid NTIID, probably of type :const:`nti.ntiids.ntiids.TYPE_UUID`).
 
         Ensures that the room is persistently stored before returning.

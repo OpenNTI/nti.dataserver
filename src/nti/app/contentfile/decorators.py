@@ -27,11 +27,11 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.externalization.singleton import SingletonDecorator
 
 from nti.links.links import Link
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.namedfile.interfaces import IFileConstrained
 

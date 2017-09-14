@@ -44,7 +44,7 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.ntiids.oids import to_external_ntiid_oid
 
 
 FLAG_VIEW = 'flag'

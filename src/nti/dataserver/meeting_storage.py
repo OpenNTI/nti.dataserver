@@ -35,9 +35,9 @@ from nti.dataserver.users.entity import Entity
 
 from nti.datastructures.datastructures import check_contained_object_for_storage
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 
 class IMeetingContainer(IBTreeContainer):

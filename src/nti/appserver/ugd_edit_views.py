@@ -43,7 +43,7 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.externalization import toExternalObject
 
-from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
+from nti.ntiids.oids import to_external_ntiid_oid as toExternalOID
 
 def _id(x):
 	return x

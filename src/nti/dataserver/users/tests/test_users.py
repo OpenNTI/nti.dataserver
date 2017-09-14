@@ -25,6 +25,12 @@ does_not = is_not
 
 from nose.tools import assert_raises
 
+from nti.testing.matchers import is_false
+from nti.testing.matchers import provides
+from nti.testing.matchers import verifiably_provides
+
+from nti.testing.time import time_monotonically_increases
+
 import copy
 import time
 import fudge
@@ -54,7 +60,6 @@ from nti.dataserver.users import User, FriendsList, Device
 from nti.dataserver.users import Community, _FriendsListMap as FriendsListContainer
 
 from nti.externalization import internalization
-from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.externalization.persistence import getPersistentState
 from nti.externalization.externalization import to_external_object
@@ -63,11 +68,7 @@ from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.ntiids import ntiids
-
-from nti.testing.matchers import is_false
-from nti.testing.matchers import provides
-from nti.testing.matchers import verifiably_provides
-from nti.testing.time import time_monotonically_increases
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDS
