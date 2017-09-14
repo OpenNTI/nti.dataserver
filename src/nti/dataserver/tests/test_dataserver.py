@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -22,17 +22,22 @@ from zope import component
 
 import persistent
 
-from nti.ntiids import ntiids
-
-from nti.dataserver.interfaces import SYSTEM_USER_NAME
-
 from nti.dataserver._Dataserver import get_object_by_oid
 
 from nti.dataserver.contenttypes.note import Note
 
+from nti.dataserver.interfaces import SYSTEM_USER_NAME
+
 from nti.externalization.internalization import find_factory_for_class_name
 
-from nti.externalization.oids import to_external_ntiid_oid, toExternalOID
+from nti.externalization.oids import toExternalOID
+
+from nti.ntiids.ntiids import get_parts
+from nti.ntiids.ntiids import make_ntiid
+from nti.ntiids.ntiids import get_provider
+from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.site.runner import run_job_in_site
 
@@ -61,38 +66,38 @@ class TestDataserver(unittest.TestCase):
         run_job_in_site(job, retries=10)
         assert_that(runs[0], is_(1), "Only run once")
 
-        def job():
+        def job0():
             runs[0] = runs[0] + 1
             raise transaction.interfaces.TransientError(str(runs[0]))
 
         runs[0] = 0
         with self.assertRaises(transaction.interfaces.TransientError):
-            run_job_in_site(job)
+            run_job_in_site(job0)
         assert_that(runs[0], is_(1), "Only run once")
 
         runs[0] = 0
         with self.assertRaises(transaction.interfaces.TransientError):
-            run_job_in_site(job, retries=9)
+            run_job_in_site(job0, retries=9)
         # The first time, then 9 retries
         assert_that(runs[0], is_(10), "Runs ten times")
 
-        def job():
+        def job1():
             runs[0] = runs[0] + 1
             raise transaction.interfaces.DoomedTransaction(str(runs[0]))
 
         runs[0] = 0
         with self.assertRaises(transaction.interfaces.DoomedTransaction):
-            run_job_in_site(job, retries=9)
+            run_job_in_site(job1, retries=9)
 
         assert_that(runs[0], is_(1), "Runs once")
 
-        def job():
+        def job2():
             runs[0] = runs[0] + 1
             raise ValueError(str(runs[0]))
 
         runs[0] = 0
         with self.assertRaises(ValueError):
-            run_job_in_site(job, retries=9)
+            run_job_in_site(job2, retries=9)
         assert_that(runs[0], is_(1), "Runs once")
 
     @mock_dataserver.WithMockDS
@@ -100,12 +105,20 @@ class TestDataserver(unittest.TestCase):
         # is_ doesn't work, that turns into class assertion
         assert_that(find_factory_for_class_name('Notes'),
                     is_matchable_type(Note))
-        assert_that(find_factory_for_class_name('Note'), 
+        assert_that(find_factory_for_class_name('Note'),
                     is_matchable_type(Note))
         assert_that(find_factory_for_class_name('notes'),
                     is_matchable_type(Note))
-        assert_that(find_factory_for_class_name('TestDataserver'), 
+        assert_that(find_factory_for_class_name('TestDataserver'),
                     is_(none()))
+
+    @property
+    def current_transaction(self):
+        return mock_dataserver.current_transaction
+        
+    @property
+    def current_mock_ds(self):
+        return mock_dataserver.current_mock_ds
 
     @mock_dataserver.WithMockDSTrans
     def test_get_plain_oid(self):
@@ -113,16 +126,16 @@ class TestDataserver(unittest.TestCase):
         We can access an object given its OID bytes with no additional checks.
         """
         obj = persistent.Persistent()
-        mock_dataserver.current_transaction.add(obj)
+        self.current_transaction.add(obj)
         __traceback_info__ = obj._p_oid
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid(obj._p_oid),
+        assert_that(self.current_mock_ds.get_by_oid(obj._p_oid),
                     is_(obj))
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid('00000'),
+        assert_that(self.current_mock_ds.get_by_oid('00000'),
                     is_(none()))
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid(''),
+        assert_that(self.current_mock_ds.get_by_oid(''),
                     is_(none()))
 
-        assert_that(get_object_by_oid(mock_dataserver.current_transaction, u'436534760'), 
+        assert_that(get_object_by_oid(self.current_transaction, u'436534760'),
                     is_(none()))
 
     @mock_dataserver.WithMockDSTrans
@@ -131,10 +144,10 @@ class TestDataserver(unittest.TestCase):
         We can access an object given its external OID string with no additional checks.
         """
         obj = persistent.Persistent()
-        mock_dataserver.current_transaction.add(obj)
+        self.current_transaction.add(obj)
 
         oid = toExternalOID(obj)
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid(oid), is_(obj))
+        assert_that(self.current_mock_ds.get_by_oid(oid), is_(obj))
 
     @mock_dataserver.WithMockDSTrans
     def test_get_ntiid_oid_system_user(self):
@@ -144,32 +157,31 @@ class TestDataserver(unittest.TestCase):
         creator, then it must match.
         """
         obj = Note()
-        mock_dataserver.current_transaction.add(obj)
-
+        self.current_transaction.add(obj)
         oid = to_external_ntiid_oid(obj)
         assert_that(oid, is_(not_none()))
-        assert_that(ntiids.get_provider(oid), is_(SYSTEM_USER_NAME))
+        assert_that(get_provider(oid), is_(SYSTEM_USER_NAME))
 
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid(oid), is_(obj))
+        assert_that(self.current_mock_ds.get_by_oid(oid), is_(obj))
 
         # The system user is the only one that can access uncreated objects
-        oid = ntiids.make_ntiid(provider='foo@bar', base=oid)
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid(oid), 
+        oid = make_ntiid(provider=u'foo@bar', base=oid)
+        assert_that(self.current_mock_ds.get_by_oid(oid),
                     is_(none()))
 
         # Now flip-flop the users around. The system user gets no
         # special treatment on created objects
         obj = Note()
-        obj.creator = 'sjohnson@nextthought.com'
-        mock_dataserver.current_transaction.add(obj)
+        obj.creator = u'sjohnson@nextthought.com'
+        self.current_transaction.add(obj)
 
         oid = to_external_ntiid_oid(obj)
-        assert_that(ntiids.get_provider(oid), is_('sjohnson@nextthought.com'))
+        assert_that(get_provider(oid), is_('sjohnson@nextthought.com'))
 
-        oid = ntiids.make_ntiid(provider=SYSTEM_USER_NAME, base=oid)
-        assert_that(ntiids.get_provider(oid), is_(SYSTEM_USER_NAME))
+        oid = make_ntiid(provider=SYSTEM_USER_NAME, base=oid)
+        assert_that(get_provider(oid), is_(SYSTEM_USER_NAME))
 
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid(oid), 
+        assert_that(self.current_mock_ds.get_by_oid(oid),
                     is_(none()))
 
     @mock_dataserver.WithMockDSTrans
@@ -179,19 +191,19 @@ class TestDataserver(unittest.TestCase):
         matches the NTIID's provider.
         """
         obj = Note()
-        obj.creator = 's-johnson@nextthought.com'  # Note the creator gets escaped
-        mock_dataserver.current_transaction.add(obj)
+        obj.creator = u's-johnson@nextthought.com'  # Note the creator gets escaped
+        self.current_transaction.add(obj)
 
         oid = to_external_ntiid_oid(obj)
-        assert_that(ntiids.get_provider(oid), is_('s_johnson@nextthought.com'))
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid(oid), is_(obj))
+        assert_that(get_provider(oid), is_('s_johnson@nextthought.com'))
+        assert_that(self.current_mock_ds.get_by_oid(oid), is_(obj))
 
-        oid = ntiids.make_ntiid(provider='some one else@nextthought.com', 
-                                 base=oid)
-        assert_that(ntiids.get_provider(oid), 
+        oid = make_ntiid(provider=u'some one else@nextthought.com',
+                         base=oid)
+        assert_that(get_provider(oid),
                     is_('some_one_else@nextthought.com'))
 
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid(oid), 
+        assert_that(self.current_mock_ds.get_by_oid(oid),
                     is_(none()))
 
     @mock_dataserver.WithMockDSTrans
@@ -200,18 +212,18 @@ class TestDataserver(unittest.TestCase):
         The provider must match the creator, if there is one.
         """
         obj = Note()
-        obj.creator = 'sjohnson@nextthought.com'
-        mock_dataserver.current_transaction.add(obj)
+        obj.creator = u'sjohnson@nextthought.com'
+        self.current_transaction.add(obj)
 
         oid = to_external_ntiid_oid(obj)
-        assert_that(ntiids.get_provider(oid), is_('sjohnson@nextthought.com'))
+        assert_that(get_provider(oid), is_('sjohnson@nextthought.com'))
         # The provider is required
-        oid_parts = ntiids.get_parts(oid)
-        oid = ntiids.make_ntiid(nttype=oid_parts.nttype,
-                                specific=oid_parts.specific)
-        assert_that(ntiids.get_provider(oid), is_(none()))
+        oid_parts = get_parts(oid)
+        oid = make_ntiid(nttype=oid_parts.nttype,
+                         specific=oid_parts.specific)
+        assert_that(get_provider(oid), is_(none()))
 
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid(oid),
+        assert_that(self.current_mock_ds.get_by_oid(oid),
                     is_(none()))
 
     @mock_dataserver.WithMockDSTrans
@@ -220,16 +232,16 @@ class TestDataserver(unittest.TestCase):
         We can access an object given its OID bytes with no additional checks.
         """
         obj = Note()
-        obj.creator = 'sjohnson@nextthought.com'
-        mock_dataserver.current_transaction.add(obj)
+        obj.creator = u'sjohnson@nextthought.com'
+        self.current_transaction.add(obj)
 
         oid = to_external_ntiid_oid(obj)
-        oid = ntiids.make_ntiid(provider='someoneelse@nextthought.com', 
-                                 base=oid)
-        assert_that(ntiids.get_provider(oid), 
+        oid = make_ntiid(provider=u'someoneelse@nextthought.com',
+                         base=oid)
+        assert_that(get_provider(oid),
                     is_('someoneelse@nextthought.com'))
 
-        assert_that(mock_dataserver.current_mock_ds.get_by_oid(oid), 
+        assert_that(self.current_mock_ds.get_by_oid(oid),
                     is_(none()))
 
     @mock_dataserver.WithMockDSTrans
@@ -238,11 +250,11 @@ class TestDataserver(unittest.TestCase):
         Attempting to access something through a user that is not a user fails gracefully
         """
         obj = Note()
-        obj.creator = 'sjohnson@nextthought.com'
-        mock_dataserver.current_transaction.add(obj)
+        obj.creator = u'sjohnson@nextthought.com'
+        self.current_transaction.add(obj)
 
         oid = to_external_ntiid_oid(obj)
-        oid = ntiids.make_ntiid(provider='Everyone', nttype='Quiz', base=oid)
-        assert_that(ntiids.get_provider(oid), is_('Everyone'))
+        oid = make_ntiid(provider=u'Everyone', nttype=u'Quiz', base=oid)
+        assert_that(get_provider(oid), is_('Everyone'))
 
-        assert_that(ntiids.find_object_with_ntiid(oid), is_(none()))
+        assert_that(find_object_with_ntiid(oid), is_(none()))
