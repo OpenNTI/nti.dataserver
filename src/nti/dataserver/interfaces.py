@@ -456,7 +456,7 @@ interface.directlyProvides(ALL_PERMISSIONS, IPermission)
 ACE_DENY_ALL = _psec.DENY_ALL
 ACE_ALLOW_ALL = (ACE_ACT_ALLOW, EVERYONE_USER_NAME, ALL_PERMISSIONS)
 
-from nti.externalization import oids
+from nti.ntiids import oids
 
 oids.DEFAULT_EXTERNAL_CREATOR = SYSTEM_USER_NAME
 
