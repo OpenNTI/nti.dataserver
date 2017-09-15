@@ -190,7 +190,6 @@ class UserAccountRecoveryUtility(object):
                                  'message': _(u"Must provide success.")
                              },
                              None)
-            return None
 
         # We need to generate a token and store the timestamped value,
         # while also invalidating any other tokens we have for this user.
