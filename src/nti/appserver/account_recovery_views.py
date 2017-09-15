@@ -286,7 +286,6 @@ def forgot_passcode_view(request):
         logger.warn("Failed to find user with username '%s' and email '%s': %s",
                     username, email_assoc_with_account, matching_users)
         matching_user = None
-        value = (None, None)
         reset_url = None
         base_template = 'failed_' + base_template
 
