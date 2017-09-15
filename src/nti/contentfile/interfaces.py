@@ -15,8 +15,6 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.location.interfaces import IContained
 
-from zope.schema import BytesLine
-
 from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
 from nti.base.interfaces import INamedFile as IBaseNamedFile
@@ -26,9 +24,9 @@ from nti.namedfile.interfaces import INamedImage
 from nti.namedfile.interfaces import INamedBlobFile
 from nti.namedfile.interfaces import INamedBlobImage
 
-from nti.schema.field import Variant
 from nti.schema.field import ValidTextLine
 from nti.schema.field import IndexedIterable
+from nti.schema.field import DecodingValidTextLine
 
 
 class IContentBaseFile(IBaseNamedFile, IAttributeAnnotatable, IContained):
@@ -39,10 +37,10 @@ class IContentBaseFile(IBaseNamedFile, IAttributeAnnotatable, IContained):
     name = ValidTextLine(title=u"Identifier for the file",
                          required=True)
 
-    contentType = Variant((ValidTextLine(), BytesLine()),
-                          title=u'content type', required=False,
-                          default=DEFAULT_CONTENT_TYPE,
-                          missing_value=DEFAULT_CONTENT_TYPE)
+    contentType = DecodingValidTextLine(title=u'content type', 
+                                        required=False,
+                                        default=DEFAULT_CONTENT_TYPE,
+                                        missing_value=DEFAULT_CONTENT_TYPE)
 
     def add_association(context):
         """
@@ -68,8 +66,6 @@ class IContentBaseFile(IBaseNamedFile, IAttributeAnnotatable, IContained):
         """
         return if this object has any associations
         """
-
-
 IBaseFile = IContentBaseFile  # BWC
 
 
