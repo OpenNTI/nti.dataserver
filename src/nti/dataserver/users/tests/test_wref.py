@@ -17,7 +17,11 @@ from hamcrest import has_property
 
 from nti.testing.matchers import verifiably_provides
 
-import cPickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
 import unittest
 
 import BTrees.OOBTree
@@ -66,7 +70,7 @@ class TestWref(unittest.TestCase):
 
         assert_that(ref, has_property('_v_entity_cache', user))
 
-        copy = cPickle.loads(cPickle.dumps(ref))
+        copy = pickle.loads(pickle.dumps(ref))
 
         assert_that(copy, has_property('_v_entity_cache', none()))
 

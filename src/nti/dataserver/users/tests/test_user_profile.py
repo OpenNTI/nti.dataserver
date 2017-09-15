@@ -40,6 +40,7 @@ from nti.dataserver.users.user_profile import Education
 from nti.dataserver.users.user_profile import ProfessionalPosition
 
 from nti.externalization import internalization
+
 from nti.externalization.externalization import to_external_object
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
