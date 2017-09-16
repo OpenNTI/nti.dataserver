@@ -26,6 +26,8 @@ from zope import interface
 
 from zope.mimetype.interfaces import IContentTypeAware
 
+from persistent import Persistent
+
 from nti.contentfile.interfaces import IS3File
 from nti.contentfile.interfaces import IS3Image
 from nti.contentfile.interfaces import IContentBlobFile
@@ -39,9 +41,12 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.namedfile.interfaces import IInternalFileRef
 
+from nti.wref.interfaces import IWeakRef
+
 from nti.contentfile.tests import SharedConfiguringTestLayer
 
 from nti.externalization.tests import externalizes
+
 
 GIF_DATAURL = b'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 
@@ -64,12 +69,45 @@ class TestModel(unittest.TestCase):
         internal.__name__ = u'aizen'
         assert_that(internal, has_property('filename', is_('aizen')))
         assert_that(internal, has_property('__name__', is_('aizen')))
-        
+
         internal.name = u'zaraki'
         assert_that(internal, has_property('name', is_('zaraki')))
         assert_that(internal, has_property('filename', is_('aizen')))
         assert_that(internal, has_property('__name__', is_('aizen')))
-        
+
+    def test_associations(self):
+        class Base(Persistent):
+            pass
+
+        base = Base()
+        ref = IWeakRef(base)
+
+        internal = ContentBlobFile()
+        internal.filename = u'ichigo'
+
+        assert_that(internal.add_association(ref),
+                    is_(True))
+
+        assert_that(internal.has_associations(),
+                    is_(True))
+
+        assert_that(internal.count_associations(),
+                    is_(1))
+
+        assert_that(internal.add_association(ref),
+                    is_(False))
+
+        internal.validate_associations()
+        assert_that(internal.count_associations(),
+                    is_(1))
+
+        internal.remove_association(ref)
+        assert_that(internal.count_associations(),
+                    is_(0))
+
+        assert_that(internal.has_associations(),
+                    is_(False))
+
     def test_file(self):
         ext_obj = {
             'MimeType': 'application/vnd.nextthought.contentimage',
@@ -140,7 +178,7 @@ class TestModel(unittest.TestCase):
         assert_that(internal, has_property('contentType', 'image/gif'))
         assert_that(internal, has_property('filename', 'ichigo.gif'))
         assert_that(internal, has_property('name', 'ichigo.gif'))
-        
+
         internal.invalidate()
 
     def test_s3_image(self):
@@ -152,7 +190,7 @@ class TestModel(unittest.TestCase):
 
         factory = find_factory_for(ext_obj)
         assert_that(factory, is_not(none()))
-         
+
         internal = factory()
         update_from_external_object(internal, ext_obj, require_updater=True)
 

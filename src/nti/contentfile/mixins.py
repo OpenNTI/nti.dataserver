@@ -73,8 +73,9 @@ class BaseContentMixin(object):
     def add_association(self, context):
         wref = IWeakRef(context, None)
         if wref is not None:
+            old = len(self._associations)
             self._associations.add(wref)
-            return True
+            return len(self._associations) > old
         return False
 
     def remove_association(self, context):
