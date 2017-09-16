@@ -133,8 +133,8 @@ class DirectoryFiler(object):
             return None
 
         # compute a parent
-        bucket = os.path.split(key)[0] + os.path.sep + '..'
-        bucket = os.path.normpath(bucket)
+        key = os.path.normpath(key)
+        bucket = os.path.split(key)[0]
         if not bucket.startswith(self.path):
             bucket = None
         else:
