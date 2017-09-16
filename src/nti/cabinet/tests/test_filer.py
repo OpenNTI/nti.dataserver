@@ -42,6 +42,8 @@ class TestFiler(unittest.TestCase):
 
     layer = SharedConfiguringTestLayer
 
+    dir_name = u'bleach manga'
+
     def get_data_source(self):
         return StringIO("<ichigo/>")
 
@@ -62,13 +64,20 @@ class TestFiler(unittest.TestCase):
             assert_that(source, verifiably_provides(ISource))
             assert_that(source, has_property('length', is_(9)))
             assert_that(source, has_property('name', is_("ichigo.xml")))
-            assert_that(source, has_property('__parent__', is_not(none())))
+            assert_that(source, has_property('path', is_(tmp_dir)))
+
             assert_that(source, 
+                        has_property('__parent__', is_not(none())))
+    
+            assert_that(source,
                         has_property('createdTime', greater_than(0)))
-            assert_that(source, 
+
+            assert_that(source,
                         has_property('lastModified', greater_than(0)))
+
             assert_that(source,
                         has_property('filename', ends_with("/ichigo.xml")))
+
             assert_that(source, has_property('contentType', is_("text/xml")))
 
             assert_that(source.read(), is_("<ichigo/>"))
@@ -92,24 +101,46 @@ class TestFiler(unittest.TestCase):
             data = self.get_data_source()
             href = filer.save(u"ichigo.xml",
                               data,
-                              bucket=u"bleach",
+                              bucket=self.dir_name,
                               contentType=u"text/xml",
                               overwrite=True)
-            assert_that(href, ends_with("bleach/ichigo.xml"))
-            assert_that(filer.is_bucket("bleach"), is_(True))
-            assert_that(filer.list("bleach"), has_length(greater_than(0)))
-            assert_that(filer.contains(href), is_(True))
-            assert_that(filer.contains("ichigo.xml", "bleach"), is_(True))
+            assert_that(href, 
+                        ends_with("%s/ichigo.xml" % self.dir_name))
 
-            bucket = filer.get('bleach')
-            assert_that(bucket, has_property('bucket', is_('bleach')))
+            assert_that(filer.is_bucket(self.dir_name), 
+                        is_(True))
+
+            assert_that(filer.list(self.dir_name),
+                        has_length(greater_than(0)))
+
+            assert_that(filer.contains(href), 
+                        is_(True))
+
+            assert_that(filer.contains("ichigo.xml", self.dir_name), 
+                        is_(True))
+
+            # check parent
+            ichigo = filer.get(href)
+            assert_that(ichigo, 
+                        has_property('path', is_(tmp_dir + '/' + self.dir_name)))
+            bucket = ichigo.__parent__
+            assert_that(bucket, 
+                        has_property('__name__', is_(self.dir_name)))
+            assert_that(bucket, 
+                        has_property('__parent__', is_(none())))
+            assert_that(bucket, 
+                        has_property('filer', is_(filer)))
+
+            # check getting a bucket
+            bucket = filer.get(self.dir_name)
+            assert_that(bucket, has_property('bucket', is_(self.dir_name)))
             assert_that(bucket, verifiably_provides(ISourceBucket))
             assert_that(bucket, has_property('__parent__', is_not(none())))
             ichigo = bucket.getChildNamed("ichigo.xml")
             assert_that(ichigo, is_not(none()))
 
             listed = bucket.enumerateChildren()
-            assert_that(listed, is_(['bleach/ichigo.xml']))
+            assert_that(listed, is_(['%s/ichigo.xml' % self.dir_name]))
 
             foo = bucket.getChildNamed("foo.xml")
             assert_that(foo, is_(none()))
@@ -117,19 +148,25 @@ class TestFiler(unittest.TestCase):
             data = self.get_data_source()
             href = filer.save(u"ichigo.xml",
                               data,
-                              bucket=u"bleach/souls",
+                              bucket=u"%s/souls" % self.dir_name,
                               contentType=u"text/xml",
                               overwrite=True)
-            assert_that(href, ends_with("bleach/souls/ichigo.xml"))
+            assert_that(href, 
+                        ends_with("%s/souls/ichigo.xml" % self.dir_name))
 
             assert_that(filer.contains(href), is_(True))
-            assert_that(filer.contains("ichigo.xml", "bleach/souls"),
+            assert_that(filer.contains("ichigo.xml", "%s/souls" % self.dir_name),
                         is_(True))
 
-            listed = filer.list("bleach")
-            assert_that(listed, is_(['bleach/ichigo.xml', 'bleach/souls']))
-            assert_that(filer.is_bucket('bleach/souls'), is_(True))
-            assert_that(filer.is_bucket('bleach/ichigo.xml'), is_(False))
+            listed = filer.list(self.dir_name)
+            assert_that(listed, 
+                        is_(['%s/ichigo.xml' % self.dir_name, '%s/souls' % self.dir_name]))
+
+            assert_that(filer.is_bucket('%s/souls' % self.dir_name), 
+                        is_(True))
+
+            assert_that(filer.is_bucket('%s/ichigo.xml' % self.dir_name),
+                        is_(False))
 
             assert_that(filer.remove(href), is_(True))
             source = filer.get(href)
@@ -139,24 +176,28 @@ class TestFiler(unittest.TestCase):
             # No type
             href = filer.save(u"ichigo",
                               data,
-                              bucket=u"bleach/souls/missing_type",
+                              bucket=u"%s/souls/missing_type" % self.dir_name,
                               overwrite=True)
-            assert_that(href, ends_with("bleach/souls/missing_type/ichigo"))
+            assert_that(href, 
+                        ends_with("%s/souls/missing_type/ichigo" % self.dir_name))
 
             assert_that(filer.contains(href), is_(True))
-            assert_that(filer.contains("ichigo", "bleach/souls/missing_type"),
+            assert_that(filer.contains("ichigo", "%s/souls/missing_type" % self.dir_name),
                         is_(True))
+
             bleh = filer.get(href)
             assert_that(bleh, is_(not_none()))
-            assert_that(bleh, 
+            assert_that(bleh,
                         has_property('contentType', is_(DEFAULT_CONTENT_TYPE)))
+
             # test no effect
             bleh.createdTime = bleh.lastModified = 0
-            assert_that(bleh, 
+            assert_that(bleh,
                         has_property('createdTime', greater_than(0)))
-            assert_that(bleh, 
+
+            assert_that(bleh,
                         has_property('lastModified', greater_than(0)))
-            
+
             assert_that(filer.remove(href), is_(True))
             source = filer.get(href)
             assert_that(source, is_(none()))
