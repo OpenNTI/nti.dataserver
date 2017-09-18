@@ -46,8 +46,9 @@ from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 
-from nti.dataserver.users import Community
-from nti.dataserver.users import get_entity_catalog
+from nti.dataserver.users.communities import Community
+
+from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import IHiddenMembership
 

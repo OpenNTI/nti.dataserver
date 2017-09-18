@@ -20,7 +20,7 @@ from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
 from nti.app.authentication import user_can_login
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 
 @interface.implementer(IAuthenticatorPlugin)

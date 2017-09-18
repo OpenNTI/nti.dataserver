@@ -23,7 +23,7 @@ from nti.contentsearch.predicates import DefaultSearchHitPredicate
 
 from nti.dataserver.authorization import ACT_READ
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IPublishableTopic

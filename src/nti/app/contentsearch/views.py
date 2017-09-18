@@ -41,7 +41,7 @@ from nti.contentsearch.search_results import SuggestResults
 
 from nti.contentsearch.search_utils import create_queryobject
 
-from nti.dataserver.users import Entity
+from nti.dataserver.users.entity import Entity
 
 from nti.externalization.externalization import to_external_object
 

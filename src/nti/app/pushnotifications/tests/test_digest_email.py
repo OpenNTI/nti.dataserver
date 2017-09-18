@@ -212,7 +212,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data_in_required_community(self, fake_connect):
 		from nti.appserver.policies.site_policies import DevmodeSitePolicyEventListener
-		from nti.dataserver.users import Entity
+		from nti.dataserver.users.entity import Entity
 		assert_that( getattr(DevmodeSitePolicyEventListener, 'COM_USERNAME', self), is_(none()))
 		DevmodeSitePolicyEventListener.COM_USERNAME = 'Everyone'
 		with mock_dataserver.mock_db_trans(self.ds):

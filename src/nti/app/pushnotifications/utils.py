@@ -20,7 +20,7 @@ from zope.intid.interfaces import IIntIds
 
 from nti.base._compat import text_
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 
 def _signature(username, secret_key):

@@ -25,7 +25,7 @@ from zope.lifecycleevent import IObjectRemovedEvent
 from zope.intid.interfaces import IIntIds
 from zope.intid.interfaces import IIntIdRemovedEvent
 
-from nti.dataserver.users import DynamicFriendsList
+from nti.dataserver.users.friends_lists import DynamicFriendsList
 
 from nti.dataserver.contenttypes.forums.board import DFLBoard
 from nti.dataserver.contenttypes.forums.forum import DFLForum

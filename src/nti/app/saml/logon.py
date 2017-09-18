@@ -57,9 +57,9 @@ from nti.base._compat import text_
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 
-from nti.dataserver.users import User
-
 from nti.dataserver.users.interfaces import IRecreatableUser
+
+from nti.dataserver.users.users import User
 
 from nti.dataserver.users.utils import force_email_verification
 

@@ -15,7 +15,7 @@ from zope import interface
 
 from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 
 @interface.implementer(IIdentifiedUserTokenAuthenticator)

@@ -76,7 +76,7 @@ from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IUserTaggedContent
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 from nti.externalization.externalization import to_external_object
 
