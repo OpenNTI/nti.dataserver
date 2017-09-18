@@ -52,7 +52,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.metadata.index import IX_MIMETYPE
 
-from nti.dataserver.users import get_entity_catalog
+from nti.dataserver.users.index import get_entity_catalog
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
