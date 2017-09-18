@@ -4,7 +4,7 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import schema
@@ -21,12 +21,13 @@ from nti.schema.field import IndexedIterable as TypedIterable
 # OData-inspired objects related to retrieving
 # data for portions of the URL space
 
+
 class ICollection(ILocation):
     """
     A collection (in the Atom sense) contains individual objects (entries).
     It may be writable.
     """
-    name = schema.TextLine(title="The name of this collection.")
+    name = schema.TextLine(title=u"The name of this collection.")
 
     accepts = interface.Attribute(
         """
@@ -36,6 +37,7 @@ class ICollection(ILocation):
         accept any input.
         """)
 
+
 class IContainerCollection(ICollection):
     """
     An :class:`ICollection` based of an :class:`nti.dataserver.interfaces.IContainer`.
@@ -44,6 +46,7 @@ class IContainerCollection(ICollection):
     container = Object(IContainer,
                        title=u"The backing container",
                        readonly=True)
+
 
 class IWorkspace(ILocation):
     """
@@ -55,19 +58,21 @@ class IWorkspace(ILocation):
     (providing a ``__getitem__``) or provide an adapter to ``ITraversable``
     for their collections.
     """
-    name = schema.TextLine(title="The name of this workspace.")
+    name = schema.TextLine(title=u"The name of this workspace.")
 
-    collections = TypedIterable(title="The collections of this workspace.",
+    collections = TypedIterable(title=u"The collections of this workspace.",
                                 readonly=True,
-                                value_type=Object(ICollection, title="A collection in this workspace"))
+                                value_type=Object(ICollection, title=u"A collection in this workspace"))
+
 
 class IService(ILocation):
     """
     A service (in the Atom sense) is a collection of workspaces.
     """
 
-    workspaces = TypedIterable(title="The workspaces of this service",
-                               value_type=Object(IWorkspace, title="Workspaces in the service"))
+    workspaces = TypedIterable(title=u"The workspaces of this service",
+                               value_type=Object(IWorkspace, title=u"Workspaces in the service"))
+
 
 class IWorkspaceValidator(interface.Interface):
     """
@@ -80,11 +85,13 @@ class IWorkspaceValidator(interface.Interface):
         returns True if the workspace is valid
         """
 
+
 class IUserWorkspace(IWorkspace):
     """
     A workspace for a particular user.
     """
-    user = Object(IUser, title="The user")
+    user = Object(IUser, title=u"The user")
+
 
 class IUserWorkspaceLinkProvider(interface.Interface):
 
@@ -93,12 +100,16 @@ class IUserWorkspaceLinkProvider(interface.Interface):
         return an interable of user links
         """
 
+
 class IUserService(IService):
     """
     A service for a particular user.
     """
-    user_workspace = Object(IUserWorkspace, title="The main workspace for the user")
-    user = Object(IUser, title="The user")
+    user_workspace = Object(IUserWorkspace,
+                            title=u"The main workspace for the user")
+
+    user = Object(IUser, title=u"The user")
+
 
 import zope.deferredimport
 zope.deferredimport.initialize()

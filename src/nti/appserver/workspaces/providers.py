@@ -12,8 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from zope.location.location import Location
 from zope.location.interfaces import ILocation
+
+from zope.location.location import Location
 
 from nti.appserver._util import link_belongs_to_user
 
@@ -36,7 +37,6 @@ class _SearchLinksProvider(object):
         # that is a string and also the name of the link. This is
         # a bit wonky and cooperates with how the CollectionSummaryExternalizer
         # wants to deal with links
-        # TODO: Hardcoding both things
         search_parent = Location()
         search_parent.__name__ = 'Search'
         search_parent.__parent__ = self.user

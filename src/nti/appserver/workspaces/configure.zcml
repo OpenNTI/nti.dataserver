@@ -6,16 +6,14 @@
 			xmlns:zcml="http://namespaces.zope.org/zcml">
 
 	<include package="zope.component" file="meta.zcml" />
-	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	<include package="zope.security" />
 
 	<adapter factory=".ContainerEnumerationWorkspace" />
 
 	<!--
 	The user workspace builds its collections through a subscriber list.
 	-->
-	<subscriber factory="._UserPagesCollection"
+	<subscriber factory=".UserPagesCollection"
 				provides=".interfaces.ICollection"
 				for=".interfaces.IUserWorkspace" />
 
