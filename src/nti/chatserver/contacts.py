@@ -6,10 +6,9 @@ Implementations related to :class:`IContacts.`
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
@@ -22,9 +21,14 @@ from nti.chatserver.interfaces import ContactISubscribeToAddedToContactsEvent
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IFollowerAddedEvent
 
+from nti.externalization.persistence import NoPickle
+
 from nti.property.property import alias
 
+logger = __import__('logging').getLogger(__name__)
 
+
+@NoPickle
 @component.adapter(IUser)
 @interface.implementer(IContacts)
 class DefaultComputedContacts(object):
@@ -37,12 +41,6 @@ class DefaultComputedContacts(object):
 
     def __init__(self, context):
         self.context = context
-
-    def __reduce__(self):
-        """
-        cannot be pickled; transient
-        """
-        raise TypeError()
 
     @property
     def contactNamesSubscribedToMyPresenceUpdates(self):

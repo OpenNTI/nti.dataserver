@@ -484,14 +484,12 @@ class IUserEnterRoomEvent(IUserRoomEvent):
     """
     Fired when a user enters a room
     """
-    pass
 
 
 class IUserExitRoomEvent(IUserRoomEvent):
     """
     Fired when a user exits a room
     """
-    pass
 
 
 class UserRoomEvent(ObjectEvent):
