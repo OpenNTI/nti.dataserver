@@ -6,10 +6,9 @@ Metaclasses to make sending chat events easy.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 from collections import Iterable
@@ -17,6 +16,8 @@ from collections import Iterable
 from zope import component
 
 from nti.chatserver.interfaces import IChatserver
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _send_event(chatserver, names, evt_name, *args):
