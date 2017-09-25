@@ -19,11 +19,11 @@ from zope import deferredimport
 
 from zope.event import notify
 
-from zope.deprecation import deprecated
-
 from BTrees.OOBTree import Set
 
 from persistent import Persistent
+
+from nti.common.sets import discard
 
 from nti.chatserver._metaclass import _ChatObjectMeta
 
@@ -33,6 +33,8 @@ from nti.chatserver.interfaces import IMeetingPolicy
 from nti.chatserver.interfaces import MeetingShouldChangeModerationStateEvent
 
 from nti.externalization.datastructures import ExternalizableInstanceDict
+
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.representation import make_repr
 
@@ -59,22 +61,15 @@ from nti.zodb.minmax import MergingCounter
 # from that location, as is anything contained there.)
 ####
 
+CLASS = StandardExternalFields.CLASS
+MIMETYPE = StandardExternalFields.MIMETYPE
+
 EVT_EXITED_ROOM = 'chat_exitedRoom'
 EVT_ENTERED_ROOM = 'chat_enteredRoom'
 EVT_POST_MESSOGE = 'chat_postMessage'
 EVT_RECV_MESSAGE = 'chat_recvMessage'
 
 logger = __import__('logging').getLogger(__name__)
-
-
-def _discard(s, k):
-    try:
-        s.discard(k)  # python sets
-    except AttributeError:
-        try:
-            s.remove(k)  # OOSet, list
-        except (KeyError, ValueError):
-            pass
 
 
 @six.add_metaclass(_ChatObjectMeta)
@@ -208,7 +203,7 @@ class _Meeting(ThreadableMixin,
             # Yay, we added one!
             self.emit_enteredRoom(name, self)
             self.emit_roomMembershipChanged(self.occupant_names - set((name,)), 
-										    self)
+                                            self)
         else:
             logger.debug("Not broadcasting (%s) enter/change events for %s in %s",
                          broadcast, name, self)
@@ -230,7 +225,7 @@ class _Meeting(ThreadableMixin,
 
     def del_occupant_name(self, name):
         if name in self._occupant_names:
-            _discard(self._occupant_names, name)
+            discard(self._occupant_names, name)
             self.emit_exitedRoom(name, self)
             self.emit_roomMembershipChanged(self._occupant_names, self)
             return True
@@ -249,13 +244,13 @@ class _Meeting(ThreadableMixin,
 
     def toExternalDictionary(self, mergeFrom=None, *args, **kwargs):
         result = dict(mergeFrom) if mergeFrom else dict()
-        result['Class'] = 'RoomInfo'  # TODO: Use __external_class_name__ ?
-        # TODO: Need to make this have a mime type.
+        result[CLASS] = 'RoomInfo'
+        result[MIMETYPE] = 'application/vnd.nextthought.roominfo'
         result['Moderated'] = self.Moderated
         # sets can't go through JSON
+        result['MessageCount'] = self.MessageCount
         result['Moderators'] = list(self.Moderators)
         result['Occupants'] = list(self.occupant_names)
-        result['MessageCount'] = self.MessageCount
         # TODO: Handling shadowing and so on.
         return super(_Meeting, self).toExternalDictionary(mergeFrom=result, *args, **kwargs)
 
@@ -274,19 +269,14 @@ class _Meeting(ThreadableMixin,
                                                       self.ID,
                                                       self._occupant_names))
 
-
-_ChatRoom = _Meeting
-deprecated('_ChatRoom', 'Prefer _Meeting')
-
-_ModeratedMeeting = _Meeting
-deprecated('_ModeratedMeeting', 'No distinction anymore')
-
-_ModeratedChatRoom = _ModeratedMeeting
-deprecated('_ModeratedChatRoom', 'Prefer _ModeratedMeeting')
-
-
 deferredimport.initialize()
 deferredimport.deprecatedFrom(
     "Moved to nti.chatserver._meeting_post_policy",
     "nti.chatserver._meeting_post_policy",
     "_ModeratedMeetingState")
+
+deferredimport.deprecated(
+    "Import from _Meeting instead",
+    _ChatRoom='nti.chatserver.meeting:_Meeting',
+   _ModeratedMeeting='nti.chatserver.meeting:_Meeting',
+   _ModeratedChatRoom='nti.chatserver.meeting:_Meeting')

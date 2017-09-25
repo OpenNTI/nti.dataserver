@@ -6,8 +6,9 @@ Interfaces having to do with chat.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 
@@ -42,9 +43,8 @@ from nti.schema.field import Float
 from nti.schema.field import Object
 from nti.schema.field import Variant
 from nti.schema.field import UniqueIterable
-from nti.schema.field import DecodingValidTextLine
 from nti.schema.field import ValidChoice as Choice
-TextLine = DecodingValidTextLine  # alias
+from nti.schema.field import DecodingValidTextLine as TextLine
 
 
 class IChatserver(interface.Interface):
@@ -88,11 +88,11 @@ class IMeeting(IModeledContent, IZContained):
     to be persistent and which is created on demand.
     """
 
-    creator = DecodingValidTextLine(title=u"Meeting creator", 
-                                    description=u"User that started the meeting")
+    creator = TextLine(title=u"Meeting creator",
+                       description=u"User that started the meeting")
 
-    RoomId = DecodingValidTextLine(title=u"Meeting identifier", 
-                                   description=u"Meeting identifier")
+    RoomId = TextLine(title=u"Meeting identifier",
+                      description=u"Meeting identifier")
 
     CreatedTime = Float(title=u"Meeting creation time",
                         description=u"Meeting creation time")
@@ -161,8 +161,8 @@ class IMeetingPolicy(interface.Interface):
 
 
 class IMessageInfo(IShareableModeledContent,
-                   IUserGeneratedData, 
-                   IZContained, 
+                   IUserGeneratedData,
+                   IZContained,
                    IModeledContentBody):
     # We have to be IShareableModeledContent if we want the same ACL provider to work for us
     # as works for Notes
@@ -172,18 +172,18 @@ class IMessageInfo(IShareableModeledContent,
     Status = Choice(title=u"The status of the message. Set by the server.",
                     values=STATUSES)
 
-    Creator = DecodingValidTextLine(title=u"Message creator",
-                                    description=u"User that send this message")
+    Creator = TextLine(title=u"Message creator",
+                       description=u"User that send this message")
 
     body = Variant((Dict(key_type=TextLine()),  # , value_type=schema.TextLine() ),
                     CompoundModeledContentBody()),
                    description=u"The body is either a dictionary of string keys and values, or a Note body")
 
     recipients = UniqueIterable(
-                    title=u"The names of all the recipients of the message.",
-                    description=u"""The actual recipients of the message, whether or not they are "
+        title=u"The names of all the recipients of the message.",
+        description=u"""The actual recipients of the message, whether or not they are "
                     u"named in the message itself. Includes people who just get the transcript.""",
-                    value_type=TextLine())
+        value_type=TextLine())
 
 
 class IMessageInfoEvent(IObjectEvent):
@@ -358,13 +358,13 @@ class IUnattachedPresenceInfo(interface.Interface):
     """
 
     type = Choice(title=u"What kind of presence this describes",
-                  values=('available', 'unavailable'),
-                  default='available',
+                  values=(u'available', u'unavailable'),
+                  default=u'available',
                   required=True)
 
     show = Choice(title=u"A hint of how the UI should present the user",
-                  values=('away', 'chat', 'dnd', 'xa'),
-                  default='chat',
+                  values=(u'away', u'chat', u'dnd', u'xa'),
+                  default=u'chat',
                   required=False)
 
     status = PlainTextLine(title=u"Optional plain text status information",
@@ -466,8 +466,8 @@ class PresenceChangedUserNotificationEvent(UserNotificationEvent):
         else:
             ptype = u'unavailable'
 
-        info = component.createObject(u'PresenceInfo', 
-                                      type=ptype, 
+        info = component.createObject(u'PresenceInfo',
+                                      type=ptype,
                                       username=sender)
         # Could also use getFactoriesFor to work with IPresenceInfo instead of
         # a name...
