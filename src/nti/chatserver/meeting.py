@@ -6,21 +6,22 @@ Chatserver functionality.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
+import six
 import time
 
 from zope import component
 from zope import interface
+from zope import deferredimport
 
 from zope.event import notify
 
 from zope.deprecation import deprecated
 
-import BTrees.OOBTree
+from BTrees.OOBTree import Set
 
 from persistent import Persistent
 
@@ -63,203 +64,216 @@ EVT_ENTERED_ROOM = 'chat_enteredRoom'
 EVT_POST_MESSOGE = 'chat_postMessage'
 EVT_RECV_MESSAGE = 'chat_recvMessage'
 
+logger = __import__('logging').getLogger(__name__)
+
+
 def _discard(s, k):
-	try:
-		s.discard(k)  # python sets
-	except AttributeError:
-		try:
-			s.remove(k)  # OOSet, list
-		except (KeyError, ValueError): pass
+    try:
+        s.discard(k)  # python sets
+    except AttributeError:
+        try:
+            s.remove(k)  # OOSet, list
+        except (KeyError, ValueError):
+            pass
 
 
+@six.add_metaclass(_ChatObjectMeta)
 @interface.implementer(IMeeting)
 class _Meeting(ThreadableMixin,
-			   ThreadableExternalizableMixin,
-			   Persistent,
-			   ExternalizableInstanceDict):
-	"""
-	Class to handle distributing messages to clients. 
-	"""
+               ThreadableExternalizableMixin,
+               Persistent,
+               ExternalizableInstanceDict):
+    """
+    Class to handle distributing messages to clients. 
+    """
 
-	__metaclass__ = _ChatObjectMeta
-	__emits__ = ('recvMessage', 'enteredRoom', 'exitedRoom',
-				 'roomMembershipChanged', 'roomModerationChanged')
+    __emits__ = ('recvMessage', 'enteredRoom', 'exitedRoom',
+                 'roomMembershipChanged', 'roomModerationChanged')
 
-	_prefer_oid_ = False
+    _prefer_oid_ = False
 
-	Active = True
-	creator = None
+    Active = True
+    creator = None
 
-	_v_chatserver = None
+    _v_chatserver = None
 
-	_occupant_names = ()
-	_moderation_state = None
+    _occupant_names = ()
+    _moderation_state = None
 
-	#: We use this to decide who can re-enter the room after exiting
-	_historical_occupant_names = ()
-	def __init__(self, chatserver=None):
-		super(_Meeting, self).__init__()
-		self._v_chatserver = chatserver
-		self.id = None
-		self.containerId = None
-		self._MessageCount = MergingCounter(0)
-		self.CreatedTime = time.time()
-		self._occupant_names = BTrees.OOBTree.Set()
-		self._historical_occupant_names = BTrees.OOBTree.Set()
-		# Sometimes a room is created with a subset of the occupants that
-		# should receive transcripts. The most notable case of this is
-		# creating a room in reply to something that's shared: everyone
-		# that it is shared with should get the transcript even if they
-		# didn't participate in the room because they were offline.
-		# TODO: How does this interact with things that are
-		# shared publically and not specific users?
-		self._addl_transcripts_to = BTrees.OOBTree.Set()
+    #: We use this to decide who can re-enter the room after exiting
+    _historical_occupant_names = ()
 
-	def _get_chatserver(self):
-		return self._v_chatserver or component.queryUtility(IChatserver)
-	def _set_chatserver(self, cs):
-		self._v_chatserver = cs
-	_chatserver = property(_get_chatserver, _set_chatserver)
+    def __init__(self, chatserver=None):
+        super(_Meeting, self).__init__()
+        self._v_chatserver = chatserver
+        self.id = None
+        self.containerId = None
+        self._MessageCount = MergingCounter(0)
+        self.CreatedTime = time.time()
+        self._occupant_names = Set()
+        self._historical_occupant_names = Set()
+        # Sometimes a room is created with a subset of the occupants that
+        # should receive transcripts. The most notable case of this is
+        # creating a room in reply to something that's shared: everyone
+        # that it is shared with should get the transcript even if they
+        # didn't participate in the room because they were offline.
+        # TODO: How does this interact with things that are
+        # shared publically and not specific users?
+        self._addl_transcripts_to = Set()
 
-	@property
-	def MessageCount(self):
-		# Can only set this directly, setting as a property
-		# leads to false conflicts
-		return self._MessageCount.value
+    def _get_chatserver(self):
+        return self._v_chatserver or component.queryUtility(IChatserver)
 
-	RoomId = alias('id')
-	createdTime = alias('CreatedTime')  # ILastModified
-	lastModified = read_alias('CreatedTime')  # ILastModified. Except we don't track it
+    def _set_chatserver(self, cs):
+        self._v_chatserver = cs
+    _chatserver = property(_get_chatserver, _set_chatserver)
 
-	ID = RoomId
+    @property
+    def MessageCount(self):
+        # Can only set this directly, setting as a property
+        # leads to false conflicts
+        return self._MessageCount.value
 
-	# IZContained
-	__name__ = ID
-	__parent__ = None
+    RoomId = alias('id')
+    createdTime = alias('CreatedTime')  # ILastModified
+    # ILastModified. Except we don't track it
+    lastModified = read_alias('CreatedTime')
 
-	def _Moderated(self):
-		return self._moderation_state is not None
+    ID = RoomId
 
-	def _setModerated(self, flag):
-		if flag and self._moderation_state is None:
-			notify(MeetingShouldChangeModerationStateEvent(self, flag))
-			self.emit_roomModerationChanged(self._occupant_names, self)
-		elif not flag and self._moderation_state is not None:
-			notify(MeetingShouldChangeModerationStateEvent(self, flag))
-			self.emit_roomModerationChanged(self._occupant_names, self)
+    # IZContained
+    __name__ = ID
+    __parent__ = None
 
-	Moderated = property(_Moderated, _setModerated)
+    def _Moderated(self):
+        return self._moderation_state is not None
 
-	@property
-	def Moderators(self):
-		return self._policy().moderated_by_usernames
+    def _setModerated(self, flag):
+        if flag and self._moderation_state is None:
+            notify(MeetingShouldChangeModerationStateEvent(self, flag))
+            self.emit_roomModerationChanged(self._occupant_names, self)
+        elif not flag and self._moderation_state is not None:
+            notify(MeetingShouldChangeModerationStateEvent(self, flag))
+            self.emit_roomModerationChanged(self._occupant_names, self)
 
-	@property
-	def occupant_session_names(self):
-		"""
-		:return: An iterable of the names of all active users in this room.
-			See :meth:`occupant_sessions`. Immutable
-		"""
-		return set(self._occupant_names)  # copy, but still a set to comply with the interface
-	occupant_names = occupant_session_names
+    Moderated = property(_Moderated, _setModerated)
 
-	@property
-	def historical_occupant_names(self):
-		"""
-		:return: An immutable iterable of anyone who has even been active in this room.
-		"""
-		return set(self._historical_occupant_names)
+    @property
+    def Moderators(self):
+        return self._policy().moderated_by_usernames
 
-	def _policy(self):
-		return IMeetingPolicy(self)
+    @property
+    def occupant_session_names(self):
+        """
+        :return: An iterable of the names of all active users in this room.
+                See :meth:`occupant_sessions`. Immutable
+        """
+        return set(self._occupant_names)  # copy, but still a set to comply with the interface
+    occupant_names = occupant_session_names
 
-	def post_message(self, msg_info):
-		result = self._policy().post_message(msg_info)
-		if result == 1 and result is not True:
-			self._MessageCount.increment()
-		return result
+    @property
+    def historical_occupant_names(self):
+        """
+        :return: An immutable iterable of anyone who has even been active in this room.
+        """
+        return set(self._historical_occupant_names)
 
-	def add_additional_transcript_username(self, username):
-		""" 
-		Ensures that the user named `username` will get all appropriate transcripts. 
-		"""
-		self._addl_transcripts_to.add(username)
+    def _policy(self):
+        return IMeetingPolicy(self)
 
-	def add_occupant_name(self, name, broadcast=True):
-		"""
-		Adds the `session` to the group of sessions that are part of this room.
-		:param bool broadcast: If `True` (the default) an event will
-			be broadcast to the given session announcing it has entered the room.
-			Set to False when doing bulk updates.
-		"""
-		sess_count_before = len(self._occupant_names)
-		self._occupant_names.add(name); self._historical_occupant_names.add(name)
-		sess_count_after = len(self._occupant_names)
-		if broadcast and sess_count_after != sess_count_before:
-			# Yay, we added one!
-			self.emit_enteredRoom(name, self)
-			self.emit_roomMembershipChanged(self.occupant_names - set((name,)), self)
-		else:
-			logger.debug("Not broadcasting (%s) enter/change events for %s in %s",
-						  broadcast, name, self)
+    def post_message(self, msg_info):
+        result = self._policy().post_message(msg_info)
+        if result == 1 and result is not True:
+            self._MessageCount.increment()
+        return result
 
-	def add_occupant_names(self, names, broadcast=True):
-		"""
-		Adds all sessions contained in the iterable `names` to this group
-		and broadcasts an event to each new member.
-		:param bool broadcast: If ``True`` (the default) an event will
-			be broadcast to all new members and to all old members.
-		"""
-		new_members = set(names).difference(self.occupant_names)
-		old_members = self.occupant_names - new_members
-		self._occupant_names.update(new_members); self._historical_occupant_names.update(names)
-		if broadcast:
-			self.emit_enteredRoom(new_members, self)
-			self.emit_roomMembershipChanged(old_members, self)
+    def add_additional_transcript_username(self, username):
+        """ 
+        Ensures that the user named `username` will get all appropriate transcripts. 
+        """
+        self._addl_transcripts_to.add(username)
 
-	def del_occupant_name(self, name):
-		if name in self._occupant_names:
-			_discard(self._occupant_names, name)
-			self.emit_exitedRoom(name, self)
-			self.emit_roomMembershipChanged(self._occupant_names, self)
-			return True
+    def add_occupant_name(self, name, broadcast=True):
+        """
+        Adds the `session` to the group of sessions that are part of this room.
+        :param bool broadcast: If `True` (the default) an event will
+                be broadcast to the given session announcing it has entered the room.
+                Set to False when doing bulk updates.
+        """
+        sess_count_before = len(self._occupant_names)
+        self._occupant_names.add(name)
+        self._historical_occupant_names.add(name)
+        sess_count_after = len(self._occupant_names)
+        if broadcast and sess_count_after != sess_count_before:
+            # Yay, we added one!
+            self.emit_enteredRoom(name, self)
+            self.emit_roomMembershipChanged(self.occupant_names - set((name,)), 
+										    self)
+        else:
+            logger.debug("Not broadcasting (%s) enter/change events for %s in %s",
+                         broadcast, name, self)
 
-	def add_moderator(self, mod_name):
-		self._policy().add_moderator(mod_name)
+    def add_occupant_names(self, names, broadcast=True):
+        """
+        Adds all sessions contained in the iterable `names` to this group
+        and broadcasts an event to each new member.
+        :param bool broadcast: If ``True`` (the default) an event will
+                be broadcast to all new members and to all old members.
+        """
+        new_members = set(names).difference(self.occupant_names)
+        old_members = self.occupant_names - new_members
+        self._occupant_names.update(new_members)
+        self._historical_occupant_names.update(names)
+        if broadcast:
+            self.emit_enteredRoom(new_members, self)
+            self.emit_roomMembershipChanged(old_members, self)
 
-	def is_moderated_by(self, mod_name):
-		return self._moderated.is_moderated_by(mod_name)
+    def del_occupant_name(self, name):
+        if name in self._occupant_names:
+            _discard(self._occupant_names, name)
+            self.emit_exitedRoom(name, self)
+            self.emit_roomMembershipChanged(self._occupant_names, self)
+            return True
 
-	def approve_message(self, msg_id):
-		return self._policy().approve_message(msg_id)
+    def add_moderator(self, mod_name):
+        self._policy().add_moderator(mod_name)
 
-	def shadow_user(self, username):
-		return self._policy().shadow_user(username)
+    def is_moderated_by(self, mod_name):
+        return self._moderated.is_moderated_by(mod_name)
 
-	def toExternalDictionary(self, mergeFrom=None, *args, **kwargs):
-		result = dict(mergeFrom) if mergeFrom else dict()
-		result['Class'] = 'RoomInfo'  # TODO: Use __external_class_name__ ?
-		# TODO: Need to make this have a mime type.
-		result['Moderated'] = self.Moderated
-		result['Moderators'] = list(self.Moderators)  # sets can't go through JSON
-		result['Occupants'] = list(self.occupant_names)
-		result['MessageCount'] = self.MessageCount
-		# TODO: Handling shadowing and so on.
-		return super(_Meeting, self).toExternalDictionary(mergeFrom=result, *args, **kwargs)
+    def approve_message(self, msg_id):
+        return self._policy().approve_message(msg_id)
 
-	def updateFromExternalObject(self, parsed, *args, **kwargs):
-		addl_ts_needs_reset = self.inReplyTo
-		super(_Meeting, self).updateFromExternalObject(parsed, *args, **kwargs)
-		try:
-			if addl_ts_needs_reset is not None and self.inReplyTo != addl_ts_needs_reset:
-				self._addl_transcripts_to.clear()
-			new_targets = self.inReplyTo.flattenedSharingTargetNames
-			self._addl_transcripts_to.update(new_targets)
-		except AttributeError: pass
+    def shadow_user(self, username):
+        return self._policy().shadow_user(username)
 
-	__repr__ = make_repr(lambda self: "<%s %s %s>" % (self.__class__.__name__, 
-													  self.ID, 
-													  self._occupant_names))
+    def toExternalDictionary(self, mergeFrom=None, *args, **kwargs):
+        result = dict(mergeFrom) if mergeFrom else dict()
+        result['Class'] = 'RoomInfo'  # TODO: Use __external_class_name__ ?
+        # TODO: Need to make this have a mime type.
+        result['Moderated'] = self.Moderated
+        # sets can't go through JSON
+        result['Moderators'] = list(self.Moderators)
+        result['Occupants'] = list(self.occupant_names)
+        result['MessageCount'] = self.MessageCount
+        # TODO: Handling shadowing and so on.
+        return super(_Meeting, self).toExternalDictionary(mergeFrom=result, *args, **kwargs)
+
+    def updateFromExternalObject(self, parsed, *args, **kwargs):
+        addl_ts_needs_reset = self.inReplyTo
+        super(_Meeting, self).updateFromExternalObject(parsed, *args, **kwargs)
+        try:
+            if addl_ts_needs_reset is not None and self.inReplyTo != addl_ts_needs_reset:
+                self._addl_transcripts_to.clear()
+            new_targets = self.inReplyTo.flattenedSharingTargetNames
+            self._addl_transcripts_to.update(new_targets)
+        except AttributeError:
+            pass
+
+    __repr__ = make_repr(lambda self: "<%s %s %s>" % (self.__class__.__name__,
+                                                      self.ID,
+                                                      self._occupant_names))
+
 
 _ChatRoom = _Meeting
 deprecated('_ChatRoom', 'Prefer _Meeting')
@@ -270,10 +284,9 @@ deprecated('_ModeratedMeeting', 'No distinction anymore')
 _ModeratedChatRoom = _ModeratedMeeting
 deprecated('_ModeratedChatRoom', 'Prefer _ModeratedMeeting')
 
-import zope.deferredimport
-zope.deferredimport.initialize()
 
-zope.deferredimport.deprecatedFrom(
+deferredimport.initialize()
+deferredimport.deprecatedFrom(
     "Moved to nti.chatserver._meeting_post_policy",
     "nti.chatserver._meeting_post_policy",
     "_ModeratedMeetingState")

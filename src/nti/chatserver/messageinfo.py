@@ -4,11 +4,11 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
+import six
 import time
 import uuid
 import datetime
@@ -18,11 +18,13 @@ from zope import interface
 
 from zope.deprecation import deprecate
 
-from zope.dublincore import interfaces as dc_interfaces
+from zope.dublincore.interfaces import IDCTimes
 
 from persistent import Persistent
 
 from persistent.list import PersistentList
+
+from nti.base._compat import text_
 
 from nti.chatserver.interfaces import STATUS_INITIAL
 from nti.chatserver.interfaces import CHANNEL_DEFAULT
@@ -35,7 +37,7 @@ from nti.dataserver.contenttypes.base import _make_getitem
 
 from nti.dataserver.sharing import AbstractReadableSharedMixin
 
-from nti.dataserver.users import entity
+from nti.dataserver.users.entity import Entity
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
@@ -46,7 +48,7 @@ from nti.externalization.internalization import register_legacy_search_module
 
 from nti.externalization.proxy import removeAllProxies
 
-from nti.mimetype import mimetype
+from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
 from nti.property.property import alias
 from nti.property.property import read_alias
@@ -55,7 +57,7 @@ from nti.threadable.externalization import ThreadableExternalizableMixin
 
 from nti.threadable.threadable import Threadable as ThreadableMixin
 
-_BodyFieldProperty = MessageInfoBodyFieldProperty  # BWC
+logger = __import__('logging').getLogger(__name__)
 
 # TODO: MessageInfo is a mess. Unify better with IContent
 # and the other content types.
@@ -63,14 +65,14 @@ _BodyFieldProperty = MessageInfoBodyFieldProperty  # BWC
 # CreatedModDateTrackingObject)
 
 
-@interface.implementer(IMessageInfo, dc_interfaces.IDCTimes)
+@six.add_metaclass(ModeledContentTypeAwareRegistryMetaclass)
+@interface.implementer(IMessageInfo, IDCTimes)
 class MessageInfo(AbstractReadableSharedMixin,
                   ThreadableMixin,
                   Persistent):
 
-    __metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-
     __parent__ = None
+    __name__ = alias('ID')
 
     __external_can_create__ = True
 
@@ -80,20 +82,21 @@ class MessageInfo(AbstractReadableSharedMixin,
     # the transcript should go to. Set by policy.
     sharedWith = ()
     channel = CHANNEL_DEFAULT
-    body = _BodyFieldProperty(IMessageInfo['body'])
+    body = MessageInfoBodyFieldProperty(IMessageInfo['body'])
 
     recipients = ()
+
     containerId = None
     Creator = None  # aka Sender. Forcibly set by the handler
 
     def __init__(self):
         super(MessageInfo, self).__init__()
-        self.ID = unicode(uuid.uuid4().hex)
-        self._v_sender_sid = None  # volatile. The session id of the sender.
-        self.LastModified = time.time()
-        self.CreatedTime = self.LastModified
-        self.Status = STATUS_INITIAL
         self.sharedWith = set()
+        self.Status = STATUS_INITIAL
+        self.LastModified = time.time()
+        self.ID = text_(uuid.uuid4().hex)
+        self.CreatedTime = self.LastModified
+        self._v_sender_sid = None  # volatile. The session id of the sender.
 
     Sender = alias('Creator')
     creator = alias('Creator')
@@ -103,8 +106,8 @@ class MessageInfo(AbstractReadableSharedMixin,
     def sharingTargets(self):
         result = set()
         for x in self.sharedWith:
-            x = entity.Entity.get_entity(x)
-            if x:
+            x = Entity.get_entity(x)
+            if x is not None:
                 result.add(x)
         return result
 
@@ -125,7 +128,6 @@ class MessageInfo(AbstractReadableSharedMixin,
 
     id = read_alias('ID')
     MessageId = read_alias('ID')  # bwc
-    __name__ = alias('ID')
 
     createdTime = alias('CreatedTime')
     lastModified = alias('LastModified')
@@ -206,7 +208,7 @@ class MessageInfo(AbstractReadableSharedMixin,
 
 
 @component.adapter(IMessageInfo)
-class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, 
+class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,
                                   InterfaceObjectIO):
 
     _ext_iface_upper_bound = IMessageInfo
@@ -230,11 +232,6 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,
     _update_accepts_type_attrs = True
 
     def _ext_replacement(self):
-        # TODO: The intid utility doesn't find objects if they are proxied. It unwraps
-        # the security proxy, but we (the appserver) may be putting an Uncached proxy around them.
-        # So we are unwrapping that here. Who should really be doing that?
-        # TODO: This could break externalization triggered off interfaces added with a proxy
-        # See also nti.dataserver.contenttypes.base
         return removeAllProxies(self.context)
 
     def toExternalObject(self, mergeFrom=None, **kwargs):
@@ -252,12 +249,12 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,
             parsed['body'] = parsed['Body']
         super(MessageInfoInternalObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
         msg = self.context
-
         # make recipients be stored as a persistent list.
         # In theory, this helps when we have to serialize the message object
         # into the database multiple times, by avoiding extra copies (like when we transcript)
         # This also results in us copying incoming recipients
         if msg.recipients and 'recipients' in parsed:
             msg.recipients = PersistentList(msg.recipients)
+
 
 register_legacy_search_module('nti.chatserver.messageinfo')

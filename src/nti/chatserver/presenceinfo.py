@@ -6,10 +6,9 @@ Implementation of the presence-related objects.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import time
 
@@ -27,6 +26,8 @@ from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.externalization.representation import WithRepr
+
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.property.property import alias
@@ -37,7 +38,10 @@ from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 
 LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 
+logger = __import__('logging').getLogger(__name__)
 
+
+@WithRepr
 @interface.implementer(IPresenceInfo)
 class PresenceInfo(SchemaConfigured):  # NOT persistent
     createDirectFieldProperties(IUnattachedPresenceInfo)
@@ -56,17 +60,15 @@ class PresenceInfo(SchemaConfigured):  # NOT persistent
     def isAvailable(self):
         return self.type == 'available'
 
-    def __repr__(self):
-        return "%s(**%s)" % (self.__class__.__name__, self.__dict__)
-
 PresenceInfoFactory = Factory(PresenceInfo)
 
 
 @component.adapter(IPresenceInfo)
 class PresenceInfoInternalObjectIO(InterfaceObjectIO):
     """
-    We are different in that we allow setting Last Modified from the external object. This is because
-    we tend to store this object in its JSON form in redis and would like to maintain that info.
+    We are different in that we allow setting Last Modified from the external object. 
+    This is because we tend to store this object in its JSON form in redis and would 
+    like to maintain that info.
     """
     _ext_iface_upper_bound = IPresenceInfo
 
