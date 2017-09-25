@@ -9,118 +9,169 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
 
-from hamcrest import assert_that, is_, has_entry
-from hamcrest import has_key,  not_none, is_not
-from hamcrest import same_instance, has_length, none, contains, same_instance
-from hamcrest import has_entries, only_contains, has_item, has_property
-from nti.testing.matchers import validly_provides as verifiably_provides, provides
-from nti.testing.matchers import is_empty
-from nti.testing.matchers import is_true
-from nose.tools import assert_raises
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import contains
+from hamcrest import has_item
+from hamcrest import not_none
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_entries
+from hamcrest import has_property
+from hamcrest import same_instance
+from hamcrest import only_contains
 
-from zope import interface, component
-from zope.deprecation import deprecate
+from nti.testing.matchers import is_true
+from nti.testing.matchers import is_empty
+from nti.testing.matchers import provides
+
+import os
+import six
 import time
 import tempfile
-import anyjson as json
+
+import transaction
+
+from zope import component 
+from zope import interface
+
+from zope.annotation.interfaces import IAttributeAnnotatable
+
+from zope.intid.interfaces import IIntIds
 
 from ZODB.DB import DB
+
 from ZODB.interfaces import IConnection
-import transaction
-import os
-from zc import intid as zc_intid
-from nti.dataserver import authorization_acl as auth_acl
+
+from pyramid.interfaces import IAuthenticationPolicy
+
 from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy
 
-from nti.dataserver.contenttypes import Note, Canvas
+from nti.chatserver._handler import _ChatHandler
 
-from nti.externalization.representation import to_external_representation
-from nti.externalization.externalization import toExternalObject, EXT_FORMAT_JSON
-from nti.externalization.representation import to_json_representation_externalized
-from nti.externalization.internalization import update_from_external_object
-from nti.externalization import externalization
+from nti.chatserver.chatserver import Chatserver
+from nti.chatserver.chatserver import TestingMappingMeetingStorage
 
-from nti.ntiids import ntiids
-from nti.ntiids.oids import toExternalOID, to_external_ntiid_oid
+from nti.chatserver.interfaces import ACT_ENTER
+from nti.chatserver.interfaces import ACT_MODERATE
+from nti.chatserver.interfaces import CHANNEL_META
+from nti.chatserver.interfaces import CHANNEL_POLL
+from nti.chatserver.interfaces import CHANNEL_STATE
+from nti.chatserver.interfaces import CHANNEL_CONTENT
+from nti.chatserver.interfaces import CHANNEL_DEFAULT
+from nti.chatserver.interfaces import CHANNEL_WHISPER
 
-import nti.dataserver.users as users
-import nti.dataserver.interfaces as interfaces
-from nti.dataserver import chat_transcripts
-from nti.dataserver import authorization as auth
-from nti.dataserver import authentication as nti_authentication
-nti_interfaces = interfaces
+from nti.chatserver.interfaces import IChatserver
+from nti.chatserver.interfaces import IMessageInfoStorage
 
-from nti.chatserver import meeting
-from nti.chatserver import messageinfo
-from nti.chatserver import _handler
-from nti.chatserver import chatserver as _chatserver
-from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.meeting import _Meeting
+
+from nti.chatserver.messageinfo import MessageInfo
+
 from nti.chatserver.presenceinfo import PresenceInfo
-from nti.socketio import interfaces as sio_interfaces
+
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
-from nti.links import links
+from nti.dataserver import authorization as auth
 
-from zope.annotation import interfaces as an_interfaces
+from nti.dataserver import authorization_acl as auth_acl
+
+from nti.dataserver.chat_transcripts import _transcript_ntiid
+from nti.dataserver.chat_transcripts import list_transcripts_for_user
+from nti.dataserver.chat_transcripts import transcript_for_user_in_room
+from nti.dataserver.chat_transcripts import transcript_summaries_for_user_in_container
+
+from nti.dataserver.contenttypes import Note
+
+from nti.dataserver.interfaces import ITranscript
+
+from nti.dataserver.users.users import User
+from nti.dataserver.users.users import get_shared_dataserver as _get_shared_dataserver
+
+from nti.externalization.externalization import EXT_FORMAT_JSON
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import NonExternalizableObjectError
+
+from nti.externalization.internalization import update_from_external_object
+
+from nti.externalization.representation import to_external_representation
+from nti.externalization.representation import to_json_representation_externalized
+
+from nti.links.links import Link
+
+from nti.ntiids.ntiids import ROOT
+from nti.ntiids.ntiids import TYPE_TRANSCRIPT
+from nti.ntiids.ntiids import TYPE_TRANSCRIPT_SUMMARY
+
+from nti.ntiids.ntiids import get_type
+from nti.ntiids.ntiids import make_ntiid
+from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.ntiids.oids import toExternalOID
+from nti.ntiids.oids import to_external_ntiid_oid
+
+from nti.socketio.interfaces import ISocketSession
+from nti.socketio.interfaces import ISocketIOSocket
+from nti.socketio.interfaces import ISocketEventHandler
+
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.tests.test_authorization_acl import denies
+from nti.dataserver.tests.test_authorization_acl import permits
+
+from nti.dataserver.tests.mock_dataserver import WithMockDS
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
 class chat(object):
-	MessageInfo = messageinfo.MessageInfo
-	Meeting = meeting._Meeting
-	ModeratedMeeting = meeting._Meeting
-	ChatHandler = _handler._ChatHandler
-	Chatserver = _chatserver.Chatserver
-	TestingMappingMeetingStorage = _chatserver.TestingMappingMeetingStorage
-	CHANNEL_CONTENT = chat_interfaces.CHANNEL_CONTENT
-	CHANNEL_META = chat_interfaces.CHANNEL_META
-	CHANNEL_DEFAULT = chat_interfaces.CHANNEL_DEFAULT
-	CHANNEL_WHISPER = chat_interfaces.CHANNEL_WHISPER
-	CHANNEL_POLL = chat_interfaces.CHANNEL_POLL
-	CHANNEL_STATE = chat_interfaces.CHANNEL_STATE
 
-
-
-from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-from nti.dataserver.tests import mock_dataserver
-from nti.dataserver.tests.test_authorization_acl import permits, denies
-from zope.dottedname import resolve as dottedname
-
-#import nti.externalization.internalization
-# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
-# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.contenttypes' )
-# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.providers' )
-# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.classes' )
-# nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.quizzes' )
-# nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
+	Meeting = _Meeting
+	MessageInfo = MessageInfo
+	ModeratedMeeting = _Meeting
+	
+	Chatserver = Chatserver
+	ChatHandler = _ChatHandler
+	TestingMappingMeetingStorage = TestingMappingMeetingStorage
+	
+	CHANNEL_POLL = CHANNEL_POLL
+	CHANNEL_META = CHANNEL_META
+	CHANNEL_STATE = CHANNEL_STATE
+	CHANNEL_CONTENT = CHANNEL_CONTENT
+	CHANNEL_DEFAULT = CHANNEL_DEFAULT
+	CHANNEL_WHISPER = CHANNEL_WHISPER
 
 
 class TestChatRoom(DataserverLayerTest):
-
 
 	def setUp(self):
 		super(TestChatRoom,self).setUp()
 		component.provideUtility( ACLAuthorizationPolicy() )
 
-
 	@WithMockDSTrans
 	def test_become_moderated(self):
-		users.User.create_user( username='sjohnson@nti' )
+		User.create_user( username=u'sjohnson@nti' )
 		room = chat.Meeting( None )
 		assert_that( room.Moderated, is_(False))
 		room.Moderated = True
-		room.id = 'foo'
+		room.id =u'foo'
 		assert_that( room, is_( chat.ModeratedMeeting ) )
 
 		msg = chat.MessageInfo()
-		msg.creator = 'sjohnson@nti'
+		msg.creator =u'sjohnson@nti'
 		room.post_message( msg )
-		assert_that( room._moderation_state._moderation_queue, has_key( msg.MessageId ) )
+		assert_that( room._moderation_state._moderation_queue, 
+					has_key( msg.MessageId ) )
 
 		# We can externalize a moderated room
 		to_external_representation( room, EXT_FORMAT_JSON )
@@ -159,8 +210,10 @@ class TestChatRoom(DataserverLayerTest):
 		# time an attribute is accessed and we de-ghost the object.
 		assert_that( room, is_( chat.Meeting ) )
 		# A method attribute, not an ivar, triggers this
-		assert_that( room.post_message.im_func, is_( chat.ModeratedMeeting.post_message.im_func ) )
-		assert_that( room._moderation_state, has_property( '_moderated_by_names', not_none() ) )
+		assert_that( room.post_message.im_func, 
+					is_( chat.ModeratedMeeting.post_message.im_func ) )
+		assert_that( room._moderation_state, 
+					has_property( '_moderated_by_names', not_none() ) )
 		# Now, we can reverse the property
 		room.Moderated = False
 		assert_that( room, is_( chat.Meeting ) )
@@ -174,7 +227,8 @@ class TestChatRoom(DataserverLayerTest):
 		conn = db.open()
 		room = conn.root()['Room']
 		assert_that( room, is_( chat.Meeting ) )
-		assert_that( room.post_message.im_class, is_( same_instance( chat.Meeting ) ) )
+		assert_that( room.post_message.im_class,
+					 is_( same_instance( chat.Meeting ) ) )
 		transaction.commit()
 		conn.close()
 		db.close()
@@ -186,7 +240,7 @@ class TestChatRoom(DataserverLayerTest):
 			n = Note()
 			room = chat.Meeting( None )
 			conn.add( n )
-			component.getUtility( zc_intid.IIntIds ).register( n )
+			component.getUtility( IIntIds ).register( n )
 			mock_dataserver.add_memory_shard( ds, 'Sessions' )
 			sconn = conn.get_connection( 'Sessions' )
 			sconn.add( room )
@@ -198,8 +252,6 @@ class TestChatRoom(DataserverLayerTest):
 
 		with mock_dataserver.mock_db_trans(ds):
 			ext = room.toExternalObject()
-
-
 			assert_that( ext, has_entry( 'inReplyTo', n_ext_id ) )
 			assert_that( ext, has_entry( 'references', only_contains( n_ext_id ) ) )
 			assert_that( ext, has_entry( 'Moderators', [] ) )
@@ -222,20 +274,20 @@ class TestChatRoom(DataserverLayerTest):
 
 	@WithMockDSTrans
 	def test_approve_moderated_removes_from_queue(self):
-		users.User.create_user( username='sjohnson@nti' )
+		User.create_user( username=u'sjohnson@nti' )
 		class MockChatServer(object):
-			def _save_message_to_transcripts(*args, **kwargs):
+			def _save_message_to_transcripts(self, *args, **kwargs):
 				pass
 
 		room = chat.Meeting( MockChatServer() )
 		room.Moderated = True
-		room.id = 'foo:bar'
+		room.id =u'foo:bar'
 		assert_that( room, is_( chat.ModeratedMeeting ) )
 		assert_that( room.toExternalObject(), has_entry( 'Moderated', True ) )
 
 		msg = chat.MessageInfo()
 		msg.containerId = room.id
-		msg.creator = 'sjohnson@nti'
+		msg.creator =u'sjohnson@nti'
 		room.post_message( msg )
 		assert_that( room._moderation_state._moderation_queue, has_key( msg.MessageId ) )
 
@@ -255,7 +307,7 @@ class _ChatserverTestMixin(object):
 				to_json_representation_externalized( event )
 			self.events.append( event )
 
-	@interface.implementer(sio_interfaces.ISocketSession,an_interfaces.IAttributeAnnotatable)
+	@interface.implementer(ISocketSession, IAttributeAnnotatable)
 	class MockSession(object):
 		def __init__( self, owner, strict_events=False ):
 			self.socket = TestChatserver.PH(strict_events=strict_events)
@@ -263,7 +315,7 @@ class _ChatserverTestMixin(object):
 			self.creation_time = time.time()
 			self.session_id = None
 		def __conform__(self, iface):
-			if iface == sio_interfaces.ISocketIOSocket:
+			if iface == ISocketIOSocket:
 				return self.socket
 			return None
 
@@ -279,10 +331,10 @@ class _ChatserverTestMixin(object):
 		def __setitem__( self, k, v ):
 			self.sessions[k] = v
 			v.session_id = k
-			if not users.User.get_user( v.owner ):
-				user = users.User.create_user( username=(v.owner if '@' in v.owner else v.owner + '@nextthought.com') )
-				users._get_shared_dataserver().root['users'][v.owner] = user # Establish an alias if '@' wasn't in the name
-			v.the_user = users.User.get_user( v.owner )
+			if not User.get_user( v.owner ):
+				user = User.create_user( username=(v.owner if '@' in v.owner else v.owner + '@nextthought.com') )
+				_get_shared_dataserver().root['users'][v.owner] = user # Establish an alias if '@' wasn't in the name
+			v.the_user = User.get_user( v.owner )
 
 		def __getitem__( self, k ):
 			return self.sessions[k]
@@ -305,12 +357,14 @@ class _ChatserverTestMixin(object):
 		def get_session_by_owner( self, *args, **kwargs ):
 			# XXX Sort of a hack
 			from nti.dataserver.sessions import SessionService
-			return SessionService.get_session_by_owner.im_func( self, *args, **kwargs )
+			im_func = six.get_method_function(SessionService.get_session_by_owner)
+			return im_func( self, *args, **kwargs )
 
 		def send_event_to_user( self, *args, **kwargs ):
 			# XXX Sort of a hack
 			from nti.dataserver.sessions import SessionService
-			return SessionService.send_event_to_user.im_func( self, *args, **kwargs )
+			im_func = six.get_method_function(SessionService.send_event_to_user)
+			return im_func( self, *args, **kwargs )
 
 		def clear_all_session_events(self):
 			for session in self:
@@ -326,7 +380,7 @@ class _ChatserverTestMixin(object):
 		sessions[3] = self.Session( 'jason' )
 		self.sessions = sessions
 		chatserver = chat.Chatserver( sessions, meeting_storage_factory() )
-		#mock_dataserver.current_transaction.add( chatserver.rooms )
+		
 		component.provideUtility( chatserver )
 
 		d = {'Occupants': ['jason', 'chris', 'sjohnson'],
@@ -335,7 +389,7 @@ class _ChatserverTestMixin(object):
 		if otherDict:
 			d.update( otherDict )
 		room = chatserver.create_room_from_dict( d )
-		ids = component.getUtility( zc_intid.IIntIds )
+		ids = component.getUtility( IIntIds )
 		if not ids.queryId( room ):
 			ids.register( room )
 		return room, chatserver
@@ -358,8 +412,6 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		super(TestChatserver,self).setUp()
 		component.provideUtility( ACLAuthorizationPolicy() )
 
-
-
 	@WithMockDSTrans
 	def test_handler_shadow_user( self ):
 		room, chatserver = self._create_moderated_room()
@@ -368,7 +420,7 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		assert_that( sjohn_handler.shadowUsers( room.ID, ['chris'] ),
 					 is_( False ),
 					"No ACL Found" )
-		room.__acl__ = auth_acl.acl_from_aces( auth_acl.ace_allowing( 'sjohnson', chat_interfaces.ACT_MODERATE ) )
+		room.__acl__ = auth_acl.acl_from_aces( auth_acl.ace_allowing( 'sjohnson', ACT_MODERATE ) )
 		component.provideUtility( ACLAuthorizationPolicy() )
 		assert_that( sjohn_handler.shadowUsers( room.ID, ['chris'] ), is_( True ) )
 
@@ -378,8 +430,8 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		sjohn_handler = chat.ChatHandler( chatserver, self.sessions[1] )
 		chris_handler = chat.ChatHandler( chatserver, self.sessions[2] )
 		jason_handler = chat.ChatHandler( chatserver, self.sessions[3] )
-		room.__acl__ = auth_acl.acl_from_aces( auth_acl.ace_allowing( 'sjohnson', chat_interfaces.ACT_MODERATE ),
-											   auth_acl.ace_allowing( 'chris', chat_interfaces.ACT_MODERATE ) )
+		room.__acl__ = auth_acl.acl_from_aces( auth_acl.ace_allowing( 'sjohnson', ACT_MODERATE ),
+											   auth_acl.ace_allowing( 'chris', ACT_MODERATE ) )
 		component.provideUtility( ACLAuthorizationPolicy() )
 
 		assert_that( sjohn_handler.makeModerated( room.ID, True ), has_property( 'Moderated', True ) )
@@ -447,7 +499,7 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 
 		# ... and re-enter
 		sessions.clear_all_session_events()
-		assert_that( meeting, permits( 'other', chat_interfaces.ACT_ENTER ) )
+		assert_that( meeting, permits( 'other', ACT_ENTER ) )
 
 		m2 = handler2.enterRoom( { 'RoomId': meeting.RoomId } )
 		assert_that( m2, is_( meeting ) )
@@ -484,14 +536,13 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 	@WithMockDSTrans
 	def test_integration_chat_storage_studygroup( self ):
 		ds = self.ds
-		import nti.dataserver.users as users
 		import nti.dataserver.meeting_container_storage as mcs
 
-		user = users.User.create_user( ds, username='foo@bar', password='temp001' )
+		user = User.create_user( ds, username=u'foo@bar', password=u'temp001' )
 		ds.root['users']['foo@bar'] = user
-		ds.root['users']['friend@bar'] = users.User.create_user( ds, username='friend@bar', password='temp001' )
+		ds.root['users']['friend@bar'] = User.create_user( ds, username=u'friend@bar', password=u'temp001' )
 		fl1 = user.maybeCreateContainedObjectWithType(  'FriendsLists', { 'Username': 'fl1', 'friends': ['friend@bar'] } )
-		fl1.containerId = 'FriendsLists'
+		fl1.containerId =u'FriendsLists'
 		fl1.creator = user
 		fl1.addFriend( ds.root['users']['friend@bar'] )
 		user.addContainedObject( fl1 )
@@ -550,15 +601,15 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 
 		# I can post a message to that room
 		msg = chat.MessageInfo()
-		msg.Creator = 'foo@bar'
+		msg.Creator =u'foo@bar'
 		msg.recipients = ['friend@bar']
-		msg.Body = 'This is the body'
+		msg.Body =u'This is the body'
 		msg.containerId = room3.ID
 		assert_that( foo_handler.postMessage( msg ), is_( True ) )
 		# But somebody else cannot
 		sessions[6] = self.Session( 'other@other' )
 		other_handler = chat.ChatHandler( chatserver, sessions[6] )
-		msg.Creator = 'other@other'
+		msg.Creator =u'other@other'
 		assert_that( other_handler.postMessage( msg ), is_( False ) )
 
 		# I can become the moderator of this room
@@ -588,19 +639,19 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		room = chatserver.create_room_from_dict( {'Occupants': ['jason', 'chris', 'sjohnson'],
 												  'Creator': 'sjohnson',
 												  'ContainerId': 'tag:nextthought.com,2011-10:x-y-z'} )
-		component.getUtility( zc_intid.IIntIds ).register( room )
+		component.getUtility( IIntIds ).register( room )
 		msg = chat.MessageInfo()
-		msg.Creator = 'jason'
+		msg.Creator =u'jason'
 		msg.recipients = ['chris'] # But the default channel
-		msg.Body = 'This is the body'
+		msg.Body =u'This is the body'
 		chatserver.post_message_to_room( room.ID, msg )
 		assert_that( IConnection( msg, None ), is_( not_none() ) )
 
 		for user in ('sjohnson', 'chris', 'jason'):
-			assert_that( chat_transcripts.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ), is_( msg ) )
-			user = users.User.get_user( user )
-			tx_id = chat_transcripts._transcript_ntiid( room, user, ntiids.TYPE_TRANSCRIPT )
-			assert_that( ntiids.find_object_with_ntiid( tx_id ).get_message( msg.ID ), is_( msg ) )
+			assert_that(transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ), is_( msg ) )
+			user = User.get_user( user )
+			tx_id = _transcript_ntiid( room, user, TYPE_TRANSCRIPT )
+			assert_that( find_object_with_ntiid( tx_id ).get_message( msg.ID ), is_( msg ) )
 
 	@WithMockDSTrans
 	def test_msg_to_state_channel_unmod_not_in_user_transcript(self):
@@ -613,12 +664,12 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		room = chatserver.create_room_from_dict( {'Occupants': ['jason', 'chris', 'sjohnson'],
 												  'Creator': 'sjohnson',
 												  'ContainerId': 'tag:nextthought.com,2011-10:x-y-z'} )
-		component.getUtility( zc_intid.IIntIds ).register( room )
+		component.getUtility( IIntIds ).register( room )
 
 		sessions.clear_all_session_events()
 
 		msg = chat.MessageInfo()
-		msg.Creator = 'jason'
+		msg.Creator =u'jason'
 		msg.recipients = ['chris'] # but this is ignored
 		msg.channel = chat.CHANNEL_STATE
 		msg.Body = { 'state': 'active', 'extra_key_to_drop': True }
@@ -630,10 +681,10 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 
 		for user in ('sjohnson', 'chris', 'jason'):
 			# No transcript yet
-			assert_that( chat_transcripts.transcript_for_user_in_room( user, room.ID ), is_( none() ) )
-			user = users.User.get_user( user )
-			tx_id = chat_transcripts._transcript_ntiid( room, user, ntiids.TYPE_TRANSCRIPT )
-			assert_that( ntiids.find_object_with_ntiid( tx_id ), is_( none() ) )
+			assert_that(transcript_for_user_in_room( user, room.ID ), is_( none() ) )
+			user = User.get_user( user )
+			tx_id = _transcript_ntiid( room, user, TYPE_TRANSCRIPT )
+			assert_that( find_object_with_ntiid( tx_id ), is_( none() ) )
 
 		# But all the occupants did get the message
 		for session in sessions:
@@ -654,7 +705,7 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		msg.recipients = ['chris']
 
 		# Even from the moderator
-		msg.Creator = 'sjohnson'
+		msg.Creator =u'sjohnson'
 		# Accepted, but not sent
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( True ) )
 
@@ -671,7 +722,7 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		msg.recipients = ['chris']
 
 		# Only the moderator
-		msg.Creator = 'sjohnson'
+		msg.Creator =u'sjohnson'
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( True ) )
 
 	@WithMockDSTrans
@@ -683,11 +734,11 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		msg.recipients = ['chris@nextthought.com']
 
 		# Only the moderator
-		msg.Creator = 'jason' # Not the moderator
+		msg.Creator =u'jason' # Not the moderator
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( False ) )
 
 		# Body must be a mapping with a valid NTIID
-		msg.Creator = 'sjohnson' # The moderator
+		msg.Creator =u'sjohnson' # The moderator
 		msg.sender_sid = 1
 		msg.Body = {}
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( False ) )
@@ -695,13 +746,13 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		msg.Body = { 'ntiid': 'foo' }
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( False ) )
 
-		msg.Body = { 'ntiid': ntiids.ROOT }
+		msg.Body = { 'ntiid': ROOT }
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( True ) )
 
 		# Unknown fields are sanitized
-		msg.Body['Foo'] = 'bar'
+		msg.Body['Foo'] =u'bar'
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( True ) )
-		assert_that( msg.Body, is_( { 'ntiid': ntiids.ROOT } ) )
+		assert_that( msg.Body, is_( { 'ntiid': ROOT } ) )
 
 	@WithMockDSTrans
 	def test_meta(self):
@@ -712,11 +763,11 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		msg.recipients = ['chris']
 
 		# Only the moderator
-		msg.Creator = 'jason'
+		msg.Creator =u'jason'
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( False ) )
 
 		# Body must be a mapping with a valid channel and action
-		msg.Creator = 'sjohnson'
+		msg.Creator =u'sjohnson'
 		msg.sender_sid = 1
 		msg.Body = {}
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( False ) )
@@ -738,10 +789,10 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		msg.Body = { 'channel': chat.CHANNEL_DEFAULT, 'action': 'pin', 'ntiid': 'bar' }
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( False ) )
 
-		msg.Body = { 'channel': chat.CHANNEL_DEFAULT, 'action': 'pin', 'ntiid': ntiids.ROOT, 'foo': 'bar' }
+		msg.Body = { 'channel': chat.CHANNEL_DEFAULT, 'action': 'pin', 'ntiid': ROOT, 'foo': 'bar' }
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( True ) )
 		# Unknown fields are sanitized
-		assert_that( msg.Body, is_( { 'channel': chat.CHANNEL_DEFAULT, 'action': 'pin', 'ntiid': ntiids.ROOT } ) )
+		assert_that( msg.Body, is_( { 'channel': chat.CHANNEL_DEFAULT, 'action': 'pin', 'ntiid': ROOT } ) )
 		# recipients are ignored
 		assert_that( msg.recipients, is_( () ) )
 
@@ -754,11 +805,11 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		msg.recipients = ['chris']
 
 		# Only the moderator
-		msg.Creator = 'jason'
+		msg.Creator =u'jason'
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( False ) )
 		# unless its a reply
 		msg_info = chat.MessageInfo()
-		component.getUtility( zc_intid.IIntIds ).register( msg_info )
+		component.getUtility( IIntIds ).register( msg_info )
 		self.ds.root._p_jar.add( msg_info )
 		msg.inReplyTo = msg_info
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( True ) )
@@ -766,7 +817,7 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		assert_that( msg.recipients, is_( {'sjohnson'} ) )
 
 		# The moderator sends to everyone
-		msg.Creator = 'sjohnson'
+		msg.Creator =u'sjohnson'
 		msg.sender_sid = 1
 		msg.Body = {}
 		msg.recipients = ()
@@ -779,20 +830,20 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		room.shadow_user( 'chris' ) # whispers to chris come to sjohnson.
 
 		msg = chat.MessageInfo()
-		msg.Creator = 'jason'
+		msg.Creator =u'jason'
 		msg.recipients = ['chris']
-		msg.Body = 'This is the body'
+		msg.Body =u'This is the body'
 		msg.channel = chat.CHANNEL_WHISPER
 		chatserver.post_message_to_room( room.ID, msg ) # jason whispers to Chris
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris']) ) )
 
 		# It should now be in the moderator transcript
-		assert_that( chat_transcripts.transcript_for_user_in_room( 'sjohnson', room.ID ).get_message( msg.ID ),
+		assert_that( transcript_for_user_in_room( 'sjohnson', room.ID ).get_message( msg.ID ),
 					 is_( msg ) )
 
 		# Every one of them should have it in their TS
 		for user in ('sjohnson', 'chris', 'jason'):
-			assert_that(chat_transcripts.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ),
+			assert_that(transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ),
 						is_(msg))
 
 	@WithMockDSTrans
@@ -800,9 +851,9 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		room, chatserver = self._create_moderated_room()
 
 		msg = chat.MessageInfo()
-		msg.Creator = 'jason'
+		msg.Creator =u'jason'
 		msg.recipients = ['chris', 'jason']
-		msg.Body = 'This is the body'
+		msg.Body =u'This is the body'
 		msg.channel = chat.CHANNEL_WHISPER
 		chatserver.post_message_to_room( room.ID, msg ) # jason whispers to Chris
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris']) ) )
@@ -810,12 +861,12 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		assert_that( auth_acl.ACLProvider( msg ), permits( 'chris', 'zope.View' ) )
 
 		# It should not be in the moderator transcript
-		assert_that( chat_transcripts.transcript_for_user_in_room( 'sjohnson', room.ID ),
+		assert_that( transcript_for_user_in_room( 'sjohnson', room.ID ),
 					 is_( none() ) )
 
 		# Every one of them should have it in their TS
 		for user in ('chris', 'jason'):
-			assert_that(chat_transcripts.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ),
+			assert_that(transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ),
 						is_(msg))
 
 	@WithMockDSTrans
@@ -823,20 +874,20 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		room, chatserver = self._create_moderated_room()
 
 		msg = chat.MessageInfo()
-		msg.Creator = 'jason'
+		msg.Creator =u'jason'
 		msg.recipients = ['chris', 'jason', 'sjohnson']
-		msg.Body = 'This is the body'
+		msg.Body =u'This is the body'
 		msg.channel = chat.CHANNEL_WHISPER
 		chatserver.post_message_to_room( room.ID, msg ) # jason whispers to Chris AND sjohnson
 		assert_that( msg.sharedWith, is_empty() )
 
 		# It should not be in anyone's transcript
-		assert_that( chat_transcripts.transcript_for_user_in_room( 'sjohnson', room.ID ),
+		assert_that( transcript_for_user_in_room( 'sjohnson', room.ID ),
 					 is_( none() ) )
 
 		# Every one of them should have it in their TS
 		for user in ('chris', 'jason', 'sjohnson'):
-			assert_that(chat_transcripts.transcript_for_user_in_room( user, room.ID ),
+			assert_that(transcript_for_user_in_room( user, room.ID ),
 						is_( none() ))
 
 	@WithMockDSTrans
@@ -845,16 +896,16 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		# no shadows
 
 		msg = chat.MessageInfo()
-		msg.Creator = 'jason'
+		msg.Creator =u'jason'
 		msg.recipients = ['jason']
-		msg.Body = 'This is the body'
+		msg.Body =u'This is the body'
 		msg.channel = chat.CHANNEL_WHISPER
 		chatserver.post_message_to_room( room.ID, msg ) # jason whispers to Chris
 		assert_that( msg.sharedWith, is_empty() )
 
 		# No one has it, it got dropped.
 		for user in ('chris', 'jason'):
-			assert_that( chat_transcripts.transcript_for_user_in_room( user, room.ID ), is_( none() ) )
+			assert_that(transcript_for_user_in_room( user, room.ID ), is_( none() ) )
 
 	@WithMockDSTrans
 	def test_simple_transcript_summary(self):
@@ -862,18 +913,18 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 			'ContainerId': 'foobar',
 			'Active': False } )
 		msg = chat.MessageInfo()
-		msg.Creator = 'jason'
-		msg.Body = 'This is the body'
+		msg.Creator =u'jason'
+		msg.Body =u'This is the body'
 		chatserver.post_message_to_room( room.ID, msg )
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris', 'sjohnson']) ) )
 
 		for user in ('sjohnson', 'chris', 'jason'):
-			summaries = chat_transcripts.list_transcripts_for_user( user )
+			summaries = list_transcripts_for_user( user )
 			assert_that( summaries, has_length( 1 ) )
 			summary = summaries[0]
 			assert_that( summary.RoomInfo, is_( room ) )
 			assert_that( summary.NTIID, is_( not_none() ) )
-			assert_that( chat_transcripts.transcript_summaries_for_user_in_container( user, 'foobar' ),
+			assert_that( transcript_summaries_for_user_in_container( user, 'foobar' ),
 						 has_key( room.ID ) )
 			assert_that( summary.Contributors, is_( set(['jason', 'chris', 'sjohnson']) ) )
 
@@ -887,27 +938,29 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 			meeting_storage_factory=user_meeting_storage	)
 		assert_that( room.containerId, is_( not_none() ) )
 		msg = chat.MessageInfo()
-		msg.Creator = 'jason'
-		msg.Body = 'This is the body'
+		msg.Creator =u'jason'
+		msg.Body =u'This is the body'
 		chatserver.post_message_to_room( room.ID, msg )
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris', 'sjohnson']) ) )
 
 		for user in ('sjohnson', 'chris', 'jason'):
-			summaries = chat_transcripts.list_transcripts_for_user( user )
+			summaries = list_transcripts_for_user( user )
 			assert_that( summaries, has_length( 1 ) )
 			summary = summaries[0]
 			assert_that( summary.RoomInfo, is_( room ) )
-			assert_that( ntiids.get_type( summary.NTIID ), is_( ntiids.TYPE_TRANSCRIPT_SUMMARY ) )
-			assert_that( chat_transcripts.transcript_summaries_for_user_in_container( user, room.containerId ),
+			assert_that( get_type( summary.NTIID ), is_( TYPE_TRANSCRIPT_SUMMARY ) )
+			assert_that( transcript_summaries_for_user_in_container( user, room.containerId ),
 						 has_key( room.ID ) )
 			assert_that( summary.Contributors, is_( set(['jason', 'chris', 'sjohnson']) ) )
 			# Links
 			assert_that( summary.links, has_length( 1 ) )
-			assert_that( summary.links[0].target, provides( interfaces.ITranscript ) )
-			assert_that( mock_dataserver.current_mock_ds.get_by_oid( room.id, ignore_creator=True), not_none() )
-			user = users.User.get_user( user )
-			transcript = ntiids.find_object_with_ntiid( ntiids.make_ntiid( base=summary.NTIID, nttype=ntiids.TYPE_TRANSCRIPT ) )
-			assert_that( transcript, provides( interfaces.ITranscript ) )
+			assert_that( summary.links[0].target, provides( ITranscript ) )
+			
+			current_mock_ds = mock_dataserver.current_mock_ds
+			assert_that(current_mock_ds.get_by_oid( room.id, ignore_creator=True), not_none() )
+			user = User.get_user( user )
+			transcript = find_object_with_ntiid( make_ntiid( base=summary.NTIID, nttype=TYPE_TRANSCRIPT ) )
+			assert_that( transcript, provides( ITranscript ) )
 
 	@WithMockDSTrans
 	def test_transcript_replyto_offline(self):
@@ -931,7 +984,7 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		n.addSharingTarget( chris_user )
 		assert_that( n.flattenedSharingTargetNames, is_( set( ['jason','chris','sjohnson'] ) ) )
 		conn.add( n )
-		component.getUtility( zc_intid.IIntIds ).register( n )
+		component.getUtility( IIntIds ).register( n )
 		conn.root()['Note'] = n
 		n_oid = toExternalOID( n )
 
@@ -942,17 +995,17 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 												  'Creator': 'sjohnson',
 												  'Active': False } )
 		msg = chat.MessageInfo()
-		msg.Creator = 'jason'
-		msg.Body = 'This is the body'
+		msg.Creator =u'jason'
+		msg.Body =u'This is the body'
 		chatserver.post_message_to_room( room.ID, msg )
 		assert_that( msg.sharedWith, is_( set(['jason', 'chris', 'sjohnson']) ) )
 
 		for user in ('sjohnson', 'chris', 'jason'):
-			summaries = chat_transcripts.list_transcripts_for_user( user )
+			summaries = list_transcripts_for_user( user )
 			assert_that( summaries, has_length( 1 ) )
 			summary = summaries[0]
 			assert_that( summary.RoomInfo, is_( room ) )
-			assert_that( chat_transcripts.transcript_summaries_for_user_in_container( user, 'foobar' ),
+			assert_that( transcript_summaries_for_user_in_container( user, 'foobar' ),
 						 has_key( room.ID ) )
 		assert_that( summary.Contributors, is_( set(['jason', 'chris', 'sjohnson']) ) )
 
@@ -962,12 +1015,13 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		sessions[1] = self.Session( 'sjohnson' )
 		socket = sessions[1]
 
+		@interface.implementer(IChatserver)
 		class CServer(object):
-			interface.implements( chat_interfaces.IChatserver )
+			pass
 		cserver = CServer()
 		component.provideUtility( cserver )
 
-		subs = component.subscribers( (socket,), sio_interfaces.ISocketEventHandler )
+		subs = component.subscribers( (socket,), ISocketEventHandler )
 		assert_that( subs, has_item( is_( chat.ChatHandler ) ) )
 
 	@WithMockDSTrans
@@ -977,12 +1031,12 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		chatserver = chat.Chatserver( sessions )
 
 		# Top-level
-		with assert_raises( externalization.NonExternalizableObjectError ):
+		with self.assertRaises( NonExternalizableObjectError ):
 			chatserver.send_event_to_user( 'sjohnson', 'event', object() )
 
 
 		# Nested
-		with assert_raises( externalization.NonExternalizableObjectError ):
+		with self.assertRaises( NonExternalizableObjectError ):
 			chatserver.send_event_to_user( 'sjohnson', 'event', [object()] )
 
 	@WithMockDSTrans
@@ -991,7 +1045,7 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		sessions[1] = self.Session( 'sjohnson', strict_events=True )
 		chatserver = chat.Chatserver( sessions )
 
-		link = links.Link( '/foo', rel='favorite' )
+		link = Link( '/foo', rel=u'favorite' )
 		# Top-level works
 		chatserver.send_event_to_user( 'sjohnson', 'event', link )
 		assert_that( sessions[1].socket.events, has_length( 1 ) )
@@ -1004,14 +1058,12 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 
 	@WithMockDSTrans
 	def test_handler_setPresence(self):
-		d = {'Occupants': ['sjohnson', 'other'],
-			 'ContainerId': 'tag:nextthought.com,2011-10:x-y-z' }
 		sessions = self.Sessions()
 		sessions[1] = self.Session( 'sjohnson' )
 		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage() )
 		handler1 = chat.ChatHandler( chatserver, sessions[1] )
 
-		presence = PresenceInfo( type='available', show='dnd' )
+		presence = PresenceInfo( type=u'available', show=u'dnd' )
 		res = handler1.setPresence( presence )
 		assert_that( res, is_true() )
 		assert_that( sessions[1].socket.events, has_length( 2 ) )
@@ -1031,10 +1083,10 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		sessions[2] = self.Session( 'otheruser' )
 		handler2 = chat.ChatHandler( chatserver, sessions[2] )
 		sessions[1].the_user.follow( sessions[2].the_user )
-		handler2.setPresence( PresenceInfo( type='available', status=IPlainTextContentFragment('Hi') ) )
+		handler2.setPresence( PresenceInfo( type=u'available', status=IPlainTextContentFragment('Hi') ) )
 		sessions.clear_all_session_events()
 
-		presence = PresenceInfo( type='available', show='xa' )
+		presence = PresenceInfo( type=u'available', show=u'xa' )
 		handler1.setPresence( presence )
 
 		my_contacts = sessions[1].socket.events[1]
@@ -1055,11 +1107,6 @@ class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 		assert_that( my_contacts['args'], has_length( 1 ) )
 		assert_that( my_contacts['args'][0], is_empty() )
 
-
-from nti.app.testing.application_webtest import ApplicationLayerTest
-from nti.app.testing.decorators import WithSharedApplicationMockDS
-import pyramid.interfaces
-
 class TestFunctionalChatserver(ApplicationLayerTest,_ChatserverTestMixin):
 
 	@WithSharedApplicationMockDS
@@ -1067,7 +1114,7 @@ class TestFunctionalChatserver(ApplicationLayerTest,_ChatserverTestMixin):
 		#"An Edit link is only sent to users that have write permissions."
 		# This is a high-level test involving the appserver as well
 		with mock_dataserver.mock_db_trans(self.ds):
-			auth_policy = component.getUtility(pyramid.interfaces.IAuthenticationPolicy)
+			auth_policy = component.getUtility(IAuthenticationPolicy)
 			with auth_policy.impersonating_userid('sjohnson')():
 
 				sessions = self.Sessions()
@@ -1082,7 +1129,7 @@ class TestFunctionalChatserver(ApplicationLayerTest,_ChatserverTestMixin):
 				self.ds.root._p_jar.add( note )
 				# If there's no __parent__, there's no link
 				note.__parent__ = self.ds.root
-				note.__name__ = 'himitsu'
+				note.__name__ =u'himitsu'
 
 				# Check the permissions
 				assert_that( note, permits( 'sjohnson', auth.ACT_READ ) )
@@ -1109,9 +1156,9 @@ class TestFunctionalChatserver(ApplicationLayerTest,_ChatserverTestMixin):
 				msg_info.creator = sessions[1].the_user.username
 				msg_info.recipients = [sessions[2].the_user.username]
 				msg_info.sharedWith = msg_info.recipients
-				msg_info.containerId = 'foobar'
+				msg_info.containerId =u'foobar'
 				# Make sure it has a parent and oid
-				storage = chat_interfaces.IMessageInfoStorage( msg_info )
+				storage = IMessageInfoStorage( msg_info )
 				storage.add_message( msg_info )
 
 
