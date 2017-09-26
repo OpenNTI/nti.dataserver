@@ -6,11 +6,11 @@ Support error handling, especially during object IO.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
+import six
 import sys
 import collections
 
@@ -37,6 +37,8 @@ from nti.app.externalization import MessageFactory as _
 
 from nti.base._compat import text_
 
+logger = __import__('logging').getLogger(__name__)
+
 
 def _json_error_map(o):
     if isinstance(o, set):
@@ -58,10 +60,10 @@ def raise_json_error(request,
     :param tb: The traceback from `sys.exc_info`.
     """
     # logger.exception( "Failed to create user; returning expected error" )
-    mts = (b'application/json', b'text/plain')
-    accept_type = b'application/json'
+    mimeTypes = ('application/json', 'text/plain')
+    accept_type = 'application/json'
     if getattr(request, 'accept', None):
-        accept_type = request.accept.best_match(mts)
+        accept_type = request.accept.best_match(mimeTypes)
 
     if isinstance(v, collections.Mapping) and v.get('field') == 'username':
         # Our internal schema field is username, but that maps to Username on
@@ -74,7 +76,7 @@ def raise_json_error(request,
     else:
         v = message = translate(v, context=request)
 
-    if accept_type == b'application/json':
+    if accept_type == 'application/json':
         try:
             v = json.dumps(v, ensure_ascii=False, default=_json_error_map)
         except TypeError:
@@ -85,7 +87,7 @@ def raise_json_error(request,
     result = factory(message)
     result.text = v
     result.content_type = accept_type
-    raise result, None, tb
+    six.reraise(result, None, tb)
 
 
 def _validation_error_to_dict(request, validation_error):
@@ -134,10 +136,10 @@ def _validation_error_to_dict(request, validation_error):
         msg = translate(validation_error.i18n_message, context=request)
     else:
         if validation_error.args:
-            msg = (validation_error.args[0]
-                   if not isinstance(validation_error.args[0], list) else '') or msg
+            if not isinstance(validation_error.args[0], list):
+                msg = validation_error.args[0] or msg
         try:
-            msg = translate(msg, context=request)
+            msg = translate(msg or '', context=request)
         except (UnicodeError, KeyError):
             # We get UnicodeDecodeError when giving a byte-string to translate that contains
             # non-ASCII (platform) characters. Since the msg can come from arbitrary user data,
@@ -148,16 +150,17 @@ def _validation_error_to_dict(request, validation_error):
                 except UnicodeError:
                     msg = ''
 
-    result = {'message': msg,
-              'code': validation_error.__class__.__name__,
-              'value': value,
-              'declared': declared}
+    result = {
+        'message': msg,
+        'value': value,
+        'declared': declared,
+        'code': validation_error.__class__.__name__,
+    }
     if field_name:
         result['field'] = field_name
 
     if getattr(validation_error, 'errors', None):
         # see schema._field._validate_sequence
-        # TODO: Now this may be revealing too much info
         contained_errors = []
         try:
             for error in validation_error.errors:
@@ -174,7 +177,7 @@ def _validation_error_to_dict(request, validation_error):
 def _no_request_validation_error():
     logger.exception("Failed to update content object, bad input")
     exc_info = sys.exc_info()
-    raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
+    raise six.reraise(hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2])
 
 
 def handle_validation_error(request, validation_error):
@@ -228,7 +231,7 @@ def handle_possible_validation_error(request, e):
         # if getattr( e, 'value', None ) is None and len(e.args) == 2:
         #     e.value = str(e.args[1])
         if getattr(e, 'i18n_message', None) is None:
-            e.i18n_message = _("You cannot store that type of object here.")
+            e.i18n_message = _(u"You cannot store that type of object here.")
         handle_validation_error(request, e)
     elif isinstance(e, (ValueError, Invalid, TypeError, KeyError)):  # pragma: no cover
         # These are all 'validation' errors. Raise them as unprocessable entities
