@@ -207,7 +207,7 @@ class TestChatRoom(DataserverLayerTest):
         assert_that(room, is_(chat.Meeting))
         # A method attribute, not an ivar, triggers this
         assert_that(room.post_message.im_func,
-                    is_(chat.ModeratedMeeting.post_message.im_func))
+                    is_(six.get_method_function(chat.ModeratedMeeting.post_message)))
         assert_that(room._moderation_state,
                     has_property('_moderated_by_names', not_none()))
         # Now, we can reverse the property
