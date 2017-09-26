@@ -55,7 +55,7 @@ from pyramid.threadlocal import get_current_request
 
 from pyramid.httpexceptions import HTTPBadRequest
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 
 def _get_possible_site_names(request):
@@ -206,7 +206,7 @@ class site_tween(object):
         # and get the user) record info in the transaction
         uid = request.authenticated_userid
         if uid:
-            transaction.get().setUser(unicode_(uid))
+            transaction.get().setUser(text_(uid))
 
     def _debug_site(self, new_site):
         if __debug__:  # pragma: no cover

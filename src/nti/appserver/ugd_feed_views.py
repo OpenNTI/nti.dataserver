@@ -37,7 +37,7 @@ from nti.appserver.interfaces import IChangePresentationDetails
 
 from nti.appserver.ugd_query_views import _RecursiveUGDStreamView
 
-from nti.base._compat import unicode_
+from nti.base._compat import text_
 
 from nti.dataserver import authorization as nauth
 
@@ -200,7 +200,7 @@ def ChangePresentationDetails(_, change):
 
     prettyname_creator = creator_profile.realname \
                       or creator_profile.alias \
-                      or unicode_(change.creator)
+                      or text_(change.creator)
     prettyname_action_kind = change.type.lower()
     # if it's proxied, type() would be wrong
     prettyname_object_kind = change.object.__class__.__name__
