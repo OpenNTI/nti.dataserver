@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -28,6 +29,8 @@ from zope import component
 from zope import interface
 
 from zope.authentication.interfaces import IPrincipal
+
+from zope.container.contained import Contained
 
 from zope.intid.interfaces import IIntIds
 
@@ -152,9 +155,8 @@ class TestContainerEnumerationWorkspace(ApplicationLayerTest):
 
 
 @interface.implementer(IRoot)
-class MockRoot(object):
-    __parent__ = None
-    __name__ = None
+class MockRoot(Contained):
+    pass
 
 
 class TestUserEnumerationWorkspace(ApplicationLayerTest):

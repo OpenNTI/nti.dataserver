@@ -4,11 +4,13 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import schema
 from zope import interface
+from zope import deferredimport
 
 from zope.location.interfaces import ILocation
 
@@ -147,9 +149,8 @@ class IUserService(IService):
     user = Object(IUser, title=u"The user")
 
 
-import zope.deferredimport
-zope.deferredimport.initialize()
-zope.deferredimport.deprecatedFrom(
+deferredimport.initialize()
+deferredimport.deprecatedFrom(
     "Moved to nti.app.contentlibrary.workspaces.interfaces ",
     "nti.app.contentlibrary.workspaces.interfaces",
     "ILibraryCollection")

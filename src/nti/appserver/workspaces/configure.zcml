@@ -45,7 +45,7 @@
 	<adapter factory="._UserAllCommunitiesCollectionFactory"
 			 name="AllCommunities"/>
 
-	<!-- Catalog workspace -->
+	<!-- Catalog workspace
 	<subscriber factory=".catalog._catalog_workspace"
                 provides=".interfaces.IWorkspace" />
 
@@ -56,7 +56,8 @@
     <subscriber factory=".catalog.FeaturedCatalogCollection"
                 provides=".interfaces.ICatalogCollection"
                 for=".interfaces.ICatalogWorkspace" />
-
+	-->
+	 
 	<!--
 	One of them is the default ICollection adapter. See application.py for why this is wrong.
 	-->

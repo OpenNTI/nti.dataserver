@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import collections
 
@@ -67,6 +66,8 @@ ITEMS = StandardExternalFields.ITEMS
 LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(IExternalObject)
@@ -301,8 +302,7 @@ class UserServiceExternalizer(ServiceExternalizer):
     """
 
     def toExternalObject(self, **kwargs):
-        result = super(UserServiceExternalizer,
-                       self).toExternalObject(**kwargs)
+        result = super(UserServiceExternalizer, self).toExternalObject(**kwargs)
         # TODO: This is almost hardcoded. Needs replaced with something dynamic.
         # Querying the utilities for the user, which would be registered for specific
         # IUser types or something...
