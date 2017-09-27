@@ -58,7 +58,7 @@ class IGrantDirective(IGrantAllDirective):
 
 class IGrantSiteDirective(IGrantAllDirective):
     """
-    Grant roles to prinipals for an ISite
+    Grant roles to principals for an ISite
     """
 
 

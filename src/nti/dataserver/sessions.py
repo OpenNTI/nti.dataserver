@@ -664,6 +664,98 @@ def _decrement_count_for_dead_socket(session, event):
     if redis.zscore(_session_active_keys, session.owner):
         redis.zincrby(_session_active_keys, session.owner, -1)
 
+from nti.async import create_job
+from nti.async import get_job_queue as async_queue
+
+from nti.async.interfaces import IRedisQueue
+
+from nti.async.redis_queue import PriorityQueue as RedisQueue
+from nti.dataserver import SESSION_CLEANUP_QUEUE
+from zope.component.zcml import utility
+
+class ISessionMaintenanceQueueFactory(interface.Interface):
+    """
+    A factory for reading session maintenance queues.
+    """
+
+class ImmediateQueueRunner(object):
+    """
+    A queue that immediately runs the given job. This is generally
+    desired for test or dev mode.
+    """
+
+    def put(self, job):
+        job()
+
+@interface.implementer(ISessionMaintenanceQueueFactory)
+class _ImmediateQueueFactory(object):
+
+    def get_queue(self, name):
+        return ImmediateQueueRunner()
+
+
+@interface.implementer(ISessionMaintenanceQueueFactory)
+class _AbstractProcessingQueueFactory(object):
+
+    queue_interface = None
+
+    def get_queue(self, name):
+        queue = async_queue(name, self.queue_interface)
+        if queue is None:
+            raise ValueError(
+                "No queue exists for content rendering queue (%s)." % name)
+        return queue
+
+
+class _ContentRenderingQueueFactory(_AbstractProcessingQueueFactory):
+
+    queue_interface = IRedisQueue
+
+    def __init__(self, _context):
+        queue = RedisQueue(self._redis, SESSION_CLEANUP_QUEUE)
+        utility(_context, provides=IRedisQueue, component=queue, name=SESSION_CLEANUP_QUEUE)
+
+    def _redis(self):
+        return component.getUtility(IRedisClient)
+
+
+def registerImmediateProcessingQueue(_context):
+    logger.info("Registering immediate content rendering queue")
+    factory = _ImmediateQueueFactory()
+    utility(_context, provides=ISessionMaintenanceQueueFactory, component=factory)
+
+
+def registerProcessingQueue(_context):
+    logger.info("Registering content rendering redis queue")
+    factory = _ContentRenderingQueueFactory(_context)
+    utility(_context, provides=ISessionMaintenanceQueueFactory, component=factory)
+
+def get_job_queue(name):
+    factory = component.getUtility(ISessionMaintenanceQueueFactory)
+    return factory.get_queue(SESSION_CLEANUP_QUEUE)
+
+
+def _cleanup_sessions(username):
+    pass
+
+def _queue_cleanup_sessions(user):
+    queue = get_job_queue(SESSION_CLEANUP_QUEUE)
+    job = create_job(_cleanup_sessions, user.username)
+    job.id = user.username
+    queue.put(job)
+    return job
+
+
+@component.adapter(ISocketSession, ISocketSessionConnectedEvent)
+def _cleanup_on_new_session(session, event):
+    _queue_cleanup_sessions(session.owner)
+
+
+@component.adapter(ISocketSession, ISocketSessionDisconnectedEvent)
+def _cleanup_on_dead_session(session, event):
+    _queue_cleanup_sessions(session.owner)
+
+
 deprecated('SessionServiceStorage', 'Use new session storage')
 class SessionServiceStorage(Persistent):
     pass

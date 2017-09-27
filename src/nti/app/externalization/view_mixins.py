@@ -106,7 +106,8 @@ class BatchingUtilsMixin(object):
 
 	@classmethod
 	def _create_batch_links(cls, request, result, next_batch_start, prev_batch_start):
-		for batch, rel in ((next_batch_start, 'batch-next'), (prev_batch_start, 'batch-prev')):
+		for batch, rel in ((next_batch_start, 'batch-next'),
+						   (prev_batch_start, 'batch-prev')):
 			if batch is not None:
 				batch_params = request.GET.copy()
 				# Pop some things that don't work

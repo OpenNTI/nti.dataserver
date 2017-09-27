@@ -196,7 +196,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
         # Update from the external value, if provided
         if ext_value:
-            update_from_external_object(user, ext_value, 
+            update_from_external_object(user, ext_value,
                                         context=dataserver, notify=False)
 
         # Register an intid for this user that we are creating so that the events that fire before
@@ -333,7 +333,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
     @property
     def id(self):
-        """ 
+        """
         Our ID is a synonym for our username
         """
         return self.username
