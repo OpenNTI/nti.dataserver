@@ -12,6 +12,7 @@ from hamcrest import none
 from hamcrest import is_in
 from hamcrest import is_not
 from hamcrest import all_of
+from hamcrest import not_none
 from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import has_length
@@ -192,7 +193,7 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 
     @mock_dataserver.WithMockDSTrans
     def test_shared_container(self):
-        user = User.create_user(dataserver=self.ds, 
+        user = User.create_user(dataserver=self.ds,
                                 username='sjohnson@nextthought.com')
 
         @interface.implementer(INTIContained)
@@ -218,14 +219,14 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
         ext_obj = toExternalObject(root, request=self.beginRequest())
         __traceback_info__ = ext_obj
         assert_that(ext_obj, has_entry('ID', ntiids.ROOT))
-        assert_that(ext_obj, 
+        assert_that(ext_obj,
                     has_entry('Class', 'PageInfo'))
-        assert_that(ext_obj, 
+        assert_that(ext_obj,
                     has_entry('MimeType', 'application/vnd.nextthought.pageinfo'))
         self.require_link_href_with_rel(ext_obj, 'RecursiveStream')
 
         [shared] = [
-            c for c in uew.pages_collection.container 
+            c for c in uew.pages_collection.container
             if c.ntiid == PersistentContained.containerId
         ]
 
@@ -276,7 +277,7 @@ class TestService(ApplicationLayerTest):
         ext_object = toExternalObject(service)
 
         # We should have a global workspace
-        assert_that(ext_object['Items'], 
+        assert_that(ext_object['Items'],
                     has_item(has_entry('Title', 'Global')))
 
         # We shouldn't have user specific workspaces
@@ -291,7 +292,7 @@ class TestUserService(ApplicationLayerTest):
 
     @mock_dataserver.WithMockDSTrans
     def test_external_coppa_capabilities(self):
-        user = User.create_user(dataserver=self.ds, 
+        user = User.create_user(dataserver=self.ds,
                                 username=u'coppa_user')
         interface.alsoProvides(user, ICoppaUserWithoutAgreement)
         service = UserService(user)
@@ -307,7 +308,7 @@ class TestUserService(ApplicationLayerTest):
 
     @mock_dataserver.WithMockDSTrans
     def test_external(self):
-        user = User.create_user(dataserver=self.ds, 
+        user = User.create_user(dataserver=self.ds,
                                  username=u'sjohnson@nextthought.com')
         service = UserService(user)
 
@@ -319,33 +320,37 @@ class TestUserService(ApplicationLayerTest):
         assert_that(ext_object, has_entry('CapabilityList',
                                           has_item('nti.platform.p2p.sharing')))
         # The global workspace should have a Link
-        assert_that(ext_object['Items'], 
+        workspaces = ext_object['Items']
+        assert_that(workspaces,
                     has_item(has_entry('Title', 'Global')))
+
+        # Catalog workspace
+        catalog_ws = next(x for x in workspaces if x['Title'] == 'Catalog')
+        assert_that(catalog_ws, not_none())
+        catalog_collections = catalog_ws['Items']
+        assert_that(catalog_collections, has_length(2))
+
         # Can't check links here, that comes from application configuration.
         # See test_usersearch.
         # And the User resource should have a Pages collection that also has
         # a link--this one pre-rendered
-        user_wss = [
-            x for x in ext_object['Items'] if x['Title'] == user.username
-        ]
-        assert_that(user_wss, has_length(1))
-        user_ws, = user_wss
+        user_ws = next(x for x in workspaces if x['Title'] == user.username)
         assert_that(user_ws, has_entry('Title', user.username))
-        assert_that(user_ws, 
-                    has_entry('Items', 
+        assert_that(user_ws,
+                    has_entry('Items',
                              has_item(all_of(has_entry('Title', 'Pages'),
                                              has_entry('href', '/dataserver2/users/sjohnson@nextthought.com/Pages')))))
         for membership_name in ('FriendsLists', 'Groups', 'Communities', 'DynamicMemberships'):
-            assert_that(user_ws, 
+            assert_that(user_ws,
                         has_entry('Items',
                                   has_item(all_of(has_entry('Title', membership_name),
                                                   has_entry('href', '/dataserver2/users/sjohnson@nextthought.com/' + membership_name)))))
-        assert_that(user_ws, 
-                    has_entry('Items', 
+        assert_that(user_ws,
+                    has_entry('Items',
                              has_item(has_entry('Links', has_item(has_entry('Class', 'Link'))))))
-        assert_that(user_ws['Items'], 
-                    has_item(has_entry('Links', 
-                                      has_item(has_entry('href', 
+        assert_that(user_ws['Items'],
+                    has_item(has_entry('Links',
+                                      has_item(has_entry('href',
                                                          '/dataserver2/users/sjohnson@nextthought.com/Search/RecursiveUserGeneratedData')))))
 
         assert_that(user_ws['Items'], has_item(has_entry('Title', 'Boards')))
@@ -354,7 +359,7 @@ class TestUserService(ApplicationLayerTest):
         site_policy = component.queryUtility(ISitePolicyUserEventListener)
         site_policy.COM_USERNAME = 'community_username'
         ext_object = toExternalObject(service)
-        assert_that(ext_object, 
+        assert_that(ext_object,
                     has_entry('SiteCommunity', 'community_username'))
 
     @mock_dataserver.WithMockDSTrans
@@ -362,7 +367,7 @@ class TestUserService(ApplicationLayerTest):
         #"A user's Pages collection only claims to accept things that are externally creatable."
         # We prove this via a negative, so unfortunately this is not such
         # a great test
-        user = User.create_user(dataserver=self.ds, 
+        user = User.create_user(dataserver=self.ds,
                                 username=u'sjohnson@nextthought.com')
         ws = UEW(user)
         assert_that('application/vnd.nextthought.transcriptsummary',
@@ -374,7 +379,7 @@ class TestUserService(ApplicationLayerTest):
 
     @mock_dataserver.WithMockDSTrans
     def test_user_pages_collection_restricted(self):
-        user = User.create_user(dataserver=self.ds, 
+        user = User.create_user(dataserver=self.ds,
                                 username=u'sjohnson@nextthought.com')
         ws = UEW(user)
         assert_that('application/vnd.nextthought.canvasurlshape',
@@ -390,7 +395,7 @@ class TestUserService(ApplicationLayerTest):
                     is_not(is_in(list(UserPagesCollection(ws).accepts))))
 
         # and from the vocab
-        vocab = component.getUtility(IVocabularyFactory, 
+        vocab = component.getUtility(IVocabularyFactory,
                                      "Creatable External Object Types")(user)
         terms = [x.token for x in vocab]
         assert_that('application/vnd.nextthought.canvasurlshape',
@@ -410,9 +415,9 @@ class TestFriendsListContainerCollection(DataserverLayerTest, TestBaseMixin):
         member_cont = FriendsListContainerCollection(member_user.friendsLists)
         assert_that(member_cont, has_property('container', has_length(0)))
 
-        assert_that(member_cont.container, 
+        assert_that(member_cont.container,
                     has_property('__name__', owner_fl_cont.__name__))
-        assert_that(member_cont.container, 
+        assert_that(member_cont.container,
                     has_property('__parent__', member_user))
 
         # Now, if we cheat and remove the member from the DFL, but leave the relationship

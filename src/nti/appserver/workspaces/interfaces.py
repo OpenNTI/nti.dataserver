@@ -93,11 +93,47 @@ class IUserWorkspace(IWorkspace):
     user = Object(IUser, title=u"The user")
 
 
+class ICatalogWorkspace(IWorkspace):
+    """
+    A workspace to provide (possibly) heterogeneous catalog choices for a user.
+    """
+
+
+class ICatalogCollection(IContainerCollection):
+    """
+    A collection contained within the :class:``ICatalogWorkspace``.
+    """
+
+
+class ICatalogCollectionProvider(interface.Interface):
+    """
+    A provider of :class:``ICatalogCollection`` items.
+    """
+
+    def get_collection_iter(filter_string=None):
+        """
+        Returns an iterable over this collection provider, optionally
+        filtering on the given string.
+        """
+
+
+class IFeaturedCatalogCollectionProvider(ICatalogCollectionProvider):
+    """
+    An :class:``ICatalogCollectionProvider`` that provides `featured` items.
+    """
+
+
+class IPurchasedCatalogCollectionProvider(ICatalogCollectionProvider):
+    """
+    An :class:``ICatalogCollectionProvider`` that provides `purchased` items.
+    """
+
+
 class IUserWorkspaceLinkProvider(interface.Interface):
 
     def links(workspace):
         """
-        return an interable of user links
+        return an iterable of user links
         """
 
 

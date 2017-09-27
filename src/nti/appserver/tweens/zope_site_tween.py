@@ -240,9 +240,8 @@ def _get_site_for_request(request, parent_site):
     site_names = request.possible_site_names
     found_site = get_site_for_site_names(site_names, site=parent_site)
     if found_site is parent_site:
-        # This design adds overhead when a site is not
-        # found. This should be uncommon during production,
-        # although common at development time.
+        # This design adds overhead when a site is not found. This should be
+        # uncommon during production although common at development time.
         gsm = component.getGlobalSiteManager()
         found_site = gsm.getUtility(IMissingSitePolicy)(request, parent_site)
         # We could reduce the overhead a bit by looking up
