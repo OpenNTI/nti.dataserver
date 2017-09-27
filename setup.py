@@ -464,10 +464,6 @@ setup(
         # Plug to make zope.schema's vocabulary registry ZCA
         # based and thus actually useful
         'zope.vocabularyregistry',
-        # Data analysis
-        # pandas,
-        # scikit-learn,
-        # rpy2, -- Requires R installed.
     ],
     extras_require={
         'test': TESTS_REQUIRE,
