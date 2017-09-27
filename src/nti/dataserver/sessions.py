@@ -390,7 +390,7 @@ class SessionService(object):
         if session_ids is None:
             session_ids = _AlwaysIn()
         elif    not isinstance(session_ids, _AlwaysIn) \
-        	and isinstance(session_ids, (basestring, numbers.Number)):
+            and isinstance(session_ids, (basestring, numbers.Number)):
             # They gave us a bare string
             session_ids = (session_ids,)
         # Since this is arbitrary by name, we choose to return
@@ -437,7 +437,7 @@ class SessionService(object):
             session_id = username.session_id
             username = username.owner
             session = self.get_session_by_owner(username,
-											    session_ids=(session_id,))
+                                                session_ids=(session_id,))
             if session is not None:
                 all_sessions = (session,)
         else:
@@ -445,8 +445,8 @@ class SessionService(object):
 
         if not all_sessions:  # pragma: no cover
             logger.log(TRACE,
-					   "No sessions for %s to send event %s to",
-					   username, name)
+                       "No sessions for %s to send event %s to",
+                       username, name)
             return
 
         # When sending an event to a user, we need to write the object
@@ -468,7 +468,7 @@ class SessionService(object):
             # the process
             replacer = DevmodeNonExternalizableObjectReplacer
             args = [
-				toExternalObject(arg, default_non_externalizable_replacer=replacer)
+                toExternalObject(arg, default_non_externalizable_replacer=replacer)
                 for arg in args
             ]
 
@@ -558,9 +558,9 @@ class SessionService(object):
         # atomically read the current messages and then clear the state of the
         # queue.
         msgs, _ = self._redis.pipeline() \
-        					 .lrange( queue_name, 0, -1) \
-        					 .delete(queue_name) \
-        					 .execute()
+                             .lrange( queue_name, 0, -1) \
+                             .delete(queue_name) \
+                             .execute()
         # If the transaction aborts, put these back so they don't get lost
         result = ()
         if msgs:  # lpush requires at least one message
@@ -570,7 +570,7 @@ class SessionService(object):
             def after_commit_or_abort(success=False):
                 if not success:
                     logger.info("Pushing messages back onto %s on abort",
-    						    queue_name)
+                                queue_name)
                     msgs.reverse()
                     self._redis.lpush(queue_name, *msgs)
             transaction.get().addAfterCommitHook(after_commit_or_abort)
@@ -610,9 +610,9 @@ class SessionService(object):
         # from a client is a good-faith indication the client is still around.
         key_name = self._heartbeat_key(session_id)
         self._redis.pipeline() \
-        		   .set(key_name, heartbeat_time or time.time()) \
-        		   .expire(key_name, self.SESSION_HEARTBEAT_TIMEOUT * 2) \
-        		   .execute()
+                   .set(key_name, heartbeat_time or time.time()) \
+                   .expire(key_name, self.SESSION_HEARTBEAT_TIMEOUT * 2) \
+                   .execute()
 
     def get_last_heartbeat_time(self, session_id, session=None):
         # TODO: This gets called a fair amount. Do we need to cache?
@@ -636,8 +636,8 @@ def _send_notification(user_notification_event):
         for target in user_notification_event.targets:
             try:
                 sessions.send_event_to_user(target,
-										    user_notification_event.name,
-										    *user_notification_event.args)
+                                            user_notification_event.name,
+                                            *user_notification_event.args)
             except AttributeError:  # pragma: no cover
                 raise
             except Exception:  # pragma: no cover
@@ -663,98 +663,6 @@ def _decrement_count_for_dead_socket(session, event):
     redis = component.getUtility(IRedisClient)
     if redis.zscore(_session_active_keys, session.owner):
         redis.zincrby(_session_active_keys, session.owner, -1)
-
-from nti.async import create_job
-from nti.async import get_job_queue as async_queue
-
-from nti.async.interfaces import IRedisQueue
-
-from nti.async.redis_queue import PriorityQueue as RedisQueue
-from nti.dataserver import SESSION_CLEANUP_QUEUE
-from zope.component.zcml import utility
-
-class ISessionMaintenanceQueueFactory(interface.Interface):
-    """
-    A factory for reading session maintenance queues.
-    """
-
-class ImmediateQueueRunner(object):
-    """
-    A queue that immediately runs the given job. This is generally
-    desired for test or dev mode.
-    """
-
-    def put(self, job):
-        job()
-
-@interface.implementer(ISessionMaintenanceQueueFactory)
-class _ImmediateQueueFactory(object):
-
-    def get_queue(self, name):
-        return ImmediateQueueRunner()
-
-
-@interface.implementer(ISessionMaintenanceQueueFactory)
-class _AbstractProcessingQueueFactory(object):
-
-    queue_interface = None
-
-    def get_queue(self, name):
-        queue = async_queue(name, self.queue_interface)
-        if queue is None:
-            raise ValueError(
-                "No queue exists for content rendering queue (%s)." % name)
-        return queue
-
-
-class _ContentRenderingQueueFactory(_AbstractProcessingQueueFactory):
-
-    queue_interface = IRedisQueue
-
-    def __init__(self, _context):
-        queue = RedisQueue(self._redis, SESSION_CLEANUP_QUEUE)
-        utility(_context, provides=IRedisQueue, component=queue, name=SESSION_CLEANUP_QUEUE)
-
-    def _redis(self):
-        return component.getUtility(IRedisClient)
-
-
-def registerImmediateProcessingQueue(_context):
-    logger.info("Registering immediate content rendering queue")
-    factory = _ImmediateQueueFactory()
-    utility(_context, provides=ISessionMaintenanceQueueFactory, component=factory)
-
-
-def registerProcessingQueue(_context):
-    logger.info("Registering content rendering redis queue")
-    factory = _ContentRenderingQueueFactory(_context)
-    utility(_context, provides=ISessionMaintenanceQueueFactory, component=factory)
-
-def get_job_queue(name):
-    factory = component.getUtility(ISessionMaintenanceQueueFactory)
-    return factory.get_queue(SESSION_CLEANUP_QUEUE)
-
-
-def _cleanup_sessions(username):
-    pass
-
-def _queue_cleanup_sessions(user):
-    queue = get_job_queue(SESSION_CLEANUP_QUEUE)
-    job = create_job(_cleanup_sessions, user.username)
-    job.id = user.username
-    queue.put(job)
-    return job
-
-
-@component.adapter(ISocketSession, ISocketSessionConnectedEvent)
-def _cleanup_on_new_session(session, event):
-    _queue_cleanup_sessions(session.owner)
-
-
-@component.adapter(ISocketSession, ISocketSessionDisconnectedEvent)
-def _cleanup_on_dead_session(session, event):
-    _queue_cleanup_sessions(session.owner)
-
 
 deprecated('SessionServiceStorage', 'Use new session storage')
 class SessionServiceStorage(Persistent):

@@ -9,5 +9,3 @@
 
 from zope.i18nmessageid import MessageFactory
 MessageFactory = MessageFactory('nti.dataserver')
-
-SESSION_CLEANUP_QUEUE = u'nti.sessions/maintenance'
