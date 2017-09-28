@@ -6,10 +6,9 @@ Definition of the Note object.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 
@@ -27,6 +26,7 @@ from nti.coremetadata.schema import BodyFieldProperty
 from nti.dataserver.contenttypes.base import _make_getitem
 
 from nti.dataserver.contenttypes.highlight import Highlight
+from nti.dataserver.contenttypes.highlight import HighlightInternalObjectIO
 
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IMedia
@@ -36,9 +36,13 @@ from nti.dataserver.interfaces import ILikeable
 from nti.dataserver.interfaces import IFlaggable
 from nti.dataserver.interfaces import IFavoritable
 
+from nti.externalization.interfaces import IClassObjectFactory 
+
 from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.threadable.externalization import ThreadableExternalizableMixin
 
 from nti.threadable.threadable import Threadable as ThreadableMixin
 
@@ -48,6 +52,8 @@ BodyFieldProperty = BodyFieldProperty  # BWC alias
 
 _style_field = INote['style'].bind(None)
 _style_field.default = 'suppressed'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(INote,
@@ -83,15 +89,11 @@ class Note(ThreadableMixin, Highlight):
     __getitem__ = _make_getitem('body')
 
 
-from nti.dataserver.contenttypes.highlight import HighlightInternalObjectIO
-
-from nti.threadable.externalization import ThreadableExternalizableMixin
-
 
 @component.adapter(INote)
 class NoteInternalObjectIO(ThreadableExternalizableMixin, HighlightInternalObjectIO):
 
-    def _resolve_external_body(self, context, parsed, body):
+    def _resolve_external_body(self, context, unused_parsed, body):
         """
         Attempt to resolve elements in the body to existing canvas objects
         that are my children. If we find them, then update them in place
@@ -175,3 +177,18 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin, HighlightInternalObjec
                 val = getattr(note.inReplyTo, copy, getattr(note, copy, None))
                 if val is not None:
                     setattr(note, copy, val)
+
+
+@interface.implementer(IClassObjectFactory)
+class NoteFactory(object):
+    
+    description = title = "Note factory"
+
+    def __init__(self, *args):
+        pass
+
+    def __call__(self, *unused_args, **unused_kw):
+        return Note()
+
+    def getInterfaces(self):
+        return (INote,)

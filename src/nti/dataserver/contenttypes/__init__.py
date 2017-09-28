@@ -8,10 +8,9 @@ Most of the imports in this module itself are backward compatibility re-exports
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable unused import warning
 # pylint: disable=W0611
@@ -54,7 +53,6 @@ from nti.dataserver.contenttypes.redaction import Redaction
 # Support for legacy class names in creation
 from nti.externalization.internalization import register_legacy_search_module
 register_legacy_search_module('nti.dataserver.contenttypes')
-register_legacy_search_module('nti.dataserver.contenttypes.note')
 register_legacy_search_module('nti.dataserver.contenttypes.canvas')
 register_legacy_search_module('nti.dataserver.contenttypes.bookmark')
 register_legacy_search_module('nti.dataserver.contenttypes.highlight')

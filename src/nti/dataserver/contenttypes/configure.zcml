@@ -23,6 +23,8 @@
 	<ext:registerMimeFactories module=".redaction" />
 
 	<adapter factory=".note.NoteInternalObjectIO" />
+	<utility name='Note' factory='.note.NoteFactory' />
+
 	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
 	<adapter factory=".highlight.HighlightInternalObjectIO" />
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
