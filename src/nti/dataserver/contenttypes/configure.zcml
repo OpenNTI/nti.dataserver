@@ -29,6 +29,8 @@
 	<utility name='Bookmark' factory='.bookmark.BookmarkFactory' />
 
 	<adapter factory=".highlight.HighlightInternalObjectIO" />
+	<utility name='Highlight' factory='.highlight.HighlightFactory' />
+	
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
 
 	<adapter factory=".canvas.CanvasInternalObjectIO" />

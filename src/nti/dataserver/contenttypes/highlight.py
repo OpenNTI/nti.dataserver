@@ -5,25 +5,28 @@ Definitions of highlight objects.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
 
 from nti.dataserver.contenttypes.base import UserContentRoot
 
-# BWC top-level import
 from nti.dataserver.contenttypes.selectedrange import SelectedRange
+from nti.dataserver.contenttypes.selectedrange import SelectedRangeInternalObjectIO
 
 from nti.dataserver.interfaces import IHighlight
 from nti.dataserver.interfaces import IPresentationPropertyHolder
 
+from nti.externalization.interfaces import IClassObjectFactory
+
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 UserContentRoot = UserContentRoot  # BWC top-level import
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(IHighlight)
@@ -36,9 +39,6 @@ class Highlight(SelectedRange):
 
     def __init__(self):
         super(Highlight, self).__init__()
-
-
-from nti.dataserver.contenttypes.selectedrange import SelectedRangeInternalObjectIO
 
 
 @component.adapter(IHighlight)
@@ -56,3 +56,18 @@ class HighlightInternalObjectIO(SelectedRangeInternalObjectIO):
                 props.update(ext_parsed['presentationProperties'])
                 ext_parsed['presentationProperties'] = props
         SelectedRangeInternalObjectIO.updateFromExternalObject(self, ext_parsed, *args, **kwargs)
+
+
+@interface.implementer(IClassObjectFactory)
+class HighlightFactory(object):
+
+    description = title = "Highlight factory"
+
+    def __init__(self, *args):
+        pass
+
+    def __call__(self, *unused_args, **unused_kw):
+        return Highlight()
+
+    def getInterfaces(self):
+        return (IHighlight,)

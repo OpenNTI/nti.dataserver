@@ -222,6 +222,12 @@ class TestHighlight(_BaseSelectedRangeTest):
                     externalizes(has_entries('presentationProperties', 
                                              {'key': 'val', 'key2': 'val2'})))
 
+    @WithMockDS
+    def test_external_legacy_factory(self):
+        ext_obj = {"Class": "Highlight"}
+        factory = find_factory_for(ext_obj)
+        assert_that(factory, is_not(none()))
+
 
 class TestBookmark(_BaseSelectedRangeTest):
 
