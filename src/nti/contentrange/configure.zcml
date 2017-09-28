@@ -25,4 +25,14 @@
 	<ext:registerMimeFactories module=".timeline" />
 	<ext:registerMimeFactories module=".contentrange" />
 
+	<!-- Class factories -->
+	<utility name='TextContext' factory='.externalization.TextContextFactory' />	
+	<utility name='DomContentPointer' factory='.externalization.DomContentPointerFactory' />
+	<utility name='ContentRangeDescription' factory='.externalization.ContentRangeDescriptionFactory' />
+
+	<utility name='TimeContentPointer' factory='.externalization.TimeContentPointerFactory' />
+	<utility name='TimeRangeDescription' factory='.externalization.TimeRangeDescriptionFactory' />
+	<utility name='TranscriptContentPointer' factory='.externalization.TranscriptContentPointerFactory' />
+	<utility name='TranscriptRangeDescription' factory='.externalization.TranscriptRangeDescriptionFactory' />
+
 </configure>

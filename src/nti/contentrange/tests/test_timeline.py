@@ -1,48 +1,88 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
 from hamcrest import assert_that
 
-from nti.contentrange import interfaces, timeline, contentrange
+from nti.testing.matchers import verifiably_provides
+
+from nti.contentrange.contentrange import DomContentPointer
+
+from nti.contentrange.interfaces import ITimeContentPointer
+from nti.contentrange.interfaces import ITimeRangeDescription
+from nti.contentrange.interfaces import ITranscriptContentPointer
+from nti.contentrange.interfaces import ITranscriptRangeDescription
+
+from nti.contentrange.timeline import TimeContentPointer
+from nti.contentrange.timeline import TimeRangeDescription
+from nti.contentrange.timeline import TranscriptContentPointer
+from nti.contentrange.timeline import TranscriptRangeDescription
+
 from nti.externalization.externalization import toExternalObject
+
+from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from nti.contentrange.tests import ConfiguringTestBase
 
-from nti.testing.matchers import verifiably_provides
+from nti.dataserver.tests.mock_dataserver import WithMockDS
+
 
 class TestTimeLineRange(ConfiguringTestBase):
 
-	def verify(self, clazz, iface, kwargs):
-		assert_that(clazz(**kwargs), verifiably_provides(iface))
-		assert_that(update_from_external_object(clazz(), toExternalObject(clazz(**kwargs)), require_updater=True),
-					is_(clazz(**kwargs)))
+    def verify(self, clazz, iface, kwargs):
+        assert_that(clazz(**kwargs), verifiably_provides(iface))
+        assert_that(update_from_external_object(clazz(),
+                                                toExternalObject(clazz(**kwargs)), require_updater=True),
+                    is_(clazz(**kwargs)))
 
-	def test_default_verifies_externalization(self):
-		self.verify(timeline.TimeContentPointer, interfaces.ITimeContentPointer, {'role':"start", 'seconds':1})
+    def test_default_verifies_externalization(self):
+        self.verify(TimeContentPointer, ITimeContentPointer,
+                    {
+                        'role': u"start",
+                        'seconds': 1
+                    })
 
-		self.verify(timeline.TimeRangeDescription, interfaces.ITimeRangeDescription,
-		 		    {'seriesId':"myseries",
-		 			 'start':timeline.TimeContentPointer(role='start', seconds=1),
-			 		 'end':timeline.TimeContentPointer(role='end', seconds=2)})
+        self.verify(TimeRangeDescription, ITimeRangeDescription,
+                    {
+                        'seriesId': u"myseries",
+                        'start': TimeContentPointer(role=u'start', seconds=1),
+                        'end': TimeContentPointer(role=u'end', seconds=2)
+                    })
 
-		self.verify(timeline.TranscriptContentPointer, interfaces.ITranscriptContentPointer,
-		 		    {'role':"start", 'seconds':1,
-		 			 'pointer':contentrange.DomContentPointer(elementId='foo', role='start', elementTagName='p'),
-			 		 'cueid':'myid'})
+        self.verify(TranscriptContentPointer, ITranscriptContentPointer,
+                    {
+                        'role': u"start",
+                        'seconds': 1,
+                        'pointer': DomContentPointer(elementId=u'foo', role=u'start', elementTagName=u'p'),
+                        'cueid': u'myid'
+                    })
 
-		self.verify(timeline.TranscriptRangeDescription, interfaces.ITranscriptRangeDescription,
-		 		    {'seriesId':"myseries",
-					 'start':timeline.TranscriptContentPointer(role="start", seconds=1, cueid='myid',
-															   pointer=contentrange.DomContentPointer(elementId='foo', role='start', elementTagName='p')),
-		 			 'end':timeline.TranscriptContentPointer(role="end", seconds=1, cueid='myid',
-															 pointer=contentrange.DomContentPointer(elementId='foo', role='end', elementTagName='p'))})
+        self.verify(TranscriptRangeDescription, ITranscriptRangeDescription,
+                    {
+                        'seriesId': u"myseries",
+                        'start': TranscriptContentPointer(role=u"start", seconds=1, cueid=u'myid',
+                                                          pointer=DomContentPointer(elementId=u'foo',
+                                                                                    role=u'start',
+                                                                                    elementTagName=u'p')),
+                        'end': TranscriptContentPointer(role=u"end", seconds=1, cueid=u'umyid',
+                                                        pointer=DomContentPointer(elementId=u'foo',
+                                                                                  role=u'end',
+                                                                                  elementTagName=u'p'))})
 
-
+    @WithMockDS
+    def test_external_legacy_factory(self):
+        for name in ('TimeRangeDescription', 'TimeContentPointer',
+                     'TranscriptContentPointer', 'TranscriptRangeDescription'):
+            ext_obj = {"Class": name}
+            factory = find_factory_for(ext_obj)
+            assert_that(factory, is_not(none()))
