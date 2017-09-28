@@ -45,7 +45,7 @@ from zope.intid.interfaces import IIntIds
 
 from zope.lifecycleevent import IObjectModifiedEvent
 
-from nti.containers import containers
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.contentfragments.interfaces import IHTMLContentFragment
 
@@ -175,7 +175,7 @@ class TestNote(DataserverLayerTest):
         assert_that(ext, has_entry('LikeCount', 0))
 
     def _do_test_rate_changes_last_mod(self, like, unlike):
-        container = containers.CheckingLastModifiedBTreeContainer()
+        container = CheckingLastModifiedBTreeContainer()
         n = Note()
         container['Note'] = n
 
