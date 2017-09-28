@@ -153,6 +153,12 @@ class TestRedaction(DataserverLayerTest):
         ext = to_external_object(redaction)
         assert_that(ext, has_entry('sharedWith', set(['joe@ou.edu'])))
 
+    @WithMockDS
+    def test_external_legacy_factory(self):
+        ext_obj = {"Class": "Redaction"}
+        factory = find_factory_for(ext_obj)
+        assert_that(factory, is_not(none()))
+
 
 class _BaseSelectedRangeTest(DataserverLayerTest):
 

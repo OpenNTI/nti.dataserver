@@ -32,6 +32,7 @@
 	<utility name='Highlight' factory='.highlight.HighlightFactory' />
 	
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
+	<utility name='Redaction' factory='.redaction.RedactionFactory' />
 
 	<adapter factory=".canvas.CanvasInternalObjectIO" />
 	<adapter factory=".canvas._CanvasExporter"
