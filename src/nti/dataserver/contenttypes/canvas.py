@@ -6,10 +6,9 @@ Implementations of canvas types.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 import numbers
@@ -36,6 +35,9 @@ from nti.contentfragments.interfaces import IUnicodeContentFragment
 from nti.dataserver.contenttypes.base import _make_getitem
 from nti.dataserver.contenttypes.base import UserContentRoot
 
+from nti.dataserver.contenttypes.color import createColorProperty
+from nti.dataserver.contenttypes.color import updateColorFromExternalValue
+
 from nti.dataserver.interfaces import ICanvas
 from nti.dataserver.interfaces import ICanvasShape
 from nti.dataserver.interfaces import ICanvasURLShape
@@ -46,8 +48,10 @@ from nti.externalization.datastructures import ExternalizableInstanceDict
 
 from nti.externalization.externalization import toExternalObject
 
-from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
+
+from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import IClassObjectFactory
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IInternalObjectExternalizer
 
@@ -61,6 +65,8 @@ from nti.threadable.threadable import Threadable as ThreadableMixin
 
 OID = StandardExternalFields.OID
 NTIID = StandardExternalFields.NTIID
+
+logger = __import__('logging').getLogger(__name__)
 
 
 #####
@@ -197,8 +203,9 @@ class _CanvasExporter(InterfaceObjectIO):
         [kwargs.pop(x, None) for x in ('name', 'decorate')]
         adapter = IInternalObjectExternalizer(context, None)
         if adapter is not None:
-            result = adapter.toExternalObject(decorate=False, name='exporter',
-                                               **kwargs)
+            result = adapter.toExternalObject(decorate=False, 
+                                              name='exporter',
+                                              **kwargs)
         else:
             result = super(_CanvasExporter, self).toExternalObject(decorate=False, 
                                                                    name='exporter',
@@ -280,10 +287,6 @@ class CanvasAffineTransform(object):
 
     def __hash__(self):
         return hash(tuple([getattr(self, x) for x in self.__slots__]))
-
-
-from nti.dataserver.contenttypes.color import createColorProperty
-from nti.dataserver.contenttypes.color import updateColorFromExternalValue
 
 
 @interface.implementer(ICanvasShape, IExternalObject)
@@ -646,3 +649,54 @@ class NonpersistentCanvasPathShape(_CanvasPathShape):
     __external_can_create__ = True
     mime_type = CanvasPathShape.mime_type
     __external_class_name__ = 'CanvasPathShape'
+
+
+@interface.implementer(IClassObjectFactory)
+class CanvasFactoryMixin(object):
+    factory = None
+    provided = None
+    description = title = "Cavas object factory"
+
+    def __init__(self, *args):
+        pass
+
+    def __call__(self, *unused_args, **unused_kw):
+        return self.factory()
+
+    def getInterfaces(self):
+        return (self.provided,)
+
+
+class CanvasFactory(CanvasFactoryMixin):
+    factory = Canvas
+    provided = ICanvas
+
+
+class CanvasShapeFactory(CanvasFactoryMixin):
+    provided = ICanvasShape
+    factory = NonpersistentCanvasShape
+
+
+class CanvasCircleShapeFactory(CanvasFactoryMixin):
+    provided = ICanvasShape
+    factory = NonpersistentCanvasCircleShape
+
+
+class CanvasPolygonShapeFactory(CanvasFactoryMixin):
+    provided = ICanvasShape
+    factory = NonpersistentCanvasPolygonShape
+
+
+class CanvasTextShapeFactory(CanvasFactoryMixin):
+    provided = ICanvasShape
+    factory = NonpersistentCanvasTextShape
+
+
+class CanvasUrlShapeFactory(CanvasFactoryMixin):
+    provided = ICanvasShape
+    factory = NonpersistentCanvasUrlShape
+
+
+class CanvasPathShapeFactory(CanvasFactoryMixin):
+    provided = ICanvasShape
+    factory = NonpersistentCanvasPathShape

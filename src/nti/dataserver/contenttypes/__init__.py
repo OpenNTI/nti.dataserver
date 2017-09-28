@@ -49,8 +49,3 @@ from nti.dataserver.contenttypes.media import EmbeddedAudio
 from nti.dataserver.contenttypes.note import Note
 
 from nti.dataserver.contenttypes.redaction import Redaction
-
-# Support for legacy class names in creation
-from nti.externalization.internalization import register_legacy_search_module
-register_legacy_search_module('nti.dataserver.contenttypes')
-register_legacy_search_module('nti.dataserver.contenttypes.canvas')

@@ -22,24 +22,45 @@
 	<ext:registerMimeFactories module=".highlight" />
 	<ext:registerMimeFactories module=".redaction" />
 
+	<!-- Note -->
 	<adapter factory=".note.NoteInternalObjectIO" />
 	<utility name='Note' factory='.note.NoteFactory' />
+	<utility name='notes' factory='.note.NoteFactory' />
+	<utility name='Notes' factory='.note.NoteFactory' />
 
+	<!-- Bookmark -->
 	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
 	<utility name='Bookmark' factory='.bookmark.BookmarkFactory' />
+	<utility name='bookmarks' factory='.bookmark.BookmarkFactory' />
+	<utility name='Bookmarks' factory='.bookmark.BookmarkFactory' />
 
+	<!-- Highlight -->
 	<adapter factory=".highlight.HighlightInternalObjectIO" />
 	<utility name='Highlight' factory='.highlight.HighlightFactory' />
+	<utility name='highlights' factory='.highlight.HighlightFactory' />
+	<utility name='Highlights' factory='.highlight.HighlightFactory' />
 	
+	<!-- Redaction -->
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
 	<utility name='Redaction' factory='.redaction.RedactionFactory' />
+	<utility name='redactions' factory='.redaction.RedactionFactory' />
+	<utility name='Redactions' factory='.redaction.RedactionFactory' />
 
+	<!-- Canvas -->
 	<adapter factory=".canvas.CanvasInternalObjectIO" />
 	<adapter factory=".canvas._CanvasExporter"
 			 for="nti.dataserver.interfaces.ICanvas"
 			 provides="nti.externalization.interfaces.IInternalObjectExternalizer"
 			 name="exporter" />
-			 
+	<utility name='Canvas' factory='.canvas.CanvasFactory' />
+	<utility name='CanvasShape' factory='.canvas.CanvasShapeFactory' />
+	<utility name='CanvasUrlShape' factory='.canvas.CanvasUrlShapeFactory' />
+	<utility name='CanvasCircle' factory='.canvas.CanvasCircleShapeFactory' />
+	<utility name='CanvasPathShape' factory='.canvas.CanvasPathShapeFactory' />
+	<utility name='CanvasTextShape' factory='.canvas.CanvasTextShapeFactory' />
+	<utility name='CanvasPolygonShape' factory='.canvas.CanvasPolygonShapeFactory' />
+
+	<!-- Media -->
 	<adapter factory=".media.MediaInternalObjectIO" />
 	<adapter factory=".media._MediaExporter"
 			 for="nti.dataserver.interfaces.IMedia"
@@ -49,8 +70,6 @@
 	<!-- Blob file URL storage for canvas images -->
 	<exclude package="zope.file" file="browser.zcml" />
 	<include package="zope.file" />
-
-	<include package=".forums" />
 
 	<!-- Additional/plugin packages -->
 	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
@@ -68,6 +87,9 @@
 
 	<!-- Schema maker -->
 	<utility factory=".jsonschema.NoteJsonSchemaMaker" name="note" />
+
+	<!-- Forums -->
+	<include package=".forums" />
 
 </configure>
 
