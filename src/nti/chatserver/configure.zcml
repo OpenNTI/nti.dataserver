@@ -34,6 +34,9 @@
 
 	<ext:registerMimeFactories module=".meeting" />
 
+	<utility name='MessageInfo'
+			 factory='.messageinfo.MessageInfoFactory' />
+			 
 	<subscriber handler="._meeting_post_policy.meeting_should_change_moderation_state" />
 
 	<!-- Socket event handling -->

@@ -43,8 +43,9 @@ from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.externalization import to_external_object
 
+from nti.externalization.interfaces import IClassObjectFactory 
+
 from nti.externalization.internalization import update_from_external_object
-from nti.externalization.internalization import register_legacy_search_module
 
 from nti.externalization.proxy import removeAllProxies
 
@@ -257,4 +258,16 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,
             msg.recipients = PersistentList(msg.recipients)
 
 
-register_legacy_search_module('nti.chatserver.messageinfo')
+@interface.implementer(IClassObjectFactory)
+class MessageInfoFactory(object):
+    
+    description = title = "MessageInfo factory"
+
+    def __init__(self, *args):
+        pass
+
+    def __call__(self, *unused_args, **unused_kw):
+        return MessageInfo()
+
+    def getInterfaces(self):
+        return (IMessageInfo,)

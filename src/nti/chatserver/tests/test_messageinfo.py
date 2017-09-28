@@ -18,11 +18,13 @@ from nti.testing.matchers import validly_provides as verifiably_provides
 from nti.chatserver.interfaces import IMessageInfo
 
 from nti.chatserver.messageinfo import MessageInfo
+from nti.chatserver.messageinfo import MessageInfoFactory
 
 from nti.dataserver.contenttypes import Canvas
 
 from nti.externalization.externalization import to_external_object
 
+from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from nti.dataserver.interfaces import IModeledContent
@@ -63,7 +65,8 @@ class TestMessageInfo(DataserverLayerTest):
 							    'shapeList', [], 
 							    'CreatedTime', c.createdTime))
 
-        m = MessageInfo()
+        ext.pop('Class', None)
+        m = find_factory_for(ext)()
         update_from_external_object(m, ext, context=self.ds)
         assert_that(m.Body[0], is_('foo'))
         assert_that(m.Body[1], is_(Canvas))
@@ -100,3 +103,13 @@ class TestMessageInfo(DataserverLayerTest):
         assert_that(m.sharedWith, is_(data))
         # Now update and it doesn't blow up
         update_from_external_object(m, {})
+        
+    @WithMockDSTrans
+    def test_class_factory(self):
+        ext_obj = {'Class': 'MessageInfo', 'Creator': u'foo', 'body': [u'baz']}
+        factory = find_factory_for(ext_obj)
+        assert_that(factory, is_(MessageInfoFactory))
+        m = factory()
+        update_from_external_object(m, ext_obj, context=self.ds)
+        assert_that(m.Body[0], is_('baz'))
+        assert_that(m.Creator, is_('foo'))
