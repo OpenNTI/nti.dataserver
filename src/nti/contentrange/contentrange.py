@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
@@ -21,6 +20,8 @@ from nti.contentrange.interfaces import IDomContentRangeDescription
 from nti.externalization.representation import WithRepr
 
 from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @WithRepr
@@ -112,7 +113,7 @@ class ElementDomContentPointer(DomContentPointer):
 
     def __eq__(self, other):
         try:
-            return self is other or (     self.elementId == other.elementId
+            return self is other or (    self.elementId == other.elementId
                                      and self.elementTagName == other.elementTagName
                                      and self.role == other.role)
         except AttributeError:
