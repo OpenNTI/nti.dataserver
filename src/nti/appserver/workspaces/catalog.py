@@ -16,11 +16,17 @@ from zope.cachedescriptors.property import Lazy
 
 from zope.container.contained import Contained
 
+from zope.traversing.interfaces import IPathAdapter
+
+from pyramid.interfaces import IRequest
+
 from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import ICatalogWorkspace
 from nti.appserver.workspaces.interfaces import ICatalogCollection
 from nti.appserver.workspaces.interfaces import IFeaturedCatalogCollectionProvider
 from nti.appserver.workspaces.interfaces import IPurchasedCatalogCollectionProvider
+
+from nti.dataserver.interfaces import IUser
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -96,6 +102,14 @@ class FeaturedCatalogCollection(Contained):
         return result
 
 
+@interface.implementer(IPathAdapter)
+@component.adapter(IUser, IRequest)
+def CatalogPathAdapter(context, unused_request):
+    service = IUserService(context)
+    workspace = ICatalogWorkspace(service)
+    return workspace
+
+
 @interface.implementer(ICatalogWorkspace)
 class CatalogWorkspace(Contained):
     """
@@ -124,9 +138,21 @@ class CatalogWorkspace(Contained):
             result.append(catalog_collection)
         return sorted(result, key=lambda x: x.name)
 
+    def __getitem__(self, key):
+        """
+        Make us traversable to collections.
+        """
+        for i in self.collections:
+            if i.__name__ == key:
+                return i
+        raise KeyError(key)
 
-@interface.implementer(ICatalogWorkspace)
+    def __len__(self):
+        return len(self.collections)
+
+
 @component.adapter(IUserService)
+@interface.implementer(ICatalogWorkspace)
 def _catalog_workspace(user_service):
     catalog_workspace = CatalogWorkspace(user_service.user)
     return catalog_workspace

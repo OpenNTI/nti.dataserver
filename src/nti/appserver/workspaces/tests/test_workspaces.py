@@ -330,7 +330,7 @@ class TestUserService(ApplicationLayerTest):
         catalog_ws = next(x for x in workspaces if x['Title'] == 'Catalog')
         assert_that(catalog_ws, not_none())
         catalog_collections = catalog_ws['Items']
-        assert_that(catalog_collections, has_length(2))
+        assert_that(catalog_collections, greater_than_or_equal_to(2))
 
         # Can't check links here, that comes from application configuration.
         # See test_usersearch.
