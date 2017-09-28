@@ -10,6 +10,7 @@ from __future__ import absolute_import
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import is_not
 from hamcrest import contains
 from hamcrest import has_entry
 from hamcrest import assert_that
@@ -50,10 +51,13 @@ from nti.dataserver.interfaces import IRedaction
 from nti.dataserver.users.users import User
 
 from nti.externalization.externalization import to_external_object
+
+from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from nti.dataserver.tests import mock_dataserver
 
+from nti.dataserver.tests.mock_dataserver import WithMockDS
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
 from nti.externalization.tests import externalizes
@@ -220,4 +224,11 @@ class TestHighlight(_BaseSelectedRangeTest):
 
 
 class TestBookmark(_BaseSelectedRangeTest):
+
     CONSTRUCTOR = staticmethod(Bookmark)
+    
+    @WithMockDS
+    def test_external_legacy_factory(self):
+        ext_obj = {"Class": "Bookmark"}
+        factory = find_factory_for(ext_obj)
+        assert_that(factory, is_not(none()))

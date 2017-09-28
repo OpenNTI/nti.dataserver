@@ -54,6 +54,5 @@ from nti.dataserver.contenttypes.redaction import Redaction
 from nti.externalization.internalization import register_legacy_search_module
 register_legacy_search_module('nti.dataserver.contenttypes')
 register_legacy_search_module('nti.dataserver.contenttypes.canvas')
-register_legacy_search_module('nti.dataserver.contenttypes.bookmark')
 register_legacy_search_module('nti.dataserver.contenttypes.highlight')
 register_legacy_search_module('nti.dataserver.contenttypes.redaction')

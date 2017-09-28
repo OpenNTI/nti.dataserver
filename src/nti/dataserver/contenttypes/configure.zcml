@@ -26,6 +26,8 @@
 	<utility name='Note' factory='.note.NoteFactory' />
 
 	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
+	<utility name='Bookmark' factory='.bookmark.BookmarkFactory' />
+
 	<adapter factory=".highlight.HighlightInternalObjectIO" />
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
 
