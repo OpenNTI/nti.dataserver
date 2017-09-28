@@ -655,7 +655,7 @@ class NonpersistentCanvasPathShape(_CanvasPathShape):
 class CanvasFactoryMixin(object):
     factory = None
     provided = None
-    description = title = "Cavas object factory"
+    description = title = "Canvas object factory"
 
     def __init__(self, *args):
         pass
