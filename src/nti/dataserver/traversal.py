@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 
@@ -15,6 +14,8 @@ from nti.dataserver.interfaces import ILink
 from nti.dataserver.interfaces import IDataserver
 
 from nti.traversal.traversal import find_nearest_site as nti_find_nearest_site
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def find_nearest_site(context):
@@ -25,7 +26,6 @@ def find_nearest_site(context):
             the target as well.
     :return: The nearest site. Possibly the root site.
     """
-
     root = component.getUtility(IDataserver).root
     result = nti_find_nearest_site(context, root, ignore=ILink)
     return result
