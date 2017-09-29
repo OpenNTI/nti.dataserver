@@ -6,14 +6,14 @@ Implements vocabularies that limit what a user can create.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
 
+from zope.componentvocabulary.vocabulary import UtilityTerm
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
 from zope.schema.interfaces import IVocabularyFactory
@@ -21,11 +21,15 @@ from zope.schema.interfaces import IVocabularyFactory
 from nti.dataserver.interfaces import ICreatableObjectFilter
 
 from nti.externalization.interfaces import IMimeObjectFactory
+from nti.externalization.interfaces import IClassObjectFactory
 
+logger = __import__('logging').getLogger(__name__)
 
 # TODO: zope.schema.vocabulary provides a vocab registry
 # Should we make use of that? Especially since these registries
 # can be ZCA utilities
+
+
 class CreatableMimeObjectVocabulary(UtilityVocabulary):
     """
     A vocabulary that reports the names (MIME types) of installed
@@ -38,6 +42,10 @@ class CreatableMimeObjectVocabulary(UtilityVocabulary):
         # We want all the mime factories visible from our current site, and
         # to only use our context to exclude items.
         super(CreatableMimeObjectVocabulary, self).__init__(None)
+        for name, util in component.getUtilitiesFor(IClassObjectFactory):
+            if name not in self._terms:
+                value = self.nameOnly and name or util
+                self._terms[name] = UtilityTerm(value, name)
         for subs in component.subscribers((context,), ICreatableObjectFilter):
             self._terms = subs.filter_creatable_objects(self._terms)
 _CreatableMimeObjectVocabulary = CreatableMimeObjectVocabulary
