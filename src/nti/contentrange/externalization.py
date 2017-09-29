@@ -24,19 +24,9 @@ from nti.contentrange.interfaces import IContentRangeDescription
 from nti.contentrange.interfaces import ITranscriptContentPointer
 from nti.contentrange.interfaces import ITranscriptRangeDescription
 
-from nti.contentrange.contentrange import TextContext
-from nti.contentrange.contentrange import DomContentPointer
-from nti.contentrange.contentrange import ContentRangeDescription
-
-from nti.contentrange.timeline import TimeContentPointer
-from nti.contentrange.timeline import TimeRangeDescription
-from nti.contentrange.timeline import TranscriptContentPointer
-from nti.contentrange.timeline import TranscriptRangeDescription
-
 from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.interfaces import IInternalObjectIO
-from nti.externalization.interfaces import IClassObjectFactory
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -88,54 +78,3 @@ class TranscriptContentPointerExternal(InterfaceObjectIO):
 class TranscriptRangeDescriptionExternal(InterfaceObjectIO):
     _ext_iface_upper_bound = ITranscriptRangeDescription
     __external_use_minimal_base__ = True
-
-
-@interface.implementer(IClassObjectFactory)
-class ContentRangeFactoryMixin(object):
-    factory = None
-    provided = None
-    description = title = "Content range object factory"
-
-    def __init__(self, *args):
-        pass
-
-    def __call__(self, *unused_args, **unused_kw):
-        return self.factory()
-
-    def getInterfaces(self):
-        return (self.provided,)
-
-
-class DomContentPointerFactory(ContentRangeFactoryMixin):
-    factory = DomContentPointer
-    provided = IDomContentPointer
-
-
-class TextContextFactory(ContentRangeFactoryMixin):
-    factory = TextContext
-    provided = ITextContext
-
-
-class ContentRangeDescriptionFactory(ContentRangeFactoryMixin):
-    factory = ContentRangeDescription
-    provided = IContentRangeDescription
-
-
-class TimeContentPointerFactory(ContentRangeFactoryMixin):
-    factory = TimeContentPointer
-    provided = ITimeContentPointer
-
-
-class TimeRangeDescriptionFactory(ContentRangeFactoryMixin):
-    factory = TimeRangeDescription
-    provided = ITimeRangeDescription
-
-
-class TranscriptContentPointerFactory(ContentRangeFactoryMixin):
-    factory = TranscriptContentPointer
-    provided = ITranscriptContentPointer
-   
-
-class TranscriptRangeDescriptionFactory(ContentRangeFactoryMixin):
-    factory = TranscriptRangeDescription
-    provided = ITranscriptRangeDescription
