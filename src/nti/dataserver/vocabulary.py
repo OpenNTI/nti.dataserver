@@ -23,6 +23,8 @@ from nti.dataserver.interfaces import ICreatableObjectFilter
 from nti.externalization.interfaces import IMimeObjectFactory
 from nti.externalization.interfaces import IClassObjectFactory
 
+from nti.property.property import LazyOnClass
+
 logger = __import__('logging').getLogger(__name__)
 
 # TODO: zope.schema.vocabulary provides a vocab registry
@@ -38,14 +40,23 @@ class CreatableMimeObjectVocabulary(UtilityVocabulary):
     nameOnly = False
     interface = IMimeObjectFactory
 
+    @LazyOnClass
+    def legacy_terms(self):
+        result = dict()
+        for name, util in component.getUtilitiesFor(IClassObjectFactory):
+            result[name] = UtilityTerm(util, name)
+        return result
+
     def __init__(self, context):
         # We want all the mime factories visible from our current site, and
         # to only use our context to exclude items.
         super(CreatableMimeObjectVocabulary, self).__init__(None)
-        for name, util in component.getUtilitiesFor(IClassObjectFactory):
+        for name, term in self.legacy_terms.values():
             if name not in self._terms:
-                value = self.nameOnly and name or util
-                self._terms[name] = UtilityTerm(value, name)
+                value = term
+                if self.nameOnly:
+                    value = UtilityTerm(name, name)
+                self._terms[name] = value
         for subs in component.subscribers((context,), ICreatableObjectFilter):
             self._terms = subs.filter_creatable_objects(self._terms)
 _CreatableMimeObjectVocabulary = CreatableMimeObjectVocabulary
