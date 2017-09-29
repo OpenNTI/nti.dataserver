@@ -6,13 +6,13 @@ Implements vocabularies that limit what a user can create.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
+from zope import deferredimport
 
 from zope.schema.interfaces import IVocabularyFactory
 
@@ -22,16 +22,17 @@ from pyramid.threadlocal import get_current_request
 
 from nti.appserver import MessageFactory as _
 
-from nti.dataserver.users import User
-
-from nti.externalization.internalization import default_externalized_object_factory_finder
+from nti.dataserver.users.users import User
 
 from nti.externalization.interfaces import IExternalizedObjectFactoryFinder
 
+from nti.externalization.internalization import default_externalized_object_factory_finder
 
-import zope.deferredimport
-zope.deferredimport.initialize()
-zope.deferredimport.deprecatedFrom(
+logger = __import__('logging').getLogger(__name__)
+
+
+deferredimport.initialize()
+deferredimport.deprecatedFrom(
     "Moved to nti.dataserver.vocabulary",
     "nti.dataserver.vocabulary",
     "_CreatableMimeObjectVocabulary",
@@ -43,7 +44,6 @@ zope.deferredimport.deprecatedFrom(
 @interface.implementer(IExternalizedObjectFactoryFinder)
 def _user_sensitive_factory_finder(ext_object):
     vocabulary = None
-
     # TODO: This process is probably horribly expensive and should be cached
     # install zope.testing hook to clean up the cache
     request = get_current_request()
@@ -54,8 +54,8 @@ def _user_sensitive_factory_finder(ext_object):
             # Some test cases call us with bad header values, causing
             # repoze.who.api.request_classifier and paste.httpheaders to incorrectly
             # blow up
-            logger.debug(
-                "Failed to get authenticated userid. If this is not a test case, this is a problem")
+            logger.debug("Failed to get authenticated userid. If this is not a "
+                         "test case, this is a problem")
             auth_user_name = None
 
         if auth_user_name:
@@ -77,11 +77,10 @@ def _user_sensitive_factory_finder(ext_object):
         # not found by Class at this time.
         msg = _("Cannot create that type of object:") + str(factory)
         raise hexc.HTTPForbidden(msg)
-
     return factory
 _user_sensitive_factory_finder.find_factory = _user_sensitive_factory_finder
 
 
 @interface.implementer(IExternalizedObjectFactoryFinder)
-def _user_sensitive_factory_finder_factory(externalized_object):
+def _user_sensitive_factory_finder_factory(unused_ext_obj):
     return _user_sensitive_factory_finder
