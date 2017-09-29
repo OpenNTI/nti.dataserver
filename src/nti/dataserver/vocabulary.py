@@ -51,7 +51,7 @@ class CreatableMimeObjectVocabulary(UtilityVocabulary):
         # We want all the mime factories visible from our current site, and
         # to only use our context to exclude items.
         super(CreatableMimeObjectVocabulary, self).__init__(None)
-        for name, term in self.legacy_terms.values():
+        for name, term in self.legacy_terms.items():
             if name not in self._terms:
                 value = term
                 if self.nameOnly:
