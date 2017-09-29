@@ -26,13 +26,13 @@
 	<ext:registerMimeFactories module=".contentrange" />
 
 	<!-- Class factories -->
-	<ext:classObjectFactory factory="contentrange.TextContext" />
-	<ext:classObjectFactory factory="contentrange.DomContentPointer" />
-	<ext:classObjectFactory factory="contentrange.ContentRangeDescription" />
+	<ext:classObjectFactory factory=".contentrange.TextContext" />
+	<ext:classObjectFactory factory=".contentrange.DomContentPointer" />
+	<ext:classObjectFactory factory=".contentrange.ContentRangeDescription" />
 
-	<ext:classObjectFactory factory="timeline.TimeContentPointer" />
-	<ext:classObjectFactory factory="timeline.TimeRangeDescription" />
-	<ext:classObjectFactory factory="timeline.TranscriptContentPointer" />
-	<ext:classObjectFactory factory="timeline.TranscriptRangeDescription" />
+	<ext:classObjectFactory factory=".timeline.TimeContentPointer" />
+	<ext:classObjectFactory factory=".timeline.TimeRangeDescription" />
+	<ext:classObjectFactory factory=".timeline.TranscriptContentPointer" />
+	<ext:classObjectFactory factory=".timeline.TranscriptRangeDescription" />
 
 </configure>
