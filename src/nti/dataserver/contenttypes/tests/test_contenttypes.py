@@ -244,3 +244,13 @@ class TestBookmark(_BaseSelectedRangeTest):
         ext_obj = {"Class": "Bookmark"}
         factory = find_factory_for(ext_obj)
         assert_that(factory, is_not(none()))
+
+
+class TestMedia(DataserverLayerTest):
+   
+    @WithMockDS
+    def test_external_legacy_factory(self):
+        for name in ('EmbeddedAudio', 'EmbeddedVideo'):
+            ext_obj = {"Class": name}
+            factory = find_factory_for(ext_obj)
+            assert_that(factory, is_not(none()))
