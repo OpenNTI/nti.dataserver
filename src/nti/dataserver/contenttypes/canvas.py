@@ -34,6 +34,7 @@ from nti.contentfragments.interfaces import IUnicodeContentFragment
 
 from nti.dataserver.contenttypes.base import _make_getitem
 from nti.dataserver.contenttypes.base import UserContentRoot
+from nti.dataserver.contenttypes.base import UserContentRootInternalObjectIO
 
 from nti.dataserver.contenttypes.color import createColorProperty
 from nti.dataserver.contenttypes.color import updateColorFromExternalValue
@@ -51,15 +52,22 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.externalization.interfaces import IExternalObject
-from nti.externalization.interfaces import IClassObjectFactory
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IInternalObjectExternalizer
+
+from nti.links.links import Link
 
 from nti.mimetype import mimetype
 
 from nti.mimetype.externalization import decorateMimeType
 
 from nti.ntiids.oids import to_external_ntiid_oid
+
+from nti.property.property import alias
+
+from nti.property.urlproperty import UrlProperty
+
+from nti.threadable.externalization import ThreadableExternalizableMixin
 
 from nti.threadable.threadable import Threadable as ThreadableMixin
 
@@ -76,6 +84,8 @@ logger = __import__('logging').getLogger(__name__)
 
 @interface.implementer(ICanvas, IContained)
 class Canvas(ThreadableMixin, UserContentRoot):
+
+    __external_class_name__ = 'Canvas'
 
     # TODO: We're not trying to resolve any incoming external
     # things. Figure out how we want to do incremental changes
@@ -124,11 +134,6 @@ class Canvas(ThreadableMixin, UserContentRoot):
         Canvas objects are always true, even when containing no shapes.
         """
         return True
-
-
-from nti.dataserver.contenttypes.base import UserContentRootInternalObjectIO
-
-from nti.threadable.externalization import ThreadableExternalizableMixin
 
 
 @component.adapter(ICanvas)
@@ -443,13 +448,6 @@ class _CanvasTextShape(_CanvasShape):
 											 name='text')
 
 
-from nti.links.links import Link
-
-from nti.property.property import alias
-
-from nti.property.urlproperty import UrlProperty
-
-
 @interface.implementer(ICanvasURLShape)
 class _CanvasUrlShape(_CanvasShape):
 
@@ -649,54 +647,3 @@ class NonpersistentCanvasPathShape(_CanvasPathShape):
     __external_can_create__ = True
     mime_type = CanvasPathShape.mime_type
     __external_class_name__ = 'CanvasPathShape'
-
-
-@interface.implementer(IClassObjectFactory)
-class CanvasFactoryMixin(object):
-    factory = None
-    provided = None
-    description = title = "Canvas object factory"
-
-    def __init__(self, *args):
-        pass
-
-    def __call__(self, *unused_args, **unused_kw):
-        return self.factory()
-
-    def getInterfaces(self):
-        return (self.provided,)
-
-
-class CanvasFactory(CanvasFactoryMixin):
-    factory = Canvas
-    provided = ICanvas
-
-
-class CanvasShapeFactory(CanvasFactoryMixin):
-    provided = ICanvasShape
-    factory = NonpersistentCanvasShape
-
-
-class CanvasCircleShapeFactory(CanvasFactoryMixin):
-    provided = ICanvasShape
-    factory = NonpersistentCanvasCircleShape
-
-
-class CanvasPolygonShapeFactory(CanvasFactoryMixin):
-    provided = ICanvasShape
-    factory = NonpersistentCanvasPolygonShape
-
-
-class CanvasTextShapeFactory(CanvasFactoryMixin):
-    provided = ICanvasShape
-    factory = NonpersistentCanvasTextShape
-
-
-class CanvasUrlShapeFactory(CanvasFactoryMixin):
-    provided = ICanvasShape
-    factory = NonpersistentCanvasUrlShape
-
-
-class CanvasPathShapeFactory(CanvasFactoryMixin):
-    provided = ICanvasShape
-    factory = NonpersistentCanvasPathShape

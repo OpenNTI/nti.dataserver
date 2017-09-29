@@ -20,8 +20,6 @@ from nti.dataserver.contenttypes.selectedrange import SelectedRangeInternalObjec
 from nti.dataserver.interfaces import IHighlight
 from nti.dataserver.interfaces import IPresentationPropertyHolder
 
-from nti.externalization.interfaces import IClassObjectFactory
-
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 UserContentRoot = UserContentRoot  # BWC top-level import
@@ -56,18 +54,3 @@ class HighlightInternalObjectIO(SelectedRangeInternalObjectIO):
                 props.update(ext_parsed['presentationProperties'])
                 ext_parsed['presentationProperties'] = props
         SelectedRangeInternalObjectIO.updateFromExternalObject(self, ext_parsed, *args, **kwargs)
-
-
-@interface.implementer(IClassObjectFactory)
-class HighlightFactory(object):
-
-    description = title = "Highlight factory"
-
-    def __init__(self, *args):
-        pass
-
-    def __call__(self, *unused_args, **unused_kw):
-        return Highlight()
-
-    def getInterfaces(self):
-        return (IHighlight,)

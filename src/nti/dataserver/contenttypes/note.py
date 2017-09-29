@@ -36,8 +36,6 @@ from nti.dataserver.interfaces import ILikeable
 from nti.dataserver.interfaces import IFlaggable
 from nti.dataserver.interfaces import IFavoritable
 
-from nti.externalization.interfaces import IClassObjectFactory 
-
 from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids.ntiids import find_object_with_ntiid
@@ -177,18 +175,3 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin, HighlightInternalObjec
                 val = getattr(note.inReplyTo, copy, getattr(note, copy, None))
                 if val is not None:
                     setattr(note, copy, val)
-
-
-@interface.implementer(IClassObjectFactory)
-class NoteFactory(object):
-    
-    description = title = "Note factory"
-
-    def __init__(self, *args):
-        pass
-
-    def __call__(self, *unused_args, **unused_kw):
-        return Note()
-
-    def getInterfaces(self):
-        return (INote,)

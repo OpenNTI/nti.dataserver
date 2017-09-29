@@ -24,27 +24,27 @@
 
 	<!-- Note -->
 	<adapter factory=".note.NoteInternalObjectIO" />
-	<utility name='Note' factory='.note.NoteFactory' />
-	<utility name='notes' factory='.note.NoteFactory' />
-	<utility name='Notes' factory='.note.NoteFactory' />
+	<ext:classObjectFactory factory=".note.Note" />
+	<ext:classObjectFactory factory=".note.Note" name="notes" />
+	<ext:classObjectFactory factory=".note.Note" name="Notes" />
 
 	<!-- Bookmark -->
 	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
-	<utility name='Bookmark' factory='.bookmark.BookmarkFactory' />
-	<utility name='bookmarks' factory='.bookmark.BookmarkFactory' />
-	<utility name='Bookmarks' factory='.bookmark.BookmarkFactory' />
+	<ext:classObjectFactory factory=".bookmark.Bookmark" />
+	<ext:classObjectFactory factory=".bookmark.Bookmark" name="bookmarks" />
+	<ext:classObjectFactory factory=".bookmark.Bookmark" name="Bookmarks" />
 
 	<!-- Highlight -->
 	<adapter factory=".highlight.HighlightInternalObjectIO" />
-	<utility name='Highlight' factory='.highlight.HighlightFactory' />
-	<utility name='highlights' factory='.highlight.HighlightFactory' />
-	<utility name='Highlights' factory='.highlight.HighlightFactory' />
-	
+	<ext:classObjectFactory factory=".highlight.Highlight" />
+	<ext:classObjectFactory factory=".highlight.Highlight" name="highlights" />
+	<ext:classObjectFactory factory=".highlight.Highlight" name="Highlights" />
+
 	<!-- Redaction -->
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
-	<utility name='Redaction' factory='.redaction.RedactionFactory' />
-	<utility name='redactions' factory='.redaction.RedactionFactory' />
-	<utility name='Redactions' factory='.redaction.RedactionFactory' />
+	<ext:classObjectFactory factory=".redaction.Redaction" />
+	<ext:classObjectFactory factory=".redaction.Redaction" name="redactions" />
+	<ext:classObjectFactory factory=".redaction.Redaction" name="Redactions" />
 
 	<!-- Canvas -->
 	<adapter factory=".canvas.CanvasInternalObjectIO" />
@@ -52,13 +52,14 @@
 			 for="nti.dataserver.interfaces.ICanvas"
 			 provides="nti.externalization.interfaces.IInternalObjectExternalizer"
 			 name="exporter" />
-	<utility name='Canvas' factory='.canvas.CanvasFactory' />
-	<utility name='CanvasShape' factory='.canvas.CanvasShapeFactory' />
-	<utility name='CanvasUrlShape' factory='.canvas.CanvasUrlShapeFactory' />
-	<utility name='CanvasCircle' factory='.canvas.CanvasCircleShapeFactory' />
-	<utility name='CanvasPathShape' factory='.canvas.CanvasPathShapeFactory' />
-	<utility name='CanvasTextShape' factory='.canvas.CanvasTextShapeFactory' />
-	<utility name='CanvasPolygonShape' factory='.canvas.CanvasPolygonShapeFactory' />
+	<ext:classObjectFactory factory=".canvas.Canvas" />
+	<ext:classObjectFactory factory=".canvas.NonpersistentCanvasShape" name="CanvasShape" />
+	<ext:classObjectFactory factory=".canvas.NonpersistentCanvasUrlShape" name="CanvasUrlShape" />
+	<ext:classObjectFactory factory=".canvas.NonpersistentCanvasCircleShape" name="CanvasCircle" />
+	<ext:classObjectFactory factory=".canvas.NonpersistentCanvasCircleShape" name="CanvasCircleShape" />
+	<ext:classObjectFactory factory=".canvas.NonpersistentCanvasPolygonShape" name="CanvasPolygonShape" />
+	<ext:classObjectFactory factory=".canvas.NonpersistentCanvasPathShape" name="CanvasPathShape" />
+	<ext:classObjectFactory factory=".canvas.NonpersistentCanvasTextShape" name="CanvasTextShape" />
 
 	<!-- Media -->
 	<adapter factory=".media.MediaInternalObjectIO" />

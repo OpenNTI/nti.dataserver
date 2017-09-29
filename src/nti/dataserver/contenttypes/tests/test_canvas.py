@@ -195,10 +195,15 @@ class TestCanvas(DataserverLayerTest):
     @WithMockDS
     def test_external_legacy_factory(self):
         for name in ('Canvas', 'CanvasShape', 'CanvasUrlShape', 'CanvasCircle',
-                      'CanvasPathShape', 'CanvasTextShape', 'CanvasPolygonShape'):
+                     'CanvasPathShape', 'CanvasTextShape', 'CanvasPolygonShape',
+                     'CanvasCircleShape'):
             ext_obj = {"Class": name}
             factory = find_factory_for(ext_obj)
             assert_that(factory, is_not(none()))
+            if name != 'CanvasCircle':
+                value = factory()
+                assert_that(value, 
+                            has_property('__external_class_name__', is_(name)))
         
     @WithMockDS
     def test_canvas_with_urls_updated_keeps_same_objects(self):
