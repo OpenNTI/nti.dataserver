@@ -103,6 +103,12 @@ ITEMS = StandardExternalFields.ITEMS
 
 logger = __import__('logging').getLogger(__name__)
 
+#: The :class:``ICatalogCollection`` popular items view.
+VIEW_CATALOG_POPULAR = 'Popular'
+
+#: The :class:``ICatalogCollection`` featured items view.
+VIEW_CATALOG_FEATURED = 'Featured'
+
 
 def _find_name(obj):
     return getattr(obj, 'name', None) \

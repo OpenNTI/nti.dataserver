@@ -116,7 +116,7 @@ class ContainerCollectionDetailExternalizer(object):
         # Since these things are useful to have at the top level, we do
         # that as well
         kwargs.pop('name', None)
-        summary_collection = toExternalObject(collection, 
+        summary_collection = toExternalObject(collection,
                                               name='summary',
                                               **kwargs)
         # Copy the basic attributes
