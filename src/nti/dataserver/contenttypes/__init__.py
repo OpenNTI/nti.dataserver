@@ -21,6 +21,8 @@ from __future__ import absolute_import
 # from .threadable import ThreadableExternalizableMixin
 # from .base import UserContentRoot as _UserContentRoot
 
+import zope.deferredimport
+
 from nti.dataserver.contenttypes.bookmark import Bookmark
 
 from nti.dataserver.contenttypes.canvas import Canvas
@@ -41,11 +43,14 @@ from nti.dataserver.contenttypes.canvas import NonpersistentCanvasPolygonShape
 
 from nti.dataserver.contenttypes.highlight import Highlight
 
-from nti.dataserver.contenttypes.media import Media
-from nti.dataserver.contenttypes.media import EmbeddedMedia
-from nti.dataserver.contenttypes.media import EmbeddedVideo
-from nti.dataserver.contenttypes.media import EmbeddedAudio
-
 from nti.dataserver.contenttypes.note import Note
 
 from nti.dataserver.contenttypes.redaction import Redaction
+
+zope.deferredimport.initialize()
+zope.deferredimport.deprecated(
+    "Moved to nti.dataserver.contenttypes.media",
+    Media="nti.dataserver.contenttypes.media:Media",
+    EmbeddedMedia="nti.dataserver.contenttypes.media:EmbeddedMedia",
+    EmbeddedAudio="nti.dataserver.contenttypes.media:EmbeddedAudio",
+    EmbeddedVideo="nti.dataserver.contenttypes.media:EmbeddedVideo")
