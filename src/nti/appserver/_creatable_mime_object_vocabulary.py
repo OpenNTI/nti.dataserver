@@ -24,6 +24,7 @@ from nti.appserver import MessageFactory as _
 
 from nti.dataserver.users.users import User
 
+from nti.externalization.interfaces import IClassObjectFactory
 from nti.externalization.interfaces import IExternalizedObjectFactoryFinder
 
 from nti.externalization.internalization import default_externalized_object_factory_finder
@@ -69,7 +70,9 @@ def _user_sensitive_factory_finder(ext_object):
     if vocabulary is None or factory is None:
         return factory
 
-    if factory not in vocabulary and component.IFactory.providedBy(factory):
+    if      factory not in vocabulary \
+        and component.IFactory.providedBy(factory) \
+        and not IClassObjectFactory.providedBy(factory):
         # If it's not in the vocabulary, don't let it be created.
         # We make a pass for legacy 'Class' based things when a MimeType was not
         # sent in (so we found the Class object, not the MimeType).
