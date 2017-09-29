@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Base functionality.
-
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
+import six
 import collections
 
 from zope import interface
@@ -24,23 +22,34 @@ from nti.dataserver.interfaces import IWritableShared
 from nti.dataserver.interfaces import IUsernameIterable
 from nti.dataserver.interfaces import IObjectSharingModifiedEvent
 
-from nti.dataserver.users import User
-from nti.dataserver.users import Entity
-
 from nti.dataserver.sharing import ShareableMixin
+
+from nti.dataserver.users.entity import Entity
+
+from nti.dataserver.users.users import User
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
+from nti.externalization.datastructures import InterfaceObjectIO
+
 from nti.externalization.externalization import to_external_object
+
+from nti.externalization.interfaces import IInternalObjectIO
+
 from nti.externalization.internalization import update_from_external_object
 
-from nti.mimetype import mimetype
+from nti.externalization.proxy import removeAllProxies
 
-from nti.ntiids import ntiids
+from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
+
+from nti.ntiids.ntiids import is_valid_ntiid_string
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.property.property import alias
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _get_entity(username, dataserver=None):
@@ -48,6 +57,7 @@ def _get_entity(username, dataserver=None):
                              _namespace=User._ds_namespace)
 
 
+@six.add_metaclass(ModeledContentTypeAwareRegistryMetaclass)
 @interface.implementer(IModeledContent)
 class UserContentRoot(ShareableMixin,
                       ZContainedMixin,
@@ -60,7 +70,6 @@ class UserContentRoot(ShareableMixin,
     Subclasses must arrange for there to be an implementation of ``toExternalDictionary``.
 
     """
-    __metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
     #: It is allowed to create instances of these classes from
     #: external data.
@@ -107,13 +116,6 @@ def _make_getitem(attr_name):
     return __getitem__
 
 
-from nti.externalization.datastructures import InterfaceObjectIO
-
-from nti.externalization.interfaces import IInternalObjectIO
-
-from nti.externalization.proxy import removeAllProxies
-
-
 class UserContentRootInternalObjectIOMixin(object):
 
     validate_after_update = True
@@ -151,12 +153,11 @@ class UserContentRootInternalObjectIOMixin(object):
                 # the NTIID of the list...once we apply security here
                 target = self.context.creator.getFriendsList(s)
 
-            if (target is s or target is None) and ntiids.is_valid_ntiid_string(s):
+            if (target is s or target is None) and is_valid_ntiid_string(s):
                 # Any thing else that is a username iterable,
                 # in which we are contained (e.g., a class section we are enrolled in)
                 # This last clause is our nod to security; need to be firmer
-
-                obj = ntiids.find_object_with_ntiid(s)
+                obj = find_object_with_ntiid(s)
                 iterable = IUsernameIterable(obj, None)
                 if iterable is not None:
                     ents = set()
