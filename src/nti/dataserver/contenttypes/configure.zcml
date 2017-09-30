@@ -53,6 +53,7 @@
 			 provides="nti.externalization.interfaces.IInternalObjectExternalizer"
 			 name="exporter" />
 	<ext:classObjectFactory factory=".canvas.Canvas" />
+	<ext:classObjectFactory factory=".canvas.CanvasAffineTransform" />
 	<ext:classObjectFactory factory=".canvas.NonpersistentCanvasShape" name="CanvasShape" />
 	<ext:classObjectFactory factory=".canvas.NonpersistentCanvasUrlShape" name="CanvasUrlShape" />
 	<ext:classObjectFactory factory=".canvas.NonpersistentCanvasCircleShape" name="CanvasCircle" />
