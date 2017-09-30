@@ -10,4 +10,6 @@
 			 provides=".interfaces.ISAMLIDPUserInfoBindings"
 			 for="nti.dataserver.interfaces.IUser" />
 
+	<subscriber handler=".subscribers._on_user_removed" />
+		
 </configure>
