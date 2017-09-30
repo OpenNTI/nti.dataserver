@@ -11,6 +11,8 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
+from zope.annotation.interfaces import IAnnotations
+
 from zope.event import notify
 
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
@@ -89,10 +91,6 @@ def _attach_remote_userdata(event):
 
 @component.adapter(IUser, IObjectRemovedEvent)
 def _user_removed(user, unused_event):
-    try:
-        annotations = user.__annotations__
-        containers = annotations[SAML_IDP_BINDINGS_ANNOTATION_KEY]
-        containers.clear()
-        del annotations[SAML_IDP_BINDINGS_ANNOTATION_KEY]
-    except (AttributeError, KeyError):
-        pass
+    annotations = IAnnotations(user)
+    containers = annotations.pop(SAML_IDP_BINDINGS_ANNOTATION_KEY, {})
+    containers.clear()
