@@ -27,7 +27,7 @@
 			 provides=".interfaces.ISAMLACSLinkProvider"
 			 for="pyramid.interfaces.IRequest" />
 
-	<adapter for="basestring
+	<adapter for="nti.base.interfaces.IBasestring
 				  nti.dataserver.interfaces.IUser
 				  .interfaces.ISAMLUserAssertionInfo
 				  pyramid.request.IRequest"

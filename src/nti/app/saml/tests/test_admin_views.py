@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import ends_with
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import starts_with
+from hamcrest import contains_string
 
 from zope import interface
 
@@ -53,7 +54,7 @@ class TestViews(ApplicationLayerTest):
         # Setup
         getUrl = "/dataserver2/saml/@@GetProviderUserInfo"
 
-        username = 'bobby.hagen@nextthought.com'
+        username = u'bobby.hagen@nextthought.com'
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user(username=username)
 
@@ -69,7 +70,7 @@ class TestViews(ApplicationLayerTest):
         #######
         # Verify
 
-        assert_that(str(response), ends_with('Must specify a username.'))
+        assert_that(str(response), contains_string('Must specify a username.'))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_provider_info_view_no_entity_id(self):
@@ -92,8 +93,7 @@ class TestViews(ApplicationLayerTest):
 
         #######
         # Verify
-
-        assert_that(str(response), ends_with('Must specify entity_id.'))
+        assert_that(str(response), contains_string('Must specify entity_id.'))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_provider_info_view_user_not_found(self):
@@ -101,7 +101,7 @@ class TestViews(ApplicationLayerTest):
         # Setup
         getUrl = "/dataserver2/saml/@@GetProviderUserInfo"
 
-        username = b'bobby.hagen@nextthought.com'
+        username = u'bobby.hagen@nextthought.com'
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user(username=username)
 
@@ -118,7 +118,7 @@ class TestViews(ApplicationLayerTest):
         #######
         # Verify
 
-        assert_that(str(response), ends_with('User not found.'))
+        assert_that(str(response), contains_string('User not found.'))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_provider_info_view_unauthorized(self):
@@ -127,7 +127,7 @@ class TestViews(ApplicationLayerTest):
         # Setup
         getUrl = "/dataserver2/saml/@@GetProviderUserInfo"
 
-        username = b'bobby.hagen@test.com'
+        username = u'bobby.hagen@test.com'
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user(username=username)
 
@@ -147,11 +147,10 @@ class TestViews(ApplicationLayerTest):
         # Setup
         getUrl = "/dataserver2/saml/@@GetProviderUserInfo"
 
-        username = b'bobby.hagen@nextthought.com'
+        username = u'bobby.hagen@nextthought.com'
         with mock_dataserver.mock_db_trans(self.ds):
             user = self._create_user(username=username)
-            ISAMLIDPUserInfoBindings(
-                user)['test_entity_id'] = TestProviderInfo()
+            ISAMLIDPUserInfoBindings(user)['test_entity_id'] = TestProviderInfo()
 
         extra_environ = self._make_extra_environ(username=username)
 
@@ -181,13 +180,12 @@ class TestViews(ApplicationLayerTest):
         # Setup
         getUrl = "/dataserver2/saml/@@GetProviderUserInfo"
 
-        admin_user_name = b'bobby.hagen@nextthought.com'
-        user_name = 'foo1287'
+        admin_user_name = u'bobby.hagen@nextthought.com'
+        user_name = u'foo1287'
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user(username=admin_user_name)
             user = self._create_user(username=user_name)
-            ISAMLIDPUserInfoBindings(
-                user)['test_entity_id'] = TestProviderInfo()
+            ISAMLIDPUserInfoBindings(user)['test_entity_id'] = TestProviderInfo()
 
         extra_environ = self._make_extra_environ(username=admin_user_name)
 
@@ -220,8 +218,8 @@ class TestNameIdViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_get_for_user(self):
-        admin_user = 'chris@nextthought.com'
-        username = 'utz2345'
+        admin_user = u'chris@nextthought.com'
+        username = u'utz2345'
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user(username=admin_user)
 
@@ -230,36 +228,33 @@ class TestNameIdViews(ApplicationLayerTest):
             bindings.store_binding(_SAMLNameId(MockNameId('A23BE5')))
 
         self.testapp.get('/dataserver2/saml/@@NameIds',
-                         extra_environ=self._make_extra_environ(
-                             username=username),
+                         extra_environ=self._make_extra_environ(username=username),
                          status=403)
 
         self.testapp.get('/dataserver2/saml/@@NameIds',
-                         extra_environ=self._make_extra_environ(
-                             username=admin_user),
+                         extra_environ=self._make_extra_environ(username=admin_user),
                          status=422)
 
         self.testapp.get('/dataserver2/saml/@@NameIds',
                          params={'username': 'idontexist'},
-                         extra_environ=self._make_extra_environ(
-                             username=admin_user),
+                         extra_environ=self._make_extra_environ(username=admin_user),
                          status=422)
 
         response = self.testapp.get('/dataserver2/saml/@@NameIds',
                                     {'username': username},
-                                    extra_environ=self._make_extra_environ(
-                                        username=admin_user),
+                                    extra_environ=self._make_extra_environ(username=admin_user),
                                     status=200)
 
         response = response.json_body
 
-        assert_that(response, has_entry('Items', has_entry(starts_with('sso.nt.com'),
-                                                           has_entry('nameid', 'A23BE5'))))
+        assert_that(response, 
+                    has_entry('Items', has_entry(starts_with('sso.nt.com'),
+                                                 has_entry('nameid', 'A23BE5'))))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_get_for_specific_entity(self):
-        admin_user = 'chris@nextthought.com'
-        username = 'utz2345'
+        admin_user = u'chris@nextthought.com'
+        username = u'utz2345'
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user(username=admin_user)
 
@@ -289,8 +284,8 @@ class TestNameIdViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_remove_for_entity(self):
-        admin_user = 'chris@nextthought.com'
-        username = 'utz2345'
+        admin_user = u'chris@nextthought.com'
+        username = u'utz2345'
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user(username=admin_user)
 

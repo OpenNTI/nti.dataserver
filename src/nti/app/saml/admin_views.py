@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from requests.structures import CaseInsensitiveDict
 
@@ -17,6 +16,8 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.externalization.error import raise_json_error
 
 from nti.app.saml import MessageFactory as _
 
@@ -43,6 +44,8 @@ ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @view_defaults(name=IDP_NAME_IDS,
                context=SAMLPathAdapter,
@@ -54,17 +57,32 @@ class IDPEntityBindingsViews(AbstractAuthenticatedView):
     def _user_from_request(self):
         username = self.request.params.get('username')
         if not username:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Must specify a username."),
+                             },
+                             None)
 
         user = User.get_user(username)
-        if user is None or not IUser.providedBy(user):
-            raise hexc.HTTPUnprocessableEntity(_("User not found."))
+        if not IUser.providedBy(user):
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"User not found."),
+                             },
+                             None)
         return user
 
     def _qualifiers_from_request(self):
         nq = self.request.params.get('name_qualifier')
         if not nq:
-            raise hexc.HTTPUnprocessableEntity(_("Must specify an name_qualifier."))
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Must specify an name_qualifier."),
+                             },
+                             None)
         spnq = self.request.params.get('sp_name_qualifier')
         return nq, spnq
 
@@ -117,15 +135,30 @@ def provider_info_view(request):
     values = CaseInsensitiveDict(request.params)
     username = values.get('username') or values.get('user')
     if not username:
-        raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
+        raise_json_error(request,
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                             'message': _(u"Must specify a username."),
+                         },
+                         None)
 
     entity_id = values.get('entity_id')
     if not entity_id:
-        raise hexc.HTTPUnprocessableEntity(_("Must specify entity_id."))
+        raise_json_error(request,
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                             'message': _(u"Must specify entity_id."),
+                         },
+                         None)
 
     user = User.get_user(username)
-    if user is None or not IUser.providedBy(user):
-        raise hexc.HTTPUnprocessableEntity(_("User not found."))
+    if not IUser.providedBy(user):
+        raise_json_error(request,
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                             'message': _(u"User not found."),
+                         },
+                         None)
 
     provider_info = ISAMLIDPUserInfoBindings(user).get(entity_id, None)
     if provider_info:
@@ -143,19 +176,39 @@ def delete_provider_info_view(request):
     values = CaseInsensitiveDict(request.params)
     username = values.get('username') or values.get('user')
     if not username:
-        raise hexc.HTTPUnprocessableEntity(_("Must specify a username."))
+        raise_json_error(request,
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                             'message': _(u"Must specify a username."),
+                         },
+                         None)
 
     entity_id = values.get('entity_id')
     if not entity_id:
-        raise hexc.HTTPUnprocessableEntity(_("Must specify entity_id."))
+        raise_json_error(request,
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                             'message': _(u"Must specify entity_id."),
+                         },
+                         None)
 
     user = User.get_user(username)
-    if user is None or not IUser.providedBy(user):
-        raise hexc.HTTPUnprocessableEntity(_("User not found."))
+    if not IUser.providedBy(user):
+        raise_json_error(request,
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                             'message': _(u"User not found."),
+                         },
+                         None)
 
     try:
         del ISAMLIDPUserInfoBindings(user)[entity_id]
     except KeyError:
-        raise hexc.HTTPNotFound(_('Entity not found.'))
+        raise_json_error(request,
+                         hexc.HTTPNotFound,
+                         {
+                             'message': _(u"Entity not found."),
+                         },
+                         None)
 
     return hexc.HTTPNoContent()

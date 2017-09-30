@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -44,7 +45,7 @@ from nti.app.saml.logon import acs_view
 
 from nti.dataserver.interfaces import IUser
 
-from nti.dataserver.users import users
+from nti.dataserver.users.users import User
 
 from nti.site.transient import TrivialSite
 
@@ -133,19 +134,21 @@ class TestEvents(ApplicationLayerTest):
 				sm.registerUtility(saml_client, ISAMLClient)
 
 				nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
-				user_info = fudge.Fake().has_attr(username='testUser',
+				user_info = fudge.Fake().has_attr(username=u'testUser',
 												  nameid=nameid,
-												  email='test@user.com',
-												  firstname='test',
-												  lastname='user',
+												  email=u'test@user.com',
+												  firstname=u'test',
+												  lastname=u'user',
 												  realname=None)
 				user_info_factory = fudge.Fake().is_callable().returns(user_info)
 				interface.alsoProvides(user_info, ISAMLUserAssertionInfo)
-				sm.registerAdapter(user_info_factory, required=(dict,), provided=ISAMLUserAssertionInfo, name="testIssuer")
+				sm.registerAdapter(user_info_factory, required=(dict,), 
+								   provided=ISAMLUserAssertionInfo, 
+								   name="testIssuer")
 
 				get_entity.is_callable().returns(None)
 
-				user = users.User.create_user(username='testUser')
+				user = User.create_user(username=u'testUser')
 				ext_acct_handler.is_callable().returns(user)
 
 				fake_handler = fudge.Fake('created_event_handler').is_callable().expects_call()
@@ -202,17 +205,17 @@ class TestEvents(ApplicationLayerTest):
 				sm.registerUtility(saml_client, ISAMLClient)
 
 				nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
-				user_info = fudge.Fake().has_attr(username='testUser',
+				user_info = fudge.Fake().has_attr(username=u'testUser',
 												  nameid=nameid,
-												  email='test@user.com',
-												  firstname='test',
-												  lastname='user')
+												  email=u'test@user.com',
+												  firstname=u'test',
+												  lastname=u'user')
 				user_info_factory = fudge.Fake().is_callable().returns(user_info)
 				interface.alsoProvides(user_info, ISAMLUserAssertionInfo)
 				sm.registerAdapter(user_info_factory, required=(dict,),
 								   provided=ISAMLUserAssertionInfo, name="testIssuer")
 
-				user = users.User.create_user(username='testUser')
+				user = User.create_user(username='testUser')
 				get_entity.is_callable().returns(user)
 
 				fake_handler = fudge.Fake('created_event_handler').is_callable().expects_call()

@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from itsdangerous import JSONWebSignatureSerializer
 
@@ -51,6 +50,8 @@ RELAY_STATE = u'RelayState'
 SAML_RESPONSE = u'SAMLResponse'
 ERROR_STATE_PARAM = u'_nti_error'
 SUCCESS_STATE_PARAM = u'_nti_success'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _get_signer_secret(default_secret=u'not-very-secure-secret'):

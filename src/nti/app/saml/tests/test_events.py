@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -43,7 +44,7 @@ from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 from nti.dataserver.saml.interfaces import ISAMLProviderUserInfo
 from nti.dataserver.saml.interfaces import ISAMLIDPUserInfoBindings
 
-from nti.dataserver.users import users
+from nti.dataserver.users.users import User
 
 from nti.schema.eqhash import EqHash
 
@@ -88,13 +89,13 @@ def assertion_info(provider_id, username, email, firstname, lastname):
                                              name_qualifier=provider_id,
                                              sp_name_qualifier=None)
     interface.alsoProvides(name_id, ISAMLNameId)
-    return TestSAMLUserAssertionInfo({u"provider_id": provider_id,
-                                      u"username": username,
-                                      u"nameid": name_id,
-                                      u"email": email,
-                                      u"firstname": firstname,
-                                      u"lastname": lastname,
-                                      u"realname": None})
+    return TestSAMLUserAssertionInfo({"provider_id": provider_id,
+                                      "username": username,
+                                      "nameid": name_id,
+                                      "email": email,
+                                      "firstname": firstname,
+                                      "lastname": lastname,
+                                      "realname": None})
 
 
 class TestEvents(ApplicationLayerTest):
@@ -103,7 +104,7 @@ class TestEvents(ApplicationLayerTest):
     def test_interfaces(self):
         ########
         # Setup
-        user = users.User.create_user(username=u'testUser')
+        user = User.create_user(username=u'testUser')
         request = Request.blank('/')
 
         #######
@@ -138,7 +139,7 @@ class TestEvents(ApplicationLayerTest):
                                                  bases=(component.getSiteManager(),)))):
             ########
             # Setup
-            user = users.User.create_user(username=u'testUser')
+            user = User.create_user(username=u'testUser')
             user_assertion_info = assertion_info(u"pid2",
                                                  u"mickey@mouse.com",
                                                  u"mickey@mouse.com",
@@ -179,7 +180,7 @@ class TestEvents(ApplicationLayerTest):
                                                  bases=(component.getSiteManager(),)))):
             ########
             # Setup
-            user = users.User.create_user(username=u'testUser')
+            user = User.create_user(username=u'testUser')
             user_assertion_info = assertion_info(u"pid2",
                                                  u"mickey@mouse.com",
                                                  u"mickey@mouse.com",
@@ -231,7 +232,7 @@ class TestEvents(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             ########
             # Setup
-            user = users.User.create_user(username=u'testUser')
+            user = User.create_user(username=u'testUser')
             user_assertion_info = assertion_info(u"pid2",
                                                  u"mickey@mouse.com",
                                                  u"mickey@mouse.com",
@@ -259,7 +260,7 @@ class TestEvents(ApplicationLayerTest):
                                                  bases=(component.getSiteManager(),)))):
             ########
             # Setup
-            user = users.User.create_user(username=u'testUser')
+            user = User.create_user(username=u'testUser')
             user_assertion_info = assertion_info(u"pid2",
                                                  u"mickey@mouse.com",
                                                  u"mickey@mouse.com",
