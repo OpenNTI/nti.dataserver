@@ -12,7 +12,7 @@ from __future__ import absolute_import
 
 import six
 import numbers
-from urllib import quote as urlquote
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
@@ -528,7 +528,7 @@ class _CanvasUrlShape(_CanvasShape):
             return
 
         existing_link = to_external_ntiid_oid(existing_file)
-        if existing_link and urlquote(existing_link) in self.url:
+        if existing_link and urllib_parse.quote(existing_link) in self.url:
             # Yes, we have a match
             self._file = existing_file
             self._file.__parent__ = self.__parent__
