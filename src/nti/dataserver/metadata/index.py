@@ -6,10 +6,9 @@ Indexing metadata about most objects.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable 'redefining builtin id' because
 # we get that from superclass
@@ -78,6 +77,8 @@ from nti.zope_catalog.string import StringTokenNormalizer
 #: The name of the utility that the Zope Catalog
 #: should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++metadata-catalog'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class ValidatingMimeType(object):

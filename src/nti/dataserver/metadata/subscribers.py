@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 
@@ -19,6 +18,8 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.metadata.utils import delete_entity_metadata
 from nti.dataserver.metadata.utils import clear_replies_to_creator
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(IEntity, IObjectRemovedEvent)
