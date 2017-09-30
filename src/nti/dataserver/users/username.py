@@ -4,11 +4,11 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
+import six
 import uuid
 
 from zope import interface
@@ -16,6 +16,8 @@ from zope import interface
 from nti.dataserver.users.interfaces import IUsernameGeneratorUtility
 
 from nti.dataserver.users.users import User
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(IUsernameGeneratorUtility)
@@ -25,7 +27,7 @@ class OpaqueUsernameGeneratorUtility(object):
     """
 
     def _make_username(self):
-        return str(uuid.uuid4().get_time_low())
+        return six.text_type(uuid.uuid4().get_time_low())
 
     def generate_username(self):
         username = self._make_username()

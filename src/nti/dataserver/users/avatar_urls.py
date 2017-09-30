@@ -6,13 +6,12 @@ Adapters and utilities for working with avatar URLs.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import random
-import urlparse
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
@@ -30,6 +29,8 @@ from nti.dataserver.users.interfaces import IAvatarChoices
 from nti.dataserver.users.interfaces import IAvatarURLProvider
 from nti.dataserver.users.interfaces import ICompleteUserProfile
 from nti.dataserver.users.interfaces import IBackgroundURLProvider
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(IEntity)
@@ -105,11 +106,11 @@ class GravatarComputedAvatarURL(object):
         gravatar_type = _find_default_gravatar_type(profile, context, self)
         self.avatarURL = create_gravatar_url(email, gravatar_type, secure=True)
         if from_real_email:
-            data = urlparse.urlparse(self.avatarURL)
+            data = urllib_parse.urlparse(self.avatarURL)
             scheme, netloc, url, params, query, fragment = data
             fragment = 'using_provided_email_address'
-            self.avatarURL = urlparse.urlunparse((scheme, netloc, url, params, 
-                                                  query, fragment))
+            self.avatarURL = urllib_parse.urlunparse((scheme, netloc, url, params, 
+                                                     query, fragment))
 
 
 @component.adapter(ICoppaUser)

@@ -10,10 +10,9 @@ GC'd).
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 import sys
@@ -35,6 +34,8 @@ from nti.property.property import read_alias
 from nti.schema.eqhash import EqHash
 
 from nti.wref.interfaces import ICachingWeakRef
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @functools.total_ordering
@@ -150,9 +151,6 @@ class WeakRef(object):
     def __repr__(self):
         return "<%s.%s %s/%s>" % (self.__class__.__module__, self.__class__.__name__,
                                   self.username, self._entity_id)
-
-    # TODO: Consider making this object act like a proxy for the entity if its
-    # found.
 
 
 @interface.implementer(ICachingWeakRef)

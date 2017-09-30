@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -10,10 +11,11 @@ __docformat__ = "restructuredtext en"
 from hamcrest import has_length
 from hamcrest import assert_that
 
-from nti.dataserver.users import User
-from nti.dataserver.users import Community
+from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.index import create_entity_catalog
+
+from nti.dataserver.users.users import User
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 

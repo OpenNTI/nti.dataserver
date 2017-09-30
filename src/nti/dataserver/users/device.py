@@ -4,11 +4,11 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
+import six
 import functools
 import collections
 
@@ -31,13 +31,15 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
+logger = __import__('logging').getLogger(__name__)
 
+
+@six.add_metaclass(ModeledContentTypeAwareRegistryMetaclass)
 @functools.total_ordering
 @interface.implementer(IDevice, IZContained)
 class Device(PersistentCreatedModDateTrackingObject,
              ExternalizableDictionaryMixin):
 
-    __metaclass__ = ModeledContentTypeAwareRegistryMetaclass
     __external_can_create__ = True
 
     __name__ = None

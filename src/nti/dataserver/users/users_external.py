@@ -6,10 +6,9 @@ Implementations for user externalization.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import random
 import functools
@@ -65,6 +64,8 @@ from nti.schema.interfaces import find_most_derived_interface
 from nti.site.interfaces import InappropriateSiteError
 
 from nti.property.urlproperty import UrlProperty
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _image_url(entity, avatar_iface, attr_name, view_name):

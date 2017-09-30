@@ -6,10 +6,9 @@ Classes for indexing information related to users.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 
@@ -63,6 +62,8 @@ IX_PASSWORD_RECOVERY_EMAIL_HASH = 'password_recovery_email_hash'
 IX_IS_COMMUNITY = 'is_community'
 IX_EMAIL_VERIFIED = 'email_verified'
 IX_OPT_IN_EMAIL_COMMUNICATION = 'opt_in_email_communication'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class ValidatingMimeType(object):

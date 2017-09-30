@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 import time
@@ -91,6 +90,9 @@ from nti.dataserver.users.entity import NOOPCM as _NOOPCM
 from nti.dataserver.users.friends_lists import FriendsList
 from nti.dataserver.users.friends_lists import DynamicFriendsList
 from nti.dataserver.users.friends_lists import _FriendsListMap  # BWC
+
+logger = __import__('logging').getLogger(__name__)
+
 
 import zope.deferredimport
 zope.deferredimport.initialize()

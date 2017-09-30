@@ -4,11 +4,11 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
+import six
 import operator
 
 from zope import component
@@ -52,10 +52,12 @@ from nti.property.property import alias
 
 from nti.wref.interfaces import IWeakRef
 
+logger = __import__('logging').getLogger(__name__)
+
 
 _marker = object()
 
-
+@six.add_metaclass(ModeledContentTypeAwareRegistryMetaclass)
 @interface.implementer(IFriendsList, ISimpleEnclosureContainer)
 class FriendsList(SimpleEnclosureMixin, Entity):  # Mixin order matters for __setstate__
     """
@@ -65,8 +67,6 @@ class FriendsList(SimpleEnclosureMixin, Entity):  # Mixin order matters for __se
 
     All mutations to the list must go through the APIs of this class.
     """
-
-    __metaclass__ = ModeledContentTypeAwareRegistryMetaclass
 
     defaultGravatarType = 'wavatar'
     __external_can_create__ = True
@@ -303,6 +303,7 @@ class FriendsList(SimpleEnclosureMixin, Entity):  # Mixin order matters for __se
 
     @classmethod
     def _resolve_friends(cls, dataserver, parsed, externalFriends):
+        __traceback_info__ = parsed, externalFriends
         result = []
         for externalFriend in externalFriends:
             result.append(cls.get_entity(externalFriend,
@@ -432,12 +433,14 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
         """
         Override to save space. Only the membership matters.
         """
+        __traceback_info__ = source
         return True
 
     def ignore_shared_data_from(self, source):
         """
         Override to save space. Only the membership matters.
         """
+        __traceback_info__ = source
         return False
 
     def is_accepting_shared_data_from(self, source):
@@ -446,6 +449,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
         a DFL whether or not they are a member. In this way, it
         is just like a Community object.
         """
+        __traceback_info__ = source
         return True
         # return source is self.creator or source in list(self)
 
@@ -530,6 +534,7 @@ class _FriendsListMap(AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
 
     contained_type = IFriendsList
     container_name = u'FriendsLists'
+
     __name__ = container_name
 
     @classmethod

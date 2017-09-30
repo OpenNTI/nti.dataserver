@@ -9,6 +9,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from zope import component
+
 from zope.annotation.interfaces import IAnnotations
 
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent

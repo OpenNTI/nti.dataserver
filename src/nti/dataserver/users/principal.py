@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import warnings
@@ -28,6 +27,8 @@ from nti.dataserver.users.interfaces import InsecurePasswordIsForbidden
 from nti.dataserver.users.interfaces import PasswordCannotConsistOfOnlyWhitespace
 
 from nti.dataserver.users.password import Password as _Password
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class Principal(SharingSourceMixin, Entity):  # order matters
