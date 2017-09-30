@@ -57,7 +57,7 @@ from nti.externalization.interfaces import IInternalObjectExternalizer
 
 from nti.links.links import Link
 
-from nti.mimetype import mimetype
+from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
 from nti.mimetype.externalization import decorateMimeType
 
@@ -220,6 +220,7 @@ class _CanvasExporter(InterfaceObjectIO):
         return result
 
 
+@six.add_metaclass(ModeledContentTypeAwareRegistryMetaclass)
 @interface.implementer(IExternalObject)
 class CanvasAffineTransform(object):
     """
@@ -232,9 +233,9 @@ class CanvasAffineTransform(object):
     never standalone, so many of their external fields are lacking. They handle
     all their own externalization and are not meant to be subclassed.
     """
-    __metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
     __external_can_create__ = True
+    __external_class_name__ = 'CanvasAffineTransform'
 
     __slots__ = ('a', 'b', 'c', 'd', 'tx', 'ty')
 
@@ -294,12 +295,12 @@ class CanvasAffineTransform(object):
         return hash(tuple([getattr(self, x) for x in self.__slots__]))
 
 
+@six.add_metaclass(ModeledContentTypeAwareRegistryMetaclass)
 @interface.implementer(ICanvasShape, IExternalObject)
 class _CanvasShape(ExternalizableInstanceDict):
 
     __name__ = None
     __parent__ = None
-    __metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
     # We generate the affine transform on demand; we don't store it
     # to avoid object overhead.

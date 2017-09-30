@@ -196,7 +196,7 @@ class TestCanvas(DataserverLayerTest):
     def test_external_legacy_factory(self):
         for name in ('Canvas', 'CanvasShape', 'CanvasUrlShape', 'CanvasCircle',
                      'CanvasPathShape', 'CanvasTextShape', 'CanvasPolygonShape',
-                     'CanvasCircleShape'):
+                     'CanvasCircleShape', 'CanvasAffineTransform'):
             ext_obj = {"Class": name}
             factory = find_factory_for(ext_obj)
             assert_that(factory, is_not(none()))
