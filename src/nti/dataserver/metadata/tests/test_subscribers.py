@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -15,7 +16,7 @@ from hamcrest import assert_that
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
-from nti.dataserver.contenttypes import Note
+from nti.dataserver.contenttypes.note import Note
 
 from nti.dataserver.metadata.index import IX_CREATOR
 from nti.dataserver.metadata.index import IX_SHAREDWITH
@@ -23,7 +24,7 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.metadata.utils import delete_entity_metadata
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 from nti.ntiids.ntiids import make_ntiid
 

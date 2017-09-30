@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -24,9 +25,9 @@ from zope.event import notify
 
 from zope.lifecycleevent import ObjectModifiedEvent
 
-from nti.dataserver import users
+from nti.dataserver.users.users import User
 
-from nti.dataserver.contenttypes import Note
+from nti.dataserver.contenttypes.note import Note
 
 from nti.dataserver.metadata.index import CATALOG_NAME
 
@@ -39,16 +40,16 @@ from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 class TestMetadataIndex(DataserverLayerTest):
 
     def _fixture(self):
-        greg = users.User.create_user(dataserver=self.ds,
-                                      username=u'greg.higgins@nextthought.com')
+        greg = User.create_user(dataserver=self.ds,
+                                username=u'greg.higgins@nextthought.com')
         root_note = Note()
         root_note.body = [u'body']
         root_note.creator = greg
         root_note.containerId = u'other:container'
         greg.addContainedObject(root_note)
 
-        jason = users.User.create_user(dataserver=self.ds,
-                                       username=u'jason.madden@nextthought.com')
+        jason = User.create_user(dataserver=self.ds,
+                                username=u'jason.madden@nextthought.com')
 
         note = Note()
         note.inReplyTo = root_note
@@ -97,7 +98,7 @@ class TestMetadataIndex(DataserverLayerTest):
         self._check_catalog(catalog, note, root_note)
 
         # Now delete a user
-        users.User.delete_user(jason.username)
+        User.delete_user(jason.username)
         for query in ({'repliesToCreator': {'any_of':
                                             ('greg.higgins@nextthought.com',)}},
                       {'containerId': {'any_of':
@@ -123,7 +124,7 @@ class TestMetadataIndex(DataserverLayerTest):
         self._check_catalog(catalog, note, root_note)
 
         # Now delete root creator
-        users.User.delete_user(greg.username)
+        User.delete_user(greg.username)
 
         for query in ({'repliesToCreator': {'any_of':
                                             ('greg.higgins@nextthought.com',)}},
@@ -173,10 +174,10 @@ class TestMetadataIndex(DataserverLayerTest):
 
     @WithMockDSTrans
     def test_circled_events(self):
-        greg = users.User.create_user(dataserver=self.ds,
+        greg = User.create_user(dataserver=self.ds,
                                       username=u'greg.higgins@nextthought.com')
-        jason = users.User.create_user(dataserver=self.ds,
-                                       username=u'jason.madden@nextthought.com')
+        jason = User.create_user(dataserver=self.ds,
+                                 username=u'jason.madden@nextthought.com')
 
         change = jason.accept_shared_data_from(greg)
         assert_that(change, is_(not_none()))
@@ -186,7 +187,7 @@ class TestMetadataIndex(DataserverLayerTest):
                                                containerId=('', ''),)),
                     contains(change))
 
-        users.User.delete_user(jason.username)
+        User.delete_user(jason.username)
 
         assert_that(list(catalog.searchResults(mimeType={'any_of': ('application/vnd.nextthought.change',)},
                                                containerId=('', ''),)),
