@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import is_not
 from hamcrest import has_key
 from hamcrest import contains
 from hamcrest import has_items
@@ -18,6 +19,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_string
+does_not = is_not
 
 from nti.testing.time import time_monotonically_increases
 
@@ -522,6 +524,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 		res = testapp.get(path, extra_environ=self._make_extra_environ())
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
+		assert_that(res.json_body, does_not(has_key('MimetType')))
 
 		for _path in path, activity_path:
 			__traceback_info__ = _path
