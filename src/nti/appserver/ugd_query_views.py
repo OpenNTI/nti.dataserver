@@ -78,7 +78,6 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.links.links import Link
 
-from nti.mimetype.mimetype import nti_mimetype_with_class
 from nti.mimetype.mimetype import nti_mimetype_from_object
 
 from nti.ntiids import ntiids
@@ -231,7 +230,6 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts,
 
 	result['Iterables'] = iterables
 	result['Last Modified'] = result.lastModified
-	result.mimeType = nti_mimetype_with_class( None )
 	interface.alsoProvides( result, result_iface )
 	if not result.lastModified:
 		interface.alsoProvides(result, IUncacheableInResponse)
