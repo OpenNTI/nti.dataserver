@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import time
@@ -34,6 +33,9 @@ from nti.schema.eqhash import EqHash
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from nti.schema.schema import SchemaConfigured
+
+logger = __import__('logging').getLogger(__name__)
+
 
 # Buckets
 
@@ -170,14 +172,14 @@ class SourceFile(SchemaConfigured):
     _data = None
     _time = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         data = kwargs.pop('data', None)
         self.name = kwargs.pop('name', None)
         self.path  = kwargs.pop('path', None) or u''
         contentType = kwargs.pop('contentType', None)
         createdTime = kwargs.pop('createdTime', None)
         lastModified = kwargs.pop('lastModified', None)
-        SchemaConfigured.__init__(self, *args, **kwargs)
+        SchemaConfigured.__init__(self, **kwargs)
         self.reset(contentType, data, createdTime, lastModified)
 
     def reset(self, contentType, data, createdTime, lastModified):

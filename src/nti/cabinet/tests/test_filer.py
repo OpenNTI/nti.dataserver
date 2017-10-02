@@ -53,7 +53,7 @@ class TestFiler(unittest.TestCase):
             filer = DirectoryFiler(tmp_dir)
             data = self.get_data_source()
             href = filer.save(u"ichigo.xml", data, relative=False,
-                              contentType=u"text/xml", overwrite=True)
+                              contentType=u"application/xml", overwrite=True)
             assert_that(href, is_not(none()))
             assert_that(href, starts_with(tmp_dir))
             assert_that(filer.contains(href), is_(True))
@@ -78,7 +78,7 @@ class TestFiler(unittest.TestCase):
             assert_that(source,
                         has_property('filename', ends_with("/ichigo.xml")))
 
-            assert_that(source, has_property('contentType', is_("text/xml")))
+            assert_that(source, has_property('contentType', ends_with("xml")))
 
             assert_that(source.read(), is_("<ichigo/>"))
             source.close()
