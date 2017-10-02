@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
@@ -15,15 +14,13 @@ from zope.file.interfaces import IFileReader
 
 from zope.location.interfaces import IContained
 
-from zope.schema import BytesLine
-
 from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
 from nti.base.interfaces import INamedFile
 
 from nti.schema.field import Number
-from nti.schema.field import Variant
 from nti.schema.field import TextLine
+from nti.schema.field import DecodingValidTextLine
 
 
 class ISourceBucket(IContained):
@@ -45,10 +42,9 @@ class ISource(IFileReader, IContained, INamedFile):
 
     length = Number(title=u"Source length", required=False, default=None)
 
-    contentType = Variant((TextLine(), BytesLine()),
-                          title=u'content type', required=False,
-                          default=DEFAULT_CONTENT_TYPE,
-                          missing_value=DEFAULT_CONTENT_TYPE)
+    contentType = DecodingValidTextLine(title=u'Content Type', required=False,
+                                        default=DEFAULT_CONTENT_TYPE,
+                                        missing_value=DEFAULT_CONTENT_TYPE)
 
     filename = TextLine(title=u"source file name", required=False)
 
@@ -69,7 +65,7 @@ IMultipartSource = ISource
 class ISourceFiler(interface.Interface):
 
     default_bucket = interface.Attribute("Default bucket")
-      
+
     def key_name(self, identifier):
         """
         return the key name for the specified identifier
