@@ -10,10 +10,9 @@ the object is removed from the intid catalog
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import warnings
 import functools
@@ -30,6 +29,8 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.wref.interfaces import ICachingWeakRef
 from nti.wref.interfaces import IWeakRefToMissing
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class _AbstractWeakRef(object):
@@ -182,5 +183,5 @@ class ArbitraryOrderableWeakRef(WeakRef):
 
 class NoCachingArbitraryOrderableWeakRef(ArbitraryOrderableWeakRef):
 
-    def __call__(self, allow_cached=False):
+    def __call__(self, unused_allow_cached=False):
         return ArbitraryOrderableWeakRef.__call__(self, allow_cached=False)

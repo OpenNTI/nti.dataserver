@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -16,10 +17,11 @@ from hamcrest import has_property
 
 from nti.testing.matchers import validly_provides as verifiably_provides
 
-import cPickle
+import pickle
 import BTrees.OOBTree
 
-from nti.dataserver import users
+# TODO: Break this
+from nti.dataserver.users.users import User
 
 from nti.intid import wref
 
@@ -35,13 +37,13 @@ class TestIntidWref(SharedConfiguringTestBase):
 
     @WithMockDSTrans
     def test_pickle(self):
-        user = users.User.create_user(username='sjohnson@nextthought.com')
+        user = User.create_user(username='sjohnson@nextthought.com')
 
         ref = wref.WeakRef(user)
 
         assert_that(ref, has_property('_v_entity_cache', user))
 
-        copy = cPickle.loads(cPickle.dumps(ref))
+        copy = pickle.loads(pickle.dumps(ref))
 
         assert_that(copy, has_property('_v_entity_cache', none()))
 
@@ -57,7 +59,7 @@ class TestIntidWref(SharedConfiguringTestBase):
 
     @WithMockDSTrans
     def test_missing(self):
-        user = users.User.create_user(username='sjohnson@nextthought.com')
+        user = User.create_user(username='sjohnson@nextthought.com')
 
         # Cannot find with invalid intid
         ref = wref.WeakRef(user)
@@ -89,8 +91,8 @@ class TestIntidWref(SharedConfiguringTestBase):
 
     @WithMockDSTrans
     def test_in_btree(self):
-        user = users.User.create_user(username='sjohnson@nextthought.com')
-        user2 = users.User.create_user(username='sjohnson2@nextthought.com')
+        user = User.create_user(username='sjohnson@nextthought.com')
+        user2 = User.create_user(username='sjohnson2@nextthought.com')
 
         bt = BTrees.OOBTree.OOBTree()
 
@@ -107,8 +109,8 @@ class TestIntidWref(SharedConfiguringTestBase):
 
     @WithMockDSTrans
     def test_eq_ne(self):
-        user = users.User.create_user(username='sjohnson@nextthought.com')
-        user2 = users.User.create_user(username='sjohnson2@nextthought.com')
+        user = User.create_user(username='sjohnson@nextthought.com')
+        user2 = User.create_user(username='sjohnson2@nextthought.com')
 
         ref = wref.ArbitraryOrderableWeakRef(user)
         ref2 = wref.ArbitraryOrderableWeakRef(user2)

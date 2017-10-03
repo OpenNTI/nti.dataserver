@@ -9,12 +9,12 @@ of behaviour.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
+from zope import deferredimport
 
 from zope.event import notify as zope_notify
 
@@ -31,9 +31,11 @@ import BTrees
 
 from nti.intid.interfaces import IIntIds
 
-import zope.deferredimport
-zope.deferredimport.initialize()
-zope.deferredimport.deprecated(
+logger = __import__('logging').getLogger(__name__)
+
+
+deferredimport.initialize()
+deferredimport.deprecated(
     "Import from zope.intid.interfaces instead",
     IntIdMissingError='zope.intid.interfaces:IntIdMissingError',
     ObjectMissingError='zope.intid.interfaces:ObjectMissingError')
@@ -76,10 +78,10 @@ class IntIds(_ZCIntIds):
         """
         return _ZCIntIds.queryId(self, aq_base(ob), default=default)
 
-    def register(self, ob, *args, **kwargs):
+    def register(self, ob, *unused_args, **unused_kwargs):
         return _ZCIntIds.register(self, aq_base(ob))
 
-    def unregister(self, ob, *args, **kwargs):
+    def unregister(self, ob, *unused_args, **unused_kwargs):
         return _ZCIntIds.unregister(self, aq_base(ob))
 
     def getId(self, ob):

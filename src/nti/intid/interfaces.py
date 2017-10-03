@@ -1,30 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Intid intefaces
-
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+from zope import deferredimport
 
 from zope.container.interfaces import IContained
 
 from zc.intid.interfaces import IIntIds
 from zc.intid.interfaces import IIntIdsSubclass
 
-import zope.deferredimport
-zope.deferredimport.initialize()
 
-zope.deferredimport.deprecated(
+deferredimport.initialize()
+deferredimport.deprecated(
     "Import from zope.intid.interfaces instead",
     IntIdMissingError='zope.intid.interfaces:IntIdMissingError',
     ObjectMissingError='zope.intid.interfaces:ObjectMissingError')
 
-zope.deferredimport.deprecated(
+deferredimport.deprecated(
     "Import from zc.intid.interfaces instead",
     IntIdAlreadyInUseError='zc.intid.interfaces:IntIdInUseError',
     IIntIdEvent='zc.intid.interfaces:ISubscriberEvent',
