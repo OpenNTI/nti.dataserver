@@ -7,10 +7,9 @@ used when externalizing for a remote client.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from abc import ABCMeta
 from abc import abstractmethod
@@ -34,6 +33,8 @@ from nti.property.property import alias
 
 StandardExternalFields_LINKS = StandardExternalFields.LINKS
 
+logger = __import__('logging').getLogger(__name__)
+
 
 class AbstractRequestAwareDecorator(object):
     """
@@ -46,11 +47,13 @@ class AbstractRequestAwareDecorator(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, context, request):
+    def __init__(self, unused_context, request):
         self.request = request
 
-    def _predicate(self, context, result):
-        "You may implement this method to check a precondition, return False if no decoration."
+    def _predicate(self, unused_context, unused_result):
+        """
+        You may implement this method to check a precondition, return False if no decoration.
+        """
         return True
 
     def decorateExternalMapping(self, context, result):
@@ -80,7 +83,7 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
 
     # Notice these two methods have the same implementation
     # but do not call each other, for speed.
-    def _predicate(self, context, result):
+    def _predicate(self, unused_context, unused_result):
         return bool(self.authenticated_userid)
 
     @Lazy

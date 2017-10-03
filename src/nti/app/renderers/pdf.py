@@ -6,10 +6,9 @@ PDF response rendering, based on :mod:`z3c.rml`.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
@@ -24,6 +23,8 @@ from nti.app.pyramid_zope.z3c_zpt import ZPTTemplateRenderer
 
 from nti.app.renderers.renderers import AbstractCachingRenderer
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @interface.provider(IRendererFactory)
 @interface.implementer(IRenderer)
@@ -32,7 +33,6 @@ def PDFRendererFactory(info):
     A renderer that creates a PDF given an /asset specification/ or absolute
     path to an RML template.
     """
-
     # We use pyramid_chameleon's implementation to find asset files,
     # support overrides, etc, as well as caching implementation objects.
     return template_renderer_factory(info, _PDFRMLRenderer)
@@ -51,7 +51,6 @@ class _PDFRMLRenderer(AbstractCachingRenderer):
         # TODO: Probably need to set headers for forcing inline view vs download?
         # TODO: Filename
         pdf_stream = rml2pdf.parseString(rml)
-        system['request'].response.content_type = str('application/pdf')
+        system['request'].response.content_type = 'application/pdf'
         return pdf_stream.read()
-
     _render_to_browser = _render_to_non_browser = _render_to_pdf

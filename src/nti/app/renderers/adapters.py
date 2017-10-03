@@ -6,10 +6,11 @@ Adapters commonly useful during various rendering pipelines.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+import six
 
 from zope import component
 from zope import interface
@@ -30,6 +31,8 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @interface.implementer(IDisplayNameGenerator)
 @component.adapter(IUser, IRequest)
@@ -38,10 +41,10 @@ class UserDisplayNameGenerator(object):
     Get the display name for a user.
     """
 
-    def __init__(self, context, request):
+    def __init__(self, context, unused_request):
         self.context = context
 
-    def __call__(self, maxlength=None):
+    def __call__(self, unused_maxlength=None):
         names = IFriendlyNamed(self.context)
         return names.alias or names.realname or self.context.username
 
@@ -65,12 +68,12 @@ class TitledContentDisplayNameGenerator(DefaultDisplayNameGenerator):
         # No title. Lets try to find a body snippet
         bodylen = maxlength or 30
         body = getattr(self.context, 'body', None)
-        if body and isinstance(body[0], basestring):
+        if body and isinstance(body[0], six.string_types):
             text = IPlainTextContentFragment(body[0])
             if text:
                 return convertName(text, self.request, bodylen)
 
-        default = DefaultDisplayNameGenerator.__call__(self, maxlength=maxlength)
+        default = DefaultDisplayNameGenerator.__call__(self, maxlength)
         if is_valid_ntiid_string(default):
             # Snap, got the ugly name. We never want to display that.
             return u''

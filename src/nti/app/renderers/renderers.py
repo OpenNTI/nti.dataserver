@@ -6,10 +6,9 @@ Contains renderers for the REST api.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
@@ -26,6 +25,8 @@ from nti.app.renderers import MessageFactory as _
 from nti.app.renderers.interfaces import IResponseRenderer
 from nti.app.renderers.interfaces import IResponseCacheController
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.provider(IRendererFactory)
@@ -88,9 +89,9 @@ class DefaultRenderer(AbstractCachingRenderer):
     def __init__(self, info):
         pass
 
-    def _render_to_browser(self, data, system):
+    def _render_to_browser(self, unused_data, unused_system):
         # render to browser
-        body = _("Rendering to a browser not supported yet")
+        body = _(u"Rendering to a browser not supported yet")
         # This is mostly to catch application tests that are
         # not setting the right headers to be classified correctly
         raise HTTPForbidden(body)

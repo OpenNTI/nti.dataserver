@@ -6,10 +6,9 @@ Adapters for forum objects.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
@@ -26,6 +25,8 @@ from nti.app.forums import MessageFactory as _
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.namedfile.constraints import FileConstraints
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer_only(IDisplayNameGenerator)
