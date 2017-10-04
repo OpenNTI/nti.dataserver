@@ -8,15 +8,19 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import has_length
 from hamcrest import assert_that
 
 import time
-import unittest
 
 import BTrees
 
+from zope import component
+
 from nti.invitations.index import create_invitations_catalog
+
+from nti.invitations.interfaces import IInvitationsContainer
 
 from nti.invitations.model import Invitation
 
@@ -25,12 +29,14 @@ from nti.invitations.utils import get_expired_invitation_ids
 from nti.invitations.utils import get_pending_invitation_ids
 from nti.invitations.utils import get_random_invitation_code
 
-from nti.invitations.tests import SharedConfiguringTestLayer
+from nti.invitations.tests import InvitationLayerTest
+
+from nti.invitations.wref import InvitationWeakRef
+
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 
-class TestUtils(unittest.TestCase):
-
-    layer = SharedConfiguringTestLayer
+class TestUtils(InvitationLayerTest):
 
     def create_invitations(self):
         catalog = create_invitations_catalog(family=BTrees.family64)
@@ -109,3 +115,21 @@ class TestUtils(unittest.TestCase):
     def test_get_random_invitation_code(self):
         code = get_random_invitation_code()
         assert_that(code, has_length(12))
+
+    @WithMockDSTrans
+    def test_wref(self):
+        invitation = Invitation(code=u'test_invitation',
+                                receiver=u'ichigo',
+                                sender=u'aizen',
+                                accepted=True)
+        container = component.getUtility(IInvitationsContainer)
+        container.add(invitation)
+
+        wref = InvitationWeakRef(invitation)
+        assert_that(wref(), is_(invitation))
+        dne_invitation = Invitation(code=u'dne',
+                                    receiver=u'ichigo',
+                                    sender=u'aizen',
+                                    accepted=True)
+        wref = InvitationWeakRef(dne_invitation)
+        assert_that(wref(), none())

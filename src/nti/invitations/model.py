@@ -78,7 +78,7 @@ class Invitation(PersistentCreatedModDateTrackingObject,
         if result:
             self.site = result
         return result
-    
+
     @readproperty
     def sender(self):
         return SYSTEM_USER_NAME

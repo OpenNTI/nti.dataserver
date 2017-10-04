@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
 from nti.testing.layers import GCLayerMixin
 from nti.testing.layers import ZopeComponentLayer
 from nti.testing.layers import ConfiguringLayerMixin
@@ -18,7 +20,7 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
                                  GCLayerMixin,
                                  ConfiguringLayerMixin):
 
-    set_up_packages = ('nti.invitations', 'nti.externalization')
+    set_up_packages = ('nti.invitations', 'nti.dataserver', 'nti.externalization')
 
     @classmethod
     def setUp(cls):
@@ -36,3 +38,7 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
     @classmethod
     def testTearDown(cls):
         pass
+
+
+class InvitationLayerTest(DataserverLayerTest):
+    layer = SharedConfiguringTestLayer
