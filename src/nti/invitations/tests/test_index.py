@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -20,12 +21,8 @@ from nti.invitations.index import create_invitations_catalog
 
 from nti.invitations.model import Invitation
 
-from nti.invitations.tests import SharedConfiguringTestLayer
-
 
 class TestIndex(unittest.TestCase):
-
-    layer = SharedConfiguringTestLayer
 
     def test_index(self):
         invitation = Invitation(code=u'bleach',
@@ -36,9 +33,9 @@ class TestIndex(unittest.TestCase):
         catalog = create_invitations_catalog(family=BTrees.family64)
         catalog.index_doc(1, invitation)
         query = {
-            'accepted': {'any_of':(True,)},
-            'sender': {'any_of':('aizen',)},
-            'receiver': {'any_of':('ichigo',)}
+            'accepted': {'any_of': (True,)},
+            'sender': {'any_of': ('aizen',)},
+            'receiver': {'any_of': ('ichigo',)}
         }
         ids = catalog.apply(query)
         assert_that(ids, is_not(none()))

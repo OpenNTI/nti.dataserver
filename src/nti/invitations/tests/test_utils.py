@@ -23,6 +23,7 @@ from nti.invitations.index import create_invitations_catalog
 from nti.invitations.interfaces import IInvitationsContainer
 
 from nti.invitations.model import Invitation
+from nti.invitations.model import InvitationsContainer
 
 from nti.invitations.utils import get_invitations_ids
 from nti.invitations.utils import get_expired_invitation_ids
@@ -32,8 +33,6 @@ from nti.invitations.utils import get_random_invitation_code
 from nti.invitations.tests import InvitationLayerTest
 
 from nti.invitations.wref import InvitationWeakRef
-
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 
 class TestUtils(InvitationLayerTest):
@@ -116,8 +115,9 @@ class TestUtils(InvitationLayerTest):
         code = get_random_invitation_code()
         assert_that(code, has_length(12))
 
-    @WithMockDSTrans
     def test_wref(self):
+        container = InvitationsContainer()
+        component.getGlobalSiteManager().registerUtility(container, IInvitationsContainer)
         invitation = Invitation(code=u'test_invitation',
                                 receiver=u'ichigo',
                                 sender=u'aizen',
@@ -133,3 +133,6 @@ class TestUtils(InvitationLayerTest):
                                     accepted=True)
         wref = InvitationWeakRef(dne_invitation)
         assert_that(wref(), none())
+
+        component.getGlobalSiteManager().unregisterUtility(container, 
+                                                           IInvitationsContainer)
