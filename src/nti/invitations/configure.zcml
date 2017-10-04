@@ -13,8 +13,12 @@
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.IInvitation"
 		modules=".model" />
-	
+
 	<!-- Events -->
 	<subscriber handler=".subscribers._on_invitation_sent" />
-	
+
+	<!-- weak refs -->
+    <include package="nti.wref" />
+    <adapter factory=".wref.InvitationWeakRef" />
+
 </configure>

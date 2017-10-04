@@ -34,6 +34,8 @@ from nti.invitations.tests import InvitationLayerTest
 
 from nti.invitations.wref import InvitationWeakRef
 
+from nti.wref.interfaces import IWeakRef
+
 
 class TestUtils(InvitationLayerTest):
 
@@ -133,6 +135,8 @@ class TestUtils(InvitationLayerTest):
                                     accepted=True)
         wref = InvitationWeakRef(dne_invitation)
         assert_that(wref(), none())
+        wref2 = IWeakRef(dne_invitation)
+        assert_that(wref2, is_(wref))
 
-        component.getGlobalSiteManager().unregisterUtility(container, 
+        component.getGlobalSiteManager().unregisterUtility(container,
                                                            IInvitationsContainer)
