@@ -61,7 +61,7 @@ class ValidatingSite(object):
 
     __slots__ = ('site',)
 
-    def __init__(self, obj, _=None):
+    def __init__(self, obj=None, unused_default=None):
         if IInvitation.providedBy(obj):
             self.site = obj.site
 
@@ -78,7 +78,7 @@ class ValidatingMimeType(object):
 
     __slots__ = ('mimeType',)
 
-    def __init__(self, obj, _=None):
+    def __init__(self, obj=None, unused_default=None):
         if IInvitation.providedBy(obj):
             self.mimeType = getattr(obj, 'mimeType', None) \
                          or getattr(obj, 'mime_type', None)
@@ -118,7 +118,7 @@ class ValidatingAccepted(object):
 
     __slots__ = ('accepted',)
 
-    def __init__(self, obj, _=None):
+    def __init__(self, obj=None, unused_default=None):
         if IInvitation.providedBy(obj):
             self.accepted = obj.is_accepted()
 

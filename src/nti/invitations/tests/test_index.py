@@ -8,21 +8,41 @@ from __future__ import absolute_import
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_length
 from hamcrest import assert_that
 
+import fudge
+import pickle
 import unittest
+
+from zope import component
+
+from zope.catalog.interfaces import ICatalog
 
 import BTrees
 
+from nti.invitations.index import CATALOG_NAME
+
+from nti.invitations.index import ValidatingSite
+from nti.invitations.index import ValidatingAccepted
+from nti.invitations.index import ValidatingMimeType
 from nti.invitations.index import create_invitations_catalog
+from nti.invitations.index import install_invitations_catalog
 
 from nti.invitations.model import Invitation
 
 
 class TestIndex(unittest.TestCase):
+
+    def test_pickle(self):
+        for factory in (ValidatingAccepted,
+                        ValidatingMimeType,
+                        ValidatingSite):
+            with self.assertRaises(TypeError):
+                pickle.dumps(factory())
 
     def test_index(self):
         invitation = Invitation(code=u'bleach',
@@ -40,3 +60,12 @@ class TestIndex(unittest.TestCase):
         ids = catalog.apply(query)
         assert_that(ids, is_not(none()))
         assert_that(ids, has_length(1))
+
+    def test_install_publishing_catalog(self):
+        intids = fudge.Fake().provides('register').has_attr(family=BTrees.family64)
+        catalog = install_invitations_catalog(component, intids)
+        assert_that(catalog, is_not(none()))
+        assert_that(install_invitations_catalog(component, intids),
+                    is_(catalog))
+        component.getGlobalSiteManager().unregisterUtility(catalog, ICatalog,
+                                                           CATALOG_NAME)
