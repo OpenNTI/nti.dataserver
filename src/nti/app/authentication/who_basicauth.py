@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from repoze.who.interfaces import IIdentifier
 from repoze.who.interfaces import IChallenger
@@ -15,6 +14,8 @@ from repoze.who.interfaces import IChallenger
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 
 from nti.app.authentication.who_classifiers import CLASS_BROWSER_APP
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class ApplicationBasicAuthPlugin(BasicAuthPlugin):

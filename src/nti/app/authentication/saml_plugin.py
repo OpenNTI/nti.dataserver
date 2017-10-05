@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import warnings
@@ -31,6 +30,8 @@ from nti.app.saml.client import BasicSAMLClient
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 DEFAULT_SP_JSON = 'sp.json'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 # functions

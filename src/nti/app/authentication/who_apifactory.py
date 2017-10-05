@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # Like Pyramid 1.4+, cause Paste's AuthTkt cookies to use the more secure
 # SHA512 algorithm instead of the weaker MD5 (actually, repoze.who, now)
@@ -17,6 +16,7 @@ nti.monkey.patch_paste_auth_tkt_sha512_on_import.patch()
 from zope import component
 
 from repoze.who.api import APIFactory
+
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 
 from nti.app.authentication import user_can_login
@@ -36,6 +36,8 @@ from nti.appserver.interfaces import IApplicationSettings
 
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def create_who_apifactory(secure_cookies=True,

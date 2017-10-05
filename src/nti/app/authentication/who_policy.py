@@ -11,10 +11,9 @@ less well in a Zope-ish environment.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import time
 from collections import Mapping
@@ -36,6 +35,8 @@ from nti.dataserver.interfaces import INoUserEffectivePrincipalResolver
 
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class _GroupsCallback(object):

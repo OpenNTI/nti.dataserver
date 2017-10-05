@@ -10,16 +10,17 @@ allowed to log on to this site (assuming a secure cookie secret).
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 
 from repoze.who.interfaces import IAPIFactory
 
 from nti.app.authentication.interfaces import ILogonWhitelist
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class IdentifyHandler(object):

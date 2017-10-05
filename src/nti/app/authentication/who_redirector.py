@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from repoze.who.interfaces import IChallenger
 
@@ -16,6 +15,8 @@ from repoze.who.plugins.redirector import RedirectorPlugin
 from pyramid.httpexceptions import HTTPFound
 
 from nti.app.authentication.who_classifiers import CLASS_BROWSER
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class BrowserRedirectorPlugin(RedirectorPlugin):

@@ -6,10 +6,9 @@ Integrations with :mod:`zope.pluggableauth``
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
@@ -21,6 +20,8 @@ from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 from nti.app.authentication import user_can_login
 
 from nti.dataserver.users.users import User
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(IAuthenticatorPlugin)

@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Directives to be used in ZCML.
-
 ..  $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
@@ -20,6 +17,8 @@ from zope.configuration.fields import TextLine
 
 from nti.app.authentication.interfaces import ILogonWhitelist
 from nti.app.authentication.interfaces import ISiteLogonWhitelist
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class ILogonWhitelistDirective(interface.Interface):
