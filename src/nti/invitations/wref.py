@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from functools import total_ordering
+
 from zope import component
 from zope import interface
 
@@ -27,6 +29,7 @@ logger = __import__('logging').getLogger(__name__)
 # pylint:disable=I0011,W0212
 
 
+@total_ordering
 @EqHash('_code')
 @component.adapter(IInvitation)
 @interface.implementer(IWeakRef)
@@ -52,6 +55,12 @@ class InvitationWeakRef(object):
 
     def __str__(self):
         return self._code
+
+    def __lt__(self, other):
+        try:
+            return self._code < other._code
+        except AttributeError:  # pragma: no cover
+            return NotImplemented
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__,

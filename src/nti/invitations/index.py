@@ -19,6 +19,7 @@ from zope.location import locate
 import BTrees
 
 from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IActionableInvitation
 
 from nti.zope_catalog.catalog import Catalog
 
@@ -62,7 +63,7 @@ class ValidatingSite(object):
     __slots__ = ('site',)
 
     def __init__(self, obj=None, unused_default=None):
-        if IInvitation.providedBy(obj):
+        if IActionableInvitation.providedBy(obj):
             self.site = obj.site
 
     def __reduce__(self):
@@ -119,7 +120,7 @@ class ValidatingAccepted(object):
     __slots__ = ('accepted',)
 
     def __init__(self, obj=None, unused_default=None):
-        if IInvitation.providedBy(obj):
+        if IActionableInvitation.providedBy(obj):
             self.accepted = obj.is_accepted()
 
     def __reduce__(self):
