@@ -17,8 +17,7 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
 
-from nose.tools import assert_raises
-
+from nti.testing.matchers import validly_provides
 from nti.testing.matchers import verifiably_provides
 
 import unittest
@@ -43,9 +42,9 @@ class TestModel(unittest.TestCase):
 
     def test_external(self):
         invitation = UserInvitation(code=u'bleach',
-                                receiver=u'ichigo',
-                                sender=u'aizen',
-                                accepted=True)
+                                    receiver=u'ichigo',
+                                    sender=u'aizen',
+                                    accepted=True)
         assert_that(invitation,
                     externalizes(all_of(has_entry('code', 'bleach'),
                                         has_entry('receiver', 'ichigo'),
@@ -53,11 +52,13 @@ class TestModel(unittest.TestCase):
                                         has_entry('accepted', is_(True)),
                                         has_entry('expiryTime', is_(0)))))
 
+        assert_that(invitation, validly_provides(IUserInvitation))
+
     def test_misc(self):
         invitation = UserInvitation(code=u'bleach',
-                                receiver=u'ichigo',
-                                sender=u'aizen',
-                                accepted=True)
+                                    receiver=u'ichigo',
+                                    sender=u'aizen',
+                                    accepted=True)
 
         assert_that(invitation.is_expired(), is_(False))
         invitation.expiryTime = 10
@@ -82,7 +83,7 @@ class TestModel(unittest.TestCase):
                                     receiver=u'ichigoxxx',
                                     sender=u'aizenxxx',
                                     accepted=False)
-        with assert_raises(DuplicateInvitationCodeError):
+        with self.assertRaises(DuplicateInvitationCodeError):
             container.add(invitation)
 
         container.remove(invitation)
