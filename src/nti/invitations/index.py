@@ -19,7 +19,6 @@ from zope.location import locate
 import BTrees
 
 from nti.invitations.interfaces import IInvitation
-from nti.invitations.interfaces import IActionableInvitation
 
 from nti.zope_catalog.catalog import Catalog
 
@@ -99,7 +98,7 @@ class SenderRawIndex(RawValueIndex):
 
 def SenderIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='sender',
-                                interface=IActionableInvitation,
+                                interface=IInvitation,
                                 index=SenderRawIndex(family=family),
                                 normalizer=StringTokenNormalizer())
 
@@ -110,7 +109,7 @@ class ReceiverRawIndex(RawValueIndex):
 
 def ReceiverIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='receiver',
-                                interface=IActionableInvitation,
+                                interface=IInvitation,
                                 index=ReceiverRawIndex(family=family),
                                 normalizer=StringTokenNormalizer())
 
@@ -120,7 +119,7 @@ class ValidatingAccepted(object):
     __slots__ = ('accepted',)
 
     def __init__(self, obj, _=None):
-        if IActionableInvitation.providedBy(obj):
+        if IInvitation.providedBy(obj):
             self.accepted = obj.is_accepted()
 
     def __reduce__(self):
@@ -149,7 +148,7 @@ class ExpiryTimeRawIndex(RawIntegerValueIndex):
 
 def ExpiryTimeIndex(family=BTrees.family64):
     return NormalizationWrapper(field_name='expiryTime',
-                                interface=IActionableInvitation,
+                                interface=IInvitation,
                                 index=ExpiryTimeRawIndex(family=family),
                                 normalizer=TimestampToNormalized64BitIntNormalizer())
 
