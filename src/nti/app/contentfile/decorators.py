@@ -4,10 +4,11 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+import six
 
 from zope import component
 from zope import interface
@@ -27,7 +28,7 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.singleton import SingletonMetaclass
 
 from nti.links.links import Link
 
@@ -39,12 +40,16 @@ OID = StandardExternalFields.OID
 LINKS = StandardExternalFields.LINKS
 NTIID = StandardExternalFields.NTIID
 
+logger = __import__('logging').getLogger(__name__)
 
+
+@six.add_metaclass(SingletonMetaclass)
 @component.adapter(IFile)
 @interface.implementer(IExternalMappingDecorator)
 class _ContentFileDecorator(object):
 
-    __metaclass__ = SingletonDecorator
+    def __init__(self, *args):
+        pass
 
     def decorateExternalMapping(self, item, ext_dict):
         # get link. this should add object to connection if required

@@ -4,15 +4,13 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import re
-from urllib import quote
-from urllib import unquote
+from six.moves import urllib_parse
 
 from collections import Mapping
 from collections import OrderedDict
@@ -60,6 +58,8 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.ntiids.oids import to_external_ntiid_oid
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def is_named_source(context):
@@ -326,7 +326,7 @@ def safe_download_file_name(name):
         try:
             # XXX: Another option is to UTF-8 encode the name and quote it
             # quote(name.encode('utf-8'))
-            result = quote(name)
+            result = urllib_parse.quote(name)
         except Exception:
             result = u'file' + ext
     return result
@@ -352,13 +352,13 @@ pattern = re.compile(r'(.+)/%s(.+)/(@@)?[view|download](\/.*)?' % TAG_NTC,
 
 
 def is_oid_external_link(link):
-    return bool(pattern.match(unquote(link))) if link else False
+    return bool(pattern.match(urllib_parse.unquote(link))) if link else False
 
 
 def get_file_from_oid_external_link(link):
     result = None
     try:
-        link = unquote(link)
+        link = urllib_parse.unquote(link)
         if is_oid_external_link(link):
             match = pattern.match(link)
             path = "%s%s" % (TAG_NTC, match.groups()[1])
@@ -367,7 +367,7 @@ def get_file_from_oid_external_link(link):
             ntiid = path
         else:
             path = link
-            ntiid = unquote(os.path.split(path)[1] or '')  # last part of path
+            ntiid = urllib_parse.unquote(os.path.split(path)[1] or '')  # last part of path
         if is_valid_ntiid_string(ntiid):
             result = find_object_with_ntiid(ntiid)
             if not IFile.providedBy(result):
