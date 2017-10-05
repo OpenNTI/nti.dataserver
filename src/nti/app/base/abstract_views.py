@@ -6,20 +6,15 @@ Abstract classes to be used as pyramid view callables.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import cgi
 
 from six import string_types
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from six import StringIO
+from six.moves import cStringIO
 
 from requests.structures import CaseInsensitiveDict
 
@@ -42,6 +37,8 @@ from nti.cabinet.mixins import SourceProxy
 from nti.dataserver.interfaces import IDataserver
 
 from nti.namedfile.file import safe_filename
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _check_creator(remote_user, obj):
@@ -173,7 +170,7 @@ _get_file_size = _get_source_size
 def process_source(source, default_content_type=DEFAULT_CONTENT_TYPE):
     if isinstance(source, string_types):
         length = len(source)
-        source = StringIO(source)
+        source = cStringIO(source)
         source.seek(0)
         source = SourceProxy(source,
                              length=length,
