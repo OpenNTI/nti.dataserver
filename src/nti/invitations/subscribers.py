@@ -12,12 +12,12 @@ import time
 
 from zope import component
 
-from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IActionableInvitation
 from nti.invitations.interfaces import IInvitationSentEvent
 
 logger = __import__('logging').getLogger(__name__)
 
 
-@component.adapter(IInvitation, IInvitationSentEvent)
+@component.adapter(IActionableInvitation, IInvitationSentEvent)
 def _on_invitation_sent(invitation, _):
     invitation.sent = time.time()

@@ -52,12 +52,29 @@ class IInvitation(IContained,
                   ICreated,
                   ILastModified):
     """
-    An invitation from one user of the system (or the system itself)
-    for another user to be able to do something.
+    An invitation to enable some system action.
 
     Invitations are initially created and registered with an
     :class:`IInvitations` utility. At some time in the future, someone
     who was invited may accept the invitation. The process of
+    accepting the invitation is considered to run at the credential
+    level of the creator of the invitation (thus allowing accepting
+    the invitation to do things like join a group of the creator).
+
+    Invitations may expire after a period of time and/or be good for only
+    a certain number of uses. They may have a predicate that determines they are
+    applicable only to certain users (for example, a list of invited users).
+    """
+
+    code = ValidTextLine(title=u"A unique code that identifies this invitation.",
+                         required=False)
+    Code = code
+
+
+class IActionableInvitation(IInvitation):
+    """
+    An :class:`IInvitation` targeting a specific user. At some time in the
+    future, someone who was invited may accept the invitation. The process of
     accepting the invitation is considered to run at the credential
     level of the creator of the invitation (thus allowing accepting
     the invitation to do things like join a group of the creator).
@@ -104,6 +121,14 @@ class IInvitation(IContained,
         """
         Returns true if the invitation has been accepted
         """
+IUserInvitation = IActionableInvitation
+
+
+class IUnActionableInvitation(IInvitation):
+    """
+    An marker interface for :class:`IInvitation` objects that cannot be acted
+    on.
+    """
 
 
 class IInvitationsContainer(IContained,
@@ -174,6 +199,16 @@ class InvitationAcceptedEvent(ObjectModifiedEvent):
     def __init__(self, obj, user):
         super(InvitationAcceptedEvent, self).__init__(obj)
         self.user = user
+
+
+class DuplicateInvitationCodeError(ValidationError):
+    """
+    Indicates a :class:`IInvitation` has a duplicate invitation code.
+    """
+
+    def __init__(self, code):
+        super(DuplicateInvitationCodeError, self).__init__()
+        self.code = code
 
 
 class InvitationValidationError(ValidationError):

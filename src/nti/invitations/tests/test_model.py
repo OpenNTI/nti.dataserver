@@ -17,13 +17,16 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
 
+from nose.tools import assert_raises
+
 from nti.testing.matchers import verifiably_provides
 
 import unittest
 
-from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IUserInvitation
+from nti.invitations.interfaces import DuplicateInvitationCodeError
 
-from nti.invitations.model import Invitation
+from nti.invitations.model import UserInvitation
 from nti.invitations.model import InvitationsContainer
 
 from nti.invitations.tests import SharedConfiguringTestLayer
@@ -36,10 +39,10 @@ class TestModel(unittest.TestCase):
     layer = SharedConfiguringTestLayer
 
     def test_valid_interface(self):
-        assert_that(Invitation(), verifiably_provides(IInvitation))
+        assert_that(UserInvitation(), verifiably_provides(IUserInvitation))
 
     def test_external(self):
-        invitation = Invitation(code=u'bleach',
+        invitation = UserInvitation(code=u'bleach',
                                 receiver=u'ichigo',
                                 sender=u'aizen',
                                 accepted=True)
@@ -51,7 +54,7 @@ class TestModel(unittest.TestCase):
                                         has_entry('expiryTime', is_(0)))))
 
     def test_misc(self):
-        invitation = Invitation(code=u'bleach',
+        invitation = UserInvitation(code=u'bleach',
                                 receiver=u'ichigo',
                                 sender=u'aizen',
                                 accepted=True)
@@ -65,14 +68,22 @@ class TestModel(unittest.TestCase):
         assert_that(invitation.is_email(), is_(True))
 
     def test_container(self):
-        invitation = Invitation(code=u'bleach',
-                                receiver=u'ichigo',
-                                sender=u'aizen',
-                                accepted=True)
+        invitation = UserInvitation(code=u'bleach',
+                                    receiver=u'ichigo',
+                                    sender=u'aizen',
+                                    accepted=True)
         container = InvitationsContainer()
         container.add(invitation)
         assert_that(container, has_length(is_(1)))
         assert_that(invitation, has_property('code', is_not(none())))
+
+        # Duplicate
+        invitation = UserInvitation(code=u'bleach',
+                                    receiver=u'ichigoxxx',
+                                    sender=u'aizenxxx',
+                                    accepted=False)
+        with assert_raises(DuplicateInvitationCodeError):
+            container.add(invitation)
 
         container.remove(invitation)
         assert_that(container, has_length(is_(0)))

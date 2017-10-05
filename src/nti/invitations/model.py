@@ -35,8 +35,9 @@ from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.representation import WithRepr
 
-from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IUserInvitation
 from nti.invitations.interfaces import IInvitationsContainer
+from nti.invitations.interfaces import DuplicateInvitationCodeError
 
 from nti.invitations.utils import get_random_invitation_code
 
@@ -54,11 +55,11 @@ logger = __import__('logging').getLogger(__name__)
 @WithRepr
 @EqHash('code')
 @total_ordering
-@interface.implementer(IInvitation, IAttributeAnnotatable, IContentTypeAware)
-class Invitation(PersistentCreatedModDateTrackingObject,
-                 SchemaConfigured):
+@interface.implementer(IUserInvitation, IAttributeAnnotatable, IContentTypeAware)
+class UserInvitation(PersistentCreatedModDateTrackingObject,
+                     SchemaConfigured):
 
-    createDirectFieldProperties(IInvitation)
+    createDirectFieldProperties(IUserInvitation)
 
     __parent__ = None
     __name__ = alias('code')
@@ -106,6 +107,9 @@ class Invitation(PersistentCreatedModDateTrackingObject,
         except AttributeError:  # pragma: no cover
             return NotImplemented
 
+# BWC
+Invitation = UserInvitation
+
 
 @interface.implementer(IInvitationsContainer, IAttributeAnnotatable)
 class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer,
@@ -118,6 +122,8 @@ class InvitationsContainer(CaseInsensitiveLastModifiedBTreeContainer,
             while code in self:
                 code = get_random_invitation_code()
             invitation.code = code
+        if code in self:
+            raise DuplicateInvitationCodeError(code)
         self[code] = invitation
     registerInvitation = append = add
 

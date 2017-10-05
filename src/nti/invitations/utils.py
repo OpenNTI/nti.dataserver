@@ -30,9 +30,9 @@ from nti.invitations.index import IX_RECEIVER
 from nti.invitations.index import IX_EXPIRYTIME
 from nti.invitations.index import get_invitations_catalog
 
-from nti.invitations.interfaces import IInvitation
 from nti.invitations.interfaces import IInvitationActor
 from nti.invitations.interfaces import InvitationActorError
+from nti.invitations.interfaces import IActionableInvitation
 from nti.invitations.interfaces import IInvitationsContainer
 from nti.invitations.interfaces import InvitationExpiredError
 from nti.invitations.interfaces import InvitationAcceptedEvent
@@ -80,13 +80,17 @@ def get_invitations_ids(sites=None, receivers=None, senders=None, catalog=None):
     return doc_ids
 
 
+def is_actionable(obj):
+    return IActionableInvitation.providedBy(obj)
+
+
 def get_invitations(sites=None, receivers=None, senders=None, catalog=None):
     result = []
     intids = component.getUtility(IIntIds)
     doc_ids = get_invitations_ids(sites, receivers, senders, catalog)
     for uid in doc_ids or ():
         obj = intids.queryObject(uid)
-        if IInvitation.providedBy(obj):
+        if is_actionable(obj):
             result.append(obj)
     return result
 
@@ -123,7 +127,7 @@ def get_pending_invitations(receivers=None, now=None, catalog=None):
     doc_ids = get_pending_invitation_ids(receivers, now, catalog)
     for uid in doc_ids or ():
         obj = intids.queryObject(uid)
-        if IInvitation.providedBy(obj):
+        if is_actionable(obj):
             result.append(obj)
     return result
 
@@ -133,7 +137,7 @@ def has_pending_invitations(receivers=None, now=None, catalog=None):
     doc_ids = get_pending_invitation_ids(receivers, now, catalog)
     for uid in doc_ids or ():
         obj = intids.queryObject(uid)
-        if IInvitation.providedBy(obj):
+        if is_actionable(obj):
             return True
     return False
 
@@ -164,7 +168,7 @@ def get_expired_invitations(receivers=None, now=None, catalog=None):
     doc_ids = get_expired_invitation_ids(receivers, now, catalog)
     for uid in doc_ids or ():
         obj = intids.queryObject(uid)
-        if IInvitation.providedBy(obj):
+        if is_actionable(obj):
             result.append(obj)
     return result
 
@@ -200,7 +204,7 @@ def get_sent_invitations(senders, accepted=False, catalog=None):
     doc_ids = get_sent_invitation_ids(senders, accepted, catalog)
     for uid in doc_ids or ():
         obj = intids.queryObject(uid)
-        if IInvitation.providedBy(obj):
+        if is_actionable(obj):
             result.append(obj)
     return result
 
