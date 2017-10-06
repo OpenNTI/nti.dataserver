@@ -147,7 +147,7 @@ class IInvitationsContainer(IContained,
         """
     registerInvitation = add
 
-    def remove(invitation):
+    def remove(invitation, event=True):
         """
         Remove the given invitation with this object.
         """
