@@ -504,8 +504,6 @@ setup(
             'snakefood',  # dependency graphs
             # Narrative docs
             'sphinx',
-            'sphinxtheme.readability >= 0.0.6',
-            # replace sphinxcontrib-programoutput
             "sphinxcontrib-programoutput",
             # virtualenv
             'virtualenv',
