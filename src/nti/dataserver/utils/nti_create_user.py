@@ -75,6 +75,8 @@ def _create_user(factory, username, password, realname, communities=(), options=
         ext_value['alias'] = text_(options.alias)
     if options.birthdate:
         ext_value['birthdate'] = text_(options.birthdate)
+    if options.contact_email:
+        ext_value['contact_email'] = text_(options.contact_email)
 
     if options.public:
         ext_value['public'] = True
