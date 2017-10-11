@@ -7,6 +7,8 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.component" />
 
+	<include package="nti.mimetype" />
+
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />

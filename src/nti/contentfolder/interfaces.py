@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
@@ -38,6 +37,7 @@ class INamedContainer(IContained,
                       IContentContainer,
                       ILastModified,
                       ICreated):
+
     tags = ListOrTuple(ValidTextLine(title=u"A single tag"), required=False)
 
     filename = ValidTextLine(title=u"Folder name", required=True)

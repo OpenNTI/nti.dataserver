@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import boto.s3.key
 
@@ -19,6 +18,8 @@ from nti.common.interfaces import IAWSKey
 
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import INamedContainer
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def get_key(context):
