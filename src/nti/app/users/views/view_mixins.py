@@ -56,6 +56,8 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users.users import User
 
+from nti.dataserver.users.utils import get_users_by_email
+
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
 from nti.ntiids.ntiids import find_object_with_ntiid
@@ -142,6 +144,12 @@ class EntityActivityViewMixin(UGDView):
 
 class AbstractUpdateView(AbstractAuthenticatedView,
                          ModeledContentUploadRequestUtilsMixin):
+    """
+    An abstract view that takes uploaded input and updates a user. By default,
+    a user is found based on their emai.
+    """
+
+    REQUIRE_EMAIL = False
 
     def readInput(self, value=None):
         if self.request.body:
@@ -158,19 +166,38 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         """
         return self.readInput()
 
+    @Lazy
+    def _email(self):
+        result = self._params.get('email') \
+              or self._params.get('mail')
+        if not result and self.REQUIRE_EMAIL:
+            raise_http_error(self.request,
+                             _(u"Must provide email."),
+                             u'NoEmailGiven')
+        return result
+
     def get_user(self):
         """
-        Subclasses are expected to define how the user is fetched.
+        Fetches a user based on the given email.
         """
-        raise NotImplementedError()
+        user = None
+        if self._email is not None:
+            users = get_users_by_email(self._email) or ()
+            users = tuple(users)
+            # XXX: Not sure if we want to handle multiple found users.
+            if len(users) > 1:
+                raise_http_error(self.request,
+                             _(u"Multiple users found for email address."),
+                             u'MultipleUsersFound')
+            elif users:
+                user = users[0]
+        return user
 
 
 class GrantAccessViewMixin(AbstractUpdateView):
     """
     Grants access to a user and a contextual object. Typically this is a
     third-party granting access on behalf of a user.
-
-    Subclasses must implement a ``get_user`` func.
 
     params:
         ntiid - the ntiid of the contextual object we grant access to
@@ -255,8 +282,6 @@ class UserUpsertViewMixin(AbstractUpdateView):
     does not already exist. This will typically be used by a third party on
     behalf of a user.
 
-    Subclasses must implement a ``get_user`` func.
-
     params:
         first_name - the user's first name, only used if no `real_name` provided.
         last_name - the user's last name, only used if no `real_name` provided.
@@ -266,7 +291,6 @@ class UserUpsertViewMixin(AbstractUpdateView):
     returns the user object
     """
 
-    REQUIRE_EMAIL = False
     REQUIRE_NAME = False
 
     def _generate_username(self):
@@ -275,16 +299,6 @@ class UserUpsertViewMixin(AbstractUpdateView):
         """
         username_util = component.getUtility(IUsernameGeneratorUtility)
         return username_util.generate_username()
-
-    @Lazy
-    def _email(self):
-        result = self._params.get('email') \
-              or self._params.get('mail')
-        if not result and self.REQUIRE_EMAIL:
-            raise_http_error(self.request,
-                             _(u"Must provide email."),
-                             u'NoEmailGiven')
-        return result
 
     @Lazy
     def _first_name(self):

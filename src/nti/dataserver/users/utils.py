@@ -110,6 +110,8 @@ def get_users_by_email(email):
     """
     Get the set of users using the given email.
     """
+    if email is None:
+        return ()
     result = set()
     catalog = get_entity_catalog()
     intids = component.getUtility(IIntIds)
@@ -118,7 +120,7 @@ def get_users_by_email(email):
         user = IUser(intids.queryObject(uid), None)
         if user is not None:
             result.add(user)
-    return result
+    return tuple(result)
 
 # properties
 
