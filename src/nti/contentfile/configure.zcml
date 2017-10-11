@@ -6,7 +6,9 @@
 
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.component" />
-
+	
+	<include package="nti.wref" />
+	<include package="nti.mimetype" />
 	<include package="nti.namedfile" />
 
 	<!-- Adapters -->
