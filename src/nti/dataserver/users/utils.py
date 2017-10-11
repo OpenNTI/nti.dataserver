@@ -14,10 +14,14 @@ from zope.catalog.interfaces import ICatalog
 
 from zope.intid.interfaces import IIntIds
 
+from nti.dataserver.interfaces import IUser
+
 from nti.dataserver.users.index import IX_EMAIL
 from nti.dataserver.users.index import IX_TOPICS
 from nti.dataserver.users.index import CATALOG_NAME
 from nti.dataserver.users.index import IX_EMAIL_VERIFIED
+
+from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IAvatarURLProvider
@@ -101,6 +105,20 @@ def is_email_verified(email):
     result = verified_email_ids(email)
     return bool(result)
 
+
+def get_users_by_email(email):
+    """
+    Get the set of users using the given email.
+    """
+    result = set()
+    catalog = get_entity_catalog()
+    intids = component.getUtility(IIntIds)
+    doc_ids = catalog[IX_EMAIL].apply((email, email))
+    for uid in doc_ids or ():
+        user = IUser(intids.queryObject(uid), None)
+        if user is not None:
+            result.add(user)
+    return result
 
 # properties
 
