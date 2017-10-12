@@ -161,7 +161,8 @@ class BasicSAMLClient(object):
         return hexc.HTTPSeeOther(location)
 
     def response_for_logging_in(self, success, error, state={}, passive=False,
-                                force_authn=False, entity_id=None, acs_link=None):
+                                force_authn=False, entity_id=None, acs_link=None,
+                                want_response_signed=None):
         if not entity_id:
             entity_id = self._pick_idp()
 
@@ -196,6 +197,7 @@ class BasicSAMLClient(object):
 
             is_passive = 'true' if passive else None
             force = 'true' if force_authn else None
+            want_response_signed = 'false' if want_response_signed is None else 'true'
 
             if not acs_link:
                 request = get_current_request()
@@ -206,7 +208,8 @@ class BasicSAMLClient(object):
             extra_args = {
                 'force_authn': force,
                 'is_passive': is_passive,
-                'assertion_consumer_service_url': acs_link
+                'assertion_consumer_service_url': acs_link,
+                'want_response_signed': want_response_signed,
             }
 
             if _cli.authn_requests_signed:
