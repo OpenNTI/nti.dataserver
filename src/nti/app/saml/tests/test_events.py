@@ -72,7 +72,7 @@ class TestSAMLUserAssertionInfo(object):
 
 @EqHash('provider_id')
 @interface.implementer(ISAMLProviderUserInfo)
-class TestSAMLProviderUserInfo:
+class TestSAMLProviderUserInfo(object):
 
     def __init__(self, user_assertion_info):
         self.email = user_assertion_info.email
