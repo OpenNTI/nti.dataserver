@@ -4,16 +4,15 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import redis
 import struct
 import logging
-from urlparse import urlparse
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
@@ -73,6 +72,8 @@ from nti.wref.interfaces import IWeakRef
 # into its own function and call it explicitly.
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def get_by_oid(oid_string, ignore_creator=False):
@@ -181,7 +182,7 @@ class MinimalDataserver(object):
             raise DeprecationWarning(msg)
 
         redis_url = conf.main_conf.get('redis', 'redis_url')
-        parsed_url = urlparse(redis_url)
+        parsed_url = urllib_parse.urlparse(redis_url)
         if parsed_url.scheme == 'file':
             # Redis client doesn't natively understand file://, only redis://
             client = redis.StrictRedis(unix_socket_path=parsed_url.path)  # XXX Windows
