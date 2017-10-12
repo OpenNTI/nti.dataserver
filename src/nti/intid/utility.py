@@ -79,7 +79,9 @@ class IntIds(_ZCIntIds):
         return _ZCIntIds.queryId(self, aq_base(ob), default=default)
 
     def register(self, ob, *unused_args, **unused_kwargs):
-        return _ZCIntIds.register(self, aq_base(ob))
+        result = _ZCIntIds.register(self, aq_base(ob))
+        logger.debug('%s was registered with intid %s', type(ob), result)
+        return result
 
     def unregister(self, ob, *unused_args, **unused_kwargs):
         return _ZCIntIds.unregister(self, aq_base(ob))
