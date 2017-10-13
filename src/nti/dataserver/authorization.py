@@ -602,7 +602,8 @@ def is_content_admin(user):
     """
     Returns whether the user has the `ROLE_CONTENT_ADMIN` role.
     """
-    roles = principalRoleManager.getRolesForPrincipal(user.username)
+    username = getattr(user, 'username', user) or ''
+    roles = principalRoleManager.getRolesForPrincipal(username)
     for role, access in roles or ():
         if role == ROLE_CONTENT_ADMIN.id and access == Allow:
             return True
@@ -624,7 +625,8 @@ def is_site_admin(user):
     result = False
     srm = site_role_manager(getSite())
     if srm is not None:
-        for role, access in srm.getRolesForPrincipal(user.username):
+        username = getattr(user, 'username', user) or ''
+        for role, access in srm.getRolesForPrincipal(username):
             if role == ROLE_SITE_ADMIN.id and access == Allow:
                 return True
     return result
@@ -644,6 +646,6 @@ def is_admin_or_content_admin_or_site_admin(user):
     `ROLE_ADMIN` or `ROLE_CONTENT_ADMIN` roles.
     """
     return user is not None \
-        or is_admin(user) \
-        or is_content_admin(user) \
-        or is_site_admin(user)
+        and (   is_admin(user) \
+             or is_content_admin(user) \
+             or is_site_admin(user) )
