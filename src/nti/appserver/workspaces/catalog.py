@@ -28,7 +28,7 @@ from nti.appserver.workspaces.interfaces import IPurchasedCatalogCollectionProvi
 
 from nti.dataserver.interfaces import IUser
 
-from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.property.property import alias
@@ -62,11 +62,13 @@ class PurchasedCatalogCollection(Contained):
     def container(self):
         providers = component.subscribers((self._user,),
                                           IPurchasedCatalogCollectionProvider)
-        result = LocatedExternalDict()
-        result[ITEMS] = featured_items = []
+        result = LocatedExternalList()
         for provider in providers:
             provider_iter = provider.get_collection_iter()
-            featured_items.extend(provider_iter)
+            result.extend(provider_iter)
+        result.__name__ = self.__name__
+        result.__parent__ = self.__parent__
+        result.lastModified = None
         return result
 
 
@@ -94,11 +96,13 @@ class FeaturedCatalogCollection(Contained):
     def container(self):
         providers = component.subscribers((self._user,),
                                           IFeaturedCatalogCollectionProvider)
-        result = LocatedExternalDict()
-        result[ITEMS] = featured_items = []
+        result = LocatedExternalList()
         for provider in providers:
             provider_iter = provider.get_collection_iter()
-            featured_items.extend(provider_iter)
+            result.extend(provider_iter)
+        result.__name__ = self.__name__
+        result.__parent__ = self.__parent__
+        result.lastModified = None
         return result
 
 
