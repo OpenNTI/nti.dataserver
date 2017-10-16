@@ -11,6 +11,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import os
+import six
 import time
 import warnings
 
@@ -119,6 +120,7 @@ class _ChatHandlerSessionState(Persistent):
 _ChatHandlerSessionStateFactory = an_factory(_ChatHandlerSessionState)
 
 
+@six.add_metaclass(_ChatObjectMeta)
 @interface.implementer(IChatEventHandler)
 @component.adapter(IUser, ISocketSession, IChatserver)
 class _ChatHandler(object):
@@ -131,7 +133,6 @@ class _ChatHandler(object):
     annotations if necessary to store additional state.
     """
 
-    __metaclass__ = _ChatObjectMeta
     __emits__ = ('recvMessageForAttention', 'presenceOfUserChangedTo',
                  'data_noticeIncomingChange', 'failedToEnterRoom',
                  'setPresenceOfUsersTo')
@@ -351,9 +352,9 @@ class _ChatHandler(object):
 
 
 @interface.implementer(IChatEventHandler)
-@component.adapter(    ICoppaUserWithoutAgreement,
-                    ISocketSession,
-                    IChatserver)
+@component.adapter(ICoppaUserWithoutAgreement,
+                   ISocketSession,
+                   IChatserver)
 def ChatHandlerNotAvailable(*unused_args):
     """
     A factory that produces ``None``, effectively disabling chat.
