@@ -14,16 +14,10 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import time
 import struct
-import anyjson as json
+import simplejson as json
 
-try:
-	import gevent
-	from gevent import socket
-	from gevent import ssl
-except ImportError:
-	gevent = None
-	import socket
-	import ssl
+from gevent import ssl
+from gevent import socket
 
 from zope import schema
 from zope import interface

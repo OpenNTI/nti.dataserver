@@ -10,7 +10,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
-import anyjson as json
+
+import simplejson as json
 
 from zope import component
 from zope import interface

@@ -44,7 +44,7 @@ REL_INVALID_CONTACT_EMAIL = 'state-bounced-contact-email'
 
 import os
 import argparse
-import anyjson as json
+import simplejson as json
 from collections import defaultdict
 
 import boto

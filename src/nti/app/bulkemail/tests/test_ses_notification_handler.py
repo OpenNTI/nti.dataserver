@@ -21,8 +21,10 @@ from hamcrest import has_property
 from hamcrest import contains_string
 
 from zope.lifecycleevent import modified
-import anyjson as json
+
 import os
+
+import simplejson as json
 
 import fudge
 from boto.sqs.message import RawMessage

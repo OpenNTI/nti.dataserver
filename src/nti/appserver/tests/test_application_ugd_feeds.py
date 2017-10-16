@@ -26,7 +26,7 @@ from nti.testing import base
 from nti.testing import matchers
 
 from zope import component
-import anyjson as json
+import simplejson as json
 
 from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -62,7 +62,7 @@ class TestFeeds(ApplicationLayerTest):
 
 		testapp = self.testapp
 		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_HTML, specific='1234' )
-		data = json.serialize( { 'Class': 'Note',
+		data = json.dumps( { 'Class': 'Note',
 								 'MimeType': 'application/vnd.nextthought.note',
 								 'ContainerId': containerId,
 								 'sharedWith': ['foo@bar'],
@@ -106,15 +106,15 @@ class TestFeeds(ApplicationLayerTest):
 	def test_feed_authentication_with_token(self):
 		testapp = self.testapp
 		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_HTML, specific='1234' )
-		data = json.serialize( { 'Class': 'Note',
-								 'MimeType': 'application/vnd.nextthought.note',
-								 'ContainerId': containerId,
-								 'sharedWith': ['foo@bar'],
-								 'selectedText': 'This is the selected text',
-								 'body': ["The note body"],
-								 'title': 'Pride and Prejudice',
-								 'tags': ['tag1', 'tag2'],
-								 'applicableRange': {'Class': 'ContentRangeDescription'}} )
+		data = json.dumps( {'Class': 'Note',
+							'MimeType': 'application/vnd.nextthought.note',
+							'ContainerId': containerId,
+							'sharedWith': ['foo@bar'],
+							'selectedText': 'This is the selected text',
+							'body': ["The note body"],
+							'title': 'Pride and Prejudice',
+							'tags': ['tag1', 'tag2'],
+							'applicableRange': {'Class': 'ContentRangeDescription'}} )
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 201 ) )

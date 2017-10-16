@@ -16,7 +16,7 @@ from nose.tools import assert_raises
 import fudge
 
 import os.path
-import anyjson as json
+import simplejson as json
 
 from zope import component
 
