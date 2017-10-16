@@ -28,7 +28,7 @@ is_not = does_not
 
 import unittest
 
-from urllib import unquote
+from six.moves.urllib_parse import unquote
 
 from pyquery import PyQuery
 

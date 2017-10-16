@@ -4,18 +4,17 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import re
 import time
-from urllib import quote
-from urllib import unquote
-from urlparse import urljoin
 from datetime import datetime
+from six.moves.urllib_parse import quote
+from six.moves.urllib_parse import urljoin
+from six.moves.urllib_parse import unquote
 
 from slugify import slugify_filename
 
@@ -34,6 +33,8 @@ from nti.externalization.integer_strings import from_external_string
 
 pattern = re.compile(r'(.+)/%s/(.+)(\/.*)?' % CFIO, 
                      re.UNICODE | re.IGNORECASE)
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def get_ds2(request=None):

@@ -55,9 +55,10 @@ zope.deferredimport.deprecatedFrom(
 	"SharedConfiguringTestBase")
 
 import time
-import urllib
 import datetime
-import anyjson as json
+from six.moves import urllib_parse
+
+import simplejson as json
 
 import webob.datetime_utils
 
@@ -103,7 +104,7 @@ class ContainedExternal(ZContainedMixin):
 			return self._str
 		return "<%s %s>" % (self.__class__.__name__, self.to_container_key())
 
-	def toExternalObject( self, **kwargs ):
+	def toExternalObject( self, **unused_kwargs ):
 		return str(self)
 	def to_container_key(self):
 		return to_external_ntiid_oid(self, default_oid=str(id(self)))
@@ -527,9 +528,9 @@ class TestApplication(ApplicationLayerTest):
 
 		testapp = TestApp( self.app )
 		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
-		data = json.serialize( { 'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
-								 'ContainerId': containerId,
-								 'applicableRange': {'Class': 'ContentRangeDescription'}} )
+		data = json.dumps({ 'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
+							'ContainerId': containerId,
+							'applicableRange': {'Class': 'ContentRangeDescription'}} )
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
@@ -556,9 +557,9 @@ class TestApplication(ApplicationLayerTest):
 
 		testapp = TestApp( self.app )
 
-		data = json.serialize( { 'Class': 'FriendsList',  'MimeType': 'application/vnd.nextthought.friendslist',
-								 'ContainerId': 'FriendsLists',
-								 'ID': "Foo@bar" } )
+		data = json.dumps( { 'Class': 'FriendsList',  'MimeType': 'application/vnd.nextthought.friendslist',
+							 'ContainerId': 'FriendsLists',
+							 'ID': "Foo@bar" } )
 		path = '/dataserver2/users/sjohnson@nextthought.com'
 		testapp.post( path, data, extra_environ=self._make_extra_environ() )
 		# Generates a conflict the next time
@@ -581,9 +582,9 @@ class TestApplication(ApplicationLayerTest):
 
 		testapp = TestApp( self.app )
 
-		data = json.serialize( { 'Class': 'Device', 'MimeType': 'application/vnd.nextthought.device',
-								 'ContainerId': 'Devices',
-								 'ID': "deadbeef" } )
+		data = json.dumps( { 'Class': 'Device', 'MimeType': 'application/vnd.nextthought.device',
+							 'ContainerId': 'Devices',
+							 'ID': "deadbeef" } )
 		path = '/dataserver2/users/sjohnson@nextthought.com'
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
 		body = json.loads( res.body )
@@ -600,9 +601,9 @@ class TestApplication(ApplicationLayerTest):
 
 		testapp = TestApp( self.app )
 
-		data = json.serialize( { 'Class': 'Device',
-								 'ContainerId': 'Devices',
-								 'ID': "deadbeef" } )
+		data = json.dumps( { 'Class': 'Device',
+							 'ContainerId': 'Devices',
+							 'ID': "deadbeef" } )
 		path = '/dataserver2/users/sjohnson@nextthought.com/Devices/deadbeef'
 		testapp.put( path, data, extra_environ=self._make_extra_environ(), status=404 )
 		# But we can post it
@@ -624,7 +625,7 @@ class TestApplication(ApplicationLayerTest):
 			self._create_user()
 
 
-		json_data = json.serialize( data )
+		json_data = json.dumps( data )
 
 		testapp = TestApp( self.app )
 
@@ -643,18 +644,18 @@ class TestApplication(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_post_canvas_image_roundtrip_download_views(self):
 		#" Images posted as data urls come back as real links which can be fetched "
-		data = {u'Class': 'Canvas',
+		data = {'Class': 'Canvas',
 				'ContainerId': 'tag:foo:bar',
-				u'MimeType': u'application/vnd.nextthought.canvas',
-				'shapeList': [{u'Class': 'CanvasUrlShape',
-							   u'MimeType': u'application/vnd.nextthought.canvasurlshape',
-							   u'url': u'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
+				'MimeType': 'application/vnd.nextthought.canvas',
+				'shapeList': [{'Class': 'CanvasUrlShape',
+							   'MimeType': 'application/vnd.nextthought.canvasurlshape',
+							   'url': 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
 
 
-		json_data = json.serialize( data )
+		json_data = json.dumps( data )
 
 		testapp = TestApp( self.app )
 
@@ -676,15 +677,15 @@ class TestApplication(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_post_canvas_in_note_image_roundtrip_download_views(self):
 		#" Images posted as data urls come back as real links which can be fetched "
-		canvas_data = {u'Class': 'Canvas',
+		canvas_data = {'Class': 'Canvas',
 					   'ContainerId': 'tag:foo:bar',
-					   u'MimeType': u'application/vnd.nextthought.canvas',
-					   'shapeList': [{u'Class': 'CanvasUrlShape',
-									  u'MimeType': u'application/vnd.nextthought.canvasurlshape',
-									  u'url': u'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
+					   'MimeType': 'application/vnd.nextthought.canvas',
+					   'shapeList': [{'Class': 'CanvasUrlShape',
+									  'MimeType': 'application/vnd.nextthought.canvasurlshape',
+									  'url': 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
 		data = {'Class': 'Note',
 				'ContainerId': 'tag:foo:bar',
-				u'MimeType': u'application/vnd.nextthought.note',
+				'MimeType': 'application/vnd.nextthought.note',
 				'applicableRange': {'Class': 'ContentRangeDescription'},
 				'body': [canvas_data]}
 
@@ -968,7 +969,7 @@ class TestApplication(ApplicationLayerTest):
 		testapp = TestApp( self.app )
 		data = '{"body": ["text"]}'
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % urllib.quote(n_ext_id)
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % urllib_parse.quote(n_ext_id)
 		res = testapp.put( path, data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( json.loads(res.body), has_entry( 'href', path ) )
@@ -999,7 +1000,7 @@ class TestApplication(ApplicationLayerTest):
 								has_item(
 									has_entry(
 										'href',
-										'/dataserver2/Objects/%s/@@like' % urllib.quote(n_ext_id) ) ) ) )
+										'/dataserver2/Objects/%s/@@like' % urllib_parse.quote(n_ext_id) ) ) ) )
 
 		# So I do
 		res = testapp.post( path + '/@@like', data, extra_environ=self._make_extra_environ() )
@@ -1081,7 +1082,7 @@ class TestApplication(ApplicationLayerTest):
 		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		field_path = path + '/++fields++sharedWith' # The name of the external field
 
-		_ = testapp.put( urllib.quote( field_path ),
+		_ = testapp.put( urllib_parse.quote( field_path ),
 						   data,
 						   extra_environ=self._make_extra_environ(),
 						   headers={"Content-Type": "application/json" },
@@ -1109,7 +1110,7 @@ class TestApplication(ApplicationLayerTest):
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/'
 
-		_ = testapp.post( urllib.quote( path ),
+		_ = testapp.post( urllib_parse.quote( path ),
 						   data,
 						   extra_environ=self._make_extra_environ(update_request=True),
 						   headers={"Content-Type": "application/json" },
@@ -1131,7 +1132,7 @@ class TestApplication(ApplicationLayerTest):
 		testapp = TestApp( self.app )
 		data = '["Everyone"]'
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % urllib.quote(n_ext_id)
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % urllib_parse.quote(n_ext_id)
 		field_path = path + '/++fields++sharedWith' # The name of the external field
 
 		res = testapp.put( field_path,
@@ -1166,13 +1167,13 @@ class TestApplication(ApplicationLayerTest):
 		field_path = path + '/++fields++Creator' # The name of the external field
 
 		# Fetch
-		res = testapp.get( urllib.quote( field_path ),
+		res = testapp.get( urllib_parse.quote( field_path ),
 						   extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( "Username", is_( username )))
 
 		# Update to field is ignored
-		res = testapp.put( urllib.quote( field_path ),
+		res = testapp.put( urllib_parse.quote( field_path ),
 						   '"dne_user1"',
 						   extra_environ=self._make_extra_environ(),
 						   headers={"Content-Type": "application/json" } )
@@ -1195,7 +1196,7 @@ class TestApplication(ApplicationLayerTest):
 			for field_segment in ('++fields++' + field, ):
 				field_path = path + '/' + field_segment # The name of the external field
 
-				res = testapp.put( urllib.quote( field_path ),
+				res = testapp.put( urllib_parse.quote( field_path ),
 								   data,
 								   extra_environ=self._make_extra_environ(),
 								   headers={"Content-Type": "application/json" } )
@@ -1277,7 +1278,7 @@ class TestApplication(ApplicationLayerTest):
 
 			data = json.dumps( {"NotificationCount": 5 } )
 
-			res = testapp.put( urllib.quote( path ),
+			res = testapp.put( urllib_parse.quote( path ),
 							   data,
 							   extra_environ=self._make_extra_environ(),
 							   headers={"Content-Type": "application/json" } )

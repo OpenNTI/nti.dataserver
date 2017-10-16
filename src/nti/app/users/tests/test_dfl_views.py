@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -18,7 +19,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 does_not = is_not
 
-import urllib
+from six.moves import urllib_parse
 
 from nti.app.users.views.dfl_views import REL_MY_MEMBERSHIP
 
@@ -67,7 +68,7 @@ class TestApplicationDFLViews(ApplicationLayerTest):
         # The member is the only one that has the link
         path = '/dataserver2/Objects/' + dfl_ntiid
         path = str(path)
-        path = urllib.quote(path)
+        path = urllib_parse.quote(path)
 
         res = testapp.get(path, 
                           extra_environ=self._make_extra_environ(member_user_username))
@@ -122,7 +123,7 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 
         path = '/dataserver2/Objects/' + dfl_ntiid
         path = str(path)
-        path = urllib.quote(path)
+        path = urllib_parse.quote(path)
 
         # Owner
         res = testapp.get(path, 
@@ -174,7 +175,7 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 
         path = '/dataserver2/Objects/%s/Activity' % dfl_ntiid
         testapp = TestApp(self.app)
-        path = urllib.quote(str(path))
+        path = urllib_parse.quote(str(path))
 
         res = testapp.get(path, 
                           extra_environ=self._make_extra_environ(owner_username))

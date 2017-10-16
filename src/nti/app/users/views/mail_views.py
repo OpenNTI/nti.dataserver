@@ -4,15 +4,13 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 import time
-import urllib
-from urlparse import urljoin
+from six.moves import urllib_parse
 
 from requests.structures import CaseInsensitiveDict
 
@@ -71,6 +69,8 @@ MAX_REQUEST_COUNT = 5
 
 #: Max wait time between emails
 MAX_WAIT_TIME_EMAILS = 300  # 5 mins
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _login_app_root():
@@ -137,11 +137,12 @@ class VerifyUserEmailView(AbstractAuthenticatedView):
             # this for all authenticated views (or the
             # BrowserRedirectorPlugin).
             current_path = request.current_route_path()
-            current_path = urllib.quote(current_path)
+            current_path = urllib_parse.quote(current_path)
             return_url = "%s?return=%s" % (login_root, current_path)
             return hexc.HTTPFound(location=return_url)
 
-        destination_url = urljoin(self.request.application_url, login_root)
+        destination_url = urllib_parse.urljoin(self.request.application_url,
+                                               login_root)
         template_args = {'href': destination_url}
 
         policy = component.getUtility(ISitePolicyUserEventListener)
@@ -306,8 +307,8 @@ class SendUserEmailVerificationView(AbstractAuthenticatedView,
             email = getattr(profile, 'email', None)
             email_verified = getattr(profile, 'email_verified', False)
             if not email_verified:
-                safe_send_email_verification(
-                    user, profile, email, self.request)
+                safe_send_email_verification(user, profile, 
+                                             email, self.request)
             else:
                 logger.debug("Not sending email verification to %s", user)
             # wait a bit

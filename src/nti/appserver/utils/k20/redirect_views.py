@@ -3,14 +3,12 @@
 """
 .. $Id$
 """
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-import urllib
-
-from urlparse import urlparse
+from six.moves import urllib_parse
 
 from requests.structures import CaseInsensitiveDict
 
@@ -24,12 +22,13 @@ from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users.users import User
 
-
 from nti.ntiids.oids import to_external_ntiid_oid
 
 K20_VIEW_NAME = 'k20_link'
 K20_LINK_PARAM_NAME = 'href'
 K20_IDENTIFIER_NAME = 'token'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _get_user_token(user):
@@ -56,8 +55,8 @@ class K20Link(AbstractAuthenticatedView):
             return hexc.HTTPBadRequest("User or link invalid.")
 
         user_token = _get_user_token(user)
-        params = urllib.urlencode({K20_IDENTIFIER_NAME: user_token})
-        if urlparse(url)[4]:
+        params = urllib_parse.urlencode({K20_IDENTIFIER_NAME: user_token})
+        if urllib_parse.urlparse(url)[4]:
             new_link = url + '&' + params
         else:
             new_link = url + '?' + params

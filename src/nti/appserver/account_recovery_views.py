@@ -9,16 +9,14 @@ password reset feature <http://www.troyhunt.com/2012/05/everything-you-ever-want
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import uuid
-import urllib
 import datetime
-import urlparse
 from collections import namedtuple
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
@@ -76,6 +74,8 @@ REL_FORGOT_PASSCODE = "logon.forgot.passcode"
 #: given a link with this rel at logon ping
 #: and handshake time.
 REL_RESET_PASSCODE = 'logon.reset.passcode'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _preflight_email_based_request(request):
@@ -199,20 +199,20 @@ class UserAccountRecoveryUtility(object):
         value = (token, now)
         annotations[_KEY_PASSCODE_RESET] = value
 
-        parsed_redirect = urlparse.urlparse(success_redirect_value)
+        parsed_redirect = urllib_parse.urlparse(success_redirect_value)
         parsed_redirect = list(parsed_redirect)
         query = parsed_redirect[4]
         if query:
             query =  query + '&username=' \
-                    + urllib.quote(user.username) \
-                    + '&id=' + urllib.quote(token)
+                    + urllib_parse.quote(user.username) \
+                    + '&id=' + urllib_parse.quote(token)
         else:
             query =  'username=' \
-                    + urllib.quote(user.username) \
-                    + '&id=' + urllib.quote(token)
+                    + urllib_parse.quote(user.username) \
+                    + '&id=' + urllib_parse.quote(token)
 
         parsed_redirect[4] = query
-        success_redirect_value = urlparse.urlunparse(parsed_redirect)
+        success_redirect_value = urllib_parse.urlunparse(parsed_redirect)
         return success_redirect_value
 
 # We store a tuple as an annotation of the user object for

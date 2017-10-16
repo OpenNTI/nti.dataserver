@@ -24,10 +24,10 @@ does_not = is_not
 from nti.testing.time import time_monotonically_increases
 
 import fudge
-import urllib2
 import unittest
 import UserList
 from datetime import datetime
+from six.moves import urllib_parse
 
 from webob import datetime_utils
 
@@ -1338,7 +1338,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 				user.addContainedObject(top_n)
 				top_n.lastModified = i
 				ntiids.append(top_n.id)
-				quoted_ntiid = urllib2.quote(to_external_ntiid_oid(top_n))
+				quoted_ntiid = urllib_parse.quote(to_external_ntiid_oid(top_n))
 				external_oids.append(quoted_ntiid)
 			top_n_containerid = top_n.containerId
 
@@ -1438,7 +1438,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 				user.addContainedObject(top_n)
 				top_n.lastModified = i
 				ntiids.append(top_n.id)
-				quoted_ntiid = urllib2.quote(to_external_ntiid_oid(top_n))
+				quoted_ntiid = urllib_parse.quote(to_external_ntiid_oid(top_n))
 				external_oids.append(quoted_ntiid)
 			top_n_containerid = top_n.containerId
 
@@ -1563,7 +1563,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 				top_n.created = datetime.utcfromtimestamp( i )
 				top_n.lastModified = i
 				ntiids.append(top_n.id)
-				quoted_ntiid = urllib2.quote(to_external_ntiid_oid(top_n))
+				quoted_ntiid = urllib_parse.quote(to_external_ntiid_oid(top_n))
 				external_oids.append(quoted_ntiid)
 			top_n_containerid = top_n.containerId
 

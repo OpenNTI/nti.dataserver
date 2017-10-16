@@ -14,9 +14,10 @@ from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import only_contains
 
-import anyjson as json
+import simplejson as json
 
-from urllib import quote as UQ
+from six.moves.urllib_parse import quote
+UQ = quote
 
 from zope import interface
 
@@ -47,7 +48,7 @@ from nti.dataserver.tests import mock_dataserver
 # class TestApplicationAssessment(ApplicationTestBase):
 #	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
 
-bad_val      = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' ).decode( 'utf-8' )
+bad_val      = u'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' ).decode( 'utf-8' )
 censored_val = u'This is ******* stupid, you ************ *******'
 
 bad_word      = 'shpxvat'.encode( 'rot13' ).decode( 'utf-8' )

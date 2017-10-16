@@ -18,7 +18,8 @@ does_not = is_not
 
 from nti.testing.matchers import validly_provides as verifiably_provides
 
-from urllib import quote as UQ
+from six.moves.urllib_parse import quote
+UQ = quote
 
 from zope import interface
 

@@ -4,18 +4,16 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import math
 import time
 import hashlib
-from urllib import urlencode
-from urlparse import urljoin
 from datetime import datetime
+from six.moves import urllib_parse
 
 import isodate
 
@@ -42,6 +40,7 @@ from nti.app.users import VERIFY_USER_EMAIL_VIEW
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.base._compat import text_
+from nti.base._compat import bytes_
 
 from nti.dataserver.interfaces import IUser
 
@@ -56,6 +55,8 @@ from nti.mailer.interfaces import ITemplatedMailer
 
 from nti.site.hostpolicy import get_host_site
 
+logger = __import__('logging').getLogger(__name__)
+
 
 _CREATION_SITE_KEY = 'nti.app.users._CREATION_SITE_KEY'
 _EMAIL_VERIFICATION_TIME_KEY = 'nti.app.users._EMAIL_VERIFICATION_TIME_KEY'
@@ -67,7 +68,7 @@ def get_user(user):
 
 
 def _token(signature):
-    return int(hashlib.sha1(signature).hexdigest(), 16) % (10 ** 8)
+    return int(hashlib.sha1(bytes_(signature)).hexdigest(), 16) % (10 ** 8)
 
 
 def _signature_and_token(username, email, secret_key):
@@ -144,11 +145,11 @@ def generate_verification_email_url(user, request=None, host_url=None,
     signature, token = generate_mail_verification_pair(user=user,
                                                        email=email,
                                                        secret_key=secret_key)
-    params = urlencode({'username': user.username.lower(),
-                        'signature': signature})
+    params = urllib_parse.urlencode({'username': user.username.lower(),
+                                     'signature': signature})
 
     href = '%s/%s?%s' % (ds2, '@@' + VERIFY_USER_EMAIL_VIEW, params)
-    result = urljoin(host_url, href) if host_url else href
+    result = urllib_parse.urljoin(host_url, href) if host_url else href
     return result, token
 
 

@@ -25,7 +25,7 @@ import datetime
 import unittest
 import itertools
 
-from urllib import unquote
+from six.moves.urllib_parse import unquote
 
 from zope import component
 

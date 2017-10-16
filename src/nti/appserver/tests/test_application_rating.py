@@ -14,8 +14,9 @@ from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import assert_that
 
-import urllib
-import anyjson as json
+from six.moves import urllib_parse
+
+import simplejson as json
 
 from nti.contentrange import contentrange
 
@@ -47,7 +48,7 @@ class TestApplicationRating(ApplicationLayerTest):
 
         testapp = TestApp(self.app)
         path = '/dataserver2/Objects/%s' % n_ext_id
-        path = urllib.quote(path)
+        path = urllib_parse.quote(path)
 
         res = testapp.get(path, extra_environ=self._make_extra_environ())
         assert_that(res.status_int, is_(200))
@@ -60,7 +61,7 @@ class TestApplicationRating(ApplicationLayerTest):
                               has_item(
                                   has_entry(
                                       'href',
-                                      '/dataserver2/Objects/' + urllib.quote(n_ext_id) + '/@@rate'))))
+                                      '/dataserver2/Objects/' + urllib_parse.quote(n_ext_id) + '/@@rate'))))
 
         # So I do
         data = json.dumps({'rating': 4})

@@ -17,8 +17,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import urllib
 import datetime
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
@@ -73,8 +73,9 @@ from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
 from nti.dataserver.shards import AbstractShardPlacer
 
-from nti.dataserver.users import Entity
-from nti.dataserver.users import Community
+from nti.dataserver.users.communities import Community
+
+from nti.dataserver.users.entity import Entity
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -601,7 +602,7 @@ class AbstractSitePolicyEventListener(object):
 	def _set_landing_page_cookie(self, user, event):
 		if self.LANDING_PAGE_NTIID:
 			event.request.response.set_cookie(b'nti.landing_page',
-											  value=urllib.quote(self.LANDING_PAGE_NTIID))
+											  value=urllib_parse.quote(self.LANDING_PAGE_NTIID))
 
 	def _check_realname(self, user, required=True):
 		# Icky. For some random reason we require everyone to provide

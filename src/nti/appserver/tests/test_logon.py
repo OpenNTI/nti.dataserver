@@ -32,7 +32,7 @@ from nti.testing.matchers import verifiably_provides
 
 import zope.testing.loghandler
 
-from urllib import quote
+from six.moves.urllib_parse import quote
 
 from zope import component
 from zope import interface

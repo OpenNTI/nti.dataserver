@@ -1,17 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -25,6 +19,8 @@ from hamcrest import has_key
 
 from quopri import decodestring
 
+from six.moves import urllib_parse
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver import users
@@ -32,8 +28,6 @@ from nti.dataserver import users
 from zope import component
 from zope import interface
 from zope.lifecycleevent import modified, added
-
-import urllib
 
 
 from nti.app.testing.webtest import TestApp
@@ -234,7 +228,8 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		msg = mailer.queue[0]
 
 		assert_that( msg, has_property( 'body' ) )
-		assert_that( decodestring(msg.body), contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) )
+		assert_that(decodestring(msg.body), 
+                    contains_string( 'http://localhost/place?username=' + urllib_parse.quote(username) ) )
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_found_multiple_matches( self ):
@@ -262,7 +257,8 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 			assert_that( mailer.queue, has_length( 1 ) )
 			msg = mailer.queue[0]
 			assert_that( msg, has_property( 'body' ) )
-			assert_that( decodestring(msg.body), contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) )
+			assert_that( decodestring(msg.body), 
+                         contains_string( 'http://localhost/place?username=' + urllib_parse.quote(username) ) )
 			del mailer.queue[:]
 
 		_check_mail()
@@ -321,7 +317,8 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
 		assert_that( msg, has_property( 'body' ) )
-		assert_that( decodestring(msg.body), contains_string( 'http://localhost/place?host=foo&baz=bar&username=' + urllib.quote(username) ) )
+		assert_that( decodestring(msg.body),
+                     contains_string( 'http://localhost/place?host=foo&baz=bar&username=' + urllib_parse.quote(username) ) )
 
 from zope.annotation.interfaces import IAnnotations
 from nti.appserver import account_recovery_views

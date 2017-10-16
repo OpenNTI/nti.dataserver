@@ -4,13 +4,11 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
-from urllib import urlencode
-from urlparse import urljoin
+from six.moves import urllib_parse
 
 from itsdangerous import JSONWebSignatureSerializer as SignatureSerializer
 
@@ -21,6 +19,8 @@ from zope.intid.interfaces import IIntIds
 from nti.base._compat import text_
 
 from nti.dataserver.users.users import User
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _signature(username, secret_key):
@@ -77,9 +77,9 @@ def generate_unsubscribe_url(user, request=None, host_url=None, secret_key=None)
         host_url = None
 
     signature = generate_signature(user=user, secret_key=secret_key)
-    params = urlencode({'username': user.username.lower(),
-                        'signature': signature})
+    params = urllib_parse.urlencode({'username': user.username.lower(),
+                                     'signature': signature})
 
     href = '/%s/%s?%s' % (ds2, '@@unsubscribe_digest_email_with_token', params)
-    result = urljoin(host_url, href) if host_url else href
+    result = urllib_parse.urljoin(host_url, href) if host_url else href
     return result

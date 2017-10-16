@@ -20,7 +20,8 @@ from hamcrest import has_entries
 from hamcrest import greater_than
 from hamcrest import has_property
 
-from urllib import quote as UQ
+from six.moves.urllib_parse import quote
+UQ = quote
 
 from pyquery import PyQuery
 

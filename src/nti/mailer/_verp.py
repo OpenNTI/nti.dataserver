@@ -107,7 +107,7 @@ def __make_signer(default_key, **kwargs):
         return _make_signer(default_key=default_key, **kwargs)
 
 
-import urllib
+from six.moves import urllib_parse
 
 
 def _sign(signer, principal_ids):
@@ -124,7 +124,7 @@ def _sign(signer, principal_ids):
     sig = signer.get_signature(principal_ids)
     # The sig is always already base64 encoded, in the
     # URL/RFC822 safe fashion.
-    principal_ids = urllib.quote(principal_ids)
+    principal_ids = urllib_parse.quote(principal_ids)
 
     return principal_ids + signer.sep + sig
 
@@ -193,7 +193,7 @@ def principal_ids_from_verp(fromaddr,
     # Split on our last '+' to allow user defined labels.
     signed_and_encoded = addr.rsplit(b'+', 1)[1].split(b'@')[0]
     encoded_pids, sig = signed_and_encoded.rsplit(signer.sep, 1)
-    decoded_pids = urllib.unquote(encoded_pids)
+    decoded_pids = urllib_parse.unquote(encoded_pids)
 
     signed = decoded_pids + signer.sep + sig
     try:

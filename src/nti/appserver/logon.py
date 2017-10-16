@@ -27,15 +27,16 @@ the function :func:`impersonate_user` for more details.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import logging
 logger = logging.getLogger(__name__)
 
-import urllib
-import urlparse
-import anyjson as json
+from six.moves import urllib_parse
+
+import simplejson as json
 
 # Clean up the logging of openid, which writes to stderr by default.
 # Patching the module like this is actually the recommended approach
@@ -283,15 +284,15 @@ def _forgetting(request, redirect_param_name, no_param_class, redirect_value=Non
 
     if redirect_value:
         if error:
-            parsed = urlparse.urlparse(redirect_value)
+            parsed = urllib_parse.urlparse(redirect_value)
             parsed = list(parsed)
             query = parsed[4]
             if query:
-                query = query + '&error=' + urllib.quote(error)
+                query = query + '&error=' + urllib_parse.quote(error)
             else:
-                query = 'error=' + urllib.quote(error)
+                query = 'error=' + urllib_parse.quote(error)
             parsed[4] = query
-            redirect_value = urlparse.urlunparse(parsed)
+            redirect_value = urllib_parse.urlunparse(parsed)
 
         response = hexc.HTTPSeeOther(location=redirect_value)
     else:
@@ -528,7 +529,7 @@ def _prepare_oid_link(request, username, rel, params=()):
         # the link provider because the link provider changes
         # when IMissingUser becomes a real user, and it's just one
         # for all open ids
-        idurl_domain = urlparse.urlparse(query['openid']).netloc
+        idurl_domain = urllib_parse.urlparse(query['openid']).netloc
         if idurl_domain:
             # Strip down to just the root domain. This assumes
             # we get a valid domain, at least 'example.com'
@@ -1172,7 +1173,7 @@ def _openidcallback(unused_context, request, success_dict):
     email = ax_dict.get('email', ('',))[0]
     content_roles = ax_dict.get('content_roles', ())
 
-    idurl_domain = urlparse.urlparse(idurl).netloc
+    idurl_domain = urllib_parse.urlparse(idurl).netloc
     username_provider = component.queryMultiAdapter((None, request),
                                                     ILogonUsernameFromIdentityURLProvider,
                                                     name=idurl_domain)
@@ -1231,7 +1232,7 @@ FB_DIAG_OAUTH = 'https://www.facebook.com/dialog/oauth'
 @view_config(route_name='logon.facebook.oauth1', request_method='GET')
 def facebook_oauth1(request):
     app_id = request.registry.settings.get('facebook.app.id')
-    our_uri = urllib.quote(request.route_url('logon.facebook.oauth2'))
+    our_uri = urllib_parse.quote(request.route_url('logon.facebook.oauth2'))
     # We seem incapable of sending any parameters with the redirect_uri. If we do,
     # then the validation step 400's. Thus we resort to the session
     for k in ('success', 'failure'):
@@ -1403,7 +1404,7 @@ def google_oauth1(request, success=None, failure=None, state=None):
 
     # redirect
     target = auth_url[:-1] if auth_url.endswith('/') else auth_url
-    target = '%s?%s' % (target, urllib.urlencode(params))
+    target = '%s?%s' % (target, urllib_parse.urlencode(params))
     response = hexc.HTTPSeeOther(location=target)
     return response
 
