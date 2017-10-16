@@ -51,8 +51,9 @@ from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
 from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import to_external_object
+
+from nti.externalization.singleton import Singleton
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import IExternalObjectDecorator
@@ -242,7 +243,7 @@ _REALNAME_FIELDS = ('realname', 'NonI18NFirstName', 'NonI18NLastName')
 
 @component.adapter(IUser)
 @interface.implementer(IExternalObjectDecorator)
-class _UserRealnameStripper(object):
+class _UserRealnameStripper(Singleton):
 	"""
 	At this time, we never, ever, ever, want to send back the extremely valuable and
 	privacy sensitive data we have stored in our 'realname' field. It's our secret.
@@ -252,7 +253,6 @@ class _UserRealnameStripper(object):
 	tell you what we think your name is. Even though you cannot edit it. And even though
 	it's probably not what you typed in the first place so it will be confusing to you.
 	"""
-	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, original, external):
 		request = get_current_request()

@@ -6,10 +6,9 @@ An implementation of rating adapters.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import functools
 
@@ -43,9 +42,11 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.oids import to_external_oid
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.singleton import Singleton
 
 RATING_CAT_NAME = u'rating'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class IObjectUnratedEvent(IObjectRatedEvent):
@@ -200,9 +201,7 @@ def rates_object(context, username):
 
 @component.adapter(IRatable)
 @interface.implementer(IExternalMappingDecorator)
-class RatingDecorator(object):
-
-    __metaclass__ = SingletonDecorator
+class RatingDecorator(Singleton):
 
     def decorateExternalMapping(self, context, mapping):
         request = get_current_request()

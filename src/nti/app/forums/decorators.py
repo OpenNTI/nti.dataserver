@@ -6,10 +6,9 @@ External decorators to provide access to the things exposed through this package
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
@@ -54,13 +53,15 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.singleton import Singleton
 
 from nti.links.links import Link
 
 from nti.traversal.traversal import find_interface
 
 LINKS = StandardExternalFields.LINKS
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(IUser)
@@ -80,9 +81,7 @@ class BlogLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 @component.adapter(ICommunity)
 @interface.implementer(IExternalMappingDecorator)
-class CommunityBoardLinkDecorator(object):
-
-    __metaclass__ = SingletonDecorator
+class CommunityBoardLinkDecorator(Singleton):
 
     def decorateExternalMapping(self, context, mapping):
         if IUnscopedGlobalCommunity.providedBy(context):
@@ -106,9 +105,7 @@ class CommunityBoardLinkDecorator(object):
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(IDynamicSharingTargetFriendsList)
-class DFLBoardLinkDecorator(object):
-
-    __metaclass__ = SingletonDecorator
+class DFLBoardLinkDecorator(Singleton):
 
     def decorateExternalMapping(self, context, mapping):
         board = IDFLBoard(context, None)
@@ -201,9 +198,9 @@ class ForumObjectContentsLinkProvider(AbstractAuthenticatedRequestAwareDecorator
             link.method = 'POST'
 
 
-@interface.implementer(IExternalObjectDecorator)
 @component.adapter(IForum)
-class SecurityAwareForumTopicCountDecorator(object):
+@interface.implementer(IExternalObjectDecorator)
+class SecurityAwareForumTopicCountDecorator(Singleton):
     """
     Adjust the reported ``TopicCount`` to reflect publication status/security.
 
@@ -225,8 +222,6 @@ class SecurityAwareForumTopicCountDecorator(object):
     or a problem. (To minimize this, we use the ``lastModified`` time of the topic,
     not its created time to determine what to fill in.)
     """
-
-    __metaclass__ = SingletonDecorator
 
     def decorateExternalObject(self, context, mapping):
         if not mapping.get('TopicCount'):
@@ -262,9 +257,9 @@ class SecurityAwareForumTopicCountDecorator(object):
                 mapping['NewestDescendantCreatedTime'] = newest_topic.createdTime
 
 
-@interface.implementer(IExternalObjectDecorator)
 @component.adapter(ICommunityBoard)
-class SecurityAwareBoardForumCountDecorator(object):
+@interface.implementer(IExternalObjectDecorator)
+class SecurityAwareBoardForumCountDecorator(Singleton):
     """
     Adjust the reported ``ForumCount`` to reflect publication status/security.
 
@@ -275,8 +270,6 @@ class SecurityAwareBoardForumCountDecorator(object):
             now by assuming our other scalability problems are worse and we'll
             have to fix them all eventually; this won't be an issue in the short term.
     """
-
-    __metaclass__ = SingletonDecorator
 
     def decorateExternalObject(self, context, mapping):
         if not mapping['ForumCount']:
@@ -292,9 +285,7 @@ class SecurityAwareBoardForumCountDecorator(object):
 
 @component.adapter(ITopic)
 @interface.implementer(IExternalObjectDecorator)
-class BoardNTIIDDecorator(object):
-
-    __metaclass__ = SingletonDecorator
+class BoardNTIIDDecorator(Singleton):
 
     def decorateExternalObject(self, context, mapping):
         if IPersonalBlogEntry.providedBy(context) or 'BoardNTIID' in mapping:

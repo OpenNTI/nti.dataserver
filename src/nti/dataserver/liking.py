@@ -13,17 +13,25 @@ directly.]
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
 
+from zope.container.contained import Contained
+
+import BTrees
+from BTrees.Length import Length
+
+from persistent import Persistent
+
 from contentratings.interfaces import IUserRating
 from contentratings.interfaces import IRatingStorage
 from contentratings.interfaces import IObjectRatedEvent
+
+from contentratings.rating import NPRating
 
 from nti.dataserver import rating as ranking
 
@@ -31,8 +39,9 @@ from nti.dataserver.interfaces import ILikeable
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IMemcacheClient
 
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.externalization.singleton import Singleton
 
 #: Category name for liking; use this as the name of the adapter
 LIKE_CAT_NAME = 'likes'
@@ -41,6 +50,8 @@ LIKE_CAT_NAME = 'likes'
 FAVR_CAT_NAME = 'favorites'
 
 _cached = ranking.cached_decorator
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _lookup_like_rating_for_read(context, cat_name=LIKE_CAT_NAME, safe=False):
@@ -186,28 +197,17 @@ def favorites_object(context, username, safe=False):
     return _rates_object(context, username, FAVR_CAT_NAME, safe)
 
 
-@interface.implementer(IExternalMappingDecorator)
 @component.adapter(ILikeable)
-class LikeDecorator(object):
+@interface.implementer(IExternalMappingDecorator)
+class LikeDecorator(Singleton):
     """
     For :class:`~.ILikeable` objects, records the number of times they
     have been liked in the ``LikeCount`` value of the external map.
     """
-    __metaclass__ = SingletonDecorator
 
     def decorateExternalMapping(self, context, mapping):
         # go through the function to be safe
         mapping['LikeCount'] = like_count(context)
-
-
-from zope.container.contained import Contained
-
-import BTrees
-from BTrees.Length import Length
-
-from persistent import Persistent
-
-from contentratings.rating import NPRating
 
 
 @interface.implementer(IUserRating, IRatingStorage)

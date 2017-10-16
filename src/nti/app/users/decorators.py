@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
@@ -40,13 +39,15 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.singleton import Singleton
 
 from nti.links.links import Link
 
 from nti.traversal.traversal import find_interface
 
 LINKS = StandardExternalFields.LINKS
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(IUser)
@@ -151,9 +152,9 @@ class _DFLLinksDecorator(AbstractAuthenticatedRequestAwareDecorator):
         _links.append(link)
 
 
-@component.adapter(IDynamicSharingTargetFriendsList)
 @interface.implementer(IExternalObjectDecorator)
-class _DFLEditLinkRemoverDecorator(object):
+@component.adapter(IDynamicSharingTargetFriendsList)
+class _DFLEditLinkRemoverDecorator(Singleton):
     """
     Remove the edit link if the DFL is locked
 
@@ -163,8 +164,6 @@ class _DFLEditLinkRemoverDecorator(object):
     and IExternalMappingDecorator; if any of the registrations
     change this will break.
     """
-
-    __metaclass__ = SingletonDecorator
 
     def decorateExternalObject(self, context, external):
         links = external.get(LINKS, ())

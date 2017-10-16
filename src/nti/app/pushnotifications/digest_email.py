@@ -85,7 +85,7 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.dataserver.users.users import User
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.singleton import Singleton
 
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
@@ -430,13 +430,11 @@ class DigestEmailCollector(object):
 		return result
 
 @interface.implementer(INotableDataEmailClassifier)
-class _AbstractClassifier(object):
-
-	__metaclass__ = SingletonDecorator
+class _AbstractClassifier(Singleton):
 
 	classification = None
 
-	def classify(self, obj):
+	def classify(self, unused_obj):
 		return self.classification
 
 AbstractClassifier = _AbstractClassifier
@@ -564,7 +562,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		result['view'] = self
 		return result
 
-	def compute_subject_for_recipient(self, recipient):
+	def compute_subject_for_recipient(self, unused_recipient):
 
 		subject = _(self._subject,
 					mapping={
@@ -593,8 +591,8 @@ class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 		def min_created_time(self, notable_data):
 			return None if self.no_created_cap else DigestEmailCollector.min_created_time(self, notable_data)
 
-	def _collector_for_user(self, user, factory=_Collector):
-		collector = DigestEmailProcessDelegate._collector_for_user(self, user, factory=self._Collector)
+	def _collector_for_user(self, user, unused_factory=_Collector):
+		collector = DigestEmailProcessDelegate._collector_for_user(self, user, self._Collector)
 		collector.no_created_cap = self.request.get('no_created_cap')
 		if collector.no_created_cap:
 			collector.last_collected = collector.last_sent = 0

@@ -5,10 +5,9 @@ ACL providers for the various content types.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 import codecs
@@ -52,9 +51,11 @@ from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.singleton import Singleton
 
 from nti.property.property import alias
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(IACE)
@@ -338,9 +339,7 @@ from ZODB.POSException import POSError
 
 @component.adapter(object)
 @interface.implementer(IExternalMappingDecorator)
-class ACLDecorator(object):
-
-    __metaclass__ = SingletonDecorator
+class ACLDecorator(Singleton):
 
     def decorateExternalMapping(self, orig, result):
         try:

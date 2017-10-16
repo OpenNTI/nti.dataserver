@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import nameparser
 
@@ -40,14 +39,14 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.singleton import Singleton
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(ILogonPong)
 @interface.implementer(IExternalObjectDecorator)
-class _SiteNameAdder(object):
-
-    __metaclass__ = SingletonDecorator
+class _SiteNameAdder(Singleton):
 
     def decorateExternalObject(self, unused_context, mapping):
         site = getSite()
@@ -57,12 +56,11 @@ class _SiteNameAdder(object):
 
 @component.adapter(IContextAnnotatable)
 @interface.implementer(IExternalMappingDecorator)
-class _ContainerContextDecorator(object):
+class _ContainerContextDecorator(Singleton):
     """
     For :class:`~.IContextAnnotatable` objects, decorate the
     result with the context_id.
     """
-    __metaclass__ = SingletonDecorator
 
     def decorateExternalMapping(self, context, mapping):
         container_context = IContainerContext(context, None)
@@ -72,7 +70,7 @@ class _ContainerContextDecorator(object):
 
 @component.adapter(IUser)
 @interface.implementer(IExternalMappingDecorator)
-class _EnglishFirstAndLastNameDecorator(object):
+class _EnglishFirstAndLastNameDecorator(Singleton):
     """
     If a user's first preferred language is English,
     then assume that they provided a first and last name and return that
@@ -83,8 +81,6 @@ class _EnglishFirstAndLastNameDecorator(object):
             looking at things. The restriction to those that prefer
             English as their language is an attempt to limit the damage.
     """
-
-    __metaclass__ = SingletonDecorator
 
     def decorateExternalMapping(self, original, external):
         realname = external.get('realname')
@@ -106,14 +102,12 @@ class _EnglishFirstAndLastNameDecorator(object):
 
 @component.adapter(IUser)
 @interface.implementer(IExternalMappingDecorator)
-class _AuthenticatedUserLinkAdder(object):
+class _AuthenticatedUserLinkAdder(Singleton):
     """
     When we decorate an user, if the user is ourself, we want to provide
     the same links that we would at logon time, mostly as a convenience
     to the client.
     """
-
-    __metaclass__ = SingletonDecorator
 
     def decorateExternalMapping(self, original, external):
         request = get_current_request()
@@ -132,7 +126,7 @@ class _AuthenticatedUserLinkAdder(object):
 
 @component.adapter(IDeletedObjectPlaceholder)
 @interface.implementer(IExternalObjectDecorator)
-class _DeletedObjectPlaceholderDecorator(object):
+class _DeletedObjectPlaceholderDecorator(Singleton):
     """
     Replaces the title, description, and body of deleted objects with I18N strings.
     Cleans up some other data too that we don't want out.
@@ -141,8 +135,6 @@ class _DeletedObjectPlaceholderDecorator(object):
     _message = _(u"This item has been deleted.")
 
     _moderator_message = _(u"This item has been deleted by the moderator.")
-
-    __metaclass__ = SingletonDecorator
 
     def decorateExternalObject(self, original, external):
         request = get_current_request()

@@ -3,12 +3,12 @@
 """
 A decorator for various user profile-type links.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 from zope import component
@@ -21,26 +21,29 @@ from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_SCHEMA
 
 from nti.appserver.user_activity_views import REL_USER_ACTIVITY
 
-from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.interfaces import StandardExternalFields
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.externalization.singleton import Singleton
+
+from nti.dataserver.interfaces import IUser
 
 from nti.links.links import Link
+
+logger = __import__('logging').getLogger(__name__)
 
 
 # These imports are broken out explicitly for speed (avoid runtime
 # attribute lookup)
-LINKS = ext_interfaces.StandardExternalFields.LINKS
+LINKS = StandardExternalFields.LINKS
 
 _PROFILE_VIEW = '@@' + REL_ACCOUNT_PROFILE_SCHEMA
 
 
-@component.adapter(nti_interfaces.IUser)
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-class ProfileLinkDecorator(object):
-
-    __metaclass__ = SingletonDecorator
+@component.adapter(IUser)
+@interface.implementer(IExternalMappingDecorator)
+class ProfileLinkDecorator(Singleton):
 
     def decorateExternalMapping(self, context, mapping):
         request = get_current_request()

@@ -6,16 +6,15 @@ View functions relating to searching for users.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 import operator
 import simplejson
-from urllib import unquote
 from collections import Mapping
+from six.moves.urllib_parse import unquote
 
 from zope import component
 from zope import interface
@@ -67,11 +66,13 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.singleton import Singleton
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.ntiids.oids import to_external_ntiid_oid
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _is_valid_search(search_term, remote_user):
@@ -466,9 +467,7 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
 
 @component.adapter(IUser)
 @interface.implementer(IExternalMappingDecorator)
-class _SharedDynamicMembershipProviderDecorator(object):
-
-    __metaclass__ = SingletonDecorator
+class _SharedDynamicMembershipProviderDecorator(Singleton):
 
     def decorateExternalMapping(self, original, mapping):
         request = get_current_request()

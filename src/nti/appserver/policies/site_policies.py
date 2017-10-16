@@ -91,7 +91,7 @@ from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import IExternalObjectDecorator
 
-from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.singleton import Singleton
 
 from nti.mailer.interfaces import ITemplatedMailer
 
@@ -298,7 +298,7 @@ class RequestAwareUserPlacer(AbstractShardPlacer):
 ####
 
 @interface.implementer(IExternalObjectDecorator)
-class SiteBasedExternalObjectDecorator(object):
+class SiteBasedExternalObjectDecorator(Singleton):
 	"""
 	Something that can be registered as a subscriber to forward
 	object decoration to objects that do something for a particular site.
@@ -308,7 +308,6 @@ class SiteBasedExternalObjectDecorator(object):
 
 	Register this object sparingly, it is expensive.
 	"""
-	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, orig_obj, ext_obj):
 		request = get_current_request()
@@ -320,13 +319,12 @@ class SiteBasedExternalObjectDecorator(object):
 			adapter.decorateExternalObject(orig_obj, ext_obj)
 
 @interface.implementer(IExternalObjectDecorator)
-class LogonLinksCreationStripper(object):
+class LogonLinksCreationStripper(Singleton):
 	"""
 	Configured for sites that are not allowing account creation through the UI.
 	"""
-	__metaclass__ = SingletonDecorator
 
-	def decorateExternalObject(self, orig_obj, result):
+	def decorateExternalObject(self, unused_context, result):
 		result['Links'] = [	link for link in result['Links']
 							if link['rel'] not in ('account.create', 'account.preflight.create')]
 
@@ -415,7 +413,7 @@ def dispatch_user_created_with_request_to_site_policy(user, event):
 def dispatch_user_logon_to_site_policy(user, event):
 	_dispatch_to_policy(user, event, 'user_did_logon')
 
-def _censor_usernames(entity, event=None):
+def _censor_usernames(entity, unused_event=None):
 	"""
 	Censor the username field of the entity. Can be used as an event
 	listener as well.
