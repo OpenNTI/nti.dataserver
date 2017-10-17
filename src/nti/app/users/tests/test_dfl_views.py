@@ -21,21 +21,21 @@ does_not = is_not
 
 from six.moves import urllib_parse
 
-from nti.app.users.views.dfl_views import REL_MY_MEMBERSHIP
-
-from nti.dataserver.contenttypes.note import Note
-
-from nti.dataserver.users.friends_lists import DynamicFriendsList
-
-from nti.dataserver.users.users import User
-
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.app.testing.webtest import TestApp
 
+from nti.app.users.views.dfl_views import REL_MY_MEMBERSHIP
+
+from nti.dataserver.contenttypes.note import Note
+
 from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.users.friends_lists import DynamicFriendsList
+
+from nti.dataserver.users.users import User
 
 
 class TestApplicationDFLViews(ApplicationLayerTest):
