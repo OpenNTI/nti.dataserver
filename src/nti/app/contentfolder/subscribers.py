@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 
@@ -36,6 +35,8 @@ from nti.contentfolder.interfaces import IS3ObjectEjected
 from nti.contentfolder.interfaces import IS3ObjectRenamed
 
 from nti.transactions import transactions
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(IContentBaseFile, IObjectAddedEvent)

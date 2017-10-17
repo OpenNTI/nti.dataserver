@@ -4,20 +4,19 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
 import argparse
-from urlparse import urlparse
 from mimetypes import guess_type
+from six.moves.urllib_parse import urlparse
 
 from nti.dataserver.interfaces import IEntity
 
-from nti.dataserver.users import Entity
+from nti.dataserver.users.entity import Entity
 
 from nti.dataserver.users.interfaces import IProfileAvatarURL
 
@@ -27,6 +26,8 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.property.dataurl import encode
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _find_profiles(entity):
@@ -120,6 +121,7 @@ def set_entity_avatar(args=None):
 def main(args=None):
     set_entity_avatar(args)
     sys.exit(0)
+
 
 if __name__ == '__main__':
     main()

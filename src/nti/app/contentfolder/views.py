@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import six
@@ -16,9 +15,9 @@ import shutil
 import zipfile
 import tempfile
 from functools import partial
-from urlparse import parse_qs
 from mimetypes import guess_type
 from mimetypes import guess_extension
+from six.moves.urllib_parse import parse_qs
 
 from requests.structures import CaseInsensitiveDict
 
@@ -136,10 +135,7 @@ LINKS = StandardExternalFields.LINKS
 MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
-try:
-    _xrange = xrange
-except NameError:
-    _xrange = range
+logger = __import__('logging').getLogger(__name__)
 
 
 def fileType_key(x):
@@ -377,7 +373,7 @@ class MkdirView(AbstractAuthenticatedView,
     default_folder_mime_type = ContentFolder.mimeType
 
     def generate(self, prefix=_(u'Unnamed Folder')):
-        for x in _xrange(10000):
+        for x in six.moves.range(10000):
             name = prefix + ('' if x == 0 else ' %s' % x)
             if safe_filename(name) not in self.context:
                 return name
