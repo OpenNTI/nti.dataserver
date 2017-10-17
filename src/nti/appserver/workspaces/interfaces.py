@@ -101,6 +101,14 @@ class ICatalogWorkspace(IWorkspace):
     """
 
 
+class ICatalogWorkspaceLinkProvider(interface.Interface):
+
+    def links(workspace):
+        """
+        return an iterable of catalog links
+        """
+
+
 class ICatalogCollection(IContainerCollection):
     """
     A collection contained within the :class:``ICatalogWorkspace``.

@@ -18,8 +18,12 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.app.users import REL_MY_MEMBERSHIP
 from nti.app.users import SUGGESTED_CONTACTS
+from nti.app.users import VIEW_GRANT_USER_ACCESS
+from nti.app.users import VIEW_RESTRICT_USER_ACCESS
 from nti.app.users import REQUEST_EMAIL_VERFICATION_VIEW
 from nti.app.users import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
+
+from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 
 from nti.dataserver.authorization import is_admin_or_site_admin
 
@@ -224,3 +228,23 @@ class _DFLSuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecora
                     rel=SUGGESTED_CONTACTS,
                     elements=(SUGGESTED_CONTACTS,))
         _links.append(link)
+
+
+@component.adapter(IUser)
+@interface.implementer(ICatalogWorkspaceLinkProvider)
+class _CatalogWorkspaceAdminLinkDecorator(object):
+
+    def __init__(self, user):
+        self.user = user
+
+    def links(self, catalog_workspace):
+        if is_admin_or_site_admin(self.user):
+            result = []
+            for rel in (VIEW_GRANT_USER_ACCESS, VIEW_RESTRICT_USER_ACCESS):
+                link = Link(catalog_workspace,
+                            rel=rel,
+                            elements=(rel,),
+                            method='POST')
+                result.append(link)
+            return result
+        return ()

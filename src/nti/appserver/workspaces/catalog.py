@@ -23,6 +23,7 @@ from pyramid.interfaces import IRequest
 from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import ICatalogWorkspace
 from nti.appserver.workspaces.interfaces import ICatalogCollection
+from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 from nti.appserver.workspaces.interfaces import IFeaturedCatalogCollectionProvider
 from nti.appserver.workspaces.interfaces import IPurchasedCatalogCollectionProvider
 
@@ -130,6 +131,14 @@ class CatalogWorkspace(Contained):
         super(CatalogWorkspace, self).__init__()
         self.__parent__ = user
         self.user = user
+
+    @property
+    def links(self):
+        result = []
+        for provider in component.subscribers((self.user,), ICatalogWorkspaceLinkProvider):
+            links = provider.links(self)
+            result.extend(links or ())
+        return result
 
     @Lazy
     def collections(self):

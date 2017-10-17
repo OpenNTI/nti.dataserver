@@ -185,8 +185,8 @@ def _checkEmailAddress(address):
 
 
 def _isValidEmail(email):
-    """ 
-    checks for valid email 
+    """
+    checks for valid email
     """
     _checkEmailAddress(email)
     return True
@@ -533,7 +533,7 @@ class ISocialMediaProfile(Interface):
     linkedIn = ValidURI(title=u'linkedIn',
                         description=u'The LinkedIn URL',
                         required=False)
-    
+
     instagram = ValidURI(title=u'instagram',
                          description=u'The Instagram URL',
                          required=False)
@@ -906,4 +906,18 @@ class IUsernameGeneratorUtility(Interface):
     def generate_username():
         """
         Return the guaranteed unique username.
+        """
+
+
+class IUserUpdateUtility(Interface):
+    """
+    Adapter utility with various functions useful when updating a user. This typically
+    is a third-party updating another user.
+    """
+
+    def can_update_user(target_user):
+        """
+        Returns whether a user can update the `target_user`. This is useful to
+        ensure admins of one site do not edit users from another site in a
+        shared environment.
         """

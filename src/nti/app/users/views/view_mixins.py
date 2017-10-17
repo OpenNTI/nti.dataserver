@@ -37,14 +37,18 @@ from nti.base._compat import text_
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.authorization import is_admin_or_site_admin
+
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 
 from nti.dataserver.interfaces import IAccessProvider
 from nti.dataserver.interfaces import IGrantAccessException
+from nti.dataserver.interfaces import IRemoveAccessException
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
+from nti.dataserver.users.interfaces import IUserUpdateUtility
 from nti.dataserver.users.interfaces import IUsernameGeneratorUtility
 
 from nti.dataserver.metadata.index import IX_TOPICS
@@ -168,6 +172,9 @@ class AbstractUpdateView(AbstractAuthenticatedView,
 
     @Lazy
     def _email(self):
+        """
+        The email address by which we look up a user.
+        """
         result = self._params.get('email') \
               or self._params.get('mail')
         if not result and self.REQUIRE_EMAIL:
@@ -176,9 +183,18 @@ class AbstractUpdateView(AbstractAuthenticatedView,
                              u'NoEmailGiven')
         return result
 
+    @Lazy
+    def _new_email(self):
+        result = self._params.get('new_email') \
+              or self._params.get('new_mail')
+        return result
+
     def get_user(self):
         """
         Fetches a user based on the given email.
+
+        TODO: Should we have a site-based utility that allows different
+        implementations of user lookup?
         """
         user = None
         if self._email is not None:
@@ -187,11 +203,33 @@ class AbstractUpdateView(AbstractAuthenticatedView,
             # XXX: Not sure if we want to handle multiple found users.
             if len(users) > 1:
                 raise_http_error(self.request,
-                             _(u"Multiple users found for email address."),
-                             u'MultipleUsersFound')
+                                 _(u"Multiple users found for email address."),
+                                 u'MultipleUsersFound')
             elif users:
                 user = users[0]
         return user
+
+    def _predicate(self):
+        """
+        Only admins and site admins are allowed to update a user, raising
+        otherwise.
+        """
+        result = is_admin_or_site_admin(self.remoteUser)
+        if result:
+            update_utility = IUserUpdateUtility(self.remoteUser, None)
+            if update_utility is not None:
+                user = self.get_user()
+                if user is not None:
+                    result = update_utility.can_update_user(user)
+        if not result:
+            raise_http_error(self.request,
+                             _(u"Cannot update this user."),
+                             u'CannotUpdateUserError',
+                             factory=hexc.HTTPForbidden)
+
+    def __call__(self):
+        self._predicate()
+        return self._do_call()
 
 
 class GrantAccessViewMixin(AbstractUpdateView):
@@ -217,13 +255,13 @@ class GrantAccessViewMixin(AbstractUpdateView):
                  or self._params.get('objectId') \
                  or self._params.get('object_id')
         if not object_id:
-            logger.warn('No ntiid given to grant access (%s)', self._params)
+            logger.warn('No ntiid given to update access (%s)', self._params)
             raise_http_error(self.request,
                              _(u"Must provide object to grant access to."),
                              u'NoObjectIDGiven')
         result = find_object_with_ntiid(object_id)
         if result is None:
-            logger.warn('Object not found to grant access to (%s)', object_id)
+            logger.warn('Object not found to update access (%s)', object_id)
             raise_http_error(self.request,
                              _(u"Object does not exist."),
                              u'ObjectNotFoundError',
@@ -247,10 +285,10 @@ class GrantAccessViewMixin(AbstractUpdateView):
                    or self._params.get('access_type')
         return access_type
 
-    def _grant_access(self, user, context):
+    def _update_access(self, user, context):
         access_provider = IAccessProvider(context, None)
         if access_provider is None:
-            logger.warn('Invalid type to grant access (%s)', context)
+            logger.warn('Invalid type to update access (%s)', context)
             raise_http_error(self.request,
                              _(u"Cannot grant access to object."),
                              u'ObjectNotAccessible')
@@ -258,22 +296,58 @@ class GrantAccessViewMixin(AbstractUpdateView):
         result = access_provider.grant_access(user,
                                               access_context=access_context)
         return result
+    _grant_access = _update_access
 
-    def __call__(self):
+    def _handle_exception(self, exception):
+        if IGrantAccessException.providedBy(exception):
+            logger.error('Error while granting access (%s) (%s)',
+                         self._user,
+                         self._contextual_object)
+            raise_http_error(self.request,
+                             text_(str(exception) or exception.i18n_message),
+                             u'ObjectNotAccessible')
+
+    def _do_call(self):
         try:
-            result = self._grant_access(self._user, self._contextual_object)
+            result = self._update_access(self._user, self._contextual_object)
         except Exception as e:
-            if IGrantAccessException.providedBy(e):
-                logger.error('Error while granting access (%s) (%s)',
-                             self._user,
-                             self._contextual_object)
-                raise_http_error(self.request,
-                                 text_(str(e) or e.i18n_message),
-                                 u'ObjectNotAccessible')
+            self._handle_exception(e)
             raise
         if result is None:
             result = self._contextual_object
         return result
+
+
+class RemoveAccessViewMixin(GrantAccessViewMixin):
+    """
+    Removes access to a user and a contextual object. Typically this is a
+    third-party removing access on behalf of a user.
+
+    params:
+        ntiid - the ntiid of the contextual object we remove access to
+
+    returns the access context
+    """
+
+    def _handle_exception(self, exception):
+        if IRemoveAccessException.providedBy(exception):
+            logger.error('Error while removing access (%s) (%s)',
+                         self._user,
+                         self._contextual_object)
+            raise_http_error(self.request,
+                             text_(str(exception) or exception.i18n_message),
+                             u'CannotRestrictAccess')
+
+    def _update_access(self, user, context):
+        access_provider = IAccessProvider(context, None)
+        if access_provider is None:
+            logger.warn('Invalid type to remove access (%s)', context)
+            raise_http_error(self.request,
+                             _(u"Cannot remove access to object."),
+                             u'CannotRestrictAccess')
+        result = access_provider.remove_access(user)
+        return result
+    _remove_access = _update_access
 
 
 class UserUpsertViewMixin(AbstractUpdateView):
@@ -335,11 +409,12 @@ class UserUpsertViewMixin(AbstractUpdateView):
         username = self._generate_username()
         realname = self._get_real_name()
         # Realname is used if we have it; otherwise first/last are used.
+        new_email = self._new_email or self._email
         user = _deal_with_external_account(self.request,
                                            username=username,
                                            fname=self._first_name,
                                            lname=self._last_name,
-                                           email=self._email,
+                                           email=new_email,
                                            idurl=None,
                                            iface=None,
                                            user_factory=User.create_user,
@@ -361,21 +436,23 @@ class UserUpsertViewMixin(AbstractUpdateView):
 
     def update_user(self, user):
         realname = self._get_real_name()
-        friendly_named = IFriendlyNamed(user)
-        friendly_named.realname = realname
+        if realname is not None:
+            friendly_named = IFriendlyNamed(user)
+            friendly_named.realname = realname
 
-        profile = IUserProfile(user)
-        profile.email = self._email
+        if self._new_email is not None:
+            profile = IUserProfile(user)
+            profile.email = self._new_email
         self.post_user_update(user)
 
-    def __call__(self):
+    def _do_call(self):
         user = self.get_user()
         if user is None:
             user = self.create_user()
         else:
             self.update_user(user)
 
-        if self._email:
+        if self._new_email:
             # Trusted source for email verification
             profile = IUserProfile(user)
             profile.email_verified = True

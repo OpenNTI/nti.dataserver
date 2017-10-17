@@ -16,6 +16,7 @@ from six.moves.urllib_parse import unquote
 from requests.structures import CaseInsensitiveDict
 
 from zope import component
+from zope import interface
 
 from zope.component.hooks import getSite
 from zope.component.hooks import site as current_site
@@ -38,10 +39,22 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
+from nti.app.users import VIEW_USER_UPSERT
+from nti.app.users import VIEW_GRANT_USER_ACCESS
+from nti.app.users import VIEW_RESTRICT_USER_ACCESS
+
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import generate_mail_verification_pair
 
 from nti.app.users.views import username_search
+
+from nti.app.users.views.view_mixins import UserUpsertViewMixin
+from nti.app.users.views.view_mixins import GrantAccessViewMixin
+from nti.app.users.views.view_mixins import RemoveAccessViewMixin
+
+from nti.appserver.interfaces import INamedLinkView
+
+from nti.appserver.workspaces.interfaces import ICatalogWorkspace
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
@@ -513,3 +526,30 @@ class RebuildEntityCatalogView(AbstractAuthenticatedView):
         result = LocatedExternalDict()
         result[ITEM_COUNT] = result[TOTAL] = count
         return result
+
+@view_config(route_name='objects.generic.traversal',
+             name=VIEW_USER_UPSERT,
+             renderer='rest',
+             context=IDataserverFolder,
+             request_method='POST')
+class UserUpsertView(UserUpsertViewMixin):
+    pass
+interface.directlyProvides(UserUpsertView, INamedLinkView)
+
+
+@view_config(name=VIEW_GRANT_USER_ACCESS,
+             context=ICatalogWorkspace,
+             route_name='objects.generic.traversal',
+             renderer='rest',
+             request_method='POST')
+class UserGrantAccessView(GrantAccessViewMixin):
+    pass
+
+
+@view_config(name=VIEW_RESTRICT_USER_ACCESS,
+             context=ICatalogWorkspace,
+             route_name='objects.generic.traversal',
+             renderer='rest',
+             request_method='POST')
+class UserRemoveAccessView(RemoveAccessViewMixin):
+    pass
