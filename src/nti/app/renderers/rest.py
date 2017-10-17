@@ -38,8 +38,11 @@ from nti.links.externalization import render_link
 
 from nti.links.links import Link
 
+from nti.mimetype.mimetype import MIME_BASE
+from nti.mimetype.mimetype import MIME_EXT_JSON
+from nti.mimetype.mimetype import MIME_BASE_JSON
+
 from nti.mimetype.mimetype import nti_mimetype_from_object
-from nti.mimetype.mimetype import MIME_BASE_JSON, MIME_EXT_JSON, MIME_BASE
 
 from nti.ntiids.oids import to_external_ntiid_oid
 
@@ -76,11 +79,13 @@ def find_content_type(request, data=None):
     Content-Type to send back.
     The returned string will always either end in 'json'.
     """
+    full_type = ''
     best_match = None
-    full_type = b''
     if data is not None:
-        content_type_aware = data if IContentTypeAware.providedBy(data) \
-            else component.queryAdapter(data, IContentTypeAware)
+        if IContentTypeAware.providedBy(data):
+            content_type_aware = data
+        else:
+            content_type_aware = component.queryAdapter(data, IContentTypeAware)
         if content_type_aware:
             full_type = content_type_aware.mimeType
         else:
@@ -93,8 +98,10 @@ def find_content_type(request, data=None):
             return full_type
 
     app_json = MIME_BASE_JSON
-    app_c_json = str(full_type) + \
-        MIME_EXT_JSON if full_type else MIME_BASE_JSON
+    if full_type:
+        app_c_json = str(full_type) + MIME_EXT_JSON
+    else:
+        app_c_json = MIME_BASE_JSON
 
     if request.accept:
         # In preference order
