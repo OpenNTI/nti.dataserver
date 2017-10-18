@@ -527,6 +527,7 @@ class RebuildEntityCatalogView(AbstractAuthenticatedView):
         result[ITEM_COUNT] = result[TOTAL] = count
         return result
 
+
 @view_config(route_name='objects.generic.traversal',
              name=VIEW_USER_UPSERT,
              renderer='rest',

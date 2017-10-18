@@ -150,7 +150,7 @@ class AbstractUpdateView(AbstractAuthenticatedView,
                          ModeledContentUploadRequestUtilsMixin):
     """
     An abstract view that takes uploaded input and updates a user. By default,
-    a user is found based on their emai.
+    a user is found based on their email.
     """
 
     REQUIRE_EMAIL = False
@@ -177,16 +177,16 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         """
         result = self._params.get('email') \
               or self._params.get('mail')
-        if not result and self.REQUIRE_EMAIL:
-            raise_http_error(self.request,
-                             _(u"Must provide email."),
-                             u'NoEmailGiven')
         return result
 
     @Lazy
     def _new_email(self):
         result = self._params.get('new_email') \
               or self._params.get('new_mail')
+        if not result and self.REQUIRE_EMAIL:
+            raise_http_error(self.request,
+                             _(u"Must provide email."),
+                             u'NoEmailGiven')
         return result
 
     def get_user(self):
