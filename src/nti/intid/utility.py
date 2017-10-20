@@ -13,6 +13,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from Acquisition import aq_base
+
+import BTrees
+
 from zope import interface
 from zope import deferredimport
 
@@ -24,10 +28,6 @@ from zc.intid.interfaces import RemovedEvent
 from zc.intid.interfaces import IntIdInUseError
 
 from zc.intid.utility import IntIds as _ZCIntIds
-
-from Acquisition import aq_base
-
-import BTrees
 
 from nti.intid.interfaces import IIntIds
 

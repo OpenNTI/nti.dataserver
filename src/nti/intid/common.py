@@ -11,6 +11,8 @@ from __future__ import absolute_import
 from zc.intid.subscribers import addIntIdSubscriber
 from zc.intid.subscribers import removeIntIdSubscriber
 
+logger = __import__('logging').getLogger(__name__)
+
 
 def addIntId(ob, event=None):
     addIntIdSubscriber(ob, event)

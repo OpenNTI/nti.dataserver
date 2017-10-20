@@ -171,13 +171,13 @@ class ArbitraryOrderableWeakRef(WeakRef):
     def __lt__(self, other):
         try:
             return (self._entity_id, self._entity_oid) < (other._entity_id, other._entity_oid)
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             return NotImplemented
 
     def __gt__(self, other):
         try:
             return (self._entity_id, self._entity_oid) > (other._entity_id, other._entity_oid)
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             return NotImplemented
 
 
