@@ -177,33 +177,33 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         """
         result = self._params.get('email') \
               or self._params.get('mail')
-        return result
-
-    @Lazy
-    def _new_email(self):
-        result = self._params.get('new_email') \
-              or self._params.get('new_mail')
         if not result and self.REQUIRE_EMAIL:
             raise_http_error(self.request,
                              _(u"Must provide email."),
                              u'NoEmailGiven')
         return result
 
+    @Lazy
+    def _identifier(self):
+        result = self._params.get('id') \
+              or self._params.get('identifier')
+        return result
+
     def get_user(self):
         """
-        Fetches a user based on the given email.
+        Fetches a user based on the given email (by default).
 
         TODO: Should we have a site-based utility that allows different
         implementations of user lookup?
         """
         user = None
-        if self._email is not None:
-            users = get_users_by_email(self._email) or ()
+        if self._identifier is not None:
+            users = get_users_by_email(self._identifier) or ()
             users = tuple(users)
             # XXX: Not sure if we want to handle multiple found users.
             if len(users) > 1:
                 raise_http_error(self.request,
-                                 _(u"Multiple users found for email address."),
+                                 _(u"Multiple users found for identifier."),
                                  u'MultipleUsersFound')
             elif users:
                 user = users[0]
@@ -409,12 +409,11 @@ class UserUpsertViewMixin(AbstractUpdateView):
         username = self._generate_username()
         realname = self._get_real_name()
         # Realname is used if we have it; otherwise first/last are used.
-        new_email = self._new_email or self._email
         user = _deal_with_external_account(self.request,
                                            username=username,
                                            fname=self._first_name,
                                            lname=self._last_name,
-                                           email=new_email,
+                                           email=self._email,
                                            idurl=None,
                                            iface=None,
                                            user_factory=User.create_user,
@@ -440,9 +439,9 @@ class UserUpsertViewMixin(AbstractUpdateView):
             friendly_named = IFriendlyNamed(user)
             friendly_named.realname = realname
 
-        if self._new_email is not None:
+        if self._email is not None:
             profile = IUserProfile(user)
-            profile.email = self._new_email
+            profile.email = self._email
         self.post_user_update(user)
 
     def _do_call(self):
@@ -452,7 +451,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
         else:
             self.update_user(user)
 
-        if self._new_email:
+        if self._email:
             # Trusted source for email verification
             profile = IUserProfile(user)
             profile.email_verified = True

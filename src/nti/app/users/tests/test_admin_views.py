@@ -285,7 +285,7 @@ class TestAdminViews(ApplicationLayerTest):
                                                              VIEW_RESTRICT_USER_ACCESS)
 
         # Empty update succeeds
-        user_update_href = '%s?email=%s' % (user_update_href, email)
+        user_update_href = '%s?identifier=%s' % (user_update_href, email)
         self.testapp.post_json(user_update_href)
 
         # Update user
@@ -294,8 +294,8 @@ class TestAdminViews(ApplicationLayerTest):
         new_email = u'new_email@gmail.com'
         self.testapp.post_json(user_update_href, {u'first_name': new_first,
                                                   u'last_name': new_last,
-                                                  u'email': u'update_user@gmail.com',
-                                                  u'new_email': new_email})
+                                                  u'identifier': u'update_user@gmail.com',
+                                                  u'email': new_email})
         res = self.testapp.get('/dataserver2/users/%s' % username,
                                extra_environ=user1_environ)
         res = res.json_body
@@ -309,7 +309,7 @@ class TestAdminViews(ApplicationLayerTest):
         res = self.testapp.post_json(user_update_href,
                                      {u'first_name': new_first,
                                       u'last_name': new_last,
-                                      u'new_email': new_email})
+                                      u'email': new_email})
         res = res.json_body
         created_username = res.get('Username')
         assert_that(created_username, not_none())
@@ -327,13 +327,13 @@ class TestAdminViews(ApplicationLayerTest):
 
         # Granting/removing access
         full_data = {u'ntiid': user_ntiid,
-                     u'email': new_email}
+                     u'identifier': new_email}
         missing_access = {u'ntiid': u"does_not_exist_ntiid",
-                          u'email': new_email}
+                          u'identifier': new_email}
         invalid_access = {u'ntiid': invalid_access_ntiid,
-                          u'email': new_email}
+                          u'identifier': new_email}
         missing_user = {u'ntiid': user_ntiid,
-                        u'email': u"does_not_exist_email@gmail.com"}
+                        u'identifier': u"does_not_exist_email@gmail.com"}
         self.testapp.post_json(grant_access_href, full_data)
         self.testapp.post_json(grant_access_href, invalid_access, status=422)
         self.testapp.post_json(grant_access_href, missing_access, status=404)
