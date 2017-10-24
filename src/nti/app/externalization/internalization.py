@@ -6,10 +6,9 @@ Support functions for reading objects.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import cgi
 import six
@@ -32,6 +31,8 @@ from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from nti.mimetype.mimetype import nti_mimetype_class
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def create_modeled_content_object(unused_dataserver, owner, datatype, externalValue, unused_creator):
@@ -90,6 +91,11 @@ def read_input_data(input_data, request, reader=None, ext_format='json'):
     return result
 
 
+def _is_file_upload(value):
+    return   isinstance(value, (cgi.FieldStorage, cgi.MiniFieldStorage)) \
+          or (hasattr(value, 'type') and hasattr(value, 'file'))
+
+
 def _handle_content_type(reader, input_data, request, content_type):
     if content_type == 'multipart/form-data' and request.POST:
         # We parse the form-data and parse out all the non FieldStorage fields
@@ -98,9 +104,7 @@ def _handle_content_type(reader, input_data, request, content_type):
         result = dict()
         data = request.POST
         for key, value in data.items():
-            if (    isinstance(value, (cgi.FieldStorage, cgi.MiniFieldStorage))
-                or (hasattr(value, 'type') and hasattr(value, 'file'))):
-                # reset to 0
+            if _is_file_upload(value):
                 fp = getattr(value, "fp", None)
                 if fp is not None:
                     fp.seek(0)
