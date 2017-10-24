@@ -96,6 +96,12 @@ def _is_file_upload(value):
           or (hasattr(value, 'type') and hasattr(value, 'file'))
 
 
+def _reset_file_pointer(value):
+    fp = getattr(value, "fp", value)
+    if hasattr(fp, 'seek'):
+        fp.seek(0)
+
+
 def _handle_content_type(reader, input_data, request, content_type):
     if content_type == 'multipart/form-data' and request.POST:
         # We parse the form-data and parse out all the non FieldStorage fields
@@ -105,15 +111,13 @@ def _handle_content_type(reader, input_data, request, content_type):
         data = request.POST
         for key, value in data.items():
             if _is_file_upload(value):
-                fp = getattr(value, "fp", None)
-                if fp is not None:
-                    fp.seek(0)
+                _reset_file_pointer(value)
             elif key in ('__json__', '__input__'):  # special case for embedded json data
-                json_data = read_input_data(data[key], request)
+                json_data = read_input_data(value, request)
                 assert isinstance(json_data, collections.Mapping)
                 result.update(json_data)
             else:
-                result[handle_unicode(key, request)] = data[key]
+                result[handle_unicode(key, request)] = value
     else:
         # We need all string values to be unicode objects. simplejson is different from 
         # the built-in json and returns strings
