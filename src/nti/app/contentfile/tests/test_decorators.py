@@ -39,7 +39,7 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.dataserver.tests import mock_dataserver
 
-GIF_DATAURL = b'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
+GIF_DATAURL = 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 
 GETTING_STARTED = u'Getting Started.pdf'
 
