@@ -33,8 +33,9 @@ from zope.location.interfaces import ILocation
 
 from persistent import Persistent
 
-from nti.intid.utility import IntIds
 from nti.intid.interfaces import IIntIds
+
+from nti.intid.utility import IntIds
 
 from nti.testing.base import AbstractTestBase
 
