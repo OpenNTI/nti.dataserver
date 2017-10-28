@@ -5,10 +5,9 @@ zope.generations installer for nti.dataserver
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 generation = 92
 
@@ -42,6 +41,7 @@ from zope import interface
 from zope import lifecycleevent
 
 from zope.component.hooks import site
+
 from zope.component.interfaces import ISite
 
 import zope.intid
@@ -83,7 +83,10 @@ from nti.dataserver.users.black_list import UserBlacklistedStorage
 from nti.intid import utility as intid_utility
 
 from nti.invitations.index import install_invitations_catalog
+
 from nti.invitations.model import install_invitations_container
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def install_chat(context):
