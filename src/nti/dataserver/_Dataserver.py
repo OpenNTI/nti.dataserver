@@ -605,4 +605,4 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
                          e, extract_stack(tb.tb_frame))
         finally:
             del tb
-        return None
+    return None
