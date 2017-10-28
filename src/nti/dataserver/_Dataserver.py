@@ -598,11 +598,15 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
 
         return result
     except (KeyError, UnicodeDecodeError, struct.error) as e:
-        tb = sys.exc_info()[2]
-        try:
-            logger.error("Failed to resolve oid '%s' using '%s' \n%s\nTraceback:\n%s",
-                         oid_string.encode('hex'), connection,
-                         e, extract_stack(tb.tb_frame))
-        finally:
-            del tb
+        if logger.getEffectiveLevel() == logging.DEBUG:
+            tb = sys.exc_info()[2]
+            try:
+                logger.error("Failed to resolve oid '%s' using '%s'\n%s\nTraceback:\n%s",
+                             oid_string.encode('hex'), connection,
+                             e.__class__, extract_stack(tb.tb_frame))
+            finally:
+                del tb
+        else:
+            logger.exception("Failed to resolve oid '%s' using '%s'",
+                             oid_string.encode('hex'), connection)
     return None
