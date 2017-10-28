@@ -9,10 +9,12 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import os
-import redis
+import sys
 import struct
 import logging
 from six.moves import urllib_parse
+
+import redis
 
 from zope import component
 from zope import interface
@@ -20,6 +22,8 @@ from zope import interface
 import zope.deprecation as zope_deprecation
 
 from zope.event import notify
+
+from zope.exceptions.exceptionformatter import extract_stack
 
 from zope.interface.interfaces import ObjectEvent
 
@@ -593,7 +597,12 @@ def get_object_by_oid(connection, oid_string, ignore_creator=False):
                 result = None
 
         return result
-    except (KeyError, UnicodeDecodeError, struct.error):
-        logger.exception("Failed to resolve oid '%s' using '%s'",
-                         oid_string.encode('hex'), connection)
+    except (KeyError, UnicodeDecodeError, struct.error) as e:
+        tb = sys.exc_info()[2]
+        try:
+            logger.error("Failed to resolve oid '%s' using '%s' \n%s\nTraceback:\n%s",
+                         oid_string.encode('hex'), connection,
+                         e, extract_stack(tb.tb_frame))
+        finally:
+            del tb
         return None
