@@ -240,8 +240,9 @@ class _CatalogWorkspaceAdminLinkDecorator(object):
     def links(self, catalog_workspace):
         if is_admin_or_site_admin(self.user):
             result = []
+            ds2 = find_interface(catalog_workspace, IDataserverFolder)
             for rel in (VIEW_GRANT_USER_ACCESS, VIEW_RESTRICT_USER_ACCESS):
-                link = Link(catalog_workspace,
+                link = Link(ds2,
                             rel=rel,
                             elements=(rel,),
                             method='POST')

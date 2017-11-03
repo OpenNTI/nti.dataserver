@@ -54,8 +54,6 @@ from nti.app.users.views.view_mixins import RemoveAccessViewMixin
 
 from nti.appserver.interfaces import INamedLinkView
 
-from nti.appserver.workspaces.interfaces import ICatalogWorkspace
-
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.dataserver import authorization as nauth
@@ -539,7 +537,7 @@ interface.directlyProvides(UserUpsertView, INamedLinkView)
 
 
 @view_config(name=VIEW_GRANT_USER_ACCESS,
-             context=ICatalogWorkspace,
+             context=IDataserverFolder,
              route_name='objects.generic.traversal',
              renderer='rest',
              request_method='POST')
@@ -548,7 +546,7 @@ class UserGrantAccessView(GrantAccessViewMixin):
 
 
 @view_config(name=VIEW_RESTRICT_USER_ACCESS,
-             context=ICatalogWorkspace,
+             context=IDataserverFolder,
              route_name='objects.generic.traversal',
              renderer='rest',
              request_method='POST')
