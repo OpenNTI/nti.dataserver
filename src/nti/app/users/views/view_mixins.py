@@ -52,6 +52,7 @@ from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users.interfaces import IUserUpdateUtility
+from nti.dataserver.users.interfaces import IUsernameGeneratorUtility
 
 from nti.dataserver.metadata.index import IX_TOPICS
 from nti.dataserver.metadata.index import IX_SHAREDWITH
@@ -61,6 +62,8 @@ from nti.dataserver.metadata.index import TP_DELETED_PLACEHOLDER
 from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users.users import User
+
+from nti.dataserver.users.utils import get_users_by_email
 
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
@@ -150,7 +153,7 @@ class AbstractUpdateView(AbstractAuthenticatedView,
                          ModeledContentUploadRequestUtilsMixin):
     """
     An abstract view that takes uploaded input and updates a user. By default,
-    a user is found based on their email (username)
+    a user is found based on their email.
     """
 
     REQUIRE_EMAIL = False
@@ -191,14 +194,22 @@ class AbstractUpdateView(AbstractAuthenticatedView,
 
     def get_user(self):
         """
-        Fetches a user. It is expected the user email (identifier) is the username.
+        Fetches a user based on the given email (by default).
 
         TODO: Should we have a site-based utility that allows different
         implementations of user lookup?
         """
         user = None
         if self._identifier is not None:
-            user = User.get_user(self._identifier)
+            users = get_users_by_email(self._identifier) or ()
+            users = tuple(users)
+            # XXX: Not sure if we want to handle multiple found users.
+            if len(users) > 1:
+                raise_http_error(self.request,
+                                 _(u"Multiple users found for identifier."),
+                                 u'MultipleUsersFound')
+            elif users:
+                user = users[0]
         return user
 
     def _predicate(self):
@@ -358,15 +369,16 @@ class UserUpsertViewMixin(AbstractUpdateView):
     """
 
     REQUIRE_NAME = False
-    
+
     def is_recreatable_user(self):
         return False
 
     def _generate_username(self):
         """
-        By default, the email is used as the new username.
+        Build an (opaque) username for this entity.
         """
-        return self._email or self._identifier
+        username_util = component.getUtility(IUsernameGeneratorUtility)
+        return username_util.generate_username()
 
     @Lazy
     def _first_name(self):
