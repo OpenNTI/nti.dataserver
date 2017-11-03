@@ -72,7 +72,7 @@ class ISAMLClient(interface.Interface):
 class ExistingUserMismatchError(ValueError):
     """
     Raised by ISAMLExistingUserValidator implementations
-    to indicate that the existig user does not match
+    to indicate that the existing user does not match
     the user identified by the saml assertion
     """
 

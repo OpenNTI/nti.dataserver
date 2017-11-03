@@ -7,7 +7,7 @@
 
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.component" />
-	
+
 	<include package=".link_providers" file="meta.zcml" />
 
 	<!-- Logon -->
@@ -16,7 +16,7 @@
 	<!-- Local users with passwords get a direct logon link -->
 	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
 				provides=".interfaces.ILogonLinkProvider"/>
-				
+
 	<!--
 		Users we've never seen before get a logon link too: Security through
 		obscurity and avoiding leaking information. Also, since
@@ -30,7 +30,7 @@
 	<!--
 		As of 11/2016 certain external users may gain impersonation
 		access within the site they administer.  As a precautionary measure prevent
-		@nexthtought.com accounts from being impersonated. They are essentially 
+		@nextthought.com accounts from being impersonated. They are essentially
 		god accounts that shouldn't be allowed to be impersonated by anyone.
 	-->
 	<adapter factory=".logon.DenyImpersonation"
@@ -41,18 +41,18 @@
 	<adapter factory=".logon.DefaultLogoutResponseProvider"
 			 provides="nti.appserver.interfaces.ILogoutForgettingResponseProvider"
 			 for="pyramid.interfaces.IRequest"/>
-			 
+
 	<adapter factory=".logon.DefaultLogoutResponseProvider"
 			 provides="nti.appserver.interfaces.ILogoutForgettingResponseProvider"
 			 for="pyramid.interfaces.IRequest"
 			 name="default"/>
 
 	<!-- Additional links for logged-in users -->
-	
+
 	<!-- Terms of service and privacy policy direct links -->
 	<subscriber factory=".logon._OnlinePolicyLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
-	
+
 	<subscriber factory=".link_providers.flag_link_provider.FlagLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
@@ -62,9 +62,12 @@
 	<subscriber factory=".logon.ImpersonationLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
+    <!-- Google logon utilities -->
+    <utility factory=".logon.DefaultGoogleLogonLookupUtility" />
+
 	<!-- All the other logon types are disabled in production -->
 	<configure zcml:condition="have devmode">
-	
+
 		<subscriber factory=".logon._SimpleMissingUserFacebookLinkProvider"
 					provides=".interfaces.ILogonLinkProvider" />
 
@@ -76,14 +79,14 @@
 
 		<subscriber factory=".logon._MissingUserAopsLoginLinkProvider"
 					provides=".interfaces.ILogonLinkProvider" />
-					
+
 		<adapter factory=".logon._MissingUserAopsLoginLinkProvider"
 				 for="* pyramid.interfaces.IRequest"
 				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
 				 name="openid.aops.com" />
 
 	</configure>
-	
+
 	<!-- Google -->
 	<include package="nti.common" file="meta.zcml" />
 	<oauth:registerOAuthKeys

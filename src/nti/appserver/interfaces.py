@@ -656,6 +656,29 @@ class IGoogleLogonSettings(interface.Interface):
     hd = ValidTextLine(title=u'Valid hosted domain', required=False)
 
 
+class IGoogleLogonLookupUtility(interface.Interface):
+    """
+    A utility to handle a user after google authentication.
+    """
+
+    def lookup_user(identifier):
+        """
+        Returns the user, if available from the given identifier.
+
+        :raises: AmbiguousUserLookupError
+        """
+
+    def generate_username(identifier):
+        """
+        Creates a username if the google entity does not exist in our system.
+        """
+
+class AmbiguousUserLookupError(ValueError):
+    """
+    An error raised when multiple users are found for a user identifier.
+    """
+
+
 # BWC exports
 
 

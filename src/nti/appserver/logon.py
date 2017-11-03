@@ -82,12 +82,14 @@ from nti.appserver.interfaces import IMissingUser
 from nti.appserver.interfaces import IUserLogonEvent
 from nti.appserver.interfaces import ILogonLinkProvider
 from nti.appserver.interfaces import IImpersonationDecider
+from nti.appserver.interfaces import IGoogleLogonLookupUtility
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 from nti.appserver.interfaces import IUnauthenticatedUserLinkProvider
 from nti.appserver.interfaces import ILogoutForgettingResponseProvider
 from nti.appserver.interfaces import ILogonUsernameFromIdentityURLProvider
 
 from nti.appserver.interfaces import UserLogoutEvent
+from nti.appserver.interfaces import AmbiguousUserLookupError
 from nti.appserver.interfaces import UserCreatedWithRequestEvent
 
 from nti.appserver.link_providers import flag_link_provider
@@ -104,11 +106,13 @@ from nti.dataserver.interfaces import IGoogleUser
 
 from nti.dataserver.users.interfaces import GoogleUserCreatedEvent
 from nti.dataserver.users.interfaces import OpenIDUserCreatedEvent
+from nti.dataserver.users.interfaces import IUsernameGeneratorUtility
 
 from nti.dataserver.users.users import User
 from nti.dataserver.users.users import OpenIdUser
 from nti.dataserver.users.users import FacebookUser
 
+from nti.dataserver.users.utils import get_users_by_email
 from nti.dataserver.users.utils import force_email_verification
 
 from nti.externalization.interfaces import IExternalObject
@@ -1380,6 +1384,44 @@ def redirect_google_oauth2_params(request, state=None, auth_keys=None):
     return params
 
 
+@interface.implementer(IGoogleLogonLookupUtility)
+class DefaultGoogleLogonLookupUtility(object):
+    """
+    This utility maps the given user identifier as the username.
+    """
+
+    def lookup_user(self, identifier):
+        return User.get_entity(identifier)
+
+    def generate_username(self, identifier):
+        return identifier
+
+
+@interface.implementer(IGoogleLogonLookupUtility)
+class EmailGoogleLogonLookupUtility(object):
+    """
+    This utility maps the given user identifier as the user's email.
+    """
+
+    def lookup_user(self, identifier):
+        user = None
+        users = get_users_by_email(identifier)
+        users = tuple(users)
+        if len(users) > 1:
+            raise AmbiguousUserLookupError()
+        elif users:
+            user = users[0]
+        return user
+
+    def generate_username(self, unused_identifier):
+        """
+        Since we allow a user to be found via email, we must allow for that
+        user's email to be changed while still mapping to the same user object.
+        """
+        username_util = component.getUtility(IUsernameGeneratorUtility)
+        return username_util.generate_username()
+
+
 @view_config(route_name=REL_LOGIN_GOOGLE, request_method='GET')
 def google_oauth1(request, success=None, failure=None, state=None):
     state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
@@ -1478,9 +1520,11 @@ def google_oauth2(request):
                                             request.session.get('google.failure'),
                                             error=_(u'Invalid access token.'))
         profile = response.json()
-        username = profile['email']
-        user = User.get_entity(username)
+        email = profile['email']
+        logon_utility = component.getUtility(IGoogleLogonLookupUtility)
+        user = logon_utility.lookup_user(email)
         if user is None:
+            username = logon_utility.generate_username(email)
             firstName = profile.get('given_name', 'unspecified')
             lastName = profile.get('family_name', 'unspecified')
             email_verified = profile.get('email_verified', 'false')
@@ -1489,7 +1533,7 @@ def google_oauth2(request):
                                                username=username,
                                                fname=firstName,
                                                lname=lastName,
-                                               email=username,
+                                               email=email,
                                                idurl=None,
                                                iface=None,
                                                user_factory=User.create_user)
@@ -1500,7 +1544,7 @@ def google_oauth2(request):
             request.environ['nti.request_had_transaction_side_effects'] = 'True'
 
         response = _create_success_response(request,
-                                            userid=username,
+                                            userid=user.username,
                                             success=request.session.get('google.success'))
     except Exception as e:
         logger.exception('Failed to login with google')
