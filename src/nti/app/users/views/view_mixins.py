@@ -4,12 +4,14 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from requests.structures import CaseInsensitiveDict
 
 from zope import component
+from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
@@ -48,6 +50,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
+from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users.interfaces import IUserUpdateUtility
 from nti.dataserver.users.interfaces import IUsernameGeneratorUtility
 
@@ -366,6 +369,9 @@ class UserUpsertViewMixin(AbstractUpdateView):
     """
 
     REQUIRE_NAME = False
+    
+    def is_recreatable_user(self):
+        return False
 
     def _generate_username(self):
         """
@@ -419,6 +425,8 @@ class UserUpsertViewMixin(AbstractUpdateView):
                                            user_factory=User.create_user,
                                            realname=realname)
         self.post_user_creation(user)
+        if self.is_recreatable_user():
+            interface.alsoProvides(user, IRecreatableUser)
         return user
 
     def post_user_creation(self, user):
