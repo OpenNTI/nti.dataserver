@@ -10,7 +10,6 @@ from __future__ import absolute_import
 
 from hamcrest import is_
 from hamcrest import none
-from hamcrest import not_none
 from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import has_length
@@ -262,10 +261,9 @@ class TestAdminViews(ApplicationLayerTest):
     def test_user_update(self):
         global_workspace = self._get_workspace(u'Global')
         catalog_workspace = self._get_workspace(u'Catalog')
-        username = u'ed_brubaker'
         email = u'update_user@gmail.com'
         with mock_dataserver.mock_db_trans(self.ds):
-            user = self._create_user(username)
+            user = self._create_user(email)
             IUserProfile(user).email = email
             catalog = get_entity_catalog()
             intids = component.getUtility(IIntIds)
@@ -273,7 +271,7 @@ class TestAdminViews(ApplicationLayerTest):
             catalog.index_doc(doc_id, user)
             user_ntiid = to_external_ntiid_oid(user)
             invalid_access_ntiid = to_external_ntiid_oid(user.__parent__)
-        user1_environ = self._make_extra_environ(user=username)
+        user1_environ = self._make_extra_environ(user=email)
 
         user_update_href = self.require_link_href_with_rel(global_workspace,
                                                            VIEW_USER_UPSERT)
@@ -294,9 +292,9 @@ class TestAdminViews(ApplicationLayerTest):
         new_email = u'new_email@gmail.com'
         self.testapp.post_json(user_update_href, {u'first_name': new_first,
                                                   u'last_name': new_last,
-                                                  u'identifier': u'update_user@gmail.com',
+                                                  u'identifier': email,
                                                   u'email': new_email})
-        res = self.testapp.get('/dataserver2/users/%s' % username,
+        res = self.testapp.get('/dataserver2/users/%s' % email,
                                extra_environ=user1_environ)
         res = res.json_body
         assert_that(res['realname'], is_('%s %s' % (new_first, new_last)))
@@ -312,7 +310,7 @@ class TestAdminViews(ApplicationLayerTest):
                                       u'email': new_email})
         res = res.json_body
         created_username = res.get('Username')
-        assert_that(created_username, not_none())
+        assert_that(created_username, is_(new_email))
 
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.get_user(created_username)
