@@ -1422,6 +1422,14 @@ class EmailGoogleLogonLookupUtility(object):
         return username_util.generate_username()
 
 
+def _get_google_hosted_domain():
+    hosted_domain = None
+    login_config = component.queryUtility(IGoogleLogonSettings)
+    if login_config is not None:
+        hosted_domain = login_config.hd
+    return hosted_domain
+
+
 @view_config(route_name=REL_LOGIN_GOOGLE, request_method='GET')
 def google_oauth1(request, success=None, failure=None, state=None):
     state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
@@ -1429,10 +1437,7 @@ def google_oauth1(request, success=None, failure=None, state=None):
     params = redirect_google_oauth2_params(request, state)
     auth_url = config.get("authorization_endpoint", DEFAULT_AUTH_URL)
 
-    hosted_domain = None
-    login_config = component.queryUtility(IGoogleLogonSettings)
-    if login_config is not None:
-        hosted_domain = login_config.hd
+    hosted_domain = _get_google_hosted_domain()
     if hosted_domain:
         params['hd'] = hosted_domain
 
@@ -1520,7 +1525,16 @@ def google_oauth2(request):
                                             request.session.get('google.failure'),
                                             error=_(u'Invalid access token.'))
         profile = response.json()
+
+        # Make sure our user is from the correct domain.
         email = profile['email']
+        hosted_domain = _get_google_hosted_domain()
+        if hosted_domain:
+            domain = email.split('@')[1]
+            if hosted_domain != domain:
+                return _create_failure_response(request,
+                                                request.session.get('google.failure'),
+                                                error=_(u'Invalid domain.'))
         logon_utility = component.getUtility(IGoogleLogonLookupUtility)
         user = logon_utility.lookup_user(email)
         if user is None:
