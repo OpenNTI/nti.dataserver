@@ -20,8 +20,6 @@ from numbers import Number
 from zope import component
 from zope import interface
 
-from zope.catalog.interfaces import ICatalog
-
 from zope.intid.interfaces import IIntIds
 
 from pyramid.view import view_config
@@ -61,7 +59,7 @@ from nti.dataserver.interfaces import IThreadable
 from nti.dataserver.interfaces import IUsernameIterable
 from nti.dataserver.interfaces import IStreamChangeEvent
 
-from nti.dataserver.metadata.index import CATALOG_NAME as METADATA_CATALOG_NAME
+from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.sharing import SharingContextCache
 
@@ -1163,7 +1161,7 @@ class RecursiveUGDView(_UGDView):
 
 		Note that we ignore filter operation.
 		"""
-		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
+		catalog = get_metadata_catalog()
 		if catalog is None:
 			raise hexc.HTTPNotFound(_("No catalog"))
 
