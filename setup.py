@@ -69,7 +69,7 @@ TESTS_REQUIRE = [
     # messy with nose-progressive> consider pdbpp?
     'ipdb >= 0.8',
     'nose >= 1.3.0',
-    'nose2[coverage_plugin]',
+    'nose2',
     'nose-timer',
     'nose-progressive >= 1.5',
     # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial
