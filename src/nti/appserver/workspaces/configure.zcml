@@ -58,10 +58,6 @@
                 provides=".interfaces.ICatalogCollection"
                 for=".interfaces.ICatalogWorkspace" />
 
-    <subscriber factory=".catalog.FeaturedCatalogCollection"
-                provides=".interfaces.ICatalogCollection"
-                for=".interfaces.ICatalogWorkspace" />
-
 	<!--
 	One of them is the default ICollection adapter. See application.py for why this is wrong.
 	-->

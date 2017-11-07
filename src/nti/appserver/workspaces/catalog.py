@@ -24,7 +24,6 @@ from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import ICatalogWorkspace
 from nti.appserver.workspaces.interfaces import ICatalogCollection
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
-from nti.appserver.workspaces.interfaces import IFeaturedCatalogCollectionProvider
 from nti.appserver.workspaces.interfaces import IPurchasedCatalogCollectionProvider
 
 from nti.dataserver.interfaces import IUser
@@ -63,40 +62,6 @@ class PurchasedCatalogCollection(Contained):
     def container(self):
         providers = component.subscribers((self._user,),
                                           IPurchasedCatalogCollectionProvider)
-        result = LocatedExternalList()
-        for provider in providers:
-            provider_iter = provider.get_collection_iter()
-            result.extend(provider_iter)
-        result.__name__ = self.__name__
-        result.__parent__ = self.__parent__
-        result.lastModified = None
-        return result
-
-
-@component.adapter(ICatalogWorkspace)
-@interface.implementer(ICatalogCollection)
-class FeaturedCatalogCollection(Contained):
-    """
-    A catalog collection that returns 'featured' items.
-    """
-
-    name = 'Featured'
-    __name__ = name
-    _workspace = alias('__parent__')
-    accepts = ()
-    links = ()
-
-    def __init__(self, catalog_workspace):
-        self.__parent__ = catalog_workspace
-
-    @property
-    def _user(self):
-        return self._workspace.user
-
-    @property
-    def container(self):
-        providers = component.subscribers((self._user,),
-                                          IFeaturedCatalogCollectionProvider)
         result = LocatedExternalList()
         for provider in providers:
             provider_iter = provider.get_collection_iter()
