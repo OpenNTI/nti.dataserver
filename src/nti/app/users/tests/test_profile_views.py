@@ -31,15 +31,17 @@ from nti.app.testing.webtest import TestApp
 
 from nti.dataserver.tests import mock_dataserver
 
+from nti.app.users.utils import set_user_creation_site
 
 class TestApplicationUserProfileViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS
     def test_user_info_extract(self):
         with mock_dataserver.mock_db_trans(self.ds):
-            self._create_user(external_value={'email': u"nti@nt.com",
+            user = self._create_user(external_value={'email': u"nti@nt.com",
                                               'realname': u'steve johnson',
                                               'alias': u'citadel'})
+            set_user_creation_site(user, 'mathcounts.nextthought.com')
             self._create_user(username=u'rukia@nt.com',
                               external_value={'email': u'rukia@nt.com',
                                               'realname': u'rukia foo',
@@ -48,9 +50,21 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
                               external_value={'email': u'ichigo@nt.com',
                                               'realname': u'ichigo bar',
                                               'alias': u'zangetsu'})
+
         testapp = TestApp(self.app)
 
         path = '/dataserver2/@@user_info_extract'
+        environ = self._make_extra_environ()
+        environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
+
+        res = testapp.get(path, extra_environ=environ)
+        assert_that(res.status_int, is_(200))
+        app_iter = res.app_iter[0].split('\n')[:-1]
+        assert_that(app_iter, has_length(2))
+        for t in app_iter:
+            assert_that(t.split(','), has_length(7))
+
+        path = '/dataserver2/@@user_info_extract?all_sites=True'
         environ = self._make_extra_environ()
         environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
 

@@ -63,6 +63,8 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.schema.interfaces import find_most_derived_interface
 
+from nti.site.site import getSite
+from nti.app.users.utils import get_user_creation_site
 # user_info_extract
 
 
@@ -116,7 +118,7 @@ def _format_date(d):
         return str(d)
 
 
-def _get_user_info_extract():
+def _get_user_info_extract(all_sites=False):
     intids = component.getUtility(IIntIds)
     ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
     userids = _get_index_userids(ent_catalog)
@@ -129,6 +131,14 @@ def _get_user_info_extract():
         u = intids.queryObject(iid, None)
         if not IUser.providedBy(u):
             continue
+
+        # filter user view by site
+        if not all_sites:
+            userSite = get_user_creation_site(u)
+            site = getSite()
+            if site != userSite:
+                continue
+
         username = u.username
         userid = _replace_username(username)
         alias = _get_index_field_value(iid, ent_catalog, 'alias')
@@ -147,13 +157,19 @@ def _get_user_info_extract():
 class UserInfoExtractView(AbstractAuthenticatedView):
 
     def __call__(self):
+        values = CaseInsensitiveDict(**self.request.params)
+        value = values.get('all_sites')
+        all_sites = is_true(value)
+        generator = partial(_get_user_info_extract,
+                            all_sites=all_sites)
+
         stream = BytesIO()
         writer = csv.writer(stream)
         response = self.request.response
         response.content_encoding = 'identity'
         response.content_type = 'text/csv; charset=UTF-8'
         response.content_disposition = 'attachment; filename="usr_info.csv"'
-        response.body_file = _write_generator(_get_user_info_extract,
+        response.body_file = _write_generator(generator,
                                               writer,
                                               stream)
         return response
