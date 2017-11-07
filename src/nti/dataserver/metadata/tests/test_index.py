@@ -19,8 +19,6 @@ from nti.testing.matchers import is_empty
 from zope import component
 from zope import interface
 
-from zope.catalog.interfaces import ICatalog
-
 from zope.event import notify
 
 from zope.lifecycleevent import ObjectModifiedEvent
@@ -29,12 +27,15 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.contenttypes.note import Note
 
-from nti.dataserver.metadata.index import CATALOG_NAME
-
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+
+from nti.dataserver.metadata.index import CATALOG_NAME
+from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
+from nti.zope_catalog.interfaces import IDeferredCatalog
 
 
 class TestMetadataIndex(DataserverLayerTest):
@@ -61,8 +62,7 @@ class TestMetadataIndex(DataserverLayerTest):
         note.tags = Note.tags.fromObject([greg.NTIID])
         jason.addContainedObject(note)
 
-        catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
-
+        catalog = component.getUtility(IDeferredCatalog, name=CATALOG_NAME)
         return greg, jason, root_note, note, catalog
 
     def _check_catalog(self, catalog, note, root_note):
@@ -182,7 +182,7 @@ class TestMetadataIndex(DataserverLayerTest):
         change = jason.accept_shared_data_from(greg)
         assert_that(change, is_(not_none()))
 
-        catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+        catalog = get_metadata_catalog()
         assert_that(list(catalog.searchResults(mimeType={'any_of': ('application/vnd.nextthought.change',)},
                                                containerId=('', ''),)),
                     contains(change))
