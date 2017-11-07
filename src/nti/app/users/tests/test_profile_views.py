@@ -17,21 +17,22 @@ from hamcrest import greater_than_or_equal_to
 
 from zope import interface
 
-from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
-
-from nti.dataserver.users.interfaces import IFriendlyNamed
-
-from nti.dataserver.users.users import User
-
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.app.testing.webtest import TestApp
 
+from nti.app.users.utils import set_user_creation_site
+
+from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
+
 from nti.dataserver.tests import mock_dataserver
 
-from nti.app.users.utils import set_user_creation_site
+from nti.dataserver.users.interfaces import IFriendlyNamed
+
+from nti.dataserver.users.users import User
+
 
 class TestApplicationUserProfileViews(ApplicationLayerTest):
 
@@ -39,8 +40,8 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
     def test_user_info_extract(self):
         with mock_dataserver.mock_db_trans(self.ds):
             user = self._create_user(external_value={'email': u"nti@nt.com",
-                                              'realname': u'steve johnson',
-                                              'alias': u'citadel'})
+                                                     'realname': u'steve johnson',
+                                                     'alias': u'citadel'})
             set_user_creation_site(user, 'mathcounts.nextthought.com')
             self._create_user(username=u'rukia@nt.com',
                               external_value={'email': u'rukia@nt.com',
@@ -189,7 +190,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
     def test_update_profile(self):
         with mock_dataserver.mock_db_trans(self.ds):
             u = self._create_user(username=u'ichigo@nt.com',
-                                  external_value={'email': u"ichigo@nt.com", 
+                                  external_value={'email': u"ichigo@nt.com",
                                                   'alias': u'foo'})
             assert_that(IFriendlyNamed(u), has_property('alias', 'foo'))
 
@@ -197,15 +198,15 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
         path = '/dataserver2/@@user_profile_update'
         res = self.testapp.post_json(path, post_data, status=200)
 
-        assert_that(res.json_body, 
-					has_entry('Allowed Fields',
-							  has_length(greater_than_or_equal_to(12))))
-        assert_that(res.json_body, 
-					has_entry('External', has_entry('alias', 'Ichigo')))
-        assert_that(res.json_body, 
-					has_entry('Profile', 'CompleteUserProfile'))
-        assert_that(res.json_body, 
-					has_entry('Summary', has_entry('alias', 'Ichigo')))
+        assert_that(res.json_body,
+                    has_entry('Allowed Fields',
+                              has_length(greater_than_or_equal_to(12))))
+        assert_that(res.json_body,
+                    has_entry('External', has_entry('alias', 'Ichigo')))
+        assert_that(res.json_body,
+                    has_entry('Profile', 'CompleteUserProfile'))
+        assert_that(res.json_body,
+                    has_entry('Summary', has_entry('alias', 'Ichigo')))
 
         with mock_dataserver.mock_db_trans(self.ds):
             u = User.get_user('ichigo@nt.com')

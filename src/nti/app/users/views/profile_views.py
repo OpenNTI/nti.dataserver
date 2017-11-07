@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import csv
 import six
@@ -33,6 +32,8 @@ from pyramid.view import view_config
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.app.users.utils import get_user_creation_site
 
 from nti.base._compat import text_
 
@@ -64,8 +65,8 @@ from nti.externalization.internalization import update_from_external_object
 from nti.schema.interfaces import find_most_derived_interface
 
 from nti.site.site import getSite
-from nti.app.users.utils import get_user_creation_site
-# user_info_extract
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _tx_string(s):
@@ -157,7 +158,7 @@ def _get_user_info_extract(all_sites=False):
 class UserInfoExtractView(AbstractAuthenticatedView):
 
     def __call__(self):
-        values = CaseInsensitiveDict(**self.request.params)
+        values = CaseInsensitiveDict(self.request.params)
         value = values.get('all_sites')
         all_sites = is_true(value)
         generator = partial(_get_user_info_extract,
@@ -173,6 +174,7 @@ class UserInfoExtractView(AbstractAuthenticatedView):
                                               writer,
                                               stream)
         return response
+
 
 # opt in communication
 
@@ -268,6 +270,7 @@ class UserEmailVerifiedView(AbstractAuthenticatedView):
         response.body_file = _write_generator(generator, writer, stream)
         return response
 
+
 # user profile
 
 
@@ -293,8 +296,7 @@ def _get_profile_info(coppaOnly=False):
         username = user.username
         userid = _replace_username(username)
         email = _get_index_field_value(iid, ent_catalog, 'email')
-        contact_email = _get_index_field_value(iid, ent_catalog, 'contact_email') \
-            or email
+        contact_email = _get_index_field_value(iid, ent_catalog, 'contact_email') or email
         info = [username, userid, email, contact_email] + _get_user_info(user)
         yield info
 
