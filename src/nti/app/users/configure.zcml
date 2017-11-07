@@ -70,4 +70,9 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 for="nti.dataserver.interfaces.IUsersFolder" />
 
+
+    <!-- Utilities -->
+    <adapter factory=".utils.UserUpdateUtility"
+             for="nti.dataserver.interfaces.IUser"
+             provides="nti.dataserver.users.interfaces.IUserUpdateUtility" />
 </configure>

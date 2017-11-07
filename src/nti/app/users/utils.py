@@ -18,6 +18,7 @@ from six.moves import urllib_parse
 import isodate
 
 from zope import component
+from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
@@ -42,10 +43,13 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.base._compat import text_
 from nti.base._compat import bytes_
 
+from nti.dataserver.authorization import is_site_admin
+
 from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IEmailAddressable
+from nti.dataserver.users.interfaces import IUserUpdateUtility
 
 from nti.dataserver.users.users import User
 
@@ -292,3 +296,24 @@ def set_user_creation_site(user, site=None):
         annotations = IAnnotations(user, None) or {}
         annotations[_CREATION_SITE_KEY] = name
     return name
+
+
+@interface.implementer(IUserUpdateUtility)
+class UserUpdateUtility(object):
+    """
+    A default :class:`IUserUpdateUtility` that only allows updates on
+    users created within this site.
+
+    XXX: This should probably be a 'ThirdPartyUserUpdate` permission granted
+    to NT admins on the ds folder and to site admin roles on their site.
+    """
+
+    def __init__(self, user):
+        self.user = user
+
+    def can_update_user(self, target_user):
+        result = True
+        if is_site_admin(self.user):
+            user_creation_site = get_user_creation_site(target_user)
+            result = getSite() == user_creation_site
+        return result

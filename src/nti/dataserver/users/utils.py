@@ -160,3 +160,4 @@ class BackgroundUrlProperty(ImageUrlProperty):
     max_file_size = 524288  # 512 KB
     avatar_field_name = 'backgroundURL'
     avatar_provider_interface = IBackgroundURLProvider
+

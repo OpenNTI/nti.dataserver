@@ -54,6 +54,8 @@ from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users.interfaces import IUserUpdateUtility
 from nti.dataserver.users.interfaces import IUsernameGeneratorUtility
 
+from nti.dataserver.users.interfaces import UpsertUserCreatedEvent
+
 from nti.dataserver.metadata.index import IX_TOPICS
 from nti.dataserver.metadata.index import IX_SHAREDWITH
 from nti.dataserver.metadata.index import TP_TOP_LEVEL_CONTENT
@@ -427,6 +429,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
         self.post_user_creation(user)
         if self.is_recreatable_user():
             interface.alsoProvides(user, IRecreatableUser)
+        notify(UpsertUserCreatedEvent(user, self.request))
         return user
 
     def post_user_creation(self, user):

@@ -921,3 +921,18 @@ class IUserUpdateUtility(Interface):
         ensure admins of one site do not edit users from another site in a
         shared environment.
         """
+
+
+class IUpsertUserCreatedEvent(IObjectEvent):
+    """
+    Fired after a user has been created via UserUpsert.
+    """
+    request = Attribute(u"Request")
+
+
+@interface.implementer(IUpsertUserCreatedEvent)
+class UpsertUserCreatedEvent(ObjectEvent):
+
+    def __init__(self, obj, request=None):
+        super(UpsertUserCreatedEvent, self).__init__(obj)
+        self.request = request
