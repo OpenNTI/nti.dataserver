@@ -1410,8 +1410,8 @@ class DataChangedUserNotificationEvent(UserNotificationEvent):
 
 
 # BWC exports
-from nti.zope_catalog.interfaces import IMetadataCatalog
-IMetadataCatalog = IMetadataCatalog
+from nti.zope_catalog.interfaces import IDeferredCatalog
+IMetadataCatalog = IDeferredCatalog
 
 
 class INotableFilter(interface.Interface):
