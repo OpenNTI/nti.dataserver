@@ -450,7 +450,8 @@ class IEntityProfile(IFriendlyNamed, IProfileAvatarURL):
 IUserProfile = IEntityProfile  # alias for BWC
 
 
-from nti.schema.jsonschema import UI_TYPE_EMAIL, UI_TYPE_HASHED_EMAIL
+from nti.schema.jsonschema import UI_TYPE_EMAIL
+from nti.schema.jsonschema import UI_TYPE_HASHED_EMAIL
 
 
 class IRestrictedUserProfile(IUserProfile):
@@ -469,8 +470,7 @@ class IRestrictedUserProfile(IUserProfile):
         required=False)
     password_recovery_email_hash.setTaggedValue(TAG_HIDDEN_IN_UI, True)
     password_recovery_email_hash.setTaggedValue(TAG_READONLY_IN_UI, True)
-    password_recovery_email_hash.setTaggedValue(
-        TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL)
+    password_recovery_email_hash.setTaggedValue(TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL)
 
     email = ValidTextLine(title=u'Email',
         				  description=u'Email is not stored at this level, but the field is '
