@@ -41,6 +41,9 @@ from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.authorization import is_admin
+from nti.dataserver.authorization import is_site_admin
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import IDataserver
@@ -153,14 +156,27 @@ def _get_user_info_extract(all_sites=False):
 @view_config(route_name='objects.generic.traversal',
              name='user_info_extract',
              request_method='GET',
-             context=IDataserverFolder,
-             permission=nauth.ACT_NTI_ADMIN)
+             context=IDataserverFolder)
 class UserInfoExtractView(AbstractAuthenticatedView):
+    """
+    A view to fetch a CSV of user info.
+
+    params:
+        all_sites - whether to include users from all sites; only available
+                    to admins
+    """
 
     def __call__(self):
-        values = CaseInsensitiveDict(self.request.params)
-        value = values.get('all_sites')
-        all_sites = is_true(value)
+        _is_site_admin = is_site_admin(self.remoteUser)
+        if      not _is_site_admin \
+            and not is_admin(self.remoteUser):
+            raise hexc.HTTPForbidden()
+        all_sites = False
+        if not _is_site_admin:
+            # Only admins can toggle this.
+            values = CaseInsensitiveDict(self.request.params)
+            value = values.get('all_sites')
+            all_sites = is_true(value)
         generator = partial(_get_user_info_extract,
                             all_sites=all_sites)
 
