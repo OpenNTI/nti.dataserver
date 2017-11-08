@@ -40,7 +40,6 @@ from nti.dataserver.interfaces import ICreatedTime
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import IModeledContent
-from nti.dataserver.interfaces import IMetadataCatalog
 from nti.dataserver.interfaces import IUserGeneratedData
 from nti.dataserver.interfaces import IUserTaggedContent
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
@@ -57,7 +56,7 @@ from nti.ntiids.ntiids import TYPE_NAMED_ENTITY
 from nti.ntiids.ntiids import is_ntiid_of_types
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.zope_catalog.catalog import Catalog
+from nti.zope_catalog.catalog import DeferredCatalog
 
 from nti.zope_catalog.index import NormalizationWrapper
 from nti.zope_catalog.index import SetIndex as RawSetIndex
@@ -71,6 +70,8 @@ from nti.zope_catalog.topic import ExtentFilteredSet
 from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
 
 from nti.zope_catalog.index import AttributeKeywordIndex
+
+from nti.zope_catalog.interfaces import IDeferredCatalog 
 
 from nti.zope_catalog.string import StringTokenNormalizer
 
@@ -437,22 +438,17 @@ TP_DELETED_PLACEHOLDER = 'deletedObjectPlaceholder'
 TP_USER_GENERATED_DATA = 'isUserGeneratedData'
 
 
-@interface.implementer(IMetadataCatalog)
-class MetadataCatalog(Catalog):
+@interface.implementer(IDeferredCatalog)
+class MetadataCatalog(DeferredCatalog):
     
     family = BTrees.family64
-    
-    super_index_doc = Catalog.index_doc
 
-    def index_doc(self, docid, ob):
-        pass
-
-    def force_index_doc(self, docid, ob):
-        self.super_index_doc(docid, ob)
+    def force_index_doc(self, docid, ob):  # BWC
+        self.index_doc(docid, ob)
 
 
 def get_metadata_catalog(registry=component):
-    catalog = registry.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
+    catalog = registry.queryUtility(IDeferredCatalog, name=CATALOG_NAME)
     return catalog
 
 
@@ -502,7 +498,7 @@ def install_metadata_catalog(site_manager_container, intids=None):
     locate(catalog, site_manager_container, CATALOG_NAME)
     intids.register(catalog)
     lsm.registerUtility(catalog,
-                        provided=IMetadataCatalog,
+                        provided=IDeferredCatalog,
                         name=CATALOG_NAME)
 
     for index in catalog.values():
