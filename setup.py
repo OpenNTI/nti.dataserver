@@ -280,7 +280,6 @@ setup(
         'packaging',
         'paste',
         'perfmetrics',  # easy statsd metrics.
-        'plone.scale',     # image scaling/storage based on PIL
         # much like zope.file, but some image-specific goodness.
         'premailer',  # inline css for html emails
         'psutil' if not IS_PYPY else '',
