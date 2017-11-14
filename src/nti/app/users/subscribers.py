@@ -9,6 +9,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from zope import component
+from zope import interface
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 
@@ -18,7 +19,12 @@ from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import set_email_verification_time
 from nti.app.users.utils import safe_send_email_verification
 
+from nti.appserver.workspaces.interfaces import IGlobalWorkspaceLinkProvider
+
+from nti.dataserver.authorization import is_admin_or_site_admin
+
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.dataserver.users.interfaces import IUserProfile
@@ -27,6 +33,10 @@ from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 
 from nti.dataserver.users.utils import reindex_email_verification
+
+from nti.links.links import Link
+
+from nti.traversal.traversal import find_interface
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -62,3 +72,19 @@ def _user_modified_from_external_event(user, event):
 @component.adapter(IUser, IObjectAddedEvent)
 def _on_user_created(user, unused_event):
     set_user_creation_site(user)
+
+
+@component.adapter(IUser)
+@interface.implementer(IGlobalWorkspaceLinkProvider)
+class _GlobalWorkspaceLinkProvider(object):
+
+    def __init__(self, user):
+        self.user = user
+
+    def links(self, unused_workspace):
+        if is_admin_or_site_admin(self.user):
+            ds2 = find_interface(self.user, IDataserverFolder)
+            link = Link(ds2, rel='UserInfoExtract', method='GET',
+                        elements=('UserInfoExtract',))
+            return [link]
+        return ()

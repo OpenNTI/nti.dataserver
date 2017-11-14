@@ -40,6 +40,7 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import Singleton
+from nti.appserver.workspaces.interfaces import IGlobalWorkspaceLinkProvider
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -176,3 +177,4 @@ class _DeletedObjectPlaceholderDecorator(Singleton):
         external['Deleted'] = True
         if deleted_by_moderator:
             external['DeletedByModerator'] = True
+

@@ -59,6 +59,7 @@ from nti.appserver.workspaces.interfaces import IUserWorkspace
 from nti.appserver.workspaces.interfaces import IWorkspaceValidator
 from nti.appserver.workspaces.interfaces import IContainerCollection
 from nti.appserver.workspaces.interfaces import IUserWorkspaceLinkProvider
+from nti.appserver.workspaces.interfaces import IGlobalWorkspaceLinkProvider
 
 from nti.dataserver import authorization
 
@@ -536,16 +537,21 @@ class GlobalWorkspace(object):
 
     __parent__ = None
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, user=None):
         super(GlobalWorkspace, self).__init__()
         if parent:
             self.__parent__ = parent
+        self._user = user
 
     @property
     def links(self):
         # Introspect the component registry to find the things that
         # want to live directly beneath the dataserver root globally.
-        return _make_named_view_links(self.__parent__)
+        result = list(_make_named_view_links(self.__parent__))
+        for provider in component.subscribers((self._user,), IGlobalWorkspaceLinkProvider):
+            links = provider.links(self)
+            result.extend(links or ())
+        return result
 
     @property
     def name(self): return 'Global'
@@ -791,7 +797,8 @@ def _user_workspace(user_service):
 @interface.implementer(IWorkspace)
 @component.adapter(IService)
 def _global_workspace(user_service):
-    global_ws = GlobalWorkspace(parent=user_service.__parent__)
+    global_ws = GlobalWorkspace(parent=user_service.__parent__,
+                                user=user_service.user)
     assert global_ws.__parent__
     return global_ws
 

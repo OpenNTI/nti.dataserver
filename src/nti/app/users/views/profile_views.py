@@ -14,6 +14,8 @@ from io import BytesIO
 from datetime import datetime
 from functools import partial
 
+from pyramid.view import view_defaults
+
 from requests.structures import CaseInsensitiveDict
 
 from zope import component
@@ -181,11 +183,12 @@ class AbstractUserInfoExtractView(AbstractAuthenticatedView):
         return _get_user_info_extract(all_sites=all_sites)
 
 
-@view_config(route_name='objects.generic.traversal',
-             name='user_info_extract',
-             request_method='GET',
-             accept='text/csv',
-             context=IDataserverFolder)
+@view_config(name='user_info_extract')
+@view_config(name='UserInfoExtract')
+@view_defaults(route_name='objects.generic.traversal',
+               request_method='GET',
+               accept='text/csv',
+               context=IDataserverFolder)
 class UserInfoExtractCSVView(AbstractUserInfoExtractView):
     """
     A view to fetch a CSV of user info.
@@ -214,11 +217,12 @@ class UserInfoExtractCSVView(AbstractUserInfoExtractView):
         return response
 
 
-@view_config(route_name='objects.generic.traversal',
-             name='user_info_extract',
-             request_method='GET',
-             accept='application/json',
-             context=IDataserverFolder)
+@view_config(name='user_info_extract')
+@view_config(name='UserInfoExtract')
+@view_defaults(route_name='objects.generic.traversal',
+               request_method='GET',
+               accept='application/json',
+               context=IDataserverFolder)
 class UserInfoExtractView(AbstractUserInfoExtractView):
     """
     A view to fetch json of user info extracts.

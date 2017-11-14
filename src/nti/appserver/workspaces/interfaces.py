@@ -143,7 +143,15 @@ class IUserWorkspaceLinkProvider(interface.Interface):
 
     def links(workspace):
         """
-        return an iterable of user links
+        return an iterable of user workspace links
+        """
+
+
+class IGlobalWorkspaceLinkProvider(interface.Interface):
+
+    def links(workspace):
+        """
+        return an iterable of global workspace links
         """
 
 
