@@ -34,6 +34,8 @@ from nti.app.externalization.internalization import handle_unicode
 from nti.app.renderers.interfaces import IUnModifiedInResponse
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 
+from nti.app.users.utils import get_user_creation_site
+
 from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.interfaces import INamedLinkView
@@ -71,6 +73,8 @@ from nti.externalization.singleton import Singleton
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.ntiids.oids import to_external_ntiid_oid
+
+from nti.site.site import getSite
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -409,9 +413,12 @@ def _get_community_name_from_site():
 
 def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
     # TODO: Hook this up to the ACL support
-    # Admin/SiteAdmins/ContentAdmins can see everything.
+    # Admin/ContentAdmins can see everything.
+    # SiteAdmins can only see users created in their site.
     if remote_user:
-        is_admin = nauth.is_admin_or_content_admin_or_site_admin(remote_user)
+        is_admin = nauth.is_admin_or_content_admin(remote_user)
+        is_site_admin = nauth.is_site_admin(remote_user)
+        current_site = getSite()
 
         if is_admin:
             # If we're an admin, we can search everyone unless
@@ -440,14 +447,22 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
             if x is remote_user:
                 return True
 
-            # No one can see the Koppa Kids
-            # FIXME: Hardcoding this site/user policy
-            if ICoppaUserWithoutAgreement.providedBy(x) and not is_admin:
+            # public comms can be searched
+            if      ICommunity.providedBy(x) \
+                and (x.public or is_admin or is_site_admin):
+                return True
+
+            # Site admins can only view users in their site.
+            if      is_site_admin \
+                and current_site != get_user_creation_site(x):
                 return False
 
-            # public comms can be searched
-            if ICommunity.providedBy(x) and (x.public or is_admin):
-                return True
+            # No one can see the Koppa Kids
+            # FIXME: Hardcoding this site/user policy
+            if      ICoppaUserWithoutAgreement.providedBy(x) \
+                and not is_admin \
+                and not is_site_admin:
+                return False
 
             # User can see dynamic memberships he's a member of
             # or owns. First, the general case
