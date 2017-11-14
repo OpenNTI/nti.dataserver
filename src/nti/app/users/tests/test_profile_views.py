@@ -58,23 +58,37 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
         environ = self._make_extra_environ()
         environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
 
-        res = testapp.get(path, extra_environ=environ)
+        res = testapp.get(path, extra_environ=environ,
+                          headers={'accept': 'text/csv'})
         assert_that(res.status_int, is_(200))
         app_iter = res.app_iter[0].split('\n')[:-1]
         assert_that(app_iter, has_length(2))
         for t in app_iter:
             assert_that(t.split(','), has_length(7))
 
-        path = '/dataserver2/@@user_info_extract?all_sites=True'
+        all_sites_path = '/dataserver2/@@user_info_extract?all_sites=True'
         environ = self._make_extra_environ()
         environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
 
-        res = testapp.get(path, extra_environ=environ)
+        res = testapp.get(all_sites_path,
+                          extra_environ=environ,
+                          headers={'accept': 'text/csv'})
         assert_that(res.status_int, is_(200))
         app_iter = res.app_iter[0].split('\n')[:-1]
         assert_that(app_iter, has_length(4))
         for t in app_iter:
             assert_that(t.split(','), has_length(7))
+
+        res = testapp.get(path, extra_environ=environ,
+                          headers={'accept': 'application/json'})
+        items = res.json_body['Items']
+        assert_that(items, has_length(1))
+
+        res = testapp.get(all_sites_path,
+                          extra_environ=environ,
+                          headers={'accept': 'application/json'})
+        items = res.json_body['Items']
+        assert_that(items, has_length(3))
 
     @WithSharedApplicationMockDS
     def test_inactive_accounts(self):

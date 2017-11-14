@@ -63,6 +63,8 @@ from nti.dataserver.users.users import User
 from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
+
 from nti.externalization.internalization import update_from_external_object
 
 from nti.schema.interfaces import find_most_derived_interface
@@ -70,6 +72,9 @@ from nti.schema.interfaces import find_most_derived_interface
 from nti.site.site import getSite
 
 logger = __import__('logging').getLogger(__name__)
+
+TOTAL = StandardExternalFields.TOTAL
+ITEMS = StandardExternalFields.ITEMS
 
 
 def _tx_string(s):
@@ -127,10 +132,6 @@ def _get_user_info_extract(all_sites=False):
     ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
     userids = _get_index_userids(ent_catalog)
 
-    # header
-    yield ['username', 'userid', 'realname', 'alias', 'email', 'createdTime',
-           'lastLoginTime']
-
     for iid in userids or ():
         u = intids.queryObject(iid, None)
         if not IUser.providedBy(u):
@@ -150,23 +151,23 @@ def _get_user_info_extract(all_sites=False):
         createdTime = _format_time(getattr(u, 'createdTime', 0))
         realname = _get_index_field_value(iid, ent_catalog, 'realname')
         lastLoginTime = _format_time(getattr(u, 'lastLoginTime', None))
-        yield [username, userid, realname, alias, email, createdTime, lastLoginTime]
+        yield {'username': u.username,
+               'userid': userid,
+               'alias': alias,
+               'email': email,
+               'createdTime': createdTime,
+               'realname': realname,
+               'lastLoginTime': lastLoginTime}
 
 
-@view_config(route_name='objects.generic.traversal',
-             name='user_info_extract',
-             request_method='GET',
-             context=IDataserverFolder)
-class UserInfoExtractView(AbstractAuthenticatedView):
+class AbstractUserInfoExtractView(AbstractAuthenticatedView):
     """
-    A view to fetch a CSV of user info.
-
     params:
         all_sites - whether to include users from all sites; only available
                     to admins
     """
 
-    def __call__(self):
+    def _iter_user_info_dicts(self):
         _is_site_admin = is_site_admin(self.remoteUser)
         if      not _is_site_admin \
             and not is_admin(self.remoteUser):
@@ -177,20 +178,62 @@ class UserInfoExtractView(AbstractAuthenticatedView):
             values = CaseInsensitiveDict(self.request.params)
             value = values.get('all_sites')
             all_sites = is_true(value)
-        generator = partial(_get_user_info_extract,
-                            all_sites=all_sites)
+        return _get_user_info_extract(all_sites=all_sites)
 
+
+@view_config(route_name='objects.generic.traversal',
+             name='user_info_extract',
+             request_method='GET',
+             accept='text/csv',
+             context=IDataserverFolder)
+class UserInfoExtractCSVView(AbstractUserInfoExtractView):
+    """
+    A view to fetch a CSV of user info.
+
+    params:
+        all_sites - whether to include users from all sites; only available
+                    to admins
+    """
+
+    def __call__(self):
         stream = BytesIO()
-        writer = csv.writer(stream)
+        fieldnames = ['username', 'userid', 'realname',
+                      'alias', 'email', 'createdTime',
+                      'lastLoginTime']
+        csv_writer = csv.DictWriter(stream, fieldnames=fieldnames,
+                                    extrasaction='ignore')
+        csv_writer.writeheader()
+        for user_info in self._iter_user_info_dicts():
+            csv_writer.writerow(user_info)
+
         response = self.request.response
+        response.body = stream.getvalue()
         response.content_encoding = 'identity'
         response.content_type = 'text/csv; charset=UTF-8'
-        response.content_disposition = 'attachment; filename="usr_info.csv"'
-        response.body_file = _write_generator(generator,
-                                              writer,
-                                              stream)
+        response.content_disposition = 'attachment; filename="user_info.csv"'
         return response
 
+
+@view_config(route_name='objects.generic.traversal',
+             name='user_info_extract',
+             request_method='GET',
+             accept='application/json',
+             context=IDataserverFolder)
+class UserInfoExtractView(AbstractUserInfoExtractView):
+    """
+    A view to fetch json of user info extracts.
+
+    params:
+        all_sites - whether to include users from all sites; only available
+                    to admins
+    """
+
+    def __call__(self):
+        result = LocatedExternalDict()
+        user_infos = tuple(self._iter_user_info_dicts())
+        result[ITEMS] = user_infos
+        result[TOTAL] = len(user_infos)
+        return result
 
 # opt in communication
 
