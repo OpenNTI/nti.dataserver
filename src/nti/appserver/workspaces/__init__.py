@@ -198,7 +198,8 @@ class HomogeneousTypedContainerCollection(_ContainerWrapper):
 class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 
     def __init__(self, user_workspace):
-        super(_AbstractPseudoMembershipContainer, self).__init__(user_workspace)
+        super(_AbstractPseudoMembershipContainer,
+              self).__init__(user_workspace)
         try:
             self._user = user_workspace.user
         except AttributeError:
@@ -301,7 +302,8 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
                                            "Creatable External Object Types")
             vocab = factory(user)
             try:
-                mimeType = nti_mimetype_from_object(self._container.contained_type)
+                contained_type = self._container.contained_type
+                mimeType = nti_mimetype_from_object(contained_type)
                 vocab.getTermByToken(mimeType)
             except LookupError:
                 # We can prove that we cannot create it, it's not in our
@@ -661,8 +663,8 @@ class NTIIDEntry(object):
         if      self.recursive_stream_supports_feeds \
             and [x for x in result if x.rel == 'RecursiveStream']:
             remote_user = get_remote_user()
-            token_creator = component.queryUtility(
-                IUserViewTokenCreator, name='feed.atom')
+            token_creator = component.queryUtility(IUserViewTokenCreator,
+                                                   name='feed.atom')
             if token_creator and remote_user:
                 token = token_creator.getTokenForUserId(remote_user.username)
                 if token:
@@ -798,7 +800,7 @@ def _user_workspace(user_service):
 @component.adapter(IService)
 def _global_workspace(user_service):
     global_ws = GlobalWorkspace(parent=user_service.__parent__,
-                                user=user_service.user)
+                                user=getattr(user_service, 'user', None))
     assert global_ws.__parent__
     return global_ws
 
