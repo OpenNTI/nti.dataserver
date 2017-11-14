@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from nti.monkey import patch_relstorage_all_except_gevent_on_import
 patch_relstorage_all_except_gevent_on_import.patch()
@@ -29,19 +28,22 @@ from z3c.autoinclude.zcml import includePluginsDirective
 
 from nti.site.site import get_site_for_site_names
 
+logger = __import__('logging').getLogger(__name__)
+
 
 class PluginPoint(Contained):
 
     def __init__(self, name):
         self.__name__ = name
 
+
 PP_APP = PluginPoint('nti.app')
 PP_APP_SITES = PluginPoint('nti.app.sites')
 PP_APP_PRODUCTS = PluginPoint('nti.app.products')
 
 
-def create_context(env_dir=None, with_library=False, context=None, plugins=True,
-                   slugs=True, slugs_files=("*.zcml",)):
+def create_context(env_dir=None, with_library=False, context=None,
+                   plugins=True, slugs=True, slugs_files=("*.zcml",)):
     etc = os.getenv('DATASERVER_ETC_DIR') or os.path.join(env_dir, 'etc')
     etc = os.path.expanduser(etc)
 
@@ -55,7 +57,7 @@ def create_context(env_dir=None, with_library=False, context=None, plugins=True,
                                  package=package,
                                  context=context)
         for name in slugs_files or ():
-            xmlconfig.include(context, 
+            xmlconfig.include(context,
                               files=os.path.join(slugs_dir, name),
                               package='nti.appserver')
     if with_library:
@@ -70,7 +72,7 @@ def create_context(env_dir=None, with_library=False, context=None, plugins=True,
     # Include zope.browserpage.meta.zcm for tales:expressiontype
     # before including the products
     xmlconfig.include(context,
-                      file="meta.zcml", 
+                      file="meta.zcml",
                       package=zope.browserpage)
 
     # include plugins
