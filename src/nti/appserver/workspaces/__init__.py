@@ -687,8 +687,6 @@ class NTIIDEntry(object):
         return "<%s.%s %s at %s>" % (type(self).__module__,
                                      type(self).__name__,
                                      self.ntiid, hex(id(self)))
-
-
 _NTIIDEntry = NTIIDEntry  # BWC
 
 
@@ -796,11 +794,11 @@ def _user_workspace(user_service):
     return user_workspace
 
 
-@interface.implementer(IWorkspace)
 @component.adapter(IService)
+@interface.implementer(IWorkspace)
 def _global_workspace(user_service):
     global_ws = GlobalWorkspace(parent=user_service.__parent__,
-                                user=getattr(user_service, 'user', None))
+                                user=user_service.user)
     assert global_ws.__parent__
     return global_ws
 
@@ -808,6 +806,8 @@ def _global_workspace(user_service):
 @component.adapter(IUnauthenticatedPrincipal)
 @interface.implementer(IService, IContentTypeAware, IContained)
 class Service(object):
+
+    user = None
     mimeType = nti_mimetype_with_class('workspace')
 
     __parent__ = None

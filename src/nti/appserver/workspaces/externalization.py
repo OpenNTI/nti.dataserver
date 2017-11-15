@@ -94,10 +94,10 @@ class CollectionSummaryExternalizer(object):
                 ext_collection['accepts'].extend(('image/*',))
                 ext_collection['accepts'].extend(('application/pdf',))
             ext_collection['accepts'].sort()  # For the convenience of tests
-
+        # find links
         _links = decorators.find_links(self._collection)
         if _links:
-            ext_collection[LINKS] = _magic_link_externalizer( _links)
+            ext_collection[LINKS] = _magic_link_externalizer(_links)
         return ext_collection
 
 
@@ -309,14 +309,11 @@ class UserServiceExternalizer(ServiceExternalizer):
         registry = vocabulary.getVocabularyRegistry()
         cap_vocab = registry.get(self.context.user, CAPABILITY_VOCAB_NAME)
         capabilities = {term.value for term in cap_vocab}
-
         # Now filter out capabilities.
         for cap_filter in component.subscribers((self.context.user,),
                                                 IUserCapabilityFilter):
             capabilities = cap_filter.filterCapabilities(capabilities)
-
         result['CapabilityList'] = list(capabilities)
-
         # Now our community name
         site_policy = component.queryUtility(ISitePolicyUserEventListener)
         community_username = getattr(site_policy, 'COM_USERNAME', '')

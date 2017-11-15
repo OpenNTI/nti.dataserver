@@ -6,8 +6,9 @@ Service document and user workspaces support.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import component
 from zope import interface
@@ -48,6 +49,7 @@ class PurchasedCatalogCollection(Contained):
     name = 'Purchased'
     __name__ = name
     _workspace = alias('__parent__')
+
     accepts = ()
     links = ()
 
@@ -134,4 +136,3 @@ class CatalogWorkspace(Contained):
 def _catalog_workspace(user_service):
     catalog_workspace = CatalogWorkspace(user_service.user)
     return catalog_workspace
-

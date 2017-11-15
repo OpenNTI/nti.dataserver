@@ -44,6 +44,8 @@ from persistent import Persistent
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
+from nti.appserver.tests import TestBaseMixin
+
 from nti.appserver.workspaces import Service
 from nti.appserver.workspaces import UserService
 from nti.appserver.workspaces import UserPagesCollection
@@ -58,25 +60,23 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import IContained as INTIContained
 
+from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
+from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
+
 from nti.dataserver.users.users import User
 
 from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids import ntiids
 
-from nti.appserver.tests import TestBaseMixin
-
 # Must create the application so that the views
 # are registered, since we depend on those
 # registrations to generate links.
 # TODO: Break this dep.
 from nti.app.testing.application_webtest import ApplicationLayerTest
-
-from nti.dataserver.tests import mock_dataserver
-
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-
-from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
 
 
 class TestContainerEnumerationWorkspace(ApplicationLayerTest):
