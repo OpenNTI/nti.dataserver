@@ -625,10 +625,10 @@ class IEntityFollowingEvent(interface.interfaces.IObjectEvent):
     The ``object`` is the entity that is now following the other entity.
     """
 
-    object = Object(IEntity, 
+    object = Object(IEntity,
                     title=u"The entity now following the other entity")
 
-    now_following = Object(IEntity, 
+    now_following = Object(IEntity,
                            title=u"The entity that is now being followed by the object.")
 
 
@@ -641,7 +641,7 @@ class IFollowerAddedEvent(interface.interfaces.IObjectEvent):
 
     object = Object(IEntity, title=u"The entity now being followed.")
 
-    followed_by = Object(IEntity, 
+    followed_by = Object(IEntity,
                          title=u"The entity that is now following the object.")
 
 
@@ -666,10 +666,10 @@ class IStopFollowingEvent(interface.interfaces.IObjectEvent):
     Fired when an entity stop following another entity.
     The ``object`` is the entity that is no longer follows the other entity.
     """
-    object = Object(IEntity, 
+    object = Object(IEntity,
                      title=u"The entity not longer following the other entity")
 
-    not_following = Object(IEntity, 
+    not_following = Object(IEntity,
                            title=u"The entity that is no longer being followed by the object.")
 
 
@@ -1528,6 +1528,18 @@ class IAccessProvider(interface.Interface):
 
 from nti.securitypolicy.interfaces import ISiteRoleManager
 ISiteRoleManager = ISiteRoleManager
+
+
+class ISiteAdminUtility(interface.Interface):
+    """
+    Generic site admin utility.
+    """
+
+    def can_administer_user(self, site_admin, user):
+        """
+        Determines whether the given site_admin can administer the given user.
+        """
+
 
 # XXX Now make all the interfaces previously
 # declared implement the correct interface

@@ -72,11 +72,13 @@
 
 
     <!-- Utilities -->
+    <utility factory=".utils.SiteAdminUtility" />
+
     <adapter factory=".utils.UserUpdateUtility"
              for="nti.dataserver.interfaces.IUser"
              provides="nti.dataserver.users.interfaces.IUserUpdateUtility" />
 
-    <!-- workspace -->
+    <!-- Workspace -->
     <subscriber factory=".subscribers._GlobalWorkspaceLinkProvider"
                 provides="nti.appserver.workspaces.interfaces.IGlobalWorkspaceLinkProvider"/>
 </configure>

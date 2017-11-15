@@ -347,15 +347,14 @@ class TestAdminViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.users.utils.is_site_admin',
-                 'nti.app.users.utils.getSite',
-                 'nti.app.users.utils.get_user_creation_site')
-    def test_user_update_site_admin(self, mock_site_admin, mock_get_site, mock_get_user_site):
+                 'nti.app.users.utils.get_component_hierarchy_names',
+                 'nti.app.users.utils.get_user_creation_sitename')
+    def test_user_update_site_admin(self, mock_site_admin, mock_get_site_names, mock_get_user_site_name):
         """
         Validate site admins can only update users in their site.
         """
-        test_site = object()
         mock_site_admin.is_callable().returns(True)
-        mock_get_site.is_callable().returns(test_site)
+        mock_get_site_names.is_callable().returns(('test_site',))
         test_site_username = u'test_site_user'
         test_site_email = u'%s@gmail.com' % test_site_username
         with mock_dataserver.mock_db_trans(self.ds):
@@ -369,7 +368,7 @@ class TestAdminViews(ApplicationLayerTest):
         user_update_href = self.require_link_href_with_rel(global_workspace,
                                                            VIEW_USER_UPSERT)
 
-        fake_user_site = mock_get_user_site.is_callable().returns(test_site)
+        fake_user_site = mock_get_user_site_name.is_callable().returns('test_site')
         fake_user_site.next_call().returns(object())
         fake_user_site.next_call().returns(None)
         user_update_href = '%s?identifier=%s' % (user_update_href,

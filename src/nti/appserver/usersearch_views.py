@@ -34,8 +34,6 @@ from nti.app.externalization.internalization import handle_unicode
 from nti.app.renderers.interfaces import IUnModifiedInResponse
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 
-from nti.app.users.utils import get_user_creation_site
-
 from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.interfaces import INamedLinkView
@@ -55,6 +53,7 @@ from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IEntityContainer
 from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -73,8 +72,6 @@ from nti.externalization.singleton import Singleton
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.ntiids.oids import to_external_ntiid_oid
-
-from nti.site.site import getSite
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -418,7 +415,7 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
     if remote_user:
         is_admin = nauth.is_admin_or_content_admin(remote_user)
         is_site_admin = nauth.is_site_admin(remote_user)
-        current_site = getSite()
+        site_admin_utility = component.getUtility(ISiteAdminUtility)
 
         if is_admin:
             # If we're an admin, we can search everyone unless
@@ -454,7 +451,7 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
 
             # Site admins can only view users in their site.
             if      is_site_admin \
-                and current_site != get_user_creation_site(x):
+                and not site_admin_utility.can_administer_user(remote_user, x):
                 return False
 
             # No one can see the Koppa Kids

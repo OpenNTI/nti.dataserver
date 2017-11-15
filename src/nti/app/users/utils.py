@@ -46,6 +46,7 @@ from nti.base._compat import bytes_
 from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ISiteAdminUtility
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IEmailAddressable
@@ -58,6 +59,8 @@ from nti.externalization.externalization import to_external_object
 from nti.mailer.interfaces import ITemplatedMailer
 
 from nti.site.hostpolicy import get_host_site
+
+from nti.site.site import get_component_hierarchy_names
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -298,6 +301,15 @@ def set_user_creation_site(user, site=None):
     return name
 
 
+def _is_user_created_in_current_site(user):
+    """
+    Returns if the user is created in the current applicable site hierarchy.
+    This will return `False` if the user does not have a creation site.
+    """
+    user_creation_sitename = get_user_creation_sitename(user)
+    return user_creation_sitename in get_component_hierarchy_names()
+
+
 @interface.implementer(IUserUpdateUtility)
 class UserUpdateUtility(object):
     """
@@ -314,6 +326,27 @@ class UserUpdateUtility(object):
     def can_update_user(self, target_user):
         result = True
         if is_site_admin(self.user):
-            user_creation_site = get_user_creation_site(target_user)
-            result = getSite() == user_creation_site
+            result = _is_user_created_in_current_site(target_user)
         return result
+
+
+@interface.implementer(ISiteAdminUtility)
+class SiteAdminUtility(object):
+    """
+    A default :class:`ISiteAdminUtility` that only allows site admins
+    the ability to administer to users that were created in the current site.
+    """
+
+    def can_administer_user(self, unused_site_admin, user):
+        return _is_user_created_in_current_site(user)
+
+
+@interface.implementer(ISiteAdminUtility)
+class GlobalSiteAdminUtility(object):
+    """
+    A :class:`ISiteAdminUtility` that allows site admins to administer anyone.
+    This should be used with care.
+    """
+
+    def can_administer_user(self, unused_site_admin, unused_user):
+        return True
