@@ -36,6 +36,9 @@
 	<permission
 		id="nti.actions.impersonate"
 		title="Impersonate another user" />
+	<permission
+        id="nti.actions.contentedit"
+        title="Allow content editing" />
 
 	<!-- Defining roles and granting permissions to them globally -->
 	<include file="meta.zcml" package="zope.securitypolicy" />
