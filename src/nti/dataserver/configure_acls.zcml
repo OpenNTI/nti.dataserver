@@ -24,7 +24,7 @@
 	<permission
 		id="nti.actions.search"
 		title="Search for objects" />
-	<permission 
+	<permission
 		id="nti.actions.list"
 		title="List contents of an object"/>
 	<permission
@@ -47,18 +47,20 @@
 		role="nti.roles.moderator"
 		permission="nti.actions.moderate" />
 
-
 	<!-- Site admins.  These have a high level of permissions. -->
-	<role 	id="role:nti.dataserver.site-admin" 
+	<role 	id="role:nti.dataserver.site-admin"
 			title="A role given to site administrators"
 			description="Provides certain administrator type functionality in a given site."/>
 
-	<!-- 
+	<!--
 		Give site admins impersonation. We could give this permission to
-	 	the role on a site by site basis with a bit of work 
+	 	the role on a site by site basis with a bit of work
 	 -->
 	<grant	permission="nti.actions.impersonate"
 			role="role:nti.dataserver.site-admin"/>
+
+    <!-- Site admins have access to all -->
+	<grantAll role="role:nti.dataserver.site-admin" />
 
 	<!-- Register an IPrincipalRoleManager for ISite objects -->
 	<adapter factory=".site.site_role_manager"
