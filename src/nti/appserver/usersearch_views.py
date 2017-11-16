@@ -449,10 +449,11 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
                 and (x.public or is_admin or is_site_admin):
                 return True
 
-            # Site admins can only view users in their site.
+            # Site admins can only view users in their site; othwerise fall
+            # back to membership intersection
             if      is_site_admin \
-                and not site_admin_utility.can_administer_user(remote_user, x):
-                return False
+                and site_admin_utility.can_administer_user(remote_user, x):
+                return True
 
             # No one can see the Koppa Kids
             # FIXME: Hardcoding this site/user policy
