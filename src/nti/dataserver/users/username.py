@@ -27,7 +27,7 @@ class OpaqueUsernameGeneratorUtility(object):
     """
 
     def _make_username(self):
-        return six.text_type(uuid.uuid4().get_time_low())
+        return six.text_type(uuid.uuid4().time_low)
 
     def generate_username(self):
         username = self._make_username()
