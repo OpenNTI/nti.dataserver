@@ -73,10 +73,10 @@ from nti.schema.interfaces import find_most_derived_interface
 
 from nti.site.site import getSite
 
-logger = __import__('logging').getLogger(__name__)
-
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _tx_string(s):
@@ -151,15 +151,17 @@ def _get_user_info_extract(all_sites=False):
         alias = _get_index_field_value(iid, ent_catalog, 'alias')
         email = _get_index_field_value(iid, ent_catalog, 'email')
         createdTime = _format_time(getattr(u, 'createdTime', 0))
-        realname = _get_index_field_value(iid, ent_catalog, 'realname')
         lastLoginTime = _format_time(getattr(u, 'lastLoginTime', None))
-        yield {'username': u.username,
-               'userid': userid,
-               'alias': alias,
-               'email': email,
-               'createdTime': createdTime,
-               'realname': realname,
-               'lastLoginTime': lastLoginTime}
+        realname = _get_index_field_value(iid, ent_catalog, 'realname')
+        yield {
+            'alias': _tx_string(alias),
+            'email': _tx_string(email),
+            'userid': _tx_string(userid),
+            'realname': _tx_string(realname),
+            'username': _tx_string(u.username),
+            'createdTime': _tx_string(createdTime),
+            'lastLoginTime': _tx_string(lastLoginTime),
+        }
 
 
 class AbstractUserInfoExtractView(AbstractAuthenticatedView):

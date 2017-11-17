@@ -49,7 +49,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
                                               'alias': u'sode no shirayuki'})
             self._create_user(username=u'ichigo@nt.com',
                               external_value={'email': u'ichigo@nt.com',
-                                              'realname': u'ichigo bar',
+                                              'realname': u'イチゴ Kurosaki',
                                               'alias': u'zangetsu'})
 
         testapp = TestApp(self.app)
