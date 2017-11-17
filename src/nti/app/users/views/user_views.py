@@ -6,10 +6,9 @@ Generic views for any user (or sometimes, entities).
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 import time
@@ -51,6 +50,8 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.links import render_link
 
 ITEMS = StandardExternalFields.ITEMS
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _image_view(context, unused_request, func):

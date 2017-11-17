@@ -6,10 +6,9 @@ Views and other objects relating to functions exposed for dynamic friends lists.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 
@@ -60,6 +59,8 @@ from nti.externalization.interfaces import StandardExternalFields
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _authenticated_user_is_member(context, request):
@@ -142,8 +143,8 @@ class ListDFLsView(AbstractAuthenticatedView):
 
         intids = component.getUtility(IIntIds)
         catalog = get_entity_catalog()
-        doc_ids = catalog[IX_MIMETYPE].apply(
-            {'any_of': ('application/vnd.nextthought.dynamicfriendslist',)
+        doc_ids = catalog[IX_MIMETYPE].apply({
+            'any_of': ('application/vnd.nextthought.dynamicfriendslist',)
         })
 
         result = LocatedExternalDict()

@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 
@@ -85,6 +84,8 @@ EXCEPTION = 'Exception'
 transcript_mime_type = 'application/vnd.nextthought.transcript'
 messageinfo_mime_type = 'application/vnd.nextthought.messageinfo'
 
+logger = __import__('logging').getLogger(__name__)
+
 
 def metadata_catalog():
     return get_metadata_catalog()
@@ -102,9 +103,9 @@ def get_user_objects(user, mime_types=()):
 
     if mime_types:
         mime_types = set(mime_types)
-        process_transcripts = \
-            bool(   transcript_mime_type in mime_types
-                 or messageinfo_mime_type in mime_types)
+        process_transcripts = bool(
+            transcript_mime_type in mime_types or messageinfo_mime_type in mime_types
+        )
         if process_transcripts:
             mime_types.discard(transcript_mime_type)
             mime_types.discard(messageinfo_mime_type)
@@ -125,7 +126,7 @@ def get_user_objects(user, mime_types=()):
     if mime_types_intids is None:
         result_ids = created_ids
     elif created_ids:
-        result_ids = catalog.family.IF.intersection(created_ids, 
+        result_ids = catalog.family.IF.intersection(created_ids,
                                                     mime_types_intids)
 
     for uid in result_ids or ():

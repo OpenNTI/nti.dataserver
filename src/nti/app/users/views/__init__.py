@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 
@@ -26,6 +25,8 @@ from nti.app.users import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _make_min_max_btree_range(search_term):

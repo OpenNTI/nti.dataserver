@@ -393,16 +393,16 @@ class UserUpsertViewMixin(AbstractUpdateView):
 
     @Lazy
     def _first_name(self):
-        result =  self._params.get('first') \
-               or self._params.get('firstname') \
-               or self._params.get('first_name')
+        result = self._params.get('first') \
+              or self._params.get('firstname') \
+              or self._params.get('first_name')
         return result
 
     @Lazy
     def _last_name(self):
-        result =  self._params.get('last') \
-               or self._params.get('lastname') \
-               or self._params.get('last_name')
+        result = self._params.get('last') \
+              or self._params.get('lastname') \
+              or self._params.get('last_name')
         return result
 
     @Lazy

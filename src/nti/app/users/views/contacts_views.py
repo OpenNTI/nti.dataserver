@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from requests.structures import CaseInsensitiveDict
 
@@ -50,6 +49,8 @@ MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 SUGGESTED_CONTACTS_MIMETYPE = 'application/vnd.nextthought.suggestedcontacts'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def to_suggested_contacts(users):
@@ -240,11 +241,9 @@ class _MembershipSuggestedContactsView(_AbstractSuggestedContactsView):
         context = self.context
         # Should we check for public here? It's false by default.
         # is_public = context.public if ICommunity.providedBy( context ) else True
-
         if     self.remoteUser is None \
             or IDisallowSuggestedContacts.providedBy(context) \
-            or not (   self.remoteUser in context
-                    or self.remoteUser == context.creator):
+            or not (self.remoteUser in context or self.remoteUser == context.creator):
             raise hexc.HTTPForbidden()
 
         results = LocatedExternalDict()

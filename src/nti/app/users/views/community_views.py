@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 
@@ -61,6 +60,8 @@ ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @view_config(name='create_community')
 @view_config(name='create.community')
@@ -79,7 +80,7 @@ class CreateCommunityView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Must specify a username.'),
+                                 'message': _(u'Must specify a username.'),
                              },
                              None)
         community = Community.get_community(username)
@@ -87,7 +88,7 @@ class CreateCommunityView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                'message': _(u'Community already exists.'),
+                                 'message': _(u'Community already exists.'),
                              },
                              None)
         args = {'username': username}
