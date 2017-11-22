@@ -135,7 +135,6 @@ setup(
         'nti.containers',
         'nti.contentfragments',
         'nti.contentprocessing',
-        'nti.contenttypes.presentation',
         'nti.coremetadata',
         'nti.dublincore',
         'nti.externalization',
