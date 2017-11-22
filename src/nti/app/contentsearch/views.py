@@ -188,15 +188,11 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 
 class SearchView(BaseSearchView):
     name = u'Search'
-
-
 Search = SearchView  # BWC
 
 
 class UserDataSearchView(BaseSearchView):
     name = u'UserSearch'
-
-
 UserSearch = UserDataSearchView  # BWC
 
 

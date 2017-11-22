@@ -43,6 +43,7 @@ logger = __import__('logging').getLogger(__name__)
 def _json_error_map(o):
     if isinstance(o, set):
         return list(o)
+    # convert to unicode representation
     return text_(o)
 
 
@@ -82,7 +83,7 @@ def raise_json_error(request,
         except TypeError:
             v = json.dumps({'UnrepresentableError': text_(v)})
     else:
-        v = text_(v)
+        v = text_(v) # unicode string representation
 
     result = factory(message)
     result.text = v
