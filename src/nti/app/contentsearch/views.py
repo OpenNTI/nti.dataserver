@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import time
@@ -48,6 +47,8 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization.interfaces import StandardExternalFields
 
 ITEMS = StandardExternalFields.ITEMS
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class BaseView(AbstractAuthenticatedView):
@@ -200,7 +201,7 @@ UserSearch = UserDataSearchView  # BWC
 
 
 class SuggestView(BaseView):
-    name = 'uSuggest'
+    name = u'Suggest'
 
     def _include_item(self, hit, search_results):
         # No need to filter suggestions.

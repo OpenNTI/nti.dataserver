@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
@@ -23,14 +22,16 @@ from nti.contentsearch.predicates import DefaultSearchHitPredicate
 
 from nti.dataserver.authorization import ACT_READ
 
-from nti.dataserver.users.users import User
-
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IPublishableTopic
 
 from nti.dataserver.interfaces import IReadableShared
 from nti.dataserver.interfaces import IUserGeneratedData
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+
+from nti.dataserver.users.users import User
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(ISearchHitPredicate)

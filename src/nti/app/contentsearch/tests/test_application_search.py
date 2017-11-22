@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -23,14 +24,6 @@ from zope.keyreference.interfaces import IKeyReference
 
 from persistent import Persistent
 
-from nti.coremetadata.mixins import ZContainedMixin
-
-from nti.ntiids.ntiids import TYPE_MEETINGROOM
-
-from nti.ntiids.ntiids import make_ntiid
-
-from nti.ntiids.oids import to_external_ntiid_oid
-
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
@@ -38,7 +31,15 @@ from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
 
 from nti.app.testing.webtest import TestApp
 
+from nti.coremetadata.mixins import ZContainedMixin
+
 from nti.dataserver.tests import mock_dataserver
+
+from nti.ntiids.ntiids import TYPE_MEETINGROOM
+
+from nti.ntiids.ntiids import make_ntiid
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 
 @interface.implementer(IKeyReference)  # IF we don't, we won't get intids
@@ -109,11 +110,11 @@ class TestApplicationSearch(ApplicationLayerTest):
                                      nttype=TYPE_MEETINGROOM,
                                      specific=u'1234')
             data = json.dumps({
-                    'Class': 'Highlight', 
-                    'MimeType': 'application/vnd.nextthought.highlight',
-                    'ContainerId': containerId,
-                    'selectedText': "This is the selected text",
-                    'applicableRange': {'Class': 'ContentRangeDescription'}})
+                'Class': 'Highlight',
+                'MimeType': 'application/vnd.nextthought.highlight',
+                'ContainerId': containerId,
+                'selectedText': "This is the selected text",
+                'applicableRange': {'Class': 'ContentRangeDescription'}})
 
         path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
         res = testapp.post(path,
@@ -123,10 +124,10 @@ class TestApplicationSearch(ApplicationLayerTest):
         assert_that(res.body,
                     contains_string('"Class": "ContentRangeDescription"'))
         href = res.json_body['href']
-        assert_that(res.headers, 
+        assert_that(res.headers,
                     has_entry('Location',
                               contains_string('http://localhost/dataserver2/users/sjohnson@nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID')))
-        assert_that(res.headers, 
+        assert_that(res.headers,
                     has_entry('Content-Type',
                               contains_string('application/vnd.nextthought.highlight+json')))
 
@@ -141,21 +142,21 @@ class TestApplicationSearch(ApplicationLayerTest):
         res = testapp.put(str(path),
                           data,
                           extra_environ=self._make_extra_environ())
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('sharedWith', ['foo@bar']))
 
         # And the recipient can see it
         path = '/dataserver2/users/foo@bar/Pages(%s)/UserGeneratedData' % containerId
         res = testapp.get(str(path),
                           extra_environ=self._make_extra_environ(user='foo@bar'))
-        assert_that(res.body, 
+        assert_that(res.body,
                     contains_string("This is the selected text"))
 
         # I can now delete that item
-        testapp.delete(str(href), 
+        testapp.delete(str(href),
                        extra_environ=self._make_extra_environ())
 
         # And it is no longer available
-        res = testapp.get(str(path), 
+        res = testapp.get(str(path),
                           extra_environ=self._make_extra_environ(user='foo@bar'),
                           status=404)
