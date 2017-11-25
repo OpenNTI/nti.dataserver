@@ -517,9 +517,6 @@ setup(
             # 'whisper >= 0.9.10', # database lib.
             # See also https://github.com/hathawsh/graphite_buildout for a buildout to install node's statsd and graphite
             # locally (you may need to use a different version of node)
-            # Managing translations
-            'Babel >= 1.3',
-            'lingua',
         ]
     },
     dependency_links=[
