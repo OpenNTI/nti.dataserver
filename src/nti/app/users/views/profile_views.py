@@ -10,8 +10,11 @@ from __future__ import absolute_import
 
 import csv
 import six
+
 from io import BytesIO
+
 from datetime import datetime
+
 from functools import partial
 
 from pyramid.view import view_defaults
@@ -35,8 +38,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.app.users.utils import get_user_creation_site
-
 from nti.base._compat import text_
 
 from nti.common.string import is_true
@@ -50,6 +51,7 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
+from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
@@ -70,8 +72,6 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.internalization import update_from_external_object
 
 from nti.schema.interfaces import find_most_derived_interface
-
-from nti.site.site import getSite
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
@@ -129,7 +129,7 @@ def _format_date(d):
         return str(d)
 
 
-def _get_user_info_extract(all_sites=False):
+def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
     intids = component.getUtility(IIntIds)
     ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
     userids = _get_index_userids(ent_catalog)
@@ -140,10 +140,8 @@ def _get_user_info_extract(all_sites=False):
             continue
 
         # filter user view by site
-        if not all_sites:
-            userSite = get_user_creation_site(u)
-            site = getSite()
-            if site != userSite:
+        if      not all_sites \
+            and not admin_utility.can_administer_user(admin_user, u):
                 continue
 
         username = u.username
@@ -182,7 +180,10 @@ class AbstractUserInfoExtractView(AbstractAuthenticatedView):
             values = CaseInsensitiveDict(self.request.params)
             value = values.get('all_sites')
             all_sites = is_true(value)
-        return _get_user_info_extract(all_sites=all_sites)
+        admin_utility = component.getUtility(ISiteAdminUtility)
+        return _get_user_info_extract(self.remoteUser,
+                                      admin_utility,
+                                      all_sites=all_sites)
 
 
 @view_config(name='user_info_extract')

@@ -34,7 +34,7 @@ from nti.app.testing.webtest import TestApp
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.dataserver.tests import mock_dataserver
-from . import ITestMailDelivery
+from nti.appserver.tests import ITestMailDelivery
 
 class TestApplicationUsernameRecovery(ApplicationLayerTest):
 
@@ -228,7 +228,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		msg = mailer.queue[0]
 
 		assert_that( msg, has_property( 'body' ) )
-		assert_that(decodestring(msg.body), 
+		assert_that(decodestring(msg.body),
                     contains_string( 'http://localhost/place?username=' + urllib_parse.quote(username) ) )
 
 	@WithSharedApplicationMockDS
@@ -257,7 +257,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 			assert_that( mailer.queue, has_length( 1 ) )
 			msg = mailer.queue[0]
 			assert_that( msg, has_property( 'body' ) )
-			assert_that( decodestring(msg.body), 
+			assert_that( decodestring(msg.body),
                          contains_string( 'http://localhost/place?username=' + urllib_parse.quote(username) ) )
 			del mailer.queue[:]
 
