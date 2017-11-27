@@ -450,6 +450,27 @@ class IEntityProfile(IFriendlyNamed, IProfileAvatarURL):
 IUserProfile = IEntityProfile  # alias for BWC
 
 
+class IAddress(interface.Interface):
+
+    full_name = ValidTextLine(title=u"First name", required=True)
+
+    street_address_1 = ValidTextLine(title=u"Street line 1", 
+                                     max_length=75, required=True)
+
+    street_address_2 = ValidTextLine(title=u"Street line 2",
+                                     required=False, max_length=75)
+
+    city = ValidTextLine(title=u"City name", required=True)
+
+    state = ValidTextLine(title=u"State name",
+                          required=False, max_length=10)
+
+    postal_code = ValidTextLine(title=u"Postal code",
+                                required=False, max_length=30)
+
+    country = ValidTextLine(title=u"Nation name", required=True)
+
+
 from nti.schema.jsonschema import UI_TYPE_EMAIL
 from nti.schema.jsonschema import UI_TYPE_HASHED_EMAIL
 
