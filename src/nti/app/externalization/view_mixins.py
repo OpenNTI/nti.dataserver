@@ -558,15 +558,14 @@ class ModeledContentUploadRequestUtilsMixin(object):
         return containedObject
 
     def updateContentObject(self, contentObject, externalValue, set_id=False,
-                            notify=True, pre_hook=None, object_hook=None):
+                            notify=True, pre_hook=None):
         # We want to be sure to only change values on the actual content object,
         # not things in its traversal lineage
         containedObject = update_object_from_external_object(aq_base(contentObject),
                                                              externalValue,
                                                              notify=notify,
                                                              pre_hook=pre_hook,
-                                                             request=self.request,
-                                                             object_hook=object_hook)
+                                                             request=self.request)
 
         # If they provided an ID, use it if we can and we need to
         if      set_id and ID in externalValue \

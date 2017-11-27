@@ -911,7 +911,7 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
         self._clean_external(externalValue)
 
     def updateContentObject(self, contentObject, externalValue, set_id=False,
-                            notify=False, pre_hook=None, object_hook=None):
+                            notify=False, pre_hook=None):
         # capture old key data
         old_name = contentObject.filename
         # update
@@ -920,8 +920,7 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
                                                 externalValue,
                                                 set_id=set_id,
                                                 notify=False,
-                                                pre_hook=pre_hook,
-                                                object_hook=object_hook)
+                                                pre_hook=pre_hook)
         # check for rename
         new_name = contentObject.filename
         if old_name.lower() != new_name.lower():

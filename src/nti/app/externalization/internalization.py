@@ -191,14 +191,12 @@ def update_object_from_external_object(contentObject,
                                        externalValue,
                                        notify=True,
                                        request=None,
-                                       pre_hook=None,
-                                       object_hook=None):
+                                       pre_hook=None):
     dataserver = component.queryUtility(IDataserver)
     try:
         __traceback_info__ = contentObject, externalValue
         return update_from_external_object(contentObject, externalValue,
                                            context=dataserver, notify=notify,
-                                           pre_hook=pre_hook,
-                                           object_hook=object_hook)
+                                           pre_hook=pre_hook)
     except Exception as e:
         handle_possible_validation_error(request, e)
