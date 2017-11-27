@@ -133,7 +133,7 @@ class OldPasswordDoesNotMatchCurrentPassword(InvalidPassword):
 
 
 class PasswordCannotConsistOfOnlyWhitespace(NoPassword):
-    i18n_message = _(u"Your pasword cannot contain only whitespace. Please try again.")
+    i18n_message = _( u"Your pasword cannot contain only whitespace. Please try again.")
 
 
 class InsecurePasswordIsForbidden(InvalidPassword):
@@ -145,6 +145,7 @@ class InsecurePasswordIsForbidden(InvalidPassword):
         super(InsecurePasswordIsForbidden, self).__init__()
         if value:
             self.value = value
+
 resource_stream = getattr(pkg_resources, 'resource_stream')
 
 
@@ -254,11 +255,13 @@ class IWillCreateNewEntityEvent(IObjectEvent):
 
     This is a good time to perform final validation of the entity.
     """
-    ext_value = Attribute(u"If the entity was created with external data, this will be it.")
+    ext_value = Attribute(
+        u"If the entity was created with external data, this will be it.")
 
     meta_data = Attribute(u"A dictionary with creation meta data")
 
-    preflight_only = Attribute(u"A boolean, set to true if this is a preflight-only event.")
+    preflight_only = Attribute(
+        u"A boolean, set to true if this is a preflight-only event.")
 
 
 @interface.implementer(IWillCreateNewEntityEvent)
@@ -321,7 +324,8 @@ class IOpenIDUserCreatedEvent(IObjectEvent):
     """
     idurl = Attribute(u"The URL identifying the user on the external system")
 
-    content_roles = Attribute(u"An iterable of strings naming provider-local content roles")
+    content_roles = Attribute(
+        u"An iterable of strings naming provider-local content roles")
 
 
 @interface.implementer(IOpenIDUserCreatedEvent)
@@ -363,16 +367,18 @@ class IAvatarURL(Interface):
     avatarURL = URI(title=u"URL of your avatar picture",
                     description=u"If not provided, one will be generated for you.",
                     required=False)
+
 # Relax this constraint for the sake of BWC
 IAvatarURL['avatarURL']._type = (str, six.text_type)
 
 
 class IBackgroundURL(Interface):
 
-    backgroundURL = URI(  # may be data:
-        title=u"URL of your background picture",
-        description=u"If not provided, one will be generated for you.",
-        required=False)
+    backgroundURL = URI(title=u"URL of your background picture",
+                        description=u"If not provided, one will be generated for you.",
+                        required=False)
+
+
 # Relax this constraint for the sake of BWC
 IBackgroundURL['backgroundURL']._type = (str, six.text_type)
 
@@ -388,7 +394,6 @@ class IAvatarChoices(Interface):
     or the IUser object. It may named for the site.
     """
 
-    # TODO: This is quite similar to a vocabulary
     def get_choices():
         """
         Returns a sequence of string choices.
@@ -423,9 +428,9 @@ class IImmutableFriendlyNamed(Interface):
 
     alias = TextLine(title=u'Display alias',
                      description=u"Enter preferred display name alias, e.g., johnnyboy."
-                        u"Your site may impose limitations on this value.",
-                       required=False,
-                    readonly=True)
+                     u"Your site may impose limitations on this value.",
+                     required=False,
+                     readonly=True)
 
     realname = TextLine(title=u'Full Name aka realname',
                         description=u"Enter full name, e.g. John Smith.",
@@ -440,6 +445,8 @@ class IRequireProfileUpdate(Interface):
     update. This will trigger profile validation (which usually doesn't happen)
     and allow bypassing certain parts of :class:`IImmutableFriendlyNamed.`
     """
+
+
 IFriendlyNamed['realname'].setTaggedValue(TAG_REQUIRED_IN_UI, True)
 
 
@@ -447,14 +454,16 @@ class IEntityProfile(IFriendlyNamed, IProfileAvatarURL):
     """
     Base class that user/entity profiles should extend.
     """
+
+
 IUserProfile = IEntityProfile  # alias for BWC
 
 
-class IAddress(interface.Interface):
+class IAddress(Interface):
 
     full_name = ValidTextLine(title=u"First name", required=True)
 
-    street_address_1 = ValidTextLine(title=u"Street line 1", 
+    street_address_1 = ValidTextLine(title=u"Street line 1",
                                      max_length=75, required=True)
 
     street_address_2 = ValidTextLine(title=u"Street line 2",
@@ -471,6 +480,23 @@ class IAddress(interface.Interface):
     country = ValidTextLine(title=u"Nation name", required=True)
 
 
+class IUserContactProfile(Interface):
+
+    mailing_address = Object(IAddress, title=u"Mailing address",
+                             required=False)
+
+    billing_address = Object(IAddress, title=u"Billing address",
+                             required=False)
+
+    home_phone = ValidTextLine(title=u"Home phone", required=False)
+
+    work_phone = ValidTextLine(title=u"Home phone", required=False)
+
+    mobile_phone = ValidTextLine(title=u"Mobile phone", required=False)
+
+    evening_phone = ValidTextLine(title=u"Evening phone", required=False)
+
+
 from nti.schema.jsonschema import UI_TYPE_EMAIL
 from nti.schema.jsonschema import UI_TYPE_HASHED_EMAIL
 
@@ -481,9 +507,9 @@ class IRestrictedUserProfile(IUserProfile):
     """
 
     birthdate = Date(title=u'birthdate',
-        			 description=u'Your date of birth. '
-        	   		 u'If one is not provided, you will be assumed to be underage.',
-        	      	 required=False)
+                     description=u'Your date of birth. '
+                     u'If one is not provided, you will be assumed to be underage.',
+                     required=False)
 
     password_recovery_email_hash = ValidTextLine(
         title=u"A secure hash of an email address used during password recovery",
@@ -494,16 +520,16 @@ class IRestrictedUserProfile(IUserProfile):
     password_recovery_email_hash.setTaggedValue(TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL)
 
     email = ValidTextLine(title=u'Email',
-        				  description=u'Email is not stored at this level, but the field is '
-        				  u'specified here as a convenient way'
-        	     		  u' to be able to set the password_recovery_email_hash',
-        			 	  required=False,
-        	      		  constraint=checkEmailAddress)
+                          description=u'Email is not stored at this level, but the field is '
+                          u'specified here as a convenient way'
+                          u' to be able to set the password_recovery_email_hash',
+                          required=False,
+                          constraint=checkEmailAddress)
     email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL)
 
     email_verified = Bool(title=u"Has the email been verified?",
-        				  required=False,
-        	     		  default=False)
+                          required=False,
+                          default=False)
     email_verified.setTaggedValue(TAG_HIDDEN_IN_UI, True)
     email_verified.setTaggedValue(TAG_READONLY_IN_UI, True)
 
@@ -515,10 +541,10 @@ class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
     """
 
     contact_email = ValidTextLine(title=u'Contact email',
-        						  description=u"An email address to use to contact someone "
-        						  u"responsible for this accounts' user",
-        			     		  required=False,
-       					  	      constraint=checkEmailAddress)
+                                  description=u"An email address to use to contact someone "
+                                  u"responsible for this accounts' user",
+                                  required=False,
+                                  constraint=checkEmailAddress)
     contact_email.setTaggedValue(TAG_REQUIRED_IN_UI, True)
     contact_email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_EMAIL)
 
@@ -529,9 +555,11 @@ class IContactEmailRecovery(Interface):
     COPPA users, since we cannot actually retain the contact email.
     Should be registered as an adapter on the user.
     """
-    contact_email_recovery_hash = Attribute(u"A string giving the hash of the contact email.")
+    contact_email_recovery_hash = Attribute(
+        u"A string giving the hash of the contact email.")
 
-    consent_email_last_sent = Attribute(u"A float giving the time the last consent email was sent.")
+    consent_email_last_sent = Attribute(
+        u"A float giving the time the last consent email was sent.")
 
 
 class ISocialMediaProfile(Interface):
@@ -668,53 +696,54 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                            IEducationProfile,
                            IProfessionalProfile,
                            IInterestProfile,
-                           IAboutProfile):
+                           IAboutProfile,
+                           IUserContactProfile):
     """
     A complete user profile.
     """
 
     email = ValidTextLine(title=u'Email',
-        				  description=u'An email address that can be used for communication.',
-        	     		  required=False,
-        			 	  constraint=checkEmailAddress)
+                          description=u'An email address that can be used for communication.',
+                          required=False,
+                          constraint=checkEmailAddress)
     email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_EMAIL)
 
     opt_in_email_communication = Bool(title=u"Can we contact you by email?",
-        							  required=False,
-        				     		  default=False)
+                                      required=False,
+                                      default=False)
 
     home_page = HTTPURL(title=u'Home page',
-        				description=u"The URL for your external home page, "
-        	   			u"if you have one.",
-        	      		required=False)
+                        description=u"The URL for your external home page, "
+                        u"if you have one.",
+                        required=False)
 
     description = ValidText(title=u'Biography',
-       						description=u"A short overview of who you are and what you "
-        	    			u"do. Will be displayed on your author page, linked "
-        			     	u"from the items you create.",
-        				    max_length=140,  # twitter
-        			     	required=False,
-        				    constraint=checkCannotBeBlank)
+                            description=u"A short overview of who you are and what you "
+                            u"do. Will be displayed on your author page, linked "
+                                        u"from the items you create.",
+                            max_length=140,  # twitter
+                                        required=False,
+                            constraint=checkCannotBeBlank)
 
     location = ValidTextLine(title=u'Location',
-        					 description=u"Your location - either city and "
-        	    			 u"country - or in a company setting, where "
-        				     u"your office is located.",
-        				     required=False,
-        				     constraint=checkCannotBeBlank)
+                             description=u"Your location - either city and "
+                             u"country - or in a company setting, where "
+                             u"your office is located.",
+                             required=False,
+                             constraint=checkCannotBeBlank)
 
     # TODO: This probably comes from a vocabulary, at least for some users
     affiliation = ValidTextLine(title=u'Affiliation',
-        						description=u"Your affiliation, such as school name",
-        	     				max_length=140,
-        			 	     	required=False,
-        						constraint=checkCannotBeBlank)
+                                description=u"Your affiliation, such as school name",
+                                max_length=140,
+                                required=False,
+                                constraint=checkCannotBeBlank)
 
     role = ValidTextLine(title=u'Role',
-        				 description=u"Your role within your affiliation",
-        	    		 max_length=140,
-        			     required=False,
-        			     constraint=checkCannotBeBlank)
+                         description=u"Your role within your affiliation",
+                         max_length=140,
+                         required=False,
+                         constraint=checkCannotBeBlank)
 
 
 class IEmailRequiredUserProfile(ICompleteUserProfile):
@@ -726,9 +755,9 @@ class IEmailRequiredUserProfile(ICompleteUserProfile):
     """
 
     email = ValidTextLine(title=u'Email',
-       					  description=u'',
-        	     		  required=True,  # TODO: This should move up when ready
-        			 	  constraint=checkEmailAddress)
+                          description=u'',
+                          required=True,  # TODO: This should move up when ready
+                          constraint=checkEmailAddress)
     email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_EMAIL)
 
 

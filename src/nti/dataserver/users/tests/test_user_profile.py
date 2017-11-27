@@ -20,8 +20,6 @@ from hamcrest import has_property
 from hamcrest import contains_string
 does_not = is_not
 
-from nose.tools import assert_raises
-
 from nti.testing.matchers import is_false
 from nti.testing.matchers import verifiably_provides
 
@@ -30,6 +28,10 @@ import unittest
 from zope import interface
 
 from zope.security.interfaces import IPrincipal
+
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
+from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users import interfaces
 
@@ -44,15 +46,11 @@ from nti.externalization import internalization
 
 from nti.externalization.externalization import to_external_object
 
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-
-from nti.dataserver.tests import mock_dataserver
-
 
 class TestUserProfile(DataserverLayerTest):
 
     def test_email_address_invalid_domain(self):
-        with assert_raises(interfaces.EmailAddressInvalid):
+        with self.assertRaises(interfaces.EmailAddressInvalid):
             interfaces._checkEmailAddress('poop@poop.poop')  # real-world example
 
         interfaces._checkEmailAddress('poop@poop.poop.com')
@@ -73,6 +71,9 @@ class TestUserProfile(DataserverLayerTest):
 
         assert_that(prof,
                     verifiably_provides(interfaces.ISocialMediaProfile))
+
+        assert_that(prof,
+                    verifiably_provides(interfaces.IUserContactProfile))
 
         assert_that(prof,
                     has_property('twitter', is_(none())))
@@ -101,7 +102,7 @@ class TestUserProfile(DataserverLayerTest):
         # We can get to the principal representing the user
         assert_that(IPrincipal(prof), has_property('id', user.username))
 
-        with assert_raises(interfaces.EmailAddressInvalid):
+        with self.assertRaises(interfaces.EmailAddressInvalid):
             prof.email = u"foo"
 
         prof.email = u'foo@bar.com'
@@ -128,9 +129,9 @@ class TestUserProfile(DataserverLayerTest):
         prof = interfaces.ICompleteUserProfile(user)
 
         for field in ('affiliation', 'role', 'location', 'description'):
-            with assert_raises(interfaces.FieldCannotBeOnlyWhitespace):
+            with self.assertRaises(interfaces.FieldCannotBeOnlyWhitespace):
                 setattr(prof, field, u'   ')  # spaces
-            with assert_raises(interfaces.FieldCannotBeOnlyWhitespace):
+            with self.assertRaises(interfaces.FieldCannotBeOnlyWhitespace):
                 setattr(prof, field, u'\t')  # tab
 
             setattr(prof, field, u'  \t bc')
@@ -154,7 +155,9 @@ class TestUserProfile(DataserverLayerTest):
     def test_updating_avatar_url_from_external(self):
         user = User(username=u"foo@bar")
 
-        user.updateFromExternalObject({'avatarURL': u'http://localhost/avatarurl'})
+        user.updateFromExternalObject({
+            'avatarURL': u'http://localhost/avatarurl'
+        })
 
         prof = interfaces.ICompleteUserProfile(user)
         assert_that(prof,

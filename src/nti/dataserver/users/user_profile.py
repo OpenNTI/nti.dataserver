@@ -43,6 +43,7 @@ from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.interfaces import IEducationProfile
 from nti.dataserver.users.interfaces import IEmailAddressable
 from nti.dataserver.users.interfaces import ISocialMediaProfile
+from nti.dataserver.users.interfaces import IUserContactProfile
 from nti.dataserver.users.interfaces import ICompleteUserProfile
 from nti.dataserver.users.interfaces import IProfessionalProfile
 from nti.dataserver.users.interfaces import IProfessionalPosition
@@ -88,8 +89,8 @@ class _ExistingDictReadFieldPropertyStoredThroughField(FP):
             del inst.context.__dict__[self._existing_name]
         except KeyError:
             pass
-        super(_ExistingDictReadFieldPropertyStoredThroughField,
-              self).setValue(inst, field, value)
+        super(_ExistingDictReadFieldPropertyStoredThroughField, self).setValue(inst, field, value)
+
         # We're not implementing the queryValue method, which is used
         # somehow when the field is readonly and...something
         # We don't use this for readonly fields, so we don't care
@@ -122,7 +123,7 @@ def get_searchable_realname_parts(realname):
             # no components, as can happen on the mathcounts site or in tests)
             splits = realname.lower().split()
             prefixes = np_all_prefixes().symmetric_difference(splits)
-            constants = np_constants(prefixes=prefixes, 
+            constants = np_constants(prefixes=prefixes,
                                      extra_suffixes=('cfa',))
             name = nameparser.HumanName(realname, constants=constants)
         # because we are cached, be sure to return an immutable value
@@ -329,6 +330,19 @@ class EmailRequiredUserProfile(CompleteUserProfile):
     """
     An adapter for requiring the email.
     """
+
+
+@WithRepr
+@interface.implementer(IUserContactProfile)
+class IUserContactProfile(SchemaConfigured, Persistent):
+    createDirectFieldProperties(IUserContactProfile)
+
+    mailing_address = FP(IUserContactProfile['mailing_address'])
+    billing_address = FP(IUserContactProfile['billing_address'])
+    home_phone = FP(IUserContactProfile['home_phone'])
+    work_phone = FP(IUserContactProfile['work_phone'])
+    mobile_phone = FP(IUserContactProfile['mobile_phone'])
+    evening_phone = FP(IUserContactProfile['evening_phone'])
 
 
 def add_profile_fields(iface, clazz, field_map=None):
