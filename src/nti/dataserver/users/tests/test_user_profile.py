@@ -16,6 +16,7 @@ from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_string
 does_not = is_not
@@ -39,6 +40,7 @@ from nti.dataserver.users.communities import Everyone
 
 from nti.dataserver.users.users import User
 
+from nti.dataserver.users.user_profile import Address
 from nti.dataserver.users.user_profile import Education
 from nti.dataserver.users.user_profile import ProfessionalPosition
 
@@ -248,6 +250,27 @@ class TestUserProfile(DataserverLayerTest):
         assert_that(ext_prof, has_entry('MimeType',
                                         ProfessionalPosition.mime_type))
 
+        # add contact info
+        mailing_address = Address()
+        mailing_address.city = u'Karakura Town'
+        mailing_address.country = u'Japan'
+        mailing_address.state = u'Chiyoda'
+        mailing_address.full_name = u'Kurosaki Ichigo'
+        mailing_address.street_address_1 = u'Kurosaki Clinic'
+        mailing_address.street_address_2 = u'クロサキ医院'
+        mailing_address.postal_code = u'100-0001'
+
+        prof.mailing_address = mailing_address
+        user_prof = to_external_object(user, name=('personal-summary'))
+        
+        assert_that(user_prof, 
+                    has_entry('mailing_address', has_entries('MimeType', 'application/vnd.nextthought.users.address',
+                                                             'city', 'Karakura Town',
+                                                             'country', 'Japan',
+                                                             'state', 'Chiyoda',
+                                                             'postal_code', '100-0001',
+                                                             'full_name', 'Kurosaki Ichigo',
+                                                             'street_address_1', 'Kurosaki Clinic',)))
         factory = internalization.find_factory_for(ext_prof)
         assert_that(factory, is_(not_none()))
 
@@ -281,6 +304,18 @@ class TestUserProfile(DataserverLayerTest):
         assert_that(new_io, has_property('degree', is_(degree)))
         assert_that(new_io, has_property('description', is_(description)))
         assert_that(new_io, is_(Education))
+        
+        # mailing address
+        ext_prof = user_prof.get('mailing_address')
+        factory = internalization.find_factory_for(ext_prof)
+        assert_that(factory, is_(not_none()))
+        
+        new_io = factory()
+        internalization.update_from_external_object(new_io, ext_prof)
+        assert_that(new_io, has_property('city', 'Karakura Town'))
+        assert_that(new_io, has_property('country', is_('Japan')))
+        assert_that(new_io, has_property('street_address_2', is_(u'クロサキ医院')))
+        assert_that(new_io, is_(Address))
 
 
 from nti.dataserver.users.user_profile import FriendlyNamed

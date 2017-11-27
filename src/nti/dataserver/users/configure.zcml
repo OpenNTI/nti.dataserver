@@ -63,8 +63,10 @@
 			 name="exporter" />
 
 	<ext:registerAutoPackageIO
-		root_interfaces=".interfaces.ISuggestedContact
+		root_interfaces=".interfaces.IAddress
 						 .interfaces.IEducation
+						 .interfaces.ISuggestedContact
+						 .interfaces.IUserContactProfile
 						 .interfaces.IProfessionalPosition"
 		modules=".suggested_contacts .user_profile" />
 

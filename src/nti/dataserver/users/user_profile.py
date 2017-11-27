@@ -34,7 +34,8 @@ from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IPrincipal
 
-from nti.dataserver.users.interfaces import IEducation
+from nti.dataserver.users.interfaces import IAddress
+from nti.dataserver.users.interfaces import IEducation 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IAboutProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -314,6 +315,33 @@ class AboutProfile(SchemaConfigured, Persistent):
     about = FP(IAboutProfile['about'])
 
 
+@WithRepr
+@interface.implementer(IAddress)
+class Address(SchemaConfigured, Persistent):
+    createDirectFieldProperties(IAddress)
+
+    full_name = FP(IAddress['full_name'])
+    street_address_1 = FP(IAddress['street_address_1'])
+    street_address_2 = FP(IAddress['street_address_2'])
+    city = FP(IAddress['city'])
+    state = FP(IAddress['state'])
+    postal_code = FP(IAddress['postal_code'])
+    country = FP(IAddress['country'])
+
+
+@WithRepr
+@interface.implementer(IUserContactProfile)
+class UserContactProfile(SchemaConfigured, Persistent):
+    createDirectFieldProperties(IUserContactProfile)
+
+    mailing_address = FP(IUserContactProfile['mailing_address'])
+    billing_address = FP(IUserContactProfile['billing_address'])
+    home_phone = FP(IUserContactProfile['home_phone'])
+    work_phone = FP(IUserContactProfile['work_phone'])
+    mobile_phone = FP(IUserContactProfile['mobile_phone'])
+    evening_phone = FP(IUserContactProfile['evening_phone'])
+
+
 @component.adapter(IUser)
 @interface.implementer(ICompleteUserProfile)
 class CompleteUserProfile(RestrictedUserProfile,  # order matters
@@ -321,6 +349,7 @@ class CompleteUserProfile(RestrictedUserProfile,  # order matters
                           InterestProfile,
                           EducationProfile,
                           AboutProfile,
+                          UserContactProfile,
                           ProfessionalProfile):
     pass
 
@@ -330,19 +359,6 @@ class EmailRequiredUserProfile(CompleteUserProfile):
     """
     An adapter for requiring the email.
     """
-
-
-@WithRepr
-@interface.implementer(IUserContactProfile)
-class IUserContactProfile(SchemaConfigured, Persistent):
-    createDirectFieldProperties(IUserContactProfile)
-
-    mailing_address = FP(IUserContactProfile['mailing_address'])
-    billing_address = FP(IUserContactProfile['billing_address'])
-    home_phone = FP(IUserContactProfile['home_phone'])
-    work_phone = FP(IUserContactProfile['work_phone'])
-    mobile_phone = FP(IUserContactProfile['mobile_phone'])
-    evening_phone = FP(IUserContactProfile['evening_phone'])
 
 
 def add_profile_fields(iface, clazz, field_map=None):

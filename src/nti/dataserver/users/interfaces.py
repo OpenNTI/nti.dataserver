@@ -454,8 +454,6 @@ class IEntityProfile(IFriendlyNamed, IProfileAvatarURL):
     """
     Base class that user/entity profiles should extend.
     """
-
-
 IUserProfile = IEntityProfile  # alias for BWC
 
 
