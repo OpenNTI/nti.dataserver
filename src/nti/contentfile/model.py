@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 from io import BytesIO
 
+from plone.namedfile.utils import getImageInfo
+
 from zope import interface
 
 from zope.cachedescriptors.property import readproperty
@@ -49,8 +51,6 @@ from nti.namedfile.file import NamedBlobFile
 from nti.namedfile.file import NamedBlobImage
 
 from nti.namedfile.interfaces import IInternalFileRef
-
-from nti.namedfile.utils import getImageInfo
 
 from nti.property.property import alias
 
