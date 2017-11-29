@@ -10,6 +10,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from nti.monkey import patch_relstorage_all_except_gevent_on_import
+patch_relstorage_all_except_gevent_on_import.patch()
+
 import os
 import sys
 import pprint

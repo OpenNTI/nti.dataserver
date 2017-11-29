@@ -12,7 +12,7 @@ import os
 import sys
 import argparse
 from mimetypes import guess_type
-from six.moves.urllib_parse import urlparse
+from six.moves import urllib_parse
 
 from nti.dataserver.interfaces import IEntity
 
@@ -64,7 +64,6 @@ def _set_avatar(username, url=None, image=None, background=False):
                           charset=b"utf-8",
                           mime_type=mime_type)
             setattr(profile, field, data)
-    return profile
 
 
 def set_entity_avatar(args=None):
@@ -103,7 +102,7 @@ def set_entity_avatar(args=None):
 
     url = args.url
     if url:
-        parsed = urlparse(url)
+        parsed = urllib_parse.urlparse(url)
         if not parsed.scheme or not parsed.netloc or not parsed.path:
             raise ValueError("Invalid image URL")
 
