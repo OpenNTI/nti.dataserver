@@ -188,7 +188,6 @@ def create_user(args=None):
     package = 'nti.appserver'
     if not args.site:
         package = 'nti.dataserver'
-        print("==> Creating a user without a site")
 
     run_with_dataserver(environment_dir=env_dir,
                         xmlconfig_packages=(package,),
