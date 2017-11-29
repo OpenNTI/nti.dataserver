@@ -7,7 +7,6 @@ entry_points = {
         "nti_shards = nti.dataserver.utils.nti_shards:main",
         "nti_init_env = nti.dataserver.utils.nti_init_env:main",
         "nti_interactive = nti.dataserver.utils.nti_interactive:main",
-        "nti_cache_avatars = nti.dataserver.utils.nti_cache_avatars:main",
         "nti_create_user = nti.dataserver.utils.nti_create_user:main",
         "nti_update_user = nti.dataserver.utils.nti_update_user:main",
         "nti_set_user_avatar = nti.dataserver.utils.nti_set_user_avatar:main",
