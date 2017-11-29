@@ -141,6 +141,7 @@ setup(
         'nti.futures',
         'nti.geventwebsocket',
         'nti.i18n',
+        'nti.intid',
         'nti.links',
         'nti.mimetype',
         'nti.monkey',
