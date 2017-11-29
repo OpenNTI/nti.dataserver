@@ -33,8 +33,6 @@ from zope.schema import Int
 
 from Acquisition.interfaces import IAcquirer
 
-from nti.contenttypes.reports.interfaces import IReportContext
-
 from nti.dataserver.interfaces import ACE_ACT_DENY
 from nti.dataserver.interfaces import ACE_ACT_ALLOW
 
@@ -285,7 +283,7 @@ class IHeadlineTopic(ITopic):
     A special kind of topic that starts off with a distinguished post to discuss. Blogs will
     be implemented with this.
     """
-    headline = Object(IHeadlinePost, 
+    headline = Object(IHeadlinePost,
 					  title=u"The main, first post of this topic.")
 
 
@@ -437,7 +435,7 @@ class ICommunityBoard(IDefaultForumBoard, IShouldHaveTraversablePath):
     __setitem__.__doc__ = None
 
 
-class ICommunityForum(IGeneralForum, IShouldHaveTraversablePath, IReportContext):
+class ICommunityForum(IGeneralForum, IShouldHaveTraversablePath):
     """
     A forum belonging to a particular community.
     """
@@ -489,8 +487,7 @@ class ICommunityHeadlinePost(IGeneralHeadlinePost):
 
 
 class ICommunityHeadlineTopic(IGeneralHeadlineTopic,
-                              IPublishableTopic,
-                              IReportContext):
+                              IPublishableTopic):
     containers(ICommunityForum)
     __parent__.required = False
     headline = Object(ICommunityHeadlinePost,
