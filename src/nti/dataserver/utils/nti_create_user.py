@@ -38,15 +38,15 @@ from nti.dataserver.utils.base_script import set_site
 
 from nti.externalization.externalization import to_external_object
 
-_type_map = {'user': User.create_user,
-             'community': Community.create_community}
+_type_map = {
+    'user': User.create_user,
+    'community': Community.create_community
+}
 
 logger = __import__('logging').getLogger(__name__)
 
 
 def _create_user(factory, username, password, realname, communities=(), options=None):
-    __traceback_info__ = locals().items()
-
     if options.shard:
         # Provide the unnamed, default utility to do this
         class FixedShardPlacer(AbstractShardPlacer):
@@ -181,6 +181,9 @@ def create_user(args=None):
 
     username = args.username
     password = args.password
+    
+    if args.type == 'user' and not username.lower().endswith('@nextthought.com'):
+        assert args.site, "must provide a creation site"
 
     package = 'nti.appserver'
     if not args.site:
