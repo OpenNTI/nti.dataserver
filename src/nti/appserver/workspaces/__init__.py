@@ -56,6 +56,7 @@ from nti.appserver.workspaces.interfaces import IWorkspace
 from nti.appserver.workspaces.interfaces import ICollection
 from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import IUserWorkspace
+from nti.appserver.workspaces.interfaces import IGlobalCollection
 from nti.appserver.workspaces.interfaces import IWorkspaceValidator
 from nti.appserver.workspaces.interfaces import IContainerCollection
 from nti.appserver.workspaces.interfaces import IUserWorkspaceLinkProvider
@@ -561,9 +562,13 @@ class GlobalWorkspace(object):
 
     @property
     def collections(self):
-        return [GlobalCollection(self.__parent__, 'Objects'),
-                GlobalCollection(self.__parent__, 'NTIIDs'),
-                GlobalCollection(self.__parent__, 'LibraryPath')]
+        result = [GlobalCollection(self.__parent__, 'Objects'),
+                  GlobalCollection(self.__parent__, 'NTIIDs'),
+                  GlobalCollection(self.__parent__, 'LibraryPath')]
+        for global_collection in component.subscribers((self,),
+                                                        IGlobalCollection):
+            result.append(global_collection)
+        return result
 
 
 @interface.implementer(ICollection)

@@ -147,6 +147,12 @@ class IUserWorkspaceLinkProvider(interface.Interface):
         """
 
 
+class IGlobalCollection(ICollection):
+    """
+    A collection contained within the Global :class:``IWorkspace``.
+    """
+
+
 class IGlobalWorkspaceLinkProvider(interface.Interface):
 
     def links(workspace):
