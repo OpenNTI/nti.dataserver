@@ -6,12 +6,15 @@ Interface definitions relating to capabilities.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope.security.interfaces import IPermission
+
+from nti.appserver import MessageFactory as _
+
+from nti.schema.field import DecodingValidTextLine
 
 # A :class:`zope.schema.interfaces.IVocabularyTokenized` vocabulary
 # will be available as a registered vocabulary under this name
@@ -28,3 +31,9 @@ class ICapability(IPermission):
     Capabilities and permissions share the same namespace, so be careful
     to avoid collisions.
     """
+
+    id = DecodingValidTextLine(
+        title=_(u"Id"),
+        description=_(u"Id as which this permission will be known and used."),
+        readonly=True,
+        required=True)

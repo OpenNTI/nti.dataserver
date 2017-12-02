@@ -6,12 +6,11 @@ Integration between pyramid and capabilities.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
-# TODO: There are two main ways to integrate this into pyramid's view
+# There are two main ways to integrate this into pyramid's view
 # security. It could either be a 'custom predicate' or an extension
 # to the authorization policy.
 

@@ -6,10 +6,9 @@ Zope vocabularies relating to capabilities.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
@@ -20,8 +19,7 @@ from zope.schema.interfaces import IVocabularyFactory
 
 from nti.appserver.capabilities.interfaces import ICapability
 
-# Make pylint not complain about "badly implemented container"
-# pylint: disable=R0924
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.provider(IVocabularyFactory)
