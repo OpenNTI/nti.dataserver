@@ -493,7 +493,7 @@ class IUserContactProfile(Interface):
 
     evening_phone = ValidTextLine(title=u"Evening phone", required=False)
 
-    other_phone = ValidTextLine(title=u"Other phone", required=False)
+    emergency_phone = ValidTextLine(title=u"Emergency phone", required=False)
 
 
 from nti.schema.jsonschema import UI_TYPE_EMAIL
