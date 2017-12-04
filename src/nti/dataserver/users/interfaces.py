@@ -13,6 +13,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+# pylint: disable=inherit-non-class,no-self-argument,protected-access
+
 import re
 import six
 import codecs
@@ -79,8 +81,7 @@ class UsernameContainsIllegalChar(InvalidData):
 
     def __init__(self, username, allowed_chars):
         self.username = username
-        allowed_chars = set(allowed_chars) - \
-            set(string.letters + string.digits)
+        allowed_chars = set(allowed_chars) - set(string.letters + string.digits)
         allowed_chars = u''.join(sorted(allowed_chars))
         self.allowed_chars = allowed_chars
         if not allowed_chars:
@@ -124,16 +125,18 @@ class RealnameInvalid(InvalidData):
 
 class BlankHumanNameError(RealnameInvalid):
 
-    def __init__(self, name=u''):
+    def __init__(self, name=u''):  # pylint: disable=useless-super-delegation
         super(BlankHumanNameError, self).__init__(name)
 
 
 class OldPasswordDoesNotMatchCurrentPassword(InvalidPassword):
-    i18n_message = _(u"The password you supplied does not match the current password.")
+    i18n_message = _(
+        u"The password you supplied does not match the current password.")
 
 
 class PasswordCannotConsistOfOnlyWhitespace(NoPassword):
-    i18n_message = _( u"Your pasword cannot contain only whitespace. Please try again.")
+    i18n_message = _(
+        u"Your pasword cannot contain only whitespace. Please try again.")
 
 
 class InsecurePasswordIsForbidden(InvalidPassword):
@@ -145,7 +148,6 @@ class InsecurePasswordIsForbidden(InvalidPassword):
         super(InsecurePasswordIsForbidden, self).__init__()
         if value:
             self.value = value
-
 resource_stream = getattr(pkg_resources, 'resource_stream')
 
 
@@ -298,9 +300,7 @@ class IWillDeleteEntityEvent(IObjectEvent):
 
 @interface.implementer(IWillDeleteEntityEvent)
 class WillDeleteEntityEvent(ObjectEvent):
-
-    def __init__(self, obj):
-        super(WillDeleteEntityEvent, self).__init__(obj)
+    pass
 
 
 class IGoogleUserCreatedEvent(IObjectEvent):
@@ -367,7 +367,6 @@ class IAvatarURL(Interface):
     avatarURL = URI(title=u"URL of your avatar picture",
                     description=u"If not provided, one will be generated for you.",
                     required=False)
-
 # Relax this constraint for the sake of BWC
 IAvatarURL['avatarURL']._type = (str, six.text_type)
 
@@ -493,6 +492,8 @@ class IUserContactProfile(Interface):
     mobile_phone = ValidTextLine(title=u"Mobile phone", required=False)
 
     evening_phone = ValidTextLine(title=u"Evening phone", required=False)
+
+    other_phone = ValidTextLine(title=u"Other phone", required=False)
 
 
 from nti.schema.jsonschema import UI_TYPE_EMAIL
@@ -730,7 +731,6 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                              required=False,
                              constraint=checkCannotBeBlank)
 
-    # TODO: This probably comes from a vocabulary, at least for some users
     affiliation = ValidTextLine(title=u'Affiliation',
                                 description=u"Your affiliation, such as school name",
                                 max_length=140,
@@ -754,7 +754,7 @@ class IEmailRequiredUserProfile(ICompleteUserProfile):
 
     email = ValidTextLine(title=u'Email',
                           description=u'',
-                          required=True,  # TODO: This should move up when ready
+                          required=True,
                           constraint=checkEmailAddress)
     email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_EMAIL)
 
@@ -794,6 +794,8 @@ class ICommunitySchema(IFriendlyNamed, IAboutProfile):
 
 class ICommunityProfile(IUserProfile, ICommunitySchema):
     pass
+
+
 ICommunityProfile['avatarURL']._type = (str, six.text_type)  # relax
 ICommunityProfile['backgroundURL']._type = (str, six.text_type)  # relax
 
