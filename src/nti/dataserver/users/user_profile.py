@@ -102,7 +102,7 @@ _EDRFP = _ExistingDictReadFieldPropertyStoredThroughField
 # fieldproperty classes, and are added to the classes themselves
 # dynamically in _init
 
-# TODO: Isn't this extremely similar to dm.zope.schema? Did we forget
+# Isn't this extremely similar to dm.zope.schema? Did we forget
 # about that?
 
 
@@ -233,7 +233,7 @@ class RestrictedUserProfile(UserProfile):
 class RestrictedUserProfileWithContactEmail(RestrictedUserProfile):
     pass
 
-# XXX: We actually will want to register this in the same
+# We actually will want to register this in the same
 # cases we register the profile itself, for the same kinds of users
 
 
@@ -253,10 +253,6 @@ class Education(SchemaConfigured, Persistent):
     __external_class_name__ = "EducationalExperience"
     mime_type = mimeType = 'application/vnd.nextthought.profile.educationalexperience'
 
-    def __init__(self, *args, **kwargs):
-        Persistent.__init__(self)
-        SchemaConfigured.__init__(self, *args, **kwargs)
-
 
 @WithRepr
 @interface.implementer(IProfessionalPosition)
@@ -265,10 +261,6 @@ class ProfessionalPosition(SchemaConfigured, Persistent):
 
     __external_class_name__ = "ProfessionalPosition"
     mime_type = mimeType = 'application/vnd.nextthought.profile.professionalposition'
-
-    def __init__(self, *args, **kwargs):
-        Persistent.__init__(self)
-        SchemaConfigured.__init__(self, *args, **kwargs)
 
 
 @WithRepr
@@ -334,12 +326,25 @@ class Address(SchemaConfigured, Persistent):
 class UserContactProfile(SchemaConfigured, Persistent):
     createDirectFieldProperties(IUserContactProfile)
 
-    mailing_address = FP(IUserContactProfile['mailing_address'])
-    billing_address = FP(IUserContactProfile['billing_address'])
-    home_phone = FP(IUserContactProfile['home_phone'])
-    work_phone = FP(IUserContactProfile['work_phone'])
-    mobile_phone = FP(IUserContactProfile['mobile_phone'])
-    evening_phone = FP(IUserContactProfile['evening_phone'])
+    @property
+    def mailing_address(self):
+        return self.addresses.get('mailing_address') \
+            or self.addresses.get('mailing')
+    
+    @property
+    def billing_address(self):
+        return self.addresses.get('billing_address') \
+            or self.addresses.get('billing')
+    
+    @property
+    def home_phone(self):
+        return self.phones.get('home_phone') or self.phones.get('home')
+
+
+    @property
+    def work_phone(self):
+        return self.phones.get('work_phone') or self.phones.get('work')
+
 
 
 @component.adapter(IUser)

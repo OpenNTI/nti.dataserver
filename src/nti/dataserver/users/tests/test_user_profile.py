@@ -260,17 +260,19 @@ class TestUserProfile(DataserverLayerTest):
         mailing_address.street_address_2 = u'クロサキ医院'
         mailing_address.postal_code = u'100-0001'
 
-        prof.mailing_address = mailing_address
+        prof.addresses = {'mailing': mailing_address}
         user_prof = to_external_object(user, name=('personal-summary'))
-        
-        assert_that(user_prof, 
-                    has_entry('mailing_address', has_entries('MimeType', 'application/vnd.nextthought.users.address',
-                                                             'city', 'Karakura Town',
-                                                             'country', 'Japan',
-                                                             'state', 'Chiyoda',
-                                                             'postal_code', '100-0001',
-                                                             'full_name', 'Kurosaki Ichigo',
-                                                             'street_address_1', 'Kurosaki Clinic',)))
+
+        assert_that(user_prof,
+                    has_entry('addresses',
+                              has_entry('mailing', has_entries('MimeType', 'application/vnd.nextthought.users.address',
+                                                               'city', 'Karakura Town',
+                                                               'country', 'Japan',
+                                                               'state', 'Chiyoda',
+                                                               'postal_code', '100-0001',
+                                                               'full_name', 'Kurosaki Ichigo',
+                                                               'street_address_1', 'Kurosaki Clinic',))))
+
         factory = internalization.find_factory_for(ext_prof)
         assert_that(factory, is_(not_none()))
 
@@ -304,12 +306,12 @@ class TestUserProfile(DataserverLayerTest):
         assert_that(new_io, has_property('degree', is_(degree)))
         assert_that(new_io, has_property('description', is_(description)))
         assert_that(new_io, is_(Education))
-        
+
         # mailing address
-        ext_prof = user_prof.get('mailing_address')
+        ext_prof = user_prof['addresses']['mailing']
         factory = internalization.find_factory_for(ext_prof)
         assert_that(factory, is_(not_none()))
-        
+
         new_io = factory()
         internalization.update_from_external_object(new_io, ext_prof)
         assert_that(new_io, has_property('city', 'Karakura Town'))

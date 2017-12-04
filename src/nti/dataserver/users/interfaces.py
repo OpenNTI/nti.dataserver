@@ -52,6 +52,7 @@ from nti.mailer.interfaces import IEmailAddressable
 from nti.schema.field import Int
 from nti.schema.field import Bool
 from nti.schema.field import Date
+from nti.schema.field import Dict
 from nti.schema.field import Object
 from nti.schema.field import HTTPURL
 from nti.schema.field import Variant
@@ -60,6 +61,7 @@ from nti.schema.field import ValidURI
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
+from nti.schema.field import DecodingValidTextLine
 
 from nti.schema.interfaces import InvalidValue
 
@@ -479,22 +481,17 @@ class IAddress(Interface):
 
 class IUserContactProfile(Interface):
 
-    mailing_address = Object(IAddress, title=u"Mailing address",
-                             required=False)
-
-    billing_address = Object(IAddress, title=u"Billing address",
-                             required=False)
-
-    home_phone = ValidTextLine(title=u"Home phone", required=False)
-
-    work_phone = ValidTextLine(title=u"Home phone", required=False)
-
-    mobile_phone = ValidTextLine(title=u"Mobile phone", required=False)
-
-    evening_phone = ValidTextLine(title=u"Evening phone", required=False)
-
-    emergency_phone = ValidTextLine(title=u"Emergency phone", required=False)
-
+    addresses = Dict(title=u"A mapping of address objects.",
+                     key_type=DecodingValidTextLine(title=u"Adresss key"),
+                     value_type=Object(IAddress),
+                     min_length=0,
+                     required=False)
+    
+    phones = Dict(title=u"A mapping of address objects.",
+                  key_type=DecodingValidTextLine(title=u"Adresss key"),
+                  value_type=ValidTextLine(title=u"A phone"),
+                  min_length=0,
+                  required=False)
 
 from nti.schema.jsonschema import UI_TYPE_EMAIL
 from nti.schema.jsonschema import UI_TYPE_HASHED_EMAIL
