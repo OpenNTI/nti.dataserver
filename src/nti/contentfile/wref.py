@@ -63,6 +63,7 @@ class ContentFileWeakRef(object):
 
     def __lt__(self, other):
         try:
+            # pylint: disable=protected-access
             return self._intid < other._intid
         except AttributeError:  # pragma: no cover
             return NotImplemented
