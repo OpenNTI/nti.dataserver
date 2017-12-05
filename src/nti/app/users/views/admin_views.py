@@ -444,6 +444,7 @@ class GetGhostContainersView(UserGhostContainersView):
     def _parse_usernames(self, values):
         term = values.get('term') or values.get('search')
         usernames = values.get('usernames') or values.get('username')
+        # pylint: disable=too-many-function-args
         if term:
             usernames = username_search(urllib_parse.unquote(term))
         elif isinstance(usernames, six.string_types):
