@@ -419,6 +419,7 @@ class IFriendlyNamed(Interface):
         excluding such things as title and suffix (things typically not
         helpful in search results).
         """
+IFriendlyNamed['realname'].setTaggedValue(TAG_REQUIRED_IN_UI, True)
 
 
 class IImmutableFriendlyNamed(Interface):
@@ -446,9 +447,6 @@ class IRequireProfileUpdate(Interface):
     update. This will trigger profile validation (which usually doesn't happen)
     and allow bypassing certain parts of :class:`IImmutableFriendlyNamed.`
     """
-
-
-IFriendlyNamed['realname'].setTaggedValue(TAG_REQUIRED_IN_UI, True)
 
 
 class IEntityProfile(IFriendlyNamed, IProfileAvatarURL):
@@ -488,10 +486,17 @@ class IUserContactProfile(Interface):
                      required=False)
     
     phones = Dict(title=u"A mapping of address objects.",
-                  key_type=DecodingValidTextLine(title=u"Adresss key"),
+                  key_type=DecodingValidTextLine(title=u"Phone key"),
                   value_type=ValidTextLine(title=u"A phone"),
                   min_length=0,
                   required=False)
+    
+    contact_emails = Dict(title=u"A mapping of contact emails.",
+                          key_type=DecodingValidTextLine(title=u"Email key"),
+                          value_type=ValidTextLine(title=u'Email',
+                                                   constraint=checkEmailAddress),
+                          min_length=0,
+                          required=False)
 
 from nti.schema.jsonschema import UI_TYPE_EMAIL
 from nti.schema.jsonschema import UI_TYPE_HASHED_EMAIL
