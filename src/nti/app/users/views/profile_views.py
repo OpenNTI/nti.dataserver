@@ -590,7 +590,7 @@ class UserContactProfileAddressesPutView(AbstractAuthenticatedView,
                                  hexc.HTTPUnprocessableEntity,
                                  {
                                      'message': _(u'Cannot find factory.'),
-                                     'addresse': name,
+                                     'address': name,
                                  },
                                  None)
             address = factory()
@@ -599,7 +599,7 @@ class UserContactProfileAddressesPutView(AbstractAuthenticatedView,
                                  hexc.HTTPUnprocessableEntity,
                                  {
                                      'message': _(u'Unsupported/missing Class.'),
-                                     'addresse': name,
+                                     'address': name,
                                  },
                                  None)
             update_from_external_object(address, ext_obj, notify=False)
