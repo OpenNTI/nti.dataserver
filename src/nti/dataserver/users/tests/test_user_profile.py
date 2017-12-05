@@ -5,9 +5,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
-
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
@@ -250,29 +247,6 @@ class TestUserProfile(DataserverLayerTest):
         assert_that(ext_prof, has_entry('MimeType',
                                         ProfessionalPosition.mime_type))
 
-        # add contact info
-        mailing_address = Address()
-        mailing_address.city = u'Karakura Town'
-        mailing_address.country = u'Japan'
-        mailing_address.state = u'Chiyoda'
-        mailing_address.full_name = u'Kurosaki Ichigo'
-        mailing_address.street_address_1 = u'Kurosaki Clinic'
-        mailing_address.street_address_2 = u'クロサキ医院'
-        mailing_address.postal_code = u'100-0001'
-
-        prof.addresses = {'mailing': mailing_address}
-        user_prof = to_external_object(user, name=('personal-summary'))
-
-        assert_that(user_prof,
-                    has_entry('addresses',
-                              has_entry('mailing', has_entries('MimeType', 'application/vnd.nextthought.users.address',
-                                                               'city', 'Karakura Town',
-                                                               'country', 'Japan',
-                                                               'state', 'Chiyoda',
-                                                               'postal_code', '100-0001',
-                                                               'full_name', 'Kurosaki Ichigo',
-                                                               'street_address_1', 'Kurosaki Clinic',))))
-
         factory = internalization.find_factory_for(ext_prof)
         assert_that(factory, is_(not_none()))
 
@@ -306,6 +280,29 @@ class TestUserProfile(DataserverLayerTest):
         assert_that(new_io, has_property('degree', is_(degree)))
         assert_that(new_io, has_property('description', is_(description)))
         assert_that(new_io, is_(Education))
+
+        # add contact info
+        mailing_address = Address()
+        mailing_address.city = u'Karakura Town'
+        mailing_address.country = u'Japan'
+        mailing_address.state = u'Chiyoda'
+        mailing_address.full_name = u'Kurosaki Ichigo'
+        mailing_address.street_address_1 = u'Kurosaki Clinic'
+        mailing_address.street_address_2 = u'クロサキ医院'
+        mailing_address.postal_code = u'100-0001'
+
+        prof.addresses = {'mailing': mailing_address}
+        user_prof = to_external_object(user, name=('personal-summary'))
+
+        assert_that(user_prof,
+                    has_entry('addresses',
+                              has_entry('mailing', has_entries('MimeType', 'application/vnd.nextthought.users.address',
+                                                               'city', 'Karakura Town',
+                                                               'country', 'Japan',
+                                                               'state', 'Chiyoda',
+                                                               'postal_code', '100-0001',
+                                                               'full_name', 'Kurosaki Ichigo',
+                                                               'street_address_1', 'Kurosaki Clinic',))))
 
         # mailing address
         ext_prof = user_prof['addresses']['mailing']
