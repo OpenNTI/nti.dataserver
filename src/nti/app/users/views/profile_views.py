@@ -75,6 +75,8 @@ from nti.dataserver.users.user_profile import Address
 
 from nti.dataserver.users.users import User
 
+from nti.dataserver.users.utils.phonenumbers import is_viable_phone_number
+
 from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -661,5 +663,34 @@ class UserContactProfileEmailsPutView(AbstractAuthenticatedView,
         if data:
             profile = IUserContactProfile(self.context)
             profile.contact_emails = data
+            lifecycleevent.modified(self.context)
+        return self.context
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='phones',
+             request_method='PUT',
+             renderer='rest',
+             context=IUser)
+class UserContactProfilePhonesPutView(AbstractAuthenticatedView,
+                                      ModeledContentUploadRequestUtilsMixin,
+                                      CheckAccessMixin):
+
+    def __call__(self):
+        self.checkAccess(self.remoteUser)
+        data = self.readInput()
+        for name, phone in data.items():
+            if not is_viable_phone_number(phone):
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Invalid phone number.'),
+                                     'phone': phone,
+                                     'name': name,
+                                 },
+                                 None)
+        if data:
+            profile = IUserContactProfile(self.context)
+            profile.phones = data
             lifecycleevent.modified(self.context)
         return self.context

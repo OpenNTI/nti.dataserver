@@ -295,3 +295,31 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
                     has_entry('Items',
                               has_entries('home', 'ichigo@kurosaki.com',
                                           'work', 'ichigo@bleach.org')))
+        
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    def test_update_phones(self):
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(username=u'ichigo@nt.com',
+                              external_value={'email': u"ichigo@nt.com",
+                                              'alias': u'foo'})
+
+        path = '/dataserver2/users/ichigo@nt.com/@@phones'
+        res = self.testapp.get(path, status=200)
+        assert_that(res.json_body,
+                    has_entry('Items', has_length(0)))
+
+        post_data = {
+            'home': '+i@405'
+        }
+        self.testapp.put_json(path, post_data, status=422)
+
+        post_data = {
+            'work': '+1 (504) 254-0596',
+            'home': '+1-504-454-0596'
+        }
+        self.testapp.put_json(path, post_data, status=200)
+        res = self.testapp.get(path, status=200)
+        assert_that(res.json_body,
+                    has_entry('Items',
+                              has_entries('home', '+1-504-454-0596',
+                                          'work', '+1 (504) 254-0596')))
