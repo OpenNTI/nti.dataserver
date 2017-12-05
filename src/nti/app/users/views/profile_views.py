@@ -38,8 +38,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.base._compat import text_
-
 from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
@@ -59,6 +57,8 @@ from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 from nti.dataserver.users.index import CATALOG_NAME
 
 from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
+
+from nti.dataserver.users.interfaces import IUserContactProfile
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
@@ -75,6 +75,7 @@ from nti.schema.interfaces import find_most_derived_interface
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -142,7 +143,7 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
         # filter user view by site
         if      not all_sites \
             and not admin_utility.can_administer_user(admin_user, u):
-                continue
+            continue
 
         username = u.username
         userid = _replace_username(username)
@@ -350,6 +351,7 @@ def _get_profile_info(coppaOnly=False):
     intids = component.getUtility(IIntIds)
     ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 
+    # pylint: disable=no-member
     for user in users_folder.values():
         if     not IUser.providedBy(user) \
             or (coppaOnly and not ICoppaUser.providedBy(user)):
@@ -390,9 +392,6 @@ class UserProfileInfoView(AbstractAuthenticatedView):
         return response
 
 
-# user profile
-
-
 def _get_inactive_accounts(max_days=365):
     header = ['username', 'userid', 'realname',
               'email', 'createdTime', 'lastLoginTime']
@@ -404,6 +403,7 @@ def _get_inactive_accounts(max_days=365):
     ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 
     now = datetime.utcnow()
+    # pylint: disable=no-member
     for user in _users.values():
         if not IUser.providedBy(user):
             continue
@@ -453,6 +453,7 @@ class InactiveAccountsView(AbstractAuthenticatedView):
 
 
 def allowed_fields(user):
+    # pylint: disable=too-many-function-args
     profile_iface = IUserProfileSchemaProvider(user).getSchema()
     profile = profile_iface(user)
     possibilities = interface.providedBy(profile)
@@ -470,12 +471,16 @@ def allowed_fields(user):
 
 @view_config(route_name='objects.generic.traversal',
              name='user_profile_update',
-             request_method='POST',
+             request_method='PUT',
              renderer='rest',
              context=IDataserverFolder,
-             permission=nauth.ACT_NTI_ADMIN)
+             permission=nauth.ACT_READ)
 class UserProfileUpdateView(AbstractAuthenticatedView,
                             ModeledContentUploadRequestUtilsMixin):
+
+    def checkAccess(self, user):
+        if not (is_admin(self.remoteUser) or user == self.remoteUser):
+            raise hexc.HTTPForbidden()
 
     def readInput(self, value=None):
         result = super(UserProfileUpdateView, self).readInput(value)
@@ -484,6 +489,7 @@ class UserProfileUpdateView(AbstractAuthenticatedView,
 
     def __call__(self):
         values = self.readInput()
+        # pylint: disable=no-member
         authenticated_userid = self.remoteUser.username
         username = values.get('username') \
                 or values.get('user') \
@@ -492,14 +498,15 @@ class UserProfileUpdateView(AbstractAuthenticatedView,
         if user is None or not IUser.providedBy(user):
             raise hexc.HTTPUnprocessableEntity('User not found')
 
+        self.checkAccess(user)
+
         external = {}
         profile, fields = allowed_fields(user)
-        for name, sch_def in fields.items():
+        for name in fields.keys():
             value = values.get(name, None)
             if value is not None:
-                value = text_(value)
                 if value:
-                    external[name] = sch_def.fromUnicode(value)
+                    external[name] = value
                 else:
                     external[name] = None
 
@@ -518,3 +525,49 @@ class UserProfileUpdateView(AbstractAuthenticatedView,
         result['Allowed Fields'] = list(fields.keys())
         result['Summary'] = to_external_object(user, name="summary")
         return result
+
+
+class UserContactProfileMixinGetView(AbstractAuthenticatedView):
+
+    field = None
+
+    def checkAccess(self, user):
+        if not (is_admin(self.remoteUser) or user == self.remoteUser):
+            raise hexc.HTTPForbidden()
+
+    def __call__(self):
+        self.checkAccess(self.remoteUser)
+        profile = IUserContactProfile(self.context, None)
+        result = LocatedExternalDict()
+        items = result[ITEMS] = {}
+        if profile is not None:
+            items.update(getattr(profile, self.field))
+        result[TOTAL] = result[ITEM_COUNT] = len(items)
+        return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='addresses',
+             request_method='GET',
+             renderer='rest',
+             context=IUser)
+class UserContactProfileAddressesGetView(UserContactProfileMixinGetView):
+    field = 'addresses'
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='phones',
+             request_method='GET',
+             renderer='rest',
+             context=IUser)
+class UserContactProfilePhonesGetView(UserContactProfileMixinGetView):
+    field = 'phones'
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='contact_emails',
+             request_method='GET',
+             renderer='rest',
+             context=IUser)
+class UserContactProfileEmailsGetView(UserContactProfileMixinGetView):
+    field = 'contact_emails'

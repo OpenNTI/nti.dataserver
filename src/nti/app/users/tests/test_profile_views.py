@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,no-member,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import has_entry
@@ -30,6 +29,7 @@ from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
+from nti.dataserver.users.interfaces import IUserContactProfile
 
 from nti.dataserver.users.users import User
 
@@ -208,9 +208,13 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
                                                   'alias': u'foo'})
             assert_that(IFriendlyNamed(u), has_property('alias', 'foo'))
 
-        post_data = {'username': 'ichigo@nt.com', 'alias': 'Ichigo'}
+        post_data = {
+            'username': 'ichigo@nt.com',
+            'alias': 'Ichigo',
+            'phones': {'home': '+81-90-1790-1357'},
+        }
         path = '/dataserver2/@@user_profile_update'
-        res = self.testapp.post_json(path, post_data, status=200)
+        res = self.testapp.put_json(path, post_data, status=200)
 
         assert_that(res.json_body,
                     has_entry('Allowed Fields',
@@ -225,3 +229,10 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             u = User.get_user('ichigo@nt.com')
             assert_that(IFriendlyNamed(u), has_property('alias', 'Ichigo'))
+            assert_that(IUserContactProfile(u),
+                        has_property('phones', has_entry('home', '+81-90-1790-1357')))
+
+        path = '/dataserver2/users/ichigo@nt.com/@@phones'
+        res = self.testapp.get(path, status=200)
+        assert_that(res.json_body,
+                    has_entry('Items', has_entry('home', '+81-90-1790-1357')))

@@ -114,6 +114,7 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
     _DEFAULT_BATCH_START = 0
 
     def _batch_params(self):
+        # pylint: disable=attribute-defined-outside-init
         self.batch_size, self.batch_start = self._get_batch_size_start()
         self.limit = self.batch_start + self.batch_size + 2
         self.batch_after = None
