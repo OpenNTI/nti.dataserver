@@ -36,7 +36,11 @@ from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.app.users import MessageFactory as _
 
 from nti.common.string import is_true
 
@@ -496,7 +500,12 @@ class UserProfileUpdateView(AbstractAuthenticatedView,
                 or authenticated_userid
         user = User.get_user(username)
         if user is None or not IUser.providedBy(user):
-            raise hexc.HTTPUnprocessableEntity('User not found')
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'User not found.'),
+                             },
+                             None)
 
         self.checkAccess(user)
 

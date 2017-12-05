@@ -11,7 +11,7 @@ from __future__ import absolute_import
 import six
 import isodate
 from datetime import datetime
-from six.moves.urllib_parse import unquote
+from six.moves import urllib_parse
 
 from requests.structures import CaseInsensitiveDict
 
@@ -445,9 +445,9 @@ class GetGhostContainersView(UserGhostContainersView):
         term = values.get('term') or values.get('search')
         usernames = values.get('usernames') or values.get('username')
         if term:
-            usernames = username_search(unquote(term))
+            usernames = username_search(urllib_parse.unquote(term))
         elif isinstance(usernames, six.string_types):
-            usernames = set(unquote(usernames).split(","))
+            usernames = set(urllib_parse.unquote(usernames).split(","))
         else:
             usernames = ()
         return usernames
@@ -515,6 +515,7 @@ class RebuildEntityCatalogView(AbstractAuthenticatedView):
         count = 0
         dataserver = component.getUtility(IDataserver)
         users_folder = IShardLayout(dataserver).users_folder
+        # pylint: disable=no-member
         for obj in users_folder.values():
             doc_id = intids.queryId(obj)
             if doc_id is None:
