@@ -55,6 +55,7 @@ def verified_email_ids(email):
 
     # all ids w/ this email
     email_idx = catalog[IX_EMAIL]
+    # pylint: disable=protected-access
     values = email_idx._fwd_index.get(email)
     intids_emails = catalog.family.IF.Set(values or ())
     if not intids_emails:
@@ -139,12 +140,13 @@ class ImageUrlProperty(UrlProperty):
     avatar_provider_interface = None
     ignore_url_with_missing_host = True
 
-    # TODO: Should we be scaling this now?
+    # Should we be scaling this now?
     # ensuring it really is an image, etc? With arbitrary image uploading, we risk
     # being used as a dumping ground for illegal/copyright infringing material
     def __get__(self, instance, owner):
         result = super(ImageUrlProperty, self).__get__(instance, owner)
         if not result and self.avatar_provider_interface is not None:
+            # pylint: disable=not-callable
             adapted = self.avatar_provider_interface(instance.context, None)
             result = getattr(adapted, self.avatar_field_name, None)
         return result
@@ -160,4 +162,3 @@ class BackgroundUrlProperty(ImageUrlProperty):
     max_file_size = 524288  # 512 KB
     avatar_field_name = 'backgroundURL'
     avatar_provider_interface = IBackgroundURLProvider
-
