@@ -23,6 +23,7 @@ from requests.structures import CaseInsensitiveDict
 
 from zope import component
 from zope import interface
+from zope import lifecycleevent
 
 from zope.catalog.interfaces import ICatalog
 
@@ -60,11 +61,13 @@ from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
 from nti.dataserver.users.index import CATALOG_NAME
 
-from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
+from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI, IAddress
 
 from nti.dataserver.users.interfaces import IUserContactProfile
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
+
+from nti.dataserver.users.user_profile import Address
 
 from nti.dataserver.users.users import User
 
@@ -73,12 +76,14 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from nti.schema.interfaces import find_most_derived_interface
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
+MIMETYPE = StandardExternalFields.MIMETYPE
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 logger = __import__('logging').getLogger(__name__)
@@ -176,8 +181,7 @@ class AbstractUserInfoExtractView(AbstractAuthenticatedView):
 
     def _iter_user_info_dicts(self):
         _is_site_admin = is_site_admin(self.remoteUser)
-        if      not _is_site_admin \
-            and not is_admin(self.remoteUser):
+        if not _is_site_admin and not is_admin(self.remoteUser):
             raise hexc.HTTPForbidden()
         all_sites = False
         if not _is_site_admin:
@@ -326,7 +330,7 @@ class UserEmailVerifiedView(AbstractAuthenticatedView):
         values = CaseInsensitiveDict(**self.request.params)
         value = values.get('coppaOnly') \
              or values.get('onlyCoppa') \
-             or values.get('coppa')
+            or values.get('coppa')
         coppaOnly = is_true(value or 'F')
         generator = partial(_get_topics_info,
                             topics_key='email_verified',
@@ -473,6 +477,13 @@ def allowed_fields(user):
     return profile, result
 
 
+class CheckAccessMixin(object):
+
+    def checkAccess(self, user):
+        if not (is_admin(self.remoteUser) or user == self.remoteUser):
+            raise hexc.HTTPForbidden()
+
+
 @view_config(route_name='objects.generic.traversal',
              name='user_profile_update',
              request_method='PUT',
@@ -480,11 +491,8 @@ def allowed_fields(user):
              context=IDataserverFolder,
              permission=nauth.ACT_READ)
 class UserProfileUpdateView(AbstractAuthenticatedView,
-                            ModeledContentUploadRequestUtilsMixin):
-
-    def checkAccess(self, user):
-        if not (is_admin(self.remoteUser) or user == self.remoteUser):
-            raise hexc.HTTPForbidden()
+                            ModeledContentUploadRequestUtilsMixin,
+                            CheckAccessMixin):
 
     def readInput(self, value=None):
         result = super(UserProfileUpdateView, self).readInput(value)
@@ -536,13 +544,10 @@ class UserProfileUpdateView(AbstractAuthenticatedView,
         return result
 
 
-class UserContactProfileMixinGetView(AbstractAuthenticatedView):
+class UserContactProfileMixinGetView(AbstractAuthenticatedView,
+                                     CheckAccessMixin):
 
     field = None
-
-    def checkAccess(self, user):
-        if not (is_admin(self.remoteUser) or user == self.remoteUser):
-            raise hexc.HTTPForbidden()
 
     def __call__(self):
         self.checkAccess(self.remoteUser)
@@ -550,7 +555,7 @@ class UserContactProfileMixinGetView(AbstractAuthenticatedView):
         result = LocatedExternalDict()
         items = result[ITEMS] = {}
         if profile is not None:
-            items.update(getattr(profile, self.field))
+            items.update(getattr(profile, self.field) or {})
         result[TOTAL] = result[ITEM_COUNT] = len(items)
         return result
 
@@ -562,6 +567,48 @@ class UserContactProfileMixinGetView(AbstractAuthenticatedView):
              context=IUser)
 class UserContactProfileAddressesGetView(UserContactProfileMixinGetView):
     field = 'addresses'
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='addresses',
+             request_method='PUT',
+             renderer='rest',
+             context=IUser)
+class UserContactProfileAddressesPutView(AbstractAuthenticatedView,
+                                         ModeledContentUploadRequestUtilsMixin,
+                                         CheckAccessMixin):
+
+    def __call__(self):
+        data = self.readInput()
+        for name, ext_obj in data.items():
+            mimeType = ext_obj.get(MIMETYPE)
+            if not mimeType:
+                ext_obj[MIMETYPE] = Address.mimeType
+            factory = find_factory_for(ext_obj)
+            if factory is None:
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Cannot find factory.'),
+                                     'addresse': name,
+                                 },
+                                 None)
+            address = factory()
+            if not IAddress.providedBy(address):
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Unsupported/missing Class.'),
+                                     'addresse': name,
+                                 },
+                                 None)
+            update_from_external_object(address, ext_obj, notify=False)
+            data[name] = address
+        if data:
+            profile = IUserContactProfile(self.context)
+            profile.addresses = data
+            lifecycleevent.modified(self.context)
+        return self.context
 
 
 @view_config(route_name='objects.generic.traversal',

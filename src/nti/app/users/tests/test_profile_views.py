@@ -10,6 +10,7 @@ from __future__ import absolute_import
 from hamcrest import is_
 from hamcrest import has_entry
 from hamcrest import has_length
+from hamcrest import has_entries
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import greater_than_or_equal_to
@@ -236,3 +237,33 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
         res = self.testapp.get(path, status=200)
         assert_that(res.json_body,
                     has_entry('Items', has_entry('home', '+81-90-1790-1357')))
+
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    def test_update_address(self):
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(username=u'ichigo@nt.com',
+                              external_value={'email': u"ichigo@nt.com",
+                                              'alias': u'foo'})
+
+        path = '/dataserver2/users/ichigo@nt.com/@@addresses'
+        res = self.testapp.get(path, status=200)
+        assert_that(res.json_body,
+                    has_entry('Items', has_length(0)))
+
+        post_data = {
+            'home': {'city': 'Karakura Town',
+                     'country': 'Japan',
+                     'state': 'Chiyoda',
+                     'postal_code': '100-0001',
+                     'full_name': 'Kurosaki Ichigo',
+                     'street_address_1': 'Kurosaki Clinic',
+                     'street_address_2': u'クロサキ医院'}
+        }
+        self.testapp.put_json(path, post_data, status=200)
+
+        res = self.testapp.get(path, status=200)
+        assert_that(res.json_body,
+                    has_entry('Items',
+                              has_entry('home', has_entries('street_address_2', u'クロサキ医院',
+                                                            'postal_code', '100-0001',
+                                                            'full_name', 'Kurosaki Ichigo',))))
