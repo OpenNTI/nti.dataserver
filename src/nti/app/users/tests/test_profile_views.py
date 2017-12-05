@@ -239,7 +239,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
                     has_entry('Items', has_entry('home', '+81-90-1790-1357')))
 
     @WithSharedApplicationMockDS(users=True, testapp=True)
-    def test_update_address(self):
+    def test_update_addresses(self):
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user(username=u'ichigo@nt.com',
                               external_value={'email': u"ichigo@nt.com",
@@ -267,3 +267,31 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
                               has_entry('home', has_entries('street_address_2', u'クロサキ医院',
                                                             'postal_code', '100-0001',
                                                             'full_name', 'Kurosaki Ichigo',))))
+        
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    def test_update_emails(self):
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(username=u'ichigo@nt.com',
+                              external_value={'email': u"ichigo@nt.com",
+                                              'alias': u'foo'})
+
+        path = '/dataserver2/users/ichigo@nt.com/@@contact_emails'
+        res = self.testapp.get(path, status=200)
+        assert_that(res.json_body,
+                    has_entry('Items', has_length(0)))
+
+        post_data = {
+            'home': 'ichigo@'
+        }
+        self.testapp.put_json(path, post_data, status=422)
+
+        post_data = {
+            'work': 'ichigo@bleach.org',
+            'home': 'ichigo@kurosaki.com'
+        }
+        self.testapp.put_json(path, post_data, status=200)
+        res = self.testapp.get(path, status=200)
+        assert_that(res.json_body,
+                    has_entry('Items',
+                              has_entries('home', 'ichigo@kurosaki.com',
+                                          'work', 'ichigo@bleach.org')))

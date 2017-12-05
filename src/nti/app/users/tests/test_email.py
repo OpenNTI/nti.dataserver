@@ -15,14 +15,14 @@ import datetime
 
 import isodate
 
-from zope.dottedname import resolve as dottedname
-
 from pyramid.renderers import render
+
+from zope.dottedname import resolve as dottedname
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 
-def _write_to_file(name, output):
+def _write_to_file(unused_name, unused_output):
     pass
 
 

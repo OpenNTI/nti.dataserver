@@ -61,11 +61,15 @@ from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
 from nti.dataserver.users.index import CATALOG_NAME
 
-from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI, IAddress
+from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
 
+from nti.dataserver.users.interfaces import IAddress
 from nti.dataserver.users.interfaces import IUserContactProfile
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
+
+from nti.dataserver.users.interfaces import checkEmailAddress
+from nti.dataserver.users.interfaces import EmailAddressInvalid
 
 from nti.dataserver.users.user_profile import Address
 
@@ -570,6 +574,24 @@ class UserContactProfileAddressesGetView(UserContactProfileMixinGetView):
 
 
 @view_config(route_name='objects.generic.traversal',
+             name='phones',
+             request_method='GET',
+             renderer='rest',
+             context=IUser)
+class UserContactProfilePhonesGetView(UserContactProfileMixinGetView):
+    field = 'phones'
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='contact_emails',
+             request_method='GET',
+             renderer='rest',
+             context=IUser)
+class UserContactProfileEmailsGetView(UserContactProfileMixinGetView):
+    field = 'contact_emails'
+
+
+@view_config(route_name='objects.generic.traversal',
              name='addresses',
              request_method='PUT',
              renderer='rest',
@@ -579,6 +601,7 @@ class UserContactProfileAddressesPutView(AbstractAuthenticatedView,
                                          CheckAccessMixin):
 
     def __call__(self):
+        self.checkAccess(self.remoteUser)
         data = self.readInput()
         for name, ext_obj in data.items():
             mimeType = ext_obj.get(MIMETYPE)
@@ -612,18 +635,31 @@ class UserContactProfileAddressesPutView(AbstractAuthenticatedView,
 
 
 @view_config(route_name='objects.generic.traversal',
-             name='phones',
-             request_method='GET',
-             renderer='rest',
-             context=IUser)
-class UserContactProfilePhonesGetView(UserContactProfileMixinGetView):
-    field = 'phones'
-
-
-@view_config(route_name='objects.generic.traversal',
              name='contact_emails',
-             request_method='GET',
+             request_method='PUT',
              renderer='rest',
              context=IUser)
-class UserContactProfileEmailsGetView(UserContactProfileMixinGetView):
-    field = 'contact_emails'
+class UserContactProfileEmailsPutView(AbstractAuthenticatedView,
+                                      ModeledContentUploadRequestUtilsMixin,
+                                      CheckAccessMixin):
+
+    def __call__(self):
+        self.checkAccess(self.remoteUser)
+        data = self.readInput()
+        for name, email in data.items():
+            try:
+                checkEmailAddress(email)
+            except EmailAddressInvalid:
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Invalid email.'),
+                                     'email': email,
+                                     'name': name,
+                                 },
+                                 None)
+        if data:
+            profile = IUserContactProfile(self.context)
+            profile.contact_emails = data
+            lifecycleevent.modified(self.context)
+        return self.context
