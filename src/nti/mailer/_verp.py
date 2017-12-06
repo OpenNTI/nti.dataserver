@@ -97,12 +97,13 @@ def _find_default_realname(request=None):
         realname, _ = rfc822.parseaddr(policy.DEFAULT_EMAIL_SENDER)
         if realname is not None:
             realname = realname.strip()
-    return realname or "NextThought"
+    brand_name = getattr(policy, 'BRAND', None)
+    return realname or brand_name or "NextThought"
 
 
 def __make_signer(default_key, **kwargs):
     if not default_key:
-        return _make_signer(**kwargs) 
+        return _make_signer(**kwargs)
     else:
         return _make_signer(default_key=default_key, **kwargs)
 
