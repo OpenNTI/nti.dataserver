@@ -43,6 +43,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
+from nti.common.phonenumbers import is_viable_phone_number
+
 from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
@@ -74,8 +76,6 @@ from nti.dataserver.users.interfaces import EmailAddressInvalid
 from nti.dataserver.users.user_profile import Address
 
 from nti.dataserver.users.users import User
-
-from nti.dataserver.users.utils.phonenumbers import is_viable_phone_number
 
 from nti.externalization.externalization import to_external_object
 
