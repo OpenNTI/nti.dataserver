@@ -20,12 +20,12 @@
 		<link:userLink
 			named='nti.appserver.logon.REL_INITIAL_WELCOME_PAGE'
 			minGeneration='20130313'
-			url='/app/content/welcome/welcome.html'
+			url='https://d2ixlfeu83tci.cloudfront.net/assets/791974150e3f5a47f159423cdf71db2d4d3985032c03102d00b9e9a034096aef/base/welcome.html'
 			mimeType='text/html'/>
 
 		<link:userLink
 			named='nti.appserver.logon.REL_PERMANENT_WELCOME_PAGE'
-			url='/app/content/welcome/welcome.html'
+			url='https://d2ixlfeu83tci.cloudfront.net/assets/791974150e3f5a47f159423cdf71db2d4d3985032c03102d00b9e9a034096aef/base/welcome.html'
 			mimeType='text/html'/>
 
 	</registerIn>
