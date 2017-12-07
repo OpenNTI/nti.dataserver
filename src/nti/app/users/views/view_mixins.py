@@ -193,7 +193,7 @@ class AbstractUpdateView(AbstractAuthenticatedView,
     def _identifier(self):
         result = self._params.get('id') \
               or self._params.get('identifier')
-        return result
+        return result and str(result)
 
     @Lazy
     def _username(self):
