@@ -501,9 +501,6 @@ setup(
             # Narrative docs
             'sphinx',
             "sphinxcontrib-programoutput",
-            # virtualenv
-            'virtualenv',
-            'virtualenvwrapper',
             # buildout
             'zc.buildout >= 2.2.1',
             # unused/used imports; see also tl.eggdeps
