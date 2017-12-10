@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+# pylint: disable=inherit-non-class
+
 from zope import interface
 
 from zope.file.interfaces import IFileReader
@@ -66,7 +68,7 @@ class ISourceFiler(interface.Interface):
 
     default_bucket = interface.Attribute("Default bucket")
 
-    def key_name(self, identifier):
+    def key_name(identifier):
         """
         return the key name for the specified identifier
         """

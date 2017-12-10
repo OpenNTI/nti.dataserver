@@ -26,8 +26,6 @@ from nti.base.interfaces import ILastModified
 from nti.cabinet.interfaces import ISource
 from nti.cabinet.interfaces import ISourceBucket
 
-from nti.property.property import alias
-
 from nti.schema.eqhash import EqHash
 
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -47,8 +45,6 @@ class SourceBucket(object):
     __name__ = None
     __parent__ = None
 
-    name = alias('__name__')
-
     def __init__(self, bucket, filer):
         self.filer = filer
         self.__name__ = bucket
@@ -60,6 +56,10 @@ class SourceBucket(object):
     @property
     def name(self):
         return os.path.split(self.__name__)[1] if self.__name__ else u''
+
+    @name.setter
+    def name(self, value):
+        self.__name__ = value
 
     def getChildNamed(self, name):
         if not name.startswith(self.bucket):
@@ -79,7 +79,7 @@ def _get_file_stat(source, name):
     try:
         with open(source, "rb") as fp:
             result = getattr(os.fstat(fp.fileno()), name)
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         pass
     return result
 
@@ -101,6 +101,8 @@ class SourceProxy(ProxyBase):
     """
     Source proxy for a io.file object
     """
+
+    # pylint: disable=property-on-old-class
 
     __parent__ = property(
         lambda s: s.__dict__.get('_v__parent__'),
@@ -131,6 +133,7 @@ class SourceProxy(ProxyBase):
 
     def __init__(self, base, filename=None, contentType=None, length=None,
                  createdTime=0, lastModified=0):
+        # pylint: disable=non-parent-init-called
         ProxyBase.__init__(self, base)
         self.length = length
         self.filename = filename
@@ -175,7 +178,7 @@ class SourceFile(SchemaConfigured):
     def __init__(self, **kwargs):
         data = kwargs.pop('data', None)
         self.name = kwargs.pop('name', None)
-        self.path  = kwargs.pop('path', None) or u''
+        self.path = kwargs.pop('path', None) or u''
         contentType = kwargs.pop('contentType', None)
         createdTime = kwargs.pop('createdTime', None)
         lastModified = kwargs.pop('lastModified', None)
@@ -208,11 +211,11 @@ class SourceFile(SchemaConfigured):
         return "rb"
 
     @readproperty
-    def createdTime(self):
+    def createdTime(self):  # pylint: disable=method-hidden
         return self._time
 
     @readproperty
-    def lastModified(self):
+    def lastModified(self):  # pylint: disable=method-hidden
         return self._time
 
     @CachedProperty('data')
@@ -220,12 +223,15 @@ class SourceFile(SchemaConfigured):
         return BytesIO(self.data)
 
     def read(self, size=-1):
+        # pylint: disable=no-member
         return self._v_fp.read(size) if size != -1 else self.data
 
     def seek(self, offset, whence=0):
+        # pylint: disable=no-member
         return self._v_fp.seek(offset, whence)
 
     def tell(self):
+        # pylint: disable=no-member
         return self._v_fp.tell()
 
     def close(self):
@@ -272,7 +278,7 @@ class ReferenceSourceFile(SourceFile):
     data = property(_getData, _setData)
 
     @readproperty
-    def _v_fp(self):
+    def _v_fp(self):  # pylint: disable=method-hidden
         self._v_fp = open(self.filename, "rb")
         return self._v_fp
 
@@ -298,11 +304,11 @@ class ReferenceSourceFile(SourceFile):
     @property
     def createdTime(self):
         return get_file_createdTime(self.filename) or 0
-    
+
     @createdTime.setter
     def createdTime(self, value):
         pass
-        
+
     @property
     def lastModified(self):
         return get_file_lastModified(self.filename) or 0

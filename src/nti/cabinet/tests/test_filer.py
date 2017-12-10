@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import none
@@ -66,9 +66,9 @@ class TestFiler(unittest.TestCase):
             assert_that(source, has_property('name', is_("ichigo.xml")))
             assert_that(source, has_property('path', is_(tmp_dir)))
 
-            assert_that(source, 
+            assert_that(source,
                         has_property('__parent__', is_not(none())))
-    
+
             assert_that(source,
                         has_property('createdTime', greater_than(0)))
 
@@ -104,31 +104,31 @@ class TestFiler(unittest.TestCase):
                               bucket=self.dir_name,
                               contentType=u"text/xml",
                               overwrite=True)
-            assert_that(href, 
+            assert_that(href,
                         ends_with("%s/ichigo.xml" % self.dir_name))
 
-            assert_that(filer.is_bucket(self.dir_name), 
+            assert_that(filer.is_bucket(self.dir_name),
                         is_(True))
 
             assert_that(filer.list(self.dir_name),
                         has_length(greater_than(0)))
 
-            assert_that(filer.contains(href), 
+            assert_that(filer.contains(href),
                         is_(True))
 
-            assert_that(filer.contains("ichigo.xml", self.dir_name), 
+            assert_that(filer.contains("ichigo.xml", self.dir_name),
                         is_(True))
 
             # check parent
             ichigo = filer.get(href)
-            assert_that(ichigo, 
+            assert_that(ichigo,
                         has_property('path', is_(tmp_dir + '/' + self.dir_name)))
             bucket = ichigo.__parent__
-            assert_that(bucket, 
+            assert_that(bucket,
                         has_property('__name__', is_(self.dir_name)))
-            assert_that(bucket, 
+            assert_that(bucket,
                         has_property('__parent__', is_(none())))
-            assert_that(bucket, 
+            assert_that(bucket,
                         has_property('filer', is_(filer)))
 
             # check getting a bucket
@@ -151,7 +151,7 @@ class TestFiler(unittest.TestCase):
                               bucket=u"%s/souls" % self.dir_name,
                               contentType=u"text/xml",
                               overwrite=True)
-            assert_that(href, 
+            assert_that(href,
                         ends_with("%s/souls/ichigo.xml" % self.dir_name))
 
             assert_that(filer.contains(href), is_(True))
@@ -159,10 +159,10 @@ class TestFiler(unittest.TestCase):
                         is_(True))
 
             listed = filer.list(self.dir_name)
-            assert_that(listed, 
+            assert_that(listed,
                         is_(['%s/ichigo.xml' % self.dir_name, '%s/souls' % self.dir_name]))
 
-            assert_that(filer.is_bucket('%s/souls' % self.dir_name), 
+            assert_that(filer.is_bucket('%s/souls' % self.dir_name),
                         is_(True))
 
             assert_that(filer.is_bucket('%s/ichigo.xml' % self.dir_name),
@@ -178,7 +178,7 @@ class TestFiler(unittest.TestCase):
                               data,
                               bucket=u"%s/souls/missing_type" % self.dir_name,
                               overwrite=True)
-            assert_that(href, 
+            assert_that(href,
                         ends_with("%s/souls/missing_type/ichigo" % self.dir_name))
 
             assert_that(filer.contains(href), is_(True))

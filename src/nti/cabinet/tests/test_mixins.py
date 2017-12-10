@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import is_not
@@ -24,6 +24,7 @@ from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 from nti.cabinet.interfaces import ISource
 
 from nti.cabinet.mixins import SourceFile
+from nti.cabinet.mixins import SourceBucket
 
 from nti.cabinet.tests import SharedConfiguringTestLayer
 
@@ -31,6 +32,14 @@ from nti.cabinet.tests import SharedConfiguringTestLayer
 class TestMixins(unittest.TestCase):
 
     layer = SharedConfiguringTestLayer
+
+    def test_source_bucket(self):
+        bucket = SourceBucket(None, None)
+        assert_that(bucket, has_properties('name', ''))
+        bucket.name = u'bankai'
+        assert_that(bucket, has_properties('__name__', 'bankai'))
+        bucket.__name__ = '/usr/local/shikai'
+        assert_that(bucket, has_properties('name', 'shikai'))
 
     def test_source_file(self):
         source = SourceFile(name=u'ichigo', path=u'/bankai', data=b'bleach')
@@ -46,7 +55,7 @@ class TestMixins(unittest.TestCase):
                                    'contentType', is_(DEFAULT_CONTENT_TYPE),
                                    'lastModified', is_(not_none()),
                                    'createdTime', is_(not_none())))
-        
+
         with source as fp:
             assert_that(fp.read(1), is_(b'b'))
             assert_that(fp.tell(), is_(1))
