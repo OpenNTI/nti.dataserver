@@ -27,11 +27,12 @@ class BaseContentMixin(object):
     tags = ()
     creator = None
 
-    path = None  # XXX BWC
+    path = None  # BWC
 
     __parent__ = None
     __name__ = alias('filename')  # to be compatible w/ zope files
 
+    # pylint: disable=useless-super-delegation
     def __init__(self, *args, **kwargs):
         super(BaseContentMixin, self).__init__(*args, **kwargs)
 
@@ -59,11 +60,13 @@ class BaseContentMixin(object):
             jar = getattr(self, '_p_jar', None)
             container = getattr(self, name)
             if jar is not None:
+                # pylint: disable=protected-access
                 jar.readCurrent(self)
                 container._p_activate()
                 jar.readCurrent(container)
             wref = IWeakRef(context, None)
             if wref is not None:
+                # pylint: disable=unused-variable
                 __traceback_info__ = context, wref
                 self.discard(container, wref)
 
@@ -75,6 +78,7 @@ class BaseContentMixin(object):
         wref = IWeakRef(context, None)
         if wref is not None:
             old = len(self._associations)
+            # pylint: disable=no-member
             self._associations.add(wref)
             return len(self._associations) > old
         return False
@@ -88,7 +92,7 @@ class BaseContentMixin(object):
                 obj = wref()
                 if obj is not None:
                     yield obj
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 logger.exception("Error while getting associatied object")
 
     def has_associations(self):
@@ -109,11 +113,12 @@ class BaseContentMixin(object):
                 obj = wref()
                 if obj is None:
                     self.discard(self._associations, wref)
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 logger.exception("Error while getting associatied object")
 
     def clear_associations(self):
         if '_associations' in self.__dict__:
+            # pylint: disable=no-member
             self._associations.clear()
 
     # IFileReader
@@ -123,12 +128,15 @@ class BaseContentMixin(object):
         return BytesIO(self.data)
 
     def read(self, size=-1):
+        # pylint: disable=no-member
         return self._v_fp.read(size) if size != -1 else self.data
 
     def seek(self, offset, whence=0):
+        # pylint: disable=no-member
         return self._v_fp.seek(offset, whence)
 
     def tell(self):
+        # pylint: disable=no-member
         return self._v_fp.tell()
 
     # compatible methods

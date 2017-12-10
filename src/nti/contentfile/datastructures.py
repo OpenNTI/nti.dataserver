@@ -47,13 +47,15 @@ class ContentFileObjectIO(NamedFileObjectIO):
     _ext_iface_upper_bound = IContentFile
     _excluded_in_ivars_ = {'download_url'}.union(NamedFileObjectIO._excluded_in_ivars_)
 
-    def _ext_mimeType(self, _):
+    def _ext_mimeType(self, unused_obj):  # pylint: disable=signature-differs
         return CONTENT_FILE_MIMETYPE
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
-        result = super(ContentFileObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
+        result = super(ContentFileObjectIO, self).updateFromExternalObject(
+            parsed, *args, **kwargs)
         ext_self = self._ext_replacement()
         if 'tags' in parsed:
+            # pylint: disable=attribute-defined-outside-init
             ext_self.tags = parsed.get('tags') or ()
         assert ext_self.filename, 'must provide a content file name'
         return result
@@ -61,7 +63,7 @@ class ContentFileObjectIO(NamedFileObjectIO):
     def _transform(self, the_file, ext_dict):
         try:
             from nti.coremetadata.interfaces import IModeledContentBody
-            # XXX: CS-20160426 For BWC we want to transform all content blob mimetype
+            # CS-20160426 For BWC we want to transform all content blob mimetype
             # to regular files in IModeledContentBody objects.
             # This cannot be done in a decorator since the external
             # MimeType is set in the super class toExternalObject method
@@ -75,7 +77,7 @@ class ContentFileObjectIO(NamedFileObjectIO):
             pass
         return ext_dict
 
-    def toExternalObject(self, *args, **kwargs):
+    def toExternalObject(self, *args, **kwargs):  # pylint: disable=arguments-differ
         ext_dict = super(ContentFileObjectIO, self).toExternalObject(*args, **kwargs)
         the_file = self._ext_replacement()
         ext_dict['tags'] = the_file.tags  # return tags

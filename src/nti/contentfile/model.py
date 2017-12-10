@@ -101,10 +101,12 @@ def transform_to_blob(context, associations=False):
         result.data = context.data  # be explicit
         if IInternalFileRef.providedBy(context):
             interface.alsoProvides(result, IInternalFileRef)
+            # pylint: disable=attribute-defined-outside-init
             result.reference = getattr(context,
                                        'reference',
                                        None)  # extra check
         if context.has_associations() or associations:
+            # pylint: disable=expression-not-assigned
             [result.add_association(obj) for obj in context.associations()]
     return result
 
@@ -114,12 +116,13 @@ def transform_to_blob(context, associations=False):
 
 @interface.implementer(IS3File, IContained, IZopeFile)
 class S3File(FileMixin, BaseContentMixin, Persistent):
-    
+
     parameters = {}
     mimeType = alias('contentType')
-    
+
     __external_mimeType__ = S3_FILE_MIMETYPE
 
+    # pylint: disable=super-init-not-called
     def __init__(self, data='', contentType='', filename=None, name=None):
         self.filename = filename
         if name:
@@ -130,18 +133,21 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
             self.contentType = contentType
 
     @readproperty
-    def name(self):
+    def name(self):  # pylint: disable=method-hidden
         return nameFinder(self)
 
     def _getData(self):
         if not hasattr(self, '_v_data'):
+            # pylint: disable=attribute-defined-outside-init
             self._v_data = ''
             s3 = IS3FileIO(self, None)
             if s3 is not None:
+                # pylint: disable=too-many-function-args
                 self._v_data = s3.contents()
         return self._v_data
 
     def _setData(self, value):
+        # pylint: disable=attribute-defined-outside-init
         self._v_data = value or ''
         if not hasattr(self, '_v_marked'):
             self._v_marked = False
@@ -158,9 +164,10 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
         else:
             s3 = IS3FileIO(self, None)
             if s3 is not None:
+                # pylint: disable=too-many-function-args
                 return s3.size()
         return 0
-           
+
     def open(self, mode="r"):
         if mode != "r":
             raise ValueError("Invalid mode")
@@ -168,11 +175,11 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
 
     def openDetached(self):
         return self.open()
-     
+
     @property
     def size(self):
         return self.getSize()
-    
+
     @size.setter
     def size(self, value):
         pass
@@ -187,16 +194,17 @@ class S3File(FileMixin, BaseContentMixin, Persistent):
 
 @interface.implementer(IS3Image)
 class S3Image(S3File):
-    
+
     __external_mimeType__ = S3_IMAGE_MIMETYPE
 
     def __init__(self, data='', contentType='', filename=None, name=None):
         S3File.__init__(self, data, contentType, filename, name)
         if contentType:
             self.contentType = contentType
-            
-    def _setData(self, data):
+
+    def _setData(self, data):  # pylint: disable=arguments-differ
         super(S3Image, self)._setData(data)
+        # pylint: disable=attribute-defined-outside-init
         contentType, self._width, self._height = getImageInfo(data)
         if contentType:
             self.contentType = contentType

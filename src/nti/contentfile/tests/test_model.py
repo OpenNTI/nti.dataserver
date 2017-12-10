@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import none
@@ -37,16 +36,16 @@ from nti.contentfile.interfaces import IContentBlobImage
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import transform_to_blob
 
+from nti.contentfile.tests import SharedConfiguringTestLayer
+
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
+
+from nti.externalization.tests import externalizes
 
 from nti.namedfile.interfaces import IInternalFileRef
 
 from nti.wref.interfaces import IWeakRef
-
-from nti.contentfile.tests import SharedConfiguringTestLayer
-
-from nti.externalization.tests import externalizes
 
 
 GIF_DATAURL = 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
