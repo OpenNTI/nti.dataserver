@@ -30,7 +30,7 @@ from nti.contentfolder.interfaces import IMimeTypeAdapter
 from nti.contentfolder.interfaces import IContainerIdAdapter
 from nti.contentfolder.interfaces import IAssociationsAdapter
 
-from nti.zope_catalog.catalog import Catalog
+from nti.zope_catalog.catalog import DeferredCatalog
 
 from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
 
@@ -190,17 +190,12 @@ class AssociationsIndex(AttributeSetIndex):
 
 
 @interface.implementer(IMetadataCatalog)
-class ContentResourcesCatalog(Catalog):
+class ContentResourcesCatalog(DeferredCatalog):
 
     family = BTrees.family64
 
-    super_index_doc = Catalog.index_doc
-
-    def index_doc(self, docid, ob):
-        pass
-
-    def force_index_doc(self, docid, ob):
-        self.super_index_doc(docid, ob)
+    def force_index_doc(self, docid, ob):  # BWC
+        self.index_doc(docid, ob)
 
 
 def create_content_resources_catalog(catalog=None, family=BTrees.family64):
@@ -225,7 +220,7 @@ def create_content_resources_catalog(catalog=None, family=BTrees.family64):
 
 def get_content_resources_catalog(registry=component):
     return registry.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
-get_catalog = get_content_resources_catalog # BWC
+get_catalog = get_content_resources_catalog  # BWC
 
 
 def install_content_resources_catalog(site_manager_container, intids=None):
