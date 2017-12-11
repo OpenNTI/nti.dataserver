@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import none
@@ -22,6 +21,8 @@ from nti.contentrange.interfaces import ITimeRangeDescription
 from nti.contentrange.interfaces import ITranscriptContentPointer
 from nti.contentrange.interfaces import ITranscriptRangeDescription
 
+from nti.contentrange.tests import ConfiguringTestBase
+
 from nti.contentrange.timeline import TimeContentPointer
 from nti.contentrange.timeline import TimeRangeDescription
 from nti.contentrange.timeline import TranscriptContentPointer
@@ -31,10 +32,6 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
-
-from nti.contentrange.tests import ConfiguringTestBase
-
-from nti.dataserver.tests.mock_dataserver import WithMockDS
 
 
 class TestTimeLineRange(ConfiguringTestBase):
@@ -79,7 +76,6 @@ class TestTimeLineRange(ConfiguringTestBase):
                                                                                   role=u'end',
                                                                                   elementTagName=u'p'))})
 
-    @WithMockDS
     def test_external_legacy_factory(self):
         for name in ('TimeRangeDescription', 'TimeContentPointer',
                      'TranscriptContentPointer', 'TranscriptRangeDescription'):

@@ -12,6 +12,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+# pylint: disable=inherit-non-class,protected-access
+
+import six
+
 from zope import interface
 
 from zope.schema.vocabulary import SimpleTerm
@@ -49,7 +53,7 @@ class IDomContentPointer(IContentPointer):
     """
     role = Choice(title=u"Intended use of this content pointer.",
                   vocabulary=POINTER_ROLE_VOCABULARY)
-IDomContentPointer['role']._type = unicode
+IDomContentPointer['role']._type = six.text_type
 
 
 class IElementDomContentPointer(IDomContentPointer):
@@ -115,7 +119,7 @@ class ITimeContentPointer(interface.Interface):
 
     seconds = Int(title=u"Number of seconds from the start of the timeline that this pointer points",
                   min=0)
-ITimeContentPointer['role']._type = unicode
+ITimeContentPointer['role']._type = six.text_type
 
 
 class ITimeRangeDescription(IContentRangeDescription):

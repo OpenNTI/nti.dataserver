@@ -53,7 +53,7 @@ class position(object):
         self_index, other_index = -1, -1
         ancestor = find_common_ancestor(self.node, other.node)
         if ancestor is None:
-            # FIXME: This isn't right
+            # This isn't right. FIXME:
             return NotImplemented
         for idx, c in enumerate(ancestor.childNodes):
             if is_ancestor(c, self.node):

@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import assert_that
@@ -48,6 +47,7 @@ def round_trip_check(range_or_ranges, newdoc=None, solution=None):
 
     if newdoc is None:
         bk = _convertrange.contentToDomRange(cr, a_range.get_root())
+        # pylint: disable=unused-variable
         __traceback_info__ = bk, a_range, cr
         if solution is None:
             assert_that(str(bk), is_(str(a_range)))
@@ -84,7 +84,7 @@ class Document(object):
             node = self.focus
         return ElementHunter(node, attr, value).hunt()
 
-    def downpath(self, path=[], ancestor=None):
+    def downpath(self, path=(), ancestor=None):
         if ancestor is None:
             ancestor = self.focus
         if len(path) == 0:
@@ -101,6 +101,7 @@ class Hunter(object):
     def hunt(self, node=None):
         if node is None:
             node = self.root
+        # pylint: disable=no-member
         if self.confirm(node):
             return node
         for c in node.childNodes:
@@ -113,7 +114,8 @@ class Hunter(object):
 class TextHunter(Hunter):
 
     def __init__(self, node, text):
-        self.root, self.text = node, text
+        super(TextHunter, self).__init__(node)
+        self.text = text
 
     def confirm(self, node):
         return node.nodeType == node.TEXT_NODE and node.data.find(self.text) >= 0
@@ -122,19 +124,22 @@ class TextHunter(Hunter):
 class ElementHunter(Hunter):
 
     def __init__(self, node, attribute, value):
-        self.root, self.attr, self.value = node, attribute, value
+        super(ElementHunter, self).__init__(node)
+        self.attr, self.value = attribute, value
 
     def confirm(self, node):
-        return node.nodeType == node.ELEMENT_NODE and \
-            node.getAttribute(self.attr) == self.value
+        return node.nodeType == node.ELEMENT_NODE \
+           and node.getAttribute(self.attr) == self.value
 
 
 class ContextChecker(BaseMatcher):
 
+    result = None
+
     def __init__(self, *args):
         self.vals = args
 
-    def _matches(self, other):
+    def _matches(self, other):  # pylint: disable=arguments-differ
         vals = []
         for pt in [other.start, other.end, other.ancestor]:
             if hasattr(pt, 'contexts'):
