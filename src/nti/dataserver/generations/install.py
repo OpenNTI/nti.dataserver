@@ -80,6 +80,8 @@ from nti.dataserver.users import index as user_index
 
 from nti.dataserver.users.black_list import UserBlacklistedStorage
 
+from nti.identifiers.index import install_identifiers_catalog
+
 from nti.intid import utility as intid_utility
 
 from nti.invitations.index import install_invitations_catalog
@@ -89,7 +91,7 @@ from nti.invitations.model import install_invitations_container
 logger = __import__('logging').getLogger(__name__)
 
 
-def install_chat(context):
+def install_chat(unused_context):
     pass
 
 
@@ -101,6 +103,7 @@ def install_main(context):
     root_folder = rootFolder()
     # Ensure we have a connection so we can become KeyRefs
     conn.add(root_folder)
+    # pylint: disable=protected-access
     assert root_folder._p_jar is conn
 
     # The root is generally presumed to be an ISite, so make it so
@@ -116,7 +119,6 @@ def install_main(context):
 
     dataserver_folder = Folder()
     interface.alsoProvides(dataserver_folder, IDataserverFolder)
-    # locate( dataserver_folder, root_folder, name='dataserver2' )
     conn.add(dataserver_folder)
     root_folder['dataserver2'] = dataserver_folder
     assert dataserver_folder.__parent__ is root_folder
@@ -150,10 +152,10 @@ def install_main(context):
             logger.warn("Using an unnamed root database")
         assert shards[conn.db().database_name].__name__
 
-        # TODO: the 'users' key should probably be several different keys, one for each type of
+        # The 'users' key should probably be several different keys, one for each type of
         # Entity object; that way traversal works out much nicer and dataserver_pyramid_views is
         # simplified through dropping UserRootResource in favor of normal traversal
-        # TODO: These will become more than plain folders, they will
+        # These will become more than plain folders, they will.
         # become either zope.pluggableauth.plugins.principalfolder.PrincipalFolder
         # or similar implementations of IAuthenticatorPlugin.
         install_root_folders(dataserver_folder)
@@ -178,6 +180,7 @@ def install_main(context):
 
         install_user_catalog(dataserver_folder, intids)
         install_metadata_catalog(dataserver_folder, intids)
+        install_identifiers_catalog(dataserver_folder, intids)
         install_invitations_catalog(dataserver_folder, intids)
         install_content_resources_catalog(dataserver_folder, intids)
 
@@ -228,7 +231,7 @@ def install_password_utility(dataserver_folder):
     policy.__parent__ = dataserver_folder
     policy.maxLength = 100
     policy.minLength = 6
-    # TODO: The group max interferes with pass phrases, which we like
+    # The group max interferes with pass phrases, which we like
     policy.groupMax = 50
     lsm.registerUtility(policy,
                         provided=z3c.password.interfaces.IPasswordUtility)
@@ -236,8 +239,8 @@ def install_password_utility(dataserver_folder):
 
 def install_flag_storage(dataserver_folder):
     lsm = dataserver_folder.getSiteManager()
-    lsm.registerUtility(
-        flagging.IntIdGlobalFlagStorage(), provided=IGlobalFlagStorage)
+    lsm.registerUtility(flagging.IntIdGlobalFlagStorage(), 
+                        provided=IGlobalFlagStorage)
 
 
 def install_root_folders(parent_folder,
@@ -277,16 +280,17 @@ def install_shard(root_conn, new_shard_name):
     connection having the given name, set up the datastructures for that new
     name to be a shard.
     """
-    # TODO: The tests for this live up in appserver/account_creation_views
+    # The tests for this live up in appserver/account_creation_views
     root_layout = IShardLayout(root_conn)
     shards = root_layout.shards
+    # pylint: disable=unsupported-membership-test
     if new_shard_name in shards:
         raise KeyError("Shard already exists", new_shard_name)
 
     shard_conn = root_conn.get_connection(new_shard_name)
     shard_root = shard_conn.root()
 
-    # TODO: Within this, how much of the site structure do we need/want to mirror?
+    # how much of the site structure do we need/want to mirror?
     # Right now, I'm making the new dataserver_folder a child of the main root folder and giving it
     # a shard name. But I'm not setting up any site managers
     root_folder = root_layout.root_folder
@@ -299,8 +303,10 @@ def install_shard(root_conn, new_shard_name):
     # make it a child of the root folder (TODO: Yes? This gets some cross-db stuff into the root
     # folder, which may not be good. We deliberately avoided that for the
     # 'shards' key)
+    # pylint: disable=unsupported-assignment-operation
     root_folder[new_shard_name] = dataserver_folder
     shards[new_shard_name] = ds_shards.ShardInfo()
+
     # Put the same things in there, but they must not take ownership or generate
     # events
     install_root_folders(dataserver_folder,
