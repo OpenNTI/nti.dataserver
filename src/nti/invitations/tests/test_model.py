@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import none
@@ -22,6 +21,8 @@ from nti.testing.matchers import verifiably_provides
 
 import unittest
 
+from nti.externalization.tests import externalizes
+
 from nti.invitations.interfaces import IUserInvitation
 from nti.invitations.interfaces import DuplicateInvitationCodeError
 
@@ -29,8 +30,6 @@ from nti.invitations.model import UserInvitation
 from nti.invitations.model import InvitationsContainer
 
 from nti.invitations.tests import SharedConfiguringTestLayer
-
-from nti.externalization.tests import externalizes
 
 
 class TestModel(unittest.TestCase):

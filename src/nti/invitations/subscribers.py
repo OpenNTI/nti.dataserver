@@ -17,5 +17,5 @@ from nti.invitations.interfaces import IInvitationSentEvent
 
 
 @component.adapter(IActionableInvitation, IInvitationSentEvent)
-def _on_invitation_sent(invitation, _):
+def _on_invitation_sent(invitation, unused_event):
     invitation.sent = time.time()

@@ -77,7 +77,7 @@ class UserInvitation(PersistentCreatedModDateTrackingObject,
         PersistentCreatedModDateTrackingObject.__init__(self)
 
     @readproperty
-    def site(self):
+    def site(self):  # pylint: disable=method-hidden
         result = getattr(getSite(), '__name__', None)
         if result:
             self.site = result

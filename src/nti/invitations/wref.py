@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Weak references for content units.
-
 .. $Id$
 """
 
@@ -25,8 +23,6 @@ from nti.schema.eqhash import EqHash
 from nti.wref.interfaces import IWeakRef
 
 logger = __import__('logging').getLogger(__name__)
-
-# pylint:disable=I0011,W0212
 
 
 @total_ordering
@@ -58,6 +54,7 @@ class InvitationWeakRef(object):
 
     def __lt__(self, other):
         try:
+            # pylint: disable=protected-access
             return self._code < other._code
         except AttributeError:  # pragma: no cover
             return NotImplemented
