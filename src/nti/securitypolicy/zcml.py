@@ -8,10 +8,11 @@ to Python identifiers for names (e.g., allows email-style names).
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+# pylint: disable=inherit-non-class
 
 from zope import component
 
@@ -24,9 +25,9 @@ from zope.security.zcml import IPermissionDirective
 
 from zope.schema import TextLine
 
-from nti.base._compat import text_
-
 from nti.securitypolicy.interfaces import ISiteRoleManager
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class IGrantAllDirective(Interface):
@@ -92,6 +93,12 @@ class IDefinePrincipalDirective(_IDefinePrincipalDirective):
         u"for encode/check the password",
         default=u"This Manager Does Not Exist",
         required=False)
+
+
+def text_(s, encoding='utf-8', err='strict'):
+    if isinstance(s, bytes):
+        s = s.decode(encoding, err)
+    return s
 
 
 def _perform_site_role_grant(role, principal):

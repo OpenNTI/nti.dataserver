@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import contains
 from hamcrest import assert_that
@@ -22,38 +22,37 @@ class TestZcml(base.ConfiguringTestBase):
     def test_directives(self):
         zcml = u"""
 		<configure	xmlns="http://namespaces.zope.org/zope"
-			xmlns:sp="http://nextthought.com/ntp/securitypolicy"
-			xmlns:zcml="http://namespaces.zope.org/zcml"
-			xmlns:z3c="http://namespaces.zope.org/z3c"
-			i18n_domain="nti.app.products.courseware_reports">
+                    xmlns:zcml="http://namespaces.zope.org/zcml"
+                    xmlns:sp="http://nextthought.com/ntp/securitypolicy"
+                    i18n_domain="nti.actions.courseware_reports.view_reports">
 
-		<include file="meta.zcml" package="zope.component" />
-		<include file="meta.zcml" package="zope.security" />
-		<include file="meta.zcml" package="nti.securitypolicy" />
-
-		<include package="zope.principalregistry" />
-
-		<permission
-			id="nti.actions.courseware_reports.view_reports"
-			title="View reports" />
-
-		<sp:role
-			id="nti.roles.courseware.report_viewer"
-			title="Globally accessible report viewing"
-			description="Other people perhaps not associated with the course at
-				all might also be able to view reports." />
-
-		<sp:grant
-			permission="nti.actions.courseware_reports.view_reports"
-			role="nti.roles.courseware.report_viewer" />
-
-		<sp:principal
-			id="grey.allman@nextthought.com"
-			login="grey.allman@nextthought.com"
-			title="Grey Allman" />
-
-		<sp:grant principal="grey.allman@nextthought.com"
-			   role="nti.roles.courseware.report_viewer" />
+    		<include file="meta.zcml" package="zope.component" />
+    		<include file="meta.zcml" package="zope.security" />
+    		<include file="meta.zcml" package="nti.securitypolicy" />
+    
+    		<include package="zope.principalregistry" />
+    
+    		<permission
+    			id="nti.actions.courseware_reports.view_reports"
+    			title="View reports" />
+    
+    		<sp:role
+    			id="nti.roles.courseware.report_viewer"
+    			title="Globally accessible report viewing"
+    			description="Other people perhaps not associated with the course at
+    				all might also be able to view reports." />
+    
+    		<sp:grant
+    			permission="nti.actions.courseware_reports.view_reports"
+    			role="nti.roles.courseware.report_viewer" />
+    
+    		<sp:principal
+    			id="grey.allman@nextthought.com"
+    			login="grey.allman@nextthought.com"
+    			title="Grey Allman" />
+    
+    		<sp:grant principal="grey.allman@nextthought.com"
+                      role="nti.roles.courseware.report_viewer" />
 
 		</configure>
 		"""
