@@ -95,9 +95,11 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
         locate(value, parent=self, name=key)
         if      IConnection(value, None) is None \
             and IConnection(self, None) is not None:
+            # pylint: disable=too-many-function-args
             IConnection(self).add(value)
         lifecycleevent.added(value, self, key)
         self.updateLastMod()
+        # pylint: disable=attribute-defined-outside-init
         self._p_changed = True  # changed
 
     def __setitem__(self, key, value):
@@ -116,6 +118,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
     def _eject(self, key, event=True):
         item = self._delitemf(key, event)
         self.updateLastMod()
+        # pylint: disable=attribute-defined-outside-init
         self._p_changed = True
         return item
 
@@ -144,7 +147,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
         def _update(obj):
             try:
                 obj.updateLastMod()
-            except AttributeError:
+            except AttributeError:  # pragma: no cover
                 pass
         _update(item)
         _update(self)
@@ -171,6 +174,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 
         item = self._delitemf(name, event=False)
         item.__name__ = item.name = newName  # set new name
+        # pylint: disable=protected-access
         target._setitemf(newName, item)
         lifecycleevent.moved(item, self, name, target, newName)
         item.__parent__ = target  # set lineage
@@ -199,7 +203,8 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
             if not key.startswith('_') and key not in ('data',):
                 try:
                     setattr(newObject, key, value)
-                except (AttributeError, TypeError):  # ignore readonly
+                except (AttributeError, TypeError):  # pragma: no cover
+                    # ignore read-only
                     pass
         newObject.__name__ = newObject.name = newName  # set name
         newObject.data = item.data  # set data
@@ -207,7 +212,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
         return newObject
 
     @CachedProperty('__parent__', '__name__')
-    def path(self):
+    def path(self):  # pylint: function-redefined
         return compute_path(self)
 
     def __str__(self):

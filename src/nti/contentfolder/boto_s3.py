@@ -32,7 +32,7 @@ def get_key(context):
         try:
             path.append(current.__name__)
             current = current.__parent__
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             break
     if path:
         path.reverse()
@@ -56,18 +56,22 @@ class BotoS3Mixin(object):
     
     @readproperty
     def grant(self):
+        # pylint: disable=no-member
         return self.aws_key.Grant
 
     @readproperty
     def aws_access_key_id(self):
+        # pylint: disable=no-member
         return self.aws_key.PublicAccessKey
 
     @readproperty
     def aws_secret_access_key(self):
+        # pylint: disable=no-member
         return self.aws_key.SecretAccessKey
 
     @readproperty
     def bucket_name(self):
+        # pylint: disable=no-member
         return self.aws_key.BucketName
 
     def _connection(self, debug=False):
@@ -96,7 +100,7 @@ class BotoS3Mixin(object):
             bucket = connection.get_bucket(self.bucket_name)
             k = boto.s3.key.Key(bucket, key)
             return k.exists()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("Error while checking existence of key %s. %s", 
                          key, e)
             return False

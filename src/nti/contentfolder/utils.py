@@ -40,6 +40,7 @@ def traverse(current, path=None):
     root = find_interface(current, IRootFolder, strict=False)
     if not path or path == '/':
         return root
+    # pylint: disable=unused-variable
     __traceback_info__ = current, path
     if path.startswith('/'):
         current = root
@@ -74,6 +75,7 @@ def mkdirs(current, path, factory):
     root = find_interface(current, IRootFolder, strict=False)
     if not path or path == '/':
         return root
+    # pylint: disable=unused-variable
     __traceback_info__ = current, path
     if path.startswith('/'):
         current = root

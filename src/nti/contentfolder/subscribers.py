@@ -24,5 +24,5 @@ def _on_content_file_moved(unused_context, event):
     if IContentFolder.providedBy(event.newParent):
         try:
             event.newParent.updateLastMod()
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             pass
