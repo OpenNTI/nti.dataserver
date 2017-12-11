@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods
 
 from hamcrest import is_
 from hamcrest import none
@@ -21,7 +21,7 @@ from zope import interface
 
 from nti.dataserver.interfaces import IUser
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 from nti.identifiers.index import get_identifier_catalog
 
@@ -71,6 +71,7 @@ class TestIndex(unittest.TestCase):
         Validate the index contains the correct external_ids for users.
         """
         with mock_db_trans():
+            # pylint: disable=no-member
             User.create_user(self.ds, username="marko")
 
         with mock_db_trans():
@@ -93,7 +94,7 @@ class TestIndex(unittest.TestCase):
                                                      adapts=(IUser,))
                 component.provideSubscriptionAdapter(TestExternalIdentifierUtilityB,
                                                      adapts=(IUser,))
-
+                # pylint: disable=no-member
                 user = User.create_user(self.ds, username="alana")
                 external_ids = get_external_ids_for_user(user)
                 assert_that(external_ids, contains_inanyorder('TYPEA_site_alana'.lower(),
