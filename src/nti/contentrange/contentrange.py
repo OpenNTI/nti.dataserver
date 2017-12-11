@@ -120,7 +120,7 @@ class ElementDomContentPointer(DomContentPointer):
             return NotImplemented
 
     def __hash__(self):
-        return hash((self.elemendId, self.elementTagName, self.role))
+        return hash((self.elementId, self.elementTagName, self.role))
 
 
 @WithRepr
