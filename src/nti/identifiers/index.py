@@ -94,7 +94,7 @@ class ValidatingSiteName(object):
     __slots__ = ('site',)
 
     def __init__(self, unused_obj, unused_default=None):
-        self.site = getSite().__name__
+        self.site = getattr(getSite(), '__name__', None)
 
     def __reduce__(self):
         raise TypeError()
