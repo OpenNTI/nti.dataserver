@@ -18,7 +18,7 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
                                  GCLayerMixin,
                                  ConfiguringLayerMixin):
 
-    set_up_packages = ('nti.identifiers', 'nti.externalization')
+    set_up_packages = ('nti.identifiers',)
 
     @classmethod
     def setUp(cls):

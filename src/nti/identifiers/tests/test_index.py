@@ -14,12 +14,9 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import contains_inanyorder
 
-import unittest
-
 from zope import component
-from zope import interface
 
-from nti.dataserver.interfaces import IUser
+from zope.intid.interfaces import IIntIds
 
 from nti.dataserver.users.users import User
 
@@ -28,85 +25,64 @@ from nti.identifiers.index import get_identifier_catalog
 from nti.identifiers.utils import get_user_for_external_id
 from nti.identifiers.utils import get_external_ids_for_user
 
-from nti.identifiers.interfaces import IExternalIdentifierUtility
+from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
-from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
-
-from nti.dataserver.tests.mock_dataserver import WithMockDS
-from nti.dataserver.tests.mock_dataserver import mock_db_trans
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
 
-class BaseTestExternalIdentifierUtility(object):
+class TestIndex(DataserverLayerTest):
 
-    TYPE = None
-
-    def __init__(self, *args):
-        pass
-
-    def get_namespaced_external_id(self, user):
-        return '%s_site_%s' % (self.TYPE, user.username)
-
-
-@component.adapter(IUser)
-@interface.implementer(IExternalIdentifierUtility)
-class TestExternalIdentifierUtilityA(BaseTestExternalIdentifierUtility):
-
-    TYPE = "TYPEA"
-
-
-@component.adapter(IUser)
-@interface.implementer(IExternalIdentifierUtility)
-class TestExternalIdentifierUtilityB(BaseTestExternalIdentifierUtility):
-
-    TYPE = "TYPEB"
-
-
-class TestIndex(unittest.TestCase):
-
-    layer = SharedConfiguringTestLayer
-
-    @WithMockDS
+    @WithMockDSTrans
     def test_index(self):
         """
         Validate the index contains the correct external_ids for users.
         """
-        with mock_db_trans():
-            # pylint: disable=no-member
-            User.create_user(self.ds, username="marko")
+        user1 = User.create_user(self.ds, username="marko")
+        catalog = get_identifier_catalog()
+        assert_that(catalog, not_none())
+        intids = component.getUtility(IIntIds)
+        id_container = IUserExternalIdentityContainer(user1)
+        assert_that(id_container, has_length(0))
+        catalog.index_doc(intids.getId(user1), user1)
 
-        with mock_db_trans():
-            catalog = get_identifier_catalog()
-            assert_that(catalog, not_none())
+        # Empty cases
+        assert_that(get_user_for_external_id('type', None), none())
+        assert_that(get_user_for_external_id(None, 'dneusername'), none())
+        assert_that(get_user_for_external_id('type', 'dneusername'), none())
 
-            user = User.get_user('marko')
-            external_ids = get_external_ids_for_user(user)
-            assert_that(external_ids, has_length(0))
+        # Actual cases
+        user2 = User.create_user(self.ds, username="ghuus")
+        user3 = User.create_user(self.ds, username="izabel")
 
-            # Empty case
-            assert_that(get_user_for_external_id(None), none())
-            assert_that(get_user_for_external_id('dneusername'), none())
+        # One user with data
+        id_container1 = IUserExternalIdentityContainer(user1)
+        id_container1.add_external_mapping('TYPE1', 'ID1')
+        catalog.index_doc(intids.getId(user1), user1)
+        assert_that(get_user_for_external_id('type1', 'id1'), is_(user1))
+        assert_that(get_user_for_external_id('TYPE1', 'ID1'), is_(user1))
 
-        # Register utility
-        with mock_db_trans():
-            try:
-                component.getGlobalSiteManager()
-                component.provideSubscriptionAdapter(TestExternalIdentifierUtilityA,
-                                                     adapts=(IUser,))
-                component.provideSubscriptionAdapter(TestExternalIdentifierUtilityB,
-                                                     adapts=(IUser,))
-                # pylint: disable=no-member
-                user = User.create_user(self.ds, username="alana")
-                external_ids = get_external_ids_for_user(user)
-                assert_that(external_ids, contains_inanyorder('TYPEA_site_alana'.lower(),
-                                                              'TYPEB_site_alana'.lower()))
+        assert_that(get_user_for_external_id('TYPE1xxx', 'ID1'), none())
+        assert_that(get_user_for_external_id('TYPE1', 'ID1xxx'), none())
 
-                found_user = get_user_for_external_id('TYPEA_site_alana')
-                assert_that(found_user, is_(user))
-                found_user = get_user_for_external_id('TYPEB_site_alana')
-                assert_that(found_user, is_(user))
-                found_user = get_user_for_external_id('typeb_site_alana')
-                assert_that(found_user, is_(user))
-            finally:
-                gsm = component.getGlobalSiteManager()
-                gsm.unregisterSubscriptionAdapter(TestExternalIdentifierUtilityA)
-                gsm.unregisterSubscriptionAdapter(TestExternalIdentifierUtilityB)
+        # Two users
+        id_container1.add_external_mapping('TYPE2', 'ID2')
+        id_container2 = IUserExternalIdentityContainer(user2)
+        id_container2.add_external_mapping('TYPE2', 'ID1')
+        catalog.index_doc(intids.getId(user1), user1)
+        catalog.index_doc(intids.getId(user2), user2)
+        catalog.index_doc(intids.getId(user3), user3)
+
+        assert_that(get_user_for_external_id('type1', 'id1'), is_(user1))
+        assert_that(get_user_for_external_id('type2', 'id1'), is_(user2))
+        assert_that(get_user_for_external_id('type1', 'id2'), none())
+
+        assert_that(get_user_for_external_id('TYPE1xxx', 'ID1'), none())
+        assert_that(get_user_for_external_id('TYPE1', 'ID1xxx'), none())
+
+        external_ids = get_external_ids_for_user(user1)
+        assert_that(external_ids, contains_inanyorder('id1', 'id2'))
+        external_ids = get_external_ids_for_user(user2)
+        assert_that(external_ids, contains_inanyorder('id1'))
+        external_ids = get_external_ids_for_user(user3)
+        assert_that(external_ids, has_length(0))
