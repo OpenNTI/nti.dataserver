@@ -39,7 +39,6 @@ class ExternalIdentityContainer(CaseInsensitiveLastModifiedDict):
     def add_external_mapping(self, external_type, external_id):
         self[external_type] = external_id
 
-
 _ExternalIdentityContainerFactory = an_factory(ExternalIdentityContainer,
                                                EXTERNAL_IDENTITY_ANNOTATION_KEY)
 
@@ -48,8 +47,9 @@ def ExternalIdentityContainerFactory(obj):
     result = _ExternalIdentityContainerFactory(obj)
     if IConnection(result, None) is None:
         try:
+            # pylint: disable=too-many-function-args
             IConnection(obj).add(result)
-        except (TypeError, AttributeError):
+        except (TypeError, AttributeError):  # pragma: no cover
             pass
     return result
 

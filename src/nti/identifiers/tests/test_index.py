@@ -18,6 +18,9 @@ from zope import component
 
 from zope.intid.interfaces import IIntIds
 
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
 from nti.dataserver.users.users import User
 
 from nti.identifiers.index import get_identifier_catalog
@@ -27,9 +30,6 @@ from nti.identifiers.utils import get_external_ids_for_user
 
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-
 
 class TestIndex(DataserverLayerTest):
 
@@ -38,6 +38,7 @@ class TestIndex(DataserverLayerTest):
         """
         Validate the index contains the correct external_ids for users.
         """
+        # pylint: disable=too-many-function-args
         user1 = User.create_user(self.ds, username="marko")
         catalog = get_identifier_catalog()
         assert_that(catalog, not_none())

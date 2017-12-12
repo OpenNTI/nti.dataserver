@@ -8,12 +8,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+# pylint: disable=inherit-non-class
+
 from zope import interface
 
 from zope.container.interfaces import IContainer
 
 logger = __import__('logging').getLogger(__name__)
-# pylint: disable=inherit-non-class
 
 
 class IUserExternalIdentityContainer(IContainer):

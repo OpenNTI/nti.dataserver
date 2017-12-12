@@ -45,6 +45,7 @@ def get_external_ids_for_user(user):
 
 
 def _is_valid(user, external_type, external_id):
+    # pylint: disable=too-many-function-args
     validator = IUserExternalIdentityValidator(user)
     return validator.is_valid(external_type, external_id)
 
@@ -61,8 +62,10 @@ def get_user_for_external_id(external_type, external_id):
     intids = component.getUtility(IIntIds)
     site_names = get_component_hierarchy_names()
     # Only query for lowercase, since that's how we store them.
-    query = {IX_EXTERNAL_IDS: {'any_of': (external_id.lower(),)},
-             IX_EXTERNAL_TYPES: {'any_of': (external_type.lower(),)}}
+    query = {
+        IX_EXTERNAL_IDS: {'any_of': (external_id.lower(),)},
+        IX_EXTERNAL_TYPES: {'any_of': (external_type.lower(),)}
+    }
     if site_names:
         query[IX_SITE] = {'any_of': site_names}
     for uid in catalog.apply(query) or ():
