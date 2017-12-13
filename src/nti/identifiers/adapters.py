@@ -15,12 +15,19 @@ from zope import interface
 
 from zope.annotation import factory as an_factory
 
+from zope.component.hooks import getSite
+
 from nti.containers.dicts import CaseInsensitiveLastModifiedDict
 
 from nti.dataserver.interfaces import IUser
 
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
 from nti.identifiers.interfaces import IUserExternalIdentityValidator
+from nti.identifiers.interfaces import MultipleUserExternalIdentitySitesError
+
+from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -29,15 +36,25 @@ EXTERNAL_IDENTITY_ANNOTATION_KEY = 'nti.identifiers.interfaces.IUserExternalIden
 
 @component.adapter(IUser)
 @interface.implementer(IUserExternalIdentityContainer)
-class ExternalIdentityContainer(CaseInsensitiveLastModifiedDict):
+class ExternalIdentityContainer(CaseInsensitiveLastModifiedDict, SchemaConfigured):
     """
-    Stores mappings of external_type -> external_id for a user.
+    Stores mappings of external_type -> external_id for a user. Users are
+    only allowed to be externally identified to one site.
+    """
 
-    XXX: Do we want to site-scope this?
-    """
+    createDirectFieldProperties(IUserExternalIdentityContainer)
+
+    def _set_site_name(self):
+        current_site = getattr(getSite(), '__name__', '')
+        if current_site:
+            if self.site_name and self.site_name != current_site:
+                raise MultipleUserExternalIdentitySitesError()
+            self.site_name = current_site
 
     def add_external_mapping(self, external_type, external_id):
+        self._set_site_name()
         self[external_type] = external_id
+
 
 _ExternalIdentityContainerFactory = an_factory(ExternalIdentityContainer,
                                                EXTERNAL_IDENTITY_ANNOTATION_KEY)

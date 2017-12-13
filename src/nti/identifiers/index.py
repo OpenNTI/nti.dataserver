@@ -88,7 +88,7 @@ class ValidatingExternalTypes(object):
 class ValidatingSiteName(object):
     """
     XXX: We should enforce that this user does not map to another site
-    since this is something we should not support.
+    since this is something we do not support.
     """
 
     __slots__ = ('site',)

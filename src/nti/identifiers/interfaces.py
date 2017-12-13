@@ -14,6 +14,8 @@ from zope import interface
 
 from zope.container.interfaces import IContainer
 
+from nti.schema.field import ValidTextLine
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -23,10 +25,17 @@ class IUserExternalIdentityContainer(IContainer):
     external_id for a user.
     """
 
+    site_name = ValidTextLine(title=u"The external identity site name",
+                              description=u"A user can only have an external identity tied to one site",
+                              required=False)
+
     def add_external_mapping(external_type, external_id):
         """
         Add a mapping for this user; the external_type is the classifier
         defined by the external id holder.
+
+        :raises MultipleUserExternalIdentitySitesError if a user is already
+        mapped to another site.
         """
 
 
@@ -40,3 +49,16 @@ class IUserExternalIdentityValidator(interface.Interface):
         Returns a bool on whether this user has this
         external_type/external_id mapping.
         """
+
+
+class ExternalIdentityError(Exception):
+    """
+    A general error when updating a user's external identity.
+    """
+
+
+class MultipleUserExternalIdentitySitesError(ExternalIdentityError):
+    """
+    Occurs when a user may have external identities mapped across multiple
+    sites.
+    """
