@@ -9,7 +9,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-generation = 92
+generation = 93
 
 # Allow going forward/backward for testing
 import os
@@ -239,7 +239,7 @@ def install_password_utility(dataserver_folder):
 
 def install_flag_storage(dataserver_folder):
     lsm = dataserver_folder.getSiteManager()
-    lsm.registerUtility(flagging.IntIdGlobalFlagStorage(), 
+    lsm.registerUtility(flagging.IntIdGlobalFlagStorage(),
                         provided=IGlobalFlagStorage)
 
 
