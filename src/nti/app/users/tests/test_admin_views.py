@@ -393,7 +393,7 @@ class TestAdminViews(ApplicationLayerTest):
                                            has_entries(new_external_type, new_external_id)))
 
         # Different site for username returns correct site external identifiers
-        resolve_href = '/dataserver2/ResolveUser/%s' % created_username
+        resolve_href = '/dataserver2/ResolveUser/%s?filter_by_site_community=False' % created_username
         resolve_res = self.testapp.get(resolve_href, extra_environ=environ)
         resolve_res = resolve_res.json_body
         resolve_res = resolve_res['Items']
