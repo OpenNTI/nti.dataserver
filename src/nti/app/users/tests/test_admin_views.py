@@ -15,8 +15,10 @@ from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import greater_than
 from hamcrest import has_property
+does_not = is_not
 
 import fudge
 
@@ -288,6 +290,14 @@ class TestAdminViews(ApplicationLayerTest):
                                                      'external_id': external_id},
                                status=422)
 
+        # Can in a different site though
+        environ = self._make_extra_environ()
+        environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
+        admin_external_href = '/dataserver2/users/%s/%s' % (username2, 'LinkUserExternalIdentity')
+        self.testapp.post_json(admin_external_href, {'external_type': external_type,
+                                                     'external_id': external_id},
+                               extra_environ=environ)
+
         user1_environ = self._make_extra_environ(user=username)
 
         user_update_href = self.require_link_href_with_rel(global_workspace,
@@ -371,6 +381,42 @@ class TestAdminViews(ApplicationLayerTest):
         self.testapp.post_json(remove_access_href, missing_access, status=404)
         self.testapp.post_json(remove_access_href, missing_user, status=404)
         self.testapp.post_json(remove_access_href, missing_user2, status=404)
+
+        # Resolving user
+        resolve_href = '/dataserver2/ResolveUser/%s' % created_username
+        resolve_res = self.testapp.get(resolve_href)
+        resolve_res = resolve_res.json_body
+        resolve_res = resolve_res['Items']
+        assert_that(resolve_res, has_length(1))
+        resolve_res = resolve_res[0]
+        assert_that(resolve_res, has_entry('external_ids',
+                                           has_entries(new_external_type, new_external_id)))
+
+        # Different site for username returns correct site external identifiers
+        resolve_href = '/dataserver2/ResolveUser/%s' % created_username
+        resolve_res = self.testapp.get(resolve_href, extra_environ=environ)
+        resolve_res = resolve_res.json_body
+        resolve_res = resolve_res['Items']
+        assert_that(resolve_res, has_length(1))
+        resolve_res = resolve_res[0]
+        assert_that(resolve_res, does_not(has_item('external_ids')))
+
+        resolve_href = '/dataserver2/ResolveUser/%s' % username
+        resolve_res = self.testapp.get(resolve_href)
+        resolve_res = resolve_res.json_body
+        resolve_res = resolve_res['Items']
+        assert_that(resolve_res, has_length(1))
+        resolve_res = resolve_res[0]
+        assert_that(resolve_res, has_entry('external_ids',
+                                           has_entries(external_type, external_id)))
+
+        resolve_href = '/dataserver2/ResolveUser/%s' % username2
+        resolve_res = self.testapp.get(resolve_href)
+        resolve_res = resolve_res.json_body
+        resolve_res = resolve_res['Items']
+        assert_that(resolve_res, has_length(1))
+        resolve_res = resolve_res[0]
+        assert_that(resolve_res, does_not(has_item('external_ids')))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.users.utils.is_site_admin',

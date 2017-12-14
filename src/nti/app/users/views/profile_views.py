@@ -86,6 +86,7 @@ from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from nti.schema.interfaces import find_most_derived_interface
+from nti.identifiers.utils import get_external_identifiers
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
@@ -167,6 +168,7 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
         createdTime = _format_time(getattr(u, 'createdTime', 0))
         lastLoginTime = _format_time(getattr(u, 'lastLoginTime', None))
         realname = _get_index_field_value(iid, ent_catalog, 'realname')
+        external_id_map = get_external_identifiers(u)
         yield {
             'alias': _tx_string(alias),
             'email': _tx_string(email),
@@ -175,6 +177,7 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
             'username': _tx_string(u.username),
             'createdTime': _tx_string(createdTime),
             'lastLoginTime': _tx_string(lastLoginTime),
+            'external_ids': external_id_map
         }
 
 
@@ -218,13 +221,18 @@ class UserInfoExtractCSVView(AbstractUserInfoExtractView):
 
     def __call__(self):
         stream = BytesIO()
-        fieldnames = ['username', 'userid', 'realname',
-                      'alias', 'email', 'createdTime',
-                      'lastLoginTime']
+        fieldnames = ['username', 'userid', 'realname', 'alias', 'email',
+                      'createdTime', 'lastLoginTime', 'external_type',
+                      'external_id']
         csv_writer = csv.DictWriter(stream, fieldnames=fieldnames,
                                     extrasaction='ignore')
         csv_writer.writeheader()
         for user_info in self._iter_user_info_dicts():
+            # With CSV, we only return one external_id mapping (common case).
+            external_id_map = user_info.pop('external_ids')
+            external_id_map = external_id_map or {'': ''}
+            for external_type in external_id_map:
+                user_info['external_type'] = external_id_map.get(external_type, '')
             csv_writer.writerow(user_info)
 
         response = self.request.response

@@ -25,11 +25,14 @@ from nti.app.users import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
 
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 
+from nti.dataserver.authorization import is_admin
+from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.interfaces import IUserProfile
@@ -44,6 +47,8 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import Singleton
+
+from nti.identifiers.utils import get_external_identifiers
 
 from nti.links.links import Link
 
@@ -90,6 +95,29 @@ class _UserMembershipsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         _links = result.setdefault(LINKS, [])
         link = Link(context, rel="memberships", elements=('@@memberships',))
         _links.append(link)
+
+
+@component.adapter(IUser)
+@interface.implementer(IExternalMappingDecorator)
+class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
+    """
+    Decorate external identifiers for the user or administrators.
+    """
+
+    def _predicate(self, user_context, unused_result):
+        if not self._is_authenticated:
+            return False
+        result = is_admin(self.remoteUser) or self.remoteUser == user_context
+        if not result and is_site_admin(self.remoteUser):
+            site_admin_utility = component.getUtility(ISiteAdminUtility)
+            result = site_admin_utility.can_administer_user(self.remoteUser,
+                                                            user_context)
+        return result
+
+    def _do_decorate_external(self, context, result):
+        external_ids = get_external_identifiers(context)
+        if external_ids:
+            result['external_ids'] = external_ids
 
 
 @component.adapter(ICommunity)

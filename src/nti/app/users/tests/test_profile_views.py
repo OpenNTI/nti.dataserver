@@ -65,7 +65,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
         app_iter = res.app_iter[0].split('\n')[:-1]
         assert_that(app_iter, has_length(2))
         for t in app_iter:
-            assert_that(t.split(','), has_length(7))
+            assert_that(t.split(','), has_length(9))
 
         all_sites_path = '/dataserver2/@@user_info_extract?all_sites=True'
         environ = self._make_extra_environ()
@@ -78,7 +78,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
         app_iter = res.app_iter[0].split('\n')[:-1]
         assert_that(app_iter, has_length(4))
         for t in app_iter:
-            assert_that(t.split(','), has_length(7))
+            assert_that(t.split(','), has_length(9))
 
         res = testapp.get(path, extra_environ=environ,
                           headers={'accept': 'application/json'})
@@ -90,6 +90,8 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
                           headers={'accept': 'application/json'})
         items = res.json_body['Items']
         assert_that(items, has_length(3))
+        for item in items:
+            assert_that(item['external_ids'], has_length(0))
 
     @WithSharedApplicationMockDS
     def test_inactive_accounts(self):
@@ -267,7 +269,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
                               has_entry('home', has_entries('street_address_2', u'クロサキ医院',
                                                             'postal_code', '100-0001',
                                                             'full_name', 'Kurosaki Ichigo',))))
-        
+
     @WithSharedApplicationMockDS(users=True, testapp=True)
     def test_update_emails(self):
         with mock_dataserver.mock_db_trans(self.ds):
@@ -295,7 +297,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
                     has_entry('Items',
                               has_entries('home', 'ichigo@kurosaki.com',
                                           'work', 'ichigo@bleach.org')))
-        
+
     @WithSharedApplicationMockDS(users=True, testapp=True)
     def test_update_phones(self):
         with mock_dataserver.mock_db_trans(self.ds):
