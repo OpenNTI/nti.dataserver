@@ -198,7 +198,10 @@ def _ResolveUserView(request):
     exact_match = text_(exact_match)
     exact_match = unquote(exact_match)
 
-    result = _resolve_user(exact_match, remote_user)
+    admin_filter_by_site_community = not is_false(
+                        request.params.get('filter_by_site_community'))
+
+    result = _resolve_user(exact_match, remote_user, admin_filter_by_site_community)
     if result:
         # If we matched one user entity, see if we can get away without rendering it
         # TODO: This isn't particularly clean
@@ -232,6 +235,9 @@ def _ResolveUsersView(request):
     remote_user = get_remote_user(request, dataserver)
     assert remote_user is not None
 
+    admin_filter_by_site_community = not is_false(
+                        request.params.get('filter_by_site_community'))
+
     values = simplejson.loads(handle_unicode(request.body, request))
     if isinstance(values, Mapping):
         usernames = values.get('usernames') or values.get('terms') or ()
@@ -240,7 +246,7 @@ def _ResolveUsersView(request):
 
     result = {}
     for term in set(usernames or ()):
-        item = _resolve_user(term, remote_user)
+        item = _resolve_user(term, remote_user, admin_filter_by_site_community)
         if item:
             match = item[0]
             controller = IPreRenderResponseCacheController(match)
@@ -262,7 +268,7 @@ def _ResolveUsersView(request):
 interface.directlyProvides(_ResolveUsersView, INamedLinkView)
 
 
-def _resolve_user(exact_match, remote_user):
+def _resolve_user(exact_match, remote_user, admin_filter_by_site_community):
     exact_match = text_(exact_match)
     # This does an NTIID lookup if needed, so we can't alter the case yet
     entity = Entity.get_entity(exact_match)
@@ -283,7 +289,7 @@ def _resolve_user(exact_match, remote_user):
 
     result = ()
     if entity is not None:
-        if _make_visibility_test(remote_user)(entity):
+        if _make_visibility_test(remote_user, admin_filter_by_site_community)(entity):
             result = (entity,)
     return result
 
