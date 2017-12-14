@@ -153,6 +153,8 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         external_id - the external id of the user to update
     """
 
+    REQUIRE_EMAIL = False
+
     def readInput(self, value=None):
         if self.request.body:
             values = super(AbstractUpdateView, self).readInput(value)
@@ -175,6 +177,10 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         """
         result = self._params.get('email') \
               or self._params.get('mail')
+        if not result and self.REQUIRE_EMAIL:
+            raise_http_error(self.request,
+                             _(u"Must provide email."),
+                             u'NoEmailGiven')
         return result
 
     @Lazy

@@ -545,7 +545,8 @@ class RebuildEntityCatalogView(AbstractAuthenticatedView):
                permission=nauth.ACT_NTI_ADMIN)
 class LinkUserExternalIdentityView(AbstractUpdateView):
     """
-    An admin view to link the contextual user with external identifiers.
+    An admin view to link the contextual user with external identifiers. This
+    information will be associated to the current site.
     """
 
     def _predicate(self):
