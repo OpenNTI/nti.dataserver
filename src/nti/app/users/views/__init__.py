@@ -10,9 +10,13 @@ from __future__ import absolute_import
 
 import six
 
+from pyramid import httpexceptions as hexc
+
 from zope import component
 
 from zope.mimetype.interfaces import IContentTypeAware
+
+from nti.app.externalization.error import raise_json_error
 
 from nti.app.users import MessageFactory
 
@@ -27,6 +31,19 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 
 logger = __import__('logging').getLogger(__name__)
+
+
+def raise_http_error(request, message, code, factory=hexc.HTTPUnprocessableEntity):
+    """
+    Raise an HTTP json error.
+    """
+    raise_json_error(request,
+                     factory,
+                     {
+                         'message': message,
+                         'code': code,
+                     },
+                     None)
 
 
 def _make_min_max_btree_range(search_term):

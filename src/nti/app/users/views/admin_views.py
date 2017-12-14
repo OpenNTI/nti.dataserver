@@ -21,6 +21,8 @@ from zope import interface
 from zope.component.hooks import getSite
 from zope.component.hooks import site as current_site
 
+from zope.event import notify
+
 from zope.intid.interfaces import IIntIds
 
 from zope.security.management import endInteraction
@@ -47,7 +49,9 @@ from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import generate_mail_verification_pair
 
 from nti.app.users.views import username_search
+from nti.app.users.views import raise_http_error
 
+from nti.app.users.views.view_mixins import AbstractUpdateView
 from nti.app.users.views.view_mixins import UserUpsertViewMixin
 from nti.app.users.views.view_mixins import GrantAccessViewMixin
 from nti.app.users.views.view_mixins import RemoveAccessViewMixin
@@ -77,6 +81,11 @@ from nti.dataserver.users.utils import reindex_email_verification
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
+
+from nti.identifiers.interfaces import IUserExternalIdentityContainer
+
+from nti.identifiers.utils import get_user_for_external_id
 
 from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import is_valid_ntiid_string
@@ -526,6 +535,49 @@ class RebuildEntityCatalogView(AbstractAuthenticatedView):
         result = LocatedExternalDict()
         result[ITEM_COUNT] = result[TOTAL] = count
         return result
+
+
+@view_config(name='LinkUserExternalIdentity')
+@view_defaults(route_name='objects.generic.traversal',
+               renderer='rest',
+               request_method='POST',
+               context=IUser,
+               permission=nauth.ACT_NTI_ADMIN)
+class LinkUserExternalIdentityView(AbstractUpdateView):
+    """
+    An admin view to link the contextual user with external identifiers.
+    """
+
+    def _predicate(self):
+        if     not self._external_type \
+            or not self._external_id:
+            raise_http_error(self.request,
+                             _(u"Provider external_type, and external_id to link user."),
+                            u'CannotLinkUserExternalIdentityError')
+
+    def __call__(self):
+        external_user = get_user_for_external_id(self._external_type,
+                                                 self._external_id)
+        if      external_user \
+            and external_user != self.context:
+            logger.warn("""Mapping user to existing external identity (%s)
+                           (existing=%s) (external_type=%s) (external_id=%s)""",
+                        self.context.username, external_user.username,
+                        self._external_type,
+                        self._external_id)
+            raise_http_error(self.request,
+                             _(u"Multiple users mapped to this external identity."),
+                             u'DuplicateUserExternalIdentityError')
+
+        identity_container = IUserExternalIdentityContainer(self.context)
+        identity_container.add_external_mapping(self._external_type,
+                                                self._external_id)
+        notify(ObjectModifiedFromExternalEvent(self.context))
+        logger.info("Linking user to external id (%s) (external_type=%s) (external_id=%s",
+                    self.context.username,
+                    self._external_type,
+                    self._external_id)
+        return self.context
 
 
 @view_config(route_name='objects.generic.traversal',

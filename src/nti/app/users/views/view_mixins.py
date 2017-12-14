@@ -25,11 +25,11 @@ from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.app.externalization.error import raise_json_error
-
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.users import MessageFactory as _
+
+from nti.app.users.views import raise_http_error
 
 from nti.appserver.logon import _deal_with_external_account
 
@@ -65,26 +65,15 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users.users import User
 
-from nti.dataserver.users.utils import get_users_by_email
-
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
+
+from nti.identifiers.interfaces import IUserExternalIdentityContainer
+
+from nti.identifiers.utils import get_user_for_external_id
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 logger = __import__('logging').getLogger(__name__)
-
-
-def raise_http_error(request, message, code, factory=hexc.HTTPUnprocessableEntity):
-    """
-    Raise an HTTP json error.
-    """
-    raise_json_error(request,
-                     factory,
-                     {
-                         'message': message,
-                         'code': code,
-                     },
-                     None)
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -154,12 +143,15 @@ class EntityActivityViewMixin(UGDView):
 class AbstractUpdateView(AbstractAuthenticatedView,
                          ModeledContentUploadRequestUtilsMixin):
     """
-    An abstract view that takes uploaded input and updates a user. By default,
-    a user is found based on their email; optionally, a user could also be
-    found via a username param.
-    """
+    An abstract view that takes uploaded input and updates a user. An external
+    user is defined by a given external_type and external_id (and optionally a
+    username).
 
-    REQUIRE_EMAIL = False
+    params:
+        username - the username of the user to update
+        external_type - the type of external identifier
+        external_id - the external id of the user to update
+    """
 
     def readInput(self, value=None):
         if self.request.body:
@@ -183,16 +175,18 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         """
         result = self._params.get('email') \
               or self._params.get('mail')
-        if not result and self.REQUIRE_EMAIL:
-            raise_http_error(self.request,
-                             _(u"Must provide email."),
-                             u'NoEmailGiven')
         return result
 
     @Lazy
-    def _identifier(self):
+    def _external_id(self):
         result = self._params.get('id') \
+              or self._params.get('external_id') \
               or self._params.get('identifier')
+        return result and str(result)
+
+    @Lazy
+    def _external_type(self):
+        result = self._params.get('external_type')
         return result and str(result)
 
     @Lazy
@@ -203,22 +197,10 @@ class AbstractUpdateView(AbstractAuthenticatedView,
 
     def get_user(self):
         """
-        Fetches a user based on the given email (by default).
-
-        TODO: Should we have a site-based utility that allows different
-        implementations of user lookup?
+        Fetches a user based on the given external_type and external_id (or
+        username).
         """
-        user = None
-        if self._identifier is not None:
-            users = get_users_by_email(self._identifier) or ()
-            users = tuple(users)
-            # XXX: Not sure if we want to handle multiple found users.
-            if len(users) > 1:
-                raise_http_error(self.request,
-                                 _(u"Multiple users found for identifier."),
-                                 u'MultipleUsersFound')
-            elif users:
-                user = users[0]
+        user = get_user_for_external_id(self._external_type, self._external_id)
         if user is None and self._username:
             user = User.get_user(self._username)
         return user
@@ -445,7 +427,13 @@ class UserUpsertViewMixin(AbstractUpdateView):
         """
         Subclasses can override this to implement behavior after a user is created.
         """
-        pass
+        if not self._external_type or not self._external_id:
+            raise_http_error(self.request,
+                             _(u"Must provide external_type and external_id."),
+                             u'ExternalIdentifiersNotGivenError.')
+        identity_container = IUserExternalIdentityContainer(user)
+        identity_container.add_external_mapping(self._external_type,
+                                                self._external_id)
 
     def post_user_update(self, user):
         """

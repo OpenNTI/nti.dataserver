@@ -265,16 +265,29 @@ class TestAdminViews(ApplicationLayerTest):
         global_workspace = self._get_workspace(u'Global')
         catalog_workspace = self._get_workspace(u'Catalog')
         username = u'ed_brubaker'
-        email = u'update_user@gmail.com'
+        username2 = u'ed_brubaker_duplicate'
+        external_type = u'employee id'
+        external_id = u'1112345'
         with mock_dataserver.mock_db_trans(self.ds):
             user = self._create_user(username)
-            IUserProfile(user).email = email
+            self._create_user(username2)
             catalog = get_entity_catalog()
             intids = component.getUtility(IIntIds)
             doc_id = intids.getId(user)
             catalog.index_doc(doc_id, user)
             user_ntiid = to_external_ntiid_oid(user)
             invalid_access_ntiid = to_external_ntiid_oid(user.__parent__)
+
+        # Set external ids via admin view
+        admin_external_href = '/dataserver2/users/%s/%s' % (username, 'LinkUserExternalIdentity')
+        self.testapp.post_json(admin_external_href, {'external_type': external_type,
+                                                     'external_id': external_id})
+        # Cannot map to different user
+        admin_external_href = '/dataserver2/users/%s/%s' % (username2, 'LinkUserExternalIdentity')
+        self.testapp.post_json(admin_external_href, {'external_type': external_type,
+                                                     'external_id': external_id},
+                               status=422)
+
         user1_environ = self._make_extra_environ(user=username)
 
         user_update_href = self.require_link_href_with_rel(global_workspace,
@@ -287,8 +300,8 @@ class TestAdminViews(ApplicationLayerTest):
                                                              VIEW_RESTRICT_USER_ACCESS)
 
         # Empty update succeeds
-        user_update_href = '%s?identifier=%s' % (user_update_href, email)
-        self.testapp.post_json(user_update_href)
+        user_update_href_username = '%s?username=%s' % (user_update_href, username)
+        self.testapp.post_json(user_update_href_username)
 
         # Update user
         new_first = u'Ed'
@@ -296,7 +309,8 @@ class TestAdminViews(ApplicationLayerTest):
         new_email = u'new_email@gmail.com'
         self.testapp.post_json(user_update_href, {u'first_name': new_first,
                                                   u'last_name': new_last,
-                                                  u'identifier': u'update_user@gmail.com',
+                                                  u'external_type': external_type,
+                                                  u'external_id': external_id,
                                                   u'email': new_email})
         res = self.testapp.get('/dataserver2/users/%s' % username,
                                extra_environ=user1_environ)
@@ -308,13 +322,17 @@ class TestAdminViews(ApplicationLayerTest):
         new_first = u'Charlie'
         new_last = u'Parish'
         new_email = u'parish@gmail.com'
+        new_external_id = '99999'
+        new_external_type = 'employee id'
         res = self.testapp.post_json(user_update_href,
                                      {u'first_name': new_first,
                                       u'last_name': new_last,
+                                      u'external_type': new_external_type,
+                                      u'external_id': new_external_id,
                                       u'email': new_email})
         res = res.json_body
         created_username = res.get('Username')
-        assert_that(created_username, is_not(email))
+        assert_that(created_username, is_not(new_email))
 
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.get_user(created_username)
@@ -329,21 +347,30 @@ class TestAdminViews(ApplicationLayerTest):
 
         # Granting/removing access
         full_data = {u'ntiid': user_ntiid,
-                     u'identifier': new_email}
+                     u'external_type': new_external_type,
+                     u'external_id': new_external_id}
         missing_access = {u'ntiid': u"does_not_exist_ntiid",
-                          u'identifier': new_email}
+                          u'external_type': new_external_type,
+                          u'external_id': new_external_id}
         invalid_access = {u'ntiid': invalid_access_ntiid,
-                          u'identifier': new_email}
+                          u'external_type': new_external_type,
+                          u'external_id': new_external_id}
         missing_user = {u'ntiid': user_ntiid,
-                        u'identifier': u"does_not_exist_email@gmail.com"}
+                        u'external_type': u"does_not_exist_type",
+                        u'external_id': new_external_id}
+        missing_user2 = {u'ntiid': user_ntiid,
+                        u'external_type': new_external_type,
+                        u'external_id': u'does_not_exist_id'}
         self.testapp.post_json(grant_access_href, full_data)
         self.testapp.post_json(grant_access_href, invalid_access, status=422)
         self.testapp.post_json(grant_access_href, missing_access, status=404)
         self.testapp.post_json(grant_access_href, missing_user, status=404)
+        self.testapp.post_json(grant_access_href, missing_user2, status=404)
         self.testapp.post_json(remove_access_href, full_data)
         self.testapp.post_json(remove_access_href, invalid_access, status=422)
         self.testapp.post_json(remove_access_href, missing_access, status=404)
         self.testapp.post_json(remove_access_href, missing_user, status=404)
+        self.testapp.post_json(remove_access_href, missing_user2, status=404)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.users.utils.is_site_admin',
@@ -357,6 +384,9 @@ class TestAdminViews(ApplicationLayerTest):
         mock_get_site_names.is_callable().returns(('test_site',))
         test_site_username = u'test_site_user'
         test_site_email = u'%s@gmail.com' % test_site_username
+        external_type = u'employee id'
+        external_id = u'1112345'
+
         with mock_dataserver.mock_db_trans(self.ds):
             user = self._create_user(test_site_username)
             IUserProfile(user).email = test_site_email
@@ -364,6 +394,11 @@ class TestAdminViews(ApplicationLayerTest):
             intids = component.getUtility(IIntIds)
             doc_id = intids.getId(user)
             catalog.index_doc(doc_id, user)
+        admin_external_href = '/dataserver2/users/%s/%s' % (test_site_username,
+                                                            'LinkUserExternalIdentity')
+        self.testapp.post_json(admin_external_href, {'external_type': external_type,
+                                                     'external_id': external_id})
+
         global_workspace = self._get_workspace(u'Global')
         user_update_href = self.require_link_href_with_rel(global_workspace,
                                                            VIEW_USER_UPSERT)
@@ -371,8 +406,10 @@ class TestAdminViews(ApplicationLayerTest):
         fake_user_site = mock_get_user_site_name.is_callable().returns('test_site')
         fake_user_site.next_call().returns(object())
         fake_user_site.next_call().returns(None)
-        user_update_href = '%s?identifier=%s' % (user_update_href,
-                                                 test_site_email)
+
+        user_update_href = '%s?external_type=%s&external_id=%s' % (user_update_href,
+                                                                   external_type,
+                                                                   external_id)
 
         self.testapp.post_json(user_update_href)
         self.testapp.post_json(user_update_href, status=403)
