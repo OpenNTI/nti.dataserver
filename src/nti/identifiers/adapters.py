@@ -46,7 +46,7 @@ class ExternalIdentityContainer(CaseInsensitiveLastModifiedDict, SchemaConfigure
 
     def _set_site_name(self):
         current_site = getattr(getSite(), '__name__', '')
-        if current_site:
+        if current_site and current_site != 'dataserver2':
             if self.site_name and self.site_name != current_site:
                 raise MultipleUserExternalIdentitySitesError()
             self.site_name = current_site

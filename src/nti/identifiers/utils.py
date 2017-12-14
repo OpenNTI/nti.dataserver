@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 from zope import component
 
+from zope.component.hooks import getSite
+
 from zope.intid.interfaces import IIntIds
 
 from nti.dataserver.interfaces import IUser
@@ -20,6 +22,7 @@ from nti.identifiers.index import IX_EXTERNAL_TYPES
 
 from nti.identifiers.index import get_identifier_catalog
 
+from nti.identifiers.interfaces import IUserExternalIdentityContainer
 from nti.identifiers.interfaces import IUserExternalIdentityValidator
 
 from nti.site.site import get_component_hierarchy_names
@@ -41,6 +44,27 @@ def get_external_ids_for_user(user):
         vals = id_index.documents_to_values.get(uid)
         if vals is not None:
             result = tuple(vals)
+    return result
+
+
+def get_external_identifiers(user):
+    """
+    Fetches a dict (external_type:external_id) of external identifiers for
+    this user in this site.
+    """
+    identity_container = IUserExternalIdentityContainer(user)
+    result = {}
+    if identity_container:
+        current_site = getSite()
+        current_site_names = get_component_hierarchy_names(current_site)
+        if      identity_container.site_name \
+            and identity_container.site_name in current_site_names:
+            # Identity site_name must be in hierarchy of current sites.
+            result = dict(identity_container)
+        elif    not identity_container.site_name \
+            and not current_site_names:
+            # No current site and no identity site name (testing)
+            result = dict(identity_container)
     return result
 
 

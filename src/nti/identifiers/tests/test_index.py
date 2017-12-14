@@ -12,6 +12,7 @@ from hamcrest import none
 from hamcrest import not_none
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import contains_inanyorder
 
 from zope import component
@@ -25,6 +26,7 @@ from nti.dataserver.users.users import User
 
 from nti.identifiers.index import get_identifier_catalog
 
+from nti.identifiers.utils import get_external_identifiers
 from nti.identifiers.utils import get_user_for_external_id
 from nti.identifiers.utils import get_external_ids_for_user
 
@@ -87,3 +89,11 @@ class TestIndex(DataserverLayerTest):
         assert_that(external_ids, contains_inanyorder('id1'))
         external_ids = get_external_ids_for_user(user3)
         assert_that(external_ids, has_length(0))
+
+        external_id_map = get_external_identifiers(user1)
+        assert_that(external_id_map, has_entries('TYPE1', 'ID1',
+                                                 'TYPE2', 'ID2'))
+        external_id_map = get_external_identifiers(user2)
+        assert_that(external_id_map, has_entries('TYPE2', 'ID1'))
+        external_id_map = get_external_identifiers(user3)
+        assert_that(external_id_map, has_length(0))
