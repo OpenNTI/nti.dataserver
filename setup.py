@@ -483,7 +483,6 @@ setup(
             'mistune',
             # the extra notebook is web based, pulls in tornado
             'ipython',
-            'logilab_astng >= 0.24.3',
             'pip',
             #'pip-tools >= 0.3.4',     # command pip-review, pip-dump -- replaced by bin/checkversions
             # Python full screen console debugger. Beats ipython's:
