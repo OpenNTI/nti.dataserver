@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 from zope import interface
 
@@ -20,6 +22,8 @@ from zope.container.contained import Contained
 from zope.traversing.interfaces import IPathAdapter
 
 from pyramid.interfaces import IRequest
+
+from pyramid.threadlocal import get_current_request
 
 from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import ICatalogWorkspace
@@ -56,6 +60,20 @@ class PurchasedCatalogCollection(Contained):
     def __init__(self, catalog_workspace):
         self.__parent__ = catalog_workspace
 
+    @Lazy
+    def _params(self):
+        result = {}
+        request = get_current_request()
+        if request is not None:
+            values = request.params
+            result = CaseInsensitiveDict(values)
+        return result
+
+    @Lazy
+    def filter_str(self):
+        result = self._params.get('filter')
+        return result and result.lower()
+
     @property
     def _user(self):
         return self._workspace.user
@@ -66,7 +84,7 @@ class PurchasedCatalogCollection(Contained):
                                           IPurchasedCatalogCollectionProvider)
         result = LocatedExternalList()
         for provider in providers:
-            provider_iter = provider.get_collection_iter()
+            provider_iter = provider.get_collection_iter(self.filter_str)
             result.extend(provider_iter)
         result.__name__ = self.__name__
         result.__parent__ = self.__parent__
