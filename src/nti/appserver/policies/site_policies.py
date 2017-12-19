@@ -361,7 +361,8 @@ def guess_site_display_name(request=None):
 	policy, site_name = find_site_policy(request)
 
 	display_name = getattr(policy, 'DISPLAY_NAME', '')
-	if display_name and display_name.strip():
+	if display_name:
+		display_name = display_name.strip()
 		return display_name
 
 	if policy is None:

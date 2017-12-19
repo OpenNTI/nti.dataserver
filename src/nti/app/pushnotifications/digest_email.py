@@ -60,6 +60,8 @@ from nti.appserver.context_providers import get_trusted_top_level_contexts
 
 from nti.appserver.interfaces import IApplicationSettings
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
 from nti.appserver.policies.site_policies import find_site_policy
 from nti.appserver.policies.site_policies import guess_site_display_name
 
@@ -563,10 +565,19 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		return result
 
 	def compute_subject_for_recipient(self, unused_recipient):
+		"""
+		Prefer the site brand first, then falling back to a site display name.
+		"""
+		policy = component.getUtility(ISitePolicyUserEventListener)
+		display_name = getattr(policy, 'BRAND', '')
+		if display_name:
+			display_name = display_name.strip()
+		else:
+			display_name = guess_site_display_name(self.request)
 
 		subject = _(self._subject,
 					mapping={
-							 'site_name': guess_site_display_name(self.request),
+							 'site_name': display_name,
 							 })
 		return translate(subject, context=self.request)
 
