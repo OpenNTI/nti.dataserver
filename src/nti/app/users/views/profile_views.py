@@ -66,6 +66,7 @@ from nti.dataserver.users.index import CATALOG_NAME
 from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
 
 from nti.dataserver.users.interfaces import IAddress
+from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IUserContactProfile
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
@@ -84,6 +85,8 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
+
+from nti.mailer.interfaces import IEmailAddressable
 
 from nti.schema.interfaces import find_most_derived_interface
 from nti.identifiers.utils import get_external_identifiers
@@ -122,6 +125,11 @@ def _get_index_userids(ent_catalog, indexname='realname'):
     index = ent_catalog.get(indexname, None)
     result = index.ids()
     return result
+
+
+def _get_email(user):
+    addr = IEmailAddressable(user, None)
+    return getattr(addr, 'email', '')
 
 
 def _get_index_field_value(userid, ent_catalog, indexname):
@@ -163,11 +171,12 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
 
         username = u.username
         userid = _replace_username(username)
-        alias = _get_index_field_value(iid, ent_catalog, 'alias')
-        email = _get_index_field_value(iid, ent_catalog, 'email')
+        friendly_named = IFriendlyNamed(u)
+        alias = friendly_named.alias
+        email = _get_email(u)
         createdTime = _format_time(getattr(u, 'createdTime', 0))
         lastLoginTime = _format_time(getattr(u, 'lastLoginTime', None))
-        realname = _get_index_field_value(iid, ent_catalog, 'realname')
+        realname = friendly_named.realname
         external_id_map = get_external_identifiers(u)
         yield {
             'alias': _tx_string(alias),
@@ -303,7 +312,7 @@ def _get_topics_info(topics_key='opt_in_email_communication', coppaOnly=False):
             continue
         username = user.username
         userid = _replace_username(username)
-        email = _get_index_field_value(iid, ent_catalog, 'email')
+        email = _get_email(user)
         info = [username, userid, email] + _get_user_info(user)
         yield info
 
@@ -385,7 +394,7 @@ def _get_profile_info(coppaOnly=False):
 
         username = user.username
         userid = _replace_username(username)
-        email = _get_index_field_value(iid, ent_catalog, 'email')
+        email = _get_email(user)
         contact_email = _get_index_field_value(iid, ent_catalog, 'contact_email') or email
         info = [username, userid, email, contact_email] + _get_user_info(user)
         yield info
@@ -422,7 +431,6 @@ def _get_inactive_accounts(max_days=365):
     dataserver = component.getUtility(IDataserver)
     _users = IShardLayout(dataserver).users_folder
     intids = component.getUtility(IIntIds)
-    ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 
     now = datetime.utcnow()
     # pylint: disable=no-member
@@ -447,9 +455,9 @@ def _get_inactive_accounts(max_days=365):
 
         username = user.username
         userid = _replace_username(username)
-        email = _get_index_field_value(iid, ent_catalog, 'email')
+        email = _get_email(user)
         createdTime = _parse_time(getattr(user, 'createdTime', 0))
-        realname = _get_index_field_value(iid, ent_catalog, 'realname')
+        realname = IFriendlyNamed(user).realname
         lastLoginTime = lastLoginTime.isoformat() if lastLoginTime else None
         info = [username, userid, realname, email, createdTime, lastLoginTime]
         yield info
