@@ -1219,10 +1219,14 @@ def _openidcallback(unused_context, request, success_dict):
 def _user_did_logon(user, event):
     request = event.request
     request.environ['nti.request_had_transaction_side_effects'] = 'True'
-    if not user.lastLoginTime:
-        # First time logon, notify the client
-        flag_link_provider.add_link(user, 'first_time_logon')
-    user.update_last_login_time()
+    # Do not update on impersonation request
+    auth_username = event.request and event.request.authenticated_userid
+    if auth_username and auth_username == user.username:
+        if not user.lastLoginTime:
+            # First time logon, notify the client
+            flag_link_provider.add_link(user, 'first_time_logon')
+        user.update_last_login_time()
+
 
 # TODO: The two facebook methods below could be radically simplified using
 # requests-facebook. As of 0.1.1, it adds no dependencies.
