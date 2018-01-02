@@ -12,10 +12,10 @@
     <!-- Adapters -->
     <adapter factory=".adapters.ExternalIdentityContainerFactory"
              provides=".interfaces.IUserExternalIdentityContainer"
-             for="nti.dataserver.interfaces.IUser" />
+             for="nti.coremetadata.interfaces.IUser" />
 
     <adapter factory=".adapters._UserExternalIdentityValidator"
              provides=".interfaces.IUserExternalIdentityValidator"
-             for="nti.dataserver.interfaces.IUser" />
+             for="nti.coremetadata.interfaces.IUser" />
 
 </configure>

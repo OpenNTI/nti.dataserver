@@ -26,11 +26,11 @@ from nti.dataserver.users.users import User
 
 from nti.identifiers.index import get_identifier_catalog
 
+from nti.identifiers.interfaces import IUserExternalIdentityContainer
+
 from nti.identifiers.utils import get_external_identifiers
 from nti.identifiers.utils import get_user_for_external_id
 from nti.identifiers.utils import get_external_ids_for_user
-
-from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
 
 class TestIndex(DataserverLayerTest):

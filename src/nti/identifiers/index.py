@@ -20,7 +20,7 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
-from nti.dataserver.interfaces import IUser
+from nti.coremetadata.interfaces import IUser
 
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
@@ -28,8 +28,6 @@ from nti.zope_catalog.catalog import Catalog
 
 from nti.zope_catalog.index import AttributeSetIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
-
-logger = __import__('logging').getLogger(__name__)
 
 CATALOG_NAME = 'nti.dataserver.++etc++external-identifier-catalog'
 
@@ -41,6 +39,8 @@ IX_EXTERNAL_IDS = 'externalIds'
 
 #: External type strings
 IX_EXTERNAL_TYPES = 'externalTypes'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class ValidatingExternalIdentifiers(object):

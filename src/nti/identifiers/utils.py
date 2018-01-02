@@ -14,7 +14,7 @@ from zope.component.hooks import getSite
 
 from zope.intid.interfaces import IIntIds
 
-from nti.dataserver.interfaces import IUser
+from nti.coremetadata.interfaces import IUser
 
 from nti.identifiers.index import IX_SITE
 from nti.identifiers.index import IX_EXTERNAL_IDS

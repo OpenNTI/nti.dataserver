@@ -19,7 +19,7 @@ from zope.component.hooks import getSite
 
 from nti.containers.dicts import CaseInsensitiveLastModifiedDict
 
-from nti.dataserver.interfaces import IUser
+from nti.coremetadata.interfaces import IUser
 
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
 from nti.identifiers.interfaces import IUserExternalIdentityValidator
@@ -41,14 +41,15 @@ class ExternalIdentityContainer(CaseInsensitiveLastModifiedDict, SchemaConfigure
     Stores mappings of external_type -> external_id for a user. Users are
     only allowed to be externally identified to one site.
     """
-
     createDirectFieldProperties(IUserExternalIdentityContainer)
 
     def _set_site_name(self):
         current_site = getattr(getSite(), '__name__', '')
         if current_site and current_site != 'dataserver2':
+            # pylint: disable=access-member-before-definition
             if self.site_name and self.site_name != current_site:
                 raise MultipleUserExternalIdentitySitesError()
+            # pylint: disable=attribute-defined-outside-init
             self.site_name = current_site
 
     def add_external_mapping(self, external_type, external_id):

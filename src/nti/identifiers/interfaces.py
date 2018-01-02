@@ -16,8 +16,6 @@ from zope.container.interfaces import IContainer
 
 from nti.schema.field import ValidTextLine
 
-logger = __import__('logging').getLogger(__name__)
-
 
 class IUserExternalIdentityContainer(IContainer):
     """

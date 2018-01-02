@@ -11,12 +11,8 @@ import unittest
 
 from zope.dottedname import resolve as dottedname
 
-from nti.identifiers.tests import SharedConfiguringTestLayer
-
 
 class TestInterfaces(unittest.TestCase):
-
-    layer = SharedConfiguringTestLayer
 
     def test_ifaces(self):
         dottedname.resolve('nti.identifiers.interfaces')
