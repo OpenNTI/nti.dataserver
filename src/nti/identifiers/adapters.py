@@ -29,9 +29,9 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 from nti.schema.schema import SchemaConfigured
 
-logger = __import__('logging').getLogger(__name__)
-
 EXTERNAL_IDENTITY_ANNOTATION_KEY = 'nti.identifiers.interfaces.IUserExternalIdentityContainer'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(IUser)
