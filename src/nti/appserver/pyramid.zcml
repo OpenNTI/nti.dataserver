@@ -65,6 +65,7 @@
 	<include package="nti.app.types" file="pyramid.zcml" />
 	<include package="nti.app.forums" file="pyramid.zcml" />
 	<include package="nti.app.bulkemail" file="pyramid.zcml" />
+	<include package="nti.app.workspaces" file="pyramid.zcml" />
 	<include package="nti.app.publishing" file="pyramid.zcml" />
 	<include package="nti.app.invitations" file="pyramid.zcml" />
 	<include package="nti.app.contentfile" file="pyramid.zcml" />
