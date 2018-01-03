@@ -33,6 +33,8 @@ from nti.app.users.views import raise_http_error
 
 from nti.appserver.logon import _deal_with_external_account
 
+from nti.appserver.policies.interfaces import INoAccountCreationEmail
+
 from nti.appserver.ugd_query_views import UGDView
 
 from nti.base._compat import text_
@@ -358,6 +360,8 @@ class UserUpsertViewMixin(AbstractUpdateView):
     does not already exist. This will typically be used by a third party on
     behalf of a user.
 
+    Users created through this process will not receive a new account email.
+
     params:
         first_name - the user's first name, only used if no `real_name` provided.
         last_name - the user's last name, only used if no `real_name` provided.
@@ -413,6 +417,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
     def create_user(self):
         username = self._generate_username()
         realname = self._get_real_name()
+        interface.alsoProvides(self.request, INoAccountCreationEmail)
         # Realname is used if we have it; otherwise first/last are used.
         user = _deal_with_external_account(self.request,
                                            username=username,

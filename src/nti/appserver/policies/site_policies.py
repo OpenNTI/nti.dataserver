@@ -52,6 +52,7 @@ from nti.appserver.interfaces import IUserCreatedWithRequestEvent
 
 from nti.appserver.interfaces import UserUpgradedEvent
 
+from nti.appserver.policies.interfaces import INoAccountCreationEmail
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
 
@@ -697,7 +698,9 @@ class GenericSitePolicyEventListener(AbstractSitePolicyEventListener):
 	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'nti.appserver:templates/new_user_created'
 
 	def user_created_with_request(self, user, event):
-		self._send_email_on_new_account(user, event)
+		request = getattr(event, 'request', None)
+		if not INoAccountCreationEmail.providedBy(request):
+			self._send_email_on_new_account(user, event)
 
 	def user_will_create(self, user, event):
 		"""
