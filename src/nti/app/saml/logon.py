@@ -39,6 +39,7 @@ from nti.app.saml.interfaces import ISAMLAuthenticationResponse
 from nti.app.saml.interfaces import ISAMLUserAuthenticatedEvent
 
 from nti.app.saml.interfaces import ExistingUserMismatchError
+from nti.app.saml.interfaces import NewUserValidationError
 
 from nti.app.saml.views import SAMLPathAdapter
 
@@ -354,6 +355,9 @@ def acs_view(request):
     except ExistingUserMismatchError as e:
         logger.exception('Unable to match assertion to existing user')
         return _failure_response(request, 'User Mismatch', error, state)
+    except NewUserValidationError as e:
+        logger.exception('Unable to create new user')
+        return _failure_response(request, 'User Validation Error', error, state)
     except Exception as e:
         logger.exception("An unknown error occurred processing saml response")
         return _failure_response(request, None, error, state)

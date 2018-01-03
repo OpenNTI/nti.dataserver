@@ -205,6 +205,13 @@ class ISAMLUserAssertionInfo(interface.Interface):
                         required=False)
 
 
+class NewUserValidationError(ValueError):
+    """
+    Raised by IUserFactory implementations
+    to indicate that existing user with the same soonerid or ounetid.
+    """
+
+
 class IUserFactory(interface.Interface):
     """
     An object capable of creating a user account for a saml assertion.
