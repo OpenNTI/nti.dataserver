@@ -208,7 +208,7 @@ class ISAMLUserAssertionInfo(interface.Interface):
 class NewUserValidationError(ValueError):
     """
     Raised by IUserFactory implementations
-    to indicate that existing user with the same soonerid or ounetid.
+    to indicate that a user can't be created from the given assertion.
     """
 
 
