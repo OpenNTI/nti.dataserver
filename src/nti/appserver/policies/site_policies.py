@@ -515,6 +515,9 @@ class AbstractSitePolicyEventListener(object):
 	COM_USERNAME = None
 	COM_REALNAME = None
 
+	#: Allow google oath user creation.
+	GOOGLE_AUTH_USER_CREATION = True
+
 	_v_my_package = None
 
 	def __init__(self):

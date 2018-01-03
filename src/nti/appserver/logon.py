@@ -95,6 +95,8 @@ from nti.appserver.interfaces import UserCreatedWithRequestEvent
 from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.link_providers import unique_link_providers
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
 from nti.appserver.pyramid_authorization import has_permission
 
 from nti.common.string import is_true
@@ -1460,6 +1462,14 @@ def google_oauth1(request, success=None, failure=None, state=None):
     return response
 
 
+def _can_create_google_oath_user():
+    """
+    Some sites may not allow google auth account creation.
+    """
+    policy = component.queryUtility(ISitePolicyUserEventListener)
+    return getattr(policy, 'GOOGLE_AUTH_USER_CREATION', True)
+
+
 @view_config(route_name=LOGON_GOOGLE_OAUTH2, request_method='GET')
 def google_oauth2(request):
     params = request.params
@@ -1542,6 +1552,9 @@ def google_oauth2(request):
         logon_utility = component.getUtility(IGoogleLogonLookupUtility)
         user = logon_utility.lookup_user(email)
         if user is None:
+            if not _can_create_google_oath_user():
+                return _create_failure_response(request,
+                                                error="Cannot create user.")
             username = logon_utility.generate_username(email)
             firstName = profile.get('given_name', 'unspecified')
             lastName = profile.get('family_name', 'unspecified')
