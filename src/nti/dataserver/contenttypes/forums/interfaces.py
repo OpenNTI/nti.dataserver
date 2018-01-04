@@ -33,6 +33,8 @@ from zope.schema import Int
 
 from Acquisition.interfaces import IAcquirer
 
+from nti.contenttypes.reports.interfaces import IReportContext
+
 from nti.dataserver.interfaces import ACE_ACT_DENY
 from nti.dataserver.interfaces import ACE_ACT_ALLOW
 
@@ -177,6 +179,7 @@ class ITopic(IContentContainer,
              IAcquirer,
              IDCTimes,
              ILastModified,
+             IReportContext,
              IUserGeneratedData,
              IUserTaggedContent,
              ITitledDescribedContent,
@@ -220,6 +223,7 @@ class IForum(IContentContainer,
              IAcquirer,
              IDCTimes,
              ILastModified,
+             IReportContext,
              IUserGeneratedData,
              ITitledDescribedContent,
              INotModifiedInStreamWhenContainerModified):
