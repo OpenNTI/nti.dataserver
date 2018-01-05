@@ -453,20 +453,20 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
 
             # public comms can be searched
             if      ICommunity.providedBy(x) \
-                    and (x.public or is_admin or is_site_admin):
+                and (x.public or is_admin or is_site_admin):
                 return True
 
-            # Site admins can only view users in their site; othwerise fall
+            # Site admins can only view users in their site; otherwise fall
             # back to membership intersection
             if      is_site_admin \
-                    and site_admin_utility.can_administer_user(remote_user, x):
+                and site_admin_utility.can_administer_user(remote_user, x, remote_com_names):
                 return True
 
             # No one can see the Koppa Kids
             # FIXME: Hardcoding this site/user policy
             if      ICoppaUserWithoutAgreement.providedBy(x) \
-                    and not is_admin \
-                    and not is_site_admin:
+                and not is_admin \
+                and not is_site_admin:
                 return False
 
             # User can see dynamic memberships he's a member of
@@ -496,8 +496,8 @@ class _SharedDynamicMembershipProviderDecorator(Singleton):
             remote_user = get_remote_user(
                 request, dataserver) if dataserver else None
             if     remote_user is None or original == remote_user \
-                    or ICoppaUserWithoutAgreement.providedBy(original) \
-                    or not hasattr(original, 'usernames_of_dynamic_memberships'):
+                or ICoppaUserWithoutAgreement.providedBy(original) \
+                or not hasattr(original, 'usernames_of_dynamic_memberships'):
                 return
             remote_dmemberships = remote_user.usernames_of_dynamic_memberships
             remote_dmemberships = remote_dmemberships - set(('Everyone',))

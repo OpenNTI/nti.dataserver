@@ -1535,7 +1535,7 @@ class ISiteAdminUtility(interface.Interface):
     Generic site admin utility.
     """
 
-    def can_administer_user(self, site_admin, user):
+    def can_administer_user(self, site_admin, user, site_admin_membership_names=None):
         """
         Determines whether the given site_admin can administer the given user.
         """

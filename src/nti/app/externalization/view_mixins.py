@@ -472,7 +472,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
             # These are borderline server/client errors. They could
             # be either, depending on details...
             transaction.doom()
-            logger.warn("Failed to accept input. Client or server problem?", 
+            logger.warn("Failed to accept input. Client or server problem?",
 						exc_info=True)
             raise hexc.HTTPUnprocessableEntity(
                 _("Unexpected internal error; see logs"))
