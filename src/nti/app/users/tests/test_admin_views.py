@@ -39,6 +39,8 @@ from nti.dataserver.contenttypes.note import Note
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IAccessProvider
 
+from nti.dataserver.users.communities import Community
+
 from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import IUserProfile
@@ -429,6 +431,7 @@ class TestAdminViews(ApplicationLayerTest):
         mock_site_admin.is_callable().returns(True)
         mock_get_site_names.is_callable().returns(('test_site',))
         test_site_username = u'test_site_user'
+        community_name = u'test_site_admin_community'
         test_site_email = u'%s@gmail.com' % test_site_username
         external_type = u'employee id'
         external_id = u'1112345'
@@ -440,6 +443,9 @@ class TestAdminViews(ApplicationLayerTest):
             intids = component.getUtility(IIntIds)
             doc_id = intids.getId(user)
             catalog.index_doc(doc_id, user)
+            community = Community.create_community(username=community_name)
+            site_admin = User.get_user('sjohnson@nextthought.com')
+            site_admin.record_dynamic_membership(community)
         admin_external_href = '/dataserver2/users/%s/%s' % (test_site_username,
                                                             'LinkUserExternalIdentity')
         self.testapp.post_json(admin_external_href, {'external_type': external_type,
@@ -460,3 +466,14 @@ class TestAdminViews(ApplicationLayerTest):
         self.testapp.post_json(user_update_href)
         self.testapp.post_json(user_update_href, status=403)
         self.testapp.post_json(user_update_href, status=403)
+
+        # Now add user to community and site admin can administer them
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = User.get_user(test_site_username)
+            community = Community.get_community(community_name)
+            user.record_dynamic_membership(community)
+
+        fake_user_site.next_call().returns(object())
+        fake_user_site.next_call().returns(None)
+        self.testapp.post_json(user_update_href)
+        self.testapp.post_json(user_update_href)

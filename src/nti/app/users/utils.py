@@ -326,7 +326,8 @@ class UserUpdateUtility(object):
     def can_update_user(self, target_user):
         result = True
         if is_site_admin(self.user):
-            result = _is_user_created_in_current_site(target_user)
+            site_admin_utility = component.getUtility(ISiteAdminUtility)
+            result = site_admin_utility.can_administer_user(self.user, target_user)
         return result
 
 
@@ -334,11 +335,23 @@ class UserUpdateUtility(object):
 class SiteAdminUtility(object):
     """
     A default :class:`ISiteAdminUtility` that only allows site admins
-    the ability to administer to users that were created in the current site.
+    the ability to administer to users that were created in the current site
+    or have intersecting memberships.
     """
 
-    def can_administer_user(self, unused_site_admin, user):
-        return _is_user_created_in_current_site(user)
+    def get_site_admin_membership_names(self, site_admin):
+        memberships = site_admin.usernames_of_dynamic_memberships
+        return memberships - set(('Everyone',))
+
+    def can_administer_user(self, site_admin, user, site_admin_membership_names=None):
+        result = _is_user_created_in_current_site(user)
+        if not result:
+            if not site_admin_membership_names:
+                site_admin_membership_names = self.get_site_admin_membership_names(site_admin)
+            user_membership_names = user.usernames_of_dynamic_memberships
+            if user_membership_names:
+                result = user_membership_names.intersection(site_admin_membership_names)
+        return result
 
 
 @interface.implementer(ISiteAdminUtility)
