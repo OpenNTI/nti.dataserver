@@ -21,17 +21,17 @@
 	<utility factory="nti.app.authentication.saml_plugin.make_saml_client"
 			 provides="nti.app.saml.interfaces.ISAMLClient" />
 
-	<!-- 
+	<!--
 	By default, everyone can logon. Use logon:whitelist in a
-	sub-site to change that 
+	sub-site to change that
 	-->
 	<utility factory=".interfaces.EveryoneLogonWhitelist" />
 
-	<!-- 
+	<!--
 	By default, everyone can logon. Use logon:whitelist in a
-	sub-site to change that 
+	sub-site to change that
 	-->
-	<utility factory=".interfaces.EveryoneSiteLogonWhitelist" />
+	<utility factory=".interfaces.DefaultSiteLogonWhitelist" />
 
 	<adapter factory=".who_classifiers.application_request_classifier_for_request" />
 

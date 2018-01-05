@@ -19,7 +19,7 @@ from nti.app.authentication.interfaces import ISiteLogonWhitelist
 
 from nti.app.users.utils import get_user_creation_sitename
 
-from nti.dataserver.authorization import is_admin_or_site_admin
+from nti.dataserver.authorization import is_admin
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
@@ -47,7 +47,8 @@ def user_can_login_in_site(user):
     if not IUser.providedBy(user):
         user = User.get_user(str(user))
     result = user is not None  # validate
-    if result and not is_admin_or_site_admin(user):
+    if result and not is_admin(user):
+        # Site admins can only login on user created site.
         sitelist = component.getUtility(ISiteLogonWhitelist)
         site = get_user_creation_sitename(user)
         result = bool(not site or site in sitelist)

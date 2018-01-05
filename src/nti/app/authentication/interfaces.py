@@ -12,6 +12,8 @@ from __future__ import absolute_import
 
 from zope import interface
 
+from nti.site.site import get_component_hierarchy_names
+
 
 class IUserTokenCreator(interface.Interface):
     """
@@ -110,17 +112,19 @@ class ISiteLogonWhitelist(interface.Interface):
     A container of sites that users are allowed to login (be authenticated).
     """
 
-    def __contains__(username):
+    def __contains__(site_name):
         """
         Return true if the username can login.
         """
 
 
 @interface.implementer(ISiteLogonWhitelist)
-class EveryoneSiteLogonWhitelist(object):
+class DefaultSiteLogonWhitelist(object):
     """
-    Everyone is allowed to logon.
+    Only allowed to login if the given site is in the site hierarchy.
     """
 
-    def __contains__(self, unused_username):
-        return True
+    def __contains__(self, site_name):
+        # XXX: Is this what we want?
+        hierarchy_site_names = get_component_hierarchy_names()
+        return site_name in hierarchy_site_names
