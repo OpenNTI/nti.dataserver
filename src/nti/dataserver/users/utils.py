@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 from zope import component
 
+from zope.annotation.interfaces import IAnnotations
+
 from zope.catalog.interfaces import ICatalog
 
 from zope.intid.interfaces import IIntIds
@@ -28,6 +30,8 @@ from nti.dataserver.users.interfaces import IAvatarURLProvider
 from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
 from nti.property.urlproperty import UrlProperty
+
+CREATION_SITE_KEY = 'nti.app.users._CREATION_SITE_KEY'
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -123,6 +127,7 @@ def get_users_by_email(email):
             result.add(user)
     return tuple(result)
 
+
 # properties
 
 
@@ -162,3 +167,11 @@ class BackgroundUrlProperty(ImageUrlProperty):
     max_file_size = 524288  # 512 KB
     avatar_field_name = 'backgroundURL'
     avatar_provider_interface = IBackgroundURLProvider
+
+
+# site 
+
+
+def user_creation_sitename(user):
+    annotations = IAnnotations(user, None) or {}
+    return annotations.get(CREATION_SITE_KEY, None)

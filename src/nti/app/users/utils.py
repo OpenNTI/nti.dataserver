@@ -54,6 +54,10 @@ from nti.dataserver.users.interfaces import IUserUpdateUtility
 
 from nti.dataserver.users.users import User
 
+from nti.dataserver.users.utils import CREATION_SITE_KEY as _CREATION_SITE_KEY
+
+from nti.dataserver.users.utils import user_creation_sitename
+
 from nti.externalization.externalization import to_external_object
 
 from nti.mailer.interfaces import ITemplatedMailer
@@ -62,12 +66,10 @@ from nti.site.hostpolicy import get_host_site
 
 from nti.site.site import get_component_hierarchy_names
 
-logger = __import__('logging').getLogger(__name__)
-
-
-_CREATION_SITE_KEY = 'nti.app.users._CREATION_SITE_KEY'
 _EMAIL_VERIFICATION_TIME_KEY = 'nti.app.users._EMAIL_VERIFICATION_TIME_KEY'
 _EMAIL_VERIFICATION_COUNT_KEY = 'nti.app.users._EMAIL_VERIFICATION_COUNT_KEY'
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def get_user(user):
@@ -86,7 +88,7 @@ def _signature_and_token(username, email, secret_key):
 
 
 def generate_mail_verification_pair(user, email=None, secret_key=None):
-    __traceback_info__ = user, email
+    __traceback_info__ = user, email  # pylint: disable=unused-variable
     user = get_user(user)
     if user is None:
         raise ValueError("User not found")
@@ -109,7 +111,7 @@ def generate_mail_verification_pair(user, email=None, secret_key=None):
 
 def get_verification_signature_data(user, signature, params=None,
                                     email=None, secret_key=None):
-    __traceback_info__ = user, email, params
+    __traceback_info__ = user, email, params  # pylint: disable=unused-variable
     user = get_user(user)
     if user is None:
         raise ValueError("User not found")
@@ -267,15 +269,13 @@ def safe_send_email_verification(user, profile, email, request=None, check=True)
                                        email,
                                        request=request,
                                        check=check)
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logger.exception("Cannot send email confirmation to %s.", user)
         return False
 
 
 def get_user_creation_sitename(user):
-    user = get_user(user)
-    annotations = IAnnotations(user, None) or {}
-    return annotations.get(_CREATION_SITE_KEY, None)
+    return user_creation_sitename(get_user(user))
 
 
 def get_user_creation_site(user):
@@ -306,8 +306,8 @@ def _is_user_created_in_current_site(user):
     Returns if the user is created in the current applicable site hierarchy.
     This will return `False` if the user does not have a creation site.
     """
-    user_creation_sitename = get_user_creation_sitename(user)
-    return user_creation_sitename in get_component_hierarchy_names()
+    creation_sitename = get_user_creation_sitename(user)
+    return creation_sitename in get_component_hierarchy_names()
 
 
 @interface.implementer(IUserUpdateUtility)
