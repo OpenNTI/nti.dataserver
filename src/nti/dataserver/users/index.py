@@ -126,11 +126,11 @@ class ContactEmailRecoveryHashIndex(FieldIndex):
     default_interface = IContactEmailRecovery
 
 
-# XXX Note that FilteredSetBase uses a BTrees Set by default,
+# Note that FilteredSetBase uses a BTrees Set by default,
 # NOT a TreeSet. So updating them when large is quite expensive.
 # You can override clear() to use a TreeSet.
 
-# TODO: Investigate migrating these two indexes to use a TreeSet,
+# Investigate migrating these two indexes to use a TreeSet,
 # they have a size equal to the number of users and will conflict
 # if many users are added at once.
 
