@@ -24,10 +24,8 @@ from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import StandardExternalFields
 
-
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
-
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -50,8 +48,8 @@ class CatalogCollectionView(AbstractAuthenticatedView,
 
     def __call__(self):
         result = to_external_object(self.context)
-        self._batch_items_iterable(result, result[ITEMS])
         result[TOTAL] = len(result[ITEMS])
+        self._batch_items_iterable(result, result[ITEMS])
         return result
 
 

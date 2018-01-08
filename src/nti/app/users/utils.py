@@ -327,7 +327,8 @@ class UserUpdateUtility(object):
         result = True
         if is_site_admin(self.user):
             site_admin_utility = component.getUtility(ISiteAdminUtility)
-            result = site_admin_utility.can_administer_user(self.user, target_user)
+            result = site_admin_utility.can_administer_user(self.user,
+                                                            target_user)
         return result
 
 
