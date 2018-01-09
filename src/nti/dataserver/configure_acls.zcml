@@ -66,9 +66,13 @@
 	<grantAll role="role:nti.dataserver.site-admin" />
 
 	<!-- Register an IPrincipalRoleManager for ISite objects -->
-	<adapter factory=".site.site_role_manager"
+	<adapter factory=".site.PersistentSiteRoleManager"
 			 for="zope.component.interfaces.ISite"
 			 provides="zope.securitypolicy.interfaces.IPrincipalRoleManager" />
+
+	<class class="nti.site.transient.TrivialSite">
+        <implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+    </class>
 
 	<!-- ACL providers -->
 	<adapter factory=".authorization_acl._UserACLProvider" />

@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import contains
+from hamcrest import has_item
+from hamcrest import has_items
 from hamcrest import assert_that
 
 from zope import component
@@ -19,6 +21,7 @@ from zope.component.hooks import getSite
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
+from zope.securitypolicy.settings import Deny
 from zope.securitypolicy.settings import Allow
 
 from z3c.baseregistry.baseregistry import BaseComponents
@@ -64,17 +67,17 @@ ZCML_STRING = """
         <registerIn registry="nti.dataserver.tests.test_site._MYSITE">
             <!-- Setup some site level admins -->
             <utility factory="nti.dataserver.site.SiteRoleManager"
-                      provides="nti.dataserver.interfaces.ISiteRoleManager" />
+                     provides="nti.dataserver.interfaces.ISiteRoleManager" />
 
             <sp:grantSite role="role:nti.dataserver.site-admin" principal="chris"/>
         </registerIn>
     </configure>
 """
 
-_MYSITE = BaseComponents(MATHCOUNTS, name='test.components', 
+_MYSITE = BaseComponents(MATHCOUNTS, name='test.components',
                          bases=(MATHCOUNTS,))
 
-_MYSITE2 = BaseComponents(MATHCOUNTS, name='test.components2', 
+_MYSITE2 = BaseComponents(MATHCOUNTS, name='test.components2',
                           bases=(MATHCOUNTS,))
 
 
@@ -93,15 +96,34 @@ class TestSiteRoleManager(ConfiguringTestBase):
             srm = component.queryUtility(ISiteRoleManager)
             assert_that(srm, is_not(None))
 
-            # which is what we get when we adapt our site to
+            # which is not what we get when we adapt our site to
             # an IPrincipalRoleManager
             site_prm = IPrincipalRoleManager(getSite())
-            assert_that(site_prm, is_(srm))
+            assert_that(site_prm, is_not(srm))
 
             principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
-            assert_that(principals, contains(('chris', Allow, )))
+            assert_that(principals, contains(('chris', Allow,)))
 
             assert_that(is_site_admin(user), is_(True))
+
+            # Can override configured allows
+            site_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN_NAME, 'chris',
+                                             check=False)
+            principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
+            assert_that(principals, has_item(('chris', Deny,)))
+
+            # Persistent registrations can be removed
+            site_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'mortimer',
+                                           check=False)
+            principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
+            assert_that(principals, has_items(('chris', Deny,),
+                                              ('mortimer', Allow,)))
+
+            site_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN_NAME,
+                                             'mortimer', check=False)
+            principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
+            assert_that(principals, has_items(('chris', Deny,),
+                                              ('mortimer', Deny,)))
 
         # Parent site not a site admin
         with site(_TrivialSite(MATHCOUNTS)):

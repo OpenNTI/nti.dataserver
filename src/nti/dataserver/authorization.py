@@ -97,6 +97,8 @@ from zope.container.contained import Contained
 from zope.security.permission import Permission
 
 from zope.securitypolicy.interfaces import Allow
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
 from zope.securitypolicy.principalrole import principalRoleManager
 
 from persistent import Persistent
@@ -121,8 +123,6 @@ from nti.dataserver.interfaces import IMutableGroupMember
 from nti.dataserver.interfaces import IGroupAwarePrincipal
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
-
-from nti.dataserver.site import site_role_manager
 
 from nti.externalization.interfaces import IExternalObject
 
@@ -623,7 +623,7 @@ def is_site_admin(user):
     Returns whether the user has the `ROLE_SITE_ADMIN` role.
     """
     result = False
-    srm = site_role_manager(getSite())
+    srm = IPrincipalRoleManager(getSite())
     if srm is not None:
         username = getattr(user, 'username', user) or ''
         for role, access in srm.getRolesForPrincipal(username):
