@@ -15,6 +15,7 @@ from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
+from hamcrest import contains
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -30,6 +31,7 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.tests import mock_dataserver
 
+from nti.testing.time import time_monotonically_increases
 
 class TestCommunityViews(ApplicationLayerTest):
 
@@ -73,7 +75,7 @@ class TestCommunityViews(ApplicationLayerTest):
                    'joinable': True}
         path = '/dataserver2/users/bleach'
 
-        res = self.testapp.put_json(path, ext_obj, 
+        res = self.testapp.put_json(path, ext_obj,
                                     status=200,
                                     extra_environ=self._make_extra_environ(user=self.default_username))
         assert_that(res.json_body, has_entry('Username', 'bleach'))
@@ -136,6 +138,7 @@ class TestCommunityViews(ApplicationLayerTest):
             user = User.get_user(self.default_username)
             assert_that(user, is_not(is_in(community)))
 
+    @time_monotonically_increases(60)
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_membership_community(self):
         with mock_dataserver.mock_db_trans(self.ds):
@@ -149,6 +152,16 @@ class TestCommunityViews(ApplicationLayerTest):
         path = '/dataserver2/users/bleach/members'
         res = self.testapp.get(path, status=200)
         assert_that(res.json_body, has_entry('Items', has_length(2)))
+
+        path = '/dataserver2/users/bleach/members?sortOn=createdTime&sortOrder=descending'
+        res = self.testapp.get(path, status=200)
+        assert_that(res.json_body, has_entry('Items', contains(has_entry('Username', 'ichigo'),
+                                                               has_entry('Username', self.default_username.lower()))))
+
+        path = '/dataserver2/users/bleach/members?sortOn=createdTime&sortOrder=ascending'
+        res = self.testapp.get(path, status=200)
+        assert_that(res.json_body, has_entry('Items', contains(has_entry('Username', self.default_username.lower()),
+                                                               has_entry('Username', 'ichigo'))))
 
         res = self.testapp.get(path,
                                extra_environ=self._make_extra_environ(user="ichigo"),

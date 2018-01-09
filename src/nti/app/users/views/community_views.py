@@ -45,6 +45,8 @@ from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 
+from nti.dataserver.metadata.index import get_metadata_catalog
+
 from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.index import get_entity_catalog
@@ -234,11 +236,22 @@ class CommunityMembersView(AbstractAuthenticatedView,
     _DEFAULT_BATCH_SIZE = 50
     _DEFAULT_BATCH_START = 0
 
+    _ALLOWED_SORTING = ('createdTime', )
+
     def _batch_params(self):
         self.batch_size, self.batch_start = self._get_batch_size_start()
         self.limit = self.batch_start + self.batch_size + 2
         self.batch_after = None
         self.batch_before = None
+
+    @property
+    def sortOn(self):
+        sort = self.request.params.get('sortOn')
+        return sort if sort in self._ALLOWED_SORTING else None
+
+    @property
+    def sortOrder(self):
+        return self.request.params.get('sortOrder', 'ascending')
 
     def __call__(self):
         self._batch_params()
@@ -258,7 +271,21 @@ class CommunityMembersView(AbstractAuthenticatedView,
                                              if x == self.remoteUser
                                              else 'summary'))
 
-        result[TOTAL] = community.number_of_members()
+        catalog = get_metadata_catalog()
+        sortOn = self.sortOn
+        if sortOn and sortOn in catalog:
+            intids = community.iter_intids_of_possible_members()
+            reverse = self.sortOrder == 'descending'
+            sorted_intids = catalog[sortOn].sort(intids, reverse=reverse)
+            intids_utility = component.getUtility(IIntIds)
+            def resolved():
+                for intid in sorted_intids:
+                    user = intids_utility.queryObject(intid)
+                    if user:
+                        yield user
+            community = resolved()
+
+        result[TOTAL] = self.request.context.number_of_members()
         self._batch_items_iterable(result, community,
                                    number_items_needed=self.limit,
                                    batch_size=self.batch_size,
