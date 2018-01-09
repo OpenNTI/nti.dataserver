@@ -8,10 +8,17 @@ Views for :mod:`zope.file` objects, and likewise
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+from plone.namedfile.utils import getImageInfo
+
+from pyramid.security import NO_PERMISSION_REQUIRED
+
+from pyramid.view import view_config
+
+from ZODB.POSException import POSError
 
 from zope import interface
 
@@ -24,12 +31,6 @@ from zope.file import download
 from zope.file.interfaces import IFile
 
 from zope.publisher.interfaces.browser import IBrowserRequest
-
-from ZODB.POSException import POSError
-
-from pyramid.security import NO_PERMISSION_REQUIRED
-
-from pyramid.view import view_config
 
 from nti.app.externalization.view_mixins import UploadRequestUtilsMixin
 
@@ -50,9 +51,9 @@ from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.externalization import to_external_object
 
-from nti.namedfile.utils import getImageInfo
-
 from nti.property import dataurl
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(IFileViewedEvent)
@@ -112,6 +113,7 @@ class FilenameRespectingView(download.Inline):
 
     def __call__(self):
         filename = getattr(self.context, 'filename', None)
+        # pylint: disable=unused-variable
         __traceback_info__ = filename,
         for k, v in download.getHeaders(self.context,
                                         downloadName=filename,
@@ -196,6 +198,7 @@ class FilenameRespectingDownload(download.Download):
 
     def __call__(self):
         filename = getattr(self.context, 'filename', None)
+        # pylint: disable=unused-variable
         __traceback_info__ = filename,
         for k, v in download.getHeaders(self.context,
                                         downloadName=filename,
@@ -263,12 +266,13 @@ def image_to_dataurl(request):
     upload = UploadRequestUtilsMixin()
     upload.request = request
 
+    # pylint: disable=protected-access
     data = upload._get_body_content()
     filename = upload._get_body_name()
 
     # Now, sniff the data with the named image type. If we don't get
     # an image type back, regardless of what they uploaded, then it's not valid
-    # TODO: We could insert scaling or other manipulations here
+    # We could insert scaling or other manipulations here. TODO:
     contentType, width, height = getImageInfo(data)
     if not contentType or not contentType.startswith('image'):
         raise hexc.HTTPBadRequest(_("Not an image upload"))
