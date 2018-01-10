@@ -278,12 +278,12 @@ class CommunityMembersView(AbstractAuthenticatedView,
             reverse = self.sortOrder == 'descending'
             sorted_intids = catalog[sortOn].sort(intids, reverse=reverse)
             intids_utility = component.getUtility(IIntIds)
-            def resolved():
-                for intid in sorted_intids:
+            def resolved(intids):
+                for intid in intids:
                     user = intids_utility.queryObject(intid)
                     if user:
                         yield user
-            community = resolved()
+            community = resolved(sorted_intids)
 
         result[TOTAL] = self.request.context.number_of_members()
         self._batch_items_iterable(result, community,
