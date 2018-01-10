@@ -43,6 +43,11 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
     the :class:`ISiteRoleManagerUtility`.
     """
 
+    def __nonzero__(self):
+        # Always want to return data since we may be pulling from another
+        # role manager.
+        return True
+
     @Lazy
     def _site_role_manager_utility(self):
         return component.queryUtility(ISiteRoleManager)
