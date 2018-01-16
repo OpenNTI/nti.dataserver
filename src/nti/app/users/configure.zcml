@@ -87,11 +87,4 @@
     <subscriber factory=".subscribers._GlobalWorkspaceLinkProvider"
                 provides="nti.appserver.workspaces.interfaces.IGlobalWorkspaceLinkProvider"/>
 
-	<configure zcml:condition="installed nti.app.site">
-    	<subscriber factory=".decorators.SiteAdminWorkspaceDecorator"
-                	provides="nti.externalization.interfaces.IExternalObjectDecorator"
-                	for="nti.app.site.workspaces.interfaces.ISiteAdminWorkspace
-                     	 pyramid.interfaces.IRequest"/>
-	</configure>
-
 </configure>
