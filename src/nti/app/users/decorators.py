@@ -16,8 +16,6 @@ from pyramid.interfaces import IRequest
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
-from nti.app.site.workspaces.interfaces import ISiteAdminWorkspace
-
 from nti.app.users import VIEW_SITE_ADMINS
 from nti.app.users import REL_MY_MEMBERSHIP
 from nti.app.users import SUGGESTED_CONTACTS
@@ -282,14 +280,13 @@ class _CatalogWorkspaceAdminLinkDecorator(object):
         return ()
 
 
-@component.adapter(ISiteAdminWorkspace, IRequest)
 @interface.implementer(IExternalObjectDecorator)
 class SiteAdminWorkspaceDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _predicate(self, unused_context, unused_result):
         return is_admin_or_site_admin(self.remoteUser)
 
-    def _do_decorate_external(self, context, result_map):
+    def _do_decorate_external(self, context, result_map):  # pylint: disable=arguments-differ
         links = result_map.setdefault("Links", [])
         rels = [VIEW_SITE_ADMINS]
         ds2 = find_interface(context, IDataserverFolder)
