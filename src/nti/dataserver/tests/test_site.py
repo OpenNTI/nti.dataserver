@@ -107,20 +107,17 @@ class TestSiteRoleManager(ConfiguringTestBase):
             assert_that(is_site_admin(user), is_(True))
 
             # Can override configured allows
-            site_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN_NAME, 'chris',
-                                             check=False)
+            site_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN_NAME, 'chris')
             principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
             assert_that(principals, has_item(('chris', Deny,)))
 
             # Persistent registrations can be removed
-            site_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'mortimer',
-                                           check=False)
+            site_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'mortimer')
             principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
             assert_that(principals, has_items(('chris', Deny,),
                                               ('mortimer', Allow,)))
 
-            site_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN_NAME,
-                                             'mortimer', check=False)
+            site_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN_NAME)
             principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
             assert_that(principals, has_items(('chris', Deny,),
                                               ('mortimer', Deny,)))
