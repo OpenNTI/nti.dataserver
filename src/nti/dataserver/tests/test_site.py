@@ -117,7 +117,7 @@ class TestSiteRoleManager(ConfiguringTestBase):
             assert_that(principals, has_items(('chris', Deny,),
                                               ('mortimer', Allow,)))
 
-            site_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN_NAME)
+            site_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN_NAME, 'mortimer')
             principals = site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN_NAME)
             assert_that(principals, has_items(('chris', Deny,),
                                               ('mortimer', Deny,)))
