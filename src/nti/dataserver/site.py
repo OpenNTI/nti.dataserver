@@ -41,6 +41,9 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
     An implementation of :class:`ISiteRoleManager` that will return
     persistently store principals/roles as well as falling back to
     the :class:`ISiteRoleManagerUtility`.
+
+    We never want to update the in-memory site utility. Results will be
+    undefined if we have a user granted/denied in both role managers.
     """
 
     def __nonzero__(self):
@@ -104,29 +107,6 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         id, principal id, and setting, in that order.
         """
         return self._accumulate('getPrincipalsAndRoles')
-
-    def _update_state(self, func_name, unused_check, *args):
-        super_func = getattr(super(PersistentSiteRoleManager, self), func_name)
-        result = super_func(*args)
-        util = self._site_role_manager_utility
-        if util is not None:
-            util_func = getattr(util, func_name)
-            # Since we do not have an auth utility that can validate principal
-            # existence, we will force check to False.
-            util_func(*args, check=False)
-        return result
-
-    def assignRoleToPrincipal(self, role_id, principal_id, check=False):
-        self._update_state('assignRoleToPrincipal', check, role_id,
-                           principal_id)
-
-    def removeRoleFromPrincipal(self, role_id, principal_id, check=False):
-        self._update_state('removeRoleFromPrincipal', check, role_id,
-                           principal_id)
-
-    def unsetRoleForPrincipal(self, role_id, principal_id, check=False):
-        self._update_state('unsetRoleForPrincipal', check, role_id,
-                           principal_id)
 
 
 deferredimport.initialize()

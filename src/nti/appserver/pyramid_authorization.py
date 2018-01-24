@@ -277,7 +277,7 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
     cache_key = (id(obj), principals)
 
     if not skip_cache:
-        cached_val = the_cache.get(cache_key, _marker) 
+        cached_val = the_cache.get(cache_key, _marker)
     else:
         cached_val = _marker
     if cached_val is not _marker:
@@ -289,7 +289,7 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
     # like the zope.site.threadSiteSubscriber that does the same thing for
     # pyramid.threadlocal, but see zope_site_tween for why that doesn't work Here we cheap out
     # and re-implement has_permission to use the desired registry.
-    check_value = _has_permission(permission, obj, reg, 
+    check_value = _has_permission(permission, obj, reg,
                                   authn_policy, principals)
     if not check_value and authn_policy is not None:
         # Try externalized objects
@@ -310,8 +310,8 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
 
 
 def _get_effective_principals(request):
-    """ 
-    Return the principals as a set, plus the auth policy and registry (optimization) 
+    """
+    Return the principals as a set, plus the auth policy and registry (optimization)
     """
     # Make sure we return a set here, the membership checks are much, much faster
     # than iteration.

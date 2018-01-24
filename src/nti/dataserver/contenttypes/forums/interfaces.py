@@ -636,10 +636,10 @@ class IUserTopicParticipationSummary(ITopicParticipationSummary):
 
     User = Object(IUser, title=u"The commenter.", required=True)
 
-    NestedChildReplyCount = Int(title=u"The numer of nested replies underneath this user's comments.",
+    NestedChildReplyCount = Int(title=u"The number of nested replies underneath this user's comments.",
                                 readonly=True)
 
-    DirectChildReplyCount = Int(title=u"The numer of direct replies to this user's comments.",
+    DirectChildReplyCount = Int(title=u"The number of direct replies to this user's comments.",
                                 readonly=True)
 
     Contexts = TypedIterable(title=u"An iterable of the comment contexts.",

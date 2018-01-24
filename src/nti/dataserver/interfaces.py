@@ -1094,7 +1094,15 @@ class ISelectedRange(IShareableModeledContent,
                              default=u'')
 
 
-class IBookmark(ISelectedRange):
+# BWC exports
+from nti.coremetadata.interfaces import IContainerContext
+from nti.coremetadata.interfaces import IUserGeneratedData
+from nti.coremetadata.interfaces import IContextAnnotatable
+
+IContainerContext = IContainerContext
+
+
+class IBookmark(ISelectedRange, IContextAnnotatable):
     """
     A marker that the user places in the content. The selected text
     is used mostly as a reminder (and may not actually be created by the user
@@ -1125,14 +1133,6 @@ class IPresentationPropertyHolder(interface.Interface):
                                   max_length=40,
                                   required=False,
                                   default=None)
-
-
-# BWC exports
-from nti.coremetadata.interfaces import IContainerContext
-from nti.coremetadata.interfaces import IUserGeneratedData
-from nti.coremetadata.interfaces import IContextAnnotatable
-
-IContainerContext = IContainerContext
 
 
 class IHighlight(IPresentationPropertyHolder,
