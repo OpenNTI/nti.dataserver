@@ -458,8 +458,9 @@ class _EntityACLProvider(object):
 @component.adapter(ICommunity)
 class _CommunityACLProvider(_EntityACLProvider):
     """
-    ACL provider for class:`.interfaces.ICommunity` objects. The
-    entity itself is allowed all permissions.
+    ACL provider for class:`.interfaces.ICommunity` objects. The entity
+    itself is only allowed READ/LIST perms. All members of the community
+    will get these perms.
     """
 
     def _viewers(self):
@@ -474,7 +475,8 @@ class _CommunityACLProvider(_EntityACLProvider):
             username = self._entity.NTIID
         else:
             username = self._entity.username
-        acl = _ACL([ace_allowing(username, ALL_PERMISSIONS, self)])
+        acl = _ACL([ace_allowing(username, authorization.ACT_READ, self)])
+        acl.append(ace_allowing(username, authorization.ACT_LIST, self))
         acl.append(ace_allowing(authorization.ROLE_ADMIN, ALL_PERMISSIONS, self))
         acl.append(ace_allowing(authorization.ROLE_MODERATOR,
                                 authorization.ACT_MODERATE, self))
@@ -691,7 +693,7 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
         if     IReadableShared.providedBy(parent) \
             or IModeledContentBody.providedBy(parent):
             result = _ACL()
-            self._extend_with_admin_privs(result, 
+            self._extend_with_admin_privs(result,
                                           'Nested _ShareableModeledContentACLProvider')
             return result
         return super(_ShareableModeledContentACLProvider, self).__acl__
