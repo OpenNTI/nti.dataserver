@@ -17,6 +17,8 @@ from zope.annotation import factory as an_factory
 
 from zope.component.hooks import getSite
 
+from nti.base._compat import text_
+
 from nti.containers.dicts import CaseInsensitiveLastModifiedDict
 
 from nti.coremetadata.interfaces import IUser
@@ -50,7 +52,7 @@ class ExternalIdentityContainer(CaseInsensitiveLastModifiedDict, SchemaConfigure
             if self.site_name and self.site_name != current_site:
                 raise MultipleUserExternalIdentitySitesError()
             # pylint: disable=attribute-defined-outside-init
-            self.site_name = current_site
+            self.site_name = text_(current_site)
 
     def add_external_mapping(self, external_type, external_id):
         self._set_site_name()
