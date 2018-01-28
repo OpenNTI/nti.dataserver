@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
 from hamcrest import is_
 from hamcrest import none
@@ -14,8 +13,9 @@ from hamcrest import is_not
 from hamcrest import assert_that
 does_not = is_not
 
-import fudge
 import unittest
+
+import fudge
 
 from zope import interface
 

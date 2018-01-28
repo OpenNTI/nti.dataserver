@@ -12,9 +12,8 @@ import os
 import re
 import time
 from datetime import datetime
-from six.moves.urllib_parse import quote
-from six.moves.urllib_parse import urljoin
-from six.moves.urllib_parse import unquote
+
+from six.moves import urllib_parse
 
 from slugify import slugify_filename
 
@@ -48,7 +47,7 @@ def get_ds2(request=None):
 
 
 def is_cf_io_href(link):
-    return bool(pattern.match(unquote(link))) if link else False
+    return bool(pattern.match(urllib_parse.unquote(link))) if link else False
 
 
 def safe_download_file_name(name):
@@ -57,8 +56,8 @@ def safe_download_file_name(name):
     else:
         ext = os.path.splitext(name)[1]
         try:
-            result = quote(name)
-        except Exception:
+            result = urllib_parse.quote(name)
+        except Exception:  # pylint: disable=broad-except
             result = u'file' + ext
     return result
 
@@ -81,7 +80,7 @@ get_cf_io_href = to_external_cf_io_href
 def to_external_cf_io_url(context, request=None):
     request = request if request else get_current_request()
     href = to_external_cf_io_href(context, request=request)
-    result = urljoin(request.host_url, href) if href else href
+    result = urllib_parse.urljoin(request.host_url, href) if href else href
     return result
 get_cf_io_url = to_external_cf_io_url
 
@@ -93,10 +92,10 @@ def get_object(uid, intids=None):
 
 
 def get_file_from_cf_io_url(link, intids=None):
-    __traceback_info__ = link,
+    __traceback_info__ = link,  # pylint: disable=unused-variable
     result = None
     try:
-        link = unquote(link)
+        link = urllib_parse.unquote(link)
         if is_cf_io_href(link):
             match = pattern.match(link)
             uid = match.groups()[1]
@@ -105,7 +104,7 @@ def get_file_from_cf_io_url(link, intids=None):
             result = get_object(uid, intids=intids)
             if not IFile.providedBy(result):
                 result = None
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logger.error("Error while getting file from %s", link)
     return result
 

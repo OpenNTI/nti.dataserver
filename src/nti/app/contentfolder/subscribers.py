@@ -34,6 +34,8 @@ from nti.contentfolder.interfaces import IS3ContentFolder
 from nti.contentfolder.interfaces import IS3ObjectEjected
 from nti.contentfolder.interfaces import IS3ObjectRenamed
 
+from nti.metadata import queue_removed
+
 from nti.transactions import transactions
 
 logger = __import__('logging').getLogger(__name__)
@@ -59,6 +61,7 @@ def _on_s3_file_removed(context, _):
     if IS3ContentFolder.providedBy(context.__parent__):
         s3 = IS3FileIO(context, None)
         if s3 is not None:
+            # pylint: disable=too-many-function-args
             transactions.do_near_end(target=context,
                                      call=s3.remove,
                                      args=(s3.key(),))
@@ -70,6 +73,7 @@ def _on_s3_folder_removed(context, event):
 
 
 def _get_src_target_keys(source_parent, source_name, target_parent, target_name):
+    # pylint: disable=too-many-function-args
     if source_parent == target_parent:
         parent_key = IS3FileIO(source_parent).key()
         source_key = parent_key + source_name
@@ -128,16 +132,12 @@ def _on_s3_folder_moved(context, event):
 def _on_s3_file_ejected(context, _):
     intids = component.getUtility(IIntIds)
     # unindex
-    catalog = get_content_resources_catalog()
+    queue_removed(context)
     doc_id = intids.queryId(context)
     if doc_id is not None:
+        catalog = get_content_resources_catalog()
         catalog.unindex_doc(doc_id)
         intids.unregister(context)
-    try:
-        from nti.metadata import queue_removed
-        queue_removed(context)
-    except ImportError:
-        pass
 
 
 @component.adapter(IS3ContentFolder, IS3ObjectEjected)

@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
 from hamcrest import is_
 from hamcrest import is_not
@@ -48,6 +47,7 @@ class TestBotoS3(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             ichigo = self.ds.root['bleach']['ichigo']
             s3 = IS3FileIO(ichigo)
+            # pylint: disable=too-many-function-args
             assert_that(s3.key(), is_('ichigo'))
             assert_that(s3.exists(), is_(True))
             assert_that(s3.contents(), is_('kurosaki'))
@@ -79,6 +79,7 @@ class TestBotoS3(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             bankai = self.ds.root['bleach']['bankai']
             s3 = IS3FileIO(bankai)
+            # pylint: disable=too-many-function-args
             assert_that(s3.key(), is_('bankai/'))
             assert_that(s3.exists(), is_(True))
             assert_that(s3.contents(), is_(''))
@@ -97,6 +98,7 @@ class TestBotoS3(ApplicationLayerTest):
             ichigo = bankai['ichigo']
             assert_that(ichigo, has_property('data', is_('zangetsu')))
             s3 = IS3FileIO(ichigo)
+            # pylint: disable=too-many-function-args
             assert_that(s3.key(), is_('bankai/ichigo'))
 
         # add some samples
@@ -124,6 +126,7 @@ class TestBotoS3(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             izuru = self.ds.root['bleach']['chikai']['izuru']
             s3 = IS3FileIO(izuru)
+            # pylint: disable=too-many-function-args
             assert_that(s3.key(), is_('chikai/izuru'))
             assert_that(s3.exists(), is_(True))
 
@@ -139,6 +142,7 @@ class TestBotoS3(ApplicationLayerTest):
             izuru = shikai['izuru']
 
             s3 = IS3FileIO(shikai)
+            # pylint: disable=too-many-function-args
             assert_that(s3.key(), is_('shikai/'))
             assert_that(s3.exists(), is_(True))
 
@@ -159,6 +163,7 @@ class TestBotoS3(ApplicationLayerTest):
             bleach = self.ds.root['bleach']
             shinigami = bleach['trash']['shinigami']
             s3 = IS3FileIO(shinigami)
+            # pylint: disable=too-many-function-args
             assert_that(s3.key(), is_('trash/shinigami'))
             assert_that(s3.exists(), is_(True))
             assert_that(s3.contents(), is_(b'shinigami'))
@@ -177,6 +182,7 @@ class TestBotoS3(ApplicationLayerTest):
             bleach = self.ds.root['bleach']
             documents = bleach['trash']['documents']
             s3 = IS3FileIO(documents)
+            # pylint: disable=too-many-function-args
             assert_that(s3.key(), is_('trash/documents/'))
 
             asauchi = documents['asauchi']

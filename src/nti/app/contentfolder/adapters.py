@@ -10,14 +10,14 @@ from __future__ import absolute_import
 
 from mimetypes import guess_type
 
+from ZODB.interfaces import IConnection
+
 from zope import component
 from zope import interface
 
 from zope.container.contained import Contained
 
 from zope.traversing.interfaces import IPathAdapter
-
-from ZODB.interfaces import IConnection
 
 from nti.base._compat import text_
 
@@ -110,7 +110,7 @@ def _s3_fileIO_adapter(context):
 @interface.implementer(IS3FileIO)
 @component.adapter(IS3ContentFolder)
 class S3FolderIO(S3FileIO):
-
+    # pylint: disable=arguments-differ
     def contents(self):
         return ''
 
@@ -226,10 +226,12 @@ class __OFSPathAdapter(Contained):
     def __getitem__(self, key):
         if key == 'root':
             try:
+                # pylint: disable=protected-access
                 result = self.context._ofs_root
             except AttributeError:
                 result = self.context._ofs_root = RootFolder()
                 result.__parent__ = self.context
+                # pylint: disable=too-many-function-args
                 IConnection(self.context).add(result)
             return result
         raise KeyError(key)
@@ -251,10 +253,12 @@ class __S3PathAdapter(Contained):
     def __getitem__(self, key):
         if key == 's3root':
             try:
+                # pylint: disable=protected-access
                 result = self.context._s3_root
             except AttributeError:
                 result = self.context._s3_root = S3RootFolder()
                 result.__parent__ = self.context
+                # pylint: disable=too-many-function-args
                 IConnection(self.context).add(result)
             return result
         raise KeyError(key)

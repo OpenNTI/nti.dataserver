@@ -17,9 +17,12 @@ import tempfile
 from functools import partial
 from mimetypes import guess_type
 from mimetypes import guess_extension
-from six.moves.urllib_parse import parse_qs
+
+from plone.namedfile.utils import getImageInfo
 
 from requests.structures import CaseInsensitiveDict
+
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
@@ -119,11 +122,11 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.links.links import Link
 
+from nti.metadata import queue_add
+
 from nti.mimetype.externalization import decorateMimeType
 
 from nti.namedfile.file import safe_filename
-
-from nti.namedfile.utils import getImageInfo
 
 from nti.ntiids.oids import to_external_ntiid_oid
 
@@ -165,7 +168,7 @@ SORT_KEYS['type'] = SORT_KEYS['fileType']
 def to_unicode(name, encoding='utf-8', err='strict'):
     try:
         return text_(name, encoding=encoding, err=err)
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         return name.decode(encoding)
 
 
@@ -187,6 +190,7 @@ class SortMixin(object):
 
     @Lazy
     def _sortOn(self):
+        # pylint: disable=no-member
         return self._params.get('sortOn', self._DEFAULT_SORT_ON)
 
     @Lazy
@@ -195,6 +199,7 @@ class SortMixin(object):
 
     @Lazy
     def _sortOrder(self):
+        # pylint: disable=no-member
         return self._params.get('sortOrder', 'ascending')
 
     def _isAscending(self):
@@ -205,6 +210,7 @@ class SortMixin(object):
         return bool(size is not None and start is not None)
 
     def _sortKey(self, item):
+        # pylint: disable=too-many-function-args
         value = self._sortFunc(item)
         if INamedContainer.providedBy(item):
             result = ('a', value)
@@ -239,6 +245,7 @@ class ContainerContentsView(AbstractAuthenticatedView,
     def __call__(self):
         result = LocatedExternalDict()
         batching = self._isBatching()
+        # pylint: disable=no-member
         depth = int(self._params.get('depth') or 0)
         items = self.ext_container(self.context, result, depth)
         if batching:
@@ -344,6 +351,7 @@ class SearchView(AbstractAuthenticatedView, BatchingUtilsMixin, SortMixin):
         # read params
         batching = self._isBatching()
         reverse = not self._isAscending()
+        # pylint: disable=no-member
         name = (self._params.get('name') or '').lower()
         recursive = is_true(self._params.get('recursive'))
         containers = is_true(self._params.get('containers'))
@@ -375,8 +383,10 @@ class MkdirView(AbstractAuthenticatedView,
     def generate(self, prefix=_(u'Unnamed Folder')):
         for x in six.moves.range(10000):
             name = prefix + ('' if x == 0 else ' %s' % x)
+            # pylint: disable=unsupported-membership-test
             if safe_filename(name) not in self.context:
                 return name
+        # pylint: disable=too-many-format-args
         return u'% %' % (prefix, generate_random_hex_string())
 
     def readInput(self, value=None):
@@ -395,8 +405,10 @@ class MkdirView(AbstractAuthenticatedView,
     def _do_call(self):
         creator = self.remoteUser
         new_folder = self.readCreateUpdateContentObject(creator)
+        # pylint: disable=no-member
         new_folder.creator = creator.username  # use username
         new_folder.name = displayName(new_folder)
+        # pylint: disable=unsupported-membership-test
         if new_folder.name in self.context:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -424,6 +436,7 @@ class MkdirsView(AbstractAuthenticatedView,
 
     def builder(self):
         result = self.folder_factory()
+        # pylint: disable=no-member
         result.creator = self.remoteUser.username
         return result
 
@@ -491,9 +504,11 @@ class UploadView(AbstractAuthenticatedView,
         values = self.readInput()
         result = LocatedExternalDict()
         result[ITEMS] = items = []
+        # pylint: disable=no-member
         creator = self.remoteUser.username
         overwrite = is_true(values.get('overwrite'))
         sources = get_all_sources(self.request, None)
+        # pylint: disable=unsupported-membership-test
         for name, source in sources.items():
             name = to_unicode(name)
             filename = to_unicode(nameFinder(source) or name)
@@ -501,6 +516,7 @@ class UploadView(AbstractAuthenticatedView,
                 filename = get_unique_file_name(filename, self.context)
 
             if filename in self.context:
+                # pylint: disable=unsubscriptable-object
                 target = self.context[filename]
                 target.data = source.read()
                 lifecycleevent.modified(target)
@@ -532,6 +548,7 @@ class ImportView(AbstractAuthenticatedView,
 
     def builder(self):
         result = self.folder_factory()
+        # pylint: disable=no-member
         result.creator = self.remoteUser.username
         return result
 
@@ -553,6 +570,7 @@ class ImportView(AbstractAuthenticatedView,
     def _do_call(self):
         result = LocatedExternalDict()
         result[ITEMS] = items = {}
+        # pylint: disable=no-member
         creator = self.remoteUser.username
         sources = get_all_sources(self.request, None)
         for source in sources.values():
@@ -609,6 +627,7 @@ class ExportView(AbstractAuthenticatedView):
         try:
             source = os.path.join(out_dir, 'export.zip')
             with zipfile.ZipFile(source, mode="w") as zfile:
+                # pylint: disable=no-member
                 for item in self.context.values():
                     self._recur(item, zfile)
             response = self.request.response
@@ -776,6 +795,7 @@ class ClearContainerView(DeleteFolderView):
         theObject = self.context
         self._check_locked(theObject)
         self._check_non_empty(theObject)
+        # pylint: disable=no-member
         self.context.clear()
         return hexc.HTTPNoContent()
 
@@ -820,6 +840,7 @@ class RenameMixin(object):
                name='rename')
 class RenameView(UGDPutView, RenameMixin):
 
+    # pylint: disable=arguments-differ
     def _check_object_constraints(self, theObject, unused_external_value=None):
         if IRootFolder.providedBy(theObject):
             raise_json_error(self.request,
@@ -863,7 +884,7 @@ class RenameView(UGDPutView, RenameMixin):
         self._check_object_constraints(theObject, data)
         new_name = data.get('name') or data.get('filename')
         self.do_rename(theObject, new_name)
-        # XXX: externalize first
+        # externalize first
         result = to_external_object(theObject)
         return result
 
@@ -889,6 +910,7 @@ class NamedContainerPutView(UGDPutView, RenameMixin):  # order matters
                 externalValue[self.name_attr] = name
         return externalValue
 
+    # pylint: disable=arguments-differ
     def _check_object_constraints(self, theObject, externalValue):
         if IRootFolder.providedBy(theObject):
             raise_json_error(self.request,
@@ -1022,6 +1044,7 @@ class MoveView(AbstractAuthenticatedView,
                              },
                              None)
 
+        # pylint: disable=no-member
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
             raise_json_error(self.request,
@@ -1061,7 +1084,7 @@ class MoveView(AbstractAuthenticatedView,
         parent.moveTo(theObject, new_parent, target_name)
         lifecycleevent.modified(theObject)
 
-        # XXX: externalize first
+        # externalize first
         self.request.response.status_int = 201
         result = to_external_object(theObject)
         return result
@@ -1078,7 +1101,7 @@ class CopyView(MoveView):
     def __call__(self):
         theObject = self.context
         self._check_object_exists(theObject)
-
+        # pylint: disable=no-member
         parent = theObject.__parent__
         if not INamedContainer.providedBy(parent):
             raise_json_error(self.request,
@@ -1106,7 +1129,7 @@ class CopyView(MoveView):
         else:
             result = parent.copyTo(theObject, target.__parent__, target_name)
 
-        # XXX: externalize first
+        # externalize first
         self.request.response.status_int = 201
         result = to_external_object(result)
         return result
@@ -1165,7 +1188,7 @@ class CFIOView(AbstractAuthenticatedView):
             if not content_disposition:
                 query_string = request.query_string or ''
                 if query_string:
-                    params = CaseInsensitiveDict(parse_qs(query_string))
+                    params = CaseInsensitiveDict(urllib_parse.parse_qs(query_string))
                     content_disposition = params.get('ContentDisposition')
             if content_disposition and 'view' in content_disposition:
                 view_name = '@@view'
@@ -1204,6 +1227,7 @@ class S3ImportView(ImportView):
 
     def builder(self):
         result = self.folder_factory()
+        # pylint: disable=no-member
         result.creator = self.remoteUser.username
         return result
 
@@ -1320,13 +1344,6 @@ class S3SyncView(AbstractAuthenticatedView):
                permission=nauth.ACT_NTI_ADMIN)
 class RebuildContentResourcesCatalogView(AbstractAuthenticatedView):
 
-    def _process_meta(self, package):
-        try:
-            from nti.metadata import queue_add
-            queue_add(package)
-        except ImportError:
-            pass
-
     def __call__(self):
         intids = component.getUtility(IIntIds)
         # remove indexes
@@ -1343,7 +1360,7 @@ class RebuildContentResourcesCatalogView(AbstractAuthenticatedView):
                         continue
                     seen.add(doc_id)
                     catalog.index_doc(doc_id, item)
-                    self._process_meta(item)
+                    queue_add(item)
         result = LocatedExternalDict()
         result[ITEM_COUNT] = result[TOTAL] = len(seen)
         return result
