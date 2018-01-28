@@ -14,7 +14,7 @@ less well in a Zope-ish environment.
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
-
+        
 import time
 from collections import Mapping
 
@@ -182,9 +182,11 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
             for k, v in headers:
                 response.headerlist.append((k, v))
         request.add_response_callback(reissue)
+        # pylint: disable:protected-access
         request._authtkt_reissued = True
 
     def forget(self, request):
+        # pylint: disable:protected-access
         request._authtkt_reissue_revoked = True
         return super(AuthenticationPolicy, self).forget(request)
 
@@ -192,6 +194,7 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
         res = self.__do_remember(request, principal, **kw)
         # Match what pyramid's AuthTkt policy does
         if hasattr(request, '_authtkt_reissued'):
+            # pylint: disable:protected-access
             request._authtkt_reissue_revoked = True
         return res
 

@@ -49,7 +49,7 @@ def find_xmlsec_path():
     try:
         from saml2.sigver import get_xmlsec_binary
         result = get_xmlsec_binary(xml_sec_dirs)
-    except (Exception, SigverError):
+    except (Exception, SigverError):  # pylint: disable=broad-except
         warnings.warn("xmlsec1 not found")
         result = None
     return result
@@ -244,7 +244,7 @@ class SAML2Plugin(_SAML2Plugin):
             environ['wsgi.input'].seek(0)  # allow reading
             wsgi_input = environ['wsgi.input'].read()  # copy
             return wsgi_input or ''
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return ''
 
     def identify(self, environ):

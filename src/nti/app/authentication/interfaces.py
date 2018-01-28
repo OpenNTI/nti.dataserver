@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+# pylint: disable=inherit-non-class,inconsistent-mro
+
 from zope import interface
 
 from nti.site.site import get_component_hierarchy_names
@@ -125,6 +127,6 @@ class DefaultSiteLogonWhitelist(object):
     """
 
     def __contains__(self, site_name):
-        # XXX: Is this what we want?
+        # Is this what we want?
         hierarchy_site_names = get_component_hierarchy_names()
         return site_name in hierarchy_site_names

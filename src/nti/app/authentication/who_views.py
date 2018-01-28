@@ -30,7 +30,7 @@ class ForbiddenView(object):
     """
 
     def __call__(self, request):
-        # TODO: This is very similar to some code in the PluggableAuthenticationMiddleware.
+        # This is very similar to some code in the PluggableAuthenticationMiddleware.
         # Should we just use that? It changes the order in which things are done, though
         # which might cause transaction problems?
         api_factory = component.getUtility(IAPIFactory)
@@ -53,6 +53,6 @@ class ForbiddenView(object):
                     challenge = hexc.__dict__[type(challenge_app).__name__]
                     result = challenge(headers=challenge_app.headers)
 
-        # TODO: Do this with a response factory or something similar
+        # Do this with a response factory or something similar
         result.vary = default_vary_on(request)
         return result

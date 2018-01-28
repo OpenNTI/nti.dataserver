@@ -15,6 +15,7 @@ from zope import interface
 from zope.authentication.interfaces import ILoginPassword
 
 from zope.pluggableauth.factories import PrincipalInfo
+
 from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
 from nti.app.authentication import user_can_login
@@ -60,5 +61,5 @@ class DataserverUsersAuthenticatorPlugin(object):
     def principalInfo(self, pid):
         user = User.get_user(pid)
         if user is not None:
-            # TODO: Better title and description
+            # 1) Better title and description
             return PrincipalInfo(pid, pid, pid, pid)

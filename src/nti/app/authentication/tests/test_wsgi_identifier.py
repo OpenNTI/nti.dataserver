@@ -5,14 +5,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
 from hamcrest import is_
 from hamcrest import assert_that
 
-import fudge
 import unittest
+
+import fudge
 
 from repoze.who.interfaces import IAPIFactory
 
@@ -48,7 +48,7 @@ class TestWsgiIdentifier(unittest.TestCase):
                    'SERVER_NAME': 'localhost', 'SERVER_PORT': '80',
                    'REQUEST_METHOD': 'GET'}
 
-        handler = identify_handler_factory(lambda e, s:  42)
+        handler = identify_handler_factory(lambda unused_e, unused_s:  42)
 
         # First, a different path
         environ['PATH_INFO'] = '/to_the_app'

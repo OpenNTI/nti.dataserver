@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
 from hamcrest import is_
 from hamcrest import assert_that
@@ -70,7 +69,7 @@ class TestClassifier(unittest.TestCase):
 
         # Add  a user agent
         environ['HTTP_USER_AGENT'] = 'Mozilla'
-        __traceback_info__ = environ
+        __traceback_info__ = environ  # pylint: disable=unused-variable
         assert_that(_nti_request_classifier(environ), is_(CLASS_BROWSER_APP))
 
         # But a default accept changes back to browser

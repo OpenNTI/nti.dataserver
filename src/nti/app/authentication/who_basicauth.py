@@ -33,8 +33,8 @@ class ApplicationBasicAuthPlugin(BasicAuthPlugin):
     """
 
     classifications = {
-          IChallenger: [CLASS_BROWSER_APP],
-          IIdentifier: [CLASS_BROWSER_APP]
+        IChallenger: [CLASS_BROWSER_APP],
+        IIdentifier: [CLASS_BROWSER_APP]
     }
 
     def challenge(self, environ, status, app_headers, forget_headers):
@@ -44,5 +44,5 @@ class ApplicationBasicAuthPlugin(BasicAuthPlugin):
         del exc.headers['WWW-Authenticate']
         return exc
 
-    def forget(self, *unused_args, **unused_kwargs):
+    def forget(self, *unused_args, **unused_kwargs):  # pylint: disable=arguments-differ
         return ()
