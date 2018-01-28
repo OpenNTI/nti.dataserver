@@ -182,20 +182,17 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
             for k, v in headers:
                 response.headerlist.append((k, v))
         request.add_response_callback(reissue)
-        # pylint: disable:protected-access
-        request._authtkt_reissued = True
+        setattr(request, '_authtkt_reissued', True)
 
     def forget(self, request):
-        # pylint: disable:protected-access
-        request._authtkt_reissue_revoked = True
+        setattr(request, '_authtkt_reissue_revoked', True)
         return super(AuthenticationPolicy, self).forget(request)
 
     def remember(self, request, principal, **kw):
         res = self.__do_remember(request, principal, **kw)
         # Match what pyramid's AuthTkt policy does
         if hasattr(request, '_authtkt_reissued'):
-            # pylint: disable:protected-access
-            request._authtkt_reissue_revoked = True
+            setattr(request, '_authtkt_reissue_revoked', True) 
         return res
 
     def __do_remember(self, request, principal, **unused_kw):
