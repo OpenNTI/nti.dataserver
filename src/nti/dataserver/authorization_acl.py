@@ -98,7 +98,7 @@ class _ACE(object):
     @classmethod
     def from_external_string(cls, string, provenance='from_string'):
         parts = string.split(':')
-        __traceback_info__ = parts, string, provenance
+        __traceback_info__ = parts, string, provenance  # pylint: disable=unused-variable
         # It happens that we use a : to delimit parts, but that is a valid character
         # to use in a role name. We arbitrarily decide that it is not a valid character
         # to use in a permission string. This lets us take the first part as the action
@@ -125,7 +125,7 @@ class _ACE(object):
         assert self.action in (ACE_ACT_ALLOW, ACE_ACT_DENY)
         self.actor = (IPrincipal(actor)
                       if not IPrincipal.providedBy(actor) else actor)
-        if not hasattr(permission, '__iter__'):  # XXX breaks on py3
+        if not hasattr(permission, '__iter__'):  #  breaks on py3
             permission = [permission]
 
         if provenance:
@@ -146,7 +146,7 @@ class _ACE(object):
 
     def __setstate__(self, state):
         other = self.from_external_string(state, provenance='from pickle')
-        self.__dict__ = other.__dict__
+        self.__dict__ = other.__dict__  # pylint: disable=attribute-defined-outside-init
 
     def to_external_string(self):
         """
@@ -159,7 +159,7 @@ class _ACE(object):
                              else [str(x.id) for x in self.permission])
 
     def __eq__(self, other):
-        # TODO: Work on this
+        # 1) Work on this
         # This trick (reversing the order and comparing to a tuple) lets us compare
         # equal to plain tuples as used in pyramid and that sometimes sneak in
         try:
@@ -244,7 +244,7 @@ def ACL(obj, default=()):
     the value of the `default` parameter is).
     """
     prov = ACLProvider(obj)
-    __traceback_info__ = obj, prov
+    __traceback_info__ = obj, prov  # pylint: disable=unused-variable
     return prov.__acl__ if prov is not None else default
 
 
@@ -296,7 +296,7 @@ def has_permission(permission, context, username, **kwargs):
         context.__acl__
     except AttributeError:
         try:
-            # XXX: JAM: This is probably a bug. Although it lets us work
+            # JAM: This is probably a bug. Although it lets us work
             # with a pure stock pyramid authorization policy, if the policy
             # is actually the one supplied by nti.appserver.pyramid_authorization
             # that automatically fills in the ACLs, then we are potentially
@@ -424,7 +424,7 @@ class _EntityACLProvider(object):
     ACL provider for class:`.interfaces.IEntity` objects. The
     entity itself is allowed all permissions.
     """
-    # TODO: Extend this for other subclasses such as communities?
+    # Extend this for other subclasses such as communities?
     # Define 'roles' and make Users members of roles that represent
     # their community
 
@@ -496,6 +496,7 @@ class _UserACLProvider(_EntityACLProvider):
     def _viewers(self):
         # intersecting community members have viewing rights
         # this is a private function while in flux
+        # pylint: disable=protected-access
         return authentication._dynamic_memberships_that_participate_in_security(self._entity)
 
 
@@ -562,7 +563,7 @@ class _CreatedACLProvider(object):
         Called after the creator and sharing target acls have been added, and after optional extensions, but
         before the deny-everyone is added (and only if it will be added). You can add additional options here.
         """
-        return
+        pass
 
     def _handle_deny_all(self, acl):
         if self._do_get_deny_all():
@@ -613,12 +614,12 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
             logger.warn("POSError getting sharing target names.")
             return ()
 
-    def _extend_acl_after_creator_and_sharing(self, acl):
+    def _extend_acl_after_creator_and_sharing(self, acl):  # pylint: disable=unused-argument
         """
         Called after the creator and sharing target acls have been added to add
         optional extensions. A deny-all may be added following this.
         """
-        return
+        pass
 
     def _extend_with_admin_privs(self, acl, provenance=None):
         """
@@ -647,7 +648,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
         """
         result = self._creator_acl()
         for name in self.__do_get_sharing_target_names():
-            __traceback_info__ = name
+            __traceback_info__ = name  # pylint: disable=unused-variable
             self._extend_for_sharing_target(name, result)
         self._extend_acl_after_creator_and_sharing(result)
         return self._handle_deny_all(result)
@@ -706,7 +707,7 @@ class _EnclosedContentACLProvider(_CreatedACLProvider):
     whether the content it is enclosing itself has an ACL.
     """
 
-    def __init__(self, obj):
+    def __init__(self, obj):  # pylint: disable=useless-super-delegation
         super(_EnclosedContentACLProvider, self).__init__(obj)
 
     @Lazy
@@ -725,7 +726,7 @@ class _FriendsListACLProvider(_CreatedACLProvider):
     Makes friends lists readable by those it contains.
     """
 
-    def __init__(self, obj):
+    def __init__(self, obj):  # pylint: disable=useless-super-delegation
         super(_FriendsListACLProvider, self).__init__(obj)
 
     @Lazy
@@ -758,7 +759,7 @@ class _DataserverFolderACLProvider(object):
                          authorization.ACT_SEARCH,
                          _DataserverFolderACLProvider),
             # Global admins also get impersonation rights globally
-            # TODO: We could easily site scope this, or otherwise
+            # We could easily site scope this, or otherwise
             ace_allowing(authorization.ROLE_ADMIN,
                          authorization.ACT_IMPERSONATE,
                          _DataserverFolderACLProvider),
