@@ -63,7 +63,7 @@ class _URLMetaDataExtractor(AbstractAuthenticatedView):
         self.request.response.cache_control.max_age = self.max_age
         if result is not None:
             return result
-        return
+        return hexc.HTTPNoContent()
 interface.directlyProvides(_URLMetaDataExtractor, INamedLinkView)
 
 _HOP_BY_HOP_HEADERS = ['te', 'transfer-encoding', 'keep-alive', 'proxy-authorization',
