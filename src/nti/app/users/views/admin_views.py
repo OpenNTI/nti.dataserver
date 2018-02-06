@@ -553,7 +553,7 @@ class LinkUserExternalIdentityView(AbstractUpdateView):
         if     not self._external_type \
             or not self._external_id:
             raise_http_error(self.request,
-                             _(u"Provider external_type, and external_id to link user."),
+                             _(u"Require external_type and external_id to link user."),
                             u'CannotLinkUserExternalIdentityError')
 
     def __call__(self):
