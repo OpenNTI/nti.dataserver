@@ -564,6 +564,7 @@ from nti.coremetadata.interfaces import IEntity
 from nti.coremetadata.interfaces import ICommunity
 from nti.coremetadata.interfaces import IAnonymousUser
 from nti.coremetadata.interfaces import IMissingEntity
+from nti.coremetadata.interfaces import ISiteCommunity
 from nti.coremetadata.interfaces import IDynamicSharingTarget
 from nti.coremetadata.interfaces import IUnscopedGlobalCommunity
 from nti.coremetadata.interfaces import IShouldHaveTraversablePath
@@ -574,16 +575,11 @@ IEntity = IEntity
 ICommunity = ICommunity
 IAnonymousUser = IAnonymousUser
 IMissingEntity = IMissingEntity
+ISiteCommunity = ISiteCommunity
 IDynamicSharingTarget = IDynamicSharingTarget
 IUnscopedGlobalCommunity = IUnscopedGlobalCommunity
 IShouldHaveTraversablePath = IShouldHaveTraversablePath
 IUsernameSubstitutionPolicy = IUsernameSubstitutionPolicy
-
-
-class ISiteCommunity(ICommunity):
-    """
-    A :class:`ICommunity` that is associated with a site.
-    """
 
 
 # BWC import
