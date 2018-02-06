@@ -579,6 +579,13 @@ IUnscopedGlobalCommunity = IUnscopedGlobalCommunity
 IShouldHaveTraversablePath = IShouldHaveTraversablePath
 IUsernameSubstitutionPolicy = IUsernameSubstitutionPolicy
 
+
+class ISiteCommunity(ICommunity):
+    """
+    A :class:`ICommunity` that is associated with a site.
+    """
+
+
 # BWC import
 from nti.coremetadata.interfaces import ANONYMOUS_USER_NAME
 from nti.coremetadata.interfaces import UNAUTHENTICATED_PRINCIPAL_NAME

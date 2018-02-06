@@ -85,6 +85,10 @@ def ZopeACLAuthorizationPolicy():
 
         def permits(self, context, principals, permission):
             # Not super() for speed reasons
+            from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
+            if ICourseCatalogEntry.providedBy(context) \
+                and getattr(context, 'Title', '') == "jzhu-QAReleaseH":
+                from IPython.terminal.debugger import set_trace;set_trace()
             permits = _PyramidACLAuthorizationPolicy.permits(
                 self, context, principals, permission)
             # Note that we're ignoring the principals given and hence pyramid's authentication

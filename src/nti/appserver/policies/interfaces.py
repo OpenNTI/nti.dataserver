@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from nti.dataserver.interfaces import ICommunity
+
 from nti.mailer.interfaces import IMailerPolicy
 
 
@@ -69,8 +71,8 @@ class ISitePolicyUserEventListener(IMailerPolicy):
 
 class ICommunitySitePolicyUserEventListener(ISitePolicyUserEventListener):
     """
-    A type of site policy that places all accounts created by that site
-    into a particular community. This community should only be used
+    A type of site policy that places all accounts created by that site into a
+    particular community. This :class:`ISiteCommunity` should only be used
     by that site.
     """
 

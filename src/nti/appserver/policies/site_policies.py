@@ -67,6 +67,7 @@ from nti.contentfragments.interfaces import ICensoredContentPolicy
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import INewUserPlacer
+from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import username_is_reserved
 from nti.dataserver.interfaces import ICoppaUserWithAgreement
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
@@ -533,6 +534,7 @@ class AbstractSitePolicyEventListener(object):
 			community = Entity.get_entity(self.COM_USERNAME)
 			if community is None:
 				community = Community.create_community(username=self.COM_USERNAME)
+				interface.alsoProvides(community, ISiteCommunity)
 				community.public = False
 				community.joinable = False
 				com_names = IFriendlyNamed(community)

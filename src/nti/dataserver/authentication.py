@@ -129,7 +129,7 @@ def effective_principals(username,
         return ()
 
     if hasattr(username, 'username'):
-        user = username 
+        user = username
     else:
         user = user_factory(username)
     username = user.username if hasattr(user, 'username') else username  # canonicalize
@@ -146,7 +146,7 @@ def effective_principals(username,
     # primary groups (unnamed adapter) and other groups (named adapters)
     memberships = _get_memberships(user, registry)
     result.update(memberships)
-    dynamic_memberships = _dynamic_memberships_that_participate_in_security(user, 
+    dynamic_memberships = _dynamic_memberships_that_participate_in_security(user,
                                                                             registry=registry)
     result.update(dynamic_memberships)
 
@@ -194,7 +194,6 @@ def effective_principals(username,
         if not hasattr(request, '_v_nti_ds_authentication_eff_prin_cache'):
             request._v_nti_ds_authentication_eff_prin_cache = dict()
         request._v_nti_ds_authentication_eff_prin_cache[key] = result
-
     return result
 
 
