@@ -109,6 +109,7 @@ def _make_min_max_btree_range(search_term):
 def username_search(search_term=None):
     dataserver = component.getUtility(IDataserver)
     _users = IShardLayout(dataserver).users_folder
+    # pylint: disable=no-member
     if search_term:
         min_inclusive, max_exclusive = _make_min_max_btree_range(search_term)
         usernames = _users.iterkeys(min_inclusive,
@@ -192,6 +193,7 @@ class JoinCommunityView(AbstractAuthenticatedView):
 
         user = self.remoteUser
         if user not in community:
+            # pylint: disable=no-member
             user.record_dynamic_membership(community)
             user.follow(community)
         return community
@@ -212,6 +214,7 @@ class LeaveCommunityView(AbstractAuthenticatedView):
         user = self.remoteUser
         community = self.request.context
         if user in community:
+            # pylint: disable=no-member
             user.record_no_longer_dynamic_member(community)
             user.stop_following(community)
         return community
@@ -239,6 +242,7 @@ class CommunityMembersView(AbstractAuthenticatedView,
     _ALLOWED_SORTING = ('createdTime', )
 
     def _batch_params(self):
+        # pylint: disable=attribute-defined-outside-init
         self.batch_size, self.batch_start = self._get_batch_size_start()
         self.limit = self.batch_start + self.batch_size + 2
         self.batch_after = None
@@ -278,6 +282,7 @@ class CommunityMembersView(AbstractAuthenticatedView,
             reverse = self.sortOrder == 'descending'
             sorted_intids = catalog[sortOn].sort(intids, reverse=reverse)
             intids_utility = component.getUtility(IIntIds)
+
             def resolved(intids):
                 for intid in intids:
                     user = intids_utility.queryObject(intid)
@@ -306,6 +311,7 @@ class HideCommunityMembershipView(AbstractAuthenticatedView):
         community = self.request.context
         hidden = IHiddenMembership(community)
         if user in community and user not in hidden:
+            # pylint: disable=too-many-function-args
             hidden.hide(user)
         return community
 
@@ -349,6 +355,7 @@ class CommunityActivityView(EntityActivityViewMixin):
 
     @property
     def _context_id(self):
+        # pylint: disable=no-member
         return self.context.username
 
     @property
