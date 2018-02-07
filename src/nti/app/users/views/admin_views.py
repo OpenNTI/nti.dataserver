@@ -559,6 +559,7 @@ class LinkUserExternalIdentityView(AbstractUpdateView):
     def __call__(self):
         external_user = get_user_for_external_id(self._external_type,
                                                  self._external_id)
+        # pylint: disable=no-member
         if      external_user \
             and external_user != self.context:
             logger.warn("""Mapping user to existing external identity (%s)
@@ -571,6 +572,7 @@ class LinkUserExternalIdentityView(AbstractUpdateView):
                              u'DuplicateUserExternalIdentityError')
 
         identity_container = IUserExternalIdentityContainer(self.context)
+        # pylint: disable=too-many-function-args
         identity_container.add_external_mapping(self._external_type,
                                                 self._external_id)
         notify(ObjectModifiedFromExternalEvent(self.context))
