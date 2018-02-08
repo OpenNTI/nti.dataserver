@@ -14,6 +14,8 @@ from requests.structures import CaseInsensitiveDict
 
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.intid.interfaces import IIntIds
 
 from pyramid import httpexceptions as hexc
@@ -29,6 +31,7 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+
 from nti.app.users import MessageFactory as _
 
 from nti.app.users.views.view_mixins import EntityActivityViewMixin
@@ -37,12 +40,15 @@ from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.authorization import is_admin
+from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 
 from nti.dataserver.metadata.index import get_metadata_catalog
@@ -257,6 +263,30 @@ class CommunityMembersView(AbstractAuthenticatedView,
     def sortOrder(self):
         return self.request.params.get('sortOrder', 'ascending')
 
+    @Lazy
+    def _is_admin(self):
+        return is_admin(self.remoteUser)
+
+    @Lazy
+    def _is_site_admin(self):
+        return is_site_admin(self.remoteUser)
+
+    @Lazy
+    def _site_admin_utility(self):
+        return component.getUtility(ISiteAdminUtility)
+
+    def _get_externalizer(self, user):
+        # XXX: It would be nice to make this automatic.
+        result = 'summary'
+        if user == self.remoteUser:
+            result = 'personal-summary'
+        elif self._is_admin:
+            result = 'admin-summary'
+        elif    self._is_site_admin \
+            and self._site_admin_utility.can_administer_user(self.remoteUser, user):
+                result = 'admin-summary'
+        return result
+
     def __call__(self):
         self._batch_params()
         community = self.request.context
@@ -271,9 +301,7 @@ class CommunityMembersView(AbstractAuthenticatedView,
         def _selector(x):
             if x is None or (x in hidden and x != self.remoteUser):
                 return None
-            return toExternalObject(x, name=('personal-summary'
-                                             if x == self.remoteUser
-                                             else 'summary'))
+            return toExternalObject(x, name=self._get_externalizer(x))
 
         catalog = get_metadata_catalog()
         sortOn = self.sortOn
