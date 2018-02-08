@@ -10,13 +10,13 @@ from __future__ import absolute_import
 
 import csv
 import six
-
 from io import BytesIO
-
 from datetime import datetime
-
 from functools import partial
 
+from pyramid import httpexceptions as hexc
+
+from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from requests.structures import CaseInsensitiveDict
@@ -30,10 +30,6 @@ from zope.catalog.interfaces import ICatalog
 from zope.interface.interfaces import IMethod
 
 from zope.intid.interfaces import IIntIds
-
-from pyramid import httpexceptions as hexc
-
-from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -58,8 +54,9 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
-from nti.dataserver.interfaces import ISiteAdminUtility
+from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
@@ -88,12 +85,11 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
+from nti.identifiers.utils import get_external_identifiers
+
 from nti.mailer.interfaces import IEmailAddressable
 
 from nti.schema.interfaces import find_most_derived_interface
-from nti.identifiers.utils import get_external_identifiers
-
-from nti.coremetadata.interfaces import ISiteCommunity
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
@@ -169,8 +165,7 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
             continue
 
         # filter user view by site
-        if      not all_sites \
-            and not admin_utility.can_administer_user(admin_user, u):
+        if not all_sites and not admin_utility.can_administer_user(admin_user, u):
             continue
 
         username = u.username
@@ -183,7 +178,7 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
         realname = friendly_named.realname
         external_id_map = get_external_identifiers(u)
         user_creation_site = get_user_creation_sitename(u)
-        
+
         if not user_creation_site:
             for i in u.dynamic_memberships:
                 if ISiteCommunity.providedBy(i):
@@ -366,7 +361,7 @@ class UserEmailVerifiedView(AbstractAuthenticatedView):
         values = CaseInsensitiveDict(**self.request.params)
         value = values.get('coppaOnly') \
              or values.get('onlyCoppa') \
-            or values.get('coppa')
+             or values.get('coppa')
         coppaOnly = is_true(value or 'F')
         generator = partial(_get_topics_info,
                             topics_key='email_verified',
