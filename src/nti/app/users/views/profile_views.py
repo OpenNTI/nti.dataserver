@@ -43,6 +43,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
+from nti.app.users.utils import get_user_creation_sitename
+
 from nti.common.phonenumbers import is_viable_phone_number
 
 from nti.common.string import is_true
@@ -90,6 +92,8 @@ from nti.mailer.interfaces import IEmailAddressable
 
 from nti.schema.interfaces import find_most_derived_interface
 from nti.identifiers.utils import get_external_identifiers
+
+from nti.coremetadata.interfaces import ISiteCommunity
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
@@ -178,6 +182,14 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
         lastLoginTime = _format_time(getattr(u, 'lastLoginTime', None))
         realname = friendly_named.realname
         external_id_map = get_external_identifiers(u)
+        user_creation_site = get_user_creation_sitename(u)
+        
+        if not user_creation_site:
+            for i in u.dynamic_memberships:
+                if ISiteCommunity.providedBy(i):
+                    user_creation_site = i.username
+                    break
+
         yield {
             'alias': _tx_string(alias),
             'email': _tx_string(email),
@@ -186,7 +198,8 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
             'username': _tx_string(u.username),
             'createdTime': _tx_string(createdTime),
             'lastLoginTime': _tx_string(lastLoginTime),
-            'external_ids': external_id_map
+            'external_ids': external_id_map,
+            'creationSite': user_creation_site
         }
 
 
@@ -232,7 +245,7 @@ class UserInfoExtractCSVView(AbstractUserInfoExtractView):
         stream = BytesIO()
         fieldnames = ['username', 'userid', 'realname', 'alias', 'email',
                       'createdTime', 'lastLoginTime', 'external_type',
-                      'external_id']
+                      'external_id', 'creationSite']
         csv_writer = csv.DictWriter(stream, fieldnames=fieldnames,
                                     extrasaction='ignore')
         csv_writer.writeheader()

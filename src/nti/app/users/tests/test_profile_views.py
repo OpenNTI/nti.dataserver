@@ -65,7 +65,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
         app_iter = res.app_iter[0].split('\n')[:-1]
         assert_that(app_iter, has_length(2))
         for t in app_iter:
-            assert_that(t.split(','), has_length(9))
+            assert_that(t.split(','), has_length(10))
 
         all_sites_path = '/dataserver2/@@user_info_extract?all_sites=True'
         environ = self._make_extra_environ()
@@ -78,7 +78,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
         app_iter = res.app_iter[0].split('\n')[:-1]
         assert_that(app_iter, has_length(4))
         for t in app_iter:
-            assert_that(t.split(','), has_length(9))
+            assert_that(t.split(','), has_length(10))
 
         res = testapp.get(path, extra_environ=environ,
                           headers={'accept': 'application/json'})
