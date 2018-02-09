@@ -165,7 +165,8 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
             continue
 
         # filter user view by site
-        if not all_sites and not admin_utility.can_administer_user(admin_user, u):
+        if      not all_sites \
+            and not admin_utility.can_administer_user(admin_user, u):
             continue
 
         username = u.username

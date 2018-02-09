@@ -341,8 +341,15 @@ def find_users_with_email(email, unused_dataserver, username=None, match_info=Fa
                         for x in ent_catalog.searchResults(**{match_type: (v, v)})))
 
     if username:
+        username = username.lower()
+        policy = component.queryUtility(IUsernameSubstitutionPolicy)
+        if policy is not None:
+            alternate_username = policy.replace(username)
+            usernames = (username, alternate_username)
+        else:
+            usernames = (username,)
         matches = ((u, match_type) for u, match_type in matches
-                   if IUser.providedBy(u) and u.username.lower() == username)
+                   if IUser.providedBy(u) and u.username.lower() in usernames)
 
     return [x[0] for x in matches] if not match_info else list(matches)
 
