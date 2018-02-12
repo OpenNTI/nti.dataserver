@@ -281,6 +281,7 @@ def forgot_passcode_view(request):
             logger.warn("No recovery url found for username '%s' and email '%s'",
                         username, email_assoc_with_account)
             reset_url = None
+        matching_user = _create_mock_user(matching_user)
     else:
         logger.warn("Failed to find user with username '%s' and email '%s': %s",
                     username, email_assoc_with_account, matching_users)
