@@ -165,3 +165,17 @@ class TestUsers(ApplicationLayerTest):
                                extra_environ=self._make_extra_environ(user=u"rukia"),
                                status=200)
         assert_that(res.json_body, has_entry('Items', has_length(0)))
+
+class TestAvatarViews(ApplicationLayerTest):
+
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=False)
+    def test_anonymously_accessible(self):
+
+        user_env = self._make_extra_environ(user=self.default_username)
+        path = '/dataserver2/users/%s/@@avatar' % self.default_username
+
+        # Returns a 302 to the avatar
+        self.testapp.get(path, status=302, extra_environ=user_env)
+
+        # Can be fetched anonymously also
+        self.testapp.get(path, status=302)

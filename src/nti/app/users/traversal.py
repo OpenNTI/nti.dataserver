@@ -15,8 +15,6 @@ from zope.container.traversal import ContainerTraversable
 
 from zope.traversing.interfaces import ITraversable
 
-from pyramid import httpexceptions as hexc
-
 from pyramid.interfaces import IRequest
 
 from nti.dataserver.interfaces import UNAUTHENTICATED_PRINCIPAL_NAME
@@ -36,16 +34,7 @@ class UsersAdapterTraversable(ContainerTraversable):
         self.context = context
         self.request = request
 
-    @property
-    def authenticated_userid(self):
-        try:
-            return self.request.authenticated_userid
-        except AttributeError:
-            return None
-
     def traverse(self, key, remaining_path):
-        if not bool(self.authenticated_userid):
-            if key == UNAUTHENTICATED_PRINCIPAL_NAME:
-                return AnonymousUser(self.context)
-            raise hexc.HTTPForbidden()
+        if key == UNAUTHENTICATED_PRINCIPAL_NAME:
+            return AnonymousUser(self.context)
         return ContainerTraversable.traverse(self, key, remaining_path)
