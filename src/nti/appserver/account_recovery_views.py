@@ -293,6 +293,10 @@ def forgot_passcode_view(request):
                       'NextThought Password Reset')
     package = getattr(policy, 'PACKAGE', None)
 
+    # Substitute username if necessary
+    matching_users = map(lambda user: _create_mock_user(user),
+                         matching_users)
+
     queue_simple_html_text_email(base_template, subject=_(subject),
                                  recipients=[email_assoc_with_account],
                                  template_args={
