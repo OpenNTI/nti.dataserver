@@ -343,13 +343,20 @@ def find_users_with_email(email, unused_dataserver, username=None, match_info=Fa
     if username:
         username = username.lower()
         policy = component.queryUtility(IUsernameSubstitutionPolicy)
-        if policy is not None:
-            alternate_username = policy.replace(username)
-            usernames = (username, alternate_username)
-        else:
-            usernames = (username,)
-        matches = ((u, match_type) for u, match_type in matches
-                   if IUser.providedBy(u) and u.username.lower() in usernames)
+        filtered_matches = []
+        for user, match_type in matches:
+            if not IUser.providedBy(user):
+                continue
+            actual_username = user.username.lower()
+            if policy is not None:
+                alternate_username = policy.replace(actual_username)
+                alternate_username = alternate_username and alternate_username.lower()
+                usernames = (actual_username, alternate_username)
+            else:
+                usernames = (actual_username,)
+            if username in usernames:
+                filtered_matches.append((user, match_type))
+        matches = filtered_matches
 
     return [x[0] for x in matches] if not match_info else list(matches)
 
