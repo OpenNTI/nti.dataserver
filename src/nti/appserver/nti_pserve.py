@@ -2,45 +2,16 @@
 # -*- coding: utf-8 -*-
 """
 A hack to help us ensure that we are loading and monkey-patching
-the entire system before Pyramid loads: loading Pyramid's ``pserve``
-loads many Pyramid modules, including :mod:`pyramid.traversal`, which
-in turn loads :mod:`repoze.lru` and allocates real, non-recursive
-thread locks. These are not compatible with gevent and eventually
-lead to a hang if we re-enter a greenlet that wants to acquire one
-of these locks while a previous greenlet already has it.
+the entire system before Pyramid loads
 
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-# Before doing any monkey patching, patch gevent.signal.signal
-# to work around an issue where using subprocess in a gunicorn worker
-# is broken because of the way that gevent and gunicorn fight over
-# SIGCHLD.  https://github.com/gevent/gevent/issues/857
-import gevent.signal
-from gevent.signal import signal as gevent_signal
-from gevent.signal import getsignal as gevent_getsignal
-
-import signal as _signal
-
-
-def _patched_signal(signalnum, handler):
-    if      signalnum == _signal.SIGCHLD \
-        and handler in (_signal.SIG_DFL, _signal.SIG_IGN):
-        if gevent_getsignal(_signal.SIGCHLD) not in (_signal.SIG_DFL, _signal.SIG_IGN):
-            # They tried to ignore/default action this signal (it's ignored by default)
-            # and previous code was there, so make sure the previous code
-            # doesn't run
-            return gevent_signal(signalnum, lambda *unused_args: None)
-        return
-    return gevent_signal(signalnum, handler)
-
-
-gevent.signal.signal = _patched_signal
-
-# Note that we must not import *anything* before the patch
+# NOTE: We must not import *anything* before the patch
 from nti.monkey import patch_nti_pserve_on_import
 patch_nti_pserve_on_import.patch()
 
