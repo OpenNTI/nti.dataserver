@@ -48,8 +48,7 @@ class _PDFRMLRenderer(AbstractCachingRenderer):
 
     def _render_to_pdf(self, value, system):
         rml = self.zpt_renderer(value, system)
-        # NOTE: Probably need to set headers for forcing inline view vs download?
-        # NOTE: Filename
+        # TODO: Probably need to set headers for forcing inline view vs download?
         pdf_stream = rml2pdf.parseString(rml)
         system['request'].response.content_type = 'application/pdf'
         return pdf_stream.read()

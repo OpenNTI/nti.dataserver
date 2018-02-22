@@ -126,7 +126,6 @@ class IExternalizationCatchComponentAction(interface.Interface):
 
     See :func:`nti.externalization.externaliaztion.catch_replace_action`
     """
-    # This probably belongs in nti.app.externalization?
 
 
 class INoHrefInResponse(interface.Interface):

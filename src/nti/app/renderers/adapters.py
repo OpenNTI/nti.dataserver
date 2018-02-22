@@ -12,15 +12,15 @@ from __future__ import absolute_import
 
 import six
 
-from zope import component
-from zope import interface
-
 from zc.displayname.adapters import convertName
 from zc.displayname.adapters import DefaultDisplayNameGenerator
 
 from zc.displayname.interfaces import IDisplayNameGenerator
 
 from pyramid.interfaces import IRequest
+
+from zope import component
+from zope import interface
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
