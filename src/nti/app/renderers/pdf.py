@@ -10,14 +10,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from zope import interface
-
-from z3c.rml import rml2pdf
+from pyramid.interfaces import IRenderer
+from pyramid.interfaces import IRendererFactory
 
 from pyramid_chameleon.renderer import template_renderer_factory
 
-from pyramid.interfaces import IRenderer
-from pyramid.interfaces import IRendererFactory
+from zope import interface
+
+from z3c.rml import rml2pdf
 
 from nti.app.pyramid_zope.z3c_zpt import ZPTTemplateRenderer
 
@@ -38,7 +38,7 @@ def PDFRendererFactory(info):
     return template_renderer_factory(info, _PDFRMLRenderer)
 
 
-# pylint: disable=W0223,I0011
+# pylint: disable=abstract-method,locally-disabled
 
 
 class _PDFRMLRenderer(AbstractCachingRenderer):
@@ -48,8 +48,8 @@ class _PDFRMLRenderer(AbstractCachingRenderer):
 
     def _render_to_pdf(self, value, system):
         rml = self.zpt_renderer(value, system)
-        # TODO: Probably need to set headers for forcing inline view vs download?
-        # TODO: Filename
+        # NOTE: Probably need to set headers for forcing inline view vs download?
+        # NOTE: Filename
         pdf_stream = rml2pdf.parseString(rml)
         system['request'].response.content_type = 'application/pdf'
         return pdf_stream.read()
