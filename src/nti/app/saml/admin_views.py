@@ -8,12 +8,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from requests.structures import CaseInsensitiveDict
-
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
+
+from requests.structures import CaseInsensitiveDict
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -106,6 +106,7 @@ class IDPEntityBindingsViews(AbstractAuthenticatedView):
         nq, spnq = self._qualifiers_from_request()
         entity_bindings = self._entity_bindings()
         try:
+            # pylint: disable=too-many-function-args
             binding = entity_bindings.binding(None, nq, spnq)
             if binding:
                 return binding
@@ -118,6 +119,7 @@ class IDPEntityBindingsViews(AbstractAuthenticatedView):
         nq, spnq = self._qualifiers_from_request()
         entity_bindings = self._entity_bindings()
         try:
+            # pylint: disable=too-many-function-args
             entity_bindings.clear_binding(None, nq, spnq)
         except KeyError:
             raise hexc.HTTPNotFound(_('NameId not found.'))

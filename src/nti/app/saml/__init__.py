@@ -30,12 +30,11 @@ IDP_NAME_IDS = u'NameIds'
 
 
 def make_location(url, params=None):
-    if not params:
-        return url
-    if not url:
-        return None
+    if not params or not url:
+        return url or None
     url_parts = list(urllib_parse.urlparse(url))
     query = dict(urllib_parse.parse_qsl(url_parts[4]))
     query.update(params)
     url_parts[4] = urllib_parse.urlencode(query)
+    # pylint: disable=too-many-function-args
     return urllib_parse.urlunparse(url_parts)
