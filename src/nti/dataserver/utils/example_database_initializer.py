@@ -80,7 +80,7 @@ class ExampleDatabaseInitializer(object):
         for uid in ('aaron.eskam', 'andrew.ligon', 'carlos.sanchez',
                     'chris.utz', 'greg.higgins', 'jason.madden',
                     'jeff.muehring', 'jonathan.grimes', 'josh.zuech', 'julie.zhu',
-                    'kaley.white', 'ken.parker',
+                    'kaley.white', 'ken.parker', 'egawati.panjei',
                     'ray.hatfield', 'sean.jones', 'mary.enos',
                     'zachary.roux', 'bobby.hagen',
                     'austin.graham', 'ethan.berman', 'admin'):
