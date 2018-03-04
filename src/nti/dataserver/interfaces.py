@@ -6,13 +6,16 @@ Dataserver interfaces
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+# pylint: disable=inherit-non-class,expression-not-assigned
 
 import six
 import sys
+
+from contentratings.interfaces import IUserRatable
 
 from zope import component
 from zope import interface
@@ -30,8 +33,6 @@ from zope.site.interfaces import IRootFolder
 
 from zope.schema import Iterable
 
-from contentratings.interfaces import IUserRatable
-
 from nti.contentrange import interfaces as rng_interfaces
 
 from nti.contentrange.contentrange import ContentRangeDescription
@@ -48,6 +49,7 @@ from nti.schema.field import ValidSet as Set
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
 
+# pylint: disable=slots-on-old-class
 
 class ACLLocationProxy(LocationProxy):
     """
@@ -57,6 +59,7 @@ class ACLLocationProxy(LocationProxy):
     __slots__ = ('__acl__',) + LocationProxy.__slots__
 
     def __new__(cls, backing, container=None, name=None, unused_acl=()):
+        # pylint: disable=redundant-keyword-arg
         return LocationProxy.__new__(cls, backing, container=container, name=name)
 
     def __init__(self, backing, container=None, name=None, acl=()):
@@ -77,6 +80,7 @@ class ACLProxy(ProxyBase):
         return ProxyBase.__new__(cls, backing)
 
     def __init__(self, backing, acl=()):
+        # pylint: disable=non-parent-init-called
         ProxyBase.__init__(self, backing)
         self.__acl__ = acl
 
@@ -562,6 +566,7 @@ class DefaultCreatedUsername(object):
 from nti.coremetadata.interfaces import IUser
 from nti.coremetadata.interfaces import IEntity
 from nti.coremetadata.interfaces import ICommunity
+from nti.coremetadata.interfaces import IMissingUser
 from nti.coremetadata.interfaces import IAnonymousUser
 from nti.coremetadata.interfaces import IMissingEntity
 from nti.coremetadata.interfaces import ISiteCommunity
@@ -573,6 +578,7 @@ from nti.coremetadata.interfaces import IUsernameSubstitutionPolicy
 IUser = IUser
 IEntity = IEntity
 ICommunity = ICommunity
+IMissingUser = IMissingUser
 IAnonymousUser = IAnonymousUser
 IMissingEntity = IMissingEntity
 ISiteCommunity = ISiteCommunity
@@ -612,156 +618,44 @@ class INoUserEffectivePrincipalResolver(IEffectivePrincipalResolver):
     as subscribers on IRequest
     """
 
-# BWC
 
-
+# BWC exports
 from nti.coremetadata.interfaces import UserEvent
 from nti.coremetadata.interfaces import IUserEvent
+from nti.coremetadata.interfaces import FollowerAddedEvent
+from nti.coremetadata.interfaces import StopFollowingEvent
+from nti.coremetadata.interfaces import IFollowerAddedEvent
+from nti.coremetadata.interfaces import IStopFollowingEvent
+from nti.coremetadata.interfaces import EntityFollowingEvent
+from nti.coremetadata.interfaces import IEntityFollowingEvent
+from nti.coremetadata.interfaces import StopDynamicMembershipEvent
+from nti.coremetadata.interfaces import IStopDynamicMembershipEvent
+from nti.coremetadata.interfaces import StartDynamicMembershipEvent
+from nti.coremetadata.interfaces import IStartDynamicMembershipEvent
 
 UserEvent = UserEvent
 IUserEvent = IUserEvent
+FollowerAddedEvent = FollowerAddedEvent
+StopFollowingEvent = StopFollowingEvent
+IFollowerAddedEvent = IFollowerAddedEvent
+IStopFollowingEvent = IStopFollowingEvent
+EntityFollowingEvent = EntityFollowingEvent
+IEntityFollowingEvent = IEntityFollowingEvent
+StopDynamicMembershipEvent = StopDynamicMembershipEvent
+IStopDynamicMembershipEvent = IStopDynamicMembershipEvent
+StartDynamicMembershipEvent = StartDynamicMembershipEvent
+IStartDynamicMembershipEvent = IStartDynamicMembershipEvent
 
 
-class IEntityFollowingEvent(interface.interfaces.IObjectEvent):
-    """
-    Fired when an entity begins following another entity.
-    The ``object`` is the entity that is now following the other entity.
-    """
-
-    object = Object(IEntity,
-                    title=u"The entity now following the other entity")
-
-    now_following = Object(IEntity,
-                           title=u"The entity that is now being followed by the object.")
-
-
-class IFollowerAddedEvent(interface.interfaces.IObjectEvent):
-    """
-    Fired when an entity is followed by another entity.
-
-    The ``object`` is the entity that is now being followed.
-    """
-
-    object = Object(IEntity, title=u"The entity now being followed.")
-
-    followed_by = Object(IEntity,
-                         title=u"The entity that is now following the object.")
-
-
-@interface.implementer(IEntityFollowingEvent)
-class EntityFollowingEvent(ObjectEvent):
-
-    def __init__(self, entity, now_following):
-        ObjectEvent.__init__(self, entity)
-        self.now_following = now_following
-
-
-@interface.implementer(IFollowerAddedEvent)
-class FollowerAddedEvent(ObjectEvent):
-
-    def __init__(self, entity, followed_by):
-        ObjectEvent.__init__(self, entity)
-        self.followed_by = followed_by
-
-
-class IStopFollowingEvent(interface.interfaces.IObjectEvent):
-    """
-    Fired when an entity stop following another entity.
-    The ``object`` is the entity that is no longer follows the other entity.
-    """
-    object = Object(IEntity,
-                     title=u"The entity not longer following the other entity")
-
-    not_following = Object(IEntity,
-                           title=u"The entity that is no longer being followed by the object.")
-
-
-@interface.implementer(IStopFollowingEvent)
-class StopFollowingEvent(ObjectEvent):
-
-    def __init__(self, entity, not_following):
-        ObjectEvent.__init__(self, entity)
-        self.not_following = not_following
-
-
-class IStartDynamicMembershipEvent(interface.interfaces.IObjectEvent):
-    """
-    Fired when an dynamic membershis (i.e. join a community is recorded)
-    The ``object`` is the entity that is is recording the membership.
-    """
-    object = Object(IEntity, title=u"The entity joining the dynamic target")
-    target = Object(IDynamicSharingTarget, title=u"The dynamic target to join")
-
-
-@interface.implementer(IStartDynamicMembershipEvent)
-class StartDynamicMembershipEvent(ObjectEvent):
-
-    def __init__(self, entity, target):
-        ObjectEvent.__init__(self, entity)
-        self.target = target
-
-
-class IStopDynamicMembershipEvent(interface.interfaces.IObjectEvent):
-    """
-    Fired when an dynamic membershis (i.e. unjoin a community) is removed
-    The ``object`` is the entity that is is leaving the membership.
-    """
-    object = Object(IEntity, title=u"The entity unjoining the dynamic target")
-
-    target = Object(IDynamicSharingTarget,
-                    title=u"The dynamic target to be leaving")
-
-
-@interface.implementer(IStopDynamicMembershipEvent)
-class StopDynamicMembershipEvent(ObjectEvent):
-
-    def __init__(self, entity, target):
-        ObjectEvent.__init__(self, entity)
-        self.target = target
-
-
-class IMissingUser(IMissingEntity):
-    """
-    A proxy object for a missing user.
-    """
-
-
-class IUsernameIterable(interface.Interface):
-    """
-    Something that can iterate across usernames belonging to system :class:`IUser`, typically
-    usernames somehow contained in or stored in this object (or its context).
-    """
-
-    def __iter__():
-        """
-        Return iterator across username strings. The usernames may refer to users
-        that have already been deleted.
-        """
-
-
-class IIntIdIterable(interface.Interface):
-    """
-    Something that can iterate across intids.
-    Typically this will be used as a mixin interface,
-    with the containing object defining what sort of
-    reference the intid will be to.
-
-    In general, the caller cannot assume that the intids
-    are entirely valid, and should use ``queryObject``
-    instead of ``getObject``.
-    """
-
-    def iter_intids():
-        """
-        Return an iterable across intids.
-        """
-
-
-# BWC
+# BWC exports
+from nti.coremetadata.interfaces import IIntIdIterable
 from nti.coremetadata.interfaces import IEntityIterable
 from nti.coremetadata.interfaces import IEntityContainer
+from nti.coremetadata.interfaces import IUsernameIterable
 from nti.coremetadata.interfaces import IEntityUsernameIterable
 from nti.coremetadata.interfaces import ISharingTargetEntityIterable
+
+IUsernameIterable = IUsernameIterable
 
 
 class IEntityIntIdIterable(IEntityIterable,
@@ -925,7 +819,6 @@ IContent = IContent
 from nti.coremetadata.interfaces import IModeledContentBody
 IModeledContentBody = IModeledContentBody
 
-
 # BWC exports
 from nti.coremetadata.interfaces import ITaggedContent
 IUserTaggedContent = ITaggedContent
@@ -1049,13 +942,12 @@ from nti.coremetadata.interfaces import ICanvasShape
 from nti.coremetadata.interfaces import ICanvasURLShape
 from nti.coremetadata.interfaces import ICanvas as ICoreCanvas
 
+ICanvasShape = ICanvasShape
+ICanvasURLShape = ICanvasURLShape
 
 class ICanvas(ICoreCanvas, IThreadable):
     pass
 
-
-ICanvasShape = ICanvasShape
-ICanvasURLShape = ICanvasURLShape
 
 # BWC exports
 from nti.coremetadata.interfaces import IEmbeddedAudio
@@ -1075,7 +967,7 @@ IEmbeddedVideo = IEmbeddedVideo
 # BWC exports
 from nti.coremetadata.interfaces import IModeledContentFile as ICoreContentFile
 
-
+# pylint: disable=inconsistent-mro
 class IModeledContentFile(ICoreContentFile, IThreadable):
     pass
 
@@ -1271,11 +1163,11 @@ class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody, IFileC
 
     body = ExtendedCompoundModeledContentBody()
 
-
+# pylint: disable=no-value-for-parameter
 INote.setTaggedValue('_ext_jsonschema', u'note')
 
-# BWC exports
 
+# BWC exports
 from nti.coremetadata.interfaces import IDeletedObjectPlaceholder
 IDeletedObjectPlaceholder = IDeletedObjectPlaceholder
 
