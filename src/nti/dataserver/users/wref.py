@@ -107,7 +107,7 @@ class WeakRef(object):
             result_username = getattr(result, 'username', None)
         except KeyError:  # pragma: no cover
             # Typically (only) a POSKeyError
-            logger.warning("POSKeyError accessing weak ref to %s", 
+            logger.warning("POSKeyError accessing weak ref to %s",
 						   self.username)
             result = None
         else:
@@ -136,7 +136,7 @@ class WeakRef(object):
         result = self._cached(allow_cached)
         if result is None and return_missing_proxy:
             if callable(return_missing_proxy):
-                factory = return_missing_proxy 
+                factory = return_missing_proxy
             else:
                 factory = MissingEntity
             result = factory(self.username)

@@ -317,7 +317,8 @@ class GrantAccessViewMixin(AbstractUpdateView):
         except Exception as e:
             self._handle_exception(e)
             raise
-        if result is None:
+        if not result:
+            # May already have access
             result = self._contextual_object
         return result
 
