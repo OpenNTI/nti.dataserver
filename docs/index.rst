@@ -115,6 +115,7 @@ Other Documents
 .. toctree::
 	:maxdepth: 2
 
+    client_api
 
 	ntiids
 	interfaces
