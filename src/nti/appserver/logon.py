@@ -1414,6 +1414,9 @@ class EmailGoogleLogonLookupUtility(object):
         users = get_users_by_email(identifier)
         users = tuple(users)
         if len(users) > 1:
+            logger.warn('Ambiguous users found on google auth (id=%s) (users=%s)',
+                        identifier,
+                        ', '.join(x.username for x in users))
             raise AmbiguousUserLookupError()
         elif users:
             user = users[0]
