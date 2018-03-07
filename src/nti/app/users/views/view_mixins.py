@@ -8,6 +8,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid import httpexceptions as hexc
+
+from pyramid.view import view_config
+
 from requests.structures import CaseInsensitiveDict
 
 from zope import component
@@ -18,10 +22,6 @@ from zope.cachedescriptors.property import Lazy
 from zope.event import notify
 
 from zope.intid.interfaces import IIntIds
-
-from pyramid import httpexceptions as hexc
-
-from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -89,7 +89,8 @@ class EntityActivityViewMixin(UGDView):
     user must be a member of the given entity.
     """
 
-    def _set_user_and_ntiid(self, *unused_args, **unusedkwargs):
+    # pylint: disable=arguments-differ
+    def _set_user_and_ntiid(self, *unused_args, **unused_kwargs):
         self.ntiid = u''
         self.user = self.remoteUser
 
@@ -117,6 +118,7 @@ class EntityActivityViewMixin(UGDView):
                     obj = obj.__parent__  # return entry
                 yield obj
 
+    # pylint: disable=arguments-differ
     def getObjectsForId(self, *unused_args, **unused_kwargs):
         context = self.request.context
         catalog = self.metadata_catalog
@@ -177,6 +179,7 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         """
         The email address by which we look up a user.
         """
+        # pylint: disable=no-member
         result = self._params.get('email') \
               or self._params.get('mail')
         if not result and self.REQUIRE_EMAIL:
@@ -187,6 +190,7 @@ class AbstractUpdateView(AbstractAuthenticatedView,
 
     @Lazy
     def _external_id(self):
+        # pylint: disable=no-member
         result = self._params.get('id') \
               or self._params.get('external_id') \
               or self._params.get('identifier')
@@ -194,11 +198,13 @@ class AbstractUpdateView(AbstractAuthenticatedView,
 
     @Lazy
     def _external_type(self):
+        # pylint: disable=no-member
         result = self._params.get('external_type')
         return result and str(result)
 
     @Lazy
     def _username(self):
+        # pylint: disable=no-member
         result = self._params.get('user') \
               or self._params.get('username')
         return result
@@ -224,6 +230,7 @@ class AbstractUpdateView(AbstractAuthenticatedView,
             if update_utility is not None:
                 user = self.get_user()
                 if user is not None:
+                    # pylint: disable=too-many-function-args
                     result = update_utility.can_update_user(user)
         if not result:
             raise_http_error(self.request,
@@ -233,6 +240,7 @@ class AbstractUpdateView(AbstractAuthenticatedView,
 
     def __call__(self):
         self._predicate()
+        # pylint: disable=no-member
         return self._do_call()
 
 
@@ -255,9 +263,10 @@ class GrantAccessViewMixin(AbstractUpdateView):
         """
         The contextual object that we want to grant access to.
         """
+        # pylint: disable=no-member
         object_id = self._params.get('ntiid') \
-                 or self._params.get('objectId') \
-                 or self._params.get('object_id')
+                or self._params.get('objectId') \
+                or self._params.get('object_id')
         if not object_id:
             logger.warn('No ntiid given to update access (%s)', self._params)
             raise_http_error(self.request,
@@ -284,6 +293,7 @@ class GrantAccessViewMixin(AbstractUpdateView):
 
     @Lazy
     def _access_context(self):
+        # pylint: disable=no-member
         access_type = self._params.get('scope') \
                    or self._params.get('access_context') \
                    or self._params.get('access_type')
@@ -386,6 +396,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
 
     @Lazy
     def _first_name(self):
+        # pylint: disable=no-member
         result = self._params.get('first') \
               or self._params.get('firstname') \
               or self._params.get('first_name')
@@ -393,6 +404,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
 
     @Lazy
     def _last_name(self):
+        # pylint: disable=no-member
         result = self._params.get('last') \
               or self._params.get('lastname') \
               or self._params.get('last_name')
@@ -400,6 +412,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
 
     @Lazy
     def _real_name(self):
+        # pylint: disable=no-member
         result = self._params.get('real') \
               or self._params.get('realname') \
               or self._params.get('real_name')
@@ -444,6 +457,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
                              _(u"Must provide external_type and external_id."),
                              u'ExternalIdentifiersNotGivenError.')
         identity_container = IUserExternalIdentityContainer(user)
+        # pylint: disable=too-many-function-args
         identity_container.add_external_mapping(self._external_type,
                                                 self._external_id)
 
@@ -458,7 +472,6 @@ class UserUpsertViewMixin(AbstractUpdateView):
         if realname is not None:
             friendly_named = IFriendlyNamed(user)
             friendly_named.realname = realname
-
         if self._email is not None:
             profile = IUserProfile(user)
             profile.email = self._email
