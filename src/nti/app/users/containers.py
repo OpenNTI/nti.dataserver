@@ -34,7 +34,7 @@ class _UserContainersQuerier(object):
             containers.update(user.iterntiids(include_stream=include_stream,
                                               stream_only=stream_only))
         # We always include the unnamed root (which holds things like CIRCLED)
-        # NOTE: This is only in the stream. Normally we cannot store contained
+        # TODO: This is only in the stream. Normally we cannot store contained
         # objects with an empty container key, so this takes internal magic
         containers.add('')  # root
         return containers

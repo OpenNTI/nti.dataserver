@@ -17,6 +17,8 @@ from six.moves import urllib_parse
 
 import isodate
 
+from itsdangerous import JSONWebSignatureSerializer as SignatureSerializer
+
 from zope import component
 from zope import interface
 
@@ -31,8 +33,6 @@ from zope.i18n import translate
 from zope.intid.interfaces import IIntIds
 
 from zope.security.interfaces import IPrincipal
-
-from itsdangerous import JSONWebSignatureSerializer as SignatureSerializer
 
 from nti.app.users import MessageFactory as _
 

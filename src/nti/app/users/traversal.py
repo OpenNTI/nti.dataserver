@@ -8,14 +8,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid.interfaces import IRequest
+
 from zope import component
 from zope import interface
 
 from zope.container.traversal import ContainerTraversable
 
 from zope.traversing.interfaces import ITraversable
-
-from pyramid.interfaces import IRequest
 
 from nti.dataserver.interfaces import UNAUTHENTICATED_PRINCIPAL_NAME
 
@@ -34,6 +34,7 @@ class UsersAdapterTraversable(ContainerTraversable):
         self.context = context
         self.request = request
 
+    # pylint: disable=arguments-differ
     def traverse(self, key, remaining_path):
         if key == UNAUTHENTICATED_PRINCIPAL_NAME:
             return AnonymousUser(self.context)

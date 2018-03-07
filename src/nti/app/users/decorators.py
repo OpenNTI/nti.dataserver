@@ -8,10 +8,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid.interfaces import IRequest
+
 from zope import component
 from zope import interface
-
-from pyramid.interfaces import IRequest
 
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
@@ -131,7 +131,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
     def _do_decorate_external(self, context, result):
         _links = result.setdefault(LINKS, [])
         in_community = self.remoteUser in context
-        is_admin = is_admin_or_site_admin(self.remoteUser)
+        is_admin_user = is_admin_or_site_admin(self.remoteUser)
         if context.joinable:
             if not in_community:
                 link = Link(context, elements=('@@join',), rel="join")
@@ -140,7 +140,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
             _links.append(link)
 
         if      not IDisallowMembersLink.providedBy(context) \
-            and (context.public or in_community or is_admin):
+            and (context.public or in_community or is_admin_user):
             link = Link(context, elements=('@@members',), rel="members")
             _links.append(link)
 

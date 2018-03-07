@@ -8,12 +8,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid.threadlocal import get_current_request
+
 from zope import component
 from zope import interface
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
-
-from pyramid.threadlocal import get_current_request
 
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import set_email_verification_time
