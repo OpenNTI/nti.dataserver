@@ -35,9 +35,8 @@ logger = logging.getLogger("mozsvc.gunicorn_worker")
 # Monkey-patching will have already been done by the time we come to
 # use these functions at runtime.
 _real_sleep = get_original('time', 'sleep')
-_real_start_new_thread = get_original('thread', 'start_new_thread')
 _real_get_ident = get_original('thread', 'get_ident')
-
+_real_start_new_thread = get_original('thread', 'start_new_thread')
 
 # The maximum amount of time that the eventloop can be blocked
 # without causing an error to be logged.
@@ -91,6 +90,7 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
     """
 
     def init_process(self):
+        # pylint: disable=attribute-defined-outside-init
         # Check if we need a background thread to monitor memory use.
         needs_monitoring_thread = False
         if MAX_MEMORY_USAGE:
@@ -98,10 +98,10 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
             needs_monitoring_thread = True
         self._last_loop_log = time.time()
 
-        self._memory_trace = os.environ.get('gevent_memory_trace', False)
         self._looping_trace = os.environ.get('gevent_loop_trace', False)
-        self._blocking_trace = os.environ.get('gevent_blocking_trace', False)
+        self._memory_trace = os.environ.get('gevent_memory_trace', False)
         self._switch_trace = os.environ.get('gevent_switch_trace', False)
+        self._blocking_trace = os.environ.get('gevent_blocking_trace', False)
 
         self._max_blocking_time = os.environ.get('gevent_max_blocking_time',
                                                  DEFAULT_MAX_BLOCKING_TIME)
@@ -152,7 +152,7 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
         with gevent.Timeout(self.cfg.timeout):
             return super(MozSvcGeventWorker, self).handle_request(*args)
 
-    def _greenlet_switch_tracer(self, what, (origin, target)):
+    def _greenlet_switch_tracer(self, what, (origin, target)):  # pylint: disable=unused-argument
         """
         Callback method executed on every greenlet switch.
 
@@ -160,6 +160,7 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
         switch.  It keeps track of which greenlet is currently active and
         increments a counter to track how many switches have been performed.
         """
+        # pylint: disable=attribute-defined-outside-init
         # Increment the counter to indicate that a switch took place.
         # This will periodically be reset to zero by the monitoring thread,
         # so we don't need to worry about it growing without bound.
@@ -170,7 +171,7 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
             now = now.strftime('%Y-%m-%d %H:%M:%S,%f')
             thread = threading.current_thread()
             print('%s [%s:%s] [%s] Switched greenlet context'
-			      % (now, thread.ident, os.getpid(), thread.getName()))
+                  % (now, thread.ident, os.getpid(), thread.getName()))
 
     def _process_monitoring_thread(self):
         """
@@ -197,7 +198,7 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
                 self._check_greenlet_blocking()
                 self._check_memory_usage()
                 self._log_loop_callbacks()
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             # Swallow any exceptions raised during interpreter shutdown.
             # Daemonic Thread objects have this same behaviour.
             if sys is not None:
@@ -206,6 +207,7 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
     def _check_greenlet_blocking(self):
         if not self._max_blocking_time or not self._blocking_trace:
             return
+        # pylint: disable=attribute-defined-outside-init
         # If there have been no greenlet switches since we last checked,
         # grab the stack trace and log an error.  The active greenlet's frame
         # is not available from the greenlet object itself, we have to look
@@ -214,6 +216,7 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
             active_greenlet = self._active_greenlet
             # The hub gets a free pass, since it blocks waiting for IO.
             if active_greenlet not in (None, self._active_hub):
+                # pylint: disable=no-member,protected-access
                 frame = sys._current_frames()[self._main_thread_id]
                 stack = traceback.format_stack(frame)
                 err_log = ["Greenlet blocked (cpu bound?)\n"] + stack
@@ -226,9 +229,11 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
     def _log_loop_callbacks(self):
         if not self._looping_trace:
             return
+        # pylint: disable=attribute-defined-outside-init
         elapsed = time.time() - self._last_loop_log
         if elapsed > self._loop_callback_interval:
             try:
+                # pylint: disable=protected-access
                 count = len(self._active_hub.loop._callbacks)
                 if count:
                     logger.info("Gevent loop callback (count=%s)", count)
@@ -239,6 +244,7 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
     def _check_memory_usage(self):
         if not MAX_MEMORY_USAGE or not self._memory_trace:
             return
+        # pylint: disable=attribute-defined-outside-init
         elapsed = time.time() - self._last_memory_check_time
         if elapsed > MEMORY_USAGE_CHECK_INTERVAL:
             mem_usage = psutil.Process().memory_info().rss
@@ -270,10 +276,10 @@ class MozSvcGeventWorker(GeventPyWSGIWorker):
         """
         now = int(time.time())
         try:
+            import meliae
             filename = "%s.%d.%d" % (MEMORY_DUMP_FILE, os.getpid(), now)
-            from meliae import scanner
-            scanner.dump_all_objects(filename)
-        except (ImportError, Exception):
+            getattr(meliae, 'scanner').dump_all_objects(filename)
+        except (ImportError, Exception):  # pylint: disable=broad-except
             filename = "%s.error.%d.%d" % (MEMORY_DUMP_FILE, os.getpid(), now)
             with open(filename, "w") as f:
                 f.write("ERROR DUMPING MEMORY USAGE\n\n")
