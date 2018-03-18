@@ -1368,24 +1368,6 @@ class IUserDigestEmailMetadata(interface.Interface):
     last_sent = Number(title=u"The last time the digest data was sent for this user.")
 
 
-# Invitations
-from nti.invitations.interfaces import IInvitation
-from nti.invitations.interfaces import IInvitationActor
-
-
-class IJoinEntityInvitation(IInvitation):
-    """
-    Interface for a invitation to join entities
-    """
-
-    entity = ValidTextLine(title=u"The entity username", required=True)
-
-
-class IJoinEntityInvitationActor(IInvitationActor):
-    """
-    Actor to join a user to an entity
-    """
-
 
 class IGrantAccessException(interface.Interface):
     """

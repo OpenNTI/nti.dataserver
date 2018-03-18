@@ -340,11 +340,6 @@
 				provides=".interfaces.INotableFilter"
 				for="*" />
 
-	<!-- Invitations -->
-	<adapter factory=".invitations.JoinEntityInvitationActor"
-			 provides=".interfaces.IJoinEntityInvitationActor"
-			 for=".interfaces.IJoinEntityInvitation" />
-
 	<!-- ACL/ACE permissions -->
 	<include package="." file="configure_acls.zcml" />
 
