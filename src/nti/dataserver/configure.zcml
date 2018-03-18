@@ -136,7 +136,6 @@
 	<include package="nti.threadable" />
 	<include package="nti.contentfile" />
 	<include package="nti.identifiers" />
-	<include package="nti.invitations" />
 	<include package="nti.contentrange" />
 	<include package="nti.coremetadata" />
 	<include package="nti.contentfolder" />

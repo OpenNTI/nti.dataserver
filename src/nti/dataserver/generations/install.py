@@ -84,10 +84,6 @@ from nti.identifiers.index import install_identifiers_catalog
 
 from nti.intid import utility as intid_utility
 
-from nti.invitations.index import install_invitations_catalog
-
-from nti.invitations.model import install_invitations_container
-
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -181,7 +177,6 @@ def install_main(context):
         install_user_catalog(dataserver_folder, intids)
         install_metadata_catalog(dataserver_folder, intids)
         install_identifiers_catalog(dataserver_folder, intids)
-        install_invitations_catalog(dataserver_folder, intids)
         install_content_resources_catalog(dataserver_folder, intids)
 
         users_folder = dataserver_folder['users']
@@ -198,8 +193,6 @@ def install_main(context):
         install_sites_folder(dataserver_folder)
 
         install_username_blacklist(dataserver_folder)
-
-        install_invitations_container(dataserver_folder, intids)
     return dataserver_folder
 
 
