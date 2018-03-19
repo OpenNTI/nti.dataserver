@@ -224,15 +224,10 @@ ILinkExternalHrefOnly = ILinkExternalHrefOnly
 from nti.coremetadata.interfaces import IContainer
 from nti.coremetadata.interfaces import IContainerNamesContainer
 from nti.coremetadata.interfaces import IZContainerNamesContainer
-from nti.coremetadata.interfaces import IHomogeneousTypeContainer
 
 IContainer = IContainer
 IContainerNamesContainer = IContainerNamesContainer
 IZContainerNamesContainer = IZContainerNamesContainer
-IHomogeneousTypeContainer = IHomogeneousTypeContainer
-
-from nti.coremetadata.interfaces import IHTC_NEW_FACTORY
-IHTC_NEW_FACTORY = IHTC_NEW_FACTORY
 
 # BWC exports
 from nti.coremetadata.interfaces import INamedContainer
@@ -241,6 +236,13 @@ INamedContainer = INamedContainer
 # BWC exports
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 DCTimesLastModifiedMixin = DCTimesLastModifiedMixin
+
+# BWC exports
+from nti.datastructures.interfaces import IHomogeneousTypeContainer
+IHomogeneousTypeContainer = IHomogeneousTypeContainer
+
+from nti.datastructures.interfaces import IHTC_NEW_FACTORY
+IHTC_NEW_FACTORY = IHTC_NEW_FACTORY
 
 # BWC exports
 from nti.base.interfaces import ICreated
