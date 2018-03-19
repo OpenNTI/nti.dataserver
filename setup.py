@@ -135,6 +135,7 @@ setup(
         'nti.contentfragments',
         'nti.contentprocessing',
         'nti.coremetadata',
+        'nti.datastructures',
         'nti.dublincore',
         'nti.externalization',
         'nti.futures',
