@@ -44,8 +44,6 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users.interfaces import IUserProfile
 
-from nti.invitations.utils import get_pending_invitation_ids
-
 from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.property.property import annotation_alias
@@ -130,9 +128,13 @@ class UserNotableData(AbstractAuthenticatedView):
 
     @CachedProperty
     def _all_my_pending_invitations_intids(self):
-        username = self.remoteUser.username
-        email = getattr(IUserProfile(self.remoteUser, None), 'email', None)
-        return get_pending_invitation_ids(receivers=(username, email))
+        try:
+            from nti.invitations.utils import get_pending_invitation_ids
+            username = self.remoteUser.username
+            email = getattr(IUserProfile(self.remoteUser, None), 'email', None)
+            return get_pending_invitation_ids(receivers=(username, email))
+        except ImportError:
+            return ()
 
     @CachedProperty
     def _all_blog_comment_intids(self):
