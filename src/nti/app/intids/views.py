@@ -10,17 +10,17 @@ from __future__ import absolute_import
 
 import sys
 
-from ZODB.POSException import POSError
-
-from zope import component
-from zope import interface
-
 from zope.intid.interfaces import IIntIds
 
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
+
+from ZODB.POSException import POSError
+
+from zope import component
+from zope import interface
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -68,6 +68,10 @@ class IntIdInfoView(AbstractAuthenticatedView):
                permission=nauth.ACT_NTI_ADMIN)
 class IntIdResolverView(AbstractAuthenticatedView):
 
+    def queryObject(self, uid):
+        intids = component.getUtility(IIntIds)
+        return intids.queryObject(uid)
+
     def __call__(self):
         request = self.request
         uid = request.subpath[0] if request.subpath else ''
@@ -89,9 +93,8 @@ class IntIdResolverView(AbstractAuthenticatedView):
                                  'code': 'InvalidIntId',
                              },
                              None)
-        intids = component.getUtility(IIntIds)
         try:
-            result = intids.queryObject(uid)
+            result = self.queryObject(uid)
         except (TypeError, POSError) as e: 
             exc_info = sys.exc_info()
             raise_json_error(self.request,
