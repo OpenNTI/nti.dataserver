@@ -4,12 +4,13 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
+
+from ZODB.POSException import POSError
 
 from zope import component
 from zope import interface
@@ -30,9 +31,12 @@ from nti.app.intids import MessageFactory as _
 from nti.app.renderers.interfaces import INoHrefInResponse
 
 from nti.dataserver import authorization as nauth
+
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.interfaces import LocatedExternalDict
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @view_config(name='IntIdInfo')
@@ -88,7 +92,7 @@ class IntIdResolverView(AbstractAuthenticatedView):
         intids = component.getUtility(IIntIds)
         try:
             result = intids.queryObject(uid)
-        except Exception as e:
+        except (TypeError, POSError) as e: 
             exc_info = sys.exc_info()
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
