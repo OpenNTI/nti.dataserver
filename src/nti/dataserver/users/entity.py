@@ -53,6 +53,8 @@ from nti.dataserver.users.interfaces import UsernameContainsIllegalChar
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.datastructures import InterfaceObjectIO
+
+from nti.externalization.internalization import notify_modified
 from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids.ntiids import DATE
@@ -379,6 +381,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
         io = InterfaceObjectIO(profile, profile_iface,
                                validate_after_update=validate)
         io.updateFromExternalObject(parsed, *args, **kwargs)
+        notify_modified(profile, parsed)
         if profile_update:
             # If we got here, then we got the data to validly update our profile,
             # so we can stop providing the update interface
