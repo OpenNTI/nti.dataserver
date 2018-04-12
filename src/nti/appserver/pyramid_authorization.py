@@ -88,10 +88,8 @@ def ZopeACLAuthorizationPolicy():
             permits = _PyramidACLAuthorizationPolicy.permits(
                 self, context, principals, permission)
             # Note that we're ignoring the principals given and hence pyramid's authentication
-            # policy. We assume
-            # that if we have the correct interaction in place, which allows us to
-            # derive the relevant principals (only a concern during
-            # impersonation)
+            # policy. We assume that if we have the correct interaction in place, which allows
+            # us to derive the relevant principals (only a concern during impersonation),
             if not permits:  # Or maybe if permits.ace == '<default deny>'?
                 zope_permits = False
                 # Turn IPermission objects into the strings that

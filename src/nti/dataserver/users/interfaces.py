@@ -61,6 +61,7 @@ from nti.schema.field import ValidURI
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
+from nti.schema.field import ValidDatetime
 from nti.schema.field import DecodingValidTextLine
 
 from nti.schema.interfaces import InvalidValue
@@ -484,13 +485,13 @@ class IUserContactProfile(Interface):
                      value_type=Object(IAddress),
                      min_length=0,
                      required=False)
-    
+
     phones = Dict(title=u"A mapping of address objects.",
                   key_type=DecodingValidTextLine(title=u"Phone key"),
                   value_type=ValidTextLine(title=u"A phone"),
                   min_length=0,
                   required=False)
-    
+
     contact_emails = Dict(title=u"A mapping of contact emails.",
                           key_type=DecodingValidTextLine(title=u"Email key"),
                           value_type=ValidTextLine(title=u'Email',
@@ -608,6 +609,10 @@ class IEducation(Interface):
                   description=u'End year',
                   required=False)
 
+    expected_graduation = ValidDatetime(title=u"The expected graduation date",
+                                        default=None,
+                                        required=False)
+
     degree = ValidTextLine(title=u'Degree name',
                            description=u'Degree name',
                            required=False)
@@ -619,7 +624,7 @@ class IEducation(Interface):
 
 class IEducationProfile(Interface):
     """
-    A social media profile
+    An education profile
     """
 
     education = ListOrTuple(Object(IEducation, title=u"The education entry"),

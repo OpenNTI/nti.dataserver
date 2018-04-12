@@ -119,10 +119,10 @@ def registerUserLink(_context,
     if view_named and (field or minGeneration or url):
         raise ConfigurationError("Pick one of view_named, field, minGeneration, or url")
 
-    kwargs = dict(name=text_(name), 
-                  url=text_(url), 
+    kwargs = dict(name=text_(name),
+                  url=text_(url),
                   view_named=text_(view_named),
-                  field=text_(field), 
+                  field=text_(field),
                   mime_type=text_(mimeType))
 
     if minGeneration:

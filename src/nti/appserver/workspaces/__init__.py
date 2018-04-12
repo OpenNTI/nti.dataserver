@@ -492,7 +492,6 @@ def _find_named_link_views(parent, provided=None):
             # the @implementer() decorator is easy)
             if INamedLinkView.providedBy(v) or INamedLinkView.implementedBy(v):
                 return True
-
     adapters = component.getSiteManager().adapters
     # Order matters. traversing wins, so views first (?)
     names = [

@@ -439,7 +439,7 @@ def account_preflight_view(request):
         externalValue['email'] = externalValue['Username']
 
     preflight_user = _create_user(request, externalValue, preflight_only=True)
-    schemafier = _AccountCreationProfileSchemafier(preflight_user, 
+    schemafier = _AccountCreationProfileSchemafier(preflight_user,
                                                    readonly_override=False)
     ext_schema = schemafier.make_schema()
 
