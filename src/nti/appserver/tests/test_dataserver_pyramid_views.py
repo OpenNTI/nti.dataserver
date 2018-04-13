@@ -147,7 +147,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 		view()
 
 		# One event, for the object we modified
-		assert_that( eventtesting.getEvents(  ), has_length( 2 ) )
+		assert_that( eventtesting.getEvents(  ), has_length( 3 ) )
 		assert_that( eventtesting.getEvents( IObjectModifiedEvent ), has_length( 1 ) )
 		mod_event = eventtesting.getEvents( IObjectModifiedEvent )[0]
 		assert_that( mod_event, has_property( 'descriptions',
@@ -210,7 +210,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 		view() # First time fine
 		# Fires events the first time
 		# ObjectCreated, ObjectAdded, zc...IntIdAdded, zope...IntIdAdded, nti...IntIdAdded, ContainerModified
-		assert_that( eventtesting.getEvents(  ), has_length( 8 ) )
+		assert_that( eventtesting.getEvents(  ), has_length( 9 ) )
 		assert_that( eventtesting.getEvents( IObjectAddedEvent ), has_length( 1 ) )
 
 		with self.assertRaises(hexc.HTTPConflict):
