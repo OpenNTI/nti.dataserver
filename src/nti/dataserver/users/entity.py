@@ -378,6 +378,18 @@ class Entity(PersistentCreatedModDateTrackingObject):
         validate = profile_update or not self._p_mtime
         __traceback_info__ = profile_iface, profile_update, validate
 
+        # We have a small set of concrete profile impl, but a possible wide
+        # range of profile interfaces; therefore, we must remove any cached
+        # iface on the concrete class.
+        # FIXME: hack
+        cache_place = interface.providedBy(profile)
+        try:
+            cache_place._v_attrs
+        except AttributeError:
+            pass
+        else:
+            cache_place._v_attrs.pop(InterfaceObjectIO, None)
+
         io = InterfaceObjectIO(profile, profile_iface,
                                validate_after_update=validate)
         io.updateFromExternalObject(parsed, *args, **kwargs)
