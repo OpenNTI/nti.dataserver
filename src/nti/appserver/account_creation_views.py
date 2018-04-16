@@ -24,6 +24,8 @@ from zope import interface
 
 from zope.event import notify
 
+from zope.schema import getValidationErrors
+
 from zope.schema.interfaces import RequiredMissing
 from zope.schema.interfaces import ValidationError
 
@@ -37,6 +39,7 @@ from pyramid.view import view_config
 from nti.app.externalization import internalization as obj_io
 
 from nti.app.externalization.error import handle_validation_error
+from nti.app.externalization.error import validation_error_to_dict
 from nti.app.externalization.error import raise_json_error as _raise_error
 from nti.app.externalization.error import handle_possible_validation_error
 
@@ -483,10 +486,17 @@ def account_profile_schema_view(request):
 
     request.response.status = 200
 
+    user = request.context
+    profile_iface = IUserProfileSchemaProvider(user).getSchema()
+    profile = profile_iface(user)
+    errors = getValidationErrors(profile_iface, profile)
+    errors = [validation_error_to_dict(request, x[1]) for x in errors or ()]
+
     return {
         'Username': request.context.username,
-        'AvatarURLChoices': _get_avatar_choices_for_username(request.context.username, request),
-        'ProfileSchema': _AccountProfileSchemafier(request.context).make_schema()
+        'AvatarURLChoices': _get_avatar_choices_for_username(user.username, request),
+        'ProfileSchema': _AccountProfileSchemafier(user).make_schema(),
+        'ValidationErrors': errors
     }
 
 

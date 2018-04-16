@@ -91,7 +91,10 @@ def raise_json_error(request,
     six.reraise(result, None, tb)
 
 
-def _validation_error_to_dict(request, validation_error):
+def validation_error_to_dict(request, validation_error):
+    """
+    Turn the given ValidationError into a dict.
+    """
     __traceback_info__ = type(validation_error), validation_error
     # Validation error may be many things, including invalid password by the policy (see above)
     # Some places try hard to set a good message, some don't.
@@ -165,7 +168,7 @@ def _validation_error_to_dict(request, validation_error):
         contained_errors = []
         try:
             for error in validation_error.errors:
-                data = _validation_error_to_dict(request, error)
+                data = validation_error_to_dict(request, error)
                 contained_errors.append(data)
         except (KeyError, ValueError, TypeError):
             pass
@@ -173,6 +176,7 @@ def _validation_error_to_dict(request, validation_error):
             result['suberrors'] = contained_errors
 
     return result
+_validation_error_to_dict = validation_error_to_dict
 
 
 def _no_request_validation_error():
