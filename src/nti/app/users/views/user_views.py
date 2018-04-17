@@ -12,7 +12,6 @@ from __future__ import absolute_import
 
 import six
 import time
-import transaction
 
 from pyramid import httpexceptions as hexc
 
@@ -280,7 +279,7 @@ class UserUpdatePreflightView(UserUpdateView):
             errors = [validation_error_to_dict(self.request, x[1]) for x in errors or ()]
             result_dict['ValidationErrors'] = errors
             result.json_body = result_dict
-        transaction.abort()
+        self.request.environ['nti.commit_veto'] = 'abort'
         return result
 
 
