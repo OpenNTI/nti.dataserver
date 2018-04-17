@@ -24,10 +24,10 @@ from zope import interface
 
 from zope.event import notify
 
+from zope.schema import ValidationError
 from zope.schema import getValidationErrors
 
 from zope.schema.interfaces import RequiredMissing
-from zope.schema.interfaces import ValidationError
 
 from z3c.password.interfaces import InvalidPassword
 from z3c.password.interfaces import IPasswordUtility
@@ -94,6 +94,9 @@ REL_PREFLIGHT_CREATE_ACCOUNT = "account.preflight.create"
 
 #: See :func:`account_profile_schema_view`
 REL_ACCOUNT_PROFILE_SCHEMA = "account.profile"  # bad name for BWC
+
+#: Account profile update preflight check
+REL_ACCOUNT_PROFILE_PREFLIGHT = "account.profile.preflight"
 
 #: The link relationship type that means that the user profile is in need
 #: of an update, possibly because the applicable fields have changed

@@ -12,22 +12,30 @@ from __future__ import absolute_import
 
 import six
 import time
+import transaction
 
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 
+from zope.schema import getValidationErrors
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
+from nti.app.externalization.error import validation_error_to_dict
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.app.users import MessageFactory as _
 
+from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_PREFLIGHT
+
 from nti.appserver.dataserver_pyramid_views import GenericGetView
 
 from nti.appserver.ugd_edit_views import UGDPutView
+
+from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
@@ -37,6 +45,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.entity import Entity
 
+from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
 from nti.dataserver.users.users_external import _avatar_url
@@ -153,6 +162,11 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
         return result
 
 
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=IUser,
+             permission=ACT_UPDATE,
+             request_method='PUT')
 class UserUpdateView(UGDPutView):
     """
     A concrete class to update user objects. Currently, we just exclude
@@ -240,6 +254,34 @@ class UserUpdateView(UGDPutView):
                                  },
                                  None)
         return True
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=IUser,
+             permission=ACT_UPDATE,
+             name=REL_ACCOUNT_PROFILE_PREFLIGHT,
+             request_method='PUT')
+class UserUpdatePreflightView(UserUpdateView):
+    """
+    A view to preflight profile updates, returning all validation errors if any.
+    """
+
+    def __call__(self):
+        try:
+            result = super(UserUpdatePreflightView, self).__call__()
+        except hexc.HTTPUnprocessableEntity as response:
+            result = response
+            user = self.context
+            result_dict = LocatedExternalDict()
+            profile_iface = IUserProfileSchemaProvider(user).getSchema()
+            profile = profile_iface(user)
+            errors = getValidationErrors(profile_iface, profile)
+            errors = [validation_error_to_dict(self.request, x[1]) for x in errors or ()]
+            result_dict['ValidationErrors'] = errors
+            result.json_body = result_dict
+        transaction.abort()
+        return result
 
 
 @view_config(context=IUsersFolder,

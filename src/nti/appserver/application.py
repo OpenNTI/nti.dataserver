@@ -355,11 +355,6 @@ def _modifying_ugd_views(pyramid_config):
 							context='nti.dataserver.interfaces.IModeledContent',
 							permission=nauth.ACT_UPDATE, request_method='PUT')
 
-	# And the user itself can be put to
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.app.users.views.user_views.UserUpdateView',
-							renderer='rest', context=nti_interfaces.IUser,
-							permission=nauth.ACT_UPDATE, request_method='PUT')
-
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDFieldPutView',
 							renderer='rest', context='nti.appserver.interfaces.IExternalFieldResource',
 							permission=nauth.ACT_UPDATE, request_method='PUT')
@@ -472,25 +467,25 @@ def createApplication( http_port,
 		return dataserver_dir_exists and os.path.isdir( dataserver_file( *args ) )
 
 	xml_conf_machine = _create_xml_conf_machine( settings,
-												 features_file=dataserver_file('etc', 
-																			   'package-includes', 
+												 features_file=dataserver_file('etc',
+																			   'package-includes',
 																			   '000-features.zcml') )
 
 	if 'pre_site_zcml' in settings:
 		# One before we load the main config so it has a chance to exclude files
 		logger.debug( "Loading pre-site settings from %s", settings['pre_site_zcml'] )
-		xml_conf_machine = xmlconfig.file(settings['pre_site_zcml'], 
-										  package=nti.appserver, 
-										  context=xml_conf_machine, 
+		xml_conf_machine = xmlconfig.file(settings['pre_site_zcml'],
+										  package=nti.appserver,
+										  context=xml_conf_machine,
 										  execute=False )
 	xml_conf_machine = xmlconfig.file('configure.zcml',
 									  package=nti.appserver,
-									  context=xml_conf_machine, 
+									  context=xml_conf_machine,
 									  execute=False )
 	if 'site_zcml' in settings:
 		logger.debug( "Loading site settings from %s", settings['site_zcml'] )
-		xml_conf_machine = xmlconfig.file(settings['site_zcml'],  
-										  package=nti.appserver, 
+		xml_conf_machine = xmlconfig.file(settings['site_zcml'],
+										  package=nti.appserver,
 										  context=xml_conf_machine,
 										  execute=False )
 		# Preserve the conf machine so that when we load other files later any
@@ -505,8 +500,8 @@ def createApplication( http_port,
 			# The files= parameter takes a shell-style glob,
 			# finds the matches, and sorts them, and then includes
 			# them.
-			xmlconfig.include(context, 
-							  files=dataserver_file('etc', include_dir_name, '*.zcml' ), 
+			xmlconfig.include(context,
+							  files=dataserver_file('etc', include_dir_name, '*.zcml' ),
 							  package=nti.appserver )
 			# This doesn't return a context, but that's ok,
 			# it is modified in place.
@@ -520,7 +515,7 @@ def createApplication( http_port,
 	# Notify of startup. (Note that configuring the packages loads zope.component:configure.zcml
 	# which in turn hooks up zope.component.event to zope.event for event dispatching)
 	notify(ApplicationProcessStarting(xml_conf_machine))
-	
+
 	logger.debug( 'Began starting dataserver' )
 	template_cache_dir = setupChameleonCache(config=True) # must do this early
 
