@@ -623,7 +623,11 @@ def is_site_admin(user):
     Returns whether the user has the `ROLE_SITE_ADMIN` role.
     """
     result = False
-    srm = IPrincipalRoleManager(getSite(), None)
+    try:
+        srm = IPrincipalRoleManager(getSite(), None)
+    except TypeError:
+        # SiteManagerContainer (tests)
+        srm = None
     if srm is not None:
         username = getattr(user, 'username', user) or ''
         for role, access in srm.getRolesForPrincipal(username):
