@@ -270,6 +270,10 @@ class UserUpdatePreflightView(UserUpdateView):
         try:
             result = super(UserUpdatePreflightView, self).__call__()
         except hexc.HTTPUnprocessableEntity as response:
+            if      response.json_body \
+                and response.json_body.get('code') == 'SchemaNotProvided':
+                # This is most likely a code issue and should be raised
+                raise response
             result = response
             user = self.context
             result_dict = LocatedExternalDict()
