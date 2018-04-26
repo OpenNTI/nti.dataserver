@@ -295,14 +295,14 @@ class _DynamicFriendsListExternalObject(_FriendsListExternalObject):
 
 
 @component.adapter(IUser)
-class _UserSummaryExternalObject(_EntitySummaryExternalObject):
+class UserSummaryExternalObject(_EntitySummaryExternalObject):
 
     # Even in summary (i.e. to other people), we want to publish all these fields
     # because it looks better
     public_summary_profile_fields = ('affiliation', 'home_page', 'description',
                                      'location', 'role', 'about', 'twitter',
-                                     'facebook', 'googlePlus', 'linkedIn', 
-                                     'instagram', 'education', 'positions', 
+                                     'facebook', 'googlePlus', 'linkedIn',
+                                     'instagram', 'education', 'positions',
                                      'interests')
 
     # These could probably be put as tags on the interface fields, but the number of
@@ -310,7 +310,7 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
     # simpler option
 
     def _do_toExternalObject(self, **kwargs):
-        extDict = super(_UserSummaryExternalObject, self)._do_toExternalObject(**kwargs)
+        extDict = super(UserSummaryExternalObject, self)._do_toExternalObject(**kwargs)
         extDict['lastLoginTime'] = self.entity.lastLoginTime
         if self.public_summary_profile_fields:
             prof = IUserProfile(self.entity)
@@ -319,6 +319,7 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
                 extDict[f] = toExternalObject(val)
         return extDict
 
+_UserSummaryExternalObject = UserSummaryExternalObject
 
 @component.adapter(IUser)
 class _UserAdminSummaryExternalObject(_UserSummaryExternalObject):
@@ -440,7 +441,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
         prof = IRestrictedUserProfile(self.entity)
         extDict['email'] = prof.email
         if prof.birthdate is not None:
-            extDict['birthdate'] = prof.birthdate.isoformat() 
+            extDict['birthdate'] = prof.birthdate.isoformat()
         else:
             extDict['birthdate'] = None
 
