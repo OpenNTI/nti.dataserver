@@ -149,7 +149,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 		# One event, for the object we modified
 		assert_that( eventtesting.getEvents(  ), has_length( 3 ) )
 		assert_that( eventtesting.getEvents( IObjectModifiedEvent ), has_length( 2 ) )
-		mod_event = eventtesting.getEvents( IObjectModifiedEvent )[0]
+		mod_event = eventtesting.getEvents( IObjectModifiedEvent )[1]
 		assert_that( mod_event, has_property( 'descriptions',
 											  has_item(
 												  all_of(
