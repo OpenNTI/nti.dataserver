@@ -6,17 +6,16 @@ Views relating to liking and unliking objects.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
-
-from zope import component
-from zope import interface
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from pyramid.interfaces import IRequest
 
 from pyramid.view import view_config
+
+from zope import component
+from zope import interface
 
 from nti.app.renderers.caching import uncached_in_response
 
@@ -30,6 +29,8 @@ from nti.dataserver.interfaces import ILikeable
 from nti.dataserver.interfaces import IFavoritable
 
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(ILikeable, IRequest)
