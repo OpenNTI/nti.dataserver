@@ -95,6 +95,7 @@ class _PhonyRequest(object):
     query = None
     method = None
     body = None
+    scheme = None
     version = (1, 0)
     proxy_protocol_info = None  # added in 0.15.0
 
