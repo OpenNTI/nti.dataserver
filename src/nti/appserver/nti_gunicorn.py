@@ -158,6 +158,7 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class, ggevent.PyWSGIHandl
         request.body = environ['wsgi.input']
         if environ.get('SERVER_PROTOCOL') == 'HTTP/1.1':
             request.version = (1, 1)
+        request.scheme = environ.get('wsgi.url_scheme') or 'http'
 
         for header in self.headers.headers:
             # If we're not careful to split with a byte string here, we can
