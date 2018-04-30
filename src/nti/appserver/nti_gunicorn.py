@@ -95,7 +95,7 @@ class _PhonyRequest(object):
     query = None
     method = None
     body = None
-    scheme = 'https'  # added in 19.8.0
+    scheme = 'http'  # added in 19.8.0
     version = (1, 0)
     proxy_protocol_info = None  # added in 0.15.0
 
@@ -158,8 +158,9 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class, ggevent.PyWSGIHandl
         request.body = environ['wsgi.input']
         if environ.get('SERVER_PROTOCOL') == 'HTTP/1.1':
             request.version = (1, 1)
+        # start w/ wsgi
         request.scheme = environ.get('wsgi.url_scheme') or 'http'
-
+        # set headers
         for header in self.headers.headers:
             # If we're not careful to split with a byte string here, we can
             # run into UnicodeDecodeErrors: True, all the headers are supposed to be sent
@@ -167,11 +168,16 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class, ggevent.PyWSGIHandl
             # without url encoding them, in the value of the Referer field (specifically
             # seen when it includes a fragment in the URI, which is also explicitly against
             # section 14.36 of HTTP 1.1. Stupid IE).
-            k, v = header.split(b':', 1)
+            k, v = header.split(':', 1)
             k = k.upper()
             v = v.strip()
-
+            # add header
             request.headers.append((k, v))
+            # check scheme
+            if     (k == 'X-FORWARDED-PROTOCOL' and v == 'ssl') \
+                or (k == 'X-FORWARDED-PROTO' and v == 'https') \
+                or (k == 'X-FORWARDED-SSL' and v == 'on'):
+                request.scheme = 'https'
         # The request arrived on self.socket, which is also environ['gunicorn.sock']. This
         # is the "listener" argument as well that's needed for deriving the
         # "HOST" value, if not present
