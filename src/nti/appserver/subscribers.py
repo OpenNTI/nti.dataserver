@@ -6,16 +6,17 @@ Subscribers for various events.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+from pyramid.interfaces import INewRequest
 
 from zope import component
 
 from zope.component.event import objectEventNotify
 
-from pyramid.interfaces import INewRequest
+logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(INewRequest)
