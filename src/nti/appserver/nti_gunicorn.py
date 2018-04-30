@@ -33,7 +33,7 @@ import gunicorn.workers.ggevent as ggevent
 
 from gunicorn.app.pasterapp import PasterServerApplication
 
-if gunicorn.version_info not in ((19, 7, 0), (19, 7, 1), (19, 8, 0)):
+if gunicorn.version_info not in ((19, 7, 0), (19, 7, 1), (19, 8, 0), (19, 8, 1)):
     raise ImportError("Unknown gunicorn version")
 
 from gevent import getcurrent
