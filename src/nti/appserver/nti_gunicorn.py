@@ -95,7 +95,7 @@ class _PhonyRequest(object):
     query = None
     method = None
     body = None
-    scheme = 'http'
+    scheme = 'http'  # added in 19.8.0
     version = (1, 0)
     proxy_protocol_info = None  # added in 0.15.0
 
@@ -116,6 +116,7 @@ class _NonParsingRequest(Request):
 
 
 import gevent
+
 
 class _PyWSGIWebSocketHandler(WebSocketServer.handler_class, ggevent.PyWSGIHandler):
     """
@@ -259,7 +260,7 @@ class GeventApplicationWorker(MozSvcGeventWorker):
         # of machines, and we quickly run out. We probably can't really handle
         # 1000 simultaneous connections anyway, even though we are non-blocking
         worker_connections = self.cfg.settings['worker_connections']
-        if (    worker_connections.value == worker_connections.default
+        if (worker_connections.value == worker_connections.default
             and worker_connections.value >= self.PREFERRED_MAX_CONNECTIONS):
             worker_connections.set(self.PREFERRED_MAX_CONNECTIONS)
             self.worker_connections = self.PREFERRED_MAX_CONNECTIONS
@@ -498,6 +499,7 @@ def _cache_objects(db, pred=id):
 
 warm_cache = False
 
+
 @component.adapter(_IGunicornWillFork)
 def _process_will_fork_listener(unused_event):
     from nti.dataserver import interfaces as nti_interfaces
@@ -645,7 +647,7 @@ class _PasterServerApplication(PasterServerApplication):  # pylint: disable=abst
 
     # pylint: disable=keyword-arg-before-vararg
 
-    def __init__(self, app, gcfg=None, host="127.0.0.1", port=None, 
+    def __init__(self, app, gcfg=None, host="127.0.0.1", port=None,
                  *args, **kwargs):
 
         super(_PasterServerApplication, self).__init__(app, gcfg=gcfg, host=host,
@@ -693,7 +695,7 @@ class _PasterServerApplication(PasterServerApplication):  # pylint: disable=abst
 
 # pylint: disable=keyword-arg-before-vararg
 
-def paste_server_runner(unused_app, gcfg=None, host="127.0.0.1", port=None, 
+def paste_server_runner(unused_app, gcfg=None, host="127.0.0.1", port=None,
                         *args, **kwargs):
     """
     A paster server entrypoint.
