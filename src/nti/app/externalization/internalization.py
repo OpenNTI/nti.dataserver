@@ -64,7 +64,7 @@ def class_name_from_content_type(request):
     """
     content_type = request
     if hasattr(request, 'content_type'):
-        content_type = request.content_type 
+        content_type = request.content_type
     content_type = content_type or ''
     return nti_mimetype_class(content_type)
 
@@ -119,7 +119,7 @@ def _handle_content_type(reader, input_data, request, content_type):
             else:
                 result[handle_unicode(key, request)] = value
     else:
-        # We need all string values to be unicode objects. simplejson is different from 
+        # We need all string values to be unicode objects. simplejson is different from
         # the built-in json and returns strings
         # that can be represented as ascii as str objects if the input was a bytestring.
         # The only way to get it to return unicode is if the input is unicode, or
@@ -157,7 +157,7 @@ def read_body_as_external_object(request, input_data=None,
         ext_format = 'plist'
 
     __traceback_info__ = ext_format, value
-    reader = component.queryUtility(IExternalRepresentationReader, 
+    reader = component.queryUtility(IExternalRepresentationReader,
 								    name=ext_format)
     if reader is None:  # pragma: no cover
         # We're officially dropping support for plist values.
