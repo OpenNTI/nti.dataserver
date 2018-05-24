@@ -82,20 +82,16 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         XXX: Since we do not run this in the parent site, we would not get any
         registered/configured users from a utility registered in the parent site.
         """
-        current_site = getSite().__name__
+        current_site = getSite()
+        current_site_name = getSite()
         site_names = get_component_hierarchy_names()
-        marker = object()
         for site_name in site_names or ():
-            if site_name != current_site:
-                try:
-                    parent_site = get_site_for_site_names((site_name,), site=marker)
-                except:
-                    # FIXME
-                    pass
-                else:
-                    if parent_site is not marker:
-                        parent_role_manager = ISiteRoleManager(parent_site, None)
-                        return parent_role_manager
+            if site_name != current_site_name:
+                parent_site = get_site_for_site_names((site_name,),
+                                                      site=current_site)
+                if parent_site is not current_site:
+                    parent_role_manager = ISiteRoleManager(parent_site, None)
+                    return parent_role_manager
                 return None
 
     def _accumulate(self, func_name, *args):
