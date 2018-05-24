@@ -6,13 +6,12 @@ from __future__ import print_function, absolute_import, unicode_literals
 
 from hamcrest import assert_that, has_length, is_, same_instance, is_not
 from hamcrest import contains
-from hamcrest import equal_to
 from hamcrest import has_property as has_attr
 from hamcrest import has_entries
+
 from nti.testing.matchers import provides
 from nti.externalization.tests import externalizes
 
-from nti.testing.matchers import provides
 from nti.testing.matchers import validly_provides as verifiably_provides
 
 from .mock_dataserver import DataserverLayerTest
@@ -37,7 +36,6 @@ class TestAuthorization(DataserverLayerTest):
 		assert_that( nti_interfaces.system_user,
 					 externalizes( has_entries( 'Class', 'SystemUser',
 												'Username', nti_interfaces.SYSTEM_USER_NAME)))
-
 
 	def test_user_adapts_to_group_member( self ):
 		u = users.User( 'sjohnson@nextthought.com', 't' )
@@ -65,7 +63,6 @@ class TestAuthorization(DataserverLayerTest):
 
 		assert_that( u, has_attr( '__annotations__',
 								  has_length( 2 ) ) )
-
 
 	def test_string_adapts_to_principal( self  ):
 		# no-name
@@ -111,7 +108,6 @@ class TestAuthorization(DataserverLayerTest):
 
 		assert_that( iprin, verifiably_provides( nti_interfaces.IPrincipal ) )
 
-
 		iprin2 = nti_interfaces.IGroupAwarePrincipal( u )
 		assert_that( iprin2, verifiably_provides( nti_interfaces.IPrincipal ) )
 		assert_that( iprin2, verifiably_provides( nti_interfaces.IGroupAwarePrincipal ) )
@@ -125,8 +121,6 @@ class TestAuthorization(DataserverLayerTest):
 		assert_that( iprin.title, is_( u.username ) )
 		assert_that( repr(iprin), is_("_UserGroupAwarePrincipal('sjohnson@nextthought.com')") )
 		assert_that( str(iprin), is_('sjohnson@nextthought.com') )
-
-
 
 	def test_permission_methods(self):
 		assert_that( nauth.ACT_CREATE, is_( Permission( nauth.ACT_CREATE.id ) ) )

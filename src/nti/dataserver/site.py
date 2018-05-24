@@ -14,6 +14,8 @@ from zope import deferredimport
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.component.hooks import getSite
+
 from zope.securitypolicy.interfaces import Unset
 
 from zope.securitypolicy.principalrole import PrincipalRoleManager
@@ -22,6 +24,9 @@ from zope.securitypolicy.principalrole import AnnotationPrincipalRoleManager
 from nti.dataserver.interfaces import ISiteRoleManager
 
 from nti.externalization.persistence import NoPickle
+
+from nti.site.site import get_site_for_site_names
+from nti.site.site import get_component_hierarchy_names
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -42,8 +47,10 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
     persistently store principals/roles as well as falling back to
     the :class:`ISiteRoleManagerUtility`.
 
-    We never want to update the in-memory site utility. Results will be
-    undefined if we have a user granted/denied in both role managers.
+    We never want to update the in-memory site utility.
+
+    By returning these items in order (ourselves, utility, parent(s)), we
+    are relying on zope security accepting the first applicable setting.
     """
 
     def __nonzero__(self):
@@ -68,17 +75,38 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
                 result = util.getSetting(role_id, principal_id, default=default)
         return result
 
+    def _get_parent_site_role_manager(self):
+        """
+        Return the :class:`ISiteRoleManager` for our parent site.
+
+        XXX: Since we do not run this in the parent site, we would not get any
+        registered/configured users from a utility registered in the parent site.
+        """
+        current_site = getSite().__name__
+        site_names = get_component_hierarchy_names()
+        marker = object()
+        for site_name in site_names or ():
+            if site_name != current_site:
+                parent_site = get_site_for_site_names((site_name,), site=marker)
+                if parent_site is not marker:
+                    parent_role_manager = ISiteRoleManager(parent_site, None)
+                    return parent_role_manager
+                return None
+
     def _accumulate(self, func_name, *args):
         """
         Call the given `func_name` on ourselves, adding to the result found in
-        the utility. Note, we do not try to dedupe here for performance.
+        the utility.
         """
         super_func = getattr(super(PersistentSiteRoleManager, self), func_name)
         result = super_func(*args)
         result = result or []
         util = self._site_role_manager_utility
-        if util is not None:
-            util_func = getattr(util, func_name)
+        parent_role_manager = self._get_parent_site_role_manager()
+        for other_role_manager in (util, parent_role_manager):
+            if other_role_manager is None:
+                continue
+            util_func = getattr(other_role_manager, func_name)
             util_result = util_func(*args)
             result.extend(util_result or ())
         return result
