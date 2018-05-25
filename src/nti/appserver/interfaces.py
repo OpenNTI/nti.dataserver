@@ -812,3 +812,19 @@ class IContainedObjectsQuerier(interface.Interface):
 
     def query(ntiid):
         pass
+
+
+class IDisplayableTimeProvider(interface.Interface):
+    """
+    An adapter to provide a timezone for displayable datetime objects.
+    """
+
+    def get_timezone_display_name(date):
+        """
+        Return a timezone display string.
+        """
+
+    def adjust_date(date):
+        """
+        Modify the given datetime object with the preferred timezone.
+        """

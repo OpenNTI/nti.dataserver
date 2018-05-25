@@ -479,6 +479,12 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IContextAnnotatable" />
 
+    <!-- TZ -->
+    <adapter factory=".timezone.DisplayableTimeProvider"
+             for="nti.coremetadata.interfaces.IUser
+                  pyramid.interfaces.IRequest"
+             provides="nti.appserver.interfaces.IDisplayableTimeProvider" />
+
 	<!-- Additional -->
 	<!-- The ones directly mentioned are part of this distribution
 		 until they get moved out -->
