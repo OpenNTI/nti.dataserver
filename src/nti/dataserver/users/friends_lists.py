@@ -157,6 +157,7 @@ class FriendsList(SimpleEnclosureMixin, Entity):  # Mixin order matters for __se
             result = self._friends_wref_set.add(wref)
             if result:
                 self._on_added_friend(friend)
+                self.updateLastMod()
         return result
 
     def _do_remove_friends(self, *friends):
