@@ -43,12 +43,14 @@ class DisplayableTimeProvider(object):
 
     @Lazy
     def _timezone_identifier(self):
-        return self.request.headers.get(TIMEZONE_ID_HEADER)
+        return self.request.cookies.get(TIMEZONE_ID_HEADER) \
+            or self.request.headers.get(TIMEZONE_ID_HEADER)
 
     @Lazy
     def _timezone_offset(self):
         # The timezone offset in +/- minutes.
-        val = self.request.headers.get(TIMEZONE_OFFSET_HEADER)
+        val =  self.request.cookies.get(TIMEZONE_OFFSET_HEADER) \
+            or self.request.headers.get(TIMEZONE_OFFSET_HEADER)
         if val is not None:
             try:
                 result = int(val)
