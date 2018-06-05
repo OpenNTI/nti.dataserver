@@ -416,7 +416,7 @@ class IGeneralForum(IForum, ICreated):
     __parent__.required = False
 
 
-class IDefaultForumBoard(IGeneralBoard):
+class IDefaultForumBoard(interface.Interface):
     """
     Mixin designating that this board should auto-create
     a default forum if needed.
@@ -429,9 +429,10 @@ class IDefaultForumBoard(IGeneralBoard):
         """
         # NOTE: This is not a good abstraction and is tied up
         # with the way that the appserver wants to handle traversal
+IDefaultForumBoard.setTaggedValue('_ext_is_marker_interface', True)
 
 
-class ICommunityBoard(IDefaultForumBoard, IShouldHaveTraversablePath):
+class ICommunityBoard(IGeneralBoard, IShouldHaveTraversablePath):
     """
     A board belonging to a particular community.
     """
@@ -448,7 +449,7 @@ class ICommunityForum(IGeneralForum, IShouldHaveTraversablePath):
     __parent__.required = False
 
 
-class IDFLBoard(IDefaultForumBoard, IShouldHaveTraversablePath):
+class IDFLBoard(IGeneralBoard, IDefaultForumBoard, IShouldHaveTraversablePath):
     """
     A board belonging to a particular dfl.
     """

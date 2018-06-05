@@ -41,6 +41,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IDFLForum
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
+from nti.dataserver.contenttypes.forums.interfaces import IDefaultForumBoard
 
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -76,15 +77,17 @@ class Board(Base,
 class GeneralBoard(Board):
     __external_can_create__ = False
 
-
 @interface.implementer(ICommunityBoard)
-class CommunityBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
+class NoDefaultForumCommunityBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
+
     __external_can_create__ = False
     _ntiid_type = NTIID_TYPE_COMMUNITY_BOARD
 
+@interface.implementer(IDefaultForumBoard, ICommunityBoard)
+class CommunityBoard(NoDefaultForumCommunityBoard):
+    
     def createDefaultForum(self):
         return ICommunityForum(self.creator)  # Ask the ICommunity
-
 
 @interface.implementer(IDFLBoard)
 class DFLBoard(GeneralBoard, _CreatedIntIdNTIIDMixin):
