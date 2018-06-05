@@ -280,8 +280,7 @@ class FriendsList(SimpleEnclosureMixin, Entity):  # Mixin order matters for __se
         return result
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
-        super(FriendsList, self).updateFromExternalObject(parsed, *args, **kwargs)
-        updated = None
+        updated = super(FriendsList, self).updateFromExternalObject(parsed, *args, **kwargs)
         newFriends = parsed.pop('friends', None)
         # Update, as usual, starts from scratch.
         # Notice we allow not sending friends to easily change

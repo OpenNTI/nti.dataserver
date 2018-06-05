@@ -20,11 +20,14 @@ from hamcrest import same_instance
 from hamcrest import is_not as does_not
 from hamcrest import contains_inanyorder
 from hamcrest import greater_than_or_equal_to
+from hamcrest import greater_than
 is_not = does_not
 
 from nti.testing.matchers import is_true
 from nti.testing.matchers import is_false
 from nti.testing.matchers import validly_provides
+
+from nti.testing.time import time_monotonically_increases
 
 import fudge
 
@@ -66,12 +69,13 @@ from nti.dataserver.tests.test_authorization_acl import permits
 
 class TestFriendsLists(DataserverLayerTest):
 
+    @time_monotonically_increases
     def test_update_friends_list_name(self):
         class O(object):
             username = u'foo'
             _avatarURL = u'BAD'
-
         o = FriendsList(u'MyList')
+        modified = o.modified
         ntiid = o.NTIID
         ext_value = to_external_object(o)
         assert_that(ext_value, has_entry('Username', 'MyList'))
@@ -79,6 +83,8 @@ class TestFriendsLists(DataserverLayerTest):
         assert_that(ext_value, has_entry('realname', 'MyList'))
 
         update_from_external_object(o, {'realname': u"My Funny Name"})
+
+        assert_that(o.modified, greater_than(modified))
 
         ext_value = to_external_object(o)
 

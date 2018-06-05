@@ -380,12 +380,14 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
         io = InterfaceObjectIO(profile, profile_iface,
                                validate_after_update=validate)
-        io.updateFromExternalObject(parsed, *args, **kwargs)
+        updated = io.updateFromExternalObject(parsed, *args, **kwargs)
         notify_modified(profile, parsed)
         if profile_update:
             # If we got here, then we got the data to validly update our profile,
             # so we can stop providing the update interface
             interface.noLongerProvides(self, IRequireProfileUpdate)
+
+        return updated
 
     # Comparisons and Hashing
 
