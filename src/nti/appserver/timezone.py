@@ -27,6 +27,7 @@ from nti.coremetadata.interfaces import IUser
 
 logger = __import__('logging').getLogger(__name__)
 
+TIMEZONE_COOKIE = 'timezone'
 TIMEZONE_ID_HEADER = 'X-NTI-Client-Timezone'
 TIMEZONE_OFFSET_HEADER = 'X-NTI-Client-TZOffset'
 
@@ -42,14 +43,26 @@ class DisplayableTimeProvider(object):
         self.request = request
 
     @Lazy
+    def timezone_cookie_dict(self):
+        return self.request.cookies.get(TIMEZONE_COOKIE) or {}
+
+    @Lazy
+    def timezone_name_cookie(self):
+        return self.timezone_cookie_dict.get('name')
+
+    @Lazy
+    def timezone_offset_cookie(self):
+        return self.timezone_cookie_dict.get('offset')
+
+    @Lazy
     def _timezone_identifier(self):
-        return self.request.cookies.get(TIMEZONE_ID_HEADER) \
+        return self.timezone_name_cookie \
             or self.request.headers.get(TIMEZONE_ID_HEADER)
 
     @Lazy
     def _timezone_offset(self):
         # The timezone offset in +/- minutes.
-        val =  self.request.cookies.get(TIMEZONE_OFFSET_HEADER) \
+        val =  self.timezone_offset_cookie \
             or self.request.headers.get(TIMEZONE_OFFSET_HEADER)
         if val is not None:
             try:

@@ -28,6 +28,7 @@ from nti.app.testing.layers import AppLayerTest
 
 from nti.appserver.interfaces import IDisplayableTimeProvider
 
+from nti.appserver.timezone import TIMEZONE_COOKIE
 from nti.appserver.timezone import TIMEZONE_ID_HEADER
 from nti.appserver.timezone import TIMEZONE_OFFSET_HEADER
 
@@ -103,7 +104,8 @@ class TestTimeZone(AppLayerTest):
 		assert_that(adjusted_date.hour, is_(14))
 
 		# Cookies take priority
-		request.cookies[TIMEZONE_ID_HEADER] = 'America/Cayman'
+		request.cookies[TIMEZONE_COOKIE] = {"offset": 300,
+											"name":"America/Cayman"}
 		request.headers[TIMEZONE_ID_HEADER] = 'American/Casey'
 		request.headers[TIMEZONE_OFFSET_HEADER] = '-120'
 		tz_provider = component.queryMultiAdapter((user, request),
@@ -117,9 +119,9 @@ class TestTimeZone(AppLayerTest):
 		assert_that(adjusted_date.hour, is_(7))
 
 		# Cookie offset
-		request.cookies.pop(TIMEZONE_ID_HEADER)
 		request.headers.pop(TIMEZONE_ID_HEADER)
-		request.cookies[TIMEZONE_OFFSET_HEADER] = '+120'
+		request.cookies[TIMEZONE_COOKIE] = {"offset": 120,
+											"name":""}
 		request.headers[TIMEZONE_OFFSET_HEADER] = '-120'
 		tz_provider = component.queryMultiAdapter((user, request),
 												  IDisplayableTimeProvider)
@@ -131,7 +133,7 @@ class TestTimeZone(AppLayerTest):
 		assert_that(adjusted_date.hour, is_(14))
 
 		# Bad headers give us UTC
-		request.cookies.pop(TIMEZONE_OFFSET_HEADER)
+		request.cookies.pop(TIMEZONE_COOKIE)
 		request.headers[TIMEZONE_ID_HEADER] = 'America/DNE'
 		request.headers[TIMEZONE_OFFSET_HEADER] = '+120AAA'
 		tz_provider = component.queryMultiAdapter((user, request),
