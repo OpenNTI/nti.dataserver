@@ -16,7 +16,11 @@ does_not = is_not
 
 import pytz
 
+import simplejson as json
+
 from datetime import datetime
+
+from six.moves.urllib_parse import quote
 
 from zope import component
 
@@ -104,33 +108,37 @@ class TestTimeZone(AppLayerTest):
 		assert_that(adjusted_date.hour, is_(14))
 
 		# Cookies take priority
-		request.cookies[TIMEZONE_COOKIE] = {"offset": 300,
-											"name":"America/Cayman"}
-		request.headers[TIMEZONE_ID_HEADER] = 'American/Casey'
-		request.headers[TIMEZONE_OFFSET_HEADER] = '-120'
-		tz_provider = component.queryMultiAdapter((user, request),
-												  IDisplayableTimeProvider)
-		assert_that(tz_provider, not_none())
-		assert_that(tz_provider.get_timezone_display_name(),
-					is_('America/Cayman'))
-		adjusted_date = tz_provider.adjust_date(get_date())
-		delta = adjusted_date - base_utc_date_tz
-		assert_that(delta.seconds, is_(0))
-		assert_that(adjusted_date.hour, is_(7))
+		tz_json = {"offset": 300, "name":"America/Cayman"}
+		tz_str = quote(json.dumps(tz_json))
+		for tz_data in (tz_json, tz_str):
+			request.cookies[TIMEZONE_COOKIE] = tz_data
+			request.headers[TIMEZONE_ID_HEADER] = 'American/Casey'
+			request.headers[TIMEZONE_OFFSET_HEADER] = '-120'
+			tz_provider = component.queryMultiAdapter((user, request),
+													  IDisplayableTimeProvider)
+			assert_that(tz_provider, not_none())
+			assert_that(tz_provider.get_timezone_display_name(),
+						is_('America/Cayman'))
+			adjusted_date = tz_provider.adjust_date(get_date())
+			delta = adjusted_date - base_utc_date_tz
+			assert_that(delta.seconds, is_(0))
+			assert_that(adjusted_date.hour, is_(7))
 
 		# Cookie offset
-		request.headers.pop(TIMEZONE_ID_HEADER)
-		request.cookies[TIMEZONE_COOKIE] = {"offset": 120,
-											"name":""}
-		request.headers[TIMEZONE_OFFSET_HEADER] = '-120'
-		tz_provider = component.queryMultiAdapter((user, request),
-												  IDisplayableTimeProvider)
-		assert_that(tz_provider, not_none())
-		assert_that(tz_provider.get_timezone_display_name(), is_('GMT+2'))
-		adjusted_date = tz_provider.adjust_date(get_date())
-		delta = adjusted_date - base_utc_date
-		assert_that(delta.seconds, is_(60 * 120))
-		assert_that(adjusted_date.hour, is_(14))
+		tz_json = {"offset": 120, "name":""}
+		tz_str = quote(json.dumps(tz_json))
+		for tz_data in (tz_json, tz_str):
+			request.headers.pop(TIMEZONE_ID_HEADER, None)
+			request.cookies[TIMEZONE_COOKIE] = tz_data
+			request.headers[TIMEZONE_OFFSET_HEADER] = '-120'
+			tz_provider = component.queryMultiAdapter((user, request),
+													  IDisplayableTimeProvider)
+			assert_that(tz_provider, not_none())
+			assert_that(tz_provider.get_timezone_display_name(), is_('GMT+2'))
+			adjusted_date = tz_provider.adjust_date(get_date())
+			delta = adjusted_date - base_utc_date
+			assert_that(delta.seconds, is_(60 * 120))
+			assert_that(adjusted_date.hour, is_(14))
 
 		# Bad headers give us UTC
 		request.cookies.pop(TIMEZONE_COOKIE)

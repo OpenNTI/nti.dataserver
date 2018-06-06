@@ -8,13 +8,18 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import six
 import pytz
+
+import simplejson as json
 
 from datetime import timedelta
 
 from pyramid.interfaces import IRequest
 
 from pytz.exceptions import UnknownTimeZoneError
+
+from six.moves.urllib_parse import unquote
 
 from zope import component
 from zope import interface
@@ -44,7 +49,14 @@ class DisplayableTimeProvider(object):
 
     @Lazy
     def timezone_cookie_dict(self):
-        return self.request.cookies.get(TIMEZONE_COOKIE) or {}
+        result = self.request.cookies.get(TIMEZONE_COOKIE)
+        if result and isinstance(result, six.string_types):
+            result = unquote(result)
+            try:
+                result = json.loads(result)
+            except ValueError:
+                result = None
+        return result or {}
 
     @Lazy
     def timezone_name_cookie(self):
