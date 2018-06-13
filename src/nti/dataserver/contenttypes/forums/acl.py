@@ -267,7 +267,7 @@ class _ACLCommunityForumACLProvider(CommunityForumACLProvider, _ACLBasedProvider
         # only admins would be able to delete the forum
         acl = self._get_context_acl()
         if not acl:
-            return super(_ACLCommunityForumACLProvider, self)._perms_for_creator()
+            return super(_ACLCommunityForumACLProvider, self)._do_get_perms_for_creator()
         # no permission for creator. ACL will be set in
         # _extend_acl_after_creator_and_sharing
         return ()
