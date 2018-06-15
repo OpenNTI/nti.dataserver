@@ -17,6 +17,7 @@ from zope.cachedescriptors.property import Lazy
 from zope.component.hooks import getSite
 
 from zope.securitypolicy.interfaces import Unset
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from zope.securitypolicy.principalrole import PrincipalRoleManager
 from zope.securitypolicy.principalrole import AnnotationPrincipalRoleManager
@@ -77,8 +78,8 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
     def _get_parent_site(self, current_site, parent_site_name):
         # Since we already within a site, we need to go up into the sites folder
         # to fetch our parent site
-        site_folder = current_site.__parent__
-        return site_folder[parent_site_name]
+        sites_folder = current_site.__parent__
+        return sites_folder[parent_site_name]
 
     def _get_parent_site_role_manager(self):
         """
@@ -96,7 +97,7 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
             if site_name != current_site_name:
                 parent_site = self._get_parent_site(current_site, site_name)
                 if parent_site is not current_site:
-                    parent_role_manager = ISiteRoleManager(parent_site, None)
+                    parent_role_manager = IPrincipalRoleManager(parent_site, None)
                     return parent_role_manager
                 return None
 
