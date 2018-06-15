@@ -25,7 +25,6 @@ from nti.dataserver.interfaces import ISiteRoleManager
 
 from nti.externalization.persistence import NoPickle
 
-from nti.site.site import get_site_for_site_names
 from nti.site.site import get_component_hierarchy_names
 
 logger = __import__('logging').getLogger(__name__)
@@ -75,9 +74,17 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
                 result = util.getSetting(role_id, principal_id, default=default)
         return result
 
+    def _get_parent_site(self, current_site, parent_site_name):
+        # Since we already within a site, we need to go up into the sites folder
+        # to fetch our parent site
+        site_folder = current_site.__parent__
+        return site_folder[parent_site_name]
+
     def _get_parent_site_role_manager(self):
         """
         Return the :class:`ISiteRoleManager` for our parent site.
+
+        Note we do not recursively iterate through the parents.
 
         XXX: Since we do not run this in the parent site, we would not get any
         registered/configured users from a utility registered in the parent site.
@@ -87,8 +94,7 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         site_names = get_component_hierarchy_names()
         for site_name in site_names or ():
             if site_name != current_site_name:
-                parent_site = get_site_for_site_names((site_name,),
-                                                      site=current_site)
+                parent_site = self._get_parent_site(current_site, site_name)
                 if parent_site is not current_site:
                     parent_role_manager = ISiteRoleManager(parent_site, None)
                     return parent_role_manager
