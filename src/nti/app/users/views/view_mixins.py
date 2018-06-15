@@ -57,6 +57,7 @@ from nti.dataserver.users.interfaces import IUserUpdateUtility
 from nti.dataserver.users.interfaces import IUsernameGeneratorUtility
 
 from nti.dataserver.users.interfaces import UpsertUserCreatedEvent
+from nti.dataserver.users.interfaces import UpsertUserPreCreateEvent
 
 from nti.dataserver.metadata.index import IX_TOPICS
 from nti.dataserver.metadata.index import IX_SHAREDWITH
@@ -432,6 +433,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
         username = self._generate_username()
         realname = self._get_real_name()
         interface.alsoProvides(self.request, INoAccountCreationEmail)
+        notify(UpsertUserPreCreateEvent(self.request))
         # Realname is used if we have it; otherwise first/last are used.
         user = _deal_with_external_account(self.request,
                                            username=username,

@@ -980,6 +980,19 @@ class IUserUpdateUtility(Interface):
         """
 
 
+class IUpsertUserPreCreateEvent(IObjectEvent):
+    """
+    Fired before a user has been created via UserUpsert.
+    """
+
+
+@interface.implementer(IUpsertUserPreCreateEvent)
+class UpsertUserPreCreateEvent(ObjectEvent):
+
+    def __init__(self, request):
+        super(UpsertUserPreCreateEvent, self).__init__(request)
+
+
 class IUpsertUserCreatedEvent(IObjectEvent):
     """
     Fired after a user has been created via UserUpsert.
