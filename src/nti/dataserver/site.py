@@ -83,7 +83,7 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         registered/configured users from a utility registered in the parent site.
         """
         current_site = getSite()
-        current_site_name = getSite()
+        current_site_name = current_site.__name__
         site_names = get_component_hierarchy_names()
         for site_name in site_names or ():
             if site_name != current_site_name:
