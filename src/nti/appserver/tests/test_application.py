@@ -893,7 +893,7 @@ class TestApplication(ApplicationLayerTest):
 										extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
 		resolved_member = resolved_member_res.json_body['Items'][0]
 
-		for k in ('DynamicMemberships', 'following', 'Communities'):
+		for k in ('DynamicMemberships', 'Communities'):
 			assert_that( resolved_member, has_entry( k, has_item(
 														has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
 

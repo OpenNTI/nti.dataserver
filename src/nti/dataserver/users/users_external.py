@@ -461,13 +461,18 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
         extDict['DynamicMemberships'] = _externalize_subordinates(filter(_selector, memberships), name='')
         extDict['Communities'] = extDict['DynamicMemberships'] # Deprecated
 
+        # As of 6/2018 no UIs are presenting or allowing the editing of these sharing fields (accepting,
+        # rejecting, following, ignoring).  For accounts with many dynamic memberships (communities/course scopes)
+        # or connections (people in contact lists) this is a bunch of wasted data. In some cases for instructors
+        # of 100s of courses this leads to several hundred communities being externalized unnecessarily.  Should
+        # we choose to expose this again we should do so with dynamically fetched collections.
         # Following is writable
-        following = self.entity.entities_followed
-        extDict['following'] = _externalize_subordinates(filter(_selector, following))
+        # following = self.entity.entities_followed
+        # extDict['following'] = _externalize_subordinates(filter(_selector, following))
 
         # as is ignoring and accepting
-        extDict['ignoring'] = _externalize_subordinates(self.entity.entities_ignoring_shared_data_from)
-        extDict['accepting'] = _externalize_subordinates(self.entity.entities_accepting_shared_data_from)
+        # extDict['ignoring'] = _externalize_subordinates(self.entity.entities_ignoring_shared_data_from)
+        # extDict['accepting'] = _externalize_subordinates(self.entity.entities_accepting_shared_data_from)
 
         extDict['AvatarURLChoices'] = component.getAdapter(self.entity, IAvatarChoices).get_choices()
 
