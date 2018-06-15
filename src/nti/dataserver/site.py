@@ -97,7 +97,7 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
             if site_name != current_site_name:
                 parent_site = self._get_parent_site(current_site, site_name)
                 if parent_site is not current_site:
-                    parent_role_manager = IPrincipalRoleManager(parent_site, None)
+                    parent_role_manager = ISiteRoleManager(parent_site, None)
                     return parent_role_manager
                 return None
 
