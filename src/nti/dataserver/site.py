@@ -81,7 +81,7 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         sites_folder = current_site.__parent__
         return sites_folder[parent_site_name]
 
-    def _get_parent_site_role_manager(self):
+    def _get_parent_site_role_manager(self, current_site):
         """
         Return the :class:`ISiteRoleManager` for our parent site.
 
@@ -90,14 +90,13 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         XXX: Since we do not run this in the parent site, we would not get any
         registered/configured users from a utility registered in the parent site.
         """
-        current_site = getSite()
         current_site_name = current_site.__name__
         site_names = get_component_hierarchy_names()
         for site_name in site_names or ():
             if site_name != current_site_name:
                 parent_site = self._get_parent_site(current_site, site_name)
                 if parent_site is not current_site:
-                    parent_role_manager = ISiteRoleManager(parent_site, None)
+                    parent_role_manager = IPrincipalRoleManager(parent_site, None)
                     return parent_role_manager
                 return None
 
@@ -109,8 +108,13 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         super_func = getattr(super(PersistentSiteRoleManager, self), func_name)
         result = super_func(*args)
         result = result or []
+        current_site = getSite()
+        if self.__parent__ != getSite():
+            # We are a parent IPrincipalRoleManager fetched in another site.
+            # Must eject here to avoid recursion issues (and duplicate work).
+            return result
         util = self._site_role_manager_utility
-        parent_role_manager = self._get_parent_site_role_manager()
+        parent_role_manager = self._get_parent_site_role_manager(current_site)
         for other_role_manager in (util, parent_role_manager):
             if other_role_manager is None:
                 continue
