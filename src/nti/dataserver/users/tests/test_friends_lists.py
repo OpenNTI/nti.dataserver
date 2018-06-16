@@ -216,12 +216,12 @@ class TestFriendsLists(DataserverLayerTest):
 
             assert_that(user3.dynamic_memberships, has_item(fl1))
             assert_that(to_external_object(user3, name='personal-summary'),
-                        has_entry('Communities', has_item(has_entry('realname', 'Friends'))))
+                        has_entry('DynamicMemberships', has_item(has_entry('realname', 'Friends'))))
 
             assert_that(user2.dynamic_memberships, does_not(has_item(fl1)))
             assert_that(user2.entities_followed, does_not(has_item(fl1)))
             assert_that(to_external_object(user2, name='personal-summary'), 
-                        has_entry('Communities', does_not(has_item(has_entry('realname', 'Friends')))))
+                        has_entry('DynamicMemberships', does_not(has_item(has_entry('realname', 'Friends')))))
 
             # The external form masquerades as a normal FL...
             x = to_external_object(fl1)

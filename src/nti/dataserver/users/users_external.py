@@ -459,7 +459,6 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
         memberships = self.entity.dynamic_memberships
         extDict['DynamicMemberships'] = _externalize_subordinates(filter(_selector, memberships), name='')
-        extDict['Communities'] = extDict['DynamicMemberships'] # Deprecated
 
         # As of 6/2018 no UIs are presenting or allowing the editing of these sharing fields (accepting,
         # rejecting, following, ignoring).  For accounts with many dynamic memberships (communities/course scopes)
