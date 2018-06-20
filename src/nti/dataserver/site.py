@@ -109,13 +109,25 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         result = super_func(*args)
         result = result or []
         current_site = getSite()
-        if self.__parent__ != getSite():
+        if      self.__parent__ != getSite() \
+            and self.__parent__.__name__ != 'dataserver2':
             # We are a parent IPrincipalRoleManager fetched in another site.
             # Must eject here to avoid recursion issues (and duplicate work).
             return result
+
         util = self._site_role_manager_utility
-        parent_role_manager = self._get_parent_site_role_manager(current_site)
-        for other_role_manager in (util, parent_role_manager):
+        if self.__parent__.__name__ == 'dataserver2':
+            # This may not be entirely correct. We're getting configured
+            # principals/roles registered in the current site while in the
+            # IPrincipalRoleManager of the dataserver2 folder. If these
+            # configured principals are moved to the persistent site role
+            # manager, those users would lose whatever access they have from
+            # this block.
+            role_managers = (util,)
+        else:
+            parent_role_manager = self._get_parent_site_role_manager(current_site)
+            role_managers = (util, parent_role_manager)
+        for other_role_manager in role_managers:
             if other_role_manager is None:
                 continue
             util_func = getattr(other_role_manager, func_name)
