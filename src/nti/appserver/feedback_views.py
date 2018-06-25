@@ -36,7 +36,7 @@ from nti.mailer.interfaces import ITemplatedMailer
 REL_SEND_FEEDBACK = 'send-feedback'
 
 
-def _format_email(request, body_key, userid, report_type, subject, to):
+def _format_email(request, body_key, userid, report_type, subject, to, include_request_details=True):
     json_body = read_body_as_external_object(request)
     if     body_key not in json_body \
         or not json_body[body_key] \
@@ -99,7 +99,11 @@ def _format_email(request, body_key, userid, report_type, subject, to):
     # notably cookies, which may contain sensitive information;
     # in particular, our nti.auth_tkt cookie is NOT using
     # IP address, so it could be used by anyone until it times out.
-    request_details = dict(request.environ)
+    if include_request_details:
+        request_details = dict(request.environ)
+    else:
+        request_details = {}
+    
     # TODO: Preserve just the names? Blacklist only certain cookies?
     for k in ('HTTP_COOKIE',
               'paste.cookies',
@@ -127,24 +131,26 @@ def _format_email(request, body_key, userid, report_type, subject, to):
         {'name': 'Request Details',     'data': _format_html_items(request_details.items())}
     ]
 
-    cur_domain = request_details.get(
-        'HTTP_HOST', request_details.get('SERVER_NAME'))
+    environ_dict = request_details or dict(request.environ)
+    cur_domain = environ_dict.get(
+        'HTTP_HOST', environ_dict.get('SERVER_NAME'))
     cur_domain = cur_domain.split(':')[0]  # drop port
     mailer = component.getUtility(ITemplatedMailer)
     mailer.queue_simple_html_text_email(
-                      'platform_feedback_email',
-                    subject=subject % (userid, cur_domain),
-                    recipients=[to],
-                    template_args={'userid': userid,
-                                   'report_type': report_type,
-                                   'data': json_body,
-                                   'filled_body': '\n    '.join(textwrap.wrap(json_body[body_key], 60)),
-                                   'context': json_body,
-                                   'request': request,
-                                   'tables': tables,
-                                   'request_info_table': request_info_table,
-                                   'request_details_table': request_detail_table},
-                    request=request)
+        'platform_feedback_email',
+        subject=subject % (userid, cur_domain),
+        recipients=[to],
+        template_args={'userid': userid,
+                       'report_type': report_type,
+                       'data': json_body,
+                       'filled_body': '\n    '.join(textwrap.wrap(json_body[body_key], 60)),
+                       'context': json_body,
+                       'request': request,
+                       'tables': tables,
+                       'request_info_table': request_info_table or None,
+                       'request_details_table': request_detail_table or None},
+        text_template_extension='.mak',
+        request=request)
 
     return hexc.HTTPNoContent()
 
@@ -162,7 +168,8 @@ def send_feedback_view(request):
                          request.authenticated_userid,
                          'Feedback',
                          'Feedback From %s on %s',
-                         'support@nextthought.com')
+                         'support@nextthought.com',
+                         include_request_details=False)
 
 
 @view_config(route_name='objects.generic.traversal',
