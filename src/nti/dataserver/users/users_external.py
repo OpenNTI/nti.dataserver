@@ -445,21 +445,6 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
         else:
             extDict['birthdate'] = None
 
-        # DynamicMemberships/Communities are not currently editable,
-        # and will need special handling of (a) Everyone and (b) DynamicFriendsLists
-        # (proper events could handle the latter)
-        _same_as_authenticated = _is_remote_same_as_authenticated(self.entity)
-
-        def _selector(x):
-            if _same_as_authenticated:
-                return True
-            else:
-                hidden = IHiddenMembership(x, None) or ()
-                return not self in hidden
-
-        memberships = self.entity.dynamic_memberships
-        extDict['DynamicMemberships'] = _externalize_subordinates(filter(_selector, memberships), name='')
-
         # As of 6/2018 no UIs are presenting or allowing the editing of these sharing fields (accepting,
         # rejecting, following, ignoring).  For accounts with many dynamic memberships (communities/course scopes)
         # or connections (people in contact lists) this is a bunch of wasted data. In some cases for instructors

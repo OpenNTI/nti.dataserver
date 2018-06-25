@@ -1063,50 +1063,6 @@ class TestUser(DataserverLayerTest):
         assert_that(find_object_with_ntiid(comm.NTIID.lower()),
                     is_(comm))
 
-    @WithMockDSTrans
-    def test_all_kinds_of_coppa_users_externalize_with_community(self):
-        comm = Community.create_entity(mock_dataserver.current_mock_ds,
-                                       username=u'TheComunity')
-
-        from zope import interface
-
-        from pyramid.threadlocal import manager  # XXX wrong level
-
-        from nti.dataserver.interfaces import ICoppaUser
-        from nti.dataserver.interfaces import ICoppaUserWithAgreement
-        from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
-        from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
-
-        class Request(object):
-            authenticated_userid = None
-
-        for iface in (ICoppaUserWithAgreement, ICoppaUserWithAgreementUpgraded,
-                      ICoppaUserWithoutAgreement, ICoppaUser):
-            __traceback_info__ = iface
-            user = User.create_user(mock_dataserver.current_mock_ds,
-                                    username=six.text_type(iface.__name__))
-            interface.alsoProvides(user, iface)
-            user.record_dynamic_membership(comm)
-            # When we're explicit
-            assert_that(to_external_object(user, name='personal-summary'),
-                        has_entry('DynamicMemberships',
-                                  has_item(has_entry('Username', comm.username))))
-
-            # And when we're implicitly authenticated
-            try:
-                req = Request()
-                req.authenticated_userid = user.username
-                manager.push({'request': req})
-                assert_that(to_external_object(user),
-                            has_entry('DynamicMemberships',
-                                      has_item(has_entry('Username', comm.username))))
-            finally:
-                manager.clear()
-
-            # but not otherwise
-            assert_that(to_external_object(user),
-                        does_not(has_key('DynamicMemberships')))
-
     @WithMockDS
     def test_owned_dfls_in_xxx_intids(self):
         with mock_dataserver.mock_db_trans(self.ds):

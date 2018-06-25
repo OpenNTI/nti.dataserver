@@ -888,15 +888,6 @@ class TestApplication(ApplicationLayerTest):
 											contains_string( 'application/vnd.nextthought.dynamicfriendslist+json' ) ) )
 		assert_that( res.json_body, has_entry( 'IsDynamicSharing', True ) )
 
-		# It is visible to the member in a few places
-		resolved_member_res = testapp.get( '/dataserver2/ResolveUser/troy.daley@nextthought.com',
-										extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
-		resolved_member = resolved_member_res.json_body['Items'][0]
-
-		for k in ('DynamicMemberships',):
-			assert_that( resolved_member, has_entry( k, has_item(
-														has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
-
 		def _friends_list_empty_check( username, owner=False ):
 			member_fl_res = testapp.get( '/dataserver2/users/%s/FriendsLists' % username,
 									extra_environ=self._make_extra_environ( username=username ) )
@@ -933,15 +924,6 @@ class TestApplication(ApplicationLayerTest):
 						   extra_environ=self._make_extra_environ(),
 						   headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
 		assert_that( res.json_body, has_entry( 'friends', [] ) )
-
-		# And it is no longer visible to the ex-member
-		resolved_member_res = testapp.get( '/dataserver2/ResolveUser/troy.daley@nextthought.com',
-										extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
-		resolved_member = resolved_member_res.json_body['Items'][0]
-
-		for k in ('DynamicMemberships', ):
-			assert_that( resolved_member, has_entry( k, does_not( has_item(
-																has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) ) )
 
 
 		for dfl_endpoint in ('Groups', 'DynamicMemberships'):

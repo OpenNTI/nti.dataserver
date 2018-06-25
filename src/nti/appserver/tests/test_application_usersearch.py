@@ -102,8 +102,6 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
         member = res.json_body['Items'][0]
         assert_that(member, has_entry('Username', 'jason@nti.com'))
-        assert_that(member,
-                    has_entry('DynamicMemberships', has_item(has_entry('Username', dfl_ntiid))))
 
         # We can also search for the DFL, by its lowercase NTIID
         # The application for some reason is lowercasing the Username, which is WRONG.
