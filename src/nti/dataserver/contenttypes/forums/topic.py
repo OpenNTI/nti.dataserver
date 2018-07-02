@@ -325,7 +325,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
                 for action, entity, perm in ace:
                     if action == ACE_ACT_ALLOW and can_read(perm):
                         possible_entities.add(entity)
-        elif IACLProvider.providedBy(_forum):
+        elif IACLProvider(_forum, None):
             for ace in IACLProvider(_forum).__acl__:
                 if IACE.providedBy(ace):
                     action = ace.action
