@@ -24,6 +24,8 @@ from nti.app.externalization.internalization import read_body_as_external_object
 
 from nti.appserver import httpexceptions as hexc
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -103,7 +105,7 @@ def _format_email(request, body_key, userid, report_type, subject, to, include_r
         request_details = dict(request.environ)
     else:
         request_details = {}
-    
+
     # TODO: Preserve just the names? Blacklist only certain cookies?
     for k in ('HTTP_COOKIE',
               'paste.cookies',
@@ -162,13 +164,17 @@ def _format_email(request, body_key, userid, report_type, subject, to, include_r
              request_method='POST',
              name=REL_SEND_FEEDBACK)
 def send_feedback_view(request):
-
+    """
+    Allows the user to send questions to support (e.g. 'contact us').
+    """
+    policy = component.getUtility(ISitePolicyUserEventListener)
+    support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
     return _format_email(request,
                          'body',
                          request.authenticated_userid,
                          'Feedback',
                          'Feedback From %s on %s',
-                         'support@nextthought.com',
+                         support_email,
                          include_request_details=False)
 
 
