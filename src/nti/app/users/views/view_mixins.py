@@ -484,8 +484,8 @@ class UserUpsertViewMixin(AbstractUpdateView):
         if user is None:
             user = self.create_user()
         else:
-            logger.info('UserUpsert updating user (%s)',
-                        user.username)
+            logger.info('UserUpsert updating user (%s) (%s)',
+                        user.username, self._email)
             self.update_user(user)
 
         if self._email:
