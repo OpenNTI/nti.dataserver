@@ -592,9 +592,10 @@ class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 
 			email = getattr(IEmailAddressable(user, None), 'email', None)
 			if email:
-				if 		email == 'jamadden@ou.edu' \
-					or	email == 'jzuech3@gmail.com' \
-					or 	email.endswith('@nextthought.com'):
+				if 	   email == 'jamadden@ou.edu' \
+					or email == 'jzuech3@gmail.com' \
+					or email == 'ntiqatesting@gmail.com' \
+					or email.endswith('@nextthought.com'):
 					return True
 
 	class _Collector(DigestEmailCollector):
