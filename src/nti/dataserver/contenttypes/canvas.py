@@ -208,11 +208,11 @@ class _CanvasExporter(InterfaceObjectIO):
         [kwargs.pop(x, None) for x in ('name', 'decorate')]
         adapter = IInternalObjectExternalizer(context, None)
         if adapter is not None:
-            result = adapter.toExternalObject(decorate=False, 
+            result = adapter.toExternalObject(decorate=False,
                                               name='exporter',
                                               **kwargs)
         else:
-            result = super(_CanvasExporter, self).toExternalObject(decorate=False, 
+            result = super(_CanvasExporter, self).toExternalObject(decorate=False,
                                                                    name='exporter',
                                                                    **kwargs)
             decorateMimeType(context, result)

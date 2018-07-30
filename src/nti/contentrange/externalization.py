@@ -32,20 +32,17 @@ logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(IDomContentPointer)
-@interface.implementer(IInternalObjectIO)
 class DomContentPointerExternal(InterfaceObjectIO):
     _ext_iface_upper_bound = IDomContentPointer
     __external_use_minimal_base__ = True
 
 
 @component.adapter(ITextContext)
-@interface.implementer(IInternalObjectIO)
 class TextContextExternal(InterfaceObjectIO):
     _ext_iface_upper_bound = ITextContext
     __external_use_minimal_base__ = True
 
 
-@interface.implementer(IInternalObjectIO)
 @component.adapter(IContentRangeDescription)
 class ContentRangeDescriptionExternal(InterfaceObjectIO):
     _ext_iface_upper_bound = IContentRangeDescription
@@ -53,27 +50,23 @@ class ContentRangeDescriptionExternal(InterfaceObjectIO):
 
 
 @component.adapter(ITimeContentPointer)
-@interface.implementer(IInternalObjectIO)
 class TimeContentPointerExternal(InterfaceObjectIO):
     _ext_iface_upper_bound = ITimeContentPointer
     __external_use_minimal_base__ = True
 
 
-@interface.implementer(IInternalObjectIO)
 @component.adapter(ITimeRangeDescription)
 class TimeRangeDescriptionExternal(InterfaceObjectIO):
     _ext_iface_upper_bound = ITimeRangeDescription
     __external_use_minimal_base__ = True
 
 
-@interface.implementer(IInternalObjectIO)
 @component.adapter(ITranscriptContentPointer)
 class TranscriptContentPointerExternal(InterfaceObjectIO):
     _ext_iface_upper_bound = ITranscriptContentPointer
     __external_use_minimal_base__ = True
 
 
-@interface.implementer(IInternalObjectIO)
 @component.adapter(ITranscriptRangeDescription)
 class TranscriptRangeDescriptionExternal(InterfaceObjectIO):
     _ext_iface_upper_bound = ITranscriptRangeDescription

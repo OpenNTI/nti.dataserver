@@ -54,7 +54,7 @@ from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
-from nti.externalization.internalization import notifyModified as notify_modified
+from nti.externalization.internalization import notify_modified
 from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids.ntiids import DATE
