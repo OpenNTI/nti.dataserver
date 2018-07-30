@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import itertools
+
 import six
 import operator
 import simplejson
@@ -75,6 +77,10 @@ from nti.ntiids.oids import to_external_ntiid_oid
 
 logger = __import__('logging').getLogger(__name__)
 
+MAX_USERSEARCH_RESULTS = 1000
+
+def _max_results():
+    return MAX_USERSEARCH_RESULTS
 
 def _is_valid_search(search_term, remote_user):
     """
@@ -131,6 +137,10 @@ def _UserSearchView(request):
         result = _search_scope_to_remote_user(remote_user, partialMatch)
 
     request.response.cache_control.max_age = 120
+
+    # limit to the first MAX_USERSEARCH_RESULTS
+    result = itertools.islice(result, _max_results())
+
     result = _format_result(result, remote_user, dataserver)
     return result
 interface.directlyProvides(_UserSearchView, INamedLinkView)

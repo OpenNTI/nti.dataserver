@@ -223,6 +223,26 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         assert_that(res.json_body['Items'], has_length(2))
 
     @WithSharedApplicationMockDS
+    @fudge.patch('nti.appserver.usersearch_views._max_results')
+    def test_user_search_max_results(self, max_results):
+        max_results.is_callable().returns(5)
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = self._create_user()
+            community = Community.create_community(username=u'TheCommunity')
+            user.record_dynamic_membership(community)
+            for i in range(2, 7):
+                newuser = self._create_user(username=user.username + unicode(i))
+                # have to share a damn community
+                newuser.record_dynamic_membership(community)
+
+        testapp = TestApp(self.app)
+        # Ensure results are limited
+        path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
+        res = testapp.get(path, extra_environ=self._make_extra_environ())
+        assert_that(res.json_body['Items'], has_length(5))
+
+    @WithSharedApplicationMockDS
     def test_user_search_username_is_prefix(self):
         with mock_dataserver.mock_db_trans(self.ds):
             user = self._create_user()
