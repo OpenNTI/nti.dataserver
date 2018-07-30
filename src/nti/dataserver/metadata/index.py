@@ -13,7 +13,6 @@ from __future__ import absolute_import
 # disable 'redefining builtin id' because
 # we get that from superclass
 # pylint: disable=W0622
-
 import six
 
 from zope import component
@@ -71,7 +70,7 @@ from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
 
 from nti.zope_catalog.index import AttributeKeywordIndex
 
-from nti.zope_catalog.interfaces import IDeferredCatalog 
+from nti.zope_catalog.interfaces import IDeferredCatalog
 
 from nti.zope_catalog.string import StringTokenNormalizer
 
@@ -440,7 +439,7 @@ TP_USER_GENERATED_DATA = 'isUserGeneratedData'
 
 @interface.implementer(IDeferredCatalog)
 class MetadataCatalog(DeferredCatalog):
-    
+
     family = BTrees.family64
 
     def force_index_doc(self, docid, ob):  # BWC

@@ -11,6 +11,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+
 # NOTE: We must not import *anything* before the patch
 from nti.monkey import patch_nti_pserve_on_import
 patch_nti_pserve_on_import.patch()

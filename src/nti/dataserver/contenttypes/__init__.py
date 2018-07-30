@@ -7,7 +7,6 @@ Most of the imports in this module itself are backward compatibility re-exports
 
 .. $Id$
 """
-
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
