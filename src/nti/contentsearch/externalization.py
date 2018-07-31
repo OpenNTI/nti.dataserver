@@ -9,14 +9,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
-
 from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
 
-from nti.externalization.interfaces import IInternalObjectIO
 
-
-@interface.implementer(IInternalObjectIO)
 class _SearchHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
     _excluded_in_ivars_ = {'Query'}

@@ -33,8 +33,6 @@ from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.externalization import to_external_object
 
-from nti.externalization.interfaces import IInternalObjectIO
-
 from nti.externalization.internalization import update_from_external_object
 
 from nti.externalization.proxy import removeAllProxies
@@ -200,7 +198,6 @@ class UserContentRootInternalObjectIOMixin(object):
         return event
 
 
-@interface.implementer(IInternalObjectIO)
 class UserContentRootInternalObjectIO(UserContentRootInternalObjectIOMixin, InterfaceObjectIO):
 
     _ext_iface_upper_bound = IModeledContent

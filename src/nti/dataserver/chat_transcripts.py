@@ -563,7 +563,6 @@ class TranscriptSummary(object):
 		"""  # because they hold other persistent objects that are meant to be weak-refd
 		raise TypeError()
 
-@interface.implementer(IInternalObjectIO)
 @component.adapter(ITranscriptSummary)
 class TranscriptSummaryInternalObjectIO(InterfaceObjectIO):
 	_ext_iface_upper_bound = ITranscriptSummary

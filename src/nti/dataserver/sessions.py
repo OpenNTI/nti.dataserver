@@ -53,7 +53,8 @@ from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 
 from nti.externalization.externalization import toExternalObject
 
-from nti.externalization.externalization.replacers import DevmodeNonExternalizableObjectReplacementFactory
+from nti.externalization.externalization import DevmodeNonExternalizableObjectReplacer
+#from nti.externalization.externalization.replacers import DevmodeNonExternalizableObjectReplacementFactory
 
 from nti.socketio.interfaces import ISocketSession
 from nti.socketio.interfaces import ISocketIOSocket
@@ -467,7 +468,7 @@ class SessionService(object):
         with imp_user():
             # Trap externalization errors /now/ rather than later during
             # the process
-            replacer = DevmodeNonExternalizableObjectReplacementFactory
+            replacer = DevmodeNonExternalizableObjectReplacer
             args = [
                 toExternalObject(arg, default_non_externalizable_replacer=replacer)
                 for arg in args
