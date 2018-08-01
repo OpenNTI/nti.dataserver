@@ -4,18 +4,19 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
-
-from zope.deprecation import deprecated
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from persistent import Persistent
 
 from persistent.mapping import PersistentMapping
 
+from zope.deprecation import deprecated
+
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
+
+logger = __import__('logging').getLogger(__name__)
 
 
 deprecated('_RepozeEntityIndexManager', 'No longer used')
