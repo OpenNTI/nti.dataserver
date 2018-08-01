@@ -4,14 +4,14 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
-import six
 import time
 import collections
+
+import six
 
 from zope import component
 from zope import interface
@@ -36,6 +36,8 @@ from nti.property.property import alias
 from nti.schema.field import SchemaConfigured
 
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(ISearchHitMetaData)
@@ -135,6 +137,7 @@ class SearchResultsMixin(Contained):
     Query = alias('query')
     Name = name = alias('__name__')
 
+    # pylint: disable=useless-super-delegation
     def __init__(self, *args, **kwargs):
         super(SearchResultsMixin, self).__init__(*args, **kwargs)
 
@@ -212,7 +215,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
             return True
         return False
 
-    def add_filter_record(self, item, predicate):
+    def add_filter_record(self, unused_item, predicate):
         self.metadata.filtered_count += 1
         name = getattr(predicate, '__name__', None) \
             or predicate.__class__.__name__
@@ -233,6 +236,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
             self._add(item)
 
     def sort(self, sortOn=None):
+        # pylint: disable=no-member
         name = sortOn or (self.query.sortOn if self.query else '')
         factory = component.queryUtility(ISearchHitComparatorFactory, 
                                          name=name or '')
@@ -247,6 +251,7 @@ class SearchResults(SearchResultsMixin, SchemaConfigured):
 
     def __iadd__(self, other):
         if ISearchResults.providedBy(other):
+            # pylint: disable=protected-access
             self._set_hits(other._raw_hits())
             self.HitMetaData += other.HitMetaData
         return self
@@ -317,7 +322,7 @@ class SearchResultsList(SchemaConfigured):
 
     @property
     def TotalHitCount(self):
-        return sum(map(lambda x: len(x), self.items))
+        return sum(len(x) for x in self.items)
     NumFound = TotalHitCount
 
 

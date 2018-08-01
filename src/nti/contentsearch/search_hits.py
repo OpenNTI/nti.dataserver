@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
@@ -28,6 +27,8 @@ from nti.schema.field import SchemaConfigured
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @WithRepr
 @interface.implementer(IContained, IContentTypeAware)
@@ -35,7 +36,7 @@ class SearchHitMixin(object):
 
     __parent__ = None
     __name__ = alias('ID')
-    __external_class_name__ = 'Hit'
+    __external_class_name__ = u'Hit'
 
     id = alias('ID')
     ContainerId = alias('Containers')
@@ -43,6 +44,7 @@ class SearchHitMixin(object):
 
     parameters = {}
 
+    # pylint: disable=useless-super-delegation
     def __init__(self, *args, **kwargs):
         super(SearchHitMixin, self).__init__(*args, **kwargs)
 

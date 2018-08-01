@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import six
 
@@ -28,6 +27,8 @@ from nti.schema.eqhash import EqHash
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from nti.schema.schema import SchemaConfigured
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @interface.implementer(ISearchQuery)
@@ -62,15 +63,18 @@ class QueryObject(SchemaConfigured):
 
     @property
     def query(self):
+        # pylint: disable=no-member
         return self.term
 
     @property
     def IsEmpty(self):
+        # pylint: disable=no-member
         return not self.term
     is_empty = IsEmpty
 
     @property
     def IsDescendingSortOrder(self):
+        # pylint: disable=no-member
         return self.sortOrder == 'descending'
     is_descending_sort_order = IsDescendingSortOrder
 
@@ -99,6 +103,7 @@ class QueryObject(SchemaConfigured):
         if kwargs:
             context = queryobject.context
             if context is None:
+                # pylint: disable=attribute-defined-outside-init 
                 context = queryobject.context = dict()
             for k, v in kwargs.items():
                 if v is None:

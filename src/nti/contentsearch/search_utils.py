@@ -4,14 +4,14 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import re
-import six
 import time
+
+import six
 
 from zope import component
 
@@ -36,6 +36,8 @@ from nti.ntiids.ntiids import is_ntiid_of_type
 from nti.site.site import get_component_hierarchy_names
 
 _extractor_pe = re.compile(r'[?*]*(.*)')
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def clean_search_query(query, language=u'en'):

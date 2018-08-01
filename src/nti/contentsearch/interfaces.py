@@ -4,8 +4,11 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+
+# pylint: disable=inherit-non-class,expression-not-assigned
 
 from zope import interface
 
@@ -25,7 +28,7 @@ from nti.base.interfaces import ILastModified
 from nti.contentfragments.interfaces import IString
 from nti.contentfragments.interfaces import IUnicode
 
-from nti.dataserver.interfaces import IEntity
+from nti.coremetadata.interfaces import IEntity
 
 from nti.schema.field import Int
 from nti.schema.field import Bool
@@ -37,7 +40,7 @@ from nti.schema.field import Variant
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import IndexedIterable
-from nti.schema.field import TextLine as ValidTextLine
+from nti.schema.field import DecodingValidTextLine as ValidTextLine
 
 # deprecated interfaes
 
@@ -169,7 +172,7 @@ class ISearchQuery(interface.Interface):
     items = interface.Attribute(u'Attributes key/value in context')
     items.setTaggedValue('_ext_excluded_out', True)
 
-    def get(key, deafult=None):
+    def get(key, deafult):
         """
         return the value associated with the key in context
         """
@@ -269,6 +272,7 @@ class ISearchHit(ILastModified):
 
 
 class ITranscriptSearchHit(ISearchHit):
+
     EndMilliSecs = Number(title=u"Media end timestamp", required=False)
 
     StartMilliSecs = Number(title=u"Media start video timestamp",
@@ -280,6 +284,10 @@ class IContentUnitSearchHit(ISearchHit):
 
 
 class IUserGeneratedDataSearchHit(ISearchHit):
+    pass
+
+
+class IEntitySearchHit(ISearchHit):
     pass
 
 

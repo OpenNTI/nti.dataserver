@@ -4,16 +4,17 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from zope import interface
 
 from nti.contentsearch.interfaces import ISearchHit
 from nti.contentsearch.interfaces import ISearchHitComparator
 from nti.contentsearch.interfaces import ISearchHitComparatorFactory
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class _CallableComparator(object):
@@ -23,6 +24,9 @@ class _CallableComparator(object):
 
     def __call__(self, a, b):
         return self.compare(a, b)
+
+    def compare(self, a, b):
+        raise NotImplementedError()
 
 
 @interface.implementer(ISearchHitComparator)
@@ -51,7 +55,7 @@ class _ScoreSearchHitComparatorFactory(object):
 
     singleton = _ScoreSearchHitComparator()
 
-    def __call__(self, results=None):
+    def __call__(self, unused_results=None):
         return self.singleton
 
 
@@ -80,7 +84,7 @@ class _LastModifiedSearchHitComparatorFactory(object):
 
     singleton = _LastModifiedSearchHitComparator()
 
-    def __call__(self, results=None):
+    def __call__(self, unused_results=None):
         return self.singleton
 
 
@@ -109,5 +113,5 @@ class _CreatorSearchHitComparatorFactory(object):
 
     singleton = _CreatorSearchHitComparator()
 
-    def __call__(self, results=None):
+    def __call__(self, unused_results=None):
         return self.singleton
