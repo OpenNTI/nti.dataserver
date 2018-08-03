@@ -10,8 +10,6 @@ from __future__ import absolute_import
 
 from zope import component
 
-from zope.annotation.interfaces import IAnnotations
-
 from zope.catalog.interfaces import ICatalog
 
 from zope.intid.interfaces import IIntIds
@@ -171,7 +169,10 @@ class BackgroundUrlProperty(ImageUrlProperty):
 
 # site 
 
+import zope.deferredimport
+zope.deferredimport.initialize()
 
-def user_creation_sitename(user):
-    annotations = IAnnotations(user, None) or {}
-    return annotations.get(CREATION_SITE_KEY, None)
+zope.deferredimport.deprecatedFrom(
+    "Moved to nti.dataserver.users.common",
+    "nti.dataserver.users.common",
+    "user_creation_sitename",)

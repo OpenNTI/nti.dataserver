@@ -18,6 +18,8 @@ from zope.catalog.interfaces import ICatalog
 
 from zope.catalog.keyword import CaseInsensitiveKeywordIndex
 
+from zope.component.hooks import getSite
+
 from zope.index.topic.filter import FilteredSetBase
 
 from zope.intid.interfaces import IIntIds
@@ -26,8 +28,11 @@ from zope.location.location import locate
 
 import BTrees
 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
+
+from nti.dataserver.users.common import user_creation_sitename
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -49,6 +54,7 @@ CaseInsensitiveFieldIndex = CaseInsensitiveAttributeFieldIndex
 #: for users should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
 
+IX_SITE = 'site'
 IX_ALIAS = 'alias'
 IX_EMAIL = 'email'
 IX_TOPICS = 'topics'
@@ -125,6 +131,29 @@ class ContactEmailRecoveryHashIndex(FieldIndex):
     default_field_name = IX_CONTACT_EMAIL_RECOVERY_HASH
     default_interface = IContactEmailRecovery
 
+
+class ValidatingSite(object):
+
+    __slots__ = ('site',)
+
+    def __init__(self, obj, unused_default=None):
+        try:
+            if IEntity.providedBy(obj):
+                site = None
+                if IUser.providedBy(obj):
+                    site = user_creation_sitename(obj)
+                site = site or getSite().__name__
+                self.site = site
+        except (AttributeError, TypeError):
+            pass
+
+    def __reduce__(self):
+        raise TypeError()
+
+
+class SiteIndex(ValueIndex):
+    default_field_name = IX_SITE
+    default_interface = ValidatingSite
 
 # Note that FilteredSetBase uses a BTrees Set by default,
 # NOT a TreeSet. So updating them when large is quite expensive.
@@ -207,7 +236,8 @@ def create_entity_catalog(catalog=None, family=BTrees.family64):
     if catalog is None:
         catalog = Catalog(family=family)
 
-    for name, clazz in ((IX_ALIAS, AliasIndex),
+    for name, clazz in ((IX_SITE, SiteIndex),
+                        (IX_ALIAS, AliasIndex),
                         (IX_EMAIL, EmailIndex),
                         (IX_TOPICS, TopicIndex),
                         (IX_MIMETYPE, MimeTypeIndex),
