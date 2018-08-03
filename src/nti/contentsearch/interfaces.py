@@ -117,7 +117,8 @@ class IDateTimeRange(interface.Interface):
 
 class ISearchQuery(interface.Interface):
 
-    term = ValidTextLine(title=u"Query search term", required=True)
+    term = ValidTextLine(title=u"Query search term", 
+                         required=False, default=u'')
 
     username = ValidTextLine(title=u"User doing the search", required=False)
 
