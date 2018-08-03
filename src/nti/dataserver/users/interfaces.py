@@ -57,7 +57,6 @@ from nti.schema.field import Object
 from nti.schema.field import HTTPURL
 from nti.schema.field import Variant
 from nti.schema.field import TextLine
-from nti.schema.field import ValidURI
 from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
@@ -569,25 +568,25 @@ class ISocialMediaProfile(Interface):
     A social media profile
     """
 
-    facebook = ValidURI(title=u'facebook',
-                        description=u'The Facebook URL',
-                        required=False)
-
-    twitter = ValidURI(title=u'twitter',
-                       description=u'The twitter URL',
+    facebook = HTTPURL(title=u'facebook',
+                       description=u'The Facebook URL',
                        required=False)
 
-    googlePlus = ValidURI(title=u'GooglePlus',
-                          description=u'The GooglePlus URL',
-                          required=False)
+    twitter = HTTPURL(title=u'twitter',
+                      description=u'The twitter URL',
+                      required=False)
 
-    linkedIn = ValidURI(title=u'linkedIn',
-                        description=u'The LinkedIn URL',
-                        required=False)
-
-    instagram = ValidURI(title=u'instagram',
-                         description=u'The Instagram URL',
+    googlePlus = HTTPURL(title=u'GooglePlus',
+                         description=u'The GooglePlus URL',
                          required=False)
+
+    linkedIn = HTTPURL(title=u'linkedIn',
+                       description=u'The LinkedIn URL',
+                       required=False)
+
+    instagram = HTTPURL(title=u'instagram',
+                        description=u'The Instagram URL',
+                        required=False)
 
 
 class IEducation(Interface):
