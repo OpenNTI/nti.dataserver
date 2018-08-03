@@ -27,7 +27,7 @@ from nti.contentsearch.interfaces import ISearchPackageResolver
 from nti.contentsearch.search_query import QueryObject
 from nti.contentsearch.search_query import DateTimeRange
 
-from nti.dataserver.users import User
+from nti.dataserver.users.users import User
 
 from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import TYPE_OID
@@ -49,7 +49,7 @@ def clean_search_query(query, language=u'en'):
 
     table = get_content_translation_table(language)
     result = result.translate(table) if result else u''
-    result =text_(result)
+    result = text_(result)
 
     # auto complete phrase search
     if result.startswith('"') and not result.endswith('"'):
@@ -129,7 +129,7 @@ def create_queryobject(username, params, clazz=QueryObject):
 
     args['context'] = context
 
-    term = params.get('term', u'')
+    term = params.get('term', None) or u''
     term = clean_search_query(text_(term))
     args['term'] = term
 
