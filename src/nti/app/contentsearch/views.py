@@ -11,14 +11,14 @@ from __future__ import absolute_import
 import sys
 import time
 
+from pyramid import httpexceptions as hexc
+
 from zope import component
 from zope import interface
 
 from zope.event import notify
 
 from zope.location import locate
-
-from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -36,7 +36,6 @@ from nti.contentsearch.interfaces import SearchCompletedEvent
 from nti.contentsearch.interfaces import ISearchQueryValidator
 
 from nti.contentsearch.search_results import SearchResults
-from nti.contentsearch.search_results import SuggestResults
 
 from nti.contentsearch.search_utils import create_queryobject
 
@@ -107,7 +106,7 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
             validator = component.queryUtility(ISearchQueryValidator)
             if validator is not None:
                 validator.validate(query)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception("Invalid search query")
             exc_info = sys.exc_info()
             raise_json_error(self.request,
@@ -127,11 +126,12 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
         # This will make sure our batchStart lines up, especially if
         # we have multiple catalogs.
         next_search_start = 0
-        self.search_hit_count = 0
+        self.search_hit_count = 0 # pylint: disable=attribute-defined-outside-init
         searcher = ISearcher(self.remoteUser, None)
         if searcher is not None:
             search_func = self._search_func(searcher)
             while True:
+                # pylint: disable=redundant-keyword-arg
                 for item in search_func(query=query,
                                         batch_start=next_search_start,
                                         batch_size=batch_size):
@@ -194,20 +194,3 @@ Search = SearchView  # BWC
 class UserDataSearchView(BaseSearchView):
     name = u'UserSearch'
 UserSearch = UserDataSearchView  # BWC
-
-
-class SuggestView(BaseView):
-    name = u'Suggest'
-
-    def _include_item(self, hit, search_results):
-        # No need to filter suggestions.
-        return search_results.add(hit)
-
-    def _get_results(self, query):
-        return SuggestResults(Name="Suggestions", Query=query)
-
-    def _search_func(self, searcher):
-        return searcher.suggest
-
-
-Suggest = SuggestView  # BWC
