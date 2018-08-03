@@ -5,22 +5,29 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods,too-many-function-args
 
 from hamcrest import is_
+from hamcrest import has_length
 from hamcrest import assert_that
 
 import unittest
 
-from nti.dataserver.users.users import User
+from zope import lifecycleevent
 
-from nti.dataserver.users.utils import is_email_verified
-from nti.dataserver.users.utils import force_email_verification
-from nti.dataserver.users.utils import unindex_email_verification
+from nti.dataserver.users.users import User
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
+
+from nti.dataserver.users.common import set_user_creation_site
+from nti.dataserver.users.common import user_creation_sitename
+from nti.dataserver.users.common import remove_user_creation_site
+
+from nti.dataserver.users.utils import get_users_by_site
+from nti.dataserver.users.utils import is_email_verified
+from nti.dataserver.users.utils import force_email_verification
+from nti.dataserver.users.utils import unindex_email_verification
 
 
 class TestUtils(unittest.TestCase):
@@ -56,3 +63,15 @@ class TestUtils(unittest.TestCase):
 
         unindex_email_verification(user)
         assert_that(is_email_verified('ichigo@bleach.org'), is_(False))
+        
+    @WithMockDSTrans
+    def test_get_user_by_site(self):
+        user = User.create_user(username=u'ichigo@bleach.org',
+                                external_value={'email': u"ichigo@bleach.org"})
+        remove_user_creation_site(user)
+        set_user_creation_site(user, u'bleach.org')
+        assert_that(user_creation_sitename(user), is_('bleach.org'))
+        lifecycleevent.modified(user)
+        
+        results = get_users_by_site('bleach.org')
+        assert_that(results, has_length(1))

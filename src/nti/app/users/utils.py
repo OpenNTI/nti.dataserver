@@ -13,11 +13,12 @@ import math
 import time
 import hashlib
 from datetime import datetime
-from six.moves import urllib_parse
 
 import isodate
 
 from itsdangerous import JSONWebSignatureSerializer as SignatureSerializer
+
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
@@ -48,15 +49,15 @@ from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ISiteAdminUtility
 
+from nti.dataserver.users.common import user_creation_sitename
+from nti.dataserver.users.common import set_user_creation_site as set_creation_site
+from nti.dataserver.users.common import remove_user_creation_site as remove_creation_site
+
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IEmailAddressable
 from nti.dataserver.users.interfaces import IUserUpdateUtility
 
 from nti.dataserver.users.users import User
-
-from nti.dataserver.users.utils import CREATION_SITE_KEY as _CREATION_SITE_KEY
-
-from nti.dataserver.users.utils import user_creation_sitename
 
 from nti.externalization.externalization import to_external_object
 
@@ -285,8 +286,7 @@ def get_user_creation_site(user):
 
 def remove_user_creation_site(user):
     user = get_user(user)
-    annotations = IAnnotations(user, None) or {}
-    annotations.pop(_CREATION_SITE_KEY, None)
+    remove_creation_site(user)
 
 
 def set_user_creation_site(user, site=None):
@@ -296,8 +296,7 @@ def set_user_creation_site(user, site=None):
     if name == 'dataserver2':
         remove_user_creation_site(user)
     elif name:
-        annotations = IAnnotations(user, None) or {}
-        annotations[_CREATION_SITE_KEY] = name
+        set_creation_site(user, name)
     return name
 
 

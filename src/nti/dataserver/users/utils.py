@@ -8,17 +8,19 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import six
+
 from zope import component
 
-from zope.catalog.interfaces import ICatalog
+from zope.component.hooks import getSite
 
 from zope.intid.interfaces import IIntIds
 
 from nti.dataserver.interfaces import IUser
 
+from nti.dataserver.users.index import IX_SITE
 from nti.dataserver.users.index import IX_EMAIL
 from nti.dataserver.users.index import IX_TOPICS
-from nti.dataserver.users.index import CATALOG_NAME
 from nti.dataserver.users.index import IX_EMAIL_VERIFIED
 
 from nti.dataserver.users.index import get_entity_catalog
@@ -29,16 +31,14 @@ from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
 from nti.property.urlproperty import UrlProperty
 
-CREATION_SITE_KEY = 'nti.app.users._CREATION_SITE_KEY'
-
 logger = __import__('logging').getLogger(__name__)
 
 
 # email
 
 
-def get_catalog():
-    return component.getUtility(ICatalog, name=CATALOG_NAME)
+def get_catalog():  # BWC
+    return get_entity_catalog()
 
 
 def update_entity_catalog(user, intids=None):
@@ -53,7 +53,7 @@ def update_entity_catalog(user, intids=None):
 
 def verified_email_ids(email):
     email = email.lower()  # normalize
-    catalog = get_catalog()
+    catalog = get_entity_catalog()
 
     # all ids w/ this email
     email_idx = catalog[IX_EMAIL]
@@ -76,7 +76,7 @@ def reindex_email_verification(user, catalog=None, intids=None):
     intids = component.getUtility(IIntIds) if intids is None else intids
     uid = intids.queryId(user)
     if uid is not None:
-        catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+        catalog = get_entity_catalog()
         verified_idx = catalog[IX_TOPICS][IX_EMAIL_VERIFIED]
         verified_idx.index_doc(uid, user)
         return True
@@ -88,7 +88,7 @@ def unindex_email_verification(user, catalog=None, intids=None):
     intids = component.getUtility(IIntIds) if intids is None else intids
     uid = intids.queryId(user)
     if uid is not None:
-        catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+        catalog = get_entity_catalog()
         verified_idx = catalog[IX_TOPICS][IX_EMAIL_VERIFIED]
         verified_idx.unindex_doc(uid)
         return True
@@ -111,19 +111,44 @@ def is_email_verified(email):
 
 def get_users_by_email(email):
     """
-    Get the set of users using the given email.
+    Get the users using the given email.
     """
-    if email is None:
-        return ()
-    result = set()
+    if not email is None:
+        result = ()
+    else:
+        result = []
+        catalog = get_entity_catalog()
+        intids = component.getUtility(IIntIds)
+        doc_ids = catalog[IX_EMAIL].apply((email, email))
+        for uid in doc_ids or ():
+            user = IUser(intids.queryObject(uid), None)
+            if user is not None:
+                result.append(user)
+    return result
+
+
+def get_users_by_sites(sites=()):
+    """
+    Get the users using the given sites.
+    """
+    if isinstance(sites, six.string_types):
+        sites = sites.split(',')
+    result = []
     catalog = get_entity_catalog()
     intids = component.getUtility(IIntIds)
-    doc_ids = catalog[IX_EMAIL].apply((email, email))
+    doc_ids = catalog[IX_SITE].apply({'any_of': sites or ()})
     for uid in doc_ids or ():
         user = IUser(intids.queryObject(uid), None)
         if user is not None:
-            result.add(user)
-    return tuple(result)
+            result.append(user)
+    return result
+
+
+def get_users_by_site(site=None):
+    """
+    Get the users using the given site.
+    """
+    return get_users_by_sites((site or getSite().__name__),)
 
 
 # properties
