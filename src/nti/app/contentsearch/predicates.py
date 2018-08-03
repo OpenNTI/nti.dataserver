@@ -8,9 +8,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from zope import interface
-
 from pyramid.threadlocal import get_current_request
+
+from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
@@ -65,7 +65,7 @@ class _AccessibleSearchHitPredicate(DefaultSearchHitPredicate):
                       and not IDeletedObjectPlaceholder.providedBy(item))
         return result
 
-    def allow(self, item, unused_score, unused_query):
+    def allow(self, item, unused_score, unused_query):  # pylint: disable=arguments-differ
         if self.principal is None:
             result = True
         elif IUserGeneratedData.providedBy(item):
