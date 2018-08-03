@@ -30,16 +30,4 @@
 				  request_method='GET'>
 	</pyramid:view>
 
-	<pyramid:route name='suggest.unified'
-				   pattern='/dataserver2/users/{user}/Search/UnifiedSuggest/{ntiid}/{term:.*}'
-				   traverse='/dataserver2/users/{user}'>
-	</pyramid:route>
-
-	<pyramid:view route_name='suggest.unified'
-				  view='.views.Suggest'
-				  renderer='rest'
-				  permission='nti.actions.search'
-				  request_method='GET'>
-	</pyramid:view>
-
 </configure>
