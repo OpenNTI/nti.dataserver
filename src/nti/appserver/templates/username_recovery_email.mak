@@ -11,7 +11,7 @@ We found the following usernames associated with this email address:
 
 If you did not request this reminder, you can safely disregard this email.
 
-For help, you can email us at support@nextthought.com.
+For help, you can email us at ${support_email}.
 
 Sincerely,
 NextThought

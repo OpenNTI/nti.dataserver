@@ -18,4 +18,4 @@ Sincerely,
 NextThought
 
 If you feel this email was sent in error, or this account was created
-without your consent, you may email us at support@nextthought.com.
+without your consent, you may email us at ${support_email}.

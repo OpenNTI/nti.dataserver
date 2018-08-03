@@ -592,6 +592,7 @@ class AbstractSitePolicyEventListener(object):
 				'profile': profile,
 				'email': email,
 				'informal_username': informal_username,
+				'support_email': self.SUPPORT_EMAIL,
 				'context': user }
 
 		# Need to send both HTML and plain text if we send HTML, because

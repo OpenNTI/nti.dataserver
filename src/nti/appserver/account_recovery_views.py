@@ -160,13 +160,15 @@ def forgot_username_view(request):
     subject = getattr(policy,
                       'USERNAME_RECOVERY_EMAIL_SUBJECT',
                       'NextThought Username Reminder')
+    support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
 
     package = getattr(policy, 'PACKAGE', None)
     queue_simple_html_text_email(base_template, subject=_(subject),
                                  recipients=[email_assoc_with_account],
                                  template_args={
                                      'users': matching_users,
-                                     'email': email_assoc_with_account
+                                     'email': email_assoc_with_account,
+                                     'support_email': support_email
                                  },
                                  request=request,
                                  package=package,
@@ -293,6 +295,7 @@ def forgot_passcode_view(request):
                       'PASSWORD_RESET_EMAIL_SUBJECT',
                       'NextThought Password Reset')
     package = getattr(policy, 'PACKAGE', None)
+    support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
 
     # Substitute username if necessary
     matching_users = map(lambda user: _create_mock_user(user),
@@ -304,7 +307,8 @@ def forgot_passcode_view(request):
                                     'users': matching_users,
                                     'user': matching_user,
                                     'reset_url': reset_url,
-                                    'email': email_assoc_with_account},
+                                    'email': email_assoc_with_account,
+                                    'support_email': support_email},
                                  package=package,
                                  request=request)
 
