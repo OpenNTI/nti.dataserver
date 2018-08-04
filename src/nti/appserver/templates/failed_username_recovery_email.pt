@@ -71,7 +71,7 @@
 		<p>
 		For help, you can email us at <a href="mailto:support@nextthought.com"
                 tal:attributes="href string:mailto:${options/support_email|default}"
-                tal:content="options/support_email">support@nextthought.com</a>.
+                tal:content="options/support_email|default">support@nextthought.com</a>.
 		</p>
 
 		<p>

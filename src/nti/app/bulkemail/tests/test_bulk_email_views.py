@@ -59,6 +59,11 @@ class Process(SiteTransactedBulkEmailProcessLoop,
 		super(Process,self).__init__(request)
 		self.delegate = self
 
+	def compute_template_args_for_recipient(self, recipient):
+		result = super(Process, self).compute_template_args_for_recipient(recipient)
+		result['support_email'] = 'support_email'
+		return result
+
 @interface.implementer(IEmailAddressable,
 					   IPrincipal)
 class Recipient(object):
