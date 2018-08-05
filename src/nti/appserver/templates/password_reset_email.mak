@@ -4,6 +4,7 @@ You are receiving this notification because you (or someone pretending
 to be you) requested your ${request.application_url} password for
 ${user.username} be reset.
 
+%if not external_reset_url:
 To reset your password, follow these steps within one hour of
 receiving this notification:
 
@@ -12,6 +13,15 @@ receiving this notification:
 
 Reset your password here:
 ${reset_url}
+%endif
+
+%if external_reset_url:
+Please click the link below and follow the instructions in
+order to reset your password.
+
+Reset your password here:
+${external_reset_url}
+%endif
 
 If you did not request this reset, you can safely disregard this email.
 

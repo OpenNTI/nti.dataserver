@@ -301,14 +301,19 @@ def forgot_passcode_view(request):
     matching_users = map(lambda user: _create_mock_user(user),
                          matching_users)
 
-    queue_simple_html_text_email(base_template, subject=_(subject),
+    args = {'users': matching_users,
+            'user': matching_user,
+            'reset_url': reset_url,
+            'email': email_assoc_with_account,
+            'support_email': support_email}
+
+    if request.application_url not in reset_url:
+        args['external_reset_url'] = reset_url
+
+    queue_simple_html_text_email(base_template,
+                                 subject=_(subject),
                                  recipients=[email_assoc_with_account],
-                                 template_args={
-                                    'users': matching_users,
-                                    'user': matching_user,
-                                    'reset_url': reset_url,
-                                    'email': email_assoc_with_account,
-                                    'support_email': support_email},
+                                 template_args=args,
                                  package=package,
                                  request=request)
 
