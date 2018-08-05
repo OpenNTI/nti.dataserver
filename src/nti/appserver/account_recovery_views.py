@@ -308,7 +308,7 @@ def forgot_passcode_view(request):
             'support_email': support_email,
             'external_reset_url': ''}
 
-    if request.application_url not in reset_url:
+    if reset_url and request.application_url not in reset_url:
         args['external_reset_url'] = reset_url
 
     queue_simple_html_text_email(base_template,
