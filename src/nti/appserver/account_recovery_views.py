@@ -284,12 +284,14 @@ def forgot_passcode_view(request):
                         username, email_assoc_with_account)
             reset_url = None
         matching_user = _create_mock_user(matching_user)
+        text_ext = ".mak"
     else:
         logger.warn("Failed to find user with username '%s' and email '%s': %s",
                     username, email_assoc_with_account, matching_users)
         matching_user = None
         reset_url = None
         base_template = 'failed_' + base_template
+        text_ext = ".txt"
 
     subject = getattr(policy,
                       'PASSWORD_RESET_EMAIL_SUBJECT',
@@ -316,7 +318,8 @@ def forgot_passcode_view(request):
                                  recipients=[email_assoc_with_account],
                                  template_args=args,
                                  package=package,
-                                 request=request)
+                                 request=request,
+                                 text_template_extension=text_ext)
 
     return hexc.HTTPNoContent()
 
