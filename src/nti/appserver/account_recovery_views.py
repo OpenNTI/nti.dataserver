@@ -305,7 +305,8 @@ def forgot_passcode_view(request):
             'user': matching_user,
             'reset_url': reset_url,
             'email': email_assoc_with_account,
-            'support_email': support_email}
+            'support_email': support_email,
+            'external_reset_url': ''}
 
     if request.application_url not in reset_url:
         args['external_reset_url'] = reset_url
