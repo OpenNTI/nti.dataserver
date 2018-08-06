@@ -113,7 +113,7 @@ def get_users_by_email(email):
     """
     Get the users using the given email.
     """
-    if not email is None:
+    if email is None:
         result = ()
     else:
         result = []
@@ -192,7 +192,7 @@ class BackgroundUrlProperty(ImageUrlProperty):
     avatar_provider_interface = IBackgroundURLProvider
 
 
-# site 
+# site
 
 import zope.deferredimport
 zope.deferredimport.initialize()
