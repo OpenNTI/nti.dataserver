@@ -69,7 +69,7 @@ class TestListViews(ApplicationLayerTest):
         params = {"site": 'othersite.com'}
         self.testapp.get(url, params, status=422)
 
-        params = {"site": 'bleach.org'}
+        params = {"site": 'bleach.org', 'sortOn': 'createdTime'}
         res = self.testapp.get(url, params, status=200)
         assert_that(res.json_body, has_entry('Total', is_(3)))
         assert_that(res.json_body, has_entry('Items', has_length(3)))

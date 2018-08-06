@@ -15,7 +15,13 @@ from pyramid.view import view_defaults
 
 from requests.structures import CaseInsensitiveDict
 
+from zope import component
+
+from zope.cachedescriptors.property import Lazy
+
 from zope.component.hooks import getSite
+
+from zope.intid.interfaces import IIntIds
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -31,7 +37,9 @@ from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUsersFolder
 
-from nti.dataserver.users.utils import get_users_by_site
+from nti.dataserver.metadata.index import get_metadata_catalog
+
+from nti.dataserver.users.utils import intids_of_users_by_site
 
 from nti.externalization.externalization import to_external_object
 
@@ -56,9 +64,26 @@ class SiteUsersView(AbstractAuthenticatedView,
     _DEFAULT_BATCH_SIZE = 30
     _DEFAULT_BATCH_START = 0
 
+    _ALLOWED_SORTING = ('createdTime',)
+
     def check_access(self):
         if not is_admin_or_site_admin(self.remoteUser):
             raise hexc.HTTPForbidden()
+
+    @Lazy
+    def params(self):
+        return CaseInsensitiveDict(**self.request.params)
+
+    @Lazy
+    def sortOn(self):
+        # pylint: disable=no-member
+        sort = self.params.get('sortOn')
+        return sort if sort in self._ALLOWED_SORTING else None
+
+    @property
+    def sortOrder(self):
+        # pylint: disable=no-member
+        return self.params.get('sortOrder', 'ascending')
 
     def _get_externalizer(self, user):
         result = 'summary'
@@ -68,8 +93,8 @@ class SiteUsersView(AbstractAuthenticatedView,
 
     def __call__(self):
         self.check_access()
-        values = CaseInsensitiveDict(**self.request.params)
-        site = values.get('site') or getSite().__name__
+        # pylint: disable=no-member
+        site = self.params.get('site') or getSite().__name__
         if site not in get_component_hierarchy_names():
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -81,7 +106,19 @@ class SiteUsersView(AbstractAuthenticatedView,
         def _selector(x):
             return to_external_object(x, name=self._get_externalizer(x))
 
-        items = get_users_by_site(site)
+        catalog = get_metadata_catalog()
+        doc_ids = intids_of_users_by_site(site)
+        if self.sortOn and self.sortOn in catalog:
+            reverse = self.sortOrder == 'descending'
+            doc_ids = catalog[self.sortOn].sort(doc_ids, reverse=reverse)
+
+        items = []
+        intids = component.getUtility(IIntIds)
+        for intid in doc_ids:
+            user = intids.queryObject(intid)
+            if user is not None:
+                items.append(user)
+
         result = LocatedExternalDict()
         self._batch_items_iterable(result, items, selector=_selector)
         result[TOTAL] = len(items)
