@@ -277,6 +277,7 @@ class UserUpdatePreflightView(UserUpdateView):
             result = response
             user = self.context
             result_dict = LocatedExternalDict()
+            # pylint: disable=too-many-function-args
             profile_iface = IUserProfileSchemaProvider(user).getSchema()
             profile = profile_iface(user)
             errors = getValidationErrors(profile_iface, profile)
