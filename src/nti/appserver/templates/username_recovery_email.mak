@@ -8,6 +8,6 @@ We found the following usernames associated with this email address:
      ${user.username}
 % endfor
 
-If you did not request this reminder, you can safely disregard this email.
+If you did not make this request, you can safely disregard this email.
 
 For help, you can email us at ${support_email}.
