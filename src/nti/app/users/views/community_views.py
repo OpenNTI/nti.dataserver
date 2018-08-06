@@ -8,20 +8,20 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import six
+from pyramid import httpexceptions as hexc
+
+from pyramid.view import view_config
+from pyramid.view import view_defaults
 
 from requests.structures import CaseInsensitiveDict
+
+import six
 
 from zope import component
 
 from zope.cachedescriptors.property import Lazy
 
 from zope.intid.interfaces import IIntIds
-
-from pyramid import httpexceptions as hexc
-
-from pyramid.view import view_config
-from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -30,7 +30,6 @@ from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
-
 
 from nti.app.users import MessageFactory as _
 
@@ -276,7 +275,8 @@ class CommunityMembersView(AbstractAuthenticatedView,
         return component.getUtility(ISiteAdminUtility)
 
     def _get_externalizer(self, user):
-        # XXX: It would be nice to make this automatic.
+        # pylint: disable=no-member
+        # It would be nice to make this automatic.
         result = 'summary'
         if user == self.remoteUser:
             result = 'personal-summary'
@@ -284,7 +284,7 @@ class CommunityMembersView(AbstractAuthenticatedView,
             result = 'admin-summary'
         elif    self._is_site_admin \
             and self._site_admin_utility.can_administer_user(self.remoteUser, user):
-                result = 'admin-summary'
+            result = 'admin-summary'
         return result
 
     def __call__(self):

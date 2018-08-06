@@ -8,12 +8,18 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import six
 import isodate
 from datetime import datetime
-from six.moves import urllib_parse
+
+from pyramid import httpexceptions as hexc
+
+from pyramid.view import view_config
+from pyramid.view import view_defaults
 
 from requests.structures import CaseInsensitiveDict
+
+import six
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
@@ -27,11 +33,6 @@ from zope.intid.interfaces import IIntIds
 
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
-
-from pyramid import httpexceptions as hexc
-
-from pyramid.view import view_config
-from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 

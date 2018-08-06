@@ -8,15 +8,15 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid import httpexceptions as hexc
+
+from pyramid.view import view_config
+
 from requests.structures import CaseInsensitiveDict
 
 from zope import component
 
 from zope.security.interfaces import IPrincipal
-
-from pyramid import httpexceptions as hexc
-
-from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -71,6 +71,7 @@ class _AbstractSuggestedContactsView(AbstractAuthenticatedView):
     MIN_RESULT_COUNT = 4
 
     def _get_params(self):
+        # pylint: disable=attribute-defined-outside-init,no-member
         params = CaseInsensitiveDict(self.request.params)
         self.result_count = params.get('Count') or self.MAX_REQUEST_SIZE
         if self.result_count > self.MAX_REQUEST_SIZE:
@@ -113,6 +114,7 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
     MIN_FILL_COUNT = 0
 
     def _set_limited_count(self, pool, pool_size_min, limited_ratio):
+        # pylint: disable=attribute-defined-outside-init
         self.limited_count = 0
         # Only fetch from our limited contacts if our pool size is
         # large enough.
@@ -122,6 +124,7 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 
     def _get_params(self):
         super(UserSuggestedContactsView, self)._get_params()
+        # pylint: disable=no-member
         # We want to not return the context the user is looking at.
         self.existing_pool.add(self.context.username)
         if self.remoteUser == self.context:
@@ -164,7 +167,7 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
         Get the rest of our suggested contacts from our contacts
         utility.
         """
-        # TODO: Currently our only subscriber does so based on
+        # Currently our only subscriber does so based on
         # courses.  We also need one for global community.
         results = set()
         fill_in_count = self.result_count - len(intermediate_contacts)
@@ -224,12 +227,14 @@ class _MembershipSuggestedContactsView(_AbstractSuggestedContactsView):
            and not member in hidden
 
     def _get_contacts(self):
+        # pylint: disable=no-member
         results = set()
         creator = self.context.creator
         creator_username = getattr(creator, 'username', creator)
         hidden = IHiddenMembership(self.context, None) or ()
         if creator and creator_username not in self.existing_pool:
             results.add(creator)
+        # pylint: disable=not-an-iterable
         for member in self.context:
             if self._accept_filter(member, hidden):
                 results.add(member)
@@ -238,6 +243,7 @@ class _MembershipSuggestedContactsView(_AbstractSuggestedContactsView):
         return results
 
     def __call__(self):
+        # pylint: disable=no-member, unsupported-membership-test
         context = self.context
         # Should we check for public here? It's false by default.
         # is_public = context.public if ICommunity.providedBy( context ) else True
