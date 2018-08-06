@@ -61,7 +61,7 @@ class TestListViews(ApplicationLayerTest):
             set_user_creation_site(user, "bleach.org")
             lifecycleevent.modified(user)
 
-        url = '/dataserver2/@@site_users'
+        url = '/dataserver2/users/@@site_users'
         self.testapp.get(url,
                          extra_environ=self._make_extra_environ(username='steve@nt.com'),
                          status=401)

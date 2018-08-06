@@ -29,7 +29,7 @@ from nti.dataserver import authorization as nauth
 
 from nti.dataserver.authorization import is_admin_or_site_admin
 
-from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import IUsersFolder
 
 from nti.dataserver.users.utils import get_users_by_site
 
@@ -48,7 +48,7 @@ logger = __import__('logging').getLogger(__name__)
 @view_config(name='site_users')
 @view_defaults(route_name='objects.generic.traversal',
                request_method='GET',
-               context=IDataserverFolder,
+               context=IUsersFolder,
                permission=nauth.ACT_READ)
 class SiteUsersView(AbstractAuthenticatedView,
                     BatchingUtilsMixin):
