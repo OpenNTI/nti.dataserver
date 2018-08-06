@@ -113,7 +113,7 @@ def get_users_by_email(email):
     """
     Get the users using the given email.
     """
-    if email is None:
+    if not email:
         result = ()
     else:
         result = []
