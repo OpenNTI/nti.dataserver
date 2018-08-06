@@ -558,6 +558,7 @@ class _FriendsListMap(AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
         return result
 
 
+# pylint: disable=no-value-for-parameter
 IFriendsList.setTaggedValue(IHTC_NEW_FACTORY,
                             Factory(_FriendsListMap.external_factory,
                                     interfaces=(IFriendsList,)))

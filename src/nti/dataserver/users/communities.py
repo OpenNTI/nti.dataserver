@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from BTrees import OOBTree
+
 from zope import component
 from zope import interface
 
@@ -21,8 +23,6 @@ from zope.cachedescriptors.property import cachedIn
 from zope.intid.interfaces import IIntIdRemovedEvent
 
 from zope.location.interfaces import ISublocations
-
-from BTrees.OOBTree import OOTreeSet
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -76,7 +76,7 @@ class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matt
     NTIID = cachedIn('_v_ntiid')(named_entity_ntiid)
 
     # We override these methods for space efficiency.
-    # TODO: If we're tracking membership, should membership
+    # If we're tracking membership, should membership
     # would be a prereq for accepting shared data. Also,
     # Everyone would need these methods to return True
     def accept_shared_data_from(self, unused_source):
@@ -129,6 +129,7 @@ class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matt
         # adding and removing himself concurrently. Therefore, it is
         # relatively safe to not readCurrent on members before doing
         # the containment check.
+        # pylint: disable=unsupported-membership-test, no-member
         if wref not in members:
             members.add(wref)
             self.updateLastMod()
@@ -139,6 +140,7 @@ class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matt
 
     def __contains__(self, other):
         try:
+            # pylint: disable=unsupported-membership-test
             return IWeakRef(other, None) in self._members
         except TypeError:
             return False  # "Object has default comparison""
@@ -165,12 +167,14 @@ class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matt
     def iter_intids_of_possible_members(self):
         self._p_activate()
         if '_members' in self.__dict__:
+            # pylint: disable=not-an-iterable
             for wref in self._members:
                 yield wref.intid
 
     def iter_usernames_of_possible_members(self):
         self._p_activate()
         if '_members' in self.__dict__:
+            # pylint: disable=not-an-iterable
             for wref in self._members:
                 yield wref.username
 
@@ -209,6 +213,7 @@ class Everyone(Community):
 def _add_member_to_community(entity, event):
     if      ICommunity.providedBy(event.target) \
         and not IUnscopedGlobalCommunity.providedBy(event.target):
+        # pylint: disable=protected-access
         event.target._note_member(entity)
 
 
@@ -216,6 +221,7 @@ def _add_member_to_community(entity, event):
 def _remove_member_from_community(entity, event):
     if      ICommunity.providedBy(event.target) \
         and not IUnscopedGlobalCommunity.providedBy(event.target):
+        # pylint: disable=protected-access
         event.target._del_member(entity)
 
 
@@ -260,7 +266,7 @@ class CommunityEntityContainer(object):
 
 @component.adapter(ICommunity)
 @interface.implementer(IHiddenMembership)
-class HiddenMembership(OOTreeSet):
+class HiddenMembership(OOBTree.OOTreeSet): # pylint: disable=undefined-variable, no-member
 
     def add(self, entity):
         wref = IWeakRef(entity)

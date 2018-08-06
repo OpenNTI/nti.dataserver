@@ -13,6 +13,8 @@ import functools
 
 from six import string_types
 
+import transaction
+
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -30,8 +32,6 @@ from zope.keyreference.interfaces import IKeyReference
 from ZODB.interfaces import IConnection
 
 from ZODB.POSException import ConnectionStateError
-
-import transaction
 
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IDataserver
