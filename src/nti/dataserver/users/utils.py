@@ -127,21 +127,29 @@ def get_users_by_email(email):
     return result
 
 
+def intids_of_users_by_sites(sites=()):
+    if isinstance(sites, six.string_types):
+        sites = sites.split(',')
+    catalog = get_entity_catalog()
+    doc_ids = catalog[IX_SITE].apply({'any_of': sites or ()})
+    return doc_ids or ()
+
+
 def get_users_by_sites(sites=()):
     """
     Get the users using the given sites.
     """
-    if isinstance(sites, six.string_types):
-        sites = sites.split(',')
     result = []
-    catalog = get_entity_catalog()
     intids = component.getUtility(IIntIds)
-    doc_ids = catalog[IX_SITE].apply({'any_of': sites or ()})
-    for uid in doc_ids or ():
+    for uid in intids_of_users_by_sites(sites) or ():
         user = IUser(intids.queryObject(uid), None)
         if user is not None:
             result.append(user)
     return result
+
+
+def intids_of_users_by_site(site=None):
+    return intids_of_users_by_sites((site or getSite().__name__),)
 
 
 def get_users_by_site(site=None):
