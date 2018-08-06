@@ -8,6 +8,7 @@
 
 	<pyramid:scan package=".dfl_views" />
 	<pyramid:scan package=".user_views" />
+	<pyramid:scan package='.list_views' />
 	<pyramid:scan package='.mail_views' />
 	<pyramid:scan package='.admin_views' />
 	<pyramid:scan package='.export_views' />
