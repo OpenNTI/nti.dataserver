@@ -23,6 +23,7 @@ from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
+from zope import lifecycleevent
 
 from zope.component.hooks import getSite
 from zope.component.hooks import site as current_site
@@ -318,6 +319,7 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
                                  None)
 
         set_user_creation_site(user, site)
+        lifecycleevent.modified(user)
         return hexc.HTTPNoContent()
 
 
