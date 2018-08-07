@@ -15,10 +15,12 @@ import unittest
 
 from zope import lifecycleevent
 
-from nti.dataserver.users.users import User
-
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
+
+from nti.dataserver.users.communities import Community
+
+from nti.dataserver.users.users import User
 
 from nti.dataserver.users.common import set_user_creation_site
 from nti.dataserver.users.common import user_creation_sitename
@@ -26,6 +28,7 @@ from nti.dataserver.users.common import remove_user_creation_site
 
 from nti.dataserver.users.utils import get_users_by_site
 from nti.dataserver.users.utils import is_email_verified
+from nti.dataserver.users.utils import get_community_members
 from nti.dataserver.users.utils import force_email_verification
 from nti.dataserver.users.utils import unindex_email_verification
 
@@ -43,6 +46,7 @@ class TestUtils(unittest.TestCase):
         User.create_user(username=u'rukia@bleach.org',
                          external_value={'email': u"rukia@bleach.org",
                                          'email_verified': True})
+
         User.create_user(username=u'foo@bleach.org',
                          external_value={'email': u"foo@bleach.org"})
 
@@ -75,3 +79,20 @@ class TestUtils(unittest.TestCase):
         
         results = get_users_by_site('bleach.org')
         assert_that(results, has_length(1))
+        
+    @WithMockDSTrans
+    def test_get_community_members(self):
+        ichigo = User.create_user(username=u'ichigo@bleach.org',
+                                  external_value={'email': u"ichigo@bleach.org",
+                                                  'email_verified': True})
+
+        rukia = User.create_user(username=u'rukia@bleach.org',
+                                 external_value={'email': u"rukia@bleach.org",
+                                                 'email_verified': True})
+        community = Community.create_entity(username=u'bleach')
+
+        ichigo.record_dynamic_membership(community)
+        rukia.record_dynamic_membership(community)
+
+        members = list(get_community_members(community))
+        assert_that(members, has_length(2))

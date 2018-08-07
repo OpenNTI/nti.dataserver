@@ -29,6 +29,8 @@ from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IAvatarURLProvider
 from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
+from nti.dataserver.users.interfaces import IHiddenMembership
+
 from nti.property.urlproperty import UrlProperty
 
 logger = __import__('logging').getLogger(__name__)
@@ -157,6 +159,29 @@ def get_users_by_site(site=None):
     Get the users using the given site.
     """
     return get_users_by_sites((site or getSite().__name__),)
+
+
+def intids_of_community_members(community, all_members=False):
+    """
+    Returns an iterable of valid intids for community members
+    """
+    intids = component.getUtility(IIntIds)
+    hidden = IHiddenMembership(community)
+    for doc_id in community.iter_intids_of_possible_members():
+        user = IUser(intids.queryObject(doc_id), None)
+        if user is not None and (all_members or user not in hidden):
+            yield doc_id
+
+
+def get_community_members(community, all_members=False):
+    """
+    Returns an iterable of valid community members
+    """
+    intids = component.getUtility(IIntIds)
+    for doc_id in intids_of_community_members(community, all_members):
+        user = IUser(intids.queryObject(doc_id), None)
+        if user is not None:
+            yield user
 
 
 # properties
