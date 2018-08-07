@@ -58,6 +58,8 @@ from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import IHiddenMembership
 
+from nti.dataserver.users.utils import intids_of_community_members
+
 from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -295,31 +297,33 @@ class CommunityMembersView(AbstractAuthenticatedView,
             and not is_admin_or_site_admin(self.remoteUser):
             raise hexc.HTTPForbidden()
 
-        result = LocatedExternalDict()
-        hidden = IHiddenMembership(community)
-
         def _selector(x):
-            if x is None or (x in hidden and x != self.remoteUser):
-                return None
             return toExternalObject(x, name=self._get_externalizer(x))
 
-        catalog = get_metadata_catalog()
         sortOn = self.sortOn
+        catalog = get_metadata_catalog()
+        members = intids_of_community_members(community)
         if sortOn and sortOn in catalog:
-            intids = community.iter_intids_of_possible_members()
             reverse = self.sortOrder == 'descending'
-            sorted_intids = catalog[sortOn].sort(intids, reverse=reverse)
-            intids_utility = component.getUtility(IIntIds)
+            members = catalog[sortOn].sort(members, reverse=reverse)
 
-            def resolved(intids):
-                for intid in intids:
-                    user = intids_utility.queryObject(intid)
-                    if user:
-                        yield user
-            community = resolved(sorted_intids)
+        # resolve all members
+        intids_utility = component.getUtility(IIntIds)
+        def resolved(doc_ids):
+            seen = False
+            for doc_id in doc_ids:
+                user = intids_utility.getObject(doc_id)
+                seen = seen or user == self.remoteUser
+                yield user
+            # check the case the remote user is hidden
+            # and in the community
+            if not seen and self.remoteUser in community:
+                yield self.remoteUser
+        members = resolved(members)
 
+        result = LocatedExternalDict()
         result[TOTAL] = self.request.context.number_of_members()
-        self._batch_items_iterable(result, community,
+        self._batch_items_iterable(result, members,
                                    number_items_needed=self.limit,
                                    batch_size=self.batch_size,
                                    batch_start=self.batch_start,

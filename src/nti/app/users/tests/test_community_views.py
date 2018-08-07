@@ -5,33 +5,32 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods,too-many-function-args
 
 from hamcrest import is_
 from hamcrest import is_in
 from hamcrest import is_not
+from hamcrest import contains
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
-from hamcrest import contains
+from nti.testing.time import time_monotonically_increases
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-from nti.dataserver.contenttypes import Note
-
-from nti.dataserver.users.interfaces import IHiddenMembership
-
-from nti.dataserver.users.communities import Community
-
-from nti.dataserver.users.users import User
+from nti.dataserver.contenttypes.note import Note
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.testing.time import time_monotonically_increases
+from nti.dataserver.users.communities import Community
+
+from nti.dataserver.users.interfaces import IHiddenMembership
+
+from nti.dataserver.users.users import User
+
 
 class TestCommunityViews(ApplicationLayerTest):
 
