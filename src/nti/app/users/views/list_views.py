@@ -53,6 +53,7 @@ TOTAL = StandardExternalFields.TOTAL
 logger = __import__('logging').getLogger(__name__)
 
 
+@view_config(name='SiteUsers')
 @view_config(name='site_users')
 @view_defaults(route_name='objects.generic.traversal',
                request_method='GET',
