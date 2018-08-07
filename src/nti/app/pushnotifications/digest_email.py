@@ -514,9 +514,12 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		# If we can find a community for the current site, we
 		# must filter users to only those within that community.
 		# See ICommunitySitePolicyUserEventListener
-		users_folder = self._dataserver.users_folder.values()
 
-		site_policy, _ = find_site_policy(self.request)
+		# FIXME: Use generic func to iterate members in a site since
+		# there is no guarantee we'll get a site community.
+		users_folder = ()
+
+		site_policy, unused_site_name = find_site_policy(self.request)
 		com_username = getattr(site_policy, 'COM_USERNAME', None)
 
 		comm = None
