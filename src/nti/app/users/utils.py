@@ -336,11 +336,15 @@ def get_community_or_site_members():
 
 def get_members_by_site(site):
     """
-    Returns the community or site memebers for the speicifed site
+    Returns the community or site members for the speicifed site
     """
     name = getattr(site, '__name__', site)
-    with current_site(get_host_site(name)):
-        return get_community_or_site_members()
+    site = get_host_site(name, True)
+    if site is not None:
+        with current_site(site):
+            return get_community_or_site_members()
+    else: # e.g dataserver2
+        return get_users_by_site(name)
 
 
 def is_user_created_in_current_site(user):
