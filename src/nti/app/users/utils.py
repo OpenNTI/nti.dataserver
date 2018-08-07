@@ -53,11 +53,18 @@ from nti.dataserver.users.common import user_creation_sitename
 from nti.dataserver.users.common import set_user_creation_site as set_creation_site
 from nti.dataserver.users.common import remove_user_creation_site as remove_creation_site
 
+from nti.dataserver.users.communities import Community
+
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IEmailAddressable
 from nti.dataserver.users.interfaces import IUserUpdateUtility
 
 from nti.dataserver.users.users import User
+
+from nti.dataserver.users.utils import get_users_by_site
+from nti.dataserver.users.utils import get_community_members
+from nti.dataserver.users.utils import intids_of_users_by_site
+from nti.dataserver.users.utils import intids_of_community_members
 
 from nti.externalization.externalization import to_external_object
 
@@ -207,8 +214,8 @@ def _get_package(policy, template='email_verification_email'):
 
 def send_email_verification(user, profile, email, request=None, check=True):
     if not request or not email:
-        logger.warn("Not sending email to %s because of no email or request",
-                    user)
+        logger.warning("Not sending email to %s because of no email or request",
+                       user)
         return
 
     username = user.username
@@ -298,6 +305,26 @@ def set_user_creation_site(user, site=None):
     elif name:
         set_creation_site(user, name)
     return name
+
+
+def get_community_from_site():
+    policy = component.getUtility(ISitePolicyUserEventListener)
+    name =  getattr(policy, 'COM_USERNAME', None)
+    return Community.get_community(name) if name else None
+
+
+def intids_of_community_or_site_members():
+    community = get_community_from_site()
+    if community is not None:
+        return intids_of_community_members(community)
+    return intids_of_users_by_site()
+
+
+def get_community_or_site_members():
+    community = get_community_from_site()
+    if community is not None:
+        return get_community_members(community)
+    return get_users_by_site()
 
 
 def _is_user_created_in_current_site(user):
