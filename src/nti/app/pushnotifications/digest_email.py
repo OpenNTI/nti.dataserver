@@ -26,6 +26,8 @@ from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.component.hooks import getSite
+
 from zope.interface.interfaces import ComponentLookupError
 
 from zope.intid.interfaces import IIntIds
@@ -55,6 +57,8 @@ from nti.app.notabledata.interfaces import IUserNotableData
 from nti.app.pushnotifications.interfaces import INotableDataEmailClassifier
 
 from nti.app.pushnotifications.utils import generate_unsubscribe_url
+
+from nti.app.users.utils import get_members_by_site
 
 from nti.appserver.context_providers import get_trusted_top_level_contexts
 
@@ -501,6 +505,22 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		collector = factory(user, self.request)
 		return collector
 
+	def get_process_site(self):
+		policy, site_or_sites = find_site_policy(self.request)
+		if policy is not None:
+			# we found a site (may be empty)
+			result = site_or_sites
+		else:
+			result = site_or_sites[0] if site_or_sites else None
+		# check against current site
+		result = result or getattr(getSite(), '__name__', None)
+		return result
+
+	def get_process_site_users(self):
+		site_name = self.get_process_site()
+		if site_name:
+			return get_members_by_site(site_name)
+
 	def collect_recipients(self):
 		# We are in an outer request, but we need to get the
 		# notable data for different users. In some cases
@@ -511,27 +531,10 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		auth_policy = component.getUtility(IAuthenticationPolicy)
 		imp_policy = IImpersonatedAuthenticationPolicy(auth_policy)
 
-		# If we can find a community for the current site, we
-		# must filter users to only those within that community.
-		# See ICommunitySitePolicyUserEventListener
-
-		# FIXME: Use generic func to iterate members in a site since
-		# there is no guarantee we'll get a site community.
-		users_folder = ()
-
-		site_policy, unused_site_name = find_site_policy(self.request)
-		com_username = getattr(site_policy, 'COM_USERNAME', None)
-
-		comm = None
-		if com_username:
-			comm = Entity.get_entity(com_username)
-		if comm is not None:
-			# We can simply iterate it
-			users_folder = comm.iter_members()
-
 		now = time.time()
-		for user in users_folder:
+		for user in self.get_process_site_users() or ():
 			if self._accept_user(user):
+				# pylint: disable=too-many-function-args
 				imp_user = imp_policy.impersonating_userid(user.username)
 				with imp_user():
 					collector = self._collector_for_user(user)
