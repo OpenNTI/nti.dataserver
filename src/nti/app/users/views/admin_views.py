@@ -92,7 +92,8 @@ from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.site.hostpolicy import get_all_host_sites, get_host_site
+from nti.site.hostpolicy import get_host_site
+from nti.site.hostpolicy import get_all_host_sites
 
 from nti.zodb.containers import bit64_int_to_time
 
