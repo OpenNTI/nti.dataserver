@@ -26,6 +26,7 @@ from zope import interface
 from zope.annotation.interfaces import IAnnotations
 
 from zope.component.hooks import getSite
+from zope.component.hooks import site as current_site
 
 from zope.dottedname import resolve as dottedname
 
@@ -314,6 +315,9 @@ def get_community_from_site():
 
 
 def intids_of_community_or_site_members():
+    """
+    Returns the intids of the community or site memebers
+    """
     community = get_community_from_site()
     if community is not None:
         return intids_of_community_members(community)
@@ -321,19 +325,32 @@ def intids_of_community_or_site_members():
 
 
 def get_community_or_site_members():
+    """
+    Returns the community or site memebers for current site
+    """
     community = get_community_from_site()
     if community is not None:
         return get_community_members(community)
     return get_users_by_site()
 
 
-def _is_user_created_in_current_site(user):
+def get_members_by_site(site):
+    """
+    Returns the community or site memebers for the speicifed site
+    """
+    name = getattr(site, '__name__', site)
+    with current_site(get_host_site(name)):
+        return get_community_or_site_members()
+
+
+def is_user_created_in_current_site(user):
     """
     Returns if the user is created in the current applicable site hierarchy.
     This will return `False` if the user does not have a creation site.
     """
     creation_sitename = get_user_creation_sitename(user)
     return creation_sitename in get_component_hierarchy_names()
+_is_user_created_in_current_site = is_user_created_in_current_site
 
 
 @interface.implementer(IUserUpdateUtility)
@@ -371,7 +388,7 @@ class SiteAdminUtility(object):
         return memberships - set(('Everyone',))
 
     def can_administer_user(self, site_admin, user, site_admin_membership_names=None):
-        result = _is_user_created_in_current_site(user)
+        result = is_user_created_in_current_site(user)
         if not result:
             if not site_admin_membership_names:
                 site_admin_membership_names = self.get_site_admin_membership_names(site_admin)
