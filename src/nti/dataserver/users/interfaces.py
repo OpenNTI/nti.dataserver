@@ -1006,3 +1006,12 @@ class UpsertUserCreatedEvent(ObjectEvent):
     def __init__(self, obj, request=None):
         super(UpsertUserCreatedEvent, self).__init__(obj)
         self.request = request
+
+
+# index
+
+class IDisplayNameAdapter(Interface):
+    """
+    Interface for an index adapter to get an entity display name
+    """
+    displayName = Attribute(u"DisplayName")
