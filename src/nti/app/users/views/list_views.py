@@ -33,9 +33,12 @@ from nti.app.users import MessageFactory as _
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.authorization import is_admin
+from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUsersFolder
+from nti.dataserver.interfaces import ISiteAdminUtility
 
 from nti.dataserver.metadata.index import IX_CREATEDTIME
 from nti.dataserver.metadata.index import get_metadata_catalog
@@ -76,6 +79,18 @@ class SiteUsersView(AbstractAuthenticatedView,
             raise hexc.HTTPForbidden()
 
     @Lazy
+    def is_admin(self):
+        return is_admin(self.remoteUser)
+
+    @Lazy
+    def is_site_admin(self):
+        return is_site_admin(self.remoteUser)
+
+    @Lazy
+    def site_admin_utility(self):
+        return component.getUtility(ISiteAdminUtility)
+
+    @Lazy
     def params(self):
         return CaseInsensitiveDict(**self.request.params)
 
@@ -91,9 +106,15 @@ class SiteUsersView(AbstractAuthenticatedView,
         return self.params.get('sortOrder', 'ascending')
 
     def _get_externalizer(self, user):
+        # pylint: disable=no-member
         result = 'summary'
         if user == self.remoteUser:
             result = 'personal-summary'
+        elif self.is_admin:
+            result = 'admin-summary'
+        elif    self.is_site_admin \
+            and self.site_admin_utility.can_administer_user(self.remoteUser, user):
+            result = 'admin-summary'
         return result
 
     @Lazy
