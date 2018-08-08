@@ -114,7 +114,7 @@ class RealnamePartsIndex(CaseInsensitiveKeywordIndex):
         self.field_callable = True
 
 
-class DisplayNameIndex(ValueIndex):
+class DisplaynameIndex(CaseInsensitiveFieldIndex):
     default_field_name = IX_DISPLAYNAME
     default_interface = IDisplayNameAdapter
 
@@ -250,7 +250,7 @@ def create_entity_catalog(catalog=None, family=BTrees.family64):
                         (IX_TOPICS, TopicIndex),
                         (IX_MIMETYPE, MimeTypeIndex),
                         (IX_REALNAME, RealnameIndex),
-                        (IX_DISPLAYNAME, DisplayNameIndex),
+                        (IX_DISPLAYNAME, DisplaynameIndex),
                         (IX_CONTACT_EMAIL, ContactEmailIndex),
                         (IX_REALNAME_PARTS, RealnamePartsIndex),
                         (IX_CONTACT_EMAIL_RECOVERY_HASH, ContactEmailRecoveryHashIndex),
