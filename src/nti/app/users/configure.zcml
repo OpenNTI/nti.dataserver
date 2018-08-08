@@ -79,9 +79,12 @@
     <!-- Utilities -->
     <utility factory=".utils.SiteAdminUtility" />
 
+	<!-- Adapter -->
     <adapter factory=".utils.UserUpdateUtility"
              for="nti.dataserver.interfaces.IUser"
              provides="nti.dataserver.users.interfaces.IUserUpdateUtility" />
+	
+	<adapter factory=".adapters._user_to_displayname" />
 
     <!-- Workspace -->
     <subscriber factory=".subscribers._GlobalWorkspaceLinkProvider"
