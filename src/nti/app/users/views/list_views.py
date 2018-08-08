@@ -37,8 +37,12 @@ from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUsersFolder
 
+from nti.dataserver.metadata.index import IX_CREATEDTIME
 from nti.dataserver.metadata.index import get_metadata_catalog
 
+from nti.dataserver.users.index import IX_ALIAS
+from nti.dataserver.users.index import IX_REALNAME
+from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.utils import intids_of_users_by_site
 
 from nti.externalization.externalization import to_external_object
@@ -65,7 +69,7 @@ class SiteUsersView(AbstractAuthenticatedView,
     _DEFAULT_BATCH_SIZE = 30
     _DEFAULT_BATCH_START = 0
 
-    _ALLOWED_SORTING = ('createdTime',)
+    _ALLOWED_SORTING = (IX_CREATEDTIME, IX_ALIAS, IX_REALNAME)
 
     def check_access(self):
         if not is_admin_or_site_admin(self.remoteUser):
@@ -92,6 +96,14 @@ class SiteUsersView(AbstractAuthenticatedView,
             result = 'personal-summary'
         return result
 
+    @Lazy
+    def sortMap(self):
+        return {
+            IX_ALIAS: get_entity_catalog(),
+            IX_REALNAME: get_entity_catalog(),
+            IX_CREATEDTIME: get_metadata_catalog(),
+        }
+
     def __call__(self):
         self.check_access()
         # pylint: disable=no-member
@@ -107,9 +119,10 @@ class SiteUsersView(AbstractAuthenticatedView,
         def _selector(x):
             return to_external_object(x, name=self._get_externalizer(x))
 
-        catalog = get_metadata_catalog()
         doc_ids = intids_of_users_by_site(site)
-        if self.sortOn and self.sortOn in catalog:
+        # pylint: disable=unsupported-membership-test
+        if self.sortOn and self.sortOn in self.sortMap:
+            catalog = self.sortMap.get(self.sortOn)
             reverse = self.sortOrder == 'descending'
             doc_ids = catalog[self.sortOn].sort(doc_ids, reverse=reverse)
 
