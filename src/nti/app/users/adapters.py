@@ -17,6 +17,7 @@ from zope import interface
 
 from nti.dataserver.interfaces import IUser
 
+from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IDisplayNameAdapter
 
 logger = __import__('logging').getLogger(__name__)
@@ -30,11 +31,16 @@ class _Displayname(object):
         self.displayname = name
 
 
+def _default_displayname(user):
+    name = IFriendlyNamed(user)
+    return name.alias or name.realname or user.username
+
+
 @component.adapter(IUser)
 @interface.implementer(IDisplayNameAdapter)
 def _user_to_displayname(context):
     generator = component.queryMultiAdapter((context, get_current_request()),
                                             IDisplayNameGenerator)
     name = generator() if generator is not None else None
-    if name:
-        return _Displayname(name)
+    name = name or _default_displayname(context)
+    return _Displayname(name)
