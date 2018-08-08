@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import BTrees
+
 from zope import component
 
 from zope.catalog.field import FieldIndex
@@ -26,8 +28,6 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location.location import locate
 
-import BTrees
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
@@ -36,6 +36,7 @@ from nti.dataserver.users.common import user_creation_sitename
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
+from nti.dataserver.users.interfaces import IDisplayNameAdapter
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 from nti.dataserver.users.interfaces import IRestrictedUserProfile
 
@@ -60,6 +61,7 @@ IX_EMAIL = 'email'
 IX_TOPICS = 'topics'
 IX_MIMETYPE = 'mimeType'
 IX_REALNAME = 'realname'
+IX_DISPLAYNAME = 'displayname'
 IX_CONTACT_EMAIL = 'contact_email'
 IX_REALNAME_PARTS = 'realname_parts'
 IX_CONTACT_EMAIL_RECOVERY_HASH = 'contact_email_recovery_hash'
@@ -112,6 +114,11 @@ class RealnamePartsIndex(CaseInsensitiveKeywordIndex):
         self.field_callable = True
 
 
+class DisplayNameIndex(ValueIndex):
+    default_field_name = IX_DISPLAYNAME
+    default_interface = IDisplayNameAdapter
+
+
 class EmailIndex(CaseInsensitiveFieldIndex):
     default_field_name = IX_EMAIL
     default_interface = IUserProfile
@@ -154,6 +161,7 @@ class ValidatingSite(object):
 class SiteIndex(ValueIndex):
     default_field_name = IX_SITE
     default_interface = ValidatingSite
+
 
 # Note that FilteredSetBase uses a BTrees Set by default,
 # NOT a TreeSet. So updating them when large is quite expensive.
@@ -242,6 +250,7 @@ def create_entity_catalog(catalog=None, family=BTrees.family64):
                         (IX_TOPICS, TopicIndex),
                         (IX_MIMETYPE, MimeTypeIndex),
                         (IX_REALNAME, RealnameIndex),
+                        (IX_DISPLAYNAME, DisplayNameIndex),
                         (IX_CONTACT_EMAIL, ContactEmailIndex),
                         (IX_REALNAME_PARTS, RealnamePartsIndex),
                         (IX_CONTACT_EMAIL_RECOVERY_HASH, ContactEmailRecoveryHashIndex),

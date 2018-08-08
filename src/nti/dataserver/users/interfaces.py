@@ -1014,4 +1014,4 @@ class IDisplayNameAdapter(Interface):
     """
     Interface for an index adapter to get an entity display name
     """
-    displayName = Attribute(u"DisplayName")
+    displayname = Attribute(u"Display name")
