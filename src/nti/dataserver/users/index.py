@@ -142,7 +142,7 @@ class ValidatingSite(object):
                 site = None
                 if IUser.providedBy(obj):
                     site = user_creation_sitename(obj)
-                site = site or getSite().__name__
+                site = site or getattr(getSite(), '__name__', None)
                 self.site = site
         except (AttributeError, TypeError):
             pass
