@@ -8,8 +8,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-generation = 96
-
 from zope import component
 from zope import interface
 
@@ -27,6 +25,8 @@ from nti.dataserver.users.index import IX_DISPLAYNAME
 from nti.dataserver.users.index import DisplaynameIndex
 from nti.dataserver.users.index import install_entity_catalog
 
+generation = 96
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -38,7 +38,9 @@ class MockDataserver(object):
     def get_by_oid(self, oid, ignore_creator=False):
         resolver = component.queryUtility(IOIDResolver)
         if resolver is None:
-            logger.warn("Using dataserver without a proper ISiteManager.")
+            logger.warning(
+                "Using dataserver without a proper ISiteManager."
+            )
         else:
             return resolver.get_object_by_oid(oid, ignore_creator=ignore_creator)
         return None
