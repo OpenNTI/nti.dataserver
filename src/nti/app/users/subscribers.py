@@ -8,16 +8,23 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import time
+
 from pyramid.threadlocal import get_current_request
 
 from zope import component
 from zope import interface
+
+from zope.event import notify
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import set_email_verification_time
 from nti.app.users.utils import safe_send_email_verification
+
+from nti.appserver.interfaces import IUserLogonEvent
+from nti.appserver.interfaces import IUserLogoutEvent
 
 from nti.appserver.workspaces.interfaces import IGlobalWorkspaceLinkProvider
 
@@ -28,6 +35,7 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import UserLastSeenEvent  
 from nti.dataserver.users.interfaces import IWillUpdateEntityEvent
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
@@ -88,3 +96,13 @@ class _GlobalWorkspaceLinkProvider(object):
                         elements=('UserInfoExtract',))
             return [link]
         return ()
+
+
+@component.adapter(IUser, IUserLogonEvent)
+def _on_user_logon(user, unused_event=None):
+    notify(UserLastSeenEvent(user, time.time(), get_current_request()))
+
+
+@component.adapter(IUser, IUserLogoutEvent)
+def _on_user_logout(user, unused_event):
+    _on_user_logon(user)
