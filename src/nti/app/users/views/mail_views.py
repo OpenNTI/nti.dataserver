@@ -8,13 +8,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import six
 import time
-from six.moves import urllib_parse
 
-from requests.structures import CaseInsensitiveDict
-
-from zope import component
+from itsdangerous import BadSignature
 
 from pyramid import httpexceptions as hexc
 
@@ -22,7 +18,12 @@ from pyramid.renderers import render
 
 from pyramid.view import view_config
 
-from itsdangerous import BadSignature
+from requests.structures import CaseInsensitiveDict
+
+import six
+from six.moves import urllib_parse
+
+from zope import component
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -152,6 +153,7 @@ class VerifyUserEmailView(AbstractAuthenticatedView):
         profile = IUserProfile(user)
         user_ext = to_external_object(user)
         informal_username = user_ext.get('NonI18NFirstName', profile.realname)
+        # pylint: disable=no-member
         informal_username = informal_username or user.username
 
         template_args['profile'] = profile
@@ -202,6 +204,7 @@ class VerifyUserEmailWithTokenView(AbstractAuthenticatedView,
 
         sig, computed = generate_mail_verification_pair(self.remoteUser)
         if token != computed:
+            # pylint: disable=unused-variable
             __traceback_info__ = sig, computed
             raise_error(self.request,
                         hexc.HTTPUnprocessableEntity,
@@ -265,7 +268,8 @@ class RequestEmailVerificationView(AbstractAuthenticatedView,
             diff_time = time.time() - last_time
             if diff_time > MAX_WAIT_TIME_EMAILS:
                 safe_send_email_verification(
-                    user, profile, email, self.request)
+                    user, profile, email, self.request
+                )
             else:
                 raise_error(self.request,
                             hexc.HTTPUnprocessableEntity,
@@ -300,7 +304,7 @@ class SendUserEmailVerificationView(AbstractAuthenticatedView,
 
         for username in usernames:
             user = User.get_user(username)
-            if not user:
+            if not IUser.providedBy(user):
                 continue
             # send email
             profile = IUserProfile(user, None)
@@ -310,7 +314,7 @@ class SendUserEmailVerificationView(AbstractAuthenticatedView,
                 safe_send_email_verification(user, profile, 
                                              email, self.request)
             else:
-                logger.debug("Not sending email verification to %s", user)
+                logger.debug("Not sending email verification to %s", username)
             # wait a bit
             sleep(0.5)
         return hexc.HTTPNoContent()
