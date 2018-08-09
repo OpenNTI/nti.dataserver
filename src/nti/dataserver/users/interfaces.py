@@ -1012,21 +1012,11 @@ class UpsertUserCreatedEvent(ObjectEvent):
 
 # index
 
-class IUserLastSeenEvent(IObjectEvent):
-    """
-    Fired after a user has been last seen.
-    """
-    timestamp = Attribute(u"Timestamp")
-    request = Attribute(u"Request")
+from nti.coremetadata.interfaces import UserLastSeenEvent
+from nti.coremetadata.interfaces import IUserLastSeenEvent
 
-
-@interface.implementer(IUserLastSeenEvent)
-class UserLastSeenEvent(ObjectEvent):
-
-    def __init__(self, obj, timestamp=None, request=None):
-        super(UserLastSeenEvent, self).__init__(obj)
-        self.request = request
-        self.timestamp = timestamp or time.time()
+UserLastSeenEvent = UserLastSeenEvent
+IUserLastSeenEvent = IUserLastSeenEvent
 
 
 class IDisplayNameAdapter(Interface):

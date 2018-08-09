@@ -25,11 +25,12 @@ from nti.app.users.utils import safe_send_email_verification
 from nti.appserver.interfaces import IUserLogonEvent
 from nti.appserver.interfaces import IUserLogoutEvent
 
+from nti.coremetadata.interfaces import UserLastSeenEvent
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.dataserver.users.interfaces import IUserProfile
-from nti.dataserver.users.interfaces import UserLastSeenEvent
 from nti.dataserver.users.interfaces import IWillUpdateEntityEvent
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
