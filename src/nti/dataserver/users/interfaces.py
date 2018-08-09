@@ -16,10 +16,12 @@ from __future__ import absolute_import
 # pylint: disable=inherit-non-class,no-self-argument,protected-access
 
 import re
-import six
+import time
 import codecs
 import string
 import pkg_resources
+
+import six
 
 from zope import component
 from zope import interface
@@ -989,7 +991,7 @@ class IUpsertUserPreCreateEvent(IObjectEvent):
 @interface.implementer(IUpsertUserPreCreateEvent)
 class UpsertUserPreCreateEvent(ObjectEvent):
 
-    def __init__(self, request):
+    def __init__(self, request): # pylint: disable=useless-super-delegation
         super(UpsertUserPreCreateEvent, self).__init__(request)
 
 
@@ -1009,6 +1011,23 @@ class UpsertUserCreatedEvent(ObjectEvent):
 
 
 # index
+
+class IUserLastSeenEvent(IObjectEvent):
+    """
+    Fired after a user has been last seen.
+    """
+    timestamp = Attribute(u"Timestamp")
+    request = Attribute(u"Request")
+
+
+@interface.implementer(IUserLastSeenEvent)
+class UserLastSeenEvent(ObjectEvent):
+
+    def __init__(self, obj, timestamp=None, request=None):
+        super(UserLastSeenEvent, self).__init__(obj)
+        self.request = request
+        self.timestamp = timestamp or time.time()
+
 
 class IDisplayNameAdapter(Interface):
     """
