@@ -37,6 +37,7 @@ from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUsersFolder
 from nti.dataserver.interfaces import ISiteAdminUtility
 
@@ -151,7 +152,7 @@ class SiteUsersView(AbstractAuthenticatedView,
         intids = component.getUtility(IIntIds)
         for intid in doc_ids:
             user = intids.queryObject(intid)
-            if user is not None:
+            if IUser.providedBy(user):
                 items.append(user)
 
         result = LocatedExternalDict()
