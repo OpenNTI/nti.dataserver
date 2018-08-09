@@ -64,6 +64,10 @@
     <subscriber factory=".decorators._CatalogWorkspaceAdminLinkDecorator"
                 provides="nti.appserver.workspaces.interfaces.ICatalogWorkspaceLinkProvider"/>
 
+	<!-- UserService -->
+	<subscriber	factory=".providers._SiteUsersLinkProvider"
+				provides="nti.appserver.workspaces.interfaces.IUserWorkspaceLinkProvider"/>
+				
 	<!-- Query -->
 	<subscriber	factory=".containers._UserContainersQuerier"
 				provides="nti.appserver.interfaces.IUserContainersQuerier"/>

@@ -101,9 +101,6 @@
 	<subscriber	factory=".providers._ResolveMeLinkProvider"
 				provides=".interfaces.IUserWorkspaceLinkProvider"/>
 
-	<subscriber	factory=".providers._SiteUsersLinkProvider"
-				provides=".interfaces.IUserWorkspaceLinkProvider"/>
-
 	<!-- Externalization -->
 	<adapter factory=".externalization.ServiceExternalizer" />
 

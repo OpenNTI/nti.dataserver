@@ -19,14 +19,9 @@ from nti.appserver._util import link_belongs_to_user
 
 from nti.appserver.workspaces.interfaces import IUserWorkspaceLinkProvider
 
-from nti.dataserver.authorization import is_admin_or_site_admin
-
 from nti.dataserver.interfaces import IUser
-from nti.dataserver.interfaces import IUsersFolder
 
 from nti.links.links import Link
-
-from nti.traversal.traversal import find_interface
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -67,20 +62,3 @@ class _ResolveMeLinkProvider(object):
         resolve_me_link = Link(user, rel="ResolveSelf", method='GET')
         link_belongs_to_user(resolve_me_link, user)
         return [resolve_me_link]
-
-
-@component.adapter(IUser)
-@interface.implementer(IUserWorkspaceLinkProvider)
-class _SiteUsersLinkProvider(object):
-
-    def __init__(self, user):
-        self.user = user
-
-    def links(self, unused_workspace):
-        result = []
-        if is_admin_or_site_admin(self.user):
-            users_folder = find_interface(self.user, IUsersFolder)
-            lnk = Link(users_folder, rel='SiteUsers', method='GET',
-                       elements=('@@SiteUsers',))
-            result.append(lnk)
-        return result
