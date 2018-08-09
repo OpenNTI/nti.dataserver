@@ -63,10 +63,6 @@
 
     <subscriber factory=".decorators._CatalogWorkspaceAdminLinkDecorator"
                 provides="nti.appserver.workspaces.interfaces.ICatalogWorkspaceLinkProvider"/>
-
-	<!-- UserService -->
-	<subscriber	factory=".providers._SiteUsersLinkProvider"
-				provides="nti.appserver.workspaces.interfaces.IUserWorkspaceLinkProvider"/>
 				
 	<!-- Query -->
 	<subscriber	factory=".containers._UserContainersQuerier"
@@ -81,7 +77,6 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 for="nti.dataserver.interfaces.IUsersFolder" />
 
-
     <!-- Utilities -->
     <utility factory=".utils.SiteAdminUtility" />
 
@@ -92,8 +87,11 @@
 	
 	<adapter factory=".adapters._user_to_displayname" />
 
-    <!-- Workspace -->
-    <subscriber factory=".subscribers._GlobalWorkspaceLinkProvider"
+    <!-- Workspace -->   
+   	<subscriber	factory=".providers._SiteUsersLinkProvider"
+				provides="nti.appserver.workspaces.interfaces.IUserWorkspaceLinkProvider"/>
+
+    <subscriber factory=".providers._GlobalWorkspaceLinkProvider"
                 provides="nti.appserver.workspaces.interfaces.IGlobalWorkspaceLinkProvider"/>
 
 </configure>
