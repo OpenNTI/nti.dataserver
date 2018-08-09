@@ -46,6 +46,7 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users.index import IX_ALIAS
 from nti.dataserver.users.index import IX_REALNAME
+from nti.dataserver.users.index import IX_DISPLAYNAME
 from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.utils import intids_of_users_by_site
 
@@ -73,7 +74,7 @@ class SiteUsersView(AbstractAuthenticatedView,
     _DEFAULT_BATCH_SIZE = 30
     _DEFAULT_BATCH_START = 0
 
-    _ALLOWED_SORTING = (IX_CREATEDTIME, IX_ALIAS, IX_REALNAME)
+    _ALLOWED_SORTING = (IX_CREATEDTIME, IX_ALIAS, IX_REALNAME, IX_DISPLAYNAME)
 
     def check_access(self):
         if not is_admin_or_site_admin(self.remoteUser):
@@ -123,6 +124,7 @@ class SiteUsersView(AbstractAuthenticatedView,
         return {
             IX_ALIAS: get_entity_catalog(),
             IX_REALNAME: get_entity_catalog(),
+            IX_DISPLAYNAME: get_entity_catalog(),
             IX_CREATEDTIME: get_metadata_catalog(),
         }
 
