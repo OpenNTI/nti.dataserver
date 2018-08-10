@@ -28,6 +28,23 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location.location import locate
 
+from nti.coremetadata.interfaces import IX_SITE
+from nti.coremetadata.interfaces import IX_ALIAS
+from nti.coremetadata.interfaces import IX_EMAIL
+from nti.coremetadata.interfaces import IX_TOPICS
+from nti.coremetadata.interfaces import IX_MIMETYPE
+from nti.coremetadata.interfaces import IX_REALNAME
+from nti.coremetadata.interfaces import IX_DISPLAYNAME
+from nti.coremetadata.interfaces import IX_IS_COMMUNITY
+from nti.coremetadata.interfaces import IX_CONTACT_EMAIL
+from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
+from nti.coremetadata.interfaces import IX_EMAIL_VERIFIED
+from nti.coremetadata.interfaces import IX_REALNAME_PARTS
+from nti.coremetadata.interfaces import IX_OPT_IN_EMAIL_COMMUNICATION
+from nti.coremetadata.interfaces import IX_CONTACT_EMAIL_RECOVERY_HASH
+from nti.coremetadata.interfaces import IX_PASSWORD_RECOVERY_EMAIL_HASH
+from nti.coremetadata.interfaces import ENTITY_CATALOG_NAME as CATALOG_NAME
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
@@ -54,27 +71,6 @@ from nti.zope_catalog.topic import ExtentFilteredSet
 
 # Old name for BWC
 CaseInsensitiveFieldIndex = CaseInsensitiveAttributeFieldIndex
-
-#: The name of the utility that the Zope Catalog
-#: for users should be registered under
-CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
-
-IX_SITE = 'site'
-IX_ALIAS = 'alias'
-IX_EMAIL = 'email'
-IX_TOPICS = 'topics'
-IX_MIMETYPE = 'mimeType'
-IX_REALNAME = 'realname'
-IX_DISPLAYNAME = 'displayname'
-IX_CONTACT_EMAIL = 'contact_email'
-IX_REALNAME_PARTS = 'realname_parts'
-IX_LASTSEEN = IX_LASTSEEN_TIME = 'lastSeenTime'
-IX_CONTACT_EMAIL_RECOVERY_HASH = 'contact_email_recovery_hash'
-IX_PASSWORD_RECOVERY_EMAIL_HASH = 'password_recovery_email_hash'
-
-IX_IS_COMMUNITY = 'is_community'
-IX_EMAIL_VERIFIED = 'email_verified'
-IX_OPT_IN_EMAIL_COMMUNICATION = 'opt_in_email_communication'
 
 logger = __import__('logging').getLogger(__name__)
 
