@@ -118,6 +118,8 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
         external_ids = get_external_identifiers(context)
         if external_ids:
             result['external_ids'] = external_ids
+        result['lastSeenTime'] = context.lastSeenTime
+        result['lastLoginTime'] = context.lastLoginTime
 
 
 @component.adapter(ICommunity)
