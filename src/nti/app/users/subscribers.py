@@ -38,6 +38,8 @@ from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 
 from nti.dataserver.users.utils import reindex_email_verification
 
+from nti.securitypolicy.utils import is_impersonating
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -76,7 +78,9 @@ def _on_user_created(user, unused_event):
 
 @component.adapter(IUser, IUserLogonEvent)
 def _on_user_logon(user, event):
-    notify(UserLastSeenEvent(user, time.time(), event.request))
+    request = event.request
+    if request is not None and not is_impersonating(request):
+        notify(UserLastSeenEvent(user, time.time(), event.request))
 
 
 @component.adapter(IUser, IUserLogoutEvent)
