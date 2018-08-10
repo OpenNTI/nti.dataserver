@@ -26,6 +26,7 @@ from nti.appserver.interfaces import IUserLogonEvent
 from nti.appserver.interfaces import IUserLogoutEvent
 
 from nti.coremetadata.interfaces import UserLastSeenEvent
+from nti.coremetadata.interfaces import IUserLastSeenEvent
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserBlacklistedStorage
@@ -81,3 +82,9 @@ def _on_user_logon(user, unused_event=None):
 @component.adapter(IUser, IUserLogoutEvent)
 def _on_user_logout(user, unused_event):
     _on_user_logon(user)
+
+
+@component.adapter(IUser, IUserLastSeenEvent)
+def _on_user_lastseen(user, event):
+    timestamp = event.timestamp
+    user.update_last_seen_time(timestamp)
