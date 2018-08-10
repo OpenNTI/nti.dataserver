@@ -47,6 +47,7 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 from nti.dataserver.users.index import IX_ALIAS
 from nti.dataserver.users.index import IX_REALNAME
 from nti.dataserver.users.index import IX_DISPLAYNAME
+from nti.dataserver.users.index import IX_LASTSEEN_TIME
 from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.utils import intids_of_users_by_site
 
@@ -126,6 +127,7 @@ class SiteUsersView(AbstractAuthenticatedView,
             IX_REALNAME: get_entity_catalog(),
             IX_DISPLAYNAME: get_entity_catalog(),
             IX_CREATEDTIME: get_metadata_catalog(),
+            IX_LASTSEEN_TIME: get_entity_catalog(),
         }
 
     def __call__(self):
