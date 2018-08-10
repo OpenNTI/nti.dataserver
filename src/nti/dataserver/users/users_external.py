@@ -310,16 +310,14 @@ class UserSummaryExternalObject(_EntitySummaryExternalObject):
 
     def _do_toExternalObject(self, **kwargs):
         extDict = super(UserSummaryExternalObject, self)._do_toExternalObject(**kwargs)
-        extDict['lastSeenTime'] = self.entity.lastSeenTime
-        extDict['lastLoginTime'] = self.entity.lastLoginTime
         if self.public_summary_profile_fields:
             prof = IUserProfile(self.entity)
             for f in self.public_summary_profile_fields:
                 val = getattr(prof, f, None)
                 extDict[f] = toExternalObject(val)
         return extDict
-
 _UserSummaryExternalObject = UserSummaryExternalObject
+
 
 @component.adapter(IUser)
 class _UserAdminSummaryExternalObject(_UserSummaryExternalObject):
@@ -333,6 +331,12 @@ class _UserAdminSummaryExternalObject(_UserSummaryExternalObject):
         result = super(_UserAdminSummaryExternalObject, self).public_summary_profile_fields
         result += ('email',)
         return result
+
+    def _do_toExternalObject(self, **kwargs):
+        extDict = super(_UserAdminSummaryExternalObject, self)._do_toExternalObject(**kwargs)
+        extDict['lastSeenTime'] = self.entity.lastSeenTime
+        extDict['lastLoginTime'] = self.entity.lastLoginTime
+        return extDict
 
 
 @component.adapter(ICoppaUserWithoutAgreement)
