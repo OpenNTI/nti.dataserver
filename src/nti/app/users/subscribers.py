@@ -78,7 +78,9 @@ def _on_user_created(user, unused_event):
 
 @component.adapter(IUser, IUserLogonEvent)
 def _on_user_logon(user, event):
-    notify(UserLastSeenEvent(user, time.time(), event.request))
+    request = getattr(event, 'request', None)
+    if request is not None and not is_impersonating(request): 
+        notify(UserLastSeenEvent(user, time.time(), request))
 
 
 @component.adapter(IUser, IUserLogoutEvent)
