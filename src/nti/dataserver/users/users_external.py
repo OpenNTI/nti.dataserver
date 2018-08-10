@@ -311,6 +311,7 @@ class UserSummaryExternalObject(_EntitySummaryExternalObject):
 
     def _do_toExternalObject(self, **kwargs):
         extDict = super(UserSummaryExternalObject, self)._do_toExternalObject(**kwargs)
+        extDict['lastSeenTime'] = self.entity.lastSeenTime
         extDict['lastLoginTime'] = self.entity.lastLoginTime
         if self.public_summary_profile_fields:
             prof = IUserProfile(self.entity)

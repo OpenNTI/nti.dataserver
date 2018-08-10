@@ -67,6 +67,7 @@ class _TransientMissingUser(_TransientMissingEntity):
     username = u'Missing User'
     avatarURL = create_gravatar_url(u'Missing User@alias.nextthought.com')
 
+    lastSeenTime = minmax.ConstantZeroValue()
     lastLoginTime = minmax.ConstantZeroValue()
     notificationCount = minmax.ConstantZeroValue()
 

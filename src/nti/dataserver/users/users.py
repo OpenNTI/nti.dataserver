@@ -8,12 +8,20 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import six
 import time
-import BTrees
 import numbers
 import warnings
 import collections
+
+import BTrees
+
+from persistent.list import PersistentList
+
+import six
+
+from z3c.password.interfaces import IPasswordUtility
+
+from ZODB.interfaces import IConnection
 
 from zope import component
 from zope import interface
@@ -26,12 +34,6 @@ from zope.deprecation import deprecated
 from zope.intid.interfaces import IIntIds
 
 from zope.location.interfaces import ISublocations
-
-from ZODB.interfaces import IConnection
-
-from z3c.password.interfaces import IPasswordUtility
-
-from persistent.list import PersistentList
 
 from nti.apns.interfaces import IDeviceFeedbackEvent
 from nti.apns.interfaces import INotificationService
@@ -229,6 +231,10 @@ class User(Principal):
     notificationCount = minmax.NumericPropertyDefaultingToZero('notificationCount',
                                                                minmax.MergingCounter)
 
+    # The last seen time is an number of seconds (as with time.time).
+    lastSeenTime = minmax.NumericPropertyDefaultingToZero('lastSeenTime',
+                                                           minmax.NumericMaximum,
+                                                           as_number=True)
     # TODO: If no AvatarURL is set when externalizing,
     # send back a gravatar URL for the primary email:
     # http://www.gravatar.com/avatar/%<Lowercase hex MD5>=44&d=mm
@@ -308,10 +314,21 @@ class User(Principal):
     def update_last_login_time(self):
         self.lastLoginTime = time.time()
 
+    def update_last_seen_time(self, timestamp=None):
+        timestamp = timestamp or time.time()
+        if timestamp > self.lastSeenTime:
+            self.lastSeenTime = timestamp
+            return True
+        return False
+    updateLastSeenTime = update_last_seen_time
+
     def updateFromExternalObject(self, parsed, *args, **kwargs):
         # with self._NoChangeBroadcast( self ):
         super(User, self).updateFromExternalObject(parsed, *args, **kwargs)
         updated = None
+        # don't update last seen time
+        parsed.pop('lastSeenTime', None)
+        # process last login time
         lastLoginTime = parsed.pop('lastLoginTime', None)
         if isinstance(lastLoginTime, numbers.Number) and self.lastLoginTime < lastLoginTime:
             self.lastLoginTime = lastLoginTime
