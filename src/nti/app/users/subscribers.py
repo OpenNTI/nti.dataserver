@@ -75,13 +75,13 @@ def _on_user_created(user, unused_event):
 
 
 @component.adapter(IUser, IUserLogonEvent)
-def _on_user_logon(user, unused_event=None):
-    notify(UserLastSeenEvent(user, time.time(), get_current_request()))
+def _on_user_logon(user, event):
+    notify(UserLastSeenEvent(user, time.time(), event.request))
 
 
 @component.adapter(IUser, IUserLogoutEvent)
-def _on_user_logout(user, unused_event):
-    _on_user_logon(user)
+def _on_user_logout(user, event):
+    _on_user_logon(user, event)
 
 
 @component.adapter(IUser, IUserLastSeenEvent)
