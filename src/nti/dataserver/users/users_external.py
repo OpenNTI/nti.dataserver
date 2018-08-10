@@ -13,10 +13,10 @@ from __future__ import absolute_import
 import random
 import functools
 
+from ZODB.POSException import POSError
+
 from zope import component
 from zope import interface
-
-from ZODB.POSException import POSError
 
 from nti.dataserver import authorization_acl as auth
 
@@ -38,7 +38,6 @@ from nti.dataserver.users.interfaces import IAvatarChoices
 from nti.dataserver.users.interfaces import IBackgroundURL
 from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import ICommunityProfile
-from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IRestrictedUserProfile
 
 from nti.dataserver.users.entity import Entity
@@ -442,6 +441,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
         prof = IRestrictedUserProfile(self.entity)
         extDict['email'] = prof.email
         if prof.birthdate is not None:
+            # pylint: disable=no-member
             extDict['birthdate'] = prof.birthdate.isoformat()
         else:
             extDict['birthdate'] = None
