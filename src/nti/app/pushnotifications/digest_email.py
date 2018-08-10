@@ -355,8 +355,10 @@ class DigestEmailCollector(object):
 														  reverse=True,
 														  reify=True)
 
-		logger.info("User %s/%s had %d notable items since %s",
-					  self.remoteUser, addr.email, len(sorted_by_time), min_created_time)
+		logger.info("[%s] User %s/%s had %d notable items since %s",
+					getSite().__name__,
+					self.remoteUser,
+					addr.email, len(sorted_by_time), min_created_time)
 		return {'email': EmailAddresablePrincipal(self.remoteUser),
 				'template_args': sorted_by_time,
 				'since': min_created_time}
