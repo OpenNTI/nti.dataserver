@@ -78,9 +78,7 @@ def _on_user_created(user, unused_event):
 
 @component.adapter(IUser, IUserLogonEvent)
 def _on_user_logon(user, event):
-    request = event.request
-    if request is not None and not is_impersonating(request):
-        notify(UserLastSeenEvent(user, time.time(), event.request))
+    notify(UserLastSeenEvent(user, time.time(), event.request))
 
 
 @component.adapter(IUser, IUserLogoutEvent)
@@ -90,5 +88,7 @@ def _on_user_logout(user, event):
 
 @component.adapter(IUser, IUserLastSeenEvent)
 def _on_user_lastseen(user, event):
-    timestamp = event.timestamp
-    user.update_last_seen_time(timestamp)
+    request = event.request
+    if request is not None and not is_impersonating(request):
+        timestamp = event.timestamp
+        user.update_last_seen_time(timestamp)
