@@ -75,7 +75,8 @@ class SiteUsersView(AbstractAuthenticatedView,
     _DEFAULT_BATCH_SIZE = 30
     _DEFAULT_BATCH_START = 0
 
-    _ALLOWED_SORTING = (IX_CREATEDTIME, IX_ALIAS, IX_REALNAME, IX_DISPLAYNAME)
+    _ALLOWED_SORTING = (IX_CREATEDTIME, IX_ALIAS, IX_REALNAME, IX_DISPLAYNAME,
+                        IX_LASTSEEN_TIME)
 
     def check_access(self):
         if not is_admin_or_site_admin(self.remoteUser):
