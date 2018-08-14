@@ -89,12 +89,12 @@
 	<adapter factory=".adapters._user_to_displayname" />
 
 	<adapter factory=".adapters._ContextLastSeenFactory"
-			 provides=".interfaces.IContextLastSeenContainer"
-			 for="nti.dataserver.interfaces.IUser" />
+			 provides="nti.coremetadata.interfaces.IContextLastSeenContainer"
+			 for="nti.coremetadata.interfaces.IUser" />
 
 	<adapter factory=".adapters._context_lastseen_to_user"
-			 provides="nti.dataserver.interfaces.IUser"
-			 for=".interfaces.IContextLastSeenContainer" />
+			 provides="nti.coremetadata.interfaces.IUser"
+			 for="nti.coremetadata.interfaces.IContextLastSeenContainer" />
  
     <!-- Workspace -->   
    	<subscriber	factory=".providers._SiteUsersLinkProvider"

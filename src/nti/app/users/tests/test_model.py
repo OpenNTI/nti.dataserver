@@ -19,7 +19,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-from nti.app.users.interfaces import IContextLastSeenContainer
+from nti.coremetadata.interfaces import IContextLastSeenContainer
 
 from nti.dataserver.interfaces import IUser
 
