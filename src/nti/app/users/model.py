@@ -16,7 +16,7 @@ from zope import interface
 
 from zope.container.contained import Contained
 
-from nti.app.users.interfaces import IContextLastSeenContainer
+from nti.coremetadata.interfaces import IContextLastSeenContainer
 
 logger = __import__('logging').getLogger(__name__)
 

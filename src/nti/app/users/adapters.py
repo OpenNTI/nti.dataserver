@@ -19,9 +19,9 @@ from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
-from nti.app.users.interfaces import IContextLastSeenContainer
-
 from nti.app.users.model import ContextLastSeenContainer
+
+from nti.coremetadata.interfaces import IContextLastSeenContainer
 
 from nti.dataserver.interfaces import IUser
 
@@ -30,7 +30,7 @@ from nti.dataserver.users.interfaces import IDisplayNameAdapter
 
 from nti.traversal.traversal import find_interface
 
-CONTEXT_LASTSEEN_ANNOTATION_KEY = 'nti.app.users.interfaces.IContextLastSeenContainer'
+CONTEXT_LASTSEEN_ANNOTATION_KEY = 'nti.coremetadata.interfaces.IContextLastSeenContainer'
 
 logger = __import__('logging').getLogger(__name__)
 
