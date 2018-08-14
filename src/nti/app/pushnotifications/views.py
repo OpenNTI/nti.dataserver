@@ -32,6 +32,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.pushnotifications import MessageFactory as _
 
+from nti.app.pushnotifications import email_notifications_preference
+
 from nti.app.pushnotifications.utils import validate_signature
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
@@ -45,13 +47,8 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.users.users import User
 
 def _do_unsubscribe( request, user ):
-	prefs = component.getUtility(IPreferenceGroup, name='PushNotifications.Email')
-	endInteraction()
-	try:
-		newInteraction( IParticipation( user ) )
+	with email_notifications_preference(user) as prefs:
 		prefs.email_a_summary_of_interesting_changes = False
-	finally:
-		restoreInteraction()
 
 	request.environ['nti.request_had_transaction_side_effects'] = True # must commit the change
 

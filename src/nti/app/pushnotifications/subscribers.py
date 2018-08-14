@@ -19,13 +19,6 @@ from zope.intid.interfaces import IIntIds
 
 from zope.intid.interfaces import IIntIdAddedEvent
 
-from zope.preference.interfaces import IPreferenceGroup
-
-from zope.security.interfaces import IParticipation
-from zope.security.management import endInteraction
-from zope.security.management import newInteraction
-from zope.security.management import restoreInteraction
-
 from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
@@ -43,19 +36,14 @@ from nti.threadable.interfaces import IThreadable
 
 from nti.app import pushnotifications as push_pkg
 
+from nti.app.pushnotifications import email_notifications_preference
+
 def _mailer():
 	return component.getUtility(ITemplatedMailer)
 
 def _is_subscribed(user):
-	prefs = component.getUtility(IPreferenceGroup, name='PushNotifications.Email')
-	# To get the user's
-	# preference information, we must be in an interaction for that user.
-	endInteraction()
-	try:
-		newInteraction(IParticipation(user))
+	with email_notifications_preference(user) as prefs:
 		return prefs.immediate_threadable_reply
-	finally:
-		restoreInteraction()
 
 @component.adapter(ICommentPost, IIntIdAddedEvent)
 @component.adapter(INote, IIntIdAddedEvent)
