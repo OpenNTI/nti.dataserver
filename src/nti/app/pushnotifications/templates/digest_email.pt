@@ -157,21 +157,22 @@
 										</div>
 									</td>
 								</tr>
-								<tr width="100%">
-									<td valign="top" align="left" style="padding: 16px; font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica; line-height: 1.25em;">
-										<p style="color: #999; margin-bottom: 8px;font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica;">
-											This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.
+								<metal:block tal:condition="exists: options/unsubscribe_link">
+									<tr width="100%">
+										<td valign="top" align="left" style="padding: 16px; font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica; line-height: 1.25em;">
+											<p style="color: #999; margin-bottom: 8px;font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica;">
+												This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.
 
-											<br />
-											<br />
-											<strong>Too many updates?</strong><br />
-											You currently receive periodic email updates on ${options/site_name} activity.
-											You can <a tal:attributes="href options/unsubscribe_link" href="" style="color: #666;">unsubscribe</a>
-											from these updates.
-										</p>
-									</td>
-
-								</tr>
+												<br />
+												<br />
+												<strong>Too many updates?</strong><br />
+												You currently receive periodic email updates on ${options/site_name} activity.
+												You can <a tal:attributes="href options/unsubscribe_link" href="" style="color: #666;">unsubscribe</a>
+												from these updates.
+											</p>
+										</td>
+									</tr>
+								</metal:block>
 								</tbody>
 							</table>
 					</td>

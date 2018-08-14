@@ -88,6 +88,10 @@ def _threadable_added(threadable, event):
 	subject = delegate.compute_subject_for_recipient(None)
 	template_args = delegate.compute_template_args_for_recipient(recipient)
 	template_args['notable_text'] = 'A user has replied to one of your comments.'
+
+	# Currently we don't have a link for unsubscribing this email notification.
+	template_args.pop('unsubscribe_link', None)
+
 	text_template_extension=delegate.text_template_extension
 
 	mailer = _mailer()

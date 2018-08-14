@@ -46,5 +46,8 @@ ${general(circled, 'added you to a group', 'their contacts')}
 You received a grade.
 % endif
 
+% if unsubscribe_link:
 This message was sent to ${email_to}. If you don't want to receive
 these emails in the future, please unsubscribe at ${unsubscribe_link}.
+
+% endif
