@@ -32,9 +32,6 @@ from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.app.pushnotifications.interfaces import INotablePreferences
-from nti.app.pushnotifications.interfaces import NotablePreferences
-
 class TestSubscribers(ApplicationLayerTest):
 
 	def _add_comment(self, creator, topic, inReplyTo=None):
@@ -46,8 +43,9 @@ class TestSubscribers(ApplicationLayerTest):
 		return comment
 
 	@WithSharedApplicationMockDS(users=False, testapp=True, default_authenticate=False)
-	@fudge.patch("nti.app.pushnotifications.subscribers._mailer")
-	def test_threadable_added(self, mock_mailer):
+	@fudge.patch("nti.app.pushnotifications.subscribers._mailer",
+				 "nti.app.pushnotifications.subscribers._is_subscribed")
+	def test_threadable_added(self, mock_mailer, mock_is_subscribed):
 		class _MockMailer(object):
 			_calls = []
 			def queue_simple_html_text_email(self, template_name, subject, recipients, template_args, reply_to, package, text_template_extension):
@@ -58,6 +56,7 @@ class TestSubscribers(ApplicationLayerTest):
 
 		_mockMailer = _MockMailer()
 		mock_mailer.is_callable().returns(_mockMailer)
+		mock_is_subscribed.is_callable().returns(True)
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			community = Community.create_community(self.ds, username=u"test_demo")
@@ -82,11 +81,6 @@ class TestSubscribers(ApplicationLayerTest):
 			forum[u'Hello'] = topic
 			topic.publish()
 
-			assert_that(component.queryUtility(INotablePreferences), is_(None))
-
-			preferences = NotablePreferences(immediate_threadable_reply=True)
-			component.getSiteManager().registerUtility(preferences, INotablePreferences)
-			assert_that(component.queryUtility(INotablePreferences), same_instance(preferences))
 
 			# Top comment
 			comment1 = self._add_comment(user3, topic, inReplyTo=None)
@@ -96,16 +90,16 @@ class TestSubscribers(ApplicationLayerTest):
 			comment2 = self._add_comment(user3, topic, inReplyTo=comment1)
 			assert_that(_mockMailer._calls, has_length(0))
 
-			preferences.immediate_threadable_reply = False
+			mock_is_subscribed.is_callable().returns(False)
 			comment3 = self._add_comment(user4, topic, inReplyTo=comment1)
 			assert_that(_mockMailer._calls, has_length(0))
 
-			preferences.immediate_threadable_reply = None
+			mock_is_subscribed.is_callable().returns(None)
 			comment4 = self._add_comment(user4, topic, inReplyTo=comment1)
 			assert_that(_mockMailer._calls, has_length(0))
 
 			# Success
-			preferences.immediate_threadable_reply = True
+			mock_is_subscribed.is_callable().returns(True)
 			comment5 = self._add_comment(user4, topic, inReplyTo=comment1)
 			assert_that(_mockMailer._calls, has_length(1))
 			assert_that(_mockMailer._calls[0][0], is_('nti.app.pushnotifications:templates/digest_email'))
@@ -137,6 +131,3 @@ class TestSubscribers(ApplicationLayerTest):
 			# No email found for the top comment
 			comment12 = self._add_comment(user4, topic, inReplyTo=comment11)
 			assert_that(_mockMailer._calls, has_length(0))
-
-			component.getSiteManager().unregisterUtility(preferences)
-			assert_that(component.queryUtility(INotablePreferences), is_(None))

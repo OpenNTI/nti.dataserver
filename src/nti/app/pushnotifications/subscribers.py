@@ -19,6 +19,13 @@ from zope.intid.interfaces import IIntIds
 
 from zope.intid.interfaces import IIntIdAddedEvent
 
+from zope.preference.interfaces import IPreferenceGroup
+
+from zope.security.interfaces import IParticipation
+from zope.security.management import endInteraction
+from zope.security.management import newInteraction
+from zope.security.management import restoreInteraction
+
 from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
@@ -36,18 +43,23 @@ from nti.threadable.interfaces import IThreadable
 
 from nti.app import pushnotifications as push_pkg
 
-from .interfaces import INotablePreferences
-
 def _mailer():
 	return component.getUtility(ITemplatedMailer)
+
+def _is_subscribed(user):
+	prefs = component.getUtility(IPreferenceGroup, name='PushNotifications.Email')
+	# To get the user's
+	# preference information, we must be in an interaction for that user.
+	endInteraction()
+	try:
+		newInteraction(IParticipation(user))
+		return prefs.immediate_threadable_reply
+	finally:
+		restoreInteraction()
 
 @component.adapter(ICommentPost, IIntIdAddedEvent)
 @component.adapter(INote, IIntIdAddedEvent)
 def _threadable_added(threadable, event):
-	notable_pref = component.queryUtility(INotablePreferences)
-	if notable_pref is None or notable_pref.immediate_threadable_reply is not True:
-		return
-
 	inReplyTo = threadable.inReplyTo
 	if not IThreadable.providedBy(inReplyTo):
 		return
@@ -56,6 +68,9 @@ def _threadable_added(threadable, event):
 		return
 
 	user = User.get_user(getattr(inReplyTo, 'creator', None))
+	if not _is_subscribed(user):
+		return
+
 	addr = IEmailAddressable(user, None)
 	if not addr or not addr.email:
 		return
