@@ -1,7 +1,11 @@
 Hi ${first_name}!
+% if notable_text:
+${notable_text}
 
+% else:
 Here's what you may have missed on ${site_name} since ${since_when}.
 
+% endif
 <%def name="general(notable, action, parent_disp_name='display_name')">
 <%
 	dn = getattr(notable, 'display_name', None)

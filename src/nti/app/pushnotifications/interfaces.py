@@ -13,6 +13,7 @@ from zope import interface
 
 from zope.viewlet.interfaces import IViewletManager
 
+from nti.schema.field import Bool
 
 class INotableDataEmailViewletManager(IViewletManager):
     """
@@ -39,3 +40,17 @@ class INotableDataEmailClassifier(interface.Interface):
         of data. If no classification is found, return nothing
         and the object will be ignored.
         """
+
+class INotablePreferences(interface.Interface):
+	"""
+	An object that decides whether a notification should be sent to the creator of inReplyTo when a threadable object is created,
+	and should be registered as utility in a site where immediate_threadable_reply is True.
+	"""
+	immediate_threadable_reply = Bool(title=u"Should send notification to the author",
+									  default=False)
+
+@interface.implementer(INotablePreferences)
+class NotablePreferences(object):
+
+	def __init__(self, immediate_threadable_reply):
+		self.immediate_threadable_reply = immediate_threadable_reply

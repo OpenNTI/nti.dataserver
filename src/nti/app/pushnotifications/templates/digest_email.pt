@@ -77,7 +77,14 @@
 								<tr width="100%">
 									<td valign="top" align="left" style="padding-left:18px; padding-bottom: 10px;">
 										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; font-weight:bold; margin: 0;color:#7f7f7f;">Hi ${options/first_name}!</div>
-										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;">Here's what you may have missed on ${options/site_name} since ${options/since_when}.</div>
+										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;">
+											<metal:block tal:condition="exists: options/notable_text">
+												${options/notable_text}
+											</metal:block>
+											<metal:block tal:condition="not:exists: options/notable_text">
+												Here's what you may have missed on ${options/site_name} since ${options/since_when}.
+											</metal:block>
+										</div>
 									</td>
 								</tr>
 								<tal:block tal:repeat="notable_group options/notable_groups">
