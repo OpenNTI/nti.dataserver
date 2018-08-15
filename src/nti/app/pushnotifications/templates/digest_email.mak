@@ -1,7 +1,11 @@
 Hi ${first_name}!
+% if notable_text:
+${notable_text}
 
+% else:
 Here's what you may have missed on ${site_name} since ${since_when}.
 
+% endif
 <%def name="general(notable, action, parent_disp_name='display_name')">
 <%
 	dn = getattr(notable, 'display_name', None)
@@ -42,5 +46,8 @@ ${general(circled, 'added you to a group', 'their contacts')}
 You received a grade.
 % endif
 
+% if unsubscribe_link:
 This message was sent to ${email_to}. If you don't want to receive
 these emails in the future, please unsubscribe at ${unsubscribe_link}.
+
+% endif

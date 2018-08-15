@@ -54,6 +54,8 @@ from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
 
 from nti.app.notabledata.interfaces import IUserNotableData
 
+from nti.app.pushnotifications import email_notifications_preference
+
 from nti.app.pushnotifications.interfaces import INotableDataEmailClassifier
 
 from nti.app.pushnotifications.utils import generate_unsubscribe_url
@@ -267,15 +269,8 @@ class DigestEmailCollector(object):
 
 	@property
 	def is_subscribed(self):
-		prefs = component.getUtility(IPreferenceGroup, name='PushNotifications.Email')
-		# To get the user's
-		# preference information, we must be in an interaction for that user.
-		endInteraction()
-		try:
-			newInteraction(IParticipation(self.remoteUser))
+		with email_notifications_preference(self.remoteUser) as prefs:
 			return prefs.email_a_summary_of_interesting_changes
-		finally:
-			restoreInteraction()
 
 	def min_created_time(self, notable_data):
 		last_time_collected = self.last_collected

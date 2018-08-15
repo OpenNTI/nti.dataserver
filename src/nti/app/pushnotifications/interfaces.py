@@ -13,7 +13,6 @@ from zope import interface
 
 from zope.viewlet.interfaces import IViewletManager
 
-
 class INotableDataEmailViewletManager(IViewletManager):
     """
     Viewlet manager for notable data items in the push email.

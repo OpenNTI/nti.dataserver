@@ -77,7 +77,14 @@
 								<tr width="100%">
 									<td valign="top" align="left" style="padding-left:18px; padding-bottom: 10px;">
 										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; font-weight:bold; margin: 0;color:#7f7f7f;">Hi ${options/first_name}!</div>
-										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;">Here's what you may have missed on ${options/site_name} since ${options/since_when}.</div>
+										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;">
+											<metal:block tal:condition="exists: options/notable_text">
+												${options/notable_text}
+											</metal:block>
+											<metal:block tal:condition="not:exists: options/notable_text">
+												Here's what you may have missed on ${options/site_name} since ${options/since_when}.
+											</metal:block>
+										</div>
 									</td>
 								</tr>
 								<tal:block tal:repeat="notable_group options/notable_groups">
@@ -150,21 +157,22 @@
 										</div>
 									</td>
 								</tr>
-								<tr width="100%">
-									<td valign="top" align="left" style="padding: 16px; font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica; line-height: 1.25em;">
-										<p style="color: #999; margin-bottom: 8px;font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica;">
-											This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.
+								<metal:block tal:condition="exists: options/unsubscribe_link">
+									<tr width="100%">
+										<td valign="top" align="left" style="padding: 16px; font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica; line-height: 1.25em;">
+											<p style="color: #999; margin-bottom: 8px;font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica;">
+												This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.
 
-											<br />
-											<br />
-											<strong>Too many updates?</strong><br />
-											You currently receive periodic email updates on ${options/site_name} activity.
-											You can <a tal:attributes="href options/unsubscribe_link" href="" style="color: #666;">unsubscribe</a>
-											from these updates.
-										</p>
-									</td>
-
-								</tr>
+												<br />
+												<br />
+												<strong>Too many updates?</strong><br />
+												You currently receive periodic email updates on ${options/site_name} activity.
+												You can <a tal:attributes="href options/unsubscribe_link" href="" style="color: #666;">unsubscribe</a>
+												from these updates.
+											</p>
+										</td>
+									</tr>
+								</metal:block>
 								</tbody>
 							</table>
 					</td>

@@ -150,4 +150,8 @@
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemFeedback"
 			 zcml:condition="installed nti.app.assessment" />
 
+	<!-- Subscribers -->
+	<!-- Events for ensuring users get a notification when a user replies to something they authored . -->
+	<subscriber handler=".subscribers._threadable_added" />
+
 </configure>
