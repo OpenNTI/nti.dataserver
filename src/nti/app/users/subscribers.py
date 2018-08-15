@@ -17,6 +17,7 @@ from zope import component
 from zope.event import notify
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import set_email_verification_time
@@ -75,6 +76,13 @@ def _user_modified_from_external_event(user, event):
 def _on_user_created(user, unused_event):
     set_user_creation_site(user)
 
+
+@component.adapter(IUser, IObjectModifiedEvent)
+def _on_user_updated(user, unused_event):
+    request = get_current_request()
+    if request is not None and not is_impersonating(request): 
+        notify(UserLastSeenEvent(user, time.time(), request))
+        
 
 @component.adapter(IUser, IUserLogonEvent)
 def _on_user_logon(user, event):
