@@ -331,8 +331,9 @@ class DigestEmailCollector(object):
 		notable_intids_since_last_viewed = notable_data.get_notable_intids(min_created_time=min_created_time)
 		if not notable_intids_since_last_viewed:
 			# Hooray, nothing to do
-			logger.debug("User %s/%s had 0 notable items since %s",
-						  self.remoteUser, addr.email, min_created_time)
+			logger.debug("[%s] User %s/%s had 0 notable items since %s",
+						getSite().__name__,
+						self.remoteUser, addr.email, min_created_time)
 
 			return
 
