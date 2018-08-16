@@ -1024,3 +1024,9 @@ class IDisplayNameAdapter(Interface):
     Interface for an index adapter to get an entity display name
     """
     displayname = Attribute(u"Display name")
+
+
+class IUIReadOnlyProfileSchema(interface.Interface):
+    """
+    A marker interface for user profiles that should be read only when schemafied externally
+    """

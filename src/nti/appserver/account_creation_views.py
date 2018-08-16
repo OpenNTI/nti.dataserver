@@ -72,6 +72,7 @@ from nti.dataserver.users.interfaces import UsernameCannotBeBlank
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
+from nti.dataserver.users.interfaces import IUIReadOnlyProfileSchema
 
 from nti.dataserver.users.users import User
 
@@ -544,6 +545,8 @@ class _AccountProfileSchemafier(JsonSchemafier):
         profile = profile_iface(user)
         profile_schema = find_most_derived_interface(profile, profile_iface,
                                                      interface.providedBy(profile))
+        if readonly_override is None:
+            readonly_override = IUIReadOnlyProfileSchema.providedBy(profile_schema)
         super(_AccountProfileSchemafier, self).__init__(profile_schema,
                                                         readonly_override=readonly_override)
 
