@@ -545,8 +545,10 @@ class _AccountProfileSchemafier(JsonSchemafier):
         profile = profile_iface(user)
         profile_schema = find_most_derived_interface(profile, profile_iface,
                                                      interface.providedBy(profile))
+        from IPython.terminal.debugger import set_trace;set_trace()
+
         if readonly_override is None:
-            readonly_override = IUIReadOnlyProfileSchema.isOrExtends(profile_schema)
+            readonly_override = profile_schema.isOrExtends(IUIReadOnlyProfileSchema)
         super(_AccountProfileSchemafier, self).__init__(profile_schema,
                                                         readonly_override=readonly_override)
 
