@@ -324,13 +324,13 @@ def intids_of_community_or_site_members():
     return intids_of_users_by_site()
 
 
-def get_community_or_site_members():
+def get_community_or_site_members(all_members=False):
     """
     Returns the community or site memebers for current site
     """
     community = get_community_from_site()
     if community is not None:
-        return get_community_members(community)
+        return get_community_members(community, all_members)
     return get_users_by_site()
 
 
