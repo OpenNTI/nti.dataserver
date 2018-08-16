@@ -33,13 +33,6 @@ from zope.interface.interfaces import ComponentLookupError
 from zope.intid.interfaces import IIntIds
 from zope.intid.interfaces import IntIdMissingError
 
-from zope.security.interfaces import IParticipation
-from zope.security.management import endInteraction
-from zope.security.management import newInteraction
-from zope.security.management import restoreInteraction
-
-from zope.preference.interfaces import IPreferenceGroup
-
 from zope.i18n import translate
 
 from zope.publisher.interfaces.browser import IBrowserRequest
@@ -73,6 +66,8 @@ from nti.appserver.policies.site_policies import guess_site_display_name
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
+from nti.coremetadata.interfaces import IContainerContext
+
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
@@ -86,8 +81,6 @@ from nti.dataserver.interfaces import IAuthenticationPolicy
 from nti.dataserver.interfaces import IUserDigestEmailMetadata
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 
-from nti.dataserver.users.entity import Entity
-
 from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
@@ -97,6 +90,8 @@ from nti.externalization.singleton import Singleton
 
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.ntiids.oids import to_external_ntiid_oid
 
@@ -366,13 +361,19 @@ class DigestEmailCollector(object):
 		# Just grab the title since this is what we display. This also
 		# collapses possible different catalog entries into a single
 		# entry, which we want.
-		top_level_contexts = get_trusted_top_level_contexts( obj )
 		result = None
-		if top_level_contexts:
-			top_level_contexts = tuple( top_level_contexts )
-			result = top_level_contexts[0]
+		container_context = IContainerContext(obj, None)
+		if container_context:
+			context_id = container_context.context_id
+			result = find_object_with_ntiid(context_id)
+		if result is None:
+			top_level_contexts = get_trusted_top_level_contexts(obj)
+			result = None
+			if top_level_contexts:
+				top_level_contexts = tuple(top_level_contexts)
+				result = top_level_contexts[0]
 
-		result = getattr( result, 'title', 'General Activity' )
+		result = getattr(result, 'title', 'General Activity')
 		return result
 
 	def recipient_to_template_args(self, recipient, request):
