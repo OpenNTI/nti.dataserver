@@ -151,7 +151,12 @@
 			 zcml:condition="installed nti.app.assessment" />
 
 	<!-- Subscribers -->
-	<!-- Events for ensuring users get a notification when a user replies to something they authored . -->
-	<subscriber handler=".subscribers._threadable_added" />
+	<!-- Events for ensuring users get a notification when a user replies to something they authored. -->
+	<subscriber handler=".subscribers._threadable_added"
+                for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost
+                     zope.intid.interfaces.IIntIdAddedEvent"/>
 
+    <subscriber handler=".subscribers._threadable_added"
+                for="nti.dataserver.interfaces.INote
+                     zope.intid.interfaces.IIntIdAddedEvent"/>
 </configure>

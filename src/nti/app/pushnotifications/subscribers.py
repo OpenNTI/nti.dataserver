@@ -9,21 +9,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import time
-
 from pyramid.threadlocal import get_current_request
 
 from zope import component
 
 from zope.intid.interfaces import IIntIds
 
-from zope.intid.interfaces import IIntIdAddedEvent
-
 from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
 
-from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
+from nti.app import pushnotifications as push_pkg
 
-from nti.dataserver.interfaces import INote
+from nti.app.pushnotifications import email_notifications_preference
 
 from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -34,20 +30,17 @@ from nti.mailer.interfaces import EmailAddresablePrincipal
 
 from nti.threadable.interfaces import IThreadable
 
-from nti.app import pushnotifications as push_pkg
-
-from nti.app.pushnotifications import email_notifications_preference
 
 def _mailer():
 	return component.getUtility(ITemplatedMailer)
+
 
 def _is_subscribed(user):
 	with email_notifications_preference(user) as prefs:
 		return prefs.immediate_threadable_reply
 
-@component.adapter(ICommentPost, IIntIdAddedEvent)
-@component.adapter(INote, IIntIdAddedEvent)
-def _threadable_added(threadable, event):
+
+def _threadable_added(threadable, unused_event):
 	inReplyTo = threadable.inReplyTo
 	if not IThreadable.providedBy(inReplyTo):
 		return
@@ -72,7 +65,9 @@ def _threadable_added(threadable, event):
 
 	request = get_current_request()
 
-	delegate = component.getMultiAdapter((inReplyTo, request), IBulkEmailProcessDelegate, name="digest_email")
+	delegate = component.getMultiAdapter((inReplyTo, request),
+										IBulkEmailProcessDelegate,
+										name="digest_email")
 	subject = delegate.compute_subject_for_recipient(None)
 	template_args = delegate.compute_template_args_for_recipient(recipient)
 	template_args['notable_text'] = 'A user has replied to one of your comments.'
