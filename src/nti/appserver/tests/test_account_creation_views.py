@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -28,6 +29,7 @@ import itertools
 from six.moves.urllib_parse import unquote
 
 from zope import component
+from zope import interface
 
 from zope.component import eventtesting
 
@@ -38,6 +40,7 @@ import pyramid.httpexceptions as hexc
 
 from nti.appserver import interfaces as app_interfaces
 
+from nti.appserver.account_creation_views import _AccountProfileSchemafier
 from nti.appserver.account_creation_views import account_create_view
 from nti.appserver.account_creation_views import account_preflight_view
 
@@ -643,6 +646,21 @@ class TestApplicationProfile(_AbstractApplicationCreateUserTest, ApplicationLaye
 		assert_that( res, has_property( 'status_int', 200 ) )
 		assert_that( res.json_body, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
 		assert_that( res.json_body['ProfileSchema'], does_not( has_key( 'birthCountry' ) ) )
+
+	@WithSharedApplicationMockDS(testapp=True, users=True)
+	def test_readonly_profile(self):
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user()
+			schema = _AccountProfileSchemafier(user).make_schema()
+			assert_that(schema['lastLoginTime']['readonly'], is_(False))
+			profile_interface = user_interfaces.ICompleteUserProfile
+			interface.alsoProvides(profile_interface, user_interfaces.IUIReadOnlyProfileSchema)
+			schema = _AccountProfileSchemafier(user).make_schema()
+			for field in schema.values():
+				assert_that(field.get('readonly'), is_(True or None))
+			interface.noLongerProvides(profile_interface, user_interfaces.IUIReadOnlyProfileSchema)
+
 
 def main(email=None, uname=None, cname=None):
 	"""
