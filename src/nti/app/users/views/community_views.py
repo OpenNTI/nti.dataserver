@@ -289,6 +289,9 @@ class CommunityMembersView(AbstractAuthenticatedView,
             result = 'admin-summary'
         return result
 
+    def _transformer(self, x):
+        return toExternalObject(x, name=self._get_externalizer(x))
+
     def __call__(self):
         self._batch_params()
         community = self.request.context
@@ -296,9 +299,6 @@ class CommunityMembersView(AbstractAuthenticatedView,
             and self.remoteUser not in community \
             and not is_admin_or_site_admin(self.remoteUser):
             raise hexc.HTTPForbidden()
-
-        def _selector(x):
-            return toExternalObject(x, name=self._get_externalizer(x))
 
         sortOn = self.sortOn
         catalog = get_metadata_catalog()
@@ -326,8 +326,11 @@ class CommunityMembersView(AbstractAuthenticatedView,
         self._batch_items_iterable(result, members,
                                    number_items_needed=self.limit,
                                    batch_size=self.batch_size,
-                                   batch_start=self.batch_start,
-                                   selector=_selector)
+                                   batch_start=self.batch_start)
+        # transform only the required items
+        result[ITEMS] = [
+            self._transformer(x) for x in result[ITEMS]
+        ]
         return result
 
 
