@@ -61,6 +61,7 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.site.site import get_component_hierarchy_names
 
 TOTAL = StandardExternalFields.TOTAL
+ITEMS = StandardExternalFields.ITEMS
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -128,6 +129,9 @@ class SiteUsersView(AbstractAuthenticatedView,
             result = 'admin-summary'
         return result
 
+    def _transformer(self, x):
+        return to_external_object(x, name=self._get_externalizer(x))
+
     @Lazy
     def sortMap(self):
         return {
@@ -151,9 +155,6 @@ class SiteUsersView(AbstractAuthenticatedView,
                              None)
 
         filter_admins = is_true(self.filterAdmins)
-        def _selector(x):
-            return to_external_object(x, name=self._get_externalizer(x))
-
         doc_ids = intids_of_users_by_site(site)
         # pylint: disable=unsupported-membership-test
         if self.sortOn and self.sortOn in self.sortMap:
@@ -171,6 +172,10 @@ class SiteUsersView(AbstractAuthenticatedView,
                 items.append(user)
 
         result = LocatedExternalDict()
-        self._batch_items_iterable(result, items, selector=_selector)
+        self._batch_items_iterable(result, items)
+        # transform only the required items
+        result[ITEMS] = [
+            self._transformer(x) for x in result[ITEMS]
+        ]
         result[TOTAL] = len(items)
         return result
