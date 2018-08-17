@@ -31,6 +31,8 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.app.users import MessageFactory as _
 
+from nti.common.string import is_true
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.authorization import is_admin
@@ -109,6 +111,11 @@ class SiteUsersView(AbstractAuthenticatedView,
         # pylint: disable=no-member
         return self.params.get('sortOrder', 'ascending')
 
+    @property
+    def filterAdmins(self):
+        # pylint: disable=no-member
+        return self.params.get('filterAdmins', 'False')
+
     def _get_externalizer(self, user):
         # pylint: disable=no-member
         result = 'summary'
@@ -143,6 +150,7 @@ class SiteUsersView(AbstractAuthenticatedView,
                              },
                              None)
 
+        filter_admins = is_true(self.filterAdmins)
         def _selector(x):
             return to_external_object(x, name=self._get_externalizer(x))
 
@@ -157,7 +165,9 @@ class SiteUsersView(AbstractAuthenticatedView,
         intids = component.getUtility(IIntIds)
         for intid in doc_ids:
             user = intids.queryObject(intid)
-            if IUser.providedBy(user):
+            if not IUser.providedBy(user):
+                continue
+            if not filter_admins or not is_site_admin(user):
                 items.append(user)
 
         result = LocatedExternalDict()
