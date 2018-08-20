@@ -115,7 +115,7 @@ class SiteUsersView(AbstractAuthenticatedView,
     @property
     def filterAdmins(self):
         # pylint: disable=no-member
-        return self.params.get('filterAdmins', 'False')
+        return is_true(self.params.get('filterAdmins', 'False'))
 
     def _get_externalizer(self, user):
         # pylint: disable=no-member
@@ -142,6 +142,30 @@ class SiteUsersView(AbstractAuthenticatedView,
             IX_LASTSEEN_TIME: get_entity_catalog(),
         }
 
+    def get_user_intids(self, site):
+        return intids_of_users_by_site(site)
+
+    def get_sorted_user_intids(self, site):
+        doc_ids = self.get_user_intids(site)
+        # pylint: disable=unsupported-membership-test
+        if self.sortOn and self.sortOn in self.sortMap:
+            catalog = self.sortMap.get(self.sortOn)
+            reverse = self.sortOrder == 'descending'
+            doc_ids = catalog[self.sortOn].sort(doc_ids, reverse=reverse)
+        return doc_ids
+
+    def get_users(self, site):
+        doc_ids = self.get_sorted_user_intids(site)
+        items = []
+        intids = component.getUtility(IIntIds)
+        for intid in doc_ids:
+            user = intids.queryObject(intid)
+            if not IUser.providedBy(user):
+                continue
+            if not self.filterAdmins or not is_site_admin(user):
+                items.append(user)
+        return items
+
     def __call__(self):
         self.check_access()
         # pylint: disable=no-member
@@ -154,23 +178,7 @@ class SiteUsersView(AbstractAuthenticatedView,
                              },
                              None)
 
-        filter_admins = is_true(self.filterAdmins)
-        doc_ids = intids_of_users_by_site(site)
-        # pylint: disable=unsupported-membership-test
-        if self.sortOn and self.sortOn in self.sortMap:
-            catalog = self.sortMap.get(self.sortOn)
-            reverse = self.sortOrder == 'descending'
-            doc_ids = catalog[self.sortOn].sort(doc_ids, reverse=reverse)
-
-        items = []
-        intids = component.getUtility(IIntIds)
-        for intid in doc_ids:
-            user = intids.queryObject(intid)
-            if not IUser.providedBy(user):
-                continue
-            if not filter_admins or not is_site_admin(user):
-                items.append(user)
-
+        items = self.get_users(site)
         result = LocatedExternalDict()
         self._batch_items_iterable(result, items)
         # transform only the required items

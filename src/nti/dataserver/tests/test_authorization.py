@@ -14,7 +14,7 @@ from nti.externalization.tests import externalizes
 
 from nti.testing.matchers import validly_provides as verifiably_provides
 
-from .mock_dataserver import DataserverLayerTest
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
 from zope.authentication.interfaces import IEveryoneGroup
 from zope.interface.verify import verifyObject
