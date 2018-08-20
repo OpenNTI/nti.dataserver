@@ -146,11 +146,11 @@ class TestUGDModifyViews(NewRequestLayerTest):
 
 		view()
 
-		# One event, for the object we modified
-		assert_that( eventtesting.getEvents(  ), has_length( 3 ) )
-		assert_that( eventtesting.getEvents( IObjectModifiedEvent ), has_length( 2 ) )
-		mod_event = eventtesting.getEvents( IObjectModifiedEvent )[1]
-		assert_that( mod_event, has_property( 'descriptions',
+		# Will update event, 2 modified events, one user last seen event
+		assert_that(eventtesting.getEvents(), has_length(4))
+		assert_that(eventtesting.getEvents(IObjectModifiedEvent), has_length(2))
+		mod_event = eventtesting.getEvents(IObjectModifiedEvent)[1]
+		assert_that(mod_event, has_property( 'descriptions',
 											  has_item(
 												  all_of(
 													  has_property( 'interface', is_( nti_interfaces.IUser ) ),
