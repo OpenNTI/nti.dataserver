@@ -48,8 +48,8 @@ class SelectedRangeInternalObjectIO(UserContentRootInternalObjectIO):
     Intended to be used as a base class.
     """
 
-    _excluded_in_ivars_ = {'AutoTags'} | UserContentRootInternalObjectIO._excluded_in_ivars_
-    _ext_primitive_out_ivars_ = {'selectedText'} | UserContentRootInternalObjectIO._ext_primitive_out_ivars_
+    _excluded_in_ivars_ = frozenset({'AutoTags'}) | UserContentRootInternalObjectIO._excluded_in_ivars_
+    _ext_primitive_out_ivars_ = frozenset({'selectedText'}) | UserContentRootInternalObjectIO._ext_primitive_out_ivars_
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
         parsed.pop('AutoTags', None)

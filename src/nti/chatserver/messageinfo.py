@@ -43,7 +43,7 @@ from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.externalization import to_external_object
 
-from nti.externalization.interfaces import IClassObjectFactory 
+from nti.externalization.interfaces import IClassObjectFactory
 
 from nti.externalization.internalization import update_from_external_object
 
@@ -215,10 +215,10 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,
     _ext_iface_upper_bound = IMessageInfo
 
     # NOTE: inReplyTo and 'references' do not really belong here
-    _excluded_out_ivars_ = {
+    _excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | frozenset({
         'MessageId', 'flattenedSharingTargetNames', 'flattenedSharingTargets',
         'sharingTargets', 'inReplyTo', 'references'
-    } | InterfaceObjectIO._excluded_out_ivars_
+    })
 
     def __init__(self, context):
         super(MessageInfoInternalObjectIO, self).__init__(context)
@@ -260,7 +260,7 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,
 
 @interface.implementer(IClassObjectFactory)
 class MessageInfoFactory(object):
-    
+
     description = title = "MessageInfo factory"
 
     def __init__(self, *args):
