@@ -42,7 +42,7 @@ class Highlight(SelectedRange):
 @component.adapter(IHighlight)
 class HighlightInternalObjectIO(SelectedRangeInternalObjectIO):
 
-    _ext_primitive_out_ivars_ = {'style'} | SelectedRangeInternalObjectIO._ext_primitive_out_ivars_
+    _ext_primitive_out_ivars_ = frozenset({'style'}) | SelectedRangeInternalObjectIO._ext_primitive_out_ivars_
 
     def updateFromExternalObject(self, ext_parsed, *args, **kwargs):
         # Merge any incoming presentation properties with what we have;

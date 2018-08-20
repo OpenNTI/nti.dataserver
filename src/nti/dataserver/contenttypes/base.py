@@ -118,8 +118,8 @@ class UserContentRootInternalObjectIOMixin(object):
     validate_after_update = True
 
     # NOTE: inReplyTo and 'references' do not really belong here
-    _excluded_out_ivars_ = {'flattenedSharingTargetNames', 'flattenedSharingTargets',
-                            'sharingTargets', 'inReplyTo', 'references'} | InterfaceObjectIO._excluded_out_ivars_
+    _excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | \
+        frozenset({'flattenedSharingTargetNames', 'flattenedSharingTargets', 'sharingTargets', 'inReplyTo', 'references'})
 
     context = alias('_ext_self')
     _orig_sharingTargets = None  # a cache for holding the targets before we update them
