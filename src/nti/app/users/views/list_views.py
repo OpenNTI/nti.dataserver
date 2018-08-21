@@ -15,6 +15,8 @@ from pyramid.view import view_defaults
 
 from requests.structures import CaseInsensitiveDict
 
+from six.moves.urllib_parse import unquote
+
 from zope import component
 
 from zope.cachedescriptors.property import Lazy
@@ -51,6 +53,9 @@ from nti.dataserver.users.index import IX_REALNAME
 from nti.dataserver.users.index import IX_DISPLAYNAME
 from nti.dataserver.users.index import IX_LASTSEEN_TIME
 from nti.dataserver.users.index import get_entity_catalog
+
+from nti.dataserver.users.interfaces import IFriendlyNamed
+
 from nti.dataserver.users.utils import intids_of_users_by_site
 
 from nti.externalization.externalization import to_external_object
@@ -107,6 +112,12 @@ class SiteUsersView(AbstractAuthenticatedView,
         sort = self.params.get('sortOn')
         return sort if sort in self._ALLOWED_SORTING else None
 
+    @Lazy
+    def searchTerm(self):
+        # pylint: disable=no-member
+        result = self.params.get('searchTerm')
+        return unquote(result).lower() if result else None
+
     @property
     def sortOrder(self):
         # pylint: disable=no-member
@@ -147,12 +158,28 @@ class SiteUsersView(AbstractAuthenticatedView,
 
     def get_sorted_user_intids(self, site):
         doc_ids = self.get_user_intids(site)
-        # pylint: disable=unsupported-membership-test
+        # pylint: disable=unsupported-membership-test,no-member
         if self.sortOn and self.sortOn in self.sortMap:
             catalog = self.sortMap.get(self.sortOn)
             reverse = self.sortOrder == 'descending'
             doc_ids = catalog[self.sortOn].sort(doc_ids, reverse=reverse)
         return doc_ids
+
+    def search_prefix_match(self, compare, search_term):
+        compare = compare.lower()
+        for k in compare.split():
+            if k.startswith(search_term):
+                return True
+        return compare.startswith(search_term)
+
+    def search_include(self, user):
+        result = not self.filterAdmins or not is_site_admin(user)
+        if result and self.searchTerm:
+            names = IFriendlyNamed(user, None)
+            result = names is not None \
+                 and (self.search_prefix_match(names.realname or '', self.searchTerm)
+                      or self.search_prefix_match(names.alias or '', self.searchTerm))
+        return result
 
     def get_users(self, site):
         doc_ids = self.get_sorted_user_intids(site)
@@ -162,7 +189,7 @@ class SiteUsersView(AbstractAuthenticatedView,
             user = intids.queryObject(intid)
             if not IUser.providedBy(user):
                 continue
-            if not self.filterAdmins or not is_site_admin(user):
+            if self.search_include(user):
                 items.append(user)
         return items
 
