@@ -125,6 +125,7 @@ from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import IInternalObjectExternalizer
 
 from nti.property.property import alias
 
@@ -339,6 +340,7 @@ def _zope_everyone_group_factory(_):
 system_user.toExternalObject = \
     staticmethod(lambda *unused_args, **unusedkwargs: {'Class': 'SystemUser',
                                                        'Username': SYSTEM_USER_NAME})
+interface.directlyProvides(system_user, IInternalObjectExternalizer)
 
 
 @interface.implementer(IGroup)
