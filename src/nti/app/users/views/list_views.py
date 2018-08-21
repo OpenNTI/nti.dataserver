@@ -166,7 +166,7 @@ class SiteUsersView(AbstractAuthenticatedView,
         return doc_ids
 
     def search_prefix_match(self, compare, search_term):
-        compare = compare.lower()
+        compare = compare.lower() if compare else ''
         for k in compare.split():
             if k.startswith(search_term):
                 return True
@@ -175,10 +175,12 @@ class SiteUsersView(AbstractAuthenticatedView,
     def search_include(self, user):
         result = not self.filterAdmins or not is_site_admin(user)
         if result and self.searchTerm:
+            op = self.search_prefix_match
             names = IFriendlyNamed(user, None)
-            result = names is not None \
-                 and (self.search_prefix_match(names.realname or '', self.searchTerm)
-                      or self.search_prefix_match(names.alias or '', self.searchTerm))
+            result = (op(user.username, self.searchTerm)) \
+                  or (names is not None 
+                      and (op(names.realname, self.searchTerm)
+                           or op(names.alias, self.searchTerm)))
         return result
 
     def get_users(self, site):
