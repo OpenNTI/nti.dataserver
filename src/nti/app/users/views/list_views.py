@@ -53,6 +53,9 @@ from nti.dataserver.users.index import IX_REALNAME
 from nti.dataserver.users.index import IX_DISPLAYNAME
 from nti.dataserver.users.index import IX_LASTSEEN_TIME
 from nti.dataserver.users.index import get_entity_catalog
+
+from nti.dataserver.users.interfaces import IFriendlyNamed
+
 from nti.dataserver.users.utils import intids_of_users_by_site
 
 from nti.externalization.externalization import to_external_object
@@ -61,7 +64,6 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.site.site import get_component_hierarchy_names
-from nti.dataserver.users.interfaces import IFriendlyNamed
 
 TOTAL = StandardExternalFields.TOTAL
 ITEMS = StandardExternalFields.ITEMS
