@@ -340,7 +340,7 @@ def _zope_everyone_group_factory(_):
 system_user.toExternalObject = \
     staticmethod(lambda *unused_args, **unusedkwargs: {'Class': 'SystemUser',
                                                        'Username': SYSTEM_USER_NAME})
-interface.directlyProvides(system_user, IInternalObjectExternalizer)
+interface.alsoProvides(system_user, IInternalObjectExternalizer)
 
 
 @interface.implementer(IGroup)
