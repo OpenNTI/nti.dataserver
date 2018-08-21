@@ -117,11 +117,18 @@ from nti.dataserver.users.users import FacebookUser
 from nti.dataserver.users.utils import get_users_by_email
 from nti.dataserver.users.utils import force_email_verification
 
+from nti.externalization.datastructures import InterfaceObjectIO
+
 from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.links.links import Link
 
 from nti.mimetype import mimetype
+
+CLASS = StandardExternalFields.CLASS
+MIMETYPE = StandardExternalFields.MIMETYPE
+LINKS = StandardExternalFields.LINKS
 
 #: Link relationship indicating a welcome page
 #: Fetching the href of this link returns either a content page
@@ -391,6 +398,9 @@ class _Pong(dict):
     def __init__(self, lnks):
         dict.__init__(self)
         self.links = lnks
+
+    def toExternalObject(self, **kwargs):
+        return InterfaceObjectIO(self, ILogonPong).toExternalObject(**kwargs)
 
 
 @interface.implementer(IMissingUser)
@@ -676,6 +686,11 @@ class _Handshake(dict):
     def __init__(self, lnks):
         dict.__init__(self)
         self.links = lnks
+
+    def toExternalObject(self, **kwargs):
+        return {CLASS: self.__external_class_name__,
+                MIMETYPE: self.mime_type,
+                LINKS: self.links}
 
 
 def _create_failure_response(request, failure=None, error=None, error_factory=hexc.HTTPUnauthorized):
