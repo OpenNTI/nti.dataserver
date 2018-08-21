@@ -168,8 +168,8 @@ def intids_of_community_members(community, all_members=False):
     intids = component.getUtility(IIntIds)
     hidden = IHiddenMembership(community)
     for doc_id in community.iter_intids_of_possible_members():
-        user = IUser(intids.queryObject(doc_id), None)
-        if user is not None and (all_members or user not in hidden):
+        user = intids.queryObject(doc_id)
+        if IUser.providedBy(user) and (all_members or user not in hidden):
             yield doc_id
 
 
@@ -177,12 +177,13 @@ def get_community_members(community, all_members=False):
     """
     Returns an iterable of valid community members
     """
+    result = []
     intids = component.getUtility(IIntIds)
     for doc_id in intids_of_community_members(community, all_members):
-        user = IUser(intids.queryObject(doc_id), None)
-        if user is not None:
-            yield user
-
+        user = intids.queryObject(doc_id)
+        if IUser.providedBy(user):
+            result.append(user)
+    return result
 
 # properties
 

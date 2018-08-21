@@ -94,5 +94,5 @@ class TestUtils(unittest.TestCase):
         ichigo.record_dynamic_membership(community)
         rukia.record_dynamic_membership(community)
 
-        members = list(get_community_members(community))
+        members = get_community_members(community)
         assert_that(members, has_length(2))
