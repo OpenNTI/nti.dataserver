@@ -73,3 +73,8 @@ class TestListViews(ApplicationLayerTest):
         res = self.testapp.get(url, params, status=200)
         assert_that(res.json_body, has_entry('Total', is_(3)))
         assert_that(res.json_body, has_entry('Items', has_length(3)))
+        
+        params = {"site": 'bleach.org', 'searchTerm': 'ichi'}
+        res = self.testapp.get(url, params, status=200)
+        assert_that(res.json_body, has_entry('Total', is_(1)))
+        assert_that(res.json_body, has_entry('Items', has_length(1)))
