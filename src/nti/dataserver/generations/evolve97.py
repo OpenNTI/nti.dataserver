@@ -76,8 +76,7 @@ def do_evolve(context, generation=generation): # pylint: disable=redefined-outer
                 doc_id = intids.queryId(user)
                 if doc_id is not None:
                     # copy last login time
-                    if not user.lastSeenTime:
-                        user.lastSeenTime = user.lastLoginTime
+                    user.lastSeenTime = user.lastLoginTime
                     # index
                     index.index_doc(doc_id, user)
                     count += 1
