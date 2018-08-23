@@ -275,6 +275,8 @@ class SessionService(object):
         if watch_session:
             self._watching_sessions.add(session_id)
 
+        logger.info('Creating session (%s) (%s)',
+                     session.owner, session.session_id)
         return session
 
     def _get_session(self, session_id):
@@ -343,6 +345,8 @@ class SessionService(object):
         sessions_to_cleanup = []
         for session in sessions:
             if session.creation_time < one_day_ago:
+                logger.info('Cleaning up session (%s) (%s)',
+                            session.owner, session.session_id)
                 self._session_cleanup(session, send_event=False)
                 sessions_to_cleanup.append(session)
 
