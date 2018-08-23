@@ -675,17 +675,16 @@ class _UGDView(AbstractAuthenticatedView,
 			mime_filter = self._MIME_FILTER_FACTORY( exclude_types )
 			return lambda o: not mime_filter(o)
 
-	def _make_complete_predicate( self, operator=Operator.intersection ):
-		"A predicate for all the filtering, excluding security"
+	def _make_complete_predicate(self, operator=Operator.intersection):
+		"""
+		A predicate for all the filtering, excluding security
+		"""
 
-		predicate = self._make_accept_predicate( )  # We build an uber predicate that handles all filtering in one pass through the list
+		# We build an uber predicate that handles all filtering in one pass through the list
+		predicate = self._make_accept_predicate()
 		if predicate is None:
 			# accept takes priority over exclude
 			predicate = self._make_exclude_predicate()
-
-		if self.user:
-			the_filter = get_principal_ugd_filter(self.user)
-			predicate = _combine_predicate(the_filter, predicate, operator=operator)
 
 		filter_names = self._get_filter_names()
 
@@ -696,23 +695,32 @@ class _UGDView(AbstractAuthenticatedView,
 			if isinstance( the_filter, tuple ):
 				the_filter = the_filter[0]( self.request )
 
-			predicate = _combine_predicate( the_filter, predicate, operator=operator )
+			predicate = _combine_predicate(the_filter, predicate, operator=operator)
 
 		shared_with_values = self._get_shared_with()
+		# Now build the predicate we *must* intersect with; we only possibly union
+		# when we want to compare/include different types (above).
+		filter_predicates = None
 		if shared_with_values:
 			def filter_shared_with( x ):
 				x_sharedWith = getattr( x, 'sharedWith', ())
 				for shared_with_value in shared_with_values:
 					if shared_with_value in x_sharedWith:
 						return True
-			predicate = _combine_predicate( filter_shared_with, predicate )
+			filter_predicates = _combine_predicate(filter_shared_with, filter_predicates)
 
 		if self.top_level_context_filters:
-			predicate = _combine_predicate( self._toplevel_context_filter, predicate )
+			filter_predicates = _combine_predicate(self._toplevel_context_filter, filter_predicates)
 
 		if self.transcript_user_filter:
-			predicate = _combine_predicate( self._transcript_user_filter, predicate )
+			filter_predicates = _combine_predicate(self._transcript_user_filter, filter_predicates)
 
+		if self.user:
+			the_filter = get_principal_ugd_filter(self.user)
+			filter_predicates = _combine_predicate(the_filter, filter_predicates)
+
+		# The final predicate (included types AND the filter predicates)
+		predicate = _combine_predicate(filter_predicates, predicate)
 		return predicate
 
 	def _get_sort_key_order(self):
