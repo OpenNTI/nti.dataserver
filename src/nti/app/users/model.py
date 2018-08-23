@@ -12,6 +12,8 @@ import time
 
 from BTrees.OLBTree import OLBTree
 
+import six
+
 from zope import interface
 
 from zope.container.contained import Contained
@@ -30,7 +32,8 @@ class ContextLastSeenContainer(OLBTree, Contained):
     def append(self, item, timestamp=None):
         timestamp = timestamp or time.time()
         ntiid = getattr(item, 'ntiid', item)
-        self[ntiid] = int(timestamp)
+        if ntiid and isinstance(ntiid, six.string_types):
+            self[ntiid] = int(timestamp)
 
     def extend(self, items, timestamp=None):
         timestamp = timestamp or time.time()
