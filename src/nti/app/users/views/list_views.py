@@ -18,6 +18,7 @@ from requests.structures import CaseInsensitiveDict
 from six.moves.urllib_parse import unquote
 
 from zope import component
+from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
@@ -30,6 +31,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
+
+from nti.app.renderers.interfaces import IUncacheableInResponse
 
 from nti.app.users import MessageFactory as _
 
@@ -215,4 +218,5 @@ class SiteUsersView(AbstractAuthenticatedView,
             self._transformer(x) for x in result[ITEMS]
         ]
         result[TOTAL] = len(items)
+        interface.alsoProvides(result, IUncacheableInResponse)
         return result
