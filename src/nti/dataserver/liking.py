@@ -123,17 +123,21 @@ def _likes_object_cache_key(context, username):
 
 
 @_cached(_likes_object_cache_key)
-def likes_object(context, username):
+def likes_object(context, username, safe=False):
     """
     Determine if the `username` likes the `context`.
 
     :param context: An :class:`~.ILikeable` object.
     :param username: The name of the user liking the object. Should not be
             empty.
+    :keyword bool safe: If ``False`` (the default) then this method can raise an
+            exception if it won't ever be possible to rate the given object (because
+            annotations and adapters are not set up). If ``True``, then this method
+            quietly returns ``False`` in that case.
     :return: An object with a boolean value; if the user likes the object, the value
             is True-y.
     """
-    result = _rates_object(context, username, LIKE_CAT_NAME)
+    result = _rates_object(context, username, LIKE_CAT_NAME, safe)
     return result
 
 
@@ -189,7 +193,7 @@ def favorites_object(context, username, safe=False):
     :keyword bool safe: If ``False`` (the default) then this method can raise an
             exception if it won't ever be possible to rate the given object (because
             annotations and adapters are not set up). If ``True``, then this method
-            quetly returns ``False`` in that case.
+            quietly returns ``False`` in that case.
 
     :return: An object with a boolean value; if the user likes the object, the value
             is True-y.
@@ -290,8 +294,8 @@ class _BinaryUserRatings(Contained, Persistent):
 
     @property
     def most_recent(self):
-        """ 
-        We don't track this and don't use it. 
+        """
+        We don't track this and don't use it.
         """
         # But it is a validated part of the interface, so we can't raise
         return None
