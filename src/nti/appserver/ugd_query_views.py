@@ -729,7 +729,8 @@ class _UGDView(AbstractAuthenticatedView,
 			filter_predicates = _combine_predicate(the_filter, filter_predicates)
 
 		# The final predicate (included types AND the filter predicates)
-		predicate = _combine_predicate(filter_predicates, predicate)
+		if filter_predicates is not None:
+			predicate = _combine_predicate(filter_predicates, predicate)
 		return predicate
 
 	def _get_sort_key_order(self):
