@@ -322,10 +322,10 @@ class SessionService(object):
             return None
         return s
 
-    def get_session(self, session_id, cleanup=True, incr_hits=False):
+    def get_session(self, session_id, cleanup=True, incr_hits=True):
         s = self._get_session(session_id)
         s = self._validated_session(s, cleanup=cleanup)
-        if s and incr_hits:
+        if incr_hits and s:
             s.incr_hits()
         return s
 

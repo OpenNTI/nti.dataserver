@@ -129,7 +129,7 @@ class _WSWillUpgradeVeto(object):
 			else:
 				return True
 		# NOTE: Not running this in any site policies.
-		# XXX: If we're not writing, do we need a transaction runner anymore?
+		# This veto does not run in our transaction tween.
 		tx_runner = component.getUtility(IDataserverTransactionRunner)
 		result = tx_runner(test_can_upgrade, retries=3, sleep=0.1)
 		return result
@@ -140,7 +140,10 @@ def _get_session(session_id):
 	"""
 	try:
 		ds = component.getUtility(IDataserver)
-		session = ds.session_manager.get_session(session_id, cleanup=False)
+		# We want to be as lightweight as possible here (no writes).
+		session = ds.session_manager.get_session(session_id,
+												 cleanup=False,
+												 incr_hits=False)
 	except (KeyError, ValueError):
 		logger.warn("Client sent bad value for session (%s); DDoS attempt?", session_id, exc_info=True)
 		raise hexc.HTTPNotFound(_("No session found or illegal session id"))
