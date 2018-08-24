@@ -117,27 +117,33 @@ class _WSWillUpgradeVeto(object):
 		"""
 		If the session exists and is valid, we can upgrade.
 		"""
-		# Pull the session id out of the path. See
-		# URL_CONNECT
+		# Pull the session id out of the path. See URL_CONNECT
 		environ = wswill_upgrade_event.environ
 		sid = environ['PATH_INFO'].split('/')[-1]
-		def test():
+		def test_can_upgrade():
 			try:
-				_get_session(sid)  # TODO: This causes a write to the session. Why?
+				_get_session(sid)
 			except hexc.HTTPNotFound:
 				logger.debug("Not upgrading, no session", exc_info=True)
 				return False
 			else:
 				return True
-		# NOTE: Not running this in any site policies
-		return component.getUtility(IDataserverTransactionRunner)(test, retries=3, sleep=0.1)
+		# NOTE: Not running this in any site policies.
+		# This veto does not run in our transaction tween.
+		tx_runner = component.getUtility(IDataserverTransactionRunner)
+		result = tx_runner(test_can_upgrade, retries=3, sleep=0.1)
+		return result
 
 def _get_session(session_id):
 	"""
 	Returns a valid session to use, or raises HTTPNotFound.
 	"""
 	try:
-		session = component.getUtility(IDataserver).session_manager.get_session(session_id)
+		ds = component.getUtility(IDataserver)
+		# We want to be as lightweight as possible here (no writes).
+		session = ds.session_manager.get_session(session_id,
+												 cleanup=False,
+												 incr_hits=False)
 	except (KeyError, ValueError):
 		logger.warn("Client sent bad value for session (%s); DDoS attempt?", session_id, exc_info=True)
 		raise hexc.HTTPNotFound(_("No session found or illegal session id"))
