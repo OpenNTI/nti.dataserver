@@ -60,7 +60,7 @@ class _AbstractWebSocketOperator(object):
 		raise NotImplementedError()
 
 	def get_session(self):
-		return self.session_service.get_session( self.session_id )
+		return self.session_service.get_session(self.session_id, cleanup=False)
 
 	def __repr__( self ):
 		return '<%s for %s%s>' % (self.__class__.__name__, self.session_id, self.session_owner)
@@ -70,7 +70,7 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 
 	def get_session(self):
 		# See note below, we don't want to be responsible for sessions.
-		return self.session_service.get_session( self.session_id, cleanup=False )
+		return self.session_service.get_session(self.session_id, cleanup=False)
 
 	def _do_send(self):
 		message = self.message
