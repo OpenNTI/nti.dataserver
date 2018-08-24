@@ -332,9 +332,17 @@ def _ifollowandme_predicate_factory( request ):
 def _ifollowdirectly_predicate_factory(request):
 	return _ifollow_predicate_factory(request, expand_nested=False)
 
-def _favorite_predicate_factory( request ):
+def _favorite_predicate_factory(request):
+	# XXX: Is this the userid we want? Don't we request other user UGD?
 	auth_userid = request.authenticated_userid
-	return functools.partial( liking.favorites_object, username=auth_userid, safe=True )
+	return functools.partial(liking.favorites_object, username=auth_userid, safe=True)
+
+
+def _like_predicate_factory(request):
+	# XXX: Is this the userid we want? Don't we request other user UGD?
+	auth_userid = request.authenticated_userid
+	return functools.partial(liking.likes_object, username=auth_userid, safe=True)
+
 
 def _bookmark_predicate_factory( request ):
 	is_bm_p = IBookmark.providedBy
@@ -388,6 +396,7 @@ FILTER_NAMES = {
 	'IFollowDirectly': (_ifollowdirectly_predicate_factory,),
 	'IFollowAndMe': (_ifollowandme_predicate_factory,),
 	'Favorite': (_favorite_predicate_factory,),
+	'Like': (_like_predicate_factory,),
 	'Bookmarks': (_bookmark_predicate_factory,),
 	'OnlyMe': (_only_me_predicate_factory,),
 }
@@ -934,6 +943,11 @@ class _UGDView(AbstractAuthenticatedView,
 
 			* ``Favorite``: it causes only objects that the current user has
 			  :mod:`favorited <nti.appserver.liking_views>` the object to be returned.
+			  (Does not function on the stream views.) Currently, this is not especially
+			  efficient.
+
+			* ``Like``: it causes only objects that the current user has
+			  :mod:`liked <nti.appserver.liking_views>` the object to be returned.
 			  (Does not function on the stream views.) Currently, this is not especially
 			  efficient.
 
