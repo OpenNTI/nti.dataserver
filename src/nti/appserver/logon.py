@@ -696,7 +696,7 @@ class _Handshake(dict):
 def _create_failure_response(request, failure=None, error=None, error_factory=hexc.HTTPUnauthorized):
     return _forgetting(request, 'failure', error_factory,
                        redirect_value=failure, error=error)
-
+create_failure_response = _create_failure_response
 
 def _create_success_response(request, userid=None, success=None):
     """
@@ -724,7 +724,7 @@ def _create_success_response(request, userid=None, success=None):
     userid = userid or request.authenticated_userid
     logon_userid_with_request(userid, request, response)
     return response
-
+create_success_response = _create_success_response
 
 def _query_impersonation_decider(request, username, name=''):
     decider = component.queryAdapter(request, IImpersonationDecider, name)
