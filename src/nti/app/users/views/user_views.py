@@ -34,6 +34,7 @@ from nti.appserver.dataserver_pyramid_views import GenericGetView
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
+from nti.dataserver.authorization import ACT_NTI_ADMIN
 from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.interfaces import IUser
@@ -154,6 +155,39 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
         result = LocatedExternalDict()
         self._batch_items_iterable(result, memberships,
+                                   number_items_needed=self.limit,
+                                   batch_size=self.batch_size,
+                                   batch_start=self.batch_start,
+                                   selector=_selector)
+        return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='communities',
+             request_method='GET',
+             context=IUser,
+             permission=ACT_NTI_ADMIN)
+class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
+
+    _DEFAULT_BATCH_SIZE = 50
+    _DEFAULT_BATCH_START = 0
+
+    def _batch_params(self):
+        # pylint: disable=attribute-defined-outside-init
+        self.batch_size, self.batch_start = self._get_batch_size_start()
+        self.limit = self.batch_start + self.batch_size + 2
+        self.batch_after = None
+        self.batch_before = None
+
+    def __call__(self):
+        self._batch_params()
+        communities = set(self.request.context.dynamic_memberships)
+
+        def _selector(x):
+            return toExternalObject(x, name='summary') if ICommunity.providedBy(x) else None
+
+        result = LocatedExternalDict()
+        self._batch_items_iterable(result, communities,
                                    number_items_needed=self.limit,
                                    batch_size=self.batch_size,
                                    batch_start=self.batch_start,

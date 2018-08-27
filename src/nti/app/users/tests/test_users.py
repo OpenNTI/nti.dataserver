@@ -10,6 +10,7 @@ from __future__ import absolute_import
 
 from hamcrest import raises
 from hamcrest import calling
+from hamcrest import contains_inanyorder
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -26,6 +27,7 @@ from nti.dataserver.users.communities import Community
 from nti.dataserver.users.friends_lists import DynamicFriendsList
 
 from nti.dataserver.users.interfaces import IRecreatableUser
+from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 
 from nti.dataserver.users.users import User
@@ -165,6 +167,52 @@ class TestUsers(ApplicationLayerTest):
                                extra_environ=self._make_extra_environ(user=u"rukia"),
                                status=200)
         assert_that(res.json_body, has_entry('Items', has_length(0)))
+
+    @WithSharedApplicationMockDS(users=(u'test001', u'test002', 'admin001@nextthought.com'), testapp=True, default_authenticate=True)
+    def test_communities(self):
+        path = '/dataserver2/users/test001/@@communities'
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"admin001@nextthought.com"),
+                               status=200)
+        assert_that([x['ID'] for x in res.json_body['Items']], contains_inanyorder('Everyone'))
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            c1 = Community.create_community(username=u'bleach')
+            c2 = Community.create_community(username=u'operation_disallowed')
+
+            for username in (u'test001', u'test002'):
+                user = User.get_user(username)
+                for c in (c1, c2):
+                    user.record_dynamic_membership(c)
+
+            interface.alsoProvides(c2, IDisallowMembershipOperations)
+
+        self.testapp.get(path,
+                         extra_environ=self._make_extra_environ(user=u"test002"),
+                         status=403)
+
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"test001"),
+                               status=200)
+
+        assert_that([x['ID'] for x in res.json_body['Items']],
+                    contains_inanyorder(u'Everyone', u'bleach', u'operation_disallowed'))
+
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"admin001@nextthought.com"),
+                               status=200)
+
+        assert_that([x['ID'] for x in res.json_body['Items']],
+                    contains_inanyorder(u'Everyone', u'bleach', u'operation_disallowed'))
+
+        # test002
+        path = '/dataserver2/users/test002/@@communities'
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"test002"),
+                               status=200)
+
+        assert_that([x['ID'] for x in res.json_body['Items']],
+                    contains_inanyorder(u'Everyone', u'bleach', u'operation_disallowed'))
 
 class TestAvatarViews(ApplicationLayerTest):
 
