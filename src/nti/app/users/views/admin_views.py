@@ -26,6 +26,8 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.component.hooks import getSite
 from zope.component.hooks import site as current_site
 
@@ -77,6 +79,7 @@ from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.index import add_catalog_filters
 
 from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
 
@@ -667,10 +670,39 @@ class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
         self.batch_after = None
         self.batch_before = None
 
+    @Lazy
+    def params(self):
+        return CaseInsensitiveDict(**self.request.params)
+
+    @Lazy
+    def searchTerm(self):
+        # pylint: disable=no-member
+        result = self.params.get('searchTerm') or self.params.get('filter')
+        return urllib_parse.unquote(result).lower() if result else None
+
+    def search_prefix_match(self, compare, search_term):
+        compare = compare.lower() if compare else ''
+        for k in compare.split():
+            if k.startswith(search_term):
+                return True
+        return compare.startswith(search_term)
+
+    def search_include(self, comm):
+        result = True
+        if self.searchTerm:
+            op = self.search_prefix_match
+            names = IFriendlyNamed(comm, None)
+            result = (op(comm.username, self.searchTerm)) \
+                  or (names is not None 
+                      and (op(names.realname, self.searchTerm)
+                           or op(names.alias, self.searchTerm)))
+        return result
+
     def __call__(self):
         self._batch_params()
         communities = set(self.request.context.dynamic_memberships)
-        communities = [x for x in communities if ICommunity.providedBy(x)]
+        communities = [x for x in communities 
+                       if ICommunity.providedBy(x) and self.search_include(x)]
 
         result = LocatedExternalDict()
         self._batch_items_iterable(result, communities,
