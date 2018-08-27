@@ -39,6 +39,7 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
 
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.users import MessageFactory as _
@@ -64,6 +65,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
@@ -80,6 +82,8 @@ from nti.dataserver.users.interfaces import EmailAddressInvalid
 from nti.dataserver.users.users import User
 
 from nti.dataserver.users.utils import reindex_email_verification
+
+from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -613,3 +617,36 @@ class UserGrantAccessView(GrantAccessViewMixin):
              request_method='POST')
 class UserRemoveAccessView(RemoveAccessViewMixin):
     pass
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='communities',
+             request_method='GET',
+             context=IUser,
+             permission=nauth.ACT_NTI_ADMIN)
+class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
+
+    _DEFAULT_BATCH_SIZE = 50
+    _DEFAULT_BATCH_START = 0
+
+    def _batch_params(self):
+        # pylint: disable=attribute-defined-outside-init
+        self.batch_size, self.batch_start = self._get_batch_size_start()
+        self.limit = self.batch_start + self.batch_size + 2
+        self.batch_after = None
+        self.batch_before = None
+
+    def __call__(self):
+        self._batch_params()
+        communities = set(self.request.context.dynamic_memberships)
+
+        def _selector(x):
+            return toExternalObject(x, name='summary') if ICommunity.providedBy(x) else None
+
+        result = LocatedExternalDict()
+        self._batch_items_iterable(result, communities,
+                                   number_items_needed=self.limit,
+                                   batch_size=self.batch_size,
+                                   batch_start=self.batch_start,
+                                   selector=_selector)
+        return result

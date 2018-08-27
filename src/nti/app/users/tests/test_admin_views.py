@@ -18,6 +18,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import greater_than
 from hamcrest import has_property
+from hamcrest import contains_inanyorder
 does_not = is_not
 
 import fudge
@@ -43,6 +44,7 @@ from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.index import get_entity_catalog
 
+from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.dataserver.users.users import User
@@ -477,3 +479,49 @@ class TestAdminViews(ApplicationLayerTest):
         fake_user_site.next_call().returns(None)
         self.testapp.post_json(user_update_href)
         self.testapp.post_json(user_update_href)
+
+    @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True, default_authenticate=True)
+    def test_communities(self):
+        path = '/dataserver2/users/test001/@@communities'
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"admin001@nextthought.com"),
+                               status=200)
+        assert_that([x['ID'] for x in res.json_body['Items']], contains_inanyorder('Everyone'))
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            c1 = Community.create_community(username=u'bleach')
+            c2 = Community.create_community(username=u'operation_disallowed')
+
+            for username in (u'test001', u'test002'):
+                user = User.get_user(username)
+                for c in (c1, c2):
+                    user.record_dynamic_membership(c)
+
+            interface.alsoProvides(c2, IDisallowMembershipOperations)
+
+        self.testapp.get(path,
+                         extra_environ=self._make_extra_environ(user=u"test002"),
+                         status=403)
+
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"test001"),
+                               status=200)
+
+        assert_that([x['ID'] for x in res.json_body['Items']],
+                    contains_inanyorder(u'Everyone', u'bleach', u'operation_disallowed'))
+
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"admin001@nextthought.com"),
+                               status=200)
+
+        assert_that([x['ID'] for x in res.json_body['Items']],
+                    contains_inanyorder(u'Everyone', u'bleach', u'operation_disallowed'))
+
+        # test002
+        path = '/dataserver2/users/test002/@@communities'
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"test002"),
+                               status=200)
+
+        assert_that([x['ID'] for x in res.json_body['Items']],
+                    contains_inanyorder(u'Everyone', u'bleach', u'operation_disallowed'))
