@@ -215,7 +215,7 @@ class UGDDeleteView(AbstractAuthenticatedView,
 		if self._do_delete_object(theObject) is None:  # Should fire lifecycleevent.removed
 			raise hexc.HTTPNotFound()
 
-		# TS thinks this log message should be info not debug.  
+		# TS thinks this log message should be info not debug.
 		# It exists to provide statistics not to debug.
 		logger.info("User '%s' deleted object '%s'/'%s' from container '%s'",
 					getattr(theObject, 'creator', None),
@@ -279,7 +279,7 @@ class UGDPutView(AbstractAuthenticatedView,
 		# subpath, view names, or query params, that was unconsumed.
 		# Now experementing with using dataserver's IModeledContent which is actually correct)
 		containerId = getattr(theObject, 'containerId', None)
-		objectId = getattr(theObject, 'id', None) or str(theObject)
+		objectId = getattr(theObject, 'id', None) or getattr(theObject, 'ntiid', None)
 
 		self.updateContentObject(theObject, externalValue)  # Should fire lifecycleevent.modified
 
