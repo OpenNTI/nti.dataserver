@@ -123,8 +123,8 @@ def get_users_by_email(email):
         intids = component.getUtility(IIntIds)
         doc_ids = catalog[IX_EMAIL].apply((email, email))
         for uid in doc_ids or ():
-            user = IUser(intids.queryObject(uid), None)
-            if user is not None:
+            user = intids.queryObject(uid)
+            if IUser.providedBy(user):
                 result.append(user)
     return result
 
@@ -144,8 +144,8 @@ def get_users_by_sites(sites=()):
     result = []
     intids = component.getUtility(IIntIds)
     for uid in intids_of_users_by_sites(sites) or ():
-        user = IUser(intids.queryObject(uid), None)
-        if user is not None:
+        user = intids.queryObject(uid)
+        if IUser.providedBy(user):
             result.append(user)
     return result
 
@@ -184,6 +184,7 @@ def get_community_members(community, all_members=False):
         if IUser.providedBy(user):
             result.append(user)
     return result
+
 
 # properties
 

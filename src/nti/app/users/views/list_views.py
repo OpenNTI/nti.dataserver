@@ -36,6 +36,8 @@ from nti.app.renderers.interfaces import IUncacheableInResponse
 
 from nti.app.users import MessageFactory as _
 
+from nti.app.users.utils import intids_of_community_or_site_members
+
 from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
@@ -58,8 +60,6 @@ from nti.dataserver.users.index import IX_LASTSEEN_TIME
 from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
-
-from nti.dataserver.users.utils import intids_of_users_by_site
 
 from nti.externalization.externalization import to_external_object
 
@@ -157,7 +157,7 @@ class SiteUsersView(AbstractAuthenticatedView,
         }
 
     def get_user_intids(self, site):
-        return intids_of_users_by_site(site)
+        return intids_of_community_or_site_members(True, site)
 
     def get_sorted_user_intids(self, site):
         doc_ids = self.get_user_intids(site)

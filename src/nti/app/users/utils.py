@@ -314,14 +314,14 @@ def get_community_from_site():
     return Community.get_community(name) if name else None
 
 
-def intids_of_community_or_site_members():
+def intids_of_community_or_site_members(all_members=False, site=None):
     """
     Returns the intids of the community or site memebers
     """
     community = get_community_from_site()
     if community is not None:
-        return intids_of_community_members(community)
-    return intids_of_users_by_site()
+        return intids_of_community_members(community, all_members)
+    return intids_of_users_by_site(site)
 
 
 def get_community_or_site_members(all_members=False):
