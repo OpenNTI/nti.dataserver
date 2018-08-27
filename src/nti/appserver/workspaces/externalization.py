@@ -204,6 +204,8 @@ class ContainerCollectionDetailExternalizer(object):
                 temp_res.__name__ = item['ID']
                 item['href'] = normal_resource_path(temp_res)
 
+        if 'Items' in ext_collection and 'Total' not in ext_collection:
+            ext_collection['ItemCount'] = ext_collection['Total'] = len(ext_collection['Items'] or ())
         return ext_collection
 
 

@@ -10,6 +10,15 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid.interfaces import IView
+from pyramid.interfaces import IViewClassifier
+
+from pyramid.threadlocal import get_current_request
+
+from requests.structures import CaseInsensitiveDict
+
+from six.moves import urllib_parse
+
 from zope import component
 from zope import interface
 
@@ -29,11 +38,6 @@ from zope.mimetype.interfaces import IContentTypeAware
 from zope.schema.interfaces import IVocabularyFactory
 
 from zope.security.interfaces import IPrincipal
-
-from pyramid.interfaces import IView
-from pyramid.interfaces import IViewClassifier
-
-from pyramid.threadlocal import get_current_request
 
 from nti.app.authentication import get_remote_user
 
@@ -81,6 +85,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.friends_lists import DynamicFriendsList
 
+from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
@@ -149,7 +154,7 @@ def _collections(self, containers):
     each into an ICollection.
     """
     for x in containers or ():
-        # TODO: Verify that only the first part is needed, because
+        # Verify that only the first part is needed, because
         # the site manager hooks are properly installed at runtime.
         # See the test package for info.
         adapt = ICollection(x, None) or component.queryAdapter(x, ICollection)
@@ -170,9 +175,6 @@ class ContainerEnumerationWorkspace(_ContainerWrapper):
     we will use that name as a last resort. This can be overridden.
     """
 
-    def __init__(self, container):
-        super(ContainerEnumerationWorkspace, self).__init__(container)
-
     @property
     def collections(self):
         if hasattr(self._container, "iter_containers"):
@@ -183,9 +185,6 @@ class ContainerEnumerationWorkspace(_ContainerWrapper):
 @interface.implementer(IContainerCollection)
 @component.adapter(IHomogeneousTypeContainer)
 class HomogeneousTypedContainerCollection(_ContainerWrapper):
-
-    def __init__(self, container):
-        super(HomogeneousTypedContainerCollection, self).__init__(container)
 
     @property
     def accepts(self):
@@ -199,8 +198,7 @@ class HomogeneousTypedContainerCollection(_ContainerWrapper):
 class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 
     def __init__(self, user_workspace):
-        super(_AbstractPseudoMembershipContainer,
-              self).__init__(user_workspace)
+        super(_AbstractPseudoMembershipContainer, self).__init__(user_workspace)
         try:
             self._user = user_workspace.user
         except AttributeError:
@@ -278,22 +276,56 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
         return result
 
 
+class NameFilterableMixin(object):
+    
+    @property
+    def params(self):
+        request = get_current_request()
+        return CaseInsensitiveDict(**request.params) if request else {}
+
+    @Lazy
+    def searchTerm(self):
+        # pylint: disable=no-member
+        params = self.params
+        result = params.get('searchTerm') or params.get('filter')
+        return urllib_parse.unquote(result).lower() if result else None
+
+    def search_prefix_match(self, compare, search_term):
+        compare = compare.lower() if compare else ''
+        for k in compare.split():
+            if k.startswith(search_term):
+                return True
+        return compare.startswith(search_term)
+
+    def search_include(self, entity):
+        result = True
+        if self.searchTerm:
+            op = self.search_prefix_match
+            names = IFriendlyNamed(entity, None)
+            result = (op(entity.username, self.searchTerm)) \
+                  or (names is not None 
+                      and (op(names.realname, self.searchTerm)
+                           or op(names.alias, self.searchTerm)))
+        return result
+
+
 @component.adapter(IFriendsListContainer)
 class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
-                                     HomogeneousTypedContainerCollection):
+                                     HomogeneousTypedContainerCollection,
+                                     NameFilterableMixin):
     """
     ..note:: We are correctly not sending back an 'edit' link, but the UI still presents
             them as editable. We are also sending back the correct creator.
     """
 
-    def __init__(self, container):
+    def __init__(self, container):  # pylint: disable=useless-super-delegation 
         super(FriendsListContainerCollection, self).__init__(container)
 
     @property
     def accepts(self):
         # Try to determine if we should be allowed to create
         # this kind of thing or not
-        # TODO: This can probably be generalized up
+        # This can probably be generalized up
         user = None
         user_service = find_interface(self, IUserService)
         if user_service:
@@ -327,11 +359,12 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
         # In alpha, some users have timestamps in FL collection.
         return IFriendsList.providedBy(obj) \
            and not IDynamicSharingTargetFriendsList.providedBy(obj) \
-           and (self.remote_user in obj or self.remote_user == obj.creator)
+           and (self.remote_user in obj or self.remote_user == obj.creator) \
+           and self.search_include(obj)
 
 
 def _is_remote_same_as_authenticated(user, req=None):
-    # XXX This doesn't exactly belong at this layer. Come up with
+    # This doesn't exactly belong at this layer. Come up with
     # a better way to do this switching.
     req = get_current_request() if req is None else req
     if     req is None or req.authenticated_userid is None \
@@ -360,9 +393,10 @@ def _UserDynamicMembershipsCollectionFactory(user):
 
 @component.adapter(IUserWorkspace)
 @interface.implementer(IContainerCollection)
-class DynamicFriendsListContainerCollection(_AbstractPseudoMembershipContainer):
+class DynamicFriendsListContainerCollection(_AbstractPseudoMembershipContainer,
+                                            NameFilterableMixin):
 
-    # TODO Do we need to accept posts here?
+    # Do we need to accept posts here?
     name = u'Groups'
     __name__ = name
 
@@ -377,7 +411,8 @@ class DynamicFriendsListContainerCollection(_AbstractPseudoMembershipContainer):
         collection.
         """
         return IDynamicSharingTargetFriendsList.providedBy(obj) \
-           and (self.remote_user in obj or self.remote_user == obj.creator)
+           and (self.remote_user in obj or self.remote_user == obj.creator) \
+           and self.search_include(obj)
 
 
 @component.adapter(IUser)
@@ -388,7 +423,8 @@ def _UserDynamicFriendsListCollectionFactory(user):
 
 @component.adapter(IUserWorkspace)
 @interface.implementer(IContainerCollection)
-class CommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
+class CommunitiesContainerCollection(_AbstractPseudoMembershipContainer,
+                                     NameFilterableMixin):
 
     name = u'Communities'
     __name__ = name
@@ -404,7 +440,8 @@ class CommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
         """
         return ICommunity.providedBy(obj) \
            and not IDisallowMembershipOperations.providedBy(obj) \
-           and (obj.public or self.remote_user in obj)
+           and (obj.public or self.remote_user in obj) \
+           and self.search_include(obj)
 
 
 @component.adapter(IUser)
@@ -415,14 +452,15 @@ def _UserCommunitiesCollectionFactory(user):
 
 @component.adapter(IUserWorkspace)
 @interface.implementer(IContainerCollection)
-class AllCommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
+class AllCommunitiesContainerCollection(_AbstractPseudoMembershipContainer,
+                                        NameFilterableMixin):
 
     name = u'AllCommunities'
     __name__ = name
 
     @property
     def memberships(self):
-        # TODO Not yet implemented.  Need all visible communities.
+        # Not yet implemented.  Need all visible communities.
         return self._user.dynamic_memberships
 
     def selector(self, obj):
@@ -431,7 +469,8 @@ class AllCommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
         """
         return ICommunity.providedBy(obj) \
            and not IDisallowMembershipOperations.providedBy(obj) \
-           and (obj.public or self.remote_user in obj)
+           and (obj.public or self.remote_user in obj) \
+           and self.search_include(obj)
 
 
 @component.adapter(IUser)
@@ -461,7 +500,7 @@ def _find_named_link_views(parent, provided=None):
 
     Returns a set of names.
     """
-
+    # pylint: disable=no-member,no-value-for-parameter
     request = get_current_request() or MissingRequest()
 
     # Pyramid's request_iface property is a dynamically generated
@@ -551,8 +590,8 @@ class GlobalWorkspace(object):
         # want to live directly beneath the dataserver root globally.
         result = list(_make_named_view_links(self.__parent__))
         for provider in component.subscribers((self._user,), IGlobalWorkspaceLinkProvider):
-            links = provider.links(self)
-            result.extend(links or ())
+            _links = provider.links(self)
+            result.extend(_links or ())
         return result
 
     @property
@@ -608,7 +647,7 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
     @property
     def pages_collection(self):
-        # TODO: Why is this here?
+        # Why is this here?
         for p in self.collections:
             if p.__name__ == 'Pages':
                 return p
@@ -617,8 +656,8 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
     def links(self):
         result = []
         for provider in component.subscribers((self.user,), IUserWorkspaceLinkProvider):
-            links = provider.links(self)
-            result.extend(links or ())
+            _links = provider.links(self)
+            result.extend(_links or ())
         return result
 
     @property
@@ -727,12 +766,12 @@ class UserPagesCollection(Location):
 
     @property
     def links(self):
-        # TODO: These are deprecated here, as the entire pages collection is
+        # These are deprecated here, as the entire pages collection is
         # deprecated. They are moved to the user's workspace
         result = []
         for provider in component.subscribers((self._user,), IUserWorkspaceLinkProvider):
-            links = provider.links(self._workspace)
-            result.extend(links or ())
+            _links = provider.links(self._workspace)
+            result.extend(_links or ())
         return result
 
     def _make_parent(self, ntiid):
@@ -768,6 +807,7 @@ class UserPagesCollection(Location):
             factory = term.value
             implementing = factory.getInterfaces()
             parent = implementing.get('__parent__')
+            # pylint: disable=no-value-for-parameter
             if      parent and getattr(parent, 'constraint', None) \
                 and itc_providedBy(parent.constraint):
                 parent_types = parent.constraint.types
@@ -827,6 +867,7 @@ class Service(object):
     def _is_valid_workspace(self, workspace):
         result = workspace != None
         if result and self._validator != None:
+            # pylint: disable=no-member
             result = self._validator.validate(workspace)
         return result
 
