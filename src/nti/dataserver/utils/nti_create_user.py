@@ -163,6 +163,12 @@ def create_user(args=None):
                             action='store_true',
                             default=False,
                             help="Joinable community")
+    
+    arg_parser.add_argument('--devmode',
+                            dest='devmode',
+                            action='store_true',
+                            default=False,
+                            help="Dev mode")
 
     site_group = arg_parser.add_mutually_exclusive_group()
 
@@ -191,10 +197,12 @@ def create_user(args=None):
     package = 'nti.appserver'
     if not args.site:
         package = 'nti.dataserver'
-
+    config_features = ('devmode',) if args.devmode else ()
+    
     run_with_dataserver(environment_dir=env_dir,
                         xmlconfig_packages=(package,),
                         verbose=args.verbose,
+                        config_features=config_features,
                         function=lambda: _create_user(_type_map[args.type],
                                                       username,
                                                       password,
