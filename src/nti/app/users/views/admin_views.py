@@ -294,8 +294,11 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
 class SetUserCreationSiteView(AbstractAuthenticatedView,
                               ModeledContentUploadRequestUtilsMixin):
 
-    def __call__(self):
-        values = CaseInsensitiveDict(self.readInput())
+    def readInput(self, value=None):
+        values = ModeledContentUploadRequestUtilsMixin.readInput(self, value)
+        return CaseInsensitiveDict(values)
+
+    def get_user(self, values):
         username = values.get('username') or values.get('user')
         if not username:
             raise_json_error(self.request,
@@ -312,6 +315,9 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
                                  'message': _(u'User not found.'),
                              },
                              None)
+        return user
+
+    def get_site(self, values):
         site = values.get('site') or getattr(getSite(), '__name__', None)
         if site != 'dataserver2':
             site = get_host_site(site, True) if site else None
@@ -322,9 +328,33 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
                                      'message': _(u'Invalid site.'),
                                  },
                                  None)
+        return site
 
+    def set_site(self, user, site):
         set_user_creation_site(user, site)
         lifecycleevent.modified(user)
+
+    def __call__(self):
+        values = self.readInput()
+        user = self.get_user(values)
+        site = self.get_site(values)
+        self.set_site(user, site)
+        return hexc.HTTPNoContent()
+
+
+@view_config(name='SetUserCreationSite')
+@view_config(name='set_user_creation_site')
+@view_defaults(route_name='objects.generic.traversal',
+               request_method='POST',
+               context=IUser,
+               renderer='rest',
+               permission=nauth.ACT_NTI_ADMIN)
+class SetCreationSiteView(SetUserCreationSiteView):
+
+    def __call__(self):
+        values = self.readInput()
+        site = self.get_site(values)
+        self.set_site(self.context, site)
         return hexc.HTTPNoContent()
 
 
