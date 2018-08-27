@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
 from hamcrest import is_
 from hamcrest import none
@@ -35,10 +34,16 @@ from nti.app.users import VIEW_RESTRICT_USER_ACCESS
 
 from nti.app.users.utils import get_user_creation_sitename
 
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
 from nti.dataserver.contenttypes.note import Note
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IAccessProvider
+
+from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users.communities import Community
 
@@ -51,17 +56,11 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.users.utils import is_email_verified
 
-from nti.site.hostpolicy import get_all_host_sites
-
-from nti.app.testing.application_webtest import ApplicationLayerTest
-
-from nti.app.testing.decorators import WithSharedApplicationMockDS
-
-from nti.dataserver.tests import mock_dataserver
-
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.ntiids.oids import to_external_ntiid_oid
+
+from nti.site.hostpolicy import get_all_host_sites
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -525,3 +524,9 @@ class TestAdminViews(ApplicationLayerTest):
 
         assert_that([x['ID'] for x in res.json_body['Items']],
                     contains_inanyorder(u'Everyone', u'bleach', u'operation_disallowed'))
+        
+        path = '/dataserver2/users/test002/@@communities?searchTerm=blea'
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"test002"),
+                               status=200)
+        assert_that(res.json_body, has_entry('Items', has_length(1)))
