@@ -640,18 +640,16 @@ class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
     def __call__(self):
         self._batch_params()
         communities = set(self.request.context.dynamic_memberships)
-
-        def _selector(x):
-            return x if ICommunity.providedBy(x) else None
+        communities = [x for x in communities if ICommunity.providedBy(x)]
 
         result = LocatedExternalDict()
         self._batch_items_iterable(result, communities,
                                    number_items_needed=self.limit,
                                    batch_size=self.batch_size,
-                                   batch_start=self.batch_start,
-                                   selector=_selector)
-        # when using a selector only transform what is required
+                                   batch_start=self.batch_start,)
+        # transform what is required
         result[ITEMS] = [
             toExternalObject(x, name='summary') for x in result[ITEMS]
         ]
+        result[TOTAL] = len(communities)
         return result
