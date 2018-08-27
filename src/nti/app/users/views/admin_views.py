@@ -8,8 +8,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import isodate
 from datetime import datetime
+
+import isodate
 
 from pyramid import httpexceptions as hexc
 
@@ -61,12 +62,12 @@ from nti.app.users.views.view_mixins import RemoveAccessViewMixin
 
 from nti.appserver.interfaces import INamedLinkView
 
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
-
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
@@ -641,7 +642,7 @@ class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
         communities = set(self.request.context.dynamic_memberships)
 
         def _selector(x):
-            return toExternalObject(x, name='summary') if ICommunity.providedBy(x) else None
+            return x if ICommunity.providedBy(x) else None
 
         result = LocatedExternalDict()
         self._batch_items_iterable(result, communities,
@@ -649,4 +650,8 @@ class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
                                    batch_size=self.batch_size,
                                    batch_start=self.batch_start,
                                    selector=_selector)
+        # when using a selector only transform what is required
+        result[ITEMS] = [
+            toExternalObject(x, name='summary') for x in result[ITEMS]
+        ]
         return result
