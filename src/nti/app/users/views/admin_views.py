@@ -54,7 +54,8 @@ from nti.app.users import VIEW_USER_UPSERT
 from nti.app.users import VIEW_GRANT_USER_ACCESS
 from nti.app.users import VIEW_RESTRICT_USER_ACCESS
 
-from nti.app.users.utils import set_user_creation_site
+from nti.app.users.utils import get_site_community
+from nti.app.users.utils import set_user_creation_site 
 from nti.app.users.utils import generate_mail_verification_pair
 
 from nti.app.users.views import username_search
@@ -348,15 +349,11 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
         set_user_creation_site(user, site)
         lifecycleevent.modified(user)
 
-    def __call__(self):
-        values = self.readInput()
-        user = self.get_user(values)
-        site = self.get_site(values)
-        self.set_site(user, site)
-        if is_true(self.request.params.get('update_site_community')):
-            policy = component.getUtility(ISitePolicyUserEventListener)
-            community_name = getattr(policy, 'COM_USERNAME')
-            community = Entity.get_entity(community_name)
+    def update_site_community(self, user, values):
+        params = self.request.params
+        value = values.get('update_site_community') or params.get('update_site_community')
+        if is_true(value):
+            community = get_site_community()
             if not ICommunity.providedBy(community):
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
@@ -364,10 +361,13 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
                                      'message': _(u'Unable to locate site community')
                                  },
                                  None)
-            if is_true(self.request.params.get('remove_all_others')):
+
+            # remove from all other site communities
+            value = values.get('remove_all_others') or params.get('remove_all_others')
+            if is_true(value):
                 for membership in set(user.dynamic_memberships):
                     if ISiteCommunity.providedBy(membership) and membership is not community:
-                        logger.info('Removing user %s from community %s' % (user, membership))
+                        logger.info('Removing user %s from community %s', user, membership)
                         user.record_no_longer_dynamic_member(membership)
                         user.stop_following(membership)
 
@@ -376,6 +376,13 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
                 logger.info('Adding user %s to community %s' % (user, community))
                 user.record_dynamic_membership(community)
                 user.follow(community)
+
+    def __call__(self):
+        values = self.readInput()
+        user = self.get_user(values)
+        site = self.get_site(values)
+        self.set_site(user, site)
+        self.update_site_community(user, values)
         return hexc.HTTPNoContent()
 
 
@@ -392,6 +399,7 @@ class SetCreationSiteView(SetUserCreationSiteView):
         values = self.readInput()
         site = self.get_site(values)
         self.set_site(self.context, site)
+        self.update_site_community(self.context, values)
         return hexc.HTTPNoContent()
 
 
