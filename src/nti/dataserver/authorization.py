@@ -125,7 +125,6 @@ from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.externalization.interfaces import IExternalObject
-from nti.externalization.interfaces import IInternalObjectExternalizer
 
 from nti.property.property import alias
 
@@ -334,13 +333,6 @@ def _zope_auth_group_factory(_):
 
 def _zope_everyone_group_factory(_):
     return component.getUtility(IEveryoneGroup)
-
-
-# Let the system user externalize
-system_user.toExternalObject = \
-    staticmethod(lambda *unused_args, **unusedkwargs: {'Class': 'SystemUser',
-                                                       'Username': SYSTEM_USER_NAME})
-interface.alsoProvides(system_user, IInternalObjectExternalizer)
 
 
 @interface.implementer(IGroup)
