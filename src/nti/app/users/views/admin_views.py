@@ -759,6 +759,10 @@ class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
 class AbstractUpdateCommunityView(AbstractAuthenticatedView,
                                   ModeledContentUploadRequestUtilsMixin):
 
+    def readInput(self, value=None):
+        values = ModeledContentUploadRequestUtilsMixin.readInput(self, value)
+        return CaseInsensitiveDict(values)
+
     @Lazy
     def community(self):
         if ICommunity.providedBy(self.context):
@@ -785,7 +789,10 @@ class AbstractUpdateCommunityView(AbstractAuthenticatedView,
         return community
 
     def parse_usernames(self, values):
-        usernames = values.get('user') or values.get('users') or values.get('username') or values.get('usernames')
+        usernames = values.get('user') \
+                 or values.get('users') \
+                 or values.get('username') \
+                 or values.get('usernames')
         if isinstance(usernames, string_types):
             usernames = usernames.split(',')
         if not usernames:
@@ -828,6 +835,7 @@ class DropUserFromCommunity(AbstractUpdateCommunityView):
     """
     def __call__(self):
         for user in self.get_user_objects():
+            # pylint: disable=unsupported-membership-test
             if user not in self.community:
                 continue
             logger.info('Removing user %s from community %s' % (user, self.community))
@@ -848,6 +856,7 @@ class AddUserToCommunity(AbstractUpdateCommunityView):
     """
     def __call__(self):
         for user in self.get_user_objects():
+            # pylint: disable=unsupported-membership-test
             if user in self.community:
                 continue
             logger.info('Adding user %s to community %s' % (user, self.community))
@@ -868,30 +877,52 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
     If query param all is provided then all site users will be updated
     """
 
-    def _reset_users(self, users=None):
-        if not users:
-            users = self.get_user_objects()
+    def readInput(self, value=None):
+        if self.request.body:
+            values = ModeledContentUploadRequestUtilsMixin.readInput(self, value)
+            return CaseInsensitiveDict(values)
+        return dict()
 
+    @Lazy
+    def _input(self):
+        return self.readInput()
+
+    @Lazy
+    def _params(self):
+        params = self.request.params
+        return CaseInsensitiveDict(params)
+    
+    def get_param(self, name):
+        # pylint: disable=no-member
+        return self._input.get(name) or self._params.get(name)
+
+    def _reset_users(self, users=None):
+        users = users or self.get_user_objects()
+
+        remove_all_others = is_true(self.get_param('remove_all_others'))
         for user in users:
-            if is_true(self.request.params.get('remove_all_others')):
+            if remove_all_others:
                 dynamic_memberships = set(user.dynamic_memberships)
                 for membership in dynamic_memberships:
-                    # If a user is in a site community that is not the current site, we will remove them
-                    if ISiteCommunity.providedBy(membership) and membership is not self.community:
-                        logger.info('Removing user %s from community %s' % (user, membership))
+                    # If a user is in a site community that is not the current site, 
+                    # we will remove them
+                    if      ISiteCommunity.providedBy(membership) \
+                        and membership is not self.community:
+                        logger.info('Removing user %s from community %s', user, membership)
                         user.record_no_longer_dynamic_member(membership)
                         user.stop_following(membership)
 
             # Update the user to the current site community if they are not in it
+            # pylint: disable=unsupported-membership-test
             if user not in self.community:
-                logger.info('Adding user %s to community %s' % (user, self.community))
+                logger.info('Adding user %s to community %s', user, self.community)
                 user.record_dynamic_membership(self.community)
                 user.follow(self.community)
 
     def __call__(self):
-        reset_all = self.request.params.get('all')
+        reset_all = self.get_param('all')
         if is_true(reset_all):
-            site = self.request.params.get('site')
+            site = self.get_param('site')
             users = get_users_by_site(site)
             self._reset_users(users)
         else:
