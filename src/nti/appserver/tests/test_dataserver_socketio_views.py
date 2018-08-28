@@ -26,7 +26,7 @@ class TestSocketioViews(ApplicationLayerTest):
 		class S(object):
 			pass
 		class SM(object):
-			def get_session( self, x ):
+			def get_session( self, x, **kwargs ):
 				return self
 			owner = 'foo@bar'
 			socket = S()
@@ -45,7 +45,7 @@ class TestSocketioViews(ApplicationLayerTest):
 		class S(object):
 			pass
 		class SM(object):
-			def get_session( self, x ):
+			def get_session( self, x, **kwargs ):
 				raise ValueError(x)
 			owner = 'foo@bar'
 			socket = S()
