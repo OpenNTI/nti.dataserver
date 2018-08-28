@@ -118,7 +118,8 @@ def unlike_object(context, username):
     return _unrate_object(context, username, LIKE_CAT_NAME)
 
 
-def _likes_object_cache_key(context, username):
+def _likes_object_cache_key(context, username, safe=False):
+    __traceback_info__ = username, safe
     return ranking.generic_cache_key(context, LIKE_CAT_NAME, username)
 
 
