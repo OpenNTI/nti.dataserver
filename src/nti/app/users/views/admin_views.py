@@ -361,15 +361,18 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
                                      'message': _(u'Unable to locate site community')
                                  },
                                  None)
-            for membership in set(user.dynamic_memberships):
-                if ISiteCommunity.providedBy(membership) and membership is not community:
-                    user.record_no_longer_dynamic_member(membership)
-                    user.stop_following(membership)
+            if self.request.params.get('remove_all_others'):
+                for membership in set(user.dynamic_memberships):
+                    if ISiteCommunity.providedBy(membership) and membership is not community:
+                        logger.info('Removing user %s from community %s' % (user, membership))
+                        user.record_no_longer_dynamic_member(membership)
+                        user.stop_following(membership)
 
-                # Update the user to the current site community if they are not in it
-                if user not in community:
-                    user.record_dynamic_membership(community)
-                    user.follow(community)
+            # Update the user to the current site community if they are not in it
+            if user not in community:
+                logger.info('Adding user %s to community %s' % (user, community))
+                user.record_dynamic_membership(community)
+                user.follow(community)
         return hexc.HTTPNoContent()
 
 
@@ -825,6 +828,7 @@ class DropUserFromCommunity(AbstractUpdateCommunityView):
                                      'message': _(u'User %s not a member of this community.' % user)
                                  },
                                  None)
+            logger.info('Removing user %s from community %s' % (user, self.community))
             user.record_no_longer_dynamic_member(self.community)
             user.stop_following(self.community)
         return self.community
@@ -849,6 +853,7 @@ class AddUserToCommunity(AbstractUpdateCommunityView):
                                      'message': _(u'User %s is already a member of this community.' % user)
                                  },
                                  None)
+            logger.info('Adding user %s to community %s' % (user, self.community))
             user.record_dynamic_membership(self.community)
             user.follow(self.community)
         return self.community
@@ -876,15 +881,18 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
             users = self.get_user_objects()
 
         for user in users:
-            dynamic_memberships = set(user.dynamic_memberships)
-            for membership in dynamic_memberships:
-                # If a user is in a site community that is not the current site, we will remove them
-                if ISiteCommunity.providedBy(membership) and membership is not self.community:
-                    user.record_no_longer_dynamic_member(membership)
-                    user.stop_following(membership)
+            if self.request.params('remove_all_others'):
+                dynamic_memberships = set(user.dynamic_memberships)
+                for membership in dynamic_memberships:
+                    # If a user is in a site community that is not the current site, we will remove them
+                    if ISiteCommunity.providedBy(membership) and membership is not self.community:
+                        logger.info('Removing user %s from community %s' % (user, membership))
+                        user.record_no_longer_dynamic_member(membership)
+                        user.stop_following(membership)
 
             # Update the user to the current site community if they are not in it
             if user not in self.community:
+                logger.info('Adding user %s to community %s' % (user, self.community))
                 user.record_dynamic_membership(self.community)
                 user.follow(self.community)
 
