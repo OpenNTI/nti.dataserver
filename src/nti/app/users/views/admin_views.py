@@ -68,6 +68,7 @@ from nti.app.users.views.view_mixins import RemoveAccessViewMixin
 from nti.appserver.interfaces import INamedLinkView
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
 
@@ -93,7 +94,7 @@ from nti.dataserver.users.interfaces import EmailAddressInvalid
 
 from nti.dataserver.users.users import User
 
-from nti.dataserver.users.utils import reindex_email_verification
+from nti.dataserver.users.utils import reindex_email_verification, get_users_by_site
 
 from nti.externalization.externalization import toExternalObject
 
@@ -350,18 +351,18 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
         user = self.get_user(values)
         site = self.get_site(values)
         self.set_site(user, site)
-        if self.request.params.get('update_site_community'):
+        if is_true(self.request.params.get('update_site_community')):
             policy = component.getUtility(ISitePolicyUserEventListener)
-            community_name = policy.get('COM_USERNAME')
+            community_name = getattr(policy, 'COM_USERNAME')
             community = Entity.get_entity(community_name)
-            if not community:
+            if not ICommunity.providedBy(community):
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
                                  {
                                      'message': _(u'Unable to locate site community')
                                  },
                                  None)
-            if self.request.params.get('remove_all_others'):
+            if is_true(self.request.params.get('remove_all_others')):
                 for membership in set(user.dynamic_memberships):
                     if ISiteCommunity.providedBy(membership) and membership is not community:
                         logger.info('Removing user %s from community %s' % (user, membership))
@@ -758,7 +759,7 @@ class AbstractUpdateCommunityView(AbstractAuthenticatedView,
 
         # Lookup the site community from the policy
         policy = component.getUtility(ISitePolicyUserEventListener)
-        community_name = policy.get('COM_USERNAME')
+        community_name = getattr(policy, 'COM_USERNAME')
         if not community_name:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -822,12 +823,7 @@ class DropUserFromCommunity(AbstractUpdateCommunityView):
     def __call__(self):
         for user in self.get_user_objects():
             if user not in self.community:
-                raise_json_error(self.request,
-                                 hexc.HTTPUnprocessableEntity,
-                                 {
-                                     'message': _(u'User %s not a member of this community.' % user)
-                                 },
-                                 None)
+                continue
             logger.info('Removing user %s from community %s' % (user, self.community))
             user.record_no_longer_dynamic_member(self.community)
             user.stop_following(self.community)
@@ -847,12 +843,7 @@ class AddUserToCommunity(AbstractUpdateCommunityView):
     def __call__(self):
         for user in self.get_user_objects():
             if user in self.community:
-                raise_json_error(self.request,
-                                 hexc.HTTPUnprocessableEntity,
-                                 {
-                                     'message': _(u'User %s is already a member of this community.' % user)
-                                 },
-                                 None)
+                continue
             logger.info('Adding user %s to community %s' % (user, self.community))
             user.record_dynamic_membership(self.community)
             user.follow(self.community)
@@ -868,20 +859,15 @@ class AddUserToCommunity(AbstractUpdateCommunityView):
 class ResetSiteCommunity(AbstractUpdateCommunityView):
     """
     Updates a list of usernames site community to the current site
-    This will remove the users from any site community that is not the current site's
     If query param all is provided then all site users will be updated
     """
-
-    def _reset_all_users(self):
-        users = IShardLayout(self.context).users_folder.values()
-        self._reset_users(users)
 
     def _reset_users(self, users=None):
         if not users:
             users = self.get_user_objects()
 
         for user in users:
-            if self.request.params('remove_all_others'):
+            if is_true(self.request.params.get('remove_all_others')):
                 dynamic_memberships = set(user.dynamic_memberships)
                 for membership in dynamic_memberships:
                     # If a user is in a site community that is not the current site, we will remove them
@@ -898,8 +884,10 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
 
     def __call__(self):
         reset_all = self.request.params.get('all')
-        if reset_all:
-            self._reset_all_users()
+        if is_true(reset_all):
+            site = self.request.params.get('site')
+            users = get_users_by_site(site)
+            self._reset_users(users)
         else:
             self._reset_users()
         return self.community
