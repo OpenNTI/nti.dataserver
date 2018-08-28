@@ -55,7 +55,8 @@ from nti.app.users import VIEW_GRANT_USER_ACCESS
 from nti.app.users import VIEW_RESTRICT_USER_ACCESS
 
 from nti.app.users.utils import get_site_community
-from nti.app.users.utils import set_user_creation_site 
+from nti.app.users.utils import set_user_creation_site
+from nti.app.users.utils import get_site_community_name
 from nti.app.users.utils import generate_mail_verification_pair
 
 from nti.app.users.views import username_search
@@ -67,8 +68,6 @@ from nti.app.users.views.view_mixins import GrantAccessViewMixin
 from nti.app.users.views.view_mixins import RemoveAccessViewMixin
 
 from nti.appserver.interfaces import INamedLinkView
-
-from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.common.string import is_true
 
@@ -83,8 +82,6 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
-
-from nti.dataserver.users import Entity
 
 from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.index import add_catalog_filters
@@ -768,8 +765,7 @@ class AbstractUpdateCommunityView(AbstractAuthenticatedView,
             return self.context
 
         # Lookup the site community from the policy
-        policy = component.getUtility(ISitePolicyUserEventListener)
-        community_name = getattr(policy, 'COM_USERNAME')
+        community_name = get_site_community_name()
         if not community_name:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -778,7 +774,7 @@ class AbstractUpdateCommunityView(AbstractAuthenticatedView,
                              },
                              None)
 
-        community = Entity.get_entity(community_name)
+        community = get_site_community()
         if not ICommunity.providedBy(community):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
