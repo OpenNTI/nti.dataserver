@@ -18,6 +18,7 @@ from hamcrest import has_entries
 from hamcrest import greater_than
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
+from hamcrest import is_in
 does_not = is_not
 
 import fudge
@@ -25,6 +26,8 @@ import fudge
 from zope import interface
 from zope import component
 from zope import lifecycleevent
+
+from zope.component import getGlobalSiteManager
 
 from zope.intid.interfaces import IIntIds
 
@@ -38,9 +41,14 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
+from nti.appserver.policies.site_policies import AdultCommunitySitePolicyEventListener
+
 from nti.dataserver.contenttypes.note import Note
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IAccessProvider
 
 from nti.dataserver.tests import mock_dataserver
@@ -190,17 +198,56 @@ class TestAdminViews(ApplicationLayerTest):
             sitename = sites[0].__name__ if sites else 'dataserver2'
 
         self.testapp.post_json('/dataserver2/@@SetUserCreationSite',
-                               {'username': username, 'site':'invalid_site'},
+                               {'username': username, 'site': 'invalid_site'},
                                status=422)
 
         self.testapp.post_json('/dataserver2/@@SetUserCreationSite',
-                               {'username': username, 'site':sitename},
+                               {'username': username, 'site': sitename},
                                status=204)
 
         with mock_dataserver.mock_db_trans(self.ds):
             creation_site = get_user_creation_sitename(username)
             if sitename != 'dataserver2':
                 assert_that(creation_site, is_(sitename))
+
+        gsm = getGlobalSiteManager()
+
+        class TestPolicy(AdultCommunitySitePolicyEventListener):
+            COM_USERNAME = u'site_community_1'
+
+        try:
+            with mock_dataserver.mock_db_trans(self.ds):
+                c1 = Community.create_community(username=u'site_community_1')
+                c2 = Community.create_community(username=u'site_community_2')
+                # To keep our dependencies clean, we explicitly set this
+                # rather than import SiteCommunity from nti.app.site
+                ISiteCommunity.providedBy(c1)
+                ISiteCommunity.providedBy(c2)
+                user = User.get_user(username)
+                user.record_dynamic_membership(c2)
+
+            gsm.registerUtility(TestPolicy, ISitePolicyUserEventListener)
+
+            # Test users are added to site community and not removed from others
+            self.testapp.post_json('/dataserver2/@@SetUserCreationSite?update_site_community=True',
+                                   {'username': 'ichigo'},
+                                   status=204)
+            with mock_dataserver.mock_db_trans(self.ds):
+                user = User.get_user(username)
+                assert_that(user, is_in(c1))
+                assert_that(user, is_in(c2))
+
+            # Test users are added to site community and removed from others
+            self.testapp.post_json('/dataserver2/@@SetUserCreationSite?update_site_community=True&remove_all_others=True',
+                                   {'username': 'ichigo'},
+                                   status=204)
+            with mock_dataserver.mock_db_trans(self.ds):
+                user = User.get_user(username)
+                assert_that(user, is_in(c1))
+                assert_that(user, not is_in(c2))
+
+        finally:
+            gsm.unregisterUtility(TestPolicy, ISitePolicyUserEventListener)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_remove_user(self):
@@ -256,7 +303,6 @@ class TestAdminViews(ApplicationLayerTest):
         assert_that(res.json_body,
                     has_entry('Items',
                               has_entry(username, has_length(0))))
-
 
     def _get_workspace(self, name):
         service_doc = '/dataserver2/service'
@@ -372,8 +418,8 @@ class TestAdminViews(ApplicationLayerTest):
                         u'external_type': u"does_not_exist_type",
                         u'external_id': new_external_id}
         missing_user2 = {u'ntiid': user_ntiid,
-                        u'external_type': new_external_type,
-                        u'external_id': u'does_not_exist_id'}
+                         u'external_type': new_external_type,
+                         u'external_id': u'does_not_exist_id'}
         self.testapp.post_json(grant_access_href, full_data)
         self.testapp.post_json(grant_access_href, invalid_access, status=422)
         self.testapp.post_json(grant_access_href, missing_access, status=404)
@@ -479,7 +525,8 @@ class TestAdminViews(ApplicationLayerTest):
         self.testapp.post_json(user_update_href)
         self.testapp.post_json(user_update_href)
 
-    @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True, default_authenticate=True)
+    @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
+                                 default_authenticate=True)
     def test_communities(self):
         path = '/dataserver2/users/test001/@@communities'
         res = self.testapp.get(path,
@@ -524,9 +571,115 @@ class TestAdminViews(ApplicationLayerTest):
 
         assert_that([x['ID'] for x in res.json_body['Items']],
                     contains_inanyorder(u'Everyone', u'bleach', u'operation_disallowed'))
-        
+
         path = '/dataserver2/users/test002/@@communities?searchTerm=blea'
         res = self.testapp.get(path,
                                extra_environ=self._make_extra_environ(user=u"test002"),
                                status=200)
         assert_that(res.json_body, has_entry('Items', has_length(1)))
+
+    @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
+                                 default_authenticate=True)
+    def test_drop_user_from_community(self):
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            c1 = Community.create_community(username=u'site_community_1')
+            # To keep our dependencies clean, we explicitly set this rather than import SiteCommunity from nti.app.site
+            ISiteCommunity.providedBy(c1)
+            for username in (u'test001', u'test002'):
+                user = User.get_user(username)
+                user.record_dynamic_membership(c1)
+
+        # Test users are removed from community
+        self.testapp.delete_json('/dataserver2/users/site_community_1/@@admin_drop',
+                                 {'usernames': 'test001,test002'},
+                                 extra_environ=self._make_extra_environ(user=u'admin001@nextthought.com'),
+                                 status=200)
+        with mock_dataserver.mock_db_trans(self.ds):
+            for username in (u'test001', u'test002'):
+                user = User.get_user(username)
+                assert_that(user, not is_in(c1))
+
+    @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
+                                 default_authenticate=True)
+    def test_add_user_to_community(self):
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            c1 = Community.create_community(username=u'site_community_1')
+            # To keep our dependencies clean, we explicitly set this rather than import SiteCommunity from nti.app.site
+            ISiteCommunity.providedBy(c1)
+
+        # Test users are removed from community
+        self.testapp.post_json('/dataserver2/users/site_community_1/@@admin_add',
+                               {'usernames': 'test001,test002'},
+                               extra_environ=self._make_extra_environ(user=u'admin001@nextthought.com'),
+                               status=200)
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            for username in (u'test001', u'test002'):
+                user = User.get_user(username)
+                assert_that(user, is_in(c1))
+
+    @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
+                                 default_authenticate=True)
+    def test_reset_site_community(self):
+        gsm = getGlobalSiteManager()
+
+        class TestPolicy(AdultCommunitySitePolicyEventListener):
+            COM_USERNAME = u'site_community_1'
+
+        try:
+            with mock_dataserver.mock_db_trans(self.ds):
+                c1 = Community.create_community(username=u'site_community_1')
+                c2 = Community.create_community(username=u'site_community_2')
+                # To keep our dependencies clean, we explicitly set this
+                # rather than import SiteCommunity from nti.app.site
+                ISiteCommunity.providedBy(c1)
+                ISiteCommunity.providedBy(c2)
+
+                for username in (u'test001', u'test002'):
+                    user = User.get_user(username)
+                    user.record_dynamic_membership(c2)
+
+            gsm.registerUtility(TestPolicy, ISitePolicyUserEventListener)
+
+            # Test users are added to site community and not removed from others
+            self.testapp.post_json('/dataserver2/@@reset_site_community',
+                                   {'usernames': 'test001,test002'},
+                                   extra_environ=self._make_extra_environ(user=u'admin001@nextthought.com'),
+                                   status=200)
+            with mock_dataserver.mock_db_trans(self.ds):
+                for username in (u'test001', u'test002'):
+                    user = User.get_user(username)
+                    assert_that(user, is_in(c1))
+                    assert_that(user, is_in(c2))
+
+            # Test users are removed from others
+            self.testapp.post_json('/dataserver2/@@reset_site_community?remove_all_others=True',
+                                   {'usernames': 'test001,test002'},
+                                   extra_environ=self._make_extra_environ(user=u'admin001@nextthought.com'),
+                                   status=200)
+            with mock_dataserver.mock_db_trans(self.ds):
+                for username in (u'test001', u'test002'):
+                    user = User.get_user(username)
+                    assert_that(user, is_in(c1))
+                    assert_that(user, not is_in(c2))
+
+            with mock_dataserver.mock_db_trans(self.ds):
+                for username in (u'test001', u'test002'):
+                    user = User.get_user(username)
+                    user.record_dynamic_membership(c2)
+                    user.record_no_longer_dynamic_member(c1)
+
+            # Test all site users are updated
+            self.testapp.post_json('/dataserver2/@@reset_site_community?remove_all_others=True&all=True',
+                                   extra_environ=self._make_extra_environ(user=u'admin001@nextthought.com'),
+                                   status=200)
+            with mock_dataserver.mock_db_trans(self.ds):
+                for username in (u'test001', u'test002'):
+                    user = User.get_user(username)
+                    assert_that(user, is_in(c1))
+                    assert_that(user, not is_in(c2))
+
+        finally:
+            gsm.unregisterUtility(TestPolicy, ISitePolicyUserEventListener)

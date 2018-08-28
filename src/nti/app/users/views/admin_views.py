@@ -20,6 +20,9 @@ from pyramid.view import view_defaults
 from requests.structures import CaseInsensitiveDict
 
 import six
+
+from six import string_types
+
 from six.moves import urllib_parse
 
 from zope import component
@@ -64,16 +67,23 @@ from nti.app.users.views.view_mixins import RemoveAccessViewMixin
 
 from nti.appserver.interfaces import INamedLinkView
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
+from nti.common.string import is_true
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
+
+from nti.dataserver.users import Entity
 
 from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.index import add_catalog_filters
@@ -85,6 +95,7 @@ from nti.dataserver.users.interfaces import EmailAddressInvalid
 
 from nti.dataserver.users.users import User
 
+from nti.dataserver.users.utils import get_users_by_site
 from nti.dataserver.users.utils import reindex_email_verification
 
 from nti.externalization.externalization import toExternalObject
@@ -342,6 +353,29 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
         user = self.get_user(values)
         site = self.get_site(values)
         self.set_site(user, site)
+        if is_true(self.request.params.get('update_site_community')):
+            policy = component.getUtility(ISitePolicyUserEventListener)
+            community_name = getattr(policy, 'COM_USERNAME')
+            community = Entity.get_entity(community_name)
+            if not ICommunity.providedBy(community):
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Unable to locate site community')
+                                 },
+                                 None)
+            if is_true(self.request.params.get('remove_all_others')):
+                for membership in set(user.dynamic_memberships):
+                    if ISiteCommunity.providedBy(membership) and membership is not community:
+                        logger.info('Removing user %s from community %s' % (user, membership))
+                        user.record_no_longer_dynamic_member(membership)
+                        user.stop_following(membership)
+
+            # Update the user to the current site community if they are not in it
+            if user not in community:
+                logger.info('Adding user %s to community %s' % (user, community))
+                user.record_dynamic_membership(community)
+                user.follow(community)
         return hexc.HTTPNoContent()
 
 
@@ -715,3 +749,147 @@ class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
         ]
         result[TOTAL] = len(communities)
         return result
+
+
+class AbstractUpdateCommunityView(AbstractAuthenticatedView,
+                                  ModeledContentUploadRequestUtilsMixin):
+
+    @Lazy
+    def community(self):
+        if ICommunity.providedBy(self.context):
+            return self.context
+
+        # Lookup the site community from the policy
+        policy = component.getUtility(ISitePolicyUserEventListener)
+        community_name = getattr(policy, 'COM_USERNAME')
+        if not community_name:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'This site does not have a community username set.')
+                             },
+                             None)
+
+        community = Entity.get_entity(community_name)
+        if not ICommunity.providedBy(community):
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Unable to find community %s.' % community_name)
+                             },
+                             None)
+        return community
+
+    def parse_usernames(self, values):
+        usernames = values.get('user') or values.get('users') or values.get('username') or values.get('usernames')
+        if isinstance(usernames, string_types):
+            usernames = usernames.split(',')
+        if not usernames:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Must specify a username.'),
+                             },
+                             None)
+        return set(usernames)
+
+    def get_user_objects(self, usernames=None):
+        if not usernames:
+            values = self.readInput()
+            usernames = self.parse_usernames(values)
+        users = [self.get_user_object(username) for username in usernames]
+        return users
+
+    def get_user_object(self, username):
+        entity = User.get_user(username)
+        if not IUser.providedBy(entity):
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'User %s not found.' % username),
+                             },
+                             None)
+        return entity
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='admin_drop',
+             renderer='rest',
+             request_method='DELETE',
+             context=ICommunity,
+             permission=nauth.ACT_NTI_ADMIN)
+class DropUserFromCommunity(AbstractUpdateCommunityView):
+    """
+    Removes a list of usernames from the community
+    """
+    def __call__(self):
+        for user in self.get_user_objects():
+            if user not in self.community:
+                continue
+            logger.info('Removing user %s from community %s' % (user, self.community))
+            user.record_no_longer_dynamic_member(self.community)
+            user.stop_following(self.community)
+        return self.community
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='admin_add',
+             renderer='rest',
+             request_method='POST',
+             context=ICommunity,
+             permission=nauth.ACT_NTI_ADMIN)
+class AddUserToCommunity(AbstractUpdateCommunityView):
+    """
+    Adds a list of usernames to the community
+    """
+    def __call__(self):
+        for user in self.get_user_objects():
+            if user in self.community:
+                continue
+            logger.info('Adding user %s to community %s' % (user, self.community))
+            user.record_dynamic_membership(self.community)
+            user.follow(self.community)
+        return self.community
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='reset_site_community',
+             renderer='rest',
+             request_method='POST',
+             context=IDataserverFolder,
+             permission=nauth.ACT_NTI_ADMIN)
+class ResetSiteCommunity(AbstractUpdateCommunityView):
+    """
+    Updates a list of usernames site community to the current site
+    If query param all is provided then all site users will be updated
+    """
+
+    def _reset_users(self, users=None):
+        if not users:
+            users = self.get_user_objects()
+
+        for user in users:
+            if is_true(self.request.params.get('remove_all_others')):
+                dynamic_memberships = set(user.dynamic_memberships)
+                for membership in dynamic_memberships:
+                    # If a user is in a site community that is not the current site, we will remove them
+                    if ISiteCommunity.providedBy(membership) and membership is not self.community:
+                        logger.info('Removing user %s from community %s' % (user, membership))
+                        user.record_no_longer_dynamic_member(membership)
+                        user.stop_following(membership)
+
+            # Update the user to the current site community if they are not in it
+            if user not in self.community:
+                logger.info('Adding user %s to community %s' % (user, self.community))
+                user.record_dynamic_membership(self.community)
+                user.follow(self.community)
+
+    def __call__(self):
+        reset_all = self.request.params.get('all')
+        if is_true(reset_all):
+            site = self.request.params.get('site')
+            users = get_users_by_site(site)
+            self._reset_users(users)
+        else:
+            self._reset_users()
+        return self.community
