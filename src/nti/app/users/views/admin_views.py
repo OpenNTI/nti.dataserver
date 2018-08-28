@@ -350,6 +350,26 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
         user = self.get_user(values)
         site = self.get_site(values)
         self.set_site(user, site)
+        if self.request.params.get('update_site_community'):
+            policy = component.getUtility(ISitePolicyUserEventListener)
+            community_name = policy.get('COM_USERNAME')
+            community = Entity.get_entity(community_name)
+            if not community:
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u'Unable to locate site community')
+                                 },
+                                 None)
+            for membership in set(user.dynamic_memberships):
+                if ISiteCommunity.providedBy(membership) and membership is not community:
+                    user.record_no_longer_dynamic_member(membership)
+                    user.stop_following(membership)
+
+                # Update the user to the current site community if they are not in it
+                if user not in community:
+                    user.record_dynamic_membership(community)
+                    user.follow(community)
         return hexc.HTTPNoContent()
 
 
