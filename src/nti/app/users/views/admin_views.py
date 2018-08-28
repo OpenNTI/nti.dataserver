@@ -748,15 +748,9 @@ class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
 class AbstractUpdateCommunityView(AbstractAuthenticatedView,
                                   ModeledContentUploadRequestUtilsMixin):
 
-    _community = None
-
     @Lazy
     def community(self):
-        if self._community:
-            return self._community
-
         if ICommunity.providedBy(self.context):
-            self._community = self.context
             return self.context
 
         # Lookup the site community from the policy
@@ -771,16 +765,13 @@ class AbstractUpdateCommunityView(AbstractAuthenticatedView,
                              None)
 
         community = Entity.get_entity(community_name)
-        if ICommunity.providedBy(community):
+        if not ICommunity.providedBy(community):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
                                  'message': _(u'Unable to find community %s.' % community_name)
                              },
                              None)
-
-        # Cache this so we don't have to do the full lookup every time
-        self._community = community
         return community
 
     def parse_usernames(self, values):
@@ -794,7 +785,7 @@ class AbstractUpdateCommunityView(AbstractAuthenticatedView,
                                  'message': _(u'Must specify a username.'),
                              },
                              None)
-        return usernames
+        return set(usernames)
 
     def get_user_objects(self, usernames=None):
         if not usernames:
