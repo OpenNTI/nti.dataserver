@@ -18,7 +18,11 @@ from ZODB.POSException import POSError
 from zope import component
 from zope import interface
 
+from nti.coremetadata.interfaces import ISystemUserPrincipal
+
 from nti.dataserver import authorization_acl as auth
+
+from nti.dataserver.interfaces import SYSTEM_USER_NAME
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
@@ -49,6 +53,7 @@ from nti.externalization.externalization import to_standard_external_dictionary
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IInternalObjectExternalizer
 
 from nti.externalization.proxy import removeAllProxies
 
@@ -112,6 +117,17 @@ def _background_url(entity):
     result = _safe_image_url(entity, IBackgroundURL,
                              'backgroundURL', '@@background_view')
     return result
+
+
+@component.adapter(ISystemUserPrincipal)
+@interface.implementer(IInternalObjectExternalizer)
+class _SystemUserExternalObject(object):
+
+    def __init__(self, system_user):
+        self.system_user = system_user
+
+    def toExternalObject(self, **kwargs):
+        return {'Class': 'SystemUser', 'Username': SYSTEM_USER_NAME}
 
 
 @interface.implementer(IExternalObject)

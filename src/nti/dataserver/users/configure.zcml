@@ -40,6 +40,7 @@
 
 	<adapter factory=".users_external._EntityExternalObject" />
 	<adapter factory=".users_external._CommunityExternalObject" />
+	<adapter factory=".users_external._SystemUserExternalObject" />
 	<adapter factory=".users_external._FriendsListExternalObject" />
 	<adapter factory=".users_external._DynamicFriendsListExternalObject" />
 
