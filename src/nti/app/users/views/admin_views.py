@@ -68,6 +68,7 @@ from nti.app.users.views.view_mixins import RemoveAccessViewMixin
 from nti.appserver.interfaces import INamedLinkView
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
 from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
@@ -94,7 +95,8 @@ from nti.dataserver.users.interfaces import EmailAddressInvalid
 
 from nti.dataserver.users.users import User
 
-from nti.dataserver.users.utils import reindex_email_verification, get_users_by_site
+from nti.dataserver.users.utils import get_users_by_site
+from nti.dataserver.users.utils import reindex_email_verification
 
 from nti.externalization.externalization import toExternalObject
 

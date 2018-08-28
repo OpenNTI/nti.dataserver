@@ -47,7 +47,8 @@ from nti.appserver.policies.site_policies import AdultCommunitySitePolicyEventLi
 
 from nti.dataserver.contenttypes.note import Note
 
-from nti.dataserver.interfaces import IUser, ISiteCommunity
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IAccessProvider
 
 from nti.dataserver.tests import mock_dataserver
