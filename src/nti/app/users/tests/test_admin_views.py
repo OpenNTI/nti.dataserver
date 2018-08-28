@@ -9,6 +9,7 @@ from __future__ import absolute_import
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import is_in
 from hamcrest import is_not
 from hamcrest import has_item
 from hamcrest import has_entry
@@ -18,7 +19,6 @@ from hamcrest import has_entries
 from hamcrest import greater_than
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
-from hamcrest import is_in
 does_not = is_not
 
 import fudge

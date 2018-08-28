@@ -54,7 +54,9 @@ from nti.app.users import VIEW_USER_UPSERT
 from nti.app.users import VIEW_GRANT_USER_ACCESS
 from nti.app.users import VIEW_RESTRICT_USER_ACCESS
 
+from nti.app.users.utils import get_site_community
 from nti.app.users.utils import set_user_creation_site
+from nti.app.users.utils import get_site_community_name
 from nti.app.users.utils import generate_mail_verification_pair
 
 from nti.app.users.views import username_search
@@ -66,8 +68,6 @@ from nti.app.users.views.view_mixins import GrantAccessViewMixin
 from nti.app.users.views.view_mixins import RemoveAccessViewMixin
 
 from nti.appserver.interfaces import INamedLinkView
-
-from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.common.string import is_true
 
@@ -82,8 +82,6 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
-
-from nti.dataserver.users import Entity
 
 from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.index import add_catalog_filters
@@ -348,15 +346,11 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
         set_user_creation_site(user, site)
         lifecycleevent.modified(user)
 
-    def __call__(self):
-        values = self.readInput()
-        user = self.get_user(values)
-        site = self.get_site(values)
-        self.set_site(user, site)
-        if is_true(self.request.params.get('update_site_community')):
-            policy = component.getUtility(ISitePolicyUserEventListener)
-            community_name = getattr(policy, 'COM_USERNAME')
-            community = Entity.get_entity(community_name)
+    def update_site_community(self, user, values):
+        params = self.request.params
+        value = values.get('update_site_community') or params.get('update_site_community')
+        if is_true(value):
+            community = get_site_community()
             if not ICommunity.providedBy(community):
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
@@ -364,10 +358,13 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
                                      'message': _(u'Unable to locate site community')
                                  },
                                  None)
-            if is_true(self.request.params.get('remove_all_others')):
+
+            # remove from all other site communities
+            value = values.get('remove_all_others') or params.get('remove_all_others')
+            if is_true(value):
                 for membership in set(user.dynamic_memberships):
                     if ISiteCommunity.providedBy(membership) and membership is not community:
-                        logger.info('Removing user %s from community %s' % (user, membership))
+                        logger.info('Removing user %s from community %s', user, membership)
                         user.record_no_longer_dynamic_member(membership)
                         user.stop_following(membership)
 
@@ -376,6 +373,13 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
                 logger.info('Adding user %s to community %s' % (user, community))
                 user.record_dynamic_membership(community)
                 user.follow(community)
+
+    def __call__(self):
+        values = self.readInput()
+        user = self.get_user(values)
+        site = self.get_site(values)
+        self.set_site(user, site)
+        self.update_site_community(user, values)
         return hexc.HTTPNoContent()
 
 
@@ -392,6 +396,7 @@ class SetCreationSiteView(SetUserCreationSiteView):
         values = self.readInput()
         site = self.get_site(values)
         self.set_site(self.context, site)
+        self.update_site_community(self.context, values)
         return hexc.HTTPNoContent()
 
 
@@ -638,11 +643,11 @@ class LinkUserExternalIdentityView(AbstractUpdateView):
         # pylint: disable=no-member
         if      external_user \
             and external_user != self.context:
-            logger.warn("""Mapping user to existing external identity (%s)
+            logger.warning("""Mapping user to existing external identity (%s)
                            (existing=%s) (external_type=%s) (external_id=%s)""",
-                        self.context.username, external_user.username,
-                        self._external_type,
-                        self._external_id)
+                           self.context.username, external_user.username,
+                           self._external_type,
+                           self._external_id)
             raise_http_error(self.request,
                              _(u"Multiple users mapped to this external identity."),
                              u'DuplicateUserExternalIdentityError')
@@ -754,14 +759,17 @@ class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
 class AbstractUpdateCommunityView(AbstractAuthenticatedView,
                                   ModeledContentUploadRequestUtilsMixin):
 
+    def readInput(self, value=None):
+        values = ModeledContentUploadRequestUtilsMixin.readInput(self, value)
+        return CaseInsensitiveDict(values)
+
     @Lazy
     def community(self):
         if ICommunity.providedBy(self.context):
             return self.context
 
         # Lookup the site community from the policy
-        policy = component.getUtility(ISitePolicyUserEventListener)
-        community_name = getattr(policy, 'COM_USERNAME')
+        community_name = get_site_community_name()
         if not community_name:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -770,7 +778,7 @@ class AbstractUpdateCommunityView(AbstractAuthenticatedView,
                              },
                              None)
 
-        community = Entity.get_entity(community_name)
+        community = get_site_community()
         if not ICommunity.providedBy(community):
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
@@ -781,7 +789,10 @@ class AbstractUpdateCommunityView(AbstractAuthenticatedView,
         return community
 
     def parse_usernames(self, values):
-        usernames = values.get('user') or values.get('users') or values.get('username') or values.get('usernames')
+        usernames = values.get('user') \
+                 or values.get('users') \
+                 or values.get('username') \
+                 or values.get('usernames')
         if isinstance(usernames, string_types):
             usernames = usernames.split(',')
         if not usernames:
@@ -824,6 +835,7 @@ class DropUserFromCommunity(AbstractUpdateCommunityView):
     """
     def __call__(self):
         for user in self.get_user_objects():
+            # pylint: disable=unsupported-membership-test
             if user not in self.community:
                 continue
             logger.info('Removing user %s from community %s' % (user, self.community))
@@ -844,6 +856,7 @@ class AddUserToCommunity(AbstractUpdateCommunityView):
     """
     def __call__(self):
         for user in self.get_user_objects():
+            # pylint: disable=unsupported-membership-test
             if user in self.community:
                 continue
             logger.info('Adding user %s to community %s' % (user, self.community))
@@ -864,30 +877,52 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
     If query param all is provided then all site users will be updated
     """
 
-    def _reset_users(self, users=None):
-        if not users:
-            users = self.get_user_objects()
+    def readInput(self, value=None):
+        if self.request.body:
+            values = ModeledContentUploadRequestUtilsMixin.readInput(self, value)
+            return CaseInsensitiveDict(values)
+        return dict()
 
+    @Lazy
+    def _input(self):
+        return self.readInput()
+
+    @Lazy
+    def _params(self):
+        params = self.request.params
+        return CaseInsensitiveDict(params)
+    
+    def get_param(self, name):
+        # pylint: disable=no-member
+        return self._input.get(name) or self._params.get(name)
+
+    def _reset_users(self, users=None):
+        users = users or self.get_user_objects()
+
+        remove_all_others = is_true(self.get_param('remove_all_others'))
         for user in users:
-            if is_true(self.request.params.get('remove_all_others')):
+            if remove_all_others:
                 dynamic_memberships = set(user.dynamic_memberships)
                 for membership in dynamic_memberships:
-                    # If a user is in a site community that is not the current site, we will remove them
-                    if ISiteCommunity.providedBy(membership) and membership is not self.community:
-                        logger.info('Removing user %s from community %s' % (user, membership))
+                    # If a user is in a site community that is not the current site, 
+                    # we will remove them
+                    if      ISiteCommunity.providedBy(membership) \
+                        and membership is not self.community:
+                        logger.info('Removing user %s from community %s', user, membership)
                         user.record_no_longer_dynamic_member(membership)
                         user.stop_following(membership)
 
             # Update the user to the current site community if they are not in it
+            # pylint: disable=unsupported-membership-test
             if user not in self.community:
-                logger.info('Adding user %s to community %s' % (user, self.community))
+                logger.info('Adding user %s to community %s', user, self.community)
                 user.record_dynamic_membership(self.community)
                 user.follow(self.community)
 
     def __call__(self):
-        reset_all = self.request.params.get('all')
+        reset_all = self.get_param('all')
         if is_true(reset_all):
-            site = self.request.params.get('site')
+            site = self.get_param('site')
             users = get_users_by_site(site)
             self._reset_users(users)
         else:

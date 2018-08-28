@@ -308,10 +308,17 @@ def set_user_creation_site(user, site=None):
     return name
 
 
-def get_community_from_site():
+def get_community_name_from_site():
     policy = component.getUtility(ISitePolicyUserEventListener)
     name =  getattr(policy, 'COM_USERNAME', None)
+    return name
+get_site_community_name = get_community_name_from_site
+
+
+def get_community_from_site():
+    name =  get_community_name_from_site()
     return Community.get_community(name) if name else None
+get_site_community = get_community_from_site
 
 
 def intids_of_community_or_site_members(all_members=False, site=None):
