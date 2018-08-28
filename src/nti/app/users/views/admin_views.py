@@ -643,11 +643,11 @@ class LinkUserExternalIdentityView(AbstractUpdateView):
         # pylint: disable=no-member
         if      external_user \
             and external_user != self.context:
-            logger.warn("""Mapping user to existing external identity (%s)
+            logger.warning("""Mapping user to existing external identity (%s)
                            (existing=%s) (external_type=%s) (external_id=%s)""",
-                        self.context.username, external_user.username,
-                        self._external_type,
-                        self._external_id)
+                           self.context.username, external_user.username,
+                           self._external_type,
+                           self._external_id)
             raise_http_error(self.request,
                              _(u"Multiple users mapped to this external identity."),
                              u'DuplicateUserExternalIdentityError')
