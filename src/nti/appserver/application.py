@@ -168,10 +168,11 @@ def _webapp_resource_views(pyramid_config, settings):
 	pyramid_config.scan('nti.appserver.policies.site_policy_views')
 
 def _socketio_views(pyramid_config):
-	pyramid_config.add_route(name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE)
-	pyramid_config.add_route(name=dataserver_socketio_views.RT_CONNECT, pattern=dataserver_socketio_views.URL_CONNECT)
-	pyramid_config.scan(dataserver_socketio_views)
-	pyramid_config.add_static_view(SOCKET_IO_PATH + '/static/', 'nti.socketio:static/')
+	pass
+# 	pyramid_config.add_route(name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE)
+# 	pyramid_config.add_route(name=dataserver_socketio_views.RT_CONNECT, pattern=dataserver_socketio_views.URL_CONNECT)
+# 	pyramid_config.scan(dataserver_socketio_views)
+# 	pyramid_config.add_static_view(SOCKET_IO_PATH + '/static/', 'nti.socketio:static/')
 
 def _dictionary_views(pyramid_config, settings):
 	if 'main_dictionary_path' not in settings:
