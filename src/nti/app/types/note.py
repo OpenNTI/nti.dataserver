@@ -4,21 +4,20 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from functools import partial
-
-from zope import component
-from zope import interface
 
 from pyramid.interfaces import IRequest
 from pyramid.interfaces import IExceptionResponse
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
+
+from zope import component
+from zope import interface
 
 from nti.app.authentication import get_remote_user
 
@@ -45,6 +44,8 @@ from nti.externalization.externalization import to_external_object
 from nti.namedfile.constraints import FileConstraints
 
 from nti.namedfile.interfaces import IFileConstraints
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @component.adapter(IRequest, INote)
@@ -74,6 +75,7 @@ def _note_transformer(request, context):
              request_method='PUT')
 class NotePutView(UGDPutView):
 
+    # pylint: disable=arguments-differ,keyword-arg-before-vararg
     def updateContentObject(self, contentObject, externalValue, set_id=False,
                             notify=True, *unused_args, **unused_kwargs):
         result = UGDPutView.updateContentObject(self,

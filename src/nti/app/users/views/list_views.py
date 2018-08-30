@@ -51,7 +51,6 @@ from nti.dataserver.interfaces import IUsersFolder
 from nti.dataserver.interfaces import ISiteAdminUtility
 
 from nti.dataserver.metadata.index import IX_CREATEDTIME
-from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users.index import IX_ALIAS
 from nti.dataserver.users.index import IX_REALNAME
@@ -152,8 +151,6 @@ class SiteUsersView(AbstractAuthenticatedView,
             IX_ALIAS: get_entity_catalog(),
             IX_REALNAME: get_entity_catalog(),
             IX_DISPLAYNAME: get_entity_catalog(),
-            IX_CREATEDTIME: get_metadata_catalog(),
-            IX_LASTSEEN_TIME: get_entity_catalog(),
         }
 
     def get_user_intids(self, site):
@@ -219,7 +216,7 @@ class SiteUsersView(AbstractAuthenticatedView,
             # We sort here by the actual value to correct this.
             reverse = self.sortOrder == 'descending'
             result[ITEMS] = sorted(result[ITEMS],
-                                   key=lambda x: getattr(x, self.sortOn, ''),
+                                   key=lambda x: getattr(x, self.sortOn, 0),
                                    reverse=reverse)
         # transform only the required items
         result[ITEMS] = [
