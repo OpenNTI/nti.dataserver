@@ -181,7 +181,7 @@ class SiteUsersView(AbstractAuthenticatedView,
             op = self.search_prefix_match
             names = IFriendlyNamed(user, None)
             result = (op(user.username, self.searchTerm)) \
-                  or (names is not None 
+                  or (names is not None
                       and (op(names.realname, self.searchTerm)
                            or op(names.alias, self.searchTerm)))
         return result
@@ -213,6 +213,14 @@ class SiteUsersView(AbstractAuthenticatedView,
         items = self.get_users(site)
         result = LocatedExternalDict()
         self._batch_items_iterable(result, items)
+
+        if self.sortOn in (IX_CREATEDTIME, IX_LASTSEEN_TIME):
+            # If we are sorting by time, we are indexed normalized to a minute.
+            # We sort here by the actual value to correct this.
+            reverse = self.sortOrder == 'descending'
+            result[ITEMS] = sorted(result[ITEMS],
+                                   key=lambda x: getattr(x, self.sortOn, ''),
+                                   reverse=reverse)
         # transform only the required items
         result[ITEMS] = [
             self._transformer(x) for x in result[ITEMS]
