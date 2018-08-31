@@ -184,6 +184,7 @@ class TestCommunityViews(ApplicationLayerTest):
             user = User.get_user(self.default_username)
             hidden = IHiddenMembership(community)
             assert_that(user, is_in(hidden))
+            assert_that(list(hidden.iter_intids()), has_length(1))
 
         unhide_path = '/dataserver2/users/bleach/unhide'
         self.testapp.post(unhide_path, status=200)
