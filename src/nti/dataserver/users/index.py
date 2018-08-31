@@ -57,6 +57,8 @@ from nti.dataserver.users.interfaces import IDisplayNameAdapter
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 from nti.dataserver.users.interfaces import IRestrictedUserProfile
 
+from nti.property.property import alias
+
 from nti.zope_catalog.catalog import Catalog
 
 from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
@@ -100,10 +102,16 @@ class AliasIndex(CaseInsensitiveFieldIndex):
     default_field_name = IX_ALIAS
     default_interface = IFriendlyNamed
 
+    documents_to_values = alias('_rev_index')
+    values_to_documents = alias('_fwd_index')
+
 
 class RealnameIndex(CaseInsensitiveFieldIndex):
     default_field_name = IX_REALNAME
     default_interface = IFriendlyNamed
+
+    documents_to_values = alias('_rev_index')
+    values_to_documents = alias('_fwd_index')
 
 
 class RealnamePartsIndex(CaseInsensitiveKeywordIndex):
@@ -119,15 +127,24 @@ class DisplaynameIndex(CaseInsensitiveFieldIndex):
     default_field_name = IX_DISPLAYNAME
     default_interface = IDisplayNameAdapter
 
+    documents_to_values = alias('_rev_index')
+    values_to_documents = alias('_fwd_index')
+
 
 class EmailIndex(CaseInsensitiveFieldIndex):
     default_field_name = IX_EMAIL
     default_interface = IUserProfile
 
+    documents_to_values = alias('_rev_index')
+    values_to_documents = alias('_fwd_index')
+
 
 class ContactEmailIndex(CaseInsensitiveFieldIndex):
     default_field_name = IX_CONTACT_EMAIL
     default_interface = IUserProfile
+
+    documents_to_values = alias('_rev_index')
+    values_to_documents = alias('_fwd_index')
 
 
 class PasswordRecoveryEmailHashIndex(FieldIndex):

@@ -126,7 +126,7 @@ class SiteUsersView(AbstractAuthenticatedView,
         # pylint: disable=no-member
         return self.params.get('sortOrder', 'ascending')
 
-    @property
+    @Lazy
     def filterAdmins(self):
         # pylint: disable=no-member
         return is_true(self.params.get('filterAdmins', 'False'))
