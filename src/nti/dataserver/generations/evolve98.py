@@ -17,15 +17,14 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location.location import locate
 
-from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
 
-from nti.dataserver.users.index import IX_LASTSEEN_TIME
-from nti.dataserver.users.index import LastSeenTimeIndex
+from nti.dataserver.users.index import IX_USERNAME
+from nti.dataserver.users.index import UsernameIndex
 from nti.dataserver.users.index import install_entity_catalog
 
-generation = 97
+generation = 98
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -57,28 +56,23 @@ def do_evolve(context, generation=generation): # pylint: disable=redefined-outer
     count = 0
     with current_site(ds_folder):
         assert component.getSiteManager() == ds_folder.getSiteManager(), \
-                "Hooks not installed?"
+               "Hooks not installed?"
 
         lsm = ds_folder.getSiteManager()
         intids = lsm.getUtility(IIntIds)
 
         catalog = install_entity_catalog(ds_folder, intids)
-        if IX_LASTSEEN_TIME not in catalog:
-            index = LastSeenTimeIndex(family=intids.family)
+        if IX_USERNAME not in catalog:
+            index = UsernameIndex(family=intids.family)
             intids.register(index)
-            locate(index, catalog, IX_LASTSEEN_TIME)
-            catalog[IX_LASTSEEN_TIME] = index
+            locate(index, catalog, IX_USERNAME)
+            catalog[IX_USERNAME] = index
 
             users = ds_folder['users']
-            for user in users.values():
-                if not IUser.providedBy(user):
-                    continue
-                doc_id = intids.queryId(user)
+            for entity in users.values():
+                doc_id = intids.queryId(entity)
                 if doc_id is not None:
-                    # copy last login time
-                    user.lastSeenTime = user.lastLoginTime
-                    # index
-                    index.index_doc(doc_id, user)
+                    index.index_doc(doc_id, entity)
                     count += 1
 
     component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
@@ -87,6 +81,6 @@ def do_evolve(context, generation=generation): # pylint: disable=redefined-outer
 
 def evolve(context):
     """
-    Evolve to generation 97 by adding the "lastSeenTime" index
+    Evolve to generation 98 by adding the "username" index
     """
     do_evolve(context, generation)

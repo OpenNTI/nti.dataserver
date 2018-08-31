@@ -39,7 +39,8 @@ class TestEntityIndex(DataserverLayerTest):
         catalog.index_doc(1, user)
         catalog.index_doc(2, community)
 
-        for name, query in ( ('alias', 'Ichigo'), 
+        for name, query in ( ('alias', 'Ichigo'),
+                             ('username', 'ichigo@bleach.org'), 
                              ('realname', 'Ichigo Kurosaki'),
                              ('email', 'ichigo@bleach.org'),
                              ('mimeType', 'application/vnd.nextthought.user')):
