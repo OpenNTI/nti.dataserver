@@ -168,14 +168,16 @@ def intids_of_community_members(community, all_members=False):
     """
     Returns an iterable of valid intids for community members
     """
-    intids = component.getUtility(IIntIds)
+    hidden_ids = None
     hidden = IHiddenMembership(community)
     for doc_id in community.iter_intids_of_possible_members():
         if all_members:
             yield doc_id
         else:
-            user = intids.queryObject(doc_id)
-            if IUser.providedBy(user) and user not in hidden:
+            if hidden_ids is None:
+                # pylint: disable=too-many-function-args
+                hidden_ids = set(hidden.iter_intids())
+            if doc_id not in hidden_ids:
                 yield doc_id
 
 
