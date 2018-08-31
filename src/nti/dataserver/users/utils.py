@@ -20,7 +20,9 @@ from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users.index import IX_SITE
 from nti.dataserver.users.index import IX_EMAIL
+from nti.dataserver.users.index import IX_ALIAS
 from nti.dataserver.users.index import IX_TOPICS
+from nti.dataserver.users.index import IX_REALNAME
 from nti.dataserver.users.index import IX_EMAIL_VERIFIED
 
 from nti.dataserver.users.index import get_entity_catalog
@@ -187,6 +189,16 @@ def get_community_members(community, all_members=False):
         if IUser.providedBy(user):
             result.append(user)
     return result
+
+
+def get_entity_realname_from_index(doc_id, catalog=None):
+    catalog = get_entity_catalog() if catalog is None else catalog
+    return catalog[IX_REALNAME].documents_to_values.get(doc_id)
+
+
+def get_entity_alias_from_index(doc_id, catalog=None):
+    catalog = get_entity_catalog() if catalog is None else catalog
+    return catalog[IX_ALIAS].documents_to_values.get(doc_id)
 
 
 # properties

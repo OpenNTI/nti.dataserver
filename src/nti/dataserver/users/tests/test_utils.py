@@ -13,7 +13,10 @@ from hamcrest import assert_that
 
 import unittest
 
+from zope import component
 from zope import lifecycleevent
+
+from zope.intid.interfaces import IIntIds
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
@@ -31,7 +34,8 @@ from nti.dataserver.users.utils import is_email_verified
 from nti.dataserver.users.utils import get_community_members
 from nti.dataserver.users.utils import force_email_verification
 from nti.dataserver.users.utils import unindex_email_verification
-
+from nti.dataserver.users.utils import get_entity_alias_from_index
+from nti.dataserver.users.utils import get_entity_realname_from_index
 
 class TestUtils(unittest.TestCase):
 
@@ -96,3 +100,26 @@ class TestUtils(unittest.TestCase):
 
         members = get_community_members(community)
         assert_that(members, has_length(2))
+
+    @WithMockDSTrans
+    def test_get_names(self):
+        ichigo = User.create_user(username=u'ichigo@bleach.org',
+                                  external_value={'email': u"ichigo@bleach.org",
+                                                  'realname': u'Ichigo Kurosaki',
+                                                  'alias': u'Ichigo',
+                                                  'email_verified': True})
+
+        User.create_user(username=u'rukia@bleach.org',
+                         external_value={'email': u"rukia@bleach.org",
+                                         'realname': u'Rukia Kuchiki',
+                                         'alias': u'Rukia',
+                                         'email_verified': True})
+        
+        intids = component.getUtility(IIntIds)
+        doc_id = intids.getId(ichigo)
+
+        alias = get_entity_alias_from_index(doc_id)
+        assert_that(alias, is_('ichigo'))
+        
+        name = get_entity_realname_from_index(doc_id)
+        assert_that(name, is_('ichigo kurosaki'))
