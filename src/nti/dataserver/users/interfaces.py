@@ -16,7 +16,6 @@ from __future__ import absolute_import
 # pylint: disable=inherit-non-class,no-self-argument,protected-access
 
 import re
-import time
 import codecs
 import string
 import pkg_resources
@@ -38,6 +37,8 @@ from z3c.password.interfaces import NoPassword
 from z3c.password.interfaces import InvalidPassword
 
 from z3c.schema.email import isValidMailAddress
+
+from nti.coremetadata.interfaces import IIntIdIterable
 
 from nti.coremetadata.schema import ExtendedCompoundModeledContentBody
 
@@ -881,7 +882,7 @@ class IDisallowMembershipOperations(IDisallowMembersLink,
     pass
 
 
-class IHiddenMembership(Interface):
+class IHiddenMembership(IIntIdIterable):
 
     def hide(entity):
         """
