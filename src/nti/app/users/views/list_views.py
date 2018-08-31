@@ -46,7 +46,6 @@ from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
-from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUsersFolder
 from nti.dataserver.interfaces import ISiteAdminUtility
 
@@ -59,7 +58,9 @@ from nti.dataserver.users.index import IX_DISPLAYNAME
 from nti.dataserver.users.index import IX_LASTSEEN_TIME
 from nti.dataserver.users.index import get_entity_catalog
 
-from nti.dataserver.users.interfaces import IFriendlyNamed
+from nti.dataserver.users.utils import get_entity_alias_from_index
+from nti.dataserver.users.utils import get_entity_realname_from_index
+from nti.dataserver.users.utils import get_entity_username_from_index
 
 from nti.externalization.externalization import to_external_object
 
@@ -131,6 +132,10 @@ class SiteUsersView(AbstractAuthenticatedView,
         # pylint: disable=no-member
         return is_true(self.params.get('filterAdmins', 'False'))
 
+    @Lazy
+    def entity_catalog(self):
+        return get_entity_catalog()
+
     def _get_externalizer(self, user):
         # pylint: disable=no-member
         result = 'summary'
@@ -175,28 +180,40 @@ class SiteUsersView(AbstractAuthenticatedView,
                 return True
         return compare.startswith(search_term)
 
-    def search_include(self, user):
-        result = not self.filterAdmins or not is_site_admin(user)
+    def username(self, doc_id):
+        return get_entity_username_from_index(doc_id, self.entity_catalog)
+
+    def realname(self, doc_id):
+        return get_entity_realname_from_index(doc_id, self.entity_catalog)
+    
+    def alias(self, doc_id):
+        return get_entity_alias_from_index(doc_id, self.entity_catalog)
+
+    def search_include(self, username, alias, realname):
+        result = not self.filterAdmins or not is_site_admin(username)
         if result and self.searchTerm:
             op = self.search_prefix_match
-            names = IFriendlyNamed(user, None)
-            result = (op(user.username, self.searchTerm)) \
-                  or (names is not None
-                      and (op(names.realname, self.searchTerm)
-                           or op(names.alias, self.searchTerm)))
+            result = op(username, self.searchTerm) \
+                  or op(realname, self.searchTerm) \
+                  or op(alias, self.searchTerm)
         return result
 
-    def get_users(self, site):
+    def get_users_ids(self, site):
         doc_ids = self.get_sorted_user_intids(site)
         items = []
-        intids = component.getUtility(IIntIds)
-        for intid in doc_ids:
-            user = intids.queryObject(intid)
-            if not IUser.providedBy(user):
+        for doc_id in doc_ids:
+            username = self.username(doc_id)
+            if not username:
                 continue
-            if self.search_include(user):
-                items.append(user)
+            alias = self.alias(doc_id)
+            realname = self.realname(doc_id)
+            if self.search_include(username, alias, realname):
+                items.append(doc_id)
         return items
+
+    def reify(self, doc_ids):
+        intids = component.getUtility(IIntIds)
+        return [intids.getObject(x) for x in doc_ids or ()]
 
     def __call__(self):
         self.check_access()
@@ -210,10 +227,12 @@ class SiteUsersView(AbstractAuthenticatedView,
                              },
                              None)
 
-        items = self.get_users(site)
+        items = self.get_users_ids(site)
         result = LocatedExternalDict()
         self._batch_items_iterable(result, items)
-
+        # reify only the required items
+        result[ITEMS] = self.reify(result[ITEMS])
+        # re/sort for numeric values
         if self.sortOn in (IX_CREATEDTIME, IX_LASTSEEN_TIME):
             # If we are sorting by time, we are indexed normalized to a minute.
             # We sort here by the actual value to correct this.
