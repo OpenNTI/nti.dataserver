@@ -34,6 +34,7 @@ from nti.coremetadata.interfaces import IX_EMAIL
 from nti.coremetadata.interfaces import IX_TOPICS
 from nti.coremetadata.interfaces import IX_MIMETYPE
 from nti.coremetadata.interfaces import IX_REALNAME
+from nti.coremetadata.interfaces import IX_USERNAME
 from nti.coremetadata.interfaces import IX_DISPLAYNAME
 from nti.coremetadata.interfaces import IX_IS_COMMUNITY
 from nti.coremetadata.interfaces import IX_CONTACT_EMAIL
@@ -96,6 +97,14 @@ class ValidatingMimeType(object):
 class MimeTypeIndex(ValueIndex):
     default_field_name = IX_MIMETYPE
     default_interface = ValidatingMimeType
+
+
+class UsernameIndex(CaseInsensitiveFieldIndex):
+    default_field_name = IX_USERNAME
+    default_interface = IEntity
+
+    documents_to_values = alias('_rev_index')
+    values_to_documents = alias('_fwd_index')
 
 
 class AliasIndex(CaseInsensitiveFieldIndex):
@@ -279,6 +288,7 @@ def create_entity_catalog(catalog=None, family=BTrees.family64):
                         (IX_TOPICS, TopicIndex),
                         (IX_MIMETYPE, MimeTypeIndex),
                         (IX_REALNAME, RealnameIndex),
+                        (IX_USERNAME, UsernameIndex),
                         (IX_DISPLAYNAME, DisplaynameIndex),
                         (IX_CONTACT_EMAIL, ContactEmailIndex),
                         (IX_LASTSEEN_TIME, LastSeenTimeIndex),
