@@ -168,9 +168,12 @@ def intids_of_community_members(community, all_members=False):
     intids = component.getUtility(IIntIds)
     hidden = IHiddenMembership(community)
     for doc_id in community.iter_intids_of_possible_members():
-        user = intids.queryObject(doc_id)
-        if IUser.providedBy(user) and (all_members or user not in hidden):
+        if all_members:
             yield doc_id
+        else:
+            user = intids.queryObject(doc_id)
+            if IUser.providedBy(user) and user not in hidden:
+                yield doc_id
 
 
 def get_community_members(community, all_members=False):
