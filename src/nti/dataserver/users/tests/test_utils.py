@@ -8,6 +8,7 @@ from __future__ import absolute_import
 # pylint: disable=protected-access,too-many-public-methods,too-many-function-args
 
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import has_length
 from hamcrest import assert_that
 
@@ -108,12 +109,6 @@ class TestUtils(unittest.TestCase):
                                                   'realname': u'Ichigo Kurosaki',
                                                   'alias': u'Ichigo',
                                                   'email_verified': True})
-
-        User.create_user(username=u'rukia@bleach.org',
-                         external_value={'email': u"rukia@bleach.org",
-                                         'realname': u'Rukia Kuchiki',
-                                         'alias': u'Rukia',
-                                         'email_verified': True})
         
         intids = component.getUtility(IIntIds)
         doc_id = intids.getId(ichigo)
@@ -123,3 +118,6 @@ class TestUtils(unittest.TestCase):
         
         name = get_entity_realname_from_index(doc_id)
         assert_that(name, is_('ichigo kurosaki'))
+
+        name = get_entity_realname_from_index(0)
+        assert_that(name, is_(none()))
