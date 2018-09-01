@@ -43,6 +43,7 @@ from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
@@ -243,18 +244,11 @@ def _replace_username(username):
 class CommunityMembersView(AbstractAuthenticatedView,
                            BatchingUtilsMixin):
 
-    _DEFAULT_BATCH_SIZE = 50
+    _DEFAULT_BATCH_SIZE = 30
     _DEFAULT_BATCH_START = 0
 
     _ALLOWED_SORTING = ('createdTime', )
-
-    def _batch_params(self):
-        # pylint: disable=attribute-defined-outside-init
-        self.batch_size, self.batch_start = self._get_batch_size_start()
-        self.limit = self.batch_start + self.batch_size + 2
-        self.batch_after = None
-        self.batch_before = None
-
+    
     @property
     def sortOn(self):
         sort = self.request.params.get('sortOn')
@@ -293,7 +287,6 @@ class CommunityMembersView(AbstractAuthenticatedView,
         return toExternalObject(x, name=self._get_externalizer(x))
 
     def __call__(self):
-        self._batch_params()
         community = self.request.context
         if      not community.public \
             and self.remoteUser not in community \
@@ -302,35 +295,26 @@ class CommunityMembersView(AbstractAuthenticatedView,
 
         sortOn = self.sortOn
         catalog = get_metadata_catalog()
+        hidden = IHiddenMembership(community)
         members = intids_of_community_members(community)
         if sortOn and sortOn in catalog:
             reverse = self.sortOrder == 'descending'
             members = catalog[sortOn].sort(members, reverse=reverse)
 
-        # resolve all members
-        intids_utility = component.getUtility(IIntIds)
-        def resolved(doc_ids):
-            seen = False
-            for doc_id in doc_ids:
-                user = intids_utility.getObject(doc_id)
-                seen = seen or user == self.remoteUser
-                yield user
-            # check the case the remote user is hidden
-            # and in the community
-            if not seen and self.remoteUser in community:
-                yield self.remoteUser
-        members = resolved(members)
-
         result = LocatedExternalDict()
-        result[TOTAL] = self.request.context.number_of_members()
-        self._batch_items_iterable(result, members,
-                                   number_items_needed=self.limit,
-                                   batch_size=self.batch_size,
-                                   batch_start=self.batch_start)
-        # transform only the required items
+        self._batch_items_iterable(result, members)
+        # reify only the required items
+        intids = component.getUtility(IIntIds)
+        result[ITEMS] = (
+            intids.queryObject(x) for x in result[ITEMS]
+        )
+        # transform and set totals
         result[ITEMS] = [
-            self._transformer(x) for x in result[ITEMS]
+            self._transformer(x) for x in result[ITEMS] if IUser.providedBy(x)
         ]
+        result[ITEM_COUNT] = len(result[ITEMS])
+        # pylint: disable=too-many-function-args
+        result[TOTAL] = community.number_of_members() - hidden.number_of_members()
         return result
 
 
