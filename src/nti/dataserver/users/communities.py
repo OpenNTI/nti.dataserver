@@ -289,6 +289,9 @@ class HiddenMembership(OOBTree.OOTreeSet): # pylint: disable=undefined-variable,
         for wref in self:
             yield wref.username
 
+    def number_of_members(self):
+        return len(self)
+
     def __contains__(self, x):
         try:
             return super(HiddenMembership, self).__contains__(IWeakRef(x, None))

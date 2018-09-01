@@ -894,6 +894,11 @@ class IHiddenMembership(IIntIdIterable):
         unhide the memebership for the specified entity
         """
 
+    def number_of_members():
+        """
+        Return the number of members in this object
+        """
+
     def __contains__(entity):
         """
         check if membership of the specifed entity is hidden
