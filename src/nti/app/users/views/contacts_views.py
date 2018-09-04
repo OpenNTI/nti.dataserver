@@ -199,8 +199,9 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
             result_list = []
             result_list.extend(limited_contacts)
             result_list.extend(fill_in_contacts)
-            results[ITEMS] = [toExternalObject(
-                x, name="summary") for x in result_list]
+            results[ITEMS] = [
+                toExternalObject(x, name="summary") for x in result_list
+            ]
             results[TOTAL] = results[ITEM_COUNT] = len(result_list)
         return results
 
