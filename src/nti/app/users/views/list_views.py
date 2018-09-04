@@ -120,6 +120,6 @@ class SiteUsersView(AbstractEntityViewMixin):
                              },
                              None)
 
-        result = self.do_call(site)
+        result = self._do_call(site)
         interface.alsoProvides(result, IUncacheableInResponse)
         return result

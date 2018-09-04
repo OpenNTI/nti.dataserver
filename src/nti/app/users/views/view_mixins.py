@@ -646,7 +646,7 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
                 result.append(obj)
         return result
 
-    def do_call(self, site=None):
+    def _do_call(self, site=None):
         result = LocatedExternalDict()
         items = self.resolve_entity_ids(site)
         self._batch_items_iterable(result, items)

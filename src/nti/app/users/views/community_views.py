@@ -108,7 +108,7 @@ class ListCommunitiesView(AbstractEntityViewMixin):
         return ICommunity.providedBy(obj)
 
     def __call__(self):
-        return self.do_call()
+        return self._do_call()
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -208,7 +208,7 @@ class CommunityMembersView(AbstractEntityViewMixin):
 
     def __call__(self):
         self.check_access()
-        result = self.do_call()
+        result = self._do_call()
         hidden = IHiddenMembership(self.context)
         # pylint: disable=too-many-function-args, no-member
         result[TOTAL] = self.context.number_of_members() - hidden.number_of_members()
