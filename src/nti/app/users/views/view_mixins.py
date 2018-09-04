@@ -558,7 +558,7 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
     @Lazy
     def searchTerm(self):
         # pylint: disable=no-member
-        result = self.params.get('searchTerm')
+        result = self.params.get('searchTerm') or self.params.get('filter')
         return unquote(result).lower() if result else None
 
     @property
