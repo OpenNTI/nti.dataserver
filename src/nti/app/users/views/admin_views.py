@@ -45,7 +45,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
 
-from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.users import MessageFactory as _
@@ -66,6 +65,7 @@ from nti.app.users.views.view_mixins import AbstractUpdateView
 from nti.app.users.views.view_mixins import UserUpsertViewMixin
 from nti.app.users.views.view_mixins import GrantAccessViewMixin
 from nti.app.users.views.view_mixins import RemoveAccessViewMixin
+from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 
 from nti.appserver.interfaces import INamedLinkView
 
@@ -87,7 +87,6 @@ from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.index import add_catalog_filters
 
 from nti.dataserver.users.interfaces import IUserProfile
-from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
 
@@ -95,8 +94,6 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.users.utils import get_users_by_site
 from nti.dataserver.users.utils import reindex_email_verification
-
-from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -697,10 +694,9 @@ class UserRemoveAccessView(RemoveAccessViewMixin):
              request_method='GET',
              context=IUser,
              permission=nauth.ACT_NTI_ADMIN)
-class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
+class UserCommunitiesView(AbstractEntityViewMixin):
 
     _DEFAULT_BATCH_SIZE = 50
-    _DEFAULT_BATCH_START = 0
 
     def _batch_params(self):
         # pylint: disable=attribute-defined-outside-init
@@ -709,50 +705,22 @@ class UserCommunitiesView(AbstractAuthenticatedView, BatchingUtilsMixin):
         self.batch_after = None
         self.batch_before = None
 
-    @Lazy
-    def params(self):
-        return CaseInsensitiveDict(**self.request.params)
+    def get_externalizer(self, unused_entity):
+        return 'summary'
 
-    @Lazy
-    def searchTerm(self):
+    def get_entity_intids(self, unused_site=None):
         # pylint: disable=no-member
-        result = self.params.get('searchTerm') or self.params.get('filter')
-        return urllib_parse.unquote(result).lower() if result else None
-
-    def search_prefix_match(self, compare, search_term):
-        compare = compare.lower() if compare else ''
-        for k in compare.split():
-            if k.startswith(search_term):
-                return True
-        return compare.startswith(search_term)
-
-    def search_include(self, comm):
-        result = True
-        if self.searchTerm:
-            op = self.search_prefix_match
-            names = IFriendlyNamed(comm, None)
-            result = (op(comm.username, self.searchTerm)) \
-                  or (names is not None 
-                      and (op(names.realname, self.searchTerm)
-                           or op(names.alias, self.searchTerm)))
+        intids = component.getUtility(IIntIds)
+        result = self.context.dynamic_memberships
+        result = {
+            intids.queryId(x) for x in result if ICommunity.providedBy(x)
+        }
+        result.discard(None)
         return result
 
     def __call__(self):
         self._batch_params()
-        communities = set(self.request.context.dynamic_memberships)
-        communities = [x for x in communities 
-                       if ICommunity.providedBy(x) and self.search_include(x)]
-
-        result = LocatedExternalDict()
-        self._batch_items_iterable(result, communities,
-                                   number_items_needed=self.limit,
-                                   batch_size=self.batch_size,
-                                   batch_start=self.batch_start,)
-        # transform what is required
-        result[ITEMS] = [
-            toExternalObject(x, name='summary') for x in result[ITEMS]
-        ]
-        result[TOTAL] = len(communities)
+        result = self._do_call()
         return result
 
 
