@@ -15,19 +15,9 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
-from requests.structures import CaseInsensitiveDict
-
-import six
-
-from zope import component
-
-from zope.intid.interfaces import IIntIds
-
 from nti.app.authentication import get_remote_user
 
 from nti.app.externalization.error import raise_json_error
-
-from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.users import MessageFactory as _
 
@@ -38,6 +28,7 @@ from nti.app.users import MessageFactory as _
 # See :func:`exit_dfl_view` for what can be done with it.
 from nti.app.users import REL_MY_MEMBERSHIP
 
+from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 from nti.app.users.views.view_mixins import EntityActivityViewMixin
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
@@ -51,9 +42,6 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.metadata.index import IX_MIMETYPE
 
-from nti.dataserver.users.index import get_entity_catalog
-
-from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
 ITEMS = StandardExternalFields.ITEMS
@@ -127,36 +115,25 @@ class DFLActivityView(EntityActivityViewMixin):
         return self.context.NTIID
 
 
-@view_config(name='list.dfls')
+@view_config(name='AllDFLs')
 @view_config(name='list_dfls')
 @view_defaults(route_name='objects.generic.traversal',
                request_method='GET',
                context=IDataserverFolder,
                permission=nauth.ACT_NTI_ADMIN)
-class ListDFLsView(AbstractAuthenticatedView):
+class ListDFLsView(AbstractEntityViewMixin):
+
+    def get_entity_intids(self, unused_site=None):
+        catalog = self.entity_catalog
+        query = {
+            'any_of': ('application/vnd.nextthought.dynamicfriendslist',)
+        }
+        # pylint: disable=unsubscriptable-object
+        doc_ids = catalog[IX_MIMETYPE].apply(query)
+        return doc_ids or ()
+
+    def reify_predicate(self, obj):
+        return IDynamicSharingTargetFriendsList.providedBy(obj)
 
     def __call__(self):
-        request = self.request
-        values = CaseInsensitiveDict(request.params)
-        usernames = values.get('usernames') or values.get('username')
-        if isinstance(usernames, six.string_types):
-            usernames = {x.lower() for x in usernames.split(",") if x}
-
-        intids = component.getUtility(IIntIds)
-        catalog = get_entity_catalog()
-        doc_ids = catalog[IX_MIMETYPE].apply({
-            'any_of': ('application/vnd.nextthought.dynamicfriendslist',)
-        })
-
-        result = LocatedExternalDict()
-        items = result[ITEMS] = []
-        for doc_id in doc_ids or ():
-            entity = intids.queryObject(doc_id)
-            if not IDynamicSharingTargetFriendsList.providedBy(entity):
-                continue
-            username = entity.username.lower()
-            if usernames and username not in usernames:
-                continue
-            items.append(entity)
-        result[TOTAL] = result[ITEM_COUNT] = len(items)
-        return result
+        return self._do_call()
