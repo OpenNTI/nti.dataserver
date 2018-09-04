@@ -88,6 +88,7 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 
 	def _run(self):
 		while self.run_loop:
+			sleep()
 			self.message = self.session_proxy.get_client_msg()
 			assert isinstance(self.message, (str,types.NoneType)), "Messages should already be encoded as required"
 			if not self.run_loop:
@@ -152,6 +153,7 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 
 	def _run(self):
 		while self.run_loop:
+			sleep()
 			self.message = self.websocket.receive()
 
 			# Reduce heartbeat activity from every five seconds to

@@ -79,7 +79,7 @@ class _Meeting(ThreadableMixin,
                Persistent,
                ExternalizableInstanceDict):
     """
-    Class to handle distributing messages to clients. 
+    Class to handle distributing messages to clients.
     """
 
     __emits__ = ('recvMessage', 'enteredRoom', 'exitedRoom',
@@ -183,8 +183,8 @@ class _Meeting(ThreadableMixin,
         return result
 
     def add_additional_transcript_username(self, username):
-        """ 
-        Ensures that the user named `username` will get all appropriate transcripts. 
+        """
+        Ensures that the user named `username` will get all appropriate transcripts.
         """
         self._addl_transcripts_to.add(username)
 
@@ -202,7 +202,7 @@ class _Meeting(ThreadableMixin,
         if broadcast and sess_count_after != sess_count_before:
             # Yay, we added one!
             self.emit_enteredRoom(name, self)
-            self.emit_roomMembershipChanged(self.occupant_names - set((name,)), 
+            self.emit_roomMembershipChanged(self.occupant_names - set((name,)),
                                             self)
         else:
             logger.debug("Not broadcasting (%s) enter/change events for %s in %s",
