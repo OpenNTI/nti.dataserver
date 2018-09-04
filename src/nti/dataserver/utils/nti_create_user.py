@@ -192,7 +192,7 @@ def create_user(args=None):
     password = args.password
     
     if args.type == 'user' and not username.lower().endswith('@nextthought.com'):
-        assert args.site, "must provide a creation site"
+        logger.warning("Creating a global user with no site !!!")
 
     package = 'nti.appserver'
     if not args.site:
