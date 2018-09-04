@@ -13,57 +13,36 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
-from requests.structures import CaseInsensitiveDict
-
-import six
-
-from zope import component
-
-from zope.cachedescriptors.property import Lazy
-
-from zope.intid.interfaces import IIntIds
-
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
 
-from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.users import MessageFactory as _
 
+from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 from nti.app.users.views.view_mixins import EntityActivityViewMixin
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.authorization import is_admin
-from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
-from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
-from nti.dataserver.interfaces import ISiteAdminUtility
-from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
-
-from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.users.communities import Community
 
-from nti.dataserver.users.index import get_entity_catalog
+from nti.dataserver.users.index import IX_MIMETYPE
 
 from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.dataserver.users.utils import intids_of_community_members
 
-from nti.externalization.externalization import toExternalObject
-
-from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
 ITEMS = StandardExternalFields.ITEMS
@@ -108,63 +87,28 @@ class CreateCommunityView(AbstractAuthenticatedView,
         return community
 
 
-def _make_min_max_btree_range(search_term):
-    min_inclusive = search_term  # start here
-    max_exclusive = search_term[0:-1] + six.unichr(ord(search_term[-1]) + 1)
-    return min_inclusive, max_exclusive
-
-
-def username_search(search_term=None):
-    dataserver = component.getUtility(IDataserver)
-    _users = IShardLayout(dataserver).users_folder
-    # pylint: disable=no-member
-    if search_term:
-        min_inclusive, max_exclusive = _make_min_max_btree_range(search_term)
-        usernames = _users.iterkeys(min_inclusive,
-                                    max_exclusive,
-                                    excludemax=True)
-    else:
-        usernames = _users.iterkeys()
-    return usernames
-
-
-@view_config(name='list.communities')
+@view_config(name='AllCommunities')
 @view_config(name='list_communities')
 @view_defaults(route_name='objects.generic.traversal',
                request_method='GET',
                context=IDataserverFolder,
                permission=nauth.ACT_NTI_ADMIN)
-class ListCommunitiesView(AbstractAuthenticatedView):
+class ListCommunitiesView(AbstractEntityViewMixin):
 
-    def __call__(self):
-        request = self.request
-        values = CaseInsensitiveDict(**request.params)
-        term = values.get('term') or values.get('search')
-        usernames = values.get('usernames') or values.get('username')
-        if term:
-            usernames = {x.lower() for x in username_search(term)}
-        elif isinstance(usernames, six.string_types):
-            usernames = {x.lower() for x in usernames.split(",") if x}
-
-        intids = component.getUtility(IIntIds)
-        catalog = get_entity_catalog()
+    def get_entity_intids(self, unused_site=None):
+        catalog = self.entity_catalog
         query = {
             'any_of': ('application/vnd.nextthought.community',)
         }
-        doc_ids = catalog['mimeType'].apply(query)
+        # pylint: disable=unsubscriptable-object
+        doc_ids = catalog[IX_MIMETYPE].apply(query)
+        return doc_ids or ()
 
-        result = LocatedExternalDict()
-        items = result[ITEMS] = []
-        for doc_id in doc_ids or ():
-            community = intids.queryObject(doc_id)
-            if not ICommunity.providedBy(community):
-                continue
-            username = community.username.lower()
-            if usernames and username not in usernames:
-                continue
-            items.append(community)
-        result[TOTAL] = result[ITEM_COUNT] = len(items)
-        return result
+    def reify_predicate(self, obj):
+        return ICommunity.providedBy(obj)
+
+    def __call__(self):
+        return self.do_call()
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -228,93 +172,46 @@ class LeaveCommunityView(AbstractAuthenticatedView):
         return community
 
 
-def _replace_username(username):
-    substituter = component.queryUtility(IUsernameSubstitutionPolicy)
-    if substituter is None:
-        return username
-    result = substituter.replace(username) or username
-    return result
-
-
 @view_config(route_name='objects.generic.traversal',
              name='members',
              request_method='GET',
              context=ICommunity,
              permission=nauth.ACT_READ)
-class CommunityMembersView(AbstractAuthenticatedView,
-                           BatchingUtilsMixin):
+class CommunityMembersView(AbstractEntityViewMixin):
 
-    _DEFAULT_BATCH_SIZE = 30
-    _DEFAULT_BATCH_START = 0
-
-    _ALLOWED_SORTING = ('createdTime', )
-    
-    @property
-    def sortOn(self):
-        sort = self.request.params.get('sortOn')
-        return sort if sort in self._ALLOWED_SORTING else None
-
-    @property
-    def sortOrder(self):
-        return self.request.params.get('sortOrder', 'ascending')
-
-    @Lazy
-    def _is_admin(self):
-        return is_admin(self.remoteUser)
-
-    @Lazy
-    def _is_site_admin(self):
-        return is_site_admin(self.remoteUser)
-
-    @Lazy
-    def _site_admin_utility(self):
-        return component.getUtility(ISiteAdminUtility)
-
-    def _get_externalizer(self, user):
-        # pylint: disable=no-member
-        # It would be nice to make this automatic.
-        result = 'summary'
-        if user == self.remoteUser:
-            result = 'personal-summary'
-        elif self._is_admin:
-            result = 'admin-summary'
-        elif    self._is_site_admin \
-            and self._site_admin_utility.can_administer_user(self.remoteUser, user):
-            result = 'admin-summary'
-        return result
-
-    def _transformer(self, x):
-        return toExternalObject(x, name=self._get_externalizer(x))
-
-    def __call__(self):
+    def check_access(self):
         community = self.request.context
         if      not community.public \
             and self.remoteUser not in community \
             and not is_admin_or_site_admin(self.remoteUser):
             raise hexc.HTTPForbidden()
+        return community
 
-        sortOn = self.sortOn
-        catalog = get_metadata_catalog()
-        hidden = IHiddenMembership(community)
-        members = intids_of_community_members(community)
-        if sortOn and sortOn in catalog:
-            reverse = self.sortOrder == 'descending'
-            members = catalog[sortOn].sort(members, reverse=reverse)
+    def get_externalizer(self, user):
+        # pylint: disable=no-member
+        # It would be nice to make this automatic.
+        result = 'summary'
+        if user == self.remoteUser:
+            result = 'personal-summary'
+        elif self.is_admin:
+            result = 'admin-summary'
+        elif    self.is_site_admin \
+            and self.site_admin_utility.can_administer_user(self.remoteUser, user):
+            result = 'admin-summary'
+        return result
 
-        result = LocatedExternalDict()
-        self._batch_items_iterable(result, members)
-        # reify only the required items
-        intids = component.getUtility(IIntIds)
-        result[ITEMS] = (
-            intids.queryObject(x) for x in result[ITEMS]
-        )
-        # transform and set totals
-        result[ITEMS] = [
-            self._transformer(x) for x in result[ITEMS] if IUser.providedBy(x)
-        ]
-        result[ITEM_COUNT] = len(result[ITEMS])
-        # pylint: disable=too-many-function-args
-        result[TOTAL] = community.number_of_members() - hidden.number_of_members()
+    def get_entity_intids(self, unused_site=None):
+        return intids_of_community_members(self.context)
+
+    def reify_predicate(self, obj):
+        return IUser.providedBy(obj)
+
+    def __call__(self):
+        self.check_access()
+        result = self.do_call()
+        hidden = IHiddenMembership(self.context)
+        # pylint: disable=too-many-function-args, no-member
+        result[TOTAL] = self.context.number_of_members() - hidden.number_of_members()
         return result
 
 
