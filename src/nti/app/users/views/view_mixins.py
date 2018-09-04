@@ -14,6 +14,8 @@ from pyramid.view import view_config
 
 from requests.structures import CaseInsensitiveDict
 
+from six.moves.urllib_parse import unquote
+
 from zope import component
 from zope import interface
 
@@ -25,6 +27,7 @@ from zope.intid.interfaces import IIntIds
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.users import MessageFactory as _
@@ -41,14 +44,34 @@ from nti.base._compat import text_
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.authorization import is_admin
+from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 
 from nti.dataserver.interfaces import IAccessProvider
+from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IGrantAccessException
 from nti.dataserver.interfaces import IRemoveAccessException
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+
+from nti.dataserver.metadata.index import IX_TOPICS
+from nti.dataserver.metadata.index import IX_SHAREDWITH
+from nti.dataserver.metadata.index import TP_TOP_LEVEL_CONTENT
+from nti.dataserver.metadata.index import TP_DELETED_PLACEHOLDER
+
+from nti.dataserver.metadata.index import IX_CREATEDTIME
+from nti.dataserver.metadata.index import get_metadata_catalog
+
+from nti.dataserver.users.index import IX_ALIAS
+from nti.dataserver.users.index import IX_REALNAME
+from nti.dataserver.users.index import IX_DISPLAYNAME
+from nti.dataserver.users.index import get_entity_catalog
+
+from nti.dataserver.users.utils import get_entity_alias_from_index
+from nti.dataserver.users.utils import get_entity_realname_from_index
+from nti.dataserver.users.utils import get_entity_username_from_index
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -59,15 +82,12 @@ from nti.dataserver.users.interfaces import IUsernameGeneratorUtility
 from nti.dataserver.users.interfaces import UpsertUserCreatedEvent
 from nti.dataserver.users.interfaces import UpsertUserPreCreateEvent
 
-from nti.dataserver.metadata.index import IX_TOPICS
-from nti.dataserver.metadata.index import IX_SHAREDWITH
-from nti.dataserver.metadata.index import TP_TOP_LEVEL_CONTENT
-from nti.dataserver.metadata.index import TP_DELETED_PLACEHOLDER
-
-from nti.dataserver.metadata.index import get_metadata_catalog
-
 from nti.dataserver.users.users import User
 
+from nti.externalization.externalization import to_external_object
+
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
@@ -75,6 +95,10 @@ from nti.identifiers.interfaces import IUserExternalIdentityContainer
 from nti.identifiers.utils import get_user_for_external_id
 
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+ITEMS = StandardExternalFields.ITEMS
+TOTAL = StandardExternalFields.TOTAL
+ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -494,3 +518,152 @@ class UserUpsertViewMixin(AbstractUpdateView):
             profile.email_verified = True
         notify(ObjectModifiedFromExternalEvent(user))
         return user
+
+
+class AbstractEntityViewMixin(AbstractAuthenticatedView,
+                              BatchingUtilsMixin):
+
+    _DEFAULT_BATCH_SIZE = 30
+    _DEFAULT_BATCH_START = 0
+
+    _ALLOWED_SORTING = (IX_CREATEDTIME, IX_ALIAS, IX_REALNAME, IX_DISPLAYNAME)
+
+    _NUMERIC_SORTING = (IX_CREATEDTIME,)
+
+    def check_access(self):
+        pass
+        
+    @Lazy
+    def is_admin(self):
+        return is_admin(self.remoteUser)
+
+    @Lazy
+    def is_site_admin(self):
+        return is_site_admin(self.remoteUser)
+
+    @Lazy
+    def site_admin_utility(self):
+        return component.getUtility(ISiteAdminUtility)
+
+    @Lazy
+    def params(self):
+        return CaseInsensitiveDict(**self.request.params)
+
+    @Lazy
+    def sortOn(self):
+        # pylint: disable=no-member
+        sort = self.params.get('sortOn')
+        return sort if sort in self._ALLOWED_SORTING else None
+
+    @Lazy
+    def searchTerm(self):
+        # pylint: disable=no-member
+        result = self.params.get('searchTerm')
+        return unquote(result).lower() if result else None
+
+    @property
+    def sortOrder(self):
+        # pylint: disable=no-member
+        return self.params.get('sortOrder', 'ascending')
+
+    @Lazy
+    def entity_catalog(self):
+        return get_entity_catalog()
+
+    def get_externalizer(self, unused_entity):
+        return ''
+
+    def transformer(self, x):
+        return to_external_object(x, name=self.get_externalizer(x))
+
+    @Lazy
+    def sortMap(self):
+        return {
+            IX_ALIAS: get_entity_catalog(),
+            IX_REALNAME: get_entity_catalog(),
+            IX_DISPLAYNAME: get_entity_catalog(),
+            IX_CREATEDTIME: get_metadata_catalog(),
+        }
+
+    def get_entity_intids(self, site=None):
+        raise NotImplementedError
+
+    def get_sorted_entity_intids(self, site=None):
+        doc_ids = self.get_entity_intids(site)
+        # pylint: disable=unsupported-membership-test,no-member
+        if self.sortOn and self.sortOn in self.sortMap:
+            catalog = self.sortMap.get(self.sortOn)
+            reverse = self.sortOrder == 'descending'
+            doc_ids = catalog[self.sortOn].sort(doc_ids, reverse=reverse)
+        return doc_ids
+
+    def search_prefix_match(self, compare, search_term):
+        compare = compare.lower() if compare else ''
+        for k in compare.split():
+            if k.startswith(search_term):
+                return True
+        return compare.startswith(search_term)
+
+    def username(self, doc_id):
+        return get_entity_username_from_index(doc_id, self.entity_catalog)
+
+    def realname(self, doc_id):
+        return get_entity_realname_from_index(doc_id, self.entity_catalog)
+    
+    def alias(self, doc_id):
+        return get_entity_alias_from_index(doc_id, self.entity_catalog)
+
+    def search_include(self, username, alias, realname):
+        result = True
+        if self.searchTerm:
+            op = self.search_prefix_match
+            result = op(username, self.searchTerm) \
+                  or op(realname, self.searchTerm) \
+                  or op(alias, self.searchTerm)
+        return result
+
+    def resolve_entity_ids(self, site=None):
+        result = []
+        for doc_id in self.get_sorted_entity_intids(site):
+            username = self.username(doc_id)
+            if not username:
+                continue
+            alias = self.alias(doc_id)
+            realname = self.realname(doc_id)
+            if self.search_include(username, alias, realname):
+                result.append(doc_id)
+        return result
+
+    def reify_predicate(self, obj):
+        return obj is not None
+
+    def reify(self, doc_ids):
+        result = []
+        intids = component.getUtility(IIntIds)
+        for doc_id in doc_ids or ():
+            obj = intids.queryObject(doc_id)
+            if self.reify_predicate(obj):
+                result.append(obj)
+        return result
+
+    def do_call(self, site=None):
+        result = LocatedExternalDict()
+        items = self.resolve_entity_ids(site)
+        self._batch_items_iterable(result, items)
+        # reify only the required items
+        result[ITEMS] = self.reify(result[ITEMS])
+        # re/sort for numeric values
+        if self.sortOn in self._NUMERIC_SORTING:
+            # If we are sorting by time, we are indexed normalized to a minute.
+            # We sort here by the actual value to correct this.
+            reverse = self.sortOrder == 'descending'
+            result[ITEMS] = sorted(result[ITEMS],
+                                   key=lambda x: getattr(x, self.sortOn, 0),
+                                   reverse=reverse)
+        # transform only the required items
+        result[ITEMS] = [
+            self.transformer(x) for x in result[ITEMS] if x is not None
+        ]
+        result[TOTAL] = len(items)
+        result[ITEM_COUNT] = len(result[ITEMS])
+        return result
