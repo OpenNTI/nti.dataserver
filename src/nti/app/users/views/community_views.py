@@ -37,7 +37,8 @@ from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users.communities import Community
 
-from nti.dataserver.users.index import IX_MIMETYPE
+from nti.dataserver.users.index import IX_TOPICS
+from nti.dataserver.users.index import IX_IS_COMMUNITY
 
 from nti.dataserver.users.interfaces import IHiddenMembership
 
@@ -97,12 +98,10 @@ class ListCommunitiesView(AbstractEntityViewMixin):
 
     def get_entity_intids(self, unused_site=None):
         catalog = self.entity_catalog
-        query = {
-            'any_of': ('application/vnd.nextthought.community',)
-        }
-        # pylint: disable=unsubscriptable-object
-        doc_ids = catalog[IX_MIMETYPE].apply(query)
-        return doc_ids or ()
+        # pylint: disable=unsubscriptable-object,no-member
+        comms_idx = catalog[IX_TOPICS][IX_IS_COMMUNITY]
+        result = catalog.family.IF.Set(comms_idx.getIds() or ())
+        return result
 
     def reify_predicate(self, obj):
         return ICommunity.providedBy(obj)
