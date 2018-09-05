@@ -6,26 +6,69 @@ Event subscribers.
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+import time
+
+from pyramid.threadlocal import get_current_request
 
 from zope import component
 
+from zope.event import notify
+
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+
+from nti.coremetadata.interfaces import UserLastSeenEvent
 
 from nti.dataserver.activitystream_change import Change
 
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
 
 from nti.dataserver.interfaces import IUser
 
+from nti.securitypolicy.utils import is_impersonating
+
 from nti.traversal.traversal import find_interface
 
+logger = __import__('logging').getLogger(__name__)
 
 # Online notifications.
+
+def notify_user_seen_event(obj):
+    request = get_current_request()
+    creator = getattr(obj, 'creator', obj)
+    if IUser.providedBy(creator) and not is_impersonating(request):
+        notify(UserLastSeenEvent(creator, time.time(), request))
+
+
+@component.adapter(ITopic, IObjectAddedEvent)
+def notify_seen_on_topic_added(obj, unused_event=None):
+    """
+    When a comment is added to a blog post, fire user seen event
+    """
+    notify_user_seen_event(obj)
+
+
+@component.adapter(ICommentPost, IObjectAddedEvent)
+def notify_seen_on_comment_added(comment, unused_event):
+    """
+    When a comment is added to a blog post, fire user seen event
+    """
+    notify_user_seen_event(getattr(comment, 'creator', None))
+
+
+@component.adapter(ICommentPost, IObjectModifiedEvent)
+def notify_seen_on_comment_modified(comment, unused_event):
+    """
+    When a comment is modified, fire user seen event
+    """
+    notify_user_seen_event(getattr(comment, 'creator', None))
 
 
 @component.adapter(IPersonalBlogComment, IObjectAddedEvent)
@@ -72,6 +115,7 @@ def _notify_online_author_of_comment(comment, topic_author):
     # Because it is not shared directly with the author, it doesn't go
     # in the shared data
     if not comment.isSharedDirectlyWith(topic_author):
+        # pylint: disable=protected-access
         topic_author._noticeChange(change, force=True)
 
     # (Except for being in the stream, the effect of the notification can be done
@@ -82,7 +126,7 @@ def _notify_online_author_of_comment(comment, topic_author):
     # _send_stream_event_to_targets( change, comment.sharingTargets )
 
 # Favoriting.
-# TODO: Under heavy construction
+# Under heavy construction
 
 from nti.dataserver.users.users import User
 
@@ -93,10 +137,10 @@ def temp_store_favorite_object(modified_object, event):
     if event.category != FAVR_CAT_NAME:
         return
     user = User.get_user(event.rating.userid)
-    if not user:
-        return
-    if bool(event.rating):
-        # ok, add it to the shared objects so that it can be seen
-        user._addSharedObject(modified_object)
-    else:
-        user._removeSharedObject(modified_object)
+    if user is not None:
+        # pylint: disable=protected-access
+        if bool(event.rating):
+            # ok, add it to the shared objects so that it can be seen
+            user._addSharedObject(modified_object)
+        else:
+            user._removeSharedObject(modified_object)
