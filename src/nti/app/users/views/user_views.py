@@ -135,7 +135,7 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
         self._batch_params()
         context = self.request.context
         memberships = set(context.dynamic_memberships)
-        memberships.update(set(context.friendsLists.values()))
+        memberships.update(context.friendsLists.values())
 
         everyone = Entity.get_entity('Everyone')
 
