@@ -36,7 +36,9 @@ from nti.dataserver.users.utils import get_community_members
 from nti.dataserver.users.utils import force_email_verification
 from nti.dataserver.users.utils import unindex_email_verification
 from nti.dataserver.users.utils import get_entity_alias_from_index
+from nti.dataserver.users.utils import get_entity_mimetype_from_index
 from nti.dataserver.users.utils import get_entity_realname_from_index
+
 
 class TestUtils(unittest.TestCase):
 
@@ -118,6 +120,9 @@ class TestUtils(unittest.TestCase):
         
         name = get_entity_realname_from_index(doc_id)
         assert_that(name, is_('ichigo kurosaki'))
+        
+        name = get_entity_mimetype_from_index(doc_id)
+        assert_that(name, is_('application/vnd.nextthought.user'))
 
         name = get_entity_realname_from_index(0)
         assert_that(name, is_(none()))
