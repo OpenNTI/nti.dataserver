@@ -2,30 +2,42 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, absolute_import, division
+
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import is_
+from hamcrest import is_, not_none, has_key, has_length
 from hamcrest import is_not
 from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import has_items
 from hamcrest import assert_that
 from hamcrest import contains_inanyorder
+does_not = is_not
 
 import fudge
 
+import unittest
+
 from zope import component
+
+from zope.component import globalSiteManager as BASE
 
 from zope.component.hooks import site
 from zope.component.hooks import getSite
+
+from zope.component.interfaces import IComponents
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from zope.securitypolicy.settings import Deny
 from zope.securitypolicy.settings import Allow
+
+from zope.site.interfaces import INewLocalSite
+
+from zope.traversing.interfaces import IEtcNamespace
 
 from z3c.baseregistry.baseregistry import BaseComponents
 
@@ -37,11 +49,23 @@ from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import ISiteRoleManager
 
+from nti.dataserver.site import _SiteHierarchyTree
+
 from nti.dataserver.users.users import User
 
 from nti.testing.base import ConfiguringTestBase
 
+from nti.site.hostpolicy import synchronize_host_policies
+
+from nti.site.interfaces import IHostPolicySiteManager
+
 from nti.site.transient import TrivialSite as _TrivialSite
+
+from nti.site.site import get_site_for_site_names
+
+from nti.site.tests import SharedConfiguringTestLayer
+from nti.site.tests import WithMockDS
+from nti.site.tests import mock_db_trans
 
 
 ZCML_STRING = """
@@ -176,3 +200,105 @@ class TestSiteRoleManager(ConfiguringTestBase):
             assert_that(is_site_admin(user), is_(False))
             set_fake_parent_sm()
             assert_that(is_site_admin(parent_user), is_(True))
+
+
+# Match a hierarchy we have in nti.app.sites.demo:
+# global
+#  \
+#   eval
+#   |\
+#   | eval-alpha
+#   \
+#   demo
+#    \
+#     demo-alpha
+
+
+EVAL = BaseComponents(BASE,
+                      name='eval.nextthoughttest.com',
+                      bases=(BASE,))
+
+EVALALPHA = BaseComponents(EVAL,
+                           name='eval-alpha.nextthoughttest.com',
+                           bases=(EVAL,))
+
+DEMO = BaseComponents(EVAL,
+                      name='demo.nextthoughttest.com',
+                      bases=(EVAL,))
+
+DEMOALPHA = BaseComponents(DEMO,
+                           name='demo-alpha.nextthoughttest.com',
+                           bases=(DEMO,))
+
+_SITES = (EVAL, EVALALPHA, DEMO, DEMOALPHA)
+
+
+class TestSiteHierarchy(unittest.TestCase):
+
+    layer = SharedConfiguringTestLayer
+
+    _events = ()
+
+    def setUp(self):
+        super(TestSiteHierarchy, self).setUp()
+        for site in _SITES:
+            # See explanation in nti.appserver.policies.sites; in short,
+            # the teardown process can disconnect the resolution order of
+            # these objects, and since they don't descend from the bases declared
+            # in that module, they fail to get reset.
+            site.__init__(site.__parent__, name=site.__name__, bases=site.__bases__)
+            BASE.registerUtility(site, name=site.__name__, provided=IComponents)
+        self._events = []
+        # NOTE: We can't use an instance method; under
+        # zope.testrunner, by the time tearDown is called, it's not
+        # equal to the value it has during setUp, so we can't
+        # unregister it!
+        self._event_handler = lambda *args: self._events.append(args)
+        BASE.registerHandler(self._event_handler, required=(IHostPolicySiteManager, INewLocalSite))
+
+    def tearDown(self):
+        for site in _SITES:
+            BASE.unregisterUtility(site, name=site.__name__, provided=IComponents)
+        BASE.unregisterHandler(self._event_handler, required=(IHostPolicySiteManager, INewLocalSite))
+        super(TestSiteHierarchy, self).tearDown()
+
+    @WithMockDS
+    def test_site_hierarchy(self):
+        with mock_db_trans():
+            synchronize_host_policies()
+            synchronize_host_policies()
+
+            ds_folder = component.getUtility(IEtcNamespace, name='hostsites').__parent__
+            eval_site = get_site_for_site_names((EVAL.__name__,))
+            alpha_site = get_site_for_site_names((EVALALPHA.__name__,))
+            demo_site = get_site_for_site_names((DEMO.__name__,))
+            demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
+
+            tree = _SiteHierarchyTree().tree
+            assert_that(tree.children_objects, contains_inanyorder(eval_site))
+            assert_that(tree.children_objects, has_length(1))
+
+            eval_node = tree.get_node_from_object(eval_site)
+            assert_that(eval_node.children_objects, contains_inanyorder(alpha_site, demo_site))
+            assert_that(eval_node.descendant_objects, contains_inanyorder(alpha_site, demo_site, demo_alpha_site))
+            assert_that(eval_node.children_objects, has_length(2))
+            assert_that(eval_node.descendant_objects, has_length(3))
+
+            alpha_node = tree.get_node_from_object(alpha_site)
+            assert_that(alpha_node.parent_object, is_(eval_site))
+            assert_that(alpha_node.ancestor_objects, contains_inanyorder(eval_site, ds_folder))
+            assert_that(alpha_node.sibling_objects, contains_inanyorder(demo_site))
+            assert_that(alpha_node.children_objects, has_length(0))
+            assert_that(alpha_node.descendant_objects, has_length(0))
+            assert_that(alpha_node.sibling_objects, has_length(1))
+
+            demo_alpha_node = tree.get_node_from_object(demo_alpha_site)
+            assert_that(demo_alpha_node.parent_object, is_(demo_site))
+            assert_that(demo_alpha_node.ancestor_objects, contains_inanyorder(eval_site, demo_site, ds_folder))
+            assert_that(demo_alpha_node.ancestor_objects, has_length(3))
+            assert_that(demo_alpha_node.children_objects, has_length(0))
+            assert_that(demo_alpha_node.descendant_objects, has_length(0))
+            assert_that(demo_alpha_node.sibling_objects, has_length(0))
+
+        # No new sites created
+        assert_that(self._events, has_length(len(_SITES)))

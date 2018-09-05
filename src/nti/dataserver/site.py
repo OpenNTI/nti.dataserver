@@ -16,15 +16,25 @@ from zope.cachedescriptors.property import Lazy
 
 from zope.component.hooks import getSite
 
+from zope.interface import ro
+from zope.interface.interfaces import IComponents
+
 from zope.securitypolicy.interfaces import Unset
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from zope.securitypolicy.principalrole import PrincipalRoleManager
 from zope.securitypolicy.principalrole import AnnotationPrincipalRoleManager
 
+from zope.traversing.interfaces import IEtcNamespace
+
+from nti.common.datastructures import ObjectHierarchyTree
+
+from nti.dataserver.interfaces import ISiteHierarchy
 from nti.dataserver.interfaces import ISiteRoleManager
 
 from nti.externalization.persistence import NoPickle
+
+from nti.site.interfaces import IMainApplicationFolder
 
 from nti.site.site import get_component_hierarchy_names
 
@@ -160,6 +170,42 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         """
         return self._accumulate('getPrincipalsAndRoles')
 
+
+@interface.implementer(ISiteHierarchy)
+class _SiteHierarchyTree(object):
+
+    @Lazy
+    def tree(self):
+        tree = ObjectHierarchyTree()
+
+        # Exerpted from nti.site.hostpolicy
+        sites = component.getUtility(IEtcNamespace, name='hostsites')
+        ds_folder = sites.__parent__
+        tree.set_root(ds_folder)
+        assert IMainApplicationFolder.providedBy(ds_folder)
+
+        # Ok, find everything that is globally registered
+        global_sm = component.getGlobalSiteManager()
+        all_global_named_utilities = list(global_sm.getUtilitiesFor(IComponents))
+        for name, comp in all_global_named_utilities:
+            # The sites must be registered the same as their internal name
+            assert name == comp.__name__
+        all_global_utilities = [x[1] for x in all_global_named_utilities]
+        site_ro = [ro.ro(x) for x in all_global_utilities]
+        # Work up the inheritance chain for each component and add it to the tree
+        for comps in site_ro:
+            comps = reversed(comps)
+            for comp in comps:
+                name = comp.__name__
+                if name.endswith('base') or name.startswith('base'):
+                    continue
+                parent_name = comp.__bases__[0].__name__
+                if parent_name.endswith('base') or parent_name.startswith('base'):
+                    parent = ds_folder
+                else:
+                    parent = sites[parent_name]
+                tree.add(sites[name], parent=parent)
+        return tree
 
 deferredimport.initialize()
 deferredimport.deprecated(
