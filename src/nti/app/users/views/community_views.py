@@ -13,6 +13,8 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+from zope.cachedescriptors.property import Lazy
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
@@ -21,6 +23,8 @@ from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMi
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.users import MessageFactory as _
+
+from nti.app.users.views import parse_mime_types
 
 from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 from nti.app.users.views.view_mixins import EntityActivityViewMixin
@@ -43,8 +47,10 @@ from nti.dataserver.users.index import IX_IS_COMMUNITY
 from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.dataserver.users.utils import intids_of_community_members
+from nti.dataserver.users.utils import get_entity_mimetype_from_index
 
 from nti.externalization.interfaces import StandardExternalFields
+
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -101,6 +107,23 @@ class ListCommunitiesView(AbstractEntityViewMixin):
         # pylint: disable=unsubscriptable-object,no-member
         comms_idx = catalog[IX_TOPICS][IX_IS_COMMUNITY]
         result = catalog.family.IF.Set(comms_idx.getIds() or ())
+        return result
+
+    @Lazy
+    def mimeTypes(self):
+        # pylint: disable=no-member
+        values = self.params
+        mime_types = values.get('accept') \
+                  or values.get('mime_types') \
+                  or values.get('mimeTypes') or ''
+        return parse_mime_types(mime_types)
+
+    def search_include(self, doc_id, username, alias, realname):
+        result = AbstractEntityViewMixin.search_include(self, doc_id, username, alias, realname)
+        if result and self.mimeTypes:
+            # pylint: disable=unsupported-membership-test
+            mimeType = get_entity_mimetype_from_index(doc_id, self.entity_catalog)
+            result = mimeType in self.mimeTypes
         return result
 
     def reify_predicate(self, obj):
