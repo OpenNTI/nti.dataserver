@@ -1425,6 +1425,12 @@ class ISiteHierarchy(interface.Interface):
     A utility that represents the current site hierarchy in a tree structure
     """
 
+
+class ISiteAdminManagerUtility(interface.Interface):
+    """
+    A mapping of what sites users should be placed in based upon their role
+    """
+
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?

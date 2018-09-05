@@ -30,8 +30,15 @@ from zope.traversing.interfaces import IEtcNamespace
 
 from nti.common.datastructures import ObjectHierarchyTree
 
+from nti.dataserver.authorization import ROLE_ADMIN
+from nti.dataserver.authorization import ROLE_CONTENT_ADMIN
+from nti.dataserver.authorization import ROLE_CONTENT_EDITOR
+from nti.dataserver.authorization import ROLE_MODERATOR
+from nti.dataserver.authorization import ROLE_SITE_ADMIN
+
 from nti.dataserver.interfaces import ISiteHierarchy
 from nti.dataserver.interfaces import ISiteRoleManager
+from nti.dataserver.interfaces import ISiteRoleMapping
 
 from nti.externalization.persistence import NoPickle
 
@@ -173,6 +180,47 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         """
         return self._accumulate('getPrincipalsAndRoles')
 
+    def assignRoleToPrincipal(self, role_id, principal_id):
+        sites = []
+        site_mapping = component.queryUtility(ISiteRoleMapping)
+        if site_mapping is not None:
+            for (site, role) in site_mapping.items():
+                if role == role_id:
+                    sites.append(self._get_parent_site(getSite(), site))
+        for site in sites:
+            principal_role_manager = IPrincipalRoleManager(site)
+            super(PersistentSiteRoleManager, principal_role_manager).assignRoleToPrincipal()
+
+
+def default_site_role_mapping():
+    """
+    :return: A map of all roles scoped only to the current site
+    """
+    role_map = dict()
+    for role in (ROLE_ADMIN,
+                 ROLE_MODERATOR,
+                 ROLE_CONTENT_EDITOR,
+                 ROLE_CONTENT_ADMIN,
+                 ROLE_SITE_ADMIN):
+        role_map.setdefault(getSite().__name__, []).append(role.id)
+    return role_map
+
+
+def hierarchal_site_admin_role_mapping():
+    """
+    :return: A map of all roles with site admins scoped to every site in the hierarchy
+    """
+    role_map = default_site_role_mapping()
+    current_site = getSite()
+    site_hierarchy = component.queryUtility(ISiteHierarchy).tree
+    site_node = site_hierarchy.get_node_for_object(current_site)
+    ancestors = list(site_node.ancestor_objects)
+    # Remove dataserver folder
+    ancestors.remove(site_node.root.obj)
+    for ancestor in ancestors:
+        role_map.setdefault(ancestor.__name__, []).append(ROLE_SITE_ADMIN.id)
+    return role_map
+
 
 @interface.implementer(ISiteHierarchy)
 class _SiteHierarchyTree(object):
@@ -208,6 +256,7 @@ class _SiteHierarchyTree(object):
                     parent = sites[parent_name]
                 tree.add(sites[name], parent=parent)
         return tree
+
 
 deferredimport.initialize()
 deferredimport.deprecated(
