@@ -10,23 +10,28 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import six
 import time
 
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 
-from zope.schema import getValidationErrors
+import six
 
-from nti.app.base.abstract_views import AbstractAuthenticatedView
+from zope import component
+
+from zope.cachedescriptors.property import Lazy
+
+from zope.intid.interfaces import IIntIds
+
+from zope.schema import getValidationErrors
 
 from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.error import validation_error_to_dict
 
-from nti.app.externalization.view_mixins import BatchingUtilsMixin
-
 from nti.app.users import MessageFactory as _
+
+from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_PREFLIGHT
 
@@ -49,8 +54,6 @@ from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
 from nti.dataserver.users.users_external import _avatar_url
 from nti.dataserver.users.users_external import _background_url
-
-from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -116,48 +119,51 @@ def background_view(context, request):
              name='memberships',
              request_method='GET',
              context=IUser)
-class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
+class UserMembershipsView(AbstractEntityViewMixin):
 
-    _DEFAULT_BATCH_SIZE = 50
-    _DEFAULT_BATCH_START = 0
-
-    def _batch_params(self):
-        # pylint: disable=attribute-defined-outside-init
-        self.batch_size, self.batch_start = self._get_batch_size_start()
-        self.limit = self.batch_start + self.batch_size + 2
-        self.batch_after = None
-        self.batch_before = None
-
-    def __call__(self):
+    def check_access(self):
         if self.remoteUser is None:
             raise hexc.HTTPForbidden()
 
-        self._batch_params()
-        context = self.request.context
+    @Lazy
+    def everyone(self):
+        return Entity.get_entity('Everyone')
+
+    def include_member(self, member):
+        result = (member is not self.everyone)
+        if result:
+            if      ICommunity.providedBy(member) \
+                and not IDisallowMembershipOperations.providedBy(member) \
+                and (member.public or self.remoteUser in member):
+                result = True
+            elif    IDynamicSharingTargetFriendsList.providedBy(member) \
+                and (self.remoteUser in member or self.remoteUser == member.creator):
+                result = True
+            else:
+                result = False
+        return result
+
+    def get_entity_intids(self, unused_site=None):
+        context = self.context
+        intids = component.getUtility(IIntIds)
+        # pylint: disable=no-member
         memberships = set(context.dynamic_memberships)
         memberships.update(context.friendsLists.values())
+        for member in memberships:
+            if self.include_member(member):
+                doc_id = intids.queryId(member)
+                if doc_id is not None:
+                    yield doc_id
 
-        everyone = Entity.get_entity('Everyone')
+    def get_externalizer(self, entity):
+        result = ''
+        if ICommunity.providedBy(entity):
+            result = 'summary'
+        return result
 
-        def _selector(x):
-            result = None
-            if x == everyone:  # always
-                result = None
-            elif    ICommunity.providedBy(x) \
-                and not IDisallowMembershipOperations.providedBy(x) \
-                and (x.public or self.remoteUser in x):
-                result = toExternalObject(x, name='summary')
-            elif    IDynamicSharingTargetFriendsList.providedBy(x) \
-                and (self.remoteUser in x or self.remoteUser == x.creator):
-                result = toExternalObject(x)
-            return result
-
-        result = LocatedExternalDict()
-        self._batch_items_iterable(result, memberships,
-                                   number_items_needed=self.limit,
-                                   batch_size=self.batch_size,
-                                   batch_start=self.batch_start,
-                                   selector=_selector)
+    def __call__(self):
+        self.check_access()
+        result = self._do_call()
         return result
 
 
