@@ -8,11 +8,12 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import is_, not_none, has_key, has_length
+from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import has_items
+from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import contains_inanyorder
 does_not = is_not

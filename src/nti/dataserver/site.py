@@ -17,6 +17,7 @@ from zope.cachedescriptors.property import Lazy
 from zope.component.hooks import getSite
 
 from zope.interface import ro
+
 from zope.interface.interfaces import IComponents
 
 from zope.securitypolicy.interfaces import Unset
