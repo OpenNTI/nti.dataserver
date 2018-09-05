@@ -20,6 +20,8 @@ import six
 
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.intid.interfaces import IIntIds
 
 from zope.schema import getValidationErrors
@@ -57,7 +59,6 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.links import render_link
-from zope.cachedescriptors.property import Lazy
 
 ITEMS = StandardExternalFields.ITEMS
 
