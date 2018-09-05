@@ -613,7 +613,7 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
     def alias(self, doc_id):
         return get_entity_alias_from_index(doc_id, self.entity_catalog)
 
-    def search_include(self, username, alias, realname):
+    def search_include(self, unused_doc_id, username, alias, realname):
         result = True
         if self.searchTerm:
             op = self.search_prefix_match
@@ -630,7 +630,7 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
                 continue
             alias = self.alias(doc_id)
             realname = self.realname(doc_id)
-            if self.search_include(username, alias, realname):
+            if self.search_include(doc_id, username, alias, realname):
                 result.append(doc_id)
         return result
 

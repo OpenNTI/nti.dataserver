@@ -56,8 +56,12 @@ class TestCommunityViews(ApplicationLayerTest):
         assert_that(res.json_body, has_entry('Items', has_length(2)))
         assert_that(res.json_body, has_entry('Total', is_(2)))
 
-        path = '/dataserver2/@@list_communities?searchTerm=B'
-        res = self.testapp.get(path, status=200)
+        path = '/dataserver2/@@list_communities'
+        params = {
+            "searchTerm": 'B',
+            "mimeTypes": 'application/vnd.nextthought.community'
+        }
+        res = self.testapp.get(path, params, status=200)
         assert_that(res.json_body, has_entry('Items', has_length(1)))
         assert_that(res.json_body, has_entry('Total', is_(1)))
 
