@@ -275,7 +275,7 @@ class TestSiteHierarchy(unittest.TestCase):
             demo_site = get_site_for_site_names((DEMO.__name__,))
             demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
 
-            tree = _SiteHierarchyTree().tree
+            tree = _SiteHierarchyTree().get_tree()
             assert_that(tree.children_objects, contains_inanyorder(eval_site))
             assert_that(tree.children_objects, has_length(1))
 

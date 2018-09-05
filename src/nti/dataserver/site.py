@@ -175,8 +175,7 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
 @interface.implementer(ISiteHierarchy)
 class _SiteHierarchyTree(object):
 
-    @Lazy
-    def tree(self):
+    def get_tree(self):
         tree = ObjectHierarchyTree()
 
         # Exerpted from nti.site.hostpolicy
