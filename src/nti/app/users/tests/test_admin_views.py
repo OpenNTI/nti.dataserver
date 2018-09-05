@@ -271,6 +271,15 @@ class TestAdminViews(ApplicationLayerTest):
         self.testapp.post_json('/dataserver2/@@RemoveUser',
                                {'username': username},
                                status=422)
+        
+        with mock_dataserver.mock_db_trans(self.ds):
+            User.create_user(username='user_two')
+        
+        self.testapp.delete('/dataserver2/users/%s' % self.default_username,
+                            status=422)
+        
+        self.testapp.delete('/dataserver2/users/user_two',
+                            status=204)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_ghost_objects(self):

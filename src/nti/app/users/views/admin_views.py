@@ -397,6 +397,33 @@ class SetCreationSiteView(SetUserCreationSiteView):
         return hexc.HTTPNoContent()
 
 
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             permission=nauth.ACT_NTI_ADMIN,
+             request_method='DELETE',
+             context=IUser)
+class DeleteUserView(AbstractAuthenticatedView):
+
+    def do_delete(self, user):
+        endInteraction()
+        try:
+            username = getattr(user, 'username', user)
+            User.delete_user(username)
+        finally:
+            restoreInteraction()
+
+    def __call__(self):
+        if self.context is self.remoteUser:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Cannot delete itself.'),
+                             },
+                             None)
+        self.do_delete(self.context)
+        return hexc.HTTPNoContent()
+
+
 @view_config(name='RemoveUser')
 @view_config(name='remove_user')
 @view_defaults(route_name='objects.generic.traversal',
@@ -404,7 +431,7 @@ class SetCreationSiteView(SetUserCreationSiteView):
                permission=nauth.ACT_NTI_ADMIN,
                request_method='POST',
                context=IDataserverFolder)
-class RemoveUserView(AbstractAuthenticatedView,
+class RemoveUserView(DeleteUserView,
                      ModeledContentUploadRequestUtilsMixin):
 
     def __call__(self):
@@ -425,11 +452,7 @@ class RemoveUserView(AbstractAuthenticatedView,
                                  'message': _(u'User not found.'),
                              },
                              None)
-        endInteraction()
-        try:
-            User.delete_user(username)
-        finally:
-            restoreInteraction()
+        self.do_delete(user)
         return hexc.HTTPNoContent()
 
 
