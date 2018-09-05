@@ -181,36 +181,24 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         return self._accumulate('getPrincipalsAndRoles')
 
     def assignRoleToPrincipal(self, role_id, principal_id):
-        sites = []
-        site_mapping = component.queryUtility(ISiteRoleMapping)
-        if site_mapping is not None:
-            for (site, role) in site_mapping.items():
-                if role == role_id:
-                    sites.append(self._get_parent_site(getSite(), site))
+        sites = component.queryUtility(ISiteRoleMapping)
         for site in sites:
             principal_role_manager = IPrincipalRoleManager(site)
             super(PersistentSiteRoleManager, principal_role_manager).assignRoleToPrincipal()
 
 
-def default_site_role_mapping():
+def default_site_role_manager_utility():
     """
     :return: A map of all roles scoped only to the current site
     """
-    role_map = dict()
-    for role in (ROLE_ADMIN,
-                 ROLE_MODERATOR,
-                 ROLE_CONTENT_EDITOR,
-                 ROLE_CONTENT_ADMIN,
-                 ROLE_SITE_ADMIN):
-        role_map.setdefault(getSite().__name__, []).append(role.id)
-    return role_map
+    return [getSite().__name__]
 
 
-def hierarchal_site_admin_role_mapping():
+def hierarchal_site_role_manager_utility():
     """
     :return: A map of all roles with site admins scoped to every site in the hierarchy
     """
-    role_map = default_site_role_mapping()
+    sites = default_site_role_manager_utility()
     current_site = getSite()
     site_hierarchy = component.queryUtility(ISiteHierarchy).tree
     site_node = site_hierarchy.get_node_for_object(current_site)
@@ -218,8 +206,8 @@ def hierarchal_site_admin_role_mapping():
     # Remove dataserver folder
     ancestors.remove(site_node.root.obj)
     for ancestor in ancestors:
-        role_map.setdefault(ancestor.__name__, []).append(ROLE_SITE_ADMIN.id)
-    return role_map
+        sites.append(ancestor.__name__)
+    return sites
 
 
 @interface.implementer(ISiteHierarchy)
@@ -256,6 +244,7 @@ class _SiteHierarchyTree(object):
                     parent = sites[parent_name]
                 tree.add(sites[name], parent=parent)
         return tree
+
 
 
 deferredimport.initialize()
