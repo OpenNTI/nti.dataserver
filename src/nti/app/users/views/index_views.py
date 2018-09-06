@@ -23,20 +23,19 @@ from nti.app.users.index import get_context_lastseen_catalog
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.metadata.index import get_metadata_catalog
-
-from nti.dataserver.users.index import get_entity_catalog
-from nti.dataserver.users.index import add_catalog_filters
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 
+from nti.dataserver.metadata.index import get_metadata_catalog
+
+from nti.dataserver.users.index import get_entity_catalog
+from nti.dataserver.users.index import add_catalog_filters
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
-ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 

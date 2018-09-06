@@ -10,6 +10,7 @@ from __future__ import absolute_import
 
 from zope import component
 from zope import interface
+from zope import lifecycleevent
 
 from zope.annotation.interfaces import IAnnotations
 
@@ -64,8 +65,10 @@ def evolve_user(user):
         # copy
         container = context_lastseen_factory(user)
         for k, v in old_container.items():
-            container.append(k, v)
-            count += 1
+            record = container.append(k, v)
+            if record is not None:
+                count += 1
+                lifecycleevent.modified(record)
 
         # ground
         old_container.__parent__ = None
