@@ -108,7 +108,8 @@ def _on_user_lastseen(user, event):
 
 
 @component.adapter(IUser, IObjectRemovedEvent)
-def _on_user_removed(obj, unused_event=None):
-    container = context_lastseen_factory(obj, False)
+def _on_user_removed(user, unused_event=None):
+    container = context_lastseen_factory(user, False)
     if container:
+        logger.info("Removing context last seen record(s) for user %s", user)
         container.clear()
