@@ -9,7 +9,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-generation = 98
+generation = 99
 
 # Allow going forward/backward for testing
 import os
@@ -177,6 +177,7 @@ def install_main(context):
         install_user_catalog(dataserver_folder, intids)
         install_metadata_catalog(dataserver_folder, intids)
         install_identifiers_catalog(dataserver_folder, intids)
+        install_context_lastseen_catalog(dataserver_folder, intids)
         install_content_resources_catalog(dataserver_folder, intids)
 
         users_folder = dataserver_folder['users']
@@ -212,6 +213,13 @@ def install_intids(dataserver_folder):
     lsm.registerUtility(intids, provided=zc.intid.IIntIds)
     return intids
 
+
+def install_context_lastseen_catalog(dataserver_folder, intids):
+    try:
+        from nti.app.users import index
+        index.install_context_lastseen_catalog(dataserver_folder, intids)
+    except ImportError:
+        pass
 
 def install_user_catalog(dataserver_folder, intids):
     return user_index.install_user_catalog(dataserver_folder, intids)
