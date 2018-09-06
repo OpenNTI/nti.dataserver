@@ -1,0 +1,17 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.component" />
+
+    <!-- Utilities -->
+    <utility factory=".admin.SiteAdminUtility" />
+
+	<!-- Adapter -->
+    <adapter factory=".admin.UserUpdateUtility"
+             for="nti.dataserver.interfaces.IUser"
+             provides="nti.dataserver.users.interfaces.IUserUpdateUtility" />
+
+</configure>
