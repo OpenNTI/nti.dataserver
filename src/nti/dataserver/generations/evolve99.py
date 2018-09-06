@@ -67,8 +67,8 @@ def evolve_user(user):
             container.append(k, v)
             count += 1
 
-        # clear
-        old_container.clear()
+        # ground
+        old_container.__parent__ = None
     except (ImportError, KeyError):
         pass
     return count
