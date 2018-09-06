@@ -65,8 +65,6 @@ from paste.deploy import loadwsgi
 
 from nti.appserver.application_server import WebSocketServer
 
-from nti.appserver.gunicorn_worker import MozSvcGeventWorker
-
 
 class _DummyApp(object):
     global_conf = None
@@ -192,7 +190,7 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class, ggevent.PyWSGIHandl
         return environ
 
 
-class GeventApplicationWorker(MozSvcGeventWorker):
+class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
     """
     Our application worker.
     """
