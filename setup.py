@@ -244,6 +244,8 @@ setup(
         # support for defining and evolving classes based on schemas
         # pulls in dm.reuse
         'dm.zope.schema',
+        # gevent pure python dns resolving
+        'dnspython',
         'filechunkio',  # Req'd for multi-put in boto == 2.5.2
         # A very simple (one module, no deps) RSS and Atom feed generator.
         # 1.7 is a modern rewrite with much better unicode and Py3k
@@ -258,6 +260,8 @@ setup(
         # Redis C parser (almost certainly an anti-optimization on
         # PyPy)
         'hiredis' if not IS_PYPY else '',
+        # gevent pure python dns resolving
+        'idna',
         'isodate',     # ISO8601 date/time/duration parser and formatter
         # Simple helper library for signing data that roundtrips
         # through untrusted environments
