@@ -30,6 +30,8 @@ import gc
 
 import gevent
 
+import time
+
 from zope import interface
 
 from pyramid.httpexceptions import HTTPOk
@@ -74,8 +76,12 @@ class greenlet_runner_tween(object):
         del request
         # Next, these are relatively rare, so this is a reasonable
         # time to clean up weak refs and otherwise do gc
-        gc.collect()
+        t0 = time.time()
+        unreachable_count = gc.collect()
+        t1 = time.time()
         # Finally, run the greenlets
         gevent.joinall(result.greenlets)
+        logger.info('Greenlet tween (unreachable_count=%s) (gc_time=%.3fs) (join_time=%.3fs)',
+                    unreachable_count, t1 - t0, time.time() - t1)
         return result.response
 greenlet_runner_tween_factory = greenlet_runner_tween
