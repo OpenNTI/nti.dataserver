@@ -14,6 +14,7 @@ from functools import total_ordering
 import six
 
 from zope import interface
+from zope import lifecycleevent
 
 from zope.container.contained import Contained
 
@@ -95,7 +96,15 @@ class ContextLastSeenRecord(PersistentCreatedModDateTrackingObject,
 class ContextLastSeenBTreeContainer(LastModifiedBTreeContainer):
 
     def add(self, record):
-        self[record.context] = record
+        stored = self.get(record.context)
+        if stored is None:
+            self[record.context] = record
+            stored = record
+        else:
+            # only copy the timestamp
+            stored.timestamp = record.timestamp
+            lifecycleevent.modified(stored)
+        return stored
 
     def append(self, item, timestamp=None):
         timestamp = timestamp or time.time()
