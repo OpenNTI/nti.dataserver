@@ -19,7 +19,7 @@ from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
-from nti.app.users.model import ContextLastSeenContainer
+from nti.app.users.model import ContextLastSeenBTreeContainer
 
 from nti.coremetadata.interfaces import IContextLastSeenContainer
 
@@ -63,19 +63,20 @@ def _user_to_displayname(context):
 # context last seen
 
 
-def _ContextLastSeenFactory(user):
+def context_lastseen_factory(user, create=True):
     result = None
     annotations = IAnnotations(user)
     KEY = CONTEXT_LASTSEEN_ANNOTATION_KEY
     try:
         result = annotations[KEY]
     except KeyError:
-        result = ContextLastSeenContainer()
-        annotations[KEY] = result
-        result.__name__ = KEY
-        result.__parent__ = user
-        # pylint: disable=too-many-function-args
-        IConnection(user).add(result)
+        if create:
+            result = ContextLastSeenBTreeContainer()
+            annotations[KEY] = result
+            result.__name__ = KEY
+            result.__parent__ = user
+            # pylint: disable=too-many-function-args
+            IConnection(user).add(result)
     return result
 
 
