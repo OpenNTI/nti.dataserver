@@ -1420,6 +1420,11 @@ class ISiteAdminUtility(interface.Interface):
         """
 
 
+class ISiteHierarchy(interface.Interface):
+    """
+    A utility that represents the current site hierarchy in a tree structure
+    """
+
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?

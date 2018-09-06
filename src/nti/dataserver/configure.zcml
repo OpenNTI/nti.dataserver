@@ -340,6 +340,10 @@
 				provides=".interfaces.INotableFilter"
 				for="*" />
 
+	<!-- Site Hierarchy -->
+	<utility factory=".site._SiteHierarchyTree"
+			 provides=".interfaces.ISiteHierarchy" />
+
 	<!-- ACL/ACE permissions -->
 	<include package="." file="configure_acls.zcml" />
 
