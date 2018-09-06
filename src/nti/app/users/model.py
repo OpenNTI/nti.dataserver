@@ -110,12 +110,14 @@ class ContextLastSeenBTreeContainer(LastModifiedBTreeContainer):
         timestamp = timestamp or time.time()
         ntiid = getattr(item, 'ntiid', item)
         if ntiid and isinstance(ntiid, six.string_types):
-            self.add(ContextLastSeenRecord(context=ntiid, timestamp=timestamp))
+            return self.add(ContextLastSeenRecord(context=ntiid, timestamp=timestamp))
 
     def extend(self, items, timestamp=None):
+        result = []
         timestamp = timestamp or time.time()
         for item in items or ():
-            self.append(item, timestamp)
+            result.append(self.append(item, timestamp))
+        return result
 
     def contexts(self):
         return list(self.keys())
