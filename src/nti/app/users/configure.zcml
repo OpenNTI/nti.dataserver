@@ -80,14 +80,7 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 for="nti.dataserver.interfaces.IUsersFolder" />
 
-    <!-- Utilities -->
-    <utility factory=".utils.SiteAdminUtility" />
-
-	<!-- Adapter -->
-    <adapter factory=".utils.UserUpdateUtility"
-             for="nti.dataserver.interfaces.IUser"
-             provides="nti.dataserver.users.interfaces.IUserUpdateUtility" />
-	
+	<!-- Adapter -->	
 	<adapter factory=".adapters._user_to_displayname" />
 
 	<adapter factory=".adapters.context_lastseen_factory"
@@ -104,5 +97,8 @@
 
     <subscriber factory=".providers._GlobalWorkspaceLinkProvider"
                 provides="nti.appserver.workspaces.interfaces.IGlobalWorkspaceLinkProvider"/>
+
+	<!-- Utils -->
+    <include package=".utils" />
 
 </configure>
