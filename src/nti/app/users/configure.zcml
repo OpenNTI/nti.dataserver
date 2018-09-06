@@ -99,6 +99,6 @@
                 provides="nti.appserver.workspaces.interfaces.IGlobalWorkspaceLinkProvider"/>
 
 	<!-- Utils -->
-	<include package=".utils" />
+    <include package=".utils" />
 
 </configure>

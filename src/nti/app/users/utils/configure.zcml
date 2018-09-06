@@ -6,12 +6,12 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.component" />
 
-    <!-- Utilities -->
-    <utility factory=".admin.SiteAdminUtility" />
+	<!-- Utilities -->
+	<utility factory=".admin.SiteAdminUtility" />
 
 	<!-- Adapter -->
-    <adapter factory=".admin.UserUpdateUtility"
-             for="nti.dataserver.interfaces.IUser"
-             provides="nti.dataserver.users.interfaces.IUserUpdateUtility" />
+	<adapter factory=".admin.UserUpdateUtility"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="nti.dataserver.users.interfaces.IUserUpdateUtility" />
 
 </configure>
