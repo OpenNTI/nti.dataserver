@@ -17,7 +17,10 @@ from zope import component
 from zope.event import notify
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+
+from nti.app.users.adapters import context_lastseen_factory
 
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import set_email_verification_time
@@ -102,3 +105,10 @@ def _on_user_lastseen(user, event):
     if request is not None and not is_impersonating(request):
         timestamp = event.timestamp
         user.update_last_seen_time(timestamp)
+
+
+@component.adapter(IUser, IObjectRemovedEvent)
+def _on_user_removed(obj, unused_event=None):
+    container = context_lastseen_factory(obj, False)
+    if container:
+        container.clear()

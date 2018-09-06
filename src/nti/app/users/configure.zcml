@@ -10,6 +10,7 @@
 	<subscriber handler=".subscribers._on_user_logon" />
 	<subscriber handler=".subscribers._on_user_logout" />
 	<subscriber handler=".subscribers._on_user_created" />
+	<subscriber handler=".subscribers._on_user_removed" />
 	<subscriber handler=".subscribers._on_user_updated" />
 	<subscriber handler=".subscribers._on_user_lastseen" />
 	<subscriber handler=".subscribers._new_user_is_not_blacklisted" />
@@ -89,7 +90,7 @@
 	
 	<adapter factory=".adapters._user_to_displayname" />
 
-	<adapter factory=".adapters._ContextLastSeenFactory"
+	<adapter factory=".adapters.context_lastseen_factory"
 			 provides="nti.coremetadata.interfaces.IContextLastSeenContainer"
 			 for="nti.coremetadata.interfaces.IUser" />
 

@@ -12,13 +12,17 @@ from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_length
 from hamcrest import assert_that
-
+from hamcrest import has_property
+from nti.testing.matchers import validly_provides
 from nti.testing.matchers import verifiably_provides
+
+from nti.app.users.model import ContextLastSeenRecord
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
+from nti.coremetadata.interfaces import IContextLastSeenRecord
 from nti.coremetadata.interfaces import IContextLastSeenContainer
 
 from nti.dataserver.interfaces import IUser
@@ -44,8 +48,33 @@ class TestModel(ApplicationLayerTest):
 
             container.extend(('1', '2'))
             assert_that(container, has_length(2))
+
             # pylint: disable=too-many-function-args
             assert_that(sorted(container.contexts()), is_(['1', '2']))
+            assert_that(container.get_timestamp('1'), is_not(none()))
+
             # coverage
             container = IContextLastSeenContainer(user)
             assert_that(IUser(container), is_(user))
+            
+            record = container.get('1')
+            assert_that(record, has_property('username', 'rukia@bleach.com'))
+            
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_record(self):
+        aizen = ContextLastSeenRecord(username=u'aizen',
+                                      context=u'bleach',
+                                      timestamp=1)
+        assert_that(aizen,
+                    validly_provides(IContextLastSeenRecord))
+        assert_that(aizen,
+                    verifiably_provides(IContextLastSeenRecord))
+        
+        ichigo = ContextLastSeenRecord(username=u'ichigo',
+                                       context=u'aizen',
+                                       timestamp=1)
+
+        assert_that(sorted([ichigo, aizen]),
+                    is_([aizen, ichigo]))
+    
+        assert_that(ichigo.__gt__(aizen), is_(True))
