@@ -11,6 +11,7 @@
 	<pyramid:scan package='.list_views' />
 	<pyramid:scan package='.mail_views' />
 	<pyramid:scan package='.admin_views' />
+	<pyramid:scan package='.index_views' />
 	<pyramid:scan package='.export_views' />
 	<pyramid:scan package='.profile_views' />
 	<pyramid:scan package='.contacts_views' />
