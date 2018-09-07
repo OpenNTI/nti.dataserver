@@ -8,6 +8,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import gc
 import os
 import sys
 import struct
@@ -132,6 +133,7 @@ class MinimalDataserver(object):
                 raise DeprecationWarning(deprecated +
                                          " is no longer supported. Remove your method " +
                                          str(meth))
+        #gc.set_debug(gc.DEBUG_STATS)
 
     def _setup_conf(self, environment_dir, demo=False):
         return config.temp_get_config(environment_dir, demo=demo)
@@ -179,7 +181,7 @@ class MinimalDataserver(object):
         __traceback_info__ = self, conf, conf.main_conf
         if not conf.main_conf.has_option('redis', 'redis_url'):
             msg = """
-            YOUR CONFIGURATION IS OUT OF DATE. Please install redis and then 
+            YOUR CONFIGURATION IS OUT OF DATE. Please install redis and then
             run nti_init_env --upgrade-outdated --write-supervisord
             """
             logger.warn(msg)
@@ -305,7 +307,7 @@ class MinimalDataserver(object):
                 if close_func is not None:
                     close_func()
                 elif obj is not None:
-                    logger.log(level, 
+                    logger.log(level,
                                "Don't know how to close %s = %s", name, obj)
             except Exception:  # pylint:disable=I0011,W0703
                 logger.log(level, 'Failed to close %s = %s',
@@ -376,8 +378,8 @@ def _after_database_opened_listener(event):
         @functools.wraps(orig_class_factory)
         def nti_classFactory(connection, modulename, globalname):
             result = orig_class_factory(connection, modulename, globalname)
-            replace = getattr(result, 
-                              '_v_nti_pseudo_broken_replacement_name', 
+            replace = getattr(result,
+                              '_v_nti_pseudo_broken_replacement_name',
                               None)
             if replace is not None:
                 result = orig_class_factory(connection, modulename, replace)
@@ -456,7 +458,7 @@ class Dataserver(MinimalDataserver):
             # TODO: For right now, we are also handling initialization until all code
             # is ported over
             if not root.has_key('nti.dataserver'):
-                raise Exception("Creating DS against uninitialized DB. Test code?", 
+                raise Exception("Creating DS against uninitialized DB. Test code?",
                                 str(root))
 
         self.__setup_volatile()

@@ -26,8 +26,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import gc
-
 import gevent
 
 from zope import interface
@@ -72,9 +70,6 @@ class greenlet_runner_tween(object):
         # Ok, our time to shine. First, drop our
         # local reference to the request, just for GPs
         del request
-        # Next, these are relatively rare, so this is a reasonable
-        # time to clean up weak refs and otherwise do gc
-        gc.collect()
         # Finally, run the greenlets
         gevent.joinall(result.greenlets)
         return result.response
