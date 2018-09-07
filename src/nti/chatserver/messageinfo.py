@@ -8,10 +8,15 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import six
 import time
 import uuid
 import datetime
+
+from persistent import Persistent
+
+from persistent.list import PersistentList
+
+import six
 
 from zope import component
 from zope import interface
@@ -19,10 +24,6 @@ from zope import interface
 from zope.deprecation import deprecate
 
 from zope.dublincore.interfaces import IDCTimes
-
-from persistent import Persistent
-
-from persistent.list import PersistentList
 
 from nti.base._compat import text_
 
@@ -60,7 +61,7 @@ from nti.threadable.threadable import Threadable as ThreadableMixin
 
 logger = __import__('logging').getLogger(__name__)
 
-# TODO: MessageInfo is a mess. Unify better with IContent
+# Warning!!! MessageInfo is a mess. Unify better with IContent
 # and the other content types.
 # We manually re-implement IDCTimes (should extend
 # CreatedModDateTrackingObject)
@@ -245,7 +246,7 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,
         assert 'recipients' in result
         return result
 
-    def updateFromExternalObject(self, parsed, *args, **kwargs):
+    def updateFromExternalObject(self, parsed, *args, **kwargs):  # pylint: disable=arguments-differ
         if 'Body' in parsed and 'body' not in parsed:
             parsed['body'] = parsed['Body']
         super(MessageInfoInternalObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)

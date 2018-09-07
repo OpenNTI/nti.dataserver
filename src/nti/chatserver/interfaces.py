@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+# pylint: disable=inherit-non-class,inconsistent-mro
+
 import six
 
 from zope import component
@@ -46,19 +48,6 @@ from nti.schema.field import UniqueIterable
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine as TextLine
 
-
-class IChatserver(interface.Interface):
-    pass
-
-
-class IChatEventHandler(ISocketEventHandler):
-    """
-    Marker interface for objects designed specifically as chat
-    event handlers. These will typically be registered as a multi-adapter
-    on the combination ``(user, session, chatserver)``.
-    """
-
-
 ACT_ENTER = Permission('nti.chatserver.actions.enter')
 ACT_MODERATE = Permission('nti.chatserver.actions.moderate')
 ACT_ADD_OCCUPANT = Permission('nti.chatserver.actions.add_occupant')
@@ -77,6 +66,18 @@ STATUS_INITIAL = u'st_INITIAL'
 STATUS_PENDING = u'st_PENDING'
 STATUS_SHADOWED = u'st_SHADOWED'
 STATUSES = (STATUS_INITIAL, STATUS_PENDING, STATUS_POSTED, STATUS_SHADOWED)
+
+
+class IChatserver(interface.Interface):
+    pass
+
+
+class IChatEventHandler(ISocketEventHandler):
+    """
+    Marker interface for objects designed specifically as chat
+    event handlers. These will typically be registered as a multi-adapter
+    on the combination ``(user, session, chatserver)``.
+    """
 
 
 class IMeeting(IModeledContent, IZContained):
@@ -102,9 +103,13 @@ class IMeeting(IModeledContent, IZContained):
 
     Active = Bool(title=u"Whether the meeting is currently active")
 
-    occupant_names = Set(title=u"A set of the string names of members currently in the meeting; immutable.")
+    occupant_names = Set(
+        title=u"A set of the string names of members currently in the meeting; immutable."
+    )
 
-    historical_occupant_names = Set(title=u"A set of the string names of anyone who has ever been a member of this meeting; immutable.")
+    historical_occupant_names = Set(
+        title=u"A set of the string names of anyone who has ever been a member of this meeting; immutable."
+    )
 
 
 class IMeetingShouldChangeModerationStateEvent(IObjectEvent):
@@ -157,7 +162,9 @@ class IMeetingPolicy(interface.Interface):
         :return: Boolean value indicating whether the username was shadowed.
         """
 
-    moderated_by_usernames = interface.Attribute("Iterable of names moderating this meeting.")
+    moderated_by_usernames = interface.Attribute(
+        "Iterable of names moderating this meeting."
+    )
 
 
 class IMessageInfo(IShareableModeledContent,
@@ -272,7 +279,7 @@ class IMeetingStorage(interface.Interface):
     the room's lifetime extend beyond that).
     """
 
-    def get(room_id):
+    def get(room_id):  # pylint: disable=arguments-differ
         """
         Returns the stored room having the given ID, or None
         if there is no room with that Id stored in this object.
@@ -337,7 +344,9 @@ class IUserTranscriptStorage(interface.Interface):
 
     transcripts = interface.Attribute("Return all Transcript objects")
 
-    transcript_summaries = interface.Attribute("Return all Transcript summary objects")
+    transcript_summaries = interface.Attribute(
+        "Return all Transcript summary objects"
+    )
 
     def transcript_for_meeting(meeting_id):
         pass
@@ -381,7 +390,9 @@ class IPresenceInfo(IUnattachedPresenceInfo, ILastModified):
                         required=False)
 
     def isAvailable():
-        """Does the presence represent a user who is available for chat/chat APIs?"""
+        """
+        Does the presence represent a user who is available for chat/chat APIs?
+        """
 
 
 class IContacts(interface.Interface):
@@ -425,7 +436,7 @@ class IContactISubscribeToAddedToContactsEvent(IContactsModifiedEvent):
 @interface.implementer(IContactsModifiedEvent)
 class ContactsModifiedEvent(ObjectEvent):
 
-    def __init__(self, user):
+    def __init__(self, user):  # pylint: disable=useless-super-delegation
         super(ContactsModifiedEvent, self).__init__(user)
 
     @property
@@ -502,8 +513,7 @@ class UserRoomEvent(ObjectEvent):
     def username(self):
         if isinstance(self.object, six.string_types):
             return self.object
-        else:
-            return self.object.username
+        return self.object.username
 
 
 @interface.implementer(IUserEnterRoomEvent)

@@ -44,7 +44,7 @@ class DefaultComputedContacts(object):
 
     @property
     def contactNamesSubscribedToMyPresenceUpdates(self):
-        # TODO: Better algorithm. Who should this really go to?
+        # Better algorithm. Who should this really go to?
         followed = {e.username for e in self.context.entities_followed}
         shared_from = set(self.context.accepting_shared_data_from)
         has_me_in_buddy_list = followed | shared_from

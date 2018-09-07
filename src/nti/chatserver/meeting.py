@@ -112,7 +112,7 @@ class _Meeting(ThreadableMixin,
         # creating a room in reply to something that's shared: everyone
         # that it is shared with should get the transcript even if they
         # didn't participate in the room because they were offline.
-        # TODO: How does this interact with things that are
+        # Warning !!! How does this interact with things that are
         # shared publically and not specific users?
         self._addl_transcripts_to = Set()
 
@@ -177,6 +177,7 @@ class _Meeting(ThreadableMixin,
         return IMeetingPolicy(self)
 
     def post_message(self, msg_info):
+        # pylint: disable=too-many-function-args
         result = self._policy().post_message(msg_info)
         if result == 1 and result is not True:
             self._MessageCount.increment()
@@ -231,18 +232,21 @@ class _Meeting(ThreadableMixin,
             return True
 
     def add_moderator(self, mod_name):
+        # pylint: disable=too-many-function-args
         self._policy().add_moderator(mod_name)
 
     def is_moderated_by(self, mod_name):
         return self._moderated.is_moderated_by(mod_name)
 
     def approve_message(self, msg_id):
+        # pylint: disable=too-many-function-args
         return self._policy().approve_message(msg_id)
 
     def shadow_user(self, username):
+        # pylint: disable=too-many-function-args
         return self._policy().shadow_user(username)
 
-    def toExternalDictionary(self, mergeFrom=None, *args, **kwargs):
+    def toExternalDictionary(self, mergeFrom=None, *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg
         result = dict(mergeFrom) if mergeFrom else dict()
         result[CLASS] = 'RoomInfo'
         result[MIMETYPE] = 'application/vnd.nextthought.roominfo'
@@ -251,10 +255,10 @@ class _Meeting(ThreadableMixin,
         result['MessageCount'] = self.MessageCount
         result['Moderators'] = list(self.Moderators)
         result['Occupants'] = list(self.occupant_names)
-        # TODO: Handling shadowing and so on.
+        # Warning !!!: Handling shadowing and so on.
         return super(_Meeting, self).toExternalDictionary(mergeFrom=result, *args, **kwargs)
 
-    def updateFromExternalObject(self, parsed, *args, **kwargs):
+    def updateFromExternalObject(self, parsed, *args, **kwargs):  # pylint: disable=arguments-differ
         addl_ts_needs_reset = self.inReplyTo
         super(_Meeting, self).updateFromExternalObject(parsed, *args, **kwargs)
         try:
@@ -265,6 +269,7 @@ class _Meeting(ThreadableMixin,
         except AttributeError:
             pass
 
+    # pylint: disable=protected-access
     __repr__ = make_repr(lambda self: "<%s %s %s>" % (self.__class__.__name__,
                                                       self.ID,
                                                       self._occupant_names))
