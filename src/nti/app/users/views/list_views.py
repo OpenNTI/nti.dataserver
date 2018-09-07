@@ -99,10 +99,11 @@ class SiteUsersView(AbstractEntityViewMixin):
             IX_LASTSEEN_TIME: get_entity_catalog(),
         }
 
-    def search_include(self, doc_id, username, alias, realname):
+    def search_include(self, doc_id):
+        username = self.username(doc_id)
         result = not self.filterAdmins or not is_site_admin(username)
         if result and self.searchTerm:
-            result = super(SiteUsersView, self).search_include(doc_id, username, alias, realname)
+            result = super(SiteUsersView, self).search_include(doc_id)
         return result
 
     def reify_predicate(self, obj):
