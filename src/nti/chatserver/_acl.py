@@ -19,6 +19,8 @@ from nti.chatserver.interfaces import IMeeting
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 
+logger = __import__('logging').getLogger(__name__)
+
 
 @component.adapter(IMeeting)
 class _MeetingACLProvider(AbstractCreatedAndSharedACLProvider):
