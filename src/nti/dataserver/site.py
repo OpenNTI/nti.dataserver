@@ -30,15 +30,9 @@ from zope.traversing.interfaces import IEtcNamespace
 
 from nti.common.datastructures import ObjectHierarchyTree
 
-from nti.dataserver.authorization import ROLE_ADMIN
-from nti.dataserver.authorization import ROLE_CONTENT_ADMIN
-from nti.dataserver.authorization import ROLE_CONTENT_EDITOR
-from nti.dataserver.authorization import ROLE_MODERATOR
-from nti.dataserver.authorization import ROLE_SITE_ADMIN
-
 from nti.dataserver.interfaces import ISiteHierarchy
 from nti.dataserver.interfaces import ISiteRoleManager
-from nti.dataserver.interfaces import ISiteRoleMapping
+from nti.dataserver.interfaces import ISiteAdminManagerUtility
 
 from nti.externalization.persistence import NoPickle
 
@@ -180,34 +174,59 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         """
         return self._accumulate('getPrincipalsAndRoles')
 
-    def assignRoleToPrincipal(self, role_id, principal_id):
-        sites = component.queryUtility(ISiteRoleMapping)
-        for site in sites:
+    def _update_role(self, func_name, *args):
+        super_func = getattr(super(PersistentSiteRoleManager, self), func_name)
+        super_func(*args)
+        site_admin_manager = component.getUtility(ISiteAdminManagerUtility)
+        for site in site_admin_manager.get_sites():
+            # XXX: If the site that you adapted to to get here is in this list,
+            # the annotation will not work as expected
             principal_role_manager = IPrincipalRoleManager(site)
-            super(PersistentSiteRoleManager, principal_role_manager).assignRoleToPrincipal()
+            super_func = getattr(super(PersistentSiteRoleManager, principal_role_manager), func_name)
+            super_func(*args)
+
+    def assignRoleToPrincipal(self, role_id, principal_id):
+        self._update_role('assignRoleToPrincipal', role_id, principal_id)
+
+    def removeRoleFromPrincipal(self, role_id, principal_id):
+        self._update_role('removeRoleFromPrincipal', role_id, principal_id)
 
 
-def default_site_role_manager_utility():
-    """
-    :return: A map of all roles scoped only to the current site
-    """
-    return [getSite().__name__]
+class DefaultSiteAdminManagerUtility(object):
+
+    def get_sites(self):
+        return []
 
 
-def hierarchal_site_role_manager_utility():
-    """
-    :return: A map of all roles with site admins scoped to every site in the hierarchy
-    """
-    sites = default_site_role_manager_utility()
-    current_site = getSite()
-    site_hierarchy = component.queryUtility(ISiteHierarchy).tree
-    site_node = site_hierarchy.get_node_for_object(current_site)
-    ancestors = list(site_node.ancestor_objects)
-    # Remove dataserver folder
-    ancestors.remove(site_node.root.obj)
-    for ancestor in ancestors:
-        sites.append(ancestor.__name__)
-    return sites
+class HierarchalSiteAdminManagerUtility(DefaultSiteAdminManagerUtility):
+
+    def get_sites(self):
+        sites = super(HierarchalSiteAdminManagerUtility, self).get_sites()
+        current_site = getSite()
+        site_hierarchy = component.getUtility(ISiteHierarchy)
+        site_hierarchy = site_hierarchy.get_tree()
+        site_node = site_hierarchy.get_node_from_object(current_site)
+        sites += list(site_node.ancestor_objects)
+        sites += list(site_node.descendant_objects)
+        # Remove dataserver folder
+        sites.remove(site_node.root.obj)
+        return sites
+
+
+class ImmediateParentSiteAdminManagerUtility(DefaultSiteAdminManagerUtility):
+
+    def get_sites(self):
+        sites = super(ImmediateParentSiteAdminManagerUtility, self).get_sites()
+        current_site = getSite()
+        site_hierarchy = component.getUtility(ISiteHierarchy)
+        site_hierarchy = site_hierarchy.get_tree()
+        site_node = site_hierarchy.get_node_from_object(current_site)
+        sites.append(site_node.parent_object)
+        try:  # Make sure we don't include dataserver2
+            sites.remove(site_node.root.obj)
+        except ValueError:
+            pass
+        return sites
 
 
 @interface.implementer(ISiteHierarchy)
@@ -244,7 +263,6 @@ class _SiteHierarchyTree(object):
                     parent = sites[parent_name]
                 tree.add(sites[name], parent=parent)
         return tree
-
 
 
 deferredimport.initialize()

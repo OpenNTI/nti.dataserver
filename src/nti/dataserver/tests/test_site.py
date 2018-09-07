@@ -30,6 +30,7 @@ from zope.component.hooks import site
 from zope.component.hooks import getSite
 
 from zope.component.interfaces import IComponents
+from zope.component.interfaces import ISite
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
@@ -42,17 +43,27 @@ from zope.traversing.interfaces import IEtcNamespace
 
 from z3c.baseregistry.baseregistry import BaseComponents
 
+from nti.appserver.policies.sites import BASEADULT
 from nti.appserver.policies.sites import BASECOPPA
 
+from nti.dataserver.authorization import ROLE_SITE_ADMIN
 from nti.dataserver.authorization import ROLE_SITE_ADMIN_NAME
 
 from nti.dataserver.authorization import is_site_admin
 
+from nti.dataserver.interfaces import ISiteAdminManagerUtility
+from nti.dataserver.interfaces import ISiteHierarchy
 from nti.dataserver.interfaces import ISiteRoleManager
 
 from nti.dataserver.site import _SiteHierarchyTree
+from nti.dataserver.site import DefaultSiteAdminManagerUtility
+from nti.dataserver.site import HierarchalSiteAdminManagerUtility
+from nti.dataserver.site import ImmediateParentSiteAdminManagerUtility
+from nti.dataserver.site import PersistentSiteRoleManager
 
 from nti.dataserver.users.users import User
+
+from nti.dataserver.tests import SharedConfiguringTestLayer
 
 from nti.testing.base import ConfiguringTestBase
 
@@ -64,7 +75,6 @@ from nti.site.transient import TrivialSite as _TrivialSite
 
 from nti.site.site import get_site_for_site_names
 
-from nti.site.tests import SharedConfiguringTestLayer
 from nti.site.tests import WithMockDS
 from nti.site.tests import mock_db_trans
 
@@ -98,13 +108,55 @@ ZCML_STRING = """
             component="nti.appserver.policies.sites.BASECOPPA"
             provides="zope.component.interfaces.IComponents"
             name="genericcoppabase" />
+            
+        <utility
+            component="nti.appserver.policies.sites.BASEADULT"
+            provides="zope.component.interfaces.IComponents"
+            name="genericadultbase" />
+            
+        <utility
+            component="nti.dataserver.tests.test_site.EVAL"
+            provides="zope.component.interfaces.IComponents"
+            name="eval.nextthoughttest.com" />
+            
+        <utility
+            component="nti.dataserver.tests.test_site.EVALALPHA"
+            provides="zope.component.interfaces.IComponents"
+            name="eval-alpha.nextthoughttest.com" />
+            
+        <utility
+            component="nti.dataserver.tests.test_site.DEMO"
+            provides="zope.component.interfaces.IComponents"
+            name="demo.nextthoughttest.com" />
+            
+        <utility
+            component="nti.dataserver.tests.test_site.DEMOALPHA"
+            provides="zope.component.interfaces.IComponents"
+            name="demo-alpha.nextthoughttest.com" />
 
+        <registerIn registry="nti.appserver.policies.sites.BASECOPPA">
+            <utility factory="nti.dataserver.site.DefaultSiteAdminManagerUtility"
+                     provides="nti.dataserver.interfaces.ISiteAdminManagerUtility" />
+         </registerIn>
+         
         <registerIn registry="nti.dataserver.tests.test_site._MYSITE">
             <!-- Setup some site level admins -->
             <utility factory="nti.dataserver.site.SiteRoleManager"
                      provides="nti.dataserver.interfaces.ISiteRoleManager" />
 
             <sp:grantSite role="role:nti.dataserver.site-admin" principal="chris"/>
+        </registerIn>
+        
+        <registerIn registry="nti.dataserver.tests.test_site.EVAL">
+            <!-- Setup some site level admins -->
+            <utility factory="nti.dataserver.site.SiteRoleManager"
+                     provides="nti.dataserver.interfaces.ISiteRoleManager" />
+            
+            <utility factory="nti.dataserver.site.HierarchalSiteAdminManagerUtility"
+                     provides="nti.dataserver.interfaces.ISiteAdminManagerUtility" />
+                     
+            <utility factory="nti.dataserver.site._SiteHierarchyTree"
+                     provides="nti.dataserver.interfaces.ISiteHierarchy" />
         </registerIn>
     </configure>
 """
@@ -114,6 +166,36 @@ _MYSITE = BaseComponents(BASECOPPA, name='test.components',
 
 _MYSITE2 = BaseComponents(BASECOPPA, name='test.components2',
                           bases=(BASECOPPA,))
+
+# Match a hierarchy we have in nti.app.sites.demo:
+# global
+#  \
+#   eval
+#   |\
+#   | eval-alpha
+#   \
+#   demo
+#    \
+#     demo-alpha
+
+
+EVAL = BaseComponents(BASEADULT,
+                      name='eval.nextthoughttest.com',
+                      bases=(BASEADULT,))
+
+EVALALPHA = BaseComponents(EVAL,
+                           name='eval-alpha.nextthoughttest.com',
+                           bases=(EVAL,))
+
+DEMO = BaseComponents(EVAL,
+                      name='demo.nextthoughttest.com',
+                      bases=(EVAL,))
+
+DEMOALPHA = BaseComponents(DEMO,
+                           name='demo-alpha.nextthoughttest.com',
+                           bases=(DEMO,))
+
+_SITES = (EVAL, EVALALPHA, DEMO, DEMOALPHA)
 
 
 class TestSiteRoleManager(ConfiguringTestBase):
@@ -203,37 +285,6 @@ class TestSiteRoleManager(ConfiguringTestBase):
             assert_that(is_site_admin(parent_user), is_(True))
 
 
-# Match a hierarchy we have in nti.app.sites.demo:
-# global
-#  \
-#   eval
-#   |\
-#   | eval-alpha
-#   \
-#   demo
-#    \
-#     demo-alpha
-
-
-EVAL = BaseComponents(BASE,
-                      name='eval.nextthoughttest.com',
-                      bases=(BASE,))
-
-EVALALPHA = BaseComponents(EVAL,
-                           name='eval-alpha.nextthoughttest.com',
-                           bases=(EVAL,))
-
-DEMO = BaseComponents(EVAL,
-                      name='demo.nextthoughttest.com',
-                      bases=(EVAL,))
-
-DEMOALPHA = BaseComponents(DEMO,
-                           name='demo-alpha.nextthoughttest.com',
-                           bases=(DEMO,))
-
-_SITES = (EVAL, EVALALPHA, DEMO, DEMOALPHA)
-
-
 class TestSiteHierarchy(unittest.TestCase):
 
     layer = SharedConfiguringTestLayer
@@ -256,11 +307,17 @@ class TestSiteHierarchy(unittest.TestCase):
         # unregister it!
         self._event_handler = lambda *args: self._events.append(args)
         BASE.registerHandler(self._event_handler, required=(IHostPolicySiteManager, INewLocalSite))
+        BASE.registerUtility(DefaultSiteAdminManagerUtility(), ISiteAdminManagerUtility)
+        BASE.registerUtility(_SiteHierarchyTree(), ISiteHierarchy)
+        BASE.registerAdapter(PersistentSiteRoleManager, (ISite,), IPrincipalRoleManager)
 
     def tearDown(self):
         for site in _SITES:
             BASE.unregisterUtility(site, name=site.__name__, provided=IComponents)
         BASE.unregisterHandler(self._event_handler, required=(IHostPolicySiteManager, INewLocalSite))
+        BASE.unregisterUtility(DefaultSiteAdminManagerUtility(), ISiteAdminManagerUtility)
+        BASE.unregisterUtility(_SiteHierarchyTree(), ISiteHierarchy)
+        BASE.unregisterAdapter(PersistentSiteRoleManager, (ISite,), IPrincipalRoleManager)
         super(TestSiteHierarchy, self).tearDown()
 
     @WithMockDS
@@ -303,3 +360,109 @@ class TestSiteHierarchy(unittest.TestCase):
 
         # No new sites created
         assert_that(self._events, has_length(len(_SITES)))
+
+    @WithMockDS
+    def test_default_site_admin_manager(self):
+        with mock_db_trans():
+            synchronize_host_policies()
+            demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
+
+            with site(demo_alpha_site):
+                user = User(u'SiteAdmin')
+                demo_alpha_prm = IPrincipalRoleManager(getSite())
+                demo_alpha_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user)
+                principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                assert_that(principals, contains_inanyorder((user, Allow,)))
+
+                demo_alpha_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN.id, user)
+                principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                assert_that(principals, contains_inanyorder((user, Deny,)))
+
+    @WithMockDS
+    def test_hierarchy_site_admin_manager(self):
+        with mock_db_trans():
+            synchronize_host_policies()
+            eval_site = get_site_for_site_names((EVAL.__name__,))
+            alpha_site = get_site_for_site_names((EVALALPHA.__name__,))
+            demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
+
+            with site(demo_alpha_site):
+                user = User(u'SiteAdmin')
+                psm = getSite().getSiteManager()
+                psm.unregisterUtility(DefaultSiteAdminManagerUtility(), ISiteAdminManagerUtility)
+                psm.registerUtility(HierarchalSiteAdminManagerUtility(), ISiteAdminManagerUtility)
+                demo_alpha_prm = IPrincipalRoleManager(getSite())
+                demo_alpha_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user)
+                principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                # Permission in demo-alpha and the immediate parent (demo)
+                assert_that(principals, contains_inanyorder((user, Allow,), (user, Allow,)))
+
+                demo_alpha_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN.id, user)
+                principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                assert_that(principals, contains_inanyorder((user, Deny,), (user, Deny,)))
+
+            with site(eval_site):
+                eval_site_prm = IPrincipalRoleManager(getSite())
+                principals = eval_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                assert_that(principals, contains_inanyorder((user, Deny,)))
+
+            with site(demo_alpha_site):
+                demo_alpha_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user)
+
+            with site(eval_site):
+                eval_site_prm = IPrincipalRoleManager(getSite())
+                principals = eval_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                assert_that(principals, contains_inanyorder((user, Allow,)))
+
+            with site(alpha_site):
+                alpha_site_prm = IPrincipalRoleManager(getSite())
+                principals = alpha_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                # Privileges granted from the parent (eval)
+                assert_that(principals, contains_inanyorder((user, Allow,)))
+
+    @WithMockDS
+    def test_immediate_site_admin_manager(self):
+        with mock_db_trans():
+            synchronize_host_policies()
+            eval_site = get_site_for_site_names((EVAL.__name__,))
+            demo_site = get_site_for_site_names((DEMO.__name__,))
+            alpha_site = get_site_for_site_names((EVALALPHA.__name__,))
+            demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
+
+            with site(demo_alpha_site):
+                user = User(u'SiteAdmin')
+                psm = getSite().getSiteManager()
+                psm.unregisterUtility(DefaultSiteAdminManagerUtility(), ISiteAdminManagerUtility)
+                psm.registerUtility(ImmediateParentSiteAdminManagerUtility(), ISiteAdminManagerUtility)
+                demo_alpha_prm = IPrincipalRoleManager(getSite())
+                demo_alpha_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user)
+                principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                # Permission in demo-alpha and the immediate parent (demo)
+                assert_that(principals, contains_inanyorder((user, Allow,), (user, Allow,)))
+
+                demo_alpha_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN.id, user)
+                principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                assert_that(principals, contains_inanyorder((user, Deny,), (user, Deny,)))
+
+            with site(eval_site):
+                eval_site_prm = IPrincipalRoleManager(getSite())
+                principals = eval_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                assert_that(principals, has_length(0))
+
+            with site(demo_alpha_site):
+                demo_alpha_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user)
+
+            with site(demo_site):
+                demo_prm = IPrincipalRoleManager(getSite())
+                principals = demo_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                assert_that(principals, contains_inanyorder((user, Allow,)))
+
+            with site(eval_site):
+                eval_site_prm = IPrincipalRoleManager(getSite())
+                principals = eval_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                assert_that(principals, has_length(0))
+
+            with site(alpha_site):
+                alpha_site_prm = IPrincipalRoleManager(getSite())
+                principals = alpha_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
+                assert_that(principals, has_length(0))
