@@ -76,12 +76,19 @@ probably a big win in unifying the indexes. Try an KeywordIndex.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import time
+
+from persistent import Persistent
+
+from repoze.lru import lru_cache
+
+import six
+
+from ZODB.POSException import POSError
 
 from zope import component
 from zope import interface
@@ -91,12 +98,6 @@ from zope.cachedescriptors.property import CachedProperty
 
 from zope.intid.interfaces import IIntIds
 
-from ZODB.POSException import POSKeyError
-
-from persistent import Persistent
-
-from repoze.lru import lru_cache
-
 from nti.chatserver.interfaces import IMeeting
 from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IUserTranscriptStorage
@@ -104,7 +105,7 @@ from nti.chatserver.interfaces import IMessageInfoPostedToRoomEvent
 
 from nti.coremetadata.mixins import ZContainedMixin
 
-from nti.dataserver import users
+from nti.dataserver.activitystream_change import Change
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ILinked
@@ -114,9 +115,11 @@ from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
 from nti.dataserver.interfaces import ITranscriptSummary
 
-from nti.dataserver.activitystream_change import Change
+from nti.dataserver.users.users import User
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
+
+from nti.intid.common import addIntId
 
 from nti.links import links
 
@@ -136,78 +139,89 @@ from nti.wref.interfaces import IWeakRef
 
 from nti.zope_catalog.interfaces import INoAutoIndexEver
 
+logger = __import__('logging').getLogger(__name__)
+
+
+# interfaces
+
+
 class _IMeetingTranscriptStorage(ICreated,  # ICreated so they get an ACL
-								 INoAutoIndexEver):
+                                 INoAutoIndexEver):
 
-	meeting = Object(IMeeting, title="The meeting we hold messages to; may go null")
+    meeting = Object(IMeeting,
+                     title="The meeting we hold messages to; may go null")
 
-	def add_message(msg):
-		"""
-		Store the message with this transcript.
-		"""
+    def add_message(msg):
+        """
+        Store the message with this transcript.
+        """
 
-	def remove_message(msg):
-		"""
-		Remove the message from this transcript.
-		"""
+    def remove_message(msg):
+        """
+        Remove the message from this transcript.
+        """
 
-	def itervalues():
-		"""
-		Iterate all the messages in this transcript.
-		"""
+    def itervalues():
+        """
+        Iterate all the messages in this transcript.
+        """
+
+
+# implementations
+
 
 @interface.implementer(_IMeetingTranscriptStorage)
 class _AbstractMeetingTranscriptStorage(PersistentCreatedModDateTrackingObject,
-										ZContainedMixin):
+                                        ZContainedMixin):
 
-	"""
-	The storage for the transcript of a single session. Private object, not public.
-	"""
+    """
+    The storage for the transcript of a single session. Private object, not public.
+    """
 
-	creator = SYSTEM_USER_NAME
+    creator = SYSTEM_USER_NAME
 
-	def __init__(self, meeting):
-		super(_AbstractMeetingTranscriptStorage, self).__init__()
-		self._meeting_ref = IWeakRef(meeting)
+    def __init__(self, meeting):
+        super(_AbstractMeetingTranscriptStorage, self).__init__()
+        self._meeting_ref = IWeakRef(meeting)
 
-	@property
-	def meeting(self):
-		return self._meeting_ref()
+    @property
+    def meeting(self):
+        return self._meeting_ref()
 
-	def add_message(self, msg):
-		"""
-		Stores the message in this transcript.
-		"""
-		raise NotImplementedError()
+    def add_message(self, msg):
+        """
+        Stores the message in this transcript.
+        """
+        raise NotImplementedError()
 
-	def remove_message_by_id(self, uid):
-		"""
-		Removes the message from this transcript.
-		"""
-		raise NotImplementedError()
+    def remove_message_by_id(self, uid):
+        """
+        Removes the message from this transcript.
+        """
+        raise NotImplementedError()
 
-	def remove_message(self, msg):
-		"""
-		Removes the message from this transcript.
-		"""
-		raise NotImplementedError()
+    def remove_message(self, msg):
+        """
+        Removes the message from this transcript.
+        """
+        raise NotImplementedError()
 
-	def __contains__(self, key):
-		"""
-		Check if a message is in this transcript
-		"""
-		raise NotImplementedError()
+    def __contains__(self, key):
+        """
+        Check if a message is in this transcript
+        """
+        raise NotImplementedError()
 
-	def itervalues(self):
-		raise NotImplementedError()
+    def itervalues(self):
+        raise NotImplementedError()
 
-	# for finding MessageInfos with zope.genartions.findObjectsMatching
-	# In some (early!) migration cases, it may be needed to disable this due to the
-	# switch to callable refs: the iterator cannot iterate non-callable objects, and
-	# that breaks generations.findObjectsMatching, # it doesn't catch that exception.
-	# Instead, the migration code needs to modify this class dynamically.
-	def values(self):
-		return self.itervalues()
+    # for finding MessageInfos with zope.genartions.findObjectsMatching
+    # In some (early!) migration cases, it may be needed to disable this due to the
+    # switch to callable refs: the iterator cannot iterate non-callable objects, and
+    # that breaks generations.findObjectsMatching, # it doesn't catch that exception.
+    # Instead, the migration code needs to modify this class dynamically.
+    def values(self):
+        return self.itervalues()
 
 # The class _MeetingTranscriptStorage extended AbstractMeetingTranscriptStorage and
 # stored messages in an OOBTree as WeakRefs keyed by message ID. With the move
@@ -219,397 +233,435 @@ class _AbstractMeetingTranscriptStorage(PersistentCreatedModDateTrackingObject,
 # _CopyingWeakRef # bwc for things in the database
 @interface.implementer(_IMeetingTranscriptStorage)
 class _MeetingTranscriptStorage(Persistent, ZContainedMixin):
-	pass
+    pass
+
 
 @interface.implementer(_IMeetingTranscriptStorage)
 class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
-	"""
-	The storage for the transcript of a single session based on docids.
-	Private object, not public.
-	"""
+    """
+    The storage for the transcript of a single session based on docids.
+    Private object, not public.
+    """
 
-	def __init__(self, meeting):
-		intids = self._intids
-		if intids.queryId(meeting) is None:
-			# This really shouldn't be happening anywhere. Why is it?
-			logger.warn("Transcript for a meeting without an intid. %s", meeting)
-			intids.register(meeting)
+    def __init__(self, meeting):
+        intids = self._intids
+        # pylint: disable=no-member
+        if intids.queryId(meeting) is None:
+            # This really shouldn't be happening anywhere. Why is it?
+            logger.warning(
+                "Transcript for a meeting without an intid. %s",
+                meeting)
+            addIntId(meeting)
 
-		super(_DocidMeetingTranscriptStorage, self).__init__(meeting)
-		self.messages = intids.family.II.TreeSet()
+        super(_DocidMeetingTranscriptStorage, self).__init__(meeting)
+        self.messages = intids.family.II.TreeSet()
 
-	def add_message(self, msg):
-		"""
-		Stores the message in this transcript.
-		"""
-		self.messages.add(self._intids.getId(msg))
+    def add_message(self, msg):
+        """
+        Stores the message in this transcript.
+        """
+        # pylint: disable=no-member
+        self.messages.add(self._intids.getId(msg))
 
-	def remove_message_by_id(self, uid):
-		if uid is not None and uid in self.messages:
-			self.messages.remove(uid)
-			return True
-		return False
+    def remove_message_by_id(self, uid):
+        if uid is not None and uid in self.messages:
+            self.messages.remove(uid)
+            return True
+        return False
 
-	def remove_message(self, msg):
-		"""
-		Removes the message from this transcript.
-		"""
-		uid = self._intids.queryId(msg)
-		result = self.remove_message_by_id(uid)
-		return result
+    def remove_message(self, msg):
+        """
+        Removes the message from this transcript.
+        """
+        # pylint: disable=no-member
+        uid = self._intids.queryId(msg)
+        result = self.remove_message_by_id(uid)
+        return result
 
-	def itervalues(self):
-		intids = self._intids
-		for iid in self.messages:
-			msg = intids.queryObject(iid)
-			if msg is not None:
-				yield msg
+    def itervalues(self):
+        intids = self._intids
+        for iid in self.messages:
+            # pylint: disable=no-member
+            msg = intids.queryObject(iid)
+            if msg is not None:
+                yield msg
 
-	def __contains__(self, key):
-		if not isinstance(key, (long, int)):
-			key = self._intids.queryId(key)
-		return key is not None and key in self.messages
+    def __contains__(self, key):
+        if not isinstance(key, six.integer_types):
+            # pylint: disable=no-member
+            key = self._intids.queryId(key)
+        return key is not None and key in self.messages
 
-	@CachedProperty
-	def _intids(self):
-		return component.getUtility(IIntIds)
+    @CachedProperty
+    def _intids(self):
+        return component.getUtility(IIntIds)
+
 
 @lru_cache(10000)
 def _transcript_ntiid(meeting, creator_username=None, nttype=ntiids.TYPE_TRANSCRIPT_SUMMARY):
-	"""
-	:return: A NTIID string representing the transcript (summary) for the
-		given meeting (chat session) with the given participant.
-	"""
-	return ntiids.make_ntiid(base=meeting.id,
-							 provider=creator_username,
-							 nttype=nttype)
+    """
+    :return: A NTIID string representing the transcript (summary) for the
+            given meeting (chat session) with the given participant.
+    """
+    return ntiids.make_ntiid(base=meeting.id,
+                             provider=creator_username,
+                             nttype=nttype)
 
-def _get_by_oid(*args, **kwargs):
-	return None
+
+def _get_by_oid(*unused_args, **unused_kwargs):
+    return None
 _get_by_oid.get_by_oid = _get_by_oid
+
+
+def get_meeting_oid(ntiid):
+    if not ntiids.is_ntiid_of_type(ntiid, ntiids.TYPE_OID):
+        # We'll take any type, usually a TRANSCRIPT type
+        ntiid = ntiids.make_ntiid(base=ntiid,
+                                  provider=SYSTEM_USER_NAME,
+                                  nttype=ntiids.TYPE_OID)
+    return ntiid
+
 
 @component.adapter(IUser)
 @interface.implementer(IUserTranscriptStorage)
 class _UserTranscriptStorageAdapter(object):
-	"""
-	The storage for all of a user's transcripts.
+    """
+    The storage for all of a user's transcripts.
 
-	You can look up transcripts by meeting ID.
+    You can look up transcripts by meeting ID.
 
-	"""
+    """
 
-	def __init__(self, user):
-		self._user = user
+    def __init__(self, user):
+        self._user = user
 
-	def transcript_for_meeting(self, object_id):
-		result = None
-		meeting_oid = object_id
-		if not ntiids.is_ntiid_of_type(meeting_oid, ntiids.TYPE_OID):
-			# We'll take any type, usually a TRANSCRIPT type
-			meeting_oid = ntiids.make_ntiid(base=meeting_oid,
-											provider=SYSTEM_USER_NAME,
-											nttype=ntiids.TYPE_OID)
+    def transcript_for_meeting(self, object_id):
+        result = None
+        meeting_oid = get_meeting_oid(object_id)
+        meeting = ntiids.find_object_with_ntiid(meeting_oid)
+        if meeting is not None:
+            storage_id = _transcript_ntiid(meeting, self._user.username)
+            storage = self._user.getContainedObject(meeting.containerId,
+                                                    storage_id)
+            result = Transcript(storage) if storage else None
+        else:
+            # OK, the meeting has gone away, GC'd and no longer directly referencable.
+            # Try to find the appropriate storage manually
+            # TODO: finish converting this all to intids
 
-		meeting = ntiids.find_object_with_ntiid(meeting_oid)
-		if meeting is not None:
-			storage_id = _transcript_ntiid(meeting, self._user.username)
-			storage = self._user.getContainedObject(meeting.containerId, storage_id)
-			result = Transcript(storage) if storage else None
-		else:
-			# OK, the meeting has gone away, GC'd and no longer directly referencable.
-			# Try to find the appropriate storage manually
-			# TODO: finish converting this all to intids
+            # We will accept either a match for the OID (unlikely at this point)
+            # the original object_id (commonly a UUID during testing), or,
+            # if we were given a TRANSCRIPT type, then we make a UUID (again,
+            # for testing). We also accept a provider-mismatch for UUID values
+            # (again, testing)
+            acceptable_oids = (meeting_oid, object_id)
+            specific = ntiids.get_specific(object_id)
+            if ntiids.is_ntiid_of_type(object_id, ntiids.TYPE_TRANSCRIPT):
+                acceptable_oids += (ntiids.make_ntiid(base=object_id,
+                                                      nttype=ntiids.TYPE_UUID),)
 
-			# We will accept either a match for the OID (unlikely at this point)
-			# the original object_id (commonly a UUID during testing), or,
-			# if we were given a TRANSCRIPT type, then we make a UUID (again,
-			# for testing). We also accept a provider-mismatch for UUID values (again, testing)
-			acceptable_oids = (meeting_oid, object_id)
-			specific = ntiids.get_specific(object_id)
-			if ntiids.is_ntiid_of_type(object_id, ntiids.TYPE_TRANSCRIPT):
-				acceptable_oids += (ntiids.make_ntiid(base=object_id, nttype=ntiids.TYPE_UUID),)
+            for value in self._user.values(of_type=_IMeetingTranscriptStorage):
+                value_meeting_id = value.meeting.ID
+                if      value_meeting_id in acceptable_oids \
+                    or (    ntiids.is_ntiid_of_type(value_meeting_id, ntiids.TYPE_UUID)
+                        and ntiids.get_specific(value_meeting_id) == specific):
+                    result = Transcript(value)
+                    break
+        return result
 
-			for value in self._user.values(of_type=_IMeetingTranscriptStorage):
-				value_meeting_id = value.meeting.ID
-				if 	value_meeting_id in acceptable_oids or \
-					(ntiids.is_ntiid_of_type(value_meeting_id, ntiids.TYPE_UUID)
-					 and ntiids.get_specific(value_meeting_id) == specific):
-					result = Transcript(value)
-					break
-		return result
+    def _transcript_storages(self):
+        for container in self._user.getAllContainers().values():
+            if not hasattr(container, "values"):
+                continue
+            for storage in container.values():
+                if _IMeetingTranscriptStorage.providedBy(storage):
+                    yield storage
 
-	def _transcript_storages(self):
-		for container in self._user.getAllContainers().values():
-			if not hasattr(container, "values"):
-				continue
-			for storage in container.values():
-				if _IMeetingTranscriptStorage.providedBy(storage):
-					yield storage
+    @property
+    def meetings(self):
+        result = []
+        for storage in self._transcript_storages():
+            result.append(storage.meeting)
+        return result
 
-	@property
-	def meetings(self):
-		result = []
-		for storage in self._transcript_storages():
-			result.append(storage.meeting)
-		return result
+    @property
+    def transcripts(self):
+        result = []
+        for storage in self._transcript_storages():
+            result.append(Transcript(storage))
+        return result
 
-	@property
-	def transcripts(self):
-		result = []
-		for storage in self._transcript_storages():
-			result.append(Transcript(storage))
-		return result
+    @property
+    def transcript_summaries(self):
+        result = []
+        for storage in self._transcript_storages():
+            result.append(TranscriptSummaryAdapter(storage))
+        return result
 
-	@property
-	def transcript_summaries(self):
-		result = []
-		for storage in self._transcript_storages():
-			result.append(TranscriptSummaryAdapter(storage))
-		return result
+    def add_message(self, meeting, msg):
+        if not meeting.containerId:
+            logger.warning(
+                "Meeting (room) has no container id, will not transcript %s",
+                 meeting)
+            # Because we won't be able to store the room on the user.
+            # This is actually a bug in creating the room.
+            return False
 
-	def add_message(self, meeting, msg):
-		if not meeting.containerId:
-			logger.warn("Meeting (room) has no container id, will not transcript %s", meeting)
-			# Because we won't be able to store the room on the user.
-			# This is actually a bug in creating the room.
-			return False
+        # Our transcript storage we store with the
+        # provider ID of our user
+        storage_id = _transcript_ntiid(meeting, self._user.username)
+        storage = self._user.getContainedObject(meeting.containerId, 
+                                                storage_id)
+        if storage is None:
+            storage = _DocidMeetingTranscriptStorage(meeting)
+            storage.id = storage_id
+            storage.containerId = meeting.containerId
+            storage.creator = self._user
+            self._user.addContainedObject(storage)
+        storage.add_message(msg)
+        return storage
 
-		# Our transcript storage we store with the
-		# provider ID of our user
-		storage_id = _transcript_ntiid(meeting, self._user.username)
-		storage = self._user.getContainedObject(meeting.containerId, storage_id)
-		if storage is None:
-			storage = _DocidMeetingTranscriptStorage(meeting)
-			storage.id = storage_id
-			storage.containerId = meeting.containerId
-			storage.creator = self._user
-			self._user.addContainedObject(storage)
-		storage.add_message(msg)
-		return storage
+    def remove_message(self, meeting, msg):
+        if not meeting.containerId:
+            logger.warning("Meeting (room) has no container id", meeting)
+            return False
 
-	def remove_message(self, meeting, msg):
-		if not meeting.containerId:
-			logger.warn("Meeting (room) has no container id", meeting)
-			return False
+        storage_id = _transcript_ntiid(meeting, self._user.username)
+        storage = self._user.getContainedObject(
+            meeting.containerId, storage_id)
+        if storage is not None:
+            storage.remove_message(msg)
+        return storage
 
-		storage_id = _transcript_ntiid(meeting, self._user.username)
-		storage = self._user.getContainedObject(meeting.containerId, storage_id)
-		if storage is not None:
-			storage.remove_message(msg)
-		return storage
 
 @interface.implementer(IUserTranscriptStorage)
 class _MissingStorage(object):
-	"""
-	A storage that's always empty and blank.
-	"""
+    """
+    A storage that's always empty and blank.
+    """
 
-	def transcript_for_meeting(self, meeting_id):
-		return None  # pragma: no cover
+    def transcript_for_meeting(self, unused_meeting_id):
+        return None  # pragma: no cover
 
-	@property
-	def transcripts(self):
-		return ()  # pragma: no cover
+    @property
+    def transcripts(self):
+        return ()  # pragma: no cover
 
-	@property
-	def transcript_summaries(self):
-		return ()  # pragma: no cover
+    @property
+    def transcript_summaries(self):
+        return ()  # pragma: no cover
 
-	def add_message(self, meeting, msg):
-		pass
+    def add_message(self, meeting, msg):
+        pass
 
-	def remove_message(self, msg):
-		pass
-
+    def remove_message(self, msg):
+        pass
 _BLANK_STORAGE = _MissingStorage()
 
+
 def _ts_storage_for(owner):
-	user = users.User.get_user(owner)
-	storage = component.queryAdapter(user, IUserTranscriptStorage, default=_BLANK_STORAGE)
-	return storage
+    user = User.get_user(owner)
+    storage = component.queryAdapter(user, IUserTranscriptStorage,
+                                     default=_BLANK_STORAGE)
+    return storage
+
 
 @component.adapter(IMessageInfo, IMessageInfoPostedToRoomEvent)
 def _save_message_to_transcripts_subscriber(msg_info, event):
-	"""
-	Event handler that saves messages to the appropriate transcripts.
-	"""
-	meeting = event.room
+    """
+    Event handler that saves messages to the appropriate transcripts.
+    """
+    meeting = event.room
 
-	change = Change(Change.CREATED, msg_info)
-	change.creator = msg_info.Sender
+    change = Change(Change.CREATED, msg_info)
+    change.creator = msg_info.Sender
 
-	for owner in set(event.recipients):
-		__traceback_info__ = owner, meeting
-		storage = _ts_storage_for(owner)
-		storage.add_message(meeting, msg_info)
+    for owner in set(event.recipients):
+        # pylint: disable=unused-variable
+        __traceback_info__ = owner, meeting
+        storage = _ts_storage_for(owner)
+        storage.add_message(meeting, msg_info)
+
 
 def transcript_for_user_in_room(username, room_id):
-	"""
-	Returns a :class:`Transcript` for the user in room.
-	If the user wasn't in the room, returns None.
-	"""
-	storage = _ts_storage_for(username)
-	return storage.transcript_for_meeting(room_id)
+    """
+    Returns a :class:`Transcript` for the user in room.
+    If the user wasn't in the room, returns None.
+    """
+    storage = _ts_storage_for(username)
+    return storage.transcript_for_meeting(room_id)
+
 
 def transcript_summaries_for_user_in_container(username, containerId):
-	"""
-	Primarily intended for debugging
+    """
+    Primarily intended for debugging
 
-	:return: Map of room/transcript id to :class:`TranscriptSummary` objects for the user that
-		have taken place in the given containerId. The map will have attributes `lastModified`
-		and `creator`.
+    :return: Map of room/transcript id to :class:`TranscriptSummary` objects for the user that
+            have taken place in the given containerId. The map will have attributes `lastModified`
+            and `creator`.
 
-	"""
-	storage = _ts_storage_for(username)
-	data = LocatedExternalDict()
-	last_modified = 0
-	for summary in storage.transcript_summaries:
-		if summary.RoomInfo.containerId == containerId:
-			data[summary.RoomInfo.ID] = summary
-			last_modified = max(last_modified, summary.LastModified)
-	data.lastModified = last_modified
-	data.creator = username
+    """
+    storage = _ts_storage_for(username)
+    data = LocatedExternalDict()
+    last_modified = 0
+    for summary in storage.transcript_summaries:
+        if summary.RoomInfo.containerId == containerId:
+            data[summary.RoomInfo.ID] = summary
+            last_modified = max(last_modified, summary.LastModified)
+    data.lastModified = last_modified
+    data.creator = username
+    return data
 
-	return data
 
 def list_transcripts_for_user(username):
-	"""
-	Returns an Iterable of :class:`TranscriptSummary` objects for the user.
-	"""
-	storage = _ts_storage_for(username)
-	return storage.transcript_summaries
+    """
+    Returns an Iterable of :class:`TranscriptSummary` objects for the user.
+    """
+    storage = _ts_storage_for(username)
+    return storage.transcript_summaries
+
 
 @interface.implementer(ITranscriptSummary)
 @component.adapter(_IMeetingTranscriptStorage)
 def TranscriptSummaryAdapter(meeting_storage):
-	"""
-	Registered as a ZCA adapter factory to get a :class:`nti_interfaces.ITranscriptSummary`.
+    """
+    Registered as a ZCA adapter factory to get a :class:`nti_interfaces.ITranscriptSummary`.
 
-	Deals gracefully with bad meeting storage objects that are missing components
-	such as a room due to GC.
-	"""
-	try:
-		if meeting_storage is not None and meeting_storage.meeting is not None:
-			return TranscriptSummary(meeting_storage)
-	except (POSKeyError, AssertionError):  # pragma: no cover
-		logger.exception("Meeting object gone missing.")
-		return None
+    Deals gracefully with bad meeting storage objects that are missing components
+    such as a room due to GC.
+    """
+    try:
+        if meeting_storage is not None and meeting_storage.meeting is not None:
+            return TranscriptSummary(meeting_storage)
+    except (POSError, AssertionError):  # pragma: no cover
+        logger.exception("Meeting object gone missing.")
+        return None
+
 
 @interface.implementer(IInternalObjectIO)
 @component.adapter(_IMeetingTranscriptStorage)
 def _MeetingTranscriptStorageExternalObjectAdapter(meeting_storage):
-	summary = ITranscriptSummary(meeting_storage)
-	return IInternalObjectIO(summary)
+    summary = ITranscriptSummary(meeting_storage)
+    return IInternalObjectIO(summary)
 
+
+@six.add_metaclass(ModeledContentTypeAwareRegistryMetaclass)
 @interface.implementer(IZContained,
-					   ILinked,
-					   ITranscriptSummary)
+                       ILinked,
+                       ITranscriptSummary)
 @component.adapter(_IMeetingTranscriptStorage)
 class TranscriptSummary(object):
-	"""
-	The transcript summary for a user in a room.
-	"""
-	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+    """
+    The transcript summary for a user in a room.
+    """
 
-	__parent__ = None
-	__name__ = None
-	id = read_alias('__name__')
+    __parent__ = None
+    __name__ = None
+    id = read_alias('__name__')
 
-	links = ()
-	_NTIID_TYPE_ = ntiids.TYPE_TRANSCRIPT_SUMMARY
+    links = ()
+    _NTIID_TYPE_ = ntiids.TYPE_TRANSCRIPT_SUMMARY
 
-	# BWC aliases
-	NTIID = read_alias('__name__')
-	ContainerId = read_alias('containerId')
-	LastModified = read_alias('lastModified')
+    # BWC aliases
+    NTIID = read_alias('__name__')
+    ContainerId = read_alias('containerId')
+    LastModified = read_alias('lastModified')
 
-	def __init__(self, meeting_storage):
-		"""
-		:param _IMeetingTranscriptStorage meeting_storage: The storage for the user in the room.
-		"""
-		super(TranscriptSummary, self).__init__()
-		room = meeting_storage.meeting
-		assert room
-		assert room.ID
-		self.creator = meeting_storage.creator
-		self.RoomInfo = room
-		self.containerId = room.ID
-		self.__parent__ = room
-		self.__name__ = _transcript_ntiid(room, self.creator.username, self._NTIID_TYPE_)
+    def __init__(self, meeting_storage):
+        """
+        :param _IMeetingTranscriptStorage meeting_storage: The storage for the user in the room.
+        """
+        super(TranscriptSummary, self).__init__()
+        room = meeting_storage.meeting
+        assert room
+        assert room.ID
+        self.creator = meeting_storage.creator
+        self.RoomInfo = room
+        self.containerId = room.ID
+        self.__parent__ = room
+        self.__name__ = _transcript_ntiid(room, self.creator.username, self._NTIID_TYPE_)
 
-		# TODO: What should the LastModified be? The room doesn't
-		# currently track it. We're using the max for our messages, which may not be right?
-		created_time = time.time()
-		last_modified = 0.0
-		contributors = set()
-		for message in meeting_storage.itervalues():
-			last_modified = max(last_modified, getattr(message, 'LastModified', 0.0))
-			created_time = min(created_time, getattr(message, 'createdTime', created_time))
-			contributors.update(getattr(message, 'sharedWith', ()) or ())
+        # TODO: What should the LastModified be? The room doesn't
+        # currently track it. We're using the max for our messages, which may
+        # not be right?
+        created_time = time.time()
+        last_modified = 0.0
+        contributors = set()
+        for message in meeting_storage.itervalues():
+            last_modified = max(last_modified, getattr(
+                message, 'LastModified', 0.0))
+            created_time = min(created_time, getattr(
+                message, 'createdTime', created_time))
+            contributors.update(getattr(message, 'sharedWith', ()) or ())
 
-		self.lastModified = last_modified
-		self.createdTime = created_time
-		self.Contributors = contributors
+        self.lastModified = last_modified
+        self.createdTime = created_time
+        self.Contributors = contributors
 
-		self.links = self._create_links(meeting_storage)
+        self.links = self._create_links(meeting_storage)
 
-	def _create_links(self, meeting_storage):
-		# TODO: constant
-		return (links.Link(Transcript(meeting_storage), rel="transcript"),)
+    def _create_links(self, meeting_storage):
+        # TODO: constant
+        return (links.Link(Transcript(meeting_storage), rel="transcript"),)
 
-	def __reduce__(self):
-		"""
-		These objects cannot be pickled.
-		"""  # because they hold other persistent objects that are meant to be weak-refd
-		raise TypeError()
+    def __reduce__(self):
+        """
+        These objects cannot be pickled.
+        """  # because they hold other persistent objects that are meant to be weak-refd
+        raise TypeError()
+
 
 @component.adapter(ITranscriptSummary)
 class TranscriptSummaryInternalObjectIO(InterfaceObjectIO):
-	_ext_iface_upper_bound = ITranscriptSummary
+    _ext_iface_upper_bound = ITranscriptSummary
+
 
 # For purposes of filtering during UGD queries, make the objects that
 # store messages (and which are in the users containers) appear to be
 # transcript summaries, since that is what they will externalize as.
 # TODO: This design is wonky
+# pylint: disable=no-member
 _AbstractMeetingTranscriptStorage.mimeType = TranscriptSummary.mimeType
 
+
+@six.add_metaclass(ModeledContentTypeAwareRegistryMetaclass)
 @interface.implementer(ITranscript)
 @component.adapter(_IMeetingTranscriptStorage)
 class Transcript(TranscriptSummary):
-	"""
-	The transcript for a user in a room.
-	"""
-	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+    """
+    The transcript for a user in a room.
+    """
 
-	_NTIID_TYPE_ = ntiids.TYPE_TRANSCRIPT
+    _NTIID_TYPE_ = ntiids.TYPE_TRANSCRIPT
 
-	def __init__(self, meeting_storage):
-		"""
-		:param _MeetingTranscriptStorage meeting_storage: The storage for the user in the room.
-		"""
-		super(Transcript, self).__init__(meeting_storage)
-		self._meeting_storage = meeting_storage
+    def __init__(self, meeting_storage):
+        """
+        :param _MeetingTranscriptStorage meeting_storage: The storage for the user in the room.
+        """
+        super(Transcript, self).__init__(meeting_storage)
+        self._meeting_storage = meeting_storage
 
-	@Lazy
-	def Messages(self):
-		return list(self._meeting_storage.itervalues())
+    @Lazy
+    def Messages(self):
+        return list(self._meeting_storage.itervalues())
 
-	def _create_links(self, meeting_storage):
-		return ()
+    def _create_links(self, unused_meeting_storage):
+        return ()
 
-	def __len__(self):
-		return len(self.Messages)
+    def __len__(self):
+        return len(self.Messages)
 
-	def __nonzero__(self):
-		return True
+    def __nonzero__(self):
+        return True
 
-	def __getitem__(self, msg_id):
-		return self.get_message(msg_id)
+    def __getitem__(self, msg_id):
+        return self.get_message(msg_id)
 
-	def get_message(self, msg_id):
-		"""
-		:return: The message in the transcript with the given ID, or None.
-		"""
-		for m in self.Messages:
-			if m.ID == msg_id:
-				return m
+    def get_message(self, msg_id):
+        """
+        :return: The message in the transcript with the given ID, or None.
+        """
+        # pylint: disable=not-an-iterable
+        for m in self.Messages:
+            if m.ID == msg_id:
+                return m
