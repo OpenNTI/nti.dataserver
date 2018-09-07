@@ -42,7 +42,7 @@ from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users.users import User
 
-from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import to_external_object
 from nti.externalization.externalization import NonExternalizableObjectError
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -94,7 +94,7 @@ class ObjectResolverView(AbstractAuthenticatedView):
         result['ACL'] = aces = []
         obj = removeAllProxies(obj)
         try:
-            result[OBJECT] = toExternalObject(obj)
+            result[OBJECT] = to_external_object(obj)
         except NonExternalizableObjectError:
             result[OBJECT] = {
                 CLASS: "NonExternalizableObject",
@@ -143,8 +143,8 @@ class ExportUsersView(AbstractAuthenticatedView):
             if IUser.providedBy(user):
                 username = user.username
                 if summary:
-                    items[username] = toExternalObject(user, name='summary')
+                    items[username] = to_external_object(user, name='summary')
                 else:
-                    items[username] = toExternalObject(user)
+                    items[username] = to_external_object(user)
         result[TOTAL] = result[ITEM_COUNT] = len(items)
         return result
