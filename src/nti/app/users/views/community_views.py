@@ -118,8 +118,8 @@ class ListCommunitiesView(AbstractEntityViewMixin):
                   or values.get('mimeTypes') or ''
         return parse_mime_types(mime_types)
 
-    def search_include(self, doc_id, username, alias, realname):
-        result = AbstractEntityViewMixin.search_include(self, doc_id, username, alias, realname)
+    def search_include(self, doc_id):
+        result = AbstractEntityViewMixin.search_include(self, doc_id)
         if result and self.mimeTypes:
             # pylint: disable=unsupported-membership-test
             mimeType = get_entity_mimetype_from_index(doc_id, self.entity_catalog)

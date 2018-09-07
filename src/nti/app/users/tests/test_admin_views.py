@@ -469,7 +469,7 @@ class TestAdminViews(ApplicationLayerTest):
         assert_that(resolve_res, does_not(has_item('external_ids')))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-    @fudge.patch('nti.app.users.utils.is_site_admin',
+    @fudge.patch('nti.app.users.utils.admin.is_site_admin',
                  'nti.app.users.utils.get_component_hierarchy_names',
                  'nti.app.users.utils.get_user_creation_sitename')
     def test_user_update_site_admin(self, mock_site_admin, mock_get_site_names, mock_get_user_site_name):

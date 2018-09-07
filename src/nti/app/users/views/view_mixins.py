@@ -613,10 +613,13 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
     def alias(self, doc_id):
         return get_entity_alias_from_index(doc_id, self.entity_catalog)
 
-    def search_include(self, unused_doc_id, username, alias, realname):
+    def search_include(self, doc_id):
         result = True
         if self.searchTerm:
             op = self.search_prefix_match
+            alias = self.alias(doc_id)
+            realname = self.realname(doc_id)
+            username = self.username(doc_id)
             result = op(username, self.searchTerm) \
                   or op(realname, self.searchTerm) \
                   or op(alias, self.searchTerm)
@@ -625,14 +628,8 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
     def resolve_entity_ids(self, site=None):
         result = []
         for doc_id in self.get_sorted_entity_intids(site):
-            if not self.searchTerm:
+            if self.search_include(doc_id):
                 result.append(doc_id)
-            else:
-                alias = self.alias(doc_id)
-                realname = self.realname(doc_id)
-                username = self.username(doc_id)
-                if self.search_include(doc_id, username, alias, realname):
-                    result.append(doc_id)
         return result
 
     def reify_predicate(self, obj):
