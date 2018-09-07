@@ -27,6 +27,8 @@ from nti.coremetadata.interfaces import IContextLastSeenContainer
 
 from nti.dataserver.interfaces import IUser
 
+from nti.dataserver.users.users import User
+
 from nti.dataserver.tests import mock_dataserver
 
 
@@ -36,7 +38,8 @@ class TestModel(ApplicationLayerTest):
     def test_model(self):
 
         with mock_dataserver.mock_db_trans(self.ds):
-            user = self._create_user(username=u'rukia@bleach.com',
+            username = u'rukia@bleach.com'
+            user = self._create_user(username=username,
                                      external_value={'email': u'rukia@bleach.com',
                                                      'realname': u'rukia kuchiki',
                                                      'alias': u'sode no shirayuki'})
@@ -59,6 +62,8 @@ class TestModel(ApplicationLayerTest):
             
             record = container.get('1')
             assert_that(record, has_property('username', 'rukia@bleach.com'))
+            
+            User.delete_user(username)
             
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_record(self):
