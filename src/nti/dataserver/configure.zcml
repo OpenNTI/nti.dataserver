@@ -185,6 +185,9 @@
 			 provides=".interfaces.ITranscriptSummary" />
 
 	<adapter factory=".chat_transcripts._message_info_to_meeting" />
+	<adapter factory=".chat_transcripts._message_info_to_transcript" />
+	<adapter factory=".chat_transcripts._message_info_to_transcript_storage" />
+	<adapter factory=".chat_transcripts._message_info_to_transcript_summary" />
 
 	<adapter factory=".chat_transcripts._MeetingTranscriptStorageExternalObjectAdapter"
 			 provides="nti.externalization.interfaces.IInternalObjectIO" />

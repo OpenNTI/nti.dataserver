@@ -122,15 +122,18 @@ from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.links import links
 
+from nti.externalization.datastructures import InterfaceObjectIO
+
 from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
 from nti.ntiids import ntiids
 
 from nti.property.property import read_alias
+
+from nti.schema.eqhash import EqHash
 
 from nti.schema.field import Object
 
@@ -425,10 +428,9 @@ class _UserTranscriptStorageAdapter(object):
         if not meeting.containerId:
             logger.warning("Meeting (room) has no container id", meeting)
             return False
-
         storage_id = _transcript_ntiid(meeting, self._user.username)
-        storage = self._user.getContainedObject(
-            meeting.containerId, storage_id)
+        storage = self._user.getContainedObject(meeting.containerId,
+                                                storage_id)
         if storage is not None:
             storage.remove_message(msg)
         return storage
@@ -545,6 +547,7 @@ def _MeetingTranscriptStorageExternalObjectAdapter(meeting_storage):
     return IInternalObjectIO(summary)
 
 
+@EqHash('id')
 @six.add_metaclass(ModeledContentTypeAwareRegistryMetaclass)
 @interface.implementer(IZContained,
                        ILinked,
@@ -665,9 +668,48 @@ class Transcript(TranscriptSummary):
                 return m
 
 
+def _get_meeting_id(msg):
+    ntiid = msg.containerId
+    return get_meeting_oid(ntiid) if ntiid else ntiid
+
+
+def _get_creator(msg):
+    result = msg.creator
+    if not IUser.providedBy(result):
+        result = User.get_user(result or '')
+    return result
+
+
 @component.adapter(IMessageInfo)
 @interface.implementer(IMeeting)
 def _message_info_to_meeting(msg):
-    ntiid = msg.containerId
-    ntiid = get_meeting_oid(ntiid) if ntiid else ntiid
+    ntiid = _get_meeting_id(msg)
     return ntiids.find_object_with_ntiid(ntiid) if ntiid else None
+
+
+@component.adapter(IMessageInfo)
+@interface.implementer(_IMeetingTranscriptStorage)
+def _message_info_to_transcript_storage(msg):
+    creator = _get_creator(msg)
+    meeting = IMeeting(msg, None)
+    if IUser.providedBy(creator) and IMeeting.providedBy(meeting):
+        storage_id = _transcript_ntiid(meeting, creator.username)
+        storage = creator.getContainedObject(meeting.containerId,
+                                             storage_id)
+        return storage
+
+
+@component.adapter(IMessageInfo)
+@interface.implementer(ITranscriptSummary)
+def _message_info_to_transcript_summary(msg):
+    return ITranscriptSummary(_IMeetingTranscriptStorage(msg, None), None)
+
+
+@component.adapter(IMessageInfo)
+@interface.implementer(ITranscript)
+def _message_info_to_transcript(msg):
+    creator = _get_creator(msg)
+    ntiid = _get_meeting_id(msg)
+    storage = IUserTranscriptStorage(creator, None)
+    # pylint: disable=too-many-function-args
+    return storage.transcript_for_meeting(ntiid) if storage is not None else None
