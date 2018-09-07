@@ -92,6 +92,7 @@ from ZODB.POSException import POSError
 
 from zope import component
 from zope import interface
+from zope import lifecycleevent
 
 from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import CachedProperty
@@ -118,8 +119,6 @@ from nti.dataserver.interfaces import ITranscriptSummary
 from nti.dataserver.users.users import User
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
-
-from nti.intid.common import addIntId
 
 from nti.links import links
 
@@ -149,7 +148,7 @@ class _IMeetingTranscriptStorage(ICreated,  # ICreated so they get an ACL
                                  INoAutoIndexEver):
 
     meeting = Object(IMeeting,
-                     title="The meeting we hold messages to; may go null")
+                     title=u"The meeting we hold messages to; may go null")
 
     def add_message(msg):
         """
@@ -251,7 +250,8 @@ class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
             logger.warning(
                 "Transcript for a meeting without an intid. %s",
                 meeting)
-            addIntId(meeting)
+            intids.register(meeting)
+            lifecycleevent.modified(meeting)
 
         super(_DocidMeetingTranscriptStorage, self).__init__(meeting)
         self.messages = intids.family.II.TreeSet()
@@ -588,10 +588,8 @@ class TranscriptSummary(object):
         last_modified = 0.0
         contributors = set()
         for message in meeting_storage.itervalues():
-            last_modified = max(last_modified, getattr(
-                message, 'LastModified', 0.0))
-            created_time = min(created_time, getattr(
-                message, 'createdTime', created_time))
+            last_modified = max(last_modified, getattr(message, 'LastModified', 0.0))
+            created_time = min(created_time, getattr(message, 'createdTime', created_time))
             contributors.update(getattr(message, 'sharedWith', ()) or ())
 
         self.lastModified = last_modified
@@ -665,3 +663,11 @@ class Transcript(TranscriptSummary):
         for m in self.Messages:
             if m.ID == msg_id:
                 return m
+
+
+@component.adapter(IMessageInfo)
+@interface.implementer(IMeeting)
+def _message_info_to_meeting(msg):
+    ntiid = msg.containerId
+    ntiid = get_meeting_oid(ntiid) if ntiid else ntiid
+    return ntiids.find_object_with_ntiid(ntiid) if ntiid else None

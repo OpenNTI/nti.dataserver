@@ -178,18 +178,24 @@
 
 	<!-- Chat -->
 	<adapter factory=".meeting_container_storage._FriendsListAdapter" />
+
 	<adapter factory=".chat_transcripts._UserTranscriptStorageAdapter" />
+
 	<adapter factory=".chat_transcripts.TranscriptSummaryAdapter"
 			 provides=".interfaces.ITranscriptSummary" />
 
+	<adapter factory=".chat_transcripts._message_info_to_meeting" />
+
 	<adapter factory=".chat_transcripts._MeetingTranscriptStorageExternalObjectAdapter"
 			 provides="nti.externalization.interfaces.IInternalObjectIO" />
+
 	<adapter factory=".chat_transcripts.TranscriptSummaryInternalObjectIO"
 			 provides="nti.externalization.interfaces.IInternalObjectIO" />
 
 	<adapter factory=".chat_transcripts.Transcript"
 			 for=".chat_transcripts._IMeetingTranscriptStorage"
 			 provides=".interfaces.ITranscript" />
+
 	<subscriber handler=".chat_transcripts._save_message_to_transcripts_subscriber" />
 
 	<adapter factory=".meeting_storage.EntityMeetingContainerAnnotation" />
