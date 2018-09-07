@@ -530,6 +530,8 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
 
     _NUMERIC_SORTING = (IX_CREATEDTIME,)
 
+    __entity_count = 0
+
     def check_access(self):
         pass
         
@@ -623,28 +625,28 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         return result
 
     def resolve_entity_ids(self, site=None):
-        result = []
+        self.__entity_count = 0
         for doc_id in self.get_sorted_entity_intids(site):
-            username = self.username(doc_id)
-            if not username:
-                continue
-            alias = self.alias(doc_id)
-            realname = self.realname(doc_id)
-            if self.search_include(doc_id, username, alias, realname):
-                result.append(doc_id)
-        return result
+            if not self.searchTerm:
+                self.__entity_count += 1
+                yield doc_id
+            else:
+                alias = self.alias(doc_id)
+                realname = self.realname(doc_id)
+                username = self.username(doc_id)
+                if self.search_include(doc_id, username, alias, realname):
+                    self.__entity_count += 1
+                    yield doc_id
 
     def reify_predicate(self, obj):
         return obj is not None
 
     def reify(self, doc_ids):
-        result = []
         intids = component.getUtility(IIntIds)
         for doc_id in doc_ids or ():
             obj = intids.queryObject(doc_id)
             if self.reify_predicate(obj):
-                result.append(obj)
-        return result
+                yield obj
 
     def _do_call(self, site=None):
         result = LocatedExternalDict()
@@ -662,8 +664,8 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
                                    reverse=reverse)
         # transform only the required items
         result[ITEMS] = [
-            self.transformer(x) for x in result[ITEMS] if x is not None
+            self.transformer(x) for x in result[ITEMS]
         ]
-        result[TOTAL] = len(items)
+        result[TOTAL] = self.__entity_count
         result[ITEM_COUNT] = len(result[ITEMS])
         return result
