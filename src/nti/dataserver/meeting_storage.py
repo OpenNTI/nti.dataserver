@@ -6,10 +6,11 @@ Dataserver-specific storage for :mod:`nti.chatserver` :class:`nti.chatserver.mee
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+from ZODB.interfaces import IConnection
 
 from zope import component
 from zope import interface
@@ -19,8 +20,6 @@ from zope.annotation import factory as a_factory
 from zope.container.constraints import contains
 
 from zope.container.interfaces import IBTreeContainer
-
-from ZODB.interfaces import IConnection
 
 from nti.chatserver.interfaces import IMeeting
 from nti.chatserver.interfaces import IMessageInfo
@@ -38,6 +37,8 @@ from nti.datastructures.datastructures import check_contained_object_for_storage
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.ntiids.oids import to_external_ntiid_oid
+
+logger = __import__('logging').getLogger(__name__)
 
 
 class IMeetingContainer(IBTreeContainer):
@@ -101,11 +102,13 @@ class CreatorBasedAnnotationMeetingStorage(object):
         # would traverse up the parent hierarchy and might find something
         # we don't want it to.
         if IConnection(room, None) is None:
+            # pylint: disable=too-many-function-args
             IConnection(creator).add(room)
 
         room.id = to_external_ntiid_oid(room, default_oid=None,
                                         add_to_intids=True)
         if room.id is None:
+            # pylint: disable=unused-variable
             __traceback_info__ = creator, meeting_container, room
             raise ValueError("Unable to get OID for room")
 
@@ -116,8 +119,8 @@ class IMessageInfoContainer(IBTreeContainer, IMessageInfoStorage):
     contains(IMessageInfo)
 
 
-@interface.implementer(IMessageInfoContainer)
 @component.adapter(IEntity)
+@interface.implementer(IMessageInfoContainer)
 class _MessageInfoContainer(CheckingLastModifiedBTreeContainer):
     """
     Messages have IDs that are UUIDs, so we use that as the key
@@ -134,8 +137,8 @@ class _MessageInfoContainer(CheckingLastModifiedBTreeContainer):
 EntityMessageInfoContainerAnnotation = a_factory(_MessageInfoContainer)
 
 
-@interface.implementer(IMessageInfoStorage)
 @component.adapter(IMessageInfo)
+@interface.implementer(IMessageInfoStorage)
 def CreatorBasedAnnotationMessageInfoStorage(msg_info):
     """
     A factory for finding message storages for the given message, based
@@ -149,6 +152,7 @@ def CreatorBasedAnnotationMessageInfoStorage(msg_info):
     check_contained_object_for_storage(msg_info)
     creator_name = msg_info.creator
     creator = Entity.get_entity(creator_name)
+    # pylint: disable=unused-variable
     __traceback_info__ = creator, creator_name, msg_info
     message_container = IMessageInfoStorage(creator)
     return message_container
