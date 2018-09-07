@@ -26,11 +26,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import gc
-
 import gevent
-
-import time
 
 from zope import interface
 
@@ -74,16 +70,7 @@ class greenlet_runner_tween(object):
         # Ok, our time to shine. First, drop our
         # local reference to the request, just for GPs
         del request
-        # Next, these are relatively rare, so this is a reasonable
-        # time to clean up weak refs and otherwise do gc
-        t0 = time.time()
-        unreachable_count = gc.collect()
-        t1 = time.time()
-        logger.info('Greenlet tween finished gc (unreachable_count=%s) (gc_time=%.3fs)',
-                    unreachable_count, t1 - t0)
         # Finally, run the greenlets
         gevent.joinall(result.greenlets)
-        logger.info('Greenlet tween finished join (join_time=%.3fs)',
-                    time.time() - t1)
         return result.response
 greenlet_runner_tween_factory = greenlet_runner_tween
