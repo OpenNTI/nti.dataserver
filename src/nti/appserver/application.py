@@ -15,6 +15,7 @@ import sys
 if 'nti.monkey.patch_gevent_on_import' in sys.modules: # DON'T import this; it should already be imported if needed
 	sys.modules['nti.monkey.patch_gevent_on_import'].check_threadlocal_status()
 
+import gc
 import os
 import time
 import warnings
@@ -36,6 +37,7 @@ import pyramid.registry
 
 from pyramid.threadlocal import get_current_registry
 
+from paste.deploy.converters import asint
 from paste.deploy.converters import asbool
 
 from ZODB.interfaces import IDatabase
@@ -446,6 +448,16 @@ def createApplication( http_port,
 	"""
 	_return_xml_conf_machine = settings.pop('_return_xml_conf_machine', False)
 	begin_time = time.time()
+
+	# Configure gc early
+	if asbool(settings.get('gc_debug', False)):
+		gc.set_debug(gc.DEBUG_STATS)
+
+	# GC threshold, 0 will never collect: (700, 10, 10) are defaults in 2.7
+	gen0 = asint(settings.get('gc_gen0_threshold', 700))
+	gen1 = asint(settings.get('gc_gen1_threshold', 10))
+	gen2 = asint(settings.get('gc_gen2_threshold', 10))
+	gc.set_threshold(gen0, gen1, gen2)
 
 	# Configure subscribers, etc.
 	__traceback_info__ = settings

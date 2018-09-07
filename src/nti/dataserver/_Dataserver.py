@@ -8,7 +8,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import gc
 import os
 import sys
 import struct
@@ -133,7 +132,6 @@ class MinimalDataserver(object):
                 raise DeprecationWarning(deprecated +
                                          " is no longer supported. Remove your method " +
                                          str(meth))
-        #gc.set_debug(gc.DEBUG_STATS)
 
     def _setup_conf(self, environment_dir, demo=False):
         return config.temp_get_config(environment_dir, demo=demo)
