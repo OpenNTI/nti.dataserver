@@ -79,9 +79,11 @@ class greenlet_runner_tween(object):
         t0 = time.time()
         unreachable_count = gc.collect()
         t1 = time.time()
+        logger.info('Greenlet tween finished gc (unreachable_count=%s) (gc_time=%.3fs)',
+                    unreachable_count, t1 - t0)
         # Finally, run the greenlets
         gevent.joinall(result.greenlets)
-        logger.info('Greenlet tween (unreachable_count=%s) (gc_time=%.3fs) (join_time=%.3fs)',
-                    unreachable_count, t1 - t0, time.time() - t1)
+        logger.info('Greenlet tween finished join (join_time=%.3fs)',
+                    time.time() - t1)
         return result.response
 greenlet_runner_tween_factory = greenlet_runner_tween
