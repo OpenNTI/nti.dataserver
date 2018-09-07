@@ -58,6 +58,7 @@ class PresenceInfo(SchemaConfigured):  # NOT persistent
         super(PresenceInfo, self).__init__(*args, **kwargs)
 
     def isAvailable(self):
+        # pylint: disable=no-member
         return self.type == 'available'
 
 PresenceInfoFactory = Factory(PresenceInfo)

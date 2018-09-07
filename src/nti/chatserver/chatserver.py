@@ -12,10 +12,8 @@ from __future__ import absolute_import
 
 import uuid
 import datetime
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+
+from six.moves import cPickle as pickle
 
 from zope import component
 from zope import interface
@@ -168,6 +166,7 @@ class Chatserver(object):
         else:
             keys = None
         if keys:
+            # pylint: disable=no-member
             presence_pickles = self._redis.mget(keys)
             presences = [
                 pickle.loads(p) for p in presence_pickles if p is not None
@@ -177,6 +176,7 @@ class Chatserver(object):
         return presences
 
     def setPresence(self, presence):
+        # pylint: disable=no-member
         presence_ext = pickle.dumps(presence, pickle.HIGHEST_PROTOCOL)
         return self._redis.setex('users/' + presence.username + '/presence',
                                  # Recall that the timeout argument comes before
@@ -186,6 +186,7 @@ class Chatserver(object):
                                  presence_ext)
 
     def removePresenceOfUser(self, username):
+        # pylint: disable=no-member
         return self._redis.delete('users/' + username + '/presence')
 
     # Low-level IO
@@ -221,7 +222,7 @@ class Chatserver(object):
                 have one value in the sequence for the Occupants key, the tuple of (sender,sid).
         :return: The room entered, or None.
         """
-        # TODO: This is racy.
+        # !!! This is racy.
         container = self.meeting_container_storage.get(room_info_dict[XFields.CONTAINER_ID])
         if not hasattr(container, 'enter_active_meeting'):
             # The container didn't match any storage.

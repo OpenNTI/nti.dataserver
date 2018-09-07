@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+# pylint: disable=inherit-non-class
+
 import os
 import six
 import time
@@ -179,11 +181,13 @@ class _ChatHandler(object):
         msg_info.sender_sid = self.session.session_id
         result = True
         # Rate limit *all* incoming chat messages
+        # pylint: disable=no-member
         state = IChatHandlerSessionState(self.session)
         if not state.message_post_rate_limit.consume():
             if 'DATASERVER_SYNC_CHANGES' in os.environ:  # hack for testing
-                logger.warn("Allowing message rate for %s to exceed throttle %s during integration testings.",
-                            self, state.message_post_rate_limit)
+                logger.warning(
+                    "Allowing message rate for %s to exceed throttle %s during integration testings.",
+                    self, state.message_post_rate_limit)
             else:
                 raise MessageRateExceeded()
 
@@ -233,6 +237,7 @@ class _ChatHandler(object):
                                                           sessions_validator=sessions_validator)
 
         if not room:
+            # pylint: disable=no-member
             self.emit_failedToEnterRoom(self.session.owner, room_info)
         else:
             notify(UserEnterRoomEvent(self.session.owner, room.id))
@@ -265,6 +270,7 @@ class _ChatHandler(object):
                 room.Moderated = flag
             logger.debug("%s becoming a moderator of room %s", self, room)
             room.add_moderator(self.session.owner)
+            # pylint: disable=unsupported-assignment-operation
             IChatHandlerSessionState(self.session).rooms_i_moderate[room.RoomId] = room
         else:
             # deactivating moderation for the room
@@ -273,11 +279,13 @@ class _ChatHandler(object):
             if flag != room.Moderated:
                 logger.debug("%s deactivating moderation of %s", self, room)
                 room.Moderated = flag
+            # pylint: disable=no-member
             IChatHandlerSessionState(self.session).rooms_i_moderate.pop(room.RoomId, None)
         return room
 
     def approveMessages(self, m_ids):
         for m in m_ids:
+            # pylint: disable=no-member
             for room in IChatHandlerSessionState(self.session).rooms_i_moderate.itervalues():
                 room.approve_message(m)
 
@@ -289,6 +297,7 @@ class _ChatHandler(object):
             # TODO: Where does this state belong? Who
             # keeps the message? Passing just the ID assumes
             # that the client can find the message by id.
+            # pylint: disable=no-member
             self.emit_recvMessageForAttention(usernames, m)
         return True
 
@@ -312,7 +321,7 @@ class _ChatHandler(object):
     def setPresence(self, presenceinfo):
         if not IPresenceInfo.providedBy(presenceinfo):
             return False
-
+        # pylint: disable=no-member
         # canonicalize the presence username
         presenceinfo.username = self.session.owner
         # canonicalize the timestamps
@@ -364,8 +373,7 @@ def ChatHandlerNotAvailable(*unused_args):
 
 @interface.implementer(ISocketEventHandler)
 def ChatHandlerFactory(socketio_protocol, chatserver=None):
-    session = socketio_protocol.session if hasattr(
-        socketio_protocol, 'session') else socketio_protocol
+    session = socketio_protocol.session if hasattr(socketio_protocol, 'session') else socketio_protocol
     if session:
         chatserver = component.queryUtility(IChatserver) if not chatserver else chatserver
         user = User.get_user(session.owner)
