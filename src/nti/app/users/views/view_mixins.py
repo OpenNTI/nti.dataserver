@@ -625,13 +625,14 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
     def resolve_entity_ids(self, site=None):
         result = []
         for doc_id in self.get_sorted_entity_intids(site):
-            username = self.username(doc_id)
-            if not username:
-                continue
-            alias = self.alias(doc_id)
-            realname = self.realname(doc_id)
-            if self.search_include(doc_id, username, alias, realname):
+            if not self.searchTerm:
                 result.append(doc_id)
+            else:
+                alias = self.alias(doc_id)
+                realname = self.realname(doc_id)
+                username = self.username(doc_id)
+                if self.search_include(doc_id, username, alias, realname):
+                    result.append(doc_id)
         return result
 
     def reify_predicate(self, obj):
