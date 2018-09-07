@@ -8,9 +8,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import six
 import functools
 import collections
+
+import BTrees
+
+from persistent import Persistent
+
+import six
 
 from zope import component
 from zope import interface
@@ -18,10 +23,6 @@ from zope import interface
 from zope.event import notify
 
 from zope.intid.interfaces import IIntIds
-
-import BTrees
-
-from persistent import Persistent
 
 from nti.chatserver import MessageFactory as _
 
@@ -83,6 +84,7 @@ class _MeetingMessagePostPolicy(object):
 
         :return: Undefined.
         """
+        # pylint: disable=too-many-function-args
         storage = IMessageInfoStorage(msg_info)
         storage.add_message(msg_info)
 
@@ -211,10 +213,12 @@ class _MeetingMessagePostPolicy(object):
             # recipients are ignored for the default channel,
             # and a message to everyone also counts for incrementing the ids.
             result = 1
+            # pylint: disable=no-member
             self.emit_recvMessage(recipient_names, msg_info)
         else:
             # On a non-default channel, and not to everyone in the room
             for name in recipient_names:
+                # pylint: disable=no-member
                 self.emit_recvMessage(name, msg_info)
 
         # Emit events
@@ -248,6 +252,7 @@ class _MeetingMessagePostPolicy(object):
         # or incrementing room message counts
         msg_info.body = {'state': msg_info.body['state']}  # drop unknown keys
         recipient_names = self._get_recipient_names_for_message(msg_info)
+        # pylint: disable=no-member
         self.emit_recvMessage(recipient_names, msg_info)
         return True
 
@@ -464,6 +469,7 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
                for recip in msg_info.recipients_with_sender):
             msg_info.Status = STATUS_SHADOWED
             self._ensure_message_stored(msg_info)
+            # pylint: disable=no-member
             self.emit_recvMessageForShadow(self.moderated_by_usernames, msg_info)
             notify(MessageInfoPostedToRoomEvent(msg_info,
                                                 self.moderated_by_usernames,
@@ -498,14 +504,15 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
             return False
         self._ensure_message_stored(msg_info)
         self.moderation_state.hold_message_for_moderation(msg_info)
+        # pylint: disable=no-member
         self.emit_recvMessageForModeration(self.moderated_by_usernames, msg_info)
         return True
 
     @_only_for_moderator
     def _msg_handle_CONTENT(self, msg_info):
-        if    not isinstance(msg_info.body, collections.Mapping) \
-           or not 'ntiid' in msg_info.body \
-           or not is_valid_ntiid_string(msg_info.body['ntiid']):
+        if     not isinstance(msg_info.body, collections.Mapping) \
+            or not 'ntiid' in msg_info.body \
+            or not is_valid_ntiid_string(msg_info.body['ntiid']):
             return False
         # sanitize any keys we don't know about.
         msg_info.body = {'ntiid': msg_info.body['ntiid']}
@@ -567,6 +574,7 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 
     def add_moderator(self, mod_name):
         self.moderation_state.add_moderator(mod_name)
+        # pylint: disable=no-member
         self.emit_roomModerationChanged(self._occupant_names, self._room)
 
     def is_moderated_by(self, mod_name):
@@ -579,7 +587,8 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 
 
 @component.adapter(IMeeting, IMeetingShouldChangeModerationStateEvent)
-def meeting_should_change_moderation_state(self, unused_event):
+def meeting_should_change_moderation_state(self, unused_event=None):
+    # pylint: disable=protected-access
     if self._moderation_state is None:
         self._moderation_state = _ModeratedMeetingState()
     else:
@@ -594,6 +603,7 @@ def MeetingPostPolicy(self):
 
     .. note:: This is currently intricately tied to the meeting.
     """
+    # pylint: disable=protected-access
     if self._moderation_state:
         policy = _ModeratedMeetingMessagePostPolicy(self._chatserver,
                                                     room=self,
