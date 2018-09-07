@@ -530,8 +530,6 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
 
     _NUMERIC_SORTING = (IX_CREATEDTIME,)
 
-    __entity_count = 0
-
     def check_access(self):
         pass
         
@@ -625,18 +623,17 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         return result
 
     def resolve_entity_ids(self, site=None):
-        self.__entity_count = 0
+        result = []
         for doc_id in self.get_sorted_entity_intids(site):
             if not self.searchTerm:
-                self.__entity_count += 1
-                yield doc_id
+                result.append(doc_id)
             else:
                 alias = self.alias(doc_id)
                 realname = self.realname(doc_id)
                 username = self.username(doc_id)
                 if self.search_include(doc_id, username, alias, realname):
-                    self.__entity_count += 1
-                    yield doc_id
+                    result.append(doc_id)
+        return result
 
     def reify_predicate(self, obj):
         return obj is not None
@@ -666,6 +663,6 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         result[ITEMS] = [
             self.transformer(x) for x in result[ITEMS]
         ]
-        result[TOTAL] = self.__entity_count
+        result[TOTAL] = len(items)
         result[ITEM_COUNT] = len(result[ITEMS])
         return result
