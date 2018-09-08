@@ -16,6 +16,7 @@ import time
 from zope import component
 from zope import interface
 from zope import deferredimport
+from zope import lifecycleevent
 
 from zope.event import notify
 
@@ -172,6 +173,7 @@ class _Meeting(ThreadableMixin,
         :return: An immutable iterable of anyone who has even been active in this room.
         """
         return set(self._historical_occupant_names)
+    sharedWith = historical_occupant_names # alias
 
     def _policy(self):
         return IMeetingPolicy(self)
@@ -205,6 +207,8 @@ class _Meeting(ThreadableMixin,
             self.emit_enteredRoom(name, self)
             self.emit_roomMembershipChanged(self.occupant_names - set((name,)),
                                             self)
+            # notify
+            lifecycleevent.modified(self)
         else:
             logger.debug("Not broadcasting (%s) enter/change events for %s in %s",
                          broadcast, name, self)
@@ -223,6 +227,8 @@ class _Meeting(ThreadableMixin,
         if broadcast:
             self.emit_enteredRoom(new_members, self)
             self.emit_roomMembershipChanged(old_members, self)
+        if new_members:
+            lifecycleevent.modified(self)
 
     def del_occupant_name(self, name):
         if name in self._occupant_names:
