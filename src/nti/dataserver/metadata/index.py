@@ -10,9 +10,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import BTrees
+
 # disable 'redefining builtin id' because
 # we get that from superclass
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 import six
 
 from zope import component
@@ -24,9 +26,9 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
-import BTrees
-
 from nti.base._compat import text_
+
+from nti.chatserver.interfaces import IMessageInfo
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
@@ -34,7 +36,6 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDevice
-from nti.dataserver.interfaces import IThreadable
 from nti.dataserver.interfaces import ICreatedTime
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import ILastModified
@@ -42,7 +43,6 @@ from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import IUserGeneratedData
 from nti.dataserver.interfaces import IUserTaggedContent
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
-from nti.dataserver.interfaces import IInspectableWeakThreadable
 from nti.dataserver.interfaces import IContained as INTIContained
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
@@ -54,6 +54,9 @@ from nti.ntiids.ntiids import TYPE_NAMED_ENTITY
 
 from nti.ntiids.ntiids import is_ntiid_of_types
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.threadable.interfaces import IThreadable
+from nti.threadable.interfaces import IInspectableWeakThreadable
 
 from nti.zope_catalog.catalog import DeferredCatalog
 
@@ -130,7 +133,8 @@ class ValidatingContainerId(object):
         if contained is not None:
             cid = contained.containerId
             if      is_ntiid_of_types(cid, self._IGNORED_TYPES) \
-                and not ICommentPost.providedBy(obj):
+                and not ICommentPost.providedBy(obj) \
+                and not IMessageInfo.providedBy(obj):
                 self.containerId = None
             else:
                 self.containerId = text_(cid)
@@ -234,7 +238,7 @@ class TaggedTo(object):
             return ()
 
         username_tags = set()
-        for raw_tag in raw_tags:
+        for raw_tag in raw_tags:  # pylint: disable=not-an-iterable
             if is_ntiid_of_types(raw_tag, self._ENTITY_TYPES):
                 entity = find_object_with_ntiid(raw_tag)
                 if entity is not None:
@@ -301,7 +305,7 @@ def CreatorOfInReplyToIndex(family=BTrees.family64):
 
 
 def isTopLevelContentObjectFilter(unused_extent, unused_docid, document):
-    # TODO: This is messy
+    # This is messy  !!!
     # NOTE: This is referenced by persistent objects, must stay
     if getattr(document, '__is_toplevel_content__', False):
         return True
@@ -322,6 +326,7 @@ def isTopLevelContentObjectFilter(unused_extent, unused_docid, document):
 
         if IInspectableWeakThreadable.providedBy(document):
             return not document.isOrWasChildInThread()
+
         if IThreadable.providedBy(document):
             return document.inReplyTo is None
         return True
