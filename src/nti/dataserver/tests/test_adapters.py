@@ -64,13 +64,15 @@ class TestAdapters(unittest.TestCase):
             # pylint: disable=too-many-function-args
             trx_storage = storage.add_message(meeting, msg)
 
-            adapted = _IMeetingTranscriptStorage(msg, None)
+            adapted = component.queryMultiAdapter((msg, user),
+                                                  _IMeetingTranscriptStorage)
             assert_that(adapted, is_not(none()))
-
             assert_that(adapted, is_(trx_storage))
 
-            summary = ITranscriptSummary(msg, None)
+            summary = component.queryMultiAdapter((msg, user),
+                                                  ITranscriptSummary)
             assert_that(summary, is_not(none()))
             
-            transcript = ITranscript(msg, None)
+            transcript = component.queryMultiAdapter((msg, user),
+                                                     ITranscript)
             assert_that(transcript, is_not(none()))

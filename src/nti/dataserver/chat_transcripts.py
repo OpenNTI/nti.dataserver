@@ -687,29 +687,27 @@ def _message_info_to_meeting(msg):
     return ntiids.find_object_with_ntiid(ntiid) if ntiid else None
 
 
-@component.adapter(IMessageInfo)
+@component.adapter(IMessageInfo, IUser)
 @interface.implementer(_IMeetingTranscriptStorage)
-def _message_info_to_transcript_storage(msg):
-    creator = _get_creator(msg)
+def _message_info_to_transcript_storage(msg, user):
     meeting = IMeeting(msg, None)
-    if IUser.providedBy(creator) and IMeeting.providedBy(meeting):
-        storage_id = _transcript_ntiid(meeting, creator.username)
-        storage = creator.getContainedObject(meeting.containerId,
-                                             storage_id)
+    if IMeeting.providedBy(meeting):
+        storage_id = _transcript_ntiid(meeting, user.username)
+        storage = user.getContainedObject(meeting.containerId,
+                                          storage_id)
         return storage
 
 
-@component.adapter(IMessageInfo)
+@component.adapter(IMessageInfo, IUser)
 @interface.implementer(ITranscriptSummary)
-def _message_info_to_transcript_summary(msg):
-    return ITranscriptSummary(_IMeetingTranscriptStorage(msg, None), None)
+def _message_info_to_transcript_summary(msg, user):
+    storage = component.queryMultiAdapter((msg, user), 
+                                          _IMeetingTranscriptStorage)
+    return ITranscriptSummary(storage, None)
 
 
-@component.adapter(IMessageInfo)
 @interface.implementer(ITranscript)
-def _message_info_to_transcript(msg):
-    creator = _get_creator(msg)
+@component.adapter(IMessageInfo, IUser)
+def _message_info_to_transcript(msg, user):
     ntiid = _get_meeting_id(msg)
-    storage = IUserTranscriptStorage(creator, None)
-    # pylint: disable=too-many-function-args
-    return storage.transcript_for_meeting(ntiid) if storage is not None else None
+    return transcript_for_user_in_room(user.username, ntiid)
