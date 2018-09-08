@@ -689,9 +689,10 @@ def _message_info_to_meeting(msg):
 
 @component.adapter(IMessageInfo, IUser)
 @interface.implementer(_IMeetingTranscriptStorage)
-def _message_info_to_transcript_storage(msg, user):
+def _message_info_to_transcript_storage(msg, user=None):
     meeting = IMeeting(msg, None)
-    if IMeeting.providedBy(meeting):
+    user = _get_creator(msg) if user is None else user
+    if IUser.providedBy(user) and IMeeting.providedBy(meeting):
         storage_id = _transcript_ntiid(meeting, user.username)
         storage = user.getContainedObject(meeting.containerId,
                                           storage_id)
@@ -700,7 +701,8 @@ def _message_info_to_transcript_storage(msg, user):
 
 @component.adapter(IMessageInfo, IUser)
 @interface.implementer(ITranscriptSummary)
-def _message_info_to_transcript_summary(msg, user):
+def _message_info_to_transcript_summary(msg, user=None):
+    user = _get_creator(msg) if user is None else user
     storage = component.queryMultiAdapter((msg, user), 
                                           _IMeetingTranscriptStorage)
     return ITranscriptSummary(storage, None)
@@ -710,4 +712,6 @@ def _message_info_to_transcript_summary(msg, user):
 @component.adapter(IMessageInfo, IUser)
 def _message_info_to_transcript(msg, user):
     ntiid = _get_meeting_id(msg)
-    return transcript_for_user_in_room(user.username, ntiid)
+    user = _get_creator(msg) if user is None else user
+    if IUser.providedBy(user):
+        return transcript_for_user_in_room(user.username, ntiid)
