@@ -96,6 +96,8 @@ class _Meeting(ThreadableMixin,
     _occupant_names = ()
     _moderation_state = None
 
+    mimeType = mime_type = 'application/vnd.nextthought.meeting'
+    
     #: We use this to decide who can re-enter the room after exiting
     _historical_occupant_names = ()
 
