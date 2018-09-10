@@ -60,7 +60,7 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
 
         lsm = ds_folder.getSiteManager()
         intids = lsm.getUtility(IIntIds)
-        from IPython.terminal.debugger import set_trace;set_trace()
+
         # get catalog and indexes
         catalog = get_metadata_catalog()
         mimeType_index = catalog[IX_MIMETYPE]
