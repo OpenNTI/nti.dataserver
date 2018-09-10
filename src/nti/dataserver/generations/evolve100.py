@@ -76,7 +76,7 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
             # reset docs ids
             for doc_id in doc_ids:
                 if doc_id in documents_to_values:
-                    count += 0
+                    count += 1
                     documents_to_values[doc_id] = NEW_MIMETYPE
                     # index meeting
                     meeting = intids.queryObject(doc_id)
