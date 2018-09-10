@@ -483,6 +483,9 @@ def createApplication( http_port,
 																			   'package-includes',
 																			   '000-features.zcml') )
 
+	if xml_conf_machine.hasFeature('testmode'):
+		os.environ.pop('GEVENT_MONITOR_THREAD_ENABLE', None)
+
 	if 'pre_site_zcml' in settings:
 		# One before we load the main config so it has a chance to exclude files
 		logger.debug( "Loading pre-site settings from %s", settings['pre_site_zcml'] )
