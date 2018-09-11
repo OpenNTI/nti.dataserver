@@ -61,9 +61,6 @@ logger = __import__('logging').getLogger(__name__)
 class UserTranscriptsView(AbstractAuthenticatedView,
                           BatchingUtilsMixin):
 
-    _DEFAULT_BATCH_SIZE = 30
-    _DEFAULT_BATCH_START = 0
-
     _ALLOWED_SORTING = (IX_CREATEDTIME, IX_CONTAINERID)
 
     @Lazy
