@@ -114,6 +114,14 @@ class CreatorBasedAnnotationMeetingStorage(object):
 
         meeting_container[room.id] = room
 
+    def remove_room(self, room):
+        creator = Entity.get_entity(room.creator)
+        meeting_container = IMeetingContainer(creator)
+        if room.id in meeting_container:
+            del meeting_container[room.id]
+            return True
+        return False
+
 
 class IMessageInfoContainer(IBTreeContainer, IMessageInfoStorage):
     contains(IMessageInfo)

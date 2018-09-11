@@ -306,6 +306,11 @@ class IMeetingStorage(interface.Interface):
         # this NTIID. They also like to be able to deriver new IDs from this
         # NTIID (all of that is weird)
 
+    def remove_room(room):
+        """
+        Remove the specifie room
+        """
+
     def __delitem__(room_id):
         """
         Removes the room stored in this object with the given id or
