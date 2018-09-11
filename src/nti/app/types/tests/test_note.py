@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods,too-many-function-args
 
 from hamcrest import is_
 from hamcrest import none
@@ -19,19 +19,19 @@ from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import greater_than_or_equal_to
 
-from nti.contentfile.model import ContentBlobFile
-
-from nti.externalization.representation import to_json_representation
-
-from nti.ntiids.ntiids import find_object_with_ntiid
-
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.app.testing.webtest import TestApp
 
+from nti.contentfile.model import ContentBlobFile
+
 from nti.dataserver.tests import mock_dataserver
+
+from nti.externalization.representation import to_json_representation
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 GIF_DATAURL = 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 
@@ -58,6 +58,7 @@ class TestNote(ApplicationLayerTest):
                    "title": "bleach"}
 
         data = to_json_representation(ext_obj)
+        # pylint: disable=no-member
         testapp = TestApp(self.app)
         path = '/dataserver2/users/sjohnson@nextthought.com/Objects/'
         res = testapp.post(path, data,
@@ -117,6 +118,7 @@ class TestNote(ApplicationLayerTest):
                    "title": "bleach"}
 
         data = to_json_representation(ext_obj)
+        # pylint: disable=no-member
         testapp = TestApp(self.app)
         path = '/dataserver2/users/sjohnson@nextthought.com/Objects/'
         res = testapp.post(path, data,
