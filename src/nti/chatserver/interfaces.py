@@ -351,6 +351,9 @@ class IUserTranscriptStorage(interface.Interface):
     def transcript_for_meeting(meeting_id):
         pass
 
+    def transcript_summary_for_meeting(meeting_id):
+        pass
+
     def add_message(meeting, msg):
         pass
 

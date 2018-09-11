@@ -338,15 +338,14 @@ class _UserTranscriptStorageAdapter(object):
     def __init__(self, user):
         self._user = user
 
-    def transcript_for_meeting(self, object_id):
+    def _storage_for_meeting(self, object_id):
         result = None
         meeting_oid = get_meeting_oid(object_id)
         meeting = ntiids.find_object_with_ntiid(meeting_oid)
         if meeting is not None:
             storage_id = _transcript_ntiid(meeting, self._user.username)
-            storage = self._user.getContainedObject(meeting.containerId,
-                                                    storage_id)
-            result = Transcript(storage) if storage else None
+            result = self._user.getContainedObject(meeting.containerId,
+                                                   storage_id)
         else:
             # OK, the meeting has gone away, GC'd and no longer directly referencable.
             # Try to find the appropriate storage manually
@@ -368,8 +367,18 @@ class _UserTranscriptStorageAdapter(object):
                 if      value_meeting_id in acceptable_oids \
                     or (    ntiids.is_ntiid_of_type(value_meeting_id, ntiids.TYPE_UUID)
                         and ntiids.get_specific(value_meeting_id) == specific):
-                    result = Transcript(value)
+                    result = value
                     break
+        return result
+
+    def transcript_for_meeting(self, object_id):
+        storage = self._storage_for_meeting(object_id)
+        result = Transcript(storage) if storage is not None else None
+        return result
+
+    def transcript_summary_for_meeting(self, object_id):
+        storage = self._storage_for_meeting(object_id)
+        result = TranscriptSummary(storage) if storage is not None else None
         return result
 
     def _transcript_storages(self):
