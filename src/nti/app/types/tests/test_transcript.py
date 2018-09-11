@@ -50,6 +50,7 @@ class TestTranscript(ApplicationLayerTest):
             conn.add(meeting)
             intids.register(meeting)
             meeting.add_occupant_name("rukia", False)
+            meeting.add_occupant_name("ichigo", False)
             meeting.id = meeting.ID = to_external_ntiid_oid(meeting)
 
             # index
@@ -77,8 +78,9 @@ class TestTranscript(ApplicationLayerTest):
         testapp = TestApp(self.app)
 
         path = '/dataserver2/users/ichigo/@@transcripts'
-        params = {'containeId': 'tag:nextthought.com,2011-10:Root',
+        params = {'containerId': 'tag:nextthought.com,2011-10:Root',
                   'recursive': True,
+                  'myOwn': True,
                   'sortOn': 'containerId',
                   'contributor': 'rukia'}
         res = testapp.get(path, params=params,
@@ -91,3 +93,13 @@ class TestTranscript(ApplicationLayerTest):
         testapp.get(path, params=params,
                     extra_environ=self._make_extra_environ(user="rukia"),
                     status=403)
+        
+        path = '/dataserver2/users/rukia/@@transcripts'
+        params['recursive'] = params['myOwn'] = False
+        params['contributor'] = 'ichigo'
+        res = testapp.get(path, params=params,
+                          extra_environ=self._make_extra_environ(user="rukia"),
+                          status=200)
+        assert_that(res.json_body,
+                    has_entry('Items',
+                              has_length(1)))
