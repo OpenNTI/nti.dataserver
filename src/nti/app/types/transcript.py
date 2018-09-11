@@ -156,7 +156,7 @@ class UserTranscriptsView(AbstractAuthenticatedView,
             if IMeeting.providedBy(obj):
                 yield obj
 
-    def transformer(self, meeting):
+    def transform(self, meeting):
         # pylint: disable=too-many-function-args
         storage = IUserTranscriptStorage(self.remoteUser)
         result = storage.transcript_summary_for_meeting(meeting.id)
@@ -166,12 +166,12 @@ class UserTranscriptsView(AbstractAuthenticatedView,
         result = LocatedExternalDict()
         items = self.get_sorted_meeting_intids()
         self._batch_items_iterable(result, items)
-        # reify only the required items
-        result[ITEMS] = self.reify(result[ITEMS])
-        # transform only the required items
-        result[ITEMS] = [
-            self.transformer(x) for x in result[ITEMS]
-        ]
+        # reify and transform only the required items
+        result[ITEMS] = (
+            self.transform(x) for x in self.reify(result[ITEMS])
+        )
+        # check null itemss
+        result[ITEMS] = [x for x in result[ITEMS] if x is not None]
         result[TOTAL] = len(items)
         result[ITEM_COUNT] = len(result[ITEMS])
         return result
