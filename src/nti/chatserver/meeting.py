@@ -229,8 +229,8 @@ class _Meeting(ThreadableMixin,
         if broadcast:
             self.emit_enteredRoom(new_members, self)
             self.emit_roomMembershipChanged(old_members, self)
-        if new_members:
-            lifecycleevent.modified(self)
+            if new_members:
+                lifecycleevent.modified(self)
 
     def del_occupant_name(self, name):
         if name in self._occupant_names:

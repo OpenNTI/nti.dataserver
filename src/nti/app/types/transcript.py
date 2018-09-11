@@ -42,6 +42,8 @@ from nti.dataserver.metadata.index import IX_CONTAINERID
 from nti.dataserver.metadata.index import IX_CREATEDTIME
 from nti.dataserver.metadata.index import get_metadata_catalog
 
+from nti.dataserver.users.users import User
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -61,7 +63,10 @@ logger = __import__('logging').getLogger(__name__)
 class UserTranscriptsView(AbstractAuthenticatedView,
                           BatchingUtilsMixin):
 
-    _ALLOWED_SORTING = (IX_CREATEDTIME, IX_CONTAINERID)
+    _ALLOWED_SORTING = (IX_CREATOR, IX_CREATEDTIME, IX_CONTAINERID)
+
+    _DEFAULT_BATCH_SIZE = 30
+    _DEFAULT_BATCH_START = 0
 
     @Lazy
     def metadata_catalog(self):
@@ -81,7 +86,11 @@ class UserTranscriptsView(AbstractAuthenticatedView,
              or params.get('transcriptUsers')
         if isinstance(users, six.string_types):
             users = users.split(",")
-        return set(users or ())
+        # pylint: disable=no-member
+        result = set(users or ())
+        # always
+        result.add(self.remoteUser.username)
+        return result
 
     def get_containerids_for_ntiid(self, ntiid):
         containers = set()
@@ -112,13 +121,20 @@ class UserTranscriptsView(AbstractAuthenticatedView,
         # pylint: disable=no-member
         return self.params.get('sortOrder', 'ascending')
 
+    @Lazy
+    def myOwn(self):
+        # pylint: disable=no-member
+        result = self.params.get('myOwn') or self.params.get('own')
+        return is_true(result)
+
     def get_meetings_ids(self):
         # pylint: disable=no-member,using-constant-test
         catalog = self.metadata_catalog
         query = {
-            IX_CREATOR: {'any_of': (self.remoteUser.username,)},
             IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.meeting',)},
         }
+        if self.myOwn:
+            query[IX_CREATOR] = {'any_of': (self.remoteUser.username,)}
         # occupants
         users = self.contributors
         if users:
@@ -133,9 +149,15 @@ class UserTranscriptsView(AbstractAuthenticatedView,
     @Lazy
     def sortMap(self):
         return {
+            IX_CREATOR: self.metadata_catalog,
             IX_CONTAINERID: self.metadata_catalog,
             IX_CREATEDTIME: self.metadata_catalog,
         }
+
+    def get_user(self, user):
+        if not IUser.providedBy(user):
+            user = User.get_user(user)
+        return user
 
     def get_sorted_meeting_intids(self):
         doc_ids = self.get_meetings_ids()
@@ -155,9 +177,10 @@ class UserTranscriptsView(AbstractAuthenticatedView,
 
     def transform(self, meeting):
         # pylint: disable=too-many-function-args
-        storage = IUserTranscriptStorage(self.remoteUser)
-        result = storage.transcript_summary_for_meeting(meeting.id)
-        return result
+        creator = self.get_user(meeting.creator)
+        storage = IUserTranscriptStorage(creator, None)
+        if storage is not None:
+            return storage.transcript_summary_for_meeting(meeting.id)
 
     def __call__(self):
         result = LocatedExternalDict()
