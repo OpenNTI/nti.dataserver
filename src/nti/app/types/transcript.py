@@ -167,9 +167,9 @@ class UserTranscriptsView(AbstractAuthenticatedView,
         items = self.get_sorted_meeting_intids()
         self._batch_items_iterable(result, items)
         # reify and transform only the required items
-        result[ITEMS] = (
+        result[ITEMS] = [
             self.transform(x) for x in self.reify(result[ITEMS])
-        )
+        ]
         # check null items
         null_items = sum(1 for x in result[ITEMS] if x is None)
         result[ITEMS] = [x for x in result[ITEMS] if x is not None]
