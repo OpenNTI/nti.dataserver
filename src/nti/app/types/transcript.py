@@ -170,8 +170,9 @@ class UserTranscriptsView(AbstractAuthenticatedView,
         result[ITEMS] = (
             self.transform(x) for x in self.reify(result[ITEMS])
         )
-        # check null itemss
+        # check null items
+        null_items = sum(1 for x in result[ITEMS] if x is None)
         result[ITEMS] = [x for x in result[ITEMS] if x is not None]
-        result[TOTAL] = len(items)
+        result[TOTAL] = len(items) - null_items
         result[ITEM_COUNT] = len(result[ITEMS])
         return result
