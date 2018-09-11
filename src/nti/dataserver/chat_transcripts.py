@@ -168,6 +168,10 @@ class _IMeetingTranscriptStorage(ICreated,  # ICreated so they get an ACL
         Iterate all the messages in this transcript.
         """
 
+    def clear():
+        """
+        Clear this storage
+        """
 
 # implementations
 
@@ -294,6 +298,9 @@ class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
             # pylint: disable=no-member
             key = self._intids.queryId(key)
         return key is not None and key in self.messages
+
+    def clear(self):
+        self.messages.clear()
 
     @CachedProperty
     def _intids(self):
@@ -443,6 +450,16 @@ class _UserTranscriptStorageAdapter(object):
         if storage is not None:
             storage.remove_message(msg)
         return storage
+
+    def remove_meeting(self, meeting):
+        result = ()
+        storage_id = _transcript_ntiid(meeting, self._user.username)
+        storage = self._user.getContainedObject(meeting.containerId,
+                                                storage_id)
+        if storage is not None:
+            self._user.deleteContainedObject(meeting.containerId, storage_id)
+            result = list(storage.itervalues())
+        return result
 
 
 @interface.implementer(IUserTranscriptStorage)

@@ -360,6 +360,8 @@ class IUserTranscriptStorage(interface.Interface):
     def remove_message(meeting, msg):
         pass
 
+    def remove_meeting(meeting):
+        pass
 
 # Presence
 
