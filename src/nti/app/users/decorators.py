@@ -43,10 +43,7 @@ from nti.dataserver.users.interfaces import IDisallowHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowSuggestedContacts
 
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
-
-from nti.externalization.singleton import Singleton
 
 from nti.identifiers.utils import get_external_identifiers
 
@@ -184,30 +181,6 @@ class _DFLLinksDecorator(AbstractAuthenticatedRequestAwareDecorator):
         _links = result.setdefault(LINKS, [])
         link = Link(context, rel="Activity", elements=('Activity',))
         _links.append(link)
-
-
-@interface.implementer(IExternalObjectDecorator)
-@component.adapter(IDynamicSharingTargetFriendsList)
-class _DFLEditLinkRemoverDecorator(Singleton):
-    """
-    Remove the edit link if the DFL is locked
-
-    :Note The order in which decorators are called is completely
-    undefined. The only reason this happens to work now
-    is the distinction between IExternalObjectDecorator
-    and IExternalMappingDecorator; if any of the registrations
-    change this will break.
-    """
-
-    def decorateExternalObject(self, context, external):
-        links = external.get(LINKS, ())
-        if context.Locked:
-            for idx, link in enumerate(tuple(links)):  # mutating
-                if link.get('rel') == 'edit':
-                    links.pop(idx)
-                    break
-        if not links and LINKS in external:
-            del external[LINKS]
 
 
 @component.adapter(IUser, IRequest)
