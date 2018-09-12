@@ -10,19 +10,19 @@ from __future__ import absolute_import
 
 import os
 import re
-from six.moves import urllib_parse
-
 from collections import Mapping
 from collections import OrderedDict
+
+from pyramid import httpexceptions as hexc
+
+from pyramid.threadlocal import get_current_request
+
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
 
 from zope.file.upload import nameFinder
-
-from pyramid import httpexceptions as hexc
-
-from pyramid.threadlocal import get_current_request
 
 from nti.app.base.abstract_views import get_source
 
@@ -219,7 +219,7 @@ def get_content_files(context, attr="body"):
     :param attr attribute name to check in context (optional)
     """
     if IModeledContentBody.providedBy(context) and attr == 'body':
-        # XXX: CS - 20160426 for model content body object we want to save
+        # CS - 20160426 for model content body object we want to save
         # content file blobs but keep the same MimeType for BWC. so we transform
         # contentfiles to contentblobfiles
         return get_content_files_from_modeled_content_body(context)
@@ -324,10 +324,10 @@ def safe_download_file_name(name):
     else:
         ext = os.path.splitext(name)[1]
         try:
-            # XXX: Another option is to UTF-8 encode the name and quote it
+            # Another option is to UTF-8 encode the name and quote it
             # quote(name.encode('utf-8'))
             result = urllib_parse.quote(name)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             result = u'file' + ext
     return result
 
@@ -372,6 +372,6 @@ def get_file_from_oid_external_link(link):
             result = find_object_with_ntiid(ntiid)
             if not IFile.providedBy(result):
                 result = None
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logger.exception("Error while getting file from %s", link)
     return result

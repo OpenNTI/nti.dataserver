@@ -8,20 +8,20 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from requests.structures import CaseInsensitiveDict
-
-from zope import lifecycleevent
-
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+from requests.structures import CaseInsensitiveDict
+
+from zope import lifecycleevent
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.app.contentfile.view_mixins import file_contraints
+from nti.app.contentfile import MessageFactory as _
 
-from nti.app.contentfolder import MessageFactory as _
+from nti.app.contentfile.view_mixins import file_contraints
 
 from nti.app.externalization.error import raise_json_error
 
@@ -73,6 +73,7 @@ class ContentFileAssociationsView(AbstractAuthenticatedView):
     def __call__(self):
         result = LocatedExternalDict()
         result[ITEMS] = items = []
+        # pylint: disable=no-member
         if self.context.has_associations():
             items.extend(self.context.associations())
         result[ITEM_COUNT] = result[TOTAL] = len(items)
@@ -112,6 +113,7 @@ class ContentFileAssociateView(AbstractAuthenticatedView,
                                  'code': 'CannotFindTargetObject',
                              },
                              None)
+        # pylint: disable=no-member
         if target is not self.context and target is not self.context.__parent__:
             self.context.add_association(target)
             lifecycleevent.modified(self.context)

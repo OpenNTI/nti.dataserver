@@ -48,6 +48,7 @@ class _ContentFileDecorator(Singleton):
     def decorateExternalMapping(self, item, ext_dict):
         # get link. this should add object to connection if required
         # This provides our download link.
+        # pylint: disable=too-many-function-args
         link = IExternalLinkProvider(item).link()
         ext_dict['download_url'] = link if link else None
         view_parts = to_external_oid_and_link(item)
@@ -57,7 +58,7 @@ class _ContentFileDecorator(Singleton):
             ext_dict['url'] = view_url
         else:
             ext_dict['url'] = None
-        # XXX: make sure we add OID/NTIID fields to signal this file
+        # Warning!!!! make sure we add OID/NTIID fields to signal this file
         # can be marked as an internal ref if it's going to be updated
         oid = to_external_ntiid_oid(item)
         if OID not in ext_dict:
