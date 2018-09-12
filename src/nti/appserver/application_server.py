@@ -23,6 +23,10 @@ class RequestCounter(object):
         self.current_count = 0
         self.server = server
 
+    @property
+    def pool_size(self):
+        return self.server.worker.worker_connections
+
     def increment(self):
         self.count += 1
         self.current_count += 1
@@ -33,27 +37,11 @@ class RequestCounter(object):
     def __repr__(self):
         return str(self.current_count)
 
-
-class _RequestContextManager(object):
-
-    def __init__(self, server, request_counter):
-        self.request_counter = request_counter
-        self.server = server
-        self.request_id = request_counter.count
-
     def __enter__(self):
-        self.request_counter.increment()
-        logger.info('Accepting request (request_id=%s) (%s/%s)',
-                    self.request_id,
-                    self.request_counter.current_count,
-                    self.server.worker.worker_connections)
+        self.increment()
 
     def __exit__(self, *args):
-        self.request_counter.decrement()
-        logger.info('Finishing request (request_id=%s) (%s/%s)',
-                    self.request_id,
-                    self.request_counter.current_count,
-                    self.server.worker.worker_connections)
+        self.decrement()
 
 
 # In gevent 1.0, gevent.wsgi is an alias for WSGIServer
@@ -74,8 +62,11 @@ class WebSocketServer(gevent.pywsgi.WSGIServer):
         if not issubclass(self.handler_class, geventwebsocket.handler.WebSocketHandler):
             raise ValueError("Unable to run with a handler that is not a type of %s",
                              WebSocketServer.handler_class)
+        # Stash a request worker in the environ that will give us status on
+        # how our connection pool is being used (see nti_gunicorn.py).
         self.request_counter = RequestCounter(self)
+        self.environ['nti_request_counter'] = self.request_counter
 
     def handle(self, *args, **kwargs):
-        with _RequestContextManager(self, self.request_counter):
+        with self.request_counter:
             return super(WebSocketServer, self).handle(*args, **kwargs)

@@ -58,6 +58,10 @@ def _glogging_atoms(self, resp, req, environ, request_time):
     client_app_id = environ.get('HTTP_X_NTI_CLIENT_APP', '-')
     client_version = environ.get('HTTP_X_NTI_CLIENT_VERSION', '-')
     atoms['C'] = "%s@%s" % (client_app_id, client_version)
+
+    request_counter = environ.get('nti_request_counter', None)
+    atoms['R'] = "(%s/%s)" % (getattr(request_counter, 'current_count', ''),
+                               getattr(request_counter, 'pool_size', ''))
     return atoms
 glogging.Logger.atoms = _glogging_atoms
 
@@ -282,7 +286,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
         # formatting field width to account for this)
         # (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
         self.cfg.settings['access_log_format'].set(
-            str(self.cfg.access_log_format) + b" \"%(C)s\" %(G)s %(T)s.%(D)06ds")
+            str(self.cfg.access_log_format) + b" \"%(C)s\" %(R)s %(G)s %(T)s.%(D)06ds")
 
         # Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
         # Then the default propagation settings mean we get two copies of access logging.
