@@ -132,7 +132,7 @@ class _Meeting(ThreadableMixin,
         # leads to false conflicts
         return self._MessageCount.value
 
-    RoomId = alias('id')
+    ntiid = RoomId = alias('id')
     createdTime = alias('CreatedTime')  # ILastModified
     # ILastModified. Except we don't track it
     lastModified = read_alias('CreatedTime')
