@@ -21,9 +21,14 @@ from zope.annotation.interfaces import IAnnotations
 
 from nti.app.users.model import ContextLastSeenBTreeContainer
 
+from nti.appserver.interfaces import IEditLinkMaker
+
+from nti.appserver.pyramid_renderers_edit_link_decorator import DefaultEditLinkMaker
+
 from nti.coremetadata.interfaces import IContextLastSeenContainer
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IDisplayNameAdapter
@@ -84,3 +89,14 @@ def context_lastseen_factory(user, create=True):
 @component.adapter(IContextLastSeenContainer)
 def _context_lastseen_to_user(context):
     return find_interface(context, IUser)
+
+
+@interface.implementer(IEditLinkMaker)
+@component.adapter(IDynamicSharingTargetFriendsList)
+class _DFLEditLinkMaker(DefaultEditLinkMaker):
+
+    def make(self, context, request=None, allow_traversable_paths=True, link_method=None):
+        if not context.Locked:
+            return super(_DFLEditLinkMaker, self).make(context, request,
+                                                       allow_traversable_paths,
+                                                       link_method)
