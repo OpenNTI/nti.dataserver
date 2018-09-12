@@ -18,17 +18,32 @@ import geventwebsocket.handler
 
 class RequestCounter(object):
 
-    def __init__(self):
+    def __init__(self, server):
         self.counter = 0
+        self.current_counter = 0
+        self.server = server
 
     def increment(self):
         self.counter += 1
+        self.current_counter += 1
 
     def decrement(self):
-        self.counter -= 1
+        self.current_counter -= 1
 
     def __repr__(self):
-        return str(self.counter)
+        return str(self.current_counter)
+
+    def __enter__(self):
+        self.increment()
+        logger.info('Accepting request (%s/%s)',
+                    self.current_counter,
+                    self.server.worker.worker_connections)
+
+    def __exit__(self, *args):
+        self.decrement()
+        logger.info('Finishing request (%s/%s)',
+                    self.current_counter,
+                    self.server.worker.worker_connections)
 
 
 # In gevent 1.0, gevent.wsgi is an alias for WSGIServer
@@ -49,15 +64,9 @@ class WebSocketServer(gevent.pywsgi.WSGIServer):
         if not issubclass(self.handler_class, geventwebsocket.handler.WebSocketHandler):
             raise ValueError("Unable to run with a handler that is not a type of %s",
                              WebSocketServer.handler_class)
-        self.request_counter = RequestCounter()
+        self.request_counter = RequestCounter(self)
 
     def handle(self, *args, **kwargs):
-        self.request_counter.increment()
-        logger.info('Accepting request (%s/%s)',
-                    self.request_counter, self.worker.worker_connections)
-        try:
+
+        with self.request_counter:
             return super(WebSocketServer, self).handle(*args, **kwargs)
-        finally:
-            self.request_counter.decrement()
-            logger.info('Finishing request (%s/%s)',
-                        self.request_counter, self.worker.worker_connections)
