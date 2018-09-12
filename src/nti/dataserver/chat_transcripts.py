@@ -468,6 +468,9 @@ class _MissingStorage(object):
     A storage that's always empty and blank.
     """
 
+    def transcript_summary_for_meeting(self, unused_object_id):
+        return None
+
     def transcript_for_meeting(self, unused_meeting_id):
         return None  # pragma: no cover
 
@@ -483,6 +486,9 @@ class _MissingStorage(object):
         pass
 
     def remove_message(self, msg):
+        pass
+
+    def remove_meeting(self, meeting):
         pass
 _BLANK_STORAGE = _MissingStorage()
 
