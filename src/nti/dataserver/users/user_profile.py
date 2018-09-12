@@ -57,9 +57,9 @@ from nti.dataserver.users.utils import BackgroundUrlProperty as _BackgrounUrlPro
 
 from nti.externalization.representation import WithRepr
 
-from nti.schema.field import SchemaConfigured
-
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 logger = __import__('logging').getLogger(__name__)
 
