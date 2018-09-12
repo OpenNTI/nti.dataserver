@@ -458,7 +458,10 @@ class _UserTranscriptStorageAdapter(object):
                                                 storage_id)
         if storage is not None:
             self._user.deleteContainedObject(meeting.containerId, storage_id)
+            # collect all message info objects
             result = list(storage.itervalues())
+            # clear storage
+            storage.clear()
         return result
 
 
@@ -469,7 +472,7 @@ class _MissingStorage(object):
     """
 
     def transcript_summary_for_meeting(self, unused_object_id):
-        return None
+        return None  # pragma: no cover
 
     def transcript_for_meeting(self, unused_meeting_id):
         return None  # pragma: no cover
