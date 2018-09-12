@@ -19,30 +19,40 @@ import geventwebsocket.handler
 class RequestCounter(object):
 
     def __init__(self, server):
-        self.counter = 0
-        self.current_counter = 0
+        self.count = 0
+        self.current_count = 0
         self.server = server
 
     def increment(self):
-        self.counter += 1
-        self.current_counter += 1
+        self.count += 1
+        self.current_count += 1
 
     def decrement(self):
-        self.current_counter -= 1
+        self.current_count -= 1
 
     def __repr__(self):
-        return str(self.current_counter)
+        return str(self.current_count)
+
+
+class _RequestContextManager(object):
+
+    def __init__(self, server, request_counter):
+        self.request_counter = request_counter
+        self.server = server
+        self.request_id = request_counter.count
 
     def __enter__(self):
-        self.increment()
-        logger.info('Accepting request (%s/%s)',
-                    self.current_counter,
+        self.request_counter.increment()
+        logger.info('Accepting request (request_id=%s) (%s/%s)',
+                    self.request_id,
+                    self.request_counter.current_count,
                     self.server.worker.worker_connections)
 
     def __exit__(self, *args):
-        self.decrement()
-        logger.info('Finishing request (%s/%s)',
-                    self.current_counter,
+        self.request_counter.decrement()
+        logger.info('Finishing request (request_id=%s) (%s/%s)',
+                    self.request_id,
+                    self.request_counter.current_count,
                     self.server.worker.worker_connections)
 
 
@@ -67,6 +77,5 @@ class WebSocketServer(gevent.pywsgi.WSGIServer):
         self.request_counter = RequestCounter(self)
 
     def handle(self, *args, **kwargs):
-
-        with self.request_counter:
+        with _RequestContextManager(self, self.request_counter):
             return super(WebSocketServer, self).handle(*args, **kwargs)
