@@ -16,6 +16,9 @@ from nti.chatserver.interfaces import ACT_ENTER
 
 from nti.chatserver.interfaces import IMeeting
 
+from nti.dataserver.authorization import ROLE_ADMIN
+from nti.dataserver.authorization import ACT_NTI_ADMIN 
+
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 
@@ -33,6 +36,10 @@ class _MeetingACLProvider(AbstractCreatedAndSharedACLProvider):
 
     def _get_sharing_target_names(self):
         return self.context.occupant_names
+
+    def _extend_acl_after_creator_and_sharing(self, acl):
+        # so admins can administer (e.g. delete)
+        acl.append(ace_allowing(ROLE_ADMIN, ACT_NTI_ADMIN, type(self)))
 
     def _extend_acl_before_deny(self, acl):
         for occupant_name in self.context.historical_occupant_names or ():
