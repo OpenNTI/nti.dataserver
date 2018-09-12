@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid import httpexceptions as hexc
+
 from pyramid.view import view_config
 
 from requests.structures import CaseInsensitiveDict
@@ -27,6 +29,7 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.appserver.interfaces import IUserContainersQuerier
 
 from nti.chatserver.interfaces import IMeeting
+from nti.chatserver.interfaces import IMessageInfoStorage
 from nti.chatserver.interfaces import IUserTranscriptStorage
 
 from nti.common.string import is_true
@@ -34,6 +37,8 @@ from nti.common.string import is_true
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
+
+from nti.dataserver.meeting_storage import CreatorBasedAnnotationMeetingStorage
 
 from nti.dataserver.metadata.index import IX_CREATOR
 from nti.dataserver.metadata.index import IX_MIMETYPE
@@ -196,3 +201,49 @@ class UserTranscriptsView(AbstractAuthenticatedView,
         result[TOTAL] = len(items) - null_items
         result[ITEM_COUNT] = len(result[ITEMS])
         return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             permission=nauth.ACT_NTI_ADMIN,
+             context=IMeeting,
+             request_method='DELETE')
+class DeleteMeetingView(AbstractAuthenticatedView):
+
+    def get_meeting_user_storages(self, meeting):
+        for username in meeting.historical_occupant_names or ():
+            user = User.get_user(username)
+            if IUser.providedBy(user):
+                storage = IUserTranscriptStorage(user)
+                yield storage
+
+    def delete_meeting_references(self, meeting):
+        """
+        Delete the message info references for the meeting occupants
+        and return the message info objects
+        """
+        result = set()
+        for storage in self.get_meeting_user_storages(meeting):
+            result.update(storage.remove_meeting(meeting) or ())
+        return result
+
+    def remove_meeting(self, meeting):
+        storage = CreatorBasedAnnotationMeetingStorage()
+        return storage.remove_room(meeting)
+
+    def __call__(self):
+        # remove user storages
+        logger.warning("Removing meeting reference(s)")
+        messages = self.delete_meeting_references(self.context)
+        
+        # remove all message info objects
+        logger.warning("Removing %s message(s)", len(messages))
+        for msg_info in messages or ():
+            storage = IMessageInfoStorage(msg_info, None)
+            if storage is not None:
+                # pylint: disable=too-many-function-args
+                storage.remove_message(msg_info)
+        
+        # remove meeting
+        self.remove_meeting(self.context)
+        return hexc.HTTPNoContent()
