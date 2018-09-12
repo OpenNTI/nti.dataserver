@@ -168,6 +168,10 @@ class _IMeetingTranscriptStorage(ICreated,  # ICreated so they get an ACL
         Iterate all the messages in this transcript.
         """
 
+    def clear():
+        """
+        Clear this storage
+        """
 
 # implementations
 
@@ -294,6 +298,9 @@ class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
             # pylint: disable=no-member
             key = self._intids.queryId(key)
         return key is not None and key in self.messages
+
+    def clear(self):
+        self.messages.clear()
 
     @CachedProperty
     def _intids(self):
@@ -444,12 +451,28 @@ class _UserTranscriptStorageAdapter(object):
             storage.remove_message(msg)
         return storage
 
+    def remove_meeting(self, meeting):
+        result = ()
+        storage_id = _transcript_ntiid(meeting, self._user.username)
+        storage = self._user.getContainedObject(meeting.containerId,
+                                                storage_id)
+        if storage is not None:
+            self._user.deleteContainedObject(meeting.containerId, storage_id)
+            # collect all message info objects
+            result = list(storage.itervalues())
+            # clear storage
+            storage.clear()
+        return result
+
 
 @interface.implementer(IUserTranscriptStorage)
 class _MissingStorage(object):
     """
     A storage that's always empty and blank.
     """
+
+    def transcript_summary_for_meeting(self, unused_object_id):
+        return None  # pragma: no cover
 
     def transcript_for_meeting(self, unused_meeting_id):
         return None  # pragma: no cover
@@ -466,6 +489,9 @@ class _MissingStorage(object):
         pass
 
     def remove_message(self, msg):
+        pass
+
+    def remove_meeting(self, meeting):
         pass
 _BLANK_STORAGE = _MissingStorage()
 

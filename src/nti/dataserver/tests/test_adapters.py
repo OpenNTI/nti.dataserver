@@ -10,6 +10,7 @@ from __future__ import absolute_import
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
+from hamcrest import has_length
 from hamcrest import assert_that
 
 import unittest
@@ -76,3 +77,6 @@ class TestAdapters(unittest.TestCase):
             transcript = component.queryMultiAdapter((msg, user),
                                                      ITranscript)
             assert_that(transcript, is_not(none()))
+
+            messages = storage.remove_meeting(meeting)
+            assert_that(messages, has_length(1))
