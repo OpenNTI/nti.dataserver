@@ -7,6 +7,8 @@ from __future__ import absolute_import
 
 # pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
+from hamcrest import is_
+from hamcrest import none
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -21,15 +23,20 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.app.testing.webtest import TestApp
 
+from nti.chatserver.interfaces import IMessageInfoStorage
 from nti.chatserver.interfaces import IUserTranscriptStorage
 
 from nti.chatserver.messageinfo import MessageInfo
 
 from nti.chatserver.meeting import _Meeting as Meeting
 
+from nti.dataserver.meeting_storage import CreatorBasedAnnotationMeetingStorage
+
 from nti.dataserver.metadata.index import get_metadata_catalog
 
 from nti.dataserver.tests.mock_dataserver import mock_db_trans
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.ntiids.oids import to_external_ntiid_oid
 
@@ -84,7 +91,8 @@ class TestTranscript(ApplicationLayerTest):
                   'sortOn': 'containerId',
                   'contributor': 'rukia'}
         res = testapp.get(path, params=params,
-                          extra_environ=self._make_extra_environ(user="ichigo"),
+                          extra_environ=self._make_extra_environ(
+                              user="ichigo"),
                           status=200)
         assert_that(res.json_body,
                     has_entry('Items',
@@ -93,7 +101,7 @@ class TestTranscript(ApplicationLayerTest):
         testapp.get(path, params=params,
                     extra_environ=self._make_extra_environ(user="rukia"),
                     status=403)
-        
+
         path = '/dataserver2/users/rukia/@@transcripts'
         params['recursive'] = params['myOwn'] = False
         params['contributor'] = 'ichigo'
@@ -103,3 +111,50 @@ class TestTranscript(ApplicationLayerTest):
         assert_that(res.json_body,
                     has_entry('Items',
                               has_length(1)))
+
+    @WithSharedApplicationMockDS
+    def test_delete_meeting(self):
+        with mock_db_trans() as conn:
+            self._create_user()
+            ichigo = self._create_user(u"ichigo")
+            rukia = self._create_user(u"rukia")
+            # pylint: disable=too-many-function-args
+
+            # sample meeting
+            meeting = Meeting()
+            meeting.creator = u'ichigo'
+            meeting.containerId = u'tag:nextthought.com,2011-10:Root'
+            meeting.add_occupant_name("rukia", False)
+            meeting.add_occupant_name("ichigo", False)
+            conn.add(meeting)
+            storage = CreatorBasedAnnotationMeetingStorage()
+            storage.add_room(meeting)
+
+            # sample message
+            msg = MessageInfo()
+            msg.creator = "ichigo"
+            msg.containerId = meeting.ID
+            msg.setSharedWithUsernames(("rukia", 'ichigo'))
+            conn.add(msg)
+            IMessageInfoStorage(ichigo).add_message(msg)
+
+            IUserTranscriptStorage(rukia).add_message(meeting, msg)
+            IUserTranscriptStorage(ichigo).add_message(meeting, msg)
+
+            meeting_ntiid = meeting.id
+            message_ntiid = to_external_ntiid_oid(msg)
+
+        # pylint: disable=no-member
+        testapp = TestApp(self.app)
+
+        path = '/dataserver2/Objects/%s' % meeting_ntiid
+        testapp.delete(path,
+                       extra_environ=self._make_extra_environ(),
+                       status=204)
+
+        with mock_db_trans() as conn:
+            meeting = find_object_with_ntiid(meeting_ntiid)
+            assert_that(meeting, is_(none()))
+
+            msg = find_object_with_ntiid(message_ntiid)
+            assert_that(msg, is_(none()))
