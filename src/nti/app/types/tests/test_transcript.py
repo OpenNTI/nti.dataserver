@@ -83,8 +83,13 @@ class TestTranscript(ApplicationLayerTest):
 
         # pylint: disable=no-member
         testapp = TestApp(self.app)
-
-        path = '/dataserver2/users/ichigo/@@transcripts'
+        res = testapp.get("/dataserver2/users/ichigo",
+                          extra_environ=self._make_extra_environ(
+                              user="ichigo"),
+                          status=200)
+        path = self.require_link_href_with_rel(res.json_body, "transcripts")
+        
+        # path = '/dataserver2/users/ichigo/@@transcripts'
         params = {'containerId': 'tag:nextthought.com,2011-10:Root',
                   'recursive': True,
                   'myOwn': True,
@@ -148,6 +153,13 @@ class TestTranscript(ApplicationLayerTest):
         testapp = TestApp(self.app)
 
         path = '/dataserver2/Objects/%s' % meeting_ntiid
+        res = testapp.get(path,
+                          extra_environ=self._make_extra_environ(user="ichigo"),
+                          status=200)
+        link = self.link_href_with_rel(res.json_body, "edit")
+        assert_that(link, is_(none()))
+        
+        # admin can delete
         testapp.delete(path,
                        extra_environ=self._make_extra_environ(),
                        status=204)

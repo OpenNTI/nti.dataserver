@@ -23,7 +23,8 @@ from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
-from nti.dataserver.interfaces import INote
+from nti.dataserver.interfaces import INote 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IThreadable
 
 from nti.externalization.interfaces import StandardExternalFields
@@ -36,6 +37,23 @@ from nti.links.links import Link
 LINKS = StandardExternalFields.LINKS
 
 logger = __import__('logging').getLogger(__name__)
+
+
+@component.adapter(IUser)
+@interface.implementer(IExternalMappingDecorator)
+class _UserTranscriptsDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+    def _predicate(self, context, unused_result):
+        return  self._is_authenticated \
+            and self.remoteUser == context
+
+    def _do_decorate_external(self, context, result):
+        links = result.setdefault(LINKS, [])
+        link = Link(context, rel='transcripts', elements=('@@transcripts',))
+        interface.alsoProvides(link, ILocation)
+        link.__name__ = ''
+        link.__parent__ = context
+        links.append(link)
 
 
 @component.adapter(INote)
@@ -72,7 +90,7 @@ class _MostRecentReplyDecorator(Singleton):
     """
 
     def decorateExternalMapping(self, context, result):
-        _links = result.setdefault(StandardExternalFields.LINKS, [])
+        _links = result.setdefault(LINKS, [])
         link = Link(context,
                     rel='mostRecentReply',
                     elements=('mostRecentReply',))
@@ -90,7 +108,7 @@ class _MostRecentReplyTopicDecorator(Singleton):
     """
 
     def decorateExternalMapping(self, context, result):
-        _links = result.setdefault(StandardExternalFields.LINKS, [])
+        _links = result.setdefault(LINKS, [])
         link = Link(context,
                     rel='mostRecentReply',
                     elements=('mostRecentReply',))
