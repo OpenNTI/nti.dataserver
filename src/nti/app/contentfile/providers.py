@@ -45,5 +45,6 @@ class S3FileExternalinkProvider(object):
         parent = self.context.__parent__
         s3 = IS3FileIO(self.context, None)
         if IS3ContentFolder.providedBy(parent) and s3 is not None:
+            # pylint: disable=too-many-function-args
             return s3.to_external_s3_href(self.context)
         return None

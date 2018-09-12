@@ -5,8 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
 from hamcrest import is_
 from hamcrest import none
@@ -22,9 +21,15 @@ from hamcrest import has_property
 from hamcrest import contains_string
 does_not = is_not
 
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
 from nti.app.contentfile.interfaces import IExternalLinkProvider
 
 from nti.app.contentfile.view_mixins import to_external_download_oid_href
+
+from nti.dataserver.tests import mock_dataserver
 
 from nti.externalization.externalization import to_external_object
 
@@ -32,12 +37,6 @@ from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from nti.externalization.tests import externalizes
-
-from nti.app.testing.application_webtest import ApplicationLayerTest
-
-from nti.app.testing.decorators import WithSharedApplicationMockDS
-
-from nti.dataserver.tests import mock_dataserver
 
 GIF_DATAURL = 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 
@@ -89,7 +88,7 @@ class TestDecorators(ApplicationLayerTest):
                         externalizes(all_of(has_key('OID'),
                                             has_entry('url',
                                                       contains_string('/Getting%20Started.pdf')))))
-
+            # pylint: disable=too-many-function-args
             adapted_href = IExternalLinkProvider(internal).link()
             for link in (href, adapted_href):
                 assert_that(link, starts_with('/dataserver2/Objects/'))
