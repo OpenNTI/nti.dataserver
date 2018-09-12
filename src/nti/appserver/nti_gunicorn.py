@@ -283,6 +283,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
         # (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
         self.cfg.settings['access_log_format'].set(
             str(self.cfg.access_log_format) + b" \"%(C)s\" %(G)s %(T)s.%(D)06ds")
+
         # Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
         # Then the default propagation settings mean we get two copies of access logging.
         # make that stop.
@@ -309,7 +310,6 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
         # (But at least as of 0.17.2 they are now reported? Check this.)
         if _call_super:  # pragma: no cover
             super(GeventApplicationWorker, self).init_process()
-
 
 class _ServerFactory(object):
     """
