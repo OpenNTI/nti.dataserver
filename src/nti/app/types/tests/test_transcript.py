@@ -88,8 +88,7 @@ class TestTranscript(ApplicationLayerTest):
                               user="ichigo"),
                           status=200)
         path = self.require_link_href_with_rel(res.json_body, "transcripts")
-        
-        # path = '/dataserver2/users/ichigo/@@transcripts'
+
         params = {'containerId': 'tag:nextthought.com,2011-10:Root',
                   'recursive': True,
                   'myOwn': True,
