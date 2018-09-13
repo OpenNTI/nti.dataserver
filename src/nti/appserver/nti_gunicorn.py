@@ -38,37 +38,34 @@ if gunicorn.version_info not in ((19, 7, 1), (19, 8, 0), (19, 8, 1), (19, 9, 0))
 
 from gevent import getcurrent
 
-# Monkey patch the Gunicorn logger:
-#  * Make the 'u' variable actually do something
-#  * Add a custom atom (G) to get the greenlet id and pid
-#    into the message, just like in normal log messages.
-#  * Add a custom atom (C) to get the client identifer and version
-#
-# Loggers are instantiated earlier, so we need to do this by swizzling
-# the class rather than subclassing it, unfortunately.
-from gunicorn import glogging
-glogging_Logger_atoms = glogging.Logger.atoms
-
-
-def _glogging_atoms(self, resp, req, environ, request_time):
-    atoms = glogging_Logger_atoms(self, resp, req, environ, request_time)
-    atoms['u'] = environ.get('REMOTE_USER', '-')
-    atoms['G'] = "[%d:%d]" % (id(getcurrent()), os.getpid())
-
-    client_app_id = environ.get('HTTP_X_NTI_CLIENT_APP', '-')
-    client_version = environ.get('HTTP_X_NTI_CLIENT_VERSION', '-')
-    atoms['C'] = "%s@%s" % (client_app_id, client_version)
-
-    connection_pool = environ['nti_connection_pool']
-    used_count = connection_pool.size - connection_pool.free_count()
-    atoms['R'] = "(%s/%s)" % (used_count,
-                              connection_pool.size)
-    return atoms
-glogging.Logger.atoms = _glogging_atoms
+from gunicorn.glogging import Logger as gunicorn_logger
 
 from paste.deploy import loadwsgi
 
 from nti.appserver.application_server import WebSocketServer
+
+
+class GunicornLogger(gunicorn_logger):
+
+    def atoms(self, resp, req, environ, request_time):
+        #  * Make the 'u' variable actually do something
+        #  * Add a custom atom (G) to get the greenlet id and pid
+        #    into the message, just like in normal log messages.
+        #  * Add a custom atom (C) to get the client identifer and version
+        #  * Add a custom atom (R) to log connection pool info
+        atoms = super(GunicornLogger, self).atoms(resp, req, environ, request_time)
+        atoms['u'] = environ.get('REMOTE_USER', '-')
+        atoms['G'] = "[%d:%d]" % (id(getcurrent()), os.getpid())
+
+        client_app_id = environ.get('HTTP_X_NTI_CLIENT_APP', '-')
+        client_version = environ.get('HTTP_X_NTI_CLIENT_VERSION', '-')
+        atoms['C'] = "%s@%s" % (client_app_id, client_version)
+
+        connection_pool = environ['nti_connection_pool']
+        used_count = connection_pool.size - connection_pool.free_count()
+        atoms['R'] = "(%s/%s)" % (used_count,
+                                  connection_pool.size)
+        return atoms
 
 
 class _DummyApp(object):
