@@ -58,6 +58,12 @@ def _glogging_atoms(self, resp, req, environ, request_time):
     client_app_id = environ.get('HTTP_X_NTI_CLIENT_APP', '-')
     client_version = environ.get('HTTP_X_NTI_CLIENT_VERSION', '-')
     atoms['C'] = "%s@%s" % (client_app_id, client_version)
+
+
+    connection_pool = environ['nti_connection_pool']
+    used_count = connection_pool.size - connection_pool.free_count()
+    atoms['R'] = "(%s/%s)" % (used_count,
+                              connection_pool.size)
     return atoms
 glogging.Logger.atoms = _glogging_atoms
 
@@ -386,6 +392,10 @@ class _ServerFactory(object):
         # We want to log with the appropriate logger, which
         # has monitoring info attached to it
         app_server.log = log
+
+        # Stash the worker connection pool in the environ to see
+        # how our connection pool is being used.
+        app_server.environ['nti_connection_pool'] = app_server.pool
 
         # Now, for logging to actually work, we need to replace
         # the handler class with one that sets up the required values in the
