@@ -81,9 +81,9 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         sites_folder = current_site.__parent__
         return sites_folder[parent_site_name]
 
-    def _get_parent_site_role_manager(self, current_site):
+    def _get_parent_site_role_managers(self, current_site):
         """
-        Return the :class:`ISiteRoleManager` for our parent site.
+        Return the :class:`ISiteRoleManager` for our parent site(s).
 
         Note we do not recursively iterate through the parents.
 
@@ -92,13 +92,14 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         """
         current_site_name = current_site.__name__
         site_names = get_component_hierarchy_names()
+        result = []
         for site_name in site_names or ():
             if site_name != current_site_name:
                 parent_site = self._get_parent_site(current_site, site_name)
                 if parent_site is not current_site:
                     parent_role_manager = IPrincipalRoleManager(parent_site, None)
-                    return parent_role_manager
-                return None
+                    result.append(parent_role_manager)
+        return result
 
     def _accumulate(self, func_name, *args):
         """
@@ -125,8 +126,9 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
             # this block.
             role_managers = (util,)
         else:
-            parent_role_manager = self._get_parent_site_role_manager(current_site)
-            role_managers = (util, parent_role_manager)
+            parent_role_managers = self._get_parent_site_role_managers(current_site)
+            role_managers = [util]
+            role_managers.extend(parent_role_managers)
         for other_role_manager in role_managers:
             if other_role_manager is None:
                 continue

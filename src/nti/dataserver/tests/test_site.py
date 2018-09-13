@@ -93,10 +93,10 @@ _MYSITE2 = BaseComponents(BASECOPPA, name='test.components2',
 
 class TestSiteRoleManager(ConfiguringTestBase):
 
-    @fudge.patch('nti.dataserver.site.PersistentSiteRoleManager._get_parent_site_role_manager')
+    @fudge.patch('nti.dataserver.site.PersistentSiteRoleManager._get_parent_site_role_managers')
     def test_site_role_manager(self, mock_get_parent_rm):
         fake_get_parent_sm =  mock_get_parent_rm.is_callable()
-        fake_get_parent_sm.returns(None)
+        fake_get_parent_sm.returns([])
 
         self.configure_string(ZCML_STRING)
         user = User(u'chris')
@@ -118,7 +118,7 @@ class TestSiteRoleManager(ConfiguringTestBase):
 
         def set_fake_parent_sm():
             fake_get_parent_sm =  mock_get_parent_rm.is_callable()
-            fake_get_parent_sm.returns(parent_site_prm)
+            fake_get_parent_sm.returns((parent_site_prm,))
             fake_get_parent_sm.next_call().returns(None)
 
         with site(_TrivialSite(_MYSITE)):
