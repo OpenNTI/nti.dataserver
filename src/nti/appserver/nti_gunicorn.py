@@ -58,6 +58,11 @@ def _glogging_atoms(self, resp, req, environ, request_time):
     client_app_id = environ.get('HTTP_X_NTI_CLIENT_APP', '-')
     client_version = environ.get('HTTP_X_NTI_CLIENT_VERSION', '-')
     atoms['C'] = "%s@%s" % (client_app_id, client_version)
+
+    connection_pool = environ['nti_connection_pool']
+    used_count = connection_pool.size - connection_pool.free_count()
+    atoms['R'] = "(%s/%s)" % (used_count,
+                              connection_pool.size)
     return atoms
 glogging.Logger.atoms = _glogging_atoms
 
@@ -282,7 +287,8 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
         # formatting field width to account for this)
         # (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
         self.cfg.settings['access_log_format'].set(
-            str(self.cfg.access_log_format) + b" \"%(C)s\" %(G)s %(T)s.%(D)06ds")
+            str(self.cfg.access_log_format) + b" \"%(C)s\" %(R)s %(G)s %(T)s.%(D)06ds")
+
         # Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
         # Then the default propagation settings mean we get two copies of access logging.
         # make that stop.
@@ -309,7 +315,6 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
         # (But at least as of 0.17.2 they are now reported? Check this.)
         if _call_super:  # pragma: no cover
             super(GeventApplicationWorker, self).init_process()
-
 
 class _ServerFactory(object):
     """
@@ -384,6 +389,10 @@ class _ServerFactory(object):
         # We want to log with the appropriate logger, which
         # has monitoring info attached to it
         app_server.log = log
+
+        # Stash the worker connection pool in the environ to see
+        # how our connection pool is being used.
+        app_server.environ['nti_connection_pool'] = app_server.pool
 
         # Now, for logging to actually work, we need to replace
         # the handler class with one that sets up the required values in the
