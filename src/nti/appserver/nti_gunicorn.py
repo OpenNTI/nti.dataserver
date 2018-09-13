@@ -40,6 +40,8 @@ from gevent import getcurrent
 
 from gunicorn.glogging import Logger as gunicorn_logger
 
+from gunicorn.instrument.statsd import Statsd
+
 from paste.deploy import loadwsgi
 
 from nti.appserver.application_server import WebSocketServer
@@ -66,6 +68,12 @@ class GunicornLogger(gunicorn_logger):
         atoms['R'] = "(%s/%s)" % (used_count,
                                   connection_pool.size)
         return atoms
+
+
+class GunicornStatsLogger(GunicornLogger, Statsd):
+    """
+    A gunicorn statsd logger.
+    """
 
 
 class _DummyApp(object):
