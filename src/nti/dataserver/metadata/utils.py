@@ -36,6 +36,7 @@ get_iid = queryId
 
 
 def user_messageinfo_iter_objects(user, broken=None):
+    # pylint: disable=not-an-iterable
     storage = IUserTranscriptStorage(user)
     for transcript in storage.transcripts:
         for message in transcript.Messages:
