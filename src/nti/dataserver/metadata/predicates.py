@@ -120,6 +120,7 @@ class _MeetingPrincipalObjects(BasePrincipalObjects):
 
     def iter_objects(self):
         storage = IUserTranscriptStorage(self.user)
+        # pylint: disable=not-an-iterable
         for meeting in storage.meetings:
             yield meeting
 
@@ -173,6 +174,7 @@ class _MembershipBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
 class _CommunityBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
 
     def iter_communities(self):
+        # pylint: disable=no-member
         for entity in self.users_folder.values():
             if not ICommunity.providedBy(entity):
                 continue
@@ -191,6 +193,7 @@ class _CommunityBlogObjects(BasePrincipalObjects, BoardObjectsMixin):
 class _CommunityObjects(BasePrincipalObjects, BoardObjectsMixin):
 
     def iter_communities(self):
+        # pylint: disable=no-member
         for entity in self.users_folder.values():
             if not ICommunity.providedBy(entity):
                 continue
