@@ -633,7 +633,7 @@ class UserContactProfileAddressesPutView(AbstractAuthenticatedView,
         for name, ext_obj in data.items():
             mimeType = ext_obj.get(MIMETYPE)
             if not mimeType:
-                ext_obj[MIMETYPE] = Address.mimeType
+                ext_obj[MIMETYPE] = getattr(Address, 'mimeType')
             factory = find_factory_for(ext_obj)
             if factory is None:
                 raise_json_error(self.request,
