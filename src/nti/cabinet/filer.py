@@ -69,7 +69,7 @@ class DirectoryFiler(object):
         if not os.path.exists(path):
             os.makedirs(path)
         elif not os.path.isdir(path):
-            raise IOError("%s is not directory", path)
+            raise IOError("%s is not directory" % path)
         return path
 
     def reset(self, path=None):
