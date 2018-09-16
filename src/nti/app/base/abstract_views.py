@@ -13,10 +13,10 @@ from __future__ import absolute_import
 import os
 import cgi
 
+from requests.structures import CaseInsensitiveDict
+
 from six import string_types
 from six.moves import cStringIO
-
-from requests.structures import CaseInsensitiveDict
 
 from zope import component
 
@@ -93,7 +93,7 @@ def make_sharing_security_check(request, remoteUser):
 
     remote_request = request
 
-    # XXX Deferred import to avoid a cycle. This will move to an nti.app
+    # Deferred import to avoid a cycle. This will move to an nti.app
     # package, and this entire method may move with it too.
     from nti.appserver.pyramid_authorization import is_readable
 
