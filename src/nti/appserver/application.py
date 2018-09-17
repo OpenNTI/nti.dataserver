@@ -594,10 +594,14 @@ def createApplication( http_port,
 	# This is only active if statsd_uri is defined in the config. Even if it is defined
 	# and points to a non-existant server, UDP won't block
 	pyramid_config.include( 'perfmetrics' )
-	if pyramid_config.registry.settings.get( 'statsd_uri' ):
+        statsd_uri = pyramid_config.registry.settings.get('statsd_uri')
+	if statsd_uri:
 		# also set the default
 		import perfmetrics
-		perfmetrics.set_statsd_client( pyramid_config.registry.settings['statsd_uri'] )
+                perfmetrics.set_statsd_client( perfmetrics.statsd_client_from_uri(statsd_uri) )
+
+                pyramid_config.add_tween('nti.appserver.tweens.performance.performance_tween_factory',
+                                         under='perfmetrics.tween')
 
 	# First, before any "application" processing, hook in a place to run
 	# greenlets with nothing below it on the stack
