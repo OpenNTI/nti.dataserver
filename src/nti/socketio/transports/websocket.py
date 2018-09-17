@@ -29,6 +29,7 @@ from nti.dataserver.sessions import SessionService
 from nti.socketio import interfaces
 
 from ._base import sleep
+from ._base import Empty
 from ._base import Greenlet
 from ._base import catch_all
 from ._base import BaseTransport
@@ -68,16 +69,15 @@ class _AbstractWebSocketOperator(object):
 class _WebSocketSender(_AbstractWebSocketOperator):
 	message = None
 
-	def get_session(self):
-		# See note below, we don't want to be responsible for sessions.
-		return self.session_service.get_session(self.session_id, cleanup=False)
+	msg_timeout = SessionService.SESSION_HEARTBEAT_TIMEOUT // 2
+	EMPTY_QUEUE_MARKER = object()
 
 	def _do_send(self):
 		message = self.message
 		session = self.get_session()
 		if session:
 			session.get_messages_to_client() # prevent buildup in the database
-		if message is None:
+		if message is None or session is None:
 			# JZ - 08.2015 - We used to kill our session here, but that would cause a large
 			# amount of conflict errors on our session storage, since we kill
 			# the same session from the reader.  We eliminate the session
@@ -89,10 +89,12 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 	def _run(self):
 		while self.run_loop:
 			sleep()
-			self.message = self.session_proxy.get_client_msg()
-			assert isinstance(self.message, (str,types.NoneType)), "Messages should already be encoded as required"
-			if not self.run_loop:
-				break
+			try:
+				self.message = self.session_proxy.get_client_msg(timeout=self.msg_timeout)
+			except Empty:
+				# No message, check our status
+				self.message = self.EMPTY_QUEUE_MARKER
+
 			try:
 				self.run_loop &= run_job_in_site( self._do_send, retries=10,
 												  site_names=self.session_originating_site_names )
@@ -103,20 +105,21 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 				self.run_loop = (self.message is not None)
 
 			if not self.run_loop:
-				# Don't send a message if the transactions failed
-				# and we're going to break this loop
+				# Don't send a message if the transactions failed and we're
+				# going to break this loop
 				break
 
-			try:
-				# logger.debug( "Sending session '%s' value '%r'", self.session_id, self.message )
-				self.websocket.send(self.message)
-			except geventwebsocket.exceptions.FrameTooLargeException:
-				logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
-							 len(self.message), self.message[0:50] )
-			except socket.error as e:
-				logger.log( TRACE, "Stopping sending messages to '%s' on %s", self.session_id, e )
-				# The session will be killed of its own accord soon enough.
-				break
+			if self.message is not self.EMPTY_QUEUE_MARKER:
+				try:
+					# logger.debug( "Sending session '%s' value '%r'", self.session_id, self.message )
+					self.websocket.send(self.message)
+				except geventwebsocket.exceptions.FrameTooLargeException:
+					logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
+								 len(self.message), self.message[0:50] )
+				except socket.error as e:
+					logger.log( TRACE, "Stopping sending messages to '%s' on %s", self.session_id, e )
+					# The session will be killed of its own accord soon enough.
+					break
 
 class _WebSocketReader(_AbstractWebSocketOperator):
 	message = None
@@ -127,7 +130,7 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 	connected = False
 
 	def _do_read(self):
-		session = self.get_session( )
+		session = self.get_session()
 		if session is None:
 			return False
 
@@ -182,22 +185,22 @@ class _WebSocketPinger(_AbstractWebSocketOperator):
 		super(_WebSocketPinger,self).__init__( *args )
 		self.ping_sleep = kwargs.get( 'ping_sleep', 30.0 )
 
-	def _do_ping_direct( self ):
-		# Short cut everything to reduce DB activity
+	def _do_ping( self ):
 		try:
-			self.websocket.send( b"2::" )
-			return True
+			session = self.get_session()
+			if session:
+				self.websocket.send( b"2::" )
+				return True
 		except Exception as e:
 			logger.debug( "Stopping sending pings to '%s' on %s",
 						self.session_id, e )
-			return False
+			logger.exception(e)
+		return False
 
 	def _run(self):
 		while self.run_loop:
-			sleep( self.ping_sleep )
-			if not self.run_loop:
-				break
-			self.run_loop &= self._do_ping_direct()
+			sleep(self.ping_sleep)
+			self.run_loop &= run_job_in_site(self._do_ping, retries=5, sleep=0.1)
 
 class _WebSocketGreenlet(Greenlet):
 	"A greenlet that runs a type of :class:`_AbstractWebSocketOperator`"
