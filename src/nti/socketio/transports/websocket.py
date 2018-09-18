@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
-import types
 import socket
 
 from zope import component
@@ -29,7 +28,6 @@ from nti.dataserver.sessions import SessionService
 from nti.socketio import interfaces
 
 from ._base import sleep
-from ._base import Empty
 from ._base import Greenlet
 from ._base import catch_all
 from ._base import BaseTransport
@@ -69,9 +67,6 @@ class _AbstractWebSocketOperator(object):
 class _WebSocketSender(_AbstractWebSocketOperator):
 	message = None
 
-	msg_timeout = SessionService.SESSION_HEARTBEAT_TIMEOUT // 2
-	EMPTY_QUEUE_MARKER = object()
-
 	def _do_send(self):
 		message = self.message
 		session = self.get_session()
@@ -89,11 +84,8 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 	def _run(self):
 		while self.run_loop:
 			sleep()
-			try:
-				self.message = self.session_proxy.get_client_msg(timeout=self.msg_timeout)
-			except Empty:
-				# No message, check our status
-				self.message = self.EMPTY_QUEUE_MARKER
+			# We must get a None here to break out of loop (see reader)
+			self.message = self.session_proxy.get_client_msg()
 
 			try:
 				self.run_loop &= run_job_in_site( self._do_send, retries=10,
@@ -132,13 +124,15 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 	def _do_read(self):
 		session = self.get_session()
 		if session is None:
+			# Kill the greenlet
+			self.session_proxy.queue_message_to_client(None)
 			return False
 
 		self.last_heartbeat_time = session.last_heartbeat_time
 		self.connected = session.connected
 		if self.message is None:
 			# Kill the greenlet
-			self.session_proxy.queue_message_to_client( None )
+			self.session_proxy.queue_message_to_client(None)
 			# and the session
 			safe_kill_session( session, 'on transfer of None across reading channel' )
 			return False
@@ -147,6 +141,8 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 			decode_packet_to_session( session, session.socket, self.message, doom_transaction=False )
 		except ValueError:
 			logger.exception( "Failed to read packets from websocket; killing session %s", self.session_id )
+			# Kill the greenlet
+			self.session_proxy.queue_message_to_client(None)
 			# We don't doom this transaction, we want to commit the death
 			# transaction.doom()
 			safe_kill_session( session, 'on failure to read packet from WS' )
