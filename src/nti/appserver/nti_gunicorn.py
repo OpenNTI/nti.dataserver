@@ -399,6 +399,8 @@ class _ServerFactory(object):
         # how our connection pool is being used.
         app_server.environ['nti_connection_pool'] = app_server.pool
 
+        app_server.environ['nti_worker_identifier'] = getattr(self.worker, '_nti_identifier', None)
+
         # Now, for logging to actually work, we need to replace
         # the handler class with one that sets up the required values in the
         # environment, as per ggevent.
@@ -590,9 +592,15 @@ def _pre_fork(arbiter, worker):
     # So things that MUST always happen, regardless, need to be here, not
     # in a listener
     # pylint: disable=global-statement
+
+    # This is similar to arbiter.worker_age and worker.age but those aren't
+    # documented in a way that looks like we can rely on them
     global _fork_count
     _fork_count += 1
     os.environ['DATASERVER_ZEO_CLIENT_NAME'] = 'gunicorn_' + str(_fork_count)
+
+    worker._nti_identifier = str(_fork_count - 1)
+    os.environ['NTI_WORKER_IDENTIFIER'] = worker._nti_identifier
     notify(_GunicornWillFork(arbiter, worker))
 
 
