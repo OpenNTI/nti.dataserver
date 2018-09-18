@@ -18,18 +18,20 @@ from perfmetrics import statsd_client
 def performance_tween_factory(handler, registry):
     client = statsd_client()
 
+    worker = os.environ['NTI_WORKER_IDENTIFIER']
+    used_metric_name = worker + '.connection_pool.used'
+    free_metric_name = worker + '.connection_pool.free'
+
     def handle(request):
         try:
             return handler(request)
         finally:
             if client is not None:
-                worker = os.getpid()
-                connection_pool_prefix = 'connection_pool.%s' % worker
                 connection_pool = request.environ['nti_connection_pool']
                 free = connection_pool.free_count()
                 used_count = connection_pool.size - free
 
-                client.gauge(('%s.used' % connection_pool_prefix), used_count)
-                client.gauge(('%s.free' % connection_pool_prefix), free)
+                client.gauge(used_metric_name, used_count)
+                client.gauge(free_metric_name, free)
 
     return handle
