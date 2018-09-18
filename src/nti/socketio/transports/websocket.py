@@ -101,17 +101,16 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 				# going to break this loop
 				break
 
-			if self.message is not self.EMPTY_QUEUE_MARKER:
-				try:
-					# logger.debug( "Sending session '%s' value '%r'", self.session_id, self.message )
-					self.websocket.send(self.message)
-				except geventwebsocket.exceptions.FrameTooLargeException:
-					logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
-								 len(self.message), self.message[0:50] )
-				except socket.error as e:
-					logger.log( TRACE, "Stopping sending messages to '%s' on %s", self.session_id, e )
-					# The session will be killed of its own accord soon enough.
-					break
+			try:
+				# logger.debug( "Sending session '%s' value '%r'", self.session_id, self.message )
+				self.websocket.send(self.message)
+			except geventwebsocket.exceptions.FrameTooLargeException:
+				logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
+							 len(self.message), self.message[0:50] )
+			except socket.error as e:
+				logger.log( TRACE, "Stopping sending messages to '%s' on %s", self.session_id, e )
+				# The session will be killed of its own accord soon enough.
+				break
 
 class _WebSocketReader(_AbstractWebSocketOperator):
 	message = None
