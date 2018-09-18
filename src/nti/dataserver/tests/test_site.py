@@ -57,7 +57,6 @@ from nti.dataserver.interfaces import ISiteRoleManager
 
 from nti.dataserver.site import _SiteHierarchyTree
 from nti.dataserver.site import DefaultSiteAdminManagerUtility
-from nti.dataserver.site import HierarchalSiteAdminManagerUtility
 from nti.dataserver.site import ImmediateParentSiteAdminManagerUtility
 from nti.dataserver.site import PersistentSiteRoleManager
 
@@ -152,7 +151,7 @@ ZCML_STRING = """
             <utility factory="nti.dataserver.site.SiteRoleManager"
                      provides="nti.dataserver.interfaces.ISiteRoleManager" />
             
-            <utility factory="nti.dataserver.site.HierarchalSiteAdminManagerUtility"
+            <utility factory="nti.dataserver.site.ImmediateParentSiteAdminManagerUtility"
                      provides="nti.dataserver.interfaces.ISiteAdminManagerUtility" />
                      
             <utility factory="nti.dataserver.site._SiteHierarchyTree"
@@ -332,7 +331,7 @@ class TestSiteHierarchy(unittest.TestCase):
             demo_site = get_site_for_site_names((DEMO.__name__,))
             demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
 
-            tree = _SiteHierarchyTree().get_tree()
+            tree = _SiteHierarchyTree().tree
             assert_that(tree.children_objects, contains_inanyorder(eval_site))
             assert_that(tree.children_objects, has_length(1))
 
@@ -377,48 +376,6 @@ class TestSiteHierarchy(unittest.TestCase):
                 demo_alpha_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN.id, user)
                 principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
                 assert_that(principals, contains_inanyorder((user, Deny,)))
-
-    @WithMockDS
-    def test_hierarchy_site_admin_manager(self):
-        with mock_db_trans():
-            synchronize_host_policies()
-            eval_site = get_site_for_site_names((EVAL.__name__,))
-            alpha_site = get_site_for_site_names((EVALALPHA.__name__,))
-            demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
-
-            with site(demo_alpha_site):
-                user = User(u'SiteAdmin')
-                psm = getSite().getSiteManager()
-                psm.unregisterUtility(DefaultSiteAdminManagerUtility(), ISiteAdminManagerUtility)
-                psm.registerUtility(HierarchalSiteAdminManagerUtility(), ISiteAdminManagerUtility)
-                demo_alpha_prm = IPrincipalRoleManager(getSite())
-                demo_alpha_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user)
-                principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
-                # Permission in demo-alpha and the immediate parent (demo)
-                assert_that(principals, contains_inanyorder((user, Allow,), (user, Allow,)))
-
-                demo_alpha_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN.id, user)
-                principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
-                assert_that(principals, contains_inanyorder((user, Deny,), (user, Deny,)))
-
-            with site(eval_site):
-                eval_site_prm = IPrincipalRoleManager(getSite())
-                principals = eval_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
-                assert_that(principals, contains_inanyorder((user, Deny,)))
-
-            with site(demo_alpha_site):
-                demo_alpha_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user)
-
-            with site(eval_site):
-                eval_site_prm = IPrincipalRoleManager(getSite())
-                principals = eval_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
-                assert_that(principals, contains_inanyorder((user, Allow,)))
-
-            with site(alpha_site):
-                alpha_site_prm = IPrincipalRoleManager(getSite())
-                principals = alpha_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
-                # Privileges granted from the parent (eval)
-                assert_that(principals, contains_inanyorder((user, Allow,)))
 
     @WithMockDS
     def test_immediate_site_admin_manager(self):
