@@ -22,6 +22,8 @@ from cStringIO import StringIO
 import gevent.pool
 from gunicorn import config as gconfig
 
+import os
+
 from pyramid.request import Request
 
 from nti.appserver import nti_gunicorn
@@ -89,7 +91,15 @@ from nti.app.testing.layers import AppLayerTest
 class TestGeventApplicationWorker(AppLayerTest):
 
 	def test_prefork(self):
-		nti_gunicorn._pre_fork( 1, 2 )
+                class MockWorker(object):
+                        pass
+                mock_worker = MockWorker()
+		nti_gunicorn._pre_fork( 1, mock_worker )
+
+                assert_that(mock_worker, has_property( '_nti_identifier', '1' ))
+
+                assert_that(os.environ, has_entry( 'NTI_WORKER_IDENTIFIER', '1' ))
+                assert_that(os.environ, has_entry( 'DATASERVER_ZEO_CLIENT_NAME', 'gunicorn_2' ))
 
 	def test_postfork( self ):
 		nti_gunicorn._post_fork( 1, 2 )
@@ -166,7 +176,6 @@ class TestGeventApplicationWorker(AppLayerTest):
 		worker = nti_gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
 		worker.init_process(_call_super=False)
 		assert_that( worker, has_property( 'worker_connections', 300 ) )
-
 
 		factory = worker.server_class
 		assert_that( factory, is_( nti_gunicorn._ServerFactory ) )
