@@ -10,12 +10,13 @@ from __future__ import absolute_import
 
 from functools import total_ordering
 
+from ZODB.utils import u64
+
 from zope import interface
 
 from zope.container.contained import Contained
 
-from ZODB.utils import u64
-
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IEntityContainer
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
@@ -31,9 +32,9 @@ from nti.externalization.representation import WithRepr
 
 from nti.schema.eqhash import EqHash
 
-from nti.schema.field import SchemaConfigured
-
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -92,6 +93,7 @@ class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
 
     @property
     def priority(self):
+        # pylint: disable=no-member
         result = getattr(self.ranking, 'priority', None) or 1
         return result
 
@@ -118,7 +120,7 @@ class _SecondOrderContactProvider(object):
         not visible from our user's communities. We also exclude
         `nextthought.com` users.
         """
-        if user:
+        if IUser.providedBy(user):
             user_community_names = user.usernames_of_dynamic_memberships - \
                                    set(('Everyone',))
 
@@ -127,6 +129,7 @@ class _SecondOrderContactProvider(object):
                     username = getattr(x, 'username')
                 except KeyError:  # pragma: no cover
                     # typically POSKeyError
+                    # pylint: disable=protected-access
                     logger.warning("Failed to filter entity with id %s", 
                                    hex(u64(x._p_oid)))
                     return False
