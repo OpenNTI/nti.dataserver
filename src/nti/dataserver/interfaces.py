@@ -1425,6 +1425,71 @@ class ISiteHierarchy(interface.Interface):
     A utility that represents the current site hierarchy in a tree structure
     """
 
+    def tree():
+        """
+        A cached property that returns the site hierarchy tree
+        """
+
+
+class ISiteAdminManagerUtility(interface.Interface):
+    """
+    A mapping of what sites users should be placed in based upon their role
+    """
+
+    def get_sites_to_update():
+        """
+        Returns a list of sites to be updated
+        """
+
+    def get_parent_site(site):
+        """
+        Returns the parent site for this site
+        """
+
+    def get_parent_site_name(site):
+        """
+        Returns the parent site name for this site
+        """
+
+    def get_ancestor_sites(site):
+        """
+        Returns all ancestor sites for this site including dataserver2
+        """
+
+    def get_ancestor_site_names(site):
+        """
+        Returns all ancestor site names for this site including dataserver2
+        """
+
+    def get_children_sites(site):
+        """
+        Returns all children sites for this site
+        """
+
+    def get_children_site_names(site):
+        """
+        Returns all children site names for this site
+        """
+
+    def get_descendant_sites(site):
+        """
+        Returns all descendant sites for this site
+        """
+
+    def get_descendant_site_names(site):
+        """
+        Returns all descendant site names for this site
+        """
+
+    def get_sibling_sites(site):
+        """
+        Returns all sibling sites for this site
+        """
+
+    def get_sibling_site_names(site):
+        """
+        Returns all sibling site names for this site
+        """
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?

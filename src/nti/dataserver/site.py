@@ -12,11 +12,10 @@ from zope import component
 from zope import interface
 from zope import deferredimport
 
+from zope.cachedescriptors.property import CachedProperty
 from zope.cachedescriptors.property import Lazy
 
 from zope.component.hooks import getSite
-
-from zope.interface import ro
 
 from zope.interface.interfaces import IComponents
 
@@ -32,8 +31,11 @@ from nti.common.datastructures import ObjectHierarchyTree
 
 from nti.dataserver.interfaces import ISiteHierarchy
 from nti.dataserver.interfaces import ISiteRoleManager
+from nti.dataserver.interfaces import ISiteAdminManagerUtility
 
 from nti.externalization.persistence import NoPickle
+
+from nti.site import get_all_host_sites
 
 from nti.site.interfaces import IMainApplicationFolder
 
@@ -173,41 +175,115 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         """
         return self._accumulate('getPrincipalsAndRoles')
 
+    def _update_role(self, func_name, *args):
+        super_func = getattr(super(PersistentSiteRoleManager, self), func_name)
+        super_func(*args)
+        site_admin_manager = component.getUtility(ISiteAdminManagerUtility)
+        for site in site_admin_manager.get_sites_to_update():
+            # XXX: If the site that you adapted to to get here is in this list,
+            # the annotation will not work as expected
+            principal_role_manager = IPrincipalRoleManager(site)
+            super_func = getattr(super(PersistentSiteRoleManager, principal_role_manager), func_name)
+            super_func(*args)
+
+    def assignRoleToPrincipal(self, role_id, principal_id):
+        self._update_role('assignRoleToPrincipal', role_id, principal_id)
+
+    def removeRoleFromPrincipal(self, role_id, principal_id):
+        self._update_role('removeRoleFromPrincipal', role_id, principal_id)
+
+
+class DefaultSiteAdminManagerUtility(object):
+
+    def get_sites_to_update(self):
+        return []
+
+    def _get_site(self, site, attr):
+        site = site if site else getSite()
+        site_hierarchy = component.getUtility(ISiteHierarchy).tree
+        site_node = site_hierarchy.get_node_from_object(site)
+        return getattr(site_node, attr)
+
+    def get_parent_site(self, site=None):
+        parent = self._get_site(site, 'parent_object')
+        return parent
+
+    def get_parent_name(self, site=None):
+        return self.get_parent_site(site).__name__
+
+    def get_ancestor_sites(self, site=None):
+        ancestors = self._get_site(site, 'ancestor_objects')
+        return ancestors
+
+    def get_children_sites(self, site=None):
+        ancestors = self._get_site(site, 'children_objects')
+        return ancestors
+
+    def get_children_site_names(self, site=None):
+        return [site.__name__ for site in self.get_children_sites(site)]
+
+    def get_ancestor_site_names(self, site=None):
+        return [site.__name__ for site in self.get_ancestor_sites(site)]
+
+    def get_descendant_sites(self, site=None):
+        descendants = self._get_site(site, 'descendant_objects')
+        return descendants
+
+    def get_descendant_site_names(self, site=None):
+        return [site.__name__ for site in self.get_descendant_sites(site)]
+
+    def get_sibling_sites(self, site=None):
+        siblings = self._get_site(site, 'sibling_objects')
+        return siblings
+
+    def get_sibling_site_names(self, site=None):
+        return [site.__name__ for site in self.get_sibling_sites(site)]
+
+
+class ImmediateParentSiteAdminManagerUtility(DefaultSiteAdminManagerUtility):
+
+    def get_sites_to_update(self):
+        sites = super(ImmediateParentSiteAdminManagerUtility, self).get_sites_to_update()
+        current_site = getSite()
+        site_hierarchy = component.getUtility(ISiteHierarchy)
+        site_hierarchy = site_hierarchy.tree
+        site_node = site_hierarchy.get_node_from_object(current_site)
+        __traceback_info__ = current_site
+        sites.append(site_node.parent_object)
+        try:  # Make sure we don't include dataserver2
+            sites.remove(site_node.root.obj)
+        except ValueError:
+            pass
+        return sites
+
 
 @interface.implementer(ISiteHierarchy)
 class _SiteHierarchyTree(object):
 
-    def get_tree(self):
-        tree = ObjectHierarchyTree()
+    @property
+    def lastModified(self):
+        sites = component.getUtility(IEtcNamespace, name='hostsites')
+        return sites.lastSynchronized
 
-        # Exerpted from nti.site.hostpolicy
+    @CachedProperty('lastModified')
+    def tree(self):
+        tree = ObjectHierarchyTree()
         sites = component.getUtility(IEtcNamespace, name='hostsites')
         ds_folder = sites.__parent__
         tree.set_root(ds_folder)
         assert IMainApplicationFolder.providedBy(ds_folder)
 
-        # Ok, find everything that is globally registered
-        global_sm = component.getGlobalSiteManager()
-        all_global_named_utilities = list(global_sm.getUtilitiesFor(IComponents))
-        for name, comp in all_global_named_utilities:
-            # The sites must be registered the same as their internal name
-            assert name == comp.__name__
-        all_global_utilities = [x[1] for x in all_global_named_utilities]
-        site_ro = [ro.ro(x) for x in all_global_utilities]
         # Work up the inheritance chain for each component and add it to the tree
-        for comps in site_ro:
-            comps = reversed(comps)
-            for comp in comps:
-                name = comp.__name__
-                if name.endswith('base') or name.startswith('base'):
-                    continue
-                parent_name = comp.__bases__[0].__name__
-                if parent_name.endswith('base') or parent_name.startswith('base'):
-                    parent = ds_folder
-                else:
-                    parent = sites[parent_name]
-                tree.add(sites[name], parent=parent)
+        for site in get_all_host_sites():
+            site_component = component.getUtility(IComponents, name=site.__name__)
+            parent_name = site_component.__parent__.__name__
+            if parent_name.endswith('base') or parent_name.startswith('base'):
+                parent = ds_folder
+            else:
+                parent = sites[parent_name]
+            tree.add(site, parent=parent)
         return tree
+
 
 deferredimport.initialize()
 deferredimport.deprecated(
