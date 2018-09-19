@@ -83,7 +83,7 @@ def _image_url(entity, avatar_iface, attr_name, view_name):
     if isinstance(url_property, UrlProperty):
         the_file = url_property.get_file(with_url)
         if the_file:
-            # TODO: View name. Coupled to the app layer
+            # View name. Coupled to the app layer
             # It's not quite possible to fully traverse to the file if the profile
             # is implemented as an annotation (and that exposes lots of internal details)
             # so we go directly to the file address
@@ -95,7 +95,7 @@ def _image_url(entity, avatar_iface, attr_name, view_name):
                             rel="data")
                 interface.alsoProvides(link, ILinkExternalHrefOnly)
                 return link
-            logger.warn("Unable to produce %s for %s", attr_name, entity)
+            logger.warning("Unable to produce %s for %s", attr_name, entity)
     result = getattr(with_url, attr_name, None)
     return result
 
@@ -126,7 +126,7 @@ class _SystemUserExternalObject(object):
     def __init__(self, system_user):
         self.system_user = system_user
 
-    def toExternalObject(self, **kwargs):
+    def toExternalObject(self, **unused_kwargs):
         return {'Class': 'SystemUser', 'Username': SYSTEM_USER_NAME}
 
 
@@ -289,7 +289,7 @@ class _FriendsListExternalObject(_EntityExternalObject):
         """
         # We do this simply by selecting 4 random users, seeded based on the name of this
         # object.
-        # TODO: Is there a better seed?
+        # Is there a better seed?
         friends = [_avatar_url(x) for x in self.entity]
         if not friends:
             return ()
@@ -310,7 +310,7 @@ class _DynamicFriendsListExternalObject(_FriendsListExternalObject):
 
 
 @component.adapter(IUser)
-class UserSummaryExternalObject(_EntitySummaryExternalObject):
+class UserSummaryExternalObject(_EntityExternalObject):
 
     # Even in summary (i.e. to other people), we want to publish all these fields
     # because it looks better
@@ -390,12 +390,12 @@ class _EntityExporterExternalObject(object):
 try:
     from pyramid.threadlocal import get_current_request
 except ImportError:
-    def get_current_request(*args):
+    def get_current_request(*unused_args):
         pass
 
 
 def _is_remote_same_as_authenticated(user, req=None):
-    # XXX This doesn't exactly belong at this layer. Come up with
+    # Warning !!! This doesn't exactly belong at this layer. Come up with
     # a better way to do this switching.
     req = get_current_request() if req is None else req
     if     req is None or req.authenticated_userid is None \
@@ -405,7 +405,7 @@ def _is_remote_same_as_authenticated(user, req=None):
 
 
 def _named_externalizer(user, req=None):
-    # XXX This doesn't exactly belong at this layer. Come up with
+    # Warning !!! This doesn't exactly belong at this layer. Come up with
     # a better way to do this switching.
     if _is_remote_same_as_authenticated(user, req):
         return 'personal-summary'
@@ -424,6 +424,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
         def _externalize_subordinates(l, name='summary'):
             result = []
             for ent_name in l:
+                # pylint: disable=unused-variable
                 __traceback_info__ = name, ent_name
                 if IEntity.providedBy(ent_name):
                     e = ent_name
@@ -446,8 +447,8 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
                     # Thrown if we fail in certain parts of externalization
                     # (e.g., links)
                     except TypeError:
-                        # TODO: Better exception?
-                        # TODO: It may not be good to do this, that may hide
+                        # Better exception?
+                        # It may not be good to do this, that may hide
                         # errors that need to be corrected
                         logger.exception("Failed to externalize subordinate object %r of %r",
                                          e, self.entity)
