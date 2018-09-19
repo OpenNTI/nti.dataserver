@@ -127,6 +127,7 @@ class _SecondOrderContactProvider(object):
             def test(x):
                 try:
                     username = getattr(x, 'username')
+                    username = username.lower()
                 except KeyError:  # pragma: no cover
                     # typically POSKeyError
                     # pylint: disable=protected-access
