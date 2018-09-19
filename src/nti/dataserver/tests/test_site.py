@@ -325,13 +325,22 @@ class TestSiteHierarchy(unittest.TestCase):
             synchronize_host_policies()
             synchronize_host_policies()
 
-            ds_folder = component.getUtility(IEtcNamespace, name='hostsites').__parent__
+            host_sites_folder = component.getUtility(IEtcNamespace, name='hostsites')
+            ds_folder = host_sites_folder.__parent__
             eval_site = get_site_for_site_names((EVAL.__name__,))
             alpha_site = get_site_for_site_names((EVALALPHA.__name__,))
             demo_site = get_site_for_site_names((DEMO.__name__,))
             demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
 
-            tree = _SiteHierarchyTree().tree
+            # Test cached tree
+            sht = _SiteHierarchyTree()
+            tree = sht.tree
+            cached_tree = sht.tree
+            assert_that(cached_tree, is_(tree))
+            host_sites_folder.lastSynchronized = 123
+            cached_tree = sht.tree
+            assert_that(cached_tree, is_not(tree))
+
             assert_that(tree.children_objects, contains_inanyorder(eval_site))
             assert_that(tree.children_objects, has_length(1))
 
