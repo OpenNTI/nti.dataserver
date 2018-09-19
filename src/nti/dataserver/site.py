@@ -41,8 +41,13 @@ from nti.site.interfaces import IMainApplicationFolder
 
 from nti.site.site import get_component_hierarchy_names
 
-logger = __import__('logging').getLogger(__name__)
+#: Common base for all COPPA sites components
+BASECOPPA = u'genericcoppabase'
 
+#: Common base for all the other non-COPPA site
+BASEADULT = u"genericadultbase"
+
+logger = __import__('logging').getLogger(__name__)
 
 @NoPickle
 @interface.implementer(ISiteRoleManager)
@@ -85,6 +90,7 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         if result is None:
             util = self._site_role_manager_utility
             if util is not None:
+                # pylint: disable=no-member
                 result = util.getSetting(role_id, principal_id, default=default)
         return result
 
@@ -180,7 +186,7 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
         super_func(*args)
         site_admin_manager = component.getUtility(ISiteAdminManagerUtility)
         for site in site_admin_manager.get_sites_to_update():
-            # XXX: If the site that you adapted to to get here is in this list,
+            # If the site that you adapted to to get here is in this list,
             # the annotation will not work as expected
             principal_role_manager = IPrincipalRoleManager(site)
             super_func = getattr(super(PersistentSiteRoleManager, principal_role_manager), func_name)
@@ -248,6 +254,7 @@ class ImmediateParentSiteAdminManagerUtility(DefaultSiteAdminManagerUtility):
         site_hierarchy = component.getUtility(ISiteHierarchy)
         site_hierarchy = site_hierarchy.tree
         site_node = site_hierarchy.get_node_from_object(current_site)
+        # pylint: disable=unused-variable
         __traceback_info__ = current_site
         sites.append(site_node.parent_object)
         try:  # Make sure we don't include dataserver2
