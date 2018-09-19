@@ -220,24 +220,24 @@ class DefaultSiteAdminManagerUtility(object):
         return ancestors
 
     def get_children_site_names(self, site=None):
-        return [site.__name__ for site in self.get_children_sites(site)]
+        return [s.__name__ for s in self.get_children_sites(site)]
 
     def get_ancestor_site_names(self, site=None):
-        return [site.__name__ for site in self.get_ancestor_sites(site)]
+        return [s.__name__ for s in self.get_ancestor_sites(site)]
 
     def get_descendant_sites(self, site=None):
         descendants = self._get_site(site, 'descendant_objects')
         return descendants
 
     def get_descendant_site_names(self, site=None):
-        return [site.__name__ for site in self.get_descendant_sites(site)]
+        return [s.__name__ for s in self.get_descendant_sites(site)]
 
     def get_sibling_sites(self, site=None):
         siblings = self._get_site(site, 'sibling_objects')
         return siblings
 
     def get_sibling_site_names(self, site=None):
-        return [site.__name__ for site in self.get_sibling_sites(site)]
+        return [s.__name__ for s in self.get_sibling_sites(site)]
 
 
 class ImmediateParentSiteAdminManagerUtility(DefaultSiteAdminManagerUtility):
