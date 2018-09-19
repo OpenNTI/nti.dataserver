@@ -276,7 +276,11 @@ class _SiteHierarchyTree(object):
         # Work up the inheritance chain for each component and add it to the tree
         for site in get_all_host_sites():
             site_component = component.getUtility(IComponents, name=site.__name__)
-            parent_name = site_component.__parent__.__name__
+            # Ideally, we would use site_component.__parent__ here
+            # but we have encountered some legacy code where the parent isn't in the site bases
+            # Grabbing the bases[0] implies we are getting the first
+            # fallback component registry
+            parent_name = site_component.__bases__[0].__name__
             if parent_name.endswith('base') or parent_name.startswith('base'):
                 parent = ds_folder
             else:
