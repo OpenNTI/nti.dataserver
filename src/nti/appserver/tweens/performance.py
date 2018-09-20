@@ -1,7 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-A tween that pushes additional useful metrics to statsd when enabled
+A tween providing a location for request-aware or request-triggered 
+performance instrumentation.
+
+This tween should be installed beneath the `perfmetrics` tween as
+it does not establish a statsd client.
+
+This tween instruments the following metrics:
+
+ - <workerid>.connection_pool.used : The number of low level connections currently being used for the given worker
+ - <workerid>.connection_pool.free : The number of remaining connections for the given worker.
+
+.. note:: workerid is filled in from the environment variable `NTI_WORKER_IDENTIFIER`.
+          This is environment is established when the worker is initially forked.
 
 .. $Id$
 """
