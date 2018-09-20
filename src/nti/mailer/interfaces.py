@@ -227,21 +227,22 @@ class IMailerPolicy(interface.Interface):
     Mailer policy utility
     """
 
-    #: An email address used to send emails to users
-    #: such as account creation, both on behalf of this
-    #: object as well as from other places. Optional.
     DEFAULT_EMAIL_SENDER = TextLine(title=u'An optional email sender',
+                                    description=u'An email address used to send emails to users'
+                                                u'such as account creation, both on behalf of this'
+                                                u'object as well as from other places. Optional.',
                                     required=False,
                                     default=None)
 
-    #: The asset spec for a template having both text and
-    #: HTML versions. If the asset spec is a bare name
-    #: like "foobar", it is assumed to be located in the
-    #: ``templates`` directory in the package this object
-    #: is located in. Otherwise, it can be a complete spec
-    #: such as "the.package:other_dir/foobar"
+
     NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for sending '
                                                                        u'an email to a newly created user.',
+                                                                 description=u'The asset spec for a template having both text and'
+                                                                             u'HTML versions. If the asset spec is a bare name'
+                                                                             u'like "foobar", it is assumed to be located in the'
+                                                                             u'``templates`` directory in the package this object'
+                                                                             u'is located in. Otherwise, it can be a complete spec'
+                                                                             u'such as "the.package:other_dir/foobar"',
                                                                  required=True,
                                                                  default='nti.appserver:templates/new_user_created')
 
