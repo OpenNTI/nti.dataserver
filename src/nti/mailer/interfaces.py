@@ -231,8 +231,9 @@ class IMailerPolicy(interface.Interface):
     #: An email address used to send emails to users
     #: such as account creation, both on behalf of this
     #: object as well as from other places. Optional.
-    DEFAULT_EMAIL_SENDER = interface.Attribute('DEFAULT_EMAIL_SENDER',
-                                               'Optional email sender')
+    DEFAULT_EMAIL_SENDER = TextLine(title=u'An optional email sender',
+                                    required=False,
+                                    default=None)
 
     #: The asset spec for a template having both text and
     #: HTML versions. If the asset spec is a bare name

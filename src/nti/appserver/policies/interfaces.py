@@ -29,9 +29,10 @@ class ISitePolicyUserEventListener(IMailerPolicy):
     they should apply to.
     """
 
-    DISPLAY_NAME = interface.Attribute('DISPLAY_NAME',
-                                       'Optional human-readable name for the site.'
-                                       'Do not access directly, use :func:`nti.appserver.policies.site_polices.guess_site_display_name`')
+    DISPLAY_NAME = TextLine(title=u'Optional human-readable name for the site.',
+                            description=u'Do not access directly, use :func:`nti.appserver.policies.site_polices.guess_site_display_name`',
+                            required=False,
+                            default=None)
 
     BRAND = TextLine(title=u'The brand name for this site.',
                      required=True,
@@ -94,8 +95,9 @@ class ICommunitySitePolicyUserEventListener(ISitePolicyUserEventListener):
     by that site.
     """
 
-    COM_USERNAME = interface.Attribute('COM_USERNAME',
-                                       "The globally resolvable name of a community, or None")
+    COM_USERNAME = TextLine(title=u'The globally resolvable name of a community, or None',
+                            required=True,
+                            default=None)
 
     COM_ALIAS = TextLine(title=u'The alias for the site community',
                          required=True,

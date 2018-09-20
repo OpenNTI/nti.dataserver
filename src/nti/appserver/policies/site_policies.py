@@ -663,9 +663,6 @@ class GenericSitePolicyEventListener(AbstractSitePolicyEventListener):
 	Implements a generic policy for all sites.
 	"""
 
-	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to NextThought")
-	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'nti.appserver:templates/new_user_created'
-
 	def user_created_with_request(self, user, event):
 		request = getattr(event, 'request', None)
 		if not INoAccountCreationEmail.providedBy(request):
@@ -914,10 +911,6 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 	"""
 	Implements the policy for an adult site, adding new users to a single community.
 	"""
-
-	COM_ALIAS = None
-	COM_USERNAME = None
-	COM_REALNAME = None
 
 	def user_created(self, user, event):
 		"""
