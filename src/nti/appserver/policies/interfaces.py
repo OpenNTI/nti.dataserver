@@ -6,6 +6,9 @@ Site policies interfaces
 """
 
 from __future__ import print_function, absolute_import, division
+
+from zope.schema import BytesLine
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,6 +18,9 @@ from zope import interface
 from nti.dataserver.interfaces import ICommunity
 
 from nti.mailer.interfaces import IMailerPolicy
+
+from nti.schema.field import Bool
+from nti.schema.field import TextLine
 
 
 class ISitePolicyUserEventListener(IMailerPolicy):
@@ -26,6 +32,18 @@ class ISitePolicyUserEventListener(IMailerPolicy):
     DISPLAY_NAME = interface.Attribute('DISPLAY_NAME',
                                        'Optional human-readable name for the site.'
                                        'Do not access directly, use :func:`nti.appserver.policies.site_polices.guess_site_display_name`')
+
+    BRAND = TextLine(title=u'The brand name for this site.',
+                     required=True,
+                     default=u'NextThought')
+
+    GOOGLE_AUTH_USER_CREATION = Bool(title=u'Is Google OAuth creation allowed on this site?',
+                                     required=True,
+                                     default=True)
+
+    LANDING_PAGE_NTIID = BytesLine(title=u'Sent in the nti.landing_page cookie',
+                                   required=True,
+                                   default=None)
 
     def map_validation_exception(incoming_data, exception):
         """
@@ -78,6 +96,14 @@ class ICommunitySitePolicyUserEventListener(ISitePolicyUserEventListener):
 
     COM_USERNAME = interface.Attribute('COM_USERNAME',
                                        "The globally resolvable name of a community, or None")
+
+    COM_ALIAS = TextLine(title=u'The alias for the site community',
+                         required=True,
+                         default=None)
+
+    COM_REALNAME = TextLine(title=u'The real name for the site community',
+                            required=True,
+                            default=None)
 
 
 class INoAccountCreationEmail(interface.Interface):

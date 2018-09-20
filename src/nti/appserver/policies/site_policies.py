@@ -13,6 +13,8 @@ to preserve the names of existing persistent classes as well as the annotation f
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -32,6 +34,8 @@ from zope.dottedname import resolve as dottedname
 from zope.event import notify
 
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+
+from zope.schema.fieldproperty import createFieldProperties
 
 from zope.schema import interfaces as sch_interfaces
 
@@ -484,46 +488,8 @@ class AbstractSitePolicyEventListener(object):
 	Basics of a site policy.
 	"""
 
-	#: An email address used to send emails to users
-	#: such as account creation, both on behalf of this
-	#: object as well as from other places. Optional.
-	DEFAULT_EMAIL_SENDER = None
-
-	#: The asset spec for a template having both text and
-	#: HTML versions. If the asset spec is a bare name
-	#: like "foobar", it is assumed to be located in the
-	#: ``templates`` directory in the package this object
-	#: is located in. Otherwise, it can be a complete spec
-	#: such as "the.package:other_dir/foobar"
-	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = None
-	NEW_USER_CREATED_EMAIL_SUBJECT = None
-	NEW_USER_CREATED_BCC = None
-
-	PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME = 'password_reset_email'
-	PASSWORD_RESET_EMAIL_SUBJECT = "NextThought Password Reset"
-
-	SUPPORT_EMAIL = 'support@nextthought.com'
-
-	USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME = 'username_recovery_email'
-	USERNAME_RECOVERY_EMAIL_SUBJECT = "Username Reminder"
-
-	#: If defined, this will be send in the ``nti.landing_page``
-	#: cookie when a user logs on. Must be a byte string.
-	LANDING_PAGE_NTIID = None
-
-	BRAND = 'NextThought'
-
-	COM_ALIAS = None
-	COM_USERNAME = None
-	COM_REALNAME = None
-
-	#: Allow google oath user creation.
-	GOOGLE_AUTH_USER_CREATION = True
-
+	createFieldProperties(ICommunitySitePolicyUserEventListener)
 	_v_my_package = None
-
-	def __init__(self):
-		pass
 
 	def _join_community_user_created(self, user, event):
 		"""
