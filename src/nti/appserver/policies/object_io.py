@@ -14,6 +14,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-class PolicyUserEventListenerExternalizer(InterfaceObjectIO):
+class PolicyUserEventListenerObjectIO(InterfaceObjectIO):
 
     _ext_iface_upper_bound = ICommunitySitePolicyUserEventListener

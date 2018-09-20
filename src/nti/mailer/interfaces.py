@@ -247,7 +247,7 @@ class IMailerPolicy(interface.Interface):
 
     NEW_USER_CREATED_EMAIL_SUBJECT = TextLine(title=u'The email subject for new user emails.',
                                               required=True,
-                                              default='Welcome to NextThought')
+                                              default=u'Welcome to NextThought')
 
     NEW_USER_CREATED_BCC = TextLine(title=u'The bcc address for new user emails.',
                                     required=True,
