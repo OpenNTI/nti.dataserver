@@ -31,8 +31,4 @@
 				provides="nti.appserver.workspaces.interfaces.ICollection"
 				for="nti.appserver.workspaces.interfaces.IUserWorkspace" />
 
-	<adapter factory=".object_io.PolicyUserEventListenerObjectIO"
-			 provides="nti.externalization.interfaces.IInternalObjectExternalizer"
-			 for=".interfaces.ISitePolicyUserEventListener" />
-
 </configure>
