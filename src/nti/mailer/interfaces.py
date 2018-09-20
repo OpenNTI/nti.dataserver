@@ -10,11 +10,14 @@ but the relevant parts are re-exported from this package.
 """
 
 from __future__ import print_function, absolute_import, division
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
+from zope.schema import NativeStringLine
 
 from zope.security.interfaces import IPrincipal
 
@@ -35,6 +38,7 @@ except ImportError:
             pass
 IMailDelivery = IMailDelivery  # [re]export, primarily for testing
 
+from nti.schema.field import TextLine
 # pylint:disable=I0011,E0213
 
 
@@ -223,5 +227,49 @@ class IMailerPolicy(interface.Interface):
     Mailer policy utility
     """
 
-    DEFAULT_EMAIL_SENDER = interface.Attribute(u'DEFAULT_EMAIL_SENDER',
-                                               u'Optional email sender')
+    DEFAULT_EMAIL_SENDER = TextLine(title=u'An optional email sender',
+                                    description=u'An email address used to send emails to users'
+                                                u'such as account creation, both on behalf of this'
+                                                u'object as well as from other places. Optional.',
+                                    required=False,
+                                    default=None)
+
+
+    NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for sending '
+                                                                       u'an email to a newly created user.',
+                                                                 description=u'The asset spec for a template having both text and'
+                                                                             u'HTML versions. If the asset spec is a bare name'
+                                                                             u'like "foobar", it is assumed to be located in the'
+                                                                             u'``templates`` directory in the package this object'
+                                                                             u'is located in. Otherwise, it can be a complete spec'
+                                                                             u'such as "the.package:other_dir/foobar"',
+                                                                 required=True,
+                                                                 default='nti.appserver:templates/new_user_created')
+
+    NEW_USER_CREATED_EMAIL_SUBJECT = TextLine(title=u'The email subject for new user emails.',
+                                              required=True,
+                                              default=u'Welcome to NextThought')
+
+    NEW_USER_CREATED_BCC = TextLine(title=u'The bcc address for new user emails.',
+                                    required=True,
+                                    default=None)
+
+    PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for password reset emails.',
+                                                               required=True,
+                                                               default='password_reset_email')
+
+    PASSWORD_RESET_EMAIL_SUBJECT = TextLine(title=u'The subject for password reset emails.',
+                                            required=True,
+                                            default=u'NextThought Password Reset')
+
+    SUPPORT_EMAIL = TextLine(title=u'The support email.',
+                             required=True,
+                             default=u'support@nextthought.com')
+
+    USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for username recovery emails.',
+                                                                  required=True,
+                                                                  default='username_recovery_email')
+
+    USERNAME_RECOVERY_EMAIL_SUBJECT = TextLine(title=u'The email subject for username recovery emails.',
+                                               required=True,
+                                               default=u'Username Reminder')
