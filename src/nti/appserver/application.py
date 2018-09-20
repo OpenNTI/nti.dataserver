@@ -595,17 +595,9 @@ def createApplication( http_port,
 	# include statsd client support around things we want to time.
 	# This is only active if statsd_uri is defined in the config. Even if it is defined
 	# and points to a non-existant server, UDP won't block
-	pyramid_config.include( 'perfmetrics' )
-        statsd_uri = pyramid_config.registry.settings.get('statsd_uri')
-	if statsd_uri:
-		# If we have a statsd_uri configured go ahead and setup a default statsd client
-		import perfmetrics
-                perfmetrics.set_statsd_client( perfmetrics.statsd_client_from_uri(statsd_uri) )
 
-        # If performance metrics are enabled we actually want that to be over everything
-        if performance_metrics_enabled(pyramid_config):
-                pyramid_config.add_tween('nti.appserver.tweens.performance.performance_tween_factory',
-                                         under=['perfmetrics.tween', pyramid.tweens.INGRESS])
+        # Optionally configure performance information
+	pyramid_config.include( 'nti.appserver.tweens.performance' )
                 
 	# First in our stack, before any "application" processing, hook in a place to run
 	# greenlets with nothing below it on the stack

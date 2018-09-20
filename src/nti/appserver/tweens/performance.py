@@ -25,20 +25,26 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 
+import pyramid
+
+from perfmetrics import set_statsd_client
 from perfmetrics import statsd_client
+from perfmetrics import statsd_client_from_uri
 
 
-def performance_metrics_enabled(config):
-    """
-    Should the performance tween be enabled
+def includeme(config):
+    statsd_uri = config.registry.settings.get('statsd_uri')
+    if statsd_uri:
+        # Include the perfmetrices configuration if we have a statsd_uri configured for pyramid
+        config.include('perfmetrics')
+        
+        # Set up a default statsd client for others to use
+        set_statsd_client(statsd_client_from_uri(statsd_uri))
 
-    Currently the tween is only activiated if a statsd client
-    has been configured.
-
-    .. note:: If we use other instrumentation methods here
-              we may want to remove this conditional
-    """
-    return statsd_client() is not None
+        # Add in our custom performance tween. We want to be as high up in the stack as we
+        # can but stay beneath perfmetrics.tween if that was enabled.
+        config.add_tween('nti.appserver.tweens.performance.performance_tween_factory',
+                         under=['perfmetrics.tween', pyramid.tweens.INGRESS])
 
 def performance_tween_factory(handler, registry):
     client = statsd_client()
