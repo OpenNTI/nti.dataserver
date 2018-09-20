@@ -27,6 +27,19 @@ import os
 
 from perfmetrics import statsd_client
 
+
+def performance_metrics_enabled(config):
+    """
+    Should the performance tween be enabled
+
+    Currently the tween is only activiated if a statsd client
+    has been configured.
+
+    .. note:: If we use other instrumentation methods here
+              we may want to remove this conditional
+    """
+    return statsd_client() is not None
+
 def performance_tween_factory(handler, registry):
     client = statsd_client()
 

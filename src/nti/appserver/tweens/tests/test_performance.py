@@ -22,6 +22,7 @@ from perfmetrics import statsd_client_stack
 from perfmetrics.statsd import StatsdClient
 
 from nti.appserver.tweens.performance import performance_tween_factory
+from nti.appserver.tweens.performance import performance_metrics_enabled
 
 class TestConnectionPoolStats(unittest.TestCase):
 
@@ -45,15 +46,20 @@ class TestConnectionPoolStats(unittest.TestCase):
 
     def setUp(self):
         self.client = self._make(patch_socket=True, prefix=self.PREFIX)
-        statsd_client_stack.push(self.client)
 
     def tearDown(self):
         statsd_client_stack.pop()
+
+    def test_metrics_enabled(self):
+        assert_that(performance_metrics_enabled(None), is_(False))
+        statsd_client_stack.push(self.client)
+        assert_that(performance_metrics_enabled(None), is_(True))
 
     def test_client(self):
         """
         Sanity check our setup
         """
+        statsd_client_stack.push(self.client)
         assert_that(statsd_client(), is_(self.client))
 
     def test_tween_logs_connection_pool(self):
@@ -74,6 +80,7 @@ class TestConnectionPoolStats(unittest.TestCase):
         request = DummyRequest()
         request.environ['nti_connection_pool'] = pool
 
+        statsd_client_stack.push(self.client)
         tween = performance_tween_factory(lambda x: True, None)
         tween(request)
 

@@ -53,6 +53,8 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 
+from nti.appserver.tweens.performance import performance_metrics_enabled
+
 from nti.appserver.utils.chameleon import setupChameleonCache
 
 import nti.dataserver.users
@@ -596,14 +598,16 @@ def createApplication( http_port,
 	pyramid_config.include( 'perfmetrics' )
         statsd_uri = pyramid_config.registry.settings.get('statsd_uri')
 	if statsd_uri:
-		# also set the default
+		# If we have a statsd_uri configured go ahead and setup a default statsd client
 		import perfmetrics
                 perfmetrics.set_statsd_client( perfmetrics.statsd_client_from_uri(statsd_uri) )
 
+        # If performance metrics are enabled we actually want that to be over everything
+        if performance_metrics_enabled(pyramid_config):
                 pyramid_config.add_tween('nti.appserver.tweens.performance.performance_tween_factory',
-                                         under='perfmetrics.tween')
-
-	# First, before any "application" processing, hook in a place to run
+                                         under=['perfmetrics.tween', pyramid.tweens.INGRESS])
+                
+	# First in our stack, before any "application" processing, hook in a place to run
 	# greenlets with nothing below it on the stack
 	pyramid_config.add_tween('nti.appserver.tweens.greenlet_runner_tween.greenlet_runner_tween_factory',
 							 under=pyramid.tweens.EXCVIEW )
