@@ -4,9 +4,8 @@
 .. $Id: __init__.py 33979 2014-03-02 23:28:42Z carlos.sanchez $
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
-
-from .. import MessageFactory
+from nti.appserver import MessageFactory

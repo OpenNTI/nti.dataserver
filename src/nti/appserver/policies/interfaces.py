@@ -5,17 +5,15 @@ Site policies interfaces
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-from zope.schema import NativeStringLine
-
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+# pylint: disable=inherit-non-class,no-value-for-parameter
 
 from zope import interface
 
-from nti.dataserver.interfaces import ICommunity
+from zope.schema import NativeStringLine
 
 from nti.mailer.interfaces import IMailerPolicy
 
@@ -79,7 +77,7 @@ class ISitePolicyUserEventListener(IMailerPolicy):
         Called just before a user is created. Do most validation here.
         """
 
-    # TODO : I'm not entirely sure this belongs here. Might want to rethink
+    # I'm not entirely sure this belongs here. Might want to rethink
     # this a lot
     def upgrade_user(user):
         """
