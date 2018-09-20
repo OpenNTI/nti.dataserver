@@ -53,6 +53,8 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 
+from nti.appserver.tweens.performance import performance_metrics_enabled
+
 from nti.appserver.utils.chameleon import setupChameleonCache
 
 import nti.dataserver.users
@@ -593,13 +595,11 @@ def createApplication( http_port,
 	# include statsd client support around things we want to time.
 	# This is only active if statsd_uri is defined in the config. Even if it is defined
 	# and points to a non-existant server, UDP won't block
-	pyramid_config.include( 'perfmetrics' )
-	if pyramid_config.registry.settings.get( 'statsd_uri' ):
-		# also set the default
-		import perfmetrics
-		perfmetrics.set_statsd_client( pyramid_config.registry.settings['statsd_uri'] )
 
-	# First, before any "application" processing, hook in a place to run
+        # Optionally configure performance information
+	pyramid_config.include( 'nti.appserver.tweens.performance' )
+                
+	# First in our stack, before any "application" processing, hook in a place to run
 	# greenlets with nothing below it on the stack
 	pyramid_config.add_tween('nti.appserver.tweens.greenlet_runner_tween.greenlet_runner_tween_factory',
 							 under=pyramid.tweens.EXCVIEW )
