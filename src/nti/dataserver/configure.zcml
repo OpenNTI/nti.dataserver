@@ -362,6 +362,10 @@
 	<utility factory=".site._SiteHierarchyTree"
 			 provides=".interfaces.ISiteHierarchy" />
 
+	<!-- Site Admin -->
+	<utility factory=".site.DefaultSiteAdminManagerUtility"
+			 provides=".interfaces.ISiteAdminManagerUtility" />
+
 	<!-- ACL/ACE permissions -->
 	<include package="." file="configure_acls.zcml" />
 
