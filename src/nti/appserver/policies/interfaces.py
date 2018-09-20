@@ -7,7 +7,7 @@ Site policies interfaces
 
 from __future__ import print_function, absolute_import, division
 
-from zope.schema import BytesLine
+from zope.schema import NativeStringLine
 
 __docformat__ = "restructuredtext en"
 
@@ -42,9 +42,9 @@ class ISitePolicyUserEventListener(IMailerPolicy):
                                      required=True,
                                      default=True)
 
-    LANDING_PAGE_NTIID = BytesLine(title=u'Sent in the nti.landing_page cookie',
-                                   required=True,
-                                   default=None)
+    LANDING_PAGE_NTIID = NativeStringLine(title=u'Sent in the nti.landing_page cookie',
+                                          required=True,
+                                          default=None)
 
     def map_validation_exception(incoming_data, exception):
         """
