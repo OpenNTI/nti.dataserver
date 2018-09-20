@@ -600,11 +600,10 @@ def _pre_fork(arbiter, worker):
     os.environ['DATASERVER_ZEO_CLIENT_NAME'] = 'gunicorn_' + str(_fork_count)
 
     worker._nti_identifier = str(_fork_count - 1)
-    os.environ['NTI_WORKER_IDENTIFIER'] = worker._nti_identifier
     notify(_GunicornWillFork(arbiter, worker))
 
 
-def _post_fork(unused_arbiter, unused_worker):
+def _post_fork(unused_arbiter, worker):
     # Patch up the thread pool and DNS if needed due to a bug in the fork watcher
     # that should have done this already; see
     # https://github.com/SiteSupport/gevent/issues/154
@@ -619,6 +618,9 @@ def _post_fork(unused_arbiter, unused_worker):
     # pylint: disable=protected-access
     if hub._threadpool is not None and hub._threadpool._size:  # same condition it uses
         hub._threadpool._on_fork()
+
+    # Setup our environment variable now that we have actually forked.
+    os.environ['NTI_WORKER_IDENTIFIER'] = worker._nti_identifier
 
     # See also
     # https://bitbucket.org/jgehrcke/gipc/src/bbfa4a02c756c81408e15016ad0ef836d1dcbad5/gipc/gipc.py?at=default#cl-217

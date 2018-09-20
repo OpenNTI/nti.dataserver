@@ -31,6 +31,8 @@ from perfmetrics import set_statsd_client
 from perfmetrics import statsd_client
 from perfmetrics import statsd_client_from_uri
 
+from zope.cachedescriptors.property import Lazy
+
 
 def includeme(config):
     statsd_uri = config.registry.settings.get('statsd_uri')
@@ -46,23 +48,39 @@ def includeme(config):
         config.add_tween('nti.appserver.tweens.performance.performance_tween_factory',
                          under=['perfmetrics.tween', pyramid.tweens.INGRESS])
 
-def performance_tween_factory(handler, registry):
-    client = statsd_client()
 
-    worker = os.environ['NTI_WORKER_IDENTIFIER']
-    used_metric_name = worker + '.connection_pool.used'
-    free_metric_name = worker + '.connection_pool.free'
+class PerformanceHandler(object):
 
-    def handle(request):
+    def __init__(self, handler, client):
+        self.handler = handler
+        self.client = client
+
+    @Lazy
+    def worker_id(self):
+        return os.environ['NTI_WORKER_IDENTIFIER']
+
+    @Lazy
+    def used_metric_name(self):
+        return self.worker_id + '.connection_pool.used'
+
+    @Lazy
+    def free_metric_name(self):
+        return self.worker_id + '.connection_pool.free'
+
+    def __call__(self, request):
         try:
-            return handler(request)
+            return self.handler(request)
         finally:
-            if client is not None:
+            if self.client is not None:
                 connection_pool = request.environ['nti_connection_pool']
                 free = connection_pool.free_count()
                 used_count = connection_pool.size - free
 
-                client.gauge(used_metric_name, used_count)
-                client.gauge(free_metric_name, free)
+                self.client.gauge(self.used_metric_name, used_count)
+                self.client.gauge(self.free_metric_name, free)
 
-    return handle
+        
+def performance_tween_factory(handler, registry):
+    client = statsd_client()
+
+    return PerformanceHandler(handler, client)
