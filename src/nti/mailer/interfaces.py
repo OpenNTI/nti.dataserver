@@ -17,6 +17,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from zope.schema import NativeStringLine
 from zope.security.interfaces import IPrincipal
 
 try:
@@ -228,10 +229,10 @@ class IMailerPolicy(interface.Interface):
     DEFAULT_EMAIL_SENDER = interface.Attribute(u'DEFAULT_EMAIL_SENDER',
                                                u'Optional email sender')
 
-    NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = TextLine(title=u'The base template for sending '
-                                                               u'an email to a newly created user.',
-                                                         required=True,
-                                                         default='nti.appserver:templates/new_user_created')
+    NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for sending '
+                                                                       u'an email to a newly created user.',
+                                                                 required=True,
+                                                                 default='nti.appserver:templates/new_user_created')
 
     NEW_USER_CREATED_EMAIL_SUBJECT = TextLine(title=u'The email subject for new user emails.',
                                               required=True,
@@ -241,9 +242,9 @@ class IMailerPolicy(interface.Interface):
                                     required=True,
                                     default=None)
 
-    PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME = TextLine(title=u'The base template for password reset emails.',
-                                                       required=True,
-                                                       default='password_reset_email')
+    PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for password reset emails.',
+                                                               required=True,
+                                                               default='password_reset_email')
 
     PASSWORD_RESET_EMAIL_SUBJECT = TextLine(title=u'The subject for password reset emails.',
                                             required=True,
@@ -253,9 +254,9 @@ class IMailerPolicy(interface.Interface):
                              required=True,
                              default='support@nextthought.com')
 
-    USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME = TextLine(title=u'The base template for username recovery emails.',
-                                                          required=True,
-                                                          default='username_recovery_email')
+    USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for username recovery emails.',
+                                                                  required=True,
+                                                                  default='username_recovery_email')
 
     USERNAME_RECOVERY_EMAIL_SUBJECT = TextLine(title=u'The email subject for username recovery emails.',
                                                required=True,
