@@ -53,8 +53,6 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 
-from nti.appserver.tweens.performance import performance_metrics_enabled
-
 from nti.appserver.utils.chameleon import setupChameleonCache
 
 import nti.dataserver.users
