@@ -9,7 +9,7 @@ but the relevant parts are re-exported from this package.
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -29,7 +29,7 @@ try:
     from repoze.sendmail.interfaces import IMailDelivery
 except ImportError:
     class IMailDelivery(interface.Interface):
-        transaction_manager = interface.Attribute("The transaction manager to use.")
+        transaction_manager = interface.Attribute(u"The transaction manager to use.")
 
         def send(fromaddr, toaddrs, message):
             pass
@@ -48,7 +48,7 @@ class IEmailAddressable(interface.Interface):
     example.
     """
 
-    email = interface.Attribute("The email address to send to")
+    email = interface.Attribute(u"The email address to send to")
 
 
 @interface.implementer(IEmailAddressable,
@@ -223,5 +223,5 @@ class IMailerPolicy(interface.Interface):
     Mailer policy utility
     """
 
-    DEFAULT_EMAIL_SENDER = interface.Attribute('DEFAULT_EMAIL_SENDER',
-                                               'Optional email sender')
+    DEFAULT_EMAIL_SENDER = interface.Attribute(u'DEFAULT_EMAIL_SENDER',
+                                               u'Optional email sender')
