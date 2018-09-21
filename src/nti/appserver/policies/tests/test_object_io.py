@@ -28,8 +28,6 @@ class TestObjectIO(ApplicationLayerTest):
         attrs = [attr for attr in dir(policy) if attr.isupper()]
         for attr in attrs:
             assert_that(getattr(policy, attr), is_(ext_policy.get(attr)))
-        from IPython.terminal.debugger import set_trace;set_trace()
-
         ext_policy['COM_USERNAME'] = u'xyz'
         policy_io.updateFromExternalObject(ext_policy)
         assert_that(policy.COM_USERNAME, is_(u'xyz'))
