@@ -39,12 +39,12 @@ class ISitePolicyUserEventListener(IMailerPolicy):
                      default=u'NextThought')
 
     GOOGLE_AUTH_USER_CREATION = Bool(title=u'Is Google OAuth creation allowed on this site?',
-                                     required=True,
-                                     default=True)
+                                     default=True,
+                                     required=False)
 
     LANDING_PAGE_NTIID = NativeStringLine(title=u'Sent in the nti.landing_page cookie',
-                                          required=True,
-                                          default=None)
+                                          default=None,
+                                          required=False)
 
     def map_validation_exception(incoming_data, exception):
         """
@@ -92,19 +92,20 @@ class ICommunitySitePolicyUserEventListener(ISitePolicyUserEventListener):
     """
     A type of site policy that places all accounts created by that site into a
     particular community. This :class:`ISiteCommunity` should only be used
-    by that site.
+    by that site. All site policies will be an implementation of this interface
+    to preserve backwards compatibility.
     """
 
     COM_USERNAME = TextLine(title=u'The globally resolvable name of a community, or None',
-                            required=True,
+                            required=False,
                             default=None)
 
     COM_ALIAS = TextLine(title=u'The alias for the site community',
-                         required=True,
+                         required=False,
                          default=None)
 
     COM_REALNAME = TextLine(title=u'The real name for the site community',
-                            required=True,
+                            required=False,
                             default=None)
 
 

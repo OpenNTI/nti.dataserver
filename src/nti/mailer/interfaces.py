@@ -243,33 +243,32 @@ class IMailerPolicy(interface.Interface):
                                                                              u'``templates`` directory in the package this object'
                                                                              u'is located in. Otherwise, it can be a complete spec'
                                                                              u'such as "the.package:other_dir/foobar"',
-                                                                 required=True,
-                                                                 default='nti.appserver:templates/new_user_created')
+                                                                 default='nti.appserver:templates/new_user_created',
+                                                                 required=False)
 
     NEW_USER_CREATED_EMAIL_SUBJECT = TextLine(title=u'The email subject for new user emails.',
-                                              required=True,
+                                              required=False,
                                               default=u'Welcome to NextThought')
 
     NEW_USER_CREATED_BCC = TextLine(title=u'The bcc address for new user emails.',
-                                    required=True,
-                                    default=None)
+                                    default=None,
+                                    required=False)
 
     PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for password reset emails.',
-                                                               required=True,
                                                                default='password_reset_email')
 
     PASSWORD_RESET_EMAIL_SUBJECT = TextLine(title=u'The subject for password reset emails.',
-                                            required=True,
-                                            default=u'NextThought Password Reset')
+                                            default=u'NextThought Password Reset',
+                                            required=False)
 
     SUPPORT_EMAIL = TextLine(title=u'The support email.',
-                             required=True,
-                             default=u'support@nextthought.com')
+                             default=u'support@nextthought.com',
+                             required=False)
 
     USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for username recovery emails.',
-                                                                  required=True,
-                                                                  default='username_recovery_email')
+                                                                  default='username_recovery_email',
+                                                                  required=False)
 
     USERNAME_RECOVERY_EMAIL_SUBJECT = TextLine(title=u'The email subject for username recovery emails.',
-                                               required=True,
-                                               default=u'Username Reminder')
+                                               default=u'Username Reminder',
+                                               required=False)
