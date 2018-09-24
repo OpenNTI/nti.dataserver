@@ -636,7 +636,9 @@ def _post_fork(unused_arbiter, worker):
 
     from nti.appserver._util import dump_info
 
+    sigprof_id = '%s:%s' % (worker._nti_identifier, os.getpid())
     def handle_info(signum, frame):
+        print('Handling SIGPROF to %s\n' % sigprof_id, file=sys.stderr)
         info = dump_info(db_gc=True)
         print(info, file=sys.stderr)
         print('\nGC Enabled:', gc.isenabled())
