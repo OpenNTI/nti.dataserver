@@ -359,7 +359,7 @@ class TestUserService(ApplicationLayerTest):
 
         # And, if we have a site community, it's exposed.
         site_policy = component.queryUtility(ISitePolicyUserEventListener)
-        site_policy.COM_USERNAME = 'community_username'
+        site_policy.COM_USERNAME = u'community_username'
         ext_object = toExternalObject(service)
         assert_that(ext_object,
                     has_entry('SiteCommunity', 'community_username'))
