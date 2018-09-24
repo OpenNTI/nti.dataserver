@@ -208,7 +208,7 @@ class DefaultSiteAdminManagerUtility(object):
         site = site if site else getSite()
         site_hierarchy = component.getUtility(ISiteHierarchy).tree
         site_node = site_hierarchy.get_node_from_object(site)
-        __traceback_info__ = site, site_hierarchy.root.descendant_objects
+        __traceback_info__ = site, site_hierarchy.root.descendant_objects, type(site)
         # If this node is None we want an error to be raised
         return getattr(site_node, attr)
 
@@ -294,6 +294,7 @@ class _SiteHierarchyTree(object):
                 parent = ds_folder
             else:
                 parent = sites[parent_name]
+            logger.log(u'Adding site %s with parent %s', (site, parent))
             tree.add(site, parent=parent)
         return tree
 
