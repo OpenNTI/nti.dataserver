@@ -12,8 +12,8 @@ from zope import component
 from zope import interface
 from zope import deferredimport
 
-from zope.cachedescriptors.property import CachedProperty
 from zope.cachedescriptors.property import Lazy
+from zope.cachedescriptors.property import CachedProperty
 
 from zope.component.hooks import getSite
 
@@ -49,12 +49,15 @@ BASEADULT = u"genericadultbase"
 
 logger = __import__('logging').getLogger(__name__)
 
+
 @NoPickle
 @interface.implementer(ISiteRoleManager)
 class SiteRoleManagerUtility(PrincipalRoleManager):
     """
     Instances of this class should be registered as utilities inside a site.
     """
+
+
 SiteRoleManager = SiteRoleManagerUtility
 
 
@@ -91,7 +94,8 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
             util = self._site_role_manager_utility
             if util is not None:
                 # pylint: disable=no-member
-                result = util.getSetting(role_id, principal_id, default=default)
+                result = util.getSetting(role_id, principal_id,
+                                         default=default)
         return result
 
     def _get_parent_site(self, current_site, parent_site_name):
@@ -189,7 +193,8 @@ class PersistentSiteRoleManager(AnnotationPrincipalRoleManager):
             # If the site that you adapted to to get here is in this list,
             # the annotation will not work as expected
             principal_role_manager = IPrincipalRoleManager(site)
-            super_func = getattr(super(PersistentSiteRoleManager, principal_role_manager), func_name)
+            super_func = getattr(super(PersistentSiteRoleManager, principal_role_manager),
+                                 func_name)
             super_func(*args)
 
     def assignRoleToPrincipal(self, role_id, principal_id):
@@ -208,6 +213,7 @@ class DefaultSiteAdminManagerUtility(object):
         site = site if site else getSite()
         site_hierarchy = component.getUtility(ISiteHierarchy).tree
         site_node = site_hierarchy.get_node_from_object(site)
+        # pylint: disable=unused-variable
         __traceback_info__ = site, site_hierarchy.root.descendant_objects, type(site)
         # If this node is None we want an error to be raised
         return getattr(site_node, attr)
@@ -282,7 +288,8 @@ class _SiteHierarchyTree(object):
         tree.set_root(ds_folder)
         assert IMainApplicationFolder.providedBy(ds_folder)
 
-        # Work up the inheritance chain for each component and add it to the tree
+        # Work up the inheritance chain for each component and add it to the
+        # tree
         for site in get_all_host_sites():
             site_component = component.getUtility(IComponents, name=site.__name__)
             # Ideally, we would use site_component.__parent__ here
