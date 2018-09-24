@@ -24,10 +24,11 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 
 generation = 100
 
-logger = __import__('logging').getLogger(__name__)
-
 NEW_MIMETYPE = 'application/vnd.nextthought.meeting'
 OLD_MIMETYPE = 'application/vnd.nextthought._meeting'
+
+logger = __import__('logging').getLogger(__name__)
+
 
 @interface.implementer(IDataserver)
 class MockDataserver(object):
