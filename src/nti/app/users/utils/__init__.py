@@ -347,13 +347,3 @@ def get_members_by_site(site, all_members=False):
             return get_community_or_site_members(all_members)
     else: # e.g dataserver2
         return get_users_by_site(name)
-
-
-def is_user_created_in_current_site(user):
-    """
-    Returns if the user is created in the current applicable site hierarchy.
-    This will return `False` if the user does not have a creation site.
-    """
-    creation_sitename = get_user_creation_sitename(user)
-    return creation_sitename in get_component_hierarchy_names()
-_is_user_created_in_current_site = is_user_created_in_current_site
