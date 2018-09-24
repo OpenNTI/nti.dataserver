@@ -58,7 +58,7 @@ class SiteAdminUtility(object):
         return memberships - {'Everyone'}
 
     def can_administer_user(self, site_admin, user, site_admin_membership_names=None):
-        site_hierarchy = component.getUtility(ISiteAdminManagerUtility).tree
+        site_hierarchy = component.getUtility(ISiteAdminManagerUtility)
         user_creation_site = get_user_creation_site(user)
         admin_creation_site = get_user_creation_site(site_admin)
         descendant_sites = site_hierarchy.get_descendant_sites(admin_creation_site)
