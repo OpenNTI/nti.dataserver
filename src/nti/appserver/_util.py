@@ -13,6 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import gc as GC
 
+from gevent.util import format_run_info
+
 from zope import interface
 
 from zope.event import notify
@@ -115,39 +117,7 @@ def dump_stacks():
             threads and greenlets. (One greenlet will duplicate one thread,
             the current thread and greenlet.)
     """
-    dump = []
-
-    # threads
-    import threading  # Late import this stuff because it may get monkey-patched
-    import sys
-    import traceback
-    try:
-        from greenlet import greenlet
-    except ImportError:
-        greenlet = None
-
-    threads = {th.ident: th.name for th in threading.enumerate()}
-
-    for thread, frame in sys._current_frames().items():
-        dump.append('Thread 0x%x (%s)\n' % (thread, threads.get(thread)))
-        dump.append(''.join(traceback.format_stack(frame)))
-        dump.append('\n')
-
-    # greenlets
-
-    # if greenlet is present, let's dump each greenlet stack
-    # Use the gc module to inspect all objects to find the greenlets
-    # since there isn't a global registry
-    for ob in GC.get_objects():
-        if not isinstance(ob, greenlet):
-            continue
-        if not ob:
-            continue  # not running anymore or not started
-        dump.append('Greenlet %s\n' % ob)
-        dump.append(''.join(traceback.format_stack(ob.gr_frame)))
-        dump.append('\n')
-
-    return dump
+    return format_run_info()
 
 
 def dump_info(db_gc=False):
