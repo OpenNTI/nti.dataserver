@@ -274,9 +274,12 @@ class _SiteHierarchyTree(object):
         sites = component.getUtility(IEtcNamespace, name='hostsites')
         return sites.lastSynchronized
 
+    def _lookup_func(self, site):
+        return site.__name__
+
     @CachedProperty('lastModified')
     def tree(self):
-        tree = ObjectHierarchyTree()
+        tree = ObjectHierarchyTree(lookup_func=self._lookup_func)
         sites = component.getUtility(IEtcNamespace, name='hostsites')
         ds_folder = sites.__parent__
         tree.set_root(ds_folder)
