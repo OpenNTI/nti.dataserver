@@ -16,7 +16,7 @@ from nti.app.users.utils import get_user_creation_site
 from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import ISiteAdminUtility
-from nti.dataserver.interfaces import ISiteHierarchy
+from nti.dataserver.interfaces import ISiteAdminManagerUtility
 
 from nti.dataserver.users.interfaces import IUserUpdateUtility
 
@@ -58,7 +58,7 @@ class SiteAdminUtility(object):
         return memberships - {'Everyone'}
 
     def can_administer_user(self, site_admin, user, site_admin_membership_names=None):
-        site_hierarchy = component.getUtility(ISiteHierarchy).tree
+        site_hierarchy = component.getUtility(ISiteAdminManagerUtility).tree
         user_creation_site = get_user_creation_site(user)
         admin_creation_site = get_user_creation_site(site_admin)
         descendant_sites = site_hierarchy.get_descendant_sites(admin_creation_site)
