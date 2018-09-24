@@ -61,6 +61,8 @@ class SiteAdminUtility(object):
         site_hierarchy = component.getUtility(ISiteAdminManagerUtility)
         user_creation_site = get_user_creation_site(user)
         admin_creation_site = get_user_creation_site(site_admin)
+        if admin_creation_site is None:
+            return False
         descendant_sites = site_hierarchy.get_descendant_sites(admin_creation_site)
         # Can administer if created in this site or any descendant
         result = user_creation_site in descendant_sites or user_creation_site is admin_creation_site
