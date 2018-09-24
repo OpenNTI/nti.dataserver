@@ -285,7 +285,7 @@ class _SiteHierarchyTree(object):
 
     @CachedProperty('lastModified')
     def tree(self):
-        tree = ObjectHierarchyTree(lookup_func=self._lookup_func)
+        tree = ObjectHierarchyTree('hostsites', None, self._lookup_func)
         sites = component.getUtility(IEtcNamespace, name='hostsites')
         ds_folder = sites.__parent__
         tree.set_root(ds_folder)
@@ -304,7 +304,7 @@ class _SiteHierarchyTree(object):
                 parent = ds_folder
             else:
                 parent = sites[parent_name]
-            logger.log(u'Adding site %s with parent %s', (site, parent))
+            logger.debug(u'Adding site %s with parent %s', site, parent)
             tree.add(site, parent=parent)
         return tree
 
