@@ -208,7 +208,7 @@ class DefaultSiteAdminManagerUtility(object):
         site = site if site else getSite()
         site_hierarchy = component.getUtility(ISiteHierarchy).tree
         site_node = site_hierarchy.get_node_from_object(site)
-        __traceback_info__ = site, site_hierarchy
+        __traceback_info__ = site, site_hierarchy.root.descendant_objects
         # If this node is None we want an error to be raised
         return getattr(site_node, attr)
 
