@@ -11,11 +11,12 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
-from nti.app.users.utils import is_user_created_in_current_site, get_user_creation_site
+from nti.app.users.utils import get_user_creation_site
 
 from nti.dataserver.authorization import is_site_admin
 
-from nti.dataserver.interfaces import ISiteAdminUtility, ISiteHierarchy
+from nti.dataserver.interfaces import ISiteAdminUtility
+from nti.dataserver.interfaces import ISiteHierarchy
 
 from nti.dataserver.users.interfaces import IUserUpdateUtility
 
