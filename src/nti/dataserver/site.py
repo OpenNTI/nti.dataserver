@@ -208,7 +208,8 @@ class DefaultSiteAdminManagerUtility(object):
         site = site if site else getSite()
         site_hierarchy = component.getUtility(ISiteHierarchy).tree
         site_node = site_hierarchy.get_node_from_object(site)
-        return getattr(site_node, attr)
+        __traceback_info__ = site, site_hierarchy
+        return getattr(site_node, attr, None)
 
     def get_parent_site(self, site=None):
         parent = self._get_site(site, 'parent_object')

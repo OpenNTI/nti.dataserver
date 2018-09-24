@@ -11,11 +11,12 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
-from nti.app.users.utils import is_user_created_in_current_site
+from nti.app.users.utils import get_user_creation_site
 
 from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import ISiteAdminUtility
+from nti.dataserver.interfaces import ISiteAdminManagerUtility
 
 from nti.dataserver.users.interfaces import IUserUpdateUtility
 
@@ -48,7 +49,7 @@ class UserUpdateUtility(object):
 class SiteAdminUtility(object):
     """
     A default :class:`ISiteAdminUtility` that only allows site admins
-    the ability to administer to users that were created in the current site
+    the ability to administer to users that were created in the current site, child site
     or have intersecting memberships.
     """
 
@@ -57,7 +58,14 @@ class SiteAdminUtility(object):
         return memberships - {'Everyone'}
 
     def can_administer_user(self, site_admin, user, site_admin_membership_names=None):
-        result = is_user_created_in_current_site(user)
+        site_hierarchy = component.getUtility(ISiteAdminManagerUtility)
+        user_creation_site = get_user_creation_site(user)
+        admin_creation_site = get_user_creation_site(site_admin)
+        if admin_creation_site is None:
+            return False
+        descendant_sites = site_hierarchy.get_descendant_sites(admin_creation_site)
+        # Can administer if created in this site or any descendant
+        result = user_creation_site in descendant_sites or user_creation_site is admin_creation_site
         if not result:
             if not site_admin_membership_names:
                 site_admin_membership_names = self.get_site_admin_membership_names(site_admin)
