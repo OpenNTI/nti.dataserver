@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, division
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-__docformat__ = "restructuredtext en"
-
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access,too-many-public-methods,arguments-differ,too-many-function-args 
 
 from hamcrest import is_
 from hamcrest import is_not
@@ -22,15 +21,17 @@ import fudge
 
 import unittest
 
+from z3c.baseregistry.baseregistry import BaseComponents
+
 from zope import component
 
 from zope.component import globalSiteManager as BASE
 
-from zope.component.hooks import site
 from zope.component.hooks import getSite
+from zope.component.hooks import site as current_site
 
-from zope.component.interfaces import IComponents
 from zope.component.interfaces import ISite
+from zope.component.interfaces import IComponents
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
@@ -40,8 +41,6 @@ from zope.securitypolicy.settings import Allow
 from zope.site.interfaces import INewLocalSite
 
 from zope.traversing.interfaces import IEtcNamespace
-
-from z3c.baseregistry.baseregistry import BaseComponents
 
 from nti.appserver.policies.sites import BASEADULT
 from nti.appserver.policies.sites import BASECOPPA
@@ -209,7 +208,7 @@ class TestSiteRoleManager(ConfiguringTestBase):
         parent_site_admin_name = 'parent_site_admin'
         parent_user = User(parent_site_admin_name)
 
-        with site(_TrivialSite(BASECOPPA)):
+        with current_site(_TrivialSite(BASECOPPA)):
             # Parent site not a site admin
             assert_that(is_site_admin(user), is_(False))
 
@@ -227,7 +226,7 @@ class TestSiteRoleManager(ConfiguringTestBase):
             fake_get_parent_sm.returns((parent_site_prm,))
             fake_get_parent_sm.next_call().returns(None)
 
-        with site(_TrivialSite(_MYSITE)):
+        with current_site(_TrivialSite(_MYSITE)):
             # we have ISiteRoleManager
             srm = component.queryUtility(ISiteRoleManager)
             assert_that(srm, is_not(None))
@@ -277,7 +276,7 @@ class TestSiteRoleManager(ConfiguringTestBase):
             site_prm.getPrincipalsAndRoles()
 
         # Not an admin to sibling site either
-        with site(_TrivialSite(_MYSITE2)):
+        with current_site(_TrivialSite(_MYSITE2)):
             set_fake_parent_sm()
             assert_that(is_site_admin(user), is_(False))
             set_fake_parent_sm()
@@ -292,7 +291,7 @@ class TestSiteHierarchy(unittest.TestCase):
 
     def setUp(self):
         super(TestSiteHierarchy, self).setUp()
-        for site in _SITES:
+        for site in _SITES:  # pylint: disable=redefined-outer-name
             # See explanation in nti.appserver.policies.sites; in short,
             # the teardown process can disconnect the resolution order of
             # these objects, and since they don't descend from the bases declared
@@ -311,7 +310,7 @@ class TestSiteHierarchy(unittest.TestCase):
         BASE.registerAdapter(PersistentSiteRoleManager, (ISite,), IPrincipalRoleManager)
 
     def tearDown(self):
-        for site in _SITES:
+        for site in _SITES:  # pylint: disable=redefined-outer-name
             BASE.unregisterUtility(site, name=site.__name__, provided=IComponents)
         BASE.unregisterHandler(self._event_handler, required=(IHostPolicySiteManager, INewLocalSite))
         BASE.unregisterUtility(DefaultSiteAdminManagerUtility(), ISiteAdminManagerUtility)
@@ -340,7 +339,8 @@ class TestSiteHierarchy(unittest.TestCase):
             host_sites_folder.lastSynchronized = 123
             cached_tree = sht.tree
             assert_that(cached_tree, is_not(tree))
-
+            
+            # pylint: disable=no-member
             assert_that(tree.children_objects, contains_inanyorder(eval_site))
             assert_that(tree.children_objects, has_length(1))
 
@@ -375,7 +375,7 @@ class TestSiteHierarchy(unittest.TestCase):
             synchronize_host_policies()
             demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
 
-            with site(demo_alpha_site):
+            with current_site(demo_alpha_site):
                 user = User(u'SiteAdmin')
                 demo_alpha_prm = IPrincipalRoleManager(getSite())
                 demo_alpha_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user)
@@ -395,7 +395,7 @@ class TestSiteHierarchy(unittest.TestCase):
             alpha_site = get_site_for_site_names((EVALALPHA.__name__,))
             demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
 
-            with site(demo_alpha_site):
+            with current_site(demo_alpha_site):
                 user = User(u'SiteAdmin')
                 psm = getSite().getSiteManager()
                 psm.unregisterUtility(DefaultSiteAdminManagerUtility(), ISiteAdminManagerUtility)
@@ -410,25 +410,25 @@ class TestSiteHierarchy(unittest.TestCase):
                 principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
                 assert_that(principals, contains_inanyorder((user, Deny,), (user, Deny,)))
 
-            with site(eval_site):
+            with current_site(eval_site):
                 eval_site_prm = IPrincipalRoleManager(getSite())
                 principals = eval_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
                 assert_that(principals, has_length(0))
 
-            with site(demo_alpha_site):
+            with current_site(demo_alpha_site):
                 demo_alpha_prm.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user)
 
-            with site(demo_site):
+            with current_site(demo_site):
                 demo_prm = IPrincipalRoleManager(getSite())
                 principals = demo_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
                 assert_that(principals, contains_inanyorder((user, Allow,)))
 
-            with site(eval_site):
+            with current_site(eval_site):
                 eval_site_prm = IPrincipalRoleManager(getSite())
                 principals = eval_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
                 assert_that(principals, has_length(0))
 
-            with site(alpha_site):
+            with current_site(alpha_site):
                 alpha_site_prm = IPrincipalRoleManager(getSite())
                 principals = alpha_site_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
                 assert_that(principals, has_length(0))
