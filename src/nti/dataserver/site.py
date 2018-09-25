@@ -290,7 +290,7 @@ class _SiteHierarchyTree(object):
 
     @CachedProperty('lastModified')
     def tree(self):
-        tree = ObjectHierarchyTree('hostsites', None, self._lookup_func)
+        tree = ObjectHierarchyTree('hostsites', None, lookup_func=self._lookup_func)
         sites = component.getUtility(IEtcNamespace, name='hostsites')
         ds_folder = sites.__parent__
         tree.set_root(ds_folder)
