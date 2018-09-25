@@ -211,10 +211,15 @@ class DefaultSiteAdminManagerUtility(object):
 
     def _get_site(self, site, attr):
         site = site if site else getSite()
-        site_hierarchy = component.getUtility(ISiteHierarchy).tree
+        site_hierarchy_utility = component.getUtility(ISiteHierarchy)
+        site_hierarchy = site_hierarchy_utility.tree
         site_node = site_hierarchy.get_node_from_object(site)
         # pylint: disable=unused-variable
-        __traceback_info__ = site, site_hierarchy.root.descendant_objects, type(site)
+        __traceback_info__ = u"Site: %s\nTree Root Descendants: %s\nSite Type: %s\n" \
+                             u"Utility Lookup func result: %s\nTree lookup func result: %s", \
+                             (site, site_hierarchy.root.descendant_objects, type(site),
+                              site_hierarchy_utility._lookup_func(site), site_hierarchy.lookup_func(site))
+
         # If this node is None we want an error to be raised
         return getattr(site_node, attr)
 
