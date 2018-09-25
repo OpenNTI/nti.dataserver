@@ -339,6 +339,8 @@ class TestSiteHierarchy(unittest.TestCase):
             host_sites_folder.lastSynchronized = 123
             cached_tree = sht.tree
             assert_that(cached_tree, is_not(tree))
+
+            assert_that(tree.lookup_func, is_(sht._lookup_func))
             
             # pylint: disable=no-member
             assert_that(tree.children_objects, contains_inanyorder(eval_site))
