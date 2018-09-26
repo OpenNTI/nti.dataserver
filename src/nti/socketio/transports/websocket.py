@@ -28,7 +28,6 @@ from nti.dataserver.sessions import SessionService
 from nti.socketio import interfaces
 
 from ._base import sleep
-from ._base import Empty
 from ._base import Greenlet
 from ._base import catch_all
 from ._base import BaseTransport
@@ -176,6 +175,8 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 					logger.exception( "Failed to receive message (%s) from websocket; ignoring and continuing %s",
 									  self.message[0:50], self.session_id )
 		finally:
+			# Need to make sure we always send a signal to our sender to shut
+			# down in case we exist abnormally. Otherwise we'll leak greenlets.
 			self.session_proxy.client_queue.put_nowait(None)
 
 class _WebSocketPinger(_AbstractWebSocketOperator):
