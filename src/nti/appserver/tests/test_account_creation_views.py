@@ -31,6 +31,7 @@ import itertools
 from six.moves.urllib_parse import unquote
 
 from zope import component
+from zope import interface
 
 from zope.component import eventtesting
 
@@ -665,6 +666,78 @@ class TestApplicationProfile(_AbstractApplicationCreateUserTest, ApplicationLaye
             schema = _AccountProfileSchemafier(user).make_schema()
             for field in schema.values():
                 assert_that(field.get('readonly'), is_(True or None))
+
+    @WithSharedApplicationMockDS(testapp=True, users=(u'test001'))
+    @fudge.patch('nti.appserver.account_creation_views.find_most_derived_interface')
+    def test_account_profile_schemafier(self, mock_interface):
+        """
+        Precedence: override_readonly -> IUIReadOnlyProfileSchema
+        """
+        class ITestProfile(user_interfaces.ICompleteUserProfile,
+                           user_interfaces.IUIReadOnlyProfileSchema):
+            pass
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = self._get_user('test001')
+            fake_interface = mock_interface.is_callable()
+
+            # Non IUIReadOnlyProfileSchema, Non IImmutableFriendlyNamed
+            fake_interface.returns(user_interfaces.ICompleteUserProfile)
+            assert_that(user_interfaces.IImmutableFriendlyNamed.providedBy(user), is_(False))
+
+            schema = _AccountProfileSchemafier(user).make_schema()
+            assert_that(schema['alias']['readonly'], is_(False))
+            assert_that(schema['realname']['readonly'], is_(False))
+
+            schema = _AccountProfileSchemafier(user, readonly_override=True).make_schema()
+            assert_that(schema['alias']['readonly'], is_(True))
+            assert_that(schema['realname']['readonly'], is_(True))
+
+            schema = _AccountProfileSchemafier(user, readonly_override=False).make_schema()
+            assert_that(schema['alias']['readonly'], is_(False))
+            assert_that(schema['realname']['readonly'], is_(False))
+
+            # Non IUIReadOnlyProfileSchema and IImmutableFriendlyNamed
+            interface.alsoProvides(user, user_interfaces.IImmutableFriendlyNamed)
+            schema = _AccountProfileSchemafier(user).make_schema()
+            assert_that(schema['alias']['readonly'], is_(True))
+            assert_that(schema['realname']['readonly'], is_(True))
+
+            schema = _AccountProfileSchemafier(user, readonly_override=False).make_schema()
+            assert_that(schema['alias']['readonly'], is_(False))
+            assert_that(schema['realname']['readonly'], is_(False))
+
+            schema = _AccountProfileSchemafier(user, readonly_override=True).make_schema()
+            assert_that(schema['alias']['readonly'], is_(True))
+            assert_that(schema['realname']['readonly'], is_(True))
+
+            # IUIReadOnlyProfileSchema, and IImmutableFriendlyNamed
+            fake_interface.returns(ITestProfile)
+            schema = _AccountProfileSchemafier(user).make_schema()
+            assert_that(schema['alias']['readonly'], is_(True))
+            assert_that(schema['realname']['readonly'], is_(True))
+
+            schema = _AccountProfileSchemafier(user, readonly_override=False).make_schema()
+            assert_that(schema['alias']['readonly'], is_(False))
+            assert_that(schema['realname']['readonly'], is_(False))
+
+            schema = _AccountProfileSchemafier(user, readonly_override=True).make_schema()
+            assert_that(schema['alias']['readonly'], is_(True))
+            assert_that(schema['realname']['readonly'], is_(True))
+
+            # IUIReadOnlyProfileSchema, and not IImmutableFriendlyNamed
+            interface.noLongerProvides(user, user_interfaces.IImmutableFriendlyNamed)
+            fake_interface.returns(ITestProfile)
+            schema = _AccountProfileSchemafier(user).make_schema()
+            assert_that(schema['alias']['readonly'], is_(True))
+            assert_that(schema['realname']['readonly'], is_(True))
+
+            schema = _AccountProfileSchemafier(user, readonly_override=False).make_schema()
+            assert_that(schema['alias']['readonly'], is_(False))
+            assert_that(schema['realname']['readonly'], is_(False))
+
+            schema = _AccountProfileSchemafier(user, readonly_override=True).make_schema()
+            assert_that(schema['alias']['readonly'], is_(True))
+            assert_that(schema['realname']['readonly'], is_(True))
 
 
 def main(email=None, uname=None, cname=None):
