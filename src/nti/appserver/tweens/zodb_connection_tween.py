@@ -92,7 +92,7 @@ class zodb_connection_tween(object):
 		logger.debug("Connection details in pid %s:\n%s", pid, stream.getvalue())
 		if need_gc:
 			logger.warn("Too many connection objects in pid %s: %s", pid, need_gc)
-			
+
 			def _print_refs(c):
 				if c in c.db().pool.available:
 					return

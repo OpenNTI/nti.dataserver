@@ -150,29 +150,34 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 		return True
 
 	def _run(self):
-		while self.run_loop:
-			sleep()
-			self.message = self.websocket.receive()
+		try:
+			while self.run_loop:
+				sleep()
+				self.message = self.websocket.receive()
 
-			# Reduce heartbeat activity from every five seconds to
-			# no more often than half of what's needed to keep the session "alive"
-			# to cut down on database activity
-			# This is tightly coupled to session implementation and lifetime
-			if 	  self.message == b"2::" \
-			  and self.connected \
-			  and self.last_heartbeat_time >= (time.time() - self.HEARTBEAT_LIFETIME):
-				continue
+				# Reduce heartbeat activity from every five seconds to
+				# no more often than half of what's needed to keep the session "alive"
+				# to cut down on database activity
+				# This is tightly coupled to session implementation and lifetime
+				if 	  self.message == b"2::" \
+				  and self.connected \
+				  and self.last_heartbeat_time >= (time.time() - self.HEARTBEAT_LIFETIME):
+					continue
 
-			if not self.run_loop:
-				break
+				if not self.run_loop:
+					break
 
-			# Try for up to 2 seconds to receive this message. If it fails,
-			# drop it and wait for the next one. That's better than dying altogether, right?
-			try:
-				self.run_loop &= run_job_in_site( self._do_read, retries=20, sleep=0.1, site_names=self.session_originating_site_names )
-			except transaction.interfaces.TransientError:
-				logger.exception( "Failed to receive message (%s) from websocket; ignoring and continuing %s",
-								  self.message[0:50], self.session_id )
+				# Try for up to 2 seconds to receive this message. If it fails,
+				# drop it and wait for the next one. That's better than dying altogether, right?
+				try:
+					self.run_loop &= run_job_in_site( self._do_read, retries=20, sleep=0.1, site_names=self.session_originating_site_names )
+				except transaction.interfaces.TransientError:
+					logger.exception( "Failed to receive message (%s) from websocket; ignoring and continuing %s",
+									  self.message[0:50], self.session_id )
+		finally:
+			# Need to make sure we always send a signal to our sender to shut
+			# down in case we exist abnormally. Otherwise we'll leak greenlets.
+			self.session_proxy.client_queue.put_nowait(None)
 
 class _WebSocketPinger(_AbstractWebSocketOperator):
 

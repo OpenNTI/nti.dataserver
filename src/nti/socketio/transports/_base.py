@@ -113,5 +113,6 @@ class SessionEventProxy(object):
 
 	def get_client_msg(self, **kwargs):
 		return self.client_queue.get(**kwargs)
-	def queue_message_to_client( self, msg ):
-		transactions.put_nowait( self.client_queue, msg )
+
+	def queue_message_to_client(self, msg):
+		transactions.put_nowait(self.client_queue, msg)
