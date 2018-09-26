@@ -546,7 +546,7 @@ class _AccountProfileSchemafier(JsonSchemafier):
         profile_schema = find_most_derived_interface(profile, profile_iface,
                                                      interface.providedBy(profile))
         if readonly_override is None:
-            # Fall back to None if the profile_schema is an IUIReadOnlyProfileSchema.
+            # Fall back to None if the profile_schema is not an IUIReadOnlyProfileSchema.
             readonly_override = profile_schema.isOrExtends(IUIReadOnlyProfileSchema) or None
         super(_AccountProfileSchemafier, self).__init__(profile_schema,
                                                         readonly_override=readonly_override)
