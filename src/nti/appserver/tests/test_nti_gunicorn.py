@@ -91,18 +91,21 @@ from nti.app.testing.layers import AppLayerTest
 class TestGeventApplicationWorker(AppLayerTest):
 
 	def test_prefork(self):
-                class MockWorker(object):
-                        pass
-                mock_worker = MockWorker()
+		class MockWorker(object):
+			pass
+		mock_worker = MockWorker()
 		nti_gunicorn._pre_fork( 1, mock_worker )
+		assert_that(mock_worker, has_property('_nti_identifier', '1'))
+		nti_gunicorn._post_fork( 1, mock_worker )
+		assert_that(os.environ, has_entry('NTI_WORKER_IDENTIFIER', '1'))
+		assert_that(os.environ, has_entry('DATASERVER_ZEO_CLIENT_NAME', 'gunicorn_2'))
 
-                assert_that(mock_worker, has_property( '_nti_identifier', '1' ))
-
-                assert_that(os.environ, has_entry( 'NTI_WORKER_IDENTIFIER', '1' ))
-                assert_that(os.environ, has_entry( 'DATASERVER_ZEO_CLIENT_NAME', 'gunicorn_2' ))
-
-	def test_postfork( self ):
-		nti_gunicorn._post_fork( 1, 2 )
+	@fudge.patch('gunicorn.workers.base.WorkerTmp')
+	def test_postfork(self, fudge_tmp):
+		fudge_tmp.is_a_stub()
+		worker = nti_gunicorn.GeventApplicationWorker( None, None, MockSocket(), None, None, MockConfig, logger)
+		worker._nti_identifier = '3'
+		nti_gunicorn._post_fork(1, worker)
 
 	@fudge.patch('gunicorn.workers.base.WorkerTmp')
 	def test_init(self, fudge_tmp):
