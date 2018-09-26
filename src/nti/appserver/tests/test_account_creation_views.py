@@ -659,7 +659,8 @@ class TestApplicationProfile(_AbstractApplicationCreateUserTest, ApplicationLaye
             fake_interface.returns(user_interfaces.ICompleteUserProfile)
             user = self._get_user()
             schema = _AccountProfileSchemafier(user).make_schema()
-            assert_that(schema['lastLoginTime']['readonly'], is_(False))
+            assert_that(schema['lastLoginTime']['readonly'], is_(True))
+            assert_that(schema['location']['readonly'], is_(False))
             fake_interface.returns(ITestProfile)
             schema = _AccountProfileSchemafier(user).make_schema()
             for field in schema.values():
