@@ -87,7 +87,7 @@
 			 name="application/vnd.nextthought.modeledcontentfile" />
 
 	<adapter factory=".file._ModeledContentFileObjectIO"
-			 for="..interfaces.IModeledContentFile"  />
+			 for="nti.dataserver.interfaces.IModeledContentFile"  />
 
 	<!-- Schema maker -->
 	<utility factory=".jsonschema.NoteJsonSchemaMaker" name="note" />
