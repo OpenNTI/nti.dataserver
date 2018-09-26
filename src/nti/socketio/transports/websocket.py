@@ -68,10 +68,6 @@ class _AbstractWebSocketOperator(object):
 class _WebSocketSender(_AbstractWebSocketOperator):
 	message = None
 
-	# We only need to wakeup to periodically sanity check our session state.
-	msg_timeout = SessionService.SESSION_HEARTBEAT_TIMEOUT * 2
-	EMPTY_QUEUE_MARKER = object()
-
 	def _do_send(self):
 		message = self.message
 		session = self.get_session()
@@ -90,12 +86,7 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 		while self.run_loop:
 			sleep()
 			# We must get a None here to break out of loop (see reader)
-			# We also do *must* to loop here in case the reader exits abnormally.
-			try:
-				self.message = self.session_proxy.get_client_msg(timeout=self.msg_timeout)
-			except Empty:
-				# No message, check our status
-				self.message = self.EMPTY_QUEUE_MARKER
+			self.message = self.session_proxy.get_client_msg()
 
 			try:
 				self.run_loop &= run_job_in_site( self._do_send, retries=10,
@@ -111,17 +102,16 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 				# going to break this loop
 				break
 
-			if self.message is not self.EMPTY_QUEUE_MARKER:
-				try:
-					# logger.debug( "Sending session '%s' value '%r'", self.session_id, self.message )
-					self.websocket.send(self.message)
-				except geventwebsocket.exceptions.FrameTooLargeException:
-					logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
-								 len(self.message), self.message[0:50] )
-				except socket.error as e:
-					logger.log( TRACE, "Stopping sending messages to '%s' on %s", self.session_id, e )
-					# The session will be killed of its own accord soon enough.
-					break
+			try:
+				# logger.debug( "Sending session '%s' value '%r'", self.session_id, self.message )
+				self.websocket.send(self.message)
+			except geventwebsocket.exceptions.FrameTooLargeException:
+				logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
+							 len(self.message), self.message[0:50] )
+			except socket.error as e:
+				logger.log( TRACE, "Stopping sending messages to '%s' on %s", self.session_id, e )
+				# The session will be killed of its own accord soon enough.
+				break
 
 class _WebSocketReader(_AbstractWebSocketOperator):
 	message = None
@@ -161,29 +151,32 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 		return True
 
 	def _run(self):
-		while self.run_loop:
-			sleep()
-			self.message = self.websocket.receive()
+		try:
+			while self.run_loop:
+				sleep()
+				self.message = self.websocket.receive()
 
-			# Reduce heartbeat activity from every five seconds to
-			# no more often than half of what's needed to keep the session "alive"
-			# to cut down on database activity
-			# This is tightly coupled to session implementation and lifetime
-			if 	  self.message == b"2::" \
-			  and self.connected \
-			  and self.last_heartbeat_time >= (time.time() - self.HEARTBEAT_LIFETIME):
-				continue
+				# Reduce heartbeat activity from every five seconds to
+				# no more often than half of what's needed to keep the session "alive"
+				# to cut down on database activity
+				# This is tightly coupled to session implementation and lifetime
+				if 	  self.message == b"2::" \
+				  and self.connected \
+				  and self.last_heartbeat_time >= (time.time() - self.HEARTBEAT_LIFETIME):
+					continue
 
-			if not self.run_loop:
-				break
+				if not self.run_loop:
+					break
 
-			# Try for up to 2 seconds to receive this message. If it fails,
-			# drop it and wait for the next one. That's better than dying altogether, right?
-			try:
-				self.run_loop &= run_job_in_site( self._do_read, retries=20, sleep=0.1, site_names=self.session_originating_site_names )
-			except transaction.interfaces.TransientError:
-				logger.exception( "Failed to receive message (%s) from websocket; ignoring and continuing %s",
-								  self.message[0:50], self.session_id )
+				# Try for up to 2 seconds to receive this message. If it fails,
+				# drop it and wait for the next one. That's better than dying altogether, right?
+				try:
+					self.run_loop &= run_job_in_site( self._do_read, retries=20, sleep=0.1, site_names=self.session_originating_site_names )
+				except transaction.interfaces.TransientError:
+					logger.exception( "Failed to receive message (%s) from websocket; ignoring and continuing %s",
+									  self.message[0:50], self.session_id )
+		finally:
+			self.session_proxy.client_queue.put_nowait(None)
 
 class _WebSocketPinger(_AbstractWebSocketOperator):
 
