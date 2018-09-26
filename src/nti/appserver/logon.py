@@ -510,6 +510,24 @@ class _OnlinePolicyLinkProvider (object):
                 Link(target=PRIVACY_POLICY_URL, rel=self.privacy_rel))
 
 
+@interface.implementer(IAuthenticatedUserLinkProvider)
+@component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
+class DoNotAdvertiseWelcomePageLinksProvider(object):
+    """
+    This link provider should be registered as subscriber in sites
+    where they don't want to show the welcome page.
+    """
+
+    priority = 1
+    rels = (REL_INITIAL_WELCOME_PAGE, REL_PERMANENT_WELCOME_PAGE)
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def get_links(self):
+        raise NotImplementedError()
+
+
 @interface.implementer(ILogonLinkProvider)
 @component.adapter(IMissingUser, pyramid.interfaces.IRequest)
 class _SimpleMissingUserFacebookLinkProvider(object):

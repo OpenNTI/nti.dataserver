@@ -42,6 +42,7 @@ from zope.component import eventtesting
 from zope.component.hooks import setSite
 from zope.component.hooks import clearSite
 
+import pyramid.interfaces
 import pyramid.request
 import pyramid.httpexceptions as hexc
 
@@ -51,6 +52,8 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.appserver import logon
 
+from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
+
 from nti.appserver.logon import ROUTE_OPENID_RESPONSE
 
 from nti.appserver.logon import ping
@@ -59,6 +62,7 @@ from nti.appserver.logon import _checksum
 from nti.appserver.logon import openid_login
 from nti.appserver.logon import password_logon
 from nti.appserver.logon import _openidcallback
+from nti.appserver.logon import DoNotAdvertiseWelcomePageLinksProvider
 
 from nti.appserver.link_providers import flag_link_provider as user_link_provider
 
@@ -216,6 +220,48 @@ class TestApplicationLogon(ApplicationLayerTest):
 
 		# Now that we have the cookie, we should be able to request ourself
 		testapp.get('/dataserver2/users/sjohnson@nextthought.com')
+
+
+class TestLinkProviders(ApplicationLayerTest):
+
+	@WithSharedApplicationMockDS(users=(u'test001',), testapp=True, default_authenticate=False)
+	def test_do_not_advertise_welcome_page_link_provider(self):
+		from z3c.baseregistry.baseregistry import BaseComponents
+		from nti.appserver.policies.sites import BASEADULT
+		site = BaseComponents(BASEADULT, name='nonwelcomepagetest.nextthought.com', bases=(BASEADULT,))
+		component.provideUtility(site, interface.interfaces.IComponents, name='nonwelcomepagetest.nextthought.com')
+
+		url = '/dataserver2/users/test001'
+
+		extra_environ = self._make_extra_environ(username=u'test001')
+		extra_environ.update({b'HTTP_ORIGIN': b'http://nonwelcomepagetest.nextthought.com'})
+
+		# It should show these links by default.
+		result = self.testapp.get(url, extra_environ=extra_environ)
+		result = [x['rel'] for x in result.json_body['Links']]
+		assert_that(result, has_item('content.initial_welcome_page'))
+		assert_that(result, has_item('content.permanent_welcome_page'))
+
+		# register DoNotAdvertiseWelcomePageLinksProvider
+		site.registerSubscriptionAdapter(DoNotAdvertiseWelcomePageLinksProvider,
+										 (nti_interfaces.IUser, pyramid.interfaces.IRequest),
+										 IAuthenticatedUserLinkProvider)
+
+		result = self.testapp.get(url, extra_environ=extra_environ)
+		result = [x['rel'] for x in result.json_body['Links']]
+		assert_that(result, not_(has_item('content.initial_welcome_page')))
+		assert_that(result, not_(has_item('content.permanent_welcome_page')))
+
+		# unregister
+		site.unregisterSubscriptionAdapter(DoNotAdvertiseWelcomePageLinksProvider,
+										   (nti_interfaces.IUser, pyramid.interfaces.IRequest),
+										   IAuthenticatedUserLinkProvider)
+
+		result = self.testapp.get(url, extra_environ=extra_environ)
+		result = [x['rel'] for x in result.json_body['Links']]
+		assert_that(result, has_item('content.initial_welcome_page'))
+		assert_that(result, has_item('content.permanent_welcome_page'))
+
 
 class TestLogonViews(ApplicationLayerTest):
 
