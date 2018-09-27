@@ -238,9 +238,9 @@ class TestLinkProviders(ApplicationLayerTest):
 
 		# It should show these links by default.
 		result = self.testapp.get(url, extra_environ=extra_environ)
-		result = [x['rel'] for x in result.json_body['Links']]
-		assert_that(result, has_item('content.initial_welcome_page'))
-		assert_that(result, has_item('content.permanent_welcome_page'))
+		result = result.json_body
+		self.require_link_href_with_rel(result, 'content.initial_welcome_page')
+		self.require_link_href_with_rel(result, 'content.permanent_welcome_page')
 
 		# register DoNotAdvertiseWelcomePageLinksProvider
 		site.registerSubscriptionAdapter(DoNotAdvertiseWelcomePageLinksProvider,
@@ -248,9 +248,9 @@ class TestLinkProviders(ApplicationLayerTest):
 										 IAuthenticatedUserLinkProvider)
 
 		result = self.testapp.get(url, extra_environ=extra_environ)
-		result = [x['rel'] for x in result.json_body['Links']]
-		assert_that(result, not_(has_item('content.initial_welcome_page')))
-		assert_that(result, not_(has_item('content.permanent_welcome_page')))
+		result = result.json_body
+		self.forbid_link_with_rel(result, 'content.initial_welcome_page')
+		self.forbid_link_with_rel(result, 'content.permanent_welcome_page')
 
 		# unregister
 		site.unregisterSubscriptionAdapter(DoNotAdvertiseWelcomePageLinksProvider,
@@ -258,9 +258,9 @@ class TestLinkProviders(ApplicationLayerTest):
 										   IAuthenticatedUserLinkProvider)
 
 		result = self.testapp.get(url, extra_environ=extra_environ)
-		result = [x['rel'] for x in result.json_body['Links']]
-		assert_that(result, has_item('content.initial_welcome_page'))
-		assert_that(result, has_item('content.permanent_welcome_page'))
+		result = result.json_body
+		self.require_link_href_with_rel(result, 'content.initial_welcome_page')
+		self.require_link_href_with_rel(result, 'content.permanent_welcome_page')
 
 
 class TestLogonViews(ApplicationLayerTest):
