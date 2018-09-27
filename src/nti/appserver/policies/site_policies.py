@@ -469,6 +469,7 @@ class BirthdateInFuture(InvalidValue): pass
 class BirthdateTooRecent(InvalidValue): pass
 class BirthdateTooAncient(InvalidValue): pass
 class InvalidUsernamePattern(InvalidValue): pass
+class UsernameMustEqualEmail(InvalidValue): pass
 class UsernameCannotContainRealname(InvalidValue): pass
 class FieldContainsCensoredSequence(InvalidValue): pass
 class UsernameCannotContainNextthoughtCom(InvalidValue): pass
