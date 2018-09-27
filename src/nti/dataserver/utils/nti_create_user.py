@@ -23,7 +23,10 @@ from zope import interface
 
 from nti.base._compat import text_
 
+from nti.coremetadata.interfaces import ISiteCommunity
+
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import INewUserPlacer
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 
@@ -49,7 +52,7 @@ _type_map = {
 logger = __import__('logging').getLogger(__name__)
 
 
-def _create_user(factory, username, password, realname, communities=(), options=None):
+def _create_user(factory, username, password, realname, communities=(), is_site_community=False, options=None):
     if options.shard:
         # Provide the unnamed, default utility to do this
         class FixedShardPlacer(AbstractShardPlacer):
@@ -100,6 +103,10 @@ def _create_user(factory, username, password, realname, communities=(), options=
             logger.info("Applying coppa to %s", user)
             interface.alsoProvides(user, ICoppaUserWithoutAgreement)
 
+    if      ICommunity.providedBy(user) \
+        and is_site_community:
+        interface.alsoProvides(user, ISiteCommunity)
+
     if options.verbose:
         pprint.pprint(to_external_object(user))
 
@@ -110,7 +117,7 @@ def create_user(args=None):
     arg_parser = argparse.ArgumentParser(description="Create a user-type object")
     arg_parser.add_argument('username', help="The username to create")
     arg_parser.add_argument('password', nargs='?')
-    arg_parser.add_argument('-v', '--verbose', help="Be verbose", 
+    arg_parser.add_argument('-v', '--verbose', help="Be verbose",
                             action='store_true', dest='verbose')
 
     arg_parser.add_argument('-t', '--type',
@@ -152,6 +159,12 @@ def create_user(args=None):
                             dest='contact_email',
                             help="The contact email address of the user")
 
+    arg_parser.add_argument('--is_site_community',
+                            dest='is_site_community',
+                            action='store_true',
+                            default=False,
+                            help="Create the community as an ISiteCommunity")
+
     arg_parser.add_argument('--public',
                             dest='public',
                             action='store_true',
@@ -163,7 +176,7 @@ def create_user(args=None):
                             action='store_true',
                             default=False,
                             help="Joinable community")
-    
+
     arg_parser.add_argument('--devmode',
                             dest='devmode',
                             action='store_true',
@@ -190,7 +203,7 @@ def create_user(args=None):
 
     username = args.username
     password = args.password
-    
+
     if args.type == 'user' and not username.lower().endswith('@nextthought.com'):
         logger.warning("Creating a global user with no site !!!")
 
@@ -198,7 +211,7 @@ def create_user(args=None):
     if not args.site:
         package = 'nti.dataserver'
     config_features = ('devmode',) if args.devmode else ()
-    
+
     run_with_dataserver(environment_dir=env_dir,
                         xmlconfig_packages=(package,),
                         verbose=args.verbose,
@@ -208,6 +221,7 @@ def create_user(args=None):
                                                       password,
                                                       args.name,
                                                       args.communities,
+                                                      args.is_site_community,
                                                       args))
 
 
