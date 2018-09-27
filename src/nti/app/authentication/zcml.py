@@ -15,7 +15,8 @@ from zope import interface
 from zope.component.zcml import utility
 
 from zope.configuration.fields import Tokens
-from zope.configuration.fields import TextLine
+
+from zope.schema import TextLine
 
 from nti.app.authentication.interfaces import ILogonWhitelist
 from nti.app.authentication.interfaces import ISiteLogonWhitelist
