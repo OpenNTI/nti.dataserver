@@ -13,6 +13,8 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+from zope import interface
+
 from zope.cachedescriptors.property import Lazy
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -28,6 +30,10 @@ from nti.app.users.views import parse_mime_types
 
 from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 from nti.app.users.views.view_mixins import EntityActivityViewMixin
+
+from nti.common.string import is_true
+
+from nti.coremetadata.interfaces import ISiteCommunity
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
@@ -70,6 +76,9 @@ class CreateCommunityView(AbstractAuthenticatedView,
 
     def __call__(self):
         externalValue = self.readInput()
+        is_site_community = externalValue.pop('site_community', None) \
+                         or externalValue.pop('is_site_community', None)
+        is_site_community = is_true(is_site_community)
         username = externalValue.pop('username', None) \
                 or externalValue.pop('Username', None)
         if not username:
@@ -91,6 +100,8 @@ class CreateCommunityView(AbstractAuthenticatedView,
         args['external_value'] = externalValue
         self.request.response.status_int = 201  # created
         community = Community.create_community(**args)
+        if is_site_community:
+            interface.alsoProvides(community, ISiteCommunity)
         return community
 
 
