@@ -19,12 +19,13 @@ from zope.component.zcml import subscriber
 
 from zope.configuration.exceptions import ConfigurationError
 
-from zope.configuration.fields import TextLine
 from zope.configuration.fields import GlobalObject
 from zope.configuration.fields import GlobalInterface
 from zope.configuration.fields import PythonIdentifier
 
 from zope.mimetype.interfaces import mimeTypeConstraint
+
+from zope.schema import TextLine
 
 from pyramid.interfaces import IRequest
 
