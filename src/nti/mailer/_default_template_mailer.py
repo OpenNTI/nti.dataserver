@@ -40,7 +40,7 @@ def _get_renderer_spec_and_package(base_template,
 								   extension,
 								   package=None,
 								   level=3):
-	if isinstance(package, basestring):
+	if isinstance(package, string_types):
 		package = dottedname.resolve(package)
 
 	# Did they give us a package, either in the name or as an argument?
