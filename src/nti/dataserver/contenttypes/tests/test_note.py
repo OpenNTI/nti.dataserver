@@ -35,7 +35,6 @@ from zope import component
 
 from zope.annotation.interfaces import IAnnotations
 
-from zope.schema.interfaces import TooShort
 from zope.schema.interfaces import WrongType
 from zope.schema.interfaces import ValidationError
 
@@ -116,7 +115,7 @@ class TestNote(DataserverLayerTest):
         assert_that(n, verifiably_provides(IFavoritable))
         assert_that(n, verifiably_provides(INote))
         ratings = _lookup_like_rating_for_write(n, FAVR_CAT_NAME)
-        assert_that(ratings, 
+        assert_that(ratings,
                     verifiably_provides(IUserRating))
         assert_that(ratings, has_property('numberOfRatings', 0))
 
@@ -125,7 +124,7 @@ class TestNote(DataserverLayerTest):
         n = Note()
         assert_that(n, verifiably_provides(ILikeable))
         ratings = _lookup_like_rating_for_write(n)
-        assert_that(ratings, 
+        assert_that(ratings,
                     verifiably_provides(IUserRating))
         assert_that(ratings, has_property('numberOfRatings', 0))
 
@@ -153,7 +152,7 @@ class TestNote(DataserverLayerTest):
         #"Externalizing a note produces correct LikeCount attribute"
         n = Note()
         # first time does something
-        assert_that(like_object(n, 'foo@bar'), 
+        assert_that(like_object(n, 'foo@bar'),
                     verifiably_provides(IUserRating))
         # second time no-op
         assert_that(like_object(n, 'foo@bar'), is_(none()))
@@ -182,7 +181,7 @@ class TestNote(DataserverLayerTest):
         n.lastModified = 0
         container.lastModified = 0
 
-        assert_that(like(n, 'foo@bar'), 
+        assert_that(like(n, 'foo@bar'),
                     verifiably_provides(IUserRating))
 
         assert_that(n, has_property('lastModified', greater_than(0)))
@@ -198,7 +197,7 @@ class TestNote(DataserverLayerTest):
         assert_that(container, has_property('lastModified', 0))
 
         # Unliking, however, does
-        assert_that(unlike(n, 'foo@bar'), 
+        assert_that(unlike(n, 'foo@bar'),
                     verifiably_provides(IUserRating))
 
         assert_that(n, has_property('lastModified', greater_than(0)))
@@ -210,7 +209,7 @@ class TestNote(DataserverLayerTest):
 
     def test_favoriting_changes_last_mod(self):
         #"Liking an object changes its modification time and that of its container"
-        self._do_test_rate_changes_last_mod(favorite_object, 
+        self._do_test_rate_changes_last_mod(favorite_object,
                                             unfavorite_object)
 
     def test_favoriting(self):
@@ -324,7 +323,7 @@ class TestNote(DataserverLayerTest):
         update_from_external_object(child_note, ext_obj, context=self.ds)
 
         assert_that(child_note, has_property('inReplyTo', parent_note))
-        assert_that(child_note, 
+        assert_that(child_note,
                     has_property('sharingTargets', set((parent_user,))))
 
     @WithMockDSTrans
@@ -354,7 +353,7 @@ class TestNote(DataserverLayerTest):
         update_from_external_object(child_note, ext_obj, context=self.ds)
 
         assert_that(child_note, has_property('inReplyTo', parent_note))
-        assert_that(child_note, 
+        assert_that(child_note,
                     has_property('sharingTargets', set((parent_dfl, parent_user))))
 
     def test_must_provide_body_text(self):
@@ -364,7 +363,7 @@ class TestNote(DataserverLayerTest):
             update_from_external_object(n, {'body': []})
 
         # Empty part
-        with self.assertRaises(TooShort):
+        with self.assertRaises(ValidationError):
             update_from_external_object(n, {'body': [u'']})
 
     def test_body_text_is_sanitized(self):
@@ -475,7 +474,7 @@ class TestNote(DataserverLayerTest):
         n.updateLastMod()
         ext = to_external_object(n)
         assert_that(ext, has_entries("body", has_length(2)))
-        
+
     @WithMockDS
     def test_external_legacy_factory(self):
         ext_obj = {"Class": "Note"}
@@ -511,15 +510,15 @@ class TestNote(DataserverLayerTest):
         html = IHTMLContentFragment(u'<html><head/><body><p>At www.nextthought.com</p></body></html>')
         update_from_external_object(n, {'body': [html]})
         ext = to_external_object(n)
-        assert_that(ext['body'], 
+        assert_that(ext['body'],
                     is_([u'<html><body><p>At <a href="http://www.nextthought.com">www.nextthought.com</a></p></body></html>']))
 
     def test_external_body_hyperlink_incoming_plain(self):
         n = Note()
-        update_from_external_object(n, 
+        update_from_external_object(n,
                                    {'body': [u"So visit www.nextthought.com and see for yourself."]})
         ext = to_external_object(n)
-        assert_that(ext['body'], 
+        assert_that(ext['body'],
                     is_([u'<html><body>So visit <a href="http://www.nextthought.com">www.nextthought.com</a> and see for yourself.</body></html>']))
 
     @WithMockDSTrans
@@ -536,7 +535,7 @@ class TestNote(DataserverLayerTest):
 
         update_from_external_object(n, ext, context=ds)
 
-        assert_that(eventtesting.getEvents(IObjectModifiedEvent), 
+        assert_that(eventtesting.getEvents(IObjectModifiedEvent),
                     has_length(1))
         mod_event = eventtesting.getEvents(IObjectModifiedEvent)[0]
         assert_that(mod_event, has_property('descriptions',
@@ -547,7 +546,7 @@ class TestNote(DataserverLayerTest):
 
     @WithMockDSTrans
     def test_update_sharing_only_unresolvable_user(self):
-        assert_that(User.get_user('jason.madden@nextthought.com', dataserver=self.ds), 
+        assert_that(User.get_user('jason.madden@nextthought.com', dataserver=self.ds),
                     is_(none()))
         n = Note()
         n.body = [u'This is the body']
@@ -577,12 +576,12 @@ class TestNote(DataserverLayerTest):
         n = Note()
         range_ = TranscriptRangeDescription(seriesId=u"myseries",
                                             start=TranscriptContentPointer(role=u"start", seconds=1, cueid=u'myid',
-                                                                           pointer=ElementDomContentPointer(elementTagName=u'p', 
-                                                                                                            elementId=u'id', 
+                                                                           pointer=ElementDomContentPointer(elementTagName=u'p',
+                                                                                                            elementId=u'id',
                                                                                                             role=u"start")),
                                             end=TranscriptContentPointer(role=u"end", seconds=1, cueid=u'myid',
-                                                                         pointer=ElementDomContentPointer(elementTagName=u'p', 
-                                                                                                          elementId=u'id', 
+                                                                         pointer=ElementDomContentPointer(elementTagName=u'p',
+                                                                                                          elementId=u'id',
                                                                                                           role=u"end")))
         n.applicableRange = range_
 
@@ -591,7 +590,7 @@ class TestNote(DataserverLayerTest):
 
         child = Note()
         child.inReplyTo = n
-        update_from_external_object(child, 
+        update_from_external_object(child,
                                     {'inReplyTo': n, 'body': (u'body', )})
 
         assert_that(child.applicableRange, is_(n.applicableRange))
@@ -618,7 +617,7 @@ class TestNote(DataserverLayerTest):
             child.inReplyTo = n
             conn.add(child)
             assert_that(child, has_property('_p_jar', not_none()))
-            update_from_external_object(child, 
+            update_from_external_object(child,
                                         {'inReplyTo': n, 'body': (u'body',)})
 
             assert_that(child.applicableRange, is_(n.applicableRange))
