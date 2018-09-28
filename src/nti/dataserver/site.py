@@ -400,12 +400,13 @@ class SiteConfigurable(object):
         title = configurable.__name__ if not self.title else self.title
         if self.persist:
             self.configurable = make_persistent(configurable)
+        iface = ISiteConfigurable
         if self.required:
-            interface.alsoProvides(self, ISiteRequiredConfigurable)
+            iface = ISiteRequiredConfigurable
         factory = Factory(self._do_configuration,
                           title=title,
                           description=self.description,
-                          interfaces=(ISiteConfigurable,))
+                          interfaces=(iface,))
         gsm = component.getGlobalSiteManager()
         gsm.registerUtility(factory, IFactory, title)
         return configurable
