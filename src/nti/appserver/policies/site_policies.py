@@ -14,6 +14,7 @@ to preserve the names of existing persistent classes as well as the annotation f
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 
+from nti.dataserver.site import SiteConfigurable
 
 __docformat__ = "restructuredtext en"
 
@@ -907,6 +908,10 @@ class NoChatAvatarDFLCapabilityFilter(NoDFLCapabilityFilter):
 		result.discard('nti.platform.p2p.chat')
 		return result
 
+@SiteConfigurable(action='persistent_utility',
+                  description='Site Policy',
+                  persist=True,
+                  required=True)
 @interface.implementer(ICommunitySitePolicyUserEventListener)
 class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener):
 	"""

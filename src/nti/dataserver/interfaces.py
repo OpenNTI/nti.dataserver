@@ -137,7 +137,7 @@ IDataserverFolder = IMainApplicationFolder
 SiteNotInstalledError = SiteNotInstalledError
 InappropriateSiteError = InappropriateSiteError
 
-from zope.component.interfaces import IPossibleSite
+from zope.component.interfaces import IPossibleSite, IFactory
 
 from zope.container.interfaces import IContained as IContainerContained
 
@@ -1490,6 +1490,26 @@ class ISiteAdminManagerUtility(interface.Interface):
         """
         Returns all sibling site names for this site
         """
+
+
+class ISiteConfigurable(interface.Interface):
+    """
+    An interface for objects that can be configured through the Site API
+    """
+
+
+class ISiteConfigurableFactory(IFactory):
+    """
+    A factory that performs the specified action for a site configurable
+    """
+
+
+class ISiteRequiredConfigurable(ISiteConfigurable):
+    """
+    A site configurable that should always be created and registered upon site creation
+    """
+
+
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?

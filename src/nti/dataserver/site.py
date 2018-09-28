@@ -8,12 +8,23 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import sys
+
+from inspect import isclass
+
+from ZODB.interfaces import IConnection
+
+from persistent.persistence import Persistent
+
 from zope import component
-from zope import interface
 from zope import deferredimport
+from zope import interface
+from zope import lifecycleevent
 
 from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import CachedProperty
+from zope.component import IFactory
+from zope.component.factory import Factory
 
 from zope.component.hooks import getSite
 
@@ -25,13 +36,22 @@ from zope.securitypolicy.interfaces import IPrincipalRoleManager
 from zope.securitypolicy.principalrole import PrincipalRoleManager
 from zope.securitypolicy.principalrole import AnnotationPrincipalRoleManager
 
+from zope.site.interfaces import INewLocalSite
+
 from zope.traversing.interfaces import IEtcNamespace
 
 from nti.common.datastructures import ObjectHierarchyTree
 
 from nti.dataserver.interfaces import ISiteHierarchy
+from nti.dataserver.interfaces import ISiteConfigurable
+from nti.dataserver.interfaces import ISiteConfigurableFactory
+from nti.dataserver.interfaces import ISiteRequiredConfigurable
 from nti.dataserver.interfaces import ISiteRoleManager
 from nti.dataserver.interfaces import ISiteAdminManagerUtility
+
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
+
+from nti.externalization.interfaces import IClassObjectFactory
 
 from nti.externalization.persistence import NoPickle
 
@@ -312,6 +332,99 @@ class _SiteHierarchyTree(object):
             logger.debug(u'Adding site %s with parent %s', site, parent)
             tree.add(site, parent=parent)
         return tree
+
+
+class UnsupportedSiteConfigurableType(Exception):
+    pass
+
+
+def persistent_utility_site_configurable_factory(configurable, site_manager):
+    if not isclass(configurable):
+        raise UnsupportedSiteConfigurableType(u'Persisting non-class type utilities is not supported.')
+    # Order is important here. If we mark it before we register it, the registration won't be able to auto resolve
+    # the interface it implements
+    factory = configurable()
+    ifaces = list(interface.implementedBy(configurable))
+    if len(ifaces) != 1:
+        raise UnsupportedSiteConfigurableType(u'Base class must implement exactly one interface.')
+    iface = ifaces[0]
+    connection = IConnection(site_manager)
+    connection.add(factory)
+    site_manager.registerUtility(factory, iface)
+    interface.alsoProvides(factory, ISiteConfigurable)
+    lifecycleevent.created(factory)
+    return factory
+
+
+def make_persistent(klass):
+    # Check if we're already persistent
+    if Persistent in klass.__bases__:
+        return klass
+    else:
+        new_name = 'Persistent' + klass.__name__
+        new_bases = (klass, PersistentCreatedModDateTrackingObject)
+        # Add a metaclass to ensure persistent init is called
+        class InitPersistence(type):
+            def __call__(cls, *args, **kwargs):
+                new_obj = type.__call__(cls, *args, **kwargs)
+                super(Persistent, new_obj).__init__()
+        # Create a new class with the added base
+        new_klass = type(new_name, new_bases, dict(klass.__dict__))
+        # Add our metaclass to make sure we initialize
+        new_klass.__metaclass__ = InitPersistence
+        # Now register this in the module so we can do pickling
+        setattr(sys.modules[klass.__module__], new_name, new_klass)
+        # Register a class factory for this so we can create it externally
+        gsm = component.getGlobalSiteManager()
+        gsm.registerAdapter(new_klass,
+                            (object,),
+                            IClassObjectFactory,
+                            name=new_name)
+        return new_klass
+
+
+@interface.implementer(ISiteConfigurable)
+class SiteConfigurable(object):
+
+    configurable = None
+
+    def __init__(self, description, action, persist=False, title=None, required=False):
+        self.description = description
+        self.action = action
+        self.title = title
+        self.persist = persist
+        self.required = required
+
+    def __call__(self, configurable):
+        self.configurable = configurable
+        title = configurable.__name__ if not self.title else self.title
+        if self.persist:
+            self.configurable = make_persistent(configurable)
+        if self.required:
+            interface.alsoProvides(self, ISiteRequiredConfigurable)
+        factory = Factory(self._do_configuration,
+                          title=title,
+                          description=self.description,
+                          interfaces=(ISiteConfigurable,))
+        gsm = component.getGlobalSiteManager()
+        gsm.registerUtility(factory, IFactory, title)
+        return configurable
+
+    def _do_configuration(self, site_manager):
+        factory = component.getMultiAdapter((self.configurable, site_manager),
+                                            ISiteConfigurableFactory,
+                                            self.action)
+        return factory
+
+
+@component.adapter(INewLocalSite)
+def _on_site_created(site_manager):
+    """
+    Register all required site configurables
+    """
+    site_configurables = interface.getFactoriesFor(ISiteRequiredConfigurable)
+    for configurable in site_configurables:
+        configurable(site_manager)
 
 
 deferredimport.initialize()
