@@ -186,11 +186,11 @@ def _checkEmailAddress(address):
     This should catch most invalid but no valid addresses.
     """
     if not isValidMailAddress(address):
-        raise EmailAddressInvalid(address)
+        raise EmailAddressInvalid(address).with_field_and_value('email', address)
     cctlds = component.getUtility(ICcTLDInformation)
     domain = address.rsplit('.', 1)[-1]
     if domain.lower() not in cctlds.getAvailableTLDs():
-        raise EmailAddressInvalid(address)
+        raise EmailAddressInvalid(address).with_field_and_value('email', address)
     return True
 
 
@@ -205,7 +205,7 @@ def _isValidEmail(email):
 def checkEmailAddress(value):
     if value and _isValidEmail(value):
         return True
-    raise EmailAddressInvalid(value)
+    raise EmailAddressInvalid(value).with_field_and_value('email', value)
 
 
 #: A sequence of only non-alphanumeric characters
