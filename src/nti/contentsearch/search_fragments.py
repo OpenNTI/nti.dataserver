@@ -18,9 +18,9 @@ from nti.contentsearch.interfaces import ISearchFragment
 
 from nti.externalization.representation import WithRepr
 
-from nti.schema.field import SchemaConfigured
-
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 logger = __import__('logging').getLogger(__name__)
 
