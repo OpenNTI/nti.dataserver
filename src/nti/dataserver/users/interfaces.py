@@ -111,6 +111,7 @@ class EmailAddressInvalid(InvalidData):
     Invalid email address.
     """
 
+    field = 'email'
     i18n_message = _(u"The email address you have entered is not valid.")
 
     def __init__(self, address):
