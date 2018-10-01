@@ -215,8 +215,8 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
                              'code': 'UsernameCannotBeBlank'
                          },
                          exc_info[2])
-        if e.value == desired_userid and e.value \
-                and externalValue.get('realname') is PLACEHOLDER_REALNAME:
+        if      e.value == desired_userid and e.value \
+            and externalValue.get('realname') is PLACEHOLDER_REALNAME:
             # This is an extreme corner case. You have to work really hard
             # to trigger this conflict
             exc_info = sys.exc_info()
