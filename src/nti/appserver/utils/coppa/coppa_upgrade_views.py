@@ -32,6 +32,8 @@ from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.link_providers import flag_link_provider
 
+from nti.appserver.policies import PLACEHOLDER_REALNAME
+
 from nti.appserver.policies import user_policies
 from nti.appserver.policies import site_policies
 
@@ -52,7 +54,6 @@ from nti.schema.field import ValidTextLine
 from nti.schema.jsonschema import JsonSchemafier
 
 _is_x_or_more_years_ago = site_policies._is_x_or_more_years_ago
-PLACEHOLDER_REALNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME
 
 _view_defaults = dict(route_name='objects.generic.traversal',
 					  renderer='rest',

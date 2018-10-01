@@ -55,8 +55,12 @@ from nti.appserver.link_providers import flag_link_provider
 
 from nti.appserver.link_providers.interfaces import IFlagLinkRemovedEvent
 
+from nti.appserver.policies import PLACEHOLDER_DOB
+from nti.appserver.policies import PLACEHOLDER_EMAIL
+from nti.appserver.policies import PLACEHOLDER_USERNAME
+from nti.appserver.policies import PLACEHOLDER_REALNAME
+
 from nti.appserver.policies.site_policies import find_site_policy
-from nti.appserver.policies.site_policies import GenericKidSitePolicyEventListener
 
 from nti.dataserver import authorization as nauth
 
@@ -106,9 +110,6 @@ REL_ACCOUNT_PROFILE_PREFLIGHT = "account.profile.preflight"
 #: When this link appears, the correct schema for the profile can
 #: be obtained from the :func:`account_profile_schema_view`
 REL_ACCOUNT_PROFILE_UPGRADE = "account.profile.needs.updated"
-
-_PLACEHOLDER_USERNAME = GenericKidSitePolicyEventListener.PLACEHOLDER_USERNAME
-_PLACEHOLDER_REALNAME = GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME
 
 
 def _create_user(request, externalValue, preflight_only=False, require_password=True,
@@ -202,7 +203,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
                      },
                      exc_info[2])
     except InvalidValue as e:
-        if e.value is _PLACEHOLDER_USERNAME:
+        if e.value is PLACEHOLDER_USERNAME:
             # Not quite sure what the conflict actually was, but at least we know
             # they haven't provided a username value, so make it look like that
             exc_info = sys.exc_info()
@@ -215,7 +216,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
                          },
                          exc_info[2])
         if e.value == desired_userid and e.value \
-                and externalValue.get('realname') is _PLACEHOLDER_REALNAME:
+                and externalValue.get('realname') is PLACEHOLDER_REALNAME:
             # This is an extreme corner case. You have to work really hard
             # to trigger this conflict
             exc_info = sys.exc_info()
@@ -424,12 +425,12 @@ def account_preflight_view(request):
     externalValue = obj_io.read_body_as_external_object(request)
 
     placeholder_data = {
-        'Username': _PLACEHOLDER_USERNAME,
+        'Username': PLACEHOLDER_USERNAME,
         'password': None,
-        'birthdate': u'1982-01-31',
-        'email': u'testing_account_creation@tests.nextthought.com',
-        'contact_email': u'testing_account_creation@tests.nextthought.com',
-        'realname': _PLACEHOLDER_REALNAME
+        'birthdate': PLACEHOLDER_DOB,
+        'email': PLACEHOLDER_EMAIL,
+        'contact_email': PLACEHOLDER_EMAIL,
+        'realname': PLACEHOLDER_REALNAME
     }
 
     for k, v in placeholder_data.items():

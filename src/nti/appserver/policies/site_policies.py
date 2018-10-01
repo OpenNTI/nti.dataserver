@@ -706,9 +706,6 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	IF_WOUT_AGREEMENT = ICoppaUserWithoutAgreement
 	IF_WITH_AGREEMENT_UPGRADED = ICoppaUserWithAgreementUpgraded
 
-	PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
-	PLACEHOLDER_REALNAME = 'com.nextthought.account_creation_user WithALastName'
-
 	def upgrade_user(self, user):
 		if not self.IF_WOUT_AGREEMENT.providedBy(user):
 			logger.debug("No need to upgrade user %s that doesn't provide %s",
@@ -788,7 +785,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		human_name = np_human_name(names.realname)
 
 		# Disable username/realname dependency checking if we are using placeholder data
-		if user.username is not self.PLACEHOLDER_USERNAME:
+		if user.username is not PLACEHOLDER_USERNAME:
 			human_name_parts = human_name.first_list + human_name.middle_list + human_name.last_list
 			if any((x.lower() in user.username.lower() for x in human_name_parts)):
 				raise UsernameCannotContainRealname(
