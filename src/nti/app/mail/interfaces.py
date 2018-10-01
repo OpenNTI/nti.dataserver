@@ -4,10 +4,11 @@
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+# pylint: disable=inherit-non-class
 
 from zope import interface
 
@@ -16,9 +17,10 @@ from nti.externalization.representation import WithRepr
 from nti.schema.field import Bool
 from nti.schema.field import ValidText
 from nti.schema.field import ValidTextLine as TextLine
-from nti.schema.field import SchemaConfigured
 
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from nti.schema.schema import SchemaConfigured
 
 
 class IEmail(interface.Interface):
