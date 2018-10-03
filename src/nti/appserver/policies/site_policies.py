@@ -56,6 +56,8 @@ from nti.appserver.interfaces import IUserCreatedWithRequestEvent
 
 from nti.appserver.interfaces import UserUpgradedEvent
 
+from nti.appserver.policies import PLACEHOLDER_USERNAME
+
 from nti.appserver.policies.interfaces import INoAccountCreationEmail
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
