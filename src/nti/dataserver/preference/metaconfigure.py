@@ -34,14 +34,12 @@ def preferenceGroup(_context,
 def definePreferenceType(_context,
                          name,
                          factory):
-
     def customPreferenceGroup(_context,
-                    id,
-                    schema=None,
-                    title=u'',
-                    description=u'',
-                    category=False):
-
+                              id,
+                              schema=None,
+                              title=u'',
+                              description=u'',
+                              category=False):
         preferenceGroup(_context,
                         id,
                         factory,
