@@ -83,7 +83,6 @@ from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
-from nti.dataserver.users.interfaces import EmailAddressInvalid
 
 from nti.dataserver.users.users import User
 
@@ -271,9 +270,7 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
                              },
                              None)
         else:
-            try:
-                checkEmailAddress(email)
-            except EmailAddressInvalid:
+            if not checkEmailAddress(email):
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
                                  {
@@ -845,7 +842,7 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
     def _params(self):
         params = self.request.params
         return CaseInsensitiveDict(params)
-    
+
     def get_param(self, name):
         # pylint: disable=no-member
         return self._input.get(name) or self._params.get(name)
@@ -858,7 +855,7 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
             if remove_all_others:
                 dynamic_memberships = set(user.dynamic_memberships)
                 for membership in dynamic_memberships:
-                    # If a user is in a site community that is not the current site, 
+                    # If a user is in a site community that is not the current site,
                     # we will remove them
                     if      ISiteCommunity.providedBy(membership) \
                         and membership is not self.community:

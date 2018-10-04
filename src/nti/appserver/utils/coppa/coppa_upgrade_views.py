@@ -164,16 +164,14 @@ class RollbackCoppaUsers(_JsonBodyView):
 		return {'Count':len(items), 'Items':items}
 
 def _check_email(email, request, field):
-	try:
-		user_interfaces.checkEmailAddress(email)
-	except user_interfaces.EmailAddressInvalid as e:
+	if not user_interfaces.checkEmailAddress(email):
 		exc_info = sys.exc_info()
 		_raise_error(request,
 					  hexc.HTTPUnprocessableEntity,
 					  { 'message': _("Please provide a valid ${field}.",
 									 mapping={'field': field} ),
 						'field': field,
-						'code': e.__class__.__name__ },
+						'code': 'EmailAddressInvalid' },
 					  exc_info[2])
 
 ### XXX: FIXME: This is largely a duplicate of account creation. The
