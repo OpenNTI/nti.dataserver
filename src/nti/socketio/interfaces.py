@@ -13,15 +13,16 @@ from zope import interface
 
 from zope.annotation.interfaces import IAnnotatable
 
+from zope.configuration.fields import Bool
+
 from zope.interface.common.mapping import IFullMapping
 
 from zope.interface.common.interfaces import IStandardError
 
-from zope.interface.interfaces import ObjectEvent 
+from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
 
 from zope.schema import Int
-from zope.schema import Bool
 from zope.schema import Field
 from zope.schema import Choice
 from zope.schema import Object
@@ -206,9 +207,9 @@ class ISocketSession(ISocketIOChannel, IAnnotatable):
         u"Do you have to commit the transaction to update the heartbeat/disconnect time?")
 
     connected = Bool(title=u'Is the session known to be connected to a client?')
-    
+
     owner = TextLine(title=u'The name of the user that owns this session.')
-    
+
     socket = Object(ISocketIOSocket,
         			title=u"The :class:`ISocketIOSocket` this session is connected with")
 
@@ -276,10 +277,10 @@ class ISocketSessionCreatedObjectEvent(IObjectEvent):
     as security proxying it.
     """
 
-    session = Object(ISocketSession, 
+    session = Object(ISocketSession,
 					 title=u"The session doing the creating.")
 
-    message = Object(ISocketIOMessage, 
+    message = Object(ISocketIOMessage,
 					 title=u"The message being processed.")
 
     external_object = interface.Attribute(

@@ -71,7 +71,6 @@ from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
 from nti.dataserver.users.interfaces import checkEmailAddress
-from nti.dataserver.users.interfaces import EmailAddressInvalid
 
 from nti.dataserver.users.user_profile import Address
 
@@ -674,9 +673,7 @@ class UserContactProfileEmailsPutView(AbstractAuthenticatedView,
         self.checkAccess(self.remoteUser)
         data = self.readInput()
         for name, email in data.items():
-            try:
-                checkEmailAddress(email)
-            except EmailAddressInvalid:
+            if not checkEmailAddress(email):
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
                                  {

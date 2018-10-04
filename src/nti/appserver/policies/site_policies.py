@@ -90,7 +90,6 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IEmailAddressable
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import BlankHumanNameError
-from nti.dataserver.users.interfaces import EmailAddressInvalid
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 from nti.dataserver.users.interfaces import IWillUpdateNewEntityEvent
@@ -835,13 +834,9 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 	def _check_email(self, user):
 		profile = IUserProfile(user)
 		if '@' in user.username:
-			try:
-				checkEmailAddress(user.username)
-			except EmailAddressInvalid:
-				# If the username is not a valid email addres2
-				# nothing further is required.
-				pass
-			else:
+			# If the username is not a valid email address, nothing further
+			# is required.
+			if checkEmailAddress(user.username):
 				# If it is a valid email address, it must match the
 				# email
 				email = getattr(profile, 'email', None)

@@ -34,6 +34,8 @@ from z3c.password.interfaces import IPasswordUtility
 
 from zope.intid.interfaces import IntIdMissingError
 
+from zope.schema.interfaces import ConstraintNotSatisfied
+
 from pyramid.view import view_config
 
 from nti.app.externalization import internalization as obj_io
@@ -70,7 +72,6 @@ from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 
 from nti.dataserver.users.interfaces import IAvatarChoices
 from nti.dataserver.users.interfaces import BlankHumanNameError
-from nti.dataserver.users.interfaces import EmailAddressInvalid
 from nti.dataserver.users.interfaces import IRequireProfileUpdate
 from nti.dataserver.users.interfaces import UsernameCannotBeBlank
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
@@ -177,19 +178,20 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
                          'value': getattr(e, 'value', None)
                      },
                      exc_info[2])
-    except EmailAddressInvalid as e:
+    except ConstraintNotSatisfied as e:
         exc_info = sys.exc_info()
-        if e.value == desired_userid:
-            # Given a choice, identify this on the username, since
-            # we are forcing them to be the same
+        if e.field.title and e.field.title.lower() == 'email':
+            exc_dict = {'field': 'email',
+                        'message': u'The email address you have entered is not valid.',
+                        'code': u'EmailAddressInvalid'}
+            if e.value == desired_userid:
+                # Given a choice, identify this on the username, since
+                # we are forcing them to be the same
+                exc_dict['field'] = 'Username'
+                exc_dict['fields'] = ['Username', 'email']
             _raise_error(request,
                          hexc.HTTPUnprocessableEntity,
-                         {
-                             'field': 'Username',
-                             'fields': ['Username', 'email'],
-                             'message': str(e),
-                             'code': e.__class__.__name__
-                         },
+                         exc_dict,
                          exc_info[2])
         handle_validation_error(request, e)
     except BlacklistedUsernameError as e:

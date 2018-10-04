@@ -58,7 +58,6 @@ from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
-from nti.dataserver.users.interfaces import EmailAddressInvalid
 
 from nti.dataserver.users.users import User
 
@@ -240,12 +239,11 @@ class RequestEmailVerificationView(AbstractAuthenticatedView,
         profile = IUserProfile(user)
         email = self.readInput().get('email')
         if email:
-            try:
-                checkEmailAddress(email)
+            if checkEmailAddress(email):
                 profile.email = email
                 profile.email_verified = False
                 reindex_email_verification(user)
-            except (EmailAddressInvalid):
+            else:
                 raise_error(self.request,
                             hexc.HTTPUnprocessableEntity,
                             {
@@ -311,7 +309,7 @@ class SendUserEmailVerificationView(AbstractAuthenticatedView,
             email = getattr(profile, 'email', None)
             email_verified = getattr(profile, 'email_verified', False)
             if not email_verified:
-                safe_send_email_verification(user, profile, 
+                safe_send_email_verification(user, profile,
                                              email, self.request)
             else:
                 logger.debug("Not sending email verification to %s", username)

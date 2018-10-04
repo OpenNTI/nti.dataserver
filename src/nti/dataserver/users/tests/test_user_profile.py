@@ -27,6 +27,8 @@ import unittest
 
 from zope import interface
 
+from zope.schema.interfaces import ConstraintNotSatisfied
+
 from zope.security.interfaces import IPrincipal
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
@@ -51,11 +53,10 @@ from nti.externalization.externalization import to_external_object
 class TestUserProfile(DataserverLayerTest):
 
     def test_email_address_invalid_domain(self):
-        with self.assertRaises(interfaces.EmailAddressInvalid):
-            interfaces._checkEmailAddress('poop@poop.poop')  # real-world example
+        assert_that(interfaces._checkEmailAddress('poop@poop.poop'), is_(False))  # real-world example
 
-        interfaces._checkEmailAddress('poop@poop.poop.com')
-        interfaces._checkEmailAddress('poop@poop.poop.co')
+        assert_that(interfaces._checkEmailAddress('poop@poop.poop.com'), is_(True))
+        assert_that(interfaces._checkEmailAddress('poop@poop.poop.co'), is_(True))
 
     def test_default_user_profile(self):
         user = User(username=u"foo@bar")
@@ -103,7 +104,7 @@ class TestUserProfile(DataserverLayerTest):
         # We can get to the principal representing the user
         assert_that(IPrincipal(prof), has_property('id', user.username))
 
-        with self.assertRaises(interfaces.EmailAddressInvalid):
+        with self.assertRaises(ConstraintNotSatisfied):
             prof.email = u"foo"
 
         prof.email = u'foo@bar.com'
