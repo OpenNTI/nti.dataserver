@@ -453,6 +453,9 @@ def createApplication( http_port,
 	if asbool(settings.get('gc_debug', False)):
 		gc.set_debug(gc.DEBUG_STATS)
 
+	if asbool(settings.get('gc_disable', False)):
+		gc.disable()
+
 	# GC threshold, 0 will never collect: (700, 10, 10) are defaults in 2.7
 	gen0 = asint(settings.get('gc_gen0_threshold', 700))
 	gen1 = asint(settings.get('gc_gen1_threshold', 10))
@@ -596,7 +599,7 @@ def createApplication( http_port,
 
         # Optionally configure performance information
 	pyramid_config.include( 'nti.appserver.tweens.performance' )
-                
+
 	# First in our stack, before any "application" processing, hook in a place to run
 	# greenlets with nothing below it on the stack
 	pyramid_config.add_tween('nti.appserver.tweens.greenlet_runner_tween.greenlet_runner_tween_factory',
