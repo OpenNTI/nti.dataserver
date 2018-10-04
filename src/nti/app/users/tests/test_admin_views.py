@@ -470,14 +470,12 @@ class TestAdminViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.users.utils.admin.is_site_admin',
-                 'nti.app.users.utils.get_component_hierarchy_names',
                  'nti.app.users.utils.get_user_creation_sitename')
-    def test_user_update_site_admin(self, mock_site_admin, mock_get_site_names, mock_get_user_site_name):
+    def test_user_update_site_admin(self, mock_site_admin, mock_user_creation_site):
         """
         Validate site admins can only update users in their site.
         """
         mock_site_admin.is_callable().returns(True)
-        mock_get_site_names.is_callable().returns(('test_site',))
         test_site_username = u'test_site_user'
         community_name = u'test_site_admin_community'
         test_site_email = u'%s@gmail.com' % test_site_username
@@ -503,16 +501,14 @@ class TestAdminViews(ApplicationLayerTest):
         user_update_href = self.require_link_href_with_rel(global_workspace,
                                                            VIEW_USER_UPSERT)
 
-        fake_user_site = mock_get_user_site_name.is_callable().returns('test_site')
-        fake_user_site.next_call().returns(object())
-        fake_user_site.next_call().returns(None)
-
         user_update_href = '%s?external_type=%s&external_id=%s' % (user_update_href,
                                                                    external_type,
                                                                    external_id)
-
+        mock_user_creation_site.is_callable().returns('alpha.dev')
         self.testapp.post_json(user_update_href)
+        mock_user_creation_site.is_callable().returns('non_existent')
         self.testapp.post_json(user_update_href, status=403)
+        mock_user_creation_site.is_callable().returns('fake')
         self.testapp.post_json(user_update_href, status=403)
 
         # Now add user to community and site admin can administer them
@@ -521,8 +517,7 @@ class TestAdminViews(ApplicationLayerTest):
             community = Community.get_community(community_name)
             user.record_dynamic_membership(community)
 
-        fake_user_site.next_call().returns(object())
-        fake_user_site.next_call().returns(None)
+        mock_user_creation_site.is_callable().returns('alpha.dev')
         self.testapp.post_json(user_update_href)
         self.testapp.post_json(user_update_href)
 
