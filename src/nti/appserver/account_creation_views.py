@@ -81,6 +81,8 @@ from nti.dataserver.users.interfaces import IUIReadOnlyProfileSchema
 
 from nti.dataserver.users.users import User
 
+from nti.schema.fieldproperty import field_name
+
 from nti.schema.interfaces import InvalidValue
 from nti.schema.interfaces import find_most_derived_interface
 
@@ -180,7 +182,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
                      exc_info[2])
     except ConstraintNotSatisfied as e:
         exc_info = sys.exc_info()
-        if e.field.title and e.field.title.lower() == 'email':
+        if field_name(e.field) == 'email':
             exc_dict = {'field': 'email',
                         'message': u'The email address you have entered is not valid.',
                         'code': u'EmailAddressInvalid'}
