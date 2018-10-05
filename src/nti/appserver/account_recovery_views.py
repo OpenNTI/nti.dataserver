@@ -96,10 +96,14 @@ def _preflight_email_based_request(request):
                          },
                          None)
 
-    try:
-        checkEmailAddress(email_assoc_with_account)
-    except ValidationError as e:
-        handle_validation_error(request, e)
+    if not checkEmailAddress(email_assoc_with_account):
+        raise_json_error(request,
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                             'message': _(u"Must provide valid email."),
+                             'code': u'EmailAddressInvalid'
+                         },
+                         None)
     return email_assoc_with_account
 
 
