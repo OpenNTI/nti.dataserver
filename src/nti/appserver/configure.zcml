@@ -383,6 +383,11 @@
 				provides="geventwebsocket.interfaces.IWSWillUpgradeVeto"
 				for="geventwebsocket.interfaces.IWSWillUpgradeEvent" />
 
+    <!-- Profile -->
+    <adapter factory=".account_creation_views._AccountProfileSchemafier"
+             for="nti.coremetadata.interfaces.IUser"
+             provides="nti.dataserver.users.interfaces.IAccountProfileSchemafier"/>
+
 	<!--
 		 FriendsLists have no modification date due to the nested user changing
 		 presence, both individually and as a group.

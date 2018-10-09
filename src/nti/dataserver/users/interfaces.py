@@ -780,6 +780,19 @@ class IUserProfileSchemaProvider(Interface):
         """
 
 
+class IAccountProfileSchemafier(Interface):
+    """
+    Usually registered as an adapter from a IUser interface or sometimes an IEntity.
+
+    Handles generating the profile schema.
+    """
+
+    def make_schema():
+        """
+        :return: the externalized profile schema
+        """
+
+
 @interface.implementer(IUserProfileSchemaProvider)
 class FriendlyNamedSchemaProvider(object):
     """
