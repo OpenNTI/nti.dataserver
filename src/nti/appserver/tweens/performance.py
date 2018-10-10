@@ -49,6 +49,9 @@ def includeme(config):
                          under=['perfmetrics.tween', pyramid.tweens.INGRESS])
 
 
+_RESPONSE_COUNTER_STATS = ['pyramid.response.%i' % k if k >= 100 else None for k in range(0, 600)]
+
+
 class PerformanceHandler(object):
 
     def __init__(self, handler, client):
@@ -68,10 +71,22 @@ class PerformanceHandler(object):
         return self.worker_id + '.connection_pool.free'
 
     def __call__(self, request):
+        response = None
         try:
-            return self.handler(request)
+            response = self.handler(request)
+            return response
         finally:
             if self.client is not None:
+                status_code = response.status_code if response else 500
+                try:
+                    stat = _RESPONSE_COUNTER_STATS[status_code]
+                    if stat is None:
+                        raise TypeError('Invalid status code' % status_code)
+                    self.client.incr(stat)
+                except (TypeError, IndexError):
+                    # Unexpected response code...
+                    logger.exception('Unexpected response status code %s, not sending stats', status_code)
+                    
                 connection_pool = request.environ['nti_connection_pool']
                 free = connection_pool.free_count()
                 used_count = connection_pool.size - free

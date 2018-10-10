@@ -11,6 +11,7 @@ from hamcrest import not_none
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_entries
+from hamcrest import is_not as does_not
 
 import unittest
 
@@ -56,8 +57,7 @@ class TestConnectionPoolStats(unittest.TestCase):
         """
         assert_that(statsd_client(), is_(self.client))
 
-    def test_tween_logs_connection_pool(self):
-
+    def mock_request_response(self):
         class MockPool(object):
             size = 100
             used = 1
@@ -70,20 +70,74 @@ class TestConnectionPoolStats(unittest.TestCase):
 
         class DummyRequest(object):
             environ = {}
+
+        class DummyResponse(object):
+            status_code = 200
         
         request = DummyRequest()
         request.environ['nti_connection_pool'] = pool
 
-        tween = performance_tween_factory(lambda x: True, None)
-        tween(request)
+        return request, DummyResponse()
 
-        # This bit can probably be abstract into a custom assertion
+    def sent_stats(self):
+        """
+        Returns a tuple of counters, and guages that were sent
+        """
         guages = {}
+        counters = {}
         for metric in [x[0] for x in self.sent]:
             mvalue, mtype = metric.split('|')
             metric, value = mvalue.split(':')
             if mtype == 'g':
                 guages[metric] = value
+            elif mtype == 'c':
+                counters[metric] = int(value)
+        return guages, counters
+
+    def test_tween_logs_connection_pool(self):
+        request, response = self.mock_request_response()
+        
+        tween = performance_tween_factory(lambda x: response, None)
+        tween(request)
+
+        guages, _ = self.sent_stats()
 
         assert_that(guages, has_entries('ds1-local.foo.connection_pool.used', '1',
                                         'ds1-local.foo.connection_pool.free', '99'))
+
+    def test_response_counter(self):
+
+        request, response = self.mock_request_response()
+
+        tween = performance_tween_factory(lambda x: response, None)
+        tween(request)
+
+        _, counters = self.sent_stats()
+
+        assert_that(counters, has_entries('ds1-local.pyramid.response.200', 1))
+
+        response.status_code = 500
+        def doom(request):
+            raise ValueError('It Dead')
+
+        tween = performance_tween_factory(doom, None)
+        try:
+            tween(request)
+        except ValueError:
+            pass
+
+        _, counters = self.sent_stats()
+        assert_that(counters, has_entries('ds1-local.pyramid.response.200', 1,
+                                          'ds1-local.pyramid.response.500', 1))
+
+        response.status_code = 40
+        tween = performance_tween_factory(lambda x: response, None)
+        tween(request)
+
+        _, counters = self.sent_stats()
+        #stats haven't changed
+        assert_that(len(counters), is_(2))
+        assert_that(counters, has_entries('ds1-local.pyramid.response.200', 1,
+                                          'ds1-local.pyramid.response.500', 1))
+
+        
