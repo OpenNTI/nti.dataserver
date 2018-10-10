@@ -76,8 +76,9 @@ from nti.dataserver.users.interfaces import IRequireProfileUpdate
 from nti.dataserver.users.interfaces import UsernameCannotBeBlank
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
-from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 from nti.dataserver.users.interfaces import IUIReadOnlyProfileSchema
+from nti.dataserver.users.interfaces import IAccountProfileSchemafier
+from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
 from nti.dataserver.users.users import User
 
@@ -504,8 +505,9 @@ def account_profile_schema_view(request):
     return {
         'Username': request.context.username,
         'AvatarURLChoices': _get_avatar_choices_for_username(user.username, request),
-        'ProfileSchema': _AccountProfileSchemafier(user).make_schema(),
-        'ValidationErrors': errors
+        'ProfileSchema': IAccountProfileSchemafier(user).make_schema(),
+        'ValidationErrors': errors,
+        'ProfileType': profile_iface.__name__
     }
 
 
@@ -584,6 +586,8 @@ class _AccountProfileSchemafier(JsonSchemafier):
 
         return ext_schema
 
+AccountProfileSchemafier = _AccountProfileSchemafier
+
 
 class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
 
@@ -597,7 +601,6 @@ class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
         """
 
         result = super(_AccountCreationProfileSchemafier, self).make_schema()
-
         # In the past, the 'readonly' status of the Username field was always set to False;
         # now that it's set to true to reflect reality, i'm not sure how the login app
         # will react, so at account creation time mark it mutable again
