@@ -11,6 +11,7 @@ from hamcrest import not_none
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_entries
+from hamcrest import is_not as does_not
 
 import unittest
 
@@ -128,5 +129,12 @@ class TestConnectionPoolStats(unittest.TestCase):
         _, counters = self.sent_stats()
         assert_that(counters, has_entries('ds1-local.pyramid.response.200', 1,
                                           'ds1-local.pyramid.response.500', 1))
+
+        response.status_code = 40
+        tween = performance_tween_factory(lambda x: response, None)
+        tween(request)
+
+        _, counters = self.sent_stats()
+        assert_that(counters, does_not(has_entries('ds1-local.None', 1)))
 
         

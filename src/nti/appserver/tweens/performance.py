@@ -49,7 +49,7 @@ def includeme(config):
                          under=['perfmetrics.tween', pyramid.tweens.INGRESS])
 
 
-_RESPONSE_COUNTER_STATS = {k: 'pyramid.response.%i' % k for k in range(100, 600)}
+_RESPONSE_COUNTER_STATS = ['pyramid.response.%i' % k if k >= 100 else None for k in range(0, 600)]
 
 
 class PerformanceHandler(object):
@@ -79,9 +79,13 @@ class PerformanceHandler(object):
             if self.client is not None:
                 status_code = response.status_code if response else 500
                 try:
-                    self.client.incr(_RESPONSE_COUNTER_STATS[status_code])
-                except KeyError:
+                    stat = _RESPONSE_COUNTER_STATS[status_code]
+                    if stat is None:
+                        raise TypeError('Invalid status code' % status_code)
+                    self.client.incr(stat)
+                except (TypeError, IndexError):
                     # Unexpected response code...
+                    logger.exception('Unexpected response status code %s, not sending stats' % status_code)
                     pass
                     
                 connection_pool = request.environ['nti_connection_pool']
