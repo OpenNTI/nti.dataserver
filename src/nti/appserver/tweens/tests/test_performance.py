@@ -135,6 +135,9 @@ class TestConnectionPoolStats(unittest.TestCase):
         tween(request)
 
         _, counters = self.sent_stats()
-        assert_that(counters, does_not(has_entries('ds1-local.None', 1)))
+        #stats haven't changed
+        assert_that(len(counters), is_(2))
+        assert_that(counters, has_entries('ds1-local.pyramid.response.200', 1,
+                                          'ds1-local.pyramid.response.500', 1))
 
         
