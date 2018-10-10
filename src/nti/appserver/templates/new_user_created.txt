@@ -6,9 +6,7 @@ Username: ${user.username}
 Log in at: ${request.application_url}
 
 NextThought offers interactive content and rich features to make
-learning both social and personal. Explore the NextThought Help Center
-in your Library to get started and learn more about the exciting
-interactive features NextThought has to offer.
+learning both social and personal.
 
 Please verify your email address. Doing so will
 help us maintain the security of your account.
