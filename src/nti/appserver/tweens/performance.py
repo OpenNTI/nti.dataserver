@@ -85,8 +85,7 @@ class PerformanceHandler(object):
                     self.client.incr(stat)
                 except (TypeError, IndexError):
                     # Unexpected response code...
-                    logger.exception('Unexpected response status code %s, not sending stats' % status_code)
-                    pass
+                    logger.exception('Unexpected response status code %s, not sending stats', status_code)
                     
                 connection_pool = request.environ['nti_connection_pool']
                 free = connection_pool.free_count()
