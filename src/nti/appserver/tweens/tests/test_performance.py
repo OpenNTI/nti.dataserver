@@ -114,3 +114,19 @@ class TestConnectionPoolStats(unittest.TestCase):
         _, counters = self.sent_stats()
 
         assert_that(counters, has_entries('ds1-local.pyramid.response.200', 1))
+
+        response.status_code = 500
+        def doom(request):
+            raise ValueError('It Dead')
+
+        tween = performance_tween_factory(doom, None)
+        try:
+            tween(request)
+        except ValueError:
+            pass
+
+        _, counters = self.sent_stats()
+        assert_that(counters, has_entries('ds1-local.pyramid.response.200', 1,
+                                          'ds1-local.pyramid.response.500', 1))
+
+        

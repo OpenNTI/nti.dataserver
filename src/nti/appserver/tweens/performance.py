@@ -68,13 +68,15 @@ class PerformanceHandler(object):
         return self.worker_id + '.connection_pool.free'
 
     def __call__(self, request):
+        response = None
         try:
             response = self.handler(request)
-            if self.client is not None:
-                self.client.incr('pyramid.response.%i' % response.status_code)
             return response
         finally:
             if self.client is not None:
+                status_code = response.status_code if response else 500
+                self.client.incr('pyramid.response.%i' % status_code)
+                
                 connection_pool = request.environ['nti_connection_pool']
                 free = connection_pool.free_count()
                 used_count = connection_pool.size - free
