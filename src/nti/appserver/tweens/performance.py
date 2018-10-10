@@ -49,6 +49,9 @@ def includeme(config):
                          under=['perfmetrics.tween', pyramid.tweens.INGRESS])
 
 
+_RESPONSE_COUNTER_STATS = {k: 'pyramid.response.%i' % k for k in range(100, 600)}
+
+
 class PerformanceHandler(object):
 
     def __init__(self, handler, client):
@@ -75,8 +78,12 @@ class PerformanceHandler(object):
         finally:
             if self.client is not None:
                 status_code = response.status_code if response else 500
-                self.client.incr('pyramid.response.%i' % status_code)
-                
+                try:
+                    self.client.incr(_RESPONSE_COUNTER_STATS[status_code])
+                except KeyError:
+                    # Unexpected response code...
+                    pass
+                    
                 connection_pool = request.environ['nti_connection_pool']
                 free = connection_pool.free_count()
                 used_count = connection_pool.size - free
