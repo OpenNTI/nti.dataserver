@@ -69,7 +69,10 @@ class PerformanceHandler(object):
 
     def __call__(self, request):
         try:
-            return self.handler(request)
+            response = self.handler(request)
+            if self.client is not None:
+                self.client.incr('pyramid.response.%i' % response.status_code)
+            return response
         finally:
             if self.client is not None:
                 connection_pool = request.environ['nti_connection_pool']
