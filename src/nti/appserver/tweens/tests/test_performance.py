@@ -99,7 +99,6 @@ class TestConnectionPoolStats(unittest.TestCase):
         tween = performance_tween_factory(lambda x: response, None)
         tween(request)
 
-        # This bit can probably be abstract into a custom assertion
         guages, _ = self.sent_stats()
 
         assert_that(guages, has_entries('ds1-local.foo.connection_pool.used', '1',
