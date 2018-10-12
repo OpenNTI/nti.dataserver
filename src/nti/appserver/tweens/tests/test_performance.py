@@ -20,33 +20,25 @@ import os
 from perfmetrics import statsd_client
 from perfmetrics import statsd_client_stack
 
-from perfmetrics.statsd import StatsdClient
-
 from nti.appserver.tweens.performance import performance_tween_factory
+
+from nti.dataserver.tests.mock_statsd import MockStatsDClient
 
 class TestConnectionPoolStats(unittest.TestCase):
 
     PREFIX = 'ds1-local'
 
     def _make(self, patch_socket=True, error=None, prefix=''):
-        obj = StatsdClient(prefix=prefix)
-
-        if patch_socket:
-            self.sent = sent = []
-
-            class DummySocket(object):
-                def sendto(self, data, addr):
-                    if error is not None:
-                        raise error
-                    sent.append((data, addr))
-
-            obj.udp_sock = DummySocket()
-
+        obj = MockStatsDClient(prefix=prefix)
         return obj
 
     def setUp(self):
         self.client = self._make(patch_socket=True, prefix=self.PREFIX)
         statsd_client_stack.push(self.client)
+
+    @property
+    def sent(self):
+        return self.client.packets
 
     def tearDown(self):
         statsd_client_stack.pop()
@@ -85,7 +77,7 @@ class TestConnectionPoolStats(unittest.TestCase):
         """
         guages = {}
         counters = {}
-        for metric in [x[0] for x in self.sent]:
+        for metric in self.sent:
             mvalue, mtype = metric.split('|')
             metric, value = mvalue.split(':')
             if mtype == 'g':
