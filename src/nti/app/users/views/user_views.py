@@ -49,6 +49,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.entity import Entity
 
+from nti.dataserver.users.interfaces import IAccountProfileSchemafier
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
@@ -289,6 +290,7 @@ class UserUpdatePreflightView(UserUpdateView):
             errors = getValidationErrors(profile_iface, profile)
             errors = [validation_error_to_dict(self.request, x[1]) for x in errors or ()]
             result_dict['ValidationErrors'] = errors
+            result_dict['ProfileSchema'] =  IAccountProfileSchemafier(user).make_schema(),
             result.json_body = result_dict
         self.request.environ['nti.commit_veto'] = 'abort'
         return result
