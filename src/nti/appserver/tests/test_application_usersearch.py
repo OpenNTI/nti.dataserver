@@ -31,6 +31,7 @@ from zope.lifecycleevent import modified
 
 from webtest import TestApp
 
+from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_PREFLIGHT
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_SCHEMA as REL_ACCOUNT_PROFILE
 
 from nti.dataserver.interfaces import ICoppaUser
@@ -505,6 +506,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         found = res.json_body['Items'][0]
         self.require_link_href_with_rel(found, 'childrens-privacy')
 
+        self.require_link_href_with_rel(found, REL_ACCOUNT_PROFILE_PREFLIGHT)
         prof = self.require_link_href_with_rel(found, REL_ACCOUNT_PROFILE)
         # At one time, we were double-nesting this link, hence the path check
         assert_that(prof,

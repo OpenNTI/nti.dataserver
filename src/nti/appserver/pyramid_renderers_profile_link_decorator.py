@@ -18,6 +18,7 @@ from pyramid.threadlocal import get_current_request
 from nti.appserver._util import link_belongs_to_user
 
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_SCHEMA
+from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_PREFLIGHT
 
 from nti.appserver.user_activity_views import REL_USER_ACTIVITY
 
@@ -38,8 +39,6 @@ logger = __import__('logging').getLogger(__name__)
 # attribute lookup)
 LINKS = StandardExternalFields.LINKS
 
-_PROFILE_VIEW = '@@' + REL_ACCOUNT_PROFILE_SCHEMA
-
 
 @component.adapter(IUser)
 @interface.implementer(IExternalMappingDecorator)
@@ -49,12 +48,14 @@ class ProfileLinkDecorator(Singleton):
         request = get_current_request()
         the_links = mapping.setdefault(LINKS, [])
         if request is not None and context.username == request.authenticated_userid:
-            # You get your own profile schema
-            link = Link(context,
-                        rel=REL_ACCOUNT_PROFILE_SCHEMA,
-                        elements=(_PROFILE_VIEW,))
-            link_belongs_to_user(link, context)
-            the_links.append(link)
+            for rel in (REL_ACCOUNT_PROFILE_SCHEMA,
+                        REL_ACCOUNT_PROFILE_PREFLIGHT):
+                # You get your own profile schema
+                link = Link(context,
+                            rel=rel,
+                            elements=('@@%s' % rel,))
+                link_belongs_to_user(link, context)
+                the_links.append(link)
 
         # TODO: This is action at a distance. Refactor these to be cleaner.
         # Primary reason this are here: speed.
