@@ -40,7 +40,6 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import Singleton
-from nti.appserver.workspaces.interfaces import IGlobalWorkspaceLinkProvider
 
 logger = __import__('logging').getLogger(__name__)
 
