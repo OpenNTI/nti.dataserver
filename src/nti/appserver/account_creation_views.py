@@ -70,6 +70,7 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 
+from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IAvatarChoices
 from nti.dataserver.users.interfaces import BlankHumanNameError
 from nti.dataserver.users.interfaces import IRequireProfileUpdate
@@ -568,6 +569,9 @@ class _AccountProfileSchemafier(JsonSchemafier):
     def make_schema(self):
         ext_schema = super(_AccountProfileSchemafier, self).make_schema()
 
+        if not self.schema.isOrExtends(IUserProfile):
+            return ext_schema
+
         # Flip the internal/external name of the Username field. Probably some other
         # stuff gets this wrong?
         ext_schema['Username'] = ext_schema['username']
@@ -604,6 +608,8 @@ class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
         # In the past, the 'readonly' status of the Username field was always set to False;
         # now that it's set to true to reflect reality, i'm not sure how the login app
         # will react, so at account creation time mark it mutable again
+        if not self.schema.isOrExtends(IUserProfile):
+            return result
         result['Username']['readonly'] = False
 
         if ICoppaUser.providedBy(self.user):
