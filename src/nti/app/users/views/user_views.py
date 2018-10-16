@@ -274,6 +274,10 @@ class UserUpdatePreflightView(UserUpdateView):
     """
 
     def __call__(self):
+        user = self.context
+        profile_iface = IUserProfileSchemaProvider(user).getSchema()
+        profile = profile_iface(user)
+        result_dict = LocatedExternalDict()
         try:
             result = super(UserUpdatePreflightView, self).__call__()
         except hexc.HTTPUnprocessableEntity as response:
@@ -282,18 +286,15 @@ class UserUpdatePreflightView(UserUpdateView):
                 # This is most likely a code issue and should be raised
                 raise response
             result = response
-            user = self.context
-            result_dict = LocatedExternalDict()
             # pylint: disable=too-many-function-args
-            profile_iface = IUserProfileSchemaProvider(user).getSchema()
-            profile = profile_iface(user)
             errors = getValidationErrors(profile_iface, profile)
             errors = [validation_error_to_dict(self.request, x[1]) for x in errors or ()]
             result_dict['ValidationErrors'] = errors
-            result_dict['ProfileSchema'] = IAccountProfileSchemafier(user).make_schema()
             result.json_body = result_dict
+        result_dict['ProfileType'] = profile_iface.__name__
+        result_dict['ProfileSchema'] = IAccountProfileSchemafier(user).make_schema()
         self.request.environ['nti.commit_veto'] = 'abort'
-        return result
+        return result_dict
 
 
 @view_config(context=IUsersFolder,
