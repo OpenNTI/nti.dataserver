@@ -276,6 +276,9 @@ class UserUpdatePreflightView(UserUpdateView):
     def __call__(self):
         user = self.context
         result_dict = LocatedExternalDict()
+        profile_iface = IUserProfileSchemaProvider(user).getSchema()
+        profile = profile_iface(user)
+        result_dict['OriginalProfileType'] = profile_iface.__name__
         try:
             result = super(UserUpdatePreflightView, self).__call__()
         except hexc.HTTPUnprocessableEntity as response:
