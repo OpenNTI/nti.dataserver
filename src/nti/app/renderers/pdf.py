@@ -51,5 +51,13 @@ class _PDFRMLRenderer(AbstractCachingRenderer):
         # TODO: Probably need to set headers for forcing inline view vs download?
         pdf_stream = rml2pdf.parseString(rml)
         system['request'].response.content_type = 'application/pdf'
+
+        # Here we don't want to override those that have already set the content_disposition,
+        # in which they may support optional download.
+        if system['request'].response.content_disposition is None:
+            # inline view
+            if getattr(system['view'], 'filename', None):
+                system['request'].response.content_disposition = 'filename="{0}"'.format(system['view'].filename)
+
         return pdf_stream.read()
     _render_to_browser = _render_to_non_browser = _render_to_pdf
