@@ -294,8 +294,18 @@ class UserUpdatePreflightView(UserUpdateView):
             result_dict['ProfileSchema'] = IAccountProfileSchemafier(user).make_schema()
             errors = getValidationErrors(profile_iface, profile)
             errors = [validation_error_to_dict(self.request, x[1]) for x in errors or ()]
-            result_dict['ValidationErrors'] = errors
-            result.json_body = result_dict
+
+            # Now we have all validation errors for set fields, but we may have
+            # validation errors before we set the field; we need to return
+            # those as well.
+            if response.json_body:
+                error_field = response.json_body.get('field')
+                validation_fields = [x.get('field') for x in errors if x.get('field')]
+                if error_field not in validation_fields:
+                    # Add our actual validation error
+                    errors.append(response.json_body)
+                result_dict['ValidationErrors'] = errors
+                result.json_body = result_dict
         else:
             result = result_dict
             profile_iface = IUserProfileSchemaProvider(user).getSchema()
