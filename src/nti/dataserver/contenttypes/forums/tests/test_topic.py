@@ -189,7 +189,7 @@ class TestTopic(ForumLayerTest):
 						is_not(has_key('flattenedSharingTargets')))))
 
 		assert_that(calling(update_from_external_object).with_args(topic, {'title': 'No\nnewline'}),
-					raises(ConstraintNotSatisfied, "(u'No\\\\nnewline', u'title')"))
+					raises(ConstraintNotSatisfied, "(u'No\\\\nnewline', 'title')"))
 
 		# With a comment
 		topic['k'] = Post()
@@ -230,20 +230,20 @@ class TestTopic(ForumLayerTest):
 									'headline', has_entry('Class', 'PersonalBlogEntryPost'),
 									'PostCount', 1,
 									'NewestDescendant', has_entry('Last Modified', 42))))
-		
+
 	def test_most_recent_reply(self):
-		
-		# If no comments on a topic, we should get nothing back. 
+
+		# If no comments on a topic, we should get nothing back.
 		topic = Topic()
 		assert_that(topic.mostRecentReply, is_([]))
-		
+
 		# If we have a top-level comment, we should get it back.
 		top_level_post = Post()
 		top_level_post.inReplyTo = None
 		topic['k'] = top_level_post
 		assert_that(topic.mostRecentReply, is_(top_level_post))
 
-		# A newer top-level comment should come back if present		
+		# A newer top-level comment should come back if present
 		newer_post = Post()
 		newer_post.inReplyTo = None
 		topic['l'] = newer_post
@@ -319,7 +319,7 @@ class TestDFLTopicNTIIDResolver(DataserverLayerTest):
 			bleach = DynamicFriendsList(username='bleach')
 			bleach.creator = ichigo  # Creator must be set
 			ichigo.addContainedObject(bleach)
-			
+
 			board = IDFLBoard(bleach)
 
 			forum = DFLForum()
@@ -333,7 +333,7 @@ class TestDFLTopicNTIIDResolver(DataserverLayerTest):
 			forum[topic_name] = topic
 			intids = component.getUtility(IIntIds)
 			intid = intids.getId(bleach)
-			
+
 			ntiid = 'tag:nextthought.com,2011-10:%s-Topic:GeneralDFL-%s.%s' % (intid, forum_name, topic_name)
 			assert_that(topic.NTIID, is_(ntiid))
 			assert_that(find_object_with_ntiid(topic.NTIID), is_(topic))
