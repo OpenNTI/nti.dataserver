@@ -405,12 +405,11 @@ class IAvatarChoices(Interface):
 class IFriendlyNamed(Interface):
 
     alias = TextLine(title=u'Display alias',
-                     description=u"Enter preferred display name alias, e.g., johnnyboy."
-                     u"Your site may impose limitations on this value.",
+                     description=u"Your display name alias",
                      required=False)
 
-    realname = TextLine(title=u'Full Name aka realname',
-                        description=u"Enter full name, e.g. John Smith.",
+    realname = TextLine(title=u'Your name',
+                        description=u"Your full name (ex. John Smith)",
                         required=False,
                         constraint=checkRealname)
 
@@ -430,13 +429,12 @@ class IImmutableFriendlyNamed(Interface):
     """
 
     alias = TextLine(title=u'Display alias',
-                     description=u"Enter preferred display name alias, e.g., johnnyboy."
-                     u"Your site may impose limitations on this value.",
+                     description=u"Your display name alias",
                      required=False,
                      readonly=True)
 
-    realname = TextLine(title=u'Full Name aka realname',
-                        description=u"Enter full name, e.g. John Smith.",
+    realname = TextLine(title=u'Your Name',
+                        description=u"Your full name (ex. John Smith)",
                         required=False,
                         readonly=True,
                         constraint=checkRealname)
@@ -570,23 +568,23 @@ class ISocialMediaProfile(Interface):
     """
 
     facebook = ValidURI(title=u'facebook',
-                        description=u'The Facebook URL',
+                        description=u'Facebook URL',
                         required=False)
 
     twitter = ValidURI(title=u'twitter',
-                       description=u'The twitter URL',
+                       description=u'Twitter URL',
                        required=False)
 
-    googlePlus = ValidURI(title=u'GooglePlus',
-                          description=u'The GooglePlus URL',
+    googlePlus = ValidURI(title=u'googleplus',
+                          description=u'GooglePlus URL',
                           required=False)
 
     linkedIn = ValidURI(title=u'linkedIn',
-                        description=u'The LinkedIn URL',
+                        description=u'LinkedIn URL',
                         required=False)
 
     instagram = ValidURI(title=u'instagram',
-                         description=u'The Instagram URL',
+                         description=u'Instagram URL',
                          required=False)
 
 
@@ -668,7 +666,7 @@ class IProfessionalProfile(Interface):
     """
 
     positions = ListOrTuple(Object(IProfessionalPosition, title=u"The profesional position entry"),
-                            title=u"profesional position entries",
+                            title=u"professional position entries",
                             required=False,
                             min_length=0)
 
@@ -691,7 +689,7 @@ class IAboutProfile(Interface):
                                required=False,
                                constraint=checkCannotBeBlank),
                      ExtendedCompoundModeledContentBody()),
-                    description=u"The body is either a string, or a Note body",
+                    description=u"A simple overview",
                     required=False)
     about.__name__ = 'about'
 
@@ -719,8 +717,7 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                                       default=False)
 
     home_page = HTTPURL(title=u'Home page',
-                        description=u"The URL for your external home page, "
-                        u"if you have one.",
+                        description=u"Your home page",
                         required=False)
 
     description = ValidText(title=u'Biography',
@@ -732,8 +729,7 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                             constraint=checkCannotBeBlank)
 
     location = ValidTextLine(title=u'Location',
-                             description=u"Your location - either city and "
-                             u"country - or in a company setting, where "
+                             description=u"Your location (city, country) or in a company setting, where "
                              u"your office is located.",
                              required=False,
                              constraint=checkCannotBeBlank)
@@ -745,7 +741,7 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                                 constraint=checkCannotBeBlank)
 
     role = ValidTextLine(title=u'Role',
-                         description=u"Your role within your affiliation",
+                         description=u"Your role",
                          max_length=140,
                          required=False,
                          constraint=checkCannotBeBlank)
