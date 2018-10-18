@@ -404,12 +404,12 @@ class IAvatarChoices(Interface):
 
 class IFriendlyNamed(Interface):
 
-    alias = TextLine(title=u'Display alias',
-                     description=u"Your display name alias",
+    alias = TextLine(title=u'Display name',
+                     description=u"Your display name",
                      required=False)
 
     realname = TextLine(title=u'Your name',
-                        description=u"Your full name (ex. John Smith)",
+                        description=u"Your full name",
                         required=False,
                         constraint=checkRealname)
 
@@ -428,13 +428,13 @@ class IImmutableFriendlyNamed(Interface):
     of the friendly name values.
     """
 
-    alias = TextLine(title=u'Display alias',
-                     description=u"Your display name alias",
+    alias = TextLine(title=u'Display name',
+                     description=u"Your display name",
                      required=False,
                      readonly=True)
 
     realname = TextLine(title=u'Your Name',
-                        description=u"Your full name (ex. John Smith)",
+                        description=u"Your full name",
                         required=False,
                         readonly=True,
                         constraint=checkRealname)
@@ -567,23 +567,23 @@ class ISocialMediaProfile(Interface):
     A social media profile
     """
 
-    facebook = ValidURI(title=u'facebook',
+    facebook = ValidURI(title=u'Facebook',
                         description=u'Facebook URL',
                         required=False)
 
-    twitter = ValidURI(title=u'twitter',
+    twitter = ValidURI(title=u'Twitter',
                        description=u'Twitter URL',
                        required=False)
 
-    googlePlus = ValidURI(title=u'googleplus',
+    googlePlus = ValidURI(title=u'GooglePlus',
                           description=u'GooglePlus URL',
                           required=False)
 
-    linkedIn = ValidURI(title=u'linkedIn',
+    linkedIn = ValidURI(title=u'LinkedIn',
                         description=u'LinkedIn URL',
                         required=False)
 
-    instagram = ValidURI(title=u'instagram',
+    instagram = ValidURI(title=u'Instagram',
                          description=u'Instagram URL',
                          required=False)
 
@@ -729,8 +729,8 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                             constraint=checkCannotBeBlank)
 
     location = ValidTextLine(title=u'Location',
-                             description=u"Your location (city, country) or in a company setting, where "
-                             u"your office is located.",
+                             description=u"Your location (or in a company setting, where "
+                             u"your office is located)",
                              required=False,
                              constraint=checkCannotBeBlank)
 
