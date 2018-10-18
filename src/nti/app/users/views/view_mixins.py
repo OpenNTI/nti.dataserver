@@ -72,6 +72,7 @@ from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.utils import get_entity_alias_from_index
 from nti.dataserver.users.utils import get_entity_realname_from_index
 from nti.dataserver.users.utils import get_entity_username_from_index
+from nti.dataserver.users.utils import get_entity_mimetype_from_index
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -532,7 +533,7 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
 
     def check_access(self):
         pass
-        
+
     @Lazy
     def is_admin(self):
         return is_admin(self.remoteUser)
@@ -609,9 +610,12 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
 
     def realname(self, doc_id):
         return get_entity_realname_from_index(doc_id, self.entity_catalog)
-    
+
     def alias(self, doc_id):
         return get_entity_alias_from_index(doc_id, self.entity_catalog)
+
+    def mime_type(self, doc_id):
+        return get_entity_mimetype_from_index(doc_id, self.entity_catalog)
 
     def search_include(self, doc_id):
         result = True

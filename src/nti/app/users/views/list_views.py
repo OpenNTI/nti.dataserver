@@ -36,7 +36,6 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
-from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUsersFolder
 
 from nti.dataserver.metadata.index import IX_CREATEDTIME
@@ -100,14 +99,12 @@ class SiteUsersView(AbstractEntityViewMixin):
         }
 
     def search_include(self, doc_id):
-        username = self.username(doc_id)
-        result = not self.filterAdmins or not is_site_admin(username)
-        if result and self.searchTerm:
-            result = super(SiteUsersView, self).search_include(doc_id)
-        return result
-
-    def reify_predicate(self, obj):
-        return IUser.providedBy(obj)
+        # Users only and filter site admins if requested
+        result = self.mime_type(doc_id) == 'application/vnd.nextthought.user'
+        if result and self.filterAdmins:
+            username = self.username(doc_id)
+            result = not is_site_admin(username)
+        return result and super(SiteUsersView, self).search_include(doc_id)
 
     def __call__(self):
         self.check_access()
