@@ -19,7 +19,7 @@ from zope.location.interfaces import IContained
 
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 
-from persistent.persistence import Persistent
+from persistent import Persistent
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserBlacklistedStorage

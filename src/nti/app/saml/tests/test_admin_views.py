@@ -16,7 +16,7 @@ from hamcrest import contains_string
 
 from zope import interface
 
-from persistent.persistence import Persistent
+from persistent import Persistent
 
 from nti.app.saml.client import _SAMLNameId
 
@@ -247,7 +247,7 @@ class TestNameIdViews(ApplicationLayerTest):
 
         response = response.json_body
 
-        assert_that(response, 
+        assert_that(response,
                     has_entry('Items', has_entry(starts_with('sso.nt.com'),
                                                  has_entry('nameid', 'A23BE5'))))
 
@@ -263,16 +263,16 @@ class TestNameIdViews(ApplicationLayerTest):
             bindings.store_binding(_SAMLNameId(MockNameId('A23BE5')))
 
         self.testapp.get('/dataserver2/saml/@@NameIds',
-                         params={'username': username, 
-                                 'name_qualifier': 'sso.nt.com', 
+                         params={'username': username,
+                                 'name_qualifier': 'sso.nt.com',
                                  'sp_name_qualifier': 'junk'},
                          extra_environ=self._make_extra_environ(
                              username=admin_user),
                          status=404)
 
         response = self.testapp.get('/dataserver2/saml/@@NameIds',
-                                    params={'username': username, 
-                                            'name_qualifier': 'sso.nt.com', 
+                                    params={'username': username,
+                                            'name_qualifier': 'sso.nt.com',
                                             'sp_name_qualifier': 'sp.nt.com'},
                                     extra_environ=self._make_extra_environ(
                                         username=admin_user),
