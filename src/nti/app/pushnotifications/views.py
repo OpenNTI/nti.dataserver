@@ -13,20 +13,13 @@ logger = __import__('logging').getLogger(__name__)
 
 from requests.structures import CaseInsensitiveDict
 
-from itsdangerous import BadSignature
+from itsdangerous.exc import BadSignature
 
 from pyramid.view import view_config
 
 from pyramid import httpexceptions as hexc
 
 from zope import component
-
-from zope.preference.interfaces import IPreferenceGroup
-
-from zope.security.interfaces import IParticipation
-from zope.security.management import endInteraction
-from zope.security.management import newInteraction
-from zope.security.management import restoreInteraction
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -69,7 +62,7 @@ class UnsubscribeWithTokenFromEmailSummaryPush( object ):
 
 	def __init__(self, request):
 		self.request = request
-		
+
 	def processUnsubscribe(self, username, signature, values):
 		user = User.get_user(username)
 		if user is None:
@@ -82,38 +75,38 @@ class UnsubscribeWithTokenFromEmailSummaryPush( object ):
 		except ValueError as e:
 			msg = _(str(e))
 			raise hexc.HTTPUnprocessableEntity(msg)
-		
+
 		return _do_unsubscribe( self.request, user=user )
 
 	def __call__(self):
 		request = self.request
 		values = CaseInsensitiveDict(**request.params)
-		
+
 		signature = values.get('signature')
 		if not signature:
 			raise hexc.HTTPUnprocessableEntity(_("No signature specified."))
-		
+
 		username = values.get('username')
 		if not username:
 			raise hexc.HTTPUnprocessableEntity(_("No username specified."))
-		
+
 		policy = component.getUtility(ISitePolicyUserEventListener)
-		
+
 		template_args = {}
 		template_args['support_email'] = getattr( policy, 'SUPPORT_EMAIL', 'support@nextthought.com' )
 		template_args['error_message'] = None
 		template_args['site_name'] = guess_site_display_name(self.request)
-		
+
 		try:
 			self.processUnsubscribe(username, signature, values)
 		except hexc.HTTPError as e:
 			logger.info('Unable to unsubscribe "%s" from email notifications. %s', username, getattr(e, 'detail', ''))
-			
+
 			#we don't want to expose the ability to fish for active usernames so just return a generic error message here
 			template_args['error_message'] = _("Unable to unsubscribe from email notifications.")
-		
+
 		template_args['error_message'] = None
-		
+
 		return template_args
 
 @view_config(route_name='objects.generic.traversal',

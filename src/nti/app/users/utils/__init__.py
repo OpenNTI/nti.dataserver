@@ -16,7 +16,7 @@ from datetime import datetime
 
 import isodate
 
-from itsdangerous import JSONWebSignatureSerializer as SignatureSerializer
+from itsdangerous.jws import JSONWebSignatureSerializer as SignatureSerializer
 
 from six.moves import urllib_parse
 

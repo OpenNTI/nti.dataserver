@@ -8,7 +8,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from itsdangerous import JSONWebSignatureSerializer
+from itsdangerous.jws import JSONWebSignatureSerializer
 
 import saml2
 
@@ -260,7 +260,7 @@ class BasicSAMLClient(object):
     def process_saml_acs_request(self, request):
         for param in (SAML_RESPONSE, RELAY_STATE):
             if param not in request.params:
-                logger.warn('Unexpected saml response. No param named %s', 
+                logger.warn('Unexpected saml response. No param named %s',
                             param)
                 raise hexc.HTTPBadRequest()
 
