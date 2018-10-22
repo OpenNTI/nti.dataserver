@@ -23,7 +23,7 @@ logger = __import__('logging').getLogger(__name__)
 
 
 @interface.provider(IVocabularyFactory)
-class CapabilityNameTokenVocabulary(object, UtilityNames):
+class CapabilityNameTokenVocabulary(UtilityNames):
 
     # This one is 'live"
     def __init__(self, *unused_args, **unused_kwargs):
