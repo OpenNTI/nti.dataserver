@@ -13,7 +13,9 @@ logger = __import__('logging').getLogger(__name__)
 
 import rfc822
 
-import itsdangerous
+from itsdangerous.exc import BadSignature
+
+from itsdangerous.signer import Signer
 
 from zope import component
 from zope import interface
@@ -77,9 +79,9 @@ def _make_signer(default_key='$Id$',
     Note that the default separator, '.' may appear in principal ids.
     """
     secret_key = _get_signer_secret(default_secret=default_key)
-    signer = itsdangerous.Signer(secret_key,
-                                 salt=salt,
-                                 digest_method=digest_method)
+    signer = Signer(secret_key,
+                    salt=salt,
+                    digest_method=digest_method)
     return signer
 
 
@@ -199,7 +201,7 @@ def principal_ids_from_verp(fromaddr,
     signed = decoded_pids + signer.sep + sig
     try:
         pids = signer.unsign(signed)
-    except itsdangerous.BadSignature:
+    except BadSignature:
         return ()
     else:
         return pids.split(',')
