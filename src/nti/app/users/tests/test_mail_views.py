@@ -52,9 +52,10 @@ class TestMailViewFunctions(mock_dataserver.DataserverLayerTest):
         # However, we have only observed two permutations, so we test both of those
         # in addition to what we got (any instance down the road needs to be able
         # to decode the signature)
+        # default - 'eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6ImljaGlnbyIsImVtYWlsIjoiaWNoaWdvQGJsZWFjaC5vcmcifQ.xvJVEzsqnQwcpPncSxjd_6rah0W2-fjp7_ShTVqM6h_-XVjgusYgEs5i3g0osoUkqAp84lzZZJZDPObNnFGIdA'
         for sig in (signature,
-                    'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6ImljaGlnbyIsImVtYWlsIjoiaWNoaWdvQGJsZWFjaC5vcmcifQ.2mDfJ4TTqRAsSGcjhNiea13Q0GHPqC6yB_AZV8Jt__c',
-                    'eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImljaGlnb0BibGVhY2gub3JnIiwidXNlcm5hbWUiOiJpY2hpZ28ifQ.lI0acsx_ETehevob1DZGRriTtuyDc4XnRbq6cF3r7zo'):
+                    'eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6ImljaGlnbyIsImVtYWlsIjoiaWNoaWdvQGJsZWFjaC5vcmcifQ.xvJVEzsqnQwcpPncSxjd_6rah0W2-fjp7_ShTVqM6h_-XVjgusYgEs5i3g0osoUkqAp84lzZZJZDPObNnFGIdA',
+                    'eyJhbGciOiJIUzUxMiJ9.eyJlbWFpbCI6ImljaGlnb0BibGVhY2gub3JnIiwidXNlcm5hbWUiOiJpY2hpZ28ifQ.l8Us0zxJU-9keq9vIR2TIcICKBHjwTLoT_KZv6eK9jzBkvHx9DRpuDqlqiC-0cpClxfN9AS6OkmKVZ6At46pyg'):
             data = get_verification_signature_data(user, sig,
                                                    secret_key='zangetsu')
             assert_that(data, has_entry('username', is_('ichigo')))
