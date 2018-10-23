@@ -210,7 +210,7 @@ class DefaultSiteAdminManagerUtility(object):
         return []
 
     def _get_site(self, site, attr):
-        site = site if site else getSite()
+        site = site if site is not None else getSite()
         site_hierarchy_utility = component.getUtility(ISiteHierarchy)
         site_hierarchy = site_hierarchy_utility.tree
         site_node = site_hierarchy.get_node_from_object(site)
