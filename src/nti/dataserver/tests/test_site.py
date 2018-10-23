@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# pylint: disable=protected-access,too-many-public-methods,arguments-differ,too-many-function-args 
+# pylint: disable=protected-access,too-many-public-methods,arguments-differ,too-many-function-args
 
 from hamcrest import is_
 from hamcrest import is_not
@@ -106,27 +106,27 @@ ZCML_STRING = """
             component="nti.appserver.policies.sites.BASECOPPA"
             provides="zope.component.interfaces.IComponents"
             name="genericcoppabase" />
-            
+
         <utility
             component="nti.appserver.policies.sites.BASEADULT"
             provides="zope.component.interfaces.IComponents"
             name="genericadultbase" />
-            
+
         <utility
             component="nti.dataserver.tests.test_site.EVAL"
             provides="zope.component.interfaces.IComponents"
             name="eval.nextthoughttest.com" />
-            
+
         <utility
             component="nti.dataserver.tests.test_site.EVALALPHA"
             provides="zope.component.interfaces.IComponents"
             name="eval-alpha.nextthoughttest.com" />
-            
+
         <utility
             component="nti.dataserver.tests.test_site.DEMO"
             provides="zope.component.interfaces.IComponents"
             name="demo.nextthoughttest.com" />
-            
+
         <utility
             component="nti.dataserver.tests.test_site.DEMOALPHA"
             provides="zope.component.interfaces.IComponents"
@@ -136,7 +136,7 @@ ZCML_STRING = """
             <utility factory="nti.dataserver.site.DefaultSiteAdminManagerUtility"
                      provides="nti.dataserver.interfaces.ISiteAdminManagerUtility" />
          </registerIn>
-         
+
         <registerIn registry="nti.dataserver.tests.test_site._MYSITE">
             <!-- Setup some site level admins -->
             <utility factory="nti.dataserver.site.SiteRoleManager"
@@ -144,15 +144,15 @@ ZCML_STRING = """
 
             <sp:grantSite role="role:nti.dataserver.site-admin" principal="chris"/>
         </registerIn>
-        
+
         <registerIn registry="nti.dataserver.tests.test_site.EVAL">
             <!-- Setup some site level admins -->
             <utility factory="nti.dataserver.site.SiteRoleManager"
                      provides="nti.dataserver.interfaces.ISiteRoleManager" />
-            
+
             <utility factory="nti.dataserver.site.ImmediateParentSiteAdminManagerUtility"
                      provides="nti.dataserver.interfaces.ISiteAdminManagerUtility" />
-                     
+
             <utility factory="nti.dataserver.site._SiteHierarchyTree"
                      provides="nti.dataserver.interfaces.ISiteHierarchy" />
         </registerIn>
@@ -341,7 +341,7 @@ class TestSiteHierarchy(unittest.TestCase):
             assert_that(cached_tree, is_not(tree))
 
             assert_that(tree.lookup_func, is_(sht._lookup_func))
-            
+
             # pylint: disable=no-member
             assert_that(tree.children_objects, contains_inanyorder(eval_site))
             assert_that(tree.children_objects, has_length(1))
@@ -376,6 +376,7 @@ class TestSiteHierarchy(unittest.TestCase):
         with mock_db_trans():
             synchronize_host_policies()
             demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
+            eval_site = get_site_for_site_names((EVAL.__name__,))
 
             with current_site(demo_alpha_site):
                 user = User(u'SiteAdmin')
@@ -387,6 +388,15 @@ class TestSiteHierarchy(unittest.TestCase):
                 demo_alpha_prm.removeRoleFromPrincipal(ROLE_SITE_ADMIN.id, user)
                 principals = demo_alpha_prm.getPrincipalsForRole(ROLE_SITE_ADMIN.id)
                 assert_that(principals, contains_inanyorder((user, Deny,)))
+
+                # While in child site, validate we can get parent site
+                # children accurately.
+                site_admin_utility = component.getUtility(ISiteAdminManagerUtility)
+                child_sites = site_admin_utility.get_descendant_site_names(eval_site)
+                assert_that(child_sites,
+                            contains_inanyorder(u'demo.nextthoughttest.com',
+                                                u'demo-alpha.nextthoughttest.com',
+                                                u'eval-alpha.nextthoughttest.com'))
 
     @WithMockDS
     def test_immediate_site_admin_manager(self):
