@@ -12,7 +12,7 @@ from zope import component
 from zope import interface
 
 from nti.app.users.utils import get_user_creation_site
-from nti.app.users.utils import get_user_creation_site_name
+from nti.app.users.utils import get_user_creation_sitename
 
 from nti.dataserver.authorization import is_site_admin
 
