@@ -12,6 +12,7 @@ from zope import component
 from zope import interface
 
 from nti.app.users.utils import get_user_creation_site
+from nti.app.users.utils import get_user_creation_site_name
 
 from nti.dataserver.authorization import is_site_admin
 
@@ -59,16 +60,16 @@ class SiteAdminUtility(object):
 
     def can_administer_user(self, site_admin, user, site_admin_membership_names=None):
         site_hierarchy = component.getUtility(ISiteAdminManagerUtility)
-        user_creation_site = get_user_creation_site(user)
+        user_creation_site_name = get_user_creation_site_name(user)
         admin_creation_site = get_user_creation_site(site_admin)
         if admin_creation_site is None:
             return False
-        descendant_sites = site_hierarchy.get_descendant_sites(admin_creation_site)
+        admin_creation_site_name = admin_creation_site.__name__
+        descendant_site_names = site_hierarchy.get_descendant_site_names(admin_creation_site)
         # Can administer if created in this site or any descendant
-        result = user_creation_site in descendant_sites or user_creation_site is admin_creation_site
+        result = user_creation_site_name in descendant_site_names \
+              or user_creation_site_name == admin_creation_site_name
         if not result:
-            logger.debug('Cannot administer user (site_admin=%s) (user=%s) (%s) (%s) (%s)',
-                         site_admin, user, repr(user_creation_site), repr(admin_creation_site), descendant_sites)
             if not site_admin_membership_names:
                 site_admin_membership_names = self.get_site_admin_membership_names(site_admin)
             user_membership_names = user.usernames_of_dynamic_memberships
