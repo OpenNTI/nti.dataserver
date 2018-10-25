@@ -68,7 +68,7 @@ class SiteAdminUtility(object):
         result = user_creation_site in descendant_sites or user_creation_site is admin_creation_site
         if not result:
             logger.debug('Cannot administer user (site_admin=%s) (user=%s) (%s) (%s) (%s)',
-                         site_admin, user, user_creation_site, admin_creation_site, descendant_sites)
+                         site_admin, user, repr(user_creation_site), repr(admin_creation_site), descendant_sites)
             if not site_admin_membership_names:
                 site_admin_membership_names = self.get_site_admin_membership_names(site_admin)
             user_membership_names = user.usernames_of_dynamic_memberships
