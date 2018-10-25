@@ -362,6 +362,15 @@
 	<utility factory=".site._SiteHierarchyTree"
 			 provides=".interfaces.ISiteHierarchy" />
 
+	<!-- Site Configurables -->
+	<adapter factory=".site.persistent_utility_site_configurable_factory"
+			 provides=".interfaces.ISiteConfigurableFactory"
+			 name="persistent_utility"
+			 for="* zope.site.interfaces.ILocalSiteManager"/>
+
+	<subscriber handler=".site._on_site_created" />
+
+
 	<!-- Site Admin -->
 	<utility factory=".site.DefaultSiteAdminManagerUtility"
 			 provides=".interfaces.ISiteAdminManagerUtility" />
