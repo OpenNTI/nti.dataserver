@@ -37,6 +37,8 @@ from nti.externalization.persistence import NoPickle
 
 from nti.site import get_all_host_sites
 
+from nti.site.hostpolicy import get_host_site
+
 from nti.site.interfaces import IMainApplicationFolder
 
 from nti.site.site import get_component_hierarchy_names
@@ -211,14 +213,13 @@ class DefaultSiteAdminManagerUtility(object):
 
     def _get_site(self, site, attr):
         site = site if site is not None else getSite()
+        site = getattr(site, '__name__', site)
         site_hierarchy_utility = component.getUtility(ISiteHierarchy)
         site_hierarchy = site_hierarchy_utility.tree
         site_node = site_hierarchy.get_node_from_object(site)
         # pylint: disable=unused-variable
-        __traceback_info__ = u"Site: %s\nTree Root Descendants: %s\nSite Type: %s\n" \
-                             u"Utility Lookup func result: %s\nTree lookup func result: %s", \
-                             (site, site_hierarchy.root.descendant_objects, type(site),
-                              site_hierarchy_utility._lookup_func(site), site_hierarchy.lookup_func(site))
+        __traceback_info__ = u"Site: %s\nTree Root Descendants: %s" % \
+                             (site, site_hierarchy.root.descendant_objects)
 
         # If this node is None we want an error to be raised
         return getattr(site_node, attr)
@@ -227,36 +228,31 @@ class DefaultSiteAdminManagerUtility(object):
         parent = self._get_site(site, 'parent_object')
         return parent
 
-    def get_parent_name(self, site=None):
-        return self.get_parent_site(site).__name__
+    get_parent_name = get_parent_site
 
     def get_ancestor_sites(self, site=None):
         ancestors = self._get_site(site, 'ancestor_objects')
         return ancestors
 
+    get_ancestor_site_names = get_ancestor_sites
+
     def get_children_sites(self, site=None):
         ancestors = self._get_site(site, 'children_objects')
         return ancestors
 
-    def get_children_site_names(self, site=None):
-        return [s.__name__ for s in self.get_children_sites(site)]
-
-    def get_ancestor_site_names(self, site=None):
-        return [s.__name__ for s in self.get_ancestor_sites(site)]
+    get_children_site_names = get_children_sites
 
     def get_descendant_sites(self, site=None):
         descendants = self._get_site(site, 'descendant_objects')
         return descendants
 
-    def get_descendant_site_names(self, site=None):
-        return [s.__name__ for s in self.get_descendant_sites(site)]
+    get_descendant_site_names = get_descendant_sites
 
     def get_sibling_sites(self, site=None):
         siblings = self._get_site(site, 'sibling_objects')
         return siblings
 
-    def get_sibling_site_names(self, site=None):
-        return [s.__name__ for s in self.get_sibling_sites(site)]
+    get_sibling_site_names = get_sibling_sites
 
 
 class ImmediateParentSiteAdminManagerUtility(DefaultSiteAdminManagerUtility):
@@ -266,14 +262,13 @@ class ImmediateParentSiteAdminManagerUtility(DefaultSiteAdminManagerUtility):
         current_site = getSite()
         site_hierarchy = component.getUtility(ISiteHierarchy)
         site_hierarchy = site_hierarchy.tree
-        site_node = site_hierarchy.get_node_from_object(current_site)
+        site_node = site_hierarchy.get_node_from_object(current_site.__name__)
         # pylint: disable=unused-variable
         __traceback_info__ = current_site
-        sites.append(site_node.parent_object)
-        try:  # Make sure we don't include dataserver2
-            sites.remove(site_node.root.obj)
-        except ValueError:
-            pass
+        parent_site = get_host_site(site_node.parent_object, safe=True)
+        if parent_site is not None:
+            assert parent_site.__name__ != 'dataserver2'
+            sites.append(parent_site)
         return sites
 
 
@@ -286,14 +281,14 @@ class _SiteHierarchyTree(object):
         return sites.lastSynchronized
 
     def _lookup_func(self, site):
-        return site.__name__
+        return site
 
     @CachedProperty('lastModified')
     def tree(self):
         tree = ObjectHierarchyTree('hostsites', None, lookup_func=self._lookup_func)
         sites = component.getUtility(IEtcNamespace, name='hostsites')
         ds_folder = sites.__parent__
-        tree.set_root(ds_folder)
+        tree.set_root(ds_folder.__name__)
         assert IMainApplicationFolder.providedBy(ds_folder)
 
         # Work up the inheritance chain for each component and add it to the
@@ -310,7 +305,7 @@ class _SiteHierarchyTree(object):
             else:
                 parent = sites[parent_name]
             logger.debug(u'Adding site %s with parent %s', site, parent)
-            tree.add(site, parent=parent)
+            tree.add(site.__name__, parent=parent.__name__)
         return tree
 
 
