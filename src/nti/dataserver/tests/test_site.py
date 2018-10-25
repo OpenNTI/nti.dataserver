@@ -325,11 +325,11 @@ class TestSiteHierarchy(unittest.TestCase):
             synchronize_host_policies()
 
             host_sites_folder = component.getUtility(IEtcNamespace, name='hostsites')
-            ds_folder = host_sites_folder.__parent__
-            eval_site = get_site_for_site_names((EVAL.__name__,))
-            alpha_site = get_site_for_site_names((EVALALPHA.__name__,))
-            demo_site = get_site_for_site_names((DEMO.__name__,))
-            demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
+            ds_folder = host_sites_folder.__parent__.__name__
+            eval_site = EVAL.__name__
+            alpha_site = EVALALPHA.__name__
+            demo_site = DEMO.__name__
+            demo_alpha_site = DEMOALPHA.__name__
 
             # Test cached tree
             sht = _SiteHierarchyTree()
@@ -376,7 +376,7 @@ class TestSiteHierarchy(unittest.TestCase):
         with mock_db_trans():
             synchronize_host_policies()
             demo_alpha_site = get_site_for_site_names((DEMOALPHA.__name__,))
-            eval_site = get_site_for_site_names((EVAL.__name__,))
+            eval_site = EVAL.__name__
 
             with current_site(demo_alpha_site):
                 user = User(u'SiteAdmin')
