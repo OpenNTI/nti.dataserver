@@ -60,7 +60,7 @@ class SiteAdminUtility(object):
 
     def can_administer_user(self, site_admin, user, site_admin_membership_names=None):
         site_hierarchy = component.getUtility(ISiteAdminManagerUtility)
-        user_creation_site_name = get_user_creation_site_name(user)
+        user_creation_site_name = get_user_creation_sitename(user)
         admin_creation_site = get_user_creation_site(site_admin)
         if admin_creation_site is None:
             return False
