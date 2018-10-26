@@ -34,6 +34,7 @@ from nti.app.users import VIEW_USER_UPSERT
 from nti.app.users import VIEW_GRANT_USER_ACCESS
 from nti.app.users import VIEW_RESTRICT_USER_ACCESS
 
+from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import get_user_creation_sitename
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -470,13 +471,15 @@ class TestAdminViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.users.utils.admin.is_site_admin',
-                 'nti.app.users.utils.get_user_creation_sitename')
-    def test_user_update_site_admin(self, mock_site_admin, mock_user_creation_site):
+                 'nti.app.users.views.view_mixins.is_admin_or_site_admin')
+    def test_user_update_site_admin(self, mock_site_admin, mock_site_admin2):
         """
         Validate site admins can only update users in their site.
         """
         mock_site_admin.is_callable().returns(True)
+        mock_site_admin2.is_callable().returns(True)
         test_site_username = u'test_site_user'
+        test_site_admin_username = u'test_site_admin'
         community_name = u'test_site_admin_community'
         test_site_email = u'%s@gmail.com' % test_site_username
         external_type = u'employee id'
@@ -484,32 +487,46 @@ class TestAdminViews(ApplicationLayerTest):
 
         with mock_dataserver.mock_db_trans(self.ds):
             user = self._create_user(test_site_username)
+            site_admin = self._create_user(test_site_admin_username)
             IUserProfile(user).email = test_site_email
             catalog = get_entity_catalog()
             intids = component.getUtility(IIntIds)
             doc_id = intids.getId(user)
             catalog.index_doc(doc_id, user)
             community = Community.create_community(username=community_name)
-            site_admin = User.get_user('sjohnson@nextthought.com')
             site_admin.record_dynamic_membership(community)
+            set_user_creation_site(user, 'alpha.dev')
+            set_user_creation_site(site_admin, 'alpha.dev')
+
+        admin_environ = self._make_extra_environ(user=test_site_admin_username)
+        admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+        nt_environ = self._make_extra_environ()
+        nt_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+
         admin_external_href = '/dataserver2/users/%s/%s' % (test_site_username,
                                                             'LinkUserExternalIdentity')
         self.testapp.post_json(admin_external_href, {'external_type': external_type,
-                                                     'external_id': external_id})
+                                                     'external_id': external_id},
+                               extra_environ=nt_environ)
 
         global_workspace = self._get_workspace(u'Global')
         user_update_href = self.require_link_href_with_rel(global_workspace,
                                                            VIEW_USER_UPSERT)
 
-        user_update_href = '%s?external_type=%s&external_id=%s' % (user_update_href,
-                                                                   external_type,
-                                                                   external_id)
-        mock_user_creation_site.is_callable().returns('alpha.dev')
-        self.testapp.post_json(user_update_href)
-        mock_user_creation_site.is_callable().returns('non_existent')
-        self.testapp.post_json(user_update_href, status=403)
-        mock_user_creation_site.is_callable().returns('fake')
-        self.testapp.post_json(user_update_href, status=403)
+        data = {'realname': "John Smith",
+                'external_type': external_type,
+                'external_id': external_id}
+        self.testapp.post_json(user_update_href, data, extra_environ=admin_environ)
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = User.get_user(test_site_username)
+            set_user_creation_site(user, 'non_existent')
+        self.testapp.post_json(user_update_href, data, extra_environ=admin_environ, status=403)
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = User.get_user(test_site_username)
+            set_user_creation_site(user, 'fake')
+        self.testapp.post_json(user_update_href, data, extra_environ=admin_environ, status=403)
 
         # Now add user to community and site admin can administer them
         with mock_dataserver.mock_db_trans(self.ds):
@@ -517,9 +534,8 @@ class TestAdminViews(ApplicationLayerTest):
             community = Community.get_community(community_name)
             user.record_dynamic_membership(community)
 
-        mock_user_creation_site.is_callable().returns('alpha.dev')
-        self.testapp.post_json(user_update_href)
-        self.testapp.post_json(user_update_href)
+        self.testapp.post_json(user_update_href, data, extra_environ=admin_environ)
+        self.testapp.post_json(user_update_href, data, extra_environ=admin_environ)
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)
