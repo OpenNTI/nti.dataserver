@@ -22,14 +22,14 @@ from perfmetrics import statsd_client_stack
 
 from nti.appserver.tweens.performance import performance_tween_factory
 
-from nti.dataserver.tests.mock_statsd import MockStatsDClient
+from nti.fakestatsd import FakeStatsDClient
 
 class TestConnectionPoolStats(unittest.TestCase):
 
     PREFIX = 'ds1-local'
 
     def _make(self, patch_socket=True, error=None, prefix=''):
-        obj = MockStatsDClient(prefix=prefix)
+        obj = FakeStatsDClient(prefix=prefix)
         return obj
 
     def setUp(self):

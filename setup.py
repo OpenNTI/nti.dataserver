@@ -83,6 +83,7 @@ TESTS_REQUIRE = [
     'nti.nose_traceback_info',
     'nti.testing',
     'nti.app.testing',
+    'nti.fakestatsd'
 ]
 
 
