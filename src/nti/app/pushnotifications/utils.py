@@ -10,7 +10,7 @@ from __future__ import absolute_import
 
 from six.moves import urllib_parse
 
-from itsdangerous.jws import JSONWebSignatureSerializer as SignatureSerializer
+from itsdangerous import JSONWebSignatureSerializer as SignatureSerializer
 
 from zope import component
 
