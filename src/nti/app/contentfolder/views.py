@@ -32,6 +32,8 @@ from zope.cachedescriptors.property import Lazy
 
 from zope.component.hooks import site as current_site
 
+from zope.container.interfaces import INameChooser
+
 from zope.file.upload import nameFinder
 
 from zope.intid.interfaces import IIntIds
@@ -70,8 +72,6 @@ from nti.base._compat import text_
 from nti.base.interfaces import DEFAULT_CONTENT_TYPE
 
 from nti.base.interfaces import INamedFile
-
-from nti.common.random import generate_random_hex_string
 
 from nti.common.string import is_true
 
@@ -125,8 +125,6 @@ from nti.links.links import Link
 from nti.metadata import queue_add
 
 from nti.mimetype.externalization import decorateMimeType
-
-from nti.namedfile.file import safe_filename
 
 from nti.ntiids.oids import to_external_ntiid_oid
 
@@ -381,13 +379,9 @@ class MkdirView(AbstractAuthenticatedView,
     default_folder_mime_type = ContentFolder.mimeType
 
     def generate(self, prefix=_(u'Unnamed Folder')):
-        for x in six.moves.range(10000):
-            name = prefix + ('' if x == 0 else ' %s' % x)
-            # pylint: disable=unsupported-membership-test
-            if safe_filename(name) not in self.context:
-                return name
-        # pylint: disable=too-many-format-args
-        return u'% %' % (prefix, generate_random_hex_string())
+        chooser = INameChooser(self.context)
+        # Object is not used
+        return chooser.chooseName(prefix, object())
 
     def readInput(self, value=None):
         data = super(MkdirView, self).readInput(value)
