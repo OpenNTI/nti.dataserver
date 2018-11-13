@@ -74,6 +74,8 @@ from nti.externalization.singleton import Singleton
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.ntiids.oids import to_external_ntiid_oid
+from nti.site.site import get_component_hierarchy_names
+from nti.app.users.utils import get_user_creation_sitename
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -420,34 +422,43 @@ def _search_scope_to_remote_user(remote_user, search_term, op=_scoped_search_pre
     return result
 
 
-def _get_community_name_from_site():
-    policy = component.getUtility(ISitePolicyUserEventListener)
-    return getattr(policy, 'COM_USERNAME', None)
-
-
 def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
+    """
+    NT Admins can see any user
+    If filtering by site, they can resolve any user in this site or from any
+    parent site.
+
+    Site admins can only see those users they are permissioned to administser.
+
+    Normal users can only resolve those users with intersecting community
+    membership.
+    """
     # TODO: Hook this up to the ACL support
-    # Admin/ContentAdmins can see everything.
-    # SiteAdmins can only see users created in their site.
     if remote_user:
         is_admin = nauth.is_admin_or_content_admin(remote_user)
         is_site_admin = nauth.is_site_admin(remote_user)
         site_admin_utility = component.getUtility(ISiteAdminUtility)
 
+        site_names = get_component_hierarchy_names()
+
         if is_admin:
-            # If we're an admin, we can search everyone unless
-            # we are filtering by site community.
-            remote_com_names = set(('Everyone',))
+            # If we're an admin, we can search everyone unless we are filtering
+            # by user creation site (this site plus any parent site).
+            def site_check(unused_target_user):
+                return True
 
             if admin_filter_by_site_community:
-                # Try to filter by site community.
-                com_name = _get_community_name_from_site()
-                if com_name is not None:
-                    remote_com_names = set((com_name,))
-
+                def site_check(target_user):
+                    user_site = get_user_creation_sitename(target_user)
+                    return not user_site or not site_names or user_site in site_names
         else:
+            # Visible if it doesn't have dynamic memberships,
+            # or we share dynamic memberships
             memberships = remote_user.usernames_of_dynamic_memberships
             remote_com_names = memberships - set(('Everyone',))
+            def site_check(target_user):
+                return not hasattr(target_user, 'usernames_of_dynamic_memberships') \
+                    or target_user.usernames_of_dynamic_memberships.intersection(remote_com_names)
 
         def test(x):
             try:
@@ -485,10 +496,7 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
             if container is not None and not is_admin:
                 return remote_user in container or getattr(x, 'creator', None) is remote_user
 
-            # Otherwise, visible if it doesn't have dynamic memberships,
-            # or we share dynamic memberships
-            return not hasattr(x, 'usernames_of_dynamic_memberships') \
-                or x.usernames_of_dynamic_memberships.intersection(remote_com_names)
+            return site_check(x)
         return test
 
     # Return false if we don't have a remote user for some reason
