@@ -75,6 +75,7 @@ from nti.dataserver.users.utils import get_entity_username_from_index
 from nti.dataserver.users.utils import get_entity_mimetype_from_index
 
 from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users.interfaces import IUserUpdateUtility
@@ -84,6 +85,8 @@ from nti.dataserver.users.interfaces import UpsertUserCreatedEvent
 from nti.dataserver.users.interfaces import UpsertUserPreCreateEvent
 
 from nti.dataserver.users.users import User
+
+from nti.externalization import update_from_external_object
 
 from nti.externalization.externalization import to_external_object
 
@@ -502,16 +505,20 @@ class UserUpsertViewMixin(AbstractUpdateView):
         if self._email is not None:
             profile = IUserProfile(user)
             profile.email = self._email
+        profile_iface = IUserProfileSchemaProvider(user).getSchema()
+        profile = profile_iface(user)
+        update_from_external_object(profile,
+                                    self.readInput())
         self.post_user_update(user)
 
     def _do_call(self):
         user = self.get_user()
         if user is None:
             user = self.create_user()
-        else:
-            logger.info('UserUpsert updating user (%s) (%s)',
-                        user.username, self._email)
-            self.update_user(user)
+
+        logger.info('UserUpsert updating user (%s) (%s)',
+                    user.username, self._email)
+        self.update_user(user)
 
         if self._email:
             # Trusted source for email verification
