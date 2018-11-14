@@ -507,8 +507,10 @@ class UserUpsertViewMixin(AbstractUpdateView):
             profile.email = self._email
         profile_iface = IUserProfileSchemaProvider(user).getSchema()
         profile = profile_iface(user)
+        # We only want to update fields that have a value provided
+        ext_values = {key: val for (key, val) in self._params.iteritems() if val is not None}
         update_from_external_object(profile,
-                                    self.readInput())
+                                    ext_values)
         self.post_user_update(user)
 
     def _do_call(self):
