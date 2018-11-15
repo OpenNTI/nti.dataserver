@@ -208,8 +208,8 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         The email address by which we look up a user.
         """
         # pylint: disable=no-member
-        result = self._params.get('email') \
-              or self._params.get('mail')
+        result = self._params.pop('email', None) \
+              or self._params.pop('mail', None)
         if not result and self.REQUIRE_EMAIL:
             raise_http_error(self.request,
                              _(u"Must provide email."),
@@ -219,22 +219,22 @@ class AbstractUpdateView(AbstractAuthenticatedView,
     @Lazy
     def _external_id(self):
         # pylint: disable=no-member
-        result = self._params.get('id') \
-              or self._params.get('external_id') \
-              or self._params.get('identifier')
+        result = self._params.pop('id', None) \
+              or self._params.pop('external_id', None) \
+              or self._params.pop('identifier', None)
         return result and str(result)
 
     @Lazy
     def _external_type(self):
         # pylint: disable=no-member
-        result = self._params.get('external_type')
+        result = self._params.pop('external_type', None)
         return result and str(result)
 
     @Lazy
     def _username(self):
         # pylint: disable=no-member
-        result = self._params.get('user') \
-              or self._params.get('username')
+        result = self._params.pop('user', None) \
+              or self._params.pop('username', None)
         return result
 
     def get_user(self):
@@ -425,25 +425,25 @@ class UserUpsertViewMixin(AbstractUpdateView):
     @Lazy
     def _first_name(self):
         # pylint: disable=no-member
-        result = self._params.get('first') \
-              or self._params.get('firstname') \
-              or self._params.get('first_name')
+        result = self._params.pop('first', None) \
+              or self._params.pop('firstname', None) \
+              or self._params.pop('first_name', None)
         return result
 
     @Lazy
     def _last_name(self):
         # pylint: disable=no-member
-        result = self._params.get('last') \
-              or self._params.get('lastname') \
-              or self._params.get('last_name')
+        result = self._params.pop('last', None) \
+              or self._params.pop('lastname', None) \
+              or self._params.pop('last_name', None)
         return result
 
     @Lazy
     def _real_name(self):
         # pylint: disable=no-member
-        result = self._params.get('real') \
-              or self._params.get('realname') \
-              or self._params.get('real_name')
+        result = self._params.pop('real', None) \
+              or self._params.pop('realname', None) \
+              or self._params.pop('real_name', None)
         return result
 
     def _get_real_name(self):
@@ -470,7 +470,8 @@ class UserUpsertViewMixin(AbstractUpdateView):
                                            idurl=None,
                                            iface=None,
                                            user_factory=User.create_user,
-                                           realname=realname)
+                                           realname=realname,
+                                           ext_values=self._params)
         self.post_user_creation(user)
         if self.is_recreatable_user():
             interface.alsoProvides(user, IRecreatableUser)
