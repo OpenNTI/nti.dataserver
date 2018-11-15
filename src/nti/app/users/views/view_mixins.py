@@ -75,7 +75,6 @@ from nti.dataserver.users.utils import get_entity_username_from_index
 from nti.dataserver.users.utils import get_entity_mimetype_from_index
 
 from nti.dataserver.users.interfaces import IUserProfile
-from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users.interfaces import IUserUpdateUtility
@@ -505,8 +504,9 @@ class UserUpsertViewMixin(AbstractUpdateView):
         if self._email is not None:
             profile = IUserProfile(user)
             profile.email = self._email
-        profile_iface = IUserProfileSchemaProvider(user).getSchema()
-        profile = profile_iface(user)
+        # This is driven off the COMPLETE_USER_PROFILE_KEY annotation
+        # so this profile could be a different implementation for different sites
+        profile = IUserProfile(user)
         update_from_external_object(profile,
                                     self._params)
         self.post_user_update(user)
