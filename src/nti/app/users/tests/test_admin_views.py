@@ -18,11 +18,21 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
+from nti.site.site import get_site_for_site_names
+from nti.testing.matchers import validly_provides
+from zope.component.hooks import site, getSite
+from zope.interface.interfaces import IComponents
+from zope.schema import TextLine
+from zope.schema.fieldproperty import createFieldProperties
+
+from nti.dataserver.users.user_profile import CompleteUserProfile, COMPLETE_USER_PROFILE_KEY
+from nti.identifiers.utils import get_user_for_external_id
+
 does_not = is_not
 
 import fudge
 
-from zope import interface
+from zope import interface, annotation
 from zope import component
 from zope import lifecycleevent
 
@@ -57,7 +67,7 @@ from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.index import get_entity_catalog
 
-from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IUserProfile, ICompleteUserProfile
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
 from nti.dataserver.users.users import User
@@ -85,6 +95,19 @@ class AlwaysPassUserAccessProvider(object):
 
     def remove_access(self, *args, **kwargs):
         pass
+
+
+class IFakeUserProfile(ICompleteUserProfile):
+    test_field = TextLine(title=u'A test field to check different profiles')
+
+
+@interface.implementer(IFakeUserProfile)
+class FakeUserProfile(CompleteUserProfile):
+    createFieldProperties(IFakeUserProfile)
+
+
+FakeUserProfileFactory = annotation.factory(FakeUserProfile,
+                                            COMPLETE_USER_PROFILE_KEY)
 
 
 class TestAdminViews(ApplicationLayerTest):
@@ -468,6 +491,53 @@ class TestAdminViews(ApplicationLayerTest):
         assert_that(resolve_res, has_length(1))
         resolve_res = resolve_res[0]
         assert_that(resolve_res, does_not(has_item('external_ids')))
+
+        # Test custom profile updates
+
+        # We don't want to do this in a DB transaction as this is a non-persistent registration
+        # Instead, we will directly query for the non-persistent registry
+        alpha = component.getUtility(IComponents, name='alpha.nextthought.com')
+        alpha.registerAdapter(FakeUserProfileFactory,
+                              provided=IFakeUserProfile,
+                              required=(IUser,))
+        environ = self._make_extra_environ()
+        environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
+        new_first = u'Alpha'
+        new_last = u'User'
+        new_email = u'alpha@gmail.com'
+        new_external_id = '88888'
+        new_external_type = 'employee id'
+        self.testapp.post_json(user_update_href,
+                              {u'first_name': new_first,
+                               u'last_name': new_last,
+                               u'external_type': new_external_type,
+                               u'external_id': new_external_id,
+                               u'email': new_email,
+                               u'test_field': u'This is a test field.'},
+                               extra_environ=environ)
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            user = get_user_for_external_id(new_external_type, new_external_id)
+            profile = ICompleteUserProfile(user)
+            assert_that(profile, validly_provides(IFakeUserProfile))
+
+        new_first = u'Default'
+        new_last = u'User'
+        new_email = u'default@gmail.com'
+        new_external_id = '77777'
+        new_external_type = 'employee id'
+        self.testapp.post_json(user_update_href,
+                              {u'first_name': new_first,
+                               u'last_name': new_last,
+                               u'external_type': new_external_type,
+                               u'external_id': new_external_id,
+                               u'email': new_email,
+                               u'test_field': u'This is a test field.'})
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = get_user_for_external_id(new_external_type, new_external_id)
+            profile = ICompleteUserProfile(user)
+            assert_that(profile, does_not(validly_provides(IFakeUserProfile)))
+            assert_that(profile, does_not(has_property('test_field')))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.users.utils.admin.is_site_admin',
