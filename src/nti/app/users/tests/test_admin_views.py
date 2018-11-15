@@ -18,27 +18,26 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
-from nti.site.site import get_site_for_site_names
-from nti.testing.matchers import validly_provides
-from zope.component.hooks import site, getSite
-from zope.interface.interfaces import IComponents
-from zope.schema import TextLine
-from zope.schema.fieldproperty import createFieldProperties
-
-from nti.dataserver.users.user_profile import CompleteUserProfile, COMPLETE_USER_PROFILE_KEY
-from nti.identifiers.utils import get_user_for_external_id
-
 does_not = is_not
+
+from nti.testing.matchers import validly_provides
 
 import fudge
 
-from zope import interface, annotation
+from zope import annotation
+from zope import interface
 from zope import component
 from zope import lifecycleevent
 
 from zope.component import getGlobalSiteManager
 
+from zope.interface.interfaces import IComponents
+
 from zope.intid.interfaces import IIntIds
+
+from zope.schema import TextLine
+
+from zope.schema.fieldproperty import createFieldProperties
 
 from nti.app.users import VIEW_USER_UPSERT
 from nti.app.users import VIEW_GRANT_USER_ACCESS
@@ -67,14 +66,20 @@ from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.index import get_entity_catalog
 
-from nti.dataserver.users.interfaces import IUserProfile, ICompleteUserProfile
+from nti.dataserver.users.interfaces import ICompleteUserProfile
+from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
+
+from nti.dataserver.users.user_profile import CompleteUserProfile
+from nti.dataserver.users.user_profile import COMPLETE_USER_PROFILE_KEY
 
 from nti.dataserver.users.users import User
 
 from nti.dataserver.users.utils import is_email_verified
 
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.identifiers.utils import get_user_for_external_id
 
 from nti.ntiids.oids import to_external_ntiid_oid
 
