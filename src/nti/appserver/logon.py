@@ -1121,7 +1121,7 @@ def openid_login(context, request):
 
 
 def _deal_with_external_account(request, username, fname, lname, email, idurl, iface,
-                                user_factory, realname=None, ext_values={}):
+                                user_factory, realname=None, ext_values=None):
     """
     Finds or creates an account based on an external authentication.
 
@@ -1132,6 +1132,8 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
     :param iface: The interface that the user object will implement.
     :return: The user object
     """
+    if ext_values is None:
+        ext_values = dict()
     dataserver = component.getUtility(nti_interfaces.IDataserver)
     user = User.get_user(username=username, dataserver=dataserver)
     url_attr = iface.names()[0] if iface and iface.names() and idurl else None
