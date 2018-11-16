@@ -1121,7 +1121,7 @@ def openid_login(context, request):
 
 
 def _deal_with_external_account(request, username, fname, lname, email, idurl, iface,
-                                user_factory, realname=None):
+                                user_factory, realname=None, ext_values=None):
     """
     Finds or creates an account based on an external authentication.
 
@@ -1132,6 +1132,8 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
     :param iface: The interface that the user object will implement.
     :return: The user object
     """
+    if ext_values is None:
+        ext_values = dict()
     dataserver = component.getUtility(nti_interfaces.IDataserver)
     user = User.get_user(username=username, dataserver=dataserver)
     url_attr = iface.names()[0] if iface and iface.names() and idurl else None
@@ -1147,22 +1149,22 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
     else:
         # When creating, we go through the same steps as account_creation_views,
         # guaranteeing the proper validation
-        external_value = {'Username': username, 'email': email}
+        ext_values.update({'Username': username, 'email': email})
         if not realname:
             if fname and lname:
                 realname = fname + ' ' + lname
 
         if realname:
-            external_value['realname'] = realname
+            ext_values['realname'] = realname
         if url_attr:
-            external_value[url_attr] = idurl
+            ext_values[url_attr] = idurl
 
         require_password = False
         from .account_creation_views import _create_user  # XXX A bit scuzzy
 
         # This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
         # will be None
-        user = _create_user(request, external_value,
+        user = _create_user(request, ext_values,
                             require_password=require_password,
                             user_factory=user_factory)
         __traceback_info__ = request, user_factory, iface, user
