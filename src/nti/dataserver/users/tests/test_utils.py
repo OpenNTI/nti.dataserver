@@ -31,6 +31,7 @@ from nti.dataserver.users.common import user_creation_sitename
 from nti.dataserver.users.common import remove_user_creation_site
 
 from nti.dataserver.users.utils import get_users_by_site
+from nti.dataserver.users.utils import get_users_by_email_in_sites
 from nti.dataserver.users.utils import is_email_verified
 from nti.dataserver.users.utils import get_community_members
 from nti.dataserver.users.utils import force_email_verification
@@ -86,7 +87,22 @@ class TestUtils(unittest.TestCase):
         
         results = get_users_by_site('bleach.org')
         assert_that(results, has_length(1))
-        
+
+    @WithMockDSTrans
+    def test_get_users_by_email_in_sites(self):
+        user = User.create_user(username=u'ichigo@bleach.org',
+                                external_value={'email': u"ichigo@bleach.org"})
+        remove_user_creation_site(user)
+        set_user_creation_site(user, u'bleach.org')
+        assert_that(user_creation_sitename(user), is_('bleach.org'))
+        lifecycleevent.modified(user)
+
+        results = get_users_by_email_in_sites('ichigo@bleach.org', 'bleach.org')
+        assert_that(results, has_length(1))
+
+        results = get_users_by_email_in_sites('ichigo@bleach.org', 'alpha.dev')
+        assert_that(results, has_length(0))
+
     @WithMockDSTrans
     def test_get_community_members(self):
         ichigo = User.create_user(username=u'ichigo@bleach.org',
