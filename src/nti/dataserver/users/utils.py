@@ -147,8 +147,9 @@ def get_users_by_email_in_sites(email, sites=None):
         result = []
         catalog = get_entity_catalog()
         intids = component.getUtility(IIntIds)
-        catalog[IX_EMAIL].apply((email, email))
-        doc_ids = catalog[IX_SITE].apply({'any_of': sites or ()})
+        query = {IX_EMAIL: (email, email),
+                 IX_SITE: {'any_of': sites}}
+        doc_ids = catalog.apply(query)
         for uid in doc_ids or ():
             user = intids.queryObject(uid)
             if IUser.providedBy(user):
