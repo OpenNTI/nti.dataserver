@@ -133,13 +133,15 @@ def get_users_by_email(email):
     return result
 
 
-def get_users_by_email_in_sites(email, sites):
+def get_users_by_email_in_sites(email, sites=None):
     """
-    Get the users using the given email in the given site.
+    Get the users using the given email in the given site or current site if not provided.
     """
     if isinstance(sites, six.string_types):
         sites = sites.split(',')
-    if not email or not sites:
+    if not sites:
+        sites = (getSite().__name__,)
+    if not email:
         result = ()
     else:
         result = []
