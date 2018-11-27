@@ -14,10 +14,13 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from zope import interface
+from zope import component
 
 from zope.cachedescriptors.property import Lazy
 
 from zope.component.hooks import getSite
+
+from zope.intid.interfaces import IIntIds
 
 from nti.app.externalization.error import raise_json_error
 
@@ -101,10 +104,16 @@ class SiteUsersView(AbstractEntityViewMixin):
     def search_include(self, doc_id):
         # Users only and filter site admins if requested
         result = self.mime_type(doc_id) == 'application/vnd.nextthought.user'
+        if result:
+            result = super(SiteUsersView, self).search_include(doc_id)
         if result and self.filterAdmins:
-            username = self.username(doc_id)
-            result = not is_site_admin(username)
-        return result and super(SiteUsersView, self).search_include(doc_id)
+            # Need to refiy object here since username is stored as all
+            # lowercase and the check below is case sensitive
+            intids = component.getUtility(IIntIds)
+            user = intids.queryObject(doc_id)
+            if user is not None:
+                result = not is_site_admin(user.username)
+        return result
 
     def __call__(self):
         self.check_access()
