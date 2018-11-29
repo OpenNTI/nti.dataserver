@@ -15,7 +15,9 @@ import itertools
 import six
 import operator
 import simplejson
+
 from collections import Mapping
+
 from six.moves.urllib_parse import unquote
 
 from zope import component
@@ -58,6 +60,8 @@ from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
+from nti.dataserver.users.common import user_creation_sitename
+
 from nti.dataserver.users.entity import Entity
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -72,8 +76,8 @@ from nti.externalization.singleton import Singleton
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.ntiids.oids import to_external_ntiid_oid
+
 from nti.site.site import get_component_hierarchy_names
-from nti.app.users.utils import get_user_creation_sitename
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -447,7 +451,7 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
 
             if admin_filter_by_site_community:
                 def site_check(target_user):
-                    user_site = get_user_creation_sitename(target_user)
+                    user_site = user_creation_sitename(target_user)
                     return not user_site or not site_names or user_site in site_names
         else:
             # Visible if it doesn't have dynamic memberships,
