@@ -47,6 +47,8 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 
+from zope.component.hooks import getSite
+
 from zope.event import notify
 
 from zope.i18n import translate
@@ -105,6 +107,8 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver.interfaces import IGoogleUser
+
+from nti.dataserver.users.common import user_creation_sitename
 
 from nti.dataserver.users.interfaces import GoogleUserCreatedEvent
 from nti.dataserver.users.interfaces import OpenIDUserCreatedEvent
@@ -1442,19 +1446,39 @@ class DefaultGoogleLogonLookupUtility(object):
 @interface.implementer(IGoogleLogonLookupUtility)
 class EmailGoogleLogonLookupUtility(object):
     """
-    This utility maps the given user identifier as the user's email.
+    This utility maps the given user identifier as the user's email. We
+    Only return users for the given site; thus, a user with accounts in
+    multiple sites with the same email should be able to SSO with their
+    email address.
     """
 
     def lookup_user(self, identifier):
         user = None
+        # XXX: We could query get_users_by_email_sites once we are ensured
+        # all users have a user creation site.
         users = get_users_by_email(identifier)
         users = tuple(users)
         if len(users) > 1:
-            logger.warn('Ambiguous users found on google auth (id=%s) (users=%s)',
-                        identifier,
-                        ', '.join(x.username for x in users))
-            raise AmbiguousUserLookupError()
-        elif users:
+            # Multiple users; check if one and only one is tied to our current
+            # site.
+            site_users = []
+            current_site_name = getattr(getSite(), '__name__', '')
+            for user in users:
+                user_site_name = user_creation_sitename(user)
+                if user_site_name == current_site_name:
+                    site_users.append(user)
+            if len(site_users) == 1:
+                # Great; we found the *one* user for this site
+                users = site_users
+            else:
+                # We either have no users for this site or more than one; we
+                # have to raise.
+                logger.warn('Ambiguous users found on google auth (id=%s) (users=%s)',
+                            identifier,
+                            ', '.join(x.username for x in users))
+                raise AmbiguousUserLookupError()
+
+        if users:
             user = users[0]
         return user
 

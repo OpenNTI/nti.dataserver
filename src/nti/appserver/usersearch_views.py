@@ -41,8 +41,6 @@ from nti.appserver import httpexceptions as hexc
 from nti.appserver.interfaces import INamedLinkView
 from nti.appserver.interfaces import IUserSearchPolicy
 
-from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
-
 from nti.base._compat import text_
 
 from nti.common.string import is_false
