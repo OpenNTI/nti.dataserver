@@ -1464,7 +1464,7 @@ class EmailGoogleLogonLookupUtility(object):
             for user in users:
                 user_site_name = user_creation_sitename(user)
                 if user_site_name == current_site_name:
-                    site_users.append(site_users)
+                    site_users.append(user)
             if len(site_users) == 1:
                 # Great; we found the *one* user for this site
                 users = site_users
