@@ -218,7 +218,7 @@ class _ObjectsContainerResource(_ContainerResource):
 		#Let the forbidden_related_context ref through so we don't have to roll all the clients back
 		#if not self.request.url.endswith('/@@forbidden_related_context'):
 		#	self._check_permission(result)
-		
+
 		# Make these things be acquisition wrapped, just as if we'd traversed
 		# all the way to them (only if not already wrapped)
 		if 	getattr(result, '__parent__', None) is not None and \

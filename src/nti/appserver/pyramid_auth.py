@@ -68,7 +68,8 @@ def configure_authentication_policy(pyramid_config,
             all instances in a given environment, but should be different in different
             environments.
     """
-    token_allowed_views = ('feed.rss', 'feed.atom')
+    # XXX: Should configure this
+    token_allowed_views = ('feed.rss', 'feed.atom', 'calendar_feed.ics')
     api_factory = create_who_apifactory(secure_cookies=secure_cookies,
                                         cookie_secret=cookie_secret,
                                         cookie_timeout=cookie_timeout,
