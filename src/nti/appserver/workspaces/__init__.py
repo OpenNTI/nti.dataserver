@@ -277,7 +277,7 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 
 
 class NameFilterableMixin(object):
-    
+
     @property
     def params(self):
         request = get_current_request()
@@ -303,7 +303,7 @@ class NameFilterableMixin(object):
             op = self.search_prefix_match
             names = IFriendlyNamed(entity, None)
             result = (op(entity.username, self.searchTerm)) \
-                  or (names is not None 
+                  or (names is not None
                       and (op(names.realname, self.searchTerm)
                            or op(names.alias, self.searchTerm)))
         return result
@@ -318,7 +318,7 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
             them as editable. We are also sending back the correct creator.
     """
 
-    def __init__(self, container):  # pylint: disable=useless-super-delegation 
+    def __init__(self, container):  # pylint: disable=useless-super-delegation
         super(FriendsListContainerCollection, self).__init__(container)
 
     @property
@@ -709,7 +709,8 @@ class NTIIDEntry(object):
             token_creator = component.queryUtility(IUserViewTokenCreator,
                                                    name='feed.atom')
             if token_creator and remote_user:
-                token = token_creator.getTokenForUserId(remote_user.username)
+                token = token_creator.getTokenForUserId(remote_user.username,
+                                                        u'feed:atom')
                 if token:
                     target = Location()
                     target.__name__ = 'RecursiveStream'
@@ -720,7 +721,6 @@ class NTIIDEntry(object):
                                       title='RSS',
                                       elements=('feed.atom',),
                                       params={'token': token})
-                    # TODO: Token
                     result.append(link)
 
         result.extend(self.extra_links)

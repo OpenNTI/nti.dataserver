@@ -17,13 +17,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import contains_string
 from hamcrest import contains
-
-from nti.testing import base
-from nti.testing import matchers
 
 from zope import component
 import simplejson as json
@@ -33,8 +29,14 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.dataserver.tests import mock_dataserver
 
 from nti.ntiids import ntiids
-from nti.dataserver import users
+
 from nti.appserver.interfaces import IUserViewTokenCreator
+
+from nti.dataserver.users.interfaces import IUserTokenContainer
+
+from nti.dataserver.users.tokens import UserToken
+
+from nti.dataserver.users.users import User
 
 class TestFeeds(ApplicationLayerTest):
 
@@ -122,7 +124,13 @@ class TestFeeds(ApplicationLayerTest):
 		# Get a token for the other user
 		token_creator = component.getUtility( IUserViewTokenCreator, name='feed.atom' )
 		with mock_dataserver.mock_db_trans(self.ds):
-			token = token_creator.getTokenForUserId( 'foo@bar' )
+			user = User.get_user('foo@bar')
+			container = IUserTokenContainer(user)
+			user_token = UserToken(title=u"title",
+	                               description=u"desc",
+	                               scopes=(u'feed:atom',))
+			container.store_token(user_token)
+			token = token_creator.getTokenForUserId('foo@bar', 'feed:atom')
 		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream/feed.atom'
 		# No token fails
 		testapp.get( path, status=401 )
