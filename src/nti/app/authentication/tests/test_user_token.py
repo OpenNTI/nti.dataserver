@@ -58,6 +58,9 @@ class TestUserToken(unittest.TestCase):
         assert_that(plugin.identityIsValid(identity),
                     is_(username))
 
+        # Invalidate token
         container.clear()
         assert_that(plugin.tokenIsValidForUserid(token, username),
+                    is_(none()))
+        assert_that(plugin.identityIsValid(identity),
                     is_(none()))
