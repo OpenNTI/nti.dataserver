@@ -66,21 +66,26 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
             # created; in the future if desired we can use this to limit
             # the valid lifetime of the token. The third return value
             # is "user roles", a tuple of strings meant to give role names
-            _, userid, _, user_data = self.auth_tkt.parse_ticket(self.secret,
-                                                                 token,
-                                                                 '0.0.0.0')
+            _, userid, tokens, user_data = self.auth_tkt.parse_ticket(self.secret,
+                                                                      token,
+                                                                      '0.0.0.0')
         except self.auth_tkt.BadTicket:  # pragma: no cover
             return None
 
         identity = {}
         identity[self.userid_key] = userid
         identity[self._userdata_key] = user_data
+        identity['scope'] = tokens[0] if tokens else None
         return identity
 
     def _get_token_for_scope(self, userid, scope):
         user = User.get_user(userid)
         token_container = IUserTokenContainer(user)
-        return token_container.get_token_by_scope(scope)
+        result = token_container.get_all_tokens_by_scope(scope)
+        if result:
+            # Arbitrarily grab the first token that is defined
+            # by our scope.
+            return result[0]
 
     def _encode_token(self, token):
         return self.sha256(token.key).hexdigest()
@@ -90,11 +95,17 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         if user_token:
             return self._encode_token(user_token)
 
-    def _get_all_user_encoded_tokens(self, userid):
+    def _get_user_encoded_tokens(self, userid, scope):
+        """
+        Return all valid encoded tokens for the given scope.
+        """
         user = User.get_user(userid)
         token_container = IUserTokenContainer(user)
-        result = [self._encode_token(x) for x in token_container.values()]
-        return result
+        if scope:
+            tokens = token_container.get_all_tokens_by_scope(scope)
+        else:
+            tokens = token_container.values()
+        return [self._encode_token(x) for x in tokens]
 
     def identityIsValid(self, identity):
         if     not identity \
@@ -104,7 +115,8 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
 
         userid = identity[self.userid_key]
         userdata = identity[self._userdata_key]
-        valid_tokens = self._get_all_user_encoded_tokens(userid)
+        token_scope = identity['scope']
+        valid_tokens = self._get_user_encoded_tokens(userid, token_scope)
         return userid if userdata in valid_tokens else None
 
     def getTokenForUserId(self, userid, scope):
@@ -117,7 +129,9 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         hexdigest = self._get_encoded_token(userid, scope)
         if hexdigest:
             tkt = self.auth_tkt.AuthTicket(self.secret, userid,
-                                          '0.0.0.0', user_data=hexdigest)
+                                          '0.0.0.0',
+                                          user_data=hexdigest,
+                                          tokens=(scope,))
             return tkt.cookie_value()
 
     def tokenIsValidForUserid(self, token, userid):

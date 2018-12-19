@@ -1071,9 +1071,11 @@ class IUserToken(ICreated, ILastModified, ITitledDescribed, IContained):
     description = ValidTextLine(title=u"Description of the token",
                                 required=False)
 
-    scope = ValidTextLine(title=u"The scope of the token",
-                          description=u"Some token views may restrict access to appropriately scoped tokens.",
-                          required=False)
+    scopes = ListOrTuple(ValidTextLine(title=u"The scope of the token",
+                                       description=u"Some token views may restrict access to appropriately scoped tokens."),
+                        title=u"scopes",
+                        required=False,
+                        min_length=0)
 
 
 class IUserTokenContainer(IShouldHaveTraversablePath,
@@ -1089,12 +1091,7 @@ class IUserTokenContainer(IShouldHaveTraversablePath,
         Store the token in the container.
         """
 
-    def get_token_by_scope(scope):
+    def get_all_tokens_by_scope(scope):
         """
-        Finds the token described by the given scope, or None.
-        """
-
-    def remove_token_by_scope(scope):
-        """
-        Removes the token with the given scope.
+        Finds all tokens described by the given scope, or None.
         """

@@ -82,20 +82,15 @@ class UserTokenContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer,
         CaseInsensitiveCheckingLastModifiedBTreeContainer.__init__(self)
         SchemaConfigured.__init__(self, *args, **kwargs)
 
-    def get_token_by_scope(self, scope):
+    def get_all_tokens_by_scope(self, scope):
         """
-        Finds the token described by the given scope, or None.
+        Finds all tokens described by the given scope, or None.
         """
+        result = []
         for token in self.values():
-            if token.scope == scope:
-                return token
-
-    def remove_token_by_scope(self, scope):
-        """
-        Removes the token with the given scope.
-        """
-        token = self.get_token_by_scope(scope)
-        return self.remove_token(token)
+            if token.scopes and scope in token.scopes:
+                result.append(token)
+        return result
 
     def store_token(self, token):
         if not getattr(token, 'id', None):

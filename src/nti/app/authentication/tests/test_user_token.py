@@ -44,7 +44,7 @@ class TestUserToken(unittest.TestCase):
         assert_that(container, has_length(0))
         user_token = UserToken(title=u"title",
                                description=u"desc",
-                               scope=valid_scope)
+                               scopes=(valid_scope,))
         container.store_token(user_token)
 
         assert_that(plugin.getTokenForUserId(username, 'dne:scope'), none())
