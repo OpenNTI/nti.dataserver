@@ -31,7 +31,7 @@ class _UserViewTokenCreator(object):
     def __init__(self, secret):
         self.secret = secret
 
-    def getTokenForUserId(self, userid):
+    def getTokenForUserId(self, userid, scope):
         """
         Given a logon for a user, return a token that can be
         used to identify the user in the future. If the user
@@ -39,7 +39,7 @@ class _UserViewTokenCreator(object):
         """
         authenticator = component.getAdapter(self.secret,
                                              IIdentifiedUserTokenAuthenticator)
-        return authenticator.getTokenForUserId(userid)
+        return authenticator.getTokenForUserId(userid, scope)
 
 
 ONE_DAY = 24 * 60 * 60

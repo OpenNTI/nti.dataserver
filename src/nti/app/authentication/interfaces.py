@@ -24,9 +24,9 @@ class IUserTokenCreator(interface.Interface):
     """
     # Or maybe this should be an adapter on the request?
 
-    def getTokenForUserId(userid):
+    def getTokenForUserId(userid, scope):
         """
-        Given a logon id for a user, return a long-lasting
+        Given a logon id for a user and a token scope, return a long-lasting
         token. If this cannot be done, return None.
         """
 

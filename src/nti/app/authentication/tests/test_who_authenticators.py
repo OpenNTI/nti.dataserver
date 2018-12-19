@@ -19,11 +19,22 @@ from nti.app.authentication.user_token import DefaultIdentifiedUserTokenAuthenti
 
 from nti.app.authentication.who_authenticators import KnownUrlTokenBasedAuthenticator
 
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
+
+from nti.dataserver.users.interfaces import IUserTokenContainer
+
+from nti.dataserver.users.tokens import UserToken
+
+from nti.dataserver.users.users import User
+
 
 class TestKnownUrlTokenBasedAuthenticator(unittest.TestCase):
 
+    layer = SharedConfiguringTestLayer
+
     def setUp(self):
-        self.plugin = KnownUrlTokenBasedAuthenticator('secret', 
+        self.plugin = KnownUrlTokenBasedAuthenticator('secret',
 													  allowed_views=('feed.atom', 'test'))
 
     def test_identify_empty_environ(self):
@@ -38,28 +49,38 @@ class TestKnownUrlTokenBasedAuthenticator(unittest.TestCase):
                                           'PATH_INFO': '/foo/bar'}),
                     is_(none()))
 
-    @fudge.patch('nti.app.authentication.user_token.DefaultIdentifiedUserTokenAuthenticator._get_user_password',
-                 'zope.component.getAdapter')
-    def test_identify_token(self, mock_pwd, mock_get):
-        mock_pwd.is_callable().returns_fake().provides('getPassword').returns('abcde')
+    @WithMockDSTrans
+    @fudge.patch('zope.component.getAdapter')
+    def test_identify_token(self, mock_get):
+        username = u'token_username'
+        valid_scope = u'user:scope'
+        user = User.create_user(username=username)
+
+        # Create token
+        container = IUserTokenContainer(user, None)
+        user_token = UserToken(title=u"title",
+                               description=u"desc",
+                               scopes=(valid_scope,))
+        container.store_token(user_token)
+
         tokens = DefaultIdentifiedUserTokenAuthenticator('secret')
         mock_get.is_callable().returns(tokens)
 
-        token = tokens.getTokenForUserId('user')
+        token = tokens.getTokenForUserId(username, valid_scope)
         environ = {'QUERY_STRING': 'token=' + token,
                    'PATH_INFO': '/feed.atom'}
 
         identity = self.plugin.identify(environ)
         assert_that(self.plugin.authenticate(environ, identity),
-                    is_('user'))
+                    is_(username))
 
-        # Password change behind the scenes
-        mock_pwd.is_callable().returns_fake().provides('getPassword').returns('1234')
+        # Invalidate
+        container.clear()
         assert_that(self.plugin.authenticate(environ, identity),
                     is_(none()))
 
-        # Back to original
-        mock_pwd.is_callable().returns_fake().provides('getPassword').returns('abcde')
+        # Restore
+        container.store_token(user_token)
         identity = self.plugin.identify(environ)
         assert_that(self.plugin.authenticate(environ, identity),
-                    is_('user'))
+                    is_(username))
