@@ -92,7 +92,7 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
 
     def _get_user_tokens(self, userid):
         """
-        Return all valid encoded tokens for the given scope.
+        Return all valid tokens for the given scope.
         """
         user = User.get_user(userid)
         token_container = IUserTokenContainer(user)
