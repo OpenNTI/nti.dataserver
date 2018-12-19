@@ -9,6 +9,8 @@
 
 	<include package="zope.location" />
 
+	<include package="nti.containers" />
+
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
@@ -66,6 +68,7 @@
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.IAddress
 						 .interfaces.IEducation
+						 .interfaces.IUserToken
 						 .interfaces.ISuggestedContact
 						 .interfaces.IUserContactProfile
 						 .interfaces.IProfessionalPosition"
@@ -203,5 +206,10 @@
     <!-- Username -->
 	<utility factory=".username.OpaqueUsernameGeneratorUtility"
              provides=".interfaces.IUsernameGeneratorUtility" />
+
+    <!-- Tokens -->
+    <adapter factory=".tokens.UserTokenContainerFactory"
+             provides=".interfaces.IUserTokenContainer"
+             for="nti.coremetadata.interfaces.IUser" />
 
 </configure>

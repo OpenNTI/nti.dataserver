@@ -25,6 +25,11 @@ import six
 from zope import component
 from zope import interface
 
+from zope.container.constraints import contains
+
+from zope.container.interfaces import IContained
+from zope.container.interfaces import IContainer
+
 from zope.interface import Attribute
 from zope.interface import Interface
 
@@ -38,11 +43,16 @@ from z3c.password.interfaces import InvalidPassword
 
 from z3c.schema.email import isValidMailAddress
 
+from nti.base.interfaces import ICreated
+from nti.base.interfaces import ITitledDescribed
+
 from nti.coremetadata.interfaces import IIntIdIterable
+from nti.coremetadata.interfaces import IShouldHaveTraversablePath
 
 from nti.coremetadata.schema import ExtendedCompoundModeledContentBody
 
 from nti.dataserver.interfaces import InvalidData
+from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import checkCannotBeBlank
 from nti.dataserver.interfaces import FieldCannotBeOnlyWhitespace
 
@@ -64,6 +74,7 @@ from nti.schema.field import ValidText
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 from nti.schema.field import ValidURI
+from nti.schema.field import ValidBytesLine
 from nti.schema.field import ValidDatetime
 from nti.schema.field import DecodingValidTextLine
 
@@ -1042,3 +1053,48 @@ class IUIReadOnlyProfileSchema(interface.Interface):
     """
     A marker interface for user profiles that should be read only when schemafied externally
     """
+
+
+class IUserToken(ICreated, ILastModified, ITitledDescribed, IContained):
+    """
+    A storage container for :class:`ICalendarEvent` objects.
+    """
+
+    key = ValidBytesLine(title=u"The token key",
+                         required=True)
+    key.setTaggedValue('_ext_excluded_out', True)
+
+    title = ValidTextLine(title=u"Title of the token",
+                          default=u'',
+                          required=False)
+
+    description = ValidTextLine(title=u"Description of the token",
+                                required=False)
+
+    scope = ValidTextLine(title=u"The scope of the token",
+                          description=u"Some token views may restrict access to appropriately scoped tokens.",
+                          required=False)
+
+
+class IUserTokenContainer(IShouldHaveTraversablePath,
+                          ILastModified,
+                          IContainer):
+    """
+    A storage container for :class:`IUserToken` objects.
+    """
+    contains(IUserToken)
+
+    def store_token(token):
+        """
+        Store the token in the container.
+        """
+
+    def get_token_by_scope(scope):
+        """
+        Finds the token described by the given scope, or None.
+        """
+
+    def remove_token_by_scope(scope):
+        """
+        Removes the token with the given scope.
+        """
