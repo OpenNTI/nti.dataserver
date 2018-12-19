@@ -88,7 +88,7 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
     def _get_token(self, userid, scope):
         user_token = self._get_token_for_scope(userid, scope)
         if user_token:
-            return user_token.key
+            return user_token.token
 
     def _get_user_tokens(self, userid):
         """
@@ -96,7 +96,7 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         """
         user = User.get_user(userid)
         token_container = IUserTokenContainer(user)
-        return [x.key for x in token_container.values()]
+        return [x.token for x in token_container.tokens]
 
     def identityIsValid(self, identity):
         if     not identity \
@@ -119,9 +119,9 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         hexdigest = self._get_token(userid, scope)
         if hexdigest:
             tkt = self.auth_tkt.AuthTicket(self.secret, userid,
-                                          '0.0.0.0',
-                                          user_data=hexdigest,
-                                          tokens=(scope,))
+                                           '0.0.0.0',
+                                           user_data=hexdigest,
+                                           tokens=(scope,))
             return tkt.cookie_value()
 
     def tokenIsValidForUserid(self, token, userid):

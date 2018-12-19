@@ -12,6 +12,10 @@ from __future__ import absolute_import
 
 import uuid
 
+from persistent import Persistent
+
+from persistent.list import PersistentList
+
 from ZODB.interfaces import IConnection
 
 from zope import component
@@ -21,12 +25,11 @@ from zope.annotation.interfaces import IAnnotations
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.component.hooks import getSite
+
 from zope.container.contained import Contained
-from zope.container.contained import NameChooser
 
-from zope.container.interfaces import INameChooser
-
-from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
+from zope.intid.interfaces import IIntIds
 
 from nti.dataserver.users.interfaces import IUserToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
@@ -44,6 +47,17 @@ from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 USER_TOKEN_CONTAINER_KEY = 'tokens'
 
 
+def _generate_token(user):
+    intids = component.getUtility(IIntIds)
+    current_site = getSite()
+    site_intid = intids.queryId(current_site)
+    user_val = str(site_intid) if site_intid else ""
+    user_intid = intids.queryId(user)
+    if user_intid:
+        user_val = "%s:%s" % (user_intid, user_val)
+    return "%s:%s" % (str(uuid.uuid4().time_low), user_val)
+
+
 @interface.implementer(IUserToken)
 class UserToken(SchemaConfigured,
                 PersistentCreatedModDateTrackingObject,
@@ -55,7 +69,7 @@ class UserToken(SchemaConfigured,
 
     mimeType = mime_type = "application/vnd.nextthought.usertoken"
 
-    key = id = alias('__name__')
+    value = alias('token')
 
     def __init__(self, *args, **kwargs):
         SchemaConfigured.__init__(self, *args, **kwargs)
@@ -67,8 +81,8 @@ class UserToken(SchemaConfigured,
 
 
 @interface.implementer(IUserTokenContainer)
-class UserTokenContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer,
-                         SchemaConfigured):
+class UserTokenContainer(SchemaConfigured,
+                         Persistent):
 
     __external_can_create__ = False
 
@@ -79,57 +93,45 @@ class UserTokenContainer(CaseInsensitiveCheckingLastModifiedBTreeContainer,
     creator = None
 
     def __init__(self, *args, **kwargs):
-        CaseInsensitiveCheckingLastModifiedBTreeContainer.__init__(self)
         SchemaConfigured.__init__(self, *args, **kwargs)
+        self.tokens = PersistentList()
 
     def get_all_tokens_by_scope(self, scope):
         """
         Finds all tokens described by the given scope, or None.
         """
         result = []
-        for token in self.values():
+        for token in self.tokens:
             if token.scopes and scope in token.scopes:
                 result.append(token)
+        # Return most recent tokens first
+        result.reverse()
         return result
 
+    def clear(self):
+        self.tokens = PersistentList()
+
     def store_token(self, token):
-        if not getattr(token, 'id', None):
-            token.id = INameChooser(self).chooseName(token.title, token)
-        self[token.id] = token
+        if not token.token:
+            user = self.__parent__
+            token.token = _generate_token(user)
+        self.tokens.append(token)
         return token
 
     def remove_token(self, token):
-        key = getattr(token, 'id', token)
         try:
-            del self[key]
+            self.tokens.remove(token)
             result = True
         except KeyError:
             result = False
         return result
 
+    def __len__(self):
+        return len(self.tokens)
+
     @Lazy
     def ntiid(self):
         return to_external_ntiid_oid(self)
-
-
-@component.adapter(IUserTokenContainer)
-@interface.implementer(INameChooser)
-class _UserTokenContainerNameChooser(NameChooser):
-    """
-    Creates UUID names for user tokens.
-    """
-
-    def generate_token_key(self):
-        return str(uuid.uuid4().time_low)
-
-    def chooseName(self, unused_name, obj):
-        container = self.context
-        result = None
-        while result is not None and result in container:
-            result = self.generate_token_key()
-            if      result not in container \
-                and self.checkName(result, obj):
-                return result
 
 
 def UserTokenContainerFactory(user):

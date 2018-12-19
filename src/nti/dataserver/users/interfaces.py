@@ -1060,8 +1060,8 @@ class IUserToken(ICreated, ILastModified, ITitledDescribed, IContained):
     User token objects.
     """
 
-    key = ValidBytesLine(title=u"The token key",
-                         required=True)
+    token = ValidBytesLine(title=u"The token value",
+                           required=True)
 
     title = ValidTextLine(title=u"Title of the token",
                           default=u'',

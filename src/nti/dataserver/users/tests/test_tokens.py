@@ -47,10 +47,10 @@ class TestUserTokens(unittest.TestCase):
         assert_that(user_token, has_property('title', u'title'))
         assert_that(user_token, has_property('description', u'desc'))
         assert_that(user_token, has_property('scopes', contains(u'user:scope')))
-        assert_that(user_token, has_property('key', none()))
+        assert_that(user_token, has_property('token', none()))
         container.store_token(user_token)
 
-        assert_that(user_token, has_property('key', not_none()))
+        assert_that(user_token, has_property('token', not_none()))
         assert_that(container, has_length(1))
 
         assert_that(container.get_all_tokens_by_scope('dne:scope'), has_length(0))
@@ -60,4 +60,4 @@ class TestUserTokens(unittest.TestCase):
         assert_that(user_token_ext, has_entry('title', u'title'))
         assert_that(user_token_ext, has_entry('description', u'desc'))
         assert_that(user_token_ext, has_entry('scopes', contains(u'user:scope')))
-        assert_that(user_token_ext, has_entry('key', not_none()))
+        assert_that(user_token_ext, has_entry('token', not_none()))
