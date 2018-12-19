@@ -710,7 +710,7 @@ class NTIIDEntry(object):
                                                    name='feed.atom')
             if token_creator and remote_user:
                 token = token_creator.getTokenForUserId(remote_user.username,
-                                                        u'feed:atom')
+                                                        u'userdata:feed')
                 if token:
                     target = Location()
                     target.__name__ = 'RecursiveStream'

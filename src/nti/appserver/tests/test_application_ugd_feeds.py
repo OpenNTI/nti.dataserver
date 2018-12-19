@@ -130,7 +130,7 @@ class TestFeeds(ApplicationLayerTest):
 	                               description=u"desc",
 	                               scopes=(u'feed:atom',))
 			container.store_token(user_token)
-			token = token_creator.getTokenForUserId('foo@bar', 'feed:atom')
+			token = token_creator.getTokenForUserId('foo@bar', 'userdata:feed')
 		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream/feed.atom'
 		# No token fails
 		testapp.get( path, status=401 )
