@@ -12,6 +12,8 @@ from __future__ import absolute_import
 
 import uuid
 
+from datetime import datetime
+
 from persistent import Persistent
 
 from persistent.list import PersistentList
@@ -98,15 +100,31 @@ class UserTokenContainer(SchemaConfigured,
 
     def get_all_tokens_by_scope(self, scope):
         """
-        Finds all tokens described by the given scope, or None.
+        Finds all tokens described by the given scope, or an empty list.
         """
         result = []
         for token in self.tokens:
             if token.scopes and scope in token.scopes:
                 result.append(token)
-        # Return most recent tokens first
-        result.reverse()
         return result
+
+    def get_longest_living_token_by_scope(self, scope):
+        """
+        Return the longest living token for a scope, or None
+        """
+        tokens = self.get_all_tokens_by_scope(scope)
+        if tokens:
+            # No expiration date comes first
+            tokens = sorted(tokens,
+                            key=lambda x: (x.expiration_date or datetime.max))
+            return tokens[0]
+
+    def get_valid_tokens(self):
+        """
+        Return unexpired tokens.
+        """
+        now = datetime.utcnow()
+        return [x for x in self.tokens if (x.expiration_date or datetime.max) > now]
 
     def clear(self):
         self.tokens = PersistentList()

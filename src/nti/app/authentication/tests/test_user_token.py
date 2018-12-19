@@ -15,6 +15,9 @@ from hamcrest import assert_that
 
 import unittest
 
+from datetime import datetime
+from datetime import timedelta
+
 from nti.app.authentication.user_token import DefaultIdentifiedUserTokenAuthenticator
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -58,7 +61,21 @@ class TestUserToken(unittest.TestCase):
         assert_that(plugin.identityIsValid(identity),
                     is_(username))
 
-        # Invalidate token
+        # Token with future expiration date
+        user_token.expiration_date = datetime.utcnow() + timedelta(seconds=30)
+        assert_that(plugin.tokenIsValidForUserid(token, username),
+                    is_(username))
+        assert_that(plugin.identityIsValid(identity),
+                    is_(username))
+
+        # Token expired
+        user_token.expiration_date = datetime.utcnow() - timedelta(seconds=30)
+        assert_that(plugin.tokenIsValidForUserid(token, username),
+                    is_(none()))
+        assert_that(plugin.identityIsValid(identity),
+                    is_(none()))
+
+        # Token gone
         container.clear()
         assert_that(plugin.tokenIsValidForUserid(token, username),
                     is_(none()))

@@ -1076,6 +1076,11 @@ class IUserToken(ICreated, ILastModified, ITitledDescribed, IContained):
                         required=False,
                         min_length=0)
 
+    expiration_date = ValidDatetime(title=u"The token expiration date",
+                                    description=u"An expired token is no longer valid.",
+                                    default=None,
+                                    required=False)
+
 
 class IUserTokenContainer(IShouldHaveTraversablePath,
                           ILastModified,
@@ -1092,5 +1097,17 @@ class IUserTokenContainer(IShouldHaveTraversablePath,
 
     def get_all_tokens_by_scope(scope):
         """
-        Finds all tokens described by the given scope, or None.
+        Finds all tokens described by the given scope, or an empty list.
         """
+
+    def get_longest_living_token_by_scope(scope):
+        """
+        Finds the token for the given scope whose expiration date
+        is the farthest out, or None.
+        """
+
+    def get_valid_tokens():
+        """
+        Return unexpired tokens.
+        """
+

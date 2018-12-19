@@ -79,11 +79,7 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
     def _get_token_for_scope(self, userid, scope):
         user = User.get_user(userid)
         token_container = IUserTokenContainer(user)
-        result = token_container.get_all_tokens_by_scope(scope)
-        if result:
-            # Arbitrarily grab the first token that is defined
-            # by our scope.
-            return result[0]
+        return token_container.get_longest_living_token_by_scope(scope)
 
     def _get_token(self, userid, scope):
         user_token = self._get_token_for_scope(userid, scope)
@@ -96,7 +92,7 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         """
         user = User.get_user(userid)
         token_container = IUserTokenContainer(user)
-        return [x.token for x in token_container.tokens]
+        return [x.token for x in token_container.get_valid_tokens()]
 
     def identityIsValid(self, identity):
         if     not identity \
