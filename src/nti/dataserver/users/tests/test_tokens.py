@@ -29,6 +29,7 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
+
 from nti.externalization.externalization import to_external_object
 
 

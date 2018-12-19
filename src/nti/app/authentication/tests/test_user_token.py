@@ -9,32 +9,55 @@ from __future__ import absolute_import
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import not_none
+from hamcrest import has_length
 from hamcrest import assert_that
 
 import unittest
 
-import fudge
-
 from nti.app.authentication.user_token import DefaultIdentifiedUserTokenAuthenticator
+
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
+
+from nti.dataserver.users.interfaces import IUserTokenContainer
+
+from nti.dataserver.users.tokens import UserToken
+
+from nti.dataserver.users.users import User
 
 
 class TestUserToken(unittest.TestCase):
 
-    @fudge.patch('nti.app.authentication.user_token.DefaultIdentifiedUserTokenAuthenticator._get_user_password')
-    def test_identify_token(self, mock_pwd):
-        mock_pwd.is_callable().returns_fake().provides('getPassword').returns('abcde')
-        plugin = DefaultIdentifiedUserTokenAuthenticator()
+    layer = SharedConfiguringTestLayer
 
-        token = plugin.getTokenForUserId('user')
+    @WithMockDSTrans
+    def test_tokens(self):
+        username = u'token_username'
+        valid_scope = u'user:scope'
+        user = User.create_user(username=username)
+        plugin = DefaultIdentifiedUserTokenAuthenticator()
+        assert_that(plugin.getTokenForUserId(username, 'dne:scope'), none())
+
+        # Create token
+        container = IUserTokenContainer(user, None)
+        assert_that(container, has_length(0))
+        user_token = UserToken(title=u"title",
+                               description=u"desc",
+                               scope=valid_scope)
+        container.store_token(user_token)
+
+        assert_that(plugin.getTokenForUserId(username, 'dne:scope'), none())
+        token = plugin.getTokenForUserId(username, valid_scope)
+        assert_that(token, not_none())
 
         identity = plugin.getIdentityFromToken(token)
-        assert_that(plugin.tokenIsValidForUserid(token, 'user'),
-                    is_('user'))
+        assert_that(plugin.tokenIsValidForUserid(token, username),
+                    is_(username))
 
         assert_that(plugin.identityIsValid(identity),
-                    is_('user'))
+                    is_(username))
 
-        # Password change behind the scenes
-        mock_pwd.is_callable().returns_fake().provides('getPassword').returns('1234')
-        assert_that(plugin.tokenIsValidForUserid(token, 'user'),
+        container.clear()
+        assert_that(plugin.tokenIsValidForUserid(token, username),
                     is_(none()))
