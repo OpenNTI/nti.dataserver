@@ -11,7 +11,6 @@ from __future__ import absolute_import
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import not_none
-from hamcrest import has_item
 from hamcrest import contains
 from hamcrest import has_entry
 from hamcrest import has_length
@@ -61,4 +60,4 @@ class TestUserTokens(unittest.TestCase):
         assert_that(user_token_ext, has_entry('title', u'title'))
         assert_that(user_token_ext, has_entry('description', u'desc'))
         assert_that(user_token_ext, has_entry('scopes', contains(u'user:scope')))
-        assert_that(user_token_ext, does_not(has_item('key')))
+        assert_that(user_token_ext, has_entry('key', not_none()))

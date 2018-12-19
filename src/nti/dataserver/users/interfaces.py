@@ -1057,12 +1057,11 @@ class IUIReadOnlyProfileSchema(interface.Interface):
 
 class IUserToken(ICreated, ILastModified, ITitledDescribed, IContained):
     """
-    A storage container for :class:`ICalendarEvent` objects.
+    User token objects.
     """
 
     key = ValidBytesLine(title=u"The token key",
                          required=True)
-    key.setTaggedValue('_ext_excluded_out', True)
 
     title = ValidTextLine(title=u"Title of the token",
                           default=u'',
