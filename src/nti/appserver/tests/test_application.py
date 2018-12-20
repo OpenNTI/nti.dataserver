@@ -81,6 +81,10 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver import users
 
+from nti.dataserver.users.interfaces import IUserTokenContainer
+
+from nti.dataserver.users.tokens import UserToken
+
 from nti.dataserver.users.user_profile import Education
 from nti.dataserver.users.user_profile import ProfessionalPosition
 
@@ -95,6 +99,7 @@ from nti.ntiids import ntiids
 from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.dataserver.tests import mock_dataserver
+
 
 @interface.implementer(IKeyReference) # IF we don't, we won't get intids
 class ContainedExternal(ZContainedMixin):
@@ -298,6 +303,12 @@ class TestApplication(ApplicationLayerTest):
 	def test_resolve_root_ntiid(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
+			user = users.User.get_user('foo@bar')
+			container = IUserTokenContainer(user)
+			user_token = UserToken(title=u"title",
+	                               description=u"desc",
+	                               scopes=(u'userdata:feed',))
+			container.store_token(user_token)
 
 		testapp = TestApp( self.app )
 		res = testapp.get( '/dataserver2/NTIIDs/' + ntiids.ROOT,

@@ -128,7 +128,7 @@ class TestFeeds(ApplicationLayerTest):
 			container = IUserTokenContainer(user)
 			user_token = UserToken(title=u"title",
 	                               description=u"desc",
-	                               scopes=(u'feed:atom',))
+	                               scopes=(u'userdata:feed',))
 			container.store_token(user_token)
 			token = token_creator.getTokenForUserId('foo@bar', 'userdata:feed')
 		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream/feed.atom'
