@@ -116,8 +116,7 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         if hexdigest:
             tkt = self.auth_tkt.AuthTicket(self.secret, userid,
                                            '0.0.0.0',
-                                           user_data=hexdigest,
-                                           tokens=(scope,))
+                                           user_data=hexdigest)
             return tkt.cookie_value()
 
     def tokenIsValidForUserid(self, token, userid):
