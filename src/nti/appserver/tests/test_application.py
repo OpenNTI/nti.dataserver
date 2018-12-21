@@ -302,8 +302,7 @@ class TestApplication(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_resolve_root_ntiid(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			self._create_user()
-			user = users.User.get_user('foo@bar')
+			user = self._create_user()
 			container = IUserTokenContainer(user)
 			user_token = UserToken(title=u"title",
 	                               description=u"desc",
