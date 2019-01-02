@@ -70,7 +70,8 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
             # is "user roles", a tuple of strings meant to give role names
             _, userid, _, user_data = self.auth_tkt.parse_ticket(self.secret,
                                                                  token,
-                                                                 '0.0.0.0')
+                                                                 '0.0.0.0',
+                                                                 digest_algo='sha256')
         except self.auth_tkt.BadTicket:  # pragma: no cover
             return None
 
@@ -132,7 +133,8 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
             # token size, in case it's used in a URL.
             tkt = self.auth_tkt.AuthTicket(self.secret, userid,
                                            '0.0.0.0',
-                                           user_data=hexdigest)
+                                           user_data=hexdigest,
+                                           digest_algo='sha256')
             return tkt.cookie_value()
 
     def tokenIsValidForUserid(self, token, userid):
