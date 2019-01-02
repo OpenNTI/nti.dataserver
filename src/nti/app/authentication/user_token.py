@@ -70,8 +70,7 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
             # is "user roles", a tuple of strings meant to give role names
             _, userid, _, user_data = self.auth_tkt.parse_ticket(self.secret,
                                                                  token,
-                                                                 '0.0.0.0',
-                                                                 digest_algo='sha256')
+                                                                 '0.0.0.0')
         except self.auth_tkt.BadTicket:  # pragma: no cover
             return None
 
@@ -82,7 +81,7 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
 
     def get_user_for_userid(self, userid):
         intids = component.getUtility(IIntIds)
-        return intids.queryObject(userid)
+        return intids.queryObject(int(userid))
 
     def _get_token_for_scope(self, user, scope):
         token_container = IUserTokenContainer(user)
@@ -93,11 +92,10 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         if user_token:
             return user_token.token
 
-    def _get_user_tokens(self, userid):
+    def _get_user_tokens(self, user):
         """
         Return all valid tokens for the user.
         """
-        user = self.get_user_for_userid(userid)
         result = ()
         if user is not None:
             token_container = IUserTokenContainer(user)
@@ -112,8 +110,12 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
 
         userid = identity[self.userid_key]
         userdata = identity[self._userdata_key]
-        valid_tokens = self._get_user_tokens(userid)
-        return userid if userdata in valid_tokens else None
+        user = self.get_user_for_userid(userid)
+        valid_tokens = self._get_user_tokens(user)
+        result = None
+        if userdata in valid_tokens:
+            result = user.username
+        return result
 
     def getTokenForUserId(self, userid, scope):
         """
@@ -126,10 +128,11 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         userid = str(intids.queryId(user))
         hexdigest = self._get_token(user, scope)
         if hexdigest:
+            # We use sha256 (rather than a sha512 default) to reduce our
+            # token size, in case it's used in a URL.
             tkt = self.auth_tkt.AuthTicket(self.secret, userid,
                                            '0.0.0.0',
-                                           user_data=hexdigest,
-                                           digest_algo='sha256')
+                                           user_data=hexdigest)
             return tkt.cookie_value()
 
     def tokenIsValidForUserid(self, token, userid):
