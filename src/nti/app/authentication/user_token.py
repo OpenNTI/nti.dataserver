@@ -11,6 +11,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from zope import interface
+from zope import component
+
+from zope.intid.interfaces import IIntIds
 
 from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
 
@@ -76,13 +79,16 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         identity[self._userdata_key] = user_data
         return identity
 
-    def _get_token_for_scope(self, userid, scope):
-        user = User.get_user(userid)
+    def get_user_for_userid(self, userid):
+        intids = component.getUtility(IIntIds)
+        return intids.queryObject(userid)
+
+    def _get_token_for_scope(self, user, scope):
         token_container = IUserTokenContainer(user)
         return token_container.get_longest_living_token_by_scope(scope)
 
-    def _get_token(self, userid, scope):
-        user_token = self._get_token_for_scope(userid, scope)
+    def _get_token(self, user, scope):
+        user_token = self._get_token_for_scope(user, scope)
         if user_token:
             return user_token.token
 
@@ -90,9 +96,12 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         """
         Return all valid tokens for the user.
         """
-        user = User.get_user(userid)
-        token_container = IUserTokenContainer(user)
-        return [x.token for x in token_container.get_valid_tokens()]
+        user = self.get_user_for_userid(userid)
+        result = ()
+        if user is not None:
+            token_container = IUserTokenContainer(user)
+            result = [x.token for x in token_container.get_valid_tokens()]
+        return result
 
     def identityIsValid(self, identity):
         if     not identity \
@@ -111,8 +120,10 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         to identify the user in the future. If the user does not exist or
         cannot get a token, return None.
         """
-
-        hexdigest = self._get_token(userid, scope)
+        intids = component.getUtility(IIntIds)
+        user = User.get_user(userid)
+        userid = intids.queryId(user)
+        hexdigest = self._get_token(user, scope)
         if hexdigest:
             tkt = self.auth_tkt.AuthTicket(self.secret, userid,
                                            '0.0.0.0',
