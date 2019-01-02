@@ -20,18 +20,13 @@ from persistent.list import PersistentList
 
 from ZODB.interfaces import IConnection
 
-from zope import component
 from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
 from zope.cachedescriptors.property import Lazy
 
-from zope.component.hooks import getSite
-
 from zope.container.contained import Contained
-
-from zope.intid.interfaces import IIntIds
 
 from nti.dataserver.users.interfaces import IUserToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
@@ -49,15 +44,8 @@ from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 USER_TOKEN_CONTAINER_KEY = 'tokens'
 
 
-def _generate_token(user):
-    intids = component.getUtility(IIntIds)
-    current_site = getSite()
-    site_intid = intids.queryId(current_site)
-    user_val = str(site_intid) if site_intid else ""
-    user_intid = intids.queryId(user)
-    if user_intid:
-        user_val = "%s:%s" % (user_intid, user_val)
-    return "%s:%s" % (str(uuid.uuid4().time_low), user_val)
+def _generate_token():
+    return str(uuid.uuid4())
 
 
 @interface.implementer(IUserToken)
@@ -131,8 +119,7 @@ class UserTokenContainer(SchemaConfigured,
 
     def store_token(self, token):
         if not token.token:
-            user = self.__parent__
-            token.token = _generate_token(user)
+            token.token = _generate_token()
         self.tokens.append(token)
         return token
 
