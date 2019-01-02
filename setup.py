@@ -321,7 +321,7 @@ setup(
         'reportlab',
         'repoze.lru',  # LRU caching. Dep of Pyramid
         'repoze.sendmail',  # trunk has some good binary changes
-        'repoze.who',  #
+        'repoze.who >= 2.1',  #
         'repoze.zodbconn',
         # Requests: http for humans. Requests >= 1.0.x is depended on by httpie 0.4.
         # We use just the generic part of the API and work back to 0.14.
