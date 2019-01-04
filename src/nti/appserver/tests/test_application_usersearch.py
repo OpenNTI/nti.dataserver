@@ -157,12 +157,21 @@ class TestApplicationUserSearch(ApplicationLayerTest):
                           extra_environ=self._make_extra_environ(user_not_in_dfl_username))
         assert_that(res.json_body['Items'], has_length(0))
 
-    @WithSharedApplicationMockDS
+    @WithSharedApplicationMockDS(users=True, testapp=True)
     def test_user_search(self):
 
         with mock_dataserver.mock_db_trans(self.ds):
-            user = self._create_user()
+            user = User.get_user('sjohnson@nextthought.com')
+            regular_user1 = self._create_user('regular_user1')
+            regular_user2 = self._create_user('regular_user2')
             IFriendlyNamed(user).realname = u"Steve Johnson"
+            # have to share a darn community
+            community = Community.create_community(username=u'TheCommunity')
+            regular_user1.record_dynamic_membership(community)
+            regular_user2.record_dynamic_membership(community)
+            mc_site = get_site_for_site_names(('mathcounts.nextthought.com',))
+            set_user_creation_site(regular_user1, mc_site)
+            set_user_creation_site(regular_user2, mc_site)
 
         testapp = TestApp(self.app)
         res = testapp.get('/dataserver2',
@@ -204,6 +213,31 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         assert_that(sj, has_entry('realname', 'Steve Johnson'))
         assert_that(sj, has_entry('NonI18NFirstName', 'Steve'))
         assert_that(sj, has_entry('NonI18NLastName', 'Johnson'))
+
+        # Regular user cannot see user in a different site,
+        # even if a shared community
+        regular_user1_environ = self._make_extra_environ(username=u"regular_user1")
+        regular_user2_environ = self._make_extra_environ(username=u"regular_user2")
+        regular_user1_environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
+        regular_user2_environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
+        path = '/dataserver2/UserSearch/regular'
+        res = testapp.get(path, extra_environ=regular_user1_environ)
+        rs = res.json_body['Items']
+        assert_that(rs, has_length(2))
+        assert_that([x['Username'] for x in rs],
+                    contains_inanyorder('regular_user1', 'regular_user2'))
+
+        # Change user2 site
+        with mock_dataserver.mock_db_trans(self.ds):
+            regular_user2 = User.get_user('regular_user2')
+            set_user_creation_site(regular_user2,
+                                   get_site_for_site_names(('prmia.nextthought.com',)))
+
+        res = testapp.get(path, extra_environ=regular_user1_environ)
+        rs = res.json_body['Items']
+        assert_that(rs, has_length(1))
+        assert_that([x['Username'] for x in rs],
+                    contains('regular_user1'))
 
     @WithSharedApplicationMockDS
     def test_user_search_subset(self):
