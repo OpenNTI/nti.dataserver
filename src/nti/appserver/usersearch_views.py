@@ -441,6 +441,8 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
         is_site_admin = nauth.is_site_admin(remote_user)
         site_admin_utility = component.getUtility(ISiteAdminUtility)
 
+        user_sitename = user_creation_sitename(remote_user)
+
         site_names = get_component_hierarchy_names()
 
         if is_admin:
@@ -455,12 +457,16 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
                     return not user_site or not site_names or user_site in site_names
         else:
             # Visible if it doesn't have dynamic memberships,
-            # or we share dynamic memberships
+            # or we share dynamic memberships and the creation sites line up.
+            # Regular (non-admin) users can only search for users in their
+            # site.
             memberships = remote_user.usernames_of_dynamic_memberships
             remote_com_names = memberships - set(('Everyone',))
             def site_check(target_user):
                 return not hasattr(target_user, 'usernames_of_dynamic_memberships') \
-                    or target_user.usernames_of_dynamic_memberships.intersection(remote_com_names)
+                    or (target_user.usernames_of_dynamic_memberships.intersection(remote_com_names) \
+                        and (   not user_sitename \
+                             or user_sitename == user_creation_sitename(target_user)))
 
         def test(x):
             try:
