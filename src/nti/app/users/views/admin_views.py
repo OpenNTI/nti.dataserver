@@ -637,7 +637,7 @@ class LinkUserExternalIdentityView(AbstractUpdateView):
         identity_container.add_external_mapping(self._external_type,
                                                 self._external_id)
         notify(ObjectModifiedFromExternalEvent(self.context))
-        logger.info("Linking user to external id (%s) (external_type=%s) (external_id=%s",
+        logger.info("Linking user to external id (%s) (external_type=%s) (external_id=%s)",
                     self.context.username,
                     self._external_type,
                     self._external_id)
