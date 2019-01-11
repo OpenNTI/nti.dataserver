@@ -251,9 +251,6 @@ class CommunityMembersView(AbstractEntityViewMixin):
     def __call__(self):
         self.check_access()
         result = self._do_call()
-        hidden = IHiddenMembership(self.context)
-        # pylint: disable=too-many-function-args, no-member
-        result[TOTAL] = self.context.number_of_members() - hidden.number_of_members()
         return result
 
 
