@@ -241,7 +241,16 @@ Example response json body:
 UserEnrollments
 ---------------
 
-The UserEnrollments API allows for retrieving user enrollents in the system. The `CatalogEntryNTIID` value in these enrollment objects will map to NTIIDs found in the `ByTag` API and can be used in the `GrantAccess`/`RemoveAccess` APIs.
+The UserEnrollments API allows for retrieving user enrollments in the system. The `CatalogEntryNTIID` value
+in these enrollment objects will map to NTIIDs found in the `ByTag` API and can be used in the `GrantAccess`/`RemoveAccess` APIs.
+
+UserEnrollments will have a user's status towards completion of the course (if enabled). The `CourseProgress` entry
+in the enrollment record will indicate a user's progress in the course. If the user has completed the course, there
+will be a `CompletedItem` entry on the `CourseProgress`. This entry will contain information on when the user
+completed the course, whether they did so successfully (`Success`), and whether they were awarded any credits
+for completing the course. The `CompletedItem` will also have a `AssignmentCompletionMetadata` entry that
+describes how the user did on each required assignment in the course. This will include information about whether
+they succeeded on the assignment (`Success`) and what the requirements for the assignment were.
 
 HTTP Endpoint: user object link with rel=`UserEnrollments`
 
@@ -298,6 +307,60 @@ Example response json body:
                     "Class": "ContentPackageBundle",
                     "ContentPackages": []
             }
+            "CourseProgress": {
+                "AbsoluteProgress": 2,
+                "Class": "CompletionContextProgress",
+                "Completed": true,
+                "CompletedDate": "2018-06-05T19:16:43Z",
+                "CompletedItem": {
+                    "AssignmentCompletionMetadata": {
+                        "FailCount": 0,
+                        "ItemCount": 1,
+                        "Items": [
+                            {
+                                "AssignmentNTIID": "tag:nextthought.com,2011-10:NTI-NAQ-23055AD5E7CFDFD2EB46BD05A56A99517523F333AB503E04EDCBB2C7B7E473FE_0105",
+                                "AssignmentTitle": "Increasing Morale Knowledge Check",
+                                "AssignmentTotalPoints": null,
+                                "CompletionDate": "2018-06-05T20:50:06Z",
+                                "CompletionRequiredPassingPercentage": null,
+                                "Success": true,
+                                "UserPointsReceived": null
+                            }
+                        ],
+                        "SuccessCount": 1
+                    },
+                    "Class": "CompletedItem",
+                    "CompletedDate": "2018-06-05T19:16:43Z",
+                    "ItemNTIID": "tag:nextthought.com,2011-10:site.admin.alpha-OID-0x054bf359:5573657273:nWknhKTHCeE",
+                    "MimeType": "application/vnd.nextthought.completion.completeditem",
+                    "Success": true,
+                    "awarded_credits": [
+                        {
+                            "Class": "CourseAwardedCredit",
+                            "MimeType": "application/vnd.nextthought.credit.courseawardedcredit",
+                            "NTIID": "tag:nextthought.com,2011-10:NTI-AwardedCredit-system_20190115203134_361297_4051553683",
+                            "amount": 1,
+                            "awarded_date": "2018-06-05T19:16:43Z",
+                            "credit_definition": {
+                                "Class": "CreditDefinition",
+                                "credit_type": "Demo Credits",
+                                "credit_units": "Hours",
+                                "deleted": false,
+                                "href": "/dataserver2/users/greg.higgins@nextthought.com/Objects/tag%3Anextthought.com%2C2011-10%3Agreg.higgins%40nextthought.com-OID-0x05361acf%3A5573657273%3AUspcjNqsefh"
+                            },
+                            "description": null,
+                            "issuer": null,
+                            "title": "Leadership for Team Management"
+                        }
+                    ]
+                },
+                "HasProgress": true,
+                "MaxPossibleProgress": 2,
+                "MimeType": "application/vnd.nextthought.completion.completioncontextprogress",
+                "NTIID": "tag:nextthought.com,2011-10:site.admin.alpha-OID-0x054bf359:5573657273:nWknhKTHCeE",
+                "PercentageProgress": 1.0,
+            },
+
         }
  }
 
