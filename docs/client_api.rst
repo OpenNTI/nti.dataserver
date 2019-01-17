@@ -248,8 +248,8 @@ UserEnrollments will have a user's status towards completion of the course (if e
 in the enrollment record will indicate a user's progress in the course. If the user has completed the course, there
 will be a `CompletedItem` entry on the `CourseProgress`. This entry will contain information on when the user
 completed the course, whether they did so successfully (`Success`), and whether they were awarded any credits
-for completing the course. The `CompletedItem` will also have a `AssignmentCompletionMetadata` entry that
-describes how the user did on each required assignment in the course. This will include information about whether
+for completing the course. The `CompletedItem` will also have a `CompletionMetadata` entry that
+describes how the user did on some required items in the course. This will include information about whether
 they succeeded on the assignment (`Success`) and what the requirements for the assignment were.
 
 HTTP Endpoint: user object link with rel=`UserEnrollments`
@@ -313,14 +313,15 @@ Example response json body:
                 "Completed": true,
                 "CompletedDate": "2018-06-05T19:16:43Z",
                 "CompletedItem": {
-                    "AssignmentCompletionMetadata": {
+                    "CompletionMetadata": {
                         "FailCount": 0,
                         "ItemCount": 1,
                         "Items": [
                             {
+                                "MimeType": "application/vnd.nextthought.assignmentcompletionmetadata",
                                 "AssignmentNTIID": "tag:nextthought.com,2011-10:NTI-NAQ-23055AD5E7CFDFD2EB46BD05A56A99517523F333AB503E04EDCBB2C7B7E473FE_0105",
                                 "AssignmentTitle": "Increasing Morale Knowledge Check",
-                                "AssignmentTotalPoints": null,
+                                "TotalPoints": null,
                                 "CompletionDate": "2018-06-05T20:50:06Z",
                                 "CompletionRequiredPassingPercentage": null,
                                 "Success": true,
