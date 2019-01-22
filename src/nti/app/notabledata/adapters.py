@@ -220,12 +220,22 @@ class UserNotableData(AbstractAuthenticatedView):
                    set(self.remoteUser.dynamic_memberships))
         return {x.NTIID for x in results if IFriendsList.providedBy(x)}
 
+    @CachedProperty
+    def _course_sharing_scopes(self):
+        try:
+            from nti.contenttypes.courses.interfaces import ICourseInstanceSharingScope
+        except ImportError:
+            return set()
+        result = self.remoteUser.dynamic_memberships
+        return {x.NTIID for x in result if ICourseInstanceSharingScope.providedBy(x)}
+
     @CachedProperty('_time_range')
     def _safely_viewable_notable_intids(self):
         catalog = self._catalog
         # Any top-level items shared directly to me or my groups
         shared_with_ids = self._group_ntiids
         shared_with_ids.add(self.remoteUser.username)
+        shared_with_ids = shared_with_ids | self._course_sharing_scopes
         query = {'any_of': shared_with_ids}
         intids_shared_to_me = catalog['sharedWith'].apply(query)
 
