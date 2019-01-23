@@ -27,6 +27,7 @@ import os
 
 import pyramid
 
+from perfmetrics import Metric
 from perfmetrics import set_statsd_client
 from perfmetrics import statsd_client
 from perfmetrics import statsd_client_from_uri
@@ -37,9 +38,6 @@ from zope.cachedescriptors.property import Lazy
 def includeme(config):
     statsd_uri = config.registry.settings.get('statsd_uri')
     if statsd_uri:
-        # Include the perfmetrices configuration if we have a statsd_uri configured for pyramid
-        config.include('perfmetrics')
-        
         # Set up a default statsd client for others to use
         set_statsd_client(statsd_client_from_uri(statsd_uri))
 
@@ -57,6 +55,7 @@ class PerformanceHandler(object):
     def __init__(self, handler, client):
         self.handler = handler
         self.client = client
+        self._handler_metric_names = {}
 
     @Lazy
     def worker_id(self):
@@ -70,10 +69,36 @@ class PerformanceHandler(object):
     def free_metric_name(self):
         return self.worker_id + '.connection_pool.free'
 
+    def classify_request(self, request):
+        """
+        Classifies the request for segmenting the count
+        and timing metric we wrap around our handler. Currently
+        the request is segmented by the root path segment which in practice
+        results in segmenting by `dataserver2` or `socket.io`. This
+        hueristic may change in the future.
+        """
+        path_info = filter(lambda x: x, iter(request.path.split('/')))
+        return path_info[0] if path_info else 'root'
+
+    def metric_name_for_wrapping_handler(self, request):
+        classifier = self.classify_request(request)
+
+        # We expect only a few different classifiers so we cache
+        # so we cache these to avoid string formatting when necessary
+        metric_name = None
+        if classifier in self._handler_metric_names:
+            metric_name = self._handler_metric_names[classifier]
+        else:
+            metric_name = 'nti.performance.tween.%s' % classifier
+            self._handler_metric_names[classifier] = metric_name
+
+        return metric_name
+
     def __call__(self, request):
         response = None
         try:
-            response = self.handler(request)
+            with Metric(self.metric_name_for_wrapping_handler(request)):
+                response = self.handler(request)
             return response
         finally:
             if self.client is not None:
@@ -81,7 +106,7 @@ class PerformanceHandler(object):
                 try:
                     stat = _RESPONSE_COUNTER_STATS[status_code]
                     if stat is None:
-                        raise TypeError('Invalid status code' % status_code)
+                        raise TypeError('Invalid status code %i' % status_code)
                     self.client.incr(stat)
                 except (TypeError, IndexError):
                     # Unexpected response code...
