@@ -49,6 +49,7 @@ def includeme(config):
 
 _RESPONSE_COUNTER_STATS = ['pyramid.response.%i' % k if k >= 100 else None for k in range(0, 600)]
 
+_UNKNOWN_PATH_CLASSIFIER = '_unknown'
 
 class PerformanceHandler(object):
 
@@ -77,8 +78,29 @@ class PerformanceHandler(object):
         results in segmenting by `dataserver2` or `socket.io`. This
         hueristic may change in the future.
         """
-        path_info = filter(lambda x: x, iter(request.path.split('/')))
-        return path_info[0] if path_info else 'root'
+
+        # Basically we want the first path segment. The more readable way
+        # to do this is split by the path seperator and take the first
+        # non empty segment. This implementation is a bit more complicated
+        # but is much faster. 3x as fast, using timeit, (500ns vs 1680ns)
+        # when the path has several segments, and 2x as fast for paths with few segments
+        path = request.path or ''
+        seperator_index = path.find('/')
+        # no seperator we return the path or _UNKNOWN_PATH_CLASSIFIER
+        if seperator_index == -1:
+            return path or _UNKNOWN_PATH_CLASSIFIER
+
+        # Skip the leading slash
+        start = 1 if seperator_index == 0 else 0
+
+        # End at the seperator we found, unless it is a leading slash, in which case we
+        # need the next slash
+        end = seperator_index if seperator_index != 0 else path.find('/', 1)
+
+        # If there wasn't another slash go to the end
+        if end < 0:
+            end = None
+        return path[start:end] or _UNKNOWN_PATH_CLASSIFIER
 
     def metric_name_for_wrapping_handler(self, request):
         classifier = self.classify_request(request)
@@ -89,7 +111,7 @@ class PerformanceHandler(object):
         if classifier in self._handler_metric_names:
             metric_name = self._handler_metric_names[classifier]
         else:
-            metric_name = 'nti.performance.tween.%s' % classifier
+            metric_name = 'nti.performance.tween.%s' % classifier.replace('.', '-')
             self._handler_metric_names[classifier] = metric_name
 
         return metric_name

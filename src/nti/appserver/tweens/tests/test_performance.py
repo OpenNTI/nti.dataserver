@@ -148,4 +148,46 @@ class TestConnectionPoolStats(unittest.TestCase):
         assert_that(metrics, has_items(is_counter('ds1-local.nti.performance.tween.dataserver2'),
                                        is_timer('ds1-local.nti.performance.tween.dataserver2.t')))
 
+        self.client.clear()
+        request.path = '/socket.io/websocket'
+        tween(request)
+        metrics = self.client.metrics
+
+        assert_that(metrics, has_items(is_counter('ds1-local.nti.performance.tween.socket-io'),
+                                       is_timer('ds1-local.nti.performance.tween.socket-io.t')))
+
+    def test_classify_request(self):
+
+        handler = performance_tween_factory(lambda x: None, None)
+
+        request = PyramidDummyRequest()
+        
+        request.path = '/dataserver2'
+        assert_that(handler.classify_request(request), is_('dataserver2'))
+
+        request.path = 'dataserver2'
+        assert_that(handler.classify_request(request), is_('dataserver2'))
+
+        request.path = '/dataserver2/foo/bar/baz'
+        assert_that(handler.classify_request(request), is_('dataserver2'))
+
+        request.path = 'dataserver2/foo/bar/baz'
+        assert_that(handler.classify_request(request), is_('dataserver2'))
+
+        request.path = ''
+        assert_that(handler.classify_request(request), is_('_unknown'))
+
+        request.path = '//' #Is this even valid????
+        assert_that(handler.classify_request(request), is_('_unknown'))
+
+        request.path = ''
+        assert_that(handler.classify_request(request), is_('_unknown'))
+
+        request.path = None
+        assert_that(handler.classify_request(request), is_('_unknown'))
+        
+
+        
+        
+
         
