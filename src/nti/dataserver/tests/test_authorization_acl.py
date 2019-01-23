@@ -8,9 +8,9 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
-from hamcrest import is_not 
+from hamcrest import is_not
 from hamcrest import has_length
-from hamcrest import assert_that 
+from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import same_instance
 from hamcrest import contains_string
@@ -141,7 +141,7 @@ class TestACLProviders(unittest.TestCase):
 
 		acl = acl_prov.__acl__
 		assert_that(acl, has_length(1))
-		assert_that(acl[0], is_(auth_acl.ace_denying(nti_interfaces.EVERYONE_GROUP_NAME, 
+		assert_that(acl[0], is_(auth_acl.ace_denying(nti_interfaces.EVERYONE_GROUP_NAME,
 													 nti_interfaces.ALL_PERMISSIONS)))
 
 		# Given a creator and a member, the creator has all access
@@ -260,7 +260,10 @@ class Permits(BaseMatcher):
 		try:
 			self.prin = (nti_interfaces.IPrincipal(prin),)
 		except TypeError:
-			self.prin = prin
+			try:
+				self.prin = [nti_interfaces.IPrincipal(x) for x in prin]
+			except TypeError:
+				self.prin = prin
 		self.perm = perm if nti_interfaces.IPermission.providedBy(perm) else Permission(perm)
 		self.policy = policy
 
