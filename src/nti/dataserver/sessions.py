@@ -652,14 +652,14 @@ _session_active_keys = 'sessions/active_sessions_set'
 @component.adapter(ISocketSession, ISocketSessionConnectedEvent)
 def _increment_count_for_new_socket(session, event):
     redis = component.getUtility(IRedisClient)
-    redis.zincrby(_session_active_keys, session.owner, 1)
+    redis.zincrby(_session_active_keys, 1, session.owner)
 
 
 @component.adapter(ISocketSession, ISocketSessionDisconnectedEvent)
 def _decrement_count_for_dead_socket(session, event):
     redis = component.getUtility(IRedisClient)
     if redis.zscore(_session_active_keys, session.owner):
-        redis.zincrby(_session_active_keys, session.owner, -1)
+        redis.zincrby(_session_active_keys, -1, session.owner)
 
 deprecated('SessionServiceStorage', 'Use new session storage')
 class SessionServiceStorage(Persistent):
