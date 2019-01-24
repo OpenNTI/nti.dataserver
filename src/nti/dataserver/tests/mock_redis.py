@@ -26,12 +26,9 @@ import fakeredis
 
 from zope import interface
 
-import zope.testing.cleanup
-
 from nti.dataserver.interfaces import IRedisClient
 interface.classImplements(fakeredis.FakeStrictRedis,
                           IRedisClient)
-zope.testing.cleanup.addCleanUp(fakeredis.DATABASES.clear)
 
 InMemoryMockRedis = fakeredis.FakeStrictRedis  # BWC alias
 
@@ -75,16 +72,16 @@ if not hasattr(InMemoryMockRedis, 'pubsub'):
     InMemoryMockRedis.publish = publish
     InMemoryMockRedis._get_channel = _get_channel
 
-
-# Pretend to have a closeable connection pool
-if not hasattr(InMemoryMockRedis, 'connection_pool'):
-
-    class Pool(object):
-
-        def disconnect(self):
-            pass
-
-    InMemoryMockRedis.connection_pool = property(lambda unused_s: Pool())
+# XXX: Dont' think we need this anymore, causes an AttributeError with redis3.0
+# # Pretend to have a closeable connection pool
+# if not hasattr(InMemoryMockRedis, 'connection_pool'):
+#
+#     class Pool(object):
+#
+#         def disconnect(self):
+#             pass
+#
+#     InMemoryMockRedis.connection_pool = property(lambda unused_s: Pool())
 
 # Pretend to have a lock
 if not hasattr(InMemoryMockRedis, 'lock'):
