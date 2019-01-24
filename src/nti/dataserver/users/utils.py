@@ -162,7 +162,7 @@ def intids_of_users_by_sites(sites=()):
         sites = sites.split(',')
     catalog = get_entity_catalog()
     doc_ids = catalog[IX_SITE].apply({'any_of': sites or ()})
-    return doc_ids or ()
+    return doc_ids
 
 
 def get_users_by_sites(sites=()):
