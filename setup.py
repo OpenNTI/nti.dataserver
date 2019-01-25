@@ -67,6 +67,7 @@ TESTS_REQUIRE = [
     # easier access to the ipython debugger from nose, --ipdb; however,
     # messy with nose-progressive> consider pdbpp?
     'ipdb >= 0.8',
+    'lupa', # needed by fakeredis when using lua
     'nose >= 1.3.0',
     'nose2',
     'nose-timer',
