@@ -98,10 +98,9 @@ class PerformanceHandler(object):
 
         # We expect only a few different classifiers so we cache
         # so we cache these to avoid string formatting when necessary
-        metric_name = None
-        if classifier in self._handler_metric_names:
+        try:
             metric_name = self._handler_metric_names[classifier]
-        else:
+        except KeyError:
             metric_name = 'nti.performance.tween.%s' % classifier.replace('.', '-')
             self._handler_metric_names[classifier] = metric_name
 
