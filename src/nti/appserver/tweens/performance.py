@@ -92,7 +92,7 @@ class PerformanceHandler(object):
             return parts[1] or _UNKNOWN_PATH_CLASSIFIER
         except (IndexError, TypeError):
             return _UNKNOWN_PATH_CLASSIFIER
-        
+
     def metric_name_for_wrapping_handler(self, request):
         classifier = self.classify_request(request)
 
@@ -106,40 +106,37 @@ class PerformanceHandler(object):
 
         return metric_name
 
-    def _measure_and_call(self, request, statsd_client):
-        response = None
-
-        try:
-            with Metric(self.metric_name_for_wrapping_handler(request)):
-                response = self.handler(request)
-            return response
-        finally:
-            if statsd_client is not None:
-                status_code = response.status_code if response else 500
-                try:
-                    stat = _RESPONSE_COUNTER_STATS[status_code]
-                    if stat is None:
-                        raise TypeError('Invalid status code %i' % status_code)
-                    statsd_client.incr(stat)
-                except (TypeError, IndexError):
-                    # Unexpected response code...
-                    logger.exception('Unexpected response status code %s, not sending stats', status_code)
-                    
-                connection_pool = request.environ['nti_connection_pool']
-                free = connection_pool.free_count()
-                used_count = connection_pool.size - free
-
-                statsd_client.gauge(self.used_metric_name, used_count)
-                statsd_client.gauge(self.free_metric_name, free)
-                
     def __call__(self, request):
-        statsd_client_stack.push(self.client)
+        statsd_client = self.client
+        statsd_client_stack.push(statsd_client)
         try:
-            return self._measure_and_call(request, self.client)
+            response = None
+            try:
+                with Metric(self.metric_name_for_wrapping_handler(request)):
+                    response = self.handler(request)
+                return response
+            finally:
+                if statsd_client is not None:
+                    status_code = response.status_code if response else 500
+                    try:
+                        stat = _RESPONSE_COUNTER_STATS[status_code]
+                        if stat is None:
+                            raise TypeError('Invalid status code %i' % status_code)
+                        statsd_client.incr(stat)
+                    except (TypeError, IndexError):
+                        # Unexpected response code...
+                        logger.exception('Unexpected response status code %s, not sending stats', status_code)
+
+                    connection_pool = request.environ['nti_connection_pool']
+                    free = connection_pool.free_count()
+                    used_count = connection_pool.size - free
+
+                    statsd_client.gauge(self.used_metric_name, used_count)
+                    statsd_client.gauge(self.free_metric_name, free)
         finally:
             statsd_client_stack.pop()
 
-        
+
 def performance_tween_factory(handler, registry):
     client = statsd_client()
 
