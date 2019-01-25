@@ -24,10 +24,10 @@ import nti.dataserver.sessions as sessions
 from nti.dataserver import session_storage
 from nti.dataserver import users
 
+from nti.dataserver.interfaces import IRedisClient
+
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-
-from nti.dataserver.tests import mock_redis
 
 class MockSessionService(sessions.SessionService):
 
@@ -55,8 +55,6 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 
 	def setUp(self):
 		super(TestSessionService,self).setUp()
-		self.redis = mock_redis.InMemoryMockRedis()
-		component.provideUtility( self.redis, provides=nti_interfaces.IRedisClient )
 		self.session_service = MockSessionService()
 		self.storage = session_storage.OwnerBasedAnnotationSessionServiceStorage()
 		component.provideUtility( self.storage, provides=nti_interfaces.ISessionServiceStorage )
@@ -150,6 +148,7 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 
 	@WithMockDSTrans
 	def test_get_dead_session(self):
+		redis = component.getUtility(IRedisClient)
 		session = self.session_service.create_session( watch_session=False )
 		assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
 		# connect it
@@ -157,7 +156,7 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 		session.incr_hits()
 		assert_that( session, has_property( 'connected', True ) )
 		# This should have a stat now
-		assert_that( self.redis.zrange(sessions._session_active_keys, 0, -1, withscores=True),
+		assert_that( redis.zrange(sessions._session_active_keys, 0, -1, withscores=True),
 					 is_( [(session.owner, 1)]) )
 		# kill it
 		session.kill()
@@ -166,7 +165,7 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 		# No longer able to get
 		assert_that( self.session_service.get_session( session.session_id ), is_( none() ) )
 		# And the stat is 0
-		assert_that( self.redis.zrange(sessions._session_active_keys, 0, -1, withscores=True),
+		assert_that( redis.zrange(sessions._session_active_keys, 0, -1, withscores=True),
 					 is_( [(session.owner, 0)]) )
 
 	@WithMockDSTrans
