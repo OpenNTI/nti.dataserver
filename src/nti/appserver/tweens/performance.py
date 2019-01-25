@@ -31,6 +31,7 @@ from perfmetrics import Metric
 from perfmetrics import set_statsd_client
 from perfmetrics import statsd_client
 from perfmetrics import statsd_client_from_uri
+from perfmetrics import statsd_client_stack
 
 from zope.cachedescriptors.property import Lazy
 
@@ -116,20 +117,21 @@ class PerformanceHandler(object):
 
         return metric_name
 
-    def __call__(self, request):
+    def _measure_and_call(self, request, statsd_client):
         response = None
+
         try:
             with Metric(self.metric_name_for_wrapping_handler(request)):
                 response = self.handler(request)
             return response
         finally:
-            if self.client is not None:
+            if statsd_client is not None:
                 status_code = response.status_code if response else 500
                 try:
                     stat = _RESPONSE_COUNTER_STATS[status_code]
                     if stat is None:
                         raise TypeError('Invalid status code %i' % status_code)
-                    self.client.incr(stat)
+                    statsd_client.incr(stat)
                 except (TypeError, IndexError):
                     # Unexpected response code...
                     logger.exception('Unexpected response status code %s, not sending stats', status_code)
@@ -138,8 +140,15 @@ class PerformanceHandler(object):
                 free = connection_pool.free_count()
                 used_count = connection_pool.size - free
 
-                self.client.gauge(self.used_metric_name, used_count)
-                self.client.gauge(self.free_metric_name, free)
+                statsd_client.gauge(self.used_metric_name, used_count)
+                statsd_client.gauge(self.free_metric_name, free)
+                
+    def __call__(self, request):
+        statsd_client_stack.push(self.client)
+        try:
+            return self._measure_and_call(request, self.client)
+        finally:
+            statsd_client_stack.pop()
 
         
 def performance_tween_factory(handler, registry):
