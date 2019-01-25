@@ -80,9 +80,10 @@ class PerformanceHandler(object):
         hueristic may change in the future.
         """
 
-        # Basically we want the first path segment. The more readable way
-        # to do this is split by the path seperator and take the first
-        # non empty segment. Rather, this implementation is optimized for
+        # Basically we want the first path segment. A common
+        # way to do this would be to split by the seperator and then
+        # take the first none empty component.
+        # Rather, this implementation is optimized for
         # speed when consuming valid paths.
         path = request.path
         try:
@@ -96,7 +97,7 @@ class PerformanceHandler(object):
     def metric_name_for_wrapping_handler(self, request):
         classifier = self.classify_request(request)
 
-        # We expect only a few different classifiers so we cache
+        # We expect only a few different classifiers
         # so we cache these to avoid string formatting when necessary
         try:
             metric_name = self._handler_metric_names[classifier]
