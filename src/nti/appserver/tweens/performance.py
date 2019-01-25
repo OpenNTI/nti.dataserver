@@ -27,9 +27,11 @@ import os
 
 import pyramid
 
+from perfmetrics import Metric
 from perfmetrics import set_statsd_client
 from perfmetrics import statsd_client
 from perfmetrics import statsd_client_from_uri
+from perfmetrics import statsd_client_stack
 
 from zope.cachedescriptors.property import Lazy
 
@@ -37,9 +39,6 @@ from zope.cachedescriptors.property import Lazy
 def includeme(config):
     statsd_uri = config.registry.settings.get('statsd_uri')
     if statsd_uri:
-        # Include the perfmetrices configuration if we have a statsd_uri configured for pyramid
-        config.include('perfmetrics')
-        
         # Set up a default statsd client for others to use
         set_statsd_client(statsd_client_from_uri(statsd_uri))
 
@@ -51,12 +50,14 @@ def includeme(config):
 
 _RESPONSE_COUNTER_STATS = ['pyramid.response.%i' % k if k >= 100 else None for k in range(0, 600)]
 
+_UNKNOWN_PATH_CLASSIFIER = '_unknown'
 
 class PerformanceHandler(object):
 
     def __init__(self, handler, client):
         self.handler = handler
         self.client = client
+        self._handler_metric_names = {}
 
     @Lazy
     def worker_id(self):
@@ -70,31 +71,73 @@ class PerformanceHandler(object):
     def free_metric_name(self):
         return self.worker_id + '.connection_pool.free'
 
-    def __call__(self, request):
-        response = None
+    def classify_request(self, request):
+        """
+        Classifies the request for segmenting the count
+        and timing metric we wrap around our handler. Currently
+        the request is segmented by the root path segment which in practice
+        results in segmenting by `dataserver2` or `socket.io`. This
+        hueristic may change in the future.
+        """
+
+        # Basically we want the first path segment. A common
+        # way to do this would be to split by the seperator and then
+        # take the first none empty component.
+        # Rather, this implementation is optimized for
+        # speed when consuming valid paths.
+        path = request.path
         try:
-            response = self.handler(request)
-            return response
+            if path[0] != '/':
+                return _UNKNOWN_PATH_CLASSIFIER
+            parts = path.split('/', 2)
+            return parts[1] or _UNKNOWN_PATH_CLASSIFIER
+        except (IndexError, TypeError):
+            return _UNKNOWN_PATH_CLASSIFIER
+
+    def metric_name_for_wrapping_handler(self, request):
+        classifier = self.classify_request(request)
+
+        # We expect only a few different classifiers
+        # so we cache these to avoid string formatting when necessary
+        try:
+            metric_name = self._handler_metric_names[classifier]
+        except KeyError:
+            metric_name = 'nti.performance.tween.%s' % classifier.replace('.', '-')
+            self._handler_metric_names[classifier] = metric_name
+
+        return metric_name
+
+    def __call__(self, request):
+        statsd_client = self.client
+        statsd_client_stack.push(statsd_client)
+        try:
+            response = None
+            try:
+                with Metric(self.metric_name_for_wrapping_handler(request)):
+                    response = self.handler(request)
+                return response
+            finally:
+                if statsd_client is not None:
+                    status_code = response.status_code if response else 500
+                    try:
+                        stat = _RESPONSE_COUNTER_STATS[status_code]
+                        if stat is None:
+                            raise TypeError('Invalid status code %i' % status_code)
+                        statsd_client.incr(stat)
+                    except (TypeError, IndexError):
+                        # Unexpected response code...
+                        logger.exception('Unexpected response status code %s, not sending stats', status_code)
+
+                    connection_pool = request.environ['nti_connection_pool']
+                    free = connection_pool.free_count()
+                    used_count = connection_pool.size - free
+
+                    statsd_client.gauge(self.used_metric_name, used_count)
+                    statsd_client.gauge(self.free_metric_name, free)
         finally:
-            if self.client is not None:
-                status_code = response.status_code if response else 500
-                try:
-                    stat = _RESPONSE_COUNTER_STATS[status_code]
-                    if stat is None:
-                        raise TypeError('Invalid status code' % status_code)
-                    self.client.incr(stat)
-                except (TypeError, IndexError):
-                    # Unexpected response code...
-                    logger.exception('Unexpected response status code %s, not sending stats', status_code)
-                    
-                connection_pool = request.environ['nti_connection_pool']
-                free = connection_pool.free_count()
-                used_count = connection_pool.size - free
+            statsd_client_stack.pop()
 
-                self.client.gauge(self.used_metric_name, used_count)
-                self.client.gauge(self.free_metric_name, free)
 
-        
 def performance_tween_factory(handler, registry):
     client = statsd_client()
 
