@@ -82,27 +82,17 @@ class PerformanceHandler(object):
 
         # Basically we want the first path segment. The more readable way
         # to do this is split by the path seperator and take the first
-        # non empty segment. This implementation is a bit more complicated
-        # but is much faster. 3x as fast, using timeit, (500ns vs 1680ns)
-        # when the path has several segments, and 2x as fast for paths with few segments
-        path = request.path or ''
-        seperator_index = path.find('/')
-        # no seperator we return the path or _UNKNOWN_PATH_CLASSIFIER
-        if seperator_index == -1:
-            return path or _UNKNOWN_PATH_CLASSIFIER
-
-        # Skip the leading slash
-        start = 1 if seperator_index == 0 else 0
-
-        # End at the seperator we found, unless it is a leading slash, in which case we
-        # need the next slash
-        end = seperator_index if seperator_index != 0 else path.find('/', 1)
-
-        # If there wasn't another slash go to the end
-        if end < 0:
-            end = None
-        return path[start:end] or _UNKNOWN_PATH_CLASSIFIER
-
+        # non empty segment. Rather, this implementation is optimized for
+        # speed when consuming valid paths.
+        path = request.path
+        try:
+            if path[0] != '/':
+                return _UNKNOWN_PATH_CLASSIFIER
+            parts = path.split('/', 2)
+            return parts[1] or _UNKNOWN_PATH_CLASSIFIER
+        except (IndexError, TypeError):
+            return _UNKNOWN_PATH_CLASSIFIER
+        
     def metric_name_for_wrapping_handler(self, request):
         classifier = self.classify_request(request)
 

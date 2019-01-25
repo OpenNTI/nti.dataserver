@@ -165,14 +165,14 @@ class TestConnectionPoolStats(unittest.TestCase):
         request.path = '/dataserver2'
         assert_that(handler.classify_request(request), is_('dataserver2'))
 
-        request.path = 'dataserver2'
-        assert_that(handler.classify_request(request), is_('dataserver2'))
-
         request.path = '/dataserver2/foo/bar/baz'
         assert_that(handler.classify_request(request), is_('dataserver2'))
 
+        request.path = 'dataserver2'
+        assert_that(handler.classify_request(request), is_('_unknown'))
+
         request.path = 'dataserver2/foo/bar/baz'
-        assert_that(handler.classify_request(request), is_('dataserver2'))
+        assert_that(handler.classify_request(request), is_('_unknown'))
 
         request.path = ''
         assert_that(handler.classify_request(request), is_('_unknown'))
