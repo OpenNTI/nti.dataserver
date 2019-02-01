@@ -10,9 +10,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from base64 import b64decode
+
 import time
 
 from pyramid import httpexceptions as hexc
+
+from pyramid.response import Response
 
 from pyramid.view import view_config
 
@@ -89,7 +93,19 @@ def _image_view(context, unused_request, func):
         # we're sending direct OID links, does it still work? Or will it 404?
         url_or_link = render_link(url_or_link)
 
-    result = hexc.HTTPFound(url_or_link)
+    if url_or_link.startswith('data:'):
+        header, data = url_or_link.split(',', 1)
+        if header.endswith('base64'):
+            data = b64decode(data)
+            header = header[5:]
+        mime = header.split(';', 1)[0]
+        result = Response()
+        result.status_code = 200
+        result.body = data
+        result.content_type = mime
+    else:
+        result = hexc.HTTPFound(url_or_link)
+
     # Let it be cached for a bit. gravatar uses 5 minutes
     result.cache_control.max_age = 300
     result.expires = time.time() + 300
