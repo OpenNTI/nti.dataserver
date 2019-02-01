@@ -353,6 +353,7 @@ class _UserAdminSummaryExternalObject(_UserSummaryExternalObject):
         extDict['lastSeenTime'] = self.entity.lastSeenTime
         extDict['lastLoginTime'] = self.entity.lastLoginTime
         return extDict
+UserAdminSummaryExternalObject = _UserAdminSummaryExternalObject
 
 
 @component.adapter(ICoppaUserWithoutAgreement)
