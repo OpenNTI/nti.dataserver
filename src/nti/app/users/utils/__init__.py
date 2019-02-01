@@ -318,7 +318,7 @@ get_site_community = get_community_from_site
 
 def intids_of_community_or_site_members(all_members=False, site=None):
     """
-    Returns the intids of the community or site memebers
+    Returns the intids of the community or site members
     """
     community = get_community_from_site()
     if community is not None:
@@ -328,7 +328,7 @@ def intids_of_community_or_site_members(all_members=False, site=None):
 
 def get_community_or_site_members(all_members=False):
     """
-    Returns the community or site memebers for current site
+    Returns the community or site members for current site
     """
     community = get_community_from_site()
     if community is not None:
@@ -338,7 +338,7 @@ def get_community_or_site_members(all_members=False):
 
 def get_members_by_site(site, all_members=False):
     """
-    Returns the community or site members for the speicifed site
+    Returns the community or site members for the specified site
     """
     name = getattr(site, '__name__', site)
     site = get_host_site(name, True)
