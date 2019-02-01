@@ -161,7 +161,9 @@ def intids_of_users_by_sites(sites=()):
     if isinstance(sites, six.string_types):
         sites = sites.split(',')
     catalog = get_entity_catalog()
-    doc_ids = catalog[IX_SITE].apply({'any_of': sites or ()})
+    query = {IX_SITE: {'any_of': sites or ()},
+             IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.user',)}}
+    doc_ids = catalog.apply(query)
     return doc_ids or ()
 
 
