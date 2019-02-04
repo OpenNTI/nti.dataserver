@@ -49,6 +49,7 @@ from nti.appserver.interfaces import IUserCreatedWithRequestEvent
 from nti.contentfragments.interfaces import IUnicode
 
 from nti.dataserver.authorization import is_admin_or_site_admin
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import IModeledContent
