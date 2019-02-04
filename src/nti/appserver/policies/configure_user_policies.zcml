@@ -35,8 +35,12 @@
 
 	<!-- Filter capabilities -->
 	<subscriber factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
-			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
-			 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
+			    for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
+			    provides="nti.appserver.interfaces.IUserCapabilityFilter" />
+
+	<subscriber factory=".user_policies.CanManageOwnedGroupsCapabilityFilter"
+			    for="nti.dataserver.interfaces.IUser"
+			    provides="nti.appserver.interfaces.IUserCapabilityFilter" />
 
 
 	<!-- Require specific profile info for Koppa Kids -->

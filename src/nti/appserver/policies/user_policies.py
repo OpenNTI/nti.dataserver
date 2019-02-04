@@ -48,6 +48,7 @@ from nti.appserver.interfaces import IUserCreatedWithRequestEvent
 
 from nti.contentfragments.interfaces import IUnicode
 
+from nti.dataserver.authorization import is_admin_or_site_admin
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import IModeledContent
@@ -157,6 +158,19 @@ class MathCountsCapabilityFilter(NoAvatarUploadCapabilityFilter):
             or IMathcountsCoppaUserWithoutAgreement.providedBy(self.context):
             result.discard(u'nti.platform.p2p.dynamicfriendslists')
         return result
+
+
+@component.adapter(IUser)
+@interface.implementer(IUserCapabilityFilter)
+class CanManageOwnedGroupsCapabilityFilter(object):
+
+    def __init__(self, context):
+        self.context = context
+
+    def filterCapabilities(self, capabilities):
+        if not is_admin_or_site_admin(self.context):
+            capabilities.discard(u'nti.platform.groups.can_manage_owned_groups')
+        return capabilities
 
 
 #: This relationship is exposed on Users and in the handshake/ping
