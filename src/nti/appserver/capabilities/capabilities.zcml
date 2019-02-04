@@ -41,4 +41,9 @@
 		title="Change Password"
 		description='Can the user change his/her password?' />
 
+	<cap:capability
+		id='nti.platform.groups.can_manage_owned_groups'
+		title="Manage Groups"
+		description='Can the user manage owned groups?' />
+
 </configure>
