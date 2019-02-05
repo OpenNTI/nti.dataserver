@@ -324,6 +324,7 @@ Example response json body:
                                 "TotalPoints": null,
                                 "CompletionDate": "2018-06-05T20:50:06Z",
                                 "CompletionRequiredPassingPercentage": null,
+                                "CompletionRequiredPassingPoints": null,
                                 "Success": true,
                                 "UserPointsReceived": null
                             }
@@ -363,6 +364,128 @@ Example response json body:
             },
 
         }
+ }
+
+
+CourseCompletionEnrollmentRecords
+---------------------------------
+
+The `CourseCompletionEnrollmentRecords` API allows for gathering user enrollment records for those users that
+completed courses within a given datetime range. This endpoint accepts the `notBefore` and `notAfter` params,
+which are UTC seconds since the epoch. This will only include those users that have completed courses after
+the given `notBefore` param and before the given `notAfter` param.
+
+The output will include an `Items` json object, keyed by CatalogEntry NTIID (representing the course) and the
+user enrollment records of those users that completed the course (within the optionally given datetime range).
+
+HTTP Method: GET
+
+HTTP Response Code:
+ * 200 OK
+
+HTTP Response Body: A json representation of the user enrollments, representing user course completions.
+
+Example Request
+===============
+
+Example request url:
+ * `http://localhost/dataserver2/CourseCompletionEnrollmentRecords?notBefore=1548915502&notAfter=1548983899`
+
+Example request headers:
+
+.. code-block:: javascript
+
+ {
+ "Authorization": "<redacted>",
+ "Content-Length": "100",
+ "Content-Type": "application/json",
+ "Host": "localhost:80",
+ "Origin": "http://mytest.nextthought.com",
+ "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6",
+ "X-Requested-With": "XMLHttpRequest"
+ }
+
+Example response json body:
+
+.. code-block:: javascript
+
+ {
+    "CourseCount": 1,
+    "EnrollmentRecordCount": ,
+    "ItemCount": 1,
+    "Items": {
+        "tag:nextthought.com,2011-10:NTI-CourseInfo-4793550654888500085_4744283674710120222": [
+            {
+                {
+                    "CatalogEntryNTIID": "tag:nextthought.com,2011-10:NTI-CourseInfo-Alpha_NTI_Art",
+                    "Class": "CourseInstanceEnrollment",
+                    "CourseInstance": {
+                        "AdminLevel": "Alpha",
+                        "Class": "CourseInstance",
+                        "ContentPackageBundle": {
+                            "Class": "ContentPackageBundle",
+                            "ContentPackages": []
+                    }
+                    "CourseProgress": {
+                        "AbsoluteProgress": 2,
+                        "Class": "CompletionContextProgress",
+                        "Completed": true,
+                        "CompletedDate": "2018-06-05T19:16:43Z",
+                        "CompletedItem": {
+                            "CompletionMetadata": {
+                                "FailCount": 0,
+                                "ItemCount": 1,
+                                "Items": [
+                                    {
+                                        "MimeType": "application/vnd.nextthought.assignmentcompletionmetadata",
+                                        "AssignmentNTIID": "tag:nextthought.com,2011-10:NTI-NAQ-23055AD5E7CFDFD2EB46BD05A56A99517523F333AB503E04EDCBB2C7B7E473FE_0105",
+                                        "AssignmentTitle": "Increasing Morale Knowledge Check",
+                                        "TotalPoints": null,
+                                        "CompletionDate": "2018-06-05T20:50:06Z",
+                                        "CompletionRequiredPassingPercentage": null,
+                                        "CompletionRequiredPassingPoints": null,
+                                        "Success": true,
+                                        "UserPointsReceived": null
+                                    }
+                                ],
+                                "SuccessCount": 1
+                            },
+                            "Class": "CompletedItem",
+                            "CompletedDate": "2018-06-05T19:16:43Z",
+                            "ItemNTIID": "tag:nextthought.com,2011-10:site.admin.alpha-OID-0x054bf359:5573657273:nWknhKTHCeE",
+                            "MimeType": "application/vnd.nextthought.completion.completeditem",
+                            "Success": true,
+                            "awarded_credits": [
+                                {
+                                    "Class": "CourseAwardedCredit",
+                                    "MimeType": "application/vnd.nextthought.credit.courseawardedcredit",
+                                    "NTIID": "tag:nextthought.com,2011-10:NTI-AwardedCredit-system_20190115203134_361297_4051553683",
+                                    "amount": 1,
+                                    "awarded_date": "2018-06-05T19:16:43Z",
+                                    "credit_definition": {
+                                        "Class": "CreditDefinition",
+                                        "credit_type": "Demo Credits",
+                                        "credit_units": "Hours",
+                                        "deleted": false,
+                                        "href": "/dataserver2/users/greg.higgins@nextthought.com/Objects/tag%3Anextthought.com%2C2011-10%3Agreg.higgins%40nextthought.com-OID-0x05361acf%3A5573657273%3AUspcjNqsefh"
+                                    },
+                                    "description": null,
+                                    "issuer": null,
+                                    "title": "Leadership for Team Management"
+                                }
+                            ]
+                        },
+                        "HasProgress": true,
+                        "MaxPossibleProgress": 2,
+                        "MimeType": "application/vnd.nextthought.completion.completioncontextprogress",
+                        "NTIID": "tag:nextthought.com,2011-10:site.admin.alpha-OID-0x054bf359:5573657273:nWknhKTHCeE",
+                        "PercentageProgress": 1.0,
+                    },
+
+                }
+            }
+        ]
+    }
  }
 
 ByTag
