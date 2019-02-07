@@ -10,8 +10,6 @@ from zope import interface
 
 from zope.component import subscribers
 
-from nti.contenttypes.courses.interfaces import ICourseInstance
-
 from nti.coremetadata.interfaces import ICommunity
 
 from nti.dataserver.contenttypes.forums.interfaces import IForum
@@ -35,25 +33,25 @@ class AbstractForumTypeScheduledEmailJob(AbstractEmailJob, ScheduledEmailJobMixi
 
     execution_buffer = DEFAULT_EMAIL_BUFFER_TIME
 
-    def get_users(self):
-        users = []
+    def get_usernames(self):
+        usernames = set()
         for subscriber in subscribers((self.obj,), IForumTypeUsers):
-            subscriber_users = subscriber.get_users()
-            users.extend(subscriber_users)
+            subscriber_usernames = subscriber.get_usernames()
+            usernames = usernames.union(subscriber_usernames)
 
 
 @component.adapter(IForum)
 class ForumCreatedScheduledEmailJob(AbstractForumTypeScheduledEmailJob):
 
     def __call__(self, *args, **kwargs):
-        users = self.get_users()
+        users = self.get_usernames()
 
 
 @component.adapter(ITopic)
 class TopicCreatedScheduledEmailJob(AbstractForumTypeScheduledEmailJob):
 
     def __call__(self, *args, **kwargs):
-        users = self.get_users()
+        users = self.get_usernames()
 
 
 @interface.implementer(IForumTypeUsers)
@@ -67,18 +65,11 @@ class AbstractUsersForForumType(object):
     def _users_for_type(self, container):
         raise NotImplementedError
 
-    def get_users(self):
+    def get_usernames(self):
         container = find_interface(self.context, self.leaf_iface)
         if container is not None:
             return self._users_for_type(container)
-
-
-class CourseUsersForForumType(AbstractUsersForForumType):
-
-    leaf_iface = ICourseInstance
-
-    def _users_for_type(self, course):
-        return []
+        return set()
 
 
 class CommunityUsersForForumType(AbstractUsersForForumType):
@@ -86,4 +77,4 @@ class CommunityUsersForForumType(AbstractUsersForForumType):
     leaf_iface = ICommunity
 
     def _users_for_type(self, community):
-        return []
+        return set(community.iter_member_usernames())

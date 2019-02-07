@@ -654,7 +654,7 @@ class ISendEmailOnForumTypeCreation(interface.Interface):
 
 class IForumTypeUsers(interface.Interface):
 
-    def get_users():
+    def get_usernames():
         """
-        :return: List of users that are belong to this forum type object
+        :return: Set of usernames that are belong to this forum type object
         """

@@ -156,4 +156,12 @@
              provides="nti.dataserver.interfaces.IScheduledEmailJob"
              for=".interfaces.ITopic" />
 
+    <subscriber factory=".job.CommunityUsersForForumType"
+                provides=".interfaces.IForumTypeUsers"
+                for=".interfaces.ITopic" />
+
+    <subscriber factory=".job.CommunityUsersForForumType"
+                provides=".interfaces.IForumTypeUsers"
+                for=".interfaces.IForum" />
+
 </configure>
