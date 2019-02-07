@@ -46,6 +46,7 @@ class ForumCreatedScheduledEmailJob(AbstractForumTypeScheduledEmailJob):
 
     def __call__(self, *args, **kwargs):
         users = self.get_usernames()
+        # This method is currently incomplete
 
 
 @component.adapter(ITopic)
@@ -53,6 +54,7 @@ class TopicCreatedScheduledEmailJob(AbstractForumTypeScheduledEmailJob):
 
     def __call__(self, *args, **kwargs):
         users = self.get_usernames()
+        # This method is currently incomplete
 
 
 @interface.implementer(IForumTypeUsers)
