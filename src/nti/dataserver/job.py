@@ -31,14 +31,14 @@ class AbstractEmailJob(object):
 
     _jid = None
 
+    def __init__(self, obj):
+        self.obj = obj
+
     @property
     def jid(self):
         if self._jid is None:
             self._jid = '%s_added_%s' % (self.jid_prefix, time.time())
         return self._jid
-
-    def __init__(self, obj):
-        self.obj = obj
 
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
