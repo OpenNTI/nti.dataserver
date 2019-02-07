@@ -6,11 +6,8 @@ from __future__ import absolute_import
 from __future__ import division
 
 import time
-from nti.schema.fieldproperty import createDirectFieldProperties
 
 from zope import interface
-
-from zope.cachedescriptors.property import Lazy
 
 from nti.asynchronous.scheduled.job import create_scheduled_job
 
@@ -19,6 +16,8 @@ from nti.asynchronous.scheduled.utils import add_scheduled_job
 from nti.dataserver.interfaces import IEmailJob
 
 from nti.dataserver.interfaces import IScheduledEmailJob
+
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 __docformat__ = "restructuredtext en"
 
@@ -65,5 +64,7 @@ def create_and_queue_scheduled_email_job(obj):
         return
     job = create_scheduled_job(job,
                                jobid=job.jid,
-                               timestamp=job.execution_time)
+                               timestamp=job.execution_time,
+                               jargs=job.jargs,
+                               jkwargs=job.jkwargs)
     return add_scheduled_job(job)

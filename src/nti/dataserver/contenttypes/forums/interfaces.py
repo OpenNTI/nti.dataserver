@@ -644,3 +644,17 @@ class IUserTopicParticipationSummary(ITopicParticipationSummary):
 
     Contexts = TypedIterable(title=u"An iterable of the comment contexts.",
                              value_type=Object(IUserTopicParticipationContext))
+
+
+class ISendEmailOnForumTypeCreation(interface.Interface):
+    """
+    Marker interface for sending an email upon forum type object creation
+    """
+
+
+class IForumTypeUsers(interface.Interface):
+
+    def get_users():
+        """
+        :return: List of users that are belong to this forum type object
+        """
