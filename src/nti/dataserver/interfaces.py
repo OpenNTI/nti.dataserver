@@ -1531,12 +1531,6 @@ class IScheduledEmailJob(IEmailJob):
                               required=True)
 
 
-class ISendEmailOnIntIdAddedEvent(interface.Interface):
-    """
-    A marker interface for sending a notification when an object is added to a container
-    """
-
-
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?

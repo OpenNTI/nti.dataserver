@@ -6,7 +6,9 @@ from __future__ import absolute_import
 from __future__ import division
 
 from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
+
 from nti.dataserver.job import create_and_queue_scheduled_email_job
+
 from nti.traversal.traversal import find_interface
 
 __docformat__ = "restructuredtext en"
