@@ -148,6 +148,7 @@
 	<include package=".saml" />
 	<include package=".users" />
 	<include package=".metadata" />
+    <include package=".job" />
 
 	<include package="." file="configure_stream.zcml" />
 	<include package="." file="configure_restricted.zcml" />

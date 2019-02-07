@@ -17,11 +17,11 @@ from zope import component
 
 from nti.coremetadata.interfaces import IUser
 
-from nti.dataserver.interfaces import IScheduledEmailJob
+from nti.dataserver.job.interfaces import IScheduledEmailJob
 
-from nti.dataserver.job import AbstractEmailJob
-from nti.dataserver.job import create_and_queue_scheduled_email_job
-from nti.dataserver.job import ScheduledEmailJobMixin
+from nti.dataserver.job.email import AbstractEmailJob
+from nti.dataserver.job.email import create_and_queue_scheduled_email_job
+from nti.dataserver.job.email import ScheduledEmailJobMixin
 
 from nti.dataserver.tests import SharedConfiguringTestLayer
 

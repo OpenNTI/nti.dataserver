@@ -149,11 +149,11 @@
                 for=".interfaces.IForum zope.intid.interfaces.IIntIdAddedEvent" />
 
     <adapter factory=".job.ForumCreatedScheduledEmailJob"
-             provides="nti.dataserver.interfaces.IScheduledEmailJob"
+             provides="nti.dataserver.job.interfaces.IScheduledEmailJob"
              for=".interfaces.IForum" />
 
     <adapter factory=".job.TopicCreatedScheduledEmailJob"
-             provides="nti.dataserver.interfaces.IScheduledEmailJob"
+             provides="nti.dataserver.job.interfaces.IScheduledEmailJob"
              for=".interfaces.ITopic" />
 
     <subscriber factory=".job.CommunityUsersForForumType"

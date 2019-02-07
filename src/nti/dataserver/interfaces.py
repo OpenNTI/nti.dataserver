@@ -32,7 +32,6 @@ from zope.site.interfaces import IFolder
 from zope.site.interfaces import IRootFolder
 
 from zope.schema import Iterable
-from zope.schema import List
 
 from nti.contentrange import interfaces as rng_interfaces
 
@@ -1493,42 +1492,7 @@ class ISiteAdminManagerUtility(interface.Interface):
         """
 
 
-class IEmailJob(interface.Interface):
-    """
-    A callable for an asynchronous job that sends an email with
-    the appropriate metadata for registering the job
-    """
 
-    jid = ValidTextLine(title=u'JID',
-                        description=u'The id that will be registered for this job',
-                        required=True)
-
-    jid_prefix = ValidTextLine(title=u'JID Prefix',
-                               description=u'The prefix for this job',
-                               required=True,
-                               default=u'EmailJob')
-
-    jargs = List(title=u'jargs',
-                 description=u'Args that will be passed to the job callable',
-                 required=False)
-
-    jkwargs = Dict(title=u'jkwargs',
-                   description=u'Kwargs that will be passed to the job callable',
-                   required=False)
-
-
-class IScheduledEmailJob(IEmailJob):
-    """
-    An IEmailJob that will be ran as a scheduled job
-    """
-
-    execution_time = Number(title=u'Execution Time',
-                            description=u'The timestamp at which this object should be executed',
-                            required=True)
-
-    execution_buffer = Number(title=u'Execution Buffer',
-                              description=u'The amount of time to buffer from when this job is queued to execution',
-                              required=True)
 
 
 # XXX Now make all the interfaces previously

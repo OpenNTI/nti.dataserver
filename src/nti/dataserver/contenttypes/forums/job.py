@@ -16,8 +16,8 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import IForumTypeUsers
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
-from nti.dataserver.job import AbstractEmailJob
-from nti.dataserver.job import ScheduledEmailJobMixin
+from nti.dataserver.job.email import AbstractEmailJob
+from nti.dataserver.job.email import ScheduledEmailJobMixin
 
 from nti.traversal.traversal import find_interface
 
