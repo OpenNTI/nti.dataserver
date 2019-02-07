@@ -38,6 +38,7 @@ class AbstractForumTypeScheduledEmailJob(AbstractEmailJob, ScheduledEmailJobMixi
         for subscriber in subscribers((self.obj,), IForumTypeUsers):
             subscriber_usernames = subscriber.get_usernames()
             usernames = usernames.union(subscriber_usernames)
+        return usernames
 
 
 @component.adapter(IForum)
