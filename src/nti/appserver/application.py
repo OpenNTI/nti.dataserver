@@ -573,6 +573,15 @@ def createApplication( http_port,
 		# This branch exists only for tests
 		pyramid_config.set_root_factory( 'nti.appserver._dataserver_pyramid_traversal.root_resource_factory' )
 
+	# Add view accept order when client is not clear, preferring `application/json` views.
+	pyramid_config.add_accept_view_order('application/json', weighs_more_than=('text/html',))
+	pyramid_config.add_accept_view_order('application/vnd.nextthought.pageinfo',
+										 weighs_less_than=('application/json',))
+	pyramid_config.add_accept_view_order('application/vnd.nextthought.pageinfo+json',
+										 weighs_less_than=('application/json',))
+	pyramid_config.add_accept_view_order('application/vnd.nextthought.link+json',
+										 weighs_less_than=('application/json',))
+
 	#content_type predicate for view_config.
 	pyramid_config.add_view_predicate('content_type', pyramid_predicates.ContentTypePredicate)
 	# Chameleon templating support; see also _renderer_settings
@@ -597,7 +606,7 @@ def createApplication( http_port,
 	# This is only active if statsd_uri is defined in the config. Even if it is defined
 	# and points to a non-existant server, UDP won't block
 
-        # Optionally configure performance information
+	# Optionally configure performance information
 	pyramid_config.include( 'nti.appserver.tweens.performance' )
 
 	# First in our stack, before any "application" processing, hook in a place to run
