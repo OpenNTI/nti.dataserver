@@ -1490,11 +1490,6 @@ class ISiteAdminManagerUtility(interface.Interface):
         """
         Returns all sibling site names for this site
         """
-
-
-
-
-
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?
