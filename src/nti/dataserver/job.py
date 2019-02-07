@@ -9,6 +9,8 @@ import time
 
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from nti.asynchronous.scheduled.job import create_scheduled_job
 
 from nti.asynchronous.scheduled.utils import add_scheduled_job
@@ -29,16 +31,12 @@ class AbstractEmailJob(object):
 
     createDirectFieldProperties(IEmailJob)
 
-    _jid = None
-
     def __init__(self, obj):
         self.obj = obj
 
-    @property
+    @Lazy
     def jid(self):
-        if self._jid is None:
-            self._jid = '%s_added_%s' % (self.jid_prefix, time.time())
-        return self._jid
+        return '%s_added_%s' % (self.jid_prefix, time.time())
 
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
@@ -47,14 +45,11 @@ class AbstractEmailJob(object):
 @interface.implementer(IScheduledEmailJob)
 class ScheduledEmailJobMixin(object):
 
-    _execution_time = None
-    execution_buffer = None
+    execution_buffer = 0
 
-    @property
+    @Lazy
     def execution_time(self):
-        if self._execution_time is None:
-            self._execution_time = time.time() + self.execution_buffer
-        return self._execution_time
+        return time.time() + self.execution_buffer
 
 
 def create_and_queue_scheduled_email_job(obj):
