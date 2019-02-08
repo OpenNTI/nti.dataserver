@@ -157,11 +157,11 @@
              for=".interfaces.ITopic" />
 
     <subscriber factory=".job.CommunityUsersForForumType"
-                provides=".interfaces.IForumTypeUsers"
+                provides=".interfaces.IForumTypeCreatedNotificationUsers"
                 for=".interfaces.ITopic" />
 
     <subscriber factory=".job.CommunityUsersForForumType"
-                provides=".interfaces.IForumTypeUsers"
+                provides=".interfaces.IForumTypeCreatedNotificationUsers"
                 for=".interfaces.IForum" />
 
 </configure>

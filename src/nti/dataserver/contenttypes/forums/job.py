@@ -13,7 +13,7 @@ from zope.component import subscribers
 from nti.coremetadata.interfaces import ICommunity
 
 from nti.dataserver.contenttypes.forums.interfaces import IForum
-from nti.dataserver.contenttypes.forums.interfaces import IForumTypeUsers
+from nti.dataserver.contenttypes.forums.interfaces import IForumTypeCreatedNotificationUsers
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
 from nti.dataserver.job.email import AbstractEmailJob
@@ -35,7 +35,7 @@ class AbstractForumTypeScheduledEmailJob(AbstractEmailJob, ScheduledEmailJobMixi
 
     def get_usernames(self):
         usernames = set()
-        for subscriber in subscribers((self.obj,), IForumTypeUsers):
+        for subscriber in subscribers((self.obj,), IForumTypeCreatedNotificationUsers):
             subscriber_usernames = subscriber.get_usernames()
             usernames = usernames.union(subscriber_usernames)
         return usernames
@@ -57,7 +57,7 @@ class TopicCreatedScheduledEmailJob(AbstractForumTypeScheduledEmailJob):
         # This method is currently incomplete
 
 
-@interface.implementer(IForumTypeUsers)
+@interface.implementer(IForumTypeCreatedNotificationUsers)
 class AbstractUsersForForumType(object):
 
     leaf_iface = None

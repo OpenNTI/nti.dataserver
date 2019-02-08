@@ -26,7 +26,7 @@ from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.forum import Forum
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
-from nti.dataserver.contenttypes.forums.interfaces import IForumTypeUsers
+from nti.dataserver.contenttypes.forums.interfaces import IForumTypeCreatedNotificationUsers
 from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
 
 from nti.dataserver.contenttypes.forums.subscribers import _send_email_on_forum_type_creation
@@ -119,7 +119,7 @@ class TestSubscribers(DataserverLayerTest):
         forum = self._create_community_forum(forum_name=u'test_forum')
         topic = self._add_community_topic(forum=forum, topic_name=u'test_topic')
         usernames = set()
-        for subscriber in subscribers((topic,), IForumTypeUsers):
+        for subscriber in subscribers((topic,), IForumTypeCreatedNotificationUsers):
             usernames = usernames.union(subscriber.get_usernames())
         assert_that(usernames, has_length(1))
 
@@ -127,6 +127,6 @@ class TestSubscribers(DataserverLayerTest):
     def test_community_users_for_forum_type(self):
         forum = self._create_community_forum(forum_name=u'test_forum')
         usernames = set()
-        for subscriber in subscribers((forum,), IForumTypeUsers):
+        for subscriber in subscribers((forum,), IForumTypeCreatedNotificationUsers):
             usernames = usernames.union(subscriber.get_usernames())
         assert_that(usernames, has_length(1))

@@ -5,8 +5,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-import time
+import calendar
 
+from zope import datetime
 from zope import interface
 
 from zope.cachedescriptors.property import Lazy
@@ -36,7 +37,7 @@ class AbstractEmailJob(object):
 
     @Lazy
     def job_id(self):
-        return '%s_added_%s' % (self.job_id_prefix, time.time())
+        return '%s_added_%s' % (self.job_id_prefix, calendar.timegm(datetime.utcnow()))
 
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
@@ -49,7 +50,7 @@ class ScheduledEmailJobMixin(object):
 
     @Lazy
     def execution_time(self):
-        return time.time() + self.execution_buffer
+        return calendar.timegm(datetime.utcnow()) + self.execution_buffer
 
 
 def create_and_queue_scheduled_email_job(obj):
