@@ -20,13 +20,12 @@ from zope.component import subscribers
 
 from zope.location.interfaces import IRoot
 
-from nti.dataserver.contenttypes.forums.board import Board
-
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.forum import Forum
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 from nti.dataserver.contenttypes.forums.interfaces import IForumTypeCreatedNotificationUsers
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
 from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
 
 from nti.dataserver.contenttypes.forums.subscribers import _send_email_on_forum_type_creation
@@ -87,7 +86,7 @@ class TestSubscribers(DataserverLayerTest):
         interface.alsoProvides(forum, IRoot)  # Mock this in for the purpose of testing
         topic = Topic()
         topic.__parent__ = forum
-
+        interface.alsoProvides(topic, IHeadlineTopic)
         # Assert we dont send email if parent does not provide iface
         _send_email_on_forum_type_creation(topic, None)
         assert_that(queue.empty(), is_(True))
@@ -97,36 +96,11 @@ class TestSubscribers(DataserverLayerTest):
         _send_email_on_forum_type_creation(topic, None)
         assert_that(queue.empty(), is_not(True))
 
-    @fudge.patch('nti.asynchronous.scheduled.utils.get_scheduled_queue')
-    def test_forum_creation_email_subscriber(self, fake_queue):
-        queue = self._setup_mock_email_job(fake_queue)
-        board = Board()
-        interface.alsoProvides(board, IRoot)  # Mock this in for the purpose of testing
-        forum = Forum()
-        forum.__parent__ = board
-
-        # Assert we dont send email if parent does not provide iface
-        _send_email_on_forum_type_creation(forum, None)
-        assert_that(queue.empty(), is_(True))
-
-        # Assert we send email if parent provides iface
-        interface.alsoProvides(board, ISendEmailOnForumTypeCreation)
-        _send_email_on_forum_type_creation(forum, None)
-        assert_that(queue.empty(), is_not(True))
-
     @WithMockDSTrans
     def test_community_users_for_topic_type(self):
         forum = self._create_community_forum(forum_name=u'test_forum')
         topic = self._add_community_topic(forum=forum, topic_name=u'test_topic')
         usernames = set()
         for subscriber in subscribers((topic,), IForumTypeCreatedNotificationUsers):
-            usernames = usernames.union(subscriber.get_usernames())
-        assert_that(usernames, has_length(1))
-
-    @WithMockDSTrans
-    def test_community_users_for_forum_type(self):
-        forum = self._create_community_forum(forum_name=u'test_forum')
-        usernames = set()
-        for subscriber in subscribers((forum,), IForumTypeCreatedNotificationUsers):
             usernames = usernames.union(subscriber.get_usernames())
         assert_that(usernames, has_length(1))

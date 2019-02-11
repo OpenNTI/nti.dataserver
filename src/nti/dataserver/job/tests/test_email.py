@@ -15,13 +15,14 @@ from Queue import Queue
 
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
 from nti.coremetadata.interfaces import IUser
 
-from nti.dataserver.job.interfaces import IScheduledEmailJob
+from nti.dataserver.job.interfaces import IScheduledJob
 
 from nti.dataserver.job.email import AbstractEmailJob
 from nti.dataserver.job.email import create_and_queue_scheduled_email_job
-from nti.dataserver.job.email import ScheduledEmailJobMixin
 
 from nti.dataserver.tests import SharedConfiguringTestLayer
 
@@ -35,9 +36,13 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-class MockScheduledEmailJob(AbstractEmailJob, ScheduledEmailJobMixin):
+class MockScheduledEmailJob(AbstractEmailJob):
 
     execution_buffer = 5  # seconds
+
+    @Lazy
+    def execution_time(self):
+        return self.utc_now + self.execution_buffer
 
     def __call__(self, *args, **kwargs):
         return True
@@ -55,7 +60,7 @@ class TestJob(DataserverLayerTest):
 
         gsm = component.getGlobalSiteManager()
         gsm.registerAdapter(MockScheduledEmailJob,
-                            provided=IScheduledEmailJob,
+                            provided=IScheduledJob,
                             required=(IUser,))  # User is arbitrary here
         return queue
 

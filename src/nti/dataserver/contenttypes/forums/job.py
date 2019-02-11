@@ -5,8 +5,12 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+import six
+from bs4 import BeautifulSoup
 from zope import component
 from zope import interface
+
+from zope.cachedescriptors.property import Lazy
 
 from zope.component import subscribers
 
@@ -14,10 +18,19 @@ from nti.coremetadata.interfaces import ICommunity
 
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import IForumTypeCreatedNotificationUsers
-from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
+
+from nti.dataserver.contenttypes.forums.notification import send_creation_notification_email
 
 from nti.dataserver.job.email import AbstractEmailJob
-from nti.dataserver.job.email import ScheduledEmailJobMixin
+
+from nti.dataserver.job.interfaces import IScheduledJob
+
+from nti.dataserver.users import User
+
+from nti.mailer.interfaces import IEmailAddressable
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.traversal.traversal import find_interface
 
@@ -26,35 +39,77 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-DEFAULT_EMAIL_BUFFER_TIME = 60  # 1 minute
+DEFAULT_EMAIL_DEFER_TIME = 60  # 1 minute
 
 
-class AbstractForumTypeScheduledEmailJob(AbstractEmailJob, ScheduledEmailJobMixin):
+@interface.implementer(IScheduledJob)
+class AbstractForumTypeScheduledEmailJob(AbstractEmailJob):
 
-    execution_buffer = DEFAULT_EMAIL_BUFFER_TIME
+    execution_buffer = DEFAULT_EMAIL_DEFER_TIME
 
-    def get_usernames(self):
+    @Lazy
+    def execution_time(self):
+        return self.utc_now + self.execution_buffer
+
+    def get_usernames(self, obj):
         usernames = set()
-        for subscriber in subscribers((self.obj,), IForumTypeCreatedNotificationUsers):
+        for subscriber in subscribers((obj,), IForumTypeCreatedNotificationUsers):
             subscriber_usernames = subscriber.get_usernames()
             usernames = usernames.union(subscriber_usernames)
         return usernames
 
+    def _emails_from_usernames(self, usernames):
+        emails = []
+        for username in usernames:
+            user = User.get_user(username)
+            email = IEmailAddressable(user, None)
+            if email is None:
+                logger.debug(u'Username %s does not have an email address for notification' % username)
+                continue
+            emails.append(email.email)
+        return emails
 
-@component.adapter(IForum)
-class ForumCreatedScheduledEmailJob(AbstractForumTypeScheduledEmailJob):
+    def _do_call(self, obj, usernames):
+        raise NotImplementedError
 
     def __call__(self, *args, **kwargs):
-        users = self.get_usernames()
-        # This method is currently incomplete
+        object_ntiid = kwargs.get('obj_ntiid')
+        obj = find_object_with_ntiid(object_ntiid)
+        if obj is None:
+            logger.debug(u'Object with ntiid %s no longer exists' % object_ntiid)
+            return
+        usernames = self.get_usernames(obj)
+        self._do_call(obj, usernames)
 
 
-@component.adapter(ITopic)
-class TopicCreatedScheduledEmailJob(AbstractForumTypeScheduledEmailJob):
+@component.adapter(IHeadlineTopic)
+class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
 
-    def __call__(self, *args, **kwargs):
-        users = self.get_usernames()
-        # This method is currently incomplete
+    def _post_to_html(self, post):
+        html = BeautifulSoup('', features='html5lib')
+        for part in post.body:
+            if isinstance(part, six.string_types):
+                part = "<br />".join(part.split('\n'))
+                # Just html, lets append it in to the tree
+                new_tag = '<div>%s</div>' % part
+                new_tag = BeautifulSoup(new_tag, features='html.parser')
+                html.body.append(new_tag)
+        return html.body.text
+
+    def _do_call(self, topic, usernames):
+        from IPython.terminal.debugger import set_trace;set_trace()
+
+        title = topic.title
+        forum = find_interface(topic, IForum)
+        forum_title = forum.title
+        subject = 'Discussion %s created in %s' % (title, forum_title)
+        emails = self._emails_from_usernames(usernames)
+        message = self._post_to_html(topic.headline)
+        send_creation_notification_email(topic,
+                                         sender=topic.creator,
+                                         receiver_emails=emails,
+                                         subject=subject,
+                                         message=message)
 
 
 @interface.implementer(IForumTypeCreatedNotificationUsers)
