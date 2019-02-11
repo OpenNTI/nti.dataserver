@@ -77,13 +77,13 @@ class ExampleDatabaseInitializer(object):
                  ('patrick@artofproblemsolving.com', 'Dave Patrick')]
 
         # Add the ok people
-        for uid in ('aaron.eskam', 'andrew.ligon', 'carlos.sanchez',
-                    'chris.utz', 'greg.higgins', 'jason.madden',
-                    'jeff.muehring', 'jonathan.grimes', 'josh.zuech', 'julie.zhu',
+        for uid in ('aaron.eskam', 'andrew.ligon',
+                    'chris.utz', 'jason.madden',
+                    'jonathan.grimes', 'josh.zuech', 'julie.zhu',
                     'kaley.white', 'ken.parker', 'egawati.panjei',
-                    'ray.hatfield', 'sean.jones', 'mary.enos',
-                    'zachary.roux', 'bobby.hagen',
-                    'austin.graham', 'ethan.berman', 'admin'):
+                    'ray.hatfield', 'sean.jones',
+                    'bobby.hagen', 'sheldon.smith', 'alex.yang',
+                    'ethan.berman', 'admin'):
             USERS.append((uid, uid.replace('.', ' ').title(),
                           uid + '@nextthought.com'))
 
@@ -121,7 +121,7 @@ class ExampleDatabaseInitializer(object):
 
     def _make_communities(self, ds):
         # Communities
-        aopsCommunity = Community.create_entity(ds, 
+        aopsCommunity = Community.create_entity(ds,
                                                 username=u"ArtOfProblemSolving")
         aopsCommunity.realname = aopsCommunity.username
         aopsCommunity.alias = u'AOPS'
@@ -130,12 +130,12 @@ class ExampleDatabaseInitializer(object):
         ntiCommunity.realname = ntiCommunity.username
         ntiCommunity.alias = u'NTI'
 
-        mathcountsCommunity = Community.create_entity(ds, 
+        mathcountsCommunity = Community.create_entity(ds,
                                                       username=u'MathCounts')
         mathcountsCommunity.realname = mathcountsCommunity.username
         mathcountsCommunity.alias = u'MathCounts'
 
-        testUsersCommunity = Community.create_entity(ds, 
+        testUsersCommunity = Community.create_entity(ds,
                                                      username=self.nti_testers)
         testUsersCommunity.realname = testUsersCommunity.username
         testUsersCommunity.alias = self.nti_testers
@@ -231,7 +231,7 @@ class ExampleDatabaseInitializer(object):
                 # This matters for test cases.
                 password = None
 
-            args = {'username': six.text_type(uname), 
+            args = {'username': six.text_type(uname),
                     'password': six.text_type(password) if password else None,
                     'dataserver': mock_dataserver}
             ext_value = {}
