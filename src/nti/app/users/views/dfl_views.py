@@ -51,23 +51,13 @@ ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 logger = __import__('logging').getLogger(__name__)
 
 
-def _authenticated_user_is_member(context, request):
-    """
-    A predicate that can be applied to a view using a :class:`nti.dataserver.interfaces.IFriendsList`.
-    By using this as a predicate, we get back a 404 response instead of just relying
-    on the lack of permission in the ACL (which would generate a 403 response).
-    """
-    user = get_remote_user(request)
-    return user is not None and user in context
-
-
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=IDynamicSharingTargetFriendsList,
              permission=nauth.ACT_READ,
              request_method='DELETE',
              name=REL_MY_MEMBERSHIP,
-             custom_predicates=(_authenticated_user_is_member,))
+             user_in_context=True)
 def exit_dfl_view(context, request):
     """
     Accept a ``DELETE`` request from a member of a DFL, causing that member to

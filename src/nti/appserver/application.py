@@ -55,7 +55,8 @@ from nti.appserver.traversal import ZopeResourceTreeTraverser
 
 from nti.appserver.utils.chameleon import setupChameleonCache
 
-import nti.dataserver.users
+from nti.appserver.view_predicates import ContextMatchesRemoteUserPredicate
+from nti.appserver.view_predicates import RemoteUserMemberOfContextPredicate
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
@@ -582,8 +583,12 @@ def createApplication( http_port,
 	pyramid_config.add_accept_view_order('application/vnd.nextthought.link+json',
 										 weighs_less_than=('application/json',))
 
-	#content_type predicate for view_config.
+	# content_type predicate for view_config.
 	pyramid_config.add_view_predicate('content_type', pyramid_predicates.ContentTypePredicate)
+	pyramid_config.add_view_predicate('user_in_context',
+									  RemoteUserMemberOfContextPredicate)
+	pyramid_config.add_view_predicate('user_is_context',
+									  ContextMatchesRemoteUserPredicate)
 	# Chameleon templating support; see also _renderer_settings
 	pyramid_config.include( 'pyramid_chameleon' )
 	# Configure Mako for plain text templates (Only! Use ZPT for XML/HTML)
