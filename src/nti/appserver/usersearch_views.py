@@ -155,7 +155,7 @@ interface.directlyProvides(_UserSearchView, INamedLinkView)
              permission=nauth.ACT_READ,
              request_method='GET',
              context=IUser,
-             custom_predicates=((lambda context, request: get_remote_user(request) == context),))
+             user_is_context=True)
 def _TraverseToMyself(request):
     """
     Custom version of user resolution that only matches for ourself.
