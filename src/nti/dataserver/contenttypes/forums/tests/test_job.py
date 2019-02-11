@@ -81,5 +81,7 @@ class TestJob(DataserverLayerTest):
         interface.alsoProvides(forum, ISendEmailOnForumTypeCreation)
         topic = self._add_community_topic(forum=forum, topic_name=u'test_topic')
         from IPython.terminal.debugger import set_trace;set_trace()
+        event = IntIdAddedEvent(object=topic, event=None)
+        notify(event)
         _send_email_on_forum_type_creation(topic, None)
         assert_that(queue.empty(), is_not(True))
