@@ -46,6 +46,8 @@ import pyramid.interfaces
 import pyramid.request
 import pyramid.httpexceptions as hexc
 
+from pyramid.session import JSONSerializer
+
 from pyramid.threadlocal import get_current_request
 
 from nti.appserver import interfaces as app_interfaces
@@ -431,7 +433,8 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that(fail, is_(hexc.HTTPUnauthorized))
 
 		from pyramid.session import SignedCookieSessionFactory
-		my_session_factory = SignedCookieSessionFactory('ntidataservercookiesecretpass', httponly=True)
+		my_session_factory = SignedCookieSessionFactory('ntidataservercookiesecretpass',
+													httponly=True, serializer=JSONSerializer())
 		self.config.set_session_factory(my_session_factory)
 		self.config.add_route(name=ROUTE_OPENID_RESPONSE, pattern='/dataserver2/' + ROUTE_OPENID_RESPONSE)
 

@@ -35,6 +35,8 @@ from zope.processlifetime import IDatabaseOpenedWithRoot
 import pyramid.config
 import pyramid.registry
 
+from pyramid.session import JSONSerializer
+
 from pyramid.threadlocal import get_current_registry
 
 from paste.deploy.converters import asint
@@ -667,7 +669,8 @@ def createApplication( http_port,
 																 settings.get('cookie_secret',
 																			  '$Id$') ) + 'session',
 													secure=asbool(settings.get('secure_cookies', True)),
-													httponly=True)
+													httponly=True,
+													serializer=JSONSerializer())
 	pyramid_config.set_session_factory( my_session_factory )
 
 	pyramid_config.set_authorization_policy( pyramid_authorization.ZopeACLAuthorizationPolicy() )
