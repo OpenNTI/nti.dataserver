@@ -6,7 +6,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import six
-from bs4 import BeautifulSoup
+
 from zope import component
 from zope import interface
 
@@ -86,23 +86,19 @@ class AbstractForumTypeScheduledEmailJob(AbstractEmailJob):
 class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
 
     def _post_to_html(self, post):
-        html = BeautifulSoup('', features='html5lib')
+        html = u''
         for part in post.body:
             if isinstance(part, six.string_types):
-                part = "<br />".join(part.split('\n'))
-                # Just html, lets append it in to the tree
-                new_tag = '<div>%s</div>' % part
-                new_tag = BeautifulSoup(new_tag, features='html.parser')
-                html.body.append(new_tag)
-        return html.body.text
+                part = u"<br />".join(part.split('\n'))
+                div = u'<div>%s</div>' % part
+                html += div
+        return html
 
     def _do_call(self, topic, usernames):
-        from IPython.terminal.debugger import set_trace;set_trace()
-
         title = topic.title
         forum = find_interface(topic, IForum)
         forum_title = forum.title
-        subject = 'Discussion %s created in %s' % (title, forum_title)
+        subject = u'Discussion %s created in %s' % (title, forum_title)
         emails = self._emails_from_usernames(usernames)
         message = self._post_to_html(topic.headline)
         send_creation_notification_email(topic,

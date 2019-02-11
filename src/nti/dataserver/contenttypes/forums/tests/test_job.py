@@ -8,23 +8,33 @@ from __future__ import division
 from Queue import Queue
 
 import fudge
-from hamcrest import assert_that, is_, is_not, has_length
-from zope import interface, lifecycleevent
-from zope.component import subscribers
-from zope.event import notify
-from zope.intid import IntIdAddedEvent
-from zope.location.interfaces import IRoot
 
-from nti.dataserver.contenttypes.forums.forum import CommunityForum, Forum
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IHeadlineTopic, \
-    ISendEmailOnForumTypeCreation, IForumTypeCreatedNotificationUsers
-from nti.dataserver.contenttypes.forums.post import Post, HeadlinePost, GeneralHeadlinePost
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import is_not
+
+from zope import interface
+
+from nti.contentfile.model import ContentBlobFile
+
+from nti.dataserver.contenttypes import Canvas
+
+from nti.dataserver.contenttypes.forums.forum import CommunityForum
+
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
+
+from nti.dataserver.contenttypes.forums.post import GeneralHeadlinePost
+
 from nti.dataserver.contenttypes.forums.subscribers import _send_email_on_forum_type_creation
-from nti.dataserver.contenttypes.forums.tests import ForumLayerTest
-from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic, Topic
 
-from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans, DataserverLayerTest
-from nti.dataserver.users import Community, User
+from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
+
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
+from nti.dataserver.users import Community
+from nti.dataserver.users import User
 
 __docformat__ = "restructuredtext en"
 
@@ -64,24 +74,67 @@ class TestJob(DataserverLayerTest):
         topic = CommunityHeadlineTopic()
         topic.title = u'a test'
         topic.creator = u'sjohnson@nextthought.com'
-        post = GeneralHeadlinePost()
-        post.body = [u'<html><body>a headline post about important things</body></html>']
-        topic.headline = post
-
         forum[topic_name] = topic
         return topic
 
     @fudge.patch('nti.asynchronous.scheduled.utils.get_scheduled_queue')
-    @fudge.patch('nti.dataserver.contenttypes.forum.job.send_creation_notification_email')
+    @fudge.patch('nti.dataserver.contenttypes.forums.job.send_creation_notification_email')
     @WithMockDSTrans
     def test_creation_email(self, fake_queue, fake_email):
         queue = self._setup_mock_email_job(fake_queue)
-        fake_email.is_callable()
+        fake_kwargs = {}
+        fake_args = []
+
+        def stub(*args, **kwargs):
+            fake_args.extend(*args)
+            fake_kwargs.update(**kwargs)
+        fake_email.is_callable().calls(stub)
+
         forum = self._create_community_forum(forum_name=u'test_forum')
         interface.alsoProvides(forum, ISendEmailOnForumTypeCreation)
         topic = self._add_community_topic(forum=forum, topic_name=u'test_topic')
-        from IPython.terminal.debugger import set_trace;set_trace()
-        event = IntIdAddedEvent(object=topic, event=None)
-        notify(event)
+        post = GeneralHeadlinePost()
+        body = [u'<html><body>a headline post about important things</body></html>']
+        post.body = body
+        topic.headline = post
         _send_email_on_forum_type_creation(topic, None)
         assert_that(queue.empty(), is_not(True))
+
+        # execute the job
+        job = queue.get()
+        job()
+
+        assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
+        assert_that(fake_kwargs['message'], is_('<div>a headline post about important things</div>'))
+
+        body.append(u'abc')
+        body.append(u'xyz')
+        post.body = body
+
+        _send_email_on_forum_type_creation(topic, None)
+        assert_that(queue.empty(), is_not(True))
+
+        # execute the job
+        job = queue.get()
+        job()
+
+        assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
+        assert_that(fake_kwargs['message'], is_('<div>a headline post about important things</div>'
+                                                '<div>abc</div>'
+                                                '<div>xyz</div>'))
+
+        body.append(ContentBlobFile())
+        body.append(Canvas())
+        post.body = body
+
+        _send_email_on_forum_type_creation(topic, None)
+        assert_that(queue.empty(), is_not(True))
+
+        # execute the job
+        job = queue.get()
+        job()
+
+        assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
+        assert_that(fake_kwargs['message'], is_('<div>a headline post about important things</div>'
+                                                '<div>abc</div>'
+                                                '<div>xyz</div>'))
