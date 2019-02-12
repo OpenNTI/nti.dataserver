@@ -18,9 +18,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-class IEmailJob(interface.Interface):
+class IJob(interface.Interface):
     """
-    A callable for an asynchronous job that sends an email with
+    A callable for an asynchronous job with
     the appropriate metadata for registering the job
     """
 
@@ -35,22 +35,18 @@ class IEmailJob(interface.Interface):
 
     job_args = List(title=u'Job Args',
                     description=u'Args that will be passed to the job callable',
-                    required=False)
+                    required=True)
 
     job_kwargs = Dict(title=u'Job Kwargs',
                       description=u'Kwargs that will be passed to the job callable',
-                      required=False)
+                      required=True)
 
 
-class IScheduledEmailJob(IEmailJob):
+class IScheduledJob(IJob):
     """
-    An IEmailJob that will be ran as a scheduled job
+    An IJob that will be ran as a scheduled job
     """
 
     execution_time = Number(title=u'Execution Time',
-                            description=u'The timestamp at which this object should be executed',
+                            description=u'The timestamp at which this callable should be executed',
                             required=True)
-
-    execution_buffer = Number(title=u'Execution Buffer',
-                              description=u'The amount of time to buffer from when this job is queued to execution',
-                              required=True)

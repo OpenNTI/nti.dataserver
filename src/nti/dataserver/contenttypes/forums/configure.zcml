@@ -143,25 +143,13 @@
 
     <!-- Email Job -->
     <subscriber handler=".subscribers._send_email_on_forum_type_creation"
-                for=".interfaces.ITopic zope.intid.interfaces.IIntIdAddedEvent" />
+                for=".interfaces.IHeadlineTopic zope.intid.interfaces.IIntIdAddedEvent" />
 
-    <subscriber handler=".subscribers._send_email_on_forum_type_creation"
-                for=".interfaces.IForum zope.intid.interfaces.IIntIdAddedEvent" />
-
-    <adapter factory=".job.ForumCreatedScheduledEmailJob"
-             provides="nti.dataserver.job.interfaces.IScheduledEmailJob"
-             for=".interfaces.IForum" />
-
-    <adapter factory=".job.TopicCreatedScheduledEmailJob"
-             provides="nti.dataserver.job.interfaces.IScheduledEmailJob"
-             for=".interfaces.ITopic" />
+    <adapter factory=".job.HeadlineTopicCreatedDeferredEmailJob"
+             provides="nti.dataserver.job.interfaces.IScheduledJob"
+             for=".interfaces.IHeadlineTopic" />
 
     <subscriber factory=".job.CommunityUsersForForumType"
                 provides=".interfaces.IForumTypeCreatedNotificationUsers"
-                for=".interfaces.ITopic" />
-
-    <subscriber factory=".job.CommunityUsersForForumType"
-                provides=".interfaces.IForumTypeCreatedNotificationUsers"
-                for=".interfaces.IForum" />
-
+                for=".interfaces.IHeadlineTopic" />
 </configure>
