@@ -65,22 +65,6 @@ class ForumObjectPutView(UGDPutView):
             externalValue.pop(name, None)
         return externalValue
 
-    def updateContentObject(self, contentObject, externalValue, set_id=False,
-                            notify=True, pre_hook=None):
-        result = super(ForumObjectPutView, self).updateContentObject(contentObject,
-                                                                     externalValue,
-                                                                     set_id=set_id,
-                                                                     notify=notify,
-                                                                     pre_hook=pre_hook)
-        externalValue = self.readInput()
-        if externalValue.get('notify_on_topic_creation', False):
-            interface.alsoProvides(result, ISendEmailOnForumTypeCreation)
-        elif ISendEmailOnForumTypeCreation.providedBy(result) and \
-                externalValue.get('notify_on_topic_creation', None) == False:  # Require an explicit disable
-            interface.noLongerProvides(result, ISendEmailOnForumTypeCreation)
-
-        return result
-
 
 @view_config(context=IHeadlinePost)
 @view_config(context=IPersonalBlogEntry)
