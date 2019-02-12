@@ -12,7 +12,7 @@ from __future__ import absolute_import
 
 from zope import interface
 
-from zope.component.interfaces import ObjectEvent
+from zope.interface.interfaces import ObjectEvent
 
 from zope.deprecation import deprecated
 
@@ -117,7 +117,7 @@ class IDateTimeRange(interface.Interface):
 
 class ISearchQuery(interface.Interface):
 
-    term = ValidTextLine(title=u"Query search term", 
+    term = ValidTextLine(title=u"Query search term",
                          required=False, default=u'')
 
     username = ValidTextLine(title=u"User doing the search", required=False)
