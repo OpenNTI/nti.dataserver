@@ -432,7 +432,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		with mock_dataserver.mock_db_trans(self.ds):
 			default_community = Community.get_community(self.default_community)
 			num_members = default_community.number_of_members()
-		fake_email.is_callable().expects_call().times_called(2)  # Check this is called for each member
+		fake_email.is_callable().expects_call().times_called(num_members)  # Check this is called for each member
 
 		# relying on @nextthought.com automatically being an admin
 		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
