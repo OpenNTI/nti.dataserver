@@ -7,6 +7,7 @@ Views and other functions related to forums and blogs.
 """
 
 from __future__ import print_function, absolute_import, division
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,6 +16,8 @@ from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
+
+from zope import interface
 
 from nti.app.contentfile import transfer_internal_content_data
 
@@ -41,6 +44,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopic
+from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
 
 _view_defaults = dict(route_name='objects.generic.traversal', renderer='rest')
 
@@ -60,6 +64,22 @@ class ForumObjectPutView(UGDPutView):
         for name in ('TopicCount', 'NewestDescendantCreatedTime', 'NewestDescendant'):
             externalValue.pop(name, None)
         return externalValue
+
+    def updateContentObject(self, contentObject, externalValue, set_id=False,
+                            notify=True, pre_hook=None):
+        result = super(ForumObjectPutView, self).updateContentObject(contentObject,
+                                                                     externalValue,
+                                                                     set_id=set_id,
+                                                                     notify=notify,
+                                                                     pre_hook=pre_hook)
+        externalValue = self.readInput()
+        if externalValue.get('notify_on_topic_creation', False):
+            interface.alsoProvides(result, ISendEmailOnForumTypeCreation)
+        elif ISendEmailOnForumTypeCreation.providedBy(result) and \
+                externalValue.get('notify_on_topic_creation', None) == False:  # Require an explicit disable
+            interface.noLongerProvides(result, ISendEmailOnForumTypeCreation)
+
+        return result
 
 
 @view_config(context=IHeadlinePost)

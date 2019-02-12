@@ -36,7 +36,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
-from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import IPost, IForum
+from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
 
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -166,6 +167,14 @@ class _AbstractForumPostView(PostUploadMixin,
         # Now the topic
         topic = topic_factory()
         topic.creator = self._get_topic_creator()
+
+        notify_on_topic_creation = external_value.get('notify_on_topic_creation', False)
+        # The naming of these objects is slightly misleading. When a forum is POSTed they are accurate
+        # but because of inheritance, when a forum is created the `forum` here is actually a board
+        # and the `topic` is a forum. Because of that, we check the type to determine what
+        # state we are in
+        if notify_on_topic_creation and IForum.providedBy(topic):
+            interface.alsoProvides(topic, ISendEmailOnForumTypeCreation)
 
         # Business rule: titles of the personal blog entry match the post
         topic.title = topic_post.title

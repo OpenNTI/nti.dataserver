@@ -650,6 +650,7 @@ class ISendEmailOnForumTypeCreation(interface.Interface):
     """
     Marker interface for sending an email upon forum type object creation
     """
+ISendEmailOnForumTypeCreation.setTaggedValue('_ext_is_marker_interface', True)
 
 
 class IForumTypeCreatedNotificationUsers(interface.Interface):
