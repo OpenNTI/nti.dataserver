@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import six
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from zope import component
 from zope import interface
@@ -89,8 +90,8 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
         html = u''
         for part in post.body:
             if isinstance(part, six.string_types):
-                part = u"<br />".join(part.split('\n'))
-                div = u'<div>%s</div>' % part
+                plain_text = IPlainTextContentFragment(part)
+                div = u'<div>%s</div>' % plain_text
                 html += div
         return html
 
