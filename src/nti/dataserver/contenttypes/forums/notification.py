@@ -82,7 +82,7 @@ def send_creation_notification_email(forum_type_obj,
         mailer.queue_simple_html_text_email(
             template,
             subject=translate(_(subject)),
-            recipients=[receiver_emails],
+            recipients=receiver_emails,
             template_args=msg_args,
             request=request,
             package=package,

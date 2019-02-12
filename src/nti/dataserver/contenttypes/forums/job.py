@@ -102,11 +102,12 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
         subject = u'Discussion %s created in %s' % (title, forum_title)
         emails = self._emails_from_usernames(usernames)
         message = self._post_to_html(topic.headline)
-        send_creation_notification_email(topic,
-                                         sender=topic.creator,
-                                         receiver_emails=emails,
-                                         subject=subject,
-                                         message=message)
+        for email in emails:
+            send_creation_notification_email(topic,
+                                             sender=topic.creator,
+                                             receiver_emails=[email],
+                                             subject=subject,
+                                             message=message)
 
 
 @interface.implementer(IForumTypeCreatedNotificationUsers)
