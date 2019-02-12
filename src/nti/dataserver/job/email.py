@@ -36,7 +36,7 @@ class AbstractEmailJob(object):
         self.obj = obj
         obj_ntiid = to_external_ntiid_oid(obj)
         if obj_ntiid is None:
-            logger.warn(u'Creating an email job for an object without an ntiid')
+            raise ValueError(u'Unable to create an email job for an object without an ntiid')
         self.job_kwargs['obj_ntiid'] = obj_ntiid
 
     @property
