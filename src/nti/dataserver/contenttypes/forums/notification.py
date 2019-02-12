@@ -24,11 +24,7 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.links import Link
 from nti.links import render_link
 
-from nti.mailer._default_template_mailer import _get_from_address
-
 from nti.mailer.interfaces import ITemplatedMailer
-
-from nti.mailer.queue import SESMailer
 
 __docformat__ = "restructuredtext en"
 
@@ -82,21 +78,15 @@ def send_creation_notification_email(forum_type_obj,
     }
 
     try:
-        message_builder = component.getUtility(ITemplatedMailer)
-        message = message_builder.create_simple_html_text_email(template,
-                                                                subject=translate(_(subject)),
-                                                                recipients=receiver_emails,
-                                                                template_args=msg_args,
-                                                                request=request,
-                                                                package=package,
-                                                                text_template_extension='.mak')
-        ses_mailer = SESMailer()
-        fromaddr = _get_from_address(message,
-                                     recipients=receiver_emails,
-                                     request=request)
-        ses_mailer.send(fromaddr=fromaddr,
-                        toaddrs=receiver_emails,
-                        message=message)
+        mailer = component.getUtility(ITemplatedMailer)
+        mailer.queue_simple_html_text_email(
+            template,
+            subject=translate(_(subject)),
+            recipients=receiver_emails,
+            template_args=msg_args,
+            request=request,
+            package=package,
+            text_template_extension='.mak')
     except Exception:
         logger.exception("Cannot send creation notification emails")
         return False
