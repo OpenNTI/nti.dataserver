@@ -36,7 +36,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
-from nti.dataserver.contenttypes.forums.interfaces import IPost, IForum
+from nti.dataserver.contenttypes.forums.interfaces import IForum
+from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
 
 from nti.externalization.interfaces import StandardExternalFields
