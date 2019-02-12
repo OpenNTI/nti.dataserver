@@ -37,8 +37,6 @@ def send_creation_notification_email(forum_type_obj,
                                      subject,
                                      message,
                                      request=None):
-    from IPython.terminal.debugger import set_trace;set_trace()
-
     request = request if request else get_current_request()
     if not receiver_emails:
         logger.warn("Not sending an creation email because of no recipient emails")
