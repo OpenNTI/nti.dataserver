@@ -30,6 +30,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
 from nti.dataserver.contenttypes.forums.interfaces import IUserTopicParticipationSummary
 
 from nti.dataserver.users.entity import Entity
@@ -41,6 +42,7 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import StandardInternalFields
 from nti.externalization.interfaces import IInternalObjectExternalizer
+from nti.externalization.interfaces import IInternalObjectUpdater
 
 from nti.mimetype.externalization import decorateMimeType
 
@@ -229,4 +231,24 @@ class _UserTopicParticipationSummaryExternalizer(InterfaceObjectIO):
     def toExternalObject(self, *args, **kwargs):
         result = super(_UserTopicParticipationSummaryExternalizer, self).toExternalObject(*args, **kwargs)
         result['IsSummary'] = True
+        return result
+
+
+@interface.implementer(IInternalObjectUpdater)
+@component.adapter(IForum)
+class ForumInternalObjectUpdater(object):
+
+    __slots__ = ('forum',)
+
+    def __init__(self, obj):
+        self.forum = obj
+
+    def updateFromExternalObject(self, parsed, *unused_args, **unused_kwargs):
+        result = InterfaceObjectIO(self.forum,
+                                   IForum).updateFromExternalObject(parsed)
+        if parsed.get('notify_on_topic_creation', False):
+            interface.alsoProvides(self.forum, ISendEmailOnForumTypeCreation)
+        elif ISendEmailOnForumTypeCreation.providedBy(result) and \
+                parsed.get('notify_on_topic_creation', None) == False:  # Require an explicit disable
+            interface.noLongerProvides(self.forum, ISendEmailOnForumTypeCreation)
         return result
