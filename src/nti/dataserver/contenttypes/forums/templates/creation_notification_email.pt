@@ -62,27 +62,27 @@
                   Click below to view my notification
               </q>
             </div>
-        </div>
 
-        <!-- view button -->
-        <div class="view-but-cont" style="margin-top:40px; margin-left: 0; margin-right: 0" tal:condition="options/resolve_url">
-            <a 	href="https://www.nextthought.com" class="but"
-                tal:attributes="href python: options['resolve_url']"
-                style='color:white; text-decoration:none; background-color:#3fb3f6; border-radius:4px;
-                       border-style:none; font-size:14px; font-weight:600;
-                       margin-bottom:15px; outline:none; text-align: center; line-height: 19px;
-                       padding: 10px 20px'>
-                        View
-            </a>
-        </div>
-
-        <!-- view link -->
-        <div class="view-link-cont" style="display: inline-block; margin-top: 27px; margin-left: 0; margin-right: 0;" tal:condition="options/resolve_url">
-            <span class="site-link">
-                <a tal:content="options/resolve_url">
-                    https://www.nextthought.com
+            <!-- view button -->
+            <div class="view-but-cont" style="margin-top:40px; margin-left: 0; margin-right: 0" tal:condition="options/resolve_url">
+                <a 	href="https://www.nextthought.com" class="but"
+                    tal:attributes="href python: options['resolve_url']"
+                    style='color:white; text-decoration:none; background-color:#3fb3f6; border-radius:4px;
+                           border-style:none; font-size:14px; font-weight:600;
+                           margin-bottom:15px; outline:none; text-align: center; line-height: 19px;
+                           padding: 10px 20px'>
+                            View
                 </a>
-            </span>
+            </div>
+
+            <!-- view link -->
+            <div class="view-link-cont" style="display: inline-block; margin-top: 27px; margin-left: 0; margin-right: 0;" tal:condition="options/resolve_url">
+                <span class="site-link">
+                    <a tal:content="options/resolve_url">
+                        https://www.nextthought.com
+                    </a>
+                </span>
+            </div>
         </div>
 
         <!-- Help information -->
