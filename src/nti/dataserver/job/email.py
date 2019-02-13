@@ -7,6 +7,11 @@ from __future__ import division
 
 from datetime import datetime
 
+from pyramid.request import Request
+
+from pyramid.threadlocal import get_current_registry
+from pyramid.threadlocal import get_current_request
+
 from zope import interface
 
 from zope.cachedescriptors.property import Lazy
@@ -38,6 +43,15 @@ class AbstractEmailJob(object):
         if obj_ntiid is None:
             raise ValueError(u'Unable to create an email job for an object without an ntiid')
         self.job_kwargs['obj_ntiid'] = obj_ntiid
+
+    def get_request(self, context):
+        request = get_current_request()
+        if request is None:
+            # fake a request
+            request = Request({})
+            request.context = context
+            request.registry = get_current_registry()
+        return request
 
     @property
     def utc_now(self):

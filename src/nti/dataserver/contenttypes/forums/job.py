@@ -108,18 +108,18 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
                 html += div
         return html
 
-    def _url(self, topic):
+    def _url_to_obj(self, obj):
         application_url = self.job_kwargs['application_url']
 
-        rendered_link = render_link(Link(topic))
+        rendered_link = render_link(Link(obj))
         if rendered_link is None:
-            logger.warn(u'Unable to generate link for %s' % topic)
-            raise ValueError(u'Unable to generate link for %s' % topic)
+            logger.warn(u'Unable to generate link for %s' % obj)
+            raise ValueError(u'Unable to generate link for %s' % obj)
 
         href = rendered_link.get('href', None)
         if href is None:
-            logger.warn(u'No href for %s' % topic)
-            raise ValueError(u'No href for %s' % topic)
+            logger.warn(u'No href for %s' % obj)
+            raise ValueError(u'No href for %s' % obj)
 
         url = urllib_parse.urljoin(application_url, href)
         return url
@@ -131,13 +131,18 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
         subject = u'Discussion %s created in %s' % (title, forum_title)
         emails = self._emails_from_usernames(usernames)
         message = self._post_to_html(topic.headline)
+        avatar_url = self._url_to_obj(topic.creator)
+        avatar_url = avatar_url if avatar_url.endswith('/') else avatar_url + '/'
+        avatar_url = urllib_parse.urljoin(avatar_url, u'@@avatar')
+        topic_url = self._url_to_obj(topic)
         for email in emails:
-            send_creation_notification_email(topic,
-                                             sender=topic.creator,
+            send_creation_notification_email(sender=topic.creator,
                                              receiver_emails=[email],
                                              subject=subject,
                                              message=message,
-                                             url=self._url(topic))
+                                             request=self.get_request(topic),
+                                             forum_type_obj_url=topic_url,
+                                             avatar_url=avatar_url)
 
 
 @interface.implementer(IForumTypeCreatedNotificationUsers)

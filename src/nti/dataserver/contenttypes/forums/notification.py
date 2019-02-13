@@ -5,13 +5,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from pyramid.threadlocal import get_current_request
-
 from zope import component
 
 from zope.i18n import translate
-
-from nti.app.pushnotifications.digest_email import _TemplateArgs
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
@@ -26,21 +22,16 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-def send_creation_notification_email(forum_type_obj,
-                                     sender,
+def send_creation_notification_email(sender,
                                      receiver_emails,
                                      subject,
                                      message,
-                                     url,
-                                     request=None):
-    request = request if request else get_current_request()
+                                     forum_type_obj_url,
+                                     avatar_url,
+                                     request):
     if not receiver_emails:
         logger.warn("Not sending an creation email because of no recipient emails")
         return False
-
-    template_args = _TemplateArgs(request=request,
-                                  remoteUser=sender,
-                                  objs=[forum_type_obj])
 
     template = 'creation_notification_email'
 
@@ -55,17 +46,18 @@ def send_creation_notification_email(forum_type_obj,
 
     msg_args = {
         'support_email': support_email,
-        'resolve_url': url,
+        'resolve_url': forum_type_obj_url,
         'brand': brand,
+        'subject': subject
     }
 
     # Tal is not very cooperative for dynamic building up this style
     # so we create and stash it here
-    avatar_styles = "float:left;height:40px;width:40px;border-radius:50%%;background-image: url('%s'), url('https://s3.amazonaws.com/content.nextthought.com/images/generic/imageassets/unresolved-user-avatar.png'); background-position: center center;background-size:cover;background-repeat:no-repeat;" % template_args.creator_avatar_url
+    avatar_styles = "float:left;height:40px;width:40px;border-radius:50%%;background-image: url('%s'), url('https://s3.amazonaws.com/content.nextthought.com/images/generic/imageassets/unresolved-user-avatar.png'); background-position: center center;background-size:cover;background-repeat:no-repeat;" % avatar_url
     msg_args['sender_content'] = {
         'sender': informal_username,
         'message': message,
-        'avatar_styles': avatar_styles
+        'avatar_styles': avatar_styles,
     }
 
     try:
