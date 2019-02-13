@@ -33,7 +33,7 @@ class AbstractEmailJob(object):
     createFieldProperties(IJob)
 
     def __init__(self, obj):
-        self.obj = obj
+        # We don't want to store this obj in the job instance because it messes up pickling
         obj_ntiid = to_external_ntiid_oid(obj)
         if obj_ntiid is None:
             raise ValueError(u'Unable to create an email job for an object without an ntiid')
