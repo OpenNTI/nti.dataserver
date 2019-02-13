@@ -84,7 +84,8 @@ TESTS_REQUIRE = [
     'nti.nose_traceback_info',
     'nti.testing',
     'nti.app.testing',
-    'nti.fakestatsd'
+    'nti.fakestatsd',
+    'nti.identifiers'
 ]
 
 
@@ -145,6 +146,7 @@ setup(
         'nti.i18n',
         'nti.intid',
         'nti.links',
+        'nti.metadata',
         'nti.mimetype',
         'nti.monkey',
         'nti.namedfile',
