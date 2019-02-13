@@ -81,6 +81,15 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 for="nti.dataserver.interfaces.IUsersFolder" />
 
+	<adapter name="tokens"
+			 factory=".traversal._user_token_path_adapter"
+			 provides="zope.traversing.interfaces.IPathAdapter"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
+
+	<adapter factory=".traversal.UserTokenContainerTraversable"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 for="nti.dataserver.users.interfaces.IUserTokenContainer pyramid.interfaces.IRequest" />
+
 	<!-- Adapter -->
 	<adapter factory=".adapters._DFLEditLinkMaker" />
 	<adapter factory=".adapters._user_to_displayname" />

@@ -212,4 +212,6 @@
              provides=".interfaces.IUserTokenContainer"
              for="nti.coremetadata.interfaces.IUser" />
 
+	<adapter factory=".tokens.UserTokenContainerACLProvider" />
+
 </configure>

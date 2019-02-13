@@ -28,7 +28,9 @@ from nti.app.users import MessageFactory as _
 
 from nti.app.users.views import VIEW_USER_TOKENS
 
-from nti.dataserver.authorization import is_admin
+from nti.dataserver.authorization import ACT_DELETE
+from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ACT_CREATE
 
 from nti.dataserver.interfaces import IUser
 
@@ -46,70 +48,36 @@ TOTAL = StandardExternalFields.TOTAL
 ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 
 
-class UserTokensViewMixins(object):
-
-    def _check_access(self):
-        # Only owner and NextThought ADMIN can access.
-        if self.remoteUser != self.context and not is_admin(self.remoteUser):
-            raise hexc.HTTPForbidden()
-
-    @Lazy
-    def token_container(self):
-        return IUserTokenContainer(self.context)
-
-    @Lazy
-    def token_ntiid(self):
-        # Get the sub path ntiid if we're drilling in.
-        return self.request.subpath[0] if self.request.subpath else ''
-
-
 @view_defaults(route_name='objects.generic.traversal',
-               context=IUser,
-               name=VIEW_USER_TOKENS)
-class UserTokensView(AbstractAuthenticatedView,
-                     UserTokensViewMixins):
+               renderer='rest',
+               context=IUserTokenContainer)
+class UserTokensView(AbstractAuthenticatedView):
 
-    @view_config(request_method='GET')
+    @view_config(request_method='GET',
+                 permission=ACT_READ)
     def get(self):
-        self._check_access()
-
-        if self.token_ntiid:
-            token = self.token_container.get_token(self.token_ntiid)
-            if token is None:
-                raise hexc.HTTPNotFound()
-            return token
-
         result = LocatedExternalDict()
         result.__name__ = self.request.view_name
         result.__parent__ = self.request.context
 
-        result[ITEMS] = [x for x in self.token_container.tokens]
+        result[ITEMS] = [x for x in self.context.tokens]
         result[TOTAL] = result[ITEM_COUNT] = len(result[ITEMS])
         return result
 
-    @view_config(request_method='DELETE')
+    @view_config(request_method='DELETE',
+                 permission=ACT_DELETE)
     def delete(self):
-        self._check_access()
-
-        if self.token_ntiid:
-            token = self.token_container.get_token(self.token_ntiid)
-            if token is None:
-                raise hexc.HTTPNotFound()
-            self.token_container.remove_token(token)
-            logger.info("Removing token (username=%s) (token=%s)", self.context.username, token.token)
-        else:
-            self.token_container.clear()
-
+        self.context.clear()
         return hexc.HTTPNoContent()
 
 
 @view_config(route_name='objects.generic.traversal',
-             context=IUser,
+             renderer='rest',
              request_method='POST',
-             name=VIEW_USER_TOKENS)
+             context=IUserTokenContainer,
+             permission=ACT_CREATE)
 class UserTokenCreationView(AbstractAuthenticatedView,
-                            ModeledContentUploadRequestUtilsMixin,
-                            UserTokensViewMixins):
+                            ModeledContentUploadRequestUtilsMixin):
 
     _excluded_fields = (u'token', u'value')
 
@@ -121,8 +89,6 @@ class UserTokenCreationView(AbstractAuthenticatedView,
         return external
 
     def __call__(self):
-        self._check_access()
-
         token = self.readCreateUpdateContentObject(self.remoteUser)
         if not IUserToken.providedBy(token):
             # Since we use PersistentList for storage, check before storing it.
@@ -134,4 +100,28 @@ class UserTokenCreationView(AbstractAuthenticatedView,
                              None)
 
         self.request.response.status_int = 201
-        return self.token_container.store_token(token)
+        return self.context.store_token(token)
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             request_method='GET',
+             context=IUserToken,
+             permission=ACT_READ)
+class UserTokenGetView(AbstractAuthenticatedView):
+
+    def __call__(self):
+        return self.context
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             request_method='DELETE',
+             context=IUserToken,
+             permission=ACT_DELETE)
+class UserTokenDeleteView(AbstractAuthenticatedView):
+
+    def __call__(self):
+        container = self.context.__parent__
+        container.remove_token(self.context)
+        return hexc.HTTPNoContent()
