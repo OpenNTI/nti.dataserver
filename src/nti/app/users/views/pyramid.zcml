@@ -16,5 +16,6 @@
 	<pyramid:scan package='.profile_views' />
 	<pyramid:scan package='.contacts_views' />
 	<pyramid:scan package='.community_views' />
+	<pyramid:scan package='.tokens_views' />
 
 </configure>

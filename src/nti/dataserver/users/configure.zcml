@@ -72,7 +72,7 @@
 						 .interfaces.ISuggestedContact
 						 .interfaces.IUserContactProfile
 						 .interfaces.IProfessionalPosition"
-		modules=".suggested_contacts .user_profile" />
+		modules=".suggested_contacts .user_profile .tokens" />
 
 	<!-- Groups and ACLs -->
 	<!-- First, make something that can store group names on the user -->

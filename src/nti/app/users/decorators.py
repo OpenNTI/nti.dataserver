@@ -16,6 +16,7 @@ from zope import interface
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
+from nti.app.users import VIEW_USER_TOKENS
 from nti.app.users import REL_MY_MEMBERSHIP
 from nti.app.users import SUGGESTED_CONTACTS
 from nti.app.users import VIEW_GRANT_USER_ACCESS
@@ -252,3 +253,16 @@ class _CatalogWorkspaceAdminLinkDecorator(object):
                 result.append(link)
             return result
         return ()
+
+
+@component.adapter(IUser, IRequest)
+@interface.implementer(IExternalMappingDecorator)
+class _UserTokensLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+    def _predicate(self, context, result):
+        return bool(self._is_authenticated and self.remoteUser == context)
+
+    def _do_decorate_external(self, context, result):
+        _links = result.setdefault(LINKS, [])
+        link = Link(context, rel=VIEW_USER_TOKENS, elements=(VIEW_USER_TOKENS,))
+        _links.append(link)

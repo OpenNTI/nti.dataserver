@@ -20,3 +20,4 @@ VIEW_RESTRICT_USER_ACCESS = "RemoveAccess"
 REQUEST_EMAIL_VERFICATION_VIEW = "request_email_verification"
 SEND_USER_EMAIL_VERFICATION_VIEW = "send_user_email_verification"
 VERIFY_USER_EMAIL_WITH_TOKEN_VIEW = "verify_user_email_with_token"
+VIEW_USER_TOKENS = 'tokens'

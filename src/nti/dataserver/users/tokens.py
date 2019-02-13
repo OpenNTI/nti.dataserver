@@ -20,6 +20,7 @@ from persistent.list import PersistentList
 
 from ZODB.interfaces import IConnection
 
+from zope import component
 from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
@@ -44,7 +45,7 @@ from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 USER_TOKEN_CONTAINER_KEY = 'tokens'
 
 
-def _generate_token():
+def generate_token():
     return str(uuid.uuid4())
 
 
@@ -105,7 +106,7 @@ class UserTokenContainer(SchemaConfigured,
             # No expiration date comes first
             tokens = sorted(tokens,
                             key=lambda x: (x.expiration_date or datetime.max))
-            return tokens[0]
+            return tokens[-1]
 
     def get_valid_tokens(self):
         """
@@ -119,7 +120,7 @@ class UserTokenContainer(SchemaConfigured,
 
     def store_token(self, token):
         if not token.token:
-            token.token = _generate_token()
+            token.token = generate_token()
         self.tokens.append(token)
         return token
 
@@ -137,6 +138,13 @@ class UserTokenContainer(SchemaConfigured,
     @Lazy
     def ntiid(self):
         return to_external_ntiid_oid(self)
+
+    def get_token(self, ntiid, default=None):
+        if ntiid:
+            for token in self.tokens:
+                if token.ntiid == ntiid:
+                    return token
+        return default
 
 
 def UserTokenContainerFactory(user):

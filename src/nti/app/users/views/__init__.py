@@ -26,6 +26,7 @@ from nti.app.users import VERIFY_USER_EMAIL_VIEW
 from nti.app.users import REQUEST_EMAIL_VERFICATION_VIEW
 from nti.app.users import SEND_USER_EMAIL_VERFICATION_VIEW
 from nti.app.users import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
+from nti.app.users import VIEW_USER_TOKENS
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout

@@ -62,7 +62,12 @@
 
     <subscriber factory=".decorators._CatalogWorkspaceAdminLinkDecorator"
                 provides="nti.appserver.workspaces.interfaces.ICatalogWorkspaceLinkProvider"/>
-				
+
+	<subscriber factory=".decorators._UserTokensLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					 pyramid.interfaces.IRequest"/>
+
 	<!-- Query -->
 	<subscriber	factory=".containers._UserContainersQuerier"
 				provides="nti.appserver.interfaces.IUserContainersQuerier"/>
