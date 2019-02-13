@@ -16,6 +16,7 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+
 from nti.app.contentfile import transfer_internal_content_data
 
 from nti.app.forums.views.view_mixins import validate_attachments

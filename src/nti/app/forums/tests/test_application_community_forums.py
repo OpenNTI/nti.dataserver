@@ -19,6 +19,11 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import greater_than
 from hamcrest import has_property
+does_not = is_not
+
+import fudge
+
+from Queue import Queue
 
 from six.moves.urllib_parse import quote
 UQ = quote
@@ -52,6 +57,16 @@ frm_ext = frm_ext
 from nti.app.forums.tests.base_forum_testing import _plain
 from nti.app.forums.tests.base_forum_testing import UserCommunityFixture
 from nti.app.forums.tests.base_forum_testing import AbstractTestApplicationForumsBaseMixin
+
+from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.users import Community
+
+from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.testing.matchers import verifiably_provides
 
 from nti.testing.time import time_monotonically_increases
 
@@ -407,3 +422,55 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 												status=200)
 
 		assert_that( board_contents_res2.json_body, has_entry( 'TotalItemCount', 1 ) )
+
+	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
+	@fudge.patch('nti.asynchronous.scheduled.utils.get_scheduled_queue')
+	@fudge.patch('nti.dataserver.contenttypes.forums.job.send_creation_notification_email')
+	def test_notify_on_topic_creation(self, fake_queue, fake_email):
+		queue = Queue()
+		fake_queue.is_callable().returns(queue)
+		with mock_dataserver.mock_db_trans(self.ds):
+			default_community = Community.get_community(self.default_community)
+			num_members = default_community.number_of_members()
+		fake_email.is_callable().expects_call().times_called(num_members)  # Check this is called for each member
+
+		# relying on @nextthought.com automatically being an admin
+		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
+		forum_data = self._create_post_data_for_POST()
+
+		# Create with it
+		forum_data['notify_on_topic_creation'] = True
+		forum_res = adminapp.post_json( self.board_pretty_url, forum_data, status=201 )
+		forum_location = forum_res.location
+		forum_ntiid = forum_res.json_body['NTIID']
+		with mock_dataserver.mock_db_trans(self.ds):
+			forum = find_object_with_ntiid(forum_ntiid)
+			assert_that(forum, verifiably_provides(ISendEmailOnForumTypeCreation))
+
+		# Disable via PUT
+		forum_data['notify_on_topic_creation'] = False
+		forum_res = adminapp.put_json( forum_location, forum_data )
+		forum_ntiid = forum_res.json_body['NTIID']
+		with mock_dataserver.mock_db_trans(self.ds):
+			forum = find_object_with_ntiid(forum_ntiid)
+			assert_that(forum, does_not(verifiably_provides(ISendEmailOnForumTypeCreation)))
+
+		# Enable via PUT
+		forum_data['notify_on_topic_creation'] = True
+		forum_res = adminapp.put_json(forum_location, forum_data)
+		forum_ntiid = forum_res.json_body['NTIID']
+		with mock_dataserver.mock_db_trans(self.ds):
+			forum = find_object_with_ntiid(forum_ntiid)
+			assert_that(forum, verifiably_provides(ISendEmailOnForumTypeCreation))
+
+		# Test topic creation queues a job
+		assert_that(queue.empty(), is_(True))
+		self._POST_and_publish_topic_entry()
+		assert_that(queue.empty(), is_not(True))
+
+		# Test the number of emails sent matches the number of community members (fudge decorator does the assertion)
+		job = queue.get()
+		with mock_dataserver.mock_db_trans(self.ds):
+			# Need the db to resolve the topic ntiid in the job
+			job()
+
