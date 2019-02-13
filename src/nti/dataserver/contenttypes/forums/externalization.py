@@ -248,7 +248,7 @@ class ForumInternalObjectUpdater(object):
                                    IForum).updateFromExternalObject(parsed)
         if parsed.get('notify_on_topic_creation', False):
             interface.alsoProvides(self.forum, ISendEmailOnForumTypeCreation)
-        elif ISendEmailOnForumTypeCreation.providedBy(result) and \
+        elif ISendEmailOnForumTypeCreation.providedBy(self.forum) and \
                 parsed.get('notify_on_topic_creation', None) == False:  # Require an explicit disable
             interface.noLongerProvides(self.forum, ISendEmailOnForumTypeCreation)
         return result
