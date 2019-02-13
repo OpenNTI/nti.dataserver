@@ -7,8 +7,6 @@ from __future__ import division
 
 from pyramid.threadlocal import get_current_request
 
-from six.moves import urllib_parse
-
 from zope import component
 
 from zope.i18n import translate
@@ -20,9 +18,6 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.dataserver.contenttypes.forums import MessageFactory as _
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
-
-from nti.links import Link
-from nti.links import render_link
 
 from nti.mailer.interfaces import ITemplatedMailer
 
@@ -36,6 +31,7 @@ def send_creation_notification_email(forum_type_obj,
                                      receiver_emails,
                                      subject,
                                      message,
+                                     url,
                                      request=None):
     request = request if request else get_current_request()
     if not receiver_emails:
@@ -57,14 +53,9 @@ def send_creation_notification_email(forum_type_obj,
     names = IFriendlyNamed(sender)
     informal_username = names.alias or names.realname or sender.username
 
-    href = render_link(Link(forum_type_obj))
-    if href is None:
-        logger.warn(u'Unable to generate href for %s' % forum_type_obj)
-    forum_type_obj_url = urllib_parse.urljoin(request.application_url, href)
-
     msg_args = {
         'support_email': support_email,
-        'resolve_url': forum_type_obj_url,
+        'resolve_url': url,
         'brand': brand,
     }
 

@@ -6,7 +6,10 @@ from __future__ import absolute_import
 from __future__ import division
 
 import six
-from nti.contentfragments.interfaces import IPlainTextContentFragment
+
+from pyramid.threadlocal import get_current_request
+
+from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
@@ -14,6 +17,8 @@ from zope import interface
 from zope.cachedescriptors.property import Lazy
 
 from zope.component import subscribers
+
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.coremetadata.interfaces import ICommunity
 
@@ -28,6 +33,9 @@ from nti.dataserver.job.email import AbstractEmailJob
 from nti.dataserver.job.interfaces import IScheduledJob
 
 from nti.dataserver.users import User
+
+from nti.links import Link
+from nti.links import render_link
 
 from nti.mailer.interfaces import IEmailAddressable
 
@@ -48,6 +56,11 @@ class AbstractForumTypeScheduledEmailJob(AbstractEmailJob):
 
     execution_buffer = DEFAULT_EMAIL_DEFER_TIME
 
+    def __init__(self, obj):
+        super(AbstractForumTypeScheduledEmailJob, self).__init__(obj)
+        request = get_current_request()
+        self.job_kwargs['application_url'] = request.application_url
+
     @Lazy
     def execution_time(self):
         return self.utc_now + self.execution_buffer
@@ -64,7 +77,7 @@ class AbstractForumTypeScheduledEmailJob(AbstractEmailJob):
         for username in usernames:
             user = User.get_user(username)
             email = IEmailAddressable(user, None)
-            if email is None:
+            if email is None or email.email is None:
                 logger.debug(u'Username %s does not have an email address for notification' % username)
                 continue
             emails.append(email.email)
@@ -95,6 +108,22 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
                 html += div
         return html
 
+    def _url(self, topic):
+        application_url = self.job_kwargs['application_url']
+
+        rendered_link = render_link(Link(topic))
+        if rendered_link is None:
+            logger.warn(u'Unable to generate link for %s' % topic)
+            raise ValueError(u'Unable to generate link for %s' % topic)
+
+        href = rendered_link.get('href', None)
+        if href is None:
+            logger.warn(u'No href for %s' % topic)
+            raise ValueError(u'No href for %s' % topic)
+
+        url = urllib_parse.urljoin(application_url, href)
+        return url
+
     def _do_call(self, topic, usernames):
         title = topic.title
         forum = find_interface(topic, IForum)
@@ -107,7 +136,8 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
                                              sender=topic.creator,
                                              receiver_emails=[email],
                                              subject=subject,
-                                             message=message)
+                                             message=message,
+                                             url=self._url(topic))
 
 
 @interface.implementer(IForumTypeCreatedNotificationUsers)
