@@ -1,0 +1,9 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="zope">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.component" />
+
+</configure>

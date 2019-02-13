@@ -86,6 +86,10 @@
 			 for=".interfaces.IForum"
 			 name="exporter" />
 
+    <adapter factory=".externalization.ForumInternalObjectUpdater"
+             for=".interfaces.IForum"
+             provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
 	<adapter factory=".externalization._TopicExporter"
 			 for=".interfaces.ITopic"
 			 name="exporter" />
@@ -141,4 +145,15 @@
 	<include package="z3c.autoinclude" file="meta.zcml" />
 	<includePlugins package="." />
 
+    <!-- Email Job -->
+    <subscriber handler=".subscribers._send_email_on_forum_type_creation"
+                for=".interfaces.IHeadlineTopic zope.intid.interfaces.IIntIdAddedEvent" />
+
+    <adapter factory=".job.HeadlineTopicCreatedDeferredEmailJob"
+             provides="nti.dataserver.job.interfaces.IScheduledJob"
+             for=".interfaces.IHeadlineTopic" />
+
+    <subscriber factory=".job.CommunityUsersForForumType"
+                provides=".interfaces.IForumTypeCreatedNotificationUsers"
+                for=".interfaces.IHeadlineTopic" />
 </configure>

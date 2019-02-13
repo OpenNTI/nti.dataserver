@@ -208,6 +208,10 @@ class _AbstractForumPostView(PostUploadMixin,
             # fail hard if no parent is set
             assert topic_post.__parent__ == topic
 
+        # Hit externalization adapters
+        self.updateContentObject(topic,
+                                 external_value)
+
         # Respond with the pretty location of the object, within the blog
         self.request.response.status_int = 201  # created
         self.request.response.location = self.request.resource_path(topic)
