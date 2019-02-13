@@ -104,8 +104,7 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
         for part in post.body:
             if isinstance(part, six.string_types):
                 plain_text = IPlainTextContentFragment(part)
-                div = u'<div>%s</div>' % plain_text
-                html += div
+                html += ' %s' % plain_text
         return html
 
     def _url_to_obj(self, obj):
@@ -134,7 +133,8 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
         avatar_url = self._url_to_obj(topic.creator)
         avatar_url = avatar_url if avatar_url.endswith('/') else avatar_url + '/'
         avatar_url = urllib_parse.urljoin(avatar_url, u'@@avatar')
-        topic_url = self._url_to_obj(topic)
+
+        topic_url = urllib_parse.urljoin(self.job_kwargs['application_url'], '/app/id/%s' % topic.NTIID)
         for email in emails:
             send_creation_notification_email(sender=topic.creator,
                                              receiver_emails=[email],
