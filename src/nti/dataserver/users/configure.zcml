@@ -214,4 +214,8 @@
 
 	<adapter factory=".tokens.UserTokenContainerACLProvider" />
 
+    <!-- Email validation -->
+    <utility factory=".utils.ValidEmailManager"
+             provides=".interfaces.IValidEmailManager" />
+
 </configure>

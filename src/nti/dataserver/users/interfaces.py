@@ -1115,3 +1115,26 @@ class IUserTokenContainer(IShouldHaveTraversablePath,
         Return unexpired tokens.
         """
 
+
+class IValidEmailManager(interface.Interface):
+    """
+    A utility for determining if a given set of emails or users can receive an
+    email.
+    """
+
+    def validate_email(email):
+        """
+        Given an email, returns the email if it is valid else None
+        """
+
+    def validate_emails(emails):
+        """
+        Given an iterable of string emails, returns
+        a string set of the valid emails
+        """
+
+    def valid_emails_for_users(users):
+        """
+        Given an iterable of Users or usernames, returns
+        a string set of the valid emails for those users
+        """

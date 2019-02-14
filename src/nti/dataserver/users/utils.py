@@ -11,12 +11,17 @@ from __future__ import absolute_import
 import six
 
 from zope import component
+from zope import interface
 
 from zope.component.hooks import getSite
 
 from zope.intid.interfaces import IIntIds
 
+from nti.coremetadata.interfaces import IX_VALID_EMAIL
+
 from nti.dataserver.interfaces import IUser
+
+from nti.dataserver.users import User
 
 from nti.dataserver.users.index import IX_SITE
 from nti.dataserver.users.index import IX_EMAIL
@@ -30,10 +35,13 @@ from nti.dataserver.users.index import IX_EMAIL_VERIFIED
 from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IValidEmailManager
 from nti.dataserver.users.interfaces import IAvatarURLProvider
 from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
 from nti.dataserver.users.interfaces import IHiddenMembership
+
+from nti.mailer.interfaces import IEmailAddressable
 
 from nti.property.urlproperty import UrlProperty
 
@@ -57,7 +65,7 @@ def update_entity_catalog(user, intids=None):
     return False
 
 
-def verified_email_ids(email):
+def _get_email_ids(email):
     email = email.lower()  # normalize
     catalog = get_entity_catalog()
 
@@ -66,6 +74,12 @@ def verified_email_ids(email):
     # pylint: disable=protected-access
     values = email_idx._fwd_index.get(email)
     intids_emails = catalog.family.IF.Set(values or ())
+    return intids_emails
+
+
+def verified_email_ids(email):
+    catalog = get_entity_catalog()
+    intids_emails = _get_email_ids(email)
     if not intids_emails:
         return catalog.family.IF.Set()
 
@@ -75,6 +89,20 @@ def verified_email_ids(email):
 
     # intersect
     return catalog.family.IF.intersection(intids_emails, intids_verified)
+
+
+def valid_email_ids(email):
+    catalog = get_entity_catalog()
+    intids_emails = _get_email_ids(email)
+    if not intids_emails:
+        return catalog.family.IF.Set()
+
+    # all valid emails
+    valid_idx = catalog[IX_TOPICS][IX_VALID_EMAIL]
+    valid_intids = catalog.family.IF.Set(valid_idx.getIds())
+
+    # intersect
+    return catalog.family.IF.intersection(intids_emails, valid_intids)
 
 
 def reindex_email_verification(user, catalog=None, intids=None):
@@ -114,6 +142,10 @@ def is_email_verified(email):
     result = verified_email_ids(email)
     return bool(result)
 
+
+def is_email_valid(email):
+    result = valid_email_ids(email)
+    return bool(result)
 
 def get_users_by_email(email):
     """
@@ -280,6 +312,38 @@ class BackgroundUrlProperty(ImageUrlProperty):
     max_file_size = 524288  # 512 KB
     avatar_field_name = 'backgroundURL'
     avatar_provider_interface = IBackgroundURLProvider
+
+
+# utilities
+
+@interface.implementer(IValidEmailManager)
+class ValidEmailManager(object):
+
+    @staticmethod
+    def validate_email(email):
+        if is_email_valid(email):
+            return email
+        return None
+
+    def validate_emails(self, emails):
+        valid_emails = set()
+        for email in emails:
+            if self.validate_email(email) is not None:
+                valid_emails.add(email)
+        return valid_emails
+
+    def validate_emails_for_users(self, users):
+        emails = set()
+        for user in users:
+            if isinstance(user, six.string_types):
+                user = User.get_user(user)
+            addressable = IEmailAddressable(user, None)
+            if addressable is None:
+                continue
+            valid_email = self.validate_email(addressable.email)
+            if valid_email is not None:
+                emails.add(valid_email)
+        return emails
 
 
 # site

@@ -1490,21 +1490,6 @@ class ISiteAdminManagerUtility(interface.Interface):
         """
         Returns all sibling site names for this site
         """
-
-
-class IValidEmailRecipientManager(interface.Interface):
-    """
-    A utility for determining if a given set of emails or users can receive an
-    email.
-    """
-
-    def validate(emails_or_users):
-        """
-        Given an iterable of string emails or User objects, returns
-        a string set of the valid emails
-        """
-
-
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?

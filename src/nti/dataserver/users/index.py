@@ -255,24 +255,24 @@ class EmailVerifiedFilteredSet(FilteredSetBase):
             self.unindex_doc(docid)
 
 
+def is_valid(unused_extent, unused_docid, document):
+    if isCommunity(unused_extent, unused_docid, document):
+        return False
+    try:
+        result = IUserProfile(document).email_verified
+    except (TypeError, AttributeError):
+        # Could not adapt, not in profile
+        result = None
+    return result is not False
+
+
 class EmailValidExtentFilteredSet(ExtentFilteredSet):
     """
     Emails that are not explicitly set as unverified
     """
 
     def __init__(self, iden, family=BTrees.family64):
-        super(EmailValidExtentFilteredSet, self).__init__(iden, self.is_valid, family=family)
-
-    def is_valid(self, unused_extent, unused_docid, document):
-        from IPython.terminal.debugger import set_trace;set_trace()
-        if isCommunity(unused_extent, unused_docid, document):
-            return False
-        try:
-            result = IUserProfile(document).email_verified
-        except (TypeError, AttributeError):
-            # Could not adapt, not in profile
-            result = None
-        return result is not False
+        super(EmailValidExtentFilteredSet, self).__init__(iden, is_valid, family=family)
 
 
 def isCommunity(unused_extent, unused_docid, document):
