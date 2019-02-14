@@ -40,6 +40,7 @@ from nti.coremetadata.interfaces import IX_IS_COMMUNITY
 from nti.coremetadata.interfaces import IX_CONTACT_EMAIL
 from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
 from nti.coremetadata.interfaces import IX_EMAIL_VERIFIED
+from nti.coremetadata.interfaces import IX_VALID_EMAIL
 from nti.coremetadata.interfaces import IX_REALNAME_PARTS
 from nti.coremetadata.interfaces import IX_OPT_IN_EMAIL_COMMUNICATION
 from nti.coremetadata.interfaces import IX_CONTACT_EMAIL_RECOVERY_HASH
@@ -254,6 +255,26 @@ class EmailVerifiedFilteredSet(FilteredSetBase):
             self.unindex_doc(docid)
 
 
+class EmailValidExtentFilteredSet(ExtentFilteredSet):
+    """
+    Emails that are not explicitly set as unverified
+    """
+
+    def __init__(self, iden, family=BTrees.family64):
+        super(EmailValidExtentFilteredSet, self).__init__(iden, self.is_valid, family=family)
+
+    def is_valid(self, unused_extent, unused_docid, document):
+        from IPython.terminal.debugger import set_trace;set_trace()
+        if isCommunity(unused_extent, unused_docid, document):
+            return False
+        try:
+            result = IUserProfile(document).email_verified
+        except (TypeError, AttributeError):
+            # Could not adapt, not in profile
+            result = None
+        return result is not False
+
+
 def isCommunity(unused_extent, unused_docid, document):
     return ICommunity.providedBy(document)
 
@@ -272,7 +293,8 @@ def add_catalog_filters(catalog, family=BTrees.family64):
     topic_index = catalog[IX_TOPICS]
     for filter_id, factory in ((IX_EMAIL_VERIFIED, EmailVerifiedFilteredSet),
                                (IX_IS_COMMUNITY, IsCommunityExtentFilteredSet),
-                               (IX_OPT_IN_EMAIL_COMMUNICATION, OptInEmailCommunicationFilteredSet)):
+                               (IX_OPT_IN_EMAIL_COMMUNICATION, OptInEmailCommunicationFilteredSet),
+                               (IX_VALID_EMAIL, EmailValidExtentFilteredSet)):
         the_filter = factory(filter_id, family=family)
         topic_index.addFilter(the_filter)
     return catalog

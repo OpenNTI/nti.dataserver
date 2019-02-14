@@ -538,9 +538,13 @@ class IRestrictedUserProfile(IUserProfile):
                           constraint=checkEmailAddress)
     email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL)
 
+    # 2/14/19
+    # A value of False here must be explicitly set
+    # This is intended for email addresses that should be excluded from any email communication
+    # A value of None indicates that the email is unverified, but not invalid for communication
     email_verified = Bool(title=u"Has the email been verified?",
                           required=False,
-                          default=False)
+                          default=None)
     email_verified.setTaggedValue(TAG_HIDDEN_IN_UI, True)
     email_verified.setTaggedValue(TAG_READONLY_IN_UI, True)
 

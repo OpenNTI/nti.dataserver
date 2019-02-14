@@ -69,7 +69,7 @@ from nti.dataserver.utils import run_with_dataserver
 from nti.mailer.interfaces import IVERP
 
 def _unverify_email(user):
-	IUserProfile( user ).email_verified = False
+	IUserProfile( user ).email_verified = None
 	unindex_email_verification(user)
 
 def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
