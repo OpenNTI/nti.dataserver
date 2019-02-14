@@ -20,6 +20,8 @@ from zope.component import subscribers
 
 from zope.location.interfaces import IRoot
 
+from nti.app.testing.request_response import DummyRequest
+
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.forum import Forum
 
@@ -79,8 +81,13 @@ class TestSubscribers(DataserverLayerTest):
         forum[topic_name] = topic
         return topic
 
+    @fudge.patch('nti.dataserver.contenttypes.forums.job.get_current_request')
+    @fudge.patch('nti.dataserver.job.email.to_external_ntiid_oid')
     @fudge.patch('nti.asynchronous.scheduled.utils.get_scheduled_queue')
-    def test_topic_creation_email_subscriber(self, fake_queue):
+    @WithMockDSTrans
+    def test_topic_creation_email_subscriber(self, fake_request, fake_ntiid, fake_queue):
+        fake_request.is_callable().returns(DummyRequest())
+        fake_ntiid.is_callable().returns('some:ntiid')
         queue = self._setup_mock_email_job(fake_queue)
         forum = Forum()
         interface.alsoProvides(forum, IRoot)  # Mock this in for the purpose of testing

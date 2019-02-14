@@ -64,6 +64,8 @@ from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users import Community
 
+from nti.mailer.interfaces import IEmailAddressable
+
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.testing.matchers import verifiably_provides
@@ -432,6 +434,9 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		with mock_dataserver.mock_db_trans(self.ds):
 			default_community = Community.get_community(self.default_community)
 			num_members = default_community.number_of_members()
+			for member in default_community.iter_members():
+				addressable = IEmailAddressable(member)
+				addressable.email = u'somevalidemail@test.com'
 		fake_email.is_callable().expects_call().times_called(num_members)  # Check this is called for each member
 
 		# relying on @nextthought.com automatically being an admin

@@ -13,6 +13,8 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not
 
+from pyramid.testing import DummyRequest
+
 from zope import interface
 
 from nti.contentfile.model import ContentBlobFile
@@ -35,6 +37,8 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.dataserver.users import Community
 from nti.dataserver.users import User
+
+from nti.mailer.interfaces import IEmailAddressable
 
 __docformat__ = "restructuredtext en"
 
@@ -70,29 +74,30 @@ class TestJob(DataserverLayerTest):
 
         return forum
 
-    def _add_community_topic(self, forum, topic_name):
+    def _add_community_topic(self, forum, topic_name, creator):
         topic = CommunityHeadlineTopic()
         topic.title = u'a test'
-        topic.creator = u'sjohnson@nextthought.com'
+        topic.creator = creator
         forum[topic_name] = topic
         return topic
 
+    @fudge.patch('nti.dataserver.contenttypes.forums.job.get_current_request')
     @fudge.patch('nti.asynchronous.scheduled.utils.get_scheduled_queue')
     @fudge.patch('nti.dataserver.contenttypes.forums.job.send_creation_notification_email')
     @WithMockDSTrans
-    def test_creation_email(self, fake_queue, fake_email):
+    def test_creation_email(self, fake_request, fake_queue, fake_email):
+        fake_request.is_callable().returns(DummyRequest())
         queue = self._setup_mock_email_job(fake_queue)
         fake_kwargs = {}
-        fake_args = []
 
-        def stub(*args, **kwargs):
-            fake_args.extend(*args)
+        def stub(**kwargs):
             fake_kwargs.update(**kwargs)
         fake_email.is_callable().calls(stub)
 
         forum = self._create_community_forum(forum_name=u'test_forum')
         interface.alsoProvides(forum, ISendEmailOnForumTypeCreation)
-        topic = self._add_community_topic(forum=forum, topic_name=u'test_topic')
+        sj = User.get_user(u'sjohnson@nextthought.com')
+        topic = self._add_community_topic(forum=forum, topic_name=u'test_topic', creator=sj)
         post = GeneralHeadlinePost()
         body = [u'<html><body>a headline post about important things</body></html>']
         post.body = body
@@ -100,12 +105,16 @@ class TestJob(DataserverLayerTest):
         _send_email_on_forum_type_creation(topic, None)
         assert_that(queue.empty(), is_not(True))
 
+        # give super user an email address
+        addressable = IEmailAddressable(sj)
+        addressable.email = u'sjohnson@nextthought.com'
+
         # execute the job
         job = queue.get()
         job()
 
         assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
-        assert_that(fake_kwargs['message'], is_('<div>a headline post about important things</div>'))
+        assert_that(fake_kwargs['message'], is_(' a headline post about important things'))
 
         body.append(u'abc')
         body.append(u'xyz')
@@ -119,9 +128,9 @@ class TestJob(DataserverLayerTest):
         job()
 
         assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
-        assert_that(fake_kwargs['message'], is_('<div>a headline post about important things</div>'
-                                                '<div>abc</div>'
-                                                '<div>xyz</div>'))
+        assert_that(fake_kwargs['message'], is_(' a headline post about important things'
+                                                ' abc'
+                                                ' xyz'))
 
         body.append(ContentBlobFile())
         body.append(Canvas())
@@ -135,6 +144,6 @@ class TestJob(DataserverLayerTest):
         job()
 
         assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
-        assert_that(fake_kwargs['message'], is_('<div>a headline post about important things</div>'
-                                                '<div>abc</div>'
-                                                '<div>xyz</div>'))
+        assert_that(fake_kwargs['message'], is_(' a headline post about important things'
+                                                ' abc'
+                                                ' xyz'))
