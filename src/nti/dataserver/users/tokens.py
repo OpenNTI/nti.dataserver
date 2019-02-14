@@ -33,14 +33,12 @@ from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_CREATE
 from nti.dataserver.authorization import ACT_UPDATE
 from nti.dataserver.authorization import ACT_DELETE
-from nti.dataserver.authorization import ROLE_ADMIN
 
 from nti.dataserver.authorization_acl import ace_denying
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import acl_from_aces
 
 from nti.dataserver.interfaces import ACE_DENY_ALL
-from nti.dataserver.interfaces import ALL_PERMISSIONS
 from nti.dataserver.interfaces import IACLProvider
 
 from nti.dataserver.users.interfaces import IUserToken
@@ -206,11 +204,9 @@ class UserTokenContainerACLProvider(object):
 
     @Lazy
     def __acl__(self):
-        aces = [ace_allowing(ROLE_ADMIN, ALL_PERMISSIONS, type(self)),
-                ACE_DENY_ALL]
-
+        aces = []
         if self.user:
-            aces.insert(0, ace_allowing(self.user.username, self._owner_permissions, type(self)))
-
+            aces.append(ace_allowing(self.user.username, self._owner_permissions, type(self)))
+        aces.append(ACE_DENY_ALL)
         acl = acl_from_aces(aces)
         return acl
