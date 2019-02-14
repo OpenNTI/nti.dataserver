@@ -62,7 +62,12 @@
 
     <subscriber factory=".decorators._CatalogWorkspaceAdminLinkDecorator"
                 provides="nti.appserver.workspaces.interfaces.ICatalogWorkspaceLinkProvider"/>
-				
+
+	<subscriber factory=".decorators._UserTokensLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					 pyramid.interfaces.IRequest"/>
+
 	<!-- Query -->
 	<subscriber	factory=".containers._UserContainersQuerier"
 				provides="nti.appserver.interfaces.IUserContainersQuerier"/>
@@ -75,6 +80,15 @@
 	<adapter factory=".traversal.UsersAdapterTraversable"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 for="nti.dataserver.interfaces.IUsersFolder" />
+
+	<adapter name="tokens"
+			 factory=".traversal._user_token_path_adapter"
+			 provides="zope.traversing.interfaces.IPathAdapter"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
+
+	<adapter factory=".traversal.UserTokenContainerTraversable"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 for="nti.dataserver.users.interfaces.IUserTokenContainer pyramid.interfaces.IRequest" />
 
 	<!-- Adapter -->
 	<adapter factory=".adapters._DFLEditLinkMaker" />
