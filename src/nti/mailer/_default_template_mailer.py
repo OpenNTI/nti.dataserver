@@ -30,6 +30,7 @@ from zope import interface
 
 from zope.dottedname import resolve as dottedname
 
+from nti.dataserver.users.interfaces import IValidEmailManager
 from nti.mailer.interfaces import IMailer
 from nti.mailer.interfaces import IMailDelivery
 from nti.mailer.interfaces import ITemplatedMailer
@@ -118,6 +119,8 @@ def _as_recipient_list(recipients):
         recipients = [
 			x for x in recipients if isinstance(x, string_types) and x
 		]
+        email_manager = component.queryUtility(IValidEmailManager)
+        recipients = email_manager.validate_emails(recipients)
     return recipients
 
 
