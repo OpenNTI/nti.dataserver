@@ -55,10 +55,7 @@ class TestTokensViews(ApplicationLayerTest):
         # Read all tokens.
         self.testapp.get(url, status=401, extra_environ=self._make_extra_environ(username=None))
         self.testapp.get(url, status=403, extra_environ=self._make_extra_environ(username=u'user002'))
-        result = self.testapp.get(url, status=200, extra_environ=self._make_extra_environ(username=u'test001@nextthought.com')).json_body
-        assert_that(result, has_entries({'Total': 1,
-                                         'ItemCount': 1,
-                                         'Items': has_length(1)}))
+        self.testapp.get(url, status=403, extra_environ=self._make_extra_environ(username=u'test001@nextthought.com'))
         result = self.testapp.get(url, status=200, extra_environ=self._make_extra_environ(username=u'user001')).json_body
         assert_that(result, has_entries({'Total': 1,
                                          'ItemCount': 1,
@@ -70,13 +67,7 @@ class TestTokensViews(ApplicationLayerTest):
 
         self.testapp.get(url, status=401, extra_environ=self._make_extra_environ(username=None))
         self.testapp.get(url, status=403, extra_environ=self._make_extra_environ(username=u'user002'))
-        result = self.testapp.get(url, status=200, extra_environ=self._make_extra_environ(username=u'test001@nextthought.com')).json_body
-        assert_that(result, has_entries({'title': 'token1',
-                                         'description': 'token1 desc',
-                                         'scopes': contains(u'one'),
-                                         'expiration_date': None,
-                                         'token': not_none(),
-                                         'MimeType': 'application/vnd.nextthought.usertoken'}))
+        self.testapp.get(url, status=403, extra_environ=self._make_extra_environ(username=u'test001@nextthought.com'))
         result = self.testapp.get(url, status=200, extra_environ=self._make_extra_environ(username=u'user001')).json_body
         assert_that(result, has_entries({'NTIID': ntiid}))
 
@@ -99,6 +90,7 @@ class TestTokensViews(ApplicationLayerTest):
         url = '/dataserver2/users/user001/tokens'
         self.testapp.post_json(url, ext_obj, status=401, extra_environ=self._make_extra_environ(username=None))
         self.testapp.post_json(url, ext_obj, status=403, extra_environ=self._make_extra_environ(username=u'user002'))
+        self.testapp.post_json(url, ext_obj, status=403, extra_environ=self._make_extra_environ(username=u'test001@nextthought.com'))
         result = self.testapp.post_json(url, ext_obj, status=201, extra_environ=self._make_extra_environ(username=u'user001')).json_body
         assert_that(result['token'], is_not('xxxx'))
         assert_that(result, has_entries({'token': not_none(),
@@ -120,11 +112,10 @@ class TestTokensViews(ApplicationLayerTest):
         # delete all
         self.testapp.delete(url, status=401, extra_environ=self._make_extra_environ(username=None))
         self.testapp.delete(url, status=403, extra_environ=self._make_extra_environ(username=u'user002'))
+        self.testapp.delete(url, status=403, extra_environ=self._make_extra_environ(username=u'test001@nextthought.com'))
         self.testapp.delete(url, status=204, extra_environ=self._make_extra_environ(username=u'user001'))
 
         self._assert_token_container(u'user001', 0)
-
-        self.testapp.delete(url, status=204, extra_environ=self._make_extra_environ(username=u'test001@nextthought.com'))
 
         # delete single
         result = self.testapp.post_json(url, ext_obj, status=201, extra_environ=self._make_extra_environ(username=u'user001')).json_body
