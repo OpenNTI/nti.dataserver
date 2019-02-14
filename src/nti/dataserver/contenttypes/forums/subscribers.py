@@ -21,7 +21,7 @@ def _send_email_on_forum_type_creation(forum_type_object, _):
     try:
         forum = find_interface(forum_type_object, IForum)
     except TypeError as e:
-        logger.debug(u'(e.message, %s)' % forum_type_object)
+        logger.debug(u'(%s, %s)' % (e.message, forum_type_object))
         return
     if ISendEmailOnForumTypeCreation.providedBy(forum):
         create_and_queue_scheduled_email_job(forum_type_object)
