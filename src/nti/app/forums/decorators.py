@@ -42,6 +42,7 @@ from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
+from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -197,6 +198,7 @@ class ForumObjectContentsLinkProvider(AbstractAuthenticatedRequestAwareDecorator
             link = self._add_link('add', context, mapping, request, elements)
             link.method = 'POST'
 
+        mapping['EmailNotifications'] = ISendEmailOnForumTypeCreation.providedBy(context)
 
 @component.adapter(IForum)
 @interface.implementer(IExternalObjectDecorator)
