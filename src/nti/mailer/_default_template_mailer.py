@@ -31,6 +31,7 @@ from zope import interface
 from zope.dottedname import resolve as dottedname
 
 from nti.dataserver.users.interfaces import IValidEmailManager
+
 from nti.mailer.interfaces import IMailer
 from nti.mailer.interfaces import IMailDelivery
 from nti.mailer.interfaces import ITemplatedMailer
