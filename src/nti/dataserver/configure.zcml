@@ -367,6 +367,11 @@
 	<utility factory=".site.DefaultSiteAdminManagerUtility"
 			 provides=".interfaces.ISiteAdminManagerUtility" />
 
+    <!-- Community Admin -->
+    <adapter factory=".community.PersistentCommunityRoleManager"
+             provides=".interfaces.ICommunityRoleManager"
+             for=".interfaces.ICommunity" />
+
 	<!-- ACL/ACE permissions -->
 	<include package="." file="configure_acls.zcml" />
 
