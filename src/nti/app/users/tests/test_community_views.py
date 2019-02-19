@@ -237,3 +237,64 @@ class TestCommunityViews(ApplicationLayerTest):
         path = '/dataserver2/users/bleach/Activity'
         res = self.testapp.get(path, status=200)
         assert_that(res.json_body, has_entry('Items', has_length(1)))
+
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_community_admin(self):
+        with mock_dataserver.mock_db_trans(self.ds):
+            c = Community.create_community(username=u'mycommunity')
+            user = User.get_user(self.default_username)
+            user.record_dynamic_membership(c)
+            user = self._create_user(u"sheldon", u"temp001")
+            user.record_dynamic_membership(c)
+            assert_that(c.is_admin(self.default_username), is_(False))
+            assert_that(c.is_admin(u'sheldon'), is_(False))
+
+        path = '/dataserver2/users/mycommunity/%s'
+
+        # test non super user can't access
+        basic_env = self._make_extra_environ(u'sheldon')
+        self.testapp.put_json(path % 'AddAdmin',
+                              {'username': 'sjohnson@nextthought.com'},
+                              status=403,
+                              extra_environ=basic_env)
+
+        self.testapp.put_json(path % 'RemoveAdmin',
+                              {'username': 'sjohnson@nextthought.com'},
+                              status=403,
+                              extra_environ=basic_env)
+
+        # test super user can add
+        self.testapp.put_json(path % 'AddAdmin',
+                              {'username': 'sheldon'},
+                              status=200)
+
+        res = self.testapp.get(path % 'ListAdmins',
+                               status=200)
+        assert_that(res.json_body, has_length(1))
+
+        # test added user can add now and read
+        self.testapp.put_json(path % 'AddAdmin',
+                              {'username': 'sjohnson@nextthought.com'},
+                              status=200,
+                              extra_environ=basic_env)
+
+        res = self.testapp.get(path % 'ListAdmins',
+                               status=200,
+                               extra_environ=basic_env)
+        assert_that(res.json_body, has_length(2))
+
+        # test basic can remove
+        self.testapp.put_json(path % 'RemoveAdmin',
+                              {'username': 'sheldon'},
+                              status=200,
+                              extra_environ=basic_env)
+
+        # basic can no longer access
+        res = self.testapp.get(path % 'ListAdmins',
+                               status=403,
+                               extra_environ=basic_env)
+
+        # Only super left
+        res = self.testapp.get(path % 'ListAdmins',
+                               status=200)
+        assert_that(res.json_body, has_length(1))

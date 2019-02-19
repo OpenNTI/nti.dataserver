@@ -652,29 +652,3 @@ def is_admin_or_content_admin_or_site_admin(user):
         and (   is_admin(user) \
              or is_content_admin(user) \
              or is_site_admin(user) )
-
-
-def is_community_admin(user, community):
-    """
-    Returns whether the user has the `ROLE_COMMUNITY_ADMIN` role.
-    """
-    result = False
-    try:
-        crm = IPrincipalRoleManager(community, None)
-    except TypeError:
-        # tests
-        crm = None
-    if crm is not None:
-        username = getattr(user, 'username', user) or ''
-        for role, access in crm.getRolesForPrincipal(username):
-            if role == ROLE_COMMUNITY_ADMIN.id and access == Allow:
-                return True
-    return result
-
-
-def is_admin_or_community_admin(user, community):
-    """
-    Returns whether the user has the `ROLE_COMMUNITY_ADMIN` or
-    `ROLE_ADMIN` roles.
-    """
-    return is_admin(user) or is_community_admin(user, community)

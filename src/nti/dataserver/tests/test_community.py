@@ -15,7 +15,6 @@ from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from zope.securitypolicy.settings import Allow
 
-from nti.dataserver.authorization import is_community_admin
 from nti.dataserver.authorization import ROLE_COMMUNITY_ADMIN_NAME
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
@@ -32,11 +31,11 @@ class TestCommunityRoleManager(DataserverLayerTest):
 
     def test_site_role_manager(self):
         username = u'sheldon'
-        user = User(username)
+        User(username)
         community = Community(u'mycommunity')
 
         # Not a community admin by default
-        assert_that(is_community_admin(user, community), is_(False))
+        assert_that(community.is_admin(username), is_(False))
 
         # Grant user admin access in community
         community_prm = IPrincipalRoleManager(community)
@@ -45,4 +44,4 @@ class TestCommunityRoleManager(DataserverLayerTest):
                                             username)
         principals = community_prm.getPrincipalsForRole(ROLE_COMMUNITY_ADMIN_NAME)
         assert_that(principals, contains((username, Allow,)))
-        assert_that(is_community_admin(user, community), is_(True))
+        assert_that(community.is_admin(username), is_(True))

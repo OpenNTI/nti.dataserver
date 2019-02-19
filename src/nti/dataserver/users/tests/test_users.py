@@ -1141,6 +1141,37 @@ class TestCommunity(DataserverLayerTest):
     layer = mock_dataserver.SharedConfiguringTestLayer
 
     @WithMockDSTrans
+    def test_community_admin(self):
+        user = User.create_user(self.ds, username=u'sjohnson@nextthought.com',
+                                password=u'temp001')
+        user2 = User.create_user(self.ds, username=u'jason@nextthought.com',
+                                 password=u'temp001')
+        comm = Community.create_entity(self.ds, username=u'AoPS')
+
+        user.record_dynamic_membership(comm)
+        user2.record_dynamic_membership(comm)
+
+        assert_that(comm.get_admin_usernames(), has_length(0))
+
+        # Test add
+        comm.add_admin(user)
+        assert_that(comm.get_admin_usernames(), has_length(1))
+        assert_that(comm.is_admin(user), is_(True))
+        assert_that(comm.is_admin(user2), is_(False))
+
+        # Test remove
+        comm.remove_admin(user)
+        assert_that(comm.get_admin_usernames(), has_length(0))
+        assert_that(comm.is_admin(user), is_(False))
+        assert_that(comm.is_admin(user2), is_(False))
+
+        # Test remove twice
+        comm.remove_admin(user2)
+        assert_that(comm.get_admin_usernames(), has_length(0))
+        assert_that(comm.is_admin(user), is_(False))
+        assert_that(comm.is_admin(user2), is_(False))
+
+    @WithMockDSTrans
     def test_community_enumarable_adapter(self):
         user = User.create_user(self.ds, username=u'sjohnson@nextthought.com',
                                 password=u'temp001')
