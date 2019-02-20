@@ -114,7 +114,7 @@ class TestJob(DataserverLayerTest):
         job()
 
         assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
-        assert_that(fake_kwargs['message'], is_(' a headline post about important things'))
+        assert_that(fake_kwargs['message'], is_('a headline post about important things'))
 
         body.append(u'abc')
         body.append(u'xyz')
@@ -128,7 +128,7 @@ class TestJob(DataserverLayerTest):
         job()
 
         assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
-        assert_that(fake_kwargs['message'], is_(' a headline post about important things'
+        assert_that(fake_kwargs['message'], is_('a headline post about important things'
                                                 ' abc'
                                                 ' xyz'))
 
@@ -144,6 +144,6 @@ class TestJob(DataserverLayerTest):
         job()
 
         assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
-        assert_that(fake_kwargs['message'], is_(' a headline post about important things'
+        assert_that(fake_kwargs['message'], is_('a headline post about important things'
                                                 ' abc'
                                                 ' xyz'))
