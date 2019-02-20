@@ -58,6 +58,7 @@ from nti.app.forums.tests.base_forum_testing import _plain
 from nti.app.forums.tests.base_forum_testing import UserCommunityFixture
 from nti.app.forums.tests.base_forum_testing import AbstractTestApplicationForumsBaseMixin
 
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityAdminRestrictedForum
 from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
 
 from nti.dataserver.tests import mock_dataserver
@@ -479,3 +480,33 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 			# Need the db to resolve the topic ntiid in the job
 			job()
 
+		@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',), testapp=True, default_authenticate=True)
+		def test_community_admin_restricted_forum():
+
+			adminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com'))
+			forum_data = self._create_post_data_for_POST()
+
+			# Create with it
+			forum_data['admin_restricted'] = True
+			forum_res = adminapp.post_json(self.board_pretty_url, forum_data, status=201)
+			forum_location = forum_res.location
+			forum_ntiid = forum_res.json_body['NTIID']
+			with mock_dataserver.mock_db_trans(self.ds):
+				forum = find_object_with_ntiid(forum_ntiid)
+				assert_that(forum, verifiably_provides(ICommunityAdminRestrictedForum))
+
+			# Disable via PUT
+			forum_data['admin_restricted'] = False
+			forum_res = adminapp.put_json(forum_location, forum_data)
+			forum_ntiid = forum_res.json_body['NTIID']
+			with mock_dataserver.mock_db_trans(self.ds):
+				forum = find_object_with_ntiid(forum_ntiid)
+				assert_that(forum, does_not(verifiably_provides(ICommunityAdminRestrictedForum)))
+
+			# Enable via PUT
+			forum_data['admin_restricted'] = True
+			forum_res = adminapp.put_json(forum_location, forum_data)
+			forum_ntiid = forum_res.json_body['NTIID']
+			with mock_dataserver.mock_db_trans(self.ds):
+				forum = find_object_with_ntiid(forum_ntiid)
+				assert_that(forum, verifiably_provides(ICommunityAdminRestrictedForum))
