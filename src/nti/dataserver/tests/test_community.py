@@ -7,20 +7,22 @@ from __future__ import division
 
 from hamcrest import assert_that
 from hamcrest import contains
+from hamcrest import has_entry
 from hamcrest import has_length
-from hamcrest import instance_of
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import none
 
-from pyramid.security import AllPermissionsList
+from zope import interface
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 from zope.securitypolicy.interfaces import IRolePermissionManager
 
 from zope.securitypolicy.settings import Allow
+from zope.securitypolicy.settings import Deny
 
 from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import ISiteCommunity
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
@@ -56,10 +58,40 @@ class TestCommunityPermissions(DataserverLayerTest):
         assert_that(principals, contains((username, Allow,)))
         assert_that(community.is_admin(username), is_(True))
 
-        # Assert role has expected permissions
+        # Assert community admin role has expected permissions
         community_rpm = IRolePermissionManager(community)
-        community_rpm.initialize()  # TODO why does this have to be called... likely a bug somewhere
         permissions = community_rpm.getPermissionsForRole(nauth.ROLE_COMMUNITY_ADMIN_NAME)
-        assert_that(permissions, has_length(1))
-        assert_that(permissions[0][0], instance_of(AllPermissionsList))
+        permissions = dict(permissions)
+        assert_that(permissions, has_length(6))
+        for permission in (nauth.ACT_READ,
+                           nauth.ACT_CREATE,
+                           nauth.ACT_DELETE,
+                           nauth.ACT_SEARCH,
+                           nauth.ACT_LIST,
+                           nauth.ACT_UPDATE):
+            assert_that(permissions, has_entry(permission.id, Allow))
 
+        # Assert site admins cannot admin regular communities
+        permissions = community_rpm.getPermissionsForRole(nauth.ROLE_SITE_ADMIN_NAME)
+        permissions = dict(permissions)
+        for permission in (nauth.ACT_READ,
+                           nauth.ACT_CREATE,
+                           nauth.ACT_DELETE,
+                           nauth.ACT_SEARCH,
+                           nauth.ACT_LIST,
+                           nauth.ACT_UPDATE):
+            assert_that(permissions, has_entry(permission.id, Deny))
+
+        # Assert site admins can admin site communities
+        interface.alsoProvides(community, ISiteCommunity)
+        community_rpm = IRolePermissionManager(community)
+        permissions = community_rpm.getPermissionsForRole(nauth.ROLE_SITE_ADMIN_NAME)
+        permissions = dict(permissions)
+        assert_that(permissions, has_length(6))
+        for permission in (nauth.ACT_READ,
+                           nauth.ACT_CREATE,
+                           nauth.ACT_DELETE,
+                           nauth.ACT_SEARCH,
+                           nauth.ACT_LIST,
+                           nauth.ACT_UPDATE):
+            assert_that(permissions, has_entry(permission.id, Allow))

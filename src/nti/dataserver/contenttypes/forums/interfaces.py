@@ -448,6 +448,15 @@ class ICommunityForum(IGeneralForum, IShouldHaveTraversablePath):
     __parent__.required = False
 
 
+class ICommunityAdminRestrictedForum(interface.Interface):
+    """
+    A a marker interface for community forums
+    that only community admins and NTI admins
+    have write privileges in
+    """
+ICommunityAdminRestrictedForum.setTaggedValue('_ext_is_marker_interface', True)
+
+
 class IDFLBoard(IGeneralBoard, IDefaultForumBoard, IShouldHaveTraversablePath):
     """
     A board belonging to a particular dfl.
