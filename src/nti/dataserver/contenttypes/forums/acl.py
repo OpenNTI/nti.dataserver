@@ -31,7 +31,8 @@ from nti.dataserver.authorization_acl import ace_denying
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 
-from nti.dataserver.contenttypes.forums.interfaces import WRITE_PERMISSION, ICommunityAdminRestrictedForum
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityAdminRestrictedForum
+from nti.dataserver.contenttypes.forums.interfaces import WRITE_PERMISSION
 from nti.dataserver.contenttypes.forums.interfaces import CREATE_PERMISSION
 from nti.dataserver.contenttypes.forums.interfaces import DELETE_PERMISSION
 from nti.dataserver.contenttypes.forums.interfaces import ALL_PERMISSIONS as FORUM_ALL_PERMISSIONS
