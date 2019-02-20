@@ -454,6 +454,7 @@ class ICommunityAdminRestrictedForum(interface.Interface):
     that only community admins and NTI admins
     have write privileges in
     """
+ICommunityAdminRestrictedForum.setTaggedValue('_ext_is_marker_interface', True)
 
 
 class IDFLBoard(IGeneralBoard, IDefaultForumBoard, IShouldHaveTraversablePath):

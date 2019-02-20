@@ -322,9 +322,6 @@ class CommunityActivityView(EntityActivityViewMixin):
 
 class CommunityAdminMixin(object):
 
-    def _can_administer(self, user):
-        return is_admin_or_site_admin(user) or self.context.is_admin(user)
-
     def get_usernames(self):
         values = self.readInput()
         usernames = values.get('usernames') or values.get('username')
@@ -335,7 +332,7 @@ class CommunityAdminMixin(object):
 @view_config(route_name='objects.generic.traversal',
              context=ICommunity,
              request_method='PUT',
-             permission=nauth.ACT_READ,
+             permission=nauth.ACT_UPDATE,
              name='AddAdmin')
 class AddCommunityAdmin(AbstractAuthenticatedView,
                         ModeledContentUploadRequestUtilsMixin,
@@ -346,8 +343,6 @@ class AddCommunityAdmin(AbstractAuthenticatedView,
     """
 
     def __call__(self):
-        if not self._can_administer(self.remoteUser):
-            raise hexc.HTTPForbidden()
         community = self.context
         for username in self.get_usernames():
             user = User.get_user(username)
@@ -365,7 +360,7 @@ class AddCommunityAdmin(AbstractAuthenticatedView,
 @view_config(route_name='objects.generic.traversal',
              context=ICommunity,
              request_method='PUT',
-             permission=nauth.ACT_READ,
+             permission=nauth.ACT_UPDATE,
              name='RemoveAdmin')
 class RemoveCommunityAdmin(AbstractAuthenticatedView,
                            CommunityAdminMixin,
@@ -375,8 +370,6 @@ class RemoveCommunityAdmin(AbstractAuthenticatedView,
     """
 
     def __call__(self):
-        if not self._can_administer(self.remoteUser):
-            raise hexc.HTTPForbidden()
         community = self.context
         for username in self.get_usernames():
             user = User.get_user(username)
@@ -392,14 +385,12 @@ class RemoveCommunityAdmin(AbstractAuthenticatedView,
 @view_config(route_name='objects.generic.traversal',
              context=ICommunity,
              request_method='GET',
-             permission=nauth.ACT_READ,
+             permission=nauth.ACT_UPDATE,
              name='ListAdmins')
 class ListCommunityAdmins(AbstractAuthenticatedView,
                           CommunityAdminMixin):
 
     def __call__(self):
-        if not self._can_administer(self.remoteUser):
-            raise hexc.HTTPForbidden()
         result = LocatedExternalList()
         usernames = self.context.get_admin_usernames()
         for username in usernames:

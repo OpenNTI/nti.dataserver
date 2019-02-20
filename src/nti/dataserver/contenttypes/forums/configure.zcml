@@ -120,7 +120,8 @@
 	<adapter factory=".acl._ForumACLProvider"
 			 for=".interfaces.IGeneralForum"/>
 
-	<adapter factory=".acl.CommunityForumACLProvider"
+	<adapter factory=".acl._acl_for_community_forum"
+             provides="nti.dataserver.interfaces.IACLProvider"
 			 for=".interfaces.ICommunityForum"/>
 
 	<adapter factory=".acl.CommunityBoardACLProvider"
@@ -138,7 +139,7 @@
 	<adapter factory=".acl._ACLCommunityBoardACLProvider"
 			 for=".interfaces.IACLCommunityBoard"/>
 
-    <adapter factory=".acl._acl_for_community_forum"
+    <adapter factory=".acl._acl_for_acl_community_forum"
              provides="nti.dataserver.interfaces.IACLProvider"
              for=".interfaces.IACLCommunityForum" />
 

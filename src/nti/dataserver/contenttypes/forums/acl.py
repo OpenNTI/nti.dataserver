@@ -76,6 +76,12 @@ class CommunityForumACLProvider(_ForumACLProvider):
         return (self.context.creator,)  # the ICommunity
 
 
+class CommunityAdminRestrictedForumACLProvider(CommunityForumACLProvider):
+
+    # Only allow read permissions for everyone but admins
+    _PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,)
+
+
 class CommunityBoardACLProvider(AbstractCreatedAndSharedACLProvider):
     """
     Gives admins the ability to create/delete entire forums. The creator,
@@ -305,6 +311,12 @@ class _ACLCommunityAdminRestrictedForumACLProvider(_ACLCommunityForumACLProvider
 
 
 def _acl_for_community_forum(created):
+    if ICommunityAdminRestrictedForum.providedBy(created):
+        return CommunityAdminRestrictedForumACLProvider(created)
+    return CommunityForumACLProvider(created)
+
+
+def _acl_for_acl_community_forum(created):
     if ICommunityAdminRestrictedForum.providedBy(created):
         return _ACLCommunityAdminRestrictedForumACLProvider(created)
     return _ACLCommunityForumACLProvider(created)
