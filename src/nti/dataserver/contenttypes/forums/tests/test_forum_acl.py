@@ -69,6 +69,8 @@ class TestForumACL(ForumLayerTest):
 		provider = nti_interfaces.IACLProvider(forum)
 		assert_that(provider, instance_of(_ACLCommunityForumACLProvider))
 
+		from IPython.terminal.debugger import set_trace;set_trace()
+
 		interface.alsoProvides(forum, ICommunityAdminRestrictedForum)
 		provider = nti_interfaces.IACLProvider(forum)
 		assert_that(provider, instance_of(_ACLCommunityAdminRestrictedForumACLProvider))

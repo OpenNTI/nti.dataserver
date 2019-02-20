@@ -146,6 +146,9 @@
 	<adapter factory=".zope_security.BoardRolePermissionManager"
 			 provides="zope.securitypolicy.interfaces.IRolePermissionMap" />
 
+	<adapter factory=".zope_security.CommunityAdminRestrictedForumRolePermissionManager"
+			 provides="zope.securitypolicy.interfaces.IRolePermissionMap" />
+
 	<!-- Additional/plugin packages -->
 	<include package="z3c.autoinclude" file="meta.zcml" />
 	<includePlugins package="." />
