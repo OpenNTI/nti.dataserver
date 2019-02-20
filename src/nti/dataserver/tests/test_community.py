@@ -5,22 +5,22 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from hamcrest import assert_that, has_length, is_in, instance_of
+from hamcrest import assert_that
 from hamcrest import contains
+from hamcrest import has_length
+from hamcrest import instance_of
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import none
-from pyramid.security import AllPermissionsList
-from zope.security import checkPermission
-from zope.security.interfaces import IParticipation
-from zope.security.management import newInteraction
 
-from zope.securitypolicy.interfaces import IPrincipalRoleManager, IRolePermissionManager
+from pyramid.security import AllPermissionsList
+
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+from zope.securitypolicy.interfaces import IRolePermissionManager
 
 from zope.securitypolicy.settings import Allow
 
 from nti.dataserver import authorization as nauth
-from nti.dataserver.interfaces import IPrincipal
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 

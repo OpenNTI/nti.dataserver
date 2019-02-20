@@ -8,6 +8,7 @@ from __future__ import division
 from zope import interface
 
 from zope.securitypolicy.principalrole import AnnotationPrincipalRoleManager
+
 from zope.securitypolicy.rolepermission import AnnotationRolePermissionManager
 
 from nti.dataserver.authorization import ROLE_COMMUNITY_ADMIN_NAME
