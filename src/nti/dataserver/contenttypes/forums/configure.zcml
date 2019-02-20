@@ -134,8 +134,9 @@
 	<adapter factory=".acl._ACLCommunityBoardACLProvider"
 			 for=".interfaces.IACLCommunityBoard"/>
 
-	<adapter factory=".acl._ACLCommunityForumACLProvider"
-			 for=".interfaces.IACLCommunityForum"/>
+    <adapter factory=".acl._acl_for_community_forum"
+             provides="nti.dataserver.interfaces.IACLProvider"
+             for=".interfaces.IACLCommunityForum" />
 
 	<!-- Zope security -->
 	<adapter factory=".zope_security.BoardRolePermissionManager"

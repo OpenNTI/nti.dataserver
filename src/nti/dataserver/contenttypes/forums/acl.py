@@ -31,7 +31,7 @@ from nti.dataserver.authorization_acl import ace_denying
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 
-from nti.dataserver.contenttypes.forums.interfaces import WRITE_PERMISSION
+from nti.dataserver.contenttypes.forums.interfaces import WRITE_PERMISSION, ICommunityAdminRestrictedForum
 from nti.dataserver.contenttypes.forums.interfaces import CREATE_PERMISSION
 from nti.dataserver.contenttypes.forums.interfaces import DELETE_PERMISSION
 from nti.dataserver.contenttypes.forums.interfaces import ALL_PERMISSIONS as FORUM_ALL_PERMISSIONS
@@ -295,3 +295,23 @@ class _ACLCommunityForumACLProvider(CommunityForumACLProvider, _ACLBasedProvider
                     action = self._resolve_action(action)
                     for entity in self._resolve_entities(eid):
                         acl.append(action(entity, perm, self))
+
+
+class _ACLCommunityAdminRestrictedForumACLProvider(_ACLCommunityForumACLProvider):
+
+    # Only allow read permissions for everyone but admins
+    _PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,)
+
+    def _extend_with_admin_privs(self, acl, provenance=None):
+        super(_ACLCommunityAdminRestrictedForumACLProvider, self)._extend_with_admin_privs(acl, provenance)
+
+        # Give community admins all privileges
+        acl.append(ace_allowing(nauth.ROLE_COMMUNITY_ADMIN,
+                                ALL_PERMISSIONS,
+                                provenance))
+
+
+def _acl_for_community_forum(created):
+    if ICommunityAdminRestrictedForum.providedBy(created):
+        return _ACLCommunityAdminRestrictedForumACLProvider(created)
+    return _ACLCommunityForumACLProvider(created)

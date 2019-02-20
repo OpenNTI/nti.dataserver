@@ -29,14 +29,19 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityAdminRestrictedForum
 from nti.dataserver.contenttypes.forums.interfaces import IForumACE
 from nti.dataserver.contenttypes.forums.interfaces import IACLCommunityForum
 from nti.dataserver.contenttypes.forums.interfaces import IACLCommunityBoard
 
 from nti.dataserver.contenttypes.forums.ace import ForumACE
+
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
+
 from nti.dataserver.contenttypes.forums.forum import ACLCommunityForum
+
 from nti.dataserver.contenttypes.forums.acl import _ACLCommunityForumACLProvider
+from nti.dataserver.contenttypes.forums.acl import _ACLCommunityAdminRestrictedForumACLProvider
 
 from . import ForumLayerTest
 
@@ -63,6 +68,10 @@ class TestForumACL(ForumLayerTest):
 		forum = ACLCommunityForum()
 		provider = nti_interfaces.IACLProvider(forum)
 		assert_that(provider, instance_of(_ACLCommunityForumACLProvider))
+
+		interface.alsoProvides(forum, ICommunityAdminRestrictedForum)
+		provider = nti_interfaces.IACLProvider(forum)
+		assert_that(provider, instance_of(_ACLCommunityAdminRestrictedForumACLProvider))
 
 	def test_externalizes(self):
 		ace = ForumACE(Action='Allow', Permissions=('All',), Entities=('foo',))
