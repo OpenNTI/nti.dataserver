@@ -32,6 +32,8 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
 from nti.dataserver.contenttypes.forums.interfaces import IUserTopicParticipationSummary
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityAdminRestrictedForum
 
 from nti.dataserver.users.entity import Entity
 
@@ -251,4 +253,18 @@ class ForumInternalObjectUpdater(object):
         elif ISendEmailOnForumTypeCreation.providedBy(self.forum) and \
                 parsed.get('notify_on_topic_creation', None) == False:  # Require an explicit disable
             interface.noLongerProvides(self.forum, ISendEmailOnForumTypeCreation)
+        return result
+
+
+@interface.implementer(IInternalObjectUpdater)
+@component.adapter(ICommunityForum)
+class CommunityForumInternalObjectUpdater(ForumInternalObjectUpdater):
+
+    def updateFromExternalObject(self, parsed, *unused_args, **unused_kwargs):
+        result = super(CommunityForumInternalObjectUpdater, self).updateFromExternalObject(parsed)
+        if parsed.get('admin_restricted', False):
+            interface.alsoProvides(self.forum, ICommunityAdminRestrictedForum)
+        elif parsed.get('admin_restricted', None) == False\
+                and ICommunityAdminRestrictedForum.providedBy(self.forum):  # Require explicit disable
+            interface.noLongerProvides(self.forum, ICommunityAdminRestrictedForum)
         return result

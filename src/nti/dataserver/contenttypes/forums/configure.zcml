@@ -90,6 +90,10 @@
              for=".interfaces.IForum"
              provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
+    <adapter factory=".externalization.CommunityForumInternalObjectUpdater"
+             for=".interfaces.ICommunityForum"
+             provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
 	<adapter factory=".externalization._TopicExporter"
 			 for=".interfaces.ITopic"
 			 name="exporter" />
