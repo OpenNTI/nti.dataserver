@@ -5,17 +5,22 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from hamcrest import assert_that
+from hamcrest import assert_that, has_length, is_in, instance_of
 from hamcrest import contains
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import none
+from pyramid.security import AllPermissionsList
+from zope.security import checkPermission
+from zope.security.interfaces import IParticipation
+from zope.security.management import newInteraction
 
-from zope.securitypolicy.interfaces import IPrincipalRoleManager
+from zope.securitypolicy.interfaces import IPrincipalRoleManager, IRolePermissionManager
 
 from zope.securitypolicy.settings import Allow
 
-from nti.dataserver.authorization import ROLE_COMMUNITY_ADMIN_NAME
+from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import IPrincipal
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
@@ -27,21 +32,34 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-class TestCommunityRoleManager(DataserverLayerTest):
+class TestCommunityPermissions(DataserverLayerTest):
 
-    def test_site_role_manager(self):
+    def test_community_permissions(self):
         username = u'sheldon'
-        User(username)
+        user = User(username)
         community = Community(u'mycommunity')
 
         # Not a community admin by default
         assert_that(community.is_admin(username), is_(False))
 
-        # Grant user admin access in community
         community_prm = IPrincipalRoleManager(community)
+
+        # Assert regular is granted no roles by community role manager
+        roles = community_prm.getRolesForPrincipal(user)
+        assert_that(roles, has_length(0))
+
+        # Grant user admin access in community
         assert_that(community_prm, is_not(none()))
-        community_prm.assignRoleToPrincipal(ROLE_COMMUNITY_ADMIN_NAME,
+        community_prm.assignRoleToPrincipal(nauth.ROLE_COMMUNITY_ADMIN_NAME,
                                             username)
-        principals = community_prm.getPrincipalsForRole(ROLE_COMMUNITY_ADMIN_NAME)
+        principals = community_prm.getPrincipalsForRole(nauth.ROLE_COMMUNITY_ADMIN_NAME)
         assert_that(principals, contains((username, Allow,)))
         assert_that(community.is_admin(username), is_(True))
+
+        # Assert role has expected permissions
+        community_rpm = IRolePermissionManager(community)
+        community_rpm.initialize()  # TODO why does this have to be called... likely a bug somewhere
+        permissions = community_rpm.getPermissionsForRole(nauth.ROLE_COMMUNITY_ADMIN_NAME)
+        assert_that(permissions, has_length(1))
+        assert_that(permissions[0][0], instance_of(AllPermissionsList))
+

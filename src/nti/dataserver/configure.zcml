@@ -368,8 +368,12 @@
 			 provides=".interfaces.ISiteAdminManagerUtility" />
 
     <!-- Community Admin -->
-    <adapter factory=".community.PersistentCommunityRoleManager"
-             provides=".interfaces.ICommunityRoleManager"
+    <adapter factory=".community.PersistentCommunityPrincipalRoleManager"
+             provides=".interfaces.ICommunityPrincipalRoleManager"
+             for=".interfaces.ICommunity" />
+
+    <adapter factory=".community.PersistentCommunityRolePermissionManager"
+             provides=".interfaces.ICommunityRolePermissionManager"
              for=".interfaces.ICommunity" />
 
 	<!-- ACL/ACE permissions -->
