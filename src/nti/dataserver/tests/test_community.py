@@ -14,18 +14,19 @@ from hamcrest import is_not
 from hamcrest import none
 
 from zope import interface
+
 from zope.component.hooks import getSite
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 from zope.securitypolicy.interfaces import IRolePermissionManager
 
 from zope.securitypolicy.settings import Allow
-from zope.securitypolicy.settings import Deny
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import ISiteCommunity
 
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest, WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.dataserver.users import Community
 from nti.dataserver.users import User
