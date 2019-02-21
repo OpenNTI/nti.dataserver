@@ -248,13 +248,19 @@ class TestCommunityViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_community_admin(self):
-        with mock_dataserver.mock_db_trans(self.ds):
+        self.default_origin = 'https://alpha.nextthought.com'
+        # XXX: If you do not specify a site the permissions will be set on `dataserver2`
+        # this will cause users to have unexpected permissions as the ds folder is always
+        # in the lineage whereas the host policy folder is not
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             c = Community.create_community(username=u'mycommunity')
             user = User.get_user(self.default_username)
             user.record_dynamic_membership(c)
-            user = self._create_user(u"sheldon", u"temp001")
+            user = self._create_user(u"sheldon", u"temp001", external_value={'realname': u'Sheldon Smith',
+                                                                             'email': u'alpha@user.com'})
             user.record_dynamic_membership(c)
-            siteadmin = self._create_user(u'siteadmin', u'temp001')
+            siteadmin = self._create_user(u'siteadmin', u'temp001', external_value={'realname': u'Site Admin',
+                                                                                    'email': u'admin@user.com'})
             site = getSite()
             prm = IPrincipalRoleManager(site)
             prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'siteadmin')
