@@ -28,6 +28,8 @@ from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
 
 from nti.dataserver.contenttypes.forums.notification import send_creation_notification_email
 
+from nti.dataserver.job.decorators import RunJobInSite
+
 from nti.dataserver.job.email import AbstractEmailJob
 
 from nti.dataserver.job.interfaces import IScheduledJob
@@ -86,6 +88,7 @@ class AbstractForumTypeScheduledEmailJob(AbstractEmailJob):
     def _do_call(self, obj, usernames):
         raise NotImplementedError
 
+    @RunJobInSite
     def __call__(self, *args, **kwargs):
         object_ntiid = kwargs.get('obj_ntiid')
         obj = find_object_with_ntiid(object_ntiid)

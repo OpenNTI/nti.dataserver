@@ -17,7 +17,11 @@ from zope import component
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.component.hooks import getSite
+
 from nti.coremetadata.interfaces import IUser
+
+from nti.dataserver.job.decorators import RunJobInSite
 
 from nti.dataserver.job.interfaces import IScheduledJob
 
@@ -44,8 +48,9 @@ class MockScheduledEmailJob(AbstractEmailJob):
     def execution_time(self):
         return self.utc_now + self.execution_buffer
 
+    @RunJobInSite
     def __call__(self, *args, **kwargs):
-        return True
+        return getSite().__name__
 
 
 class TestJob(DataserverLayerTest):
@@ -72,4 +77,4 @@ class TestJob(DataserverLayerTest):
         create_and_queue_scheduled_email_job(user)
         assert_that(queue.empty(), is_not(True))
         job = queue.get()
-        assert_that(job(), is_(True))
+        assert_that(job(), is_('dataserver2'))
