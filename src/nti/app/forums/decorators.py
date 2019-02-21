@@ -37,6 +37,7 @@ from nti.dataserver.contenttypes.forums.board import DEFAULT_BOARD_NAME
 from nti.dataserver.contenttypes.forums.forum import DEFAULT_PERSONAL_BLOG_NAME
 
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityAdminRestrictedForum
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
@@ -199,6 +200,7 @@ class ForumObjectContentsLinkProvider(AbstractAuthenticatedRequestAwareDecorator
             link.method = 'POST'
 
         mapping['EmailNotifications'] = ISendEmailOnForumTypeCreation.providedBy(context)
+        mapping['AdminRestricted'] = ICommunityAdminRestrictedForum.providedBy(context)
 
 @component.adapter(IForum)
 @interface.implementer(IExternalObjectDecorator)
