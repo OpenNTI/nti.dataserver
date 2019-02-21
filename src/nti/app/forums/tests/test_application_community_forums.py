@@ -490,8 +490,15 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 			# Need the db to resolve the topic ntiid in the job
 			job()
 
-	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com','basicuser', 'siteadmin'), testapp=True)
+	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',), testapp=True)
 	def test_community_admin_restricted_forum(self):
+		self.default_origin = b'https://alpha.nextthought.com'
+		with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+			self._create_user('basicuser', 'temp001', external_value={'realname': u'Basic User',
+                                                                      'email': u'basic@user.com'})
+			self._create_user('siteadmin', 'temp001', external_value={'realname': u'Site Admin',
+																	  'email': u'siteadmin@user.com'})
+
 		adminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com'))
 		forum_data = self._create_post_data_for_POST()
 
@@ -500,7 +507,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		forum_res = adminapp.post_json(self.board_pretty_url, forum_data, status=201)
 		forum_location = forum_res.location
 		forum_ntiid = forum_res.json_body['NTIID']
-		with mock_dataserver.mock_db_trans(self.ds):
+		with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
 			forum = find_object_with_ntiid(forum_ntiid)
 			assert_that(forum, verifiably_provides(ICommunityAdminRestrictedForum))
 
@@ -508,7 +515,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		forum_data['admin_restricted'] = False
 		forum_res = adminapp.put_json(forum_location, forum_data)
 		forum_ntiid = forum_res.json_body['NTIID']
-		with mock_dataserver.mock_db_trans(self.ds):
+		with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
 			forum = find_object_with_ntiid(forum_ntiid)
 			assert_that(forum, does_not(verifiably_provides(ICommunityAdminRestrictedForum)))
 
@@ -516,7 +523,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		forum_data['admin_restricted'] = True
 		forum_res = adminapp.put_json(forum_location, forum_data)
 		forum_ntiid = forum_res.json_body['NTIID']
-		with mock_dataserver.mock_db_trans(self.ds):
+		with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
 			forum = find_object_with_ntiid(forum_ntiid)
 			assert_that(forum, verifiably_provides(ICommunityAdminRestrictedForum))
 
@@ -533,7 +540,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 								 status=201)
 
 		# Check site admins are forbidden on non site communities
-		with mock_dataserver.mock_db_trans(self.ds):
+		with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
 			site = getSite()
 			prm = IPrincipalRoleManager(site)
 			prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'siteadmin')
@@ -544,7 +551,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 							   status=403)
 
 		# Check site admins are allowed on site communities
-		with mock_dataserver.mock_db_trans(self.ds):
+		with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
 			community = Community.get_community(self.default_community)
 			interface.alsoProvides(community, ISiteCommunity)
 		siteadminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='siteadmin'))
