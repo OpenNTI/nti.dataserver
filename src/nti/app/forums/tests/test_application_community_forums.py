@@ -30,11 +30,17 @@ UQ = quote
 
 from pyquery import PyQuery
 
+from zope import interface
+
 from zope.component import eventtesting
+
+from zope.component.hooks import getSite
 
 from zope.lifecycleevent import IObjectRemovedEvent
 
 from zope.intid.interfaces import IIntIdRemovedEvent
+
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
@@ -58,7 +64,12 @@ from nti.app.forums.tests.base_forum_testing import _plain
 from nti.app.forums.tests.base_forum_testing import UserCommunityFixture
 from nti.app.forums.tests.base_forum_testing import AbstractTestApplicationForumsBaseMixin
 
+from nti.dataserver.authorization import ROLE_SITE_ADMIN_NAME
+
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityAdminRestrictedForum
 from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
+
+from nti.dataserver.interfaces import ISiteCommunity
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -479,3 +490,74 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 			# Need the db to resolve the topic ntiid in the job
 			job()
 
+	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com','basicuser', 'siteadmin'), testapp=True)
+	def test_community_admin_restricted_forum(self):
+		adminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com'))
+		forum_data = self._create_post_data_for_POST()
+
+		# Create with it
+		forum_data['admin_restricted'] = True
+		forum_res = adminapp.post_json(self.board_pretty_url, forum_data, status=201)
+		forum_location = forum_res.location
+		forum_ntiid = forum_res.json_body['NTIID']
+		with mock_dataserver.mock_db_trans(self.ds):
+			forum = find_object_with_ntiid(forum_ntiid)
+			assert_that(forum, verifiably_provides(ICommunityAdminRestrictedForum))
+
+		# Disable via PUT
+		forum_data['admin_restricted'] = False
+		forum_res = adminapp.put_json(forum_location, forum_data)
+		forum_ntiid = forum_res.json_body['NTIID']
+		with mock_dataserver.mock_db_trans(self.ds):
+			forum = find_object_with_ntiid(forum_ntiid)
+			assert_that(forum, does_not(verifiably_provides(ICommunityAdminRestrictedForum)))
+
+		# Enable via PUT
+		forum_data['admin_restricted'] = True
+		forum_res = adminapp.put_json(forum_location, forum_data)
+		forum_ntiid = forum_res.json_body['NTIID']
+		with mock_dataserver.mock_db_trans(self.ds):
+			forum = find_object_with_ntiid(forum_ntiid)
+			assert_that(forum, verifiably_provides(ICommunityAdminRestrictedForum))
+
+		# Check basic user cannot create topics in forum
+		testapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='basicuser'))
+		topic_data = self._create_post_data_for_POST()
+		res = testapp.post_json(self.forum_pretty_url,
+								topic_data,
+								status=403)
+
+		# Check nti admin still has privs
+		res = adminapp.post_json(self.forum_pretty_url,
+								 topic_data,
+								 status=201)
+
+		# Check site admins are forbidden on non site communities
+		with mock_dataserver.mock_db_trans(self.ds):
+			site = getSite()
+			prm = IPrincipalRoleManager(site)
+			prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'siteadmin')
+
+		siteadminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='siteadmin'))
+		siteadminapp.post_json(self.forum_pretty_url,
+							   topic_data,
+							   status=403)
+
+		# Check site admins are allowed on site communities
+		with mock_dataserver.mock_db_trans(self.ds):
+			community = Community.get_community(self.default_community)
+			interface.alsoProvides(community, ISiteCommunity)
+		siteadminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='siteadmin'))
+		siteadminapp.post_json(self.forum_pretty_url,
+							   topic_data,
+							   status=201)
+
+		# Make basic user an admin
+		adminapp.put_json('/dataserver2/users/%s/@@AddAdmin' % self.default_community,
+						  {'usernames': 'basicuser'},
+						  status=200)
+
+		# Check basic user that is now an admin can create
+		res = testapp.post_json(self.forum_pretty_url,
+								topic_data,
+								status=201)

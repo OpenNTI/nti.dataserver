@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import six
+
 from BTrees import OOBTree
 
 from zope import component
@@ -23,6 +25,12 @@ from zope.cachedescriptors.property import cachedIn
 from zope.intid.interfaces import IIntIdRemovedEvent
 
 from zope.location.interfaces import ISublocations
+
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
+from zope.securitypolicy.settings import Allow
+
+from nti.dataserver.authorization import ROLE_COMMUNITY_ADMIN_NAME, ROLE_COMMUNITY_ADMIN
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -185,6 +193,36 @@ class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matt
         if 'joinable' in parsed:
             self.joinable = bool(parsed['joinable'])
         return result
+
+    @property
+    def CommunityRoleManager(self):
+        # XXX: Making this lazy breaks things
+        return IPrincipalRoleManager(self)
+
+    def add_admin(self, username):
+        if not isinstance(username, six.string_types):
+            username = username.username
+        self.CommunityRoleManager.assignRoleToPrincipal(ROLE_COMMUNITY_ADMIN_NAME,
+                                                        username)
+
+    def remove_admin(self, username):
+        if not isinstance(username, six.string_types):
+            username = username.username
+        self.CommunityRoleManager.removeRoleFromPrincipal(ROLE_COMMUNITY_ADMIN_NAME,
+                                                          username)
+
+    def get_admin_usernames(self):
+        # returns a list of (principal_id, setting)
+        principals = self.CommunityRoleManager.getPrincipalsForRole(ROLE_COMMUNITY_ADMIN_NAME)
+        usernames = [x[0] for x in principals if x[1] is Allow]
+        return usernames
+
+    def is_admin(self, username):
+        username = getattr(username, 'username', username) or ''
+        for role, access in self.CommunityRoleManager.getRolesForPrincipal(username):
+            if role == ROLE_COMMUNITY_ADMIN.id and access == Allow:
+                return True
+        return False
 
 
 @interface.implementer(IUnscopedGlobalCommunity)

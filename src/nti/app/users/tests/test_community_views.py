@@ -17,11 +17,19 @@ from hamcrest import assert_that
 from hamcrest import has_property
 from nti.testing.time import time_monotonically_increases
 
+from zope import interface
+
+from zope.component.hooks import getSite
+
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.coremetadata.interfaces import ISiteCommunity
+
+from nti.dataserver.authorization import ROLE_SITE_ADMIN_NAME
 
 from nti.dataserver.contenttypes.note import Note
 
@@ -237,3 +245,111 @@ class TestCommunityViews(ApplicationLayerTest):
         path = '/dataserver2/users/bleach/Activity'
         res = self.testapp.get(path, status=200)
         assert_that(res.json_body, has_entry('Items', has_length(1)))
+
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_community_admin(self):
+        with mock_dataserver.mock_db_trans(self.ds):
+            c = Community.create_community(username=u'mycommunity')
+            user = User.get_user(self.default_username)
+            user.record_dynamic_membership(c)
+            user = self._create_user(u"sheldon", u"temp001")
+            user.record_dynamic_membership(c)
+            siteadmin = self._create_user(u'siteadmin', u'temp001')
+            site = getSite()
+            prm = IPrincipalRoleManager(site)
+            prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'siteadmin')
+            assert_that(c.is_admin(self.default_username), is_(False))
+            assert_that(c.is_admin(u'sheldon'), is_(False))
+
+        path = '/dataserver2/users/mycommunity/%s'
+        site_admin_env = self._make_extra_environ(u'siteadmin')
+        basic_env = self._make_extra_environ(u'sheldon')
+
+        # Test site admin has no permissions on regular community they are not a member of
+        self.testapp.get(path % '',
+                         status=403,
+                         extra_environ=site_admin_env)
+
+        # Test site admin can access as community admin
+        self.testapp.put_json(path % 'AddAdmin',
+                              {'username': 'siteadmin'},
+                              status=200)
+        self.testapp.get(path % '',
+                         status=200,
+                         extra_environ=site_admin_env)
+
+        # Test site admin can access as a non community admin community member
+        self.testapp.put_json(path % 'RemoveAdmin',
+                              {'username': 'siteadmin'},
+                              status=200)
+        with mock_dataserver.mock_db_trans(self.ds):
+            c = Community.get_community(u'mycommunity')
+            siteadmin = User.get_user(u'siteadmin')
+            siteadmin.record_dynamic_membership(c)
+
+        self.testapp.get(path % '',
+                         status=200,
+                         extra_environ=site_admin_env)
+
+        # Test site admin can access site community as a non member
+        with mock_dataserver.mock_db_trans(self.ds):
+            c = Community.get_community(u'mycommunity')
+            siteadmin = User.get_user(u'siteadmin')
+            siteadmin.record_no_longer_dynamic_member(c)
+            interface.alsoProvides(c, ISiteCommunity)
+
+        self.testapp.get(path % '',
+                         status=200,
+                         extra_environ=site_admin_env)
+
+        # Test site admin can access site community admin views
+        res = self.testapp.get(path % 'ListAdmins',
+                               status=200,
+                               extra_environ=site_admin_env)
+
+        # test non super user can't access
+        self.testapp.put_json(path % 'AddAdmin',
+                              {'username': 'sjohnson@nextthought.com'},
+                              status=403,
+                              extra_environ=basic_env)
+
+        self.testapp.put_json(path % 'RemoveAdmin',
+                              {'username': 'sjohnson@nextthought.com'},
+                              status=403,
+                              extra_environ=basic_env)
+
+        # test super user can add
+        self.testapp.put_json(path % 'AddAdmin',
+                              {'username': 'sheldon'},
+                              status=200)
+
+        res = self.testapp.get(path % 'ListAdmins',
+                               status=200)
+        assert_that(res.json_body, has_length(1))
+
+        # test added user can add now and read
+        self.testapp.put_json(path % 'AddAdmin',
+                              {'username': 'sjohnson@nextthought.com'},
+                              status=200,
+                              extra_environ=basic_env)
+
+        res = self.testapp.get(path % 'ListAdmins',
+                               status=200,
+                               extra_environ=basic_env)
+        assert_that(res.json_body, has_length(2))
+
+        # test basic can remove
+        self.testapp.put_json(path % 'RemoveAdmin',
+                              {'username': 'sheldon'},
+                              status=200,
+                              extra_environ=basic_env)
+
+        # basic can no longer access
+        res = self.testapp.get(path % 'ListAdmins',
+                               status=403,
+                               extra_environ=basic_env)
+
+        # Only super left
+        res = self.testapp.get(path % 'ListAdmins',
+                               status=200)
+        assert_that(res.json_body, has_length(1))

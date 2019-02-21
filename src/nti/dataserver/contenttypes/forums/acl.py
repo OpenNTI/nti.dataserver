@@ -31,6 +31,7 @@ from nti.dataserver.authorization_acl import ace_denying
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityAdminRestrictedForum
 from nti.dataserver.contenttypes.forums.interfaces import WRITE_PERMISSION
 from nti.dataserver.contenttypes.forums.interfaces import CREATE_PERMISSION
 from nti.dataserver.contenttypes.forums.interfaces import DELETE_PERMISSION
@@ -73,6 +74,12 @@ class CommunityForumACLProvider(_ForumACLProvider):
 
     def _get_sharing_target_names(self):
         return (self.context.creator,)  # the ICommunity
+
+
+class CommunityAdminRestrictedForumACLProvider(CommunityForumACLProvider):
+
+    # Only allow read permissions for everyone but admins
+    _PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,)
 
 
 class CommunityBoardACLProvider(AbstractCreatedAndSharedACLProvider):
@@ -295,3 +302,21 @@ class _ACLCommunityForumACLProvider(CommunityForumACLProvider, _ACLBasedProvider
                     action = self._resolve_action(action)
                     for entity in self._resolve_entities(eid):
                         acl.append(action(entity, perm, self))
+
+
+class _ACLCommunityAdminRestrictedForumACLProvider(_ACLCommunityForumACLProvider):
+
+    # Only allow read permissions for everyone but admins
+    _PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,)
+
+
+def _acl_for_community_forum(created):
+    if ICommunityAdminRestrictedForum.providedBy(created):
+        return CommunityAdminRestrictedForumACLProvider(created)
+    return CommunityForumACLProvider(created)
+
+
+def _acl_for_acl_community_forum(created):
+    if ICommunityAdminRestrictedForum.providedBy(created):
+        return _ACLCommunityAdminRestrictedForumACLProvider(created)
+    return _ACLCommunityForumACLProvider(created)
