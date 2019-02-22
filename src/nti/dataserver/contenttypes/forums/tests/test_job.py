@@ -15,7 +15,16 @@ from hamcrest import is_not
 
 from pyramid.testing import DummyRequest
 
+from z3c.baseregistry.baseregistry import BaseComponents
+
 from zope import interface
+
+from zope.component import globalSiteManager as BASE
+
+from zope.component.hooks import site
+from zope.interface.interfaces import IComponents
+
+from nti.appserver.policies.sites import BASEADULT
 
 from nti.contentfile.model import ContentBlobFile
 
@@ -31,23 +40,40 @@ from nti.dataserver.contenttypes.forums.post import GeneralHeadlinePost
 from nti.dataserver.contenttypes.forums.subscribers import _send_email_on_forum_type_creation
 
 from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
+from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import WithMockDS
 
 from nti.dataserver.users import Community
 from nti.dataserver.users import User
 
 from nti.mailer.interfaces import IEmailAddressable
 
+from nti.site.transient import TrivialSite
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 
+ALPHA = BaseComponents(BASEADULT,
+                       name='alpha.nextthought.com',
+                       bases=(BASEADULT,))
+
+
 class TestJob(DataserverLayerTest):
 
     set_up_packages = ('nti.dataserver', 'nti.dataserver.contenttypes.forums')
+
+    def setUp(self):
+        super(TestJob, self).setUp()
+        ALPHA.__init__(ALPHA.__parent__, name=ALPHA.__name__, bases=ALPHA.__bases__)
+        BASE.registerUtility(ALPHA, name=ALPHA.__name__, provided=IComponents)
+
+    def tearDown(self):
+        BASE.unregisterUtility(ALPHA, name=ALPHA.__name__, provided=IComponents)
+        super(DataserverLayerTest, self).tearDown()
 
     def _setup_mock_email_job(self, fake_queue):
         queue = Queue()
@@ -84,66 +110,67 @@ class TestJob(DataserverLayerTest):
     @fudge.patch('nti.dataserver.contenttypes.forums.job.get_current_request')
     @fudge.patch('nti.asynchronous.scheduled.utils.get_scheduled_queue')
     @fudge.patch('nti.dataserver.contenttypes.forums.job.send_creation_notification_email')
-    @WithMockDSTrans
+    @WithMockDS
     def test_creation_email(self, fake_request, fake_queue, fake_email):
-        fake_request.is_callable().returns(DummyRequest())
-        queue = self._setup_mock_email_job(fake_queue)
-        fake_kwargs = {}
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            fake_request.is_callable().returns(DummyRequest())
+            queue = self._setup_mock_email_job(fake_queue)
+            fake_kwargs = {}
 
-        def stub(**kwargs):
-            fake_kwargs.update(**kwargs)
-        fake_email.is_callable().calls(stub)
+            def stub(**kwargs):
+                fake_kwargs.update(**kwargs)
+            fake_email.is_callable().calls(stub)
 
-        forum = self._create_community_forum(forum_name=u'test_forum')
-        interface.alsoProvides(forum, ISendEmailOnForumTypeCreation)
-        sj = User.get_user(u'sjohnson@nextthought.com')
-        topic = self._add_community_topic(forum=forum, topic_name=u'test_topic', creator=sj)
-        post = GeneralHeadlinePost()
-        body = [u'<html><body>a headline post about important things</body></html>']
-        post.body = body
-        topic.headline = post
-        _send_email_on_forum_type_creation(topic, None)
-        assert_that(queue.empty(), is_not(True))
+            forum = self._create_community_forum(forum_name=u'test_forum')
+            interface.alsoProvides(forum, ISendEmailOnForumTypeCreation)
+            sj = User.get_user(u'sjohnson@nextthought.com')
+            topic = self._add_community_topic(forum=forum, topic_name=u'test_topic', creator=sj)
+            post = GeneralHeadlinePost()
+            body = [u'<html><body>a headline post about important things</body></html>']
+            post.body = body
+            topic.headline = post
+            _send_email_on_forum_type_creation(topic, None)
+            assert_that(queue.empty(), is_not(True))
 
-        # give super user an email address
-        addressable = IEmailAddressable(sj)
-        addressable.email = u'sjohnson@nextthought.com'
+            # give super user an email address
+            addressable = IEmailAddressable(sj)
+            addressable.email = u'sjohnson@nextthought.com'
 
-        # execute the job
-        job = queue.get()
-        job()
+            # execute the job
+            job = queue.get()
+            job()
 
-        assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
-        assert_that(fake_kwargs['message'], is_('a headline post about important things'))
+            assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
+            assert_that(fake_kwargs['message'], is_('a headline post about important things'))
 
-        body.append(u'abc')
-        body.append(u'xyz')
-        post.body = body
+            body.append(u'abc')
+            body.append(u'xyz')
+            post.body = body
 
-        _send_email_on_forum_type_creation(topic, None)
-        assert_that(queue.empty(), is_not(True))
+            _send_email_on_forum_type_creation(topic, None)
+            assert_that(queue.empty(), is_not(True))
 
-        # execute the job
-        job = queue.get()
-        job()
+            # execute the job
+            job = queue.get()
+            job()
 
-        assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
-        assert_that(fake_kwargs['message'], is_('a headline post about important things'
-                                                ' abc'
-                                                ' xyz'))
+            assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
+            assert_that(fake_kwargs['message'], is_('a headline post about important things'
+                                                    ' abc'
+                                                    ' xyz'))
 
-        body.append(ContentBlobFile())
-        body.append(Canvas())
-        post.body = body
+            body.append(ContentBlobFile())
+            body.append(Canvas())
+            post.body = body
 
-        _send_email_on_forum_type_creation(topic, None)
-        assert_that(queue.empty(), is_not(True))
+            _send_email_on_forum_type_creation(topic, None)
+            assert_that(queue.empty(), is_not(True))
 
-        # execute the job
-        job = queue.get()
-        job()
+            # execute the job
+            job = queue.get()
+            job()
 
-        assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
-        assert_that(fake_kwargs['message'], is_('a headline post about important things'
-                                                ' abc'
-                                                ' xyz'))
+            assert_that(fake_kwargs['subject'], is_(u'Discussion a test created in test'))
+            assert_that(fake_kwargs['message'], is_('a headline post about important things'
+                                                    ' abc'
+                                                    ' xyz'))

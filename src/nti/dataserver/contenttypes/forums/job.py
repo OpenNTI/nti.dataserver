@@ -30,7 +30,7 @@ from nti.dataserver.contenttypes.forums.notification import send_creation_notifi
 
 from nti.dataserver.job.decorators import RunJobInSite
 
-from nti.dataserver.job.email import AbstractEmailJob
+from nti.dataserver.job.job import AbstractJob
 
 from nti.dataserver.job.interfaces import IScheduledJob
 
@@ -54,7 +54,7 @@ DEFAULT_EMAIL_DEFER_TIME = 60  # 1 minute
 
 
 @interface.implementer(IScheduledJob)
-class AbstractForumTypeScheduledEmailJob(AbstractEmailJob):
+class AbstractForumTypeScheduledEmailJob(AbstractJob):
 
     execution_buffer = DEFAULT_EMAIL_DEFER_TIME
 
