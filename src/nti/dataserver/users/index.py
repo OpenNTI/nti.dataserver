@@ -50,7 +50,7 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 
-from nti.dataserver.users.common import user_creation_sitename
+from nti.dataserver.users.common import entity_creation_sitename
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -174,8 +174,8 @@ class ValidatingSite(object):
         try:
             if IEntity.providedBy(obj):
                 site = None
-                if IUser.providedBy(obj):
-                    site = user_creation_sitename(obj)
+                if IUser.providedBy(obj) or ICommunity.providedBy(obj):
+                    site = entity_creation_sitename(obj)
                 site = site or getattr(getSite(), '__name__', None)
                 self.site = site
         except (AttributeError, TypeError):
