@@ -46,9 +46,9 @@ from nti.base._compat import bytes_
 
 from nti.dataserver.interfaces import IUser
 
-from nti.dataserver.users.common import user_creation_sitename
-from nti.dataserver.users.common import set_user_creation_site as set_creation_site
-from nti.dataserver.users.common import remove_user_creation_site as remove_creation_site
+from nti.dataserver.users.common import entity_creation_sitename
+from nti.dataserver.users.common import set_entity_creation_site as set_creation_site
+from nti.dataserver.users.common import remove_entity_creation_site as remove_creation_site
 
 from nti.dataserver.users.communities import Community
 
@@ -279,7 +279,7 @@ def safe_send_email_verification(user, profile, email, request=None, check=True)
 
 
 def get_user_creation_sitename(user):
-    return user_creation_sitename(get_user(user))
+    return entity_creation_sitename(get_user(user))
 
 
 def get_user_creation_site(user):
@@ -315,6 +315,15 @@ def get_community_from_site():
     return Community.get_community(name) if name else None
 get_site_community = get_community_from_site
 
+
+def set_community_creation_site(community, site=None):
+    site = getSite() if site is None else site
+    name = getattr(site, '__name__', None) or str(site)
+    if name == 'dataserver2':
+        remove_creation_site(community)
+    elif name:
+        set_creation_site(community, name)
+    return name
 
 def intids_of_community_or_site_members(all_members=False, site=None):
     """
