@@ -13,11 +13,19 @@ from hamcrest import is_not
 
 from Queue import Queue
 
+from z3c.baseregistry.baseregistry import BaseComponents
+
 from zope import component
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.component import globalSiteManager as BASE
+
 from zope.component.hooks import getSite
+
+from zope.interface.interfaces import IComponents
+
+from nti.appserver.policies.sites import BASEADULT
 
 from nti.coremetadata.interfaces import IUser
 
@@ -25,13 +33,15 @@ from nti.dataserver.job.decorators import RunJobInSite
 
 from nti.dataserver.job.interfaces import IScheduledJob
 
-from nti.dataserver.job.email import AbstractEmailJob
-from nti.dataserver.job.email import create_and_queue_scheduled_email_job
+from nti.dataserver.job.job import AbstractJob
 
+from nti.dataserver.job.utils import create_and_queue_scheduled_job
+
+from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests import SharedConfiguringTestLayer
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import WithMockDS
 
 from nti.dataserver.users import User
 
@@ -40,7 +50,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-class MockScheduledEmailJob(AbstractEmailJob):
+class MockScheduledEmailJob(AbstractJob):
 
     execution_buffer = 5  # seconds
 
@@ -53,9 +63,23 @@ class MockScheduledEmailJob(AbstractEmailJob):
         return getSite().__name__
 
 
+ALPHA = BaseComponents(BASEADULT,
+                       name='alpha.nextthought.com',
+                       bases=(BASEADULT,))
+
+
 class TestJob(DataserverLayerTest):
 
     layer = SharedConfiguringTestLayer
+
+    def setUp(self):
+        super(TestJob, self).setUp()
+        ALPHA.__init__(ALPHA.__parent__, name=ALPHA.__name__, bases=ALPHA.__bases__)
+        BASE.registerUtility(ALPHA, name=ALPHA.__name__, provided=IComponents)
+
+    def tearDown(self):
+        BASE.unregisterUtility(ALPHA, name=ALPHA.__name__, provided=IComponents)
+        super(DataserverLayerTest, self).tearDown()
 
     def _setup_mock_email_job(self, fake_queue):
         queue = Queue()
@@ -70,11 +94,12 @@ class TestJob(DataserverLayerTest):
         return queue
 
     @fudge.patch('nti.asynchronous.scheduled.utils.get_scheduled_queue')
-    @WithMockDSTrans
+    @WithMockDS
     def test_enqueue_job(self, fake_queue):
-        queue = self._setup_mock_email_job(fake_queue)
-        user = User.create_user(self.ds, username=u'emailer@job.com')
-        create_and_queue_scheduled_email_job(user)
-        assert_that(queue.empty(), is_not(True))
-        job = queue.get()
-        assert_that(job(), is_('dataserver2'))
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            queue = self._setup_mock_email_job(fake_queue)
+            user = User.create_user(username=u'emailer@job.com')
+            create_and_queue_scheduled_job(user)
+            assert_that(queue.empty(), is_not(True))
+            job = queue.get()
+            assert_that(job(), is_('alpha.nextthought.com'))
