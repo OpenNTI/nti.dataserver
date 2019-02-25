@@ -3,6 +3,10 @@
 
 from __future__ import print_function, absolute_import, division
 
+from zope.lifecycleevent import IObjectAddedEvent
+
+from nti.app.users.subscribers import _on_community_created
+
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -30,7 +34,7 @@ from nti.appserver.policies.site_policies import AdultCommunitySitePolicyEventLi
 
 from nti.appserver.policies.sites import BASEADULT
 
-from nti.coremetadata.interfaces import IX_SITE
+from nti.coremetadata.interfaces import IX_SITE, ICommunity
 
 from nti.dataserver.interfaces import ISiteCommunity
 
@@ -72,11 +76,15 @@ class TestEvolve102(mock_dataserver.DataserverLayerTest):
             bc.__init__(bc.__parent__, name=bc.__name__, bases=bc.__bases__)
             BASE.registerUtility(bc, name=bc.__name__, provided=IComponents)
         ALPHA.registerUtility(MockSitePolicyUserEventListener(), ISitePolicyUserEventListener)
+        # we want to mock the current environment where creation sites are not set
+        # on community creation
+        BASE.unregisterHandler(_on_community_created, (ICommunity, IObjectAddedEvent))
 
     def tearDown(self):
         for bc in SITES:
             BASE.unregisterUtility(bc, name=bc.__name__, provided=IComponents)
         ALPHA.unregisterUtility(MockSitePolicyUserEventListener(), ISitePolicyUserEventListener)
+        BASE.registerHandler(_on_community_created, (ICommunity, IObjectAddedEvent))
         super(TestEvolve102, self).tearDown()
 
     @mock_dataserver.WithMockDS
