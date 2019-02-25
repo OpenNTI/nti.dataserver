@@ -10,7 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 102
+generation = 103
 
 from zope import component
 from zope import interface
@@ -83,6 +83,6 @@ def do_evolve(context, generation=generation):
 
 def evolve(context):
     """
-    Evolve to generation 102 by adding "valid email" filter set index
+    Evolve to generation 103 by adding "valid email" filter set index
     """
     do_evolve(context, generation)
