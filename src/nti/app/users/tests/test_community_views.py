@@ -35,6 +35,8 @@ from nti.dataserver.contenttypes.note import Note
 
 from nti.dataserver.tests import mock_dataserver
 
+from nti.dataserver.users.common import entity_creation_sitename
+
 from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.interfaces import IHiddenMembership
@@ -43,6 +45,8 @@ from nti.dataserver.users.users import User
 
 
 class TestCommunityViews(ApplicationLayerTest):
+
+    default_origin = 'https://alpha.nextthought.com'
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_create_list_community(self):
@@ -61,6 +65,8 @@ class TestCommunityViews(ApplicationLayerTest):
             assert_that(c, has_property('public', is_(True)))
             assert_that(c, has_property('joinable', is_(True)))
             assert_that(ISiteCommunity.providedBy(c), is_(False))
+            creation_site = entity_creation_sitename(c)
+            assert_that(creation_site, is_('alpha.nextthought.com'))
 
         path = '/dataserver2/@@list_communities'
         res = self.testapp.get(path, status=200)
@@ -91,6 +97,8 @@ class TestCommunityViews(ApplicationLayerTest):
             assert_that(c, has_property('public', is_(True)))
             assert_that(c, has_property('joinable', is_(True)))
             assert_that(ISiteCommunity.providedBy(c), is_(True))
+            creation_site = entity_creation_sitename(c)
+            assert_that(creation_site, is_('alpha.nextthought.com'))
 
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)

@@ -22,7 +22,7 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from nti.app.users.adapters import context_lastseen_factory
 
-from nti.app.users.utils import set_user_creation_site
+from nti.app.users.utils import set_user_creation_site, set_community_creation_site
 from nti.app.users.utils import set_email_verification_time
 from nti.app.users.utils import safe_send_email_verification
 
@@ -32,6 +32,7 @@ from nti.appserver.interfaces import IUserLogoutEvent
 from nti.coremetadata.interfaces import UserLastSeenEvent
 from nti.coremetadata.interfaces import IUserLastSeenEvent
 
+from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
@@ -78,6 +79,11 @@ def _user_modified_from_external_event(user, event):
 @component.adapter(IUser, IObjectAddedEvent)
 def _on_user_created(user, unused_event):
     set_user_creation_site(user)
+
+
+@component.adapter(ICommunity, IObjectAddedEvent)
+def _on_community_created(community, unused_event):
+    set_community_creation_site(community)
 
 
 @component.adapter(IUser, IObjectModifiedEvent)
