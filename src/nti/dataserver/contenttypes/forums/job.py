@@ -28,7 +28,9 @@ from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
 
 from nti.dataserver.contenttypes.forums.notification import send_creation_notification_email
 
-from nti.dataserver.job.email import AbstractEmailJob
+from nti.dataserver.job.decorators import RunJobInSite
+
+from nti.dataserver.job.job import AbstractJob
 
 from nti.dataserver.job.interfaces import IScheduledJob
 
@@ -52,7 +54,7 @@ DEFAULT_EMAIL_DEFER_TIME = 60  # 1 minute
 
 
 @interface.implementer(IScheduledJob)
-class AbstractForumTypeScheduledEmailJob(AbstractEmailJob):
+class AbstractForumTypeScheduledEmailJob(AbstractJob):
 
     execution_buffer = DEFAULT_EMAIL_DEFER_TIME
 
@@ -86,6 +88,7 @@ class AbstractForumTypeScheduledEmailJob(AbstractEmailJob):
     def _do_call(self, obj, usernames):
         raise NotImplementedError
 
+    @RunJobInSite
     def __call__(self, *args, **kwargs):
         object_ntiid = kwargs.get('obj_ntiid')
         obj = find_object_with_ntiid(object_ntiid)
@@ -105,7 +108,7 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
             if isinstance(part, six.string_types):
                 plain_text = IPlainTextContentFragment(part)
                 html += ' %s' % plain_text
-        return html
+        return html.strip()
 
     def _url_to_obj(self, obj):
         application_url = self.job_kwargs['application_url']
@@ -143,6 +146,11 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
                                              request=self.get_request(topic),
                                              forum_type_obj_url=topic_url,
                                              avatar_url=avatar_url)
+        logger.info("Sending board object notification email (%s) (ntiid=%s) (forum=%s) (email_count=%s)",
+                    title,
+                    topic.NTIID,
+                    forum.title,
+                    len(emails))
 
 
 @interface.implementer(IForumTypeCreatedNotificationUsers)

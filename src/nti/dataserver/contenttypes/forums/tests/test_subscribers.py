@@ -82,7 +82,7 @@ class TestSubscribers(DataserverLayerTest):
         return topic
 
     @fudge.patch('nti.dataserver.contenttypes.forums.job.get_current_request')
-    @fudge.patch('nti.dataserver.job.email.to_external_ntiid_oid')
+    @fudge.patch('nti.dataserver.job.job.to_external_ntiid_oid')
     @fudge.patch('nti.asynchronous.scheduled.utils.get_scheduled_queue')
     @WithMockDSTrans
     def test_topic_creation_email_subscriber(self, fake_request, fake_ntiid, fake_queue):

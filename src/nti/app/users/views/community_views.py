@@ -45,6 +45,8 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserverFolder
 
+from nti.dataserver.users import User
+
 from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.index import IX_TOPICS
@@ -58,8 +60,8 @@ from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.utils import intids_of_community_members
 from nti.dataserver.users.utils import get_entity_mimetype_from_index
 
+from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
-
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -316,3 +318,81 @@ class CommunityActivityView(EntityActivityViewMixin):
     @property
     def _entity_board(self):
         return ICommunityBoard(self.request.context, None) or {}
+
+
+class CommunityAdminMixin(object):
+
+    def get_usernames(self):
+        values = self.readInput()
+        usernames = values.get('usernames') or values.get('username')
+        usernames = usernames.split(',')
+        return usernames
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=ICommunity,
+             request_method='PUT',
+             permission=nauth.ACT_UPDATE,
+             name='AddAdmin')
+class AddCommunityAdmin(AbstractAuthenticatedView,
+                        ModeledContentUploadRequestUtilsMixin,
+                        CommunityAdminMixin):
+    """
+    Updates a list of usernames to the admin role for a community
+    If the user is not currently in the community they are added
+    """
+
+    def __call__(self):
+        community = self.context
+        for username in self.get_usernames():
+            user = User.get_user(username)
+            if user is None:
+                logger.debug(u'Failed to add username %s to community %s' % (username, community.username))
+                raise hexc.HTTPUnprocessableEntity(u'Username %s does not exist' % username)
+            if user not in community:
+                # pylint: disable=no-member
+                user.record_dynamic_membership(community)
+                user.follow(community)
+            community.add_admin(username)
+        return hexc.HTTPOk()
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=ICommunity,
+             request_method='PUT',
+             permission=nauth.ACT_UPDATE,
+             name='RemoveAdmin')
+class RemoveCommunityAdmin(AbstractAuthenticatedView,
+                           CommunityAdminMixin,
+                           ModeledContentUploadRequestUtilsMixin):
+    """
+    Removes a list of usernames from the admin role for a community
+    """
+
+    def __call__(self):
+        community = self.context
+        for username in self.get_usernames():
+            user = User.get_user(username)
+            if user is None:
+                logger.debug(u'Failed to remove username %s from community %s' % (username, community.username))
+                raise hexc.HTTPUnprocessableEntity(u'Username %s does not exist' % username)
+            if user not in community:
+                raise hexc.HTTPUnprocessableEntity(u'Username %s is not a community member' % username)
+            community.remove_admin(username)
+        return hexc.HTTPOk()
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=ICommunity,
+             request_method='GET',
+             permission=nauth.ACT_UPDATE,
+             name='ListAdmins')
+class ListCommunityAdmins(AbstractAuthenticatedView,
+                          CommunityAdminMixin):
+
+    def __call__(self):
+        result = LocatedExternalList()
+        usernames = self.context.get_admin_usernames()
+        for username in usernames:
+            result.append(User.get_user(username))
+        return result

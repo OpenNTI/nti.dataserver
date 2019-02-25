@@ -28,6 +28,9 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from zope.proxy import ProxyBase
 
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+from zope.securitypolicy.interfaces import IRolePermissionManager
+
 from zope.site.interfaces import IFolder
 from zope.site.interfaces import IRootFolder
 
@@ -1490,6 +1493,20 @@ class ISiteAdminManagerUtility(interface.Interface):
         """
         Returns all sibling site names for this site
         """
+
+
+# Community Roles
+class ICommunityPrincipalRoleManager(IPrincipalRoleManager):
+    """
+    An IPrincipalRoleManager that can be used to grant
+    roles to principals within a community.
+    """
+
+class ICommunityRolePermissionManager(IRolePermissionManager):
+    """
+    An IRolePermissionManager that grants all permissions
+    to community admins for a given community
+    """
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?

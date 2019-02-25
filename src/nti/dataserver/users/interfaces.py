@@ -740,7 +740,7 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                             u"do. Will be displayed on your author page, linked "
                                         u"from the items you create.",
                             max_length=140,  # twitter
-                                        required=False,
+                            required=False,
                             constraint=checkCannotBeBlank)
 
     location = ValidTextLine(title=u'Location',

@@ -388,6 +388,11 @@ ROLE_CONTENT_ADMIN = _StringRole(ROLE_CONTENT_ADMIN_NAME)
 ROLE_SITE_ADMIN_NAME = ROLE_PREFIX + 'nti.dataserver.site-admin'
 ROLE_SITE_ADMIN = _StringRole(ROLE_SITE_ADMIN_NAME)
 
+#: Name of the high-permission group that is expected to have
+#: administrative abilities with a community.
+ROLE_COMMUNITY_ADMIN_NAME = ROLE_PREFIX + 'nti.dataserver.community-admin'
+ROLE_COMMUNITY_ADMIN = _StringRole(ROLE_COMMUNITY_ADMIN_NAME)
+
 # We're now using the zope principal registry in
 # place of these home grown entities.  However, these are left
 # place as there is some concern we may have acls pickled as

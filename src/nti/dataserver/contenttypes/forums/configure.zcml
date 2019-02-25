@@ -90,6 +90,10 @@
              for=".interfaces.IForum"
              provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
+    <adapter factory=".externalization.CommunityForumInternalObjectUpdater"
+             for=".interfaces.ICommunityForum"
+             provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+
 	<adapter factory=".externalization._TopicExporter"
 			 for=".interfaces.ITopic"
 			 name="exporter" />
@@ -116,7 +120,8 @@
 	<adapter factory=".acl._ForumACLProvider"
 			 for=".interfaces.IGeneralForum"/>
 
-	<adapter factory=".acl.CommunityForumACLProvider"
+	<adapter factory=".acl._acl_for_community_forum"
+             provides="nti.dataserver.interfaces.IACLProvider"
 			 for=".interfaces.ICommunityForum"/>
 
 	<adapter factory=".acl.CommunityBoardACLProvider"
@@ -134,8 +139,9 @@
 	<adapter factory=".acl._ACLCommunityBoardACLProvider"
 			 for=".interfaces.IACLCommunityBoard"/>
 
-	<adapter factory=".acl._ACLCommunityForumACLProvider"
-			 for=".interfaces.IACLCommunityForum"/>
+    <adapter factory=".acl._acl_for_acl_community_forum"
+             provides="nti.dataserver.interfaces.IACLProvider"
+             for=".interfaces.IACLCommunityForum" />
 
 	<!-- Zope security -->
 	<adapter factory=".zope_security.BoardRolePermissionManager"
