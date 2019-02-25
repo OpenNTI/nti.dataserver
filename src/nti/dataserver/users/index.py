@@ -263,7 +263,7 @@ def is_valid(unused_extent, unused_docid, document):
     except (TypeError, AttributeError):
         # Could not adapt, not in profile
         result = None
-    return result is not False
+    return result or result is None
 
 
 class EmailValidExtentFilteredSet(ExtentFilteredSet):

@@ -91,9 +91,12 @@ def verified_email_ids(email):
     return catalog.family.IF.intersection(intids_emails, intids_verified)
 
 
-def valid_email_ids(email):
+def valid_email_ids(emails):
     catalog = get_entity_catalog()
-    intids_emails = _get_email_ids(email)
+    intids_emails = catalog.family.IF.Set(())
+    for email in emails:
+        ids = _get_email_ids(email)
+        intids_emails = catalog.family.IF.union(intids_emails, ids)
     if not intids_emails:
         return catalog.family.IF.Set()
 
@@ -104,6 +107,14 @@ def valid_email_ids(email):
     # intersect
     return catalog.family.IF.intersection(intids_emails, valid_intids)
 
+
+def _valid_emails_for_ids(email_ids):
+    intids = component.getUtility(IIntIds)
+    emails = set()
+    for email_id in email_ids:
+        email = intids.queryObject(email_id)
+        emails.add(email)
+    return emails
 
 def reindex_email_verification(user, catalog=None, intids=None):
     catalog = catalog if catalog is not None else get_catalog()
@@ -143,9 +154,15 @@ def is_email_verified(email):
     return bool(result)
 
 
-def is_email_valid(email):
-    result = valid_email_ids(email)
-    return bool(result)
+def filter_invalid_emails(emails):
+    email_ids = valid_email_ids(emails)
+    return _valid_emails_for_ids(email_ids)
+
+
+def filter_users_with_invalid_emails(users):
+    for user in users:
+        if isinstance(user, six.string_types):
+            user = User.get_user(user)
 
 def get_users_by_email(email):
     """
@@ -318,19 +335,14 @@ class BackgroundUrlProperty(ImageUrlProperty):
 
 @interface.implementer(IValidEmailManager)
 class ValidEmailManager(object):
-
-    @staticmethod
-    def validate_email(email):
-        if is_email_valid(email):
-            return email
-        return None
+    """
+    An email manager that validates emails or user emails
+    via the entity catalog. Defined as a utility to allow
+    site based overrides
+    """
 
     def validate_emails(self, emails):
-        valid_emails = set()
-        for email in emails:
-            if self.validate_email(email) is not None:
-                valid_emails.add(email)
-        return valid_emails
+        return filter_invalid_emails(emails)
 
     def validate_emails_for_users(self, users):
         emails = set()
@@ -340,7 +352,9 @@ class ValidEmailManager(object):
             addressable = IEmailAddressable(user, None)
             if addressable is None:
                 continue
-            valid_email = self.validate_email(addressable.email)
+            valid_email = self.validate_emails([addressable.email])
+            from IPython.terminal.debugger import set_trace;set_trace()
+
             if valid_email is not None:
                 emails.add(valid_email)
         return emails

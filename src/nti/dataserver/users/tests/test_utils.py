@@ -33,9 +33,9 @@ from nti.dataserver.users.common import set_user_creation_site
 from nti.dataserver.users.common import user_creation_sitename
 from nti.dataserver.users.common import remove_user_creation_site
 
+from nti.dataserver.users.utils import are_emails_valid
 from nti.dataserver.users.utils import get_users_by_site
 from nti.dataserver.users.utils import get_users_by_email_in_sites
-from nti.dataserver.users.utils import is_email_valid
 from nti.dataserver.users.utils import is_email_verified
 from nti.dataserver.users.utils import get_community_members
 from nti.dataserver.users.utils import force_email_verification
@@ -81,11 +81,11 @@ class TestUtils(unittest.TestCase):
         User.create_user(username=u'foo@bleach.org',
                          external_value={'email': u"foo@bleach.org"})
 
-        assert_that(is_email_valid('ichigo@bleach.org'), is_(True))
-        assert_that(is_email_valid('ICHIGO@bleach.ORG'), is_(True))
-        assert_that(is_email_valid('rukia@bleach.org'), is_(False))
-        assert_that(is_email_valid('foo@bleach.org'), is_(True))
-        assert_that(is_email_valid('aizen@bleach.org'), is_(False))
+        assert_that(are_emails_valid(('ichigo@bleach.org',)), is_(True))
+        assert_that(are_emails_valid(('ICHIGO@bleach.ORG',)), is_(True))
+        assert_that(are_emails_valid(('rukia@bleach.org',)), is_(False))
+        assert_that(are_emails_valid(('foo@bleach.org',)), is_(True))
+        assert_that(are_emails_valid(('aizen@bleach.org',)), is_(False))
 
     @WithMockDSTrans
     def test_force_email_verification(self):
