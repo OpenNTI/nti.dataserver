@@ -52,6 +52,12 @@ ALPHA = BaseComponents(BASEADULT,
                        name='alpha.nextthought.com',
                        bases=(BASEADULT,))
 
+ALPHA_CHILD = BaseComponents(ALPHA,
+                             name='alpha-child.nextthought.com',
+                             bases=(ALPHA,))
+
+SITES = (ALPHA,
+         ALPHA_CHILD)
 
 class MockSitePolicyUserEventListener(AdultCommunitySitePolicyEventListener):
 
@@ -62,12 +68,14 @@ class TestEvolve102(mock_dataserver.DataserverLayerTest):
 
     def setUp(self):
         super(TestEvolve102, self).setUp()
-        ALPHA.__init__(ALPHA.__parent__, name=ALPHA.__name__, bases=ALPHA.__bases__)
-        BASE.registerUtility(ALPHA, name=ALPHA.__name__, provided=IComponents)
+        for bc in SITES:
+            bc.__init__(bc.__parent__, name=bc.__name__, bases=bc.__bases__)
+            BASE.registerUtility(bc, name=bc.__name__, provided=IComponents)
         ALPHA.registerUtility(MockSitePolicyUserEventListener(), ISitePolicyUserEventListener)
 
     def tearDown(self):
-        BASE.unregisterUtility(ALPHA, name=ALPHA.__name__, provided=IComponents)
+        for bc in SITES:
+            BASE.unregisterUtility(bc, name=bc.__name__, provided=IComponents)
         ALPHA.unregisterUtility(MockSitePolicyUserEventListener(), ISitePolicyUserEventListener)
         super(TestEvolve102, self).tearDown()
 
@@ -82,14 +90,18 @@ class TestEvolve102(mock_dataserver.DataserverLayerTest):
             intids = component.getUtility(IIntIds)
             alpha_site_policy = ALPHA.queryUtility(ISitePolicyUserEventListener)
             alpha_com_username = alpha_site_policy.COM_USERNAME
-            site_community = Community.create_community(username=alpha_com_username)
-            interface.alsoProvides(site_community, ISiteCommunity)
+            alpha_site_community = Community.create_community(username=alpha_com_username)
+            interface.alsoProvides(alpha_site_community, ISiteCommunity)
+
+            ac_policy = ALPHA_CHILD.queryUtility(ISitePolicyUserEventListener)
+            ac_site_comm = Community.get_community(ac_policy.COM_USERNAME)
+            assert_that(ac_site_comm, is_(alpha_site_community))
 
             # Assert existing behavior of no creation site
-            creation_sitename = entity_creation_sitename(site_community)
+            creation_sitename = entity_creation_sitename(alpha_site_community)
             assert_that(creation_sitename, is_(none()))
 
-            doc_id = intids.getId(site_community)
+            doc_id = intids.getId(alpha_site_community)
 
             # Assert existing behavior of no indexed creation site
             catalog = get_entity_catalog()
@@ -100,7 +112,7 @@ class TestEvolve102(mock_dataserver.DataserverLayerTest):
             do_evolve(context)
 
             # Assert we now have a creation site
-            creation_sitename = entity_creation_sitename(site_community)
+            creation_sitename = entity_creation_sitename(alpha_site_community)
             assert_that(creation_sitename, is_('alpha.nextthought.com'))
 
             # Assert the creation site is indexed

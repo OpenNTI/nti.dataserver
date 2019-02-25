@@ -24,6 +24,7 @@ from nti.dataserver.interfaces import IOIDResolver
 
 from nti.dataserver.users import get_entity_catalog
 
+from nti.dataserver.users.common import entity_creation_sitename
 from nti.dataserver.users.common import set_entity_creation_site
 
 from nti.site import get_all_host_sites
@@ -66,10 +67,17 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
             with current_site(site):
                 site_comm = get_site_community()
                 if site_comm is not None:
-                    site_name = site.__name__
-                    set_entity_creation_site(site_comm, site_name)
-                    comm_id = intids.queryId(site_comm)
-                    site_idx.index_doc(comm_id, site_comm)
+                    creation_site = entity_creation_sitename(site_comm)
+                    # Child sites can inherit a parent site community.
+                    # The order of the host sites is top down as we iterate
+                    # so we check to see if a creation site has already been
+                    # been set in the parent to ensure it is not overwritten
+                    # in the child
+                    if creation_site is None:
+                        site_name = site.__name__
+                        set_entity_creation_site(site_comm, site_name)
+                        comm_id = intids.queryId(site_comm)
+                        site_idx.index_doc(comm_id, site_comm)
     component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
     logger.info('Evolution %s done.', generation)
 
