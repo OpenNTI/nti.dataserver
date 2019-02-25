@@ -33,12 +33,3 @@ def set_entity_creation_site(entity, site):
     annotations[CREATION_SITE_KEY] = name
     return name
 set_user_creation_site = set_entity_creation_site
-
-
-# deprecations
-
-from zope.deprecation import deprecated
-
-deprecated('user_creation_sitename', 'Use entity_creation_sitename')
-deprecated('remove_user_creation_site', 'Use remove_entity_creation_site')
-deprecated('set_user_creation_site', 'Use set_entity_creation_site')
