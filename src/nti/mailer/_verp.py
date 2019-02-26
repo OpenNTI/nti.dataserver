@@ -195,6 +195,10 @@ def principal_ids_from_verp(fromaddr,
 
     # Split on our last '+' to allow user defined labels.
     signed_and_encoded = addr.rsplit(b'+', 1)[1].split(b'@')[0]
+
+    if signer.sep not in signed_and_encoded:
+        return ()
+
     encoded_pids, sig = signed_and_encoded.rsplit(signer.sep, 1)
     decoded_pids = urllib_parse.unquote(encoded_pids)
 
