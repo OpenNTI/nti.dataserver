@@ -61,7 +61,7 @@ class TestGoogleLogonConfigurationViews(ApplicationLayerTest):
         # enable
         enable_url = 'https://demo.nextthought.com/dataserver2/@@enable_google_logon'
         res = self.testapp.post_json(enable_url, status=200, extra_environ=extra_environ)
-        assert_that(res.json_body, has_entries({'use_gmail': False,
+        assert_that(res.json_body, has_entries({'lookup_by_email': False,
                                                 'restricted_domain': None}))
 
         with mock_dataserver.mock_db_trans(self.ds, site_name='demo.nextthought.com'):

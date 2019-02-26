@@ -59,6 +59,9 @@ GOOGLE_LOGON_SETTINGS_NAME = u'GoogleLogonSettings'
                context=IDataserverFolder,
                permission=nauth.ACT_NTI_ADMIN)
 class GoogleLogonConfigurationView(AbstractAuthenticatedView):
+    """
+    Enable or disable google oauth logon for a site.
+    """
 
     @Lazy
     def site(self):
@@ -69,8 +72,12 @@ class GoogleLogonConfigurationView(AbstractAuthenticatedView):
         return self.site.getSiteManager()
 
     def _params(self):
+        """
+        If lookup_by_email is effectively true we would look up user with the email and would use the email as username,
+        otherwise we would look up user with external identity and create a unique random username for the email.
+        """
         params = CaseInsensitiveDict(self.request.params)
-        params['use_gmail'] = is_true(params.get('use_gmail'))
+        params['lookup_by_email'] = is_true(params.get('lookup_by_email'))
 
         rd = params.get('restricted_domain')
         params['restricted_domain'] = params['restricted_domain'].strip() or None if rd else None
@@ -102,8 +109,8 @@ class GoogleLogonConfigurationView(AbstractAuthenticatedView):
             return None
         return obj
 
-    def _register_lookup_utility(self, use_gmail=False):
-        obj = GoogleLogonLookupUtility(use_gmail=use_gmail)
+    def _register_lookup_utility(self, lookup_by_email=False):
+        obj = GoogleLogonLookupUtility(lookup_by_email=lookup_by_email)
         obj.__name__ = GOOGLE_LOGON_LOOKUP_NAME
         install_utility(obj,
                         utility_name=obj.__name__,
@@ -129,14 +136,15 @@ class GoogleLogonConfigurationView(AbstractAuthenticatedView):
     @view_config(request_method='POST',
                  name="enable_google_logon")
     def enable(self):
+        logger.info("Enabling google oauth logon for site (%s) by username=%s", self.site.__name__, self.remoteUser)
         params = self._params()
 
         # Logon lookup utility.
         lookup = self._get_local_utility(IGoogleLogonLookupUtility)
         if lookup is None:
-            lookup = self._register_lookup_utility(use_gmail=params['use_gmail'])
+            lookup = self._register_lookup_utility(lookup_by_email=params['lookup_by_email'])
         else:
-            lookup.use_gmail = params['use_gmail']
+            lookup.lookup_by_email = params['lookup_by_email']
 
         # Logon settings utility.
         settings = self._get_local_utility(IGoogleLogonSettings)
@@ -152,13 +160,15 @@ class GoogleLogonConfigurationView(AbstractAuthenticatedView):
         self._register_unauthenticated_user_link_provider()
 
         return {
-            'use_gmail': lookup.use_gmail,
+            'lookup_by_email': lookup.lookup_by_email,
             'restricted_domain': settings.hd
         }
 
     @view_config(request_method='POST',
                  name="disable_google_logon")
     def disable(self):
+        logger.info("Disabling google oauth logon for site (%s) by username=%s", self.site.__name__, self.remoteUser)
+
         self._unregister_local_utility(IGoogleLogonLookupUtility)
 
         self._unregister_local_utility(IGoogleLogonSettings)

@@ -1695,11 +1695,11 @@ class SimpleMissingUserGoogleLinkProvider(SimpleUnauthenticatedUserGoogleLinkPro
 @interface.implementer(IGoogleLogonLookupUtility)
 class GoogleLogonLookupUtility(Persistent, Contained):
 
-    def __init__(self, use_gmail=True):
-        self.use_gmail = use_gmail
+    def __init__(self, lookup_by_email=False):
+        self.lookup_by_email = lookup_by_email
 
     def lookup_user(self, identifier):
-        if self.use_gmail:
+        if self.lookup_by_email:
             return User.get_user(identifier)
         # When a user login a child site, then login its parent or sibling site with the same GMail,
         # it would create duplicated users with the same GMail, which may cause a different user returned
@@ -1709,7 +1709,7 @@ class GoogleLogonLookupUtility(Persistent, Contained):
         return user
 
     def generate_username(self, identifier):
-        if self.use_gmail:
+        if self.lookup_by_email:
             return identifier
         username_util = component.getUtility(IUsernameGeneratorUtility)
         return username_util.generate_username()
