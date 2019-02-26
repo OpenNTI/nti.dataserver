@@ -34,9 +34,8 @@ class TestEntityIndex(DataserverLayerTest):
         community = Community(username=u'bleach')
         return user, community
 
-    #@WithMockDSTrans
     def test_index(self):
-        user, community =  self._fixture()
+        user, community = self._fixture()
         catalog = create_entity_catalog()
         catalog.index_doc(1, user)
         catalog.index_doc(2, community)

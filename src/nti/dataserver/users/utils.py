@@ -21,8 +21,6 @@ from nti.coremetadata.interfaces import IX_VALID_EMAIL
 
 from nti.dataserver.interfaces import IUser
 
-from nti.dataserver.users import User
-
 from nti.dataserver.users.index import IX_SITE
 from nti.dataserver.users.index import IX_EMAIL
 from nti.dataserver.users.index import IX_ALIAS
@@ -40,8 +38,6 @@ from nti.dataserver.users.interfaces import IAvatarURLProvider
 from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
 from nti.dataserver.users.interfaces import IHiddenMembership
-
-from nti.mailer.interfaces import IEmailAddressable
 
 from nti.property.urlproperty import UrlProperty
 
@@ -101,19 +97,22 @@ def valid_email_ids(emails):
         return catalog.family.IF.Set()
 
     # all valid emails
-    valid_idx = catalog[IX_TOPICS][IX_VALID_EMAIL]
-    valid_intids = catalog.family.IF.Set(valid_idx.getIds())
+    valid_extent = catalog[IX_TOPICS][IX_VALID_EMAIL].getExtent()
+    valid_intids = catalog.family.IF.Set(valid_extent)
 
     # intersect
     return catalog.family.IF.intersection(intids_emails, valid_intids)
 
 
 def _valid_emails_for_ids(email_ids):
-    intids = component.getUtility(IIntIds)
     emails = set()
+    catalog = get_entity_catalog()
+    email_idx = catalog[IX_EMAIL]
+    email_dv = email_idx.documents_to_values
     for email_id in email_ids:
-        email = intids.queryObject(email_id)
-        emails.add(email)
+        email = email_dv.get(email_id)
+        if email is not None:
+            emails.add(email)
     return emails
 
 def reindex_email_verification(user, catalog=None, intids=None):
@@ -159,10 +158,33 @@ def filter_invalid_emails(emails):
     return _valid_emails_for_ids(email_ids)
 
 
+def is_email_valid(email):
+    return bool(filter_invalid_emails([email]))
+
+
+def are_emails_valid(emails):
+    return bool(filter_invalid_emails(emails))
+
+
+def is_user_email_valid(user):
+    if IUser.providedBy(user):
+        user = user.username
+    catalog = get_entity_catalog()
+    username_idx = catalog[IX_USERNAME]
+    username_docs = username_idx.values_to_documents.get(user)
+    username_doc_ids = catalog.family.IF.LFSet(username_docs)
+    valid_email_extent = catalog[IX_TOPICS][IX_VALID_EMAIL].getExtent()
+    valid_ids = catalog.family.IF.LFSet(valid_email_extent)
+    email_ids = catalog.family.IF.intersection(valid_ids, username_doc_ids)
+    return _valid_emails_for_ids(email_ids)
+
+
 def filter_users_with_invalid_emails(users):
+    filtered = set()
     for user in users:
-        if isinstance(user, six.string_types):
-            user = User.get_user(user)
+        filtered = filtered.union(is_user_email_valid(user))
+    return filtered
+
 
 def get_users_by_email(email):
     """
@@ -345,19 +367,7 @@ class ValidEmailManager(object):
         return filter_invalid_emails(emails)
 
     def validate_emails_for_users(self, users):
-        emails = set()
-        for user in users:
-            if isinstance(user, six.string_types):
-                user = User.get_user(user)
-            addressable = IEmailAddressable(user, None)
-            if addressable is None:
-                continue
-            valid_email = self.validate_emails([addressable.email])
-            from IPython.terminal.debugger import set_trace;set_trace()
-
-            if valid_email is not None:
-                emails.add(valid_email)
-        return emails
+        return filter_users_with_invalid_emails(users)
 
 
 # site
