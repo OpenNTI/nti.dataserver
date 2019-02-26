@@ -520,6 +520,9 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		if site_name:
 			return get_members_by_site(site_name)
 
+	def _display_name(self, user):
+		return component.getMultiAdapter((user, self.request), IDisplayNameGenerator)()
+
 	def collect_recipients(self):
 		# We are in an outer request, but we need to get the
 		# notable data for different users. In some cases
@@ -541,7 +544,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 					possible_recipient = collector()
 					if possible_recipient:
 						collector.last_sent = time.time()
-						possible_recipient['realname'] = IFriendlyNamed(user).realname
+						possible_recipient['display_name'] = self._display_name(user)
 						yield possible_recipient
 
 	def compute_template_args_for_recipient(self, recipient):
@@ -563,7 +566,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 
 		result['site_name'] = guess_site_display_name(self.request)
 		result['since_when'] = formatter.format(when)
-		result['first_name'] = HumanName(recipient['realname']).first if recipient['realname'] else recipient['email'].id
+		result['display_name'] = recipient['display_name']
 
 		# Hmm, maybe?
 		result['view'] = self

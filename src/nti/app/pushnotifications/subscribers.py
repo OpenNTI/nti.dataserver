@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from pyramid.threadlocal import get_current_request
 
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 from zope import component
 
 from zope.intid.interfaces import IIntIds
@@ -22,7 +24,6 @@ from nti.app import pushnotifications as push_pkg
 from nti.app.pushnotifications import email_notifications_preference
 
 from nti.dataserver.users import User
-from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import ITemplatedMailer
@@ -38,6 +39,10 @@ def _mailer():
 def _is_subscribed(user):
 	with email_notifications_preference(user) as prefs:
 		return prefs.immediate_threadable_reply
+
+
+def _display_name(user, request):
+	return component.getMultiAdapter((user, request), IDisplayNameGenerator)()
 
 
 def _threadable_added(threadable, unused_event):
@@ -56,14 +61,14 @@ def _threadable_added(threadable, unused_event):
 	if not addr or not addr.email:
 		return
 
+	request = get_current_request()
+
 	intids = component.getUtility(IIntIds)
 	intid = intids.getId(threadable)
 	recipient = {'email': EmailAddresablePrincipal(user),
 				 'template_args': [intid],
-				 'realname': IFriendlyNamed(user).realname,
+				 'display_name': _display_name(user, request),
 				 'since': 0}
-
-	request = get_current_request()
 
 	delegate = component.getMultiAdapter((inReplyTo, request),
 										IBulkEmailProcessDelegate,

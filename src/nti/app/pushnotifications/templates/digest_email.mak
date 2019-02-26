@@ -1,4 +1,4 @@
-Hi ${first_name}!
+Hi ${display_name}!
 % if notable_text:
 ${notable_text}
 
