@@ -107,6 +107,10 @@ REL_ACCOUNT_PROFILE_SCHEMA = "account.profile"  # bad name for BWC
 #: Account profile update preflight check
 REL_ACCOUNT_PROFILE_PREFLIGHT = "account.profile.preflight"
 
+#: A marker flag that a user's profile needs to be updated, post
+#: account creation.
+VIEW_UPDATE_USER_PROFILE = 'user_profile_update'
+
 #: The link relationship type that means that the user profile is in need
 #: of an update, possibly because the applicable fields have changed
 #: (e.g., when the user signs a COPPA agreement). This is one of those
