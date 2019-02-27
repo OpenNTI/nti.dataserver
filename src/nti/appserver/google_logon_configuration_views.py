@@ -154,9 +154,11 @@ class GoogleLogonConfigurationView(AbstractAuthenticatedView):
             settings.hd = params['restricted_domain']
 
         # Missing user link provider.
+        self._unregister_missing_user_link_provider()
         self._register_missing_user_link_provider()
 
         # Unauthenticated user link provider.
+        self._unregister_unauthenticated_user_link_provider()
         self._register_unauthenticated_user_link_provider()
 
         return {

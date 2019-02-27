@@ -129,6 +129,7 @@ from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
@@ -1645,6 +1646,8 @@ def google_oauth2(request):
             # add external_type / external_id
             id_container = IUserExternalIdentityContainer(user)
             id_container.add_external_mapping(GOOGLE_OAUTH_EXTERNAL_ID_TYPE, email)
+            logger.info("Setting Google OAUTH for user (%s) (%s)", user.username, email)
+            notify(ObjectModifiedFromExternalEvent(user))
 
             notify(GoogleUserCreatedEvent(user, request))
             if is_true(email_verified):
