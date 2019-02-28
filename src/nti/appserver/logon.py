@@ -43,11 +43,15 @@ import simplejson as json
 from openid import oidutil
 oidutil.log = logging.getLogger('openid').info
 
+from persistent import Persistent
+
 from zope import component
 from zope import interface
 from zope import lifecycleevent
 
 from zope.component.hooks import getSite
+
+from zope.container.contained import Contained
 
 from zope.event import notify
 
@@ -125,6 +129,11 @@ from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
+
+from nti.identifiers.interfaces import IUserExternalIdentityContainer
+
+from nti.identifiers.utils import get_user_for_external_id
 
 from nti.links.links import Link
 
@@ -1397,6 +1406,8 @@ DEFAULT_TOKEN_URL = 'https://www.googleapis.com/oauth2/v4/token'
 DEFAULT_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 DISCOVERY_DOC_URL = 'https://accounts.google.com/.well-known/openid-configuration'
 
+GOOGLE_OAUTH_EXTERNAL_ID_TYPE = u'google.oauth'
+
 
 def redirect_google_oauth2_uri(request):
     root = request.route_path('objects.generic.traversal', traverse=())
@@ -1632,6 +1643,12 @@ def google_oauth2(request):
                                                iface=None,
                                                user_factory=User.create_user)
             interface.alsoProvides(user, IGoogleUser)
+            # add external_type / external_id
+            id_container = IUserExternalIdentityContainer(user)
+            id_container.add_external_mapping(GOOGLE_OAUTH_EXTERNAL_ID_TYPE, email)
+            logger.info("Setting Google OAUTH for user (%s) (%s)", user.username, email)
+            notify(ObjectModifiedFromExternalEvent(user))
+
             notify(GoogleUserCreatedEvent(user, request))
             if is_true(email_verified):
                 force_email_verification(user)  # trusted source
@@ -1646,3 +1663,63 @@ def google_oauth2(request):
                                             request.session.get('google.failure'),
                                             error=str(e))
     return response
+
+
+@component.adapter(pyramid.interfaces.IRequest)
+@interface.implementer(IUnauthenticatedUserLinkProvider)
+class SimpleUnauthenticatedUserGoogleLinkProvider(object):
+
+    rel = REL_LOGIN_GOOGLE
+
+    def __init__(self, request):
+        self.request = request
+
+    def get_links(self):
+        elements = (self.rel,)
+        root = self.request.route_path('objects.generic.traversal',
+                                       traverse=())
+        root = root[:-1] if root.endswith('/') else root
+        return [Link(root, elements=elements, rel=self.rel)]
+
+
+@interface.implementer(ILogonLinkProvider)
+@component.adapter(IMissingUser, pyramid.interfaces.IRequest)
+class SimpleMissingUserGoogleLinkProvider(SimpleUnauthenticatedUserGoogleLinkProvider):
+
+    def __init__(self, user, request):
+        super(SimpleMissingUserGoogleLinkProvider, self).__init__(request)
+        self.user = user
+
+    def __call__(self):
+        links = self.get_links()
+        return links[0] if links else None
+
+
+@interface.implementer(IGoogleLogonLookupUtility)
+class GoogleLogonLookupUtility(Persistent, Contained):
+
+    def __init__(self, lookup_by_email=False):
+        self.lookup_by_email = lookup_by_email
+
+    def lookup_user(self, identifier):
+        if self.lookup_by_email:
+            return User.get_user(identifier)
+        # When a user login a child site, then login its parent or sibling site with the same GMail,
+        # it would create duplicated users with the same GMail, which may cause a different user returned
+        # when login the child site with that gmail.
+        # fix get_user_for_external_id?
+        user = get_user_for_external_id(GOOGLE_OAUTH_EXTERNAL_ID_TYPE, identifier)
+        return user
+
+    def generate_username(self, identifier):
+        if self.lookup_by_email:
+            return identifier
+        username_util = component.getUtility(IUsernameGeneratorUtility)
+        return username_util.generate_username()
+
+
+@interface.implementer(IGoogleLogonSettings)
+class GoogleLogonSettings(Persistent, Contained):
+
+    def __init__(self, hd):
+        self.hd = hd
