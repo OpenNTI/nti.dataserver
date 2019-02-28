@@ -325,6 +325,7 @@ def set_community_creation_site(community, site=None):
         set_creation_site(community, name)
     return name
 
+
 def intids_of_community_or_site_members(all_members=False, site=None):
     """
     Returns the intids of the community or site members
