@@ -544,6 +544,10 @@ class TestAdminViews(ApplicationLayerTest):
             assert_that(profile, does_not(validly_provides(IFakeUserProfile)))
             assert_that(profile, does_not(has_property('test_field')))
 
+        alpha.unregisterAdapter(FakeUserProfileFactory,
+                                provided=IFakeUserProfile,
+                                required=(IUser,))
+
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.users.utils.admin.is_site_admin',
                  'nti.app.users.views.view_mixins.is_admin_or_site_admin')
