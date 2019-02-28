@@ -27,6 +27,8 @@
 	<subscriber handler=".communities._remove_member_from_community" />
 	<subscriber handler=".communities._remove_all_members_when_community_deleted" />
 
+    <subscriber handler=".subscribers._reindex_invalid_email" />
+
 	<!-- Externalization -->
 	<adapter factory=".users_external._EntitySummaryExternalObject"
 			 name="summary" />
@@ -179,6 +181,10 @@
 	<adapter factory=".user_profile.RestrictedUserProfileWithContactEmailAddressable" />
 
 	<adapter factory=".user_profile.CommunityProfileFactory" />
+
+    <adapter factory=".adapters._profile_to_user"
+             provides="nti.dataserver.interfaces.IUser"
+             for=".interfaces.IUserProfile" />
 
 	<!-- In dev mode, we don't impose too many restrictions by default -->
 	<adapter factory=".user_profile.CompleteUserProfileFactory"
