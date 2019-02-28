@@ -11,13 +11,10 @@ from __future__ import absolute_import
 import six
 
 from zope import component
-from zope import interface
 
 from zope.component.hooks import getSite
 
 from zope.intid.interfaces import IIntIds
-
-from nti.coremetadata.interfaces import IX_VALID_EMAIL
 
 from nti.dataserver.interfaces import IUser
 
@@ -29,11 +26,11 @@ from nti.dataserver.users.index import IX_MIMETYPE
 from nti.dataserver.users.index import IX_REALNAME
 from nti.dataserver.users.index import IX_USERNAME
 from nti.dataserver.users.index import IX_EMAIL_VERIFIED
+from nti.dataserver.users.index import IX_INVALID_EMAIL
 
 from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import IUserProfile
-from nti.dataserver.users.interfaces import IValidEmailManager
 from nti.dataserver.users.interfaces import IAvatarURLProvider
 from nti.dataserver.users.interfaces import IBackgroundURLProvider
 
@@ -73,6 +70,26 @@ def _get_email_ids(email):
     return intids_emails
 
 
+def _get_email_ids_for_emails(emails):
+    catalog = get_entity_catalog()
+    email_ids = catalog.family.IF.Set(())
+    for email in emails:
+        ids = _get_email_ids(email)
+        email_ids = catalog.family.IF.union(email_ids, ids)
+    return email_ids
+
+
+def _get_emails_for_email_ids(email_ids):
+    catalog = get_entity_catalog()
+    email_idx = catalog[IX_EMAIL]
+    email_dv = email_idx.documents_to_values
+    emails = set()
+    for email_id in email_ids:
+        email = email_dv.get(email_id)
+        emails.add(email)
+    return emails
+
+
 def verified_email_ids(email):
     catalog = get_entity_catalog()
     intids_emails = _get_email_ids(email)
@@ -86,34 +103,6 @@ def verified_email_ids(email):
     # intersect
     return catalog.family.IF.intersection(intids_emails, intids_verified)
 
-
-def valid_email_ids(emails):
-    catalog = get_entity_catalog()
-    intids_emails = catalog.family.IF.Set(())
-    for email in emails:
-        ids = _get_email_ids(email)
-        intids_emails = catalog.family.IF.union(intids_emails, ids)
-    if not intids_emails:
-        return catalog.family.IF.Set()
-
-    # all valid emails
-    valid_extent = catalog[IX_TOPICS][IX_VALID_EMAIL].getExtent()
-    valid_intids = catalog.family.IF.Set(valid_extent)
-
-    # intersect
-    return catalog.family.IF.intersection(intids_emails, valid_intids)
-
-
-def _valid_emails_for_ids(email_ids):
-    emails = set()
-    catalog = get_entity_catalog()
-    email_idx = catalog[IX_EMAIL]
-    email_dv = email_idx.documents_to_values
-    for email_id in email_ids:
-        email = email_dv.get(email_id)
-        if email is not None:
-            emails.add(email)
-    return emails
 
 def reindex_email_verification(user, catalog=None, intids=None):
     catalog = catalog if catalog is not None else get_catalog()
@@ -153,37 +142,43 @@ def is_email_verified(email):
     return bool(result)
 
 
-def filter_invalid_emails(emails):
-    email_ids = valid_email_ids(emails)
-    return _valid_emails_for_ids(email_ids)
+def _get_invalid_email_ids():
+    catalog = get_entity_catalog()
+    invalid_extent = catalog[IX_TOPICS][IX_INVALID_EMAIL].getExtent()
+    invalid_email_ids = catalog.family.IF.Set(invalid_extent)
+    return invalid_email_ids
+
+
+def _valid_email_ids_for_emails(emails):
+    catalog = get_entity_catalog()
+    email_ids = _get_email_ids_for_emails(emails)
+    invalid_email_ids = _get_invalid_email_ids()
+    return catalog.family.IF.difference(email_ids, invalid_email_ids)
+
+
+def _invalid_email_ids_for_emails(emails):
+    catalog = get_entity_catalog()
+    email_ids = _get_email_ids_for_emails(emails)
+    invalid_email_ids = _get_invalid_email_ids()
+    return catalog.family.IF.intersection(email_ids, invalid_email_ids)
+
+
+def valid_emails_for_emails(emails):
+    valid_email_ids = _valid_email_ids_for_emails(emails)
+    return _get_emails_for_email_ids(valid_email_ids)
+
+
+def invalid_emails_for_emails(emails):
+    invalid_email_ids = _invalid_email_ids_for_emails(emails)
+    return _get_emails_for_email_ids(invalid_email_ids)
 
 
 def is_email_valid(email):
-    return bool(filter_invalid_emails([email]))
+    return bool(valid_emails_for_emails([email]))
 
 
-def are_emails_valid(emails):
-    return bool(filter_invalid_emails(emails))
-
-
-def is_user_email_valid(user):
-    if IUser.providedBy(user):
-        user = user.username
-    catalog = get_entity_catalog()
-    username_idx = catalog[IX_USERNAME]
-    username_docs = username_idx.values_to_documents.get(user)
-    username_doc_ids = catalog.family.IF.LFSet(username_docs)
-    valid_email_extent = catalog[IX_TOPICS][IX_VALID_EMAIL].getExtent()
-    valid_ids = catalog.family.IF.LFSet(valid_email_extent)
-    email_ids = catalog.family.IF.intersection(valid_ids, username_doc_ids)
-    return _valid_emails_for_ids(email_ids)
-
-
-def filter_users_with_invalid_emails(users):
-    filtered = set()
-    for user in users:
-        filtered = filtered.union(is_user_email_valid(user))
-    return filtered
+def is_email_invalid(email):
+    return not is_email_valid(email)
 
 
 def get_users_by_email(email):
@@ -351,23 +346,6 @@ class BackgroundUrlProperty(ImageUrlProperty):
     max_file_size = 524288  # 512 KB
     avatar_field_name = 'backgroundURL'
     avatar_provider_interface = IBackgroundURLProvider
-
-
-# utilities
-
-@interface.implementer(IValidEmailManager)
-class ValidEmailManager(object):
-    """
-    An email manager that validates emails or user emails
-    via the entity catalog. Defined as a utility to allow
-    site based overrides
-    """
-
-    def validate_emails(self, emails):
-        return filter_invalid_emails(emails)
-
-    def validate_emails_for_users(self, users):
-        return filter_users_with_invalid_emails(users)
 
 
 # site

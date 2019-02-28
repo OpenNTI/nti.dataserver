@@ -25,17 +25,17 @@ from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 
 from nti.dataserver.users.communities import Community
 
-from nti.dataserver.users.interfaces import IValidEmailManager
-
 from nti.dataserver.users.users import User
 
 from nti.dataserver.users.common import set_user_creation_site
 from nti.dataserver.users.common import user_creation_sitename
 from nti.dataserver.users.common import remove_user_creation_site
 
-from nti.dataserver.users.utils import are_emails_valid
 from nti.dataserver.users.utils import get_users_by_site
 from nti.dataserver.users.utils import get_users_by_email_in_sites
+from nti.dataserver.users.utils import invalid_emails_for_emails
+from nti.dataserver.users.utils import is_email_invalid
+from nti.dataserver.users.utils import is_email_valid
 from nti.dataserver.users.utils import is_email_verified
 from nti.dataserver.users.utils import get_community_members
 from nti.dataserver.users.utils import force_email_verification
@@ -43,6 +43,9 @@ from nti.dataserver.users.utils import unindex_email_verification
 from nti.dataserver.users.utils import get_entity_alias_from_index
 from nti.dataserver.users.utils import get_entity_mimetype_from_index
 from nti.dataserver.users.utils import get_entity_realname_from_index
+from nti.dataserver.users.utils import valid_emails_for_emails
+
+from nti.mailer.interfaces import IEmailAddressable
 
 
 class TestUtils(unittest.TestCase):
@@ -81,11 +84,30 @@ class TestUtils(unittest.TestCase):
         User.create_user(username=u'foo@bleach.org',
                          external_value={'email': u"foo@bleach.org"})
 
-        assert_that(are_emails_valid(('ichigo@bleach.org',)), is_(True))
-        assert_that(are_emails_valid(('ICHIGO@bleach.ORG',)), is_(True))
-        assert_that(are_emails_valid(('rukia@bleach.org',)), is_(False))
-        assert_that(are_emails_valid(('foo@bleach.org',)), is_(True))
-        assert_that(are_emails_valid(('aizen@bleach.org',)), is_(False))
+        assert_that(is_email_valid('ichigo@bleach.org'), is_(True))
+        assert_that(is_email_valid('ICHIGO@bleach.ORG'), is_(True))
+        assert_that(is_email_valid('rukia@bleach.org'), is_(False))
+        assert_that(is_email_valid('foo@bleach.org'), is_(True))
+        assert_that(is_email_valid('aizen@bleach.org'), is_(False))
+
+    @WithMockDSTrans
+    def test_is_email_invalid(self):
+        User.create_user(username=u'ichigo@bleach.org',
+                         external_value={'email': u"ichigo@bleach.org",
+                                         'email_verified': True})
+
+        User.create_user(username=u'rukia@bleach.org',
+                         external_value={'email': u"rukia@bleach.org",
+                                         'email_verified': False})
+
+        User.create_user(username=u'foo@bleach.org',
+                         external_value={'email': u"foo@bleach.org"})
+
+        assert_that(is_email_invalid('ichigo@bleach.org'), is_(False))
+        assert_that(is_email_invalid('ICHIGO@bleach.ORG'), is_(False))
+        assert_that(is_email_invalid('rukia@bleach.org'), is_(True))
+        assert_that(is_email_invalid('foo@bleach.org'), is_(False))
+        assert_that(is_email_invalid('aizen@bleach.org'), is_(True))
 
     @WithMockDSTrans
     def test_force_email_verification(self):
@@ -167,8 +189,7 @@ class TestUtils(unittest.TestCase):
         assert_that(name, is_(none()))
 
     @WithMockDSTrans
-    def test_valid_email_manager(self):
-        manager = component.getUtility(IValidEmailManager)
+    def test_valid_emails_for_emails(self):
         ichigo = User.create_user(username=u'ichigo@bleach.org',
                                   external_value={'email': u"ichigo@bleach.org",
                                                   'email_verified': True})
@@ -180,15 +201,25 @@ class TestUtils(unittest.TestCase):
         foo = User.create_user(username=u'foo@bleach.org',
                                external_value={'email': u"foo@bleach.org"})
 
-        # verify user objects
-        emails = manager.validate_emails_for_users([ichigo,
-                                                    rukia,
-                                                    foo])
+        user_emails = [IEmailAddressable(user).email for user in [ichigo, rukia, foo]]
+        emails = valid_emails_for_emails(user_emails)
         assert_that(emails, has_length(2))
         assert_that(emails, contains(u'ichigo@bleach.org', u'foo@bleach.org'))
 
-        # Verify email list
-        emails = [u'ichigo@bleach.org', u'rukia@bleach.org', u'foo@bleach.org']
-        valid_emails = manager.validate_emails(emails)
-        assert_that(valid_emails, has_length(2))
-        assert_that(valid_emails, contains(u'ichigo@bleach.org', u'foo@bleach.org'))
+    @WithMockDSTrans
+    def test_invalid_emails_for_emails(self):
+        ichigo = User.create_user(username=u'ichigo@bleach.org',
+                                  external_value={'email': u"ichigo@bleach.org",
+                                                  'email_verified': True})
+
+        rukia = User.create_user(username=u'rukia@bleach.org',
+                                 external_value={'email': u"rukia@bleach.org",
+                                                 'email_verified': False})
+
+        foo = User.create_user(username=u'foo@bleach.org',
+                               external_value={'email': u"foo@bleach.org"})
+
+        user_emails = [IEmailAddressable(user).email for user in [ichigo, rukia, foo]]
+        invalid_emails = invalid_emails_for_emails(user_emails)
+        assert_that(invalid_emails, has_length(1))
+        assert_that(invalid_emails, contains(u'rukia@bleach.org'))

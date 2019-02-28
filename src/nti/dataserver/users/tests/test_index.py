@@ -54,24 +54,24 @@ class TestEntityIndex(DataserverLayerTest):
                     has_length(1))
 
         # Default is None, which is valid
-        is_valid_email = catalog['topics']['valid_email']
-        assert_that(list(is_valid_email.ids()),
-                    has_length(1))
+        invalid_emails = catalog['topics']['invalid_email']
+        assert_that(list(invalid_emails.ids()),
+                    has_length(0))
 
         profile = IUserProfile(user)
         profile.email_verified = False
         catalog.index_doc(1, user)
 
         # Explicitly False, invalid
-        is_valid_email = catalog['topics']['valid_email']
-        assert_that(list(is_valid_email.ids()),
-                    has_length(0))
+        invalid_emails = catalog['topics']['invalid_email']
+        assert_that(list(invalid_emails.ids()),
+                    has_length(1))
 
         profile = IUserProfile(user)
         profile.email_verified = True
         catalog.index_doc(1, user)
 
         # Explicitly True, valid
-        is_valid_email = catalog['topics']['valid_email']
-        assert_that(list(is_valid_email.ids()),
-                    has_length(1))
+        invalid_emails = catalog['topics']['invalid_email']
+        assert_that(list(invalid_emails.ids()),
+                    has_length(0))
