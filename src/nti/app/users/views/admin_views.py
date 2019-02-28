@@ -54,6 +54,7 @@ from nti.app.users import VIEW_GRANT_USER_ACCESS
 from nti.app.users import VIEW_RESTRICT_USER_ACCESS
 
 from nti.app.users.utils import get_site_community
+from nti.app.users.utils import get_members_by_site
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import get_site_community_name
 from nti.app.users.utils import generate_mail_verification_pair
@@ -80,6 +81,7 @@ from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
+from nti.dataserver.interfaces import ISiteAdminManagerUtility
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
@@ -370,6 +372,68 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
         self.set_site(user, site)
         self.update_site_community(user, values)
         return hexc.HTTPNoContent()
+
+
+@view_config(name='MoveAllUsersToParentSite')
+@view_defaults(route_name='objects.generic.traversal',
+               request_method='POST',
+               context=IDataserverFolder,
+               renderer='rest',
+               permission=nauth.ACT_NTI_ADMIN)
+class MoveAllUsersToParentSiteView(SetUserCreationSiteView):
+    """
+    Iterate over child sites, moving all users to the parent site,
+    including into the parent site community.
+    """
+
+    def update_site_community(self, user, site_community, remove_other_communities=False):
+        # remove from all other site communities
+        if remove_other_communities:
+            for membership in set(user.dynamic_memberships):
+                if ISiteCommunity.providedBy(membership) and membership is not site_community:
+                    logger.info('Removing user %s from community %s', user, membership)
+                    user.record_no_longer_dynamic_member(membership)
+                    user.stop_following(membership)
+
+        # Update the user to the current site community if they are not in it
+        if user not in site_community:
+            logger.info('Adding user %s to community %s' % (user, site_community))
+            user.record_dynamic_membership(site_community)
+            user.follow(site_community)
+
+    def __call__(self):
+        result = LocatedExternalDict()
+        result[ITEMS] = items = {}
+        values = self.readInput()
+        site = self.get_site(values)
+        remove_other_communities = values.get('remove_all_others') or values.get('remove_other_communities')
+        remove_other_communities = is_true(remove_other_communities)
+        community = get_site_community()
+        if not ICommunity.providedBy(community):
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Unable to locate site community')
+                             },
+                             None)
+        # Even hidden members
+        site_admin_utility = component.getUtility(ISiteAdminManagerUtility)
+        child_sites = site_admin_utility.get_descendant_site_names()
+        total_moved = 0
+        for child_site in child_sites:
+            child_site_count = 0
+            for user in get_members_by_site(child_site, all_members=True):
+                logger.info('Moved user from %s to %s (%s)',
+                            child_site, site.__name__, user.username)
+                self.set_site(user, site)
+                self.update_site_community(user, community, remove_other_communities=remove_other_communities)
+                child_site_count += 1
+            total_moved += child_site_count
+            items[child_site] = child_site_count
+            logger.info('Moved %s users from %s to %s',
+                        child_site_count, child_site, site.__name__)
+        result[TOTAL] = total_moved
+        return result
 
 
 @view_config(name='SetUserCreationSite')
