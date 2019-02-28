@@ -17,7 +17,7 @@ from zope import interface
 
 from zope.component.hooks import site as current_site
 
-from nti.coremetadata.interfaces import IX_VALID_EMAIL
+from nti.coremetadata.interfaces import IX_INVALID_EMAIL
 from nti.coremetadata.interfaces import IUser
 
 from zope.intid.interfaces import IIntIds
@@ -25,7 +25,7 @@ from zope.intid.interfaces import IIntIds
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
 
-from nti.dataserver.users.index import EmailValidExtentFilteredSet
+from nti.dataserver.users.index import EmailInvalidExtentFilteredSet
 from nti.dataserver.users.index import IX_TOPICS
 from nti.dataserver.users.index import install_entity_catalog
 
@@ -63,10 +63,10 @@ def do_evolve(context, generation=generation):
         catalog = install_entity_catalog(ds_folder, intids)
         topics = catalog[IX_TOPICS]
         try:
-            topics[IX_VALID_EMAIL]
+            topics[IX_INVALID_EMAIL]
         except KeyError:
-            the_filter = EmailValidExtentFilteredSet(IX_VALID_EMAIL,
-                                                     family=intids.family)
+            the_filter = EmailInvalidExtentFilteredSet(IX_INVALID_EMAIL,
+                                                       family=intids.family)
             topics.addFilter(the_filter)
 
             _users = ds_folder['users']
@@ -83,6 +83,6 @@ def do_evolve(context, generation=generation):
 
 def evolve(context):
     """
-    Evolve to generation 103 by adding "valid email" filter set index
+    Evolve to generation 103 by adding "invalid email" filter set index
     """
     do_evolve(context, generation)
