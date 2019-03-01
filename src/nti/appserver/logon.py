@@ -139,6 +139,8 @@ from nti.links.links import Link
 
 from nti.mimetype import mimetype
 
+from nti.securitypolicy.utils import is_impersonating
+
 CLASS = StandardExternalFields.CLASS
 MIMETYPE = StandardExternalFields.MIMETYPE
 LINKS = StandardExternalFields.LINKS
@@ -241,6 +243,11 @@ def _links_for_authenticated_users(request):
 
         for _, prov_links in unique_link_providers(remote_user, request, True):
             links.extend(prov_links)
+
+    # For impersonating, do not show welcome page and TOS page.
+    if links and is_impersonating(request):
+        links = [x for x in links if x.rel not in (REL_INITIAL_WELCOME_PAGE,
+                                                   REL_INITIAL_TOS_PAGE)]
 
     links = tuple(links) if links else ()
     return links
