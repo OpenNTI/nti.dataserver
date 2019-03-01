@@ -343,6 +343,8 @@ class TestAdminViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_user_update(self):
+        # Default environ with alpha
+        self.testapp.extra_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
         global_workspace = self._get_workspace(u'Global')
         catalog_workspace = self._get_workspace(u'Catalog')
         username = u'ed_brubaker'
@@ -427,6 +429,7 @@ class TestAdminViews(ApplicationLayerTest):
             user = User.get_user(created_username)
             user.password = 'temp001'
         user2_environ = self._make_extra_environ(user=created_username)
+        user2_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
 
         res = self.testapp.get('/dataserver2/users/%s' % created_username,
                                extra_environ=user2_environ)
@@ -505,8 +508,8 @@ class TestAdminViews(ApplicationLayerTest):
         alpha.registerAdapter(FakeUserProfileFactory,
                               provided=IFakeUserProfile,
                               required=(IUser,))
-        environ = self._make_extra_environ()
-        environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
+        alpha_environ = self._make_extra_environ()
+        alpha_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
         new_first = u'Alpha'
         new_last = u'User'
         new_email = u'alpha@gmail.com'
@@ -519,12 +522,13 @@ class TestAdminViews(ApplicationLayerTest):
                                u'external_id': new_external_id,
                                u'email': new_email,
                                u'test_field': u'This is a test field.'},
-                               extra_environ=environ)
+                               extra_environ=alpha_environ)
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             user = get_user_for_external_id(new_external_type, new_external_id)
             profile = ICompleteUserProfile(user)
             assert_that(profile, validly_provides(IFakeUserProfile))
 
+        # Profile in mathcounts env is unaffected
         new_first = u'Default'
         new_last = u'User'
         new_email = u'default@gmail.com'
@@ -536,7 +540,8 @@ class TestAdminViews(ApplicationLayerTest):
                                u'external_type': new_external_type,
                                u'external_id': new_external_id,
                                u'email': new_email,
-                               u'test_field': u'This is a test field.'})
+                               u'test_field': u'This is a test field.'},
+                               extra_environ=environ)
 
         with mock_dataserver.mock_db_trans(self.ds):
             user = get_user_for_external_id(new_external_type, new_external_id)
