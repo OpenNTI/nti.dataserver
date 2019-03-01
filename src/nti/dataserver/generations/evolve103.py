@@ -6,28 +6,26 @@
 
 from __future__ import print_function, absolute_import, division
 
-import importlib
-
-from zope.annotation import IAnnotations
-
-from nti.dataserver.users.interfaces import IUserProfile
-from nti.externalization import update_from_external_object, to_external_object
-
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 generation = 103
 
+import importlib
+
 from zope import component
 from zope import interface
 
+from zope.annotation import IAnnotations
+
 from zope.component.hooks import site as current_site
+
+from zope.intid.interfaces import IIntIds
 
 from nti.coremetadata.interfaces import IX_INVALID_EMAIL
 from nti.coremetadata.interfaces import IUser
 
-from zope.intid.interfaces import IIntIds
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
@@ -35,6 +33,11 @@ from nti.dataserver.interfaces import IOIDResolver
 from nti.dataserver.users.index import EmailInvalidExtentFilteredSet
 from nti.dataserver.users.index import IX_TOPICS
 from nti.dataserver.users.index import install_entity_catalog
+
+from nti.dataserver.users.interfaces import IUserProfile
+
+from nti.externalization import to_external_object
+from nti.externalization import update_from_external_object
 
 
 @interface.implementer(IDataserver)
