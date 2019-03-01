@@ -6,6 +6,13 @@
 
 from __future__ import print_function, absolute_import, division
 
+import importlib
+
+from zope.annotation import IAnnotations
+
+from nti.dataserver.users.interfaces import IUserProfile
+from nti.externalization import update_from_external_object, to_external_object
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -60,6 +67,7 @@ def do_evolve(context, generation=generation):
         lsm = ds_folder.getSiteManager()
         intids = lsm.getUtility(IIntIds)
 
+        # Add the invalid email filter
         catalog = install_entity_catalog(ds_folder, intids)
         topics = catalog[IX_TOPICS]
         try:
@@ -69,13 +77,49 @@ def do_evolve(context, generation=generation):
                                                        family=intids.family)
             topics.addFilter(the_filter)
 
-            _users = ds_folder['users']
-            for entity in _users.values():
-                if IUser.providedBy(entity):
-                    doc_id = intids.queryId(entity)
-                    if doc_id is not None:
-                        catalog.index_doc(doc_id, entity)
-                        count += 1
+        # Migrate email verified to None unless email is also None, then leave as False
+        # Migrate user profiles to new email_verified
+        _users = ds_folder['users']
+        for entity in _users.values():
+            if IUser.providedBy(entity):
+                # Migrate to the updated profile
+                profile = IUserProfile(entity)
+                annotations = IAnnotations(entity)
+                # We need to make sure we use the right key in the migration.
+                # In most cases this is the __name__ of the profile,
+                # but there are a few inconsistencies so we take the
+                # performance hit here to make sure we get it right
+                annotation_key = None
+                for (key, factory) in annotations.items():
+                    if factory is profile:
+                        annotation_key = key
+                        break
+                if annotation_key is None:
+                    # Blow up? Guess a key? If we can't resolve the profile we
+                    # probably need to not do this migration
+                    raise KeyError(u'Unable to locate a profile annotation key for %s' % entity)
+                ext_profile = to_external_object(profile)
+                # Make sure we are replicating custom profiles
+                profile_class = profile.__class__
+                module = profile_class.__module__
+                class_name = profile_class.__name__
+                new_module = importlib.import_module(module)
+                new_profile = getattr(new_module, class_name)
+                new_profile = new_profile()
+                new_profile.__parent__ = entity
+                update_from_external_object(new_profile, ext_profile)
+                conn.add(new_profile)
+                annotations[annotation_key] = new_profile
+
+                # Migrate email_verified
+                email = new_profile.email
+                email_verified = new_profile.email_verified
+                if email is not None and email_verified is False:
+                    new_profile.email_verified = None
+
+                # Invalid emails should get indexed when email_verified is set in
+                # update_from_external_object
+                count += 1
 
     component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
     logger.info('Evolution %s done. %s object(s) indexed', generation, count)
@@ -83,6 +127,10 @@ def do_evolve(context, generation=generation):
 
 def evolve(context):
     """
-    Evolve to generation 103 by adding "invalid email" filter set index
+    Evolve to generation 103.
+    - Add invalid email index
+    - Migrate email_verified profile attribute to FieldProperty
+    - Migrate email_verified to be None unless email is None, then leave as False
+            (this was the previous invalid email state)
     """
     do_evolve(context, generation)
