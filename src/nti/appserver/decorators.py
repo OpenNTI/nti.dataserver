@@ -28,6 +28,9 @@ from nti.appserver.interfaces import IModeratorDealtWithFlag
 
 from nti.appserver.link_providers import provide_links
 
+from nti.appserver.logon import REL_INITIAL_WELCOME_PAGE
+from nti.appserver.logon import REL_INITIAL_TOS_PAGE
+
 from nti.common.nameparser import constants as np_constants
 
 from nti.dataserver.interfaces import IUser
@@ -40,6 +43,8 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import Singleton
+
+from nti.securitypolicy.utils import is_impersonating
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -109,6 +114,11 @@ class _AuthenticatedUserLinkAdder(Singleton):
     to the client.
     """
 
+    def _filtered_links(self, links, request):
+        if links and is_impersonating(request):
+            return [x for x in links if x.rel not in (REL_INITIAL_WELCOME_PAGE, REL_INITIAL_TOS_PAGE)]
+        return links
+
     def decorateExternalMapping(self, original, external):
         request = get_current_request()
         if not request:
@@ -120,6 +130,7 @@ class _AuthenticatedUserLinkAdder(Singleton):
 
         links = list(external.get(StandardExternalFields.LINKS, ()))
         links.extend(provide_links(original, request))
+        links = self._filtered_links(links, request)
 
         external[StandardExternalFields.LINKS] = links
 
