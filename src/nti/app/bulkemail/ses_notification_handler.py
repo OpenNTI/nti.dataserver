@@ -111,7 +111,6 @@ def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 			if match_type == 'email':
 				# Clear it if we can; some types of profiles don't allow that
 				try:
-					from IPython.terminal.debugger import set_trace;set_trace()
 					profile = IUserProfile(user)
 					profile.email_verified = False
 				except Invalid:
