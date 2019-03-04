@@ -218,7 +218,9 @@ def make_password_recovery_email_hash(email):
 @interface.implementer(IRestrictedUserProfile)
 class RestrictedUserProfile(UserProfile):
 
-    email_verified = False
+    # 2/28/19 email_verified used to be explicitly set here.
+    # This was removed so that a FieldProperty will be created
+    # via `_init` instead to allow for subscriber hooks
 
     # If anyone tries to set an email on us, we turn it into the recovery hash
     email = property(lambda self: None,

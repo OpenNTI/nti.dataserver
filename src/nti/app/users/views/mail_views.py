@@ -241,7 +241,7 @@ class RequestEmailVerificationView(AbstractAuthenticatedView,
         if email:
             if checkEmailAddress(email):
                 profile.email = email
-                profile.email_verified = False
+                profile.email_verified = None
                 reindex_email_verification(user)
             else:
                 raise_error(self.request,

@@ -26,6 +26,7 @@ from nti.dataserver.users.index import IX_MIMETYPE
 from nti.dataserver.users.index import IX_REALNAME
 from nti.dataserver.users.index import IX_USERNAME
 from nti.dataserver.users.index import IX_EMAIL_VERIFIED
+from nti.dataserver.users.index import IX_INVALID_EMAIL
 
 from nti.dataserver.users.index import get_entity_catalog
 
@@ -57,7 +58,7 @@ def update_entity_catalog(user, intids=None):
     return False
 
 
-def verified_email_ids(email):
+def _get_email_ids(email):
     email = email.lower()  # normalize
     catalog = get_entity_catalog()
 
@@ -66,6 +67,32 @@ def verified_email_ids(email):
     # pylint: disable=protected-access
     values = email_idx._fwd_index.get(email)
     intids_emails = catalog.family.IF.Set(values or ())
+    return intids_emails
+
+
+def _get_email_ids_for_emails(emails):
+    catalog = get_entity_catalog()
+    email_ids = catalog.family.IF.Set(())
+    for email in emails:
+        ids = _get_email_ids(email)
+        email_ids = catalog.family.IF.union(email_ids, ids)
+    return email_ids
+
+
+def _get_emails_for_email_ids(email_ids):
+    catalog = get_entity_catalog()
+    email_idx = catalog[IX_EMAIL]
+    email_dv = email_idx.documents_to_values
+    emails = set()
+    for email_id in email_ids:
+        email = email_dv.get(email_id)
+        emails.add(email)
+    return emails
+
+
+def verified_email_ids(email):
+    catalog = get_entity_catalog()
+    intids_emails = _get_email_ids(email)
     if not intids_emails:
         return catalog.family.IF.Set()
 
@@ -113,6 +140,83 @@ def force_email_verification(user, profile=None, catalog=None, intids=None):
 def is_email_verified(email):
     result = verified_email_ids(email)
     return bool(result)
+
+
+def _get_invalid_email_ids():
+    catalog = get_entity_catalog()
+    invalid_extent = catalog[IX_TOPICS][IX_INVALID_EMAIL].getExtent()
+    invalid_email_ids = catalog.family.IF.Set(invalid_extent)
+    return invalid_email_ids
+
+
+def _valid_email_ids_for_emails(emails):
+    catalog = get_entity_catalog()
+    email_ids = _get_email_ids_for_emails(emails)
+    invalid_email_ids = _get_invalid_email_ids()
+    return catalog.family.IF.difference(email_ids, invalid_email_ids)
+
+
+def _invalid_email_ids_for_emails(emails):
+    catalog = get_entity_catalog()
+    email_ids = _get_email_ids_for_emails(emails)
+    invalid_email_ids = _get_invalid_email_ids()
+    return catalog.family.IF.intersection(email_ids, invalid_email_ids)
+
+
+def valid_emails_for_emails(emails):
+    """
+    Given an iterable of emails, return the subset that are valid
+    :return: Set of valid emails
+    """
+    valid_email_ids = _valid_email_ids_for_emails(emails)
+    return set(_get_emails_for_email_ids(valid_email_ids))
+
+
+def invalid_emails_for_emails(emails):
+    """
+    Given an iterable of emails, return the subset that are invalid
+    :return: Set of invalid emails
+    """
+    invalid_email_ids = _invalid_email_ids_for_emails(emails)
+    return set(_get_emails_for_email_ids(invalid_email_ids))
+
+
+def is_email_valid(email):
+    """
+    Is the provided email valid for communication?
+    :return: bool
+    """
+    return bool(valid_emails_for_emails([email]))
+
+
+def is_email_invalid(email):
+    """
+    Is the provided email invalid for communication?
+    :return: bool
+    """
+    return not is_email_valid(email)
+
+
+def reindex_email_invalidation(user, catalog=None, intids=None):
+    catalog = catalog if catalog is not None else get_entity_catalog()
+    intids = component.getUtility(IIntIds) if intids is None else intids
+    uid = intids.queryId(user)
+    if uid is not None:
+        invalid_idx = catalog[IX_TOPICS][IX_INVALID_EMAIL]
+        invalid_idx.index_doc(uid, user)
+        return True
+    return False
+
+
+def unindex_email_invalidation(user, catalog=None, intids=None):
+    catalog = catalog if catalog is not None else get_entity_catalog()
+    intids = component.getUtility(IIntIds) if intids is None else intids
+    uid = intids.queryId(user)
+    if uid is not None:
+        invalid_idx = catalog[IX_TOPICS][IX_INVALID_EMAIL]
+        invalid_idx.unindex_doc(uid)
+        return True
+    return False
 
 
 def get_users_by_email(email):

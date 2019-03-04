@@ -64,7 +64,7 @@ def _user_modified_from_external_event(user, event):
     email = (event.ext_value or {}).get('email')
     if profile is not None and email and profile.email != email:
         # change state of email verification
-        profile.email_verified = False
+        profile.email_verified = None
         reindex_email_verification(user)
         set_email_verification_time(user, 0)
         # send email

@@ -15,6 +15,8 @@ from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.index import create_entity_catalog
 
+from nti.dataserver.users.interfaces import IUserProfile
+
 from nti.dataserver.users.users import User
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
@@ -32,9 +34,8 @@ class TestEntityIndex(DataserverLayerTest):
         community = Community(username=u'bleach')
         return user, community
 
-    #@WithMockDSTrans
     def test_index(self):
-        user, community =  self._fixture()
+        user, community = self._fixture()
         catalog = create_entity_catalog()
         catalog.index_doc(1, user)
         catalog.index_doc(2, community)
@@ -51,3 +52,26 @@ class TestEntityIndex(DataserverLayerTest):
         is_community_idx = catalog['topics']['is_community']
         assert_that(list(is_community_idx.ids()),
                     has_length(1))
+
+        # Default is None, which is valid
+        invalid_emails = catalog['topics']['invalid_email']
+        assert_that(list(invalid_emails.ids()),
+                    has_length(0))
+
+        profile = IUserProfile(user)
+        profile.email_verified = False
+        catalog.index_doc(1, user)
+
+        # Explicitly False, invalid
+        invalid_emails = catalog['topics']['invalid_email']
+        assert_that(list(invalid_emails.ids()),
+                    has_length(1))
+
+        profile = IUserProfile(user)
+        profile.email_verified = True
+        catalog.index_doc(1, user)
+
+        # Explicitly True, valid
+        invalid_emails = catalog['topics']['invalid_email']
+        assert_that(list(invalid_emails.ids()),
+                    has_length(0))

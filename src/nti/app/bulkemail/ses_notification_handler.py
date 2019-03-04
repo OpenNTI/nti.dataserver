@@ -111,8 +111,8 @@ def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 			if match_type == 'email':
 				# Clear it if we can; some types of profiles don't allow that
 				try:
-		
-					IUserProfile( user ).email = None
+					profile = IUserProfile(user)
+					profile.email_verified = False
 				except Invalid:
 					# TODO: Should we do something about zope.schema.interfaces.RequiredMissing, in
 					# particular? That means the profile doesn't allow None. But if we can't reset
