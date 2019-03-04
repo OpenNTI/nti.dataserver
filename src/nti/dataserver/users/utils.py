@@ -164,20 +164,36 @@ def _invalid_email_ids_for_emails(emails):
 
 
 def valid_emails_for_emails(emails):
+    """
+    Given an iterable of emails, return the subset that are valid
+    :return: Set of valid emails
+    """
     valid_email_ids = _valid_email_ids_for_emails(emails)
-    return _get_emails_for_email_ids(valid_email_ids)
+    return set(_get_emails_for_email_ids(valid_email_ids))
 
 
 def invalid_emails_for_emails(emails):
+    """
+    Given an iterable of emails, return the subset that are invalid
+    :return: Set of invalid emails
+    """
     invalid_email_ids = _invalid_email_ids_for_emails(emails)
-    return _get_emails_for_email_ids(invalid_email_ids)
+    return set(_get_emails_for_email_ids(invalid_email_ids))
 
 
 def is_email_valid(email):
+    """
+    Is the provided email valid for communication?
+    :return: bool
+    """
     return bool(valid_emails_for_emails([email]))
 
 
 def is_email_invalid(email):
+    """
+    Is the provided email invalid for communication?
+    :return: bool
+    """
     return not is_email_valid(email)
 
 
