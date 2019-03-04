@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import copy
+
 import six
 
 from zope import component
@@ -149,18 +151,19 @@ def _get_invalid_email_ids():
     return invalid_email_ids
 
 
-def _valid_email_ids_for_emails(emails):
+def _sort_emails_for_emails(emails):
     catalog = get_entity_catalog()
-    email_ids = _get_email_ids_for_emails(emails)
     invalid_email_ids = _get_invalid_email_ids()
-    return catalog.family.IF.difference(email_ids, invalid_email_ids)
-
-
-def _invalid_email_ids_for_emails(emails):
-    catalog = get_entity_catalog()
-    email_ids = _get_email_ids_for_emails(emails)
-    invalid_email_ids = _get_invalid_email_ids()
-    return catalog.family.IF.intersection(email_ids, invalid_email_ids)
+    valid_emails = []
+    invalid_emails = []
+    for email in emails:
+        email_ids = _get_email_ids(email)
+        invalid = bool(catalog.family.IF.intersection(invalid_email_ids, email_ids)) or not bool(email_ids)
+        if not invalid:
+            valid_emails.append(email)
+        else:
+            invalid_emails.append(email)
+    return valid_emails, invalid_emails
 
 
 def valid_emails_for_emails(emails):
@@ -168,17 +171,14 @@ def valid_emails_for_emails(emails):
     Given an iterable of emails, return the subset that are valid
     :return: Set of valid emails
     """
-    valid_email_ids = _valid_email_ids_for_emails(emails)
-    return set(_get_emails_for_email_ids(valid_email_ids))
-
+    return _sort_emails_for_emails(emails)[0]
 
 def invalid_emails_for_emails(emails):
     """
     Given an iterable of emails, return the subset that are invalid
     :return: Set of invalid emails
     """
-    invalid_email_ids = _invalid_email_ids_for_emails(emails)
-    return set(_get_emails_for_email_ids(invalid_email_ids))
+    return _sort_emails_for_emails(emails)[1]
 
 
 def is_email_valid(email):
@@ -195,6 +195,53 @@ def is_email_invalid(email):
     :return: bool
     """
     return not is_email_valid(email)
+
+
+def valid_emails_for_users(users):
+    """
+    Returns a 1-1 matching list of emails that are valid from a given iterable of users
+    This is more exact than valid_emails_for_emails as it directly checks for the user
+    in the invalid index, rather than a match of the user's email
+    :return: list of valid emails for an iterable of users
+    """
+    intids = component.getUtility(IIntIds)
+    catalog = get_entity_catalog()
+    uids = catalog.family.IF.Set([intids.queryId(user) for user in users])
+    invalid_email_extent = catalog[IX_TOPICS][IX_INVALID_EMAIL].getExtent()
+    invalid_email_ids = catalog.family.IF.Set(invalid_email_extent)
+    valid_email_uids = catalog.family.IF.difference(uids, invalid_email_ids)
+    uids_to_emails = catalog[IX_EMAIL].documents_to_values
+    return [uids_to_emails.get(uid) for uid in valid_email_uids]
+
+
+def invalid_emails_for_users(users):
+    """
+    :return: List of invalid emails for an iterable of users
+    """
+    intids = component.getUtility(IIntIds)
+    catalog = get_entity_catalog()
+    uids = catalog.family.IF.Set([intids.queryId(user) for user in users])
+    invalid_email_extent = catalog[IX_TOPICS][IX_INVALID_EMAIL].getExtent()
+    invalid_email_ids = catalog.family.IF.Set(invalid_email_extent)
+    valid_email_uids = catalog.family.IF.intersection(uids, invalid_email_ids)
+    uids_to_emails = catalog[IX_EMAIL].documents_to_values
+    return [uids_to_emails.get(uid) for uid in valid_email_uids]
+
+
+def is_user_email_valid(user):
+    """
+    Is this user's email valid?
+    :return: bool
+    """
+    return bool(valid_emails_for_users([user]))
+
+
+def is_user_email_invalid(user):
+    """
+    Is this user's email invalid?
+    :return: bool
+    """
+    return not bool(is_user_email_valid(user))
 
 
 def reindex_email_invalidation(user, catalog=None, intids=None):
