@@ -12,12 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 103
 
-import importlib
-
 from zope import component
 from zope import interface
-
-from zope.annotation import IAnnotations
 
 from zope.component.hooks import site as current_site
 
@@ -35,9 +31,6 @@ from nti.dataserver.users.index import IX_TOPICS
 from nti.dataserver.users.index import install_entity_catalog
 
 from nti.dataserver.users.interfaces import IUserProfile
-
-from nti.externalization import to_external_object
-from nti.externalization import update_from_external_object
 
 
 @interface.implementer(IDataserver)
@@ -80,48 +73,21 @@ def do_evolve(context, generation=generation):
                                                        family=intids.family)
             topics.addFilter(the_filter)
 
+        invalid_emails = topics[IX_INVALID_EMAIL]
         # Migrate email verified to None unless email is also None, then leave as False
-        # Migrate user profiles to new email_verified
         _users = ds_folder['users']
         for entity in _users.values():
             if IUser.providedBy(entity):
-                # Migrate to the updated profile
-                profile = IUserProfile(entity)
-                annotations = IAnnotations(entity)
-                # We need to make sure we use the right key in the migration.
-                # In most cases this is the __name__ of the profile,
-                # but there are a few inconsistencies so we take the
-                # performance hit here to make sure we get it right
-                annotation_key = None
-                for (key, factory) in annotations.items():
-                    if factory is profile:
-                        annotation_key = key
-                        break
-                if annotation_key is None:
-                    # Blow up? Guess a key? If we can't resolve the profile we
-                    # probably need to not do this migration
-                    raise KeyError(u'Unable to locate a profile annotation key for %s' % entity)
-                ext_profile = to_external_object(profile)
-                # Make sure we are replicating custom profiles
-                profile_class = profile.__class__
-                module = profile_class.__module__
-                class_name = profile_class.__name__
-                new_module = importlib.import_module(module)
-                new_profile = getattr(new_module, class_name)
-                new_profile = new_profile()
-                new_profile.__parent__ = entity
-                update_from_external_object(new_profile, ext_profile)
-                conn.add(new_profile)
-                annotations[annotation_key] = new_profile
-
                 # Migrate email_verified
-                email = new_profile.email
-                email_verified = new_profile.email_verified
+                profile = IUserProfile(entity)
+                email = profile.email
+                email_verified = profile.email_verified
                 if email is not None and email_verified is False:
-                    new_profile.email_verified = None
+                    profile.email_verified = None
 
-                # Invalid emails should get indexed when email_verified is set in
-                # update_from_external_object
+                # Index in the invalid email extent
+                uid = intids.queryId(entity)
+                invalid_emails.index_doc(uid, entity)
                 count += 1
 
     component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
@@ -132,7 +98,6 @@ def evolve(context):
     """
     Evolve to generation 103.
     - Add invalid email index
-    - Migrate email_verified profile attribute to FieldProperty
     - Migrate email_verified to be None unless email is None, then leave as False
             (this was the previous invalid email state)
     """

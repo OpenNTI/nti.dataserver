@@ -182,25 +182,23 @@ def is_email_invalid(email):
 
 
 def reindex_email_invalidation(user, catalog=None, intids=None):
-    catalog = catalog if catalog is not None else get_catalog()
+    catalog = catalog if catalog is not None else get_entity_catalog()
     intids = component.getUtility(IIntIds) if intids is None else intids
     uid = intids.queryId(user)
     if uid is not None:
-        catalog = get_entity_catalog()
-        verified_idx = catalog[IX_TOPICS][IX_INVALID_EMAIL]
-        verified_idx.index_doc(uid, user)
+        invalid_idx = catalog[IX_TOPICS][IX_INVALID_EMAIL]
+        invalid_idx.index_doc(uid, user)
         return True
     return False
 
 
 def unindex_email_invalidation(user, catalog=None, intids=None):
-    catalog = catalog if catalog is not None else get_catalog()
+    catalog = catalog if catalog is not None else get_entity_catalog()
     intids = component.getUtility(IIntIds) if intids is None else intids
     uid = intids.queryId(user)
     if uid is not None:
-        catalog = get_entity_catalog()
-        verified_idx = catalog[IX_TOPICS][IX_INVALID_EMAIL]
-        verified_idx.unindex_doc(uid)
+        invalid_idx = catalog[IX_TOPICS][IX_INVALID_EMAIL]
+        invalid_idx.unindex_doc(uid)
         return True
     return False
 
