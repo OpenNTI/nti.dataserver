@@ -83,6 +83,10 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.interfaces import ISiteAdminManagerUtility
 
+from nti.dataserver.users import Community
+
+from nti.dataserver.users.common import entity_creation_sitename
+
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 
@@ -943,3 +947,78 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
         else:
             self._reset_users()
         return self.community
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=IDataserverFolder,
+             request_method='POST',
+             permission=nauth.ACT_NTI_ADMIN,
+             renderer='rest',
+             name='UpdateUserCreationSiteByCommunity')
+class UpdateUserCreationSiteByCommunityView(SetUserCreationSiteView):
+
+    def get_community(self, values):
+        community_name = values.get('community')
+        community = Community.get_community(community_name)
+        # require a community that can be resolved to a site
+        if not ISiteCommunity.providedBy(community) or entity_creation_sitename(community) is None:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Provided community does not have an origin site.')
+                             },
+                             None)
+        return community
+
+    def update_users_by_community(self, community, force):
+        creation_sitename = entity_creation_sitename(community)
+        if not is_true(force):
+            site_utility = component.getUtility(ISiteAdminManagerUtility)
+            children_sites = site_utility.get_descendant_sites()
+            for child_site in children_sites:
+                with current_site(child_site):
+                    child_community = get_site_community()
+                    if child_community is community:
+                        raise_json_error(self.request,
+                                         hexc.HTTPUnprocessableEntity,
+                                         {
+                                             'message': _(u'Community %s is shared in child site %s.'
+                                                          u'The force param is required for this change.'
+                                                          % (community,
+                                                             child_site))
+                                         },
+                                         None)
+
+        for member in community.iter_members():
+            if not IUser.providedBy(member):
+                continue
+            self.set_site(member, creation_sitename)
+
+    def __call__(self):
+        values = self.readInput()
+        force = values.get('force')
+        community = self.get_community(values)
+        self.update_users_by_community(community, force)
+        return hexc.HTTPNoContent()
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=IDataserverFolder,
+             request_method='POST',
+             permission=nauth.ACT_NTI_ADMIN,
+             renderer='rest',
+             name='UpdateAllUserCreationSitesBySiteCommunity')
+class UpdateAllUserCreationSitesBySiteCommunityView(UpdateUserCreationSiteByCommunityView):
+
+    def __call__(self):
+        values = self.readInput()
+        force = values.get('force')
+        missing = []
+        for site in get_all_host_sites():
+            with current_site(site):
+                community = get_site_community()
+            if community is None:
+                missing.append(u'Site %s has no site community')
+                continue
+            self.update_users_by_community(community, force)
+        return hexc.HTTPOk('\n'.join(missing))
