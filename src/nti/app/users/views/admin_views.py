@@ -1018,7 +1018,7 @@ class UpdateAllUserCreationSitesBySiteCommunityView(UpdateUserCreationSiteByComm
             with current_site(site):
                 community = get_site_community()
             if community is None:
-                missing.append(u'Site %s has no site community')
+                missing.append(u'Site %s has no site community' % site)
                 continue
             self.update_users_by_community(community, force)
         return hexc.HTTPOk('\n'.join(missing))
