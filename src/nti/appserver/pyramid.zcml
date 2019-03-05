@@ -69,6 +69,7 @@
 	<include package="nti.app.workspaces" file="pyramid.zcml" />
 	<include package="nti.app.contentfile" file="pyramid.zcml" />
 	<include package="nti.app.contentfolder" file="pyramid.zcml" />
+    <include package="nti.app.scheduler" file="pyramid.zcml" />
 
 	<!-- Util views -->
 	<include package=".utils.k20" file="pyramid.zcml" />

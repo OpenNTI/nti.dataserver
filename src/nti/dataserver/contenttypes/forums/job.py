@@ -50,7 +50,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-DEFAULT_EMAIL_DEFER_TIME = 60  # 1 minute
+DEFAULT_EMAIL_DEFER_TIME = 600  # 10 minute
 
 
 @interface.implementer(IScheduledJob)
@@ -101,6 +101,8 @@ class AbstractForumTypeScheduledEmailJob(AbstractJob):
 
 @component.adapter(IHeadlineTopic)
 class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
+
+    __name__ = 'TopicNotificationJob'
 
     def _post_to_html(self, post):
         html = u''
