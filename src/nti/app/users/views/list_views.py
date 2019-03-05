@@ -28,7 +28,7 @@ from nti.app.renderers.interfaces import IUncacheableInResponse
 
 from nti.app.users import MessageFactory as _
 
-from nti.app.users.utils import intids_of_community_or_site_members
+from nti.app.users.utils import intids_of_users_by_site
 
 from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 
@@ -77,7 +77,7 @@ class SiteUsersView(AbstractEntityViewMixin):
         return is_true(self.params.get('filterAdmins', 'False'))
 
     def get_entity_intids(self, site=None):
-        return intids_of_community_or_site_members(True, site)
+        return intids_of_users_by_site(site)
 
     def get_externalizer(self, user):
         # pylint: disable=no-member
