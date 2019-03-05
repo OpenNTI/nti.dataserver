@@ -20,6 +20,7 @@ from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.users import User
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 
 class TestEntityIndex(DataserverLayerTest):
@@ -34,6 +35,7 @@ class TestEntityIndex(DataserverLayerTest):
         community = Community(username=u'bleach')
         return user, community
 
+    @WithMockDSTrans
     def test_index(self):
         user, community = self._fixture()
         catalog = create_entity_catalog()
