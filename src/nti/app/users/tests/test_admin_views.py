@@ -181,8 +181,8 @@ class TestAdminViews(ApplicationLayerTest):
             user = User.create_user(username=username,
                                     external_value={u'email': email})
             assert_that(IUserProfile(user),
-                        has_property('email_verified', is_(False)))
-            assert_that(is_email_verified(username), is_(False))
+                        has_property('email_verified', is_(None)))
+            assert_that(is_email_verified(username), is_(None))
 
         self.testapp.post_json('/dataserver2/@@ForceUserEmailVerification',
                                {'username': username},

@@ -135,8 +135,8 @@ class TestMailViews(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.get_user(username)
             assert_that(IUserProfile(user),
-                        has_property('email_verified', is_(False)))
-            assert_that(is_email_verified(email), is_(False))
+                        has_property('email_verified', is_(None)))
+            assert_that(is_email_verified(email), is_(None))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_email_verification_link(self):
