@@ -55,7 +55,7 @@ class GunicornLogger(gunicorn_logger):
         #    into the message, just like in normal log messages.
         #  * Add a custom atom (C) to get the client identifer and version
         #  * Add a custom atom (R) to log connection pool info
-        #  * Add a custom atom (S) to include possible site names
+        #  * Add a custom atom (S) to include current site name
         atoms = super(GunicornLogger, self).atoms(resp, req, environ, request_time)
         atoms['u'] = environ.get('REMOTE_USER', '-')
         atoms['G'] = "[%d:%d]" % (id(getcurrent()), os.getpid())
