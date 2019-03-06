@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from collections import defaultdict
+
 from datetime import datetime
 
 import isodate
@@ -953,49 +955,44 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
              context=IDataserverFolder,
              permission=nauth.ACT_NTI_ADMIN,
              renderer='rest',
-             name='UpdateUserCreationSiteByCommunity')
-class UpdateUserCreationSiteByCommunityView(SetUserCreationSiteView):
+             name='SetUserCreationSiteInSite')
+class SetUserCreationSiteInSite(SetUserCreationSiteView):
 
-    def get_community(self, values):
+    def get_community_or_site_community(self, values, site):
         community_name = values.get('community')
         community = Community.get_community(community_name)
-        # require a community that can be resolved to a site
-        if not ISiteCommunity.providedBy(community) or entity_creation_sitename(community) is None:
+        if community is None:
+            with current_site(site):
+                community = get_site_community()
+        if community is None:
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                 'message': _(u'Provided community does not have an origin site.')
+                                 'message': _(u'No provided community and %s has no site community. Cannot set'
+                                              u' user creation site.' % site)
                              },
                              None)
         return community
 
-    def update_users_by_community(self, community, force):
-        creation_sitename = entity_creation_sitename(community)
-        if not is_true(force):
-            site_utility = component.getUtility(ISiteAdminManagerUtility)
-            children_sites = site_utility.get_descendant_sites()
-            for child_site in children_sites:
-                with current_site(child_site):
-                    child_community = get_site_community()
-                    if child_community is community:
-                        raise_json_error(self.request,
-                                         hexc.HTTPUnprocessableEntity,
-                                         {
-                                             'message': _(u'Community %s is shared in child site %s.'
-                                                          u'The force param is required for this change.'
-                                                          % (community,
-                                                             child_site))
-                                         },
-                                         None)
-
+    def update_users_by_community_and_site(self, community, site, force):
+        updated_users = defaultdict(list)
         for member in community.iter_members():
             if not IUser.providedBy(member):
                 continue
-            self.set_site(member, creation_sitename)
+            if not entity_creation_sitename(member) or force:
+                logger.info(u'Setting creation site for user %s in community %s to %s' % (member.username,
+                                                                                          community.username,
+                                                                                          site.__name__))
+                updated_users['UpdatedUsers'].append({member.username: site.__name__})
+                self.set_site(member, site)
+            else:
+                updated_users['SkippedUsers'].append(member.username)
+        return updated_users
 
     def __call__(self):
         values = self.readInput()
         force = values.get('force')
-        community = self.get_community(values)
-        self.update_users_by_community(community, force)
-        return hexc.HTTPNoContent()
+        site = self.get_site(values)
+        community = self.get_community_or_site_community(values, site)
+        updated_users = self.update_users_by_community_and_site(community, site, force)
+        return updated_users
