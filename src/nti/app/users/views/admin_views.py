@@ -951,7 +951,6 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
 
 @view_config(route_name='objects.generic.traversal',
              context=IDataserverFolder,
-             request_method='POST',
              permission=nauth.ACT_NTI_ADMIN,
              renderer='rest',
              name='UpdateUserCreationSiteByCommunity')
