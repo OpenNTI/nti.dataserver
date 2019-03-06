@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from collections import defaultdict
+
 from datetime import datetime
 
 import isodate
@@ -82,6 +84,10 @@ from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.interfaces import ISiteAdminManagerUtility
+
+from nti.dataserver.users import Community
+
+from nti.dataserver.users.common import entity_creation_sitename
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
@@ -943,3 +949,75 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
         else:
             self._reset_users()
         return self.community
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=IDataserverFolder,
+             permission=nauth.ACT_NTI_ADMIN,
+             request_method='POST',
+             renderer='rest',
+             name='SetUserCreationSiteInSite')
+class SetUserCreationSiteInSite(SetUserCreationSiteView):
+    """
+    Updates the creation site for users in the provided community to the provided or current site.
+    If a community name is not provided or does not exist this falls back to the provided or current site community.
+    If there is no community at that point this migration fails.
+    Users that already have a creation site set will not be updated unless the `force` flag is provided.
+    If a `commit=False` flag is provided this view will not commit the transaction
+
+    Note: This view does not account for child sites that share a community with a parent. I.e. if you
+    run this in parent site A with children B and C that all share a community, all users' creation site
+    will be set to site A. Similarly running in site B will set all users' to site B, etc.
+
+    Note: This view does not account for if the provided site community does not belong to the provided site.
+    E.g. Site A has site community A and site B has site community B. Site A and site community B are
+    provided to this view. The creation site for all users in site community B will be set to site A,
+    but these users will still be members of site community B and not members of site community A.
+    """
+
+    def get_community_or_site_community(self, values, site):
+        community_name = values.get('community')
+        community = Community.get_community(community_name)
+        if community is None:
+            with current_site(site):
+                community = get_site_community()
+        if community is None:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'No provided community and %s has no site community. Cannot set'
+                                              u' user creation site.' % site.__name__)
+                             },
+                             None)
+        return community
+
+    def update_users_by_community_and_site(self, community, site, force):
+        updated_users = defaultdict(list)
+        for member in community.iter_members():
+            if not IUser.providedBy(member):
+                continue
+            creation_site = entity_creation_sitename(member)
+            if not creation_site or force:
+                logger.info(u'Setting creation site for user %s in community %s to %s' % (member.username,
+                                                                                          community.username,
+                                                                                          site.__name__))
+                updated_users['UpdatedUsers'].append((member.username, site.__name__, creation_site))
+                self.set_site(member, site)
+            else:
+                updated_users['SkippedUsers'].append((member.username, creation_site))
+        return updated_users
+
+    def __call__(self):
+        values = self.readInput()
+        force = values.get('force')
+        site = self.get_site(values)
+        community = self.get_community_or_site_community(values, site)
+        updated_users = self.update_users_by_community_and_site(community, site, force)
+
+        commit = values.get('commit', True)
+        if not commit:
+            self.request.environ['nti.commit_veto'] = 'abort'
+
+        # Splat out the defaultdict so the response doesn't include "Class": "defaultdict"
+        result = LocatedExternalDict(**updated_users)
+        return result
