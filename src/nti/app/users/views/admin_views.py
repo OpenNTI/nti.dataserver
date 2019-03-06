@@ -1000,25 +1000,3 @@ class UpdateUserCreationSiteByCommunityView(SetUserCreationSiteView):
         community = self.get_community(values)
         self.update_users_by_community(community, force)
         return hexc.HTTPNoContent()
-
-
-@view_config(route_name='objects.generic.traversal',
-             context=IDataserverFolder,
-             request_method='POST',
-             permission=nauth.ACT_NTI_ADMIN,
-             renderer='rest',
-             name='UpdateAllUserCreationSitesBySiteCommunity')
-class UpdateAllUserCreationSitesBySiteCommunityView(UpdateUserCreationSiteByCommunityView):
-
-    def __call__(self):
-        values = self.readInput()
-        force = values.get('force')
-        missing = []
-        for site in get_all_host_sites():
-            with current_site(site):
-                community = get_site_community()
-            if community is None:
-                missing.append(u'Site %s has no site community' % site)
-                continue
-            self.update_users_by_community(community, force)
-        return hexc.HTTPOk('\n'.join(missing))
