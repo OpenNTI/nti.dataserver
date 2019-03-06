@@ -779,3 +779,59 @@ class TestAdminViews(ApplicationLayerTest):
 
         finally:
             gsm.unregisterUtility(TestPolicy, ISitePolicyUserEventListener)
+
+    @WithSharedApplicationMockDS(users=(u'nocreationsiteuser',
+                                        u'creationsiteuser'),
+                                 testapp=True,
+                                 default_authenticate=True)
+    def test_set_user_creation_site_in_site(self):
+        environ = self._make_extra_environ()
+        environ['HTTP_ORIGIN'] = 'https://alpha.nextthought.com'
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            cs_user = self._get_user('creationsiteuser')
+            set_user_creation_site(cs_user, 'beta.nextthought.com')
+            # If we created a user through a view rather than db trans this comm would get created
+            site_comm = Community.create_community(username='testing_community')
+            for username in ('nocreationsiteuser', 'creationsiteuser'):
+                user = self._get_user(username)
+                user.record_dynamic_membership(site_comm)
+
+        # Check no commit
+        res = self.testapp.post_json('/dataserver2/@@SetUserCreationSiteInSite',
+                                     {'commit': False},
+                                     status=200,
+                                     extra_environ=environ)
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            cs_user = self._get_user('creationsiteuser')
+            assert_that(get_user_creation_sitename(cs_user), is_('beta.nextthought.com'))
+
+            ncs_user = self._get_user('nocreationsiteuser')
+            assert_that(get_user_creation_sitename(ncs_user), is_(none()))
+
+        # Check commit
+        res = self.testapp.post_json('/dataserver2/@@SetUserCreationSiteInSite',
+                                     {},
+                                     status=200,
+                                     extra_environ=environ)
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            cs_user = self._get_user('creationsiteuser')
+            assert_that(get_user_creation_sitename(cs_user), is_('beta.nextthought.com'))
+
+            ncs_user = self._get_user('nocreationsiteuser')
+            assert_that(get_user_creation_sitename(ncs_user), is_('alpha.nextthought.com'))
+
+        # Check force
+        res = self.testapp.post_json('/dataserver2/@@SetUserCreationSiteInSite',
+                                     {'force': True},
+                                     status=200,
+                                     extra_environ=environ)
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            cs_user = self._get_user('creationsiteuser')
+            assert_that(get_user_creation_sitename(cs_user), is_('alpha.nextthought.com'))
+
+            ncs_user = self._get_user('nocreationsiteuser')
+            assert_that(get_user_creation_sitename(ncs_user), is_('alpha.nextthought.com'))

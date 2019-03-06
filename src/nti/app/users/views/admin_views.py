@@ -954,6 +954,7 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
 @view_config(route_name='objects.generic.traversal',
              context=IDataserverFolder,
              permission=nauth.ACT_NTI_ADMIN,
+             request_method='POST',
              renderer='rest',
              name='SetUserCreationSiteInSite')
 class SetUserCreationSiteInSite(SetUserCreationSiteView):
@@ -962,6 +963,7 @@ class SetUserCreationSiteInSite(SetUserCreationSiteView):
     If a community name is not provided or does not exist this falls back to the provided or current site community.
     If there is no community at that point this migration fails.
     Users that already have a creation site set will not be updated unless the `force` flag is provided.
+    If a `commit=False` flag is provided this view will not commit the transaction
 
     Note: This view does not account for child sites that share a community with a parent. I.e. if you
     run this in parent site A with children B and C that all share a community, all users' creation site
@@ -984,7 +986,7 @@ class SetUserCreationSiteInSite(SetUserCreationSiteView):
                              hexc.HTTPUnprocessableEntity,
                              {
                                  'message': _(u'No provided community and %s has no site community. Cannot set'
-                                              u' user creation site.' % site)
+                                              u' user creation site.' % site.__name__)
                              },
                              None)
         return community
@@ -994,14 +996,15 @@ class SetUserCreationSiteInSite(SetUserCreationSiteView):
         for member in community.iter_members():
             if not IUser.providedBy(member):
                 continue
-            if not entity_creation_sitename(member) or force:
+            creation_site = entity_creation_sitename(member)
+            if not creation_site or force:
                 logger.info(u'Setting creation site for user %s in community %s to %s' % (member.username,
                                                                                           community.username,
                                                                                           site.__name__))
-                updated_users['UpdatedUsers'].append({member.username: site.__name__})
+                updated_users['UpdatedUsers'].append((member.username, site.__name__, creation_site))
                 self.set_site(member, site)
             else:
-                updated_users['SkippedUsers'].append(member.username)
+                updated_users['SkippedUsers'].append((member.username, creation_site))
         return updated_users
 
     def __call__(self):
@@ -1010,4 +1013,11 @@ class SetUserCreationSiteInSite(SetUserCreationSiteView):
         site = self.get_site(values)
         community = self.get_community_or_site_community(values, site)
         updated_users = self.update_users_by_community_and_site(community, site, force)
-        return updated_users
+
+        commit = values.get('commit', True)
+        if not commit:
+            self.request.environ['nti.commit_veto'] = 'abort'
+
+        # Splat out the defaultdict so the response doesn't include "Class": "defaultdict"
+        result = LocatedExternalDict(**updated_users)
+        return result
