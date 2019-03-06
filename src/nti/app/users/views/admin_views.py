@@ -957,6 +957,21 @@ class ResetSiteCommunity(AbstractUpdateCommunityView):
              renderer='rest',
              name='SetUserCreationSiteInSite')
 class SetUserCreationSiteInSite(SetUserCreationSiteView):
+    """
+    Updates the creation site for users in the provided community to the provided or current site.
+    If a community name is not provided or does not exist this falls back to the provided or current site community.
+    If there is no community at that point this migration fails.
+    Users that already have a creation site set will not be updated unless the `force` flag is provided.
+
+    Note: This view does not account for child sites that share a community with a parent. I.e. if you
+    run this in parent site A with children B and C that all share a community, all users' creation site
+    will be set to site A. Similarly running in site B will set all users' to site B, etc.
+
+    Note: This view does not account for if the provided site community does not belong to the provided site.
+    E.g. Site A has site community A and site B has site community B. Site A and site community B are
+    provided to this view. The creation site for all users in site community B will be set to site A,
+    but these users will still be members of site community B and not members of site community A.
+    """
 
     def get_community_or_site_community(self, values, site):
         community_name = values.get('community')
