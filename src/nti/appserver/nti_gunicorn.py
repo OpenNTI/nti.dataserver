@@ -55,6 +55,7 @@ class GunicornLogger(gunicorn_logger):
         #    into the message, just like in normal log messages.
         #  * Add a custom atom (C) to get the client identifer and version
         #  * Add a custom atom (R) to log connection pool info
+        #  * Add a custom atom (S) to include current site name
         atoms = super(GunicornLogger, self).atoms(resp, req, environ, request_time)
         atoms['u'] = environ.get('REMOTE_USER', '-')
         atoms['G'] = "[%d:%d]" % (id(getcurrent()), os.getpid())
@@ -67,6 +68,8 @@ class GunicornLogger(gunicorn_logger):
         used_count = connection_pool.size - connection_pool.free_count()
         atoms['R'] = "(%s/%s)" % (used_count,
                                   connection_pool.size)
+
+        atoms['S'] = environ['nti.current_site']
         return atoms
 
 
@@ -292,7 +295,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
         # formatting field width to account for this)
         # (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
         self.cfg.settings['access_log_format'].set(
-            str(self.cfg.access_log_format) + b" \"%(C)s\" %(R)s %(G)s %(T)s.%(D)06ds")
+            str(self.cfg.access_log_format) + b" \"%(C)s\" \"%(S)s\" %(R)s %(G)s %(T)s.%(D)06ds")
 
         # Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
         # Then the default propagation settings mean we get two copies of access logging.

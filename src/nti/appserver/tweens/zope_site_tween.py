@@ -163,6 +163,7 @@ class site_tween(object):
         self._add_properties_to_request(request)
 
         site = _get_site_for_request(request, site)
+        request.environ['nti.current_site'] = site.__name__
 
         setSite(site)
         __traceback_info__ = self.handler
