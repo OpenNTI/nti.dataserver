@@ -58,8 +58,6 @@ class ScheduledJobInterfaceObjectIO(InterfaceObjectIO):
         result = super(ScheduledJobInterfaceObjectIO, self).toExternalObject(mergeFrom, **kwargs)
         ext_self = self._ext_replacement()
         result['callable'] = str(ext_self.callable)  # This could be a function so we keep it simple
-        from IPython.terminal.debugger import set_trace;set_trace()
-
         # Fix up timestamp to be more friendly
         result['execution_time'] = adjust_timestamp(ext_self.timestamp)
         return result
