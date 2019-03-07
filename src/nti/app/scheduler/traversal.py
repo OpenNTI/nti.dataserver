@@ -14,6 +14,8 @@ from zope.location.interfaces import LocationError
 from zope.traversing.interfaces import IPathAdapter
 from zope.traversing.interfaces import ITraversable
 
+from nti.app.scheduler import SCHEDULED_JOBS
+
 from nti.asynchronous.scheduled.utils import get_scheduled_queue
 
 __docformat__ = "restructuredtext en"
@@ -24,7 +26,7 @@ logger = __import__('logging').getLogger(__name__)
 @interface.implementer(IPathAdapter)
 def _ds_folder_to_scheduled_jobs(context, unused_request):
     queue = get_scheduled_queue()
-    return LocationProxy(queue, context, 'ScheduledJobs')
+    return LocationProxy(queue, context, SCHEDULED_JOBS)
 
 
 @interface.implementer(ITraversable)

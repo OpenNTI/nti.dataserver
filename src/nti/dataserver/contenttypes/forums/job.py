@@ -102,8 +102,6 @@ class AbstractForumTypeScheduledEmailJob(AbstractJob):
 @component.adapter(IHeadlineTopic)
 class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
 
-    __name__ = 'TopicNotificationJob'
-
     def _post_to_html(self, post):
         html = u''
         for part in post.body:
