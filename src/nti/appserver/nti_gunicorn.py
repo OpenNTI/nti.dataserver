@@ -68,8 +68,8 @@ class GunicornLogger(gunicorn_logger):
         used_count = connection_pool.size - connection_pool.free_count()
         atoms['R'] = "(%s/%s)" % (used_count,
                                   connection_pool.size)
-
-        atoms['S'] = environ['nti.current_site']
+        current_site = environ.get('nti.current_site', 'no defined site')
+        atoms['S'] = current_site
         return atoms
 
 
