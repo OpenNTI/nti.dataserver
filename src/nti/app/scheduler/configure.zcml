@@ -13,6 +13,7 @@
     <include package="nti.externalization" file="meta.zcml" />
     <include package="nti.externalization" />
 
+    <!-- Externalization -->
     <adapter factory=".externalization.BaseQueueInterfaceObjectIO"
              for="nti.asynchronous.interfaces.IBaseQueue" />
 
@@ -27,4 +28,5 @@
     <adapter factory=".traversal.TraversableQueue"
              provides="zope.traversing.interfaces.ITraversable"
              for="nti.asynchronous.interfaces.IBaseQueue pyramid.interfaces.IRequest" />
+
 </configure>
