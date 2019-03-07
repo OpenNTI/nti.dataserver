@@ -5,6 +5,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from datetime import datetime
+
 from nti.asynchronous.scheduled.job import create_scheduled_job
 
 from nti.asynchronous.scheduled.utils import add_scheduled_job
@@ -27,3 +29,10 @@ def create_and_queue_scheduled_job(obj):
                                jargs=job.job_args,
                                jkwargs=job.job_kwargs)
     return add_scheduled_job(job)
+
+
+def utc_now():
+    epoch = datetime.utcfromtimestamp(0)
+    now_datetime = datetime.utcnow()
+    time_delta = now_datetime - epoch
+    return time_delta.total_seconds()

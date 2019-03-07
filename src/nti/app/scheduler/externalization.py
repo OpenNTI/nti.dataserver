@@ -5,11 +5,15 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+import inspect
+
 from datetime import datetime
 
 from pyramid.threadlocal import get_current_request
 
 from zope import component
+
+from zope.dottedname import resolve as dottedname
 
 from nti.appserver.interfaces import IDisplayableTimeProvider
 
@@ -53,7 +57,7 @@ class ScheduledJobInterfaceObjectIO(InterfaceObjectIO):
     _ext_iface_upper_bound = IScheduledJob
     _excluded_out_ivars_ = frozenset(('callable',
                                       'timestamp'))
-    
+
     def toExternalObject(self, mergeFrom=None, **kwargs):
         result = super(ScheduledJobInterfaceObjectIO, self).toExternalObject(mergeFrom, **kwargs)
         ext_self = self._ext_replacement()
@@ -63,7 +67,14 @@ class ScheduledJobInterfaceObjectIO(InterfaceObjectIO):
         return result
 
     def updateFromExternalObject(self, parsed, *unused_args, **unused_kwargs):
-        # TODO
+        call = parsed.get('callable')
+        call = dottedname.resolve(call)
+        if inspect.isclass(call):
+            call = call()
+
+        # Fix up the naming
+        parsed.pop('callable')
+        parsed['_callable_root'] = call
         return super(ScheduledJobInterfaceObjectIO, self).updateFromExternalObject(parsed,
                                                                                    *unused_args,
                                                                                    **unused_kwargs)

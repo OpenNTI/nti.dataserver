@@ -5,6 +5,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+import inspect
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -34,10 +36,21 @@ logger = __import__('logging').getLogger(__name__)
              request_method='POST',
              permission=nauth.ACT_NTI_ADMIN,
              renderer='rest')
-class ScheduledQueuePostView(AbstractAuthenticatedView,
+class ScheduledQueuePOSTView(AbstractAuthenticatedView,
                              ModeledContentUploadRequestUtilsMixin):
 
+    def performReadCreateUpdateContentObject(self, user, search_owner=False, externalValue=None,
+                                             deepCopy=False, add_to_connection=True):
+        # Don't add to the connection
+        return super(ScheduledQueuePOSTView, self).performReadCreateUpdateContentObject(user,
+                                                                                        search_owner,
+                                                                                        externalValue,
+                                                                                        deepCopy,
+                                                                                        add_to_connection=False)
+
     def createContentObject(self, user, datatype, externalValue, creator):
+        # We have to override everything here because ScheduledJob has dependencies in its __init__
+        # that can't be updated as a modeled object
         clazz = externalValue.get(StandardExternalFields.CLASS)
         if clazz != ScheduledJob.__name__:
             raise hexc.HTTPUnprocessableEntity(u'Class type must be "ScheduledJob" (%s provided)' % clazz)
@@ -47,12 +60,15 @@ class ScheduledQueuePostView(AbstractAuthenticatedView,
         job_id = externalValue.get('job_id')
         call = externalValue.get('callable')
         call = dottedname.resolve(call)
+
+        if inspect.isclass(call):
+            # Currently don't support passing init vars
+            call = call()
         job = create_scheduled_job(call,
                                    execution_time,
                                    jargs=job_args,
                                    jkwargs=job_kwargs,
                                    jobid=job_id)
-        # TODO if externalValue.get('periodic'): interface.alsoProvides(job, IPeriodicJob) -- make it reschedule automatically
         return job
 
     def __call__(self, *args, **kwargs):
