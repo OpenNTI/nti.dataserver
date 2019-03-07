@@ -50,7 +50,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-DEFAULT_EMAIL_DEFER_TIME = 600  # 10 minute
+DEFAULT_EMAIL_DEFER_TIME = 60  # 1 minute
 
 
 @interface.implementer(IScheduledJob)
