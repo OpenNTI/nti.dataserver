@@ -154,6 +154,14 @@ def _format_date(d):
 
 
 def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
+    """
+    3/13/19 - This does not use `get_users_by_site` because all users do not currently
+    have a user creation site. Instead, we go down `can_administer_user` to include users
+    that do not have a creation site, but share a dynamic membership with the requesting admin.
+    This causes this util to return different information for a site admin and an NTI admin because
+    the site admin will share the site community, whereas the NTI admin will not. We are keeping
+    this as-is until all users have been migrated to a creation site to keep the behavior defined.
+    """
     intids = component.getUtility(IIntIds)
     ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
     userids = _get_index_userids(ent_catalog)
