@@ -25,7 +25,6 @@ def remove_entity_creation_site(entity):
     annotations = IAnnotations(entity, None) or {}
     old_site = annotations.pop(CREATION_SITE_KEY, None)
     logger.info(u'Removing entity %s from creation site %s' % (entity, old_site))
-
 remove_user_creation_site = remove_entity_creation_site
 
 
