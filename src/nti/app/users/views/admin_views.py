@@ -1010,6 +1010,7 @@ class SetUserCreationSiteInSite(SetUserCreationSiteView):
     def __call__(self):
         values = self.readInput()
         force = values.get('force')
+        force = is_true(force)
         site = self.get_site(values)
         community = self.get_community_or_site_community(values, site)
         updated_users = self.update_users_by_community_and_site(community, site, force)
