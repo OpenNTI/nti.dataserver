@@ -7,13 +7,13 @@ from __future__ import division
 
 from zope import interface
 
-from zope.component.hooks import getSite
-
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from zope.securitypolicy.principalrole import AnnotationPrincipalRoleManager
 
 from zope.securitypolicy.rolepermission import AnnotationRolePermissionManager
+
+from nti.app.users.utils import get_user_creation_site
 
 from nti.dataserver import authorization as nauth
 
@@ -21,7 +21,6 @@ from nti.dataserver.authorization import ROLE_COMMUNITY_ADMIN_NAME
 
 from nti.dataserver.interfaces import ICommunityPrincipalRoleManager
 from nti.dataserver.interfaces import ICommunityRolePermissionManager
-from nti.dataserver.interfaces import ISiteCommunity
 
 __docformat__ = "restructuredtext en"
 
@@ -42,15 +41,10 @@ class PersistentCommunityPrincipalRoleManager(AnnotationPrincipalRoleManager):
     def getRolesForPrincipal(self, principal_id):
         """
         Include site admin roles for Site Communities
-
-        2/21/19
-        Note that this allows child site admins to admin parent site communities
-        and vice versa. We currently do not have a way to determine the creation site
-        of a community, thus we are unable to only allow admins from that location.
         """
         roles = super(PersistentCommunityPrincipalRoleManager, self).getRolesForPrincipal(principal_id)
-        if ISiteCommunity.providedBy(self._context):
-            site = getSite()
+        site = get_user_creation_site(self._context)
+        if site is not None:
             site_prm = IPrincipalRoleManager(site)
             site_roles = site_prm.getRolesForPrincipal(principal_id)
             for role in site_roles:
