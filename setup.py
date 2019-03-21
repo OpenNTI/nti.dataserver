@@ -84,8 +84,7 @@ TESTS_REQUIRE = [
     'nti.nose_traceback_info',
     'nti.testing',
     'nti.app.testing',
-    'nti.fakestatsd',
-    'nti.identifiers'
+    'nti.fakestatsd'
 ]
 
 
@@ -144,6 +143,7 @@ setup(
         'nti.futures',
         'nti.geventwebsocket',
         'nti.i18n',
+	'nti.identifiers',
         'nti.intid',
         'nti.links',
         'nti.metadata',
