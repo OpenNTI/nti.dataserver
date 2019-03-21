@@ -664,13 +664,19 @@ def createApplication( http_port,
 	# Note: It's not clear how much benefit, if any, ropez.who.plugins.openid would bring
 	# us. I don't know if I want 401s to automatically result in redirections to HTML pages.
 	# OTOH, it would fit in with the existing place that we 'autocreate' users
+	# XXX: Safari 12 drops our session state cookie for some reason, even though we
+	# GET redirected back to our logon endpoint.
+	# See: https://bugs.webkit.org/show_bug.cgi?id=188165
+	# Once fixed, we can remove the samesite param.
 	from pyramid.session import SignedCookieSessionFactory
 	my_session_factory = SignedCookieSessionFactory(settings.get('session_cookie_secret',
 																 settings.get('cookie_secret',
-																			  '$Id$') ) + 'session',
-													secure=asbool(settings.get('secure_cookies', True)),
+																			  '$Id$')) + 'session',
+													secure=asbool(
+														settings.get('secure_cookies', True)),
 													httponly=True,
-													serializer=JSONSerializer())
+													serializer=JSONSerializer(),
+													samesite=None)
 	pyramid_config.set_session_factory( my_session_factory )
 
 	pyramid_config.set_authorization_policy( pyramid_authorization.ZopeACLAuthorizationPolicy() )
