@@ -732,6 +732,8 @@ class _Handshake(dict):
 
 
 def _create_failure_response(request, failure=None, error=None, error_factory=hexc.HTTPUnauthorized):
+    if error:
+        logger.info("Authentication error (%s)", error)
     return _forgetting(request, 'failure', error_factory,
                        redirect_value=failure, error=error)
 create_failure_response = _create_failure_response
