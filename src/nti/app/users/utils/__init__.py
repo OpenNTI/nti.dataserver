@@ -287,6 +287,15 @@ def get_user_creation_site(user):
     return get_host_site(name, True) if name else None
 
 
+def get_entity_creation_sitename(user):
+    return entity_creation_sitename(user)
+
+
+def get_entity_creation_site(user):
+    name = get_user_creation_sitename(user)
+    return get_host_site(name, True) if name else None
+
+
 def remove_user_creation_site(user):
     user = get_user(user)
     remove_creation_site(user)

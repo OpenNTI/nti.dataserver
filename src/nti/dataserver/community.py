@@ -13,7 +13,7 @@ from zope.securitypolicy.principalrole import AnnotationPrincipalRoleManager
 
 from zope.securitypolicy.rolepermission import AnnotationRolePermissionManager
 
-from nti.app.users.utils import get_user_creation_site
+from nti.app.users.utils import get_entity_creation_site
 
 from nti.dataserver import authorization as nauth
 
@@ -43,7 +43,7 @@ class PersistentCommunityPrincipalRoleManager(AnnotationPrincipalRoleManager):
         Include site admin roles for Site Communities
         """
         roles = super(PersistentCommunityPrincipalRoleManager, self).getRolesForPrincipal(principal_id)
-        site = get_user_creation_site(self._context)
+        site = get_entity_creation_site(self._context)
         if site is not None:
             site_prm = IPrincipalRoleManager(site)
             site_roles = site_prm.getRolesForPrincipal(principal_id)
