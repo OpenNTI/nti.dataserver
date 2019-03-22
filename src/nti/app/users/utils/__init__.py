@@ -292,7 +292,7 @@ def get_entity_creation_sitename(user):
 
 
 def get_entity_creation_site(user):
-    name = get_user_creation_sitename(user)
+    name = get_entity_creation_sitename(user)
     return get_host_site(name, True) if name else None
 
 
