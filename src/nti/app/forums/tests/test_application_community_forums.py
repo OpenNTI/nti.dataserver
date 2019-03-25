@@ -75,6 +75,8 @@ from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users import Community
 
+from nti.dataserver.users.common import set_entity_creation_site
+
 from nti.mailer.interfaces import IEmailAddressable
 
 from nti.ntiids.ntiids import find_object_with_ntiid
@@ -88,7 +90,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 	__test__ = True
 
 	extra_environ_default_user = AbstractTestApplicationForumsBaseMixin.default_username
-	
+
 	default_community = 'TheCommunity'
 	default_entityname = default_community
 	forum_url_relative_to_user = _BOARD_NAME + '/' + _FORUM_NAME
@@ -498,6 +500,8 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
                                                                       'email': u'basic@user.com'})
 			self._create_user('siteadmin', 'temp001', external_value={'realname': u'Site Admin',
 																	  'email': u'siteadmin@user.com'})
+			community = Community.get_community(self.default_community)
+			set_entity_creation_site(community, 'alpha.nextthought.com')
 
 		adminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com'))
 		forum_data = self._create_post_data_for_POST()
@@ -530,12 +534,12 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		# Check basic user cannot create topics in forum
 		testapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='basicuser'))
 		topic_data = self._create_post_data_for_POST()
-		res = testapp.post_json(self.forum_pretty_url,
+		testapp.post_json(self.forum_pretty_url,
 								topic_data,
 								status=403)
 
 		# Check nti admin still has privs
-		res = adminapp.post_json(self.forum_pretty_url,
+		adminapp.post_json(self.forum_pretty_url,
 								 topic_data,
 								 status=201)
 
@@ -556,8 +560,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 			interface.alsoProvides(community, ISiteCommunity)
 		siteadminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='siteadmin'))
 		siteadminapp.post_json(self.forum_pretty_url,
-							   topic_data,
-							   status=201)
+							   topic_data)
 
 		# Make basic user an admin
 		adminapp.put_json('/dataserver2/users/%s/@@AddAdmin' % self.default_community,
@@ -565,6 +568,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 						  status=200)
 
 		# Check basic user that is now an admin can create
-		res = testapp.post_json(self.forum_pretty_url,
+		testapp.post_json(self.forum_pretty_url,
 								topic_data,
 								status=201)

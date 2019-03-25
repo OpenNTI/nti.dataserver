@@ -36,6 +36,7 @@ from nti.dataserver.contenttypes.note import Note
 from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users.common import entity_creation_sitename
+from nti.dataserver.users.common import set_entity_creation_site
 
 from nti.dataserver.users.communities import Community
 
@@ -267,13 +268,14 @@ class TestCommunityViews(ApplicationLayerTest):
             user = self._create_user(u"sheldon", u"temp001", external_value={'realname': u'Sheldon Smith',
                                                                              'email': u'alpha@user.com'})
             user.record_dynamic_membership(c)
-            siteadmin = self._create_user(u'siteadmin', u'temp001', external_value={'realname': u'Site Admin',
+            self._create_user(u'siteadmin', u'temp001', external_value={'realname': u'Site Admin',
                                                                                     'email': u'admin@user.com'})
             site = getSite()
             prm = IPrincipalRoleManager(site)
             prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'siteadmin')
             assert_that(c.is_admin(self.default_username), is_(False))
             assert_that(c.is_admin(u'sheldon'), is_(False))
+            set_entity_creation_site(c, 'alpha.nextthought.com')
 
         path = '/dataserver2/users/mycommunity/%s'
         site_admin_env = self._make_extra_environ(u'siteadmin')

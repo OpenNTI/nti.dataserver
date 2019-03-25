@@ -31,7 +31,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.users import Community
 from nti.dataserver.users import User
 
-__docformat__ = "restructuredtext en"
+from nti.dataserver.users.common import set_entity_creation_site
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -79,6 +79,7 @@ class TestCommunityPermissions(DataserverLayerTest):
         username = u'sheldon'
         User(username)
         community = Community(u'mycommunity')
+        set_entity_creation_site(community, 'alpha.nextthought.com')
 
         site = getSite()
         site_prm = IPrincipalRoleManager(site)
