@@ -360,7 +360,8 @@ def find_users_with_email(email, unused_dataserver, username=None, match_info=Fa
         # for his own use and his parental contact.
         record_type = match_type if match_info else ''
         matches.update(((x, record_type)
-                        for x in ent_catalog.searchResults(**{match_type: (v, v)})))
+                        for x in ent_catalog.searchResults(**{match_type: (v, v)})
+                        if IUser.providedBy(x)))
 
     if username:
         username = username.lower()
