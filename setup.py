@@ -84,8 +84,7 @@ TESTS_REQUIRE = [
     'nti.nose_traceback_info',
     'nti.testing',
     'nti.app.testing',
-    'nti.fakestatsd',
-    'nti.identifiers'
+    'nti.fakestatsd'
 ]
 
 
@@ -133,6 +132,7 @@ setup(
         # 'setuptools_subversion >= 3.1'
     ],
     install_requires=[
+	'nti.app.pyramid_zope',
         'nti.common',
         'nti.containers',
         'nti.contentfragments',
@@ -144,6 +144,7 @@ setup(
         'nti.futures',
         'nti.geventwebsocket',
         'nti.i18n',
+	'nti.identifiers',
         'nti.intid',
         'nti.links',
         'nti.metadata',
