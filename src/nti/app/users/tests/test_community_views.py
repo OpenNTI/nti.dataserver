@@ -281,9 +281,8 @@ class TestCommunityViews(ApplicationLayerTest):
         site_admin_env = self._make_extra_environ(u'siteadmin')
         basic_env = self._make_extra_environ(u'sheldon')
 
-        # Test site admin has no permissions on regular community they are not a member of
+        # Site admin can admin the site community
         self.testapp.get(path % '',
-                         status=403,
                          extra_environ=site_admin_env)
 
         # Test site admin can access as community admin
@@ -319,9 +318,8 @@ class TestCommunityViews(ApplicationLayerTest):
                          extra_environ=site_admin_env)
 
         # Test site admin can access site community admin views
-        res = self.testapp.get(path % 'ListAdmins',
-                               status=200,
-                               extra_environ=site_admin_env)
+        self.testapp.get(path % 'ListAdmins',
+                         extra_environ=site_admin_env)
 
         # test non super user can't access
         self.testapp.put_json(path % 'AddAdmin',

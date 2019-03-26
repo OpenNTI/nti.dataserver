@@ -551,15 +551,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 
 		siteadminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='siteadmin'))
 		siteadminapp.post_json(self.forum_pretty_url,
-							   topic_data,
-							   status=403)
-
-		# Check site admins are allowed on site communities
-		with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
-			community = Community.get_community(self.default_community)
-			interface.alsoProvides(community, ISiteCommunity)
-		siteadminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='siteadmin'))
-		siteadminapp.post_json(self.forum_pretty_url,
 							   topic_data)
 
 		# Make basic user an admin

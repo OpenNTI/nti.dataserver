@@ -13,7 +13,7 @@ from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import none
 
-from zope import interface
+import fudge
 
 from zope.component.hooks import getSite
 
@@ -23,7 +23,6 @@ from zope.securitypolicy.interfaces import IRolePermissionManager
 from zope.securitypolicy.settings import Allow
 
 from nti.dataserver import authorization as nauth
-from nti.dataserver.interfaces import ISiteCommunity
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -75,23 +74,19 @@ class TestCommunityPermissions(DataserverLayerTest):
             assert_that(permissions, has_entry(permission.id, Allow))
 
     @WithMockDSTrans
-    def test_site_admin_community_permissions(self):
+    @fudge.patch('nti.dataserver.community.get_entity_creation_site')
+    def test_site_admin_community_permissions(self, mock_get_creation_site):
         username = u'sheldon'
         User(username)
-        community = Community(u'mycommunity')
-        set_entity_creation_site(community, 'alpha.nextthought.com')
+        # Need to be created to keep annotations
+        community = Community.create_community(username=u'mycommunity')
 
         site = getSite()
+        set_entity_creation_site(community, site)
         site_prm = IPrincipalRoleManager(site)
         site_prm.assignRoleToPrincipal(nauth.ROLE_SITE_ADMIN_NAME, username)
 
-        # Site admins should not be included in roles for the principal in non site communities
-        community_prm = IPrincipalRoleManager(community)
-        roles = community_prm.getRolesForPrincipal(username)
-        assert_that(roles, has_length(0))
-
-        # Site admins should be included in site communities
-        interface.alsoProvides(community, ISiteCommunity)
+        mock_get_creation_site.is_callable().returns(site)
         community_prm = IPrincipalRoleManager(community)
         roles = community_prm.getRolesForPrincipal(username)
         roles = dict(roles)
