@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import fudge
+
 from hamcrest import is_
 from hamcrest import not_
 from hamcrest import all_of
@@ -56,6 +58,10 @@ from nti.appserver import logon
 
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 
+from nti.appserver.logon import REL_INVALID_EMAIL
+from nti.appserver.logon import REL_INVALID_CONTACT_EMAIL
+from nti.appserver.logon import REL_INITIAL_WELCOME_PAGE
+from nti.appserver.logon import REL_INITIAL_TOS_PAGE
 from nti.appserver.logon import ROUTE_OPENID_RESPONSE
 
 from nti.appserver.logon import ping
@@ -89,6 +95,9 @@ from nti.appserver.tests.test_application import WithSharedApplicationMockDS
 
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
+from nti.dataserver.users import User
+
 
 class DummyView(object):
 	response = "Response"
@@ -263,6 +272,61 @@ class TestLinkProviders(ApplicationLayerTest):
 		result = result.json_body
 		self.require_link_href_with_rel(result, 'content.initial_welcome_page')
 		self.require_link_href_with_rel(result, 'content.permanent_welcome_page')
+
+
+	@WithSharedApplicationMockDS(users=(u'test001', u'test002@nextthought.com'), testapp=True, default_authenticate=False)
+	@fudge.patch('nti.appserver.decorators.is_impersonating')
+	def test_bypassing_links(self, mock_is_impersonating):
+		from z3c.baseregistry.baseregistry import BaseComponents
+		from nti.appserver.policies.sites import BASEADULT
+		site = BaseComponents(BASEADULT, name='nonwelcomepagetest.nextthought.com', bases=(BASEADULT,))
+		component.provideUtility(site, interface.interfaces.IComponents, name='testbypassing.nextthought.com')
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			for username in (u'test001', 'test002@nextthought.com'):
+				user = User.get_user(username)
+				user_link_provider.add_link( user, REL_INVALID_CONTACT_EMAIL )
+				user_link_provider.add_link( user, REL_INVALID_EMAIL )
+
+		# normal user, bypassing when it's impersonating.
+		username = u'test001'
+		url = '/dataserver2/users/%s' % username
+		extra_environ = self._make_extra_environ(username=username)
+		extra_environ.update({b'HTTP_ORIGIN': b'http://testbypassing.nextthought.com'})
+
+		mock_is_impersonating.is_callable().returns(False)
+		result = self.testapp.get(url, extra_environ=extra_environ).json_body
+		self.require_link_href_with_rel(result, REL_INITIAL_TOS_PAGE)
+		self.require_link_href_with_rel(result, REL_INITIAL_WELCOME_PAGE)
+		self.require_link_href_with_rel(result, REL_INVALID_CONTACT_EMAIL)
+		self.require_link_href_with_rel(result, REL_INVALID_EMAIL)
+
+		mock_is_impersonating.is_callable().returns(True)
+		result = self.testapp.get(url, extra_environ=extra_environ).json_body
+		self.forbid_link_with_rel(result, REL_INITIAL_TOS_PAGE)
+		self.forbid_link_with_rel(result, REL_INITIAL_WELCOME_PAGE)
+		self.forbid_link_with_rel(result, REL_INVALID_CONTACT_EMAIL)
+		self.forbid_link_with_rel(result, REL_INVALID_EMAIL)
+
+		# NextThought user, bypassing all
+		username = u'test002@nextthought.com'
+		url = '/dataserver2/users/%s' % username
+		extra_environ = self._make_extra_environ(username=username)
+		extra_environ.update({b'HTTP_ORIGIN': b'http://testbypassing.nextthought.com'})
+
+		mock_is_impersonating.is_callable().returns(False)
+		result = self.testapp.get(url, extra_environ=extra_environ).json_body
+		self.forbid_link_with_rel(result, REL_INITIAL_TOS_PAGE)
+		self.forbid_link_with_rel(result, REL_INITIAL_WELCOME_PAGE)
+		self.forbid_link_with_rel(result, REL_INVALID_CONTACT_EMAIL)
+		self.forbid_link_with_rel(result, REL_INVALID_EMAIL)
+
+		mock_is_impersonating.is_callable().returns(True)
+		result = self.testapp.get(url, extra_environ=extra_environ).json_body
+		self.forbid_link_with_rel(result, REL_INITIAL_TOS_PAGE)
+		self.forbid_link_with_rel(result, REL_INITIAL_WELCOME_PAGE)
+		self.forbid_link_with_rel(result, REL_INVALID_CONTACT_EMAIL)
+		self.forbid_link_with_rel(result, REL_INVALID_EMAIL)
 
 
 class TestLogonViews(ApplicationLayerTest):

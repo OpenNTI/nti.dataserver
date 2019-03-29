@@ -159,22 +159,28 @@ class TestApplicationBouncedEmailWorkflow(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_delete_states(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			user = self._create_user()
-			user_username = user.username
-			user_link_provider.add_link( user, bounced_email_workflow.REL_INVALID_CONTACT_EMAIL )
-			user_link_provider.add_link( user, bounced_email_workflow.REL_INVALID_EMAIL )
+			for username in (u'test001', 'test@nextthought.com'):
+				user = self._create_user(username)
+				user_link_provider.add_link( user, bounced_email_workflow.REL_INVALID_CONTACT_EMAIL )
+				user_link_provider.add_link( user, bounced_email_workflow.REL_INVALID_EMAIL )
 
-
-		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+		username = u'test001'
+		testapp = TestApp( self.app, extra_environ=self._make_extra_environ(username=username) )
 
 		for k in (bounced_email_workflow.REL_INVALID_EMAIL,bounced_email_workflow.REL_INVALID_CONTACT_EMAIL):
-			href = self.require_link_href_with_rel( self.resolve_user( testapp, user_username ), k )
+			href = self.require_link_href_with_rel( self.resolve_user( testapp, username ), k )
 
-			res = testapp.delete( href , extra_environ=self._make_extra_environ() )
+			res = testapp.delete( href , extra_environ=self._make_extra_environ(username=username) )
 			assert_that( res, has_property( 'status_int', 204 ) )
 
-			res = testapp.delete( href, extra_environ=self._make_extra_environ(), status=404 )
+			res = testapp.delete( href, extra_environ=self._make_extra_environ(username=username), status=404 )
 			assert_that( res, has_property( 'status_int', 404 ) )
+
+		username = u'test@nextthought.com'
+		testapp = TestApp( self.app, extra_environ=self._make_extra_environ(username=username) )
+
+		for k in (bounced_email_workflow.REL_INVALID_EMAIL,bounced_email_workflow.REL_INVALID_CONTACT_EMAIL):
+			self.forbid_link_with_rel( self.resolve_user( testapp, username ), k )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@fudge.patch('boto.connect_sqs')
