@@ -45,8 +45,6 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.traversal.traversal import find_interface
 
-__docformat__ = "restructuredtext en"
-
 logger = __import__('logging').getLogger(__name__)
 
 

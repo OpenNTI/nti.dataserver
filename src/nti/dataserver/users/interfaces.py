@@ -459,6 +459,13 @@ class IRequireProfileUpdate(Interface):
     """
 
 
+class IDoNotValidateProfile(Interface):
+    """
+    Apply this as a marker to a context object (user) that should not
+    validate the profile state in certain situations.
+    """
+
+
 class IEntityProfile(IFriendlyNamed, IProfileAvatarURL):
     """
     Base class that user/entity profiles should extend.

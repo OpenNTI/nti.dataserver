@@ -23,14 +23,11 @@ from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
-from zope.schema.interfaces import ValidationError
-
 from pyramid.view import view_config
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.app.externalization.error import raise_json_error
-from nti.app.externalization.error import handle_validation_error
 
 from nti.app.externalization.internalization import update_object_from_external_object
 
@@ -48,6 +45,7 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users.interfaces import checkEmailAddress
+from nti.dataserver.users.interfaces import IDoNotValidateProfile
 
 from nti.dataserver.users.users import User
 
@@ -475,8 +473,15 @@ def reset_passcode_view(request):
     if user.has_password():
         del user.password
 
-    update_object_from_external_object(user, {'password': new_password},
-                                       notify=False, request=request)
+    try:
+        # We want to avoid any full profile validation here when a
+        # user is resetting their password (later in the flow the
+        # user will be forced to update their profile, but not here).
+        interface.alsoProvides(user, IDoNotValidateProfile)
+        update_object_from_external_object(user, {'password': new_password},
+                                           notify=False, request=request)
+    finally:
+        interface.noLongerProvides(user, IDoNotValidateProfile)
 
     # Great, it worked. Kill the annotation so that it CANNOT be used again
     # (otherwise the window of vulnerability is larger than it needs to be)
