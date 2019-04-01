@@ -23,7 +23,7 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.cachedescriptors.property import CachedProperty
 
-from zope.event import notify
+from zope.event import notify as do_notify
 
 from zope.intid.interfaces import IIntIds
 
@@ -40,6 +40,7 @@ from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import INewUserPlacer
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
 
+from nti.dataserver.users.interfaces import IDoNotValidateProfile
 from nti.dataserver.users.interfaces import IRequireProfileUpdate
 from nti.dataserver.users.interfaces import UsernameCannotBeBlank
 from nti.dataserver.users.interfaces import WillDeleteEntityEvent
@@ -195,7 +196,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
                "User should still have a connection"
 
         # Notify we're about to update
-        notify(WillUpdateNewEntityEvent(user, ext_value, meta_data))
+        do_notify(WillUpdateNewEntityEvent(user, ext_value, meta_data))
 
         # Update from the external value, if provided
         if ext_value:
@@ -205,7 +206,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
         # Register an intid for this user that we are creating so that the events that fire before
         # ObjectAdded (which is usually when intids get assigned) can use it.
         component.getUtility(IIntIds).register(user)
-        notify(WillCreateNewEntityEvent(user, ext_value, preflight_only, meta_data))
+        do_notify(WillCreateNewEntityEvent(user, ext_value, preflight_only, meta_data))
 
         if preflight_only:
             if user.username in root_users:
@@ -247,7 +248,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
         root_users = dataserver.root[cls._ds_namespace]
         user = root_users[username]
 
-        notify(WillDeleteEntityEvent(user))
+        do_notify(WillDeleteEntityEvent(user))
 
         del root_users[username]
 
@@ -343,10 +344,10 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
     # Externalization
 
-    def updateFromExternalObject(self, parsed, *args, **kwargs):
+    def updateFromExternalObject(self, parsed, notify=True, *args, **kwargs):
         # Notify we're about to update
         if getattr(self, '_p_jar', None):
-            notify(WillUpdateEntityEvent(self, parsed))
+            do_notify(WillUpdateEntityEvent(self, parsed))
 
         # Profile info
         profile_iface = IUserProfileSchemaProvider(self).getSchema()
@@ -369,20 +370,20 @@ class Entity(PersistentCreatedModDateTrackingObject):
             about = [about, ]
             parsed['about'] = about
 
-        # Only validate it though, if we are not saved and not forcing a profile update.
-        # Once we are saved, presumably with a
-        # valid profile, then if the profile changes and we are missing (new) fields,
-        # we cannot necessarily expect to have them filled in.
-        # TODO: I think this make is impossible to just change a password while
-        # the profile needs updated
+        # Only validate it though, if we are not saved and not forcing a profile
+        # update and we are not disabling it (password reset). Once we are saved,
+        # presumably with a valid profile, then if the profile changes and we are
+        # missing (new) fields, we cannot necessarily expect to have them filled in.
         validate = profile_update or not self._p_mtime
+        validate = validate and not IDoNotValidateProfile.providedBy(self)
         __traceback_info__ = profile_iface, profile_update, validate
 
         io = InterfaceObjectIO(profile, profile_iface,
                                validate_after_update=validate)
         updated = io.updateFromExternalObject(parsed, *args, **kwargs)
-        notify_modified(profile, parsed)
-        if profile_update:
+        if notify:
+            notify_modified(profile, parsed)
+        if profile_update and not IDoNotValidateProfile:
             # If we got here, then we got the data to validly update our profile,
             # so we can stop providing the update interface
             interface.noLongerProvides(self, IRequireProfileUpdate)
