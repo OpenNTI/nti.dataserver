@@ -26,22 +26,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-#: The link relationship type that
-#: indicates we know that the email recorded for this user is bad and
-#: has received permanent bounces. The user must be asked to enter a
-#: new one and update the profile. Send an HTTP DELETE to this link
-#: when you are done updating the profile to remove the flag.
-REL_INVALID_EMAIL = 'state-bounced-email'
-
-#: The link relationship type that
-#: indicates that a contact email (aka parent email) recorded for
-#: this (under 13) user has received permanent bounces. The child
-#: must be asked to enter a new contact_email and update the profile.
-#: When the profile is updated, a new consent email will be
-#: generated. Send an HTTP DELETE to this link with you are done
-#: updating the profile to remove the flag.
-REL_INVALID_CONTACT_EMAIL = 'state-bounced-contact-email'
-
 import os
 import argparse
 import simplejson as json
@@ -57,6 +41,9 @@ from zope.interface.exceptions import Invalid
 from nti.appserver.account_recovery_views import find_users_with_email
 
 from nti.appserver.link_providers import flag_link_provider
+
+from nti.appserver.logon import REL_INVALID_EMAIL
+from nti.appserver.logon import REL_INVALID_CONTACT_EMAIL
 
 from nti.dataserver.interfaces import IDataserver
 

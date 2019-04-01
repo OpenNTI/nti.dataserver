@@ -30,6 +30,8 @@ from nti.appserver.link_providers import provide_links
 
 from nti.appserver.logon import REL_INITIAL_WELCOME_PAGE
 from nti.appserver.logon import REL_INITIAL_TOS_PAGE
+from nti.appserver.logon import REL_INVALID_EMAIL
+from nti.appserver.logon import REL_INVALID_CONTACT_EMAIL
 
 from nti.common.nameparser import constants as np_constants
 
@@ -114,9 +116,12 @@ class _AuthenticatedUserLinkAdder(Singleton):
     to the client.
     """
 
-    def _filtered_links(self, links, request):
-        if links and is_impersonating(request):
-            return [x for x in links if x.rel not in (REL_INITIAL_WELCOME_PAGE, REL_INITIAL_TOS_PAGE)]
+    def _filtered_links(self, links, request, userid):
+        if links and (is_impersonating(request) or userid.endswith('@nextthought.com')):
+            return [x for x in links if x.rel not in (REL_INITIAL_WELCOME_PAGE,
+                                                      REL_INITIAL_TOS_PAGE,
+                                                      REL_INVALID_EMAIL,
+                                                      REL_INVALID_CONTACT_EMAIL)]
         return links
 
     def decorateExternalMapping(self, original, external):
@@ -130,7 +135,7 @@ class _AuthenticatedUserLinkAdder(Singleton):
 
         links = list(external.get(StandardExternalFields.LINKS, ()))
         links.extend(provide_links(original, request))
-        links = self._filtered_links(links, request)
+        links = self._filtered_links(links, request, userid)
 
         external[StandardExternalFields.LINKS] = links
 

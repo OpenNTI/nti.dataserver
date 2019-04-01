@@ -209,6 +209,22 @@ AX_TYPE_CONTENT_ROLES = 'tag:nextthought.com,2011:ax/contentroles/1'
 #: the authentication process
 _REQUEST_TIMEOUT = 0.5
 
+#: The link relationship type that
+#: indicates we know that the email recorded for this user is bad and
+#: has received permanent bounces. The user must be asked to enter a
+#: new one and update the profile. Send an HTTP DELETE to this link
+#: when you are done updating the profile to remove the flag.
+REL_INVALID_EMAIL = 'state-bounced-email'
+
+#: The link relationship type that
+#: indicates that a contact email (aka parent email) recorded for
+#: this (under 13) user has received permanent bounces. The child
+#: must be asked to enter a new contact_email and update the profile.
+#: When the profile is updated, a new consent email will be
+#: generated. Send an HTTP DELETE to this link with you are done
+#: updating the profile to remove the flag.
+REL_INVALID_CONTACT_EMAIL = 'state-bounced-contact-email'
+
 
 def _authenticated_user(request):
     """
@@ -244,11 +260,12 @@ def _links_for_authenticated_users(request):
         for _, prov_links in unique_link_providers(remote_user, request, True):
             links.extend(prov_links)
 
-    # For impersonating, do not show welcome page and TOS page.
-    if links and is_impersonating(request):
+    # For impersonating, do not show welcome page and TOS page, invalid emails dialogs.
+    if links and (is_impersonating(request) or (remote_user and remote_user.username.endswith('@nextthought.com'))):
         links = [x for x in links if x.rel not in (REL_INITIAL_WELCOME_PAGE,
-                                                   REL_INITIAL_TOS_PAGE)]
-
+                                                   REL_INITIAL_TOS_PAGE,
+                                                   REL_INVALID_EMAIL,
+                                                   REL_INVALID_CONTACT_EMAIL)]
     links = tuple(links) if links else ()
     return links
 
