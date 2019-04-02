@@ -12,6 +12,8 @@ from pyramid.request import Request
 from pyramid.threadlocal import get_current_registry
 from pyramid.threadlocal import get_current_request
 
+from webob.request import environ_from_url
+
 from zope import interface
 
 from zope.cachedescriptors.property import Lazy
@@ -20,16 +22,9 @@ from zope.component.hooks import getSite
 
 from zope.schema.fieldproperty import createFieldProperties
 
-from nti.asynchronous.scheduled.job import create_scheduled_job
-
-from nti.asynchronous.scheduled.utils import add_scheduled_job
-
 from nti.dataserver.job.interfaces import IJob
-from nti.dataserver.job.interfaces import IScheduledJob
 
 from nti.ntiids.oids import to_external_ntiid_oid
-
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -48,11 +43,14 @@ class AbstractJob(object):
         self.job_kwargs['obj_ntiid'] = obj_ntiid
         self.job_kwargs['site_name'] = site_name
 
-    def get_request(self, context):
+    def get_request(self, context, application_url=None):
         request = get_current_request()
         if request is None:
+            environ = {}
+            if application_url:
+                environ = environ_from_url(application_url)
             # fake a request
-            request = Request({})
+            request = Request(environ=environ)
             request.context = context
             request.registry = get_current_registry()
         return request

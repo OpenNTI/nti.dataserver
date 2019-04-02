@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
-
-logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import has_entry
@@ -29,12 +28,12 @@ from zope import component
 from zope import interface
 from zope.lifecycleevent import modified, added
 
-
 from nti.app.testing.webtest import TestApp
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests import ITestMailDelivery
+
 
 class TestApplicationUsernameRecovery(ApplicationLayerTest):
 
@@ -78,7 +77,7 @@ class TestApplicationUsernameRecovery(ApplicationLayerTest):
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.forgot.username'
-		data = {'email': 'not.registered@example.com'}
+		data = {'email': u'not.registered@example.com'}
 		app.post( path, data, status=204 )
 
 		mailer = component.getUtility( ITestMailDelivery )
@@ -91,13 +90,13 @@ class TestApplicationUsernameRecovery(ApplicationLayerTest):
 			user_username = user.username
 			profile = user_interfaces.IUserProfile( user )
 			added( profile )
-			profile.email = 'jason.madden@nextthought.com'
+			profile.email = u'jason.madden@nextthought.com'
 			modified( user )
 
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.forgot.username'
-		data = {'email': 'jason.madden@nextthought.com'}
+		data = {'email': u'jason.madden@nextthought.com'}
 		app.post( path, data, status=204 )
 
 		mailer = component.getUtility( ITestMailDelivery )
@@ -113,21 +112,21 @@ class TestApplicationUsernameRecovery(ApplicationLayerTest):
 			user_username = user.username
 			profile = user_interfaces.IUserProfile( user )
 			added( profile )
-			profile.email = 'jason.madden@nextthought.com'
+			profile.email = u'jason.madden@nextthought.com'
 			modified( user )
 
 			user2 = self._create_user( username='other.user@foo.bar' )
 			user2_username = user2.username
 			profile = user_interfaces.IUserProfile( user2 )
 			added( profile )
-			profile.email = 'jason.madden@nextthought.com'
+			profile.email = u'jason.madden@nextthought.com'
 			modified( user2 )
 
 
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.forgot.username'
-		data = {'email': 'jason.madden@nextthought.com'}
+		data = {'email': u'jason.madden@nextthought.com'}
 		app.post( path, data, status=204 )
 
 		mailer = component.getUtility( ITestMailDelivery )
@@ -167,7 +166,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.forgot.passcode'
-		data = {'email': 'foo@bar.com'}
+		data = {'email': u'foo@bar.com'}
 		res = app.post( path, data, status=400 )
 		assert_that( res.body, contains_string( "Must provide username" ) )
 
@@ -176,7 +175,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.forgot.passcode'
-		data = {'email': 'foo@bar.com', 'username': 'foo@bar.com' }
+		data = {'email': u'foo@bar.com', 'username': 'foo@bar.com' }
 		res = app.post( path, data, status=400 )
 
 		assert_that( res.body, contains_string( "Must provide success" ) )
@@ -186,7 +185,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.forgot.passcode'
-		data = {'email': 'not valid'}
+		data = {'email': u'not valid'}
 		res = app.post( path, data, status=422 )
 		assert_that( res.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
 
@@ -198,7 +197,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.forgot.passcode'
-		data = {'email': 'not.registered@example.com', 'username': 'somebodyelse', 'success': 'http://localhost/place'}
+		data = {'email': u'not.registered@example.com', 'username': 'somebodyelse', 'success': 'http://localhost/place'}
 		app.post( path, data, status=204 )
 
 		mailer = component.getUtility( ITestMailDelivery )
@@ -211,14 +210,14 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 			username = user.username
 			profile = user_interfaces.IUserProfile( user )
 			added( profile )
-			profile.email = 'jason.madden@nextthought.com'
+			profile.email = u'jason.madden@nextthought.com'
 			modified( user )
 
 
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.forgot.passcode'
-		data = {'email': 'jason.madden@nextthought.com',
+		data = {'email': u'jason.madden@nextthought.com',
 				'username': username,
 				'success': 'http://localhost/place'}
 		app.post( path, data, status=204 )
@@ -238,15 +237,15 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 			username = user.username
 			profile = user_interfaces.IRestrictedUserProfileWithContactEmail( user )
-			profile.email = 'jason.madden@nextthought.com'
-			profile.contact_email = 'other.user@nextthought.com'
+			profile.email = u'jason.madden@nextthought.com'
+			profile.contact_email = u'other.user@nextthought.com'
 			modified( user )
 
 		app = TestApp( self.app )
 
 		# Find it via an actual email match
 		path = b'/dataserver2/logon.forgot.passcode'
-		data = {'email': 'jason.madden@nextthought.com',
+		data = {'email': u'jason.madden@nextthought.com',
 				'username': username,
 				'success': 'http://localhost/place'}
 		__traceback_info__ = data
@@ -264,7 +263,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		_check_mail()
 
 		# Find it via a contact email match
-		data = {'email': 'other.user@nextthought.com',
+		data = {'email': u'other.user@nextthought.com',
 				'username': username,
 				'success': 'http://localhost/place'}
 		__traceback_info__ = data
@@ -272,7 +271,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		_check_mail()
 
 		# If we pass in an inconsistent case for the email, we still find it
-		data = {'email': 'JASON.madden@nextthought.com',
+		data = {'email': u'JASON.madden@nextthought.com',
 				'username': username,
 				'success': 'http://localhost/place'}
 		__traceback_info__ = data
@@ -280,7 +279,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		_check_mail()
 
 		# Likewise for the contact email
-		data = {'email': 'other.USER@nextthought.com',
+		data = {'email': u'other.USER@nextthought.com',
 				'username': username,
 				'success': 'http://localhost/place'}
 		__traceback_info__ = data
@@ -288,7 +287,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		_check_mail()
 
 		# And for the username too
-		data = {'email': 'JASON.madden@nextthought.com',
+		data = {'email': u'JASON.madden@nextthought.com',
 				'username': username.upper(),
 				'success': 'http://localhost/place'}
 		__traceback_info__ = data
@@ -302,13 +301,13 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 			user = self._create_user( )
 			username = user.username
 			profile = user_interfaces.IUserProfile( user )
-			profile.email = 'jason.madden@nextthought.com'
+			profile.email = u'jason.madden@nextthought.com'
 			modified( user )
 
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.forgot.passcode'
-		data = {'email': 'jason.madden@nextthought.com',
+		data = {'email': u'jason.madden@nextthought.com',
 				'username': username,
 				'success': 'http://localhost/place?host=foo&baz=bar'}
 		app.post( path, data, status=204 )
@@ -368,7 +367,7 @@ class TestApplicationPasswordReset(ApplicationLayerTest):
 			user = self._create_user( )
 			username = user.username
 			profile = user_interfaces.IUserProfile( user )
-			profile.email = 'jason.madden@nextthought.com'
+			profile.email = u'jason.madden@nextthought.com'
 			IAnnotations(user)[account_recovery_views._KEY_PASSCODE_RESET] = ('the_id', datetime.datetime.utcnow())
 
 		app = TestApp( self.app )
@@ -389,7 +388,7 @@ class TestApplicationPasswordReset(ApplicationLayerTest):
 			user = self._create_user( )
 			username = user.username
 			profile = user_interfaces.IUserProfile( user )
-			profile.email = 'jason.madden@nextthought.com'
+			profile.email = u'jason.madden@nextthought.com'
 			IAnnotations(user)[account_recovery_views._KEY_PASSCODE_RESET] = ('the_id', datetime.datetime.utcnow())
 
 		app = TestApp( self.app )
