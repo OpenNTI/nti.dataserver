@@ -135,13 +135,14 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
         avatar_url = avatar_url if avatar_url.endswith('/') else avatar_url + '/'
         avatar_url = urllib_parse.urljoin(avatar_url, u'@@avatar')
 
-        topic_url = urllib_parse.urljoin(self.job_kwargs['application_url'], '/app/id/%s' % topic.NTIID)
+        app_url = self.job_kwargs['application_url']
+        topic_url = urllib_parse.urljoin(app_url, '/app/id/%s' % topic.NTIID)
         for email in emails:
             send_creation_notification_email(sender=topic.creator,
                                              receiver_emails=[email],
                                              subject=subject,
                                              message=message,
-                                             request=self.get_request(topic),
+                                             request=self.get_request(topic, application_url=app_url),
                                              forum_type_obj_url=topic_url,
                                              avatar_url=avatar_url)
         logger.info("Sending board object notification email (%s) (ntiid=%s) (forum=%s) (email_count=%s)",

@@ -377,7 +377,6 @@ class Entity(PersistentCreatedModDateTrackingObject):
         validate = profile_update or not self._p_mtime
         validate = validate and not IDoNotValidateProfile.providedBy(self)
         __traceback_info__ = profile_iface, profile_update, validate
-
         io = InterfaceObjectIO(profile, profile_iface,
                                validate_after_update=validate)
         updated = io.updateFromExternalObject(parsed, *args, **kwargs)

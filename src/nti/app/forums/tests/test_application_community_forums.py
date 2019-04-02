@@ -30,7 +30,7 @@ UQ = quote
 
 from pyquery import PyQuery
 
-from zope import interface
+from webob.request import environ_from_url
 
 from zope.component import eventtesting
 
@@ -41,6 +41,8 @@ from zope.lifecycleevent import IObjectRemovedEvent
 from zope.intid.interfaces import IIntIdRemovedEvent
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
+from nti.asynchronous.scheduled.redis_queue import ScheduledQueue
 
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
@@ -489,6 +491,18 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		# Test the number of emails sent matches the number of community members (fudge decorator does the assertion)
 		job = queue.get()
 		with mock_dataserver.mock_db_trans(self.ds):
+			# In tests, we do not pickle the job, so we test that we can here.
+			queue = ScheduledQueue('test_queue')
+			queue._pickle(job)
+
+			# We also want our job request to have an actual application_url
+			actual_job = job._callable_root
+			from pyramid.request import Request
+			# We have to manually test this here since DummyRequest will not
+			# build this out with an environ like an actual request would.
+			mock_environ = environ_from_url(actual_job.job_kwargs['application_url'])
+			mock_request = Request(mock_environ)
+			assert_that(mock_request.application_url, is_('http://localhost'))
 			# Need the db to resolve the topic ntiid in the job
 			job()
 

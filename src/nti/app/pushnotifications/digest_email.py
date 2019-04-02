@@ -19,8 +19,6 @@ import datetime
 import nameparser
 import collections
 
-from nameparser import HumanName
-
 from zope import component
 from zope import interface
 
