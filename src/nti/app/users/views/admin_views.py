@@ -59,6 +59,7 @@ from nti.app.users.utils import get_site_community
 from nti.app.users.utils import get_members_by_site
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import get_site_community_name
+from nti.app.users.utils import set_entity_creation_site
 from nti.app.users.utils import generate_mail_verification_pair
 
 from nti.app.users.views import username_search
@@ -79,12 +80,14 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.interfaces import ISiteAdminManagerUtility
 
+from nti.dataserver.users import Entity
 from nti.dataserver.users import Community
 
 from nti.dataserver.users.common import entity_creation_sitename
@@ -1022,3 +1025,67 @@ class SetUserCreationSiteInSite(SetUserCreationSiteView):
         # Splat out the defaultdict so the response doesn't include "Class": "defaultdict"
         result = LocatedExternalDict(**updated_users)
         return result
+
+
+@view_config(name='SetEntityCreationSite')
+@view_config(name='set_entity_creation_site')
+@view_defaults(route_name='objects.generic.traversal',
+               request_method='POST',
+               context=IDataserverFolder,
+               renderer='rest',
+               permission=nauth.ACT_NTI_ADMIN)
+class SetEntityCreationSiteView(AbstractAuthenticatedView,
+                                ModeledContentUploadRequestUtilsMixin):
+
+    def readInput(self, value=None):
+        try:
+            values = ModeledContentUploadRequestUtilsMixin.readInput(self, value)
+            return CaseInsensitiveDict(values)
+        except hexc.HTTPBadRequest as e:
+            if self.request.body:
+                raise e
+            return {}
+
+    def _raise_json_error(self, message, error=hexc.HTTPUnprocessableEntity):
+        raise_json_error(self.request,
+                         error,
+                         {
+                             'message': message,
+                         },
+                         None)
+
+    def get_entity(self, values):
+        """
+        entityId should be username, community id or group ntiid.
+        """
+        entityId = values.get('entityId') or None
+        if not entityId:
+            self._raise_json_error(_(u'Must specify a entityId.'))
+
+        obj = Entity.get_entity(entityId)
+        if obj is None:
+            obj = find_object_with_ntiid(entityId)
+
+        if obj is None or not IEntity.providedBy(obj):
+            self._raise_json_error(_(u'Invalid entityId.'))
+
+        return obj
+
+    def get_site(self, values):
+        site = values.get('site') or getattr(getSite(), '__name__', None)
+        if site != 'dataserver2':
+            site = get_host_site(site, True) if site else None
+            if site is None:
+                self._raise_json_error( _(u'Invalid site.') )
+        return site
+
+    def set_site(self, entity, site):
+        set_entity_creation_site(entity, site)
+        lifecycleevent.modified(entity)
+
+    def __call__(self):
+        values = self.readInput()
+        entity = self.get_entity(values)
+        site = self.get_site(values)
+        self.set_site(entity, site)
+        return hexc.HTTPNoContent()

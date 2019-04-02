@@ -366,3 +366,13 @@ def get_members_by_site(site, all_members=False):
             return get_community_or_site_members(all_members)
     else: # e.g dataserver2
         return get_users_by_site(name)
+
+
+def set_entity_creation_site(entity, site=None):
+    site = getSite() if site is None else site
+    name = getattr(site, '__name__', None) or str(site)
+    if name == 'dataserver2':
+        remove_creation_site(entity)
+    elif name:
+        set_creation_site(entity, name)
+    return name
