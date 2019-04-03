@@ -19,33 +19,7 @@ from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import IDataserverFolder
-
-
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             context=IFriendsList,
-             name='++fields++friends',
-             permission=nauth.ACT_UPDATE,
-             request_method='PUT')
-class _FriendsListsFriendsFieldUpdateView(UGDPutView):
-    """
-    This is a temporary fast hack to enable updating friends list objects
-    with just friends using the new ++fields++ syntax until the unification
-    is complete.
-
-    This is done by specifically naming a view for the remainder of the path
-    after a friends list.
-    """
-    # TODO: Can this go away now?
-    inputClass = list
-
-    def _get_object_to_update(self):
-        return self.request.context
-
-    def _transformInput(self, externalValue):
-        return {"friends": externalValue}
 
 
 @view_config(route_name='objects.generic.traversal',

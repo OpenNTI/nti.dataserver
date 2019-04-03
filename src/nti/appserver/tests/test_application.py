@@ -785,53 +785,6 @@ class TestApplication(ApplicationLayerTest):
 		testapp.delete( str(res.json_body['href']), extra_environ=self._make_extra_environ() )
 
 	@WithSharedApplicationMockDS
-	def test_post_friendslist_friends_field(self):
-		#"We can put to ++fields++friends"
-		with mock_dataserver.mock_db_trans( self.ds ):
-			self._create_user()
-			self._create_user('troy.daley@nextthought.com')
-		testapp = TestApp( self.app )
-		# Make one
-		data = '{"Last Modified":1323788728,"ContainerId":"FriendsLists","Username": "boom@nextthought.com","friends":["steve.johnson@nextthought.com"],"realname":"boom"}'
-		path = '/dataserver2/users/sjohnson@nextthought.com'
-		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
-
-		now = time.time()
-
-		# Edit it
-		data = '["troy.daley@nextthought.com"]'
-		path = res.json_body['href'] + '/++fields++friends'
-
-		res = testapp.put( str(path),
-						   data,
-						   extra_environ=self._make_extra_environ(),
-						   headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
-		assert_that( res.status_int, is_( 200 ) )
-		assert_that( res.json_body, has_entry( 'friends', has_item( has_entry( 'Username', 'troy.daley@nextthought.com' ) ) ) )
-		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
-
-		# the object itself is uncachable as far as HTTP goes
-		assert_that( res, has_property( 'last_modified', none() ) )
-		# But the last modified value is preserved in the body, and did update
-		# when we PUT
-		assert_that( res.json_body, has_entry( 'Last Modified', greater_than( now ) ) )
-
-		# We can fetch the object and get the same info
-		last_mod = res.json_body['Last Modified']
-		href = res.json_body['href']
-
-		res = testapp.get( href, extra_environ=self._make_extra_environ() )
-		assert_that( res.status_int, is_( 200 ) )
-		assert_that( res.json_body,	has_entries( 'Last Modified', last_mod, 'href', href ) )
-
-		# And likewise for the collection
-		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/FriendsLists', extra_environ=self._make_extra_environ() )
-		assert_that( res.status_int, is_( 200 ) )
-		assert_that( res.json_body['Items'], has_entry( 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-MeetingRoom:Group-boom@nextthought.com',
-														has_entries( 'Last Modified', last_mod,
-																	 'href', href ) ) )
-
-	@WithSharedApplicationMockDS
 	def test_friends_lists_collections(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			creator_username = self._create_user().username
