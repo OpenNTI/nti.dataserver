@@ -1042,7 +1042,7 @@ class SetUserCreationSiteInSite(SetUserCreationSiteView):
         community = self.get_community_or_site_community(values, site)
         updated_users = self.update_users_by_community_and_site(community, site, force)
 
-        commit = values.get('commit', True)
+        commit = is_true(values.get('commit')) if 'commit' in values else True
         if not commit:
             self.request.environ['nti.commit_veto'] = 'abort'
 
