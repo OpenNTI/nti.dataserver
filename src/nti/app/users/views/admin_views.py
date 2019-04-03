@@ -59,6 +59,7 @@ from nti.app.users.utils import get_site_community
 from nti.app.users.utils import get_members_by_site
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import get_site_community_name
+from nti.app.users.utils import set_entity_creation_site
 from nti.app.users.utils import generate_mail_verification_pair
 
 from nti.app.users.views import username_search
@@ -79,12 +80,14 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.interfaces import ISiteAdminManagerUtility
 
+from nti.dataserver.users import Entity
 from nti.dataserver.users import Community
 
 from nti.dataserver.users.common import entity_creation_sitename
@@ -293,6 +296,70 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
         return hexc.HTTPNoContent()
 
 
+@view_config(name='SetEntityCreationSite')
+@view_config(name='set_entity_creation_site')
+@view_defaults(route_name='objects.generic.traversal',
+               request_method='POST',
+               context=IDataserverFolder,
+               renderer='rest',
+               permission=nauth.ACT_NTI_ADMIN)
+class SetEntityCreationSiteView(AbstractAuthenticatedView,
+                                ModeledContentUploadRequestUtilsMixin):
+
+    def readInput(self, value=None):
+        try:
+            values = ModeledContentUploadRequestUtilsMixin.readInput(self, value)
+            return CaseInsensitiveDict(values)
+        except hexc.HTTPBadRequest as e:
+            if self.request.body:
+                raise e
+            return {}
+
+    def _raise_json_error(self, message, error=hexc.HTTPUnprocessableEntity):
+        raise_json_error(self.request,
+                         error,
+                         {
+                             'message': message,
+                         },
+                         None)
+
+    def get_entity(self, values):
+        """
+        entityId should be username, community id or group ntiid.
+        """
+        entityId = values.get('entityId') or None
+        if not entityId:
+            self._raise_json_error(_(u'Must specify a entityId.'))
+
+        obj = Entity.get_entity(entityId)
+        if obj is None:
+            obj = find_object_with_ntiid(entityId)
+
+        if obj is None or not IEntity.providedBy(obj):
+            self._raise_json_error(_(u'Invalid entityId.'))
+
+        return obj
+
+    def get_site(self, values):
+        site = values.get('site') or getattr(getSite(), '__name__', None)
+        if site != 'dataserver2':
+            site = get_host_site(site, True) if site else None
+            if site is None:
+                self._raise_json_error( _(u'Invalid site.') )
+        return site
+
+    def set_site(self, entity, site):
+        set_entity_creation_site(entity, site)
+        lifecycleevent.modified(entity)
+
+    def __call__(self):
+        values = self.readInput()
+        entity = self.get_entity(values)
+        site = self.get_site(values)
+        self.set_site(entity, site)
+        return hexc.HTTPNoContent()
+
+
 @view_config(name='SetUserCreationSite')
 @view_config(name='set_user_creation_site')
 @view_defaults(route_name='objects.generic.traversal',
@@ -300,48 +367,17 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
                context=IDataserverFolder,
                renderer='rest',
                permission=nauth.ACT_NTI_ADMIN)
-class SetUserCreationSiteView(AbstractAuthenticatedView,
-                              ModeledContentUploadRequestUtilsMixin):
+class SetUserCreationSiteView(SetEntityCreationSiteView):
 
-    def readInput(self, value=None):
-        values = ModeledContentUploadRequestUtilsMixin.readInput(self, value)
-        return CaseInsensitiveDict(values)
-
-    def get_user(self, values):
+    def get_entity(self, values):
         username = values.get('username') or values.get('user')
         if not username:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': _(u'Must specify a username.'),
-                             },
-                             None)
+            self._raise_json_error(_(u'Must specify a username.'))
+
         user = User.get_user(username)
         if not IUser.providedBy(user):
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': _(u'User not found.'),
-                             },
-                             None)
+            self._raise_json_error(_(u'User not found.'))
         return user
-
-    def get_site(self, values):
-        site = values.get('site') or getattr(getSite(), '__name__', None)
-        if site != 'dataserver2':
-            site = get_host_site(site, True) if site else None
-            if site is None:
-                raise_json_error(self.request,
-                                 hexc.HTTPUnprocessableEntity,
-                                 {
-                                     'message': _(u'Invalid site.'),
-                                 },
-                                 None)
-        return site
-
-    def set_site(self, user, site):
-        set_user_creation_site(user, site)
-        lifecycleevent.modified(user)
 
     def update_site_community(self, user, values):
         params = self.request.params
@@ -349,12 +385,7 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
         if is_true(value):
             community = get_site_community()
             if not ICommunity.providedBy(community):
-                raise_json_error(self.request,
-                                 hexc.HTTPUnprocessableEntity,
-                                 {
-                                     'message': _(u'Unable to locate site community')
-                                 },
-                                 None)
+                self._raise_json_error(_(u'Unable to locate site community'))
 
             # remove from all other site communities
             value = values.get('remove_all_others') or params.get('remove_all_others')
@@ -373,7 +404,7 @@ class SetUserCreationSiteView(AbstractAuthenticatedView,
 
     def __call__(self):
         values = self.readInput()
-        user = self.get_user(values)
+        user = self.get_entity(values)
         site = self.get_site(values)
         self.set_site(user, site)
         self.update_site_community(user, values)
@@ -416,12 +447,8 @@ class MoveAllUsersToParentSiteView(SetUserCreationSiteView):
         remove_other_communities = is_true(remove_other_communities)
         community = get_site_community()
         if not ICommunity.providedBy(community):
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': _(u'Unable to locate site community')
-                             },
-                             None)
+            self._raise_json_error(_(u'Unable to locate site community'))
+
         # Even hidden members
         site_admin_utility = component.getUtility(ISiteAdminManagerUtility)
         child_sites = site_admin_utility.get_descendant_site_names()

@@ -45,6 +45,7 @@ from nti.app.users import VIEW_RESTRICT_USER_ACCESS
 
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import get_user_creation_sitename
+from nti.app.users.utils import get_entity_creation_sitename
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -63,6 +64,8 @@ from nti.dataserver.interfaces import IAccessProvider
 from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users.communities import Community
+
+from nti.dataserver.users.friends_lists import DynamicFriendsList
 
 from nti.dataserver.users.index import get_entity_catalog
 
@@ -835,3 +838,70 @@ class TestAdminViews(ApplicationLayerTest):
 
             ncs_user = self._get_user('nocreationsiteuser')
             assert_that(get_user_creation_sitename(ncs_user), is_('alpha.nextthought.com'))
+
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_set_entity_creation_site(self):
+        sitename = u'demo.nextthought.com'
+        sitename2 = 'alpha.nextthought.com'
+        username = u'user001'
+        communityname = u'community001'
+        groupname = u'group001'
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = User.create_user(username=username)
+            assert_that(get_entity_creation_sitename(user), is_(None))
+
+            community = Community.create_community(username=communityname)
+            assert_that(get_entity_creation_sitename(community), is_(None))
+
+            dfl = DynamicFriendsList(username=groupname)
+            dfl.creator = user
+            user.addContainedObject(dfl)
+            groupID = dfl.NTIID
+            assert_that(get_entity_creation_sitename(dfl), is_(None))
+
+        # user
+        result = self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': username, 'site': 'invalid_site'}, status=422).json_body
+        assert_that(result['message'], is_('Invalid site.'))
+        self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': username, 'site': sitename}, status=204)
+        with mock_dataserver.mock_db_trans(self.ds):
+            assert_that(get_entity_creation_sitename(user), is_(sitename))
+
+        self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': username, 'site': sitename2}, status=204)
+        with mock_dataserver.mock_db_trans(self.ds):
+            assert_that(get_entity_creation_sitename(user), is_(sitename2))
+
+        # community
+        self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': communityname, 'site': 'invalid_site'}, status=422)
+        self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': communityname, 'site': sitename}, status=204)
+        with mock_dataserver.mock_db_trans(self.ds):
+            assert_that(get_entity_creation_sitename(community), is_(sitename))
+
+        self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': communityname, 'site': sitename2}, status=204)
+        with mock_dataserver.mock_db_trans(self.ds):
+            assert_that(get_entity_creation_sitename(community), is_(sitename2))
+
+        # group
+        self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': groupID, 'site': 'invalid_site'}, status=422)
+        self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': groupID, 'site': sitename}, status=204)
+        with mock_dataserver.mock_db_trans(self.ds):
+            assert_that(get_entity_creation_sitename(dfl), is_(sitename))
+
+        self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': groupID, 'site': sitename2}, status=204)
+        with mock_dataserver.mock_db_trans(self.ds):
+            assert_that(get_entity_creation_sitename(dfl), is_(sitename2))
+
+        # reset
+        self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': username}, status=204)
+        self.testapp.post_json('/dataserver2/@@set_entity_creation_site', {'entityId': communityname, 'site': 'dataserver2'}, status=204)
+        self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityId': groupID, 'site': 'dataserver2'}, status=204)
+        with mock_dataserver.mock_db_trans(self.ds):
+            assert_that(get_entity_creation_sitename(user), is_(None))
+            assert_that(get_entity_creation_sitename(community), is_(None))
+            assert_that(get_entity_creation_sitename(dfl), is_(None))
+
+        # validate parameters
+        result = self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'site': 'dataserver2'}, status=422).json_body
+        assert_that(result['message'], 'Must specify a entityId.')
+
+        result = self.testapp.post_json('/dataserver2/@@SetEntityCreationSite', {'entityid': 'invalid_entity_id','site': 'dataserver2'}, status=422).json_body
+        assert_that(result['message'], 'Invalid entityId.')
