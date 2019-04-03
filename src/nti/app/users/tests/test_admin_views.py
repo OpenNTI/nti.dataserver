@@ -783,6 +783,15 @@ class TestAdminViews(ApplicationLayerTest):
         finally:
             gsm.unregisterUtility(TestPolicy, ISitePolicyUserEventListener)
 
+
+    def _assert_user_creation_site(self, siteOne='beta.nextthought.com', siteTwo=none()):
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            cs_user = self._get_user('creationsiteuser')
+            assert_that(get_user_creation_sitename(cs_user), is_(siteOne))
+
+            ncs_user = self._get_user('nocreationsiteuser')
+            assert_that(get_user_creation_sitename(ncs_user), is_(siteTwo))
+
     @WithSharedApplicationMockDS(users=(u'nocreationsiteuser',
                                         u'creationsiteuser'),
                                  testapp=True,
@@ -790,6 +799,7 @@ class TestAdminViews(ApplicationLayerTest):
     def test_set_user_creation_site_in_site(self):
         environ = self._make_extra_environ()
         environ['HTTP_ORIGIN'] = 'https://alpha.nextthought.com'
+        url = '/dataserver2/@@SetUserCreationSiteInSite'
 
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             cs_user = self._get_user('creationsiteuser')
@@ -801,43 +811,22 @@ class TestAdminViews(ApplicationLayerTest):
                 user.record_dynamic_membership(site_comm)
 
         # Check no commit
-        res = self.testapp.post_json('/dataserver2/@@SetUserCreationSiteInSite',
-                                     {'commit': False},
-                                     status=200,
-                                     extra_environ=environ)
+        res = self.testapp.post_json(url, {'commit': 'false'}, status=200, extra_environ=environ)
+        self._assert_user_creation_site(siteOne='beta.nextthought.com', siteTwo=none())
 
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
-            cs_user = self._get_user('creationsiteuser')
-            assert_that(get_user_creation_sitename(cs_user), is_('beta.nextthought.com'))
-
-            ncs_user = self._get_user('nocreationsiteuser')
-            assert_that(get_user_creation_sitename(ncs_user), is_(none()))
+        res = self.testapp.post_json(url, {'commit': False}, status=200, extra_environ=environ)
+        self._assert_user_creation_site(siteOne='beta.nextthought.com', siteTwo=none())
 
         # Check commit
-        res = self.testapp.post_json('/dataserver2/@@SetUserCreationSiteInSite',
-                                     {},
-                                     status=200,
-                                     extra_environ=environ)
-
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
-            cs_user = self._get_user('creationsiteuser')
-            assert_that(get_user_creation_sitename(cs_user), is_('beta.nextthought.com'))
-
-            ncs_user = self._get_user('nocreationsiteuser')
-            assert_that(get_user_creation_sitename(ncs_user), is_('alpha.nextthought.com'))
+        res = self.testapp.post_json(url, {'commit': 'true'}, status=200, extra_environ=environ)
+        self._assert_user_creation_site(siteOne='beta.nextthought.com', siteTwo='alpha.nextthought.com')
 
         # Check force
-        res = self.testapp.post_json('/dataserver2/@@SetUserCreationSiteInSite',
-                                     {'force': True},
-                                     status=200,
-                                     extra_environ=environ)
+        res = self.testapp.post_json(url, {'force': True, 'commit': None}, status=200, extra_environ=environ)
+        self._assert_user_creation_site(siteOne='beta.nextthought.com', siteTwo='alpha.nextthought.com')
 
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
-            cs_user = self._get_user('creationsiteuser')
-            assert_that(get_user_creation_sitename(cs_user), is_('alpha.nextthought.com'))
-
-            ncs_user = self._get_user('nocreationsiteuser')
-            assert_that(get_user_creation_sitename(ncs_user), is_('alpha.nextthought.com'))
+        res = self.testapp.post_json(url, {'force': True, 'commit': 'Y'}, status=200, extra_environ=environ)
+        self._assert_user_creation_site(siteOne='alpha.nextthought.com', siteTwo='alpha.nextthought.com')
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_set_entity_creation_site(self):
