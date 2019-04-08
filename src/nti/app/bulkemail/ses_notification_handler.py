@@ -252,10 +252,20 @@ def process_sqs_queue(queue_name, delete_matched=True):
 		# remove it, it's probably ok if the address was also
 		# used in an another environment---most likely it's testing,
 		# not real-world use)
-		try:
-			fb_q.delete_message_batch(result.matched_messages)
-		except Exception:
-			logger.error("Failed to delete some messages")
+		# Max batch size is 10
+		def _batch(messages, batch_size=10):
+			start = 0
+			while start < len(messages):
+				yield messages[start: start+batch_size]
+				start += batch_size
+
+		for messages in _batch(result.matched_messages):
+			try:
+				resp = fb_q.delete_message_batch(messages)
+				if resp.errors:
+					logger.error("Failed to delete messages: %s", resp.errors)
+			except Exception:
+				logger.error("Failed to delete some messages")
 
 	return result
 
