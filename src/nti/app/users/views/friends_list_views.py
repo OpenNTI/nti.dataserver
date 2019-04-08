@@ -39,9 +39,7 @@ class _FriendsListsFriendsFieldUpdateView(UGDPutView):
         removals = set(externalValue.get('removals') or ())
         if additions != removals:
             newFriends = set([x.username for x in self.request.context])
-            for x in (additions - removals):
-                if x not in newFriends:
-                    newFriends.add(x)
+            newFriends = newFriends | (additions - removals)
             newFriends = newFriends - (removals - additions)
 
         return {"friends": newFriends}
