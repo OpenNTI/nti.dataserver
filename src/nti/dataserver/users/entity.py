@@ -344,7 +344,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
     # Externalization
 
-    def updateFromExternalObject(self, parsed, notify=True, *args, **kwargs):
+    def updateFromExternalObject(self, parsed, *args, **kwargs):
         # Notify we're about to update
         if getattr(self, '_p_jar', None):
             do_notify(WillUpdateEntityEvent(self, parsed))
@@ -380,8 +380,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
         io = InterfaceObjectIO(profile, profile_iface,
                                validate_after_update=validate)
         updated = io.updateFromExternalObject(parsed, *args, **kwargs)
-        if notify:
-            notify_modified(profile, parsed)
+        notify_modified(profile, parsed)
         if profile_update and not IDoNotValidateProfile:
             # If we got here, then we got the data to validly update our profile,
             # so we can stop providing the update interface
