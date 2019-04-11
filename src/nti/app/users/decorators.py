@@ -51,6 +51,7 @@ from nti.identifiers.utils import get_external_identifiers
 from nti.links.links import Link
 
 from nti.traversal.traversal import find_interface
+from nti.app.users.utils import get_user_creation_sitename
 
 LINKS = StandardExternalFields.LINKS
 
@@ -118,6 +119,7 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
             result['external_ids'] = external_ids
         result['lastSeenTime'] = context.lastSeenTime
         result['lastLoginTime'] = context.lastLoginTime
+        result['CreationSite'] = get_user_creation_sitename(context)
 
 
 @component.adapter(ICommunity)
@@ -259,7 +261,7 @@ class _CatalogWorkspaceAdminLinkDecorator(object):
 @interface.implementer(IExternalMappingDecorator)
 class _UserTokensLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def _predicate(self, context, result):
+    def _predicate(self, context, unused_result):
         return bool(self._is_authenticated and self.remoteUser == context)
 
     def _do_decorate_external(self, context, result):
