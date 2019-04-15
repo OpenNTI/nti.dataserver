@@ -10,6 +10,7 @@ from __future__ import absolute_import
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import is_not
 from hamcrest import raises
 from hamcrest import calling
 from hamcrest import has_entry
@@ -91,15 +92,18 @@ class TestWref(unittest.TestCase):
         setattr(ref, '_v_entity_cache', None)
         setattr(ref, '_entity_id', -1)
 
-        assert_that(ref(), is_(none()))
+        # Resolve via username
+        assert_that(ref(), is_not(none()))
 
-        assert_that(ref(True),
+        setattr(ref, 'username', 'unused_name')
+
+        assert_that(ref(True, allow_cached=False),
                     verifiably_provides(IMissingEntity))
 
-        assert_that(ref(MissingUser),
+        assert_that(ref(MissingUser, allow_cached=False),
                     verifiably_provides(IMissingUser))
 
-        ext_obj = to_external_object(ref(MissingUser),  name='summary')
+        ext_obj = to_external_object(ref(MissingUser, allow_cached=False),  name='summary')
         assert_that(ext_obj, has_entry('Class', 'MissingUser'))
 
     @WithMockDSTrans

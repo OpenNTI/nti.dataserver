@@ -29,6 +29,8 @@ from nti.dataserver.interfaces import IEntity
 
 from nti.dataserver.users.missing_user import MissingEntity
 
+from nti.dataserver.users import User
+
 from nti.property.property import read_alias
 
 from nti.schema.eqhash import EqHash
@@ -66,8 +68,8 @@ class WeakRef(object):
 
     """
 
-    # Because entity names may be reused, we keep both the intid of the object
-    # as well as the username and only return the entity if both of those things match.
+    # We keep both the intid of the object as well as the username and only
+    # return the entity if both of those things match.
     # pylint: disable=E0236,W0212
     __slots__ = ('username', '_entity_id', '_v_entity_cache')
 
@@ -102,6 +104,13 @@ class WeakRef(object):
             result = component.getUtility(IIntIds).getObject(self._entity_id)
         except KeyError:
             result = None
+
+        if result is None:
+            # We used to only resolve via intid, but now, we no longer allow
+            # usernames to be re-used (blacklisted). So this should be safe
+            # and even useful since it would allow us to recover accounts.
+            # Try username
+            result = User.get_user(self.username)
 
         try:
             result_username = getattr(result, 'username', None)
