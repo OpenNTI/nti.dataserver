@@ -61,7 +61,7 @@ def _unverify_email(user):
 
 def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 	"""
-	Given a sequence of (email addresses, principal id), find all the
+	Given a sequence of (email addresses, principal id, bounce_sub_type), find all the
 	accounts that correspond to those addresses pairs, and take
 	appropriate action.
 
@@ -75,7 +75,7 @@ def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 	all_pids = set()
 
 	dataserver = dataserver or component.getUtility( IDataserver )
-	for email_addr, possible_pid in email_addrs_and_pids:
+	for email_addr, possible_pid, unused_bounce_subtype in email_addrs_and_pids:
 		if possible_pid:
 			all_pids.add(possible_pid)
 
@@ -128,22 +128,19 @@ ProcessResult = collections.namedtuple('ProcessResult',
 										'permanent_error_addrs',
 										'matched_pids'])
 
-def process_ses_feedback( messages, dataserver=None, mark_transient=True ):
+def process_ses_feedback(messages, dataserver=None, mark_transient=False):
 	"""
 	Given an iterable of :class:`boto.sqs.message.Message` objects
 	that represent `feedback from SES <http://docs.amazonwebservices.com/ses/latest/DeveloperGuide/NotificationContents.html>`_,
 	process them.
 
-	:param bool mark_transient: If set to ``True`` (the default) then bounce notifications
-		that are either permanent or transient (so all notifications) result in
-		corresponding user accounts being marked as needing an update. This is true by default
-		because SES only sends a bounce notification once it has given up trying to deliver:
-		"Amazon SES only reports hard bounces back to you. A hard bounce indicates a persistent delivery failure
-		(e.g., mailbox does not exist).
-		In other words, your recipient did not receive your email message, and Amazon SES will not try to resend it."
-		For our purposes, this means the user needs to confirm the address again. (While it is possible to distinguish certain subtypes of
-		transient errors that may truly be transient, particularly MailboxFull, we haven't seen any
-		of those in practice.)
+	:param bool mark_transient: If set to ``True`` (defaults to False) then
+	   bounce notifications that are transient result in corresponding user
+	   accounts being marked as needing an update. Transient email bounces
+	   may be caused by something as simple as an "OutOfMessage" auto-reply.
+	   Therefore, it is probably never correct to mark these messages as
+	   requiring update.
+	   https://docs.aws.amazon.com/ses/latest/DeveloperGuide/notification-contents.html#bounce-object
 
 
 	:return: A tuple-like instance of :class:`ProcessResult`.
@@ -191,7 +188,7 @@ def process_ses_feedback( messages, dataserver=None, mark_transient=True ):
 			pids_to_messages[pid].append(message)
 
 		for bounced in bounce['bouncedRecipients']:
-			errors.add( (bounced['emailAddress'], pid) )
+			errors.add( (bounced['emailAddress'], pid, bounce['bounceSubType']) )
 
 	logger.info( "Processed %d bounce notices", i )
 	logger.info( "The following email addresses experienced transient failures: %s", addr_transient_errors )
@@ -277,18 +274,18 @@ def process_sqs_messages():
 		VERP context.
 	"""
 	arg_parser = argparse.ArgumentParser( description="Read SES feedback messages from an SQS queue and mark users that need updates." )
-	arg_parser.add_argument( 'queue', 
+	arg_parser.add_argument( 'queue',
                              help="The SQS queue to read from. Default: %(default)s",
                               default='SESFeedback', nargs='?' )
-	arg_parser.add_argument( '--env_dir', 
+	arg_parser.add_argument( '--env_dir',
                              help="Dataserver environment root directory" )
-	arg_parser.add_argument( '-v', '--verbose', 
+	arg_parser.add_argument( '-v', '--verbose',
                              help="Be verbose", action='store_true',
                              dest='verbose')
 	arg_parser.add_argument( '--delete',
                              help="After successful processing, delete messages that actually matched a user from SQS queue. Default: %(default)s",
 							 action='store',
-                             dest='delete', 
+                             dest='delete',
                              default=True)
 
 	args = arg_parser.parse_args()
