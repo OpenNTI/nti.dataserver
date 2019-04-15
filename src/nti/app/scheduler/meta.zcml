@@ -1,0 +1,20 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:meta="http://namespaces.zope.org/meta">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<meta:directives namespace="http://nextthought.com/ntp/app/scheduler">
+
+		<meta:directive	name="createScheduledJob"
+						schema=".zcml.ICreateScheduledJob"
+						handler=".zcml.createScheduledJob" />
+
+	</meta:directives>
+
+</configure>
