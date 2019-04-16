@@ -137,10 +137,15 @@ class TestViews(ApplicationLayerTest):
         assert_that(res, has_entries({'name': 'first',
                                       'values': contains_inanyorder('a', 'b'),
                                       'MimeType': 'application/vnd.nextthought.vocabularyregistry.vocabularyitem'}))
+        self.forbid_link_with_rel(res, 'add')
+        self.forbid_link_with_rel(res, 'remove')
+
         res = self.testapp.get(voca_url, status=200, extra_environ=self.admin_environ).json_body
         assert_that(res, has_entries({'name': 'first',
                                       'values': contains_inanyorder('a', 'b'),
                                       'MimeType': 'application/vnd.nextthought.vocabularyregistry.vocabularyitem'}))
+        self.require_link_href_with_rel(res, 'add')
+        self.require_link_href_with_rel(res, 'remove')
 
         # delete
         self.testapp.delete(voca_url, status=401, extra_environ=self.anonymous_environ)

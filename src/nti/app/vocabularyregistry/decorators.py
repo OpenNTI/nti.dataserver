@@ -34,7 +34,7 @@ logger = __import__('logging').getLogger(__name__)
 @interface.implementer(IExternalMappingDecorator)
 class _VocabularyLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def _predicate(self, user_context, unused_result):
+    def _predicate(self, context, result):
         return bool(self._is_authenticated and is_admin(self.remoteUser))
 
     def _do_decorate_external(self, context, result):

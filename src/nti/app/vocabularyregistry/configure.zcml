@@ -8,7 +8,7 @@
 
     <subscriber factory=".decorators._VocabularyLinkDecorator"
                 provides="nti.externalization.interfaces.IExternalMappingDecorator"
-                for="nti.dataserver.vocabularyregistry.interfaces.IVocabularyItemContainer
+                for="nti.dataserver.vocabularyregistry.interfaces.IVocabularyItem
                      pyramid.interfaces.IRequest" />
 
 </configure>
