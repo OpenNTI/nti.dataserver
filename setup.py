@@ -501,7 +501,7 @@ setup(
             'pylint',  # install astroid
             'pyramid_debugtoolbar >= 1.0.9',
             # built-in to pypy
-            'readline >= 6.2.4.1' if not IS_PYPY else '',
+            'gnureadline >= 6.3.8' if not IS_PYPY else '',
             'repoze.sphinx.autointerface >= 0.7.1',
             'rope >= 0.9.4',  # refactoring library. c.f. ropemacs
             'ropemode >= 0.2',  # IDE helper for rope
