@@ -77,10 +77,11 @@ class TestVocabulary(DataserverLayerTest):
         item.remove(['a', 'b'])
         assert_that(item.values, contains_inanyorder('c', 'd'))
 
-        item.remove(['c', 'd'])
+        item.remove(['c', 'd', 'f'])
         assert_that(item.values, has_length(0))
 
-        assert_that(calling(item.remove).with_args(['e']), raises(KeyError))
+        # don't raise KeyError if it doens't exist.
+        item.remove(['e'])
 
         # internalizing/externalizing
         item = VocabularyItem(name=u'first', values=(u'one', u'two'))

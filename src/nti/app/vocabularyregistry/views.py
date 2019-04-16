@@ -108,7 +108,7 @@ class AddValuesToVocabularyView(AbstractAuthenticatedView,
     def __call__(self):
         external = self.readInput()
         self.context.add(external)
-        return hexc.HTTPNoContent()
+        return self.context
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -125,4 +125,4 @@ class RemoveValuesFromVocabularyView(AbstractAuthenticatedView,
     def __call__(self):
         external = self.readInput()
         self.context.remove(external)
-        return hexc.HTTPNoContent()
+        return self.context

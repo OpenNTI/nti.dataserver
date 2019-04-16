@@ -71,7 +71,8 @@ class VocabularyItem(SchemaConfigured, PersistentCreatedAndModifiedTimeObject, C
 
     def remove(self, values):
         for x in values or ():
-            self.values.remove(x)
+            if x in self.values:
+                self.values.remove(x)
 
 
 @interface.implementer(IVocabularyItemContainer)

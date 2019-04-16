@@ -167,13 +167,13 @@ class TestViews(ApplicationLayerTest):
 
         self.testapp.post_json(add_url, params=params, status=401, extra_environ=self.anonymous_environ)
         self.testapp.post_json(add_url, params=params, status=403, extra_environ=self.user_environ)
-        self.testapp.post_json(add_url, params=params, status=204, extra_environ=self.admin_environ)
+        self.testapp.post_json(add_url, params=params, status=200, extra_environ=self.admin_environ)
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             container = component.getUtility(IVocabularyItemContainer)
             item = container.get_vocabulary_item('first')
             assert_that(item.values, contains_inanyorder('one', 'two'))
 
-        self.testapp.post_json(add_url, params=['three'], status=204, extra_environ=self.admin_environ)
+        self.testapp.post_json(add_url, params=['three'], status=200, extra_environ=self.admin_environ)
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             assert_that(item.values, contains_inanyorder('one', 'two', 'three'))
 
@@ -181,10 +181,10 @@ class TestViews(ApplicationLayerTest):
         params = ['two']
         self.testapp.post_json(remove_url, params=params, status=401, extra_environ=self.anonymous_environ)
         self.testapp.post_json(remove_url, params=params, status=403, extra_environ=self.user_environ)
-        self.testapp.post_json(remove_url, params=params, status=204, extra_environ=self.admin_environ)
+        self.testapp.post_json(remove_url, params=params, status=200, extra_environ=self.admin_environ)
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             assert_that(item.values, contains_inanyorder('one', 'three'))
 
-        self.testapp.post_json(remove_url, params=['one', 'three'], status=204, extra_environ=self.admin_environ)
+        self.testapp.post_json(remove_url, params=['one', 'three'], status=200, extra_environ=self.admin_environ)
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             assert_that(item.values, has_length(0))
