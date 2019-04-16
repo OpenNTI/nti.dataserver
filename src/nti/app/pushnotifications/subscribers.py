@@ -57,10 +57,6 @@ def _threadable_added(threadable, unused_event):
 	if not _is_subscribed(user):
 		return
 
-	addr = IEmailAddressable(user, None)
-	if not addr or not addr.email:
-		return
-
 	request = get_current_request()
 
 	intids = component.getUtility(IIntIds)
@@ -85,7 +81,7 @@ def _threadable_added(threadable, unused_event):
 	mailer = _mailer()
 	mailer.queue_simple_html_text_email(delegate.template_name,
 										subject=subject,
-										recipients=[addr.email],
+										recipients=[user],
 										template_args=template_args,
 										reply_to=None,
 										package=push_pkg,

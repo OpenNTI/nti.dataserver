@@ -570,7 +570,7 @@ class AbstractSitePolicyEventListener(object):
 			self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
 			subject=self.NEW_USER_CREATED_EMAIL_SUBJECT,
 			bcc=self.NEW_USER_CREATED_BCC,
-			recipients=[profile],
+			recipients=[user],
 			template_args=args,
 			request=event.request,
 			package=self.__find_my_package())

@@ -8,6 +8,7 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import not_none
 from hamcrest import assert_that
 from hamcrest import has_property
@@ -18,6 +19,8 @@ from zope import interface
 from zope.publisher.interfaces.browser import IBrowserRequest
 
 from zope.security.interfaces import IPrincipal
+
+from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.mailer._default_template_mailer import _pyramid_message_to_message
 from nti.mailer._default_template_mailer import create_simple_html_text_email
@@ -82,7 +85,7 @@ class TestEmail(AppLayerTest):
 
 	def test_create_email_with_verp(self):
 
-		@interface.implementer(IPrincipal, IEmailAddressable)
+		@interface.implementer(IPrincipal, IEmailAddressable, IUserProfile)
 		class User(object):
 			username = 'the_user'
 			id = 'the_user'
@@ -124,3 +127,19 @@ class TestEmail(AppLayerTest):
 		# we can get to IPrincipal, so we have VERP
 		# The first part will be predictable, the rest won't
 		assert_that(msg.sender, contains_string('"NextThought" <no-reply+'))
+
+		#
+		user.email_verified = False
+		msg = create_simple_html_text_email('new_user_created',
+											subject='Hi there',
+											recipients=[user],
+											template_args={'user': user,
+														'profile': profile,
+														'context': user,
+														'href': token_url,
+														'support_email': 'support_email' },
+											package='nti.appserver',
+											request=request)
+		assert_that(msg, none())
+
+
