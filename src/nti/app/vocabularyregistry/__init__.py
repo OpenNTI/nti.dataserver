@@ -10,6 +10,3 @@ from __future__ import absolute_import
 
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
-
-VIEW_VOCABULARY_VALUE_ADD = u"add"
-VIEW_VOCABULARY_VALUE_REMOVE = u"remove"

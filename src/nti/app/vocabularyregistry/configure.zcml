@@ -6,9 +6,4 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.component" />
 
-    <subscriber factory=".decorators._VocabularyLinkDecorator"
-                provides="nti.externalization.interfaces.IExternalMappingDecorator"
-                for="nti.dataserver.vocabularyregistry.interfaces.IVocabularyItem
-                     pyramid.interfaces.IRequest" />
-
 </configure>

@@ -391,7 +391,4 @@
 	<include package="z3c.autoinclude" file="meta.zcml" />
 	<includePlugins package="." />
 
-	<include package=".vocabularyregistry" file="configure.zcml" />
-
-
 </configure>
