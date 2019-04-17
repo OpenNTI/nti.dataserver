@@ -75,12 +75,12 @@ class _DynamicChangeTypeProvidedBy(ObjectSpecificationDescriptor):
     def __get__(self, inst, cls):
         result = ObjectSpecificationDescriptor.__get__(self, inst, cls)
         if inst is not None and inst.type in SC_CHANGE_TYPE_MAP:
-            inst_type = type(inst)
+            key = (cls.__name__, inst.type)
             try:
-                result = self.type_cache[inst_type]
+                result = self.type_cache[key]
             except KeyError:
                 result = result + SC_CHANGE_TYPE_MAP[inst.type]
-                self.type_cache[inst_type] = result
+                self.type_cache[key] = result
         return result
 
 
