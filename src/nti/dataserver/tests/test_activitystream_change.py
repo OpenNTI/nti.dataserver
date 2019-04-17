@@ -17,6 +17,8 @@ from hamcrest import has_entry
 from hamcrest import assert_that
 does_not = is_not
 
+from zope.interface import providedBy
+
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer, WithMockDSTrans
 
 import unittest
@@ -42,9 +44,11 @@ class TestChange(unittest.TestCase):
 		change2 = Change(Change.CREATED, user)
 		assert_that(change2, does_not(validly_provides(IStreamChangeCircledEvent)))
 		assert_that(change, validly_provides(IStreamChangeCircledEvent))
+		assert_that(providedBy(change), is_not(providedBy(change2)))
 
 		change2.type = Change.CIRCLED
 		assert_that(change2, validly_provides(IStreamChangeCircledEvent))
+		assert_that(providedBy(change), is_(providedBy(change2)))
 
 
 	@WithMockDSTrans

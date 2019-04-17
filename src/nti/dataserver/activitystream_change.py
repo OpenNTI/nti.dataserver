@@ -11,9 +11,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import functools
-
 from operator import setitem
+
+from repoze.lru import lru_cache
 
 from zope import component
 from zope import interface
@@ -71,7 +71,7 @@ def _weak_ref_to(obj):
 
 
 # module global
-@functools.lru_cache
+@lru_cache(10000)
 def descriptor_for_type(parent_type, my_type):
     if my_type in SC_CHANGE_TYPE_MAP:
         return parent_type + SC_CHANGE_TYPE_MAP[my_type]
