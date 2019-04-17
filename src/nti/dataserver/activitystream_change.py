@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import functools
+
 from operator import setitem
 
 from zope import component
@@ -68,19 +70,21 @@ def _weak_ref_to(obj):
         return obj
 
 
+# module global
+@functools.rlucache
+def descriptor_for_type(parent_type, my_type):
+    if my_type in SC_CHANGE_TYPE_MAP:
+        return parent_type + SC_CHANGE_TYPE_MAP[my_type]
+    return parent_type
+
+
 class _DynamicChangeTypeProvidedBy(ObjectSpecificationDescriptor):
 
-    type_cache = dict()
-
+    # instance method
     def __get__(self, inst, cls):
         result = ObjectSpecificationDescriptor.__get__(self, inst, cls)
         if inst is not None and inst.type in SC_CHANGE_TYPE_MAP:
-            key = (cls.__name__, inst.type)
-            try:
-                result = self.type_cache[key]
-            except KeyError:
-                result = result + SC_CHANGE_TYPE_MAP[inst.type]
-                self.type_cache[key] = result
+            return descriptor_for_type(result, inst.type)
         return result
 
 
