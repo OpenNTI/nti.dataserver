@@ -13,6 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from operator import setitem
 
+from repoze.lru import lru_cache
+
 from zope import component
 from zope import interface
 
@@ -68,12 +70,21 @@ def _weak_ref_to(obj):
         return obj
 
 
+# module global
+@lru_cache(10000)
+def descriptor_for_type(parent_type, my_type):
+    if my_type in SC_CHANGE_TYPE_MAP:
+        return parent_type + SC_CHANGE_TYPE_MAP[my_type]
+    return parent_type
+
+
 class _DynamicChangeTypeProvidedBy(ObjectSpecificationDescriptor):
 
+    # instance method
     def __get__(self, inst, cls):
         result = ObjectSpecificationDescriptor.__get__(self, inst, cls)
         if inst is not None and inst.type in SC_CHANGE_TYPE_MAP:
-            result = result + SC_CHANGE_TYPE_MAP[inst.type]
+            return descriptor_for_type(result, inst.type)
         return result
 
 
@@ -189,7 +200,7 @@ class Change(PersistentCreatedModDateTrackingObject):
 
     @property
     def object(self):
-        """ 
+        """
         Returns the object to which this reference refers,
         or None if the object no longer exists.
         """

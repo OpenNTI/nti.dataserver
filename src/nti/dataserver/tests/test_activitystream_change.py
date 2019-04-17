@@ -6,18 +6,22 @@
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
-__docformat__ = "restructuredtext en"
+from __future__ import division
 
-logger = __import__('logging').getLogger(__name__)
+from __future__ import absolute_import
 
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import not_none
+from hamcrest import has_entry
+from hamcrest import assert_that
+does_not = is_not
 
+from zope.interface import providedBy
 
-from hamcrest import assert_that, is_, not_none, has_entry
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer, WithMockDSTrans
 
 import unittest
-
 
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver.users import User
@@ -31,16 +35,25 @@ class TestChange(unittest.TestCase):
 
 	@WithMockDSTrans
 	def test_dynamic_provides(self):
-		user = User.create_user( self.ds, username='jason.madden@nextthought.com' )
+		user = User.create_user(self.ds, username=u'jason.madden@nextthought.com')
 
-		change = Change( Change.CIRCLED, user )
+		change = Change(Change.CIRCLED, user)
 
-		assert_that( change, validly_provides(IStreamChangeCircledEvent))
+		assert_that(change, validly_provides(IStreamChangeCircledEvent))
+
+		change2 = Change(Change.CREATED, user)
+		assert_that(change2, does_not(validly_provides(IStreamChangeCircledEvent)))
+		assert_that(change, validly_provides(IStreamChangeCircledEvent))
+		assert_that(providedBy(change), is_not(providedBy(change2)))
+
+		change2.type = Change.CIRCLED
+		assert_that(change2, validly_provides(IStreamChangeCircledEvent))
+		assert_that(providedBy(change), is_(providedBy(change2)))
 
 
 	@WithMockDSTrans
 	def test_to_external(self):
-		user = User.create_user( self.ds, username='jason.madden@nextthought.com' )
+		user = User.create_user( self.ds, username=u'jason.madden@nextthought.com' )
 
 		change = Change( Change.CIRCLED, user )
 		assert_that( change.object, is_( user ) )
