@@ -70,10 +70,17 @@ def _weak_ref_to(obj):
 
 class _DynamicChangeTypeProvidedBy(ObjectSpecificationDescriptor):
 
+    type_cache = dict()
+
     def __get__(self, inst, cls):
         result = ObjectSpecificationDescriptor.__get__(self, inst, cls)
         if inst is not None and inst.type in SC_CHANGE_TYPE_MAP:
-            result = result + SC_CHANGE_TYPE_MAP[inst.type]
+            inst_type = type(inst)
+            try:
+                result = self.type_cache[inst_type]
+            except KeyError:
+                result = result + SC_CHANGE_TYPE_MAP[inst.type]
+                self.type_cache[inst_type] = result
         return result
 
 
@@ -189,7 +196,7 @@ class Change(PersistentCreatedModDateTrackingObject):
 
     @property
     def object(self):
-        """ 
+        """
         Returns the object to which this reference refers,
         or None if the object no longer exists.
         """
