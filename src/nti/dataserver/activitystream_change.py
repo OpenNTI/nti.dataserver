@@ -71,7 +71,7 @@ def _weak_ref_to(obj):
 
 
 # module global
-@functools.rlucache
+@functools.lru_cache
 def descriptor_for_type(parent_type, my_type):
     if my_type in SC_CHANGE_TYPE_MAP:
         return parent_type + SC_CHANGE_TYPE_MAP[my_type]
