@@ -17,6 +17,7 @@ from zope import component
 from zope.cachedescriptors.property import Lazy
 
 from zope.component.hooks import getSite
+from zope.component.hooks import site as current_site
 
 from zope.schema.interfaces import IVocabulary
 
@@ -35,6 +36,9 @@ from nti.app.vocabularyregistry.utils import install_named_utility
 from nti.dataserver import authorization as nauth
 
 from nti.site import unregisterUtility
+from nti.site.interfaces import IHostPolicyFolder
+
+from nti.traversal.traversal import find_interface
 
 
 class VocabularyViewMixin(object):
@@ -44,14 +48,6 @@ class VocabularyViewMixin(object):
                          error,
                          { 'message': message, },
                          None)
-
-    @Lazy
-    def site(self):
-        return getSite()
-
-    @Lazy
-    def site_manager(self):
-        return self.site.getSiteManager()
 
     @Lazy
     def _params(self):
@@ -82,25 +78,29 @@ class VocabularyViewMixin(object):
 
         return _res
 
-    def _get_local_utility(self, name, iface):
-        obj = component.queryUtility(iface, name=name, context=self.site)
-        if obj is None or getattr(obj, '__parent__', None) != self.site_manager:
+    def _get_local_utility(self, name, iface, site, site_manager=None):
+        site_manager = site_manager or site.getSiteManager()
+        obj = component.queryUtility(iface, name=name, context=site)
+        if obj is None or getattr(obj, '__parent__', None) != site_manager:
             return None
         return obj
 
-    def register_vocabulary(self, name, terms):
+    def register_vocabulary(self, name, terms, site_manager):
         obj = SimpleVocabulary([SimpleTerm(x) for x in terms])
         install_named_utility(obj,
                               utility_name=name,
                               provided=IVocabulary,
-                              local_site_manager=self.site_manager)
+                              local_site_manager=site_manager)
         return obj
 
-    def unregister_vocabulary(self, name, iface=IVocabulary):
-        obj = self._get_local_utility(name, iface)
+    def unregister_vocabulary(self, name, site, site_manager=None, iface=IVocabulary):
+        site_manager = site_manager or site.getSiteManager()
+        obj = self._get_local_utility(name, iface,
+                                      site=site,
+                                      site_manager=site_manager)
         if obj is not None:
-            del self.site_manager[obj.__name__]
-            unregisterUtility(self.site_manager,
+            del site_manager[obj.__name__]
+            unregisterUtility(site_manager,
                               obj,
                               iface,
                               name=name)
@@ -119,13 +119,18 @@ class VocabularyUpdateView(AbstractAuthenticatedView,
     otherwise create a new vocabulary for the current site.
     """
     def __call__(self):
-        if self.context.__parent__ is not self.site_manager:
-            self._raise_error(_("Only vocabulary created in the current site can be updated."), error=hexc.HTTPForbidden)
         name = self.context.__name__
         terms = self._get_terms()
-        self.unregister_vocabulary(name)
-        vocabulary = self.register_vocabulary(name, terms)
-        return vocabulary
+
+        target_site = find_interface(self.context, IHostPolicyFolder)
+        with current_site(target_site):
+            site_manager = target_site.getSiteManager()
+            self.unregister_vocabulary(name,
+                                       site=target_site,
+                                       site_manager=site_manager)
+
+            vocabulary = self.register_vocabulary(name, terms, site_manager)
+            return vocabulary
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -139,11 +144,14 @@ class VocabularyDeleteView(AbstractAuthenticatedView,
     Delete this IVocabulary if it was created in the current site.
     """
     def __call__(self):
-        if self.context.__parent__ is not self.site_manager:
-            self._raise_error(_("Only vocabulary created in the current site can be deleted."), error=hexc.HTTPForbidden)
         name = self.context.__name__
-        self.unregister_vocabulary(name)
-        return hexc.HTTPNoContent()
+        target_site = find_interface(self.context, IHostPolicyFolder)
+        with current_site(target_site):
+            site_manager = target_site.getSiteManager()
+            self.unregister_vocabulary(name,
+                                       site=target_site,
+                                       site_manager=site_manager)
+            return hexc.HTTPNoContent()
 
 
 @view_config(route_name='objects.generic.traversal',
