@@ -11,7 +11,6 @@ from __future__ import absolute_import
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
-from pyramid.view import view_defaults
 
 from zope import component
 
@@ -20,11 +19,6 @@ from zope.cachedescriptors.property import Lazy
 from zope.component.hooks import getSite
 
 from zope.schema.interfaces import IVocabulary
-from zope.schema.interfaces import IVocabularyFactory
-from zope.schema.interfaces import IVocabularyRegistry
-
-from zope.schema.vocabulary import SimpleVocabulary
-from zope.schema.vocabulary import SimpleTerm
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -32,21 +26,15 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.app.vocabularyregistry.factory import DefaultVocabularyFactory
+from nti.app.vocabularyregistry import MessageFactory as _
+from nti.app.vocabularyregistry.vocabulary import Term as SimpleTerm
+from nti.app.vocabularyregistry.vocabulary import Vocabulary as SimpleVocabulary
 
-from nti.common.string import is_true
+from nti.app.vocabularyregistry.utils import install_named_utility
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IDataserverFolder
-
-from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.interfaces import StandardExternalFields
-
-
-ITEMS = StandardExternalFields.ITEMS
-TOTAL = StandardExternalFields.TOTAL
-ITEM_COUNT = StandardExternalFields.ITEM_COUNT
+from nti.site import unregisterUtility
 
 
 class VocabularyViewMixin(object):
@@ -76,7 +64,7 @@ class VocabularyViewMixin(object):
             if name:
                 return name
 
-        self._raise_error(u'name must be non-empty string.') 
+        self._raise_error(u'name must be non-empty string.')
 
     def _get_terms(self):
         terms = self._params.get('terms')
@@ -94,92 +82,28 @@ class VocabularyViewMixin(object):
 
         return _res
 
-    def create_vocabulary(self, name, terms):
-        vocabulary = SimpleVocabulary([SimpleTerm(x) for x in terms])
-        vocabulary.__name__ = name
-        vocabulary.__parent__ = self.site_manager
-        return vocabulary
-
-    def create_vocabulary_factory(self, name):
-        factory = DefaultVocabularyFactory()
-        factory.__name__ = name
-        factory.__parent__ = self.site_manager
-        return factory
-
-    def register_vocabulary(self, name, vocabulary):
-        self.site_manager.registerUtility(vocabulary,
-                                          provided=IVocabulary,
-                                          name=name)
-        return vocabulary
-
-    def register_vocabulary_factory(self, name, factory):
-        self.site_manager.registerUtility(factory,
-                                          provided=IVocabularyFactory,
-                                          name=name)
-        return factory
-
-    def unregister_vocabulary(self, vocabulary):
-        self.site_manager.unregisterUtility(vocabulary,
-                                            provided=IVocabulary,
-                                            name=vocabulary.__name__)
-
-    def unregister_vocabulary_factory(self, factory):
-        self.site_manager.unregisterUtility(factory,
-                                            provided=IVocabularyFactory,
-                                            name=factory.__name__)
-
-    def _get_local_utility(self, name, iface=IVocabulary):
-        if not name:
+    def _get_local_utility(self, name, iface):
+        obj = component.queryUtility(iface, name=name, context=self.site)
+        if obj is None or getattr(obj, '__parent__', None) != self.site_manager:
             return None
-        obj = component.queryUtility(iface, name=name)
-        if obj is not None \
-            and getattr(obj, '__name__', None) == name \
-            and getattr(obj, '__parent__', None) == self.site_manager:
-            return obj
-        return None
+        return obj
 
-    def _get_local_vocabulary(self, name):
-        return self._get_local_utility(name, iface=IVocabulary)
+    def register_vocabulary(self, name, terms):
+        obj = SimpleVocabulary([SimpleTerm(x) for x in terms])
+        install_named_utility(obj,
+                              utility_name=name,
+                              provided=IVocabulary,
+                              local_site_manager=self.site_manager)
+        return obj
 
-    def _get_local_vocabulary_factory(self, name):
-        return self._get_local_utility(name, iface=IVocabularyFactory)
-
-
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             request_method='POST',
-             permission=nauth.ACT_CREATE,
-             context=IVocabularyRegistry)
-class VocabularyCreationView(AbstractAuthenticatedView,
-                             ModeledContentUploadRequestUtilsMixin,
-                             VocabularyViewMixin):
-    """
-    Create and register new IVocabulary and IVocabularyFactory utilities in the current site.
-    """
-
-    def _reRegister(self, name, terms):
-        # Unregister if possible
-        vocabulary = self._get_local_vocabulary(name=name)
-        if vocabulary is not None:
-            self.unregister_vocabulary(vocabulary)
-
-        factory = self._get_local_vocabulary_factory(name=name)
-        if factory is not None:
-            self.unregister_vocabulary_factory(factory)
-
-        # Register
-        vocabulary = self.create_vocabulary(name=name, terms=terms)
-        self.register_vocabulary(name, vocabulary)
-
-        factory = self.create_vocabulary_factory(name=name)
-        self.register_vocabulary_factory(name, factory)
-
-        return vocabulary
-
-    def __call__(self):
-        name = self._get_name()
-        terms = self._get_terms()
-        return self._reRegister(name, terms)
+    def unregister_vocabulary(self, name, iface=IVocabulary):
+        obj = self._get_local_utility(name, iface)
+        if obj is not None:
+            del self.site_manager[obj.__name__]
+            unregisterUtility(self.site_manager,
+                              obj,
+                              iface,
+                              name=name)
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -187,15 +111,21 @@ class VocabularyCreationView(AbstractAuthenticatedView,
              request_method='PUT',
              permission=nauth.ACT_UPDATE,
              context=IVocabulary)
-class VocabularyUpdateView(VocabularyCreationView):
+class VocabularyUpdateView(AbstractAuthenticatedView,
+                           ModeledContentUploadRequestUtilsMixin,
+                           VocabularyViewMixin):
     """
-    Replace the current vocabulary if it was created for the current site,
+    Replace the current vocabulary if it was created in the current site,
     otherwise create a new vocabulary for the current site.
     """
     def __call__(self):
-        name = getattr(self.context, '__name__', None)
+        if self.context.__parent__ is not self.site_manager:
+            self._raise_error(_("Only vocabulary created in the current site can be updated."), error=hexc.HTTPForbidden)
+        name = self.context.__name__
         terms = self._get_terms()
-        return self._reRegister(name, terms)
+        self.unregister_vocabulary(name)
+        vocabulary = self.register_vocabulary(name, terms)
+        return vocabulary
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -206,22 +136,13 @@ class VocabularyUpdateView(VocabularyCreationView):
 class VocabularyDeleteView(AbstractAuthenticatedView,
                            VocabularyViewMixin):
     """
-    Delete this IVocabulary if it was created in the current site,
-    otherwise raise 403 forbidden.
+    Delete this IVocabulary if it was created in the current site.
     """
     def __call__(self):
-        name = getattr(self.context, '__name__', None)
-
-        vocabulary = self._get_local_vocabulary(name=name)
-        if vocabulary is None:
-            self._raise_error("Only persistent vocabulary that created in current site can be deleted.",
-                              error=hexc.HTTPForbidden)
-        self.unregister_vocabulary(vocabulary)
-
-        factory = self._get_local_vocabulary_factory(name=name)
-        if factory is not None:
-            self.unregister_vocabulary_factory(factory)
-
+        if self.context.__parent__ is not self.site_manager:
+            self._raise_error(_("Only vocabulary created in the current site can be deleted."), error=hexc.HTTPForbidden)
+        name = self.context.__name__
+        self.unregister_vocabulary(name)
         return hexc.HTTPNoContent()
 
 

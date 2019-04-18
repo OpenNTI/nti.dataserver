@@ -31,12 +31,14 @@ from zope.schema.interfaces import IVocabulary
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.interfaces import IVocabularyRegistry
 
-from zope.schema.vocabulary import SimpleVocabulary
-from zope.schema.vocabulary import SimpleTerm
+from nti.app.vocabularyregistry.vocabulary import Vocabulary as SimpleVocabulary
+from nti.app.vocabularyregistry.vocabulary import Term as SimpleTerm
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.app.vocabularyregistry.utils import install_named_utility
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -54,185 +56,80 @@ class _MockVocabularyFactory(object):
 class TestViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=(u'user001', u'admin001@nextthought.com'), testapp=True, default_authenticate=False)
-    def testVocabularyCreationView(self):
-        # no persistent vocabulary/factory
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
-            vocab = component.queryUtility(IVocabulary, name=u'test_vocab')
-            assert_that(vocab, same_instance(None))
-            factory = component.queryUtility(IVocabularyFactory, name=u'test_vocab')
-            assert_that(factory, same_instance(None))
+    def test_vocabulary_read_and_delete(self):
+        parent_admin_environ = self._make_extra_environ(username='admin001@nextthought.com')
+        parent_admin_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
+        parent_url = 'https://alpha.nextthought.com/dataserver2/++etc++hostsites/alpha.nextthought.com/++etc++site/test_vocab'
 
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
-            vocab = component.queryUtility(IVocabulary, name=u'test_vocab')
-            assert_that(vocab, same_instance(None))
-            factory = component.queryUtility(IVocabularyFactory, name=u'test_vocab')
-            assert_that(factory, same_instance(None))
+        child_admin_environ = self._make_extra_environ(username='admin001@nextthought.com')
+        child_admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+        child_url = 'https://alpha.dev/dataserver2/++etc++hostsites/alpha.dev/++etc++site/test_vocab'
 
-        # register for parent site.
-        admin_environ = self._make_extra_environ(username='admin001@nextthought.com')
-        admin_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
-        url = 'https://alpha.nextthought.com/dataserver2/++etc++vocabularies'
+        self.testapp.get(parent_url, status=404, extra_environ=parent_admin_environ)
+        self.testapp.get(child_url, status=404, extra_environ=child_admin_environ)
 
-        params = {'name': 'test_vocab', 'terms': ['one', 'two']}
-        result = self.testapp.post_json(url, params=params, status=200, extra_environ=admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(2)}))
-        assert_that([x['value'] for x in result['terms']], contains_inanyorder('one', 'two'))
-
+        # create one in parent site.
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             parent_site_manager = getSite().getSiteManager()
-            vocab = component.queryUtility(IVocabulary, name=u'test_vocab')
-            assert_that(vocab.__parent__, same_instance(parent_site_manager))
-            factory = component.queryUtility(IVocabularyFactory, name=u'test_vocab')
-            assert_that(factory.__parent__, same_instance(parent_site_manager))
-
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
-            # child inherits from parent
-            child_site_manager = getSite().getSiteManager()
-            assert_that(child_site_manager, not_(parent_site_manager))
-
-            vocab = component.queryUtility(IVocabulary, name=u'test_vocab')
-            assert_that(vocab.__parent__, same_instance(parent_site_manager))
-            factory = component.queryUtility(IVocabularyFactory, name=u'test_vocab')
-            assert_that(factory.__parent__, same_instance(parent_site_manager))
-
-        # child site
-        admin_environ = self._make_extra_environ(username='admin001@nextthought.com')
-        admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
-        url = 'https://alpha.dev/dataserver2/++etc++vocabularies'
-
-        # read
-        result = self.testapp.get(url+'/test_vocab', params=params, status=200, extra_environ=admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(2)}))
-        assert_that([x['value'] for x in result['terms']], contains_inanyorder('one', 'two'))
-
-        # create/read
-        params = {'name': 'test_vocab', 'terms': ['three', 'four', 'five']}
-        result = self.testapp.post_json(url, params=params, status=200, extra_environ=admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(3)}))
-
-        result = self.testapp.get(url+'/test_vocab', params=params, status=200, extra_environ=admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(3)}))
-        assert_that([x['value'] for x in result['terms']], contains_inanyorder('three', 'four', 'five'))
-
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
-            vocab = component.queryUtility(IVocabulary, name=u'test_vocab')
-            assert_that(vocab.__parent__, same_instance(parent_site_manager))
-            factory = component.queryUtility(IVocabularyFactory, name=u'test_vocab')
-            assert_that(factory.__parent__, same_instance(parent_site_manager))
-
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
-            vocab = component.queryUtility(IVocabulary, name=u'test_vocab')
-            assert_that(vocab.__parent__, same_instance(child_site_manager))
-            factory = component.queryUtility(IVocabularyFactory, name=u'test_vocab')
-            assert_that(factory.__parent__, same_instance(child_site_manager))
-
-        # create/read
-        params = {'name': 'test_vocab', 'terms': ['six']}
-        result = self.testapp.post_json(url, params=params, status=200, extra_environ=admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(1)}))
-        assert_that([x['value'] for x in result['terms']], contains_inanyorder('six'))
-
-        result = self.testapp.get(url+'/test_vocab', params=params, status=200, extra_environ=admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(1)}))
-        assert_that([x['value'] for x in result['terms']], contains_inanyorder('six'))
-
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
-            vocab = component.queryUtility(IVocabulary, name=u'test_vocab')
-            assert_that(vocab.__parent__, same_instance(parent_site_manager))
-            assert_that(vocab.__name__, is_('test_vocab'))
-            assert_that([x.value for x in iter(vocab)], contains_inanyorder('one', 'two'))
-            factory = component.queryUtility(IVocabularyFactory, name=u'test_vocab')
-            assert_that(factory.__parent__, same_instance(parent_site_manager))
-
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
-            vocab = component.queryUtility(IVocabulary, name=u'test_vocab')
-            assert_that(vocab.__parent__, same_instance(child_site_manager))
-            assert_that(vocab.__name__, is_('test_vocab'))
-            assert_that([x.value for x in iter(vocab)], contains_inanyorder('six'))
-            factory = component.queryUtility(IVocabularyFactory, name=u'test_vocab')
-            assert_that(factory.__parent__, same_instance(child_site_manager))
-
-    @WithSharedApplicationMockDS(users=(u'user001', u'admin001@nextthought.com'), testapp=True, default_authenticate=False)
-    def test_vocabulary_read_and_delete(self):
-        admin_environ = self._make_extra_environ(username='admin001@nextthought.com')
-        admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
-        url = 'https://alpha.dev/dataserver2/++etc++vocabularies'
-        self.testapp.get(url+'/test_vocab', status=404, extra_environ=admin_environ)
-
-        ## register a global one.
-        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
-            vocab = component.queryUtility(IVocabulary, name=u'test_vocab')
-            assert_that(vocab, same_instance(None))
-            factory = component.queryUtility(IVocabularyFactory, name=u'test_vocab')
-            assert_that(factory, same_instance(None))
-
             vocab = SimpleVocabulary([SimpleTerm(x) for x in ('a', 'b')])
-            component.getGlobalSiteManager().registerUtility(vocab,
-                                                             provided=IVocabulary,
-                                                             name='test_vocab')
-            factory = _MockVocabularyFactory()
-            component.getGlobalSiteManager().registerUtility(factory,
-                                                             provided=IVocabularyFactory,
-                                                             name='test_vocab')
+            install_named_utility(vocab,
+                                   utility_name=u'test_vocab',
+                                   provided=IVocabulary,
+                                   local_site_manager=parent_site_manager)
 
-        # read
-        href = url + '/test_vocab'
-        result = self.testapp.get(href, status=200, extra_environ=admin_environ).json_body
+            vocab = component.queryUtility(IVocabulary, name='test_vocab')
+            assert_that(vocab.__name__, is_('test_vocab'))
+            assert_that(vocab.__parent__, same_instance(parent_site_manager))
+
+        # read in parent site.
+        result = self.testapp.get(parent_url, status=200, extra_environ=parent_admin_environ).json_body
         assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(2)}))
         assert_that([x['value'] for x in result['terms']], contains_inanyorder('a', 'b'))
 
-        # delete
-        result = self.testapp.delete(href, status=403, extra_environ=admin_environ).json_body
-        assert_that(result['message'], is_('Only persistent vocabulary that created in current site can be deleted.'))
+        # read in child site.
+        self.testapp.get(child_url, status=404, extra_environ=child_admin_environ)
 
-        ## create in a parent site
-        parent_admin_environ = self._make_extra_environ(username='admin001@nextthought.com')
-        parent_admin_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
-        result = self.testapp.post_json('https://alpha.nextthought.com/dataserver2/++etc++vocabularies',
-                                        params={'name': 'test_vocab', 'terms': ['one']},
-                                        status=200,
-                                        extra_environ=parent_admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(1)}))
-
-        # read
-        result = self.testapp.get(href, status=200, extra_environ=admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(1)}))
-
-        # delete
-        result = self.testapp.delete(href, status=403, extra_environ=admin_environ).json_body
-        assert_that(result['message'], is_('Only persistent vocabulary that created in current site can be deleted.'))
-
-        ## create in a child site
-        result = self.testapp.post_json('https://alpha.dev/dataserver2/++etc++vocabularies',
-                                        params={'name': 'test_vocab', 'terms': ['one', 'two', 'three']},
-                                        status=200,
-                                        extra_environ=admin_environ).json_body
+        # update in parent site.
+        result = self.testapp.put_json(parent_url,
+                                       params={'terms': ['one', 'two', 'three']},
+                                       status=200,
+                                       extra_environ=parent_admin_environ).json_body
         assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(3)}))
+        assert_that([x['value'] for x in result['terms']], contains_inanyorder('one', 'two', 'three'))
 
-        # read
-        result = self.testapp.get(href, status=200, extra_environ=admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(3)}))
-
-        # delete
-        self.testapp.delete(href, status=204, extra_environ=admin_environ)
-
-        # read
-        result = self.testapp.get(href, status=200, extra_environ=admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(1)}))
-
-        # delete parent vocab
-        self.testapp.delete('https://alpha.nextthought.com/dataserver2/++etc++vocabularies/test_vocab',
-                            status=204, extra_environ=parent_admin_environ)
-
-        # read
-        result = self.testapp.get(href, status=200, extra_environ=admin_environ).json_body
-        assert_that(result, has_entries({'name': 'test_vocab', 'terms': has_length(2)}))
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            vocab = component.queryUtility(IVocabulary, name='test_vocab')
+            assert_that(vocab.__name__, is_('test_vocab'))
+            assert_that(vocab.__parent__, same_instance(parent_site_manager))
+            assert_that([x.value for x in iter(vocab)], contains_inanyorder('one', 'two', 'three'))
 
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
-            component.getGlobalSiteManager().unregisterUtility(vocab,
-                                                              provided=IVocabulary,
-                                                              name='test_vocab')
+            child_site_manager = getSite().getSiteManager()
+            assert_that(child_site_manager, not_(parent_site_manager))
 
-            component.getGlobalSiteManager().unregisterUtility(factory,
-                                                               provided=IVocabularyFactory,
-                                                               name='test_vocab')
+            assert_that(vocab.__name__, is_('test_vocab'))
+            assert_that(vocab.__parent__, same_instance(parent_site_manager))
+            assert_that([x.value for x in iter(vocab)], contains_inanyorder('one', 'two', 'three'))
+
+        # update in child site. which would create a new one in child site.
+        self.testapp.put_json(child_url,
+                              params={'terms': ['six']},
+                              status=404,
+                              extra_environ=child_admin_environ)
+
+        # delete in child site.
+        self.testapp.delete(child_url, status=404, extra_environ=child_admin_environ)
+
+        # delete in parent site.
+        self.testapp.delete(parent_url, status=204, extra_environ=parent_admin_environ)
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            vocab = component.queryUtility(IVocabulary, name='test_vocab')
+            assert_that(vocab, is_(None))
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
+            vocab = component.queryUtility(IVocabulary, name='test_vocab')
+            assert_that(vocab, is_(None))
+
+        # removed.
+        self.testapp.delete(parent_url, status=404, extra_environ=parent_admin_environ)

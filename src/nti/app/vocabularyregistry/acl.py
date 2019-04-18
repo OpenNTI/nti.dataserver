@@ -13,7 +13,7 @@ from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
-from zope.schema.interfaces import IVocabularyRegistry
+from zope.schema.interfaces import IVocabulary
 
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ROLE_ADMIN
@@ -28,8 +28,8 @@ from nti.dataserver.interfaces import IACLProvider
 
 
 @interface.implementer(IACLProvider)
-@component.adapter(IVocabularyRegistry)
-class VocabularyRegistryACLProvider(object):
+@component.adapter(IVocabulary)
+class VocabularyACLProvider(object):
 
     def __init__(self, context):
         self.context = context
