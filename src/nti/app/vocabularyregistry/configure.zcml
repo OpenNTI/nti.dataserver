@@ -6,4 +6,25 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.component" />
 
+    <adapter factory=".externalization._TermExternalObject"
+             provides="nti.externalization.interfaces.IExternalObject"
+             for="zope.schema.interfaces.ITerm" />
+
+    <adapter factory=".externalization._VocabularyExternalObject"
+             provides="nti.externalization.interfaces.IExternalObject"
+             for="zope.schema.interfaces.IVocabulary" />
+
+    <!-- Traversal -->
+    <!-- The path would be '*/dataserver2/++etc++vocabularies' -->
+	<utility factory="zope.vocabularyregistry.registry.ZopeVocabularyRegistry"
+			 provides="zope.traversing.interfaces.IEtcNamespace"
+			 name="vocabularies" />
+
+	<adapter factory=".traversal.VocabularyRegistryTraversable"
+			 for="zope.schema.interfaces.IVocabularyRegistry pyramid.interfaces.IRequest"
+			 provides="zope.container.traversal.ITraversable" />
+
+	<!-- ACLs -->
+	<adapter factory=".acl.VocabularyRegistryACLProvider" />
+
 </configure>
