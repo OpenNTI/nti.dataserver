@@ -63,6 +63,11 @@ class VocabularyViewMixin(object):
         self._raise_error(u'name must be non-empty string.')
 
     def _get_terms(self):
+        """
+        Here we don't do any dedup or sorting, just keep what they are,
+        and will raise error if duplicated terms happen when initializing the vocabulary,
+        Since we don't know which position the duplicated term should be.
+        """
         terms = self._params.get('terms')
         if not isinstance(terms, (list or tuple)):
             self._raise_error(u'terms should be an array of strings.')
@@ -128,9 +133,11 @@ class VocabularyUpdateView(AbstractAuthenticatedView,
             self.unregister_vocabulary(name,
                                        site=target_site,
                                        site_manager=site_manager)
-
-            vocabulary = self.register_vocabulary(name, terms, site_manager)
-            return vocabulary
+            try:
+                vocabulary = self.register_vocabulary(name, terms, site_manager)
+                return vocabulary
+            except ValueError as e:
+                self._raise_error(str(e))
 
 
 @view_config(route_name='objects.generic.traversal',
