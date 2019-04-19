@@ -115,8 +115,8 @@ class VocabularyUpdateView(AbstractAuthenticatedView,
                            ModeledContentUploadRequestUtilsMixin,
                            VocabularyViewMixin):
     """
-    Replace the current vocabulary if it was created in the current site,
-    otherwise create a new vocabulary for the current site.
+    Should always unregister the existing vocabulary,
+    and re-register a new one in appropriate site.
     """
     def __call__(self):
         name = self.context.__name__
