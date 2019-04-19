@@ -39,8 +39,6 @@ from nti.dataserver.users import User
 from nti.links import Link
 from nti.links import render_link
 
-from nti.mailer.interfaces import IEmailAddressable
-
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.traversal.traversal import find_interface
@@ -72,16 +70,13 @@ class AbstractForumTypeScheduledEmailJob(AbstractJob):
             usernames = usernames.union(subscriber_usernames)
         return usernames
 
-    def _emails_from_usernames(self, usernames):
-        emails = []
+    def _users_from_usernames(self, usernames):
+        result = []
         for username in usernames:
             user = User.get_user(username)
-            email = IEmailAddressable(user, None)
-            if email is None or email.email is None:
-                logger.debug(u'Username %s does not have an email address for notification' % username)
-                continue
-            emails.append(email.email)
-        return emails
+            if user is not None:
+                result.append(user)
+        return result
 
     def _do_call(self, obj, usernames):
         raise NotImplementedError
@@ -129,7 +124,7 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
         forum = find_interface(topic, IForum)
         forum_title = forum.title
         subject = u'Discussion %s created in %s' % (title, forum_title)
-        emails = self._emails_from_usernames(usernames)
+        users = self._users_from_usernames(usernames)
         message = self._post_to_html(topic.headline)
         avatar_url = self._url_to_obj(topic.creator)
         avatar_url = avatar_url if avatar_url.endswith('/') else avatar_url + '/'
@@ -137,9 +132,9 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
 
         app_url = self.job_kwargs['application_url']
         topic_url = urllib_parse.urljoin(app_url, '/app/id/%s' % topic.NTIID)
-        for email in emails:
+        for user in users:
             send_creation_notification_email(sender=topic.creator,
-                                             receiver_emails=[email],
+                                             receiver_emails=[user],
                                              subject=subject,
                                              message=message,
                                              request=self.get_request(topic, application_url=app_url),
@@ -149,7 +144,7 @@ class HeadlineTopicCreatedDeferredEmailJob(AbstractForumTypeScheduledEmailJob):
                     title,
                     topic.NTIID,
                     forum.title,
-                    len(emails))
+                    len(users))
 
 
 @interface.implementer(IForumTypeCreatedNotificationUsers)

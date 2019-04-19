@@ -30,6 +30,8 @@ from zope import interface
 
 from zope.dottedname import resolve as dottedname
 
+from nti.dataserver.users.interfaces import IUserProfile
+
 from nti.mailer.interfaces import IMailer
 from nti.mailer.interfaces import IMailDelivery
 from nti.mailer.interfaces import ITemplatedMailer
@@ -108,17 +110,27 @@ def do_html_text_templates_exist(base_template,
 
 
 def _as_recipient_list(recipients):
+    # XXX: Perhaps we should enforce a certain kwarg to ensure we always get
+    # users here. We definitely prefer it since we can enforce we do not send
+    # to bounced addresses. In some cases, we only have raw email addresses.
+    # Currently, we'll just ignore those users with invalid addresses.
+    result = []
     if recipients:
         # accept a raw string
         recipients = recipients if is_nonstr_iter(recipients) else [recipients]
-        # Convert any IEmailAddressable into their email, and strip
-        # empty strings
-        recipients = [getattr(IEmailAddressable(x, x), 'email', x)
-                      for x in recipients]
-        recipients = [
-			x for x in recipients if isinstance(x, string_types) and x
-		]
-    return recipients
+        for recipient in recipients:
+            # If we have a user object, explicitly check if `email_verified` is
+            # `False`. `True` means it is verified and `None` means it is unknown.
+            # We do not want to send to users with known bounced emails.
+            profile = IUserProfile(recipient, None)
+            if profile is not None and profile.email_verified == False:
+                continue
+            # Convert any IEmailAddressable into their email, and strip
+            # empty strings
+            recipient = getattr(IEmailAddressable(recipient, recipient), 'email', recipient)
+            if isinstance(recipient, string_types) and recipient:
+                result.append(recipient)
+    return result
 
 
 def create_simple_html_text_email(base_template,

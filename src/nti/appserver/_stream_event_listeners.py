@@ -122,7 +122,7 @@ def user_change_new_note_emailer(user, change):
 		queue_simple_html_text_email(
 			base_template,
 			subject=change_presentation_details.title,
-			recipients=[email],
+			recipients=[user],
 			template_args={'note': change_object,
 						   'change': change,
 						   'user': user,

@@ -241,7 +241,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
                 'member_email',
                 subject=subject,
                 reply_to=reply_addr,
-                recipients=[to_addr],
+                recipients=[to_user],
                 template_args=user_args,
                 request=self.request,
                 text_template_extension=".mak")
