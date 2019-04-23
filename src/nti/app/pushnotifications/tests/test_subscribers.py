@@ -128,6 +128,3 @@ class TestSubscribers(ApplicationLayerTest):
 			comment11 = self._add_comment(user5, topic, inReplyTo=None)
 			assert_that(_mockMailer._calls, has_length(0))
 
-			# No email found for the top comment
-			self._add_comment(user4, topic, inReplyTo=comment11)
-			assert_that(_mockMailer._calls, has_length(0))

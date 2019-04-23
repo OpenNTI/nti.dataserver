@@ -160,6 +160,7 @@ def create_simple_html_text_email(base_template,
     """
 
     recipients = _as_recipient_list(recipients)
+    from IPython.terminal.debugger import set_trace;set_trace()
 
     if not recipients:
         logger.debug("Refusing to attempt to send email with no recipients")
