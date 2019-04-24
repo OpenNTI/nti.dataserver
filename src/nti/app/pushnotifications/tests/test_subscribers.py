@@ -125,6 +125,6 @@ class TestSubscribers(ApplicationLayerTest):
 			_mockMailer.reset()
 
 			# Top comment other
-			comment11 = self._add_comment(user5, topic, inReplyTo=None)
+			self._add_comment(user5, topic, inReplyTo=None)
 			assert_that(_mockMailer._calls, has_length(0))
 
