@@ -27,6 +27,8 @@ from zope import lifecycleevent
 
 from zope.catalog.interfaces import ICatalog
 
+from zope.component.hooks import getSite
+
 from zope.interface.interfaces import IMethod
 
 from zope.intid.interfaces import IIntIds
@@ -75,6 +77,8 @@ from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.user_profile import Address
 
 from nti.dataserver.users.users import User
+
+from nti.dataserver.users.utils import get_users_by_site
 
 from nti.externalization.externalization import to_external_object
 
@@ -153,7 +157,7 @@ def _format_date(d):
         return str(d)
 
 
-def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
+def _get_user_info_extract(admin_user, admin_utility, all_sites=False, is_site_admin=False):
     """
     3/13/19 - This does not use `get_users_by_site` because all users do not currently
     have a user creation site. Instead, we go down `can_administer_user` to include users
@@ -162,20 +166,7 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
     the site admin will share the site community, whereas the NTI admin will not. We are keeping
     this as-is until all users have been migrated to a creation site to keep the behavior defined.
     """
-    intids = component.getUtility(IIntIds)
-    ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
-    userids = _get_index_userids(ent_catalog)
-
-    for iid in userids or ():
-        u = intids.queryObject(iid, None)
-        if not IUser.providedBy(u):
-            continue
-
-        # filter user view by site
-        if      not all_sites \
-            and not admin_utility.can_administer_user(admin_user, u):
-            continue
-
+    def _build_user_info(u, user_creation_site=None):
         username = u.username
         userid = _replace_username(username)
         friendly_named = IFriendlyNamed(u)
@@ -185,15 +176,10 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
         lastLoginTime = _format_time(getattr(u, 'lastLoginTime', None))
         realname = friendly_named.realname
         external_id_map = get_external_identifiers(u)
-        user_creation_site = get_user_creation_sitename(u)
+        if user_creation_site is None:
+            user_creation_site = get_user_creation_sitename(u)
 
-        if not user_creation_site:
-            for i in u.dynamic_memberships:
-                if ISiteCommunity.providedBy(i):
-                    user_creation_site = i.username
-                    break
-
-        yield {
+        return {
             'alias': _tx_string(alias),
             'email': _tx_string(email),
             'userid': _tx_string(userid),
@@ -204,6 +190,20 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False):
             'external_ids': external_id_map,
             'creationSite': user_creation_site
         }
+
+    if is_site_admin or not all_sites:
+        current_sitename = getSite().__name__
+        users = get_users_by_site()
+        for u in users or ():
+            yield _build_user_info(u, current_sitename)
+    else:
+        intids = component.getUtility(IIntIds)
+        ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+        userids = _get_index_userids(ent_catalog)
+        for iid in userids or ():
+            u = intids.queryObject(iid, None)
+            if IUser.providedBy(u):
+                yield _build_user_info(u)
 
 
 class AbstractUserInfoExtractView(AbstractAuthenticatedView):
@@ -226,7 +226,8 @@ class AbstractUserInfoExtractView(AbstractAuthenticatedView):
         admin_utility = component.getUtility(ISiteAdminUtility)
         return _get_user_info_extract(self.remoteUser,
                                       admin_utility,
-                                      all_sites=all_sites)
+                                      all_sites=all_sites,
+                                      is_site_admin=_is_site_admin)
 
 
 @view_config(name='user_info_extract')

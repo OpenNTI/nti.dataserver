@@ -13,9 +13,15 @@ from hamcrest import has_length
 from hamcrest import has_entries
 from hamcrest import assert_that
 from hamcrest import has_property
+from hamcrest import contains_inanyorder
 from hamcrest import greater_than_or_equal_to
 
 from zope import interface
+from zope import lifecycleevent
+
+from zope.component.hooks import getSite
+
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -24,6 +30,8 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.webtest import TestApp
 
 from nti.app.users.utils import set_user_creation_site
+
+from nti.dataserver.authorization import ROLE_SITE_ADMIN
 
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
@@ -35,7 +43,7 @@ from nti.dataserver.users.interfaces import IUserContactProfile
 from nti.dataserver.users.users import User
 
 
-class TestApplicationUserProfileViews(ApplicationLayerTest):
+class TestUserInfoExtractView(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS
     def test_user_info_extract(self):
@@ -44,6 +52,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
                                                      'realname': u'steve johnson',
                                                      'alias': u'citadel'})
             set_user_creation_site(user, 'mathcounts.nextthought.com')
+            lifecycleevent.modified(user)
             self._create_user(username=u'rukia@nt.com',
                               external_value={'email': u'rukia@nt.com',
                                               'realname': u'rukia foo',
@@ -92,6 +101,111 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
         assert_that(items, has_length(3))
         for item in items:
             assert_that(item['external_ids'], has_length(0))
+
+    @WithSharedApplicationMockDS(users=False, testapp=True, default_authenticate=False)
+    def test_user_info_extract_json_view(self):
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            self._create_user(username=u'test001', external_value={'email': u'nti1@nt.com', 'realname': u'Nti1 Test'})
+            user = self._create_user(username=u'test002', external_value={'email': u'nti2@nt.com', 'realname': u'Nti2 Test'})
+
+            mgr = IPrincipalRoleManager(getSite())
+            mgr.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user.username)
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='demo.nextthought.com'):
+            self._create_user(username=u'test003', external_value={'email': u'nti3@nt.com', 'realname': u'Nti3 Test'})
+            user = self._create_user(username=u'test004', external_value={'email': u'nti4@nt.com', 'realname': u'Nti4 Test'})
+            mgr = IPrincipalRoleManager(getSite())
+            mgr.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, user.username)
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(username=u'admin001@nextthought.com', external_value={'email': u'admin001@nextthought.com', 'realname': u'Admin Test'})
+
+        path = '/dataserver2/@@user_info_extract'
+        path_all = '/dataserver2/@@user_info_extract?all_sites=true'
+
+        # Fetch alpha site
+        admin_environ = self._make_extra_environ(username='admin001@nextthought.com')
+        admin_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
+
+        site_admin_environ = self._make_extra_environ(username='test002')
+        site_admin_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
+
+        # admin
+        res = self.testapp.get(path, status=200, extra_environ=admin_environ,
+                               headers={'accept': 'application/json'}).json_body
+        assert_that([x['username'] for x in res['Items']], contains_inanyorder('test001', 'test002'))
+
+        res = self.testapp.get(path_all, status=200, extra_environ=admin_environ,
+                               headers={'accept': 'application/json'}).json_body
+        assert_that([x['username'] for x in res['Items']], contains_inanyorder('test001', 'test002', 'test003', 'test004', 'admin001@nextthought.com'))
+
+        # site admin
+        res = self.testapp.get(path, status=200, extra_environ=site_admin_environ,
+                               headers={'accept': 'application/json'}).json_body
+        assert_that([x['username'] for x in res['Items']], contains_inanyorder('test001', 'test002'))
+
+        res = self.testapp.get(path_all, status=200,
+                          extra_environ=site_admin_environ,
+                          headers={'accept': 'application/json'}).json_body
+        assert_that([x['username'] for x in res['Items']], contains_inanyorder('test001', 'test002'))
+
+        # Fetch demo site
+        admin_environ = self._make_extra_environ(username='admin001@nextthought.com')
+        admin_environ['HTTP_ORIGIN'] = 'http://demo.nextthought.com'
+
+        site_admin_environ = self._make_extra_environ(username='test004')
+        site_admin_environ['HTTP_ORIGIN'] = 'http://demo.nextthought.com'
+
+        # admin
+        res = self.testapp.get(path, status=200, extra_environ=admin_environ,
+                               headers={'accept': 'application/json'}).json_body
+        assert_that([x['username'] for x in res['Items']], contains_inanyorder('test003', 'test004'))
+
+        res = self.testapp.get(path_all, status=200, extra_environ=admin_environ,
+                               headers={'accept': 'application/json'}).json_body
+        assert_that([x['username'] for x in res['Items']], contains_inanyorder('test001', 'test002', 'test003', 'test004', 'admin001@nextthought.com'))
+        assert_that([x for x in res['Items'] if x['username']=='test001'][0], has_entries({'email': 'nti1@nt.com',
+                                                                                           'realname': 'Nti1 Test',
+                                                                                           'username': 'test001',
+                                                                                           'creationSite': 'alpha.nextthought.com'}))
+        assert_that([x for x in res['Items'] if x['username']=='test003'][0], has_entries({'email': 'nti3@nt.com',
+                                                                                           'realname': 'Nti3 Test',
+                                                                                           'username': 'test003',
+                                                                                           'creationSite': 'demo.nextthought.com'}))
+        assert_that([x for x in res['Items'] if x['username']=='admin001@nextthought.com'][0], has_entries({'email': 'admin001@nextthought.com',
+                                                                                                            'realname': 'Admin Test',
+                                                                                                            'username': 'admin001@nextthought.com',
+                                                                                                            'creationSite': None}))
+
+        # site admin
+        res = self.testapp.get(path, status=200, extra_environ=site_admin_environ,
+                               headers={'accept': 'application/json'}).json_body
+        assert_that([x['username'] for x in res['Items']], contains_inanyorder('test003', 'test004'))
+
+        res = self.testapp.get(path_all, status=200, extra_environ=site_admin_environ,
+                               headers={'accept': 'application/json'}).json_body
+        assert_that([x['username'] for x in res['Items']], contains_inanyorder('test003', 'test004'))
+
+        # 403
+        user_environ = self._make_extra_environ(username='test001')
+        user_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
+        self.testapp.get(path, status=403, extra_environ=user_environ, headers={'accept': 'application/json'})
+
+        user_environ = self._make_extra_environ(username='test003')
+        user_environ['HTTP_ORIGIN'] = 'http://demo.nextthought.com'
+        self.testapp.get(path, status=403, extra_environ=user_environ, headers={'accept': 'application/json'})
+
+        # clean
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            mgr = IPrincipalRoleManager(getSite())
+            mgr.removeRoleFromPrincipal(ROLE_SITE_ADMIN.id, 'test002')
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='demo.nextthought.com'):
+            mgr = IPrincipalRoleManager(getSite())
+            mgr.removeRoleFromPrincipal(ROLE_SITE_ADMIN.id, 'test004')
+
+
+class TestApplicationUserProfileViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS
     def test_inactive_accounts(self):
