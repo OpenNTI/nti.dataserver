@@ -20,6 +20,8 @@ from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
+from nti.app.authentication import get_remote_user
+
 from nti.app.users.adapters import context_lastseen_factory
 
 from nti.app.users.utils import set_user_creation_site, set_community_creation_site
@@ -89,14 +91,16 @@ def _on_community_created(community, unused_event):
 @component.adapter(IUser, IObjectModifiedEvent)
 def _on_user_updated(user, unused_event):
     request = get_current_request()
-    if request is not None and not is_impersonating(request): 
+    if      request is not None \
+        and not is_impersonating(request) \
+        and get_remote_user() == user:
         notify(UserLastSeenEvent(user, time.time(), request))
-        
+
 
 @component.adapter(IUser, IUserLogonEvent)
 def _on_user_logon(user, event):
     request = getattr(event, 'request', None)
-    if request is not None and not is_impersonating(request): 
+    if request is not None and not is_impersonating(request):
         notify(UserLastSeenEvent(user, time.time(), request))
 
 
