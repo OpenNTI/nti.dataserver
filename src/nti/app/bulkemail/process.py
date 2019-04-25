@@ -149,6 +149,13 @@ class DefaultBulkEmailProcessLoop(object):
 		Check that the process is in a state to be initially started, raising
 		an exception if not. This checks that none of the objects meant to be
 		in redis are.
+
+		XXX: This may fail if we retry due to a conflict (storing user time
+		metadata in digest_email.py). The emails *should* have been sent
+		successfully though. Unfortunately, since the time metadata is
+		rolled back. The user will get duplicate notables the next time
+		this process runs. This occurred due to multiple digest jobs running
+		in close proximity to one another.
 		"""
 		for name in self.names.names:
 			if self.redis.exists(name):
