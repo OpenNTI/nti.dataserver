@@ -673,7 +673,6 @@ Example response json body:
                   "employee_id": "123456",
                  },
  "facebook": null,
- "googlePlus": null,
  "home_page": null,
  "href": "/dataserver2/users/1041980252",
  "interests": null,

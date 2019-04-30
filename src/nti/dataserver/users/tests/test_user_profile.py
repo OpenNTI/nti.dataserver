@@ -84,6 +84,9 @@ class TestUserProfile(DataserverLayerTest):
                     has_property('facebook', is_(none())))
 
         assert_that(prof,
+                    does_not(has_property('googlePlus')))
+
+        assert_that(prof,
                     has_property('instagram', is_(none())))
 
         assert_that(prof,

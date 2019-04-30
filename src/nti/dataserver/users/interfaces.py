@@ -597,10 +597,6 @@ class ISocialMediaProfile(Interface):
                        description=u'Twitter URL',
                        required=False)
 
-    googlePlus = ValidURI(title=u'GooglePlus',
-                          description=u'GooglePlus URL',
-                          required=False)
-
     linkedIn = ValidURI(title=u'LinkedIn',
                         description=u'LinkedIn URL',
                         required=False)
