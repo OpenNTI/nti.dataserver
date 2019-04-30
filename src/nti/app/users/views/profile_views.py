@@ -58,7 +58,6 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IDataserverFolder
-from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
@@ -157,10 +156,9 @@ def _format_date(d):
         return str(d)
 
 
-def _get_user_info_extract(admin_user, admin_utility, all_sites=False, is_site_admin=False):
+def _get_user_info_extract(all_sites=False):
     """
-    For NT admin, it would return all users from current site, or all users from all sites if all_sites is specified;
-    For site admin, it would only return all users from current site.
+    Return all users from the current site, or all users from all sites if all_sites is specified.
     """
     def _build_user_info(u, user_creation_site=None):
         username = u.username
@@ -187,7 +185,7 @@ def _get_user_info_extract(admin_user, admin_utility, all_sites=False, is_site_a
             'creationSite': user_creation_site
         }
 
-    if is_site_admin or not all_sites:
+    if not all_sites:
         current_sitename = getSite().__name__
         users = get_users_by_site()
         for u in users or ():
@@ -219,11 +217,7 @@ class AbstractUserInfoExtractView(AbstractAuthenticatedView):
             values = CaseInsensitiveDict(self.request.params)
             value = values.get('all_sites')
             all_sites = is_true(value)
-        admin_utility = component.getUtility(ISiteAdminUtility)
-        return _get_user_info_extract(self.remoteUser,
-                                      admin_utility,
-                                      all_sites=all_sites,
-                                      is_site_admin=_is_site_admin)
+        return _get_user_info_extract(all_sites=all_sites)
 
 
 @view_config(name='user_info_extract')
