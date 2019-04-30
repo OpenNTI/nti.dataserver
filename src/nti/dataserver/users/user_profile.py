@@ -272,7 +272,6 @@ class SocialMediaProfile(SchemaConfigured, Persistent):
 
     facebook = FP(ISocialMediaProfile['facebook'])
     twitter = FP(ISocialMediaProfile['twitter'])
-    googlePlus = FP(ISocialMediaProfile['googlePlus'])
     linkedIn = FP(ISocialMediaProfile['linkedIn'])
     instagram = FP(ISocialMediaProfile['instagram'])
 

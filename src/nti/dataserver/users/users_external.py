@@ -316,9 +316,8 @@ class UserSummaryExternalObject(_EntityExternalObject):
     # because it looks better
     public_summary_profile_fields = ('affiliation', 'home_page', 'description',
                                      'location', 'role', 'about', 'twitter',
-                                     'facebook', 'googlePlus', 'linkedIn',
-                                     'instagram', 'education', 'positions',
-                                     'interests')
+                                     'facebook', 'linkedIn', 'instagram',
+                                     'education', 'positions', 'interests')
 
     # These could probably be put as tags on the interface fields, but the number of
     # profile interfaces in use makes that a chore. At the moment, this is the
