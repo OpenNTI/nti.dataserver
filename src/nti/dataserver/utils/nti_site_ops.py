@@ -56,7 +56,7 @@ def remove_sites(names=(), remove_site_entities=True, remove_child_sites=True, r
 
     # Starter set
     sites_to_remove = set(names)
-    if remove_child_sites:
+    if remove_child_sites or remove_only_child_sites:
         # Add in child sites
         site_admin_utility = component.getUtility(ISiteAdminManagerUtility)
         for site_name in list(sites_to_remove):
@@ -128,24 +128,25 @@ def main():
                             help="print site info")
 
     # Exclude args
+    child_group = arg_parser.add_mutually_exclusive_group()
 
-    arg_parser.add_argument('--remove_child_sites',
-                            dest='remove_child_sites',
-                            action='store_true',
-                            default=True,
-                            help="remove child sites (default True)")
+    child_group.add_argument('--remove_child_sites',
+                             dest='remove_child_sites',
+                             action='store_true',
+                             default=True,
+                             help="remove child sites (default True)")
+
+    child_group.add_argument('--remove_only_child_sites',
+                             dest='remove_only_child_sites',
+                             action='store_true',
+                             default=False,
+                             help="remove only child sites of given site (default False)")
 
     arg_parser.add_argument('--remove_site_entities',
                             dest='remove_site_entities',
                             action='store_true',
                             default=True,
                             help="remove site entities (default True)")
-
-    arg_parser.add_argument('--remove_only_child_sites',
-                            dest='remove_only_child_sites',
-                            action='store_true',
-                            default=False,
-                            help="remove only child sites of given site (default False)")
 
     arg_parser.add_argument('--excluded_sites',
                             dest='excluded_sites',
