@@ -37,9 +37,9 @@ logger = __import__('logging').getLogger(__name__)
 
 
 def list_sites():
-    for site in get_all_host_sites():
-        name = site.__name__
-        print("Site:", name)
+    sites = sorted(get_all_host_sites(), key=lambda x: x.__name__)
+    for site in sites:
+        print("Site:", site.__name__)
         for k, v in site.items():
             print("\t", k, v)
 
