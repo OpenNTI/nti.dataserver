@@ -92,29 +92,31 @@ class TestRemoveSite(unittest.TestCase):
             site_components = component.queryUtility(IComponents, name=site_name)
             assert_that(site_components, site_check(), site_name)
 
-    def _validate_users(self, deleted_sites=(), deleted_users=False):
+    def _validate_users(self, deleted_sites=(), removed_user_creation_sites=False, deleted_users=False):
         """
         Validate users exist (or do not) and that the site user counts
         line up with expectations.
         """
         for site_name, site_users in self.SITES_TO_USERS.items():
-            if deleted_users and site_name in deleted_sites:
-                to_check = none
-                user_count = 0
-            else:
-                to_check = not_none
-                user_count = len(site_users)
+            exists_check = not_none
+            user_count = len(site_users)
+            if site_name in deleted_sites:
+                if deleted_users:
+                    exists_check = none
+                    user_count = 0
+                elif removed_user_creation_sites:
+                    user_count = 0
 
             for site_user in site_users:
                 user = User.get_user(site_user)
-                assert_that(user, to_check(), (site_user, site_name))
+                assert_that(user, exists_check(), (site_user, site_name))
             site_users = get_users_by_site(site_name)
             assert_that(site_users, has_length(user_count), site_name)
         assert_that(User.get_user('unaffiliated_user'), not_none())
 
-    def _validate(self, deleted_sites=(), deleted_users=False):
+    def _validate(self, deleted_sites=(), removed_user_creation_sites=False, deleted_users=False):
         self._validate_sites(deleted_sites)
-        self._validate_users(deleted_sites, deleted_users)
+        self._validate_users(deleted_sites, removed_user_creation_sites, deleted_users)
 
     @WithMockDSTrans
     def test_remove_sites(self):
@@ -132,42 +134,101 @@ class TestRemoveSite(unittest.TestCase):
         reset()
 
         # Simple site deletion
-        remove_sites(names=('site_to_delete',), remove_site_entities=False)
-        self._validate(deleted_sites=('site_to_delete',), deleted_users=False)
+        remove_sites(names=('site_to_delete',),
+                     remove_entity_creation_sites=False,
+                     remove_site_entities=False)
+        self._validate(deleted_sites=('site_to_delete',),
+                       deleted_users=False)
+        reset()
+
+        remove_sites(names=('site_to_delete',),
+                     remove_entity_creation_sites=False,
+                     remove_site_entities=True)
+        self._validate(deleted_sites=('site_to_delete',),
+                       deleted_users=True)
+        reset()
+
+        remove_sites(names=('site_to_delete',),
+                     remove_entity_creation_sites=True,
+                     remove_site_entities=False)
+        self._validate(deleted_sites=('site_to_delete',),
+                       removed_user_creation_sites=True,
+                       deleted_users=False)
         reset()
 
         # Remove child sites with exclusion
-        remove_sites(names=('parent_site',), remove_site_entities=True,
-                     remove_only_child_sites=True, excluded_sites=('child_site2',))
+        remove_sites(names=('parent_site',),
+                     remove_entity_creation_sites=False,
+                     remove_site_entities=True,
+                     remove_only_child_sites=True,
+                     excluded_sites=('child_site2',))
         self._validate(deleted_sites=('child_site1',), deleted_users=True)
         reset()
 
+        remove_sites(names=('parent_site',),
+                     remove_entity_creation_sites=True,
+                     remove_site_entities=False,
+                     remove_only_child_sites=True,
+                     excluded_sites=('child_site2',))
+        self._validate(deleted_sites=('child_site1',),
+                       removed_user_creation_sites=True,
+                       deleted_users=False)
+        reset()
+
         # Remove all child sites
-        remove_sites(names=('parent_site',), remove_site_entities=False,
+        remove_sites(names=('parent_site',),
+                     remove_entity_creation_sites=False,
+                     remove_site_entities=False,
                      remove_only_child_sites=True)
         self._validate(deleted_sites=('child_site1', 'child_site2'), deleted_users=False)
         reset()
 
-        remove_sites(names=('parent_site',), remove_site_entities=True,
+        remove_sites(names=('parent_site',),
+                     remove_entity_creation_sites=False,
+                     remove_site_entities=True,
                      remove_only_child_sites=True)
         self._validate(deleted_sites=('child_site1', 'child_site2'), deleted_users=True)
         reset()
 
+        remove_sites(names=('parent_site',),
+                     remove_entity_creation_sites=True,
+                     remove_site_entities=False,
+                     remove_only_child_sites=True)
+        self._validate(deleted_sites=('child_site1', 'child_site2'),
+                       removed_user_creation_sites=True,
+                       deleted_users=False)
+        reset()
+
         # Remove site tree
-        remove_sites(names=('parent_site',), remove_site_entities=False,
+        remove_sites(names=('parent_site',),
+                     remove_entity_creation_sites=False,
+                     remove_site_entities=False,
                      remove_child_sites=True)
         self._validate(deleted_sites=('parent_site', 'child_site1', 'child_site2'),
                        deleted_users=False)
         reset()
 
-        remove_sites(names=('parent_site',), remove_site_entities=True,
+        remove_sites(names=('parent_site',),
+                     remove_entity_creation_sites=False,
+                     remove_site_entities=True,
                      remove_child_sites=True)
         self._validate(deleted_sites=('parent_site', 'child_site1', 'child_site2'),
                        deleted_users=True)
         reset()
 
+        remove_sites(names=('parent_site',),
+                     remove_entity_creation_sites=True,
+                     remove_site_entities=False,
+                     remove_child_sites=True)
+        self._validate(deleted_sites=('parent_site', 'child_site1', 'child_site2'),
+                       removed_user_creation_sites=True,
+                       deleted_users=False)
+        reset()
+
         # Remove multiple sites
-        remove_sites(names=('parent_site', 'site_to_delete'), remove_site_entities=True,
+        remove_sites(names=('parent_site', 'site_to_delete'),
+                     remove_entity_creation_sites=False,
+                     remove_site_entities=True,
                      remove_child_sites=True)
         self._validate(deleted_sites=('parent_site', 'child_site1', 'child_site2', 'site_to_delete'),
                        deleted_users=True)

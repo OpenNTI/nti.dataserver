@@ -14,6 +14,7 @@ import argparse
 from collections import Mapping
 
 from zope import component
+from zope import lifecycleevent
 
 from zope.component.hooks import site as current_site
 
@@ -22,6 +23,8 @@ from zope.interface.interfaces import IComponents
 from zope.traversing.interfaces import IEtcNamespace
 
 from nti.dataserver.interfaces import ISiteAdminManagerUtility
+
+from nti.dataserver.users.common import remove_entity_creation_site
 
 from nti.dataserver.users.entity import Entity
 
@@ -48,13 +51,26 @@ def list_sites():
             print("\t", k, v)
 
 
-def remove_sites(names=(), remove_site_entities=True, remove_child_sites=True,
-                 remove_only_child_sites=False, excluded_sites=(), verbose=True, library=True):
+def _remove_entity(site_name, entity, verbose=False):
+    try:
+        Entity.delete_entity(entity.username)
+    except KeyError:
+        # Propbably user contained friends lists
+        pass
+    else:
+        if verbose:
+            print('[%s] Entity removed (%s)' % (site_name, entity.username))
+
+
+def remove_sites(names=(), remove_site_entities=False, remove_entity_creation_sites=True,
+                 remove_child_sites=True, remove_only_child_sites=False,
+                 excluded_sites=None, verbose=True, library=True):
     """
     Remove the given sites and their registered components. If specified, we may only
     remove the child sites of the given sites. We also remove the entitites tied to
     the sites to be removed.
     """
+    excluded_sites = excluded_sites or ()
     if library:
         try:
             from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -80,16 +96,18 @@ def remove_sites(names=(), remove_site_entities=True, remove_child_sites=True,
             if verbose:
                 print('[%s] Skipping site' % name)
             continue
-        if remove_site_entities:
+
+        # Entity management
+        if remove_site_entities or remove_entity_creation_sites:
             for entity in get_entities_by_site(name):
-                try:
-                    Entity.delete_entity(entity.username)
-                except KeyError:
-                    # Propbably user contained friends lists
-                    pass
+                if remove_site_entities:
+                    _remove_entity(name, entity, verbose)
                 else:
                     if verbose:
-                        print('[%s] Entity removed (%s)' % (name, entity.username))
+                        print('[%s] Entity creation site removed (%s)' % (site_name, entity.username))
+                    remove_entity_creation_site(entity)
+                    lifecycleevent.modified(entity)
+
         del sites_folder[name]
         # This should probably be a subscriber.
         site_components = component.queryUtility(IComponents, name=name)
@@ -155,11 +173,19 @@ def main():
                              default=False,
                              help="remove only child sites of given site (default False)")
 
-    arg_parser.add_argument('--remove_site_entities',
-                            dest='remove_site_entities',
-                            action='store_true',
-                            default=True,
-                            help="remove site entities (default True)")
+    entity_group = arg_parser.add_mutually_exclusive_group()
+
+    entity_group.add_argument('--remove_site_entities',
+                              dest='remove_site_entities',
+                              action='store_true',
+                              default=False,
+                              help="remove site entities (default False)")
+
+    entity_group.add_argument('--remove_entity_creation_sites',
+                              dest='remove_entity_creation_sites',
+                              action='store_true',
+                              default=False,
+                              help="remove entity creation sites of deleted sites (default False)")
 
     arg_parser.add_argument('--excluded_sites',
                             dest='excluded_sites',
@@ -186,6 +212,7 @@ def main():
                             verbose=args.verbose,
                             function=lambda: remove_sites(args.remove,
                                                           args.remove_site_entities,
+                                                          args.remove_entity_creation_sites,
                                                           args.remove_child_sites,
                                                           args.remove_only_child_sites,
                                                           args.excluded_sites,
