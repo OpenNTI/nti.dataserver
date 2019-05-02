@@ -16,7 +16,6 @@ from zope import component
 
 from zope.cachedescriptors.property import Lazy
 
-from zope.component.hooks import getSite
 from zope.component.hooks import site as current_site
 
 from zope.schema.interfaces import IVocabulary
@@ -27,7 +26,6 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.app.vocabularyregistry import MessageFactory as _
 from nti.app.vocabularyregistry.vocabulary import Term as SimpleTerm
 from nti.app.vocabularyregistry.vocabulary import Vocabulary as SimpleVocabulary
 
@@ -36,6 +34,7 @@ from nti.app.vocabularyregistry.utils import install_named_utility
 from nti.dataserver import authorization as nauth
 
 from nti.site import unregisterUtility
+
 from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface

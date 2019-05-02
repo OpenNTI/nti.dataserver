@@ -17,6 +17,8 @@ from zope import component
 
 from zope.component.hooks import site as current_site
 
+from zope.interface.interfaces import IComponents
+
 from zope.traversing.interfaces import IEtcNamespace
 
 from nti.dataserver.interfaces import ISiteAdminManagerUtility
@@ -31,6 +33,8 @@ from nti.dataserver.utils.base_script import create_context
 
 from nti.site.hostpolicy import get_all_host_sites
 
+from nti.site.utils import unregisterUtility
+
 conf_package = 'nti.appserver'
 
 logger = __import__('logging').getLogger(__name__)
@@ -44,7 +48,13 @@ def list_sites():
             print("\t", k, v)
 
 
-def remove_sites(names=(), remove_site_entities=True, remove_child_sites=True, remove_only_child_sites=False, excluded_sites=(), verbose=True, library=True):
+def remove_sites(names=(), remove_site_entities=True, remove_child_sites=True,
+                 remove_only_child_sites=False, excluded_sites=(), verbose=True, library=True):
+    """
+    Remove the given sites and their registered components. If specified, we may only
+    remove the child sites of the given sites. We also remove the entitites tied to
+    the sites to be removed.
+    """
     if library:
         try:
             from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -80,8 +90,11 @@ def remove_sites(names=(), remove_site_entities=True, remove_child_sites=True, r
                 else:
                     if verbose:
                         print('[%s] Entity removed (%s)' % (name, entity.username))
-        # FIXME: Do we need to remove associated registered components?
         del sites_folder[name]
+        # This should probably be a subscriber.
+        site_components = component.queryUtility(IComponents, name=name)
+        if site_components is not None:
+            unregisterUtility(component.getSiteManager(), site_components, IComponents, name=name)
         if verbose:
             print('[%s] Site removed' % name)
 
