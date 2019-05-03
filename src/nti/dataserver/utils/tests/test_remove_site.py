@@ -23,8 +23,9 @@ from zope.interface.interfaces import IComponents
 
 from nti.app.site.hostpolicy import create_site
 
+from nti.dataserver.tests import SharedConfiguringTestLayer
+
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 
 from nti.dataserver.users.users import User
 
