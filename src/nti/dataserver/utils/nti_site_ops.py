@@ -18,8 +18,6 @@ from zope import lifecycleevent
 
 from zope.component.hooks import site as current_site
 
-from zope.interface.interfaces import IComponents
-
 from zope.traversing.interfaces import IEtcNamespace
 
 from nti.dataserver.interfaces import ISiteAdminManagerUtility
@@ -35,8 +33,6 @@ from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.utils.base_script import create_context
 
 from nti.site.hostpolicy import get_all_host_sites
-
-from nti.site.utils import unregisterUtility
 
 conf_package = 'nti.appserver'
 
@@ -109,10 +105,6 @@ def remove_sites(names=(), remove_site_entities=False, remove_entity_creation_si
                     lifecycleevent.modified(entity)
 
         del sites_folder[name]
-        # This should probably be a subscriber.
-        site_components = component.queryUtility(IComponents, name=name)
-        if site_components is not None:
-            unregisterUtility(component.getSiteManager(), site_components, IComponents, name=name)
         if verbose:
             print('[%s] Site removed' % name)
 
