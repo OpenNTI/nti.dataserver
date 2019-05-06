@@ -32,6 +32,7 @@ from nti.dataserver.utils import run_with_dataserver
 
 from nti.dataserver.utils.base_script import create_context
 
+from nti.site.hostpolicy import get_host_site
 from nti.site.hostpolicy import get_all_host_sites
 
 conf_package = 'nti.appserver'
@@ -47,9 +48,10 @@ def list_sites():
             print("\t", k, v)
 
 
-def _remove_entity(site_name, entity, verbose=False):
+def _remove_entity(site_name, entity, verbose=False, commit=False):
     try:
-        Entity.delete_entity(entity.username)
+        if commit:
+            Entity.delete_entity(entity.username)
     except KeyError:
         # Propbably user contained friends lists
         pass
@@ -60,7 +62,7 @@ def _remove_entity(site_name, entity, verbose=False):
 
 def remove_sites(names=(), remove_site_entities=False, remove_entity_creation_sites=True,
                  remove_child_sites=True, remove_only_child_sites=False,
-                 excluded_sites=None, verbose=True, library=True):
+                 excluded_sites=None, verbose=True, library=True, commit=False):
     """
     Remove the given sites and their registered components. If specified, we may only
     remove the child sites of the given sites. We also remove the entitites tied to
@@ -82,6 +84,12 @@ def remove_sites(names=(), remove_site_entities=False, remove_entity_creation_si
         # Add in child sites
         site_admin_utility = component.getUtility(ISiteAdminManagerUtility)
         for site_name in list(sites_to_remove):
+            try:
+                get_host_site(site_name)
+            except KeyError:
+                print('[%s] Skipping non-existent site' % site_name)
+                sites_to_remove.remove(site_name)
+                continue
             child_site_names = site_admin_utility.get_descendant_site_names(site_name)
             sites_to_remove.update(child_site_names)
             if remove_only_child_sites:
@@ -97,14 +105,16 @@ def remove_sites(names=(), remove_site_entities=False, remove_entity_creation_si
         if remove_site_entities or remove_entity_creation_sites:
             for entity in get_entities_by_site(name):
                 if remove_site_entities:
-                    _remove_entity(name, entity, verbose)
+                    _remove_entity(name, entity, verbose, commit=commit)
                 else:
                     if verbose:
                         print('[%s] Entity creation site removed (%s)' % (site_name, entity.username))
-                    remove_entity_creation_site(entity)
-                    lifecycleevent.modified(entity)
+                    if commit:
+                        remove_entity_creation_site(entity)
+                        lifecycleevent.modified(entity)
 
-        del sites_folder[name]
+        if commit:
+            del sites_folder[name]
         if verbose:
             print('[%s] Site removed' % name)
 
@@ -184,6 +194,13 @@ def main():
                             nargs="+",
                             help="sites to be excluded during remove")
 
+    arg_parser.add_argument('--commit',
+                            dest='commit',
+                            action='store_true',
+                            default=False,
+                            help="""commit the transaction, useful to see
+                                 behavior before running destructive changes (default False)""")
+
     env_dir = os.getenv('DATASERVER_DIR')
     args = arg_parser.parse_args()
     if args.list:
@@ -208,7 +225,8 @@ def main():
                                                           args.remove_child_sites,
                                                           args.remove_only_child_sites,
                                                           args.excluded_sites,
-                                                          args.verbose))
+                                                          args.verbose,
+                                                          args.commit))
     elif args.info:
         context = create_context(env_dir, with_library=True)
         conf_packages = (conf_package,)

@@ -137,6 +137,7 @@ class TestRemoveSite(unittest.TestCase):
         # Simple site deletion
         remove_sites(names=('site_to_delete',),
                      remove_entity_creation_sites=False,
+                     commit=True,
                      remove_site_entities=False)
         self._validate(deleted_sites=('site_to_delete',),
                        deleted_users=False)
@@ -144,6 +145,7 @@ class TestRemoveSite(unittest.TestCase):
 
         remove_sites(names=('site_to_delete',),
                      remove_entity_creation_sites=False,
+                     commit=True,
                      remove_site_entities=True)
         self._validate(deleted_sites=('site_to_delete',),
                        deleted_users=True)
@@ -151,6 +153,7 @@ class TestRemoveSite(unittest.TestCase):
 
         remove_sites(names=('site_to_delete',),
                      remove_entity_creation_sites=True,
+                     commit=True,
                      remove_site_entities=False)
         self._validate(deleted_sites=('site_to_delete',),
                        removed_user_creation_sites=True,
@@ -160,6 +163,7 @@ class TestRemoveSite(unittest.TestCase):
         # Remove child sites with exclusion
         remove_sites(names=('parent_site',),
                      remove_entity_creation_sites=False,
+                     commit=True,
                      remove_site_entities=True,
                      remove_only_child_sites=True,
                      excluded_sites=('child_site2',))
@@ -168,6 +172,7 @@ class TestRemoveSite(unittest.TestCase):
 
         remove_sites(names=('parent_site',),
                      remove_entity_creation_sites=True,
+                     commit=True,
                      remove_site_entities=False,
                      remove_only_child_sites=True,
                      excluded_sites=('child_site2',))
@@ -179,6 +184,7 @@ class TestRemoveSite(unittest.TestCase):
         # Remove all child sites
         remove_sites(names=('parent_site',),
                      remove_entity_creation_sites=False,
+                     commit=True,
                      remove_site_entities=False,
                      remove_only_child_sites=True)
         self._validate(deleted_sites=('child_site1', 'child_site2'), deleted_users=False)
@@ -187,12 +193,14 @@ class TestRemoveSite(unittest.TestCase):
         remove_sites(names=('parent_site',),
                      remove_entity_creation_sites=False,
                      remove_site_entities=True,
+                     commit=True,
                      remove_only_child_sites=True)
         self._validate(deleted_sites=('child_site1', 'child_site2'), deleted_users=True)
         reset()
 
         remove_sites(names=('parent_site',),
                      remove_entity_creation_sites=True,
+                     commit=True,
                      remove_site_entities=False,
                      remove_only_child_sites=True)
         self._validate(deleted_sites=('child_site1', 'child_site2'),
@@ -204,6 +212,7 @@ class TestRemoveSite(unittest.TestCase):
         remove_sites(names=('parent_site',),
                      remove_entity_creation_sites=False,
                      remove_site_entities=False,
+                     commit=True,
                      remove_child_sites=True)
         self._validate(deleted_sites=('parent_site', 'child_site1', 'child_site2'),
                        deleted_users=False)
@@ -211,6 +220,7 @@ class TestRemoveSite(unittest.TestCase):
 
         remove_sites(names=('parent_site',),
                      remove_entity_creation_sites=False,
+                     commit=True,
                      remove_site_entities=True,
                      remove_child_sites=True)
         self._validate(deleted_sites=('parent_site', 'child_site1', 'child_site2'),
@@ -219,6 +229,7 @@ class TestRemoveSite(unittest.TestCase):
 
         remove_sites(names=('parent_site',),
                      remove_entity_creation_sites=True,
+                     commit=True,
                      remove_site_entities=False,
                      remove_child_sites=True)
         self._validate(deleted_sites=('parent_site', 'child_site1', 'child_site2'),
@@ -229,8 +240,34 @@ class TestRemoveSite(unittest.TestCase):
         # Remove multiple sites
         remove_sites(names=('parent_site', 'site_to_delete'),
                      remove_entity_creation_sites=False,
+                     commit=True,
+                     remove_site_entities=True,
+                     remove_child_sites=True)
+        self._validate(deleted_sites=('parent_site', 'child_site1', 'child_site2', 'site_to_delete'),
+                       deleted_users=True)
+
+        # Running the same operation again (without a test reset) should log and ignore
+        remove_sites(names=('parent_site', 'site_to_delete'),
+                     remove_entity_creation_sites=False,
+                     commit=True,
                      remove_site_entities=True,
                      remove_child_sites=True)
         self._validate(deleted_sites=('parent_site', 'child_site1', 'child_site2', 'site_to_delete'),
                        deleted_users=True)
         reset()
+
+        # The same command without commiting just logs
+        remove_sites(names=('parent_site', 'site_to_delete'),
+                     remove_entity_creation_sites=False,
+                     commit=False,
+                     remove_site_entities=True,
+                     remove_child_sites=False)
+        self._validate()
+        reset()
+
+        remove_sites(names=('parent_site', 'site_to_delete'),
+                     remove_entity_creation_sites=False,
+                     commit=False,
+                     remove_site_entities=False,
+                     remove_child_sites=True)
+        self._validate()
