@@ -318,6 +318,28 @@ def intids_of_users_by_sites(sites=()):
     return doc_ids or ()
 
 
+def intids_of_entities_by_sites(sites=()):
+    if isinstance(sites, six.string_types):
+        sites = sites.split(',')
+    catalog = get_entity_catalog()
+    query = {IX_SITE: {'any_of': sites or ()}}
+    doc_ids = catalog.apply(query)
+    return doc_ids or ()
+
+
+def get_entites_by_sites(sites=()):
+    """
+    Get the entities using the given sites.
+    """
+    result = []
+    intids = component.getUtility(IIntIds)
+    for uid in intids_of_entities_by_sites(sites) or ():
+        entity = intids.queryObject(uid)
+        if entity is not None:
+            result.append(entity)
+    return result
+
+
 def get_users_by_sites(sites=()):
     """
     Get the users using the given sites.
@@ -340,6 +362,13 @@ def get_users_by_site(site=None):
     Get the users using the given site.
     """
     return get_users_by_sites((site or getSite().__name__),)
+
+
+def get_entities_by_site(site=None):
+    """
+    Get the users using the given site.
+    """
+    return get_entites_by_sites((site or getSite().__name__),)
 
 
 def intids_of_community_members(community, all_members=False):
