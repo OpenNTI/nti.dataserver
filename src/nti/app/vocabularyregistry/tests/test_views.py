@@ -21,6 +21,8 @@ from hamcrest import contains_inanyorder
 
 from pyramid.interfaces import IRequest
 
+import unittest
+
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -211,6 +213,7 @@ class TestViews(ApplicationLayerTest):
                               params={'terms': ['world', 'hello', 'world']},
                               status=403, extra_environ=user_environ)
 
+    @unittest.skip("Disable the deletion view for now.")
     @WithSharedApplicationMockDS(users=(u'user001', u'admin001@nextthought.com'), testapp=True, default_authenticate=False)
     def testVocabularyDeleteView(self):
         # NT admin can delete any vocabularies from any sites.

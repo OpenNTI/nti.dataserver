@@ -139,11 +139,12 @@ class VocabularyUpdateView(AbstractAuthenticatedView,
                 self._raise_error(str(e))
 
 
-@view_config(route_name='objects.generic.traversal',
-             renderer='rest',
-             request_method='DELETE',
-             permission=nauth.ACT_DELETE,
-             context=IVocabulary)
+# Disable the deletion view for now.
+#@view_config(route_name='objects.generic.traversal',
+#             renderer='rest',
+#             request_method='DELETE',
+#             permission=nauth.ACT_DELETE,
+#             context=IVocabulary)
 class VocabularyDeleteView(AbstractAuthenticatedView,
                            VocabularyViewMixin):
     """
