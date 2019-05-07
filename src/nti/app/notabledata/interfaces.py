@@ -138,6 +138,19 @@ class IUserNotableProvider(interface.Interface):
         """
 
 
+class IUserNotableSharedWithIDProvider(interface.Interface):
+    """
+    Registered as a subscription adapter to a (subclass of)
+    :class:`IUser` and the request. Used to provide a set of shared with
+    NTIIDs to query for notables.
+    """
+
+    def get_shared_with_ids():
+        """
+        Return a set of ids to query for sharedWith content.
+        """
+
+
 class IUserNotableDataStorage(interface.Interface):
     """
     An implementation helper for objects which otherwise do not
