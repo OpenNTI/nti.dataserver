@@ -4,10 +4,9 @@
 .. $Id$
 """
 
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from array import array
 
@@ -27,6 +26,7 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.notabledata.interfaces import IUserNotableData
 from nti.app.notabledata.interfaces import IUserNotableProvider
 from nti.app.notabledata.interfaces import IUserNotableDataStorage
+from nti.app.notabledata.interfaces import IUserNotableSharedWithIDProvider
 
 from nti.dataserver.authentication import dynamic_memberships_that_participate_in_security
 
@@ -49,6 +49,8 @@ from nti.ntiids.oids import to_external_ntiid_oid
 from nti.property.property import annotation_alias
 
 from nti.zodb import isBroken
+
+logger = __import__('logging').getLogger(__name__)
 
 _MESSAGEINFO_MYMETYPE = "application/vnd.nextthought.messageinfo"
 
@@ -102,7 +104,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
     def _results(self, doc_ids):
         return SafeResultSet(doc_ids or (), self._intids)
-        
+
     def __find_blog_comment_intids(self):
         # We know that blog comments have a container ID that is the
         # blog entry's NTIID. We know that the blog entry's NTIID is deterministic
@@ -221,13 +223,15 @@ class UserNotableData(AbstractAuthenticatedView):
         return {x.NTIID for x in results if IFriendsList.providedBy(x)}
 
     @CachedProperty
-    def _course_sharing_scopes(self):
-        try:
-            from nti.contenttypes.courses.interfaces import ICourseInstanceSharingScope
-        except ImportError:
-            return set()
-        result = self.remoteUser.dynamic_memberships
-        return {x.NTIID for x in result if ICourseInstanceSharingScope.providedBy(x)}
+    def _shared_with_ids(self):
+        """
+        Fetch additional shared with ids.
+        """
+        result = set()
+        for provider in component.subscribers((self.remoteUser, self.request),
+                                              IUserNotableSharedWithIDProvider):
+            result.update(provider.get_shared_with_ids())
+        return result
 
     @CachedProperty('_time_range')
     def _safely_viewable_notable_intids(self):
@@ -235,7 +239,7 @@ class UserNotableData(AbstractAuthenticatedView):
         # Any top-level items shared directly to me or my groups
         shared_with_ids = self._group_ntiids
         shared_with_ids.add(self.remoteUser.username)
-        shared_with_ids = shared_with_ids | self._course_sharing_scopes
+        shared_with_ids = shared_with_ids | self._shared_with_ids
         query = {'any_of': shared_with_ids}
         intids_shared_to_me = catalog['sharedWith'].apply(query)
 
