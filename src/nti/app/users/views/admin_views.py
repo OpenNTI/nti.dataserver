@@ -57,7 +57,6 @@ from nti.app.users import VIEW_RESTRICT_USER_ACCESS
 
 from nti.app.users.utils import get_site_community
 from nti.app.users.utils import get_members_by_site
-from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import get_site_community_name
 from nti.app.users.utils import set_entity_creation_site
 from nti.app.users.utils import generate_mail_verification_pair

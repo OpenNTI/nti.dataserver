@@ -162,11 +162,11 @@ def create_simple_html_text_email(base_template,
     recipients = _as_recipient_list(recipients)
 
     if not recipients:
-        logger.debug("Refusing to attempt to send email with no recipients")
+        logger.info("Refusing to attempt to send email with no recipients")
         return
     if not subject:
         # Should the subject already be localized or should we do that?
-        logger.debug("Refusing to attempt to send email with no subject")
+        logger.info("Refusing to attempt to send email with no subject")
         return
 
     if request is None:
@@ -279,7 +279,13 @@ def queue_simple_html_text_email(*args, **kwargs):
     kwargs = dict(kwargs)
     if '_level' not in kwargs:
         kwargs['_level'] = 4
-    return _send_pyramid_mailer_mail(create_simple_html_text_email(*args, **kwargs),
+    message = create_simple_html_text_email(*args, **kwargs)
+    # There are cases where this will be none (bounced email handling, missing
+    # subject - error?). In at least the bounced email case, we want to avoid
+    # sending the email and erroring.
+    if message is None:
+        return
+    return _send_pyramid_mailer_mail(message,
                                      recipients=kwargs.get('recipients'),
                                      request=kwargs.get('request'))
 
