@@ -228,7 +228,7 @@ class DefaultSiteAdminManagerUtility(object):
         parent = self._get_site(site, 'parent_object')
         return parent
 
-    get_parent_name = get_parent_site
+    get_parent_site_name = get_parent_name = get_parent_site
 
     def get_ancestor_sites(self, site=None):
         ancestors = self._get_site(site, 'ancestor_objects')
