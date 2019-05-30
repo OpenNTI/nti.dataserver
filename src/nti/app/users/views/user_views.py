@@ -196,14 +196,16 @@ class UserUpdateView(UGDPutView):
     about it and the internalization factory tries to create a None username DFL.
     """
 
+    MIN_VALID_YEAR = 1900
+    MAX_VALID_YEAR = 3000
+
     def readInput(self, value=None):
         value = super(UserUpdateView, self).readInput(value=value)
         value.pop('DynamicMemberships', None)
         self.validateInput(value)
         return value
 
-    @staticmethod
-    def is_valid_year(year):
+    def is_valid_year(self, year):
         if year is None:
             return False
         elif isinstance(year, six.string_types):
@@ -211,7 +213,7 @@ class UserUpdateView(UGDPutView):
                 year = int(year)
             except (ValueError):
                 return False
-        if year < 1900:
+        if not (self.MIN_VALID_YEAR < year < self.MAX_VALID_YEAR):
             return False
         return True
 
