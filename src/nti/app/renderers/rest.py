@@ -135,7 +135,7 @@ def render_externalizable(data, system):
 
     catch_component_action = component.queryUtility(IExternalizationCatchComponentAction,
                                                     default=_extended_catch_replace_action)
-    body = toExternalObject(data, 
+    body = toExternalObject(data,
                             name=getattr(request, '_v_nti_render_externalizable_name', ''),
                             # Catch *nested* errors during externalization. We got this far,
                             # at least send back some data for the main object. The exception will be logged.
@@ -161,6 +161,7 @@ def render_externalizable(data, system):
     if      isinstance(body, collections.MutableMapping) \
         and not INoHrefInResponse.providedBy(data):
 
+        # FIXME: Do we want to render the link before checking if it is valid?
         if 'href' not in body or not nti_traversal.is_valid_resource_path(body['href']):
             if request.method == 'GET':
                 # safe assumption, send back what we had
