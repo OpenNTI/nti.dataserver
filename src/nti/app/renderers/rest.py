@@ -36,6 +36,8 @@ from nti.externalization.representation import to_json_representation_externaliz
 
 from nti.links.externalization import render_link
 
+from nti.links.interfaces import ILink
+
 from nti.links.links import Link
 
 from nti.mimetype.mimetype import MIME_BASE
@@ -161,7 +163,10 @@ def render_externalizable(data, system):
     if      isinstance(body, collections.MutableMapping) \
         and not INoHrefInResponse.providedBy(data):
 
-        # FIXME: Do we want to render the link before checking if it is valid?
+        if ILink.providedBy(body.get('href')):
+            # Render the link before checking validity
+            body['href'] = render_link(body['href'])
+
         if 'href' not in body or not nti_traversal.is_valid_resource_path(body['href']):
             if request.method == 'GET':
                 # safe assumption, send back what we had
