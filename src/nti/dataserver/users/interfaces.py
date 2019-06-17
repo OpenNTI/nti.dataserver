@@ -765,6 +765,28 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                          constraint=checkCannotBeBlank)
 
 
+class IProfileDisplayableSupplementalFields(interface.Interface):
+    """
+    A utility that can define additional (profile) fields to expose, typically in
+    admin or report views.
+    """
+
+    def get_user_fields(user):
+        """
+        Returns a dict of field_name -> value.
+        """
+
+    def get_field_display_values():
+        """
+        Returns a dict of field_name -> field_display_name.
+        """
+
+    def get_ordered_fields():
+        """
+        The list of field names in order.
+        """
+
+
 class IEmailRequiredUserProfile(ICompleteUserProfile):
     """
     A user profile that ensures the email is filled in.
