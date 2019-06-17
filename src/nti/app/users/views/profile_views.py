@@ -56,7 +56,6 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
-from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
@@ -70,6 +69,7 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IUserContactProfile
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
+from nti.dataserver.users.interfaces import IProfileDisplayableSupplementalFields
 
 from nti.dataserver.users.interfaces import checkEmailAddress
 
@@ -160,6 +160,8 @@ def _get_user_info_extract(all_sites=False):
     """
     Return all users from the current site, or all users from all sites if all_sites is specified.
     """
+    profile_fields = component.queryUtility(IProfileDisplayableSupplementalFields)
+
     def _build_user_info(u, user_creation_site=None):
         username = u.username
         userid = _replace_username(username)
@@ -173,7 +175,7 @@ def _get_user_info_extract(all_sites=False):
         if user_creation_site is None:
             user_creation_site = get_user_creation_sitename(u)
 
-        return {
+        result = {
             'alias': _tx_string(alias),
             'email': _tx_string(email),
             'userid': _tx_string(userid),
@@ -184,6 +186,8 @@ def _get_user_info_extract(all_sites=False):
             'external_ids': external_id_map,
             'creationSite': user_creation_site
         }
+        if profile_fields is not None:
+            result.update(profile_fields.get_user_fields(u))
 
     if not all_sites:
         current_sitename = getSite().__name__
@@ -240,6 +244,9 @@ class UserInfoExtractCSVView(AbstractUserInfoExtractView):
         fieldnames = ['username', 'userid', 'realname', 'alias', 'email',
                       'createdTime', 'lastLoginTime', 'external_type',
                       'external_id', 'creationSite']
+        profile_fields = component.queryUtility(IProfileDisplayableSupplementalFields)
+        if profile_fields is not None:
+            fieldnames.extend(profile_fields.get_ordered_fields())
         csv_writer = csv.DictWriter(stream, fieldnames=fieldnames,
                                     extrasaction='ignore')
         csv_writer.writeheader()
