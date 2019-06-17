@@ -9,31 +9,18 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_key
 from hamcrest import has_length
-from hamcrest import has_properties
-from hamcrest import instance_of
 from hamcrest import is_
 from hamcrest import not_
-from hamcrest import none
-from hamcrest import not_none
 from hamcrest import same_instance
 from hamcrest import contains
-from hamcrest import contains_inanyorder
-
-from pyramid.interfaces import IRequest
 
 import unittest
 
 from zope import component
-from zope import interface
-from zope import lifecycleevent
 
 from zope.component.hooks import getSite
 
-from zope.event import notify
-
 from zope.schema.interfaces import IVocabulary
-from zope.schema.interfaces import IVocabularyFactory
-from zope.schema.interfaces import IVocabularyRegistry
 
 from nti.app.vocabularyregistry.vocabulary import Vocabulary as SimpleVocabulary
 from nti.app.vocabularyregistry.vocabulary import Term as SimpleTerm
@@ -45,8 +32,6 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.vocabularyregistry.utils import install_named_utility
 
 from nti.dataserver.tests import mock_dataserver
-
-from nti.dataserver.users import User
 
 logger = __import__('logging').getLogger(__name__)
 

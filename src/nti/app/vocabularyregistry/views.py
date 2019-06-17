@@ -18,6 +18,8 @@ from zope.cachedescriptors.property import Lazy
 
 from zope.component.hooks import site as current_site
 
+from zope.event import notify
+
 from zope.schema.interfaces import IVocabulary
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -32,6 +34,8 @@ from nti.app.vocabularyregistry.vocabulary import Vocabulary as SimpleVocabulary
 from nti.app.vocabularyregistry.utils import install_named_utility
 
 from nti.dataserver import authorization as nauth
+
+from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
 from nti.site import unregisterUtility
 
@@ -134,6 +138,7 @@ class VocabularyUpdateView(AbstractAuthenticatedView,
                                        site_manager=site_manager)
             try:
                 vocabulary = self.register_vocabulary(name, terms, site_manager)
+                notify(ObjectModifiedFromExternalEvent(vocabulary))
                 return vocabulary
             except ValueError as e:
                 self._raise_error(str(e))
