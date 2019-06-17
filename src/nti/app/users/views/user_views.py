@@ -30,6 +30,8 @@ from zope.intid.interfaces import IIntIds
 
 from zope.schema import getValidationErrors
 
+from zope.interface import Invalid
+
 from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.error import validation_error_to_dict
 
@@ -311,19 +313,32 @@ class UserUpdatePreflightView(UserUpdateView):
             result_dict['ProfileType'] = profile_iface.__name__
             result_dict['ProfileSchema'] = IAccountProfileSchemafier(user).make_schema()
             errors = getValidationErrors(profile_iface, profile)
-            errors = [validation_error_to_dict(self.request, x[1]) for x in errors or ()]
+            errors = [x[1] for x in errors]
+            errors = [validation_error_to_dict(self.request, x) for x in errors or ()]
+            validation_fields = [x.get('field') for x in errors if x.get('field')]
 
             # Now we have all validation errors for set fields, but we may have
             # validation errors before we set the field; we need to return
             # those as well.
             if response.json_body:
                 error_field = response.json_body.get('field')
-                validation_fields = [x.get('field') for x in errors if x.get('field')]
                 if error_field not in validation_fields:
                     # Add our actual validation error
                     errors.append(response.json_body)
-                result_dict['ValidationErrors'] = errors
-                result.json_body = result_dict
+                    validation_fields.append(error_field)
+
+            # Finally gather all invariants (for fields not found above)
+            invariant_errors = []
+            try:
+                profile_iface.validateInvariants(profile, invariant_errors)
+            except Invalid:
+                pass
+            invariant_errors = [validation_error_to_dict(self.request, x) for x in invariant_errors or ()]
+            invariant_errors = [x for x in invariant_errors if x.get('field', '') not in validation_fields]
+            errors.extend(invariant_errors)
+
+            result_dict['ValidationErrors'] = errors
+            result.json_body = result_dict
         else:
             result = result_dict
             profile_iface = IUserProfileSchemaProvider(user).getSchema()
