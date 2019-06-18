@@ -188,6 +188,7 @@ def _get_user_info_extract(all_sites=False):
         }
         if profile_fields is not None:
             result.update(profile_fields.get_user_fields(u))
+        return result
 
     if not all_sites:
         current_sitename = getSite().__name__
