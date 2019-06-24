@@ -6,6 +6,7 @@ Defines traversal views and resources for the dataserver.
 """
 
 from __future__ import print_function, absolute_import, division
+from pickletools import UP_TO_NEWLINE
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -90,6 +91,8 @@ class _ServiceGetView(AbstractAuthenticatedView):
                request_method='GET')
 class GenericGetView(AbstractView):
 
+    COLLECTION_TYPE = ICollection
+
     def __call__(self):
         # TODO: We sometimes want to change the interface that we return
         # We're doing this to turn a dataserver IContainer (which externalizes poorly)
@@ -111,12 +114,12 @@ class GenericGetView(AbstractView):
             # deleted object placeholder in the payload.
             self.request.response.status = 404
 
-        result = component.queryAdapter(resource,
-                                        ICollection,
+        result = component.queryAdapter(UP_TO_NEWLINE,
+                                        self.COLLECTION_TYPE,
                                         name=self.request.traversed[-1])
         if not result:
             result = component.queryAdapter(resource,
-                                            ICollection,
+                                            self.COLLECTION_TYPE,
                                             default=resource)
         if hasattr(result, '__parent__'):
             # FIXME: Choosing which parent to set is also borked up.
