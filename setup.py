@@ -275,7 +275,6 @@ setup(
         # Powerful and Pythonic HTML/XML processing library combining
         # libxml2/libxslt with the ElementTree API. Also a pull parser.
         'lxml',
-        'mysqlclient',
         'nameparser',  # Human name parsing
         # numpy is req'd by nltk, but not depended on. sigh.
         # This turns out to be because it CANNOT be installed in a setup.py:
