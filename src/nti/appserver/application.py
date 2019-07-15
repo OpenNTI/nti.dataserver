@@ -464,7 +464,8 @@ def createApplication( http_port,
 	gen1 = asint(settings.get('gc_gen1_threshold', 10))
 	gen2 = asint(settings.get('gc_gen2_threshold', 10))
 	gc.set_threshold(gen0, gen1, gen2)
-
+	logger.info("GC settings (%s) (%s %s %s)",
+				gc.isenabled(), gen0, gen1, gen2)
 	# Configure subscribers, etc.
 	__traceback_info__ = settings
 

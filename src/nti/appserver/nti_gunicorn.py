@@ -636,7 +636,6 @@ def _post_fork(unused_arbiter, worker):
     import gc
     import sys
     import signal
-
     from nti.appserver._util import dump_info
 
     sigprof_id = '%s:%s' % (worker._nti_identifier, os.getpid())

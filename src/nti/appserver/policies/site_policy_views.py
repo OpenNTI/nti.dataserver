@@ -126,7 +126,6 @@ def _response_for_site_resource_with_marker(marker_interface, request, resource,
     to just redirecting unconditionally, but we might wind up getting
     lots of 404 responses which is ugly.
     """
-
     view = component.queryUtility(IView, name=resource)
 
     if view:
