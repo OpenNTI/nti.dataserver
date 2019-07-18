@@ -38,13 +38,18 @@ from nti.schema.schema import SchemaConfigured
 
 logger = __import__('logging').getLogger(__name__)
 
-
+# This could be an object instantiated a lot; inherit
+# from object to avoid SchemaConfigured overhead. Should
+# be safe since we create these ourselves.
 @total_ordering
 @WithRepr
 @EqHash("username", "rank")
 @interface.implementer(ISuggestedContact)
-class SuggestedContact(SchemaConfigured, Contained):
-    createDirectFieldProperties(ISuggestedContact)
+class SuggestedContact(object):
+
+    def __init__(self, username, rank):
+        self.username = username
+        self.rank = rank
 
     @property
     def provider(self):
@@ -131,7 +136,7 @@ class _SecondOrderContactProvider(object):
                 except KeyError:  # pragma: no cover
                     # typically POSKeyError
                     # pylint: disable=protected-access
-                    logger.warning("Failed to filter entity with id %s", 
+                    logger.warning("Failed to filter entity with id %s",
                                    hex(u64(x._p_oid)))
                     return False
 
