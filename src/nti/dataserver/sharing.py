@@ -418,15 +418,15 @@ class _SharingContextCache(object):
     def _build_entities_followed_for_read(self, entity):
         if self.communities_followed is not None:
             return
-        communities_followed = self.communities_followed = []
-        persons_followed = self.persons_followed = []
+        communities_followed = self.communities_followed = set()
+        persons_followed = self.persons_followed = set()
 
         # pylint: disable=protected-access
         for following in self(entity._get_entities_followed_for_read):
             if IDynamicSharingTarget.providedBy(following):
-                communities_followed.append(following)
+                communities_followed.add(following)
             else:
-                persons_followed.append(following)
+                persons_followed.add(following)
 
     def __call__(self, func):
         # makes many assumptions. Func must return an iterable that we
@@ -435,7 +435,7 @@ class _SharingContextCache(object):
         if key in self._data:
             return self._data[key]
 
-        result = list(func())
+        result = set(func())
         self._data[key] = result
         return result
 
@@ -699,7 +699,7 @@ class SharingTargetMixin(object):
     @property
     # @deprecate("Prefer `entities_accepting_shared_data_from`")
     def accepting_shared_data_from(self):
-        """ 
+        """
         :returns: Iterable names of entities we accept shared data from.
         """
         return _set_of_usernames_from_named_lazy_set_of_wrefs(self, '_entities_accepted')
@@ -1049,7 +1049,7 @@ class SharingTargetMixin(object):
             if (removed is False or removed is None) and change.is_object_shareable():  # Explicit, not falsey
                 # We expected the item in the shared container, but didn't find
                 # it.
-                logger.warning("Incoming deletion (%s) didn't find a shared object in %s", 
+                logger.warning("Incoming deletion (%s) didn't find a shared object in %s",
                                change, self)
             # Hmm. We also feel like we want to remove the entire thing from the stream
             # as well, erasing all evidence that it ever
@@ -1175,8 +1175,8 @@ class SharingSourceMixin(SharingTargetMixin):
 
     @property
     def usernames_of_dynamic_memberships(self):
-        """ 
-        :returns: Iterable names of dynamic sharing targets we belong to. 
+        """
+        :returns: Iterable names of dynamic sharing targets we belong to.
         """
         return _set_of_usernames_from_named_lazy_set_of_wrefs(self, '_dynamic_memberships')
 
@@ -1304,7 +1304,7 @@ class SharingSourceMixin(SharingTargetMixin):
         for following in communities_seen:
             # pylint: disable=unused-variable
             __traceback_info__ = following
-            if following == self:
+            if following is self:
                 continue
             for x in following.getSharedContainer(containerId):
                 try:
@@ -1566,7 +1566,7 @@ def _ii_family():
 
 @interface.implementer(IWritableShared)
 class ShareableMixin(AbstractReadableSharedWithMixin, CreatedModDateTrackingObject):
-    """ 
+    """
     Represents something that can be shared. It has a set of SharingTargets
     with which it is shared (permissions) and some flags. Only its creator
     can alter its sharing targets. It may be possible to copy this object.
@@ -1637,7 +1637,7 @@ class ShareableMixin(AbstractReadableSharedWithMixin, CreatedModDateTrackingObje
 
         def addToSet(target):
             if isinstance(target, six.string_types):
-                raise TypeError('Strings are no longer acceptable', 
+                raise TypeError('Strings are no longer acceptable',
                                 target, self)
 
             if target == self.creator:
