@@ -43,6 +43,8 @@ from nti.site.interfaces import IHostPolicyFolder
 
 from nti.traversal.traversal import find_interface
 
+logger = __import__('logging').getLogger(__name__)
+
 
 class VocabularyViewMixin(object):
 
@@ -129,6 +131,11 @@ class VocabularyUpdateView(AbstractAuthenticatedView,
     def __call__(self):
         name = self.context.__name__
         terms = self._get_terms()
+        current_terms = set(x.token for x in self.context)
+        new_term_set = set(terms)
+        logger.info("Updating vocabulary (added=%s) (removed=%s)",
+                    sorted(new_term_set - current_terms),
+                    sorted(current_terms - new_term_set))
 
         target_site = find_interface(self.context, IHostPolicyFolder)
         with current_site(target_site):
