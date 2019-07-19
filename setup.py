@@ -183,39 +183,6 @@ setup(
         'zdaemon',
         'persistent',
         'ZEO',
-        # ZODB RelStorage:
-        # 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
-        # 'MySQL-python', # mysql adapter--NOT needed, loaded from umysqldb
-        # See also umysqldb for a mysql adapter that should be gevent compat, with same API
-        # It depends on umysql, which has been released as 2.5 on pypi.
-        # NOTE: This does not support unix socket connections
-        # MySQL-python is mostly in C. umysql is entirely in C.
-        # umysqldb uses (very small) parts of PyMySQL (which is entirely in python),
-        # As of 2010-09-15, PyMySQL at github/petehunt is not being maintained,
-        # but the original it was forked from, at github/lecram seems to be; both
-        # have commits not in the released 0.5 that we need.
-        # As of 2013-10-04 it looks like releases are being made to PyPI again,
-        # and lecram is now maintaining the master copy at https://github.com/PyMySQL/PyMySQL/.
-        # However, pymysql 0.6 is incompatible with relstorage. The cursors.Cursor
-        # class changed from storing self.connection as weakref.proxy to a plain
-        # weakref (requiring a call to dereference) which naturally breaks all users
-        # of cursors:
-        #    Module relstorage.storage:925 in f
-        #    >>    return list(self._adapter.oidallocator.new_oids(cursor))
-        #    Module relstorage.adapters.oidallocator:58 in new_oids
-        #    >>    n = cursor.connection.insert_id()
-        #    AttributeError: 'weakref' object has no attribute 'insert_id'
-        # See https://github.com/PyMySQL/PyMySQL/issues/180.
-        # This is fixed in 0.6.1, but umysqldb 1.0.3 already had a pin <0.6
-        # MySQL-python (aka MySQLdb) has been renamed to moist but seems stalled (https://github.com/farcepest/moist)
-        # On PyPy, we want pure PyMySQL, it's fastest.
-        # Benchmarking, however, shows that MySQL-python is by far the fastest under CPython,
-        # and MAY even be gevent friendly. It also seems like PyMySQL is also probably faster
-        # than umysql under CPython, despite umysql's claims (have to
-        # finish confirming that).
-        'umysql',
-        # requires PyMySQL < 0.6, but we want 0.6.1; hence our patch
-        'umysqldb == 1.0.4dev2' if not IS_PYPY else '',
         'RelStorage',
         'PyMySQL',
         'PyYAML',
@@ -524,9 +491,6 @@ setup(
             # locally (you may need to use a different version of node)
         ]
     },
-    dependency_links=[
-        'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev2'
-    ],
     zip_safe=False,
     package_dir={'': 'src'},
     packages=find_packages('src'),

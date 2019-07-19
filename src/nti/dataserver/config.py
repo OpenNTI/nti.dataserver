@@ -10,11 +10,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-# Patch for relstorage.
-# MUST be done at a higher level
-#import nti.monkey.relstorage_umysqldb_patch_on_import
-# nti.monkey.relstorage_umysqldb_patch_on_import.patch()
-
 import os
 import stat
 from six.moves import configparser
@@ -261,7 +256,7 @@ def _configure_redis(env):
 
     if not env.main_conf.has_section('redis'):
         env.main_conf.add_section('redis')
-    env.main_conf.set('redis', 'redis_url', 
+    env.main_conf.set('redis', 'redis_url',
                       urllib_parse.urljoin('file://', pathname2url(redis_file)))
 
 
@@ -598,7 +593,7 @@ def _make_connect_databases(env, ini=None, root=None):
             component.getGlobalSiteManager().registerUtility(xdb, IDatabase, name)
 
         if '' not in db.databases:
-            component.getGlobalSiteManager().registerUtility(db.databases['Users'], 
+            component.getGlobalSiteManager().registerUtility(db.databases['Users'],
                                                              IDatabase)
 
         for xdb in db.databases.values():
