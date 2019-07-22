@@ -39,6 +39,7 @@ def _delete_user(factory, username, site=None):
     if not entity:
         print("Entity '%s' does not exists" % username, file=sys.stderr)
         sys.exit(2)
+    print("Deleting user (%s)" % username)
     return deleter(username)
 
 
