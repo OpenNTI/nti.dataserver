@@ -60,6 +60,7 @@ def main():
     run_with_dataserver(environment_dir=env_dir,
                         xmlconfig_packages=conf_packages,
                         verbose=args.verbose,
+                        minimal_ds=True,
                         context=context,
                         function=lambda: _set_generation(args))
 

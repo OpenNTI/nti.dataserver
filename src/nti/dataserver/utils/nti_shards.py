@@ -35,6 +35,7 @@ def _init_shard(shard_name):
 
 def init_shard(env_dir, shard_name):
     run_with_dataserver(environment_dir=env_dir,
+                        minimal_ds=True,
                         function=lambda: _init_shard(shard_name))
 
 

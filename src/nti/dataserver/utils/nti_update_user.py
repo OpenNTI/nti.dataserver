@@ -144,6 +144,7 @@ def main(args=None):
     config_pacakges = ('nti.appserver',)
     run_with_dataserver(verbose=args.verbose,
                         environment_dir=env_dir,
+                        minimal_ds=True,
                         xmlconfig_packages=config_pacakges,
                         function=lambda: _update_user(username, args))
     sys.exit(0)

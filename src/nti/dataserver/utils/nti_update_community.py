@@ -118,6 +118,7 @@ def process_args(args=None):
     run_with_dataserver(environment_dir=env_dir,
                         xmlconfig_packages=conf_packages,
                         verbose=args.verbose,
+                        minimal_ds=True,
                         function=lambda: update_community(username,
                                                           args.name,
                                                           args.alias,

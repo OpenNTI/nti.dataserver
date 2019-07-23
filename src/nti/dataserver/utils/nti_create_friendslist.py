@@ -112,6 +112,7 @@ def main():
     run_with_dataserver(environment_dir=env_dir,
                         xmlconfig_packages=conf_packages,
                         verbose=args.verbose,
+                        minimal_ds=True,
                         context=context,
                         function=lambda: _process_args(args))
     sys.exit(0)

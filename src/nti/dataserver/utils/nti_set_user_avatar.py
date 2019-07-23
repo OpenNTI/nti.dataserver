@@ -110,6 +110,7 @@ def set_entity_avatar(args=None):
     package = 'nti.appserver'
     run_with_dataserver(verbose=args.verbose,
                         environment_dir=env_dir,
+                        minimal_ds=True,
                         xmlconfig_packages=(package,),
                         function=lambda: _set_avatar(username,
                                                      url=url,

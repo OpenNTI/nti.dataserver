@@ -77,6 +77,7 @@ def main():
                         xmlconfig_packages=conf_packages,
                         verbose=args.verbose,
                         context=context,
+                        minimal_ds=True,
                         function=lambda: _delete_user(_type_map[args.type], username, site))
     sys.exit(0)
 
