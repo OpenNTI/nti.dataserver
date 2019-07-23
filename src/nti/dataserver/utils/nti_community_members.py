@@ -104,6 +104,7 @@ def process_args(args=None):
     run_with_dataserver(environment_dir=env_dir,
                         xmlconfig_packages=('nti.appserver',),
                         verbose=args.verbose,
+                        minimal_ds=True,
                         function=lambda: output_members(args.username,
                                                         args.output,
                                                         args.site,

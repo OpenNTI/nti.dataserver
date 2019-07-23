@@ -133,6 +133,7 @@ def main():
         raise IOError("Invalid dataserver environment root directory", env_dir)
 
     run_with_dataserver(environment_dir=env_dir,
+                        minimal_ds=True,
                         function=lambda: _action(args))
 
 

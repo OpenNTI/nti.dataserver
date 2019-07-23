@@ -57,6 +57,7 @@ def main():
         sys.exit(1)
 
     run_with_dataserver(environment_dir=env_dir,
+                        minimal_ds=True,
                         function=lambda: _set_pass(username, password))
     sys.exit(0)
 

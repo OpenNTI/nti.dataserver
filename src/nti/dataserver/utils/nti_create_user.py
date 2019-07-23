@@ -215,6 +215,7 @@ def create_user(args=None):
     run_with_dataserver(environment_dir=env_dir,
                         xmlconfig_packages=(package,),
                         verbose=args.verbose,
+                        minimal_ds=True,
                         config_features=config_features,
                         function=lambda: _create_user(_type_map[args.type],
                                                       username,

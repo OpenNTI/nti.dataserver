@@ -84,7 +84,7 @@ def process_params(args):
 
 def main():
     arg_parser = argparse.ArgumentParser(description="Add/Remvove friends from a FriendsList")
-    arg_parser.add_argument('-v', '--verbose', help="Be verbose", 
+    arg_parser.add_argument('-v', '--verbose', help="Be verbose",
                             action='store_true', dest='verbose')
     arg_parser.add_argument('owner', help="The owner of the friend list")
     arg_parser.add_argument('name', help="The name of friend list")
@@ -109,6 +109,7 @@ def main():
     run_with_dataserver(environment_dir=env_dir,
                         xmlconfig_packages=conf_packages,
                         verbose=args.verbose,
+                        minimal_ds=True,
                         context=context,
                         function=lambda: process_params(args))
 
