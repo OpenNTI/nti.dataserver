@@ -18,6 +18,8 @@ import simplejson
 
 from collections import Mapping
 
+from requests.structures import CaseInsensitiveDict
+
 from six.moves.urllib_parse import unquote
 
 from zope import component
@@ -72,6 +74,8 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.singleton import Singleton
+
+from nti.identifiers.utils import get_user_for_external_id
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
@@ -207,15 +211,25 @@ def _ResolveUserView(request):
     assert remote_user is not None
 
     exact_match = request.subpath[0] if request.subpath else ''
+    external_type = external_id = None
     if not exact_match:
-        raise hexc.HTTPNotFound()
+        params = CaseInsensitiveDict(request.params)
+        external_type = params.get("external_type") or params.get("externaltype")
+        external_id = params.get("external_id") or params.get("externalid")
+        if not external_type or not external_id:
+            raise hexc.HTTPNotFound()
+        external_id = text_(external_id)
+        external_id = unquote(external_id)
+        external_type = text_(external_type)
+        external_type = unquote(external_type)
     exact_match = text_(exact_match)
     exact_match = unquote(exact_match)
 
     admin_filter_by_site_community = not is_false(
                         request.params.get('filter_by_site_community'))
 
-    result = _resolve_user(exact_match, remote_user, admin_filter_by_site_community)
+    result = _resolve_user(exact_match, remote_user, admin_filter_by_site_community,
+                           external_type=external_type, external_id=external_id)
     if result:
         # If we matched one user entity, see if we can get away without rendering it
         # TODO: This isn't particularly clean
@@ -282,24 +296,28 @@ def _ResolveUsersView(request):
 interface.directlyProvides(_ResolveUsersView, INamedLinkView)
 
 
-def _resolve_user(exact_match, remote_user, admin_filter_by_site_community):
-    exact_match = text_(exact_match)
-    # This does an NTIID lookup if needed, so we can't alter the case yet
-    entity = Entity.get_entity(exact_match)
-    # NOTE2: Going through this API lets some private objects be found if an NTIID is passed
-    # (DynamicFriendsLists, specifically). We should probably lock that down
-    if entity is None:
-        exact_match = exact_match.lower()
-        # To avoid ambiguity, we limit this to just friends lists.
-        scoped = _search_scope_to_remote_user(remote_user, exact_match,
-                                              op=operator.eq, fl_only=True)
-        if not scoped:
-            # Hmm. Ok, try everything else. Note that this could produce ambiguous results
-            # in which case we make an arbitrary choice
+def _resolve_user(exact_match, remote_user, admin_filter_by_site_community, external_type=None, external_id=None):
+    entity = None
+    if exact_match:
+        exact_match = text_(exact_match)
+        # This does an NTIID lookup if needed, so we can't alter the case yet
+        entity = Entity.get_entity(exact_match)
+        # NOTE2: Going through this API lets some private objects be found if an NTIID is passed
+        # (DynamicFriendsLists, specifically). We should probably lock that down
+        if entity is None:
+            exact_match = exact_match.lower()
+            # To avoid ambiguity, we limit this to just friends lists.
             scoped = _search_scope_to_remote_user(remote_user, exact_match,
-                                                  op=operator.eq, ignore_fl=True)
-        if scoped:
-            entity = scoped.pop()  # there can only be one exact match
+                                                  op=operator.eq, fl_only=True)
+            if not scoped:
+                # Hmm. Ok, try everything else. Note that this could produce ambiguous results
+                # in which case we make an arbitrary choice
+                scoped = _search_scope_to_remote_user(remote_user, exact_match,
+                                                      op=operator.eq, ignore_fl=True)
+            if scoped:
+                entity = scoped.pop()  # there can only be one exact match
+    else:
+        entity = get_user_for_external_id(external_type, external_id)
 
     result = ()
     if entity is not None:

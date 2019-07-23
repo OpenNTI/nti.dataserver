@@ -364,6 +364,12 @@ class TestAdminViews(ApplicationLayerTest):
             user_ntiid = to_external_ntiid_oid(user)
             invalid_access_ntiid = to_external_ntiid_oid(user.__parent__)
 
+        # Resolve user can get via external identity
+        self.testapp.get('/dataserver2/ResolveUser', status=404)
+        resolve_url = '/dataserver2/ResolveUser?external_type=%s&external_id=%s' % (external_type, external_id)
+        resolve_res = self.testapp.get(resolve_url).json_body
+        resolve_res = resolve_res['Items']
+        assert_that(resolve_res, has_length(0))
         # Set external ids via admin view
         admin_external_href = '/dataserver2/users/%s/%s' % (username, 'LinkUserExternalIdentity')
         self.testapp.post_json(admin_external_href, {'external_type': external_type,
@@ -373,6 +379,14 @@ class TestAdminViews(ApplicationLayerTest):
         self.testapp.post_json(admin_external_href, {'external_type': external_type,
                                                      'external_id': external_id},
                                status=422)
+
+        resolve_res = self.testapp.get(resolve_url).json_body
+        resolve_res = resolve_res['Items']
+        assert_that(resolve_res, has_length(1))
+        resolve_res = resolve_res[0]
+        assert_that(resolve_res, has_entries('external_ids',
+                                             has_entries(external_type, external_id),
+                                             'Username', username))
 
         # Can in a different site though
         environ = self._make_extra_environ()
