@@ -292,23 +292,6 @@ def has_permission(permission, context, username, **kwargs):
     :return: An object that behaves like a boolean value but provides a description
             about what was allowed or denied when printed.
     """
-    try:
-        context.__acl__
-    except AttributeError:
-        try:
-            # JAM: This is probably a bug. Although it lets us work
-            # with a pure stock pyramid authorization policy, if the policy
-            # is actually the one supplied by nti.appserver.pyramid_authorization
-            # that automatically fills in the ACLs, then we are potentially
-            # losing the tree.
-            # A workaround, where this is a problem, is to be sure the ACL provider
-            # object returns the parent of its context.
-            to_check = IACLProvider(context)
-        except TypeError:
-            return psecDenied("No ACL found")
-    else:
-        to_check = context
-
     policy = component.queryUtility(IAuthorizationPolicy)
     if not policy:
         return psecDenied("No IAuthorizationPolicy installed")
@@ -318,7 +301,7 @@ def has_permission(permission, context, username, **kwargs):
     if not principals:
         principals = authentication.effective_principals(username, **kwargs)
 
-    result = policy.permits(to_check, principals, permission)
+    result = policy.permits(context, principals, permission)
     return result
 
 
