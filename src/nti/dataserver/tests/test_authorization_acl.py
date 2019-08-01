@@ -236,11 +236,6 @@ class TestHasPermission(unittest.TestCase):
 		assert_that(bool(result), is_(False))
 		assert_that(result, has_property('msg', 'No IAuthorizationPolicy installed'))
 
-	def test_no_acl(self):
-		result = auth_acl.has_permission(auth.ACT_CREATE, "no acl", "sjohnson@nextthought.com")
-		assert_that(bool(result), is_(False))
-		assert_that(result, has_property('msg', 'No ACL found'))
-
 	def test_creator_allowed(self):
 		policy = ACLAuthorizationPolicy()
 		try:
