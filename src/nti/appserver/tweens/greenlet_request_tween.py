@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import time
+
 from gevent import getcurrent
 
 from paste.deploy.converters import asbool
@@ -39,9 +41,18 @@ class _greenlet_request_tween(object):
         enable_tween = self.enable_tween
         switch_logging = self.switch_logging
 
+        # For this request, capture the:
+        # * number of times we were switched into
+        # * time running
+        # * a trace function will be responsible for getting delta time
+        #   as we switch to the hub
+        current._nt_switch_time = 0
         current._nt_switch_into_count = 0
+        current._nt_switch_time_start = time.time()
         original_switch = current.switch
+
         def _nt_switch(*args, **kwargs):
+            current._nt_switch_time_start = time.time()
             if switch_logging:
                 logger.info("Switching into greenlet (%s)", path)
             current._nt_switch_into_count += 1
@@ -52,6 +63,7 @@ class _greenlet_request_tween(object):
         try:
             return self.handler(request)
         finally:
+            request.environ['nti_greenlet_switch_time'] = current._nt_switch_time
             request.environ['nti_greenlet_switch_into_count'] = current._nt_switch_into_count
 
 

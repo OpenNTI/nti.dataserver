@@ -70,7 +70,12 @@ class GunicornLogger(gunicorn_logger):
                                   connection_pool.size)
         current_site = environ.get('nti.current_site', '-')
         atoms['S'] = current_site
-        atoms['GS'] = "[%s]" % environ.get('nti_greenlet_switch_into_count', '-')
+        switch_count = environ.get('nti_greenlet_switch_into_count', '-')
+        switch_time = environ.get('nti_greenlet_switch_time', None)
+        if switch_time:
+            atoms['GS'] = "[%s switches - %.2fs]" % (switch_count, switch_time)
+        else:
+            atoms['GS'] = "[%s switches - ]" % switch_count
         return atoms
 
 
