@@ -188,8 +188,9 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
     except ConstraintNotSatisfied as e:
         exc_info = sys.exc_info()
         if field_name(e.field) == 'email':
+            msg = e.message or u'The email address you have entered is not valid.'
             exc_dict = {'field': 'email',
-                        'message': u'The email address you have entered is not valid.',
+                        'message': msg,
                         'code': u'EmailAddressInvalid'}
             if e.value == desired_userid:
                 # Given a choice, identify this on the username, since
