@@ -37,8 +37,6 @@ from nti.dataserver.users.users import User
 
 from nti.intid import utility as intid_utility
 
-from nti.zodb import readCurrent
-
 # Leaving this key around for historical purposes:
 # We used to use this as an annotation key on users that held
 # an LLTreeSet to hold session_ids. But that was a duplicate
@@ -48,11 +46,6 @@ _OWNED_SESSIONS_KEY = __name__ + '.' \
                     + '_OwnerAnnotationBasedServiceStorage' \
                     + '.' \
                     + 'session_set'
-
-
-def _read_current(obj, container=False):
-    return readCurrent(obj, container=container)
-
 
 def _u(o):
     return getattr(o, 'username', o)
@@ -160,19 +153,12 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
         by_owner.__parent__ = self
         by_owner.__name__ = '_by_owner'
 
-        for session in self._intids_rc.refs.values():
+        for session in self.intids.refs.values():
             by_owner.add_session(session)
         return by_owner
 
-    @property
-    def _intids_rc(self):
-        # Prior to 9/7/19 we were calling readCurrent on
-        # both self.intids and self.intids.ref. That was likely
-        # unnecessary and also contributed to higher db lock contention.
-        return self.intids
-
     def register_session(self, session):
-        session_id = self._intids_rc.register(session)
+        session_id = self.intids.register(session)
         session.id = hex(session_id)
         self._by_owner.add_session(session)
         logger.info('Registered session id %s for %s',
@@ -198,7 +184,7 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
     def unregister_session(self, session):
         if session is None:
             return
-        session_id = self._intids_rc.queryId(session)
+        session_id = self.intids.queryId(session)
         if session_id is not None:
             # Not registered, or gone
             self.intids.unregister(session)
