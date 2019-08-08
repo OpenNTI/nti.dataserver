@@ -414,6 +414,11 @@ def ping(request):
     links.append(Link(handshake_href, rel=REL_HANDSHAKE))
     links.extend(_links_for_authenticated_users(request))
     links.extend(_links_for_unauthenticated_users(request))
+    policy = component.getUtility(ISitePolicyUserEventListener)
+    support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
+    links.append(Link('mailto:%s' % support_email,
+                      rel='support-email',
+                      title='Email'))
     links.sort()  # for tests
 
     username = request.authenticated_userid
