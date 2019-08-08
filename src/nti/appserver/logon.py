@@ -141,6 +141,7 @@ from nti.mimetype import mimetype
 
 from nti.securitypolicy.utils import is_impersonating
 
+HREF = StandardExternalFields.HREF
 CLASS = StandardExternalFields.CLASS
 MIMETYPE = StandardExternalFields.MIMETYPE
 LINKS = StandardExternalFields.LINKS
@@ -416,9 +417,10 @@ def ping(request):
     links.extend(_links_for_unauthenticated_users(request))
     policy = component.getUtility(ISitePolicyUserEventListener)
     support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
-    links.append(Link(u'mailto:%s' % support_email,
-                      rel=u'support-email',
-                      title=u'Email'))
+    links.append({CLASS: 'Link',
+                  HREF: u'mailto:%s' % support_email,
+                  'rel': 'support-email',
+                  'title': u'Email'})
     links.sort()  # for tests
 
     username = request.authenticated_userid
