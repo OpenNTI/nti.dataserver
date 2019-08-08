@@ -166,8 +166,9 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 
     @property
     def _intids_rc(self):
-        _read_current(self.intids)
-        _read_current(self.intids.refs)
+        # Prior to 9/7/19 we were calling readCurrent on
+        # both self.intids and self.intids.ref. That was likely
+        # unnecessary and also contributed to higher db lock contention.
         return self.intids
 
     def register_session(self, session):
