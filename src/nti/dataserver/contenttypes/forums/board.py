@@ -85,7 +85,7 @@ class NoDefaultForumCommunityBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
 
 @interface.implementer(IDefaultForumBoard, ICommunityBoard)
 class CommunityBoard(NoDefaultForumCommunityBoard):
-    
+
     def createDefaultForum(self):
         return ICommunityForum(self.creator)  # Ask the ICommunity
 
