@@ -107,6 +107,9 @@
 				for="nti.dataserver.contenttypes.forums.interfaces.ITopic
 					 pyramid.interfaces.IRequest"  />
 
+    <subscriber factory=".decorators.DefaultForumDecorator"
+                provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
 	<subscriber factory=".decorators.SecurityAwareForumTopicCountDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
@@ -228,7 +231,7 @@
 		<subscriber handler=".subscribers.notify_seen_on_comment_added" />
 		<subscriber handler=".subscribers.notify_seen_on_comment_modified" />
 	</configure>
-	
+
 	<!-- Storing favorite objects -->
 	<subscriber handler=".subscribers.temp_store_favorite_object"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry

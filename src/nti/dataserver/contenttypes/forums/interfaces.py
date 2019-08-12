@@ -431,6 +431,14 @@ class IDefaultForumBoard(interface.Interface):
 IDefaultForumBoard.setTaggedValue('_ext_is_marker_interface', True)
 
 
+class IDefaultForum(interface.Interface):
+    """
+    Marker interface to designate this forum is a default forum.
+    """
+
+IDefaultForum.setTaggedValue('_ext_is_marker_interface', True)
+
+
 class ICommunityBoard(IGeneralBoard, IShouldHaveTraversablePath):
     """
     A board belonging to a particular community.

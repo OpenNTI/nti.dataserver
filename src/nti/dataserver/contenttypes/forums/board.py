@@ -38,6 +38,7 @@ from nti.dataserver.contenttypes.forums.interfaces import NTIID_TYPE_COMMUNITY_B
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import IDFLForum
+from nti.dataserver.contenttypes.forums.interfaces import IDefaultForum
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
@@ -87,7 +88,9 @@ class NoDefaultForumCommunityBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
 class CommunityBoard(NoDefaultForumCommunityBoard):
 
     def createDefaultForum(self):
-        return ICommunityForum(self.creator)  # Ask the ICommunity
+        result = ICommunityForum(self.creator)  # Ask the ICommunity
+        interface.alsoProvides(result, IDefaultForum)
+        return result
 
 @interface.implementer(IDFLBoard)
 class DFLBoard(GeneralBoard, _CreatedIntIdNTIIDMixin):
@@ -95,7 +98,9 @@ class DFLBoard(GeneralBoard, _CreatedIntIdNTIIDMixin):
     _ntiid_type = NTIID_TYPE_DFL_BOARD
 
     def createDefaultForum(self):
-        return IDFLForum(self.creator)  # Ask the DFL
+        result = IDFLForum(self.creator)  # Ask the DFL
+        interface.alsoProvides(result, IDefaultForum)
+        return result
 
 
 def _prepare_annotation_board(clazz, iface, creator, title, name=None):

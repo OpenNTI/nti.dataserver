@@ -37,13 +37,14 @@ from nti.dataserver.contenttypes.forums.board import DEFAULT_BOARD_NAME
 from nti.dataserver.contenttypes.forums.forum import DEFAULT_PERSONAL_BLOG_NAME
 
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityAdminRestrictedForum
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
+from nti.dataserver.contenttypes.forums.interfaces import IDefaultForum
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
 from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityAdminRestrictedForum
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -312,3 +313,11 @@ class TopicParticipationLinkDecorator(AbstractAuthenticatedRequestAwareDecorator
             link.__parent__ = context
             _links.append(link)
         return link
+
+
+@component.adapter(IForum)
+@interface.implementer(IExternalMappingDecorator)
+class DefaultForumDecorator(Singleton):
+
+    def decorateExternalMapping(self, context, mapping):
+        mapping['IsDefaultForum'] = IDefaultForum.providedBy(context)
