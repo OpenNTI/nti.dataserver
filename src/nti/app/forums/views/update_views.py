@@ -32,6 +32,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralBoard
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IDFLHeadlineTopic
@@ -44,6 +45,23 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopic
 
 _view_defaults = dict(route_name='objects.generic.traversal', renderer='rest')
+
+
+@view_config(context=IGeneralBoard)
+@view_defaults(permission=nauth.ACT_UPDATE,
+               request_method='PUT',
+               **_view_defaults)
+class BoardObjectPutView(UGDPutView):
+    """
+    Editing an existing board etc
+    """
+
+    def readInput(self):
+        externalValue = super(BoardObjectPutView, self).readInput()
+        # remove read only properties
+        for name in ('ForumCount', 'NewestDescendantCreatedTime', 'NewestDescendant'):
+            externalValue.pop(name, None)
+        return externalValue
 
 
 @view_config(context=IGeneralForum)
