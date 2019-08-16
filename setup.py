@@ -308,6 +308,7 @@ setup(
         'sympy',
         'supervisor',
         'transaction',
+        'unicodecsv',
         # See http://pypi.python.org/pypi/user-agents/ for a high-level
         # library to do web user agent detection
         'webob',
