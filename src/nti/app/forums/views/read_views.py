@@ -248,11 +248,50 @@ class DefaultForumBoardContentsGetView(ForumsContainerContentsGetView):
         super(DefaultForumBoardContentsGetView, self)._update_last_modified_after_sort(objects, result)
 
 
+class ForumContentFilteringMixin(object):
+
+    def _get_topic_content(self, topic):
+        # process the post
+        x = topic.headline
+        # get content
+        content = []
+        for iface, name, default, method in (
+            (ITitled, 'title', u'', content.append),
+            (IUserTaggedContent, 'tags', (), content.extend),
+            (ContentResolver, 'content', u'', content.append)):
+            resolver = iface(x, None)
+            value = getattr(resolver, name, None) or default
+            method(value)
+        # join as one
+        content = u' '.join(content)
+        return content
+
+    def _get_searchTerm(self):
+        param = self.request.params.get('searchTerm', None)
+        return param
+
+    def _get_topic_predicate(self):
+        searchTerm = self._get_searchTerm()
+        result = None
+        if searchTerm:
+            def filter_searchTerm(x):
+                if not frm_interfaces.ITopic.providedBy(x):
+                    return True
+                content = self._get_topic_content(x)
+                term = clean_special_characters(searchTerm.lower())
+                match = re.match(".*%s.*" % term, content,
+                                 re.MULTILINE | re.DOTALL | re.UNICODE | re.IGNORECASE)
+                return match is not None
+            result = filter_searchTerm
+        return result
+
+
 @view_config(context=frm_interfaces.IForum)
 @view_config(context=frm_interfaces.IGeneralForum)
 @view_config(context=frm_interfaces.IPersonalBlog)
 @view_defaults(name=VIEW_CONTENTS, **_r_view_defaults)
-class ForumContentsGetView(ForumsContainerContentsGetView):
+class ForumContentsGetView(ForumsContainerContentsGetView,
+                           ForumContentFilteringMixin):
     """
     Adds support for sorting by ``NewestDescendantCreatedTime`` of the
     individual topics, and makes sure that the Last Modified time
@@ -281,40 +320,11 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
         return _negate_tuples
     _make_heapq_PostCount_descending_key = _make_heapq_NewestDescendantCreatedTime_descending_key
 
-    def _get_topic_content(self, topic):
-        # process the post
-        x = topic.headline
-        # get content
-        content = []
-        for iface, name, default, method in (
-            (ITitled, 'title', u'', content.append),
-            (IUserTaggedContent, 'tags', (), content.extend),
-            (ContentResolver, 'content', u'', content.append)):
-            resolver = iface(x, None)
-            value = getattr(resolver, name, None) or default
-            method(value)
-        # join as one
-        content = u' '.join(content)
-        return content
-
-    def _get_searchTerm(self):
-        param = self.request.params.get('searchTerm', None)
-        return param
-
     def _make_complete_predicate(self, *args, **kwargs):
         predicate = super(ForumContentsGetView, self)._make_complete_predicate(*args, **kwargs)
-        searchTerm = self._get_searchTerm()
-        if searchTerm:
-            def filter_searchTerm(x):
-                if not frm_interfaces.ITopic.providedBy(x):
-                    return True
-                content = self._get_topic_content(x)
-                term = clean_special_characters(searchTerm.lower())
-                match = re.match(".*%s.*" % term, content,
-                                 re.MULTILINE | re.DOTALL | re.UNICODE | re.IGNORECASE)
-                return match is not None
-
-            predicate = _combine_predicate(filter_searchTerm, predicate)
+        topic_predicate = self._get_topic_predicate()
+        if topic_predicate:
+            predicate = _combine_predicate(topic_predicate, predicate)
         return predicate
 
     def __call__(self):
