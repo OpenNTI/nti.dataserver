@@ -8,9 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import csv
-import six
 from io import BytesIO
+import unicodecsv as csv
 from datetime import datetime
 from functools import partial
 
@@ -101,12 +100,6 @@ ITEM_COUNT = StandardExternalFields.ITEM_COUNT
 logger = __import__('logging').getLogger(__name__)
 
 
-def _tx_string(s):
-    if s is not None and isinstance(s, six.text_type):
-        s = s.encode('utf-8')
-    return s
-
-
 def _replace_username(username):
     substituter = component.queryUtility(IUsernameSubstitutionPolicy)
     if substituter is None:
@@ -117,7 +110,7 @@ def _replace_username(username):
 
 def _write_generator(generator, writer, stream):
     for line in generator():
-        writer.writerow([_tx_string(x) for x in line])
+        writer.writerow(line)
     stream.flush()
     stream.seek(0)
     return stream
@@ -176,13 +169,13 @@ def _get_user_info_extract(all_sites=False):
             user_creation_site = get_user_creation_sitename(u)
 
         result = {
-            'alias': _tx_string(alias),
-            'email': _tx_string(email),
-            'userid': _tx_string(userid),
-            'realname': _tx_string(realname),
-            'username': _tx_string(u.username),
-            'createdTime': _tx_string(createdTime),
-            'lastLoginTime': _tx_string(lastLoginTime),
+            'alias': alias,
+            'email': email,
+            'userid': userid,
+            'realname': realname,
+            'username': u.username,
+            'createdTime': createdTime,
+            'lastLoginTime': lastLoginTime,
             'external_ids': external_id_map,
             'creationSite': user_creation_site
         }
@@ -249,7 +242,8 @@ class UserInfoExtractCSVView(AbstractUserInfoExtractView):
         if profile_fields is not None:
             fieldnames.extend(profile_fields.get_ordered_fields())
         csv_writer = csv.DictWriter(stream, fieldnames=fieldnames,
-                                    extrasaction='ignore')
+                                    extrasaction='ignore',
+                                    encoding='utf-8')
         csv_writer.writeheader()
         for user_info in self._iter_user_info_dicts():
             # With CSV, we only return one external_id mapping (common case).
@@ -348,7 +342,7 @@ class UserOptInEmailCommunicationView(AbstractAuthenticatedView):
         generator = partial(_get_topics_info, coppaOnly=coppaOnly)
 
         stream = BytesIO()
-        writer = csv.writer(stream)
+        writer = csv.writer(stream, encoding='utf-8')
         response = self.request.response
         response.content_encoding = 'identity'
         response.content_type = 'text/csv; charset=UTF-8'
@@ -375,7 +369,7 @@ class UserEmailVerifiedView(AbstractAuthenticatedView):
                             coppaOnly=coppaOnly)
 
         stream = BytesIO()
-        writer = csv.writer(stream)
+        writer = csv.writer(stream, encoding='utf-8')
         response = self.request.response
         response.content_encoding = 'identity'
         response.content_type = 'text/csv; charset=UTF-8'
@@ -429,7 +423,7 @@ class UserProfileInfoView(AbstractAuthenticatedView):
         generator = partial(_get_profile_info, coppaOnly=coppaOnly)
 
         stream = BytesIO()
-        writer = csv.writer(stream)
+        writer = csv.writer(stream, encoding='utf-8')
         response = self.request.response
         response.content_encoding = 'identity'
         response.content_type = 'text/csv; charset=UTF-8'
