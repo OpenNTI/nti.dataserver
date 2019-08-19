@@ -369,7 +369,7 @@ class RemoveAccessViewMixin(GrantAccessViewMixin):
     params:
         ntiid - the ntiid of the contextual object we remove access to
 
-    returns the access context
+    returns HTTPNoContent
     """
 
     def _handle_exception(self, exception):
@@ -391,6 +391,14 @@ class RemoveAccessViewMixin(GrantAccessViewMixin):
         result = access_provider.remove_access(user)
         return result
     _remove_access = _update_access
+
+    def _do_call(self):
+        try:
+            self._update_access(self._user, self._contextual_object)
+        except Exception as e:
+            self._handle_exception(e)
+            raise
+        return hexc.HTTPNoContent()
 
 
 class UserUpsertViewMixin(AbstractUpdateView):
