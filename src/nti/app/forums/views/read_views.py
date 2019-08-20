@@ -67,6 +67,8 @@ from nti.coremetadata.interfaces import IModeledContentBody
 
 from nti.contentprocessing.content_utils import clean_special_characters
 
+from nti.coremetadata.interfaces import IUserDefinedOrderedContent
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.contenttypes.forums.summaries import TopicParticipationSummary
@@ -221,6 +223,27 @@ class ForumsContainerContentsGetView(UGDQueryView):
 
     def getObjectsForId(self, *unused_args):
         return (self.request.context,)
+
+    def _make_sort_key_function(self):
+        """
+        Returns a key function for sorting based on current params
+        """
+        user_sort = self.request.params.get('sortOn')
+        default_sort = super(ForumsContainerContentsGetView, self)._make_sort_key_function()
+        result = default_sort
+        context = self.request.context
+        if      not user_sort \
+            and IUserDefinedOrderedContent.providedBy(context):
+            # We have a user sorted object and an empty sortOn param
+            # We sort by our ordered_keys and everything not in ordered_keys
+            # gets sorted by the default sort (lastModified)
+            ordered_dict = {}
+            for idx, ntiid in enumerate(context.ordered_keys):
+                ordered_dict[ntiid] = idx
+            result = lambda x: (x.NTIID not in ordered_dict,
+                                ordered_dict.get(x.NTIID, None),
+                                self.SORT_KEYS[self._DEFAULT_SORT_ON])
+        return result
 
 
 @view_config(context=frm_interfaces.IDefaultForumBoard)
