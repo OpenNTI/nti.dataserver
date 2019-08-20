@@ -22,6 +22,7 @@ from nti.appserver._adapters import GenericModeledContentExternalFieldTraverser
 from nti.dataserver.contenttypes.forums.forum import DEFAULT_FORUM_NAME
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import IDefaultForumBoard
 
 
@@ -33,6 +34,17 @@ class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
     _allowed_fields = tuple(
         set(GenericModeledContentExternalFieldTraverser._allowed_fields) -
         {'sharedWith'}
+    )
+
+
+@component.adapter(IBoard)
+class _BoardExternalFieldTraverser(GenericModeledContentExternalFieldTraverser):
+    """
+    Ordered keys
+    """
+    _allowed_fields = tuple(
+        set(GenericModeledContentExternalFieldTraverser._allowed_fields) |
+        {'ordered_keys'}
     )
 
 

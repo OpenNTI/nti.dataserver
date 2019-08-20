@@ -220,7 +220,7 @@ class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
                           'NotificationCount', 'avatarURL', 'backgroundURL'}
 
         for k, v in profile_schema.namesAndDescriptions(all=True):
-            # pylint: disable=unused-variable 
+            # pylint: disable=unused-variable
             __traceback_info__ = k, v
             if interface.interfaces.IMethod.providedBy(v):
                 continue
@@ -241,7 +241,7 @@ class CommunityExternalFieldTraverser(_AbstractExternalFieldTraverser):
     def __init__(self, context, request=None):
         super(CommunityExternalFieldTraverser, self).__init__(context, request=request)
         allowed_fields = {'avatarURL', 'backgroundURL'}
-        # pylint: disable=no-value-for-parameter,unused-variable 
+        # pylint: disable=no-value-for-parameter,unused-variable
         for k, v in ICommunityProfile.namesAndDescriptions(all=True):
             __traceback_info__ = k, v
             if interface.interfaces.IMethod.providedBy(v):

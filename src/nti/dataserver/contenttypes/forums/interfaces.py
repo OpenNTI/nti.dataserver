@@ -34,6 +34,8 @@ from Acquisition.interfaces import IAcquirer
 
 from nti.contenttypes.reports.interfaces import IReportContext
 
+from nti.coremetadata.interfaces import IUserDefinedOrderedContent
+
 from nti.dataserver.interfaces import ACE_ACT_DENY
 from nti.dataserver.interfaces import ACE_ACT_ALLOW
 
@@ -252,7 +254,8 @@ class IBoard(IContentContainer,
              IContained,
              IDCTimes,
              ILastModified,
-             ITitledDescribedContent):  # implementations may be IAcquirer
+             ITitledDescribedContent,
+             IUserDefinedOrderedContent):  # implementations may be IAcquirer
     """
     A board is the outermost object. It contains potentially many forums (though
     usually this number is relatively small). Each forum is distinctly named

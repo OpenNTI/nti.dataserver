@@ -1214,6 +1214,25 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		assert_that(contents_res.json_body, has_entry('Items', has_length(1)))
 		assert_that(contents_res.json_body['Items'][0], has_entry('MimeType', _plain(self.forum_content_type)))
 
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_default_board_sorted_contents(self):
+		if not self.board_pretty_url:
+			raise unittest.SkipTest('No board url')
+
+		board_href = self._get_board_href_via_rel()
+		board_res = self.testapp.get(board_href)
+		__traceback_info__ = board_res.json_body
+		contents_href = self.require_link_href_with_rel(board_res.json_body, 'contents')
+		add = self.link_with_rel(board_res.json_body, 'add')
+		if add is not None:
+			assert_that(add, has_entry('method', 'POST'))
+			assert_that(unquote(contents_href), is_(unquote(add['href'])))
+
+		contents_res = self.testapp.get(contents_href)
+		assert_that(contents_res.json_body, has_entry('Items', has_length(1)))
+		assert_that(contents_res.json_body['Items'][0], has_entry('MimeType', _plain(self.forum_content_type)))
+
+
 	def _do_simple_tests_for_POST_of_topic_entry(self, data, content_type=None, status_only=None, expected_data=None):
 		res = self._POST_topic_entry(data, content_type=content_type, status_only=status_only)
 		if status_only:

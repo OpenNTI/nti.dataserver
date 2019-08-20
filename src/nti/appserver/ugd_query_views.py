@@ -745,7 +745,8 @@ class _UGDView(AbstractAuthenticatedView,
 		if _sort_key_function is self.SORT_KEYS[self._DEFAULT_SORT_ON] and sort_on != self._DEFAULT_SORT_ON:
 			sort_on = self._DEFAULT_SORT_ON
 
-		sort_order = self.request.params.get( 'sortOrder', self.SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
+		sort_order = self.request.params.get('sortOrder',
+											 self.SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
 		return sort_on, sort_order
 
 	def _make_sort_key_function(self):

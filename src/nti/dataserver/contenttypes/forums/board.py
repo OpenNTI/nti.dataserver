@@ -71,12 +71,14 @@ class Board(Base,
     ForumCount = property(CheckingLastModifiedBTreeContainer.__len__)
 
     sharingTargets = ()
+    ordered_keys = ()
     creator = None
 
 
 @interface.implementer(IGeneralBoard)
 class GeneralBoard(Board):
     __external_can_create__ = False
+
 
 @interface.implementer(ICommunityBoard)
 class NoDefaultForumCommunityBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
