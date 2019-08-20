@@ -240,9 +240,18 @@ class ForumsContainerContentsGetView(UGDQueryView):
             ordered_dict = {}
             for idx, ntiid in enumerate(context.ordered_keys):
                 ordered_dict[ntiid] = idx
-            result = lambda x: (x.NTIID not in ordered_dict,
-                                ordered_dict.get(x.NTIID, None),
-                                self.SORT_KEYS[self._DEFAULT_SORT_ON])
+
+            # We do not reverse sortOrder, so reverse the logic here
+            sort_order = self.request.params.get('sortOrder')
+            if not sort_order or sort_order.lower() == 'ascending':
+                result = lambda x: (x.NTIID not in ordered_dict,
+                                    ordered_dict.get(x.NTIID, None),
+                                    self.SORT_KEYS[self._DEFAULT_SORT_ON])
+            else:
+                ordered_dict = {x:-y for x,y in ordered_dict.items()}
+                result = lambda x: (x.NTIID in ordered_dict,
+                                    ordered_dict.get(x.NTIID, None),
+                                    self.SORT_KEYS[self._DEFAULT_SORT_ON])
         return result
 
 

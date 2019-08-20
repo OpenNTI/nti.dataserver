@@ -190,6 +190,11 @@
 
 	<adapter factory=".traversal._DefaultForumBoardTraversable" />
 
+	<adapter factory=".traversal._BoardExternalFieldTraverser"
+             for="nti.dataserver.contenttypes.forums.interfaces.IBoard"
+             provides="zope.traversing.interfaces.ITraversable"
+             name="fields" />
+
 	<!-- Make certain classes Likeable/Flaggable/Favoritable. -->
 	<!--
 		Note that this is declared at leaf levels:

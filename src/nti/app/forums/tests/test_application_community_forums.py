@@ -11,6 +11,7 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_key
+from hamcrest import not_none
 from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import has_entry
@@ -44,9 +45,11 @@ from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from nti.asynchronous.scheduled.redis_queue import ScheduledQueue
 
+from nti.dataserver.contenttypes.forums.forum import DEFAULT_FORUM_NAME
+
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
-from nti.dataserver.contenttypes.forums.topic import  CommunityHeadlineTopic
+from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
 _FORUM_NAME = CommunityForum.__default_name__
 _BOARD_NAME = CommunityBoard.__default_name__
@@ -71,8 +74,6 @@ from nti.dataserver.authorization import ROLE_SITE_ADMIN_NAME
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityAdminRestrictedForum
 from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
 
-from nti.dataserver.interfaces import ISiteCommunity
-
 from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users import Community
@@ -86,6 +87,7 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 from nti.testing.matchers import verifiably_provides
 
 from nti.testing.time import time_monotonically_increases
+
 
 class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 									 ApplicationLayerTest):
@@ -186,6 +188,77 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		rem_events = eventtesting.getEvents(IObjectRemovedEvent)
 		assert_that( rem_events, has_length( 1 ) )
 		self.testapp.get( forum_res.location, status=404 )
+
+	@time_monotonically_increases
+	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
+	def test_board_sorted_contents(self):
+		"""
+		Test users can define our board sorting order
+		"""
+		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
+		forum_data = self._create_post_data_for_POST()
+		forum_data1 = dict(forum_data)
+		forum_data2 = dict(forum_data)
+		forum_data3 = dict(forum_data)
+		forum_data1['title'] = forum_title1 = 'forum data 1'
+		forum_data2['title'] = forum_title2 = 'forum data 2'
+		forum_data3['title'] = forum_title3 = 'forum data 3'
+		forum_res1 = adminapp.post_json(self.board_pretty_url, forum_data1)
+		forum_res2 = adminapp.post_json(self.board_pretty_url, forum_data2)
+		forum_res3 = adminapp.post_json(self.board_pretty_url, forum_data3)
+		forum_ntiid1 = forum_res1.json_body.get('NTIID')
+		forum_ntiid2 = forum_res2.json_body.get('NTIID')
+		forum_ntiid3 = forum_res3.json_body.get('NTIID')
+		assert_that(forum_ntiid1, not_none())
+		assert_that(forum_ntiid2, not_none())
+		assert_that(forum_ntiid3, not_none())
+		res = adminapp.get(self.board_pretty_url)
+		contents_href = self.require_link_href_with_rel(res.json_body, 'contents')
+
+		default_forum = adminapp.get('%s/%s' % (self.board_pretty_url, DEFAULT_FORUM_NAME))
+		default_forum_ntiid = default_forum.json_body.get('NTIID')
+		def get_forum_titles(reverse=False):
+			href = contents_href
+			if reverse:
+				href = '%s?sortOrder=descending' % href
+			contents = adminapp.get(href).json_body
+			return [x.get('title') for x in contents['Items']]
+		# By default, sorted by last mod
+		assert_that(get_forum_titles(), contains(DEFAULT_FORUM_NAME,
+												 forum_title1,
+												 forum_title2,
+												 forum_title3))
+
+		#adminapp.put_json('%s/++fields++ordered_keys' % self.board_pretty_url, [forum_ntiid3, forum_ntiid2])
+		adminapp.put_json(self.board_pretty_url,
+						  {'ordered_keys': [forum_ntiid3, forum_ntiid2]})
+		assert_that(get_forum_titles(), contains(forum_title3,
+												 forum_title2,
+												 DEFAULT_FORUM_NAME,
+												 forum_title1))
+		# When state changes, validate an extraneous value does not break things
+		adminapp.put_json(self.board_pretty_url,
+						  {'ordered_keys': [default_forum_ntiid, 'dne_ntiid', forum_ntiid3, forum_ntiid2]})
+		assert_that(get_forum_titles(), contains(DEFAULT_FORUM_NAME,
+												 forum_title3,
+												 forum_title2,
+												 forum_title1))
+
+		# Reversed
+		assert_that(get_forum_titles(reverse=True), contains(forum_title1,
+															 forum_title2,
+															 forum_title3,
+															 DEFAULT_FORUM_NAME))
+
+		# Now undo
+		adminapp.put_json(self.board_pretty_url, {'ordered_keys': []})
+		assert_that(get_forum_titles(), contains(DEFAULT_FORUM_NAME,
+												 forum_title1,
+												 forum_title2,
+												 forum_title3))
+		self.testapp.put_json(self.board_pretty_url,
+							  {'ordered_keys': [forum_ntiid3, forum_ntiid2]},
+							  status=403)
 
 	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
 	def test_super_user_can_delete_forum_with_topic_and_comments(self):
