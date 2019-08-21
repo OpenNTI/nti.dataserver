@@ -23,7 +23,7 @@ from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
-from nti.dataserver.interfaces import INote 
+from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IThreadable
 
@@ -33,6 +33,7 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.singleton import Singleton
 
 from nti.links.links import Link
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 LINKS = StandardExternalFields.LINKS
 
@@ -80,6 +81,18 @@ class _NoteRequestDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, result):
         self._do_schema_link(context, result)
+
+
+@component.adapter(INote)
+@interface.implementer(IExternalMappingDecorator)
+class _NoteDecorator(Singleton):
+
+    def decorateExternalMapping(self, context, result):
+        container = find_object_with_ntiid(context.containerId)
+        if container is not None:
+            title = getattr(container, 'title', '') \
+                 or getattr(container, 'label', '')
+            result['ContainerTitle'] = title
 
 
 @component.adapter(IThreadable)
