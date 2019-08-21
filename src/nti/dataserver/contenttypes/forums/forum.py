@@ -69,7 +69,11 @@ from nti.traversal.traversal import find_interface
 
 _NEWEST_TTL = datetime.timedelta(days=7)
 
-DEFAULT_FORUM_NAME = u'Forum'
+#: The __name__ of the default forum
+DEFAULT_FORUM_KEY = u'Forum'
+
+#: The default title of the default forum
+DEFAULT_FORUM_NAME = u'General Discussion'
 DEFAULT_PERSONAL_BLOG_NAME = u'Blog'
 
 
@@ -283,7 +287,7 @@ def NoBlogAdapter(_):
 class GeneralForum(Forum, _SingleInstanceNTIIDMixin):
     __external_can_create__ = False
     creator = None
-    __name__ = __default_name__ = DEFAULT_FORUM_NAME
+    __name__ = __default_name__ = DEFAULT_FORUM_KEY
     _ntiid_type = NTIID_TYPE_GENERAL_FORUM
 
 
@@ -324,7 +328,7 @@ def GeneralForumCommunityAdapter(community):
     forum = CommunityForum()
     forum.creator = community
     board[forum.__default_name__] = forum
-    forum.title = _(u'Forum')
+    forum.title = _(DEFAULT_FORUM_NAME)
 
     errors = schema.getValidationErrors(ICommunityForum, forum)
     if errors:
@@ -366,7 +370,7 @@ def GeneralForumDFLAdapter(dfl):
     forum = DFLForum()
     forum.creator = dfl
     board[forum.__default_name__] = forum
-    forum.title = _(u'Forum')
+    forum.title = _(DEFAULT_FORUM_NAME)
 
     errors = schema.getValidationErrors(IDFLForum, forum)
     if errors:
