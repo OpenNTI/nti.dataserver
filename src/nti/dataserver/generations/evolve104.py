@@ -49,7 +49,9 @@ generation = 104
 OLD_FORUM_NAME = u'Forum'
 NEW_DEFAULT_NAME = u'General Discussion'
 
-BOARD_OBJECT_MIMETYPES = ['application/vnd.nextthought.forums.communityboard']
+FORUM_OBJECT_MIMETYPES = ['application/vnd.nextthought.forums.communityforum',
+                          'application/vnd.nextthought.forums.contentforum',
+                          'application/vnd.nextthought.forums.dflforum']
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -87,14 +89,14 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
         intids = lsm.getUtility(IIntIds)
 
         catalog = get_metadata_catalog()
-        query = {IX_MIMETYPE: {'any_of': BOARD_OBJECT_MIMETYPES}}
-        for board_id in catalog.apply(query):
-            board = intids.queryObject(board_id)
-            if board is None:
+        query = {IX_MIMETYPE: {'any_of': FORUM_OBJECT_MIMETYPES}}
+        for forum_id in catalog.apply(query):
+            forum = intids.queryObject(forum_id)
+            if forum is None:
                 continue
-            default_forum = board.get(OLD_FORUM_NAME)
-            if default_forum is None:
+            if forum.__name__ != OLD_FORUM_NAME:
                 continue
+            default_forum = forum
             if not IDefaultForum.providedBy(default_forum):
                 marked_count += 1
                 interface.alsoProvides(default_forum, IDefaultForum)
