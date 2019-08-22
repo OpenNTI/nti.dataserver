@@ -51,7 +51,7 @@ from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
 from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
-_FORUM_NAME = CommunityForum.__default_name__
+_FORUM_NAME = DEFAULT_FORUM_NAME
 _BOARD_NAME = CommunityBoard.__default_name__
 
 from nti.app.testing.webtest import TestApp as _TestApp
