@@ -27,6 +27,7 @@ from zope.intid.interfaces import IIntIdRemovedEvent
 
 from nti.dataserver.users.friends_lists import DynamicFriendsList
 
+from nti.dataserver.contenttypes.forums.forum import DEFAULT_FORUM_KEY
 from nti.dataserver.contenttypes.forums.forum import DEFAULT_FORUM_NAME
 
 from nti.dataserver.contenttypes.forums.board import DFLBoard
@@ -44,7 +45,7 @@ from nti.dataserver.tests import mock_dataserver
 
 from nti.testing.time import time_monotonically_increases
 
-_FORUM_NAME = DEFAULT_FORUM_NAME
+_FORUM_NAME = DEFAULT_FORUM_KEY
 _BOARD_NAME = DFLBoard.__default_name__
 
 class TestApplicationDFLorums(ApplicationLayerTest, AbstractPostCreationMixin):
@@ -62,7 +63,7 @@ class TestApplicationDFLorums(ApplicationLayerTest, AbstractPostCreationMixin):
 	board_link_rel = forum_link_rel = _BOARD_NAME
 
 	forum_type = DFLForum
-	forum_title = _FORUM_NAME
+	forum_title = DEFAULT_FORUM_NAME
 	forum_topic_content_type = None
 	forum_headline_class_type = 'Post'
 	forum_content_type = 'application/vnd.nextthought.forums.dflforum+json'

@@ -45,13 +45,14 @@ from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from nti.asynchronous.scheduled.redis_queue import ScheduledQueue
 
+from nti.dataserver.contenttypes.forums.forum import DEFAULT_FORUM_KEY
 from nti.dataserver.contenttypes.forums.forum import DEFAULT_FORUM_NAME
 
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
 from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
-_FORUM_NAME = DEFAULT_FORUM_NAME
+_FORUM_NAME = DEFAULT_FORUM_KEY
 _BOARD_NAME = CommunityBoard.__default_name__
 
 from nti.app.testing.webtest import TestApp as _TestApp
@@ -109,14 +110,14 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 	forum_headline_class_type = 'Post'
 	forum_topic_content_type = None
 	board_link_rel = forum_link_rel = _BOARD_NAME
-	forum_title = _FORUM_NAME
+	forum_title = DEFAULT_FORUM_NAME
 	forum_type = CommunityForum
 
 	forum_topic_comment_content_type = 'application/vnd.nextthought.forums.generalforumcomment+json'
 
 	def setUp( self ):
 		super(TestApplicationCommunityForums,self).setUp()
-		self.board_pretty_url = self.forum_pretty_url[:-(len(_FORUM_NAME) + 1)]
+		self.board_pretty_url = self.forum_pretty_url[:-(len(quote(_FORUM_NAME)) + 1)]
 
 		self.board_content_type = CommunityBoard.mimeType + '+json'
 		self.forum_topic_content_type = CommunityHeadlineTopic.mimeType + '+json'
@@ -215,7 +216,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		res = adminapp.get(self.board_pretty_url)
 		contents_href = self.require_link_href_with_rel(res.json_body, 'contents')
 
-		default_forum = adminapp.get('%s/%s' % (self.board_pretty_url, DEFAULT_FORUM_NAME))
+		default_forum = adminapp.get('%s/%s' % (self.board_pretty_url, DEFAULT_FORUM_KEY))
 		default_forum_ntiid = default_forum.json_body.get('NTIID')
 		def get_forum_titles(reverse=False):
 			href = contents_href

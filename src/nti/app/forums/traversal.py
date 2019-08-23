@@ -19,7 +19,7 @@ from zope.traversing.interfaces import TraversalError
 
 from nti.appserver._adapters import GenericModeledContentExternalFieldTraverser
 
-from nti.dataserver.contenttypes.forums.forum import DEFAULT_FORUM_NAME
+from nti.dataserver.contenttypes.forums.forum import DEFAULT_FORUM_KEY
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
@@ -55,7 +55,7 @@ class _DefaultForumBoardTraversable(ContainerTraversable):
     """
 
     def traverse(self, name, furtherPath):
-        if name not in self._container and name == DEFAULT_FORUM_NAME:
+        if name not in self._container and name == DEFAULT_FORUM_KEY:
             try:
                 return self._container.createDefaultForum()
             except (TypeError, AttributeError):  # pragma: no cover
