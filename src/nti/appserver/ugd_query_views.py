@@ -502,6 +502,9 @@ class _UGDView(AbstractAuthenticatedView,
 	_force_shared_objects = False
 	_force_apply_security = False
 
+	#: Skip any security checks
+	_skip_security = False
+
 	#: Set this to false, either dynamically or at the class level,
 	#: if _sort_filter_batch_objects does not need to do any sort of further
 	#: filtering: not the value from _make_complete_predicate, nor
@@ -772,7 +775,7 @@ class _UGDView(AbstractAuthenticatedView,
 		needs_security = self._force_apply_security or self.remoteUser != self.user
 		# Our security check is optimized for sharing objects, not taking the full
 		# ACL into account.
-		if not needs_security:
+		if not needs_security or self._skip_security:
 			def security_check(x):
 				return True
 			predicate = security_check
