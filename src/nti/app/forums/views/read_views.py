@@ -284,7 +284,7 @@ class ForumContentFilteringMixin(object):
 
     def _get_topic_content(self, topic):
         # process the post
-        x = topic.headline
+        x = getattr(topic, 'headline', topic)
         # get content
         content = []
         for iface, name, default, method in (
@@ -302,12 +302,15 @@ class ForumContentFilteringMixin(object):
         param = self.request.params.get('searchTerm', None)
         return param
 
+    def _validate_search_object_type(self, obj):
+        return frm_interfaces.ITopic.providedBy(obj)
+
     def _get_topic_predicate(self):
         searchTerm = self._get_searchTerm()
         result = None
         if searchTerm:
             def filter_searchTerm(x):
-                if not frm_interfaces.ITopic.providedBy(x):
+                if not self._validate_search_object_type(x):
                     return True
                 content = self._get_topic_content(x)
                 term = clean_special_characters(searchTerm.lower())
