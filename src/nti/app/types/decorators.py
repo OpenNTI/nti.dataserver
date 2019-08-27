@@ -93,6 +93,9 @@ class _NoteDecorator(Singleton):
             title = getattr(container, 'title', '') \
                  or getattr(container, 'label', '')
             result['ContainerTitle'] = title
+            mime_type = getattr(container, 'mime_type', '') \
+                     or getattr(container, 'MimeType', '')
+            result['ContainerMimeType'] = mime_type
 
 
 @component.adapter(IThreadable)
