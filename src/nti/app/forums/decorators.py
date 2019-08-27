@@ -60,6 +60,8 @@ from nti.externalization.singleton import Singleton
 
 from nti.links.links import Link
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 from nti.traversal.traversal import find_interface
 
 LINKS = StandardExternalFields.LINKS
@@ -305,6 +307,11 @@ class BoardNTIIDDecorator(Singleton):
 class TopicParticipationLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, result):
+        container = find_object_with_ntiid(context.containerId)
+        if container is not None:
+            title = getattr(container, 'title', '') \
+                 or getattr(container, 'label', '')
+            result['ContainerTitle'] = title
         _links = result.setdefault(LINKS, [])
         for rel in (VIEW_USER_TOPIC_PARTICIPATION, VIEW_TOPIC_PARTICIPATION_SUMMARY):
             link = Link(context, rel=rel, elements=('@@%s' % rel,))
