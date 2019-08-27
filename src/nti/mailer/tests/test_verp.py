@@ -73,6 +73,18 @@ class TestVerp(unittest.TestCase):
 		pids = principal_ids_from_verp(addr, default_key='alpha.nextthought.com')
 		assert_that(pids, contains(prin.id))
 
+		# If more than one prin, no verp
+		prin2 = EmailAddresablePrincipal.__new__(EmailAddresablePrincipal)
+		prin2.email = 'foo2@bar.com'
+		prin2.id = 'foo2'
+
+		prin.id = 'foo+++'
+		addr = verp_from_recipients('no-reply+label+label2@nextthought.com',
+									(prin, prin2),
+									default_key='alpha.nextthought.com')
+
+		assert_that(addr, is_('"Janux" <no-reply+label+label2@nextthought.com>'))
+
 	@fudge.patch('nti.mailer._verp.find_site_policy',
 				 'nti.mailer._verp._get_signer_secret')
 	def test_brand_is_used_for_sender_rename(self, mock_find, mock_secret):

@@ -161,22 +161,21 @@ def verp_from_recipients(fromaddr,
     principals.discard(None)
 
     principal_ids = {x.id for x in principals}
-    if principal_ids:
-        principal_ids = ','.join(principal_ids)
+    if len(principal_ids) == 1:
         # mildly encode them; this is just obfuscation.
         # Do that after signing to be sure we wind up with
         # something rfc822-safe
         # First, get bytes to avoid any default-encoding
-        principal_ids = principal_ids.encode('utf-8')
+        principal_id = tuple(principal_ids)[0].encode('utf-8')
         # now sign
         signer = __make_signer(default_key)
-        principal_ids = _sign(signer, principal_ids)
+        principal_id = _sign(signer, principal_id)
 
         local, domain = addr.split('@')
         # Note: we may have a local address that already has a label '+'.
         # The principal ids with '+' should now be url quoted away. This
         # ensures we want the last '+' on parsing.
-        addr = local + '+' + principal_ids + '@' + domain
+        addr = local + '+' + principal_id + '@' + domain
 
     return rfc822.dump_address_pair((realname, addr))
 
