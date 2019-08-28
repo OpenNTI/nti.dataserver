@@ -40,7 +40,7 @@ from nti.dataserver.interfaces import INoUserEffectivePrincipalResolver
 def get_memberships(entity, registry):
     result = set()
     for _, adapter in registry.getAdapters((entity,), IGroupMember):
-        result.update(adapter.groups)
+        result.update(IPrincipal(x) for x in adapter.groups)
     return result
 _get_memberships = get_memberships
 
