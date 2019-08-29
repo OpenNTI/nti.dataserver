@@ -1168,6 +1168,7 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		# relying on @nextthought.com automatically being an admin
 		adminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com'))
 		forum_data = self._create_post_data_for_POST()
+		forum_data.pop('description', None)
 		# Incoming mimetype is actually unimportant at this point
 		del forum_data['Class']
 		del forum_data['MimeType']
@@ -1181,7 +1182,7 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		assert_that(forum_res.json_body, has_entry('ContainerId', self.board_ntiid_checker))
 		self.require_link_href_with_rel(forum_res.json_body, 'edit')
 		assert_that(forum_res.json_body, has_entry('title', forum_data['title']))
-		assert_that(forum_res.json_body, has_entry('description', forum_data['description']))
+		assert_that(forum_res.json_body, has_entry('description', ''))
 
 	def _get_board_href_via_rel(self):
 		# default board has a contents href which can be fetched,
