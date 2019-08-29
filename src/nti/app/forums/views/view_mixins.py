@@ -104,8 +104,8 @@ class PostUploadMixin(AuthenticatedViewMixin,
         if sources and self.request and self.request.POST:
             read_multipart_sources(self.request, sources.values())
         if sources:
-            validate_attachments(self.remoteUser, 
-                                 containedObject, 
+            validate_attachments(self.remoteUser,
+                                 containedObject,
                                  tuple(sources.values()))
         return containedObject, externalValue
 
@@ -144,6 +144,9 @@ class _AbstractForumPostView(PostUploadMixin,
     def _get_topic_creator(self):
         return self.getRemoteUser()
 
+    def _copy_title(self, topic, external_value):
+        topic.description = external_value.get('description', topic.title)
+
     def _do_call(self):
         forum = self.request.context
         _, topic_factory, _ = self._find_factory_from_precondition(forum)
@@ -169,7 +172,7 @@ class _AbstractForumPostView(PostUploadMixin,
 
         # Business rule: titles of the personal blog entry match the post
         topic.title = topic_post.title
-        topic.description = external_value.get('description', topic.title)
+        self._copy_title(topic, external_value)
 
         # For these, the name matters. We want it to be as pretty as we can get
         # TODO: We probably need to register an IReservedNames that forbids
@@ -230,6 +233,9 @@ class AbstractBoardPostView(_AbstractForumPostView):
     """
     Given an incoming IPost, creates a new forum in the board
     """
+
+    def _copy_title(self, unused_topic, unused_external_value):
+        pass
 
 
 class _AbstractTopicPostView(PostUploadMixin,
