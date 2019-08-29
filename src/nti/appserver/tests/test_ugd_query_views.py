@@ -61,6 +61,8 @@ from nti.assessment.assessed import QAssessedQuestion
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from nti.coremetadata.interfaces import IDeletedObjectPlaceholder
+
 import nti.dataserver.contenttypes
 
 from nti.dataserver import users
@@ -73,6 +75,7 @@ from nti.ntiids import ntiids
 from nti.externalization.representation import to_json_representation as to_external_representation
 
 from nti.ntiids.oids import to_external_ntiid_oid
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
@@ -805,6 +808,22 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		assert_that(res.json_body, has_entry('Items',
 											  contains(has_entry('ID', fav_id_follow),
 													   has_entry('ID', bm_id))))
+
+		# Deleted filter
+		with mock_dataserver.mock_db_trans(self.ds):
+			fav_note = find_object_with_ntiid(fav_id_follow)
+			interface.alsoProvides(fav_note, IDeletedObjectPlaceholder)
+
+		res = testapp.get(path, params={'filter':'Favorite'},
+						  extra_environ=self._make_extra_environ())
+		assert_that(res.json_body, has_entry('Items', has_length(1)))
+		assert_that(res.json_body, has_entry('Items',
+											  contains(has_entry('ID', fav_id_follow))))
+
+		res = testapp.get(path, params={'filter':'Favorite,NotDeleted'},
+						  extra_environ=self._make_extra_environ())
+		assert_that(res.json_body, has_entry('Items', has_length(0)))
+
 
 		# TranscriptSummaries can be filtered
 		with mock_dataserver.mock_db_trans(self.ds):
