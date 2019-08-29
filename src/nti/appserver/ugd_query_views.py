@@ -7,6 +7,7 @@ Views for querying user generated data.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.coremetadata.interfaces import IDeletedObjectPlaceholder
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -349,16 +350,23 @@ def _bookmark_predicate_factory( request ):
 	is_fav_p = _favorite_predicate_factory(request)
 	return lambda o: is_fav_p( o ) or is_bm_p( o )
 
+
 def _only_me_predicate_factory( request ):
 	me_username = request.authenticated_userid
 	return _creator_based_predicate_factory( (me_username,) )
 
-def _toplevel_filter( x ):
+
+def _toplevel_filter(x):
 	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
 	try:
 		return x.getInReplyTo( allow_cached=False ) is None
 	except AttributeError:
 		return True # No getInReplyTo means it cannot be a reply, means its toplevel
+
+
+def _not_deleted_filter(x):
+	return not IDeletedObjectPlaceholder.providedBy(x)
+
 
 def _referenced_by_count(x):
 	"""
@@ -371,6 +379,7 @@ def _referenced_by_count(x):
 		result = _post_count(x)
 	return result
 
+
 SORT_KEYS = {
 	# LastModified and createdTime are sorted on the same values we would provide
 	# externally, which might involve an attribute /or/ adapting to IDCTimes.
@@ -382,6 +391,7 @@ SORT_KEYS = {
 	'RecursiveLikeCount':  _reference_list_recursive_like_count,
 }
 SORT_KEYS['CreatedTime'] = SORT_KEYS['createdTime'] # Despite documentation, some clients send this value
+
 
 SORT_DIRECTION_DEFAULT = {
 	'LikeCount': 'descending',
@@ -399,7 +409,10 @@ FILTER_NAMES = {
 	'Like': (_like_predicate_factory,),
 	'Bookmarks': (_bookmark_predicate_factory,),
 	'OnlyMe': (_only_me_predicate_factory,),
+	'NotDeleted': _not_deleted_filter,
 }
+FILTER_NAMES['_NotDeleted'] = FILTER_NAMES['NotDeleted'] # bwc
+
 
 class _MimeFilter(object):
 
@@ -955,6 +968,8 @@ class _UGDView(AbstractAuthenticatedView,
 			  :mod:`liked <nti.appserver.liking_views>` the object to be returned.
 			  (Does not function on the stream views.) Currently, this is not especially
 			  efficient.
+
+			* ``NotDeleted``: ensures deleted object (placeholders) are not returned.
 
 			* ``Bookmarks``: a high-level, pseudo-object filter that causes only
 			  objects identified as "bookmarks" to be returned. For this purpose, bookmarks
