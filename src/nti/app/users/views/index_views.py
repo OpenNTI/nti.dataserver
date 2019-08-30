@@ -33,6 +33,8 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.index import add_catalog_filters
 
+from nti.dataserver.users.utils import get_users_by_site
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -49,6 +51,9 @@ logger = __import__('logging').getLogger(__name__)
                context=IDataserverFolder,
                permission=nauth.ACT_NTI_ADMIN)
 class RebuildEntityCatalogView(AbstractAuthenticatedView):
+    """
+    Re-index all current site users.
+    """
 
     def __call__(self):
         intids = component.getUtility(IIntIds)
@@ -61,10 +66,9 @@ class RebuildEntityCatalogView(AbstractAuthenticatedView):
         # reindex
         count = 0
         meta_catalog = get_metadata_catalog()
-        dataserver = component.getUtility(IDataserver)
-        users_folder = IShardLayout(dataserver).users_folder
+        site_users = get_users_by_site()
         # pylint: disable=no-member
-        for obj in users_folder.values():
+        for obj in site_users:
             doc_id = intids.queryId(obj)
             if doc_id is None:
                 continue

@@ -7,7 +7,6 @@ Views for querying user generated data.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.coremetadata.interfaces import IDeletedObjectPlaceholder
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -44,6 +43,8 @@ from nti.appserver.interfaces import ITopLevelContainerContextProvider
 from nti.appserver.interfaces import get_principal_ugd_filter
 
 from nti.appserver.pyramid_authorization import is_readable
+
+from nti.coremetadata.interfaces import IDeletedObjectPlaceholder
 
 from nti.dataserver import liking
 from nti.dataserver import authorization as nauth
