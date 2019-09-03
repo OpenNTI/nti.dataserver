@@ -24,6 +24,8 @@ from nti.app.users import VIEW_RESTRICT_USER_ACCESS
 from nti.app.users import REQUEST_EMAIL_VERFICATION_VIEW
 from nti.app.users import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
 
+from nti.app.users import MessageFactory as _
+
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 
 from nti.dataserver.authorization import is_admin
@@ -134,6 +136,8 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         _links = result.setdefault(LINKS, [])
         in_community = self.remoteUser in context
         is_admin_user = is_admin_or_site_admin(self.remoteUser)
+        result['joinable'] = context.joinable
+        result['public'] = context.public
         if context.joinable:
             if not in_community:
                 link = Link(context, elements=('@@join',), rel="join")
@@ -154,7 +158,10 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
             _links.append(link)
 
         if not IDisallowActivityLink.providedBy(context):
-            link = Link(context, elements=('@@Activity',), rel="Activity")
+            link = Link(context,
+                        elements=('@@Activity',),
+                        rel="Activity",
+                        title=_("All Activity"))
             _links.append(link)
 
 
