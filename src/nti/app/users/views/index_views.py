@@ -66,9 +66,10 @@ class RebuildEntityCatalogView(AbstractAuthenticatedView):
         # reindex
         count = 0
         meta_catalog = get_metadata_catalog()
-        site_users = get_users_by_site()
+        dataserver = component.getUtility(IDataserver)
+        users_folder = IShardLayout(dataserver).users_folder
         # pylint: disable=no-member
-        for obj in site_users:
+        for obj in users_folder.values():
             doc_id = intids.queryId(obj)
             if doc_id is None:
                 continue
@@ -78,6 +79,7 @@ class RebuildEntityCatalogView(AbstractAuthenticatedView):
         result = LocatedExternalDict()
         result[ITEM_COUNT] = result[TOTAL] = count
         return result
+
 
 
 @view_config(name='RebuildContextLastSeenCatalog')
