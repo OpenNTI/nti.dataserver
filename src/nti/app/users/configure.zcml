@@ -69,6 +69,15 @@
 				for="nti.dataserver.interfaces.IUser
 					 pyramid.interfaces.IRequest"/>
 
+	<!-- Community Admin -->
+    <adapter factory=".zope_security.PersistentCommunityPrincipalRoleManager"
+             provides="nti.dataserver.interfaces.ICommunityPrincipalRoleManager"
+             for="nti.dataserver.interfaces.ICommunity" />
+
+    <adapter factory=".zope_security.PersistentCommunityRolePermissionManager"
+             provides="nti.dataserver.interfaces.ICommunityRolePermissionManager"
+             for="nti.dataserver.interfaces.ICommunity" />
+
 	<!-- Query -->
 	<subscriber	factory=".containers._UserContainersQuerier"
 				provides="nti.appserver.interfaces.IUserContainersQuerier"/>
@@ -102,8 +111,8 @@
 	<adapter factory=".adapters._context_lastseen_to_user"
 			 provides="nti.coremetadata.interfaces.IUser"
 			 for="nti.coremetadata.interfaces.IContextLastSeenContainer" />
- 
-    <!-- Workspace -->   
+
+    <!-- Workspace -->
    	<subscriber	factory=".providers._SiteUsersLinkProvider"
 				provides="nti.appserver.workspaces.interfaces.IUserWorkspaceLinkProvider"/>
 
