@@ -51,7 +51,7 @@ from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
-from nti.dataserver.users.users import User
+from nti.dataserver.users.utils import get_communities_by_site
 
 from nti.datastructures.datastructures import LastModifiedCopyingUserList
 

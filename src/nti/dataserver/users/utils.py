@@ -369,6 +369,24 @@ def get_entities_by_site(site=None):
     return get_entites_by_sites((site or getSite().__name__),)
 
 
+def intids_of_communities_by_sites(sites=()):
+    if isinstance(sites, six.string_types):
+        sites = sites.split(',')
+    catalog = get_entity_catalog()
+    query = {IX_SITE: {'any_of': sites or ()},
+             IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.community',
+                                      'application/vnd.nextthought.sitecommunity')}}
+    doc_ids = catalog.apply(query)
+    return doc_ids or ()
+
+
+def get_communities_by_site(site=None):
+    """
+    Get the communities using the given site.
+    """
+    return intids_of_communities_by_sites((site or getSite().__name__),)
+
+
 def intids_of_community_members(community, all_members=False):
     """
     Returns an iterable of valid intids for community members
