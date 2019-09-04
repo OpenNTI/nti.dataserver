@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import not_none
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_entries
 from hamcrest import has_items
-from hamcrest import is_not as does_not
+from hamcrest import assert_that
 
 import unittest
 
@@ -70,7 +69,7 @@ class TestConnectionPoolStats(unittest.TestCase):
 
         class DummyResponse(object):
             status_code = 200
-        
+
         request = DummyRequest()
         request.environ['nti_connection_pool'] = pool
 
@@ -91,8 +90,8 @@ class TestConnectionPoolStats(unittest.TestCase):
 
     def test_tween_logs_connection_pool(self):
         request, response = self.mock_request_response()
-        
-        tween = performance_tween_factory(lambda x: response, None)
+
+        tween = performance_tween_factory(lambda unused_x: response, None)
         tween(request)
 
         guages, _ = self.sent_stats()
@@ -104,7 +103,7 @@ class TestConnectionPoolStats(unittest.TestCase):
 
         request, response = self.mock_request_response()
 
-        tween = performance_tween_factory(lambda x: response, None)
+        tween = performance_tween_factory(lambda unused_x: response, None)
         tween(request)
 
         _, counters = self.sent_stats()
@@ -126,7 +125,7 @@ class TestConnectionPoolStats(unittest.TestCase):
                                           'ds1-local.pyramid.response.500', 1))
 
         response.status_code = 40
-        tween = performance_tween_factory(lambda x: response, None)
+        tween = performance_tween_factory(lambda unused_x: response, None)
         tween(request)
 
         _, counters = self.sent_stats()
@@ -140,11 +139,11 @@ class TestConnectionPoolStats(unittest.TestCase):
         request, response = self.mock_request_response()
         request.path = '/dataserver2/service'
 
-        tween = performance_tween_factory(lambda x: response, None)
+        tween = performance_tween_factory(lambda unused_x: response, None)
         tween(request)
 
         metrics = self.client.metrics
-        
+
         assert_that(metrics, has_items(is_counter('ds1-local.nti.performance.tween.dataserver2'),
                                        is_timer('ds1-local.nti.performance.tween.dataserver2.t')))
 
@@ -158,10 +157,10 @@ class TestConnectionPoolStats(unittest.TestCase):
 
     def test_classify_request(self):
 
-        handler = performance_tween_factory(lambda x: None, None)
+        handler = performance_tween_factory(lambda unused_x: None, None)
 
         request = PyramidDummyRequest()
-        
+
         request.path = '/dataserver2'
         assert_that(handler.classify_request(request), is_('dataserver2'))
 
@@ -185,9 +184,9 @@ class TestConnectionPoolStats(unittest.TestCase):
 
         request.path = None
         assert_that(handler.classify_request(request), is_('_unknown'))
-        
 
-        
-        
 
-        
+
+
+
+

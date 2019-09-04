@@ -74,12 +74,13 @@ logger = __import__('logging').getLogger(__name__)
 @view_config(name='create.community')
 @view_defaults(route_name='objects.generic.traversal',
                request_method='POST',
-               context=IDataserverFolder,
-               permission=nauth.ACT_NTI_ADMIN)
+               context=IDataserverFolder)
 class CreateCommunityView(AbstractAuthenticatedView,
                           ModeledContentUploadRequestUtilsMixin):
 
     def __call__(self):
+        if not is_admin_or_site_admin(self.remoteUser):
+            raise hexc.HTTPForbidden()
         externalValue = self.readInput()
         is_site_community = externalValue.pop('site_community', None) \
                          or externalValue.pop('is_site_community', None)
