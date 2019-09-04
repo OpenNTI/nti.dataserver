@@ -617,13 +617,14 @@ def is_admin_or_content_admin(user):
     return is_admin(user) or is_content_admin(user)
 
 
-def is_site_admin(user):
+def is_site_admin(user, site=None):
     """
     Returns whether the user has the `ROLE_SITE_ADMIN` role.
     """
     result = False
+    site = site if site is not None else getSite()
     try:
-        srm = IPrincipalRoleManager(getSite(), None)
+        srm = IPrincipalRoleManager(site, None)
     except TypeError:
         # SiteManagerContainer (tests)
         srm = None

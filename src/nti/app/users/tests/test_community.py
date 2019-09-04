@@ -22,9 +22,10 @@ from zope.securitypolicy.interfaces import IRolePermissionManager
 
 from zope.securitypolicy.settings import Allow
 
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.dataserver.users import Community
@@ -35,7 +36,7 @@ from nti.dataserver.users.common import set_entity_creation_site
 logger = __import__('logging').getLogger(__name__)
 
 
-class TestCommunityPermissions(DataserverLayerTest):
+class TestCommunityPermissions(ApplicationLayerTest):
 
     @WithMockDSTrans
     def test_community_permissions(self):
@@ -74,10 +75,10 @@ class TestCommunityPermissions(DataserverLayerTest):
             assert_that(permissions, has_entry(permission.id, Allow))
 
     @WithMockDSTrans
-    @fudge.patch('nti.dataserver.community.get_entity_creation_site')
+    @fudge.patch('nti.app.users.zope_security.get_entity_creation_site')
     def test_site_admin_community_permissions(self, mock_get_creation_site):
         username = u'sheldon'
-        User(username)
+        self._create_user(username)
         # Need to be created to keep annotations
         community = Community.create_community(username=u'mycommunity')
 
@@ -91,5 +92,5 @@ class TestCommunityPermissions(DataserverLayerTest):
         roles = community_prm.getRolesForPrincipal(username)
         roles = dict(roles)
         assert_that(roles, has_length(1))
-        assert_that(roles, has_entry(nauth.ROLE_SITE_ADMIN_NAME,
+        assert_that(roles, has_entry(nauth.ROLE_COMMUNITY_ADMIN_NAME,
                                      Allow))
