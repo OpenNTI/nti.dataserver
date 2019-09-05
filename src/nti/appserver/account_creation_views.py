@@ -473,6 +473,9 @@ def account_preflight_view(request):
                                                           request)
 
     # Make sure there are /no/ side effects of this
+    # XXX: FIXME: This should use the nti.commit_veto; when
+    # nti.transactions 3.0 comes out and uses an explicit transaction manager,
+    # this will become illegal and result in raising ForeignTransactionError.
     transaction.abort()
     return {
         'Username': externalValue['Username'] if provided_username else None,
