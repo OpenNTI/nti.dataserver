@@ -148,6 +148,8 @@ class SessionService(object):
                 # already in a transaction
                 # NOTE: We do not do this in a site (to reduce DB connections), so the proxy listeners need to
                 # be very limited in what they do
+                # TODO: This should use a transaction manager in its explicit mode
+                # and it should actually cache the TransactionManager object locally.
                 try:
                     transaction.begin()
                     _ = self._dispatch_message_to_proxy(*msgs)

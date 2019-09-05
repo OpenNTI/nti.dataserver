@@ -225,6 +225,8 @@ class mock_db_trans(object):
 		self._site_name = site_name
 
 	def __enter__(self):
+		# XXX: FIXME: Make this set the transaction manager into explicit mode,
+	    # like nti.transactions 3 does.
 		transaction.begin()
 		self.conn = conn = self.ds.db.open()
 		global current_transaction
