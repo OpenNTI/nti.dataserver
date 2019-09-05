@@ -22,6 +22,10 @@ from zope.location.interfaces import ILocationInfo
 
 from zope.location.traversing import LocationPhysicallyLocatable
 
+from zope.traversing.interfaces import IPathAdapter
+
+from pyramid.interfaces import IRequest
+
 from pyramid.threadlocal import get_current_request
 
 from nti.app.users.interfaces import ICommunitiesWorkspace
@@ -117,8 +121,16 @@ def _user_communities_workspace(user_service):
     return result
 
 
-@component.adapter(IUserWorkspace)
-@interface.implementer(IContainerCollection)
+@interface.implementer(IPathAdapter)
+@component.adapter(IUser, IRequest)
+def CommunitiesPathAdapter(context, unused_request):
+    service = IUserService(context)
+    workspace = ICommunitiesWorkspace(service)
+    return workspace
+
+
+@component.adapter(ICommunitiesWorkspace)
+@interface.implementer(IJoinedCommunitiesCollection)
 class JoinedCommunitiesCollection(AbstractPseudoMembershipContainer,
                                   NameFilterableMixin):
 
@@ -141,13 +153,13 @@ class JoinedCommunitiesCollection(AbstractPseudoMembershipContainer,
 
 
 @component.adapter(IUser)
-@interface.implementer(IContainerCollection)
+@interface.implementer(IJoinedCommunitiesCollection)
 def _UserCommunitiesCollectionFactory(user):
     return JoinedCommunitiesCollection(UserEnumerationWorkspace(user))
 
 
-@component.adapter(IUserWorkspace)
-@interface.implementer(IContainerCollection)
+@component.adapter(ICommunitiesWorkspace)
+@interface.implementer(IAllCommunitiesCollection)
 class AllCommunitiesCollection(AbstractPseudoMembershipContainer,
                                NameFilterableMixin):
 
@@ -156,20 +168,47 @@ class AllCommunitiesCollection(AbstractPseudoMembershipContainer,
 
     @property
     def memberships(self):
-        # Not yet implemented.  Need all visible communities.
-        return self._user.dynamic_memberships
+        return get_communities_by_site()
 
     def selector(self, obj):
         """
-        Communities you're a member of plus communities
+        Communities you can possibly join that the user is not a member of.
         """
         return ICommunity.providedBy(obj) \
            and not IDisallowMembershipOperations.providedBy(obj) \
-           and (obj.public or self.remote_user in obj) \
-           and self.search_include(obj)
+           and obj.public \
+           and self.search_include(obj) \
+           and self._user not in obj
 
 
 @component.adapter(IUser)
-@interface.implementer(IContainerCollection)
+@interface.implementer(IAllCommunitiesCollection)
 def _UserAllCommunitiesCollectionFactory(user):
     return AllCommunitiesCollection(UserEnumerationWorkspace(user))
+
+
+@component.adapter(ICommunitiesWorkspace)
+@interface.implementer(IAdministeredCommunitiesCollection)
+class AdministeredCommunitiesCollection(AbstractPseudoMembershipContainer,
+                                        NameFilterableMixin):
+
+    __name__ = u'AdministeredCommunities'
+
+    name = alias('__name__', __name__)
+
+    accepts = ()
+    links = ()
+
+    def selector(self, obj):
+        return self.search_include(obj)
+
+    @property
+    def memberships(self):
+        communities = get_communities_by_site()
+        return [x for x in communities or () if x.is_admin(self._user)]
+
+
+@component.adapter(IUser)
+@interface.implementer(IAdministeredCommunitiesCollection)
+def _UserAdministeredCommunitiesCollectionFactory(user):
+    return AdministeredCommunitiesCollection(UserEnumerationWorkspace(user))
