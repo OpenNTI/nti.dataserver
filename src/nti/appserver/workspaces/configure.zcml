@@ -25,25 +25,11 @@
 				provides=".interfaces.ICollection"
 				for=".interfaces.IUserWorkspace" />
 
-	<subscriber factory=".CommunitiesContainerCollection"
-				provides=".interfaces.ICollection"
-				for=".interfaces.IUserWorkspace" />
-
-	<subscriber factory=".AllCommunitiesContainerCollection"
-				provides=".interfaces.ICollection"
-				for=".interfaces.IUserWorkspace" />
-
 	<adapter factory="._UserDynamicMembershipsCollectionFactory"
 			 name="DynamicMemberships"/>
 
 	<adapter factory="._UserDynamicFriendsListCollectionFactory"
 			 name="Groups"/>
-
-	<adapter factory="._UserCommunitiesCollectionFactory"
-			 name="Communities"/>
-
-	<adapter factory="._UserAllCommunitiesCollectionFactory"
-			 name="AllCommunities"/>
 
 	<!-- Catalog workspace -->
 	<adapter name="Catalog" factory=".catalog.CatalogPathAdapter" />

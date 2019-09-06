@@ -10,11 +10,15 @@ from __future__ import absolute_import
 from hamcrest import is_
 from hamcrest import is_in
 from hamcrest import is_not
+from hamcrest import not_none
 from hamcrest import contains
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import has_property
+from hamcrest import contains_inanyorder
+
 from nti.testing.time import time_monotonically_increases
 
 from zope import interface
@@ -100,7 +104,6 @@ class TestCommunityViews(ApplicationLayerTest):
             assert_that(ISiteCommunity.providedBy(c), is_(True))
             creation_site = entity_creation_sitename(c)
             assert_that(creation_site, is_('alpha.nextthought.com'))
-
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_update_community(self):
@@ -367,3 +370,153 @@ class TestCommunityViews(ApplicationLayerTest):
         res = self.testapp.get(path % 'ListAdmins',
                                status=200)
         assert_that(res.json_body, has_length(1))
+
+    def _get_community_workspace_rels(self, env):
+        """
+        Validate workspace community state, returning all, admin, joined
+        collection hrefs, respectively.
+        """
+        # Validate workspace state
+        res = self.testapp.get('/dataserver2/service', extra_environ=env)
+        res = res.json_body
+        try:
+            comm_ws = next(x for x in res['Items'] if x['Title'] == 'Communities')
+        except StopIteration:
+            comm_ws = None
+        assert_that(comm_ws, not_none())
+        collections = comm_ws.get("Items")
+        assert_that(collections, has_length(3))
+        colls = [x for x in collections if x.get('Title') == 'AllCommunities']
+        all_href = colls[0].get('href') if colls else None
+        colls = [x for x in collections if x.get('Title') == 'AdministeredCommunities']
+        admin_href = colls[0].get('href') if colls else None
+        colls = [x for x in collections if x.get('Title') == 'Communities']
+        joined_href = colls[0].get('href') if colls else None
+        assert_that(all_href, not_none())
+        assert_that(admin_href, not_none())
+        assert_that(joined_href, not_none())
+        return all_href, admin_href, joined_href
+
+
+    @time_monotonically_increases
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_communities_workspace(self):
+        """
+        Validate the community workspace. All communities should be tied and
+        exposed by the site they belong to.
+        """
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(u"locke")
+            self._create_user(u"terra")
+
+            # Non site community that does not pollute our alpha work
+            comm = Community.create_community(username='non_site_community')
+            comm.public = True
+            comm.joinable = True
+
+        # Community tied to another site is not visible in our alpha site
+        with mock_dataserver.mock_db_trans(self.ds, site_name='mathcounts.nextthought.com'):
+            comm = Community.create_community(username='mathcounts_test_community')
+            comm.public = True
+            comm.joinable = True
+
+        non_site_community_href = '/dataserver2/users/non_site_community'
+        mc_site_community_href = '/dataserver2/users/mathcounts_test_community'
+
+        locke_env = self._make_extra_environ(user="locke")
+        terra_admin_env = self._make_extra_environ(user="terra")
+
+        all_href, admin_href, joined_href = self._get_community_workspace_rels(locke_env)
+        admin_all_href, admin_admin_href, admin_joined_href = self._get_community_workspace_rels(terra_admin_env)
+
+        # Validate empty
+        for href in (all_href, admin_href, joined_href):
+            res = self.testapp.get(href, extra_environ=locke_env)
+            res = res.json_body
+            assert_that(res.get('Items'), has_length(0))
+
+        public_joinable_comm = u'comm1_ws_test'
+        public_unjoinable_comm = u'comm2_ws_test'
+        private_unjoinable_comm = u'comm3_ws_test'
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            comm = Community.create_community(username=public_joinable_comm)
+            comm.public = True
+            comm.joinable = True
+            comm = Community.create_community(username=public_unjoinable_comm)
+            comm.public = True
+            comm.joinable = False
+            comm = Community.create_community(username=private_unjoinable_comm)
+            comm.public = False
+            comm.joinable = False
+
+            site = getSite()
+            prm = IPrincipalRoleManager(site)
+            prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra')
+
+        # Validate with communities
+        for href in (admin_href, joined_href):
+            res = self.testapp.get(href, extra_environ=locke_env)
+            res = res.json_body
+            assert_that(res.get('Items'), has_length(0))
+
+        res = self.testapp.get(all_href, extra_environ=locke_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(1))
+        joinable_comm = comms[0]
+        assert_that(joinable_comm, has_entries('Username', public_joinable_comm,
+                                               'public', True,
+                                               'joinable', True))
+        join_href = self.require_link_href_with_rel(joinable_comm, 'join')
+        self.testapp.post(join_href, extra_environ=locke_env)
+
+        # We joined; now joined does not show up in available, but in joined
+        for href in (admin_href, all_href):
+            res = self.testapp.get(href, extra_environ=locke_env)
+            res = res.json_body
+            assert_that(res.get('Items'), has_length(0))
+
+        res = self.testapp.get(joined_href, extra_environ=locke_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(1))
+        joined_comm = comms[0]
+        assert_that(joined_comm, has_entries('Username', public_joinable_comm,
+                                             'public', True,
+                                             'joinable', True))
+        self.require_link_href_with_rel(joined_comm, 'leave')
+        self.forbid_link_with_rel(joined_comm, 'join')
+
+        # Site admin can see all communities
+        res = self.testapp.get(admin_joined_href, extra_environ=terra_admin_env)
+        res = res.json_body
+        assert_that(res.get('Items'), has_length(0))
+
+        res = self.testapp.get(admin_all_href, extra_environ=terra_admin_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(1))
+        joinable_comm = comms[0]
+        assert_that(joinable_comm, has_entries('Username', public_joinable_comm,
+                                               'public', True,
+                                               'joinable', True))
+
+        res = self.testapp.get(admin_admin_href, extra_environ=terra_admin_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(3))
+        comm_names = [x.get('Username') for x in comms]
+        assert_that(comm_names, contains_inanyorder(public_joinable_comm,
+                                                    public_unjoinable_comm,
+                                                    private_unjoinable_comm))
+
+        # Validate cross site community access
+        for href in (non_site_community_href, mc_site_community_href):
+            for env in (locke_env, terra_admin_env):
+                for post_view_name in ('join', 'leave', 'hide', 'unhide'):
+                    self.testapp.post('%s/%s' % (href, post_view_name),
+                                      extra_environ=env,
+                                      status=404)
+                self.testapp.get(href, extra_environ=env, status=404)
+                self.testapp.get(href + '/members', extra_environ=env, status=404)
+

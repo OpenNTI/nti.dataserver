@@ -13,6 +13,7 @@
 	<subscriber handler=".subscribers._on_user_removed" />
 	<subscriber handler=".subscribers._on_user_updated" />
 	<subscriber handler=".subscribers._on_user_lastseen" />
+	<subscriber handler=".subscribers._community_site_traverse" />
 	<subscriber handler=".subscribers._new_user_is_not_blacklisted" />
 	<subscriber handler=".subscribers._user_modified_from_external_event" />
     <subscriber handler=".subscribers._on_community_created" />
@@ -69,7 +70,7 @@
 				for="nti.dataserver.interfaces.IUser
 					 pyramid.interfaces.IRequest"/>
 
-	<!-- Community Admin -->
+	<!-- Communities -->
     <adapter factory=".zope_security.PersistentCommunityPrincipalRoleManager"
              provides="nti.dataserver.interfaces.ICommunityPrincipalRoleManager"
              for="nti.dataserver.interfaces.ICommunity" />
@@ -77,6 +78,35 @@
     <adapter factory=".zope_security.PersistentCommunityRolePermissionManager"
              provides="nti.dataserver.interfaces.ICommunityRolePermissionManager"
              for="nti.dataserver.interfaces.ICommunity" />
+
+    <adapter factory=".workspaces._UserCommunitiesCollectionFactory"
+             name="Communities"/>
+
+    <adapter factory=".workspaces._UserAllCommunitiesCollectionFactory"
+             name="AllCommunities"/>
+
+    <adapter factory=".workspaces._UserAdministeredCommunitiesCollectionFactory"
+             name="AdministeredCommunities"/>
+
+    <subscriber factory=".workspaces.JoinedCommunitiesCollection"
+                provides="nti.appserver.workspaces.interfaces.ICollection"
+                for=".interfaces.ICommunitiesWorkspace" />
+
+    <subscriber factory=".workspaces.AllCommunitiesCollection"
+                provides="nti.appserver.workspaces.interfaces.ICollection"
+                for=".interfaces.ICommunitiesWorkspace" />
+
+    <subscriber factory=".workspaces.AdministeredCommunitiesCollection"
+                provides="nti.appserver.workspaces.interfaces.ICollection"
+                for=".interfaces.ICommunitiesWorkspace" />
+
+    <adapter name="Communities" factory=".workspaces.CommunitiesPathAdapter" />
+
+    <adapter factory=".workspaces._user_communities_workspace"
+             provides=".interfaces.ICommunitiesWorkspace" />
+
+    <subscriber factory=".workspaces._user_communities_workspace"
+                provides="nti.appserver.workspaces.interfaces.IWorkspace" />
 
 	<!-- Query -->
 	<subscriber	factory=".containers._UserContainersQuerier"

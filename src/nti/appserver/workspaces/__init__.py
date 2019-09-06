@@ -274,6 +274,7 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
         result.lastModified = self.get_last_modified(memberships)
         self._caching_headers(result)
         return result
+AbstractPseudoMembershipContainer = _AbstractPseudoMembershipContainer
 
 
 class NameFilterableMixin(object):
@@ -419,64 +420,6 @@ class DynamicFriendsListContainerCollection(_AbstractPseudoMembershipContainer,
 @interface.implementer(IContainerCollection)
 def _UserDynamicFriendsListCollectionFactory(user):
     return DynamicFriendsListContainerCollection(UserEnumerationWorkspace(user))
-
-
-@component.adapter(IUserWorkspace)
-@interface.implementer(IContainerCollection)
-class CommunitiesContainerCollection(_AbstractPseudoMembershipContainer,
-                                     NameFilterableMixin):
-
-    name = u'Communities'
-    __name__ = name
-
-    @property
-    def memberships(self):
-        return self._user.dynamic_memberships
-
-    def selector(self, obj):
-        """
-        Communities that allow membership ops and are either public or
-        we are a member of.
-        """
-        return ICommunity.providedBy(obj) \
-           and not IDisallowMembershipOperations.providedBy(obj) \
-           and (obj.public or self.remote_user in obj) \
-           and self.search_include(obj)
-
-
-@component.adapter(IUser)
-@interface.implementer(IContainerCollection)
-def _UserCommunitiesCollectionFactory(user):
-    return CommunitiesContainerCollection(UserEnumerationWorkspace(user))
-
-
-@component.adapter(IUserWorkspace)
-@interface.implementer(IContainerCollection)
-class AllCommunitiesContainerCollection(_AbstractPseudoMembershipContainer,
-                                        NameFilterableMixin):
-
-    name = u'AllCommunities'
-    __name__ = name
-
-    @property
-    def memberships(self):
-        # Not yet implemented.  Need all visible communities.
-        return self._user.dynamic_memberships
-
-    def selector(self, obj):
-        """
-        Communities you're a member of plus communities
-        """
-        return ICommunity.providedBy(obj) \
-           and not IDisallowMembershipOperations.providedBy(obj) \
-           and (obj.public or self.remote_user in obj) \
-           and self.search_include(obj)
-
-
-@component.adapter(IUser)
-@interface.implementer(IContainerCollection)
-def _UserAllCommunitiesCollectionFactory(user):
-    return AllCommunitiesContainerCollection(UserEnumerationWorkspace(user))
 
 
 @component.adapter(ICollection)
