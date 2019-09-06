@@ -27,7 +27,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
-from nti.app.users.interfaces import ICommunitiesCollection
+from nti.app.users.interfaces import ICommunitiesCollection,\
+    IAllCommunitiesCollection
 
 from nti.app.users.views import parse_mime_types
 
@@ -79,7 +80,54 @@ logger = __import__('logging').getLogger(__name__)
 @view_config(name='create.community')
 @view_defaults(route_name='objects.generic.traversal',
                request_method='POST',
-               context=IDataserverFolder)
+               context=IDataserverFolder,
+               permission=nauth.ACT_NTI_ADMIN)
+class AdminCreateCommunityView(AbstractAuthenticatedView,
+                               ModeledContentUploadRequestUtilsMixin):
+    """
+    An NT admin view to create a community. NTI admins are able to define
+    the username as well as designate the new community an
+    :class:`ISiteCommunity`.
+    """
+
+    def __call__(self):
+        if not is_admin_or_site_admin(self.remoteUser):
+            raise hexc.HTTPForbidden()
+        externalValue = self.readInput()
+        is_site_community = externalValue.pop('site_community', None) \
+                         or externalValue.pop('is_site_community', None)
+        is_site_community = is_true(is_site_community)
+        username = externalValue.pop('username', None) \
+                or externalValue.pop('Username', None)
+        if not username:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Must specify a username.'),
+                             },
+                             None)
+        community = Community.get_community(username)
+        if community is not None:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Community already exists.'),
+                             },
+                             None)
+        args = {'username': username}
+        args['external_value'] = externalValue
+        self.request.response.status_int = 201  # created
+        community = Community.create_community(**args)
+        if is_site_community:
+            interface.alsoProvides(community, ISiteCommunity)
+        return community
+
+
+@view_config(route_name='objects.generic.traversal',
+             request_method='POST',
+             context=IAllCommunitiesCollection,
+             permission=nauth.ACT_NTI_ADMIN,
+             renderer='rest')
 class CreateCommunityView(AbstractAuthenticatedView,
                           ModeledContentUploadRequestUtilsMixin):
 

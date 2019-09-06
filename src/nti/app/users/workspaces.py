@@ -31,8 +31,12 @@ from nti.appserver.workspaces import AbstractPseudoMembershipContainer
 
 from nti.appserver.workspaces.interfaces import IUserService
 
+from nti.dataserver.authorization import is_site_admin
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
+
+from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
@@ -136,6 +140,13 @@ class AllCommunitiesCollection(AbstractPseudoMembershipContainer,
     def __init__(self, communities_ws):
         super(AllCommunitiesCollection, self).__init__(communities_ws)
         self.__parent__ = communities_ws
+
+    @property
+    def accepts(self):
+        if      self.remote_user == self._user \
+            and is_site_admin(self.remote_user):
+            return (Community.mime_type,)
+        return ()
 
     @property
     def memberships(self):

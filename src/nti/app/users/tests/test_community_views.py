@@ -18,6 +18,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
+does_not = is_not
 
 from nti.testing.time import time_monotonically_increases
 
@@ -371,7 +372,7 @@ class TestCommunityViews(ApplicationLayerTest):
                                status=200)
         assert_that(res.json_body, has_length(1))
 
-    def _get_community_workspace_rels(self, env):
+    def _get_community_workspace_rels(self, env, is_admin=False):
         """
         Validate workspace community state, returning all, admin, joined
         collection hrefs, respectively.
@@ -387,7 +388,12 @@ class TestCommunityViews(ApplicationLayerTest):
         collections = comm_ws.get("Items")
         assert_that(collections, has_length(3))
         colls = [x for x in collections if x.get('Title') == 'AllCommunities']
-        all_href = colls[0].get('href') if colls else None
+        all_comm = colls[0]
+        if is_admin:
+            assert_that(all_comm, has_entry('accepts', contains(Community.mime_type)))
+        else:
+            assert_that(all_comm, does_not(has_entry('accepts', contains(Community.mime_type))))
+        all_href = all_comm.get('href')
         colls = [x for x in collections if x.get('Title') == 'AdministeredCommunities']
         admin_href = colls[0].get('href') if colls else None
         colls = [x for x in collections if x.get('Title') == 'Communities']
@@ -396,7 +402,6 @@ class TestCommunityViews(ApplicationLayerTest):
         assert_that(admin_href, not_none())
         assert_that(joined_href, not_none())
         return all_href, admin_href, joined_href
-
 
     @time_monotonically_increases
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
@@ -427,7 +432,6 @@ class TestCommunityViews(ApplicationLayerTest):
         terra_admin_env = self._make_extra_environ(user="terra")
 
         all_href, admin_href, joined_href = self._get_community_workspace_rels(locke_env)
-        admin_all_href, admin_admin_href, admin_joined_href = self._get_community_workspace_rels(terra_admin_env)
 
         # Validate empty
         for href in (all_href, admin_href, joined_href):
@@ -452,6 +456,9 @@ class TestCommunityViews(ApplicationLayerTest):
             site = getSite()
             prm = IPrincipalRoleManager(site)
             prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra')
+
+        admin_rels = self._get_community_workspace_rels(terra_admin_env, is_admin=True)
+        admin_all_href, admin_admin_href, admin_joined_href = admin_rels
 
         # Validate with communities
         for href in (admin_href, joined_href):
