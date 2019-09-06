@@ -138,6 +138,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         is_admin_user = is_admin_or_site_admin(self.remoteUser)
         result['joinable'] = context.joinable
         result['public'] = context.public
+        result['RemoteIsMember'] = in_community
         if context.joinable:
             if not in_community:
                 link = Link(context, elements=('@@join',), rel="join")

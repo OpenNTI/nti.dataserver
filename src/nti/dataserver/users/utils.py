@@ -16,6 +16,8 @@ from zope.component.hooks import getSite
 
 from zope.intid.interfaces import IIntIds
 
+from nti.coremetadata.interfaces import ICommunity
+
 from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users.index import IX_SITE
@@ -384,7 +386,15 @@ def get_communities_by_site(site=None):
     """
     Get the communities using the given site.
     """
-    return intids_of_communities_by_sites((site or getSite().__name__),)
+    result = []
+    intids = component.getUtility(IIntIds)
+    site = site if site is not None else getSite()
+    site = getattr(site, '__name__', site)
+    for uid in intids_of_communities_by_sites(site) or ():
+        obj = intids.queryObject(uid)
+        if ICommunity.providedBy(obj):
+            result.append(obj)
+    return result
 
 
 def intids_of_community_members(community, all_members=False):

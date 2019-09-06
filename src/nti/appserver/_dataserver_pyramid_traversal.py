@@ -447,9 +447,6 @@ def _DynamicMembershipsResource(context, request):
 def _DynamicFriendsListResource(context, request):
 	return _get_named_container_resource('Groups', context, request)
 
-def _CommunitiesResource(context, request):
-	return _get_named_container_resource('Communities', context, request)
-
 def _AllCommunitiesResource(context, request):
 	return _get_named_container_resource('AllCommunities', context, request)
 
@@ -461,7 +458,6 @@ class UserTraversable(_PseudoTraversableMixin):
 						 PersonalBlog.__default_name__: _BlogResource,
 						 'DynamicMemberships': _DynamicMembershipsResource,
 						 'Groups': _DynamicFriendsListResource,
-						 'Communities': _CommunitiesResource,
 						 'AllCommunities': _AllCommunitiesResource }
 	_pseudo_classes_.update(_PseudoTraversableMixin._pseudo_classes_)
 

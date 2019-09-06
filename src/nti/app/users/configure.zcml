@@ -78,24 +78,24 @@
              provides="nti.dataserver.interfaces.ICommunityRolePermissionManager"
              for="nti.dataserver.interfaces.ICommunity" />
 
-    <adapter factory="workspaces._UserCommunitiesCollectionFactory"
+    <adapter factory=".workspaces._UserCommunitiesCollectionFactory"
              name="Communities"/>
 
-    <adapter factory="workspaces._UserAllCommunitiesCollectionFactory"
+    <adapter factory=".workspaces._UserAllCommunitiesCollectionFactory"
              name="AllCommunities"/>
 
-    <adapter factory="workspaces._UserAdministeredCommunitiesCollectionFactory"
+    <adapter factory=".workspaces._UserAdministeredCommunitiesCollectionFactory"
              name="AdministeredCommunities"/>
 
-    <subscriber factory="workspaces.JoinedCommunitiesCollection"
+    <subscriber factory=".workspaces.JoinedCommunitiesCollection"
                 provides="nti.appserver.workspaces.interfaces.ICollection"
                 for=".interfaces.ICommunitiesWorkspace" />
 
-    <subscriber factory="workspaces.AllCommunitiesCollection"
+    <subscriber factory=".workspaces.AllCommunitiesCollection"
                 provides="nti.appserver.workspaces.interfaces.ICollection"
                 for=".interfaces.ICommunitiesWorkspace" />
 
-    <subscriber factory="workspaces.AdministeredCommunitiesCollection"
+    <subscriber factory=".workspaces.AdministeredCommunitiesCollection"
                 provides="nti.appserver.workspaces.interfaces.ICollection"
                 for=".interfaces.ICommunitiesWorkspace" />
 

@@ -30,20 +30,27 @@ class ICommunitiesWorkspaceLinkProvider(interface.Interface):
         """
 
 
-class IJoinedCommunitiesCollection(IContainerCollection):
+class ICommunitiesCollection(IContainerCollection):
+    """
+    A collection contained within the :class:``ICommunitiesWorkspace``,
+    containing communities.
+    """
+
+
+class IJoinedCommunitiesCollection(ICommunitiesCollection):
     """
     A collection contained within the :class:``ICommunitiesWorkspace``,
     containing those communites the user is a member of.
     """
 
 
-class IAdministeredCommunitiesCollection(IContainerCollection):
+class IAdministeredCommunitiesCollection(ICommunitiesCollection):
     """
     A collection contained within the :class:``ICommunitiesWorkspace``,
     containing those communities user administers.
     """
 
-class IAllCommunitiesCollection(IContainerCollection):
+class IAllCommunitiesCollection(ICommunitiesCollection):
     """
     A collection contained within the :class:``ICommunitiesWorkspace``,
     containing those communities a user may join.

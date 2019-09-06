@@ -21,10 +21,13 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
 
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.users import MessageFactory as _
+
+from nti.app.users.interfaces import ICommunitiesCollection
 
 from nti.app.users.views import parse_mime_types
 
@@ -59,6 +62,8 @@ from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.dataserver.users.utils import intids_of_community_members
 from nti.dataserver.users.utils import get_entity_mimetype_from_index
+
+from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
@@ -396,4 +401,30 @@ class ListCommunityAdmins(AbstractAuthenticatedView,
         usernames = self.context.get_admin_usernames()
         for username in usernames:
             result.append(User.get_user(username))
+        return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=ICommunitiesCollection,
+             permission=nauth.ACT_READ,
+             request_method='GET')
+class CommunityCollectionView(AbstractAuthenticatedView,
+                              BatchingUtilsMixin):
+    """
+    A generic :class:`ICommunitiesCollection` view that supports paging on the
+    collection.
+    """
+
+    _DEFAULT_BATCH_SIZE = None
+    _DEFAULT_BATCH_START = None
+
+    def __call__(self):
+        result = to_external_object(self.context)
+        # We have a dict here
+        result[ITEMS] = result[ITEMS].values()
+        result[TOTAL] = len(result[ITEMS])
+        self._batch_items_iterable(result,
+                                   result[ITEMS],
+                                   number_items_needed=result[TOTAL])
         return result

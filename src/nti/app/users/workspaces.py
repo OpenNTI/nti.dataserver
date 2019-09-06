@@ -17,54 +17,28 @@ from zope.cachedescriptors.property import Lazy
 
 from zope.container.contained import Contained
 
-from zope.location.interfaces import IRoot
-from zope.location.interfaces import ILocationInfo
-
-from zope.location.traversing import LocationPhysicallyLocatable
-
 from zope.traversing.interfaces import IPathAdapter
 
 from pyramid.interfaces import IRequest
 
-from pyramid.threadlocal import get_current_request
-
 from nti.app.users.interfaces import ICommunitiesWorkspace
 from nti.app.users.interfaces import IAllCommunitiesCollection
 from nti.app.users.interfaces import IJoinedCommunitiesCollection
-from nti.app.users.interfaces import ICommunitiesWorkspaceLinkProvider
 from nti.app.users.interfaces import IAdministeredCommunitiesCollection
 
 from nti.appserver.workspaces import NameFilterableMixin
-from nti.appserver.workspaces import UserEnumerationWorkspace
 from nti.appserver.workspaces import AbstractPseudoMembershipContainer
 
 from nti.appserver.workspaces.interfaces import IUserService
-from nti.appserver.workspaces.interfaces import IUserWorkspace
-from nti.appserver.workspaces.interfaces import IContainerCollection
-
-from nti.dataserver.authorization import ACT_READ
-from nti.dataserver.authorization import ACT_DELETE
-
-from nti.dataserver.authorization_acl import ace_allowing
-from nti.dataserver.authorization_acl import acl_from_aces
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 
-from nti.dataserver.users.interfaces import IFriendlyNamed
-from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
 from nti.dataserver.users.utils import get_communities_by_site
 
-from nti.datastructures.datastructures import LastModifiedCopyingUserList
-
-from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-
-from nti.links.links import Link
-
-from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.property.property import alias
 
@@ -78,7 +52,6 @@ logger = __import__('logging').getLogger(__name__)
 @interface.implementer(ICommunitiesWorkspace)
 class _CommunitiesWorkspace(Contained):
 
-    #: Our name, part of our URL
     __name__ = 'Communities'
 
     name = alias('__name__', __name__)
@@ -89,18 +62,11 @@ class _CommunitiesWorkspace(Contained):
 
     @Lazy
     def collections(self):
-        """
-        The collections in this workspace provide info about the enrolled and
-        available courses as well as any courses the user administers (teaches).
-        """
         return (AllCommunitiesCollection(self),
                 JoinedCommunitiesCollection(self),
                 AdministeredCommunitiesCollection(self))
 
     def __getitem__(self, key):
-        """
-        Make us traversable to collections.
-        """
         for i in self.collections:
             if i.__name__ == key:
                 return i
@@ -113,9 +79,6 @@ class _CommunitiesWorkspace(Contained):
 @component.adapter(IUserService)
 @interface.implementer(ICommunitiesWorkspace)
 def _user_communities_workspace(user_service):
-    """
-    The courses for a user reside at the path ``/users/$ME/Communities``.
-    """
     result = _CommunitiesWorkspace(user_service)
     result.__parent__ = result.user
     return result
@@ -123,7 +86,7 @@ def _user_communities_workspace(user_service):
 
 @interface.implementer(IPathAdapter)
 @component.adapter(IUser, IRequest)
-def CommunitiesPathAdapter(context, unused_request):
+def CommunitiesPathAdapter(context, unused_request=None):
     service = IUserService(context)
     workspace = ICommunitiesWorkspace(service)
     return workspace
@@ -136,6 +99,10 @@ class JoinedCommunitiesCollection(AbstractPseudoMembershipContainer,
 
     name = u'Communities'
     __name__ = name
+
+    def __init__(self, communities_ws):
+        super(JoinedCommunitiesCollection, self).__init__(communities_ws)
+        self.__parent__ = communities_ws
 
     @property
     def memberships(self):
@@ -155,7 +122,7 @@ class JoinedCommunitiesCollection(AbstractPseudoMembershipContainer,
 @component.adapter(IUser)
 @interface.implementer(IJoinedCommunitiesCollection)
 def _UserCommunitiesCollectionFactory(user):
-    return JoinedCommunitiesCollection(UserEnumerationWorkspace(user))
+    return JoinedCommunitiesCollection(CommunitiesPathAdapter(user))
 
 
 @component.adapter(ICommunitiesWorkspace)
@@ -166,6 +133,10 @@ class AllCommunitiesCollection(AbstractPseudoMembershipContainer,
     name = u'AllCommunities'
     __name__ = name
 
+    def __init__(self, communities_ws):
+        super(AllCommunitiesCollection, self).__init__(communities_ws)
+        self.__parent__ = communities_ws
+
     @property
     def memberships(self):
         return get_communities_by_site()
@@ -174,9 +145,8 @@ class AllCommunitiesCollection(AbstractPseudoMembershipContainer,
         """
         Communities you can possibly join that the user is not a member of.
         """
-        return ICommunity.providedBy(obj) \
-           and not IDisallowMembershipOperations.providedBy(obj) \
-           and obj.public \
+        return not IDisallowMembershipOperations.providedBy(obj) \
+           and obj.public and obj.joinable \
            and self.search_include(obj) \
            and self._user not in obj
 
@@ -184,7 +154,7 @@ class AllCommunitiesCollection(AbstractPseudoMembershipContainer,
 @component.adapter(IUser)
 @interface.implementer(IAllCommunitiesCollection)
 def _UserAllCommunitiesCollectionFactory(user):
-    return AllCommunitiesCollection(UserEnumerationWorkspace(user))
+    return AllCommunitiesCollection(CommunitiesPathAdapter(user))
 
 
 @component.adapter(ICommunitiesWorkspace)
@@ -199,6 +169,10 @@ class AdministeredCommunitiesCollection(AbstractPseudoMembershipContainer,
     accepts = ()
     links = ()
 
+    def __init__(self, communities_ws):
+        super(AdministeredCommunitiesCollection, self).__init__(communities_ws)
+        self.__parent__ = communities_ws
+
     def selector(self, obj):
         return self.search_include(obj)
 
@@ -211,4 +185,4 @@ class AdministeredCommunitiesCollection(AbstractPseudoMembershipContainer,
 @component.adapter(IUser)
 @interface.implementer(IAdministeredCommunitiesCollection)
 def _UserAdministeredCommunitiesCollectionFactory(user):
-    return AdministeredCommunitiesCollection(UserEnumerationWorkspace(user))
+    return AdministeredCommunitiesCollection(CommunitiesPathAdapter(user))
