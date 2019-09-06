@@ -401,9 +401,25 @@ class TestCommunityViews(ApplicationLayerTest):
     @time_monotonically_increases
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_communities_workspace(self):
+        """
+        Validate the community workspace. All communities should be tied and
+        exposed by the site they belong to.
+        """
         with mock_dataserver.mock_db_trans(self.ds):
             self._create_user(u"locke")
             self._create_user(u"terra")
+
+            # Non site community that does not pollute our alpha work
+            comm = Community.create_community(username='non_site_community')
+            comm.public = True
+            comm.joinable = True
+
+        # Community tied to another site is not visible in our alpha site
+        with mock_dataserver.mock_db_trans(self.ds, site_name='mathcounts.nextthought.com'):
+            comm = Community.create_community(username='mathcounts_test_community')
+            comm.public = True
+            comm.joinable = True
+
         locke_env = self._make_extra_environ(user="locke")
         terra_admin_env = self._make_extra_environ(user="terra")
 
