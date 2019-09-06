@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 import time
 
+from pyramid import httpexceptions as hexc
+
 from pyramid.threadlocal import get_current_request
 
 from zope import component
@@ -19,8 +21,6 @@ from zope.event import notify
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
-
-from zope.location.interfaces import LocationError
 
 from zope.traversing.interfaces import IBeforeTraverseEvent
 
@@ -148,4 +148,4 @@ def _community_site_traverse(community, unused_event):
     creation_site_name = get_entity_creation_sitename(community)
     current_sites = get_component_hierarchy_names()
     if not creation_site_name or creation_site_name not in current_sites:
-        raise LocationError(community.username)
+        raise hexc.HTTPNotFound()
