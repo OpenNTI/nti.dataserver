@@ -17,6 +17,8 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
+from hamcrest import contains_inanyorder
+
 from nti.testing.time import time_monotonically_increases
 
 from zope import interface
@@ -369,15 +371,13 @@ class TestCommunityViews(ApplicationLayerTest):
                                status=200)
         assert_that(res.json_body, has_length(1))
 
-    @time_monotonically_increases
-    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-    def test_communities_workspace(self):
-        with mock_dataserver.mock_db_trans(self.ds):
-            self._create_user(u"locke")
-        locke_env = self._make_extra_environ(user="locke")
-
+    def _get_community_workspace_rels(self, env):
+        """
+        Validate workspace community state, returning all, admin, joined
+        collection hrefs, respectively.
+        """
         # Validate workspace state
-        res = self.testapp.get('/dataserver2/service', extra_environ=locke_env)
+        res = self.testapp.get('/dataserver2/service', extra_environ=env)
         res = res.json_body
         try:
             comm_ws = next(x for x in res['Items'] if x['Title'] == 'Communities')
@@ -395,6 +395,20 @@ class TestCommunityViews(ApplicationLayerTest):
         assert_that(all_href, not_none())
         assert_that(admin_href, not_none())
         assert_that(joined_href, not_none())
+        return all_href, admin_href, joined_href
+
+
+    @time_monotonically_increases
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_communities_workspace(self):
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(u"locke")
+            self._create_user(u"terra")
+        locke_env = self._make_extra_environ(user="locke")
+        terra_admin_env = self._make_extra_environ(user="terra")
+
+        all_href, admin_href, joined_href = self._get_community_workspace_rels(locke_env)
+        admin_all_href, admin_admin_href, admin_joined_href = self._get_community_workspace_rels(terra_admin_env)
 
         # Validate empty
         for href in (all_href, admin_href, joined_href):
@@ -415,6 +429,10 @@ class TestCommunityViews(ApplicationLayerTest):
             comm = Community.create_community(username=private_unjoinable_comm)
             comm.public = False
             comm.joinable = False
+
+            site = getSite()
+            prm = IPrincipalRoleManager(site)
+            prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra')
 
         # Validate with communities
         for href in (admin_href, joined_href):
@@ -449,3 +467,26 @@ class TestCommunityViews(ApplicationLayerTest):
                                              'joinable', True))
         self.require_link_href_with_rel(joined_comm, 'leave')
         self.forbid_link_with_rel(joined_comm, 'join')
+
+        # Site admin can see all communities
+        res = self.testapp.get(admin_joined_href, extra_environ=terra_admin_env)
+        res = res.json_body
+        assert_that(res.get('Items'), has_length(0))
+
+        res = self.testapp.get(admin_all_href, extra_environ=terra_admin_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(1))
+        joinable_comm = comms[0]
+        assert_that(joinable_comm, has_entries('Username', public_joinable_comm,
+                                               'public', True,
+                                               'joinable', True))
+
+        res = self.testapp.get(admin_admin_href, extra_environ=terra_admin_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(3))
+        comm_names = [x.get('Username') for x in comms]
+        assert_that(comm_names, contains_inanyorder(public_joinable_comm,
+                                                    public_unjoinable_comm,
+                                                    private_unjoinable_comm))
