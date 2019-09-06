@@ -42,7 +42,9 @@ from nti.app.users.views.view_mixins import EntityActivityViewMixin
 
 from nti.common.string import is_true
 
+from nti.coremetadata.interfaces import ICommunity
 from nti.coremetadata.interfaces import ISiteCommunity
+from nti.coremetadata.interfaces import IDeactivatedCommunity
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
@@ -52,7 +54,6 @@ from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 
@@ -66,6 +67,7 @@ from nti.dataserver.users.index import IX_IS_COMMUNITY
 
 from nti.dataserver.users.index import get_entity_catalog
 
+from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.dataserver.users.utils import intids_of_community_members
@@ -183,6 +185,43 @@ class CreateCommunityView(AbstractAuthenticatedView,
         logger.info('Created community (%s) (%s) (%s)',
                     alias, username, self.remoteUser)
         return community
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             permission=nauth.ACT_DELETE,
+             request_method='DELETE',
+             context=ICommunity)
+class DeleteCommunityView(AbstractAuthenticatedView):
+
+    def __call__(self):
+        profile = ICommunityProfile(self.context, None)
+        logger.info('Deleting community (%s) (%s) (%s)',
+                    self.context.username,
+                    getattr(profile, 'alias', ''),
+                    self.remoteUser)
+        if not IDeactivatedCommunity.providedBy(self.context):
+            interface.alsoProvides(self.context, IDeactivatedCommunity)
+        return hexc.HTTPNoContent()
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             permission=nauth.ACT_UPDATE,
+             request_method='POST',
+             name='Restore',
+             context=ICommunity)
+class RestoreCommunityView(AbstractAuthenticatedView):
+
+    def __call__(self):
+        profile = ICommunityProfile(self.context, None)
+        logger.info('Restoring community (%s) (%s)',
+                    self.context.username,
+                    getattr(profile, 'alias', ''),
+                    self.remoteUser)
+        if IDeactivatedCommunity.providedBy(self.context):
+            interface.noLongerProvides(self.context, IDeactivatedCommunity)
+        return self.context
 
 
 @view_config(name='AllCommunities')

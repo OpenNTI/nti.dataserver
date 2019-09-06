@@ -26,7 +26,14 @@ from nti.app.users import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
 
 from nti.app.users import MessageFactory as _
 
+from nti.app.users.utils import get_user_creation_sitename
+
+from nti.appserver.pyramid_authorization import has_permission
+
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
+
+from nti.dataserver.authorization import ACT_DELETE
+from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import is_site_admin
@@ -53,7 +60,7 @@ from nti.identifiers.utils import get_external_identifiers
 from nti.links.links import Link
 
 from nti.traversal.traversal import find_interface
-from nti.app.users.utils import get_user_creation_sitename
+from nti.coremetadata.interfaces import IDeletedObjectPlaceholder
 
 LINKS = StandardExternalFields.LINKS
 
@@ -163,6 +170,27 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
                         elements=('@@Activity',),
                         rel="Activity",
                         title=_("All Activity"))
+            _links.append(link)
+
+        if      not IDeletedObjectPlaceholder.providedBy(context) \
+            and has_permission(ACT_DELETE, context):
+            link = Link(context,
+                        rel="delete",
+                        method='DELETE')
+            _links.append(link)
+
+        if      IDeletedObjectPlaceholder.providedBy(context) \
+            and has_permission(ACT_UPDATE, context):
+            link = Link(context,
+                        rel="restore",
+                        elements=('@@restore',),
+                        method='POST')
+            _links.append(link)
+
+        if has_permission(ACT_UPDATE, context):
+            link = Link(context,
+                        rel="edit",
+                        method='PUT')
             _links.append(link)
 
 

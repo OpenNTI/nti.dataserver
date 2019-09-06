@@ -30,7 +30,8 @@ from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from zope.securitypolicy.settings import Allow
 
-from nti.dataserver.authorization import ROLE_COMMUNITY_ADMIN_NAME, ROLE_COMMUNITY_ADMIN
+from nti.dataserver.authorization import ROLE_COMMUNITY_ADMIN
+from nti.dataserver.authorization import ROLE_COMMUNITY_ADMIN_NAME
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity

@@ -179,6 +179,10 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
                 needs_edit = False
                 break
 
+        from nti.coremetadata.interfaces import ICommunity
+        if ICommunity.providedBy(context):
+            from IPython.terminal.debugger import set_trace;set_trace()
+
         needs_edit = needs_edit and self._has_permission(context)
         needs_href = 'href' not in mapping
         if not (needs_edit or needs_href):
