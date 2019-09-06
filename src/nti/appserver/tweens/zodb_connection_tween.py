@@ -25,9 +25,12 @@ import os
 from pprint import pprint
 from cStringIO import StringIO
 
+import transaction
+
 class zodb_connection_tween(object):
 	"""
-	Opens and closes a connection.
+	Opens and closes a connection, after first putting the
+	local transaction manager into explicit mode.
 
 	Set up the connection tween. You must have `nti_zodb_root_db`
 	established on the registry.
@@ -44,8 +47,17 @@ class zodb_connection_tween(object):
 	def __call__(self, request):
 		# logger.debug("Connection details %s", '\n'.join([str(x) for x in request.registry.nti_zodb_root_db.connectionDebugInfo()]))
 		# The value of nti_zodb_root_db may change at runtime,
-		# so we don't cache it (only during tests)
+		# so we don't cache it (only during tests).
+
+		# Having the transaction manager be in explicit mode
+		# *before* we open the connection lets it make certain
+		# optimizations. The transaction tween below us will also
+		# do this, but by then its too late. We never bother to
+		# reset this, we're in a new greenlet and this is greenlet-local.
+		transaction.manager.explicit = True
+
 		request.nti_zodb_root_connection = request.registry.nti_zodb_root_db.open()
+		assert request.nti_zodb_root_connection.explicit_transactions
 		self._debug_connection(request)
 		try:
 			return self.handler(request)
