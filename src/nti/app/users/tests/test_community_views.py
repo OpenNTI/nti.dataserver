@@ -18,6 +18,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
+does_not = is_not
 
 from nti.testing.time import time_monotonically_increases
 
@@ -371,7 +372,7 @@ class TestCommunityViews(ApplicationLayerTest):
                                status=200)
         assert_that(res.json_body, has_length(1))
 
-    def _get_community_workspace_rels(self, env):
+    def _get_community_workspace_rels(self, env, is_admin=False):
         """
         Validate workspace community state, returning all, admin, joined
         collection hrefs, respectively.
@@ -387,7 +388,12 @@ class TestCommunityViews(ApplicationLayerTest):
         collections = comm_ws.get("Items")
         assert_that(collections, has_length(3))
         colls = [x for x in collections if x.get('Title') == 'AllCommunities']
-        all_href = colls[0].get('href') if colls else None
+        all_comm = colls[0]
+        if is_admin:
+            assert_that(all_comm, has_entry('accepts', contains(Community.mime_type)))
+        else:
+            assert_that(all_comm, does_not(has_entry('accepts', contains(Community.mime_type))))
+        all_href = all_comm.get('href')
         colls = [x for x in collections if x.get('Title') == 'AdministeredCommunities']
         admin_href = colls[0].get('href') if colls else None
         colls = [x for x in collections if x.get('Title') == 'Communities']
@@ -396,7 +402,6 @@ class TestCommunityViews(ApplicationLayerTest):
         assert_that(admin_href, not_none())
         assert_that(joined_href, not_none())
         return all_href, admin_href, joined_href
-
 
     @time_monotonically_increases
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
@@ -427,7 +432,6 @@ class TestCommunityViews(ApplicationLayerTest):
         terra_admin_env = self._make_extra_environ(user="terra")
 
         all_href, admin_href, joined_href = self._get_community_workspace_rels(locke_env)
-        admin_all_href, admin_admin_href, admin_joined_href = self._get_community_workspace_rels(terra_admin_env)
 
         # Validate empty
         for href in (all_href, admin_href, joined_href):
@@ -452,6 +456,9 @@ class TestCommunityViews(ApplicationLayerTest):
             site = getSite()
             prm = IPrincipalRoleManager(site)
             prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra')
+
+        admin_rels = self._get_community_workspace_rels(terra_admin_env, is_admin=True)
+        admin_all_href, admin_admin_href, admin_joined_href = admin_rels
 
         # Validate with communities
         for href in (admin_href, joined_href):
@@ -520,3 +527,49 @@ class TestCommunityViews(ApplicationLayerTest):
                 self.testapp.get(href, extra_environ=env, status=404)
                 self.testapp.get(href + '/members', extra_environ=env, status=404)
 
+
+        # Create new Community
+        self.testapp.post_json(all_href, {}, extra_environ=locke_env,
+                               status=403)
+        self.testapp.post_json(all_href, {}, extra_environ=terra_admin_env,
+                               status=422)
+        new_comm1_alias = "new community one"
+        data = {'alias': new_comm1_alias,
+                'public': True,
+                'joinable': True}
+        new_comm1 = self.testapp.post_json(all_href, data, extra_environ=terra_admin_env)
+        new_comm1 = new_comm1.json_body
+        new_comm1_username = 'new_community_one@alpha.nextthought.com'
+        assert_that(new_comm1, has_entries('alias', new_comm1_alias,
+                                           'Username', new_comm1_username,
+                                           'public', True,
+                                           'joinable', True,
+                                           'RemoteIsMember', False,
+                                           'Creator', 'terra',
+                                           'CreatedTime', not_none(),
+                                           'Last Modified', not_none()))
+
+        # Now one with a duplicate alias
+        new_comm2 = self.testapp.post_json(all_href, data, extra_environ=terra_admin_env)
+        new_comm2 = new_comm2.json_body
+        new_comm2_username = new_comm2.get('Username')
+        assert_that(new_comm2, has_entries('alias', new_comm1_alias,
+                                           'Username', is_not('new_community_one@alpha.nextthought.com'),
+                                           'public', True,
+                                           'joinable', True,
+                                           'RemoteIsMember', False,
+                                           'Creator', 'terra',
+                                           'CreatedTime', not_none(),
+                                           'Last Modified', not_none()))
+
+        # Join new community
+        res = self.testapp.get(all_href, extra_environ=locke_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(2))
+        comm_usernames = [x.get('Username') for x in comms]
+        assert_that(comm_usernames, contains_inanyorder(new_comm1_username, new_comm2_username))
+        comm_ext = [x for x in comms if x.get('Username') == new_comm1_username]
+        comm_ext = comm_ext[0]
+        new_comm_join_href = self.require_link_href_with_rel(comm_ext, 'join')
+        self.testapp.post(new_comm_join_href, extra_environ=locke_env)
