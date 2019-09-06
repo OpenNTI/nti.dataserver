@@ -527,3 +527,35 @@ class TestCommunityViews(ApplicationLayerTest):
                 self.testapp.get(href, extra_environ=env, status=404)
                 self.testapp.get(href + '/members', extra_environ=env, status=404)
 
+
+        # Create new Community
+        self.testapp.post_json(all_href, {}, extra_environ=locke_env,
+                               status=403)
+        self.testapp.post_json(all_href, {}, extra_environ=terra_admin_env,
+                               status=422)
+        new_comm1_alias = "new community one"
+        data = {'alias': new_comm1_alias,
+                'public': True,
+                'joinable': True}
+        new_comm1 = self.testapp.post_json(all_href, data, extra_environ=terra_admin_env)
+        new_comm1 = new_comm1.json_body
+        assert_that(new_comm1, has_entries('alias', new_comm1_alias,
+                                           'Username', 'new_community_one@alpha.nextthought.com',
+                                           'public', True,
+                                           'joinable', True,
+                                           'RemoteIsMember', False,
+                                           'Creator', 'terra',
+                                           'CreatedTime', not_none(),
+                                           'Last Modified', not_none()))
+
+        # Now one with a duplicate alias
+        new_comm1 = self.testapp.post_json(all_href, data, extra_environ=terra_admin_env)
+        new_comm1 = new_comm1.json_body
+        assert_that(new_comm1, has_entries('alias', new_comm1_alias,
+                                           'Username', is_not('new_community_one@alpha.nextthought.com'),
+                                           'public', True,
+                                           'joinable', True,
+                                           'RemoteIsMember', False,
+                                           'Creator', 'terra',
+                                           'CreatedTime', not_none(),
+                                           'Last Modified', not_none()))

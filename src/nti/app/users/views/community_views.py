@@ -13,9 +13,14 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+from zope import component
 from zope import interface
 
 from zope.cachedescriptors.property import Lazy
+
+from zope.component.hooks import getSite
+
+from zope.container.interfaces import INameChooser
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -27,8 +32,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
-from nti.app.users.interfaces import ICommunitiesCollection,\
-    IAllCommunitiesCollection
+from nti.app.users.interfaces import ICommunitiesCollection
+from nti.app.users.interfaces import IAllCommunitiesCollection
 
 from nti.app.users.views import parse_mime_types
 
@@ -46,7 +51,9 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users import User
@@ -91,8 +98,6 @@ class AdminCreateCommunityView(AbstractAuthenticatedView,
     """
 
     def __call__(self):
-        if not is_admin_or_site_admin(self.remoteUser):
-            raise hexc.HTTPForbidden()
         externalValue = self.readInput()
         is_site_community = externalValue.pop('site_community', None) \
                          or externalValue.pop('is_site_community', None)
@@ -118,6 +123,7 @@ class AdminCreateCommunityView(AbstractAuthenticatedView,
         args['external_value'] = externalValue
         self.request.response.status_int = 201  # created
         community = Community.create_community(**args)
+        community.creator = self.remoteUser.username
         if is_site_community:
             interface.alsoProvides(community, ISiteCommunity)
         return community
@@ -126,41 +132,56 @@ class AdminCreateCommunityView(AbstractAuthenticatedView,
 @view_config(route_name='objects.generic.traversal',
              request_method='POST',
              context=IAllCommunitiesCollection,
-             permission=nauth.ACT_NTI_ADMIN,
              renderer='rest')
 class CreateCommunityView(AbstractAuthenticatedView,
                           ModeledContentUploadRequestUtilsMixin):
+    """
+    A view on the :class:`IAllCommunitiesCollection` which will accept
+    new communites tied to the current site.
+    """
+
+    RESTRICTED_FIELDS = ('Username', 'site_community', 'is_site_community')
+
+    content_predicate = ICommunity.providedBy
+
+    def readInput(self):
+        result = super(CreateCommunityView, self).readInput()
+        if result is not None:
+            for key in self.RESTRICTED_FIELDS:
+                result.pop(key, None)
+        return result
+
+    def generate_username(self, alias):
+        """
+        Return a username based on the alias of the form:
+
+        alias@current_site.com.
+        """
+        site_name = getSite().__name__
+        username = '%s@%s' % (alias, site_name)
+        username = username.replace(' ', '_')
+        dataserver = component.getUtility(IDataserver)
+        users_folder = IShardLayout(dataserver).users_folder
+        # XXX: Do we do this or do we raise because of conflict?
+        name_chooser = INameChooser(users_folder)
+        username = name_chooser.chooseName(username, object())
+        return username
 
     def __call__(self):
         if not is_admin_or_site_admin(self.remoteUser):
             raise hexc.HTTPForbidden()
         externalValue = self.readInput()
-        is_site_community = externalValue.pop('site_community', None) \
-                         or externalValue.pop('is_site_community', None)
-        is_site_community = is_true(is_site_community)
-        username = externalValue.pop('username', None) \
-                or externalValue.pop('Username', None)
-        if not username:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': _(u'Must specify a username.'),
-                             },
-                             None)
-        community = Community.get_community(username)
-        if community is not None:
-            raise_json_error(self.request,
-                             hexc.HTTPUnprocessableEntity,
-                             {
-                                 'message': _(u'Community already exists.'),
-                             },
-                             None)
-        args = {'username': username}
-        args['external_value'] = externalValue
-        self.request.response.status_int = 201  # created
-        community = Community.create_community(**args)
-        if is_site_community:
-            interface.alsoProvides(community, ISiteCommunity)
+
+        # Build the name based on the alias
+        alias = externalValue.get('alias')
+        if not alias:
+            raise hexc.HTTPUnprocessableEntity()
+        username = self.generate_username(alias)
+        community = Community.create_community(username=username,
+                                               external_value=externalValue)
+        community.creator = self.remoteUser.username
+        logger.info('Created community (%s) (%s) (%s)',
+                    alias, username, self.remoteUser)
         return community
 
 
