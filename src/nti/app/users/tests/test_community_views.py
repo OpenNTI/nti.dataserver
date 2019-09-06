@@ -539,8 +539,9 @@ class TestCommunityViews(ApplicationLayerTest):
                 'joinable': True}
         new_comm1 = self.testapp.post_json(all_href, data, extra_environ=terra_admin_env)
         new_comm1 = new_comm1.json_body
+        new_comm1_username = 'new_community_one@alpha.nextthought.com'
         assert_that(new_comm1, has_entries('alias', new_comm1_alias,
-                                           'Username', 'new_community_one@alpha.nextthought.com',
+                                           'Username', new_comm1_username,
                                            'public', True,
                                            'joinable', True,
                                            'RemoteIsMember', False,
@@ -549,9 +550,10 @@ class TestCommunityViews(ApplicationLayerTest):
                                            'Last Modified', not_none()))
 
         # Now one with a duplicate alias
-        new_comm1 = self.testapp.post_json(all_href, data, extra_environ=terra_admin_env)
-        new_comm1 = new_comm1.json_body
-        assert_that(new_comm1, has_entries('alias', new_comm1_alias,
+        new_comm2 = self.testapp.post_json(all_href, data, extra_environ=terra_admin_env)
+        new_comm2 = new_comm2.json_body
+        new_comm2_username = new_comm2.get('Username')
+        assert_that(new_comm2, has_entries('alias', new_comm1_alias,
                                            'Username', is_not('new_community_one@alpha.nextthought.com'),
                                            'public', True,
                                            'joinable', True,
@@ -559,3 +561,15 @@ class TestCommunityViews(ApplicationLayerTest):
                                            'Creator', 'terra',
                                            'CreatedTime', not_none(),
                                            'Last Modified', not_none()))
+
+        # Join new community
+        res = self.testapp.get(all_href, extra_environ=locke_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(2))
+        comm_usernames = [x.get('Username') for x in comms]
+        assert_that(comm_usernames, contains_inanyorder(new_comm1_username, new_comm2_username))
+        comm_ext = [x for x in comms if x.get('Username') == new_comm1_username]
+        comm_ext = comm_ext[0]
+        new_comm_join_href = self.require_link_href_with_rel(comm_ext, 'join')
+        self.testapp.post(new_comm_join_href, extra_environ=locke_env)
