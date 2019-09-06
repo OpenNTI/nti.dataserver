@@ -13,6 +13,7 @@
 	<subscriber handler=".subscribers._on_user_removed" />
 	<subscriber handler=".subscribers._on_user_updated" />
 	<subscriber handler=".subscribers._on_user_lastseen" />
+	<subscriber handler=".subscribers._community_site_traverse" />
 	<subscriber handler=".subscribers._new_user_is_not_blacklisted" />
 	<subscriber handler=".subscribers._user_modified_from_external_event" />
     <subscriber handler=".subscribers._on_community_created" />

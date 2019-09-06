@@ -20,19 +20,27 @@ from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
+from zope.location.interfaces import LocationError
+
+from zope.traversing.interfaces import IBeforeTraverseEvent
+
 from nti.app.authentication import get_remote_user
 
 from nti.app.users.adapters import context_lastseen_factory
 
-from nti.app.users.utils import set_user_creation_site, set_community_creation_site
+from nti.app.users.utils import set_user_creation_site
+from nti.app.users.utils import set_community_creation_site
 from nti.app.users.utils import set_email_verification_time
 from nti.app.users.utils import safe_send_email_verification
+from nti.app.users.utils import get_entity_creation_sitename
 
 from nti.appserver.interfaces import IUserLogonEvent
 from nti.appserver.interfaces import IUserLogoutEvent
 
 from nti.coremetadata.interfaces import UserLastSeenEvent
 from nti.coremetadata.interfaces import IUserLastSeenEvent
+
+from nti.dataserver.authorization import is_admin
 
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUser
@@ -46,6 +54,8 @@ from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 from nti.dataserver.users.utils import reindex_email_verification
 
 from nti.securitypolicy.utils import is_impersonating
+
+from nti.site.site import get_component_hierarchy_names
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -123,3 +133,19 @@ def _on_user_removed(user, unused_event=None):
     if container:
         logger.info("Removing context last seen record(s) for user %s", user)
         container.clear()
+
+
+@component.adapter(ICommunity, IBeforeTraverseEvent)
+def _community_site_traverse(community, unused_event):
+    """
+    Only allow traversal to this community if it is part of this site.
+
+    XXX: NT admins do not count...
+    XXX: Do this for all entities?
+    """
+    if is_admin(get_remote_user()):
+        return
+    creation_site_name = get_entity_creation_sitename(community)
+    current_sites = get_component_hierarchy_names()
+    if not creation_site_name or creation_site_name not in current_sites:
+        raise LocationError(community.username)

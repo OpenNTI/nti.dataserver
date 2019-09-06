@@ -420,6 +420,9 @@ class TestCommunityViews(ApplicationLayerTest):
             comm.public = True
             comm.joinable = True
 
+        non_site_community_href = '/dataserver2/users/non_site_community'
+        mc_site_community_href = '/dataserver2/users/mathcounts_test_community'
+
         locke_env = self._make_extra_environ(user="locke")
         terra_admin_env = self._make_extra_environ(user="terra")
 
@@ -506,3 +509,14 @@ class TestCommunityViews(ApplicationLayerTest):
         assert_that(comm_names, contains_inanyorder(public_joinable_comm,
                                                     public_unjoinable_comm,
                                                     private_unjoinable_comm))
+
+        # Validate cross site community access
+        for href in (non_site_community_href, mc_site_community_href):
+            for env in (locke_env, terra_admin_env):
+                for post_view_name in ('join', 'leave', 'hide', 'unhide'):
+                    self.testapp.post('%s/%s' % (href, post_view_name),
+                                      extra_environ=env,
+                                      status=404)
+                self.testapp.get(href, extra_environ=env, status=404)
+                self.testapp.get(href + '/members', extra_environ=env, status=404)
+
