@@ -225,10 +225,12 @@ class mock_db_trans(object):
 		self._site_name = site_name
 
 	def __enter__(self):
-		# XXX: FIXME: Make this set the transaction manager into explicit mode,
-	    # like nti.transactions 3 does.
+		# See comments in zodb_connection_tween: we need to put the 
+		# manager in explicit mode before opening DB connections.
+		transaction.manager.explicit = True
 		transaction.begin()
 		self.conn = conn = self.ds.db.open()
+		assert conn.explicit_transactions
 		global current_transaction
 		current_transaction = conn
 
