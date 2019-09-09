@@ -18,6 +18,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
+from nti.app.users.utils import get_entity_creation_sitename
 does_not = is_not
 
 from nti.testing.time import time_monotonically_increases
@@ -562,6 +563,13 @@ class TestCommunityViews(ApplicationLayerTest):
                                            'CreatedTime', not_none(),
                                            'Last Modified', not_none()))
 
+        # Validate creation site
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            for comm in (new_comm1_username, new_comm2_username):
+                comm = Community.get_community(comm)
+                assert_that(get_entity_creation_sitename(comm),
+                            is_('alpha.nextthought.com'))
+
         # Join new community
         res = self.testapp.get(all_href, extra_environ=locke_env)
         res = res.json_body
@@ -573,3 +581,99 @@ class TestCommunityViews(ApplicationLayerTest):
         comm_ext = comm_ext[0]
         new_comm_join_href = self.require_link_href_with_rel(comm_ext, 'join')
         self.testapp.post(new_comm_join_href, extra_environ=locke_env)
+
+        res = self.testapp.get(joined_href, extra_environ=locke_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(2))
+        comm_names = [x.get('Username') for x in comms]
+        assert_that(comm_names, contains_inanyorder(new_comm1_username,
+                                                    public_joinable_comm))
+
+        # Member cannot edit or delete community
+        for comm_ext in comms:
+            for rel in ('edit', 'delete'):
+                self.forbid_link_with_rel(comm_ext, rel)
+
+        # Admin can edit and delete
+        res = self.testapp.get('/dataserver2/users/%s' % public_joinable_comm,
+                               extra_environ=terra_admin_env)
+        res = res.json_body
+        self.require_link_href_with_rel(res, 'edit')
+        delete_href = self.require_link_href_with_rel(res, 'delete')
+        self.forbid_link_with_rel(res, 'restore')
+        self.testapp.delete(delete_href, extra_environ=terra_admin_env)
+        # Can delete again without change
+        self.testapp.delete(delete_href, extra_environ=terra_admin_env)
+
+        res = self.testapp.get('/dataserver2/users/%s' % public_joinable_comm,
+                               extra_environ=terra_admin_env)
+        res = res.json_body
+        self.forbid_link_with_rel(res, 'delete')
+        restore_href = self.require_link_href_with_rel(res, 'restore')
+
+        # Deleted no longer shows up in joined for member
+        res = self.testapp.get(joined_href, extra_environ=locke_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(1))
+        comm = comms[0]
+        assert_that(comm, has_entry('Username', new_comm1_username))
+
+        # ...or in available to join
+        res = self.testapp.get(all_href, extra_environ=locke_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(1))
+        comm = comms[0]
+        assert_that(comm, has_entry('Username', new_comm2_username))
+
+        # Admin no longer sees it
+        res = self.testapp.get(admin_admin_href, extra_environ=terra_admin_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(4))
+        comm_names = [x.get('Username') for x in comms]
+        assert_that(comm_names, contains_inanyorder(public_unjoinable_comm,
+                                                    new_comm1_username,
+                                                    new_comm2_username,
+                                                    private_unjoinable_comm))
+
+        # Validate a user's dynamic memberships
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            user = User.get_user('locke')
+            deactivated_community = Community.get_community(public_joinable_comm)
+            assert_that(deactivated_community in user.following, is_(False))
+            assert_that(user.is_dynamic_member_of(deactivated_community), is_(False))
+
+        # Restore
+        self.testapp.post(restore_href, extra_environ=terra_admin_env)
+
+        # Still no longer shows up in joined for member
+        res = self.testapp.get(joined_href, extra_environ=locke_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(1))
+        comm = comms[0]
+        assert_that(comm, has_entry('Username', new_comm1_username))
+
+        # ...but does show up in available to join again
+        res = self.testapp.get(all_href, extra_environ=locke_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(2))
+        comm_usernames = [x.get('Username') for x in comms]
+        assert_that(comm_usernames, contains_inanyorder(public_joinable_comm,
+                                                        new_comm2_username))
+
+        # Admin sees it
+        res = self.testapp.get(admin_admin_href, extra_environ=terra_admin_env)
+        res = res.json_body
+        comms = res.get('Items')
+        assert_that(comms, has_length(5))
+        comm_names = [x.get('Username') for x in comms]
+        assert_that(comm_names, contains_inanyorder(public_joinable_comm,
+                                                    public_unjoinable_comm,
+                                                    new_comm1_username,
+                                                    new_comm2_username,
+                                                    private_unjoinable_comm))

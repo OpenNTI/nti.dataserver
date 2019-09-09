@@ -31,6 +31,8 @@ from nti.appserver.workspaces import AbstractPseudoMembershipContainer
 
 from nti.appserver.workspaces.interfaces import IUserService
 
+from nti.coremetadata.interfaces import IDeactivatedCommunity
+
 from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import IUser
@@ -118,6 +120,7 @@ class JoinedCommunitiesCollection(AbstractPseudoMembershipContainer,
         we are a member of.
         """
         return ICommunity.providedBy(obj) \
+           and not IDeactivatedCommunity.providedBy(obj) \
            and not IDisallowMembershipOperations.providedBy(obj) \
            and (obj.public or self.remote_user in obj) \
            and self.search_include(obj)

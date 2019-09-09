@@ -39,8 +39,11 @@ from nti.appserver.interfaces import IUserLogoutEvent
 
 from nti.coremetadata.interfaces import UserLastSeenEvent
 from nti.coremetadata.interfaces import IUserLastSeenEvent
+from nti.coremetadata.interfaces import IDeactivatedCommunity
+from nti.coremetadata.interfaces import IDeactivatedCommunityEvent
 
 from nti.dataserver.authorization import is_admin
+from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUser
@@ -143,9 +146,26 @@ def _community_site_traverse(community, unused_event):
     XXX: NT admins do not count...
     XXX: Do this for all entities?
     """
-    if is_admin(get_remote_user()):
+    remote_user = get_remote_user()
+    if is_admin(remote_user):
         return
     creation_site_name = get_entity_creation_sitename(community)
     current_sites = get_component_hierarchy_names()
-    if not creation_site_name or creation_site_name not in current_sites:
+    if     (    IDeactivatedCommunity.providedBy(community)
+            and not is_site_admin(remote_user)) \
+        or not creation_site_name \
+        or creation_site_name not in current_sites:
         raise hexc.HTTPNotFound()
+
+
+@component.adapter(ICommunity, IDeactivatedCommunityEvent)
+def _on_community_deactivated(community, unused_event):
+    """
+    When a community is deactivated, remove all members from
+    its membership and following. It is much easier to do this
+    than to filter all items/views into these deactivated
+    communities.
+    """
+    for user in community:
+        user.record_no_longer_dynamic_member(community)
+        user.stop_following(community)

@@ -41,11 +41,14 @@ from nti.coremetadata.interfaces import IX_CONTACT_EMAIL
 from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
 from nti.coremetadata.interfaces import IX_EMAIL_VERIFIED
 from nti.coremetadata.interfaces import IX_INVALID_EMAIL
+from nti.coremetadata.interfaces import IX_IS_DEACTIVATED
 from nti.coremetadata.interfaces import IX_REALNAME_PARTS
 from nti.coremetadata.interfaces import IX_OPT_IN_EMAIL_COMMUNICATION
 from nti.coremetadata.interfaces import IX_CONTACT_EMAIL_RECOVERY_HASH
 from nti.coremetadata.interfaces import IX_PASSWORD_RECOVERY_EMAIL_HASH
 from nti.coremetadata.interfaces import ENTITY_CATALOG_NAME as CATALOG_NAME
+
+from nti.coremetadata.interfaces import IDeactivatedEntity
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
@@ -200,7 +203,7 @@ def LastSeenTimeIndex(family=BTrees.family64):
                                 interface=IUser,
                                 index=LastSeenTimeRawIndex(family=family),
                                 normalizer=TimestampToNormalized64BitIntNormalizer())
-    
+
 
 # Note that FilteredSetBase uses a BTrees Set by default,
 # NOT a TreeSet. So updating them when large is quite expensive.
@@ -285,6 +288,18 @@ class IsCommunityExtentFilteredSet(ExtentFilteredSet):
         super(IsCommunityExtentFilteredSet, self).__init__(fid, isCommunity, family=family)
 
 
+def is_deactivated(unused_extent, unused_docid, document):
+    return IDeactivatedEntity.providedBy(document)
+
+
+class IsDeactivatedExtentFilteredSet(ExtentFilteredSet):
+
+    def __init__(self, fid, family=BTrees.family64):
+        super(IsDeactivatedExtentFilteredSet, self).__init__(fid,
+                                                             is_deactivated,
+                                                             family=family)
+
+
 def get_entity_catalog(registry=component):
     return registry.queryUtility(ICatalog, name=CATALOG_NAME)
 
@@ -293,6 +308,7 @@ def add_catalog_filters(catalog, family=BTrees.family64):
     topic_index = catalog[IX_TOPICS]
     for filter_id, factory in ((IX_EMAIL_VERIFIED, EmailVerifiedFilteredSet),
                                (IX_IS_COMMUNITY, IsCommunityExtentFilteredSet),
+                               (IX_IS_DEACTIVATED, IsDeactivatedExtentFilteredSet),
                                (IX_OPT_IN_EMAIL_COMMUNICATION, OptInEmailCommunicationFilteredSet),
                                (IX_INVALID_EMAIL, EmailInvalidExtentFilteredSet)):
         the_filter = factory(filter_id, family=family)

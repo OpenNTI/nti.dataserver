@@ -17,6 +17,7 @@
 	<subscriber handler=".subscribers._new_user_is_not_blacklisted" />
 	<subscriber handler=".subscribers._user_modified_from_external_event" />
     <subscriber handler=".subscribers._on_community_created" />
+    <subscriber handler=".subscribers._on_community_deactivated" />
 
 	<!-- Decorators -->
 	<subscriber factory=".decorators._UserEmailVerificationLinkDecorator"
