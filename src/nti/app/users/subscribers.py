@@ -39,6 +39,7 @@ from nti.appserver.interfaces import IUserLogoutEvent
 
 from nti.coremetadata.interfaces import UserLastSeenEvent
 from nti.coremetadata.interfaces import IUserLastSeenEvent
+from nti.coremetadata.interfaces import IDeactivatedCommunity
 
 from nti.dataserver.authorization import is_admin
 
@@ -147,5 +148,7 @@ def _community_site_traverse(community, unused_event):
         return
     creation_site_name = get_entity_creation_sitename(community)
     current_sites = get_component_hierarchy_names()
-    if not creation_site_name or creation_site_name not in current_sites:
+    if     IDeactivatedCommunity.providedBy(community) \
+        or not creation_site_name \
+        or creation_site_name not in current_sites:
         raise hexc.HTTPNotFound()

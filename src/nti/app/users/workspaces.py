@@ -160,7 +160,6 @@ class AllCommunitiesCollection(AbstractPseudoMembershipContainer,
         Communities you can possibly join that the user is not a member of.
         """
         return not IDisallowMembershipOperations.providedBy(obj) \
-           and not IDeactivatedCommunity.providedBy(obj) \
            and obj.public and obj.joinable \
            and self.search_include(obj) \
            and self._user not in obj
@@ -189,8 +188,7 @@ class AdministeredCommunitiesCollection(AbstractPseudoMembershipContainer,
         self.__parent__ = communities_ws
 
     def selector(self, obj):
-        return      not IDeactivatedCommunity.providedBy(obj) \
-                and self.search_include(obj)
+        return self.search_include(obj)
 
     @property
     def memberships(self):

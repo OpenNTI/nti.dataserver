@@ -22,6 +22,8 @@ from zope.component.hooks import getSite
 
 from zope.container.interfaces import INameChooser
 
+from zope.event import notify
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
@@ -45,6 +47,7 @@ from nti.common.string import is_true
 from nti.coremetadata.interfaces import ICommunity
 from nti.coremetadata.interfaces import ISiteCommunity
 from nti.coremetadata.interfaces import IDeactivatedCommunity
+from nti.coremetadata.interfaces import DeactivatedCommunityEvent
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
@@ -77,6 +80,8 @@ from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
+
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -202,6 +207,8 @@ class DeleteCommunityView(AbstractAuthenticatedView):
                     self.remoteUser)
         if not IDeactivatedCommunity.providedBy(self.context):
             interface.alsoProvides(self.context, IDeactivatedCommunity)
+            notify(ObjectModifiedFromExternalEvent(self.context))
+            notify(DeactivatedCommunityEvent(self.context))
         return hexc.HTTPNoContent()
 
 
@@ -221,6 +228,7 @@ class RestoreCommunityView(AbstractAuthenticatedView):
                     self.remoteUser)
         if IDeactivatedCommunity.providedBy(self.context):
             interface.noLongerProvides(self.context, IDeactivatedCommunity)
+            notify(ObjectModifiedFromExternalEvent(self.context))
         return self.context
 
 
