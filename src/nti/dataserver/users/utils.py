@@ -27,8 +27,10 @@ from nti.dataserver.users.index import IX_TOPICS
 from nti.dataserver.users.index import IX_MIMETYPE
 from nti.dataserver.users.index import IX_REALNAME
 from nti.dataserver.users.index import IX_USERNAME
-from nti.dataserver.users.index import IX_EMAIL_VERIFIED
+from nti.dataserver.users.index import IX_IS_COMMUNITY
 from nti.dataserver.users.index import IX_INVALID_EMAIL
+from nti.dataserver.users.index import IX_IS_DEACTIVATED
+from nti.dataserver.users.index import IX_EMAIL_VERIFIED
 
 from nti.dataserver.users.index import get_entity_catalog
 
@@ -172,6 +174,7 @@ def valid_emails_for_emails(emails):
     :return: Set of valid emails
     """
     return _sort_emails_for_emails(emails)[0]
+
 
 def invalid_emails_for_emails(emails):
     """
@@ -371,18 +374,23 @@ def get_entities_by_site(site=None):
     return get_entites_by_sites((site or getSite().__name__),)
 
 
-def intids_of_communities_by_sites(sites=()):
+def intids_of_communities_by_sites(sites=(), filter_deactivated=True):
     if isinstance(sites, six.string_types):
         sites = sites.split(',')
     catalog = get_entity_catalog()
-    query = {IX_SITE: {'any_of': sites or ()},
-             IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.community',
-                                      'application/vnd.nextthought.sitecommunity')}}
+    comms_idx = catalog[IX_TOPICS][IX_IS_COMMUNITY]
+    result = catalog.family.IF.Set(comms_idx.getIds() or ())
+    if filter_deactivated:
+        deactivated_idx = catalog[IX_TOPICS][IX_IS_DEACTIVATED]
+        deactivated_ids = catalog.family.IF.Set(deactivated_idx.getIds() or ())
+        result = catalog.family.IF.difference(result, deactivated_ids)
+    query = {IX_SITE: {'any_of': sites or ()}}
     doc_ids = catalog.apply(query)
-    return doc_ids or ()
+    result = catalog.family.IF.intersection(doc_ids, result)
+    return result
 
 
-def get_communities_by_site(site=None):
+def get_communities_by_site(site=None, filter_deactivated=True):
     """
     Get the communities using the given site.
     """
@@ -390,7 +398,9 @@ def get_communities_by_site(site=None):
     intids = component.getUtility(IIntIds)
     site = site if site is not None else getSite()
     site = getattr(site, '__name__', site)
-    for uid in intids_of_communities_by_sites(site) or ():
+    comm_ids = intids_of_communities_by_sites(site,
+                                              filter_deactivated=filter_deactivated)
+    for uid in comm_ids or ():
         obj = intids.queryObject(uid)
         if ICommunity.providedBy(obj):
             result.append(obj)
