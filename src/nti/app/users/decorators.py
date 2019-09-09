@@ -32,6 +32,8 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 
+from nti.coremetadata.interfaces import IDeactivatedCommunity
+
 from nti.dataserver.authorization import ACT_DELETE
 from nti.dataserver.authorization import ACT_UPDATE
 
@@ -60,7 +62,6 @@ from nti.identifiers.utils import get_external_identifiers
 from nti.links.links import Link
 
 from nti.traversal.traversal import find_interface
-from nti.coremetadata.interfaces import IDeletedObjectPlaceholder
 
 LINKS = StandardExternalFields.LINKS
 
@@ -172,18 +173,18 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
                         title=_("All Activity"))
             _links.append(link)
 
-        if      not IDeletedObjectPlaceholder.providedBy(context) \
+        if      not IDeactivatedCommunity.providedBy(context) \
             and has_permission(ACT_DELETE, context):
             link = Link(context,
                         rel="delete",
                         method='DELETE')
             _links.append(link)
 
-        if      IDeletedObjectPlaceholder.providedBy(context) \
+        if      IDeactivatedCommunity.providedBy(context) \
             and has_permission(ACT_UPDATE, context):
             link = Link(context,
                         rel="restore",
-                        elements=('@@restore',),
+                        elements=('@@Restore',),
                         method='POST')
             _links.append(link)
 

@@ -48,6 +48,7 @@ from nti.coremetadata.interfaces import ICommunity
 from nti.coremetadata.interfaces import ISiteCommunity
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import DeactivatedCommunityEvent
+from nti.coremetadata.interfaces import ReactivatedCommunityEvent
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
@@ -222,13 +223,14 @@ class RestoreCommunityView(AbstractAuthenticatedView):
 
     def __call__(self):
         profile = ICommunityProfile(self.context, None)
-        logger.info('Restoring community (%s) (%s)',
+        logger.info('Restoring community (%s) (%s) (%s)',
                     self.context.username,
                     getattr(profile, 'alias', ''),
                     self.remoteUser)
         if IDeactivatedCommunity.providedBy(self.context):
             interface.noLongerProvides(self.context, IDeactivatedCommunity)
             notify(ObjectModifiedFromExternalEvent(self.context))
+            notify(ReactivatedCommunityEvent(self.context))
         return self.context
 
 
