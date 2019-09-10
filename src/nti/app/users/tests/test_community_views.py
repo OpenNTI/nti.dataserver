@@ -519,7 +519,7 @@ class TestCommunityViews(ApplicationLayerTest):
                                                     private_unjoinable_comm))
 
         # Validate cross site community access
-        for href in (non_site_community_href, mc_site_community_href):
+        for href in (mc_site_community_href,):
             for env in (locke_env, terra_admin_env):
                 for post_view_name in ('join', 'leave', 'hide', 'unhide'):
                     self.testapp.post('%s/%s' % (href, post_view_name),
@@ -545,7 +545,7 @@ class TestCommunityViews(ApplicationLayerTest):
                                            'Username', new_comm1_username,
                                            'public', True,
                                            'joinable', True,
-                                           'RemoteIsMember', False,
+                                           'RemoteIsMember', True,
                                            'Creator', 'terra',
                                            'CreatedTime', not_none(),
                                            'Last Modified', not_none()))
@@ -558,7 +558,7 @@ class TestCommunityViews(ApplicationLayerTest):
                                            'Username', is_not('new_community_one@alpha.nextthought.com'),
                                            'public', True,
                                            'joinable', True,
-                                           'RemoteIsMember', False,
+                                           'RemoteIsMember', True,
                                            'Creator', 'terra',
                                            'CreatedTime', not_none(),
                                            'Last Modified', not_none()))
