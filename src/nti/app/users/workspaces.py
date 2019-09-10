@@ -33,7 +33,7 @@ from nti.appserver.workspaces.interfaces import IUserService
 
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 
-from nti.dataserver.authorization import is_site_admin
+from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -147,7 +147,7 @@ class AllCommunitiesCollection(AbstractPseudoMembershipContainer,
     @property
     def accepts(self):
         if      self.remote_user == self._user \
-            and is_site_admin(self.remote_user):
+            and is_admin_or_site_admin(self.remote_user):
             return (Community.mime_type,)
         return ()
 
