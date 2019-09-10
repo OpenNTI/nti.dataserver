@@ -342,7 +342,7 @@ class TestUserService(ApplicationLayerTest):
                     has_entry('Items',
                              has_item(all_of(has_entry('Title', 'Pages'),
                                              has_entry('href', '/dataserver2/users/sjohnson@nextthought.com/Pages')))))
-        for membership_name in ('FriendsLists', 'Groups', 'Communities', 'DynamicMemberships'):
+        for membership_name in ('FriendsLists', 'Groups', 'DynamicMemberships'):
             assert_that(user_ws,
                         has_entry('Items',
                                   has_item(all_of(has_entry('Title', membership_name),

@@ -143,7 +143,8 @@ def _community_site_traverse(community, unused_event):
     """
     Only allow traversal to this community if it is part of this site.
 
-    XXX: NT admins do not count...
+    We should allow traversal for communities without a site.
+
     XXX: Do this for all entities?
     """
     remote_user = get_remote_user()
@@ -153,8 +154,8 @@ def _community_site_traverse(community, unused_event):
     current_sites = get_component_hierarchy_names()
     if     (    IDeactivatedCommunity.providedBy(community)
             and not is_site_admin(remote_user)) \
-        or not creation_site_name \
-        or creation_site_name not in current_sites:
+        or (    creation_site_name \
+            and creation_site_name not in current_sites):
         raise hexc.HTTPNotFound()
 
 
