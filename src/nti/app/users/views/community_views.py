@@ -42,6 +42,8 @@ from nti.app.users.views import parse_mime_types
 from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 from nti.app.users.views.view_mixins import EntityActivityViewMixin
 
+from nti.appserver.pyramid_authorization import has_permission
+
 from nti.common.string import is_true
 
 from nti.coremetadata.interfaces import ICommunity
@@ -190,6 +192,9 @@ class CreateCommunityView(AbstractAuthenticatedView,
         community.creator = self.remoteUser.username
         logger.info('Created community (%s) (%s) (%s)',
                     alias, username, self.remoteUser)
+        # By default, creators get placed in community
+        self.remoteUser.record_dynamic_membership(community)
+        self.remoteUser.follow(community)
         return community
 
 
@@ -302,7 +307,8 @@ class JoinCommunityView(AbstractAuthenticatedView):
 
     def __call__(self):
         community = self.request.context
-        if not community.joinable:
+        if      not community.joinable \
+            and not has_permission(nauth.ACT_UPDATE, self.context):
             raise hexc.HTTPForbidden()
 
         user = self.remoteUser
@@ -322,7 +328,8 @@ class LeaveCommunityView(AbstractAuthenticatedView):
 
     def __call__(self):
         community = self.request.context
-        if not community.joinable:
+        if      not community.joinable \
+            and not has_permission(nauth.ACT_UPDATE, self.context):
             raise hexc.HTTPForbidden()
 
         user = self.remoteUser

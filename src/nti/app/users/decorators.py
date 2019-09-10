@@ -144,10 +144,11 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         _links = result.setdefault(LINKS, [])
         in_community = self.remoteUser in context
         is_admin_user = is_admin_or_site_admin(self.remoteUser)
+        user_can_update = has_permission(ACT_UPDATE, context)
         result['joinable'] = context.joinable
         result['public'] = context.public
         result['RemoteIsMember'] = in_community
-        if context.joinable:
+        if context.joinable or user_can_update:
             if not in_community:
                 link = Link(context, elements=('@@join',), rel="join")
             else:
@@ -181,14 +182,14 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
             _links.append(link)
 
         if      IDeactivatedCommunity.providedBy(context) \
-            and has_permission(ACT_UPDATE, context):
+            and user_can_update:
             link = Link(context,
                         rel="restore",
                         elements=('@@Restore',),
                         method='POST')
             _links.append(link)
 
-        if has_permission(ACT_UPDATE, context):
+        if user_can_update:
             link = Link(context,
                         rel="edit",
                         method='PUT')
