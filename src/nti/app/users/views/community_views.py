@@ -192,9 +192,6 @@ class CreateCommunityView(AbstractAuthenticatedView,
         community.creator = self.remoteUser.username
         logger.info('Created community (%s) (%s) (%s)',
                     alias, username, self.remoteUser)
-        # By default, creators get placed in community
-        self.remoteUser.record_dynamic_membership(community)
-        self.remoteUser.follow(community)
         return community
 
 
