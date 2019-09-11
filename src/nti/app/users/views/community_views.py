@@ -56,6 +56,7 @@ from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
@@ -440,6 +441,7 @@ class CommunityActivityView(EntityActivityViewMixin):
         super(CommunityActivityView, self).check_permission(context, user)
         if      not context.public \
             and self.remoteUser not in context \
+            and not is_admin(self.remoteUser) \
             and not has_permission(nauth.ACT_UPDATE, context):
             raise hexc.HTTPForbidden()
 
