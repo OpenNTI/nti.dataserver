@@ -189,7 +189,11 @@ class AdministeredCommunitiesCollection(AbstractPseudoMembershipContainer,
         self.__parent__ = communities_ws
 
     def selector(self, obj):
-        return self.search_include(obj)
+        # IDisallowMembershipOperations are communities
+        # (e.g. ICourseInstanceSharingScopes) that we do not want to expose
+        # in community workspaces.
+        return  not IDisallowMembershipOperations.providedBy(obj) \
+            and self.search_include(obj)
 
     @property
     def memberships(self):
