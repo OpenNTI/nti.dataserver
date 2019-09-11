@@ -33,6 +33,7 @@ from nti.appserver.workspaces.interfaces import IUserService
 
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 
+from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
@@ -192,8 +193,9 @@ class AdministeredCommunitiesCollection(AbstractPseudoMembershipContainer,
 
     @property
     def memberships(self):
+        _is_admin = is_admin(self.remote_user)
         communities = get_communities_by_site()
-        return [x for x in communities or () if x.is_admin(self._user)]
+        return [x for x in communities or () if _is_admin or x.is_admin(self._user)]
 
 
 @component.adapter(IUser)
