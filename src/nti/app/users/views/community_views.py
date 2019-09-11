@@ -435,13 +435,11 @@ class CommunityActivityView(EntityActivityViewMixin):
         return False, security_check
 
     def check_permission(self, context, user):
-        # Anyone can view activity if public (?)
-        # ...or a member
+        # Parent requires creator or member; we override that.
+        # Members can only view if public (?)
         # ...or an admin
-        super(CommunityActivityView, self).check_permission(context, user)
-        if      not context.public \
-            and self.remoteUser not in context \
-            and not is_admin(self.remoteUser) \
+        if      (    not context.public
+                 and user not in context) \
             and not has_permission(nauth.ACT_UPDATE, context):
             raise hexc.HTTPForbidden()
 
