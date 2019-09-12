@@ -51,8 +51,6 @@ from nti.site.transient import TrivialSite
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
-from nti.dataserver.tests import mock_dataserver
-
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 
@@ -118,131 +116,129 @@ class TestEvents(ApplicationLayerTest):
 
 		########
 		# Setup
-		with mock_dataserver.mock_db_trans(self.ds):
-			with site(TrivialSite(IsolatedComponents('nti.app.saml.tests',
-													 bases=(component.getSiteManager(),)))):
-				sm = component.getSiteManager()
-				assert isinstance(sm, Persistent)
+		with site(TrivialSite(IsolatedComponents('nti.app.saml.tests',
+												 bases=(component.getSiteManager(),)))):
+			sm = component.getSiteManager()
+			assert isinstance(sm, Persistent)
 
-				saml_response = fudge.Fake('saml_response')
-				saml_response.provides('session_info').returns({"issuer":"testIssuer"})
-				saml_response.provides('id').returns("fakesamlid")
-				saml_response.provides('session_id').returns("fakesamlsessionid")
-				
-				saml_client = fudge.Fake('saml_client')
-				saml_client.provides('process_saml_acs_request').returns((saml_response,None,None,None))
-				sm.registerUtility(saml_client, ISAMLClient)
+			saml_response = fudge.Fake('saml_response')
+			saml_response.provides('session_info').returns({"issuer":"testIssuer"})
+			saml_response.provides('id').returns("fakesamlid")
+			saml_response.provides('session_id').returns("fakesamlsessionid")
 
-				nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
-				user_info = fudge.Fake().has_attr(username=u'testUser',
-												  nameid=nameid,
-												  email=u'test@user.com',
-												  firstname=u'test',
-												  lastname=u'user',
-												  realname=None)
-				user_info_factory = fudge.Fake().is_callable().returns(user_info)
-				interface.alsoProvides(user_info, ISAMLUserAssertionInfo)
-				sm.registerAdapter(user_info_factory, required=(dict,), 
-								   provided=ISAMLUserAssertionInfo, 
-								   name="testIssuer")
+			saml_client = fudge.Fake('saml_client')
+			saml_client.provides('process_saml_acs_request').returns((saml_response,None,None,None))
+			sm.registerUtility(saml_client, ISAMLClient)
 
-				get_entity.is_callable().returns(None)
+			nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
+			user_info = fudge.Fake().has_attr(username=u'testUser',
+											  nameid=nameid,
+											  email=u'test@user.com',
+											  firstname=u'test',
+											  lastname=u'user',
+											  realname=None)
+			user_info_factory = fudge.Fake().is_callable().returns(user_info)
+			interface.alsoProvides(user_info, ISAMLUserAssertionInfo)
+			sm.registerAdapter(user_info_factory, required=(dict,),
+							   provided=ISAMLUserAssertionInfo,
+							   name="testIssuer")
 
-				user = User.create_user(username=u'testUser')
-				ext_acct_handler.is_callable().returns(user)
+			get_entity.is_callable().returns(None)
 
-				fake_handler = fudge.Fake('created_event_handler').is_callable().expects_call()
+			user = User.create_user(username=u'testUser')
+			ext_acct_handler.is_callable().returns(user)
 
-				self.captured_event = None
-				@component.adapter(ISAMLUserAuthenticatedEvent)
-				def user_creation_handler(event):
-					self.captured_event = event
-					return fake_handler(event)
+			fake_handler = fudge.Fake('created_event_handler').is_callable().expects_call()
 
-				sm.registerHandler(user_creation_handler)
+			self.captured_event = None
+			@component.adapter(ISAMLUserAuthenticatedEvent)
+			def user_creation_handler(event):
+				self.captured_event = event
+				return fake_handler(event)
 
-				sm.registerAdapter(TestSAMLUserAuthenticatedEvent,
-								   [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
+			sm.registerHandler(user_creation_handler)
 
-				request = Request.blank('/')
-				request.registry = sm
+			sm.registerAdapter(TestSAMLUserAuthenticatedEvent,
+							   [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
 
-				#######
-				# Test
-				#
-				acs_view(request)
+			request = Request.blank('/')
+			request.registry = sm
 
-				#######
-				# Verify
+			#######
+			# Test
+			#
+			acs_view(request)
 
-				assert_that(self.captured_event, not_none())
-				assert_that(self.captured_event, has_properties({"user":equal_to(user),
-																 "request":equal_to(request),
-																 "user_info":equal_to(user_info)}))
+			#######
+			# Verify
+
+			assert_that(self.captured_event, not_none())
+			assert_that(self.captured_event, has_properties({"user":equal_to(user),
+															 "request":equal_to(request),
+															 "user_info":equal_to(user_info)}))
 
 	@WithMockDSTrans
 	@fudge.patch('nti.dataserver.users.users.User.get_entity',
 				 'nti.app.saml.logon._validate_idp_nameid')
 	def test_user_creation_event_existing_user(self, get_entity, fake_validate_nameid):
-		with mock_dataserver.mock_db_trans(self.ds):
-			fake_validate_nameid.is_callable().returns(True)
-			with site(TrivialSite(IsolatedComponents('nti.app.saml.tests',
-													 bases=(component.getSiteManager(),)))):
-				########
-				# Setup
+		fake_validate_nameid.is_callable().returns(True)
+		with site(TrivialSite(IsolatedComponents('nti.app.saml.tests',
+												 bases=(component.getSiteManager(),)))):
+			########
+			# Setup
 
-				sm = component.getSiteManager()
+			sm = component.getSiteManager()
 
-				saml_response = fudge.Fake('saml_response')
-				saml_response.provides('session_info').returns({"issuer":"testIssuer"})
-				saml_response.provides('id').returns("fakesamlid")
-				saml_response.provides('session_id').returns("fakesamlsessionid")
+			saml_response = fudge.Fake('saml_response')
+			saml_response.provides('session_info').returns({"issuer":"testIssuer"})
+			saml_response.provides('id').returns("fakesamlid")
+			saml_response.provides('session_id').returns("fakesamlsessionid")
 
-				saml_client = fudge.Fake('saml_client')
-				saml_client.provides('process_saml_acs_request').returns(
-					(saml_response,None,None,None)
-				)
-				sm.registerUtility(saml_client, ISAMLClient)
+			saml_client = fudge.Fake('saml_client')
+			saml_client.provides('process_saml_acs_request').returns(
+				(saml_response,None,None,None)
+			)
+			sm.registerUtility(saml_client, ISAMLClient)
 
-				nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
-				user_info = fudge.Fake().has_attr(username=u'testUser',
-												  nameid=nameid,
-												  email=u'test@user.com',
-												  firstname=u'test',
-												  lastname=u'user')
-				user_info_factory = fudge.Fake().is_callable().returns(user_info)
-				interface.alsoProvides(user_info, ISAMLUserAssertionInfo)
-				sm.registerAdapter(user_info_factory, required=(dict,),
-								   provided=ISAMLUserAssertionInfo, name="testIssuer")
+			nameid = fudge.Fake('nameid').has_attr(name_format=NAMEID_FORMAT_PERSISTENT)
+			user_info = fudge.Fake().has_attr(username=u'testUser',
+											  nameid=nameid,
+											  email=u'test@user.com',
+											  firstname=u'test',
+											  lastname=u'user')
+			user_info_factory = fudge.Fake().is_callable().returns(user_info)
+			interface.alsoProvides(user_info, ISAMLUserAssertionInfo)
+			sm.registerAdapter(user_info_factory, required=(dict,),
+							   provided=ISAMLUserAssertionInfo, name="testIssuer")
 
-				user = User.create_user(username='testUser')
-				get_entity.is_callable().returns(user)
+			user = User.create_user(username='testUser')
+			get_entity.is_callable().returns(user)
 
-				fake_handler = fudge.Fake('created_event_handler').is_callable().expects_call()
+			fake_handler = fudge.Fake('created_event_handler').is_callable().expects_call()
 
-				self.captured_event = None
-				@component.adapter(ISAMLUserAuthenticatedEvent)
-				def user_creation_handler(event):
-					self.captured_event = event
-					return fake_handler(event)
+			self.captured_event = None
+			@component.adapter(ISAMLUserAuthenticatedEvent)
+			def user_creation_handler(event):
+				self.captured_event = event
+				return fake_handler(event)
 
-				sm.registerHandler(user_creation_handler)
+			sm.registerHandler(user_creation_handler)
 
-				sm.registerAdapter(TestSAMLUserAuthenticatedEvent,
-								  [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
+			sm.registerAdapter(TestSAMLUserAuthenticatedEvent,
+							  [basestring, IUser, ISAMLUserAssertionInfo, IRequest])
 
-				request = Request.blank('/')
-				request.registry = sm
+			request = Request.blank('/')
+			request.registry = sm
 
-				#######
-				# Test
-				#
-				acs_view(request)
+			#######
+			# Test
+			#
+			acs_view(request)
 
-				#######
-				# Verify
+			#######
+			# Verify
 
-				assert_that(self.captured_event, not_none())
-				assert_that(self.captured_event, has_properties({"user":equal_to(user),
-																 "request":equal_to(request),
-																 "user_info":equal_to(user_info)}))
+			assert_that(self.captured_event, not_none())
+			assert_that(self.captured_event, has_properties({"user":equal_to(user),
+															 "request":equal_to(request),
+															 "user_info":equal_to(user_info)}))

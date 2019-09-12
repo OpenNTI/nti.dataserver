@@ -228,30 +228,28 @@ class TestEvents(ApplicationLayerTest):
 
     @WithMockDSTrans
     def test_failure_to_adapt(self):
+        ########
+        # Setup
+        user = User.create_user(username=u'testUser')
+        user_assertion_info = assertion_info(u"pid2",
+                                             u"mickey@mouse.com",
+                                             u"mickey@mouse.com",
+                                             u"Mickey",
+                                             u"Mouse")
+        request = Request.blank('/')
+        event = component.getMultiAdapter(
+            ('disneyProvider', user, user_assertion_info, request),
+            ISAMLUserAuthenticatedEvent
+        )
 
-        with mock_dataserver.mock_db_trans(self.ds):
-            ########
-            # Setup
-            user = User.create_user(username=u'testUser')
-            user_assertion_info = assertion_info(u"pid2",
-                                                 u"mickey@mouse.com",
-                                                 u"mickey@mouse.com",
-                                                 u"Mickey",
-                                                 u"Mouse")
-            request = Request.blank('/')
-            event = component.getMultiAdapter(
-                ('disneyProvider', user, user_assertion_info, request),
-                ISAMLUserAuthenticatedEvent
-            )
+        #######
+        # Test
+        _user_created(event)
 
-            #######
-            # Test
-            _user_created(event)
-
-            #######
-            # Verify
-            assert_that(ISAMLIDPUserInfoBindings(user),
-                        is_not(has_key('disneyProvider')))
+        #######
+        # Verify
+        assert_that(ISAMLIDPUserInfoBindings(user),
+                    is_not(has_key('disneyProvider')))
 
     @WithMockDSTrans
     def test_handler_registration(self):

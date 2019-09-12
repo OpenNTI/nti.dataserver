@@ -536,46 +536,46 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that(result.headers, has_entry("Policy", "Me"))
 		assert_that(result, has_property('location', '/the/url/to/go/to'))
 
-	@WithMockDSTrans
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=False)
 	def test_password_logon_success(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = users.User.create_user(self.ds, username='jason.madden@nextthought.com', password='temp001')
 
-		class Policy(object):
-			interface.implements(pyramid.interfaces.IAuthenticationPolicy)
-			def remember(self, request, who):
-				return [("Policy", who)]
-			def authenticated_userid(self, request):
-				return 'jason.madden@nextthought.com'
-			def effective_principals(self, request):
-				return [self.authenticated_userid(request)]
+			class Policy(object):
+				interface.implements(pyramid.interfaces.IAuthenticationPolicy)
+				def remember(self, request, who):
+					return [("Policy", who)]
+				def authenticated_userid(self, request):
+					return 'jason.madden@nextthought.com'
+				def effective_principals(self, request):
+					return [self.authenticated_userid(request)]
 
-		get_current_request().registry.registerUtility(Policy())
-		with mock_dataserver.mock_db_trans(self.ds):
+			get_current_request().registry.registerUtility(Policy())
 			result = password_logon(get_current_request())
-		assert_that(result, is_(hexc.HTTPNoContent))
-		assert_that(result.headers, has_entry("Policy", 'jason.madden@nextthought.com'))
+			assert_that(result, is_(hexc.HTTPNoContent))
+			assert_that(result.headers, has_entry("Policy", 'jason.madden@nextthought.com'))
 
-		with mock_dataserver.mock_db_trans(self.ds):
 			# The event fired
 			assert_that(user.lastLoginTime,
 						is_(greater_than(0)))
 			# Verify we have our first_time_logon flag (that is then deleted)
 			assert_that(user_link_provider.has_link(user, 'first_time_logon'),
 						is_(True))
-			testapp = TestApp(self.app)
-			testapp.delete('/dataserver2/users/jason.madden@nextthought.com/@@NamedLinks/first_time_logon',
-							extra_environ=self._make_extra_environ('jason.madden@nextthought.com'),
-							status=204)
+		testapp = TestApp(self.app)
+		testapp.delete('/dataserver2/users/jason.madden@nextthought.com/@@NamedLinks/first_time_logon',
+						extra_environ=self._make_extra_environ('jason.madden@nextthought.com'),
+						status=204)
+		with mock_dataserver.mock_db_trans(self.ds):
 			assert_that(user_link_provider.has_link(user, 'first_time_logon'),
 						is_(False))
 
 		# Or a redirect
-		get_current_request().params['success'] = '/the/url/to/go/to'
-		result = password_logon(get_current_request())
-		assert_that(result, is_(hexc.HTTPSeeOther))
-		assert_that(result.headers, has_entry("Policy", 'jason.madden@nextthought.com'))
-		assert_that(result, has_property('location', '/the/url/to/go/to'))
+		with mock_dataserver.mock_db_trans(self.ds):
+			get_current_request().params['success'] = '/the/url/to/go/to'
+			result = password_logon(get_current_request())
+			assert_that(result, is_(hexc.HTTPSeeOther))
+			assert_that(result.headers, has_entry("Policy", 'jason.madden@nextthought.com'))
+			assert_that(result, has_property('location', '/the/url/to/go/to'))
 
 	@WithMockDSTrans
 	def test_policy_links(self):
