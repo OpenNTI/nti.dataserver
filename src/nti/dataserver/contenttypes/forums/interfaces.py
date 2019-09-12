@@ -32,6 +32,8 @@ from zope.schema import Int
 
 from Acquisition.interfaces import IAcquirer
 
+from nti.contentfragments.schema import PlainTextLine
+
 from nti.contenttypes.reports.interfaces import IReportContext
 
 from nti.coremetadata.interfaces import IUserDefinedOrderedContent
@@ -212,7 +214,7 @@ class ITopic(IContentContainer,
                               description=u"May be a IDeletedObjectPlaceholder",
                               required=False)
 
-    title =  ValidTextLine(max_length=140,
+    title =  PlainTextLine(max_length=140,
                            required=False,
                            title=u"The human-readable title of this object",
                            __name__=u'title')
@@ -254,7 +256,7 @@ class IForum(IContentContainer,
                                description=u"May be a IDeletedObjectPlaceholder",
                                required=False)
 
-    title =  ValidTextLine(max_length=140,
+    title =  PlainTextLine(max_length=140,
                            required=False,
                            title=u"The human-readable title of this object",
                            __name__=u'title')
