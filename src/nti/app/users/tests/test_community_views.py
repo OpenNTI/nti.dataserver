@@ -601,7 +601,14 @@ class TestCommunityViews(ApplicationLayerTest):
         res = self.testapp.get('/dataserver2/users/%s' % public_joinable_comm,
                                extra_environ=terra_admin_env)
         res = res.json_body
-        self.require_link_href_with_rel(res, 'edit')
+        edit_href = self.require_link_href_with_rel(res, 'edit')
+
+        # Can edit
+        res = self.testapp.put_json(edit_href, {"alias" : u"community renamed汉字"},
+                                    extra_environ=terra_admin_env)
+        res = res.json_body
+        assert_that(res.get('alias'), is_(u"community renamed汉字"))
+
         delete_href = self.require_link_href_with_rel(res, 'delete')
         self.forbid_link_with_rel(res, 'restore')
         self.testapp.delete(delete_href, extra_environ=terra_admin_env)
