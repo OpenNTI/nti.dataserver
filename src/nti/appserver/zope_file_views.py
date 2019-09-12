@@ -49,6 +49,10 @@ from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IDataserverFolder
 
+from nti.dataserver.users.interfaces import IAvatarURL
+from nti.dataserver.users.interfaces import IBackgroundURL
+from nti.dataserver.users.interfaces import IBlurredAvatarURL
+
 from nti.externalization.externalization import to_external_object
 
 from nti.property import dataurl
@@ -139,10 +143,6 @@ def file_view(request):
     return result
 
 
-from nti.dataserver.users.interfaces import IAvatarURL
-from nti.dataserver.users.interfaces import IBackgroundURL
-
-
 def _image_file_view(request, image_interface, attr_name):
     """
     Like :func:`file_view`, but does not require the
@@ -173,6 +173,15 @@ def _image_file_view(request, image_interface, attr_name):
              name="avatar_view")
 def avatar_file_view(request):
     result = _image_file_view(request, IAvatarURL, 'avatarURL')
+    return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=IFile,
+             request_method='GET',
+             name="blurred_avatar_view")
+def blurred_avatar_file_view(request):
+    result = _image_file_view(request, IBlurredAvatarURL, 'blurredAvatarURL')
     return result
 
 

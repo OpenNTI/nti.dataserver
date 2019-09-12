@@ -385,6 +385,15 @@ class IAvatarURL(Interface):
 IAvatarURL['avatarURL']._type = (str, six.text_type)
 
 
+class IBlurredAvatarURL(Interface):
+    """
+    Something that features a display URL.
+    """
+
+    blurredAvatarURL = URI(title=u"URL of your blurred avatar picture",
+                           required=False)
+
+
 class IBackgroundURL(Interface):
 
     backgroundURL = URI(title=u"URL of your background picture",
@@ -396,7 +405,7 @@ class IBackgroundURL(Interface):
 IBackgroundURL['backgroundURL']._type = (str, six.text_type)
 
 
-class IProfileAvatarURL(IAvatarURL, IBackgroundURL):
+class IProfileAvatarURL(IAvatarURL, IBackgroundURL, IBlurredAvatarURL):
     pass
 
 

@@ -8,6 +8,7 @@ from __future__ import absolute_import
 # pylint: disable=protected-access,too-many-public-methods,too-many-function-args
 
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_in
 from hamcrest import is_not
 from hamcrest import not_none
@@ -18,7 +19,6 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
-from nti.app.users.utils import get_entity_creation_sitename
 does_not = is_not
 
 from nti.testing.time import time_monotonically_increases
@@ -32,6 +32,8 @@ from zope.securitypolicy.interfaces import IPrincipalRoleManager
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.app.users.utils import get_entity_creation_sitename
 
 from nti.coremetadata.interfaces import ISiteCommunity
 
@@ -545,7 +547,7 @@ class TestCommunityViews(ApplicationLayerTest):
                                            'Username', new_comm1_username,
                                            'public', True,
                                            'joinable', True,
-                                           'RemoteIsMember', True,
+                                           'RemoteIsMember', False,
                                            'Creator', 'terra',
                                            'CreatedTime', not_none(),
                                            'Last Modified', not_none()))
@@ -558,7 +560,7 @@ class TestCommunityViews(ApplicationLayerTest):
                                            'Username', is_not('new_community_one@alpha.nextthought.com'),
                                            'public', True,
                                            'joinable', True,
-                                           'RemoteIsMember', True,
+                                           'RemoteIsMember', False,
                                            'Creator', 'terra',
                                            'CreatedTime', not_none(),
                                            'Last Modified', not_none()))
@@ -677,3 +679,40 @@ class TestCommunityViews(ApplicationLayerTest):
                                                     new_comm1_username,
                                                     new_comm2_username,
                                                     private_unjoinable_comm))
+
+
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_community_images(self):
+        """
+        Validate community image management.
+        """
+        gif_image_data = 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
+        png_image_data = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAsTAAALEwEAmpwYAAACbmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS4xLjIiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iPgogICAgICAgICA8eG1wOkNyZWF0b3JUb29sPkFjb3JuIHZlcnNpb24gMi42LjU8L3htcDpDcmVhdG9yVG9vbD4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgICAgIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiCiAgICAgICAgICAgIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIj4KICAgICAgICAgPHRpZmY6Q29tcHJlc3Npb24+NTwvdGlmZjpDb21wcmVzc2lvbj4KICAgICAgICAgPHRpZmY6WVJlc29sdXRpb24+NzI8L3RpZmY6WVJlc29sdXRpb24+CiAgICAgICAgIDx0aWZmOlhSZXNvbHV0aW9uPjcyPC90aWZmOlhSZXNvbHV0aW9uPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KO/MupgAAAA1JREFUCB1j+P//PwMACPwC/uYM/6sAAAAASUVORK5CYII='
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            comm = Community.create_community(username='community_image_test')
+            comm.public = True
+            comm.joinable = True
+
+        comm_href = '/dataserver2/users/community_image_test'
+        res = self.testapp.get(comm_href)
+        res = res.json_body
+        assert_that(res, has_entries('avatarURL', not_none(),
+                                     'backgroundURL', none(),
+                                     'blurredAvatarURL', none()))
+
+        res = self.testapp.put_json(comm_href, {'avatarURL': png_image_data})
+        res = res.json_body
+        avatar_url = res.get('avatarURL')
+        assert_that(avatar_url, not_none())
+        self.testapp.get(avatar_url)
+        blurred_url = res.get('blurredAvatarURL')
+        assert_that(blurred_url, not_none())
+        self.testapp.get(blurred_url)
+
+        # Cannot blur GIF so blurred URL is empty again
+        res = self.testapp.put_json(comm_href, {'avatarURL': gif_image_data})
+        res = res.json_body
+        assert_that(res, has_entries('avatarURL', not_none(),
+                                     'backgroundURL', none(),
+                                     'blurredAvatarURL', none()))
