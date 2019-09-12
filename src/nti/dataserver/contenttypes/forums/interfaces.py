@@ -212,6 +212,11 @@ class ITopic(IContentContainer,
                               description=u"May be a IDeletedObjectPlaceholder",
                               required=False)
 
+    title =  ValidTextLine(max_length=140,
+                           required=False,
+                           title=u"The human-readable title of this object",
+                           __name__=u'title')
+
 
 class ITopicList(ISequence):
     """
@@ -248,6 +253,11 @@ class IForum(IContentContainer,
                                title=u"The newest object added to this forum, if there is one",
                                description=u"May be a IDeletedObjectPlaceholder",
                                required=False)
+
+    title =  ValidTextLine(max_length=140,
+                           required=False,
+                           title=u"The human-readable title of this object",
+                           __name__=u'title')
 
 
 class IBoard(IContentContainer,
