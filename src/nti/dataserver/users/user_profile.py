@@ -35,7 +35,7 @@ from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IPrincipal
 
 from nti.dataserver.users.interfaces import IAddress
-from nti.dataserver.users.interfaces import IEducation 
+from nti.dataserver.users.interfaces import IEducation
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IAboutProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -53,7 +53,8 @@ from nti.dataserver.users.interfaces import IEmailRequiredUserProfile
 from nti.dataserver.users.interfaces import IRestrictedUserProfileWithContactEmail
 
 from nti.dataserver.users.utils import AvatarUrlProperty as _AvatarUrlProperty
-from nti.dataserver.users.utils import BackgroundUrlProperty as _BackgrounUrlProperty
+from nti.dataserver.users.utils import BackgroundUrlProperty as _BackgroundUrlProperty
+from nti.dataserver.users.utils import BlurredAvatarUrlProperty as _BlurredAvatarUrlProperty
 
 from nti.externalization.representation import WithRepr
 
@@ -182,10 +183,15 @@ class ImageProfileMixin(object):
 
     __getitem__ = avatarURL.make_getitem()
 
+    _blurredAvatarURL = None
+    blurredAvatarURL = _BlurredAvatarUrlProperty(data_name="blurredAvatarURL",
+                                                 url_attr_name='_blurredAvatarURL',
+                                                 file_attr_name='_blurredAvatarURL')
+
     _backgroundURL = None
-    backgroundURL = _BackgrounUrlProperty(data_name="backgroundURL",
-                                          url_attr_name='_backgroundURL',
-                                          file_attr_name='_backgroundURL')
+    backgroundURL = _BackgroundUrlProperty(data_name="backgroundURL",
+                                           url_attr_name='_backgroundURL',
+                                           file_attr_name='_backgroundURL')
 
 
 @component.adapter(IUser)
@@ -331,12 +337,12 @@ class UserContactProfile(SchemaConfigured, Persistent):
     def mailing_address(self):
         return self.addresses.get('mailing_address') \
             or self.addresses.get('mailing')
-    
+
     @property
     def billing_address(self):
         return self.addresses.get('billing_address') \
             or self.addresses.get('billing')
-    
+
     @property
     def home_phone(self):
         return self.phones.get('home_phone') or self.phones.get('home')

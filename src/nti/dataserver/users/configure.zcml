@@ -28,6 +28,7 @@
 	<subscriber handler=".communities._remove_all_members_when_community_deleted" />
 
     <subscriber handler=".subscribers._reindex_invalid_email" />
+    <subscriber handler=".subscribers._community_blurred_avatar" />
 
 	<!-- Externalization -->
 	<adapter factory=".users_external._EntitySummaryExternalObject"

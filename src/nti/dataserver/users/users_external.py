@@ -34,7 +34,7 @@ from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
+from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI, IBlurredAvatarURL
 
 from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IUserProfile
@@ -113,6 +113,11 @@ def _avatar_url(entity):
     return result
 
 
+def _blurred_avatar_url(entity):
+    result = _safe_image_url(entity, IBlurredAvatarURL, 'blurredAvatarURL', '@@blurred_avatar_view')
+    return result
+
+
 def _background_url(entity):
     result = _safe_image_url(entity, IBackgroundURL,
                              'backgroundURL', '@@background_view')
@@ -161,6 +166,7 @@ class _AbstractEntitySummaryExternalObject(object):
 
         if self._AVATAR_URL:
             extDict['avatarURL'] = _avatar_url(entity)
+            extDict['blurredAvatarURL'] = _blurred_avatar_url(entity)
 
         if self._BACKGROUND_URL:
             extDict['backgroundURL'] = _background_url(entity)
