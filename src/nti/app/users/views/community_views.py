@@ -279,7 +279,7 @@ class ListCommunitiesView(AbstractEntityViewMixin):
 @view_config(route_name='objects.generic.traversal',
              context=ICommunity,
              request_method='PUT',
-             permission=nauth.ACT_NTI_ADMIN,
+             permission=nauth.ACT_UPDATE,
              renderer='rest')
 class UpdateCommunityView(AbstractAuthenticatedView,
                           ModeledContentEditRequestUtilsMixin,

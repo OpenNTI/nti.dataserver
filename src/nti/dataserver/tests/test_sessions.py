@@ -126,16 +126,15 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 
 		self.session_service.queue_message_from_client( session.session_id, b'foobar' )
 		self.session_service.queue_message_to_client( session.session_id, b'foobar' )
-		transaction.commit()
 
+		transaction.commit()
+		transaction.begin()
 		to_client = list(self.session_service.get_messages_to_client( session.session_id ))
 		from_client = list(self.session_service.get_messages_from_client( session.session_id ))
 
 		for l in to_client, from_client:
 			assert_that( l, has_length( 1 ) )
 			assert_that( l, contains( 'foobar' ) )
-
-		transaction.commit()
 
 	@WithMockDSTrans
 	def test_clear_disconnect_timeout(self):
