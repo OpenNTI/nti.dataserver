@@ -739,10 +739,14 @@ class TestCommunityViews(ApplicationLayerTest):
         Validate the community auto subscribe.
         """
         with mock_dataserver.mock_db_trans(self.ds):
-            self._create_user(u"non-site-user")
+            self._create_user(u"non-admin-user")
             self._create_user(u'terra1')
             self._create_user(u'terra2')
 
+            self._create_user(u'nonadmin1')
+            self._create_user(u'nonadmin2')
+
+        nonadmin_env = self._make_extra_environ(user="non-admin-user")
         terra1_admin_env = self._make_extra_environ(user="terra1")
         terra2_admin_env = self._make_extra_environ(user="terra2")
 
@@ -753,6 +757,7 @@ class TestCommunityViews(ApplicationLayerTest):
             prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra1')
             prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra2')
             terra1 = User.get_user('terra1')
+
             set_user_creation_site(terra1)
             catalog = get_entity_catalog()
             intids = component.getUtility(IIntIds)
@@ -771,8 +776,8 @@ class TestCommunityViews(ApplicationLayerTest):
 
         auto_comm1_alias = 'new_comm2_alias'
         data = {'alias': auto_comm1_alias,
-                'public': False,
-                'joinable': False,
+                'public': True,
+                'joinable': True,
                 'auto_subscribe': {'MimeType': SiteAutoSubscribeMembershipPredicate.mime_type}}
         res = self.testapp.post_json(admin_all_href, data, extra_environ=terra2_admin_env)
         res = res.json_body
@@ -798,6 +803,12 @@ class TestCommunityViews(ApplicationLayerTest):
             terra3 = self._create_user(u'terra3', external_value={"realname": u"terra three"})
             assert_that(terra3 in auto_comm, is_(True))
             assert_that(terra3 in non_auto_comm, is_(False))
+
+        # Users cannot join or leave auto-subscribe communities
+        res = self.testapp.get('/dataserver2/users/%s' % auto_comm1_username, extra_environ=nonadmin_env)
+        res = res.json_body
+        for rel in ('join', 'leave'):
+            self.forbid_link_with_rel(res, rel)
 
         # Disable auto_subcribe via another admin
         data = {'auto_subscribe': None}
