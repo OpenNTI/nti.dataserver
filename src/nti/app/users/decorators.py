@@ -145,8 +145,6 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         in_community = self.remoteUser in context
         is_admin_user = is_admin_or_site_admin(self.remoteUser)
         user_can_update = has_permission(ACT_UPDATE, context)
-        result['joinable'] = context.joinable
-        result['public'] = context.public
         result['RemoteIsMember'] = in_community
         if context.joinable or user_can_update:
             if not in_community:

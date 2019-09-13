@@ -18,6 +18,7 @@
 	<subscriber handler=".subscribers._user_modified_from_external_event" />
     <subscriber handler=".subscribers._on_community_created" />
     <subscriber handler=".subscribers._on_community_deactivated" />
+    <subscriber handler=".subscribers._on_auto_subscribe_created" />
 
 	<!-- Decorators -->
 	<subscriber factory=".decorators._UserEmailVerificationLinkDecorator"

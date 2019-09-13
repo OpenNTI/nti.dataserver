@@ -12,7 +12,6 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_in
 from hamcrest import is_not
-from hamcrest import has_key
 from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import has_entry
@@ -34,7 +33,6 @@ from nti.testing.time import time_monotonically_increases
 
 import fudge
 
-import six
 import copy
 import time
 import unittest

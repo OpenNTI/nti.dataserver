@@ -45,8 +45,9 @@ from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users.auto_subscribe import SiteAutoSubscribeMembershipPredicate
 
-from nti.dataserver.users.common import entity_creation_sitename
+from nti.dataserver.users.common import set_user_creation_site
 from nti.dataserver.users.common import set_entity_creation_site
+from nti.dataserver.users.common import entity_creation_sitename
 
 from nti.dataserver.users.communities import Community
 
@@ -430,7 +431,6 @@ class TestCommunityViews(ApplicationLayerTest):
             comm.public = True
             comm.joinable = True
 
-        non_site_community_href = '/dataserver2/users/non_site_community'
         mc_site_community_href = '/dataserver2/users/mathcounts_test_community'
 
         locke_env = self._make_extra_environ(user="locke")
@@ -725,3 +725,52 @@ class TestCommunityViews(ApplicationLayerTest):
         assert_that(res, has_entries('avatarURL', not_none(),
                                      'backgroundURL', none(),
                                      'blurredAvatarURL', none()))
+
+
+    @time_monotonically_increases
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_community_auto_subscribe(self):
+        """
+        Validate the community auto subscribe.
+        """
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(u"non-site-user")
+            self._create_user(u'terra1')
+            self._create_user(u'terra2')
+
+        non_site_env = self._make_extra_environ(user="non-site-user")
+        terra1_admin_env = self._make_extra_environ(user="terra1")
+        terra2_admin_env = self._make_extra_environ(user="terra2")
+
+        all_href, admin_href, joined_href = self._get_community_workspace_rels(non_site_env)
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            site = getSite()
+            prm = IPrincipalRoleManager(site)
+            prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra1')
+            prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra2')
+            #set_user_creation_site(entity, site)
+
+        # Create a regular community and auto-subscribe community
+        admin_rels = self._get_community_workspace_rels(terra1_admin_env, is_admin=True)
+        admin_all_href, admin_admin_href, admin_joined_href = admin_rels
+        nonauto_comm1_alias = 'new_comm1_alias'
+        data = {'alias': nonauto_comm1_alias,
+                'public': True,
+                'joinable': True}
+        self.testapp.post_json(all_href, data, extra_environ=terra1_admin_env)
+
+        auto_comm1_alias = 'new_comm1_alias'
+        data = {'alias': auto_comm1_alias,
+                'public': False,
+                'joinable': False,
+                'auto_subscribe': {'MimeType': SiteAutoSubscribeMembershipPredicate.mime_type}}
+        res = self.testapp.post_json(all_href, data, extra_environ=terra2_admin_env)
+        res = res.json_body
+        assert_that(res['auto_subscribe'], has_entries('MimeType', SiteAutoSubscribeMembershipPredicate.mime_type,
+                                                       'Class', SiteAutoSubscribeMembershipPredicate.__name__,
+                                                       'CreatedTime', not_none(),
+                                                       'Creator', is_('terra2'),
+                                                       'Last Modified', not_none()))
+        #from IPython.terminal.debugger import set_trace;set_trace()
+        #from IPython.terminal.debugger import set_trace;set_trace()

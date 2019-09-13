@@ -36,6 +36,8 @@ class SiteAutoSubscribeMembershipPredicate(PersistentCreatedModDateTrackingObjec
 
     createDirectFieldProperties(IAutoSubscribeMembershipPredicate)
 
+    __acl_deny_all__ = False
+
     __parent__ = None
     __name__ = None
 

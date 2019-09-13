@@ -255,6 +255,9 @@ class _CommunityExternalObject(_EntityExternalObject):
                 continue
             field_val = field.query(entity, getattr(field, 'default', None))
             result[name] = toExternalObject(field_val)
+        result['joinable'] = self.entity.joinable
+        result['public'] = self.entity.public
+        result['auto_subscribe'] = self.entity.auto_subscribe
         return result
 
 
