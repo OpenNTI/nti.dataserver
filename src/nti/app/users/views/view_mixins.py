@@ -48,7 +48,8 @@ from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
-from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost,\
+    ICommentPost
 
 from nti.dataserver.interfaces import IAccessProvider
 from nti.dataserver.interfaces import ISiteAdminUtility
@@ -142,9 +143,12 @@ class EntityActivityViewMixin(UGDView):
         for uid in all_intids or ():
             obj = intids.queryObject(uid)
             if obj is not None:
+                # Return post entry
                 if IHeadlinePost.providedBy(obj):
-                    obj = obj.__parent__  # return entry
-                yield obj
+                    obj = obj.__parent__
+                # Do not return comments for entity activity
+                if not ICommentPost.providedBy(obj):
+                    yield obj
 
     # pylint: disable=arguments-differ
     def getObjectsForId(self, *unused_args, **unused_kwargs):
