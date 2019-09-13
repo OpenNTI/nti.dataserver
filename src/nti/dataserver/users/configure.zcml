@@ -74,8 +74,9 @@
 						 .interfaces.IUserToken
 						 .interfaces.ISuggestedContact
 						 .interfaces.IUserContactProfile
-						 .interfaces.IProfessionalPosition"
-		modules=".suggested_contacts .user_profile .tokens" />
+						 .interfaces.IProfessionalPosition
+						 nti.coremetadata.interfaces.IAutoSubscribeMembershipPredicate"
+		modules=".suggested_contacts .user_profile .tokens .auto_subscribe" />
 
 	<!-- Groups and ACLs -->
 	<!-- First, make something that can store group names on the user -->

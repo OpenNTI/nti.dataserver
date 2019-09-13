@@ -43,6 +43,8 @@ from nti.dataserver.contenttypes.note import Note
 
 from nti.dataserver.tests import mock_dataserver
 
+from nti.dataserver.users.auto_subscribe import SiteAutoSubscribeMembershipPredicate
+
 from nti.dataserver.users.common import entity_creation_sitename
 from nti.dataserver.users.common import set_entity_creation_site
 
