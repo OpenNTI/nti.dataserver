@@ -304,7 +304,8 @@ class JoinCommunityView(AbstractAuthenticatedView):
 
     def __call__(self):
         community = self.request.context
-        if      not community.joinable \
+        if      (  not community.joinable \
+                or community.auto_subscribe is not None) \
             and not has_permission(nauth.ACT_UPDATE, self.context):
             raise hexc.HTTPForbidden()
 
@@ -325,7 +326,8 @@ class LeaveCommunityView(AbstractAuthenticatedView):
 
     def __call__(self):
         community = self.request.context
-        if      not community.joinable \
+        if      (  not community.joinable \
+                or community.auto_subscribe is not None) \
             and not has_permission(nauth.ACT_UPDATE, self.context):
             raise hexc.HTTPForbidden()
 
