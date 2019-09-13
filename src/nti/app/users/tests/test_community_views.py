@@ -24,6 +24,9 @@ does_not = is_not
 from nti.testing.time import time_monotonically_increases
 
 from zope import interface
+from zope import component
+
+from zope.intid.interfaces import IIntIds
 
 from zope.component.hooks import getSite
 
@@ -33,6 +36,8 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
+from nti.app.users.utils import set_user_creation_site
+from nti.app.users.utils import set_entity_creation_site
 from nti.app.users.utils import get_entity_creation_sitename
 
 from nti.coremetadata.interfaces import ISiteCommunity
@@ -45,11 +50,11 @@ from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users.auto_subscribe import SiteAutoSubscribeMembershipPredicate
 
-from nti.dataserver.users.common import set_user_creation_site
-from nti.dataserver.users.common import set_entity_creation_site
 from nti.dataserver.users.common import entity_creation_sitename
 
 from nti.dataserver.users.communities import Community
+
+from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import IHiddenMembership
 
@@ -738,39 +743,80 @@ class TestCommunityViews(ApplicationLayerTest):
             self._create_user(u'terra1')
             self._create_user(u'terra2')
 
-        non_site_env = self._make_extra_environ(user="non-site-user")
         terra1_admin_env = self._make_extra_environ(user="terra1")
         terra2_admin_env = self._make_extra_environ(user="terra2")
 
-        all_href, admin_href, joined_href = self._get_community_workspace_rels(non_site_env)
-
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            # Both site admins, only terra1 is an alpha user
             site = getSite()
             prm = IPrincipalRoleManager(site)
             prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra1')
             prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra2')
-            #set_user_creation_site(entity, site)
+            terra1 = User.get_user('terra1')
+            set_user_creation_site(terra1)
+            catalog = get_entity_catalog()
+            intids = component.getUtility(IIntIds)
+            doc_id = intids.getId(terra1)
+            catalog.index_doc(doc_id, terra1)
 
         # Create a regular community and auto-subscribe community
         admin_rels = self._get_community_workspace_rels(terra1_admin_env, is_admin=True)
-        admin_all_href, admin_admin_href, admin_joined_href = admin_rels
+        admin_all_href, unused_admin_admin_href, unused_admin_joined_href = admin_rels
         nonauto_comm1_alias = 'new_comm1_alias'
         data = {'alias': nonauto_comm1_alias,
                 'public': True,
                 'joinable': True}
-        self.testapp.post_json(all_href, data, extra_environ=terra1_admin_env)
+        res = self.testapp.post_json(admin_all_href, data, extra_environ=terra1_admin_env)
+        nonauto_comm1_username = res.json_body.get("Username")
 
-        auto_comm1_alias = 'new_comm1_alias'
+        auto_comm1_alias = 'new_comm2_alias'
         data = {'alias': auto_comm1_alias,
                 'public': False,
                 'joinable': False,
                 'auto_subscribe': {'MimeType': SiteAutoSubscribeMembershipPredicate.mime_type}}
-        res = self.testapp.post_json(all_href, data, extra_environ=terra2_admin_env)
+        res = self.testapp.post_json(admin_all_href, data, extra_environ=terra2_admin_env)
         res = res.json_body
+        auto_comm1_username = res.get("Username")
         assert_that(res['auto_subscribe'], has_entries('MimeType', SiteAutoSubscribeMembershipPredicate.mime_type,
                                                        'Class', SiteAutoSubscribeMembershipPredicate.__name__,
                                                        'CreatedTime', not_none(),
                                                        'Creator', is_('terra2'),
                                                        'Last Modified', not_none()))
-        #from IPython.terminal.debugger import set_trace;set_trace()
-        #from IPython.terminal.debugger import set_trace;set_trace()
+
+        # Our site users ends up as a member
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            auto_comm = Community.get_community(auto_comm1_username)
+            non_auto_comm = Community.get_community(nonauto_comm1_username)
+            terra1 = User.get_user('terra1')
+            terra2 = User.get_user('terra2')
+            assert_that(terra1 in auto_comm, is_(True))
+            assert_that(terra2 in auto_comm, is_(False))
+            assert_that(terra1 in non_auto_comm, is_(False))
+            assert_that(terra2 in non_auto_comm, is_(False))
+
+            # New user is auto-subscribed
+            terra3 = self._create_user(u'terra3', external_value={"realname": u"terra three"})
+            assert_that(terra3 in auto_comm, is_(True))
+            assert_that(terra3 in non_auto_comm, is_(False))
+
+        # Disable auto_subcribe via another admin
+        data = {'auto_subscribe': None}
+        res = self.testapp.put_json('/dataserver2/users/%s' % auto_comm1_username,
+                                    data, extra_environ=terra1_admin_env)
+        assert_that(res.json_body, has_entry('auto_subscribe', none()))
+
+        # Our community membership is unchanged
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            auto_comm = Community.get_community(auto_comm1_username)
+            non_auto_comm = Community.get_community(nonauto_comm1_username)
+            terra1 = User.get_user('terra1')
+            terra2 = User.get_user('terra2')
+            terra3 = User.get_user('terra3')
+            assert_that(terra1 in auto_comm, is_(True))
+            assert_that(terra2 in auto_comm, is_(False))
+            assert_that(terra3 in auto_comm, is_(True))
+
+            assert_that(terra1 in non_auto_comm, is_(False))
+            assert_that(terra2 in non_auto_comm, is_(False))
+            assert_that(terra3 in non_auto_comm, is_(False))
+

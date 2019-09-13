@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 from zope import interface
 
+from zope.component.hooks import getSite
+
 from nti.app.users.utils import get_user_creation_sitename
 from nti.app.users.utils import get_entity_creation_sitename
 
@@ -55,6 +57,10 @@ class SiteAutoSubscribeMembershipPredicate(PersistentCreatedModDateTrackingObjec
         Returns a bool whether or not this user should be accepted.
         """
         entity_site_name = get_entity_creation_sitename(self.entity)
+        # This may be during community creation such that this has
+        # not yet been stored; assume current site.
+        if entity_site_name is None:
+            entity_site_name = getSite().__name__
         user_site_name = get_user_creation_sitename(user)
         return  entity_site_name and user_site_name \
             and entity_site_name == user_site_name

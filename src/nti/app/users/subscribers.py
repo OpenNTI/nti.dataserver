@@ -14,9 +14,13 @@ from pyramid import httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
 
+from zc.intid.interfaces import IAfterIdAddedEvent
+
 from zope import component
 
 from zope.event import notify
+
+from zope.intid.interfaces import IIntIds
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
@@ -106,21 +110,37 @@ def _on_user_created(user, unused_event):
     for community in get_communities_by_site() or ():
         if      community.auto_subscribe is not None \
             and community.auto_subscribe.accept_user(user):
-                user.record_dynamic_member(community)
-                user.following(community)
+                user.record_dynamic_membership(community)
+                user.follow(community)
+
+
+@component.adapter(ICommunity, IAfterIdAddedEvent)
+def _process_community_auto_subscribe(community, unused_event=None):
+    """
+    A new community that may or may not have an auto_subscribe predicate.
+    """
+    intids = component.getUtility(IIntIds)
+    doc_id = intids.queryId(community)
+    if      doc_id is not None \
+        and community.auto_subscribe is not None:
+        all_site_users = get_users_by_site()
+        for user in all_site_users or ():
+            if community.auto_subscribe.accept_user(user):
+                user.record_dynamic_membership(community)
+                user.follow(community)
+
 
 @component.adapter(IAutoSubscribeMembershipPredicate, IObjectCreatedEvent)
 def _on_auto_subscribe_created(auto_subscribe, unused_event):
     """
     An auto-subscribe object was created, run through the site
     users and add those who pass the predicate.
+
+    This may be called *before* the community has an intid; that's the
+    case for the subscriber above.
     """
     auto_subscribe.creator = get_remote_user().username
-    all_site_users = get_users_by_site()
-    for user in all_site_users or ():
-        if auto_subscribe.accept_user(user):
-            user.record_dynamic_member(auto_subscribe.entity)
-            user.following(auto_subscribe.entity)
+    _process_community_auto_subscribe(auto_subscribe.entity)
 
 
 @component.adapter(ICommunity, IObjectAddedEvent)
