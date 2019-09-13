@@ -22,7 +22,12 @@ from zope.annotation.interfaces import IAnnotations
 from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import cachedIn
 
+from zope.event import notify
+
 from zope.intid.interfaces import IIntIdRemovedEvent
+
+from zope.lifecycleevent import ObjectCreatedEvent
+from zope.lifecycleevent import ObjectRemovedEvent
 
 from zope.location.interfaces import ISublocations
 
@@ -68,9 +73,11 @@ class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matt
 
     public = False
     joinable = False
+    auto_subscribe = None
 
     Public = alias('public')
     Joinable = alias('joinable')
+    AutoSubscribe = alias('auto_subscribe')
 
     @classmethod
     def create_community(cls, dataserver=None, **kwargs):
@@ -193,6 +200,16 @@ class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matt
             self.public = bool(parsed['public'])
         if 'joinable' in parsed:
             self.joinable = bool(parsed['joinable'])
+        if 'auto_subscribe' in parsed:
+            old_auto_subscribe = self.auto_subscribe
+            self.auto_subscribe = parsed['auto_subscribe']
+            if old_auto_subscribe is not None:
+                # Changing auto subscribe, undo current state
+                notify(ObjectRemovedEvent(old_auto_subscribe))
+            if self.auto_subscribe is not None:
+                # We have a new auto subscribe
+                self.auto_subscribe.__parent__ = self
+                notify(ObjectCreatedEvent(self.auto_subscribe))
         return result
 
     @property
