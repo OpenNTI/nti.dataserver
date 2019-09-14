@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from PIL import Image
+
 from PIL.ImageFilter import GaussianBlur
 
 from six import StringIO
@@ -64,12 +65,17 @@ def _community_blurred_avatar(community, event):
         data = StringIO(avatar_file.data)
         image = Image.open(data)
         # This mimics what the webapp did
+        #resized_image = image.resize((560, 400), Image.ANTIALIAS)
         try:
             blurred_image = image.filter(GaussianBlur(50))
         except ValueError:
             # Unblurrable image
             profile.blurredAvatarURL = None
         else:
-            data_url = encode(blurred_image.tobytes(),
+            blurred_bytes = StringIO()
+            blurred_image.save(blurred_bytes, image.format)
+            blurred_bytes.flush()
+            blurred_bytes.seek(0)
+            data_url = encode(blurred_bytes.read(),
                               mime_type=avatar_file.mimeType)
             profile.blurredAvatarURL = data_url
