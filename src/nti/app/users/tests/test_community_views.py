@@ -174,6 +174,13 @@ class TestCommunityViews(ApplicationLayerTest):
             c = Community.get_community(username='bleach')
             c.joinable = True
 
+        # Cannot find non-public
+        self.testapp.post(path, status=403, extra_environ=env)
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            c = Community.get_community(username='bleach')
+            c.public = True
+
         self.testapp.post(path, status=200, extra_environ=env)
         with mock_dataserver.mock_db_trans(self.ds):
             community = Community.get_community(username='bleach')

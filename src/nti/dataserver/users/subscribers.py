@@ -64,6 +64,8 @@ def _community_blurred_avatar(community, event):
         avatar_file = getattr(profile, '_avatarURL', None)
         if     avatar_file is None \
             or avatar_file.mimeType == 'image/svg+xml':
+            # Always empty out our old value
+            profile.blurredAvatarURL = None
             return
         data = StringIO(avatar_file.data)
         image = Image.open(data)
