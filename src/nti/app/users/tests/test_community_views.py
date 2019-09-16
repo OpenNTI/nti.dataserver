@@ -880,24 +880,74 @@ class TestCommunityViews(ApplicationLayerTest):
                 doc_id = intids.getId(user)
                 catalog.index_doc(doc_id, user)
 
-        # Create a regular community and auto-subscribe community
+        # Create first community
         admin_rels = self._get_community_workspace_rels(terra1_admin_env, is_admin=True)
         admin_all_href, unused_admin_admin_href, unused_admin_joined_href = admin_rels
-        nonauto_comm1_alias = 'new_comm1_alias'
-        data = {'alias': nonauto_comm1_alias,
+        comm1_alias = 'new_comm1_alias'
+        comm2_alias = 'new_comm1_alias'
+        data = {'alias': comm1_alias,
                 'public': True,
                 'joinable': True}
         res = self.testapp.post_json(admin_all_href, data, extra_environ=terra1_admin_env)
-        comm1_username = res.json_body.get("Username")
+        res = res.json_body
+        comm1_username = res.get("Username")
+        add_members_rel = self.require_link_href_with_rel(res, 'AddMembers')
+        remove_members_rel = self.require_link_href_with_rel(res, 'RemoveMembers')
+        members_rel = self.require_link_href_with_rel(res, 'members')
 
-        com_res = self.testapp.get('')
+        res = self.testapp.get(members_rel, extra_environ=terra1_admin_env)
+        res = res.json_body
+        assert_that(res.get('Total'), is_(0))
 
-        # Test rels
-        for env in (terra1_admin_env, terra2_admin_env):
+        # Second community
+        data = {'alias': comm2_alias,
+                'public': True,
+                'joinable': True}
+        res = self.testapp.post_json(admin_all_href, data, extra_environ=terra1_admin_env)
+        res = res.json_body
+        comm2_username = res.get("Username")
 
-        # Test adding users/groups again
+        # Add everyone
+        self.testapp.post_json(add_members_rel, {'users': 'everyone'},
+                               extra_environ=terra1_admin_env)
 
-        # Test removing users/groups again
+        # Test adding users/groups again no-ops
+        self.testapp.post_json(add_members_rel, {'users': 'everyone'},
+                               extra_environ=terra1_admin_env)
+
+        # Our site users ends up as members
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            comm = Community.get_community(comm1_username)
+            for username in ('terra1', 'terra2', 'nonadmin1', 'nonadmin2'):
+                user = User.get_user(username)
+                assert_that(user in comm, is_(True), username)
+
+            non_site_user = User.get_user('non-site-user')
+            assert_that(non_site_user in comm, is_(False))
+
+        # Non site admins do not have rels
+        for env in (nonadmin1_env, nonadmin2_env):
+            comm_res = self.testapp.get('/dataserver2/users/%s' % comm1_username,
+                                        extra_environ=env)
+            comm_res = comm_res.json_body
+            for rel in ('AddMembers', 'RemoveMembers'):
+                self.forbid_link_with_rel(comm_res, rel)
+
+        # Remove all
+        self.testapp.post_json(remove_members_rel, {'users': 'everyone'},
+                               extra_environ=terra1_admin_env)
+
+        # Test removing all users again
+        self.testapp.post_json(remove_members_rel, {'users': 'everyone'},
+                               extra_environ=terra1_admin_env)
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            comm = Community.get_community(comm1_username)
+            for username in ('terra1', 'terra2', 'nonadmin1', 'nonadmin2', 'non-site-user'):
+                user = User.get_user(username)
+                assert_that(user in comm, is_(False))
+
+        # Add specific users
 
         # Test adding member does not dynamically add member to community
 

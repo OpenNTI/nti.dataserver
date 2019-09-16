@@ -435,8 +435,7 @@ class AbstractUpdateMembershipView(AbstractAuthenticatedView,
     def community(self):
         return self.context.community
 
-    @Lazy
-    def _user_set(self):
+    def _get_user_set(self):
         # pylint: disable=no-member
         user_set = self._params.get('users') \
                 or self._params.get('usernames')
@@ -447,7 +446,7 @@ class AbstractUpdateMembershipView(AbstractAuthenticatedView,
             if 'everyone' in user_set or 'Everyone' in user_set:
                 logger.info('Adding all site users to community (%s)',
                             self.community.username)
-                user_set = get_users_by_site()
+                result = get_users_by_site()
             else:
                 for username in user_set:
                     if is_valid_ntiid_string(username):
@@ -497,7 +496,7 @@ class AbstractUpdateMembershipView(AbstractAuthenticatedView,
         result = LocatedExternalDict()
         if not is_admin_or_site_admin(self.remoteUser):
             raise hexc.HTTPForbidden()
-        user_set, missing = self._user_set()
+        user_set, missing = self._get_user_set()
         updated_users, not_allowed = self.process_users(user_set)
 
         result['Missing'] = missing
