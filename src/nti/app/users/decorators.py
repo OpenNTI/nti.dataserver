@@ -157,12 +157,12 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
         if      not IDisallowMembersLink.providedBy(context) \
             and (context.public or in_community or is_admin_user):
-            link = Link(context, elements=('@@members',), rel="members")
+            link = Link(context, elements=('members',), rel="members")
             _links.append(link)
 
         if is_admin_user:
             link = Link(context,
-                        elements=('@@members',),
+                        elements=('members',),
                         rel="AddMembers",
                         method="POST")
             _links.append(link)
