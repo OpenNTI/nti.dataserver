@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import six
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -435,38 +437,57 @@ class AbstractUpdateMembershipView(AbstractAuthenticatedView,
     def community(self):
         return self.context.community
 
-    def _get_user_set(self):
+    @Lazy
+    def username_set(self):
         # pylint: disable=no-member
         user_set = self._params.get('users') \
                 or self._params.get('usernames')
+        if isinstance(user_set, six.string_types):
+            user_set = (user_set,)
+        return user_set
+
+    @Lazy
+    def is_everyone(self):
+        result = 'everyone' in self.username_set or 'Everyone' in self.username_set
+        if result:
+            logger.info('%s all site users to community (%s)',
+                        self.UPDATE_TYPE,
+                        self.community.username)
+        return result
+
+    def _get_user_set(self):
         result = []
         missing = []
-        if user_set:
-            user_set = user_set.split(',')
-            if 'everyone' in user_set or 'Everyone' in user_set:
-                logger.info('Adding all site users to community (%s)',
-                            self.community.username)
-                result = get_users_by_site()
-            else:
-                for username in user_set:
-                    if is_valid_ntiid_string(username):
-                        # Check if ntiid first
-                        entity = find_object_with_ntiid(username)
-                    else:
-                        # The standard username case
-                        entity = User.get_user(username)
+        if not self.username_set:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Must specify users to update.'),
+                                 'code': u"NoUsersGivenForCommunityMembershipError"
+                             },
+                             None)
+        if self.is_everyone:
+            result = get_users_by_site()
+        else:
+            for username in self.username_set:
+                if is_valid_ntiid_string(username):
+                    # Check if ntiid first
+                    entity = find_object_with_ntiid(username)
+                else:
+                    # The standard username case
+                    entity = User.get_user(username)
 
-                    if entity is None:
-                        logger.info('Cannot add missing entity to community (%s)',
-                                    username)
-                        missing.append(username)
-                        continue
-                    entity_iterable = IEntityIterable(entity, None)
-                    if entity_iterable is not None:
-                        # Check and expand iterable
-                        result.extend(entity_iterable)
-                    else:
-                        result.append(entity)
+                if entity is None:
+                    logger.info('Cannot add missing entity to community (%s)',
+                                username)
+                    missing.append(username)
+                    continue
+                entity_iterable = IEntityIterable(entity, None)
+                if entity_iterable is not None:
+                    # Check and expand iterable
+                    result.extend(entity_iterable)
+                else:
+                    result.append(entity)
         return result, missing
 
     def _update_user_membership(self, user):
@@ -546,6 +567,16 @@ class CommunityMembersRemoveView(AbstractUpdateMembershipView):
     def _update_user_membership(self, user):
         user.record_no_longer_dynamic_member(self.community)
         user.stop_following(self.community)
+
+    def _get_user_set(self):
+        if self.is_everyone:
+            # For removal, more efficient to iterate and remove community
+            # members instead of all site users
+            community_users = tuple(self.community)
+            result = (community_users, [])
+        else:
+            result = super(CommunityMembersRemoveView, self)._get_user_set()
+        return result
 
 
 @view_config(route_name='objects.generic.traversal',

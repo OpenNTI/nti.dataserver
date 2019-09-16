@@ -865,7 +865,6 @@ class TestCommunityViews(ApplicationLayerTest):
         nonadmin1_env = self._make_extra_environ(user="nonadmin1")
         nonadmin2_env = self._make_extra_environ(user="nonadmin1")
         terra1_admin_env = self._make_extra_environ(user="terra1")
-        terra2_admin_env = self._make_extra_environ(user="terra2")
 
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             site = getSite()
@@ -891,11 +890,11 @@ class TestCommunityViews(ApplicationLayerTest):
         res = self.testapp.post_json(admin_all_href, data, extra_environ=terra1_admin_env)
         res = res.json_body
         comm1_username = res.get("Username")
-        add_members_rel = self.require_link_href_with_rel(res, 'AddMembers')
-        remove_members_rel = self.require_link_href_with_rel(res, 'RemoveMembers')
-        members_rel = self.require_link_href_with_rel(res, 'members')
+        add_members1_rel = self.require_link_href_with_rel(res, 'AddMembers')
+        remove_members1_rel = self.require_link_href_with_rel(res, 'RemoveMembers')
+        members1_rel = self.require_link_href_with_rel(res, 'members')
 
-        res = self.testapp.get(members_rel, extra_environ=terra1_admin_env)
+        res = self.testapp.get(members1_rel, extra_environ=terra1_admin_env)
         res = res.json_body
         assert_that(res.get('Total'), is_(0))
 
@@ -905,14 +904,17 @@ class TestCommunityViews(ApplicationLayerTest):
                 'joinable': True}
         res = self.testapp.post_json(admin_all_href, data, extra_environ=terra1_admin_env)
         res = res.json_body
-        comm2_username = res.get("Username")
+        comm2_ntiid = res.get('NTIID')
+        assert_that(comm2_ntiid, not_none())
+        add_members2_rel = self.require_link_href_with_rel(res, 'AddMembers')
+        members2_rel = self.require_link_href_with_rel(res, 'members')
 
         # Add everyone
-        self.testapp.post_json(add_members_rel, {'users': 'everyone'},
+        self.testapp.post_json(add_members1_rel, {'users': ['everyone']},
                                extra_environ=terra1_admin_env)
 
         # Test adding users/groups again no-ops
-        self.testapp.post_json(add_members_rel, {'users': 'everyone'},
+        self.testapp.post_json(add_members1_rel, {'users': ['everyone']},
                                extra_environ=terra1_admin_env)
 
         # Our site users ends up as members
@@ -934,11 +936,11 @@ class TestCommunityViews(ApplicationLayerTest):
                 self.forbid_link_with_rel(comm_res, rel)
 
         # Remove all
-        self.testapp.post_json(remove_members_rel, {'users': 'everyone'},
+        self.testapp.post_json(remove_members1_rel, {'users': 'everyone'},
                                extra_environ=terra1_admin_env)
 
         # Test removing all users again
-        self.testapp.post_json(remove_members_rel, {'users': 'everyone'},
+        self.testapp.post_json(remove_members1_rel, {'users': ['everyone']},
                                extra_environ=terra1_admin_env)
 
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
@@ -947,7 +949,73 @@ class TestCommunityViews(ApplicationLayerTest):
                 user = User.get_user(username)
                 assert_that(user in comm, is_(False))
 
-        # Add specific users
+        # All communities empty; add specific users to comm1/comm2
+        # * terra1, nonadmin1, non-site-user to comm1
+        # * terra2 and a nonexistant user to comm2
+        res = self.testapp.post_json(add_members2_rel,
+                                     {'usernames': ['dne_user_xxx', 'non-site-user', 'terra2']},
+                                     extra_environ=terra1_admin_env)
+        res = res.json_body
+        assert_that(res, has_entries('Missing', contains('dne_user_xxx'),
+                                     'MissingCount', is_(1),
+                                     'NotAllowed', contains('non-site-user'),
+                                     'NotAllowedCount', is_(1),
+                                     'Added', contains('terra2'),
+                                     'AddedCount', is_(1)))
+
+        # Adding community2 members to community, plus others
+        res = self.testapp.post_json(add_members1_rel,
+                                     {'usernames': ['%s' % comm2_ntiid,'terra1', 'nonadmin1']},
+                                     extra_environ=terra1_admin_env)
+        res = res.json_body
+        assert_that(res, has_entries('Missing', has_length(0),
+                                     'MissingCount', is_(0),
+                                     'NotAllowed', has_length(0),
+                                     'NotAllowedCount', is_(0),
+                                     'Added', contains_inanyorder('terra2',
+                                                                  'terra1',
+                                                                  'nonadmin1'),
+                                     'AddedCount', is_(3)))
+
+        res = self.testapp.get(members1_rel, extra_environ=terra1_admin_env)
+        res = res.json_body
+        usernames = [x.get('Username') for x in res['Items']]
+        assert_that(usernames, contains_inanyorder('terra1', 'terra2', 'nonadmin1'))
+
+        res = self.testapp.get(members2_rel, extra_environ=terra1_admin_env)
+        res = res.json_body
+        usernames = [x.get('Username') for x in res['Items']]
+        assert_that(usernames, contains_inanyorder('terra2'))
 
         # Test adding member does not dynamically add member to community
+        self.testapp.post_json(add_members2_rel,
+                               {'usernames': ['nonadmin2', 'terra2']},
+                               extra_environ=terra1_admin_env)
 
+        res = self.testapp.get(members1_rel, extra_environ=terra1_admin_env)
+        res = res.json_body
+        usernames = [x.get('Username') for x in res['Items']]
+        assert_that(usernames, contains_inanyorder('terra1', 'terra2', 'nonadmin1'))
+
+        # Removing individual users: dne user, dne ntiid, comm2, non-site-user, specific user
+        # We do not currently check for existing membership, so nonadmin2 shows up
+        # as removed.
+        res = self.testapp.post_json(remove_members1_rel,
+                                     {'usernames': ['%s' % comm2_ntiid,
+                                                    '%s_dne' % comm2_ntiid,
+                                                    'dne_user_yyy',
+                                                    'non-site-user',
+                                                    'terra1']},
+                                     extra_environ=terra1_admin_env)
+        res = res.json_body
+        assert_that(res, has_entries('MissingCount', is_(2),
+                                     'NotAllowedCount', is_(1),
+                                     'Removed', contains_inanyorder('terra2',
+                                                                    'terra1',
+                                                                    'nonadmin2'),
+                                     'RemovedCount', is_(3)))
+
+        res = self.testapp.get(members1_rel, extra_environ=terra1_admin_env)
+        res = res.json_body
+        usernames = [x.get('Username') for x in res['Items']]
+        assert_that(usernames, contains('nonadmin1'))
