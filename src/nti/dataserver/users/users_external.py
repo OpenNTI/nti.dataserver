@@ -108,6 +108,18 @@ def _safe_image_url(entity, avatar_iface, attr_name, view_name):
         return None
 
 
+def _is_avatar_svg(entity):
+    """
+    Returns whether the tnity avatar file is an SVG
+    """
+    with_url = IAvatarURL(entity, None)
+    with_url = removeAllProxies(with_url)
+    url_property = getattr(type(with_url), 'avatarURL', None)
+    if isinstance(url_property, UrlProperty):
+        the_file = url_property.get_file(with_url)
+        return the_file and the_file.mimeType == 'image/svg+xml'
+
+
 def _avatar_url(entity):
     result = _safe_image_url(entity, IAvatarURL, 'avatarURL', '@@avatar_view')
     return result
@@ -165,8 +177,12 @@ class _AbstractEntitySummaryExternalObject(object):
             extDict['ID'] = extDict['Username'] = entity.NTIID
 
         if self._AVATAR_URL:
-            extDict['avatarURL'] = _avatar_url(entity)
-            extDict['blurredAvatarURL'] = _blurred_avatar_url(entity)
+            extDict['avatarURL'] = user_avatar_url = _avatar_url(entity)
+            user_blurred_url = _blurred_avatar_url(entity)
+            # If our avatar url is SVG, we use it
+            if not user_blurred_url and _is_avatar_svg(entity):
+                user_blurred_url = user_avatar_url
+            extDict['blurredAvatarURL'] = user_blurred_url
 
         if self._BACKGROUND_URL:
             extDict['backgroundURL'] = _background_url(entity)
