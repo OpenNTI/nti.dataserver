@@ -52,8 +52,9 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.common.string import is_true
 
-from nti.coremetadata.interfaces import ICommunity, IEntityIterable
+from nti.coremetadata.interfaces import ICommunity
 from nti.coremetadata.interfaces import ISiteCommunity
+from nti.coremetadata.interfaces import IEntityIterable
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import DeactivatedCommunityEvent
 from nti.coremetadata.interfaces import ReactivatedCommunityEvent
@@ -62,7 +63,8 @@ from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.authorization import is_admin_or_site_admin, is_site_admin
+from nti.dataserver.authorization import is_site_admin
+from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
@@ -83,19 +85,19 @@ from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IUserUpdateUtility
 
-from nti.dataserver.users.utils import intids_of_community_members,\
-    get_users_by_site
+from nti.dataserver.users.utils import get_users_by_site
+from nti.dataserver.users.utils import intids_of_community_members
 from nti.dataserver.users.utils import get_entity_mimetype_from_index
 
 from nti.externalization.externalization import to_external_object
 
-from nti.externalization.interfaces import LocatedExternalList,\
-    LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
-from jinja2.utils import missing
-from nti.ntiids.ntiids import is_ntiid_of_type, is_valid_ntiid_string,\
-    find_object_with_ntiid
+
+from nti.ntiids.ntiids import is_valid_ntiid_string
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 
 ITEMS = StandardExternalFields.ITEMS
@@ -500,6 +502,8 @@ class AbstractUpdateMembershipView(AbstractAuthenticatedView,
 
     def __call__(self):
         result = LocatedExternalDict()
+        if not is_admin_or_site_admin(self.remoteUser):
+            raise hexc.HTTPForbidden()
         user_set, missing = self._user_set()
         updated_users, not_allowed = self.process_users(user_set)
 
