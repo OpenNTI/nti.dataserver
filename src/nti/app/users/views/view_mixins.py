@@ -684,6 +684,6 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         result[ITEMS] = [
             self.transformer(x) for x in result[ITEMS]
         ]
-        result[TOTAL] = len(items)
+        result[TOTAL] = result['TotalItemCount'] = len(items)
         result[ITEM_COUNT] = len(result[ITEMS])
         return result

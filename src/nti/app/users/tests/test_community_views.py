@@ -734,13 +734,6 @@ class TestCommunityViews(ApplicationLayerTest):
         assert_that(blurred_url, not_none())
         self.testapp.get(blurred_url)
 
-        # Cannot blur GIF so blurred URL is empty again
-        res = self.testapp.put_json(comm_href, {'avatarURL': gif_image_data})
-        res = res.json_body
-        assert_that(res, has_entries('avatarURL', not_none(),
-                                     'backgroundURL', none(),
-                                     'blurredAvatarURL', none()))
-
         # SVG image results in duplicate URLs
         res = self.testapp.put_json(comm_href, {'avatarURL': svg_image_data})
         res = res.json_body
@@ -748,6 +741,13 @@ class TestCommunityViews(ApplicationLayerTest):
         assert_that(avatar_url, not_none())
         assert_that(res, has_entries('backgroundURL', none(),
                                      'blurredAvatarURL', is_(avatar_url)))
+
+        # Cannot blur GIF so blurred URL is empty again
+        res = self.testapp.put_json(comm_href, {'avatarURL': gif_image_data})
+        res = res.json_body
+        assert_that(res, has_entries('avatarURL', not_none(),
+                                     'backgroundURL', none(),
+                                     'blurredAvatarURL', none()))
 
 
     @time_monotonically_increases
@@ -848,4 +848,56 @@ class TestCommunityViews(ApplicationLayerTest):
             assert_that(terra1 in non_auto_comm, is_(False))
             assert_that(terra2 in non_auto_comm, is_(False))
             assert_that(terra3 in non_auto_comm, is_(False))
+
+    @time_monotonically_increases
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_membership_management(self):
+        """
+        Validate community membership management
+        """
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(u"non-site-user")
+            self._create_user(u'terra1')
+            self._create_user(u'terra2')
+            self._create_user(u'nonadmin1')
+            self._create_user(u'nonadmin2')
+
+        nonadmin1_env = self._make_extra_environ(user="nonadmin1")
+        nonadmin2_env = self._make_extra_environ(user="nonadmin1")
+        terra1_admin_env = self._make_extra_environ(user="terra1")
+        terra2_admin_env = self._make_extra_environ(user="terra2")
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            site = getSite()
+            prm = IPrincipalRoleManager(site)
+            prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra1')
+            prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'terra2')
+            for username in ('terra1', 'terra2', 'nonadmin1', 'nonadmin2'):
+                user = User.get_user(username)
+                set_user_creation_site(user)
+                catalog = get_entity_catalog()
+                intids = component.getUtility(IIntIds)
+                doc_id = intids.getId(user)
+                catalog.index_doc(doc_id, user)
+
+        # Create a regular community and auto-subscribe community
+        admin_rels = self._get_community_workspace_rels(terra1_admin_env, is_admin=True)
+        admin_all_href, unused_admin_admin_href, unused_admin_joined_href = admin_rels
+        nonauto_comm1_alias = 'new_comm1_alias'
+        data = {'alias': nonauto_comm1_alias,
+                'public': True,
+                'joinable': True}
+        res = self.testapp.post_json(admin_all_href, data, extra_environ=terra1_admin_env)
+        comm1_username = res.json_body.get("Username")
+
+        com_res = self.testapp.get('')
+
+        # Test rels
+        for env in (terra1_admin_env, terra2_admin_env):
+
+        # Test adding users/groups again
+
+        # Test removing users/groups again
+
+        # Test adding member does not dynamically add member to community
 
