@@ -13,6 +13,8 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import component
 from zope import interface
 
@@ -20,7 +22,11 @@ from zope.cachedescriptors.property import Lazy
 
 from zope.component.hooks import getSite
 
+from zope.container.contained import Contained
+
 from zope.container.interfaces import INameChooser
+
+from zope.traversing.interfaces import IPathAdapter
 
 from zope.event import notify
 
@@ -46,7 +52,7 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.common.string import is_true
 
-from nti.coremetadata.interfaces import ICommunity
+from nti.coremetadata.interfaces import ICommunity, IEntityIterable
 from nti.coremetadata.interfaces import ISiteCommunity
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import DeactivatedCommunityEvent
@@ -56,7 +62,7 @@ from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.authorization import is_admin_or_site_admin
+from nti.dataserver.authorization import is_admin_or_site_admin, is_site_admin
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
@@ -75,15 +81,21 @@ from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.interfaces import IHiddenMembership
+from nti.dataserver.users.interfaces import IUserUpdateUtility
 
-from nti.dataserver.users.utils import intids_of_community_members
+from nti.dataserver.users.utils import intids_of_community_members,\
+    get_users_by_site
 from nti.dataserver.users.utils import get_entity_mimetype_from_index
 
 from nti.externalization.externalization import to_external_object
 
-from nti.externalization.interfaces import LocatedExternalList
+from nti.externalization.interfaces import LocatedExternalList,\
+    LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
+from jinja2.utils import missing
+from nti.ntiids.ntiids import is_ntiid_of_type, is_valid_ntiid_string,\
+    find_object_with_ntiid
 
 
 ITEMS = StandardExternalFields.ITEMS
@@ -340,15 +352,25 @@ class LeaveCommunityView(AbstractAuthenticatedView):
         return community
 
 
+@interface.implementer(IPathAdapter)
+class CommunityMembersPathAdapter(Contained):
+
+    __name__ = 'members'
+
+    def __init__(self, context, request):
+        self.context = self.community = context
+        self.request = request
+        self.__parent__ = context
+
+
 @view_config(route_name='objects.generic.traversal',
-             name='members',
              request_method='GET',
-             context=ICommunity,
+             context=CommunityMembersPathAdapter,
              permission=nauth.ACT_READ)
 class CommunityMembersView(AbstractEntityViewMixin):
 
     def check_access(self):
-        community = self.request.context
+        community = self.context.community
         if      not community.public \
             and self.remoteUser not in community \
             and not is_admin_or_site_admin(self.remoteUser):
@@ -373,7 +395,7 @@ class CommunityMembersView(AbstractEntityViewMixin):
         return entity_catalog[IX_USERNAME]
 
     def get_entity_intids(self, unused_site=None):
-        result = intids_of_community_members(self.context)
+        result = intids_of_community_members(self.context.community)
         username_index = self.username_index()
         return (x for x in result if x in username_index.documents_to_values)
 
@@ -384,6 +406,150 @@ class CommunityMembersView(AbstractEntityViewMixin):
         self.check_access()
         result = self._do_call()
         return result
+
+
+class AbstractUpdateMembershipView(AbstractAuthenticatedView,
+                                   ModeledContentUploadRequestUtilsMixin):
+
+
+    UPDATE_TYPE = None
+
+    def readInput(self, value=None):
+        if self.request.body:
+            values = super(AbstractUpdateMembershipView, self).readInput(value)
+        else:
+            values = self.request.params
+        result = CaseInsensitiveDict(values)
+        return result
+
+    @Lazy
+    def _params(self):
+        """
+        A case insensitive dict of user input.
+        """
+        return self.readInput()
+
+    @Lazy
+    def community(self):
+        return self.context.community
+
+    @Lazy
+    def _user_set(self):
+        # pylint: disable=no-member
+        user_set = self._params.get('users') \
+                or self._params.get('usernames')
+        result = []
+        missing = []
+        if user_set:
+            user_set = user_set.split(',')
+            if 'everyone' in user_set or 'Everyone' in user_set:
+                logger.info('Adding all site users to community (%s)',
+                            self.community.username)
+                user_set = get_users_by_site()
+            else:
+                for username in user_set:
+                    if is_valid_ntiid_string(username):
+                        # Check if ntiid first
+                        possible_user = find_object_with_ntiid(username)
+                        if possible_user is None:
+                            logger.info('Cannot add missing entity to community (%s)',
+                                        username)
+                            missing.append(username)
+                            continue
+                        if IUser.providedBy(possible_user):
+                            result.append(possible_user)
+                        else:
+                            # Check and expand iterable
+                            user_iterable = IEntityIterable(possible_user, None)
+                            if user_iterable is not None:
+                                result.extend(user_iterable)
+                    else:
+                        # The standard username case
+                        user = User.get_user(username)
+                        if user is None:
+                            logger.info('Cannot add missing user to community (%s)',
+                                        username)
+                            missing.append(username)
+                            continue
+                        result.append(user)
+        return result, missing
+
+    def _update_user_membership(self, user):
+        raise NotImplementedError()
+
+    def process_users(self, users):
+        """
+        Process the user set, updating our community. Return the
+        usernames of the updated, disallowed users, respectively.
+        """
+        update_utility = IUserUpdateUtility(self.remoteUser, None)
+        updated_usernames = []
+        disallowed_usernames = []
+        remote_is_site_admin = is_site_admin(self.remoteUser)
+        for user in users:
+            # XXX: What do we do here for community admins
+            # (non site admins)?
+            if remote_is_site_admin:
+                if      update_utility is not None \
+                    and not update_utility.can_update_user(user):
+                    disallowed_usernames.append(user.username)
+                    continue
+            self._update_user_membership(user)
+            updated_usernames.append(user.username)
+        return updated_usernames, disallowed_usernames
+
+    def __call__(self):
+        result = LocatedExternalDict()
+        user_set, missing = self._user_set()
+        updated_users, not_allowed = self.process_users(user_set)
+
+        result['Missing'] = missing
+        result[self.UPDATE_TYPE] = updated_users
+        result['NotAllowed'] = not_allowed
+
+        result['MissingCount'] = len(missing)
+        result['NotAllowedCount'] = len(not_allowed)
+        result['%sCount' % self.UPDATE_TYPE] = len(updated_users)
+        logger.info("%s community members (%s) (missing=%s) (not_allowed=%s) (updated=%s)",
+                    self.UPDATE_TYPE,
+                    self.community.username,
+                    missing,
+                    not_allowed,
+                    len(updated_users))
+        return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             request_method='POST',
+             context=CommunityMembersPathAdapter,
+             permission=nauth.ACT_UPDATE)
+class CommunityMembersAddView(AbstractUpdateMembershipView):
+    """
+    API to manage user membership within a community
+    """
+
+    UPDATE_TYPE = 'Added'
+
+    def _update_user_membership(self, user):
+        user.record_dynamic_membership(self.community)
+        user.follow(self.community)
+
+
+@view_config(route_name='objects.generic.traversal',
+             name='bulk_remove',
+             request_method='POST',
+             context=CommunityMembersPathAdapter,
+             permission=nauth.ACT_UPDATE)
+class CommunityMembersRemoveView(AbstractUpdateMembershipView):
+    """
+    API to remove user membership within a community
+    """
+
+    UPDATE_TYPE = 'Removed'
+
+    def _update_user_membership(self, user):
+        user.record_no_longer_dynamic_member(self.community)
+        user.stop_following(self.community)
 
 
 @view_config(route_name='objects.generic.traversal',
