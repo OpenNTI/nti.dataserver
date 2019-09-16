@@ -164,15 +164,17 @@ class TestCommunityViews(ApplicationLayerTest):
     def test_join_community(self):
         with mock_dataserver.mock_db_trans(self.ds):
             Community.create_community(username=u'bleach')
+            self._create_user('regular_user')
 
+        env = self._make_extra_environ(user='regular_user')
         path = '/dataserver2/users/bleach/join'
-        self.testapp.post(path, status=403)
+        self.testapp.post(path, status=403, extra_environ=env)
 
         with mock_dataserver.mock_db_trans(self.ds):
             c = Community.get_community(username='bleach')
             c.joinable = True
 
-        self.testapp.post(path, status=200)
+        self.testapp.post(path, status=200, extra_environ=env)
         with mock_dataserver.mock_db_trans(self.ds):
             community = Community.get_community(username='bleach')
             user = User.get_user(self.default_username)
