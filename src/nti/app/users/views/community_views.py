@@ -489,13 +489,12 @@ class AbstractUpdateMembershipView(AbstractAuthenticatedView,
         disallowed_usernames = []
         remote_is_site_admin = is_site_admin(self.remoteUser)
         for user in users:
-            # XXX: What do we do here for community admins
-            # (non site admins)?
             if remote_is_site_admin:
                 if      update_utility is not None \
                     and not update_utility.can_update_user(user):
                     disallowed_usernames.append(user.username)
                     continue
+            # XXX: Do we check for current state before doing anything?
             self._update_user_membership(user)
             updated_usernames.append(user.username)
         return updated_usernames, disallowed_usernames
