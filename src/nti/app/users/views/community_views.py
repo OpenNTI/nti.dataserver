@@ -452,28 +452,22 @@ class AbstractUpdateMembershipView(AbstractAuthenticatedView,
                 for username in user_set:
                     if is_valid_ntiid_string(username):
                         # Check if ntiid first
-                        possible_user = find_object_with_ntiid(username)
-                        if possible_user is None:
-                            logger.info('Cannot add missing entity to community (%s)',
-                                        username)
-                            missing.append(username)
-                            continue
-                        if IUser.providedBy(possible_user):
-                            result.append(possible_user)
-                        else:
-                            # Check and expand iterable
-                            user_iterable = IEntityIterable(possible_user, None)
-                            if user_iterable is not None:
-                                result.extend(user_iterable)
+                        entity = find_object_with_ntiid(username)
                     else:
                         # The standard username case
-                        user = User.get_user(username)
-                        if user is None:
-                            logger.info('Cannot add missing user to community (%s)',
-                                        username)
-                            missing.append(username)
-                            continue
-                        result.append(user)
+                        entity = User.get_user(username)
+
+                    if entity is None:
+                        logger.info('Cannot add missing entity to community (%s)',
+                                    username)
+                        missing.append(username)
+                        continue
+                    entity_iterable = IEntityIterable(entity, None)
+                    if entity_iterable is not None:
+                        # Check and expand iterable
+                        result.extend(entity_iterable)
+                    else:
+                        result.append(entity)
         return result, missing
 
     def _update_user_membership(self, user):
