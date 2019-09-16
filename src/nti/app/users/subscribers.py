@@ -114,35 +114,6 @@ def _on_user_created(user, unused_event):
                 user.follow(community)
 
 
-@component.adapter(ICommunity, IAfterIdAddedEvent)
-def _process_community_auto_subscribe(community, unused_event=None):
-    """
-    A new community that may or may not have an auto_subscribe predicate.
-    """
-    intids = component.getUtility(IIntIds)
-    doc_id = intids.queryId(community)
-    if      doc_id is not None \
-        and community.auto_subscribe is not None:
-        all_site_users = get_users_by_site()
-        for user in all_site_users or ():
-            if community.auto_subscribe.accept_user(user):
-                user.record_dynamic_membership(community)
-                user.follow(community)
-
-
-@component.adapter(IAutoSubscribeMembershipPredicate, IObjectCreatedEvent)
-def _on_auto_subscribe_created(auto_subscribe, unused_event):
-    """
-    An auto-subscribe object was created, run through the site
-    users and add those who pass the predicate.
-
-    This may be called *before* the community has an intid; that's the
-    case for the subscriber above.
-    """
-    auto_subscribe.creator = get_remote_user().username
-    _process_community_auto_subscribe(auto_subscribe.entity)
-
-
 @component.adapter(ICommunity, IObjectAddedEvent)
 def _on_community_created(community, unused_event):
     set_community_creation_site(community)
