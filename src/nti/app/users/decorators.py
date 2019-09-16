@@ -160,6 +160,18 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
             link = Link(context, elements=('@@members',), rel="members")
             _links.append(link)
 
+        if is_admin_user:
+            link = Link(context,
+                        elements=('@@members',),
+                        rel="AddMembers",
+                        method="POST")
+            _links.append(link)
+            link = Link(context,
+                        elements=('members', '@@bulk_remove'),
+                        rel="RemoveMembers",
+                        method='POST')
+            _links.append(link)
+
         if in_community and not IDisallowHiddenMembership.providedBy(context):
             if self.remoteUser in IHiddenMembership(context, None) or ():
                 link = Link(context, elements=('@@unhide',), rel="unhide")

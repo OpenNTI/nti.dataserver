@@ -14,13 +14,9 @@ from pyramid import httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
 
-from zc.intid.interfaces import IAfterIdAddedEvent
-
 from zope import component
 
 from zope.event import notify
-
-from zope.intid.interfaces import IIntIds
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
@@ -60,7 +56,6 @@ from nti.dataserver.users.interfaces import IWillUpdateEntityEvent
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 
-from nti.dataserver.users.utils import get_users_by_site
 from nti.dataserver.users.utils import get_communities_by_site
 from nti.dataserver.users.utils import reindex_email_verification
 
@@ -112,6 +107,11 @@ def _on_user_created(user, unused_event):
             and community.auto_subscribe.accept_user(user):
                 user.record_dynamic_membership(community)
                 user.follow(community)
+
+
+@component.adapter(IAutoSubscribeMembershipPredicate, IObjectCreatedEvent)
+def _on_auto_subscribe_created(auto_subscribe, unused_event):
+    auto_subscribe.creator = get_remote_user().username
 
 
 @component.adapter(ICommunity, IObjectAddedEvent)

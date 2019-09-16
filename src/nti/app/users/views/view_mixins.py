@@ -48,8 +48,8 @@ from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
-from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost,\
-    ICommentPost
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 
 from nti.dataserver.interfaces import IAccessProvider
 from nti.dataserver.interfaces import ISiteAdminUtility

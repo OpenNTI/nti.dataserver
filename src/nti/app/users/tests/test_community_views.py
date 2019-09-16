@@ -174,10 +174,17 @@ class TestCommunityViews(ApplicationLayerTest):
             c = Community.get_community(username='bleach')
             c.joinable = True
 
+        # Cannot find non-public
+        self.testapp.post(path, status=403, extra_environ=env)
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            c = Community.get_community(username='bleach')
+            c.public = True
+
         self.testapp.post(path, status=200, extra_environ=env)
         with mock_dataserver.mock_db_trans(self.ds):
             community = Community.get_community(username='bleach')
-            user = User.get_user(self.default_username)
+            user = User.get_user('regular_user')
             assert_that(user, is_in(community))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
@@ -799,18 +806,18 @@ class TestCommunityViews(ApplicationLayerTest):
                                                        'Creator', is_('terra2'),
                                                        'Last Modified', not_none()))
 
-        # Our site users ends up as a member
+        # Our new site users ends up as members
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             auto_comm = Community.get_community(auto_comm1_username)
             non_auto_comm = Community.get_community(nonauto_comm1_username)
             terra1 = User.get_user('terra1')
             terra2 = User.get_user('terra2')
-            assert_that(terra1 in auto_comm, is_(True))
+            assert_that(terra1 in auto_comm, is_(False))
             assert_that(terra2 in auto_comm, is_(False))
             assert_that(terra1 in non_auto_comm, is_(False))
             assert_that(terra2 in non_auto_comm, is_(False))
 
-            # New user is auto-subscribed
+            # Only new users is auto-subscribed
             terra3 = self._create_user(u'terra3', external_value={"realname": u"terra three"})
             assert_that(terra3 in auto_comm, is_(True))
             assert_that(terra3 in non_auto_comm, is_(False))
@@ -834,7 +841,7 @@ class TestCommunityViews(ApplicationLayerTest):
             terra1 = User.get_user('terra1')
             terra2 = User.get_user('terra2')
             terra3 = User.get_user('terra3')
-            assert_that(terra1 in auto_comm, is_(True))
+            assert_that(terra1 in auto_comm, is_(False))
             assert_that(terra2 in auto_comm, is_(False))
             assert_that(terra3 in auto_comm, is_(True))
 
