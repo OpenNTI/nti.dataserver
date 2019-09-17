@@ -23,10 +23,7 @@ from zope import interface
 
 from nti.base._compat import text_
 
-from nti.coremetadata.interfaces import ISiteCommunity
-
 from nti.dataserver.interfaces import IUser
-from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import INewUserPlacer
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 
@@ -52,7 +49,7 @@ _type_map = {
 logger = __import__('logging').getLogger(__name__)
 
 
-def _create_user(factory, username, password, realname, communities=(), is_site_community=False, options=None):
+def _create_user(factory, username, password, realname, communities=(), options=None):
     if options.shard:
         # Provide the unnamed, default utility to do this
         class FixedShardPlacer(AbstractShardPlacer):
@@ -102,10 +99,6 @@ def _create_user(factory, username, password, realname, communities=(), is_site_
             not ICoppaUserWithoutAgreement.providedBy(user):
             logger.info("Applying coppa to %s", user)
             interface.alsoProvides(user, ICoppaUserWithoutAgreement)
-
-    if      ICommunity.providedBy(user) \
-        and is_site_community:
-        interface.alsoProvides(user, ISiteCommunity)
 
     if options.verbose:
         pprint.pprint(to_external_object(user))
@@ -158,12 +151,6 @@ def create_user(args=None):
     arg_parser.add_argument('--contact_email',
                             dest='contact_email',
                             help="The contact email address of the user")
-
-    arg_parser.add_argument('--is_site_community',
-                            dest='is_site_community',
-                            action='store_true',
-                            default=False,
-                            help="Create the community as an ISiteCommunity")
 
     arg_parser.add_argument('--public',
                             dest='public',
@@ -222,7 +209,6 @@ def create_user(args=None):
                                                       password,
                                                       args.name,
                                                       args.communities,
-                                                      args.is_site_community,
                                                       args))
 
 

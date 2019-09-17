@@ -316,13 +316,4 @@ class UserServiceExternalizer(ServiceExternalizer):
                                                 IUserCapabilityFilter):
             capabilities = cap_filter.filterCapabilities(capabilities)
         result['CapabilityList'] = list(capabilities)
-        # Now our community name
-        site_policy = component.queryUtility(ISitePolicyUserEventListener)
-        community_username = getattr(site_policy, 'COM_USERNAME', '')
-        if community_username:
-            result['SiteCommunity'] = community_username
-        else:
-            community = ICommunity(getSite(), None)
-            if community is not None:
-                result['SiteCommunity'] = community.username
         return result
