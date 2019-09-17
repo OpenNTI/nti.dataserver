@@ -99,24 +99,6 @@ class TestCommunityViews(ApplicationLayerTest):
         assert_that(res.json_body, has_entry('Items', has_length(1)))
         assert_that(res.json_body, has_entry('Total', is_(1)))
 
-        # Site community
-        ext_obj = {'username': 'bleach_site_community',
-                   'alias': 'Bleach',
-                   'realname': 'Bleach',
-                   'public': True,
-                   'joinable': True,
-                   'is_site_community': True}
-        path = '/dataserver2/@@create_community'
-        res = self.testapp.post_json(path, ext_obj, status=201)
-        assert_that(res.json_body, has_entry('Username', 'bleach_site_community'))
-        with mock_dataserver.mock_db_trans(self.ds):
-            c = Community.get_community(username='bleach_site_community')
-            assert_that(c, has_property('public', is_(True)))
-            assert_that(c, has_property('joinable', is_(True)))
-            assert_that(ISiteCommunity.providedBy(c), is_(True))
-            creation_site = entity_creation_sitename(c)
-            assert_that(creation_site, is_('alpha.nextthought.com'))
-
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_update_community(self):
         with mock_dataserver.mock_db_trans(self.ds):

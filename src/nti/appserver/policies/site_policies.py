@@ -493,25 +493,6 @@ class AbstractSitePolicyEventListener(object):
 	createFieldProperties(ICommunitySitePolicyUserEventListener)
 	_v_my_package = None
 
-	def _join_community_user_created(self, user, event):
-		"""
-		Helper method that places newly created users in the community defined by the fields
-		of this object (creating it if it doesn't exist).
-		"""
-		if self.COM_USERNAME and self.COM_ALIAS and self.COM_REALNAME:
-			community = Entity.get_entity(self.COM_USERNAME)
-			if community is None:
-				community = Community.create_community(username=self.COM_USERNAME)
-				interface.alsoProvides(community, ISiteCommunity)
-				community.public = False
-				community.joinable = False
-				com_names = IFriendlyNamed(community)
-				com_names.alias = self.COM_ALIAS
-				com_names.realname = self.COM_REALNAME
-
-			user.record_dynamic_membership(community)
-			user.follow(community)
-
 	def __find_my_package(self):
 		specific_package = getattr(self, 'PACKAGE', None)
 		if specific_package is not None:
@@ -906,14 +887,6 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 	"""
 	Implements the policy for an adult site, adding new users to a single community.
 	"""
-
-	def user_created(self, user, event):
-		"""
-		This policy places newly created users in the community defined by the fields
-		of this object (creating it if it doesn't exist).
-		"""
-		super(AdultCommunitySitePolicyEventListener, self).user_created(user, event)
-		self._join_community_user_created(user, event)
 
 # BWC import for objects in the database
 zope.deferredimport.deprecatedFrom(

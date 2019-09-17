@@ -52,10 +52,7 @@ from nti.app.users.views.view_mixins import EntityActivityViewMixin
 
 from nti.appserver.pyramid_authorization import has_permission
 
-from nti.common.string import is_true
-
 from nti.coremetadata.interfaces import ICommunity
-from nti.coremetadata.interfaces import ISiteCommunity
 from nti.coremetadata.interfaces import IEntityIterable
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import DeactivatedCommunityEvent
@@ -119,15 +116,11 @@ class AdminCreateCommunityView(AbstractAuthenticatedView,
                                ModeledContentUploadRequestUtilsMixin):
     """
     An NT admin view to create a community. NTI admins are able to define
-    the username as well as designate the new community an
-    :class:`ISiteCommunity`.
+    the username.
     """
 
     def __call__(self):
         externalValue = self.readInput()
-        is_site_community = externalValue.pop('site_community', None) \
-                         or externalValue.pop('is_site_community', None)
-        is_site_community = is_true(is_site_community)
         username = externalValue.pop('username', None) \
                 or externalValue.pop('Username', None)
         if not username:
@@ -150,8 +143,6 @@ class AdminCreateCommunityView(AbstractAuthenticatedView,
         self.request.response.status_int = 201  # created
         community = Community.create_community(**args)
         community.creator = self.remoteUser.username
-        if is_site_community:
-            interface.alsoProvides(community, ISiteCommunity)
         return community
 
 
