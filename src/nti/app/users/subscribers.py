@@ -185,6 +185,6 @@ def _on_community_deactivated(community, unused_event):
     than to filter all items/views into these deactivated
     communities.
     """
-    for user in community:
+    for user in tuple(community):
         user.record_no_longer_dynamic_member(community)
         user.stop_following(community)
