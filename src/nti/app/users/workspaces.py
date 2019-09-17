@@ -26,6 +26,8 @@ from nti.app.users.interfaces import IAllCommunitiesCollection
 from nti.app.users.interfaces import IJoinedCommunitiesCollection
 from nti.app.users.interfaces import IAdministeredCommunitiesCollection
 
+from nti.app.users.utils import can_create_new_communities
+
 from nti.appserver.workspaces import NameFilterableMixin
 from nti.appserver.workspaces import AbstractPseudoMembershipContainer
 
@@ -148,7 +150,8 @@ class AllCommunitiesCollection(AbstractPseudoMembershipContainer,
     @property
     def accepts(self):
         if      self.remote_user == self._user \
-            and is_admin_or_site_admin(self.remote_user):
+            and is_admin_or_site_admin(self.remote_user) \
+            and can_create_new_communities():
             return (Community.mime_type,)
         return ()
 

@@ -57,6 +57,7 @@ from nti.dataserver.users.communities import Community
 from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import IHiddenMembership
+from nti.dataserver.users.interfaces import ICommunityPolicyManagementUtility
 
 from nti.dataserver.users.users import User
 
@@ -684,6 +685,23 @@ class TestCommunityViews(ApplicationLayerTest):
                                                     new_comm1_username,
                                                     new_comm2_username,
                                                     private_unjoinable_comm))
+
+        # Test community limits
+        @interface.implementer(ICommunityPolicyManagementUtility)
+        class TestCommunityPolicy(object):
+            max_community_limit = 5
+        test_policy = TestCommunityPolicy()
+        gsm = component.getGlobalSiteManager()
+        old_utility = gsm.getUtility(ICommunityPolicyManagementUtility)
+        gsm.registerUtility(test_policy, ICommunityPolicyManagementUtility)
+
+        try:
+            # is_admin is False, indicating the Accepts is empty in the collections
+            self._get_community_workspace_rels(terra_admin_env, is_admin=False)
+            self.testapp.post_json(all_href, data, extra_environ=terra_admin_env, status=422)
+        finally:
+            gsm.unregisterUtility(test_policy, ICommunityPolicyManagementUtility)
+            gsm.registerUtility(old_utility, ICommunityPolicyManagementUtility)
 
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)

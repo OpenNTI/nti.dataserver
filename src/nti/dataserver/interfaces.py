@@ -1507,6 +1507,8 @@ class ICommunityRolePermissionManager(IRolePermissionManager):
     An IRolePermissionManager that grants all permissions
     to community admins for a given community
     """
+
+
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?

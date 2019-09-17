@@ -45,6 +45,8 @@ from nti.app.users import MessageFactory as _
 from nti.app.users.interfaces import ICommunitiesCollection
 from nti.app.users.interfaces import IAllCommunitiesCollection
 
+from nti.app.users.utils import can_create_new_communities
+
 from nti.app.users.views import parse_mime_types
 
 from nti.app.users.views.view_mixins import AbstractEntityViewMixin
@@ -117,6 +119,8 @@ class AdminCreateCommunityView(AbstractAuthenticatedView,
     """
     An NT admin view to create a community. NTI admins are able to define
     the username.
+
+    NTI admin created communities are not restricted by community count limits.
     """
 
     def __call__(self):
@@ -187,6 +191,14 @@ class CreateCommunityView(AbstractAuthenticatedView,
     def __call__(self):
         if not is_admin_or_site_admin(self.remoteUser):
             raise hexc.HTTPForbidden()
+        if not can_create_new_communities():
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'The number of permitted communities has been exceeded.'),
+                                 'code': u"CommunityLimitExceededError"
+                             },
+                             None)
         externalValue = self.readInput()
 
         # Build the name based on the alias
