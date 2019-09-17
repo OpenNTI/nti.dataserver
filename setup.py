@@ -50,10 +50,6 @@ entry_points = {
     ],
 }
 
-import platform
-py_impl = getattr(platform, 'python_implementation', lambda: None)
-IS_PYPY = py_impl() == 'PyPy'
-
 TESTS_REQUIRE = [
     # 2.0 is incompatible in a minor way with 1.4. It also pulls in six,
     # waitress, beautifulsoup4
@@ -231,7 +227,7 @@ setup(
         'gunicorn',
         # Redis C parser (almost certainly an anti-optimization on
         # PyPy)
-        'hiredis' if not IS_PYPY else '',
+        'hiredis ; platform_python_implementation == "CPython"',
         # gevent pure python dns resolving
         'idna',
         'isodate',     # ISO8601 date/time/duration parser and formatter
@@ -252,13 +248,13 @@ setup(
         # or have it in requirements.txt (which we do).
         # It also works to install it with buildout, which is the currently
         # supported mechanism. This is how we do it with pypy too.
-        'numpy' if not IS_PYPY else '',
+        'numpy',
         'packaging',
         'paste',
         'perfmetrics',  # easy statsd metrics.
         # much like zope.file, but some image-specific goodness.
         'premailer',  # inline css for html emails
-        'psutil' if not IS_PYPY else '',
+        'psutil',
         'pyparsing',  # used by rdflib
         # Pure python PDF reading and manipulation library.
         'pyPDF2',
@@ -277,7 +273,7 @@ setup(
         'pyramid_zcml',
         'pyramid-openid',
         # 'psycopg2 >= 2.5.1',    # PostGreSQL
-        'pysaml2' if not IS_PYPY else '',
+        'pysaml2',
         # Monitoring stats and instrumenting code
         # statsd client. statsd must be installed separately:
         # https://github.com/etsy/statsd
@@ -455,9 +451,6 @@ setup(
             'epydoc >= 3.0.1',  # auto-api docs
             'httpie',
             'jsonschema',
-            # A development tool to measure, monitor and analyze
-            # the memory behavior of Python objects.
-            'pympler' if not IS_PYPY else '',
             'mistune',
             # the extra notebook is web based, pulls in tornado
             'ipython',
@@ -468,8 +461,6 @@ setup(
             'pudb >= 2013.5.1',
             'pylint',  # install astroid
             'pyramid_debugtoolbar >= 1.0.9',
-            # built-in to pypy
-            'gnureadline >= 6.3.8' if not IS_PYPY else '',
             'repoze.sphinx.autointerface >= 0.7.1',
             'rope >= 0.9.4',  # refactoring library. c.f. ropemacs
             'ropemode >= 0.2',  # IDE helper for rope
