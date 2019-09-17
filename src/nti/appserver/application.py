@@ -454,19 +454,26 @@ def createApplication( http_port,
 
 	# Configure gc early
 	if asbool(settings.get('gc_debug', False)):
-		gc.set_debug(gc.DEBUG_STATS)
+                try:
+		        gc.set_debug(gc.DEBUG_STATS)
+                except AttributeError:
+                        logger.warn('Unable to gc.set_debug. PYPY?')
 
 	if asbool(settings.get('gc_disable', False)):
 		gc.disable()
 
-	# GC threshold, 0 will never collect: (700, 10, 10) are defaults in 2.7
-	gen0 = asint(settings.get('gc_gen0_threshold', 700))
-	gen1 = asint(settings.get('gc_gen1_threshold', 10))
-	gen2 = asint(settings.get('gc_gen2_threshold', 10))
-	gc.set_threshold(gen0, gen1, gen2)
-	logger.info("GC settings (%s) (%s %s %s)",
-				gc.isenabled(), gen0, gen1, gen2)
-	# Configure subscribers, etc.
+        try:
+	        # GC threshold, 0 will never collect: (700, 10, 10) are defaults in 2.7
+	        gen0 = asint(settings.get('gc_gen0_threshold', 700))
+	        gen1 = asint(settings.get('gc_gen1_threshold', 10))
+	        gen2 = asint(settings.get('gc_gen2_threshold', 10))
+	        gc.set_threshold(gen0, gen1, gen2)
+	        logger.info("GC settings (%s) (%s %s %s)",
+			    gc.isenabled(), gen0, gen1, gen2)
+        except AttributeError:
+                logger.warn('Unable to gc.set_threshold. PYPY?')
+
+        # Configure subscribers, etc.
 	__traceback_info__ = settings
 
 	setHooks() # required for z3c.baseregistry
