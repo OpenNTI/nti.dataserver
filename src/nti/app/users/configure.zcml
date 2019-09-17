@@ -9,6 +9,8 @@
     <!-- Views -->
     <include package=".views" />
 
+    <utility factory=".community.DefaultCommunityPolicyManagementUtility" />
+
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._on_user_logon" />
 	<subscriber handler=".subscribers._on_user_logout" />

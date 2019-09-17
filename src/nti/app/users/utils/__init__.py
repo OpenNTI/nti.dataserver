@@ -54,6 +54,7 @@ from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IEmailAddressable
+from nti.dataserver.users.interfaces import ICommunityPolicyManagementUtility
 
 from nti.dataserver.users.users import User
 
@@ -61,6 +62,7 @@ from nti.dataserver.users.utils import get_users_by_site
 from nti.dataserver.users.utils import get_community_members
 from nti.dataserver.users.utils import intids_of_users_by_site
 from nti.dataserver.users.utils import intids_of_community_members
+from nti.dataserver.users.utils import get_communities_by_site
 
 from nti.externalization.externalization import to_external_object
 
@@ -376,3 +378,13 @@ def set_entity_creation_site(entity, site=None):
     elif name:
         set_creation_site(entity, name)
     return name
+
+
+def can_create_new_communities():
+    """
+    Return a bool whether new communities can be created in this site. This
+    *does not* check user permissions.
+    """
+    policy = component.getUtility(ICommunityPolicyManagementUtility)
+    site_communities = get_communities_by_site()
+    return len(site_communities) < policy.max_community_limit

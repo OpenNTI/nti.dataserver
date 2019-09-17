@@ -1148,3 +1148,15 @@ class IUserTokenContainer(IShouldHaveTraversablePath,
         """
         Return unexpired tokens.
         """
+
+
+class ICommunityPolicyManagementUtility(interface.Interface):
+    """
+    A management utility that dictates how communities are managed.
+
+    XXX: Would parent/child communities count towards this?
+    """
+
+    max_community_limit = Int(title=u"The maximum number of communities allowed for a site.",
+                              description=u"This only counts current, activated communities in a site",
+                              required=True)
