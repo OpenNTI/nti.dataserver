@@ -518,6 +518,7 @@ class AbstractUpdateMembershipView(AbstractAuthenticatedView,
         result['MissingCount'] = len(missing)
         result['NotAllowedCount'] = len(not_allowed)
         result['%sCount' % self.UPDATE_TYPE] = len(updated_users)
+        result['NumberOfMembers'] = self.community.number_of_members()
         logger.info("%s community members (%s) (missing=%s) (not_allowed=%s) (updated=%s)",
                     self.UPDATE_TYPE,
                     self.community.username,
