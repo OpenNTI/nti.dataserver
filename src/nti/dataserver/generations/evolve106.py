@@ -63,7 +63,7 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
                 if username in seen:
                     continue
                 seen.add(username)
-                if site_comm is not None and site_comm.auto_subscribe is None:
+                if site_comm.auto_subscribe is None:
                     site_comm.auto_subscribe = SiteAutoSubscribeMembershipPredicate()
                     site_comm.auto_subscribe.__parent__ = site_comm
     component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
