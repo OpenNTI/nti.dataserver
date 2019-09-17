@@ -9,7 +9,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-generation = 105
+generation = 106
 
 # Allow going forward/backward for testing
 import os
