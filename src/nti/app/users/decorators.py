@@ -146,6 +146,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         is_admin_user = is_admin_or_site_admin(self.remoteUser)
         user_can_update = has_permission(ACT_UPDATE, context)
         result['RemoteIsMember'] = in_community
+        result['NumberOfMembers'] = context.number_of_members
         if      (    context.joinable \
                  and context.auto_subscribe is None) \
             or user_can_update:
