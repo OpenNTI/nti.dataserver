@@ -36,7 +36,6 @@ from nti.common.string import is_true
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUsersFolder
@@ -51,6 +50,7 @@ from nti.dataserver.users.index import IX_LASTSEEN_TIME
 from nti.dataserver.users.index import get_entity_catalog
 
 from nti.site.site import get_component_hierarchy_names
+from nti.app.site.utils import get_site_admins
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -75,6 +75,15 @@ class SiteUsersView(AbstractEntityViewMixin):
     def filterAdmins(self):
         # pylint: disable=no-member
         return is_true(self.params.get('filterAdmins', 'False'))
+
+    @Lazy
+    def site_admin_intids(self):
+        """
+        Return a set of site admin intids.
+        """
+        intids = component.getUtility(IIntIds)
+        all_site_admins = get_site_admins()
+        return set(intids.getId(x) for x in all_site_admins or ())
 
     def get_entity_intids(self, site=None):
         return intids_of_users_by_site(site)
@@ -103,16 +112,10 @@ class SiteUsersView(AbstractEntityViewMixin):
 
     def search_include(self, doc_id):
         # Users only and filter site admins if requested
-        result = self.mime_type(doc_id) == 'application/vnd.nextthought.user'
-        if result:
-            result = super(SiteUsersView, self).search_include(doc_id)
+        result = self.mime_type(doc_id) == 'application/vnd.nextthought.user' \
+             and super(SiteUsersView, self).search_include(doc_id)
         if result and self.filterAdmins:
-            # Need to refiy object here since username is stored as all
-            # lowercase and the check below is case sensitive
-            intids = component.getUtility(IIntIds)
-            user = intids.queryObject(doc_id)
-            if user is not None:
-                result = not is_site_admin(user.username)
+            result = doc_id not in self.site_admin_intids
         return result
 
     def __call__(self):
