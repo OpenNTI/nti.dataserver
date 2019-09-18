@@ -97,19 +97,20 @@ class _CreatedNamedNTIIDMixin(object):
         """
         NTIID is defined only after the _ntiid_creator_username is
         set; until then it is none. We cache based on this value and
-        our specific part (which includes our __name__)
+        our specific part (which includes our __name__).
         """
-        creator_name = self._ntiid_creator_username
-        # Ensure we have an ntiid (for containerId) if we do not have a
-        # creator name.
-        if     find_interface(self, IUseOIDForNTIID, strict=False) is not None \
-            or not creator_name:
+        if find_interface(self, IUseOIDForNTIID, strict=False) is not None:
             return to_external_ntiid_oid(self, mask_creator=self._ntiid_mask_creator)
 
-        return _make_ntiid(date=_NTIID_DATE,
-                           provider=creator_name,
-                           nttype=self._ntiid_type,
-                           specific=self._ntiid_specific_part)
+
+        # XXX: the creator name must *not* have both a `_` and `-` or these
+        # ntiids will not be resolvable.
+        creator_name = self._ntiid_creator_username
+        if creator_name:
+            return _make_ntiid(date=_NTIID_DATE,
+                               provider=creator_name,
+                               nttype=self._ntiid_type,
+                               specific=self._ntiid_specific_part)
 
 
 class _CreatedIntIdNTIIDMixin(_CreatedNamedNTIIDMixin):

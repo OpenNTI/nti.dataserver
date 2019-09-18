@@ -454,7 +454,9 @@ class IDefaultForum(interface.Interface):
 IDefaultForum.setTaggedValue('_ext_is_marker_interface', True)
 
 
-class ICommunityBoard(IGeneralBoard, IShouldHaveTraversablePath):
+# Must use `IUseOIDForNTIID` to resolve unresolvable ntiids via creator
+# or titles with both `-` and `_`
+class ICommunityBoard(IUseOIDForNTIID, IGeneralBoard, IShouldHaveTraversablePath):
     """
     A board belonging to a particular community.
     """

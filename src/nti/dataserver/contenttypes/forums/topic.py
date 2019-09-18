@@ -54,7 +54,6 @@ from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
-from nti.dataserver.contenttypes.forums.interfaces import IUseOIDForNTIID
 from nti.dataserver.contenttypes.forums.interfaces import IDFLHeadlineTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
@@ -301,13 +300,11 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
     @readproperty
     def _ntiid_creator_username(self):
         """
-        Now that we implement `IUseOIDForNTIID`, this is not used. We cannot use the
-        creator as part of our provider part of the ntiid because the creator may
-        contain both `-` and `_` characters. When escaping and attempting to resolve
-        these Communities, a username with both types (as our UI-created communities
-        may now be), these usernames will not be resolved.
+        The community, not the user
         """
-        return None
+        community = self._community
+        if community is not None:
+            return community.username
 
     @property
     def sharingTargetsWhenPublished(self):
