@@ -995,6 +995,7 @@ class TestCommunityViews(ApplicationLayerTest):
         res = self.testapp.get(members1_rel, extra_environ=terra1_admin_env)
         res = res.json_body
         usernames = [x.get('Username') for x in res['Items']]
+        assert_that(res.get('NumberOfMembers'), is_(3))
         assert_that(usernames, contains_inanyorder('terra1', 'terra2', 'nonadmin1'))
 
         # Removing individual users: dne user, dne ntiid, comm2, non-site-user, specific user
@@ -1017,5 +1018,15 @@ class TestCommunityViews(ApplicationLayerTest):
 
         res = self.testapp.get(members1_rel, extra_environ=terra1_admin_env)
         res = res.json_body
+        assert_that(res.get('NumberOfMembers'), is_(1))
         usernames = [x.get('Username') for x in res['Items']]
         assert_that(usernames, contains('nonadmin1'))
+
+        # Deleting a user cleans up everything
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            User.delete_user('nonadmin1')
+
+        res = self.testapp.get(members1_rel, extra_environ=terra1_admin_env)
+        res = res.json_body
+        assert_that(res.get('NumberOfMembers'), is_(0))
+        assert_that(res['Items'], has_length(0))
