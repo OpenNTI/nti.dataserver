@@ -15,6 +15,7 @@
 	<subscriber handler=".subscribers._on_user_logon" />
 	<subscriber handler=".subscribers._on_user_logout" />
 	<subscriber handler=".subscribers._on_user_created" />
+	<subscriber handler=".subscribers._on_user_deletion" />
 	<subscriber handler=".subscribers._on_user_removed" />
 	<subscriber handler=".subscribers._on_user_updated" />
 	<subscriber handler=".subscribers._on_user_lastseen" />

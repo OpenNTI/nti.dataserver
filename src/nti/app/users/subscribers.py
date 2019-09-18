@@ -14,6 +14,8 @@ from pyramid import httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
 
+from zc.intid.interfaces import IBeforeIdRemovedEvent
+
 from zope import component
 
 from zope.event import notify
@@ -188,3 +190,14 @@ def _on_community_deactivated(community, unused_event):
     for user in tuple(community):
         user.record_no_longer_dynamic_member(community)
         user.stop_following(community)
+
+
+@component.adapter(IUser, IBeforeIdRemovedEvent)
+def _on_user_deletion(user, unused_event=None):
+    """
+    On user deletion, make sure we clean up our community
+    (and only community) weak-refs.
+    """
+    # This result set should be relatively small per site
+    for community in get_communities_by_site() or ():
+        user.record_no_longer_dynamic_member(community)

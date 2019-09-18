@@ -412,6 +412,7 @@ class CommunityMembersView(AbstractEntityViewMixin):
     def __call__(self):
         self.check_access()
         result = self._do_call()
+        result['NumberOfMembers'] = self.context.community.number_of_members()
         return result
 
 
