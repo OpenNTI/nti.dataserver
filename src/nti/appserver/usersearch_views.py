@@ -49,6 +49,8 @@ from nti.base._compat import text_
 
 from nti.common.string import is_false
 
+from nti.coremetadata.interfaces import IDeactivatedEntity
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
@@ -494,6 +496,10 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
                 logger.warning("Failed to filter entity with id %s",
                                hex(u64(x._p_oid)))
                 return False
+
+            if IDeactivatedEntity.providedBy(x):
+                return False
+
             # User can see himself
             if x is remote_user:
                 return True
