@@ -54,6 +54,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
+from nti.dataserver.contenttypes.forums.interfaces import IUseOIDForNTIID
 from nti.dataserver.contenttypes.forums.interfaces import IDFLHeadlineTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
@@ -205,7 +206,7 @@ class HeadlineTopic(Topic):
                 attributes.append(lifecycleevent.Attributes(
                     iface_providing, attr_name))
 
-        event = ObjectSharingModifiedEvent(self, *attributes, 
+        event = ObjectSharingModifiedEvent(self, *attributes,
                                            oldSharingTargets=oldSharingTargets)
         notify(event)
 
@@ -263,7 +264,7 @@ class GeneralHeadlineTopic(AbstractDefaultPublishableSharedWithMixin,
 from nti.dataserver.contenttypes.forums.interfaces import can_read
 
 
-@interface.implementer(ICommunityHeadlineTopic)
+@interface.implementer(ICommunityHeadlineTopic, IUseOIDForNTIID)
 class CommunityHeadlineTopic(GeneralHeadlineTopic):
     # Note: This used to extend (AbstractDefaultPublishableSharedWithMixin,GeneralHeadlineTopic)
     # in that order. But AbstractDefaultPublishableSharedWithMixin is already a base
@@ -300,7 +301,11 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
     @readproperty
     def _ntiid_creator_username(self):
         """
-        The community, not the user
+        Now that we implement `IUseOIDForNTIID`, this is not used. We cannot use the
+        creator as part of our provider part of the ntiid because the creator may
+        contain both `-` and `_` characters. When escaping and attempting to resolve
+        these Communities, a username with both types (as our UI-created communities
+        may now be), these usernames will not be resolved.
         """
         community = self._community
         if community is not None:
