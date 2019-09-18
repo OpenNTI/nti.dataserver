@@ -99,15 +99,17 @@ class _CreatedNamedNTIIDMixin(object):
         set; until then it is none. We cache based on this value and
         our specific part (which includes our __name__)
         """
-        if find_interface(self, IUseOIDForNTIID, strict=False) is not None:
+        creator_name = self._ntiid_creator_username
+        # Ensure we have an ntiid (for containerId) if we do not have a
+        # creator name.
+        if     find_interface(self, IUseOIDForNTIID, strict=False) is not None \
+            or not creator_name:
             return to_external_ntiid_oid(self, mask_creator=self._ntiid_mask_creator)
 
-        creator_name = self._ntiid_creator_username
-        if creator_name:
-            return _make_ntiid(date=_NTIID_DATE,
-                               provider=creator_name,
-                               nttype=self._ntiid_type,
-                               specific=self._ntiid_specific_part)
+        return _make_ntiid(date=_NTIID_DATE,
+                           provider=creator_name,
+                           nttype=self._ntiid_type,
+                           specific=self._ntiid_specific_part)
 
 
 class _CreatedIntIdNTIIDMixin(_CreatedNamedNTIIDMixin):
