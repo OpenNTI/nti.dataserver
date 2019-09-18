@@ -264,7 +264,7 @@ class GeneralHeadlineTopic(AbstractDefaultPublishableSharedWithMixin,
 from nti.dataserver.contenttypes.forums.interfaces import can_read
 
 
-@interface.implementer(ICommunityHeadlineTopic, IUseOIDForNTIID)
+@interface.implementer(ICommunityHeadlineTopic)
 class CommunityHeadlineTopic(GeneralHeadlineTopic):
     # Note: This used to extend (AbstractDefaultPublishableSharedWithMixin,GeneralHeadlineTopic)
     # in that order. But AbstractDefaultPublishableSharedWithMixin is already a base
@@ -307,9 +307,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
         these Communities, a username with both types (as our UI-created communities
         may now be), these usernames will not be resolved.
         """
-        community = self._community
-        if community is not None:
-            return community.username
+        return None
 
     @property
     def sharingTargetsWhenPublished(self):
