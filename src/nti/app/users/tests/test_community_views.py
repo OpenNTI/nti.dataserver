@@ -612,10 +612,17 @@ class TestCommunityViews(ApplicationLayerTest):
         self.forbid_link_with_rel(res, 'restore')
         self.testapp.delete(delete_href, extra_environ=terra_admin_env)
         # Can delete again without change
-        self.testapp.delete(delete_href, extra_environ=terra_admin_env)
+        self.testapp.delete(delete_href, extra_environ=terra_admin_env, status=404)
+        self.testapp.delete(delete_href)
 
-        res = self.testapp.get('/dataserver2/users/%s' % public_joinable_comm,
-                               extra_environ=terra_admin_env)
+        # Cannot resolve
+        res = self.resolve_user_response(username=public_joinable_comm).json_body
+        assert_that(res.get('Items'), has_length(0))
+        res = self.resolve_user_response(username=public_joinable_comm,
+                                         extra_environ=terra_admin_env).json_body
+        assert_that(res.get('Items'), has_length(0))
+
+        res = self.testapp.get('/dataserver2/users/%s' % public_joinable_comm)
         res = res.json_body
         self.forbid_link_with_rel(res, 'delete')
         restore_href = self.require_link_href_with_rel(res, 'restore')
@@ -655,7 +662,13 @@ class TestCommunityViews(ApplicationLayerTest):
             assert_that(user.is_dynamic_member_of(deactivated_community), is_(False))
 
         # Restore
-        self.testapp.post(restore_href, extra_environ=terra_admin_env)
+        self.testapp.post(restore_href)
+
+        res = self.resolve_user(username=public_joinable_comm)
+        assert_that(res.get('Username'), is_(public_joinable_comm))
+        res = self.resolve_user(username=public_joinable_comm,
+                                extra_environ=terra_admin_env)
+        assert_that(res.get('Username'), is_(public_joinable_comm))
 
         # Still no longer shows up in joined for member
         res = self.testapp.get(joined_href, extra_environ=locke_env)

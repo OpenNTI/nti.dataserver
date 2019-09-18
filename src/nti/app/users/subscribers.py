@@ -47,7 +47,6 @@ from nti.coremetadata.interfaces import IDeactivatedCommunityEvent
 from nti.coremetadata.interfaces import IAutoSubscribeMembershipPredicate
 
 from nti.dataserver.authorization import is_admin
-from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUser
@@ -172,8 +171,7 @@ def _community_site_traverse(community, unused_event):
         return
     creation_site_name = get_entity_creation_sitename(community)
     current_sites = get_component_hierarchy_names()
-    if     (    IDeactivatedCommunity.providedBy(community)
-            and not is_site_admin(remote_user)) \
+    if     IDeactivatedCommunity.providedBy(community) \
         or (    creation_site_name \
             and creation_site_name not in current_sites):
         raise hexc.HTTPNotFound()
