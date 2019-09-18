@@ -27,7 +27,6 @@ from nti.dataserver.users.index import IX_TOPICS
 from nti.dataserver.users.index import IX_MIMETYPE
 from nti.dataserver.users.index import IX_REALNAME
 from nti.dataserver.users.index import IX_USERNAME
-from nti.dataserver.users.index import IX_IS_COMMUNITY
 from nti.dataserver.users.index import IX_INVALID_EMAIL
 from nti.dataserver.users.index import IX_IS_DEACTIVATED
 from nti.dataserver.users.index import IX_EMAIL_VERIFIED
@@ -378,15 +377,14 @@ def intids_of_communities_by_sites(sites=(), filter_deactivated=True):
     if isinstance(sites, six.string_types):
         sites = sites.split(',')
     catalog = get_entity_catalog()
-    comms_idx = catalog[IX_TOPICS][IX_IS_COMMUNITY]
-    result = catalog.family.IF.Set(comms_idx.getIds() or ())
+    query = {IX_SITE: {'any_of': sites or ()},
+             IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.community',
+                                      'application/vnd.nextthought.sitecommunity')}}
+    result = catalog.apply(query)
     if filter_deactivated:
         deactivated_idx = catalog[IX_TOPICS][IX_IS_DEACTIVATED]
         deactivated_ids = catalog.family.IF.Set(deactivated_idx.getIds() or ())
         result = catalog.family.IF.difference(result, deactivated_ids)
-    query = {IX_SITE: {'any_of': sites or ()}}
-    doc_ids = catalog.apply(query)
-    result = catalog.family.IF.intersection(doc_ids, result)
     return result
 
 

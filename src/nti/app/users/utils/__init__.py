@@ -387,4 +387,5 @@ def can_create_new_communities():
     """
     policy = component.getUtility(ICommunityPolicyManagementUtility)
     site_communities = get_communities_by_site()
-    return len(site_communities) < policy.max_community_limit
+    return policy.max_community_limit is None \
+        or len(site_communities) < policy.max_community_limit
