@@ -77,10 +77,7 @@ from nti.dataserver.users import User
 from nti.dataserver.users.communities import Community
 
 from nti.dataserver.users.index import IX_TOPICS
-from nti.dataserver.users.index import IX_USERNAME
 from nti.dataserver.users.index import IX_IS_COMMUNITY
-
-from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.interfaces import IHiddenMembership
@@ -397,14 +394,8 @@ class CommunityMembersView(AbstractEntityViewMixin):
             result = 'admin-summary'
         return result
 
-    def username_index(self):
-        entity_catalog = get_entity_catalog()
-        return entity_catalog[IX_USERNAME]
-
     def get_entity_intids(self, unused_site=None):
-        result = intids_of_community_members(self.context.community)
-        username_index = self.username_index()
-        return (x for x in result if x in username_index.documents_to_values)
+        return intids_of_community_members(self.context.community)
 
     def reify_predicate(self, obj):
         return IUser.providedBy(obj)
@@ -412,7 +403,7 @@ class CommunityMembersView(AbstractEntityViewMixin):
     def __call__(self):
         self.check_access()
         result = self._do_call()
-        result['NumberOfMembers'] = self.context.community.number_of_members()
+        result['NumberOfMembers'] = result['TotalItemCount'] = self.context.community.number_of_members()
         return result
 
 
