@@ -53,11 +53,10 @@ from nti.dataserver.sharing import _iterable_of_entities_from_named_lazy_set_of_
 
 from nti.dataserver.users.entity import Entity
 from nti.dataserver.users.entity import NOOPCM as _NOOPCM
-from nti.dataserver.users.entity import named_entity_ntiid
 
 from nti.dataserver.users.interfaces import IHiddenMembership
 
-from nti.ntiids.ntiids import TYPE_NAMED_ENTITY_COMMUNITY
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.property.property import alias
 
@@ -76,6 +75,7 @@ class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matt
     auto_subscribe = None
 
     Public = alias('public')
+    ntiid = alias('NTIID')
     Joinable = alias('joinable')
     AutoSubscribe = alias('auto_subscribe')
 
@@ -88,8 +88,9 @@ class Community(DynamicSharingTargetMixin, Entity):  # order of inheritance matt
 
     get_community = Entity.get_entity
 
-    NTIID_TYPE = TYPE_NAMED_ENTITY_COMMUNITY
-    NTIID = cachedIn('_v_ntiid')(named_entity_ntiid)
+    @Lazy
+    def NTIID(self):
+        return to_external_ntiid_oid(self)
 
     # We override these methods for space efficiency.
     # If we're tracking membership, should membership

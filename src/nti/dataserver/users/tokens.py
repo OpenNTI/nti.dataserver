@@ -34,7 +34,6 @@ from nti.dataserver.authorization import ACT_CREATE
 from nti.dataserver.authorization import ACT_UPDATE
 from nti.dataserver.authorization import ACT_DELETE
 
-from nti.dataserver.authorization_acl import ace_denying
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import acl_from_aces
 
