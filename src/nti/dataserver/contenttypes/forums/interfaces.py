@@ -258,6 +258,7 @@ class IForum(IContentContainer,
 
     title =  PlainTextLine(max_length=140,
                            required=True,
+                           min_length=1,
                            title=u"The human-readable title of this object",
                            __name__=u'title')
 
