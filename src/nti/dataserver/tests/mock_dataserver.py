@@ -230,10 +230,10 @@ class mock_db_trans(object):
 	def __enter__(self):
 		# See comments in zodb_connection_tween: we need to put the
 		# manager in explicit mode before opening DB connections.
-		transaction.manager.explicit = False
+		transaction.manager.explicit = True
 		transaction.begin()
 		self.conn = conn = self.ds.db.open()
-		#assert conn.explicit_transactions
+		assert conn.explicit_transactions
 		global current_transaction
 		current_transaction = conn
 
