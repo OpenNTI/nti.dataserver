@@ -134,7 +134,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		board_res = self.fetch_by_ntiid( self.board_ntiid )
 		assert_that( board_res, has_property( 'content_type', self.board_content_type ) )
 		assert_that( board_res.json_body, has_entry( 'MimeType', _plain( self.board_content_type ) ) )
-		assert_that( board_res.json_body, has_entry( 'NTIID', self.board_ntiid ) )
 		self.require_link_href_with_rel( board_res.json_body, 'contents' )
 
 	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
@@ -622,14 +621,12 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		# Check basic user cannot create topics in forum
 		testapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='basicuser'))
 		topic_data = self._create_post_data_for_POST()
-		testapp.post_json(self.forum_pretty_url,
-								topic_data,
-								status=403)
+		testapp.post_json(forum_location,
+						  topic_data,
+						  status=403)
 
 		# Check nti admin still has privs
-		adminapp.post_json(self.forum_pretty_url,
-								 topic_data,
-								 status=201)
+		adminapp.post_json(forum_location, topic_data, status=201)
 
 		# Check site admins are forbidden on non site communities
 		with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
@@ -638,8 +635,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 			prm.assignRoleToPrincipal(ROLE_SITE_ADMIN_NAME, 'siteadmin')
 
 		siteadminapp = _TestApp(self.app, extra_environ=self._make_extra_environ(username='siteadmin'))
-		siteadminapp.post_json(self.forum_pretty_url,
-							   topic_data)
+		siteadminapp.post_json(forum_location, topic_data)
 
 		# Make basic user an admin
 		adminapp.put_json('/dataserver2/users/%s/@@AddAdmin' % self.default_community,
@@ -647,6 +643,4 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 						  status=200)
 
 		# Check basic user that is now an admin can create
-		testapp.post_json(self.forum_pretty_url,
-								topic_data,
-								status=201)
+		testapp.post_json(forum_location, topic_data, status=201)

@@ -48,6 +48,8 @@ from nti.coremetadata.interfaces import IAutoSubscribeMembershipPredicate
 
 from nti.dataserver.authorization import is_admin
 
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserBlacklistedStorage
@@ -118,6 +120,12 @@ def _on_auto_subscribe_created(auto_subscribe, unused_event):
 @component.adapter(ICommunity, IObjectAddedEvent)
 def _on_community_created(community, unused_event):
     set_community_creation_site(community)
+    # create default forum
+    board = ICommunityBoard(community)
+    try:
+        board.createDefaultForum()
+    except AttributeError:
+        pass
 
 
 @component.adapter(IUser, IObjectModifiedEvent)
