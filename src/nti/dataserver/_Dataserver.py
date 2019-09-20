@@ -16,6 +16,8 @@ from six.moves import urllib_parse
 
 import redis
 
+import transaction
+
 from zope import component
 from zope import interface
 
@@ -137,6 +139,9 @@ class MinimalDataserver(object):
         return config.temp_get_config(environment_dir, demo=demo)
 
     def _open_dbs(self):
+        
+        assert not transaction.manager.explicit
+        
         if self.db is not None:
             self.db.close()
 

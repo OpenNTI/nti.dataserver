@@ -4,6 +4,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import warnings
 
+import transaction
+
 import ZODB
 
 from ZODB.DemoStorage import DemoStorage
@@ -298,6 +300,7 @@ def WithMockDSTrans( func ):
 		# All fixtures now setHooks() before running, so no
 		# need to even do that anymore.
 		# setHooks()
+                transaction.manager.explicit = False
 		ds = MockDataserver() if not getattr( func, 'with_ds_changes', False ) else ChangePassingMockDataserver()
 		current_mock_ds = ds
 
