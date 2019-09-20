@@ -8,6 +8,7 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import has_entries
@@ -53,6 +54,7 @@ class TestForumACL(ForumLayerTest):
 
 	def test_acl_forum_interfaces(self):
 		forum = ACLCommunityForum()
+		forum.title = u'forum_title'
 		assert_that(forum, verifiably_provides(IACLCommunityForum))
 		assert_that(forum, validly_provides(IACLCommunityForum))
 
@@ -66,6 +68,7 @@ class TestForumACL(ForumLayerTest):
 
 	def test_forum_acl_provider(self):
 		forum = ACLCommunityForum()
+		forum.title = u'forum_title'
 		provider = nti_interfaces.IACLProvider(forum)
 		assert_that(provider, instance_of(_ACLCommunityForumACLProvider))
 
@@ -76,6 +79,7 @@ class TestForumACL(ForumLayerTest):
 	def test_externalizes(self):
 		ace = ForumACE(Action='Allow', Permissions=('All',), Entities=('foo',))
 		forum = ACLCommunityForum()
+		forum.title = u'forum_title'
 		forum.ACL = [ace]
 		external = toExternalObject(forum)
 		assert_that(external, has_entry('Class', u'CommunityForum'))
@@ -104,7 +108,7 @@ class TestBoardACL(DataserverLayerTest):
 		creator = Community.create_community(dataserver=self.ds, username='Creator')
 
 		com_ntiid = community.NTIID
-		assert_that(com_ntiid, is_('tag:nextthought.com,2011-10:system-NamedEntity:Community-testcommunity'))
+		assert_that(com_ntiid, not_none())
 
 		ace = ForumACE(Action='Allow',
 					   Permissions=('Read',),

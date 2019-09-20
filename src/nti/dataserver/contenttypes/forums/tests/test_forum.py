@@ -56,26 +56,31 @@ class TestForum(ForumLayerTest):
 
 	def test_forum_interfaces(self):
 		post = Forum()
+		post.title = u'forum_title'
 		assert_that(post, verifiably_provides(IForum))
 		assert_that(post, validly_provides(IForum))
 
 	def test_general_forum_interfaces(self):
 		post = GeneralForum()
+		post.title = u'forum_title'
 		assert_that(post, verifiably_provides(IGeneralForum))
 		assert_that(post, validly_provides(IGeneralForum))
 
 	def test_community_forum_interfaces(self):
 		post = CommunityForum()
+		post.title = u'forum_title'
 		assert_that(post, verifiably_provides(ICommunityForum))
 		assert_that(post, validly_provides(ICommunityForum))
 
 	def test_dfl_forum_interfaces(self):
 		post = DFLForum()
+		post.title = u'forum_title'
 		assert_that(post, verifiably_provides(IDFLForum))
 		assert_that(post, validly_provides(IDFLForum))
 
 	def test_blog_interfaces(self):
 		post = PersonalBlog()
+		post.title = u'forum_title'
 		assert_that(post, verifiably_provides(IForum))
 		assert_that(post, validly_provides(IForum))
 		assert_that(post, validly_provides(IPersonalBlog))
@@ -97,7 +102,7 @@ class TestForum(ForumLayerTest):
 		assert_that(forum, validly_provides(IDFLForum))
 		assert_that(forum, has_property('__parent__', validly_provides(IDFLBoard)))
 		assert_that(forum.__parent__, has_property('__parent__', dfl))
-		
+
 	def test_forum_constraints(self):
 
 		@interface.implementer(ITopic, IWeakRef)
@@ -130,6 +135,7 @@ class TestForum(ForumLayerTest):
 
 		board = Board()
 		forum = Forum()
+		forum.title = u'forum_title'
 		topic = Topic()
 
 		board['forum'] = forum
