@@ -202,6 +202,8 @@ class TestUGDQueryViews(NewRequestLayerTest):
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId(user, ntiids.ROOT)
 
+                transaction.doom()
+
 	@WithMockDS(with_changes=True)
 	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
 	def test_rstream_not_found_following_community(self, mock_interaction):
