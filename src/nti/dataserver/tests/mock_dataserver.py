@@ -4,8 +4,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import warnings
 
-import transaction
-
 import ZODB
 
 from ZODB.DemoStorage import DemoStorage
@@ -227,7 +225,7 @@ class mock_db_trans(object):
 		self._site_name = site_name
 
 	def __enter__(self):
-		# See comments in zodb_connection_tween: we need to put the 
+		# See comments in zodb_connection_tween: we need to put the
 		# manager in explicit mode before opening DB connections.
 		transaction.manager.explicit = True
 		transaction.begin()
@@ -301,10 +299,10 @@ def WithMockDSTrans( func ):
 		# need to even do that anymore.
 		# setHooks()
 
-                # zope.generation doesn't play nice with explicit transaction
-                # manager. https://github.com/zopefoundation/zope.generations/issues/8
-                transaction.manager.explicit = False
-                
+		# zope.generation doesn't play nice with explicit transaction
+		# manager. https://github.com/zopefoundation/zope.generations/issues/8
+		transaction.manager.explicit = False
+
 		ds = MockDataserver() if not getattr( func, 'with_ds_changes', False ) else ChangePassingMockDataserver()
 		current_mock_ds = ds
 
