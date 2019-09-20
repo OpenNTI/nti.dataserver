@@ -4,6 +4,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import warnings
 
+import transaction
+
 import ZODB
 
 from ZODB.DemoStorage import DemoStorage
@@ -298,6 +300,11 @@ def WithMockDSTrans( func ):
 		# All fixtures now setHooks() before running, so no
 		# need to even do that anymore.
 		# setHooks()
+
+                # zope.generation doesn't play nice with explicit transaction
+                # manager. https://github.com/zopefoundation/zope.generations/issues/8
+                transaction.manager.explicit = False
+                
 		ds = MockDataserver() if not getattr( func, 'with_ds_changes', False ) else ChangePassingMockDataserver()
 		current_mock_ds = ds
 
