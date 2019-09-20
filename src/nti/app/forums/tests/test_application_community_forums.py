@@ -19,7 +19,6 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import greater_than
-from hamcrest import has_property
 does_not = is_not
 
 import fudge
@@ -66,7 +65,6 @@ from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges 
 from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
-from nti.app.forums.tests.base_forum_testing import _plain
 from nti.app.forums.tests.base_forum_testing import UserCommunityFixture
 from nti.app.forums.tests.base_forum_testing import AbstractTestApplicationForumsBaseMixin
 
@@ -99,11 +97,10 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 	default_community = 'TheCommunity'
 	default_entityname = default_community
 	forum_url_relative_to_user = _BOARD_NAME + '/' + _FORUM_NAME
-	forum_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Forum:GeneralCommunity-Forum'
-	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-Forum.'
-
-	board_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Board:GeneralCommunity-DiscussionBoard'
-	board_ntiid_checker = board_ntiid
+	forum_ntiid = None
+	forum_topic_ntiid_base = None
+	forum_ntiid_url = None
+	board_ntiid_checker = not_none()
 	board_content_type = None
 
 	forum_content_type = 'application/vnd.nextthought.forums.communityforum+json'
@@ -128,13 +125,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		user = self.resolve_user(username=self.default_community)
 		href = self.require_link_href_with_rel( user, self.board_link_rel )
 		assert_that( href, is_( self.board_pretty_url ) )
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_default_board_can_be_resolved_by_ntiid( self ):
-		board_res = self.fetch_by_ntiid( self.board_ntiid )
-		assert_that( board_res, has_property( 'content_type', self.board_content_type ) )
-		assert_that( board_res.json_body, has_entry( 'MimeType', _plain( self.board_content_type ) ) )
-		self.require_link_href_with_rel( board_res.json_body, 'contents' )
 
 	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
 	@time_monotonically_increases
@@ -558,7 +548,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 
 		# Test topic creation queues a job
 		assert_that(queue.empty(), is_(True))
-		self._POST_and_publish_topic_entry()
+		self._POST_and_publish_topic_entry(forum_url=forum_location)
 		assert_that(queue.empty(), is_not(True))
 
 		# Test the number of emails sent matches the number of community members (fudge decorator does the assertion)

@@ -240,7 +240,7 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 			assert_that(res, has_property('content_type', self.forum_content_type))
 			assert_that(res.json_body, has_entry('title', self.forum_title))
 			if self.forum_ntiid:
-				assert_that(res.json_body, has_entry('NTIID', self.forum_ntiid))
+				assert_that(res.json_body, has_entry('NTIID', not_none()))
 
 			# We have a contents URL
 			contents_href = self.require_link_href_with_rel(res.json_body, 'contents')
