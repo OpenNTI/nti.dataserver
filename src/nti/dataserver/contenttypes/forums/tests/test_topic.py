@@ -176,7 +176,7 @@ class TestTopic(ForumLayerTest):
 	def test_headline_topic_externalizes(self):
 
 		topic = HeadlineTopic()
-		topic.title = 'foo'
+		topic.title = u'foo'
 
 		assert_that(topic,
 					 externalizes(all_of(
@@ -189,7 +189,7 @@ class TestTopic(ForumLayerTest):
 						is_not(has_key('flattenedSharingTargets')))))
 
 		assert_that(calling(update_from_external_object).with_args(topic, {'title': 'No\nnewline'}),
-					raises(ConstraintNotSatisfied, "(u'No\\\\nnewline', 'title')"))
+					raises(ConstraintNotSatisfied, "(u'No\\\\nnewline', u'title')"))
 
 		# With a comment
 		topic['k'] = Post()
@@ -199,14 +199,14 @@ class TestTopic(ForumLayerTest):
 		assert_that(topic,
 					 externalizes(has_entries('PostCount', 1,
 											  'NewestDescendant', has_entries('Class', 'Post',
-																		  'Last Modified', 42))))
+																		  	  'Last Modified', 42))))
 		# and on-demand
 		del topic._newestPostWref
 		assert_that(topic, has_property('_newestPostWref', none()))
 		assert_that(topic,
 					 externalizes(has_entries('PostCount', 1,
 											  'NewestDescendant', has_entries('Class', 'Post',
-																		  'Last Modified', 42))))
+																		      'Last Modified', 42))))
 	def test_blog_topic_externalizes(self):
 
 		post = PersonalBlogEntry()
