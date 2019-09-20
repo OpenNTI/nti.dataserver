@@ -132,6 +132,9 @@ def _mock_ds_wrapper_for( func,
 		_base_storage = base_storage
 		if callable(_base_storage):
 			_base_storage = _base_storage( *args )
+		# zope.generation doesn't play nice with explicit transaction
+		# manager. https://github.com/zopefoundation/zope.generations/issues/8
+		transaction.manager.explicit = False
 		# see comments about hooks in WithMockDS
 		ds = factory(base_storage=_base_storage)
 		current_mock_ds = ds
@@ -227,10 +230,10 @@ class mock_db_trans(object):
 	def __enter__(self):
 		# See comments in zodb_connection_tween: we need to put the
 		# manager in explicit mode before opening DB connections.
-		transaction.manager.explicit = True
+		transaction.manager.explicit = False
 		transaction.begin()
 		self.conn = conn = self.ds.db.open()
-		assert conn.explicit_transactions
+		#assert conn.explicit_transactions
 		global current_transaction
 		current_transaction = conn
 
