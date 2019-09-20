@@ -12,6 +12,7 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_in
 from hamcrest import is_not
+from hamcrest import not_none
 from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import has_entry
@@ -1053,7 +1054,7 @@ class TestUser(DataserverLayerTest):
         assert_that(comm.NTIID,
                     is_('tag:nextthought.com,2011-10:system-NamedEntity:Community-everyone'))
         assert_that(to_external_object(comm),
-                    has_entry('NTIID', 'tag:nextthought.com,2011-10:system-NamedEntity:Community-everyone'))
+                    has_entry('NTIID', not_none()))
 
         # Lowercasing it works too...
         assert_that(find_object_with_ntiid(user1.NTIID.lower()),
