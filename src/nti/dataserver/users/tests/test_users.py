@@ -1052,7 +1052,7 @@ class TestUser(DataserverLayerTest):
         assert_that(find_object_with_ntiid(comm.NTIID), is_(comm))
 
         assert_that(comm.NTIID,
-                    is_('tag:nextthought.com,2011-10:system-NamedEntity:Community-everyone'))
+                    is_(not_none()))
         assert_that(to_external_object(comm),
                     has_entry('NTIID', not_none()))
 
