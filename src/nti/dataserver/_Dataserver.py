@@ -139,7 +139,9 @@ class MinimalDataserver(object):
         return config.temp_get_config(environment_dir, demo=demo)
 
     def _open_dbs(self):
-        
+
+        # zope.generation doens't play nice when the transaction
+        # manager is in explicit mode. https://github.com/zopefoundation/zope.generations/issues/8
         assert not transaction.manager.explicit
         
         if self.db is not None:
