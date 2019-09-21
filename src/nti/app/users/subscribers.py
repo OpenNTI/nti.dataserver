@@ -43,6 +43,7 @@ from nti.appserver.interfaces import IUserLogoutEvent
 from nti.coremetadata.interfaces import UserLastSeenEvent
 from nti.coremetadata.interfaces import IUserLastSeenEvent
 from nti.coremetadata.interfaces import IDeactivatedCommunity
+from nti.coremetadata.interfaces import IUnscopedGlobalCommunity
 from nti.coremetadata.interfaces import IDeactivatedCommunityEvent
 from nti.coremetadata.interfaces import IAutoSubscribeMembershipPredicate
 
@@ -119,6 +120,8 @@ def _on_auto_subscribe_created(auto_subscribe, unused_event):
 
 @component.adapter(ICommunity, IObjectAddedEvent)
 def _on_community_created(community, unused_event):
+    if IUnscopedGlobalCommunity.providedBy(community):
+        return
     set_community_creation_site(community)
     # create default forum
     board = ICommunityBoard(community)

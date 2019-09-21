@@ -86,7 +86,7 @@ class TestMetadataIndex(DataserverLayerTest):
 
         assert_that(list(catalog.searchResults(topics='topLevelContent')),
                     contains(root_note))
-        
+
         assert_that(list(catalog.searchResults(topics='isUserGeneratedData')),
                     has_length(2))
 
@@ -143,7 +143,7 @@ class TestMetadataIndex(DataserverLayerTest):
             results = list(catalog.searchResults(**query))
 
             __traceback_info__ = query, [
-                (type(x), 
+                (type(x),
                  getattr(x, 'creator', None)) for x in results]
             assert_that(results, is_empty())
 
