@@ -66,11 +66,7 @@ class TestSubscribers(ApplicationLayerTest):
 				_user.record_dynamic_membership(community)
 
 			board = ICommunityBoard(community)
-
-			forum = CommunityForum()
-			forum.title = u'test'
-			forum.creator = user1
-			board[u'Forum'] = forum
+			forum = board[u'Forum']
 
 			topic = CommunityHeadlineTopic()
 			topic.title = u'a test'
