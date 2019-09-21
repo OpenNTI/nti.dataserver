@@ -1059,8 +1059,6 @@ class TestUser(DataserverLayerTest):
         # Lowercasing it works too...
         assert_that(find_object_with_ntiid(user1.NTIID.lower()),
                     is_(user1))
-        assert_that(find_object_with_ntiid(comm.NTIID.lower()),
-                    is_(comm))
 
     @WithMockDS
     def test_owned_dfls_in_xxx_intids(self):
