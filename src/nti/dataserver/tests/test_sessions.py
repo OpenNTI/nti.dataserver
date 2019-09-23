@@ -17,6 +17,8 @@ from nose.tools import assert_raises
 
 from zope import component
 
+from zope.component import getGlobalSiteManager
+
 from nti.testing.matchers import validly_provides as verifiably_provides
 import nti.dataserver.interfaces as nti_interfaces
 from nti.socketio import interfaces as sio_interfaces
@@ -177,7 +179,6 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 			# now dead
 			session.incr_hits()
 			session.kill()
-
 			assert_that( self.session_service.get_sessions_by_owner( session.owner ), is_( [] ) )
 
 	@WithMockDSTrans
@@ -191,33 +192,37 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 			self.session_service.get_sessions_by_owner( session.owner )
 			called[0] += 1
 
-		component.provideHandler( session_disconnected_broadcaster )
+                gsm = getGlobalSiteManager()
+		gsm.registerHandler( session_disconnected_broadcaster )
 
-		sessions = []
-		recur_limit = sys.getrecursionlimit()
-		# The length needs to be pretty big to ensure recursion fails
-		two_days_ago = time.time() - 60 * 60 * 24 * 2
-		for val in range(recur_limit * 2):
-			session = self.session_service.create_session( watch_session=False, drop_old_sessions=False )
-			if val % 2 == 0:
-				# Make every other value a day+ old, so it gets cleaned up.
-				session.creation_time -= two_days_ago
-			sessions.append( session )
-			session.incr_hits()
+                try:
+		        sessions = []
+		        recur_limit = sys.getrecursionlimit()
+		        # The length needs to be pretty big to ensure recursion fails
+		        two_days_ago = time.time() - 60 * 60 * 24 * 2
+		        for val in range(recur_limit * 2):
+			        session = self.session_service.create_session( watch_session=False, drop_old_sessions=False )
+			        if val % 2 == 0:
+				        # Make every other value a day+ old, so it gets cleaned up.
+				        session.creation_time -= two_days_ago
+			        sessions.append( session )
+			        session.incr_hits()
 
-		# Only half are alive now.
-		assert_that( self.session_service.get_sessions_by_owner( session.owner ),
-					 has_length( len( sessions ) / 2 ) )
-		assert_that( called[0], is_( len( sessions ) / 2 ) )
+		        # Only half are alive now.
+		        assert_that( self.session_service.get_sessions_by_owner( session.owner ),
+			             has_length( len( sessions ) / 2 ) )
+		        assert_that( called[0], is_( len( sessions ) / 2 ) )
 
-		# Now kill the rest of them, silently
-		for session in sessions:
-			session.creation_time = 0
-			del session.last_heartbeat_time
+		        # Now kill the rest of them, silently
+		        for session in sessions:
+		                session.creation_time = 0
+			        del session.last_heartbeat_time
 
-		# Now we can request them again, get nothing, and not overflow the stack doing so.
-		assert_that( self.session_service.get_sessions_by_owner( session.owner ), is_( [] ) )
-		assert_that( called[0], is_( len( sessions ) ) )
+		        # Now we can request them again, get nothing, and not overflow the stack doing so.
+		        assert_that( self.session_service.get_sessions_by_owner( session.owner ), is_( [] ) )
+		        assert_that( called[0], is_( len( sessions ) ) )
+                finally:
+                        gsm.unregisterHandler(session_disconnected_broadcaster)
 
 	@WithMockDSTrans
 	def test_delete_session(self):
