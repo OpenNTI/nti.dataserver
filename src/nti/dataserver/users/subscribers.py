@@ -62,9 +62,10 @@ def _community_blurred_avatar(community, event):
         profile = ICommunityProfile(community, None)
         # We want to ensure we have an avatar here, and not a gravatar.
         avatar_file = getattr(profile, '_avatarURL', None)
-        if     avatar_file is None \
+        # We may have a type we cannot handle (a url or an SVG file)
+        # Empty out the blurred url and return.
+        if     not hasattr(avatar_file, 'mimeType') \
             or avatar_file.mimeType == 'image/svg+xml':
-            # Always empty out our old value
             profile.blurredAvatarURL = None
             return
         data = StringIO(avatar_file.data)
