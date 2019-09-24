@@ -89,6 +89,7 @@ from nti.externalization.representation import to_external_representation
 from nti.site.site import get_site_for_site_names
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.application_webtest import ApplicationTestLayer
 
 from nti.appserver.tests.test_application import TestApp
 from nti.appserver.tests.test_application import WithSharedApplicationMockDS
@@ -328,8 +329,12 @@ class TestLinkProviders(ApplicationLayerTest):
 		self.forbid_link_with_rel(result, REL_INVALID_CONTACT_EMAIL)
 		self.forbid_link_with_rel(result, REL_INVALID_EMAIL)
 
+class LogonViewsLayer(ApplicationTestLayer):
+        pass
 
 class TestLogonViews(ApplicationLayerTest):
+
+        layer = LogonViewsLayer # we use our own layer here b/c our tests manipulate the route registry
 
 	def setUp(self):
 		super(TestLogonViews, self).setUp()
@@ -348,33 +353,6 @@ class TestLogonViews(ApplicationLayerTest):
 			component.getGlobalSiteManager().registerUtility(self.__policy)
 		component.getGlobalSiteManager().unregisterHandler(_handle_user_create_event)
 		super(TestLogonViews, self).tearDown()
-
-	# @classmethod
-	# def setUpClass( self, request_factory=DummyRequest, request_args=() ):
-	# 	super(TestLogonViews,self).setUpClass( request_factory=request_factory, request_args=request_args )
-	# 	component.provideHandler( _handle_user_create_event )
-
-	# 	self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )
-	# 	self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.password' )
-	# 	self.config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
-	# 	self.config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook.1' )
-
-	# 	self.config.add_route( name='logon.forgot.username', pattern='/dataserver2/logon.forgot.username' )
-	# 	self.config.add_route( name='logon.forgot.passcode', pattern='/dataserver2/logon.forgot.passcode' )
-	# 	self.config.add_route( name='logon.reset.passcode', pattern='/dataserver2/logon.reset.passcode' )
-
-	# 	self.config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
-
-	# 	self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
-	# 	self.config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}' )
-
-	# 	self.config.add_route(name='logon.nti.impersonate', pattern='/dataserver2/logon.nti.impersonate',
-	# 						  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory')
-
-
-	# 	# Provide a library
-	# 	library = FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
-	# 	component.provideUtility( library, lib_interfaces.IContentPackageLibrary )
 
 	def _get_link_by_rel(self, links, rel_name):
 		return next((x for x in links if x.rel == rel_name))
