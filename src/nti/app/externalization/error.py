@@ -150,9 +150,9 @@ def validation_error_to_dict(request, validation_error):
             # this is a fairly easy situation to get into
             if isinstance(msg, bytes):
                 try:
-                    msg = msg.encode('utf-8')
+                    msg = msg.decode('utf-8')
                 except UnicodeError:
-                    msg = ''
+                    msg = u''
 
     result = {
         'message': msg,
