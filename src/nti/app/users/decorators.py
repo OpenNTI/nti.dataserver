@@ -33,6 +33,7 @@ from nti.appserver.pyramid_authorization import has_permission
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 
 from nti.coremetadata.interfaces import IDeactivatedCommunity
+from nti.coremetadata.interfaces import IDeleteLockedCommunity
 
 from nti.dataserver.authorization import ACT_DELETE
 from nti.dataserver.authorization import ACT_UPDATE
@@ -147,6 +148,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         user_can_update = has_permission(ACT_UPDATE, context)
         result['RemoteIsMember'] = in_community
         result['NumberOfMembers'] = context.number_of_members()
+        result['DeleteLocked'] = IDeleteLockedCommunity.providedBy(context)
         if      (    context.joinable \
                  and context.auto_subscribe is None) \
             or user_can_update:
@@ -188,6 +190,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
             _links.append(link)
 
         if      not IDeactivatedCommunity.providedBy(context) \
+            and not IDeleteLockedCommunity.providedBy(context) \
             and has_permission(ACT_DELETE, context):
             link = Link(context,
                         rel="delete",

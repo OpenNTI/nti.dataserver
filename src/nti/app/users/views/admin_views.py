@@ -74,6 +74,8 @@ from nti.appserver.interfaces import INamedLinkView
 
 from nti.common.string import is_true
 
+from nti.coremetadata.interfaces import IDeleteLockedCommunity
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
@@ -407,6 +409,42 @@ class SetUserCreationSiteView(SetEntityCreationSiteView):
         site = self.get_site(values)
         self.set_site(user, site)
         self.update_site_community(user, values)
+        return hexc.HTTPNoContent()
+
+
+@view_config(name='DeleteLock')
+@view_config(name='delete_lock')
+@view_defaults(route_name='objects.generic.traversal',
+               request_method='POST',
+               context=ICommunity,
+               renderer='rest',
+               permission=nauth.ACT_NTI_ADMIN)
+class DeleteLockCommunityView(AbstractAuthenticatedView):
+
+    def __call__(self):
+        logger.info('Applying delete lock to community (%s) (%s)',
+                    self.context.username,
+                    self.remoteUser)
+        if not IDeleteLockedCommunity.providedBy(self.context):
+            interface.alsoProvides(self.context, IDeleteLockedCommunity)
+        return hexc.HTTPNoContent()
+
+
+@view_config(name='DeleteUnlock')
+@view_config(name='delete_unlock')
+@view_defaults(route_name='objects.generic.traversal',
+               request_method='POST',
+               context=ICommunity,
+               renderer='rest',
+               permission=nauth.ACT_NTI_ADMIN)
+class DeleteUnLockCommunityView(AbstractAuthenticatedView):
+
+    def __call__(self):
+        logger.info('Removing delete lock from community (%s) (%s)',
+                    self.context.username,
+                    self.remoteUser)
+        if IDeleteLockedCommunity.providedBy(self.context):
+            interface.noLongerProvides(self.context, IDeleteLockedCommunity)
         return hexc.HTTPNoContent()
 
 
