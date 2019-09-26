@@ -181,9 +181,9 @@ class Forum(Implicit,
 
             redis = component.getUtility(IRedisClient)
             args = (redis, unicode(uid),)
-            transactions.do(target=self,
-                            call=self._publish_descendant_to_redis,
-                            args=args)
+            transactions.do_near_end(target=self,
+                                     call=self._publish_descendant_to_redis,
+                                     args=args)
 
     def _publish_descendant_to_redis(self, redis, data):
         redis.setex(self._descendent_key(), _NEWEST_TTL, data)

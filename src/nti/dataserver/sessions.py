@@ -504,9 +504,9 @@ class SessionService(object):
             # We wind up with a lot of these data managers for a given transaction (e.g., one for every
             # message to every session). We really would like to coallesce these into one, which we
             # can do with some work
-            transactions.do(target=self,
-                            call=self._put_msg_to_redis,
-                            args=(queue_name, msg,))
+            transactions.do_near_end(target=self,
+                                     call=self._put_msg_to_redis,
+                                     args=(queue_name, msg,))
 
     def _publish_msg(self, name, session_id, msg_str):
         if msg_str is None:  # Disconnecting/kill(). These don't need to go to the cluster, handled locally
@@ -535,11 +535,11 @@ class SessionService(object):
         # node of the cluster, and to make the WebSockets case non-blocking (gevent). See also
         # socketio-server
         if not self._dispatch_message_to_proxy(session_id, name, msg_str):
-            transactions.do(target=self,
-                            call=self._publish_msg_to_redis,
-                            args=(self.channel_name,
-                                  pickle.dumps([session_id,
-                                                name, msg_str], pickle.HIGHEST_PROTOCOL),))
+            transactions.do_near_end(target=self,
+                                     call=self._publish_msg_to_redis,
+                                     args=(self.channel_name,
+                                           pickle.dumps([session_id,
+                                                         name, msg_str], pickle.HIGHEST_PROTOCOL),))
 
     def queue_message_from_client(self, session_id, msg):
         self._put_msg('enqueue_message_from_client',
