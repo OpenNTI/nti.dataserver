@@ -57,6 +57,7 @@ from nti.appserver.pyramid_authorization import has_permission
 from nti.coremetadata.interfaces import ICommunity
 from nti.coremetadata.interfaces import IEntityIterable
 from nti.coremetadata.interfaces import IDeactivatedCommunity
+from nti.coremetadata.interfaces import IDeleteLockedCommunity
 from nti.coremetadata.interfaces import DeactivatedCommunityEvent
 from nti.coremetadata.interfaces import ReactivatedCommunityEvent
 
@@ -219,6 +220,14 @@ class CreateCommunityView(AbstractAuthenticatedView,
 class DeleteCommunityView(AbstractAuthenticatedView):
 
     def __call__(self):
+        if IDeleteLockedCommunity.providedBy(self.context):
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Community cannot be deleted.'),
+                                 'code': u"DeleteLockedCommunityError"
+                             },
+                             None)
         profile = ICommunityProfile(self.context, None)
         logger.info('Deleting community (%s) (%s) (%s)',
                     self.context.username,

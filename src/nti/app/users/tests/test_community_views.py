@@ -699,6 +699,17 @@ class TestCommunityViews(ApplicationLayerTest):
                                                     new_comm2_username,
                                                     private_unjoinable_comm))
 
+        # Test delete locked (NT admin)
+        self.testapp.post('%s/DeleteLock' % '/dataserver2/users/%s' % public_joinable_comm)
+        res = self.testapp.get('/dataserver2/users/%s' % public_joinable_comm).json_body
+        self.forbid_link_with_rel(res, 'delete')
+        self.testapp.delete(delete_href, extra_environ=terra_admin_env, status=422)
+
+        # Unlock
+        self.testapp.post('%s/DeleteUnlock' % '/dataserver2/users/%s' % public_joinable_comm)
+        res = self.testapp.get('/dataserver2/users/%s' % public_joinable_comm).json_body
+        self.require_link_href_with_rel(res, 'delete')
+
         # Test community limits
         @interface.implementer(ICommunityPolicyManagementUtility)
         class TestCommunityPolicy(object):
