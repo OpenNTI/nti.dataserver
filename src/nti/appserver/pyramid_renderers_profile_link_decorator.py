@@ -13,20 +13,22 @@ from __future__ import absolute_import
 from zope import interface
 from zope import component
 
-from pyramid.threadlocal import get_current_request
+from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver._util import link_belongs_to_user
 
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_SCHEMA
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_PREFLIGHT
 
+from nti.appserver.pyramid_authorization import has_permission
+
 from nti.appserver.user_activity_views import REL_USER_ACTIVITY
+
+from nti.dataserver.authorization import ACT_READ
 
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.interfaces import IExternalMappingDecorator
-
-from nti.externalization.singleton import Singleton
 
 from nti.dataserver.interfaces import IUser
 
@@ -34,19 +36,21 @@ from nti.links.links import Link
 
 logger = __import__('logging').getLogger(__name__)
 
-
-# These imports are broken out explicitly for speed (avoid runtime
-# attribute lookup)
 LINKS = StandardExternalFields.LINKS
 
 
 @component.adapter(IUser)
 @interface.implementer(IExternalMappingDecorator)
-class ProfileLinkDecorator(Singleton):
+class ProfileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def decorateExternalMapping(self, context, mapping):
-        request = get_current_request()
-        the_links = mapping.setdefault(LINKS, [])
+    def _predicate(self, context, unused_result):
+        return  self._is_authenticated \
+            and (   context.username == self.request.authenticated_userid \
+                 or has_permission(ACT_READ, context))
+
+    def _do_decorate_external(self, context, result):
+        request = self.request
+        the_links = result.setdefault(LINKS, [])
         if request is not None and context.username == request.authenticated_userid:
             for rel in (REL_ACCOUNT_PROFILE_SCHEMA,
                         REL_ACCOUNT_PROFILE_PREFLIGHT):
