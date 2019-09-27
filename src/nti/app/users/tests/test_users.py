@@ -8,6 +8,7 @@ from __future__ import absolute_import
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
 from hamcrest import raises
 from hamcrest import calling
 from hamcrest import has_entry
@@ -15,9 +16,15 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import only_contains
 
+import time
+
 from zope import component
 from zope import interface
 from zope import lifecycleevent
+
+from zope.event import notify
+
+from nti.coremetadata.interfaces import UserLastSeenEvent
 
 from nti.dataserver.interfaces import IDataserver
 
@@ -35,10 +42,30 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
 
+from nti.app.testing.request_response import DummyRequest
+
 from nti.dataserver.tests import mock_dataserver
 
 
 class TestUsers(ApplicationLayerTest):
+
+    @WithSharedApplicationMockDSWithChanges
+    def test_user_last_seen(self):
+        username = u'herodotus_lastseen'
+        request = DummyRequest()
+        t0 = time.time()
+        t0_thirty = t0 + 30
+        t0_fiftynine = t0 + 59
+        t0_sixty = t0 + 60
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = User.create_user(username=username)
+            notify(UserLastSeenEvent(user, t0, request))
+            assert_that(user.lastSeenTime, is_(t0))
+            for small_delta_time in (t0_thirty, t0_fiftynine):
+                notify(UserLastSeenEvent(user, small_delta_time, request))
+                assert_that(user.lastSeenTime, is_(t0))
+            notify(UserLastSeenEvent(user, t0_sixty, request))
+            assert_that(user.lastSeenTime, is_(t0_sixty))
 
     @WithSharedApplicationMockDSWithChanges
     def test_user_blacklist(self):

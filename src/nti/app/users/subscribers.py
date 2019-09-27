@@ -152,12 +152,18 @@ def _on_user_logout(user, event):
     _on_user_logon(user, event)
 
 
+LAST_SEEN_UPDATE_BUFFER_IN_SEC = 60
+
+
 @component.adapter(IUser, IUserLastSeenEvent)
 def _on_user_lastseen(user, event):
     request = event.request
     if request is not None and not is_impersonating(request):
-        timestamp = event.timestamp
-        user.update_last_seen_time(timestamp)
+        # Only update last seen if we are past our buffer threshold
+        if      user.lastSeenTime \
+            and user.lastSeenTime + LAST_SEEN_UPDATE_BUFFER_IN_SEC > event.timestamp:
+            return
+        user.update_last_seen_time(event.timestamp)
 
 
 @component.adapter(IUser, IObjectRemovedEvent)
