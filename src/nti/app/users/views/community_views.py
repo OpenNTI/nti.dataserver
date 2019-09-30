@@ -8,6 +8,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import re
 import six
 
 from pyramid import httpexceptions as hexc
@@ -178,7 +179,8 @@ class CreateCommunityView(AbstractAuthenticatedView,
         """
         site_name = getSite().__name__
         username = '%s@%s' % (alias, site_name)
-        username = username.replace(' ', '_')
+        # Make sure we have a safe username (swap out non safe chars)
+        username = re.sub(r'[^.a-zA-Z0-9-+.@_]', "", username)
         dataserver = component.getUtility(IDataserver)
         users_folder = IShardLayout(dataserver).users_folder
         # XXX: Do we do this or do we raise because of conflict?

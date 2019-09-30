@@ -535,13 +535,14 @@ class TestCommunityViews(ApplicationLayerTest):
                                status=403)
         self.testapp.post_json(all_href, {}, extra_environ=terra_admin_env,
                                status=422)
-        new_comm1_alias = "new community one"
+        # We can create with special chars in alias
+        new_comm1_alias = "new community one'@+%"
         data = {'alias': new_comm1_alias,
                 'public': True,
                 'joinable': True}
         new_comm1 = self.testapp.post_json(all_href, data, extra_environ=terra_admin_env)
         new_comm1 = new_comm1.json_body
-        new_comm1_username = 'new_community_one@alpha.nextthought.com'
+        new_comm1_username = 'newcommunityone@+@alpha.nextthought.com'
         assert_that(new_comm1, has_entries('alias', new_comm1_alias,
                                            'Username', new_comm1_username,
                                            'public', True,
