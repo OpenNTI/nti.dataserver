@@ -78,7 +78,8 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
         result = bool(    self._is_authenticated
                       and self.remoteUser == context
                       and profile is not None
-                      and not profile.email_verified)
+                      and not profile.email_verified
+                      and not is_admin(context))
         return result
 
     def _do_decorate_external(self, context, result):
