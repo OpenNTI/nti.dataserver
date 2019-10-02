@@ -291,10 +291,8 @@ class _FriendsListExternalObject(_EntityExternalObject):
                 # here, but I think that is no longer a concern since we do not attempt
                 # to decorate these on the user. Without this, the client state gets
                 # messed up (due to missing fields).
-                if friend == self.entity.creator:
-                    friend = toExternalObject(friend, name='personal-summary')
-                else:
-                    friend = toExternalObject(friend, name='summary')
+                ext_name = _named_externalizer(friend)
+                friend = toExternalObject(friend, name=ext_name)
                 theFriends.append(friend)
 
         extDict['friends'] = theFriends
