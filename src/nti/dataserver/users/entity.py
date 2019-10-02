@@ -374,13 +374,8 @@ class Entity(PersistentCreatedModDateTrackingObject):
         # update and we are not disabling it (password reset). Once we are saved,
         # presumably with a valid profile, then if the profile changes and we are
         # missing (new) fields, we cannot necessarily expect to have them filled in.
-
-        # Bounced email update only, disable validation
-        bounced_email_update = getattr(profile, 'email_verified', True) == False \
-                            and len(parsed) == 1 and 'email' in parsed
         validate =     (profile_update or not self._p_mtime) \
-                   and not IDoNotValidateProfile.providedBy(self) \
-                   and not bounced_email_update
+                   and not IDoNotValidateProfile.providedBy(self)
         __traceback_info__ = profile_iface, profile_update, validate
         io = InterfaceObjectIO(profile, profile_iface,
                                validate_after_update=validate)

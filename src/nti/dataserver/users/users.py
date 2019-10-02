@@ -59,6 +59,8 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.entity import get_shared_dataserver
 
+from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IDoNotValidateProfile
 from nti.dataserver.users.interfaces import OldPasswordDoesNotMatchCurrentPassword
 
 from nti.dataserver.users.principal import Principal
@@ -164,7 +166,7 @@ class User(Principal):
         if isinstance(username, cls):
             return username
         if username:
-            result = cls.get_entity(username, dataserver=dataserver, default=default) 
+            result = cls.get_entity(username, dataserver=dataserver, default=default)
         else:
             result = None
         # but this instance check is the base class
@@ -210,13 +212,13 @@ class User(Principal):
                 }
             else:
                 # a single externalized entity map
-                result = cls.get_entity(value.get('Username'), 
+                result = cls.get_entity(value.get('Username'),
                                         dataserver=dataserver)
 
         return result
 
     __external_resolvers__ = {
-        'ignoring': _resolve_entities, 
+        'ignoring': _resolve_entities,
         'accepting': _resolve_entities
     }
 
@@ -293,15 +295,15 @@ class User(Principal):
 
     @property
     def creator(self):
-        """ 
+        """
         For security, we are always our own creator.
         """
         return self
 
     @creator.setter
     def creator(self, unused_other):
-        """ 
-        Ignored. 
+        """
+        Ignored.
         """
         return
 
@@ -323,8 +325,20 @@ class User(Principal):
     updateLastSeenTime = update_last_seen_time
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
-        # with self._NoChangeBroadcast( self ):
-        super(User, self).updateFromExternalObject(parsed, *args, **kwargs)
+        profile = IUserProfile(self, None)
+        bounced_email_update =  getattr(profile, 'email_verified', True) == False \
+                            and parsed and len(parsed) == 1 and 'email' in parsed
+        if bounced_email_update:
+            try:
+                # We want to avoid any full profile validation here when a
+                # user is updating their email due to a bounce. We do something
+                # similar when resetting a password.
+                interface.alsoProvides(self, IDoNotValidateProfile)
+                super(User, self).updateFromExternalObject(parsed, *args, **kwargs)
+            finally:
+                interface.noLongerProvides(self, IDoNotValidateProfile)
+        else:
+            super(User, self).updateFromExternalObject(parsed, *args, **kwargs)
         updated = None
         # don't update last seen time
         parsed.pop('lastSeenTime', None)
@@ -409,7 +423,7 @@ class User(Principal):
         # incoming set (and remove specified drops) and then do any
         # new ignores or accepts.
         old_ignore = set(self.entities_ignoring_shared_data_from)
-        ignoring = set_from_input('ignoring', old_ignore, 
+        ignoring = set_from_input('ignoring', old_ignore,
                                   self.stop_ignoring_shared_data_from)
         ignoring_diff = ignoring - old_ignore
         handle_ext(self.reset_shared_data_from,
@@ -417,7 +431,7 @@ class User(Principal):
                    ignoring_diff)
 
         old_accept = set(self.entities_accepting_shared_data_from)
-        accepting = set_from_input('accepting', old_accept, 
+        accepting = set_from_input('accepting', old_accept,
                                    self.stop_accepting_shared_data_from)
         accepting_diff = accepting - old_accept
         handle_ext(self.reset_shared_data_from,
@@ -471,7 +485,7 @@ class User(Principal):
         return ()
 
     def accept_shared_data_from(self, source):
-        """ 
+        """
         Accepts if not ignored; auto-follows as well.
         :return: A truth value. If this was the initial add, it will be the Change.
                 If the source is ignored, it will be False.
@@ -516,21 +530,21 @@ class User(Principal):
             return change  # which is both True and useful
 
     def is_accepting_shared_data_from(self, source):
-        """ 
-        We say we're accepting so long as we're not ignoring. 
+        """
+        We say we're accepting so long as we're not ignoring.
         """
         # TODO: the 'incoming' group discussed in super will obsolete this
         return not self.is_ignoring_shared_data_from(source)
 
     def getFriendsList(self, name):
-        """ 
+        """
         Returns the friends list having the given name, otherwise
-        returns None. 
+        returns None.
         """
         return self.friendsLists.get(name)
 
     def getFriendsLists(self, unused_name=None):
-        """ 
+        """
         Returns all the friends lists
         """
         return tuple(self.friendsLists.values())
@@ -603,7 +617,7 @@ class User(Principal):
         return result
 
     def getAllContainers(self):
-        """ 
+        """
         Returns all containers, as a map from containerId to container.
         The returned value *MUST NOT* be modified.
         """
@@ -888,7 +902,7 @@ class OpenIdUser(User):
 class FacebookUser(User):
 
     __external_class_name__ = 'User'
- 
+
     facebook_url = None
 
     def __init__(self, username, **kwargs):
