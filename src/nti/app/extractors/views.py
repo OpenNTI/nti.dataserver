@@ -6,10 +6,9 @@ Views related to fetching extracting metadata
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 import gevent
 import requests
@@ -31,6 +30,8 @@ from nti.contentprocessing.metadata_extractors import get_metadata_from_http_url
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IDataserverFolder
+
+logger = __import__('logging').getLogger(__name__)
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -65,6 +66,7 @@ class _URLMetaDataExtractor(AbstractAuthenticatedView):
             return result
         return hexc.HTTPNoContent()
 interface.directlyProvides(_URLMetaDataExtractor, INamedLinkView)
+
 
 _HOP_BY_HOP_HEADERS = ['te', 'transfer-encoding', 'keep-alive', 'proxy-authorization',
                        'proxy-authentication', 'trailer', 'upgrade', 'connection']
