@@ -41,6 +41,8 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.app.forums.views.read_views import ForumContentFilteringMixin
+
 from nti.app.users import MessageFactory as _
 
 from nti.app.users.interfaces import ICommunitiesCollection
@@ -69,6 +71,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.authorization import is_site_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
+from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
@@ -624,7 +627,8 @@ class UnhideCommunityMembershipView(AbstractAuthenticatedView):
              request_method='GET',
              context=ICommunity,
              permission=nauth.ACT_READ)
-class CommunityActivityView(EntityActivityViewMixin):
+class CommunityActivityView(EntityActivityViewMixin,
+                            ForumContentFilteringMixin):
 
     def _set_user_and_ntiid(self, *unused_args, **unused_kwargs):
         self.ntiid = u''
@@ -643,6 +647,13 @@ class CommunityActivityView(EntityActivityViewMixin):
                  and user not in context) \
             and not has_permission(nauth.ACT_UPDATE, context):
             raise hexc.HTTPForbidden()
+
+    def _validate_search_object_type(self, obj):
+        """
+        We want notes and topics to go through the search term filtering.
+        """
+        return super(CommunityActivityView, self)._validate_search_object_type(obj) \
+            or INote.providedBy(obj)
 
     @property
     def _context_id(self):
