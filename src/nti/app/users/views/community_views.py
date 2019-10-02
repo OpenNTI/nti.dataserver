@@ -57,6 +57,8 @@ from nti.app.users.views.view_mixins import EntityActivityViewMixin
 
 from nti.appserver.pyramid_authorization import has_permission
 
+from nti.appserver.ugd_query_views import _combine_predicate
+
 from nti.coremetadata.interfaces import ICommunity
 from nti.coremetadata.interfaces import IEntityIterable
 from nti.coremetadata.interfaces import IDeactivatedCommunity
@@ -654,6 +656,13 @@ class CommunityActivityView(EntityActivityViewMixin,
         """
         return super(CommunityActivityView, self)._validate_search_object_type(obj) \
             or INote.providedBy(obj)
+
+    def _make_complete_predicate(self, *args, **kwargs):
+        predicate = super(CommunityActivityView, self)._make_complete_predicate(*args, **kwargs)
+        topic_predicate = self._get_topic_predicate()
+        if topic_predicate:
+            predicate = _combine_predicate(topic_predicate, predicate)
+        return predicate
 
     @property
     def _context_id(self):
