@@ -47,7 +47,13 @@ class TestPyramidAuthorization(ConfiguringTestBase):  # Not shared, we muck with
 
 		self.auth_policy = AuthPolicy()
 		self.request.registry.registerUtility(self.auth_policy)
-		self.request.registry.registerUtility(ZopeACLAuthorizationPolicy())
+		self.policy = ZopeACLAuthorizationPolicy()
+		self.request.registry.registerUtility(self.policy)
+
+	def tearDown(self):
+		super(TestPyramidAuthorization, self).tearDown()
+		self.request.registry.unregisterUtility(self.auth_policy)
+		self.request.registry.unregisterUtility(self.policy)
 
 	def test_policy(self):
 
