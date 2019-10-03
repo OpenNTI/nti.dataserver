@@ -485,8 +485,13 @@ class AbstractUpdateMembershipView(AbstractAuthenticatedView,
                     # Check if ntiid first
                     entity = find_object_with_ntiid(username)
                 else:
-                    # The standard username case
-                    entity = User.get_user(username)
+                    # Check for friends list
+                    # This branch is semi-deprecated. They should send in
+                    # the NTIID of the list...once we apply security here
+                    entity = self.remoteUser.getFriendsList(username)
+                    if entity is None:
+                        # The standard username case
+                        entity = User.get_user(username)
 
                 if entity is None:
                     logger.info('Cannot add missing entity to community (%s)',
