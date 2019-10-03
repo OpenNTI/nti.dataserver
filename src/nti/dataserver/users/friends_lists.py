@@ -246,11 +246,11 @@ class FriendsList(SimpleEnclosureMixin, Entity):  # Mixin order matters for __se
                 result += 1
 
         # What's incoming that I don't have
-        missing_entities = OOBTree_difference(incoming_entities, 
+        missing_entities = OOBTree_difference(incoming_entities,
                                               current_entities)
 
         # What's incoming that I /do/ have
-        overlap_entities = OOBTree_intersection(incoming_entities, 
+        overlap_entities = OOBTree_intersection(incoming_entities,
                                                 current_entities)
 
         # The weak refs we keep are non-persistent, so when we write out the tree set
@@ -355,7 +355,7 @@ class _FriendsListEntityIterable(object):
         self.context = context
 
     def __iter__(self):
-        return self.context  # (x for x in self.context)
+        return (x for x in self.context)
 
     def iter_usernames(self):
         return (x.username for x in self.context)
