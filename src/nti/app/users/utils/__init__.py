@@ -35,6 +35,9 @@ from zope.intid.interfaces import IIntIds
 
 from zope.security.interfaces import IPrincipal
 
+from zope.securitypolicy.interfaces import Allow
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
 from nti.app.users import MessageFactory as _
 
 from nti.app.users import VERIFY_USER_EMAIL_VIEW
@@ -43,6 +46,8 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.base._compat import text_
 from nti.base._compat import bytes_
+
+from nti.dataserver.authorization import ROLE_SITE_ADMIN
 
 from nti.dataserver.interfaces import IUser
 
@@ -389,3 +394,23 @@ def can_create_new_communities():
     site_communities = get_communities_by_site()
     return policy.max_community_limit is None \
         or len(site_communities) < policy.max_community_limit
+
+
+def get_site_admins(site=None):
+    """
+    Returns all site admins.
+    """
+    result = []
+    site = getSite() if site is None else site
+    try:
+        srm = IPrincipalRoleManager(site, None)
+    except TypeError:
+        # SiteManagerContainer (tests)
+        srm = None
+    if srm is not None:
+        for prin_id, access in srm.getPrincipalsForRole(ROLE_SITE_ADMIN.id):
+            if access == Allow:
+                user = User.get_user(prin_id)
+                if user is not None:
+                    result.append(user)
+    return result

@@ -140,7 +140,7 @@ setup(
         'nti.futures',
         'nti.geventwebsocket',
         'nti.i18n',
-	'nti.identifiers',
+        'nti.identifiers',
         'nti.intid',
         'nti.links',
         'nti.metadata',

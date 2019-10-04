@@ -28,6 +28,7 @@ from nti.app.renderers.interfaces import IUncacheableInResponse
 
 from nti.app.users import MessageFactory as _
 
+from nti.app.users.utils import get_site_admins
 from nti.app.users.utils import intids_of_users_by_site
 
 from nti.app.users.views.view_mixins import AbstractEntityViewMixin
@@ -50,7 +51,6 @@ from nti.dataserver.users.index import IX_LASTSEEN_TIME
 from nti.dataserver.users.index import get_entity_catalog
 
 from nti.site.site import get_component_hierarchy_names
-from nti.app.site.utils import get_site_admins
 
 logger = __import__('logging').getLogger(__name__)
 
