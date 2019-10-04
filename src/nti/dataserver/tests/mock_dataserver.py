@@ -132,9 +132,6 @@ def _mock_ds_wrapper_for( func,
 		_base_storage = base_storage
 		if callable(_base_storage):
 			_base_storage = _base_storage( *args )
-		# zope.generation doesn't play nice with explicit transaction
-		# manager. https://github.com/zopefoundation/zope.generations/issues/8
-		transaction.manager.explicit = False
 		# see comments about hooks in WithMockDS
 		ds = factory(base_storage=_base_storage)
 		current_mock_ds = ds
@@ -301,10 +298,6 @@ def WithMockDSTrans( func ):
 		# All fixtures now setHooks() before running, so no
 		# need to even do that anymore.
 		# setHooks()
-
-		# zope.generation doesn't play nice with explicit transaction
-		# manager. https://github.com/zopefoundation/zope.generations/issues/8
-		transaction.manager.explicit = False
 
 		ds = MockDataserver() if not getattr( func, 'with_ds_changes', False ) else ChangePassingMockDataserver()
 		current_mock_ds = ds
