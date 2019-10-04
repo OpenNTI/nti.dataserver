@@ -152,7 +152,12 @@ class TestChatRoom(DataserverLayerTest):
 
     def setUp(self):
         super(TestChatRoom, self).setUp()
-        component.provideUtility(ACLAuthorizationPolicy())
+        self.policy = ACLAuthorizationPolicy()
+        component.provideUtility(self.policy)
+
+    def tearDown(self):
+        super(TestChatRoom, self).tearDown()
+        component.getGlobalSiteManager().unregisterUtility(self.policy)
 
     @WithMockDSTrans
     def test_become_moderated(self):
@@ -417,7 +422,12 @@ class TestChatserver(DataserverLayerTest, _ChatserverTestMixin):
 
     def setUp(self):
         super(TestChatserver, self).setUp()
-        component.provideUtility(ACLAuthorizationPolicy())
+        self.policy = ACLAuthorizationPolicy()
+        component.provideUtility(self.policy)
+
+    def tearDown(self):
+        super(TestChatserver, self).tearDown()
+        component.getGlobalSiteManager().unregisterUtility(self.policy)
 
     @WithMockDSTrans
     def test_handler_shadow_user(self):
@@ -428,7 +438,6 @@ class TestChatserver(DataserverLayerTest, _ChatserverTestMixin):
                     is_(False),
                     "No ACL Found")
         room.__acl__ = auth_acl.acl_from_aces(auth_acl.ace_allowing('sjohnson', ACT_MODERATE))
-        component.provideUtility(ACLAuthorizationPolicy())
         assert_that(sjohn_handler.shadowUsers(room.ID, ['chris']), is_(True))
 
     @WithMockDSTrans
@@ -439,7 +448,6 @@ class TestChatserver(DataserverLayerTest, _ChatserverTestMixin):
         jason_handler = chat.ChatHandler(chatserver, self.sessions[3])
         room.__acl__ = auth_acl.acl_from_aces(auth_acl.ace_allowing('sjohnson', ACT_MODERATE),
                                               auth_acl.ace_allowing('chris', ACT_MODERATE))
-        component.provideUtility(ACLAuthorizationPolicy())
 
         assert_that(sjohn_handler.makeModerated(room.ID, True),
                     has_property('Moderated', True))
@@ -647,7 +655,6 @@ class TestChatserver(DataserverLayerTest, _ChatserverTestMixin):
 
         # I can become the moderator of this room
         del sessions[5].socket.events[:]
-        component.provideUtility(ACLAuthorizationPolicy())
         assert_that(foo_handler.makeModerated(room3.ID, True), is_(room3))
         assert_that(room3.Moderators, is_(set([foo_handler.session.owner])))
         assert_that(room3.Moderated, is_(True))
