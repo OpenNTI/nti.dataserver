@@ -16,8 +16,6 @@ from six.moves import urllib_parse
 
 import redis
 
-import transaction
-
 from zope import component
 from zope import interface
 
@@ -140,10 +138,6 @@ class MinimalDataserver(object):
 
     def _open_dbs(self):
 
-        # zope.generation doens't play nice when the transaction
-        # manager is in explicit mode. https://github.com/zopefoundation/zope.generations/issues/8
-        assert not transaction.manager.explicit
-        
         if self.db is not None:
             self.db.close()
 
