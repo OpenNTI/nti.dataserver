@@ -888,6 +888,21 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 	Implements the policy for an adult site, adding new users to a single community.
 	"""
 
+def adult_community_site_policy_factory(brand=None,
+                                        display_name=None,
+                                        com_username=None,
+                                        com_alias=None,
+                                        com_realname=None):
+        policy = AdultCommunitySitePolicyEventListener()
+        # brand is required but has a default
+        if brand is not None:
+                policy.BRAND = brand
+        policy.DISPLAY_NAME = display_name
+        policy.COM_USERNAME = com_username
+        policy.COM_ALIAS = com_alias
+        policy.COM_REALNAME = com_realname
+        return policy
+
 # BWC import for objects in the database
 zope.deferredimport.deprecatedFrom(
 	"Code should not access this directly; move your tests to the columbia site package."

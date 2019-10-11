@@ -1,0 +1,12 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:meta="http://namespaces.zope.org/meta">
+
+	<meta:directive
+		namespace="http://nextthought.com/ntp/sitepolicy"
+		name="createSitePolicy"
+		schema=".zcml.ICreateSitePolicy"
+		handler=".zcml.create_site_policy" />
+
+</configure>
