@@ -206,6 +206,8 @@ class MinimalDataserver(object):
         # Import the python implementation
         import memcache
         cache_servers = conf.main_conf.get('memcached', 'servers')
+        if not cache_servers:
+            return
         # That will throw a ConfigParser.Error if the config is out of date;
         # but in buildout, it should always be up-to-date
 
