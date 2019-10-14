@@ -293,15 +293,19 @@ def get_users_by_email_in_sites(email, sites=None):
     if isinstance(sites, six.string_types):
         sites = sites.split(',')
     if not sites:
-        sites = (getSite().__name__,)
+        current_site_name = getSite().__name__
+        # Probably only in tests, in this case, do not filter
+        if current_site_name != 'dataserver2':
+            sites = (current_site_name,)
     if not email:
         result = ()
     else:
         result = []
         catalog = get_entity_catalog()
         intids = component.getUtility(IIntIds)
-        query = {IX_EMAIL: (email, email),
-                 IX_SITE: {'any_of': sites}}
+        query = {IX_EMAIL: (email, email)}
+        if sites:
+            query[IX_SITE] = {'any_of': sites}
         doc_ids = catalog.apply(query)
         for uid in doc_ids or ():
             user = intids.queryObject(uid)
