@@ -16,15 +16,20 @@ from zope import interface
 
 from zope.component.zcml import utility
 
+from zope.configuration.fields import GlobalObject
+
 from nti.schema.field import TextLine
 
-from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
-from nti.appserver.policies.site_policies import adult_community_site_policy_factory
+from nti.appserver.policies.site_policies import default_site_policy_factory
 
 from nti.schema.interfaces import find_most_derived_interface
 
 class ICreateSitePolicy(interface.Interface):
+
+    factory = GlobalObject(title=u'A factory returning a configured policy',
+                           required=False)
 
     brand = TextLine(title=u'The site BRAND',
                      required=False)
@@ -47,29 +52,20 @@ class ICreateSitePolicy(interface.Interface):
         _check_username_if_display_name(self.comm_username, self.com_alias, self.com_realname)
         
 
-def _check_username_if_display_name(username, alias, realname):
+def _check_username_if_display_name(com_username=None, com_alias=None, com_realname=None, **kwargs):
     """
     If they provide a realname or alias they must also provide a username.
     """
-    if not username and ( realname or alias ):
+    if not com_username and ( com_realname or com_alias ):
         raise interface.Invalid(u'com_username must be provided if com_alias or com_realname is specified.')
 
-def create_site_policy(context,
-                             brand=None,
-                             display_name=None,
-                             com_username=None,
-                             com_alias=None,
-                             com_realname=None):
+def create_site_policy(context, factory=default_site_policy_factory, **kwargs):
 
     # Ideally we could let the interface invariant handle this, but the configuration machinary
     # doesn't seem to do anything with invariants.
-    _check_username_if_display_name(com_username, com_alias, com_realname)
+    _check_username_if_display_name(**kwargs)
     
-    policy = adult_community_site_policy_factory(brand,
-                                                 display_name,
-                                                 com_username,
-                                                 com_alias,
-                                                 com_realname)
+    policy = factory(**kwargs)
 
-    iface = find_most_derived_interface(policy, ICommunitySitePolicyUserEventListener)    
+    iface = find_most_derived_interface(policy, ISitePolicyUserEventListener)    
     utility(context, provides=iface, component=policy)
