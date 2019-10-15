@@ -154,6 +154,9 @@ def validation_error_to_dict(request, validation_error):
                 except UnicodeError:
                     msg = u''
 
+    if value is not None:
+        value = str(value)
+
     result = {
         'message': msg,
         'value': value,
