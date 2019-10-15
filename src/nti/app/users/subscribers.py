@@ -20,7 +20,6 @@ from zope import component
 
 from zope.event import notify
 
-from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -98,7 +97,7 @@ def _user_modified_from_external_event(user, event):
                                          check=False)
 
 
-@component.adapter(IUser, IObjectAddedEvent)
+@component.adapter(IUser, IWillCreateNewEntityEvent)
 def _on_user_created(user, unused_event):
     """
     Set creation site, run new user through site community
@@ -118,7 +117,7 @@ def _on_auto_subscribe_created(auto_subscribe, unused_event):
     auto_subscribe.creator = get_remote_user().username
 
 
-@component.adapter(ICommunity, IObjectAddedEvent)
+@component.adapter(ICommunity, IWillCreateNewEntityEvent)
 def _on_community_created(community, unused_event):
     if IUnscopedGlobalCommunity.providedBy(community):
         return
