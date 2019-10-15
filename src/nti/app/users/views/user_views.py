@@ -338,6 +338,7 @@ class UserUpdatePreflightView(UserUpdateView):
             errors.extend(invariant_errors)
 
             result_dict['ValidationErrors'] = errors
+            __traceback_info__ = errors
             result.json_body = result_dict
         else:
             result = result_dict

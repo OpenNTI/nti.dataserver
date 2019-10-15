@@ -622,10 +622,6 @@ class IEducation(Interface):
                            required=True,
                            min_length=1)
 
-    # TODO: Hardcoding max and min values for now, but
-    # need to implement a proper validation in a view
-    # where we verify that startYear <= endYear and that
-    # the numbers are reasonable values for years.
     startYear = Int(title=u'Start year',
                     description=u'Start year',
                     required=False)
