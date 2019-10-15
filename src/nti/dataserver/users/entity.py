@@ -63,6 +63,7 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.ntiids.ntiids import escape_provider
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
+from nti.dataserver.users.common import set_entity_creation_site
 
 logger = __import__('logging').getLogger(__name__)
 

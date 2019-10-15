@@ -20,6 +20,8 @@ from zope.catalog.interfaces import ICatalog
 
 from zope.catalog.keyword import CaseInsensitiveKeywordIndex
 
+from zope.component.hooks import getSite
+
 from zope.index.topic.filter import FilteredSetBase
 
 from zope.intid.interfaces import IIntIds
@@ -178,6 +180,8 @@ class ValidatingSite(object):
                 site = None
                 if IUser.providedBy(obj) or ICommunity.providedBy(obj):
                     site = entity_creation_sitename(obj)
+                    if site is None and not obj._p_mtime:
+                        site = getattr(getSite(), '__name__', None)
                 self.site = site
         except (AttributeError, TypeError):
             pass

@@ -97,10 +97,10 @@ def _user_modified_from_external_event(user, event):
                                          check=False)
 
 
-@component.adapter(IUser, IWillCreateNewEntityEvent)
+@component.adapter(IUser, IObjectCreatedEvent)
 def _on_user_created(user, unused_event):
     """
-    Set creation site, run new user through site community
+    Run new user through site community
     auto-subscribe predicates.
     """
     set_user_creation_site(user)
@@ -117,7 +117,7 @@ def _on_auto_subscribe_created(auto_subscribe, unused_event):
     auto_subscribe.creator = get_remote_user().username
 
 
-@component.adapter(ICommunity, IWillCreateNewEntityEvent)
+@component.adapter(ICommunity, IObjectCreatedEvent)
 def _on_community_created(community, unused_event):
     if IUnscopedGlobalCommunity.providedBy(community):
         return
