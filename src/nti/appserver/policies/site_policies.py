@@ -799,10 +799,6 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 	Implements a generic policy for adult sites.
 	"""
 
-	def user_created(self, user, event):
-		super(GenericAdultSitePolicyEventListener, self).user_created(user, event)
-		interface.alsoProvides(user, IImmutableFriendlyNamed)
-
 	def user_will_update_new(self, user, event):
 		"""
 		Also enforces the email requirement constraint for newly created objects.
