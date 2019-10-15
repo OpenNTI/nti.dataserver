@@ -73,17 +73,12 @@ from nti.contentfragments.interfaces import ICensoredContentPolicy
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import INewUserPlacer
-from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import username_is_reserved
 from nti.dataserver.interfaces import ICoppaUserWithAgreement
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
 from nti.dataserver.shards import AbstractShardPlacer
-
-from nti.dataserver.users.communities import Community
-
-from nti.dataserver.users.entity import Entity
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -799,10 +794,6 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 	Implements a generic policy for adult sites.
 	"""
 
-	def user_created(self, user, event):
-		super(GenericAdultSitePolicyEventListener, self).user_created(user, event)
-		interface.alsoProvides(user, IImmutableFriendlyNamed)
-
 	def user_will_update_new(self, user, event):
 		"""
 		Also enforces the email requirement constraint for newly created objects.
@@ -903,7 +894,7 @@ def default_site_policy_factory(policy_factory=None,
         if policy_factory is None:
                 policy_factory = AdultCommunitySitePolicyEventListener if com_username is not None else GenericAdultSitePolicyEventListener
         policy = policy_factory()
-        
+
         # brand is required but has a default
         if brand is not None:
                 policy.BRAND = brand
@@ -914,7 +905,7 @@ def default_site_policy_factory(policy_factory=None,
                 policy.COM_USERNAME = com_username
                 policy.COM_ALIAS = com_alias
                 policy.COM_REALNAME = com_realname
-        
+
         return policy
 
 # BWC import for objects in the database
