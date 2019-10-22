@@ -17,8 +17,8 @@ from zope import interface
 
 from zope.publisher.interfaces.browser import IBrowserRequest
 
-from nti.mailer.filtered_template_mailer import ImpersonatedMailer
-from nti.mailer.filtered_template_mailer import NextThoughtOnlyMailer
+from nti.dataserver.mailer.filtered_template_mailer import ImpersonatedMailer
+from nti.dataserver.mailer.filtered_template_mailer import NextThoughtOnlyMailer
 
 from nti.mailer.interfaces import IPrincipal
 from nti.mailer.interfaces import ITemplatedMailer
