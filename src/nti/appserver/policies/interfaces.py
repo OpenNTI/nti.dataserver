@@ -15,13 +15,11 @@ from zope import interface
 
 from zope.schema import NativeStringLine
 
-from nti.mailer.interfaces import IMailerPolicy
-
 from nti.schema.field import Bool
 from nti.schema.field import TextLine
 
 
-class ISitePolicyUserEventListener(IMailerPolicy):
+class ISitePolicyUserEventListener(interface.Interface):
     """
     Register instances of these as utilities by the name of the site
     they should apply to.

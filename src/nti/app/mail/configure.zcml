@@ -17,4 +17,8 @@
 		root_interfaces=".interfaces.IEmail"
 		modules=".interfaces" />
 
+	<utility factory=".utils.DefaultMailerPolicy" />
+
+	<adapter factory=".utils.UserEmailValidation" />
+
 </configure>

@@ -143,6 +143,7 @@ setup(
         'nti.identifiers',
         'nti.intid',
         'nti.links',
+        'nti.mailer',
         'nti.metadata',
         'nti.mimetype',
         'nti.monkey',
