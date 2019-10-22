@@ -143,6 +143,7 @@ setup(
         'nti.identifiers',
         'nti.intid',
         'nti.links',
+        'nti.mailer',
         'nti.metadata',
         'nti.mimetype',
         'nti.monkey',
@@ -487,6 +488,6 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages('src'),
     include_package_data=True,
-    namespace_packages=['nti'],
+    namespace_packages=['nti', 'nti.mailer'],
     entry_points=entry_points,
 )

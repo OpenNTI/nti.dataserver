@@ -8,9 +8,6 @@ actually creating or queuing mail.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
 
 import rfc822
 
@@ -20,9 +17,11 @@ from zope import interface
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable
 
-from nti.mailer._default_template_mailer import _as_recipient_list
+from nti.mailer._default_template_mailer import as_recipient_list
 
 from nti.securitypolicy.utils import is_impersonating
+
+logger = __import__('logging').getLogger(__name__)
 
 
 def _get_current_request():
@@ -86,8 +85,8 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
         # Implementation wise, we know that all activity
         # gets directed through this method, so we only need to filter
         # here.
-        bcc = _as_recipient_list(bcc) or ()
-        recipients = _as_recipient_list(recipients)
+        bcc = as_recipient_list(bcc) or ()
+        recipients = as_recipient_list(recipients)
         filtered_recip = [self._transform_recipient(a) for a in recipients]
         filtered_recip = [
             a for a in filtered_recip if self._should_send_to_addr(a)]

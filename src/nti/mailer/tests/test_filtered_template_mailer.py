@@ -15,6 +15,8 @@ from nti.testing.matchers import validly_provides
 
 from zope import interface
 
+from zope.publisher.interfaces.browser import IBrowserRequest
+
 from nti.mailer.filtered_template_mailer import ImpersonatedMailer
 from nti.mailer.filtered_template_mailer import NextThoughtOnlyMailer
 
@@ -24,6 +26,20 @@ from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
 
 from nti.app.testing.layers  import AppLayerTest
+
+
+@interface.implementer(IBrowserRequest)
+class Request(object):
+	context = None
+	response = None
+	application_url = 'foo'
+
+	def __init__(self):
+		self.annotations = {}
+
+	def get(self, key, default=None):
+		return default
+
 
 class User(object):
 	username = 'the_user'
@@ -36,7 +52,6 @@ class Principal(object):
 	id = 'the_prin_id'
 	email = None
 
-from .test_default_template_mailer import Request
 
 class _BaseMixin(object):
 
