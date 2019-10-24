@@ -879,34 +879,35 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 	Implements the policy for an adult site, adding new users to a single community.
 	"""
 
+
 def default_site_policy_factory(policy_factory=None,
                                 brand=None,
                                 display_name=None,
                                 com_username=None,
                                 com_alias=None,
                                 com_realname=None):
-        """
-        A factory that creates and initalizes a site policy. If no factory is provided a
-        AdultCommunitySitePolicyEventListener or a
-        GenericAdultSitePolicyEventListener is created based on whether or
-        not a com_username is provided.
-        """
-        if policy_factory is None:
-                policy_factory = AdultCommunitySitePolicyEventListener if com_username is not None else GenericAdultSitePolicyEventListener
-        policy = policy_factory()
+	"""
+	A factory that creates and initalizes a site policy. If no factory is provided a
+	AdultCommunitySitePolicyEventListener or a
+	GenericAdultSitePolicyEventListener is created based on whether or
+	not a com_username is provided.
+	"""
+	if policy_factory is None:
+		policy_factory = AdultCommunitySitePolicyEventListener if com_username is not None else GenericAdultSitePolicyEventListener
+	policy = policy_factory()
 
-        # brand is required but has a default
-        if brand is not None:
-                policy.BRAND = brand
+	# brand is required but has a default
+	if brand is not None:
+		policy.BRAND = brand
 
-        policy.DISPLAY_NAME = display_name
+	policy.DISPLAY_NAME = display_name
 
-        if ICommunitySitePolicyUserEventListener.providedBy(policy) and com_username:
-                policy.COM_USERNAME = com_username
-                policy.COM_ALIAS = com_alias
-                policy.COM_REALNAME = com_realname
+	if ICommunitySitePolicyUserEventListener.providedBy(policy) and com_username:
+		policy.COM_USERNAME = com_username
+		policy.COM_ALIAS = com_alias
+		policy.COM_REALNAME = com_realname
 
-        return policy
+	return policy
 
 # BWC import for objects in the database
 zope.deferredimport.deprecatedFrom(
