@@ -147,6 +147,7 @@
 
 	<include package=".saml" />
 	<include package=".users" />
+	<include package=".mailer" />
 	<include package=".metadata" />
     <include package=".job" />
 
