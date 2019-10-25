@@ -27,7 +27,6 @@ entry_points = {
         'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
         'nti_testing_mark_emails_bounced = nti.appserver.bounced_email_workflow:mark_emails_bounced',
         "nti_pserve = nti.appserver.nti_pserve:main",
-        "nti_qp = nti.mailer.queue:run_console",
         # XXX: NOTE: The following technique is NOT reliable and fails
         # under buildout or any other scenario that results in this package
         # not being the /last/ package installed.
