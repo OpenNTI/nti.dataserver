@@ -38,7 +38,7 @@ class DefaultMailerPolicy(object):
         is provided.
         """
         policy = component.queryUtility(ISitePolicyUserEventListener)
-        return getattr(policy, 'DEFAULT_SENDER', '')
+        return getattr(policy, 'DEFAULT_EMAIL_SENDER', '')
 
     def get_signer_secret(self):
         """
