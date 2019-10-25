@@ -154,8 +154,9 @@ def validation_error_to_dict(request, validation_error):
                 except UnicodeError:
                     msg = u''
 
-    if value is not None:
-        value = str(value)
+    if not isinstance(value, six.string_types):
+        # Make sure we have something externalizeable (e.g. datetime)
+        value = unicode(value)
 
     result = {
         'message': msg,
