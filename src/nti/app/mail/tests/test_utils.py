@@ -51,7 +51,7 @@ class TestUtils(AppLayerTest):
 	def test_policy(self):
 		policy = component.queryUtility(IMailerPolicy)
 		assert_that(policy, not_none())
-		assert_that(policy.get_default_sender(), is_(''))
+		assert_that(policy.get_default_sender(), none())
 		assert_that(policy.get_signer_secret(), none())
 
 
