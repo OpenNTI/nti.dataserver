@@ -19,6 +19,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
+from hamcrest import greater_than_or_equal_to
 does_not = is_not
 
 from nti.testing.time import time_monotonically_increases
@@ -88,12 +89,12 @@ class TestCommunityViews(ApplicationLayerTest):
 
         path = '/dataserver2/@@list_communities'
         res = self.testapp.get(path, status=200)
-        assert_that(res.json_body, has_entry('Items', has_length(2)))
-        assert_that(res.json_body, has_entry('Total', is_(2)))
+        assert_that(res.json_body, has_entry('Items', has_length(greater_than_or_equal_to(2))))
+        assert_that(res.json_body, has_entry('Total', is_(greater_than_or_equal_to(2))))
 
         path = '/dataserver2/@@list_communities'
         params = {
-            "searchTerm": 'B',
+            "searchTerm": 'Bleach',
             "mimeTypes": 'application/vnd.nextthought.community'
         }
         res = self.testapp.get(path, params, status=200)

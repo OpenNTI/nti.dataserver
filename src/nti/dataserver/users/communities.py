@@ -20,7 +20,6 @@ from zope.annotation.factory import factory as an_factory
 from zope.annotation.interfaces import IAnnotations
 
 from zope.cachedescriptors.property import Lazy
-from zope.cachedescriptors.property import cachedIn
 
 from zope.event import notify
 
