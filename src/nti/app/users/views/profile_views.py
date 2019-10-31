@@ -249,8 +249,9 @@ class UserInfoExtractCSVView(AbstractUserInfoExtractView):
             # With CSV, we only return one external_id mapping (common case).
             external_id_map = user_info.pop('external_ids')
             external_id_map = external_id_map or {'': ''}
-            for external_type in external_id_map:
-                user_info['external_type'] = external_id_map.get(external_type, '')
+            for external_type, external_id in external_id_map.items():
+                user_info['external_type'] = external_type
+                user_info['external_id'] = external_id
             csv_writer.writerow(user_info)
 
         response = self.request.response
