@@ -819,27 +819,29 @@ class TestAdminViews(ApplicationLayerTest):
             cs_user = self._get_user('creationsiteuser')
             set_user_creation_site(cs_user, 'beta.nextthought.com')
             # If we created a user through a view rather than db trans this comm would get created
-            site_comm = Community.create_community(username='testing_community')
+            site_comm = Community.get_community('testing_community')
+            if site_comm is None:
+                site_comm = Community.create_community(username='testing_community')
             for username in ('nocreationsiteuser', 'creationsiteuser'):
                 user = self._get_user(username)
                 user.record_dynamic_membership(site_comm)
 
         # Check no commit
-        res = self.testapp.post_json(url, {'commit': 'false'}, status=200, extra_environ=environ)
+        self.testapp.post_json(url, {'commit': 'false'}, status=200, extra_environ=environ)
         self._assert_user_creation_site(siteOne='beta.nextthought.com', siteTwo=none())
 
-        res = self.testapp.post_json(url, {'commit': False}, status=200, extra_environ=environ)
+        self.testapp.post_json(url, {'commit': False}, status=200, extra_environ=environ)
         self._assert_user_creation_site(siteOne='beta.nextthought.com', siteTwo=none())
 
         # Check commit
-        res = self.testapp.post_json(url, {'commit': 'true'}, status=200, extra_environ=environ)
+        self.testapp.post_json(url, {'commit': 'true'}, status=200, extra_environ=environ)
         self._assert_user_creation_site(siteOne='beta.nextthought.com', siteTwo='alpha.nextthought.com')
 
         # Check force
-        res = self.testapp.post_json(url, {'force': True, 'commit': None}, status=200, extra_environ=environ)
+        self.testapp.post_json(url, {'force': True, 'commit': None}, status=200, extra_environ=environ)
         self._assert_user_creation_site(siteOne='beta.nextthought.com', siteTwo='alpha.nextthought.com')
 
-        res = self.testapp.post_json(url, {'force': True, 'commit': 'Y'}, status=200, extra_environ=environ)
+        self.testapp.post_json(url, {'force': True, 'commit': 'Y'}, status=200, extra_environ=environ)
         self._assert_user_creation_site(siteOne='alpha.nextthought.com', siteTwo='alpha.nextthought.com')
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
