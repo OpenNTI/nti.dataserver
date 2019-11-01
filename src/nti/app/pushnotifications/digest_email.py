@@ -515,7 +515,9 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 
 	def get_process_site_users(self):
 		site_name = self.get_process_site()
-		if site_name:
+		if site_name and site_name == 'dataserver2':
+			return self._dataserver.users_folder.values()
+		elif site_name:
 			return get_members_by_site(site_name)
 
 	def _display_name(self, user):
