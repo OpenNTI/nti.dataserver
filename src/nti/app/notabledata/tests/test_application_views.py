@@ -72,7 +72,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
     def _check_stream(self, username=None):
         if username:
             extra_environ = self._make_extra_environ(user=username)
-            stream_res = self.fetch_user_root_rstream(username=username, 
+            stream_res = self.fetch_user_root_rstream(username=username,
                                                       extra_environ=extra_environ)
         else:
             stream_res = self.fetch_user_root_rstream()
@@ -329,7 +329,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
         path = href % (self.extra_environ_default_user, ntiids.ROOT)
         res = self.testapp.get(path)
         assert_that(res.json_body, has_entry('TotalItemCount', initial_count))
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('Items', has_length(initial_count)))
 
         # Now I share it indirectly with me. The sharing is indirect
@@ -338,22 +338,24 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
             user = self._get_user()
             jason = self._get_user('jason')
 
-            community = Community.create_community(self.ds, username=u'MathCounts')
+            community = Community.get_community('MathCounts')
+            if community is None:
+                community = Community.create_community(self.ds, username=u'MathCounts')
             user.record_dynamic_membership(community)
             jason.record_dynamic_membership(community)
 
             top_n = jason.getContainedObject('tag:nti:foo', top_n_id)
 
-            update_from_external_object(top_n, 
+            update_from_external_object(top_n,
                                        {'sharedWith': [u'MathCounts']}, context=self.ds)
 
         res = self.testapp.get(path)
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('TotalItemCount', initial_count + 1))
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('Items', has_length(initial_count + 1)))
 
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('Items', has_item(has_entry('NTIID', ext_ntiid))))
 
         self._check_notable_data(length=initial_count + 1)
@@ -370,7 +372,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
         res = self.testapp.get(path)
         assert_that(res.json_body, has_entry('TotalItemCount', initial_count))
-        assert_that(res.json_body, 
+        assert_that(res.json_body,
                     has_entry('Items', has_length(initial_count)))
 
     @WithSharedApplicationMockDS(users=('jason'),

@@ -415,6 +415,10 @@ class TestCommunityViews(ApplicationLayerTest):
         exposed by the site they belong to.
         """
         with mock_dataserver.mock_db_trans(self.ds):
+            alpha = Community.get_community('testing_community')
+            if alpha is not None:
+                Community.delete_entity('testing_community')
+
             self._create_user(u"locke")
             self._create_user(u"terra")
 
