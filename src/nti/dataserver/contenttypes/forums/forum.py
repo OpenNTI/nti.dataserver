@@ -177,16 +177,20 @@ class Forum(Implicit,
     def _set_NewestDescendant(self, descendant):
         uid = query_uid(descendant)
         if uid:
+            # Capture key here (key based on board NTIID, which dynamically
+            # gets intid, requiring an intid utility via our site manager).
+            # In post tx processing, we may not have that information.
+            key = self._descendent_key()
             self._v_newest_descendant = descendant
 
             redis = component.getUtility(IRedisClient)
-            args = (redis, unicode(uid),)
+            args = (key, redis, unicode(uid),)
             transactions.do_near_end(target=self,
                                      call=self._publish_descendant_to_redis,
                                      args=args)
 
-    def _publish_descendant_to_redis(self, redis, data):
-        redis.setex(self._descendent_key(), _NEWEST_TTL, data)
+    def _publish_descendant_to_redis(self, key, redis, data):
+        redis.setex(key, _NEWEST_TTL, data)
 
     NewestDescendant = property(_get_NewestDescendant)
 
