@@ -333,7 +333,6 @@ def account_create_view(request):
             error results.
 
     """
-
     if request.authenticated_userid:
         _raise_error(request,
                      hexc.HTTPForbidden,

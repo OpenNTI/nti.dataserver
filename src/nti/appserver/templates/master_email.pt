@@ -220,9 +220,12 @@
 	</head>
 	<body class="normal-text">
 		<div metal:define-macro="header">
-			<div id="green-bar" style="background-color: #89be3c; width: 100%; height: 5px;"></div>
+			<div id="green-bar"
+			     style="background-color: #89be3c; width: 100%; height: 5px;"></div>
 			<div id="logo-bar" style="margin-top: 20px; margin-bottom: 30px;">
-				<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+				<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177"
+				     tal:attributes="src options/nti_site_brand_email_image_url|default;
+				                     alt options/nti_site_brand_name|default"
 					 alt="NextThought Logo" />
 			</div>
 			<!--! Flash messages -->
