@@ -133,7 +133,7 @@ class Forum(Implicit,
     def _descendent_key(self):
         try:
             return 'forums/' + self.containerId + '/' + self.id + '/newestDescendant'
-        except TypeError:
+        except (TypeError, AttributeError):
             # This should only happen in tests
             logger.warn("No stable key for newestDescendant of %s", self)
             return 'broken/' + unicode(id(self)) + '/newestDescendant'
