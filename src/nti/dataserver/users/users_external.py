@@ -366,7 +366,7 @@ class _UserAdminSummaryExternalObject(_UserSummaryExternalObject):
     @property
     def public_summary_profile_fields(self):
         result = super(_UserAdminSummaryExternalObject, self).public_summary_profile_fields
-        result += ('email',)
+        result += ('email', 'opt_in_email_communication')
         return result
 
     def _do_toExternalObject(self, **kwargs):
