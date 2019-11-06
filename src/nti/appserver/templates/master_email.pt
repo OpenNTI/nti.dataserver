@@ -220,7 +220,7 @@
 	</head>
 	<body class="normal-text">
 		<div metal:define-macro="header">
-			<div background-color= "#89be3c"
+			<div background-color="#89be3c"
 			     tal:attributes="background-color options/nti_site_brand_color|default"
 			     style="width: 100%; height: 5px;"></div>
 			<div id="logo-bar" style="margin-top: 20px; margin-bottom: 30px;">
