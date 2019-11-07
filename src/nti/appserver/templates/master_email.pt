@@ -221,7 +221,7 @@
 	<body class="normal-text">
 		<div metal:define-macro="header">
 			<div style="background-color: ${options/nti_site_brand_color};width: 100%; height: 5px;"></div>
-			<div id="logo-bar" style="margin-top: 20px; margin-bottom: 30px;">
+			<div style="margin-top: 20px; margin-bottom: 30px;">
 				<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" max-height="100%" max-width="100%"
 				     tal:attributes="src options/nti_site_brand_email_image_url|default;
 				                     alt options/nti_site_brand_name|default"
