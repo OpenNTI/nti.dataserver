@@ -220,7 +220,10 @@
 	</head>
 	<body class="normal-text">
 		<div metal:define-macro="header">
-			<div style="background-color: ${options/nti_site_brand_color};width: 100%; height: 5px;"></div>
+			<div tal:condition="python: 'nti_site_brand_color' in options"
+			     style="background-color: ${options/nti_site_brand_color};width: 100%; height: 5px;"></div>
+			<div tal:condition="python: 'nti_site_brand_color' not in options"
+                 style="background-color: #89be3c;width: 100%; height: 5px;"></div>
 			<div style="margin-top: 20px; margin-bottom: 30px;">
 				<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" style="max-height:140px;max-width:100%"
 				     tal:attributes="src options/nti_site_brand_email_image_url|default;

@@ -16,6 +16,7 @@ from zope import interface
 
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable
+from nti.mailer.interfaces import IMailerTemplateArgsUtility
 
 from nti.mailer._default_template_mailer import as_recipient_list
 
@@ -99,6 +100,11 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
             kwargs['_level'] = kwargs['_level'] + 1
         else:
             kwargs['_level'] = 4
+
+        if template_args:
+            template_args = dict(template_args)
+            for args_utility in component.getAllUtilitiesRegisteredFor(IMailerTemplateArgsUtility):
+                template_args.update(args_utility.get_template_args())
 
         mailer = self._default_mailer
         return mailer.create_simple_html_text_email(base_template,
