@@ -28,6 +28,7 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.app.vocabularyregistry.traversal import VocabulariesPathAdapter
 from nti.app.vocabularyregistry.vocabulary import Term as SimpleTerm
 from nti.app.vocabularyregistry.vocabulary import Vocabulary as SimpleVocabulary
 
@@ -184,3 +185,69 @@ class VocabularyGetView(AbstractAuthenticatedView):
     """
     def __call__(self):
         return self.context
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='templates/vocab_list.pt',
+             request_method='GET',
+             permission=nauth.ACT_READ,
+             context=VocabulariesPathAdapter)
+class VocabularyListView(AbstractAuthenticatedView):
+
+    def _search(self):
+        val = self.request.params.get('search') or ''
+        val = val.strip()
+        return val.lower() if val else None
+
+    def _predicate(self, vocab_name, search=None):
+        return not search or search in vocab_name.lower()
+
+    def get_items(self, search=None):
+        currentSiteManager = component.getSiteManager()
+        items = []
+        total = 0
+        for x in component.getUtilitiesFor(IVocabulary):
+            total += 1
+            if not self._predicate(x[0], search):
+                continue
+
+            parent = getattr(x[1], '__parent__', None)
+            persisted = bool(parent is not None)
+            inherited = bool(parent is not None and parent is not currentSiteManager)
+            items.append({'name': x[0],
+                          'total_terms': len(x[1]),
+                          'href': self.request.resource_url(self.context, x[0], '@@details'),
+                          'editable': persisted,
+                          'inherited': inherited})
+        return (items, total)
+
+    def __call__(self):
+        search = self._search()
+        items, total = self.get_items(search=search)
+        items = sorted(items, key=lambda x: x['name'])
+        return {'vocabularies': items,
+                'search': search or '',
+                'raw_url': self.request.resource_url(self.context),
+                'Total': total,
+                'ItemCount': len(items)}
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='templates/vocab_details.pt',
+             request_method='GET',
+             permission=nauth.ACT_READ,
+             context=IVocabulary,
+             name="details")
+class VocabularyDetailsView(AbstractAuthenticatedView):
+
+    def __call__(self):
+        policy = find_interface(self.context, IHostPolicyFolder)
+        siteManager = policy.getSiteManager()
+        save_link = self.request.resource_url(self.context) if self.context.__parent__ is siteManager else None
+        list_link = self.request.resource_url(siteManager, 'Vocabularies')
+        terms = [x for x in self.context]
+        return {'name': self.context.__name__,
+                'terms': terms,
+                'total_terms': len(terms),
+                'list_link': list_link,
+                'save_link': save_link}

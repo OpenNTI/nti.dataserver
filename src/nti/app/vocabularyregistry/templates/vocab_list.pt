@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:metal="http://xml.zope.org/namespaces/metal"
+    xmlns:tal="http://xml.zope.org/namespaces/tal">
+
+<head>
+    <style>
+        body {
+            padding: 0px 16px;
+        }
+
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr {
+            border: 1px solid #dddddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Vocabularies</h2>
+
+    <input id="search" style="width:300px; padding: 8px; font-size:16px;" placeHolder="Search"
+        raw_url="${options/raw_url}" value="${options/search}" />
+    <span style="margin-left: 10px;">Result: ${options/ItemCount} / ${options/Total} records</span>
+
+    <table style="margin-top: 16px;">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Total Terms</th>
+                <th>Editable (Persistent)</th>
+                <th>Inherited From Parent Site</th>
+            </tr>
+        </thead>
+        <tbody>
+            <metal:block tal:omit-tag="" tal:repeat="item options/vocabularies">
+                <tr>
+                    <td><a href="vocab_detail.html" tal:content="item/name" tal:attributes="href item/href"></a></td>
+                    <td tal:content="item/total_terms"></td>
+                    <td tal:content="item/editable"></td>
+                    <td tal:content="item/inherited"></td>
+                </tr>
+            </metal:block>
+        </tbody>
+    </table>
+
+</body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+    $('#search').on('keydown', function (e) {
+        if (event.which == 13 || event.keyCode == 13) {
+            var search = $(this).val().trim();
+            var raw_url = $(this).attr("raw_url");
+            window.location.href = raw_url + "?search=" + search;
+        }
+    });
+</script>
+
+</html>
