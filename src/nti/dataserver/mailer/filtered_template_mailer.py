@@ -104,7 +104,7 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
         if template_args:
             template_args = dict(template_args)
             for args_utility in component.getAllUtilitiesRegisteredFor(IMailerTemplateArgsUtility):
-                template_args.update(args_utility.get_template_args())
+                template_args.update(args_utility.get_template_args(request))
 
         mailer = self._default_mailer
         return mailer.create_simple_html_text_email(base_template,
