@@ -63,6 +63,9 @@ from nti.app.testing.testing import ITestMailDelivery
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
+from nti.mailer._verp import formataddr
+
+
 class _AbstractValidationViewBase(TestBaseMixin):
     """ Base for the things where validation should fail """
 
@@ -598,7 +601,8 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationL
         mailer = component.getUtility( ITestMailDelivery )
         assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
-        assert_that( mailer.queue, has_item( has_entry('From', contains_string('Hello <test+') ) ) )
+        from_addr = formataddr(('Hello', 'test+jason%40test.nextthought.com.TMMZxw@nextthought.com'))
+        assert_that( mailer.queue, has_item(has_entry('From', from_addr)))
 
     @WithSharedApplicationMockDS
     def test_create_user_logged_in( self ):
