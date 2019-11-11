@@ -580,7 +580,6 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationL
     @WithSharedApplicationMockDS
     def test_create_user_email_site_policy(self):
         from nti.appserver.policies.site_policies import GenericSitePolicyEventListener
-        from zope import interface
         policy = GenericSitePolicyEventListener()
         policy.DEFAULT_EMAIL_SENDER = '\"Hello\" <test@nextthought.com>'
 
@@ -599,7 +598,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationL
         mailer = component.getUtility( ITestMailDelivery )
         assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
-        assert_that( mailer.queue, has_item( has_entry('From', contains_string('"Hello" <test+') ) ) )
+        assert_that( mailer.queue, has_item( has_entry('From', contains_string('Hello <test+') ) ) )
 
     @WithSharedApplicationMockDS
     def test_create_user_logged_in( self ):

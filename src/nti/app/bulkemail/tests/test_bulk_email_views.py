@@ -35,6 +35,8 @@ from ..delegate import AbstractBulkEmailProcessDelegate
 from zope.security.interfaces import IPrincipal
 from nti.mailer.interfaces import IEmailAddressable
 
+from nti.mailer._verp import formataddr
+
 from boto.ses.exceptions import SESDailyQuotaExceededError
 from boto.ses.exceptions import SESError
 
@@ -70,7 +72,7 @@ class Recipient(object):
 
 	email = 'foo@bar'
 	id = 'jason'
-	verp_from = '"NextThought" <no-reply+jason.VRjdUA@alerts.nextthought.com>'
+	verp_from = formataddr(('NextThought', 'no-reply+jason.UrcYWQ@alerts.nextthought.com'))
 	def __init__(self, email=None):
 		if email:
 			self.email = email

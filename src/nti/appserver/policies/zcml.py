@@ -10,8 +10,6 @@ from __future__ import absolute_import
 
 # pylint: disable=inherit-non-class
 
-from zope import component
-
 from zope import interface
 
 from zope.component.zcml import utility
@@ -50,7 +48,7 @@ class ICreateSitePolicy(interface.Interface):
     @interface.invariant
     def comm_username_if_display_name(self):
         _check_username_if_display_name(self.comm_username, self.com_alias, self.com_realname)
-        
+
 
 def _check_username_if_display_name(com_username=None, com_alias=None, com_realname=None, **kwargs):
     """
@@ -64,8 +62,8 @@ def create_site_policy(context, factory=default_site_policy_factory, **kwargs):
     # Ideally we could let the interface invariant handle this, but the configuration machinary
     # doesn't seem to do anything with invariants.
     _check_username_if_display_name(**kwargs)
-    
+
     policy = factory(**kwargs)
 
-    iface = find_most_derived_interface(policy, ISitePolicyUserEventListener)    
+    iface = find_most_derived_interface(policy, ISitePolicyUserEventListener)
     utility(context, provides=iface, component=policy)
