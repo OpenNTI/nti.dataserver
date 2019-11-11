@@ -9,6 +9,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_key
 from hamcrest import has_length
+from hamcrest import has_items
 from hamcrest import is_
 from hamcrest import not_
 from hamcrest import same_instance
@@ -24,6 +25,11 @@ from zope.schema.interfaces import IVocabulary
 
 from nti.app.vocabularyregistry.vocabulary import Vocabulary as SimpleVocabulary
 from nti.app.vocabularyregistry.vocabulary import Term as SimpleTerm
+
+from nti.app.vocabularyregistry.traversal import VocabulariesPathAdapter
+
+from nti.app.vocabularyregistry.views import VocabularyListView
+from nti.app.vocabularyregistry.views import VocabularyDetailsView
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -42,7 +48,12 @@ class _MockVocabularyFactory(object):
         return component.queryUtility(IVocabulary, name='test_vocab')
 
 
-class TestViews(ApplicationLayerTest):
+class _TestBaseViewMixin(object):
+
+    def _make_environ(self, username, hostname='alpha.dev'):
+        environ = self._make_extra_environ(username=username)
+        environ['HTTP_ORIGIN'] = hostname
+        return environ
 
     def _register_vocabulary(self, name, terms, site_manager):
         vocab = SimpleVocabulary([SimpleTerm(x) for x in terms])
@@ -53,8 +64,11 @@ class TestViews(ApplicationLayerTest):
         assert_that(vocab.__name__, is_(name))
         assert_that(vocab.__parent__, same_instance(site_manager))
         assert_that(site_manager[name], same_instance(vocab))
-        assert_that(component.queryUtility(IVocabulary, name='test_vocab'), same_instance(vocab))
+        assert_that(component.queryUtility(IVocabulary, name=name), same_instance(vocab))
         return vocab
+
+
+class TestViews(ApplicationLayerTest, _TestBaseViewMixin):
 
     @WithSharedApplicationMockDS(users=(u'user001', u'admin001@nextthought.com'), testapp=True, default_authenticate=False)
     def testVocabularyUpdateView(self):
@@ -329,3 +343,184 @@ class TestViews(ApplicationLayerTest):
         self.testapp.get('/dataserver2/++etc++hostsites/demo.dev/++etc++site/test_vocab',
                          status=404,
                          extra_environ=anonymous_environ)
+
+
+class TestVocabularyListView(ApplicationLayerTest, _TestBaseViewMixin):
+
+    @WithSharedApplicationMockDS(users=(u'user001', u'admin001@nextthought.com'), testapp=True, default_authenticate=False)
+    def test_authenticate(self):
+        url = 'http://alpha.dev/dataserver2/++etc++hostsites/alpha.dev/++etc++site/Vocabularies'
+        anon_environ = self._make_environ(None)
+        user_environ = self._make_environ('user001')
+        admin_environ = self._make_environ('admin001@nextthought.com')
+        self.testapp.get(url, status=401, extra_environ=anon_environ)
+        self.testapp.get(url, status=403, extra_environ=user_environ)
+        self.testapp.get(url, status=200, extra_environ=admin_environ)
+
+    @WithSharedApplicationMockDS(users=(u'user001', u'admin001@nextthought.com'), testapp=True, default_authenticate=False)
+    def testVocabularyListView(self):
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            view = VocabularyListView(self.request)
+            view.context = VocabulariesPathAdapter(getSite().getSiteManager(), self.request)
+            result = view()
+            assert_that(result, has_entries({'vocabularies': [], 'Total': 0, 'ItemCount': 0,
+                                             'search': '',
+                                             'raw_url': 'http://example.com/dataserver2/++etc++hostsites/alpha.nextthought.com/++etc++site/Vocabularies/'}))
+            self._register_vocabulary(name='test_zzz',
+                                      terms=('x',),
+                                      site_manager=getSite().getSiteManager())
+            result = view()
+            assert_that(result, has_entries({'vocabularies': has_length(1), 'Total': 1, 'ItemCount': 1,
+                                             'search': '',
+                                             'raw_url': 'http://example.com/dataserver2/++etc++hostsites/alpha.nextthought.com/++etc++site/Vocabularies/'}))
+            assert_that(result['vocabularies'][0], has_entries({'name': 'test_zzz', 'total_terms': 1,
+                                                                'href': 'http://example.com/dataserver2/++etc++hostsites/alpha.nextthought.com/++etc++site/Vocabularies/test_zzz/@@details',
+                                                                'editable': True,
+                                                                'inherited': False}))
+
+        expected_raw_url = u'http://example.com/dataserver2/++etc++hostsites/alpha.dev/++etc++site/Vocabularies/'
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
+            view = VocabularyListView(self.request)
+            view.context = VocabulariesPathAdapter(getSite().getSiteManager(), self.request)
+            result = view()
+            assert_that(result, has_entries({'vocabularies': has_length(1), 'Total': 1, 'ItemCount': 1,
+                                             'search': '',
+                                             'raw_url': expected_raw_url}))
+
+            self._register_vocabulary(name='test_vocab',
+                                      terms=('a', 'b'),
+                                      site_manager=getSite().getSiteManager())
+            result = view()
+            assert_that(result, has_entries({'vocabularies': has_length(2), 'Total': 2, 'ItemCount': 2,
+                                             'search': '',
+                                             'raw_url': expected_raw_url}))
+
+        # global
+        vocab = SimpleVocabulary([SimpleTerm(x) for x in (u'one', u'two', u'three')])
+        component.getGlobalSiteManager().registerUtility(vocab,
+                                                         IVocabulary,
+                                                         name=u'test_xxx')
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            view = VocabularyListView(self.request)
+            view.context = VocabulariesPathAdapter(getSite().getSiteManager(), self.request)
+            result = view()
+            assert_that(result, has_entries({'vocabularies': has_length(2), 'Total': 2, 'ItemCount': 2, 'search': '',
+                                             'raw_url': 'http://example.com/dataserver2/++etc++hostsites/alpha.nextthought.com/++etc++site/Vocabularies/'}))
+            assert_that(result['vocabularies'][0], has_entries({'name': 'test_xxx', 'total_terms': 3,
+                                                                'href': 'http://example.com/dataserver2/++etc++hostsites/alpha.nextthought.com/++etc++site/Vocabularies/test_xxx/@@details',
+                                                                'editable': False,
+                                                                'inherited': False}))
+            assert_that(result['vocabularies'][1], has_entries({'name': 'test_zzz', 'total_terms': 1,
+                                                                'href': 'http://example.com/dataserver2/++etc++hostsites/alpha.nextthought.com/++etc++site/Vocabularies/test_zzz/@@details',
+                                                                'editable': True,
+                                                                'inherited': False}))
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
+            view = VocabularyListView(self.request)
+            view.context = VocabulariesPathAdapter(getSite().getSiteManager(), self.request)
+            result = view()
+            assert_that(result, has_entries({'search': '', 'vocabularies': has_length(3), 'Total': 3, 'ItemCount': 3, 'raw_url': expected_raw_url}))
+            assert_that(result['vocabularies'][0], has_entries({'name': 'test_vocab', 'total_terms': 2,
+                                                                'href': expected_raw_url + 'test_vocab/@@details',
+                                                                'editable': True,
+                                                                'inherited': False}))
+            assert_that(result['vocabularies'][1], has_entries({'name': 'test_xxx', 'total_terms': 3,
+                                                                'href': expected_raw_url + 'test_xxx/@@details',
+                                                                'editable': False,
+                                                                'inherited': False}))
+            assert_that(result['vocabularies'][2], has_entries({'name': 'test_zzz', 'total_terms': 1,
+                                                                'href': expected_raw_url + 'test_zzz/@@details',
+                                                                'editable': True,
+                                                                'inherited': True}))
+
+            self.request.params = {'search': 'xxx'}
+            result = view()
+            assert_that(result, has_entries({'search': 'xxx', 'vocabularies': has_length(1), 'Total': 3, 'ItemCount': 1, 'raw_url': expected_raw_url}))
+
+            self.request.params = {'search': 'vocab'}
+            result = view()
+            assert_that(result, has_entries({'search': 'vocab', 'vocabularies': has_length(1), 'Total': 3, 'ItemCount': 1, 'raw_url': expected_raw_url}))
+
+            self.request.params = {'search': ' oKc '}
+            result = view()
+            assert_that(result, has_entries({'search': 'okc', 'vocabularies': has_length(0), 'Total': 3, 'ItemCount': 0, 'raw_url': expected_raw_url}))
+
+            self.request.params = {'search': ' TesT '}
+            result = view()
+            assert_that(result, has_entries({'search': 'test', 'vocabularies': has_length(3), 'Total': 3, 'ItemCount': 3, 'raw_url': expected_raw_url}))
+
+        component.getGlobalSiteManager().unregisterUtility(vocab,
+                                                           IVocabulary,
+                                                           name=u'test_xxx')
+
+
+class TestVocabularyDetailsView(ApplicationLayerTest, _TestBaseViewMixin):
+
+    @WithSharedApplicationMockDS(users=(u'user001', u'admin001@nextthought.com'), testapp=True, default_authenticate=False)
+    def test_authenticate(self):
+        vocab = SimpleVocabulary([SimpleTerm(x) for x in (u'one', u'two')])
+        component.getGlobalSiteManager().registerUtility(vocab,
+                                                         IVocabulary,
+                                                         name=u'test_xxx')
+        url = 'http://alpha.dev/dataserver2/++etc++hostsites/alpha.dev/++etc++site/Vocabularies/test_xxx/@@details'
+        anon_environ = self._make_environ(None)
+        user_environ = self._make_environ('user001')
+        admin_environ = self._make_environ('admin001@nextthought.com')
+        self.testapp.get(url, status=401, extra_environ=anon_environ)
+        self.testapp.get(url, status=403, extra_environ=user_environ)
+        self.testapp.get(url, status=200, extra_environ=admin_environ)
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            parent_site_manager = getSite().getSiteManager()
+            self._register_vocabulary(name='test_vocab',
+                                      terms=('a', 'b'),
+                                      site_manager=parent_site_manager)
+
+        url = 'http://alpha.dev/dataserver2/++etc++hostsites/alpha.dev/++etc++site/Vocabularies/test_vocab/@@details'
+        self.testapp.get(url, status=401, extra_environ=anon_environ)
+        self.testapp.get(url, status=403, extra_environ=user_environ)
+        self.testapp.get(url, status=200, extra_environ=admin_environ)
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
+            parent_site_manager = getSite().getSiteManager()
+            self._register_vocabulary(name='test_vocab2',
+                                      terms=('a', 'b'),
+                                      site_manager=parent_site_manager)
+
+        url = 'http://alpha.dev/dataserver2/++etc++hostsites/alpha.dev/++etc++site/Vocabularies/test_vocab2/@@details'
+        self.testapp.get(url, status=401, extra_environ=anon_environ)
+        self.testapp.get(url, status=403, extra_environ=user_environ)
+        self.testapp.get(url, status=200, extra_environ=admin_environ)
+
+        component.getGlobalSiteManager().unregisterUtility(vocab,
+                                                           IVocabulary,
+                                                           name=u'test_xxx')
+
+    @WithSharedApplicationMockDS(users=(u'user001', u'admin001@nextthought.com'), testapp=True, default_authenticate=False)
+    def testVocabularyDetailsView(self):
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
+            site_manager = getSite().getSiteManager()
+            vocab1 = self._register_vocabulary(name='test_vocab',
+                                               terms=('a', 'b'),
+                                               site_manager=site_manager)
+            view = VocabularyDetailsView(self.request)
+            view.context = vocab1
+            result = view()
+            assert_that(result, has_entries({'name': 'test_vocab',
+                                             'terms': has_length(2),
+                                             'total_terms': 2,
+                                             'list_link': 'http://example.com/dataserver2/++etc++hostsites/alpha.dev/++etc++site/Vocabularies',
+                                             'save_link': 'http://example.com/dataserver2/++etc++hostsites/alpha.dev/++etc++site/test_vocab/'}))
+
+            vocab2 = SimpleVocabulary([SimpleTerm(x) for x in (u'one', u'two', u'three')])
+            vocab2.__parent__ = VocabulariesPathAdapter(site_manager, self.request)
+            vocab2.__name__ = 'test_vocab2'
+            view = VocabularyDetailsView(self.request)
+            view.context = vocab2
+            result = view()
+            assert_that(result, has_entries({'name': 'test_vocab2',
+                                             'terms': has_length(3),
+                                             'total_terms': 3,
+                                             'list_link': 'http://example.com/dataserver2/++etc++hostsites/alpha.dev/++etc++site/Vocabularies',
+                                             'save_link': None}))

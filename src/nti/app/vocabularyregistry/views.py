@@ -190,7 +190,7 @@ class VocabularyGetView(AbstractAuthenticatedView):
 @view_config(route_name='objects.generic.traversal',
              renderer='templates/vocab_list.pt',
              request_method='GET',
-             permission=nauth.ACT_READ,
+             permission=nauth.ACT_UPDATE,
              context=VocabulariesPathAdapter)
 class VocabularyListView(AbstractAuthenticatedView):
 
@@ -235,7 +235,7 @@ class VocabularyListView(AbstractAuthenticatedView):
 @view_config(route_name='objects.generic.traversal',
              renderer='templates/vocab_details.pt',
              request_method='GET',
-             permission=nauth.ACT_READ,
+             permission=nauth.ACT_UPDATE,
              context=IVocabulary,
              name="details")
 class VocabularyDetailsView(AbstractAuthenticatedView):
