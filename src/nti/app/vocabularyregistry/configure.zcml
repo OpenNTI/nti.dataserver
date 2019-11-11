@@ -21,8 +21,4 @@
 			 for="nti.site.interfaces.IHostPolicySiteManager pyramid.interfaces.IRequest"
 			 factory=".traversal.VocabulariesPathAdapter"
 			 provides="zope.traversing.interfaces.IPathAdapter" />
-	<utility
-		factory=".test.testVocab"
-		provides="zope.schema.interfaces.IVocabulary"
-		name="testVocab" />
 </configure>
