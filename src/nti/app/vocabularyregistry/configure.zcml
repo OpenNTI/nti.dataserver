@@ -17,4 +17,8 @@
 	<!-- ACLs -->
 	<adapter factory=".acl.VocabularyACLProvider" />
 
+	<adapter name="Vocabularies"
+			 for="nti.site.interfaces.IHostPolicySiteManager pyramid.interfaces.IRequest"
+			 factory=".traversal.VocabulariesPathAdapter"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
 </configure>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            padding: 0px 16px;
+        }
+
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 16px;
+        }
+
+        td, th {
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr {
+            border: 1px solid #dddddd;
+        }
+
+        table td:not([class=row-data]) {
+            cursor: move;
+        }
+
+        .btn:not([disabled]) {
+            cursor: pointer;
+        }
+
+        .btnCustom {
+            padding: 8px;
+            font-size: 14px;
+            opacity: 0.9;
+            filter: alpha(opacity=90);
+            border-radius: 3px;
+            background-color: #ddd;
+        }
+
+        .btnCustom:not([disabled]):hover,
+        .btnCustom:not([disabled]):focus {
+            opacity: 1.0;
+            filter: alpha(opacity=100);
+        }
+
+        .btnSave {
+            margin-top: 16px;
+        }
+
+        .success {
+            color: green;
+            margin-top: 16px;
+        }
+
+        .error {
+            color: red;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Name: <span tal:replace="options/name"></span></h2>
+
+    <p>Total: ${options/total_terms}</p>
+    <table id="termTbl">
+        <thead>
+            <tr>
+                <th>Term</th>
+                <metal:block tal:omit-tag="" tal:condition="options/save_link">
+                    <th>Actions</th>
+                </metal:block>
+            </tr>
+            <thead>
+            <tbody>
+                <metal:block tal:omit-tag="" tal:repeat="item options/terms">
+                    <tr>
+                        <td class="row-data">${item/value}</td>
+                        <metal:block tal:omit-tag="" tal:condition="options/save_link">
+                            <td>
+                                <button class="btn" onclick="editRow(this);">Edit</button>
+                                <button class="btn" onclick="insertAbove(this);">Insert Above</button>
+                                <button class="btn" onclick="insertBelow(this);">Insert Below</button>
+                                <button class="btn" onclick="deleteRow(this);">Delete</button>
+                            </td>
+                        </metal:block>
+                    </tr>
+                </metal:block>
+            </tbody>
+    </table>
+
+    <button class="btn btnCustom btnSave" onclick="saveChanges(this);" tal:attributes="disabled python: 'disabled' if not options['save_link'] else None;
+							save_link options/save_link;">
+        Save Changes
+    </button>
+    <button class="btn btnCustom" onclick="window.location='${options/list_link}'">
+        Back To List
+    </button>
+
+	<div class="success" style="display:none;"></div>
+	<div class="error" style="display:none;"></div>
+
+</body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+<script type="text/javascript">
+
+    function insertRow(rowIndex) {
+        var table = document.getElementById('termTbl');
+        var row = table.insertRow(rowIndex);
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+        cell1.setAttribute("contenteditable", "true");
+        cell1.classList.add("row-data");
+        cell1.innerHTML = "";
+        cell2.innerHTML = '<button class="btn" onclick="editRow(this);">Edit</button> ' +
+            '<button class="btn" onclick="insertAbove(this);">Insert Above</button> ' +
+            '<button class="btn" onclick="insertBelow(this);">Insert Below</button> ' +
+            '<button class="btn" onclick="deleteRow(this);">Delete</button>'
+    }
+
+    function insertAbove(me) {
+        var rowIndex = $(me).closest('tr')[0].rowIndex;
+        insertRow(rowIndex);
+    }
+
+    function insertBelow(me) {
+        var rowIndex = $(me).closest('tr')[0].rowIndex + 1;
+        insertRow(rowIndex);
+    }
+
+    function deleteRow(me) {
+        var rowIndex = $(me).closest('tr')[0].rowIndex;
+        var table = document.getElementById('termTbl');
+        table.deleteRow(rowIndex)
+    }
+
+    function editRow(me) {
+        var row = $(me).closest('tr');
+        $(row).find('.row-data').each(function () {
+            $(this).attr("contenteditable", "true");
+        });
+    }
+
+    $(document).ready(function () {
+
+        if ($('.btnSave').attr('save_link')) {
+            $("table tbody").sortable({ cancel: '.row-data,[contenteditable]' });
+
+            //override the mousedown event which is disabled by sortable.
+            $('.row-data').each(function () {
+                $(this)[0].onmousedown = function () {
+                    this.focus();
+                };
+            });
+        }
+
+    });
+
+    function getTermData() {
+        var data = [];
+        var index = 0;
+        var tbl = $('#termTbl');
+        $.each($(tbl).find('.row-data'), function () {
+            data[index] = $(this).text();
+            index = index + 1;
+        });
+        data = { "terms": data };
+        return JSON.stringify(data);
+    }
+
+    function saveChanges(me) {
+        var sure = confirm("Are you sure you want to make the changes?");
+        if (sure !== true) {
+            return;
+        }
+
+        var url = $(me).attr('save_link');
+        var data = getTermData();
+        $.ajax({
+            url: url,
+            method: 'PUT',
+            contentType: "application/json",
+            data: data,
+            success: function (result) {
+                showSuccess("Save successfully.", '.success', '.error', 500);
+            },
+            error: function (xhr, exception) {
+                if (xhr.status === 422) {
+                    var result = JSON.parse(xhr.responseText);
+                    showError(result['message'], '.success', '.error');
+                } else {
+                    console.log(exception);
+                }
+            }
+        });
+    }
+
+    function showSuccess(success, successSelector, errorSelector, timeout) {
+        $(errorSelector).html('');
+        $(errorSelector).hide();
+        $(successSelector).html(success);
+        $(successSelector).show();
+        if (timeout) {
+            setTimeout(function () {
+                window.location.reload();
+            }, timeout);
+        }
+    }
+
+    function showError(error, successSelector, errorSelector) {
+        $(successSelector).html('');
+        $(successSelector).hide();
+        $(errorSelector).html(error);
+        $(errorSelector).show();
+    }
+
+</script>
+
+</html>
