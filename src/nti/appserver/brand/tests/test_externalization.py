@@ -103,7 +103,7 @@ class TestExternalization(ApplicationLayerTest):
         assert_that(logo[LAST_MODIFIED], not_none())
         assert_that(logo['source'], is_(logo_image.source))
         assert_that(logo['filename'], is_(u'filename.png'))
-        assert_that(logo['href'], is_(u'/site-assets/logo'))
+        assert_that(logo['href'], is_(u'/site-assets/bucket_site_name/logo'))
 
         full_logo = assets.get('full_logo')
         assert_that(full_logo, not_none())
