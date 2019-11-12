@@ -57,7 +57,7 @@ from nti.appserver.context_providers import get_trusted_top_level_contexts
 
 from nti.appserver.interfaces import IApplicationSettings
 
-from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+from nti.appserver.brand.interfaces import ISiteBrand
 
 from nti.appserver.policies.site_policies import find_site_policy
 from nti.appserver.policies.site_policies import guess_site_display_name
@@ -576,8 +576,8 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		"""
 		Prefer the site brand first, then falling back to a site display name.
 		"""
-		policy = component.getUtility(ISitePolicyUserEventListener)
-		display_name = getattr(policy, 'BRAND', '')
+		brand = component.queryUtility(ISiteBrand)
+		display_name = getattr(brand, 'brand_name', '')
 		if display_name:
 			display_name = display_name.strip()
 		else:

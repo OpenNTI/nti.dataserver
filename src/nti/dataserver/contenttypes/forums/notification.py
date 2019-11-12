@@ -9,6 +9,9 @@ from zope import component
 
 from zope.i18n import translate
 
+# FIXME: break these deps
+from nti.appserver.brand.interfaces import ISiteBrand
+
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.dataserver.contenttypes.forums import MessageFactory as _
@@ -16,8 +19,6 @@ from nti.dataserver.contenttypes.forums import MessageFactory as _
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.mailer.interfaces import ITemplatedMailer
-
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -35,10 +36,11 @@ def send_creation_notification_email(sender,
 
     template = 'creation_notification_email'
 
+    brand = component.queryUtility(ISiteBrand)
     policy = component.getUtility(ISitePolicyUserEventListener)
 
     support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
-    brand = getattr(policy, 'BRAND', 'NextThought')
+    brand = getattr(brand, 'brand_name', 'NextThought')
     package = getattr(policy, 'PACKAGE', None)
 
     names = IFriendlyNamed(sender)

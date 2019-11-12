@@ -42,6 +42,8 @@ from nti.app.users import MessageFactory as _
 
 from nti.app.users import VERIFY_USER_EMAIL_VIEW
 
+from nti.appserver.brand.interfaces import ISiteBrand
+
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.base._compat import text_
@@ -222,6 +224,7 @@ def send_email_verification(user, profile, email, request=None, check=True):
         return
 
     username = user.username
+    brand = component.queryUtility(ISiteBrand)
     policy = component.getUtility(ISitePolicyUserEventListener)
 
     if check:
@@ -233,6 +236,7 @@ def send_email_verification(user, profile, email, request=None, check=True):
     informal_username = informal_username or username
 
     site_alias = getattr(policy, 'COM_ALIAS', '')
+    brand_name = getattr(brand, 'brand_name', '')
     support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
     href, token = generate_verification_email_url(user, request=request)
 
@@ -241,7 +245,7 @@ def send_email_verification(user, profile, email, request=None, check=True):
             'token': token,
             'profile': profile,
             'request': request,
-            'brand': policy.BRAND,
+            'brand': brand_name,
             'site_alias': site_alias,
             'support_email': support_email,
             'informal_username': informal_username,
