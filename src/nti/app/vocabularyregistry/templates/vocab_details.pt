@@ -46,10 +46,6 @@
             filter: alpha(opacity=100);
         }
 
-        .btnSave {
-            margin-top: 16px;
-        }
-
         .success {
             color: green;
             margin-top: 16px;
@@ -63,45 +59,59 @@
 </head>
 
 <body>
-    <h2>Name: <span tal:replace="options/name"></span></h2>
+	<div metal:use-macro="macro:header">
+		<div id="green-bar"></div>
+		<div id="logo-bar">
+			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+			alt="NextThought Logo" />
+		</div>
+	</div>
 
-    <p>Total: ${options/total_terms}</p>
-    <table id="termTbl">
-        <thead>
-            <tr>
-                <th>Term</th>
-                <metal:block tal:omit-tag="" tal:condition="options/save_link">
-                    <th>Actions</th>
-                </metal:block>
-            </tr>
-            <thead>
-            <tbody>
-                <metal:block tal:omit-tag="" tal:repeat="item options/terms">
-                    <tr>
-                        <td class="row-data">${item/value}</td>
-                        <metal:block tal:omit-tag="" tal:condition="options/save_link">
-                            <td>
-                                <button class="btn" onclick="editRow(this);">Edit</button>
-                                <button class="btn" onclick="insertAbove(this);">Insert Above</button>
-                                <button class="btn" onclick="insertBelow(this);">Insert Below</button>
-                                <button class="btn" onclick="deleteRow(this);">Delete</button>
-                            </td>
-                        </metal:block>
-                    </tr>
-                </metal:block>
-            </tbody>
-    </table>
+	<div style="margin-top: 20px;margin-left: 20px; margin-right:20px;">
+        <h2>Name: <span tal:replace="options/name"></span></h2>
 
-    <button class="btn btnCustom btnSave" onclick="saveChanges(this);" tal:attributes="disabled python: 'disabled' if not options['save_link'] else None;
-							save_link options/save_link;">
-        Save Changes
-    </button>
-    <button class="btn btnCustom" onclick="window.location='${options/list_link}'">
-        Back To List
-    </button>
+	    <p>Total: ${options/total_terms}</p>
+	    <table id="termTbl">
+	        <thead>
+	            <tr>
+	                <th>Term</th>
+	                <metal:block tal:omit-tag="" tal:condition="options/save_link">
+	                    <th>Actions</th>
+	                </metal:block>
+	            </tr>
+	            <thead>
+	            <tbody>
+	                <metal:block tal:omit-tag="" tal:repeat="item options/terms">
+	                    <tr>
+	                        <td class="row-data">${item/value}</td>
+	                        <metal:block tal:omit-tag="" tal:condition="options/save_link">
+	                            <td>
+	                                <button class="btn" onclick="editRow(this);">Edit</button>
+	                                <button class="btn" onclick="insertAbove(this);">Insert Above</button>
+	                                <button class="btn" onclick="insertBelow(this);">Insert Below</button>
+	                                <button class="btn" onclick="deleteRow(this);">Delete</button>
+	                            </td>
+	                        </metal:block>
+	                    </tr>
+	                </metal:block>
+	            </tbody>
+	    </table>
 
-	<div class="success" style="display:none;"></div>
-	<div class="error" style="display:none;"></div>
+		<div style="margin-top: 16px;">
+			<metal:block tal:omit-tag="" tal:condition="options/save_link">
+				<button class="btn btnCustom" onclick="AppendRow(this);">Add New Term</button>
+			    <button class="btn btnCustom btnSave" onclick="saveChanges(this);" tal:attributes="save_link options/save_link;">
+			        Save Changes
+			    </button>
+		    </metal:block>
+		    <button class="btn btnCustom" onclick="window.location='${options/list_link}'">
+		        Back To List
+            </button>
+       	</div>
+
+        <div class="success" style="display:none;"></div>
+        <div class="error" style="display:none;"></div>
+    </div>
 
 </body>
 
@@ -145,6 +155,11 @@
             $(this).attr("contenteditable", "true");
         });
     }
+
+	function AppendRow(me) {
+		var table = document.getElementById('termTbl');
+		insertRow(table.rows.length);
+	}
 
     $(document).ready(function () {
 

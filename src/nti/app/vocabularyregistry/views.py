@@ -84,8 +84,9 @@ class VocabularyViewMixin(object):
                 self._raise_error(u"'%s' is not non-empty string." % x)
             _res.append(x.strip())
 
-        if not _res:
-            self._raise_error("terms can not be empty.")
+        # Allow empty terms for now.
+        #if not _res:
+        #    self._raise_error("terms can not be empty.")
 
         return _res
 
