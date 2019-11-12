@@ -32,10 +32,10 @@ ZCML_REGISTRATION = """
     <include package="zope.security" file="meta.zcml" />
     <include package="zope.component" />
     <include package="nti.app.site" file="meta.zcml" />
-    <include package="." file="meta.zcml" />
+    <include package="nti.appserver.policies" file="meta.zcml" />
 
     <!-- We can reference a global object as our base -->
-    <appsite:createBaseComponents bases="nti.appserver.policies.sites.BASEADULT" 
+    <appsite:createBaseComponents bases="nti.appserver.policies.sites.BASEADULT"
                                   name="%s" />
 
     <appsite:registerInNamedComponents registry="%s">
@@ -47,7 +47,7 @@ ZCML_REGISTRATION = """
 
 def _make_xml_attrs(**kwargs):
     return ' '.join(['%s="%s"' % (name, value) for name, value in kwargs.items() if value is not None])
-    
+
 
 def _config_for_site_with_policy(sitename, brand, display, username, alias, realname):
     site_attrs = _make_xml_attrs(brand=brand,
@@ -98,4 +98,4 @@ class TestLocalSitePolicyZCML(ConfiguringTestBase):
 
         assert_that(str(e.exception),
                     contains_string('com_username must be provided if com_alias or com_realname is specified.'))
-        
+

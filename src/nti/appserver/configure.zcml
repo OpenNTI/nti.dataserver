@@ -460,6 +460,7 @@
 
 	<includeOverrides file="overrides.zcml" />
 
+    <include package=".brand" file="configure.zcml" />
 	<include package=".policies" file="configure.zcml" />
 
 	<include package="nti.app.forums" />
