@@ -10,7 +10,7 @@ from zope import component
 from zope.i18n import translate
 
 # FIXME: break these deps
-from nti.appserver.brand.interfaces import ISiteBrand
+from nti.appserver.brand.utils import get_site_brand_name
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
@@ -36,11 +36,10 @@ def send_creation_notification_email(sender,
 
     template = 'creation_notification_email'
 
-    brand = component.queryUtility(ISiteBrand)
     policy = component.getUtility(ISitePolicyUserEventListener)
 
     support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
-    brand = getattr(brand, 'brand_name', 'NextThought')
+    brand = get_site_brand_name()
     package = getattr(policy, 'PACKAGE', None)
 
     names = IFriendlyNamed(sender)

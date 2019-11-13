@@ -7,7 +7,6 @@ Support for building digest emails.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -57,7 +56,7 @@ from nti.appserver.context_providers import get_trusted_top_level_contexts
 
 from nti.appserver.interfaces import IApplicationSettings
 
-from nti.appserver.brand.interfaces import ISiteBrand
+from nti.appserver.brand.utils import get_site_brand_name
 
 from nti.appserver.policies.site_policies import find_site_policy
 from nti.appserver.policies.site_policies import guess_site_display_name
@@ -576,8 +575,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		"""
 		Prefer the site brand first, then falling back to a site display name.
 		"""
-		brand = component.queryUtility(ISiteBrand)
-		display_name = getattr(brand, 'brand_name', '')
+		display_name = get_site_brand_name()
 		if display_name:
 			display_name = display_name.strip()
 		else:
