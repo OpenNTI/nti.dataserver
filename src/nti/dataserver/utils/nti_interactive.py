@@ -62,12 +62,12 @@ def process_args(args=None):
 
     if plugins:
         features = ()
-        packages = "nti.appserver"
-        context = create_context(env_dir, features)
+        packages = ("nti.appserver",)
     else:
-        context = None
         packages = set(args.packages or ())
-        packages.add('nti.dataserver')  # always include dataserver
+        # always include dataserver
+        packages.add('nti.dataserver')
+    context = create_context(env_dir, features)
 
     db, conn, root = interactive_setup(context=context,
                                        config_features=features,
