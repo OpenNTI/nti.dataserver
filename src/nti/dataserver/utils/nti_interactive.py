@@ -13,7 +13,10 @@ patch_relstorage_all_except_gevent_on_import.patch()
 
 import os
 import sys
+import glob
 import argparse
+
+from zope.configuration import xmlconfig
 
 from IPython.terminal.debugger import set_trace
 
@@ -49,6 +52,12 @@ def process_args(args=None):
     site_group.add_argument('-u', '--plugins', help="Load plugin points",
                             action='store_true', dest='plugins')
 
+    arg_parser.add_argument('-s', '--load_slugs',
+                            help="Slug files",
+                            nargs="+",
+                            default=(),
+                            dest='slugs_files')
+
     args = arg_parser.parse_args(args=args)
 
     env_dir = os.getenv('DATASERVER_DIR')
@@ -67,7 +76,15 @@ def process_args(args=None):
         packages = set(args.packages or ())
         # always include dataserver
         packages.add('nti.dataserver')
+
+    # By default, we load all package-includes slugs
     context = create_context(env_dir, features)
+
+    for slug_file in args.slugs_files:
+        if args.verbose:
+            print("Including slug files (%s)" % slug_file)
+        xmlconfig.include(context,
+                          files=slug_file)
 
     db, conn, root = interactive_setup(context=context,
                                        config_features=features,
