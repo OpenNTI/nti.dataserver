@@ -13,7 +13,6 @@ patch_relstorage_all_except_gevent_on_import.patch()
 
 import os
 import sys
-import glob
 import argparse
 
 from zope.configuration import xmlconfig

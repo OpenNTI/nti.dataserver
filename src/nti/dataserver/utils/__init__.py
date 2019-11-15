@@ -328,13 +328,13 @@ def interactive_setup(root=".",
 	logging.root.handlers[0].setFormatter(zope.exceptions.log.Formatter(log_format))
 
 	setHooks()
-	if context is None:
-		packages = ['nti.dataserver']
-		if xmlconfig_packages:
-			packages = set(xmlconfig_packages)
-		context = _configure(set_up_packages=packages,
-							 features=config_features,
-							 execute=False)
+	packages = ['nti.dataserver']
+	if xmlconfig_packages:
+		packages = set(xmlconfig_packages)
+	context = _configure(set_up_packages=packages,
+						 features=config_features,
+						 context=context,
+						 execute=False)
 	if with_library:
 		# XXX: Very similar to nti.appserver.application.
 		DATASERVER_DIR = os.getenv('DATASERVER_DIR', '')
