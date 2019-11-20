@@ -94,6 +94,18 @@ class ISiteBrandAssets(ILastModified, ICreated):
                      title=u'The site brand favicon image',
                      required=False)
 
+    login_logo = Object(ISiteBrandImage,
+                        title=u'The login app logo',
+                        required=False)
+
+    login_background = Object(ISiteBrandImage,
+                              title=u'The login app background',
+                              required=False)
+
+    login_featured_callout = Object(ISiteBrandImage,
+                                    title=u'The login app callout',
+                                    required=False)
+
     # <>/site-assets/<site>
     root = Object(IDelimitedHierarchyBucket,
                   title=u"asset location",
