@@ -637,9 +637,13 @@ def createApplication( http_port,
 	pyramid_config.add_tween('nti.appserver.tweens.zodb_connection_tween.zodb_connection_tween_factory',
 							 under='nti.appserver.tweens.greenlet_runner_tween.greenlet_runner_tween_factory')
 
+	# Wrap for greenlet info
+	pyramid_config.add_tween( 'nti.appserver.tweens.greenlet_request_tween.greenlet_request_tween_factory',
+							  under='nti.appserver.tweens.zodb_connection_tween.zodb_connection_tween_factory' )
+
 	# Then, ensure that each request is wrapped in default global transaction
 	pyramid_config.add_tween( 'nti.appserver.tweens.transaction_tween.transaction_tween_factory',
-							  under='nti.appserver.tweens.zodb_connection_tween.zodb_connection_tween_factory' )
+							  under='nti.appserver.tweens.greenlet_request_tween.greenlet_request_tween_factory' )
 
 	_configure_zodb_tween( DatabaseOpenedWithRoot( server.db ), pyramid_config.registry )
 

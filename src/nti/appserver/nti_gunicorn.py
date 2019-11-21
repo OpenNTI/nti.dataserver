@@ -70,6 +70,12 @@ class GunicornLogger(gunicorn_logger):
                                   connection_pool.size)
         current_site = environ.get('nti.current_site', '-')
         atoms['S'] = current_site
+        switch_count = environ.get('nti_greenlet_switch_into_count', '-')
+        switch_time = environ.get('nti_greenlet_switch_time', None)
+        if switch_time:
+            atoms['GS'] = "[%s switches - %.2fs]" % (switch_count, switch_time)
+        else:
+            atoms['GS'] = "[%s switches - ]" % switch_count
         return atoms
 
 
@@ -295,7 +301,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
         # formatting field width to account for this)
         # (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
         self.cfg.settings['access_log_format'].set(
-            str(self.cfg.access_log_format) + b" \"%(C)s\" \"%(S)s\" %(R)s %(G)s %(T)s.%(D)06ds")
+            str(self.cfg.access_log_format) + b" \"%(C)s\" \"%(S)s\" %(R)s %(G)s %(GS)s %(T)s.%(D)06ds")
 
         # Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
         # Then the default propagation settings mean we get two copies of access logging.
