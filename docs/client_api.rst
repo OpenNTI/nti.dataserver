@@ -127,9 +127,15 @@ The user object can be obtained as a result of the `UserUpsert` API or via the `
               }]
  }
 
- If a user object must be resolved from the external identifier fields (external_type and external_id), the `UserInfoExtract` API should be used. The `UserInfoExtract` API will take an HTTP Accept header defining the return type. The options are `text/csv` or `application/json`. A NextThought username can be retrieved that is mapped to an email address in the resulting data set. This username can then be used in the `ResolveUser` API.
+If a user object must be resolved from the external identifier fields (external_type and external_id),
+the `UserInfoExtract` API should be used. The `UserInfoExtract` API will take an HTTP Accept header
+defining the return type. The options are `text/csv` or `application/json`. A NextThought username can
+be retrieved that is mapped to an email address in the resulting data set. This username can then be
+used in the `ResolveUser` API.
 
- The `UserEnrollments` API will return a user"s enrollment records. The `CatalogEntryNTIID` value in these enrollment objects will map to NTIIDs found in the `ByTag` API and can be used in the `GrantAccess`/`RemoveAccess` APIs.
+The `UserEnrollments` API will return a user"s enrollment records. The `CatalogEntryNTIID` value in
+these enrollment objects will map to NTIIDs found in the `ByTag` API and can be used in the
+`GrantAccess`/`RemoveAccess` APIs.
 
 UserInfoExtract
 ---------------
@@ -205,6 +211,7 @@ Example Request
 
 Example request url:
  * `http://localhost/dataserver2/ResolveUser/hazel`
+ * `http://localhost/dataserver2/ResolveUser?external_type=employee_id&external_id=123456`
 
 Example request headers:
 
