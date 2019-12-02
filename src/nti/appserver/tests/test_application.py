@@ -1306,30 +1306,6 @@ class TestApplication(ApplicationLayerTest):
 														 'description', description,
 														 'degree', degree ) ) ))
 
-	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
-	def test_transaction_tween_abort_ioerror(self):
-		# Commonly seen on socketio XHR post. If
-		# the wsgi.input raises an IOError, we don't 500
-
-		username = 'aizen@bleach.com'
-		with mock_dataserver.mock_db_trans( self.ds ):
-			self._create_user( username )
-
-		class Input(object):
-			def read(self, *args):
-				raise IOError("unexpected end of file while reading request at position 0")
-			# Make webtest lint happy
-			readline = read
-			readlines = readline
-			def __iter__(self):
-				return []
-
-		extra_environ=self._make_extra_environ(username=username)
-		extra_environ[b'wsgi.input'] = Input()
-		self.testapp.put('/dataserver2/users/%s' % username,
-						{"NotificationCount": 5 },
-						extra_environ=extra_environ,
-						status=400)
 
 class TestUtil(unittest.TestCase):
 
