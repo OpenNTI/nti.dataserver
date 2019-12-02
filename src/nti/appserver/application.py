@@ -638,14 +638,14 @@ def createApplication( http_port,
 							 under='nti.appserver.tweens.greenlet_runner_tween.greenlet_runner_tween_factory')
 
 	# Then, ensure that each request is wrapped in default global transaction
-	pyramid_config.add_tween( 'nti.appserver.tweens.transaction_tween.transaction_tween_factory',
+	pyramid_config.add_tween( 'nti.transactions.pyramid_tween.transaction_tween_factory',
 							  under='nti.appserver.tweens.zodb_connection_tween.zodb_connection_tween_factory' )
 
 	_configure_zodb_tween( DatabaseOpenedWithRoot( server.db ), pyramid_config.registry )
 
 	# Add a tween that ensures we are within a SiteManager.
 	pyramid_config.add_tween( 'nti.appserver.tweens.zope_site_tween.site_tween_factory',
-							  under='nti.appserver.tweens.transaction_tween.transaction_tween_factory' )
+							  under='nti.transactions.pyramid_tween.transaction_tween_factory' )
 
 	# And a tween that handles Zope security integration
 	pyramid_config.add_tween( 'nti.appserver.tweens.zope_security_interaction_tween.security_interaction_tween_factory',
