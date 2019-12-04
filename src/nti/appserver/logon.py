@@ -34,6 +34,8 @@ from __future__ import absolute_import
 import logging
 logger = logging.getLogger(__name__)
 
+import hashlib
+
 from six.moves import urllib_parse
 
 import simplejson as json
@@ -72,6 +74,8 @@ from requests.exceptions import RequestException
 
 from nti.app.renderers.interfaces import IResponseCacheController
 from nti.app.renderers.interfaces import IPrivateUncacheableInResponse
+
+from nti.app.users.utils import get_user_creation_sitename
 
 from nti.appserver import MessageFactory as _
 
@@ -426,7 +430,23 @@ def ping(request):
     username = request.authenticated_userid
     result = _Pong(links)
     if username:
-        result['AuthenticatedUsername'] = username
+        result.AuthenticatedUsername = username
+
+        # As of 12/4/2019 we are only using this for google analytics.
+        # We want something unique and stable that ids the user but that isn't
+        # PII and isn't easy to reverse. We use a one way hash of an identifier
+        # based off the username and user creation site if it exists.
+        #
+        # TODO: Really we add the site because users are only specific to a db.
+        # We collect analytics across all environements and we don't want collisions.
+        # The current site isn't exactly right especially in a child site scenario like
+        # ifsta. It also probably isn't accurate if people jump between vanity urls.
+        # so we use the user creation site. This still isn't guarenteed to be unique, but
+        # in practice, in our current and known future setups it will be
+
+        scope = get_user_creation_sitename(username)
+        uid = username + u'@' + scope if scope else username
+        result.AuthenticatedUserId = hashlib.md5(uid).hexdigest()
     return result
 
 
@@ -438,6 +458,9 @@ class _Pong(dict):
     __external_class_name__ = 'Pong'
 
     mime_type = mimetype.nti_mimetype_with_class('pong')
+
+    AuthenticatedUsername = None
+    AuthenticatedUserId = None
 
     def __init__(self, lnks):
         dict.__init__(self)
