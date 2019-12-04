@@ -70,6 +70,8 @@ from pyramid.view import view_config
 import requests
 from requests.exceptions import RequestException
 
+from nti.app.authentication import get_remote_user
+
 from nti.app.renderers.interfaces import IResponseCacheController
 from nti.app.renderers.interfaces import IPrivateUncacheableInResponse
 
@@ -130,6 +132,8 @@ from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
+
+from nti.externalization.oids import to_external_oid
 
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
@@ -427,6 +431,7 @@ def ping(request):
     result = _Pong(links)
     if username:
         result.AuthenticatedUsername = username
+        result.AuthenticatedUserId = to_external_oid(get_remote_user())
     return result
 
 
@@ -440,6 +445,7 @@ class _Pong(dict):
     mime_type = mimetype.nti_mimetype_with_class('pong')
 
     AuthenticatedUsername = None
+    AuthenticatedUserId = None
 
     def __init__(self, lnks):
         dict.__init__(self)

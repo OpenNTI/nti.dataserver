@@ -158,6 +158,8 @@ class ILogonPong(interface.Interface):
 
     AuthenticatedUsername = interface.Attribute(u"The username if authenticated")
 
+    AuthenticatedUserId = interface.Attribute(u"An opaque identifier for the authenticated user")
+
 
 class IUserViewTokenCreator(interface.Interface):
     """

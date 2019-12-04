@@ -371,6 +371,7 @@ class TestLogonViews(ApplicationLayerTest):
 		external = to_external_object(result)
 
                 assert_that(external, has_entry('AuthenticatedUsername', None))
+                assert_that(external, has_entry('_AuthenticatedUserId', None))
 
 	@WithMockDSTrans
 	def test_authenticated_ping(self):
@@ -403,6 +404,7 @@ class TestLogonViews(ApplicationLayerTest):
 
                 # Our external object also has the AuthenticatedUsername we expect
                 assert_that(external, has_entry('AuthenticatedUsername', 'jason.madden@nextthought.com'))
+                assert_that(external, has_entry('AuthenticatedUserId', not_(None)))
 
 		# and we can decrease again
 		user_link_provider.delete_link(user, 'force-edit-profile')
