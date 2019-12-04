@@ -426,7 +426,7 @@ def ping(request):
     username = request.authenticated_userid
     result = _Pong(links)
     if username:
-        result['AuthenticatedUsername'] = username
+        result.AuthenticatedUsername = username
     return result
 
 
@@ -438,6 +438,8 @@ class _Pong(dict):
     __external_class_name__ = 'Pong'
 
     mime_type = mimetype.nti_mimetype_with_class('pong')
+
+    AuthenticatedUsername = None
 
     def __init__(self, lnks):
         dict.__init__(self)

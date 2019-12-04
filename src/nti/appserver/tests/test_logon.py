@@ -358,7 +358,7 @@ class TestLogonViews(ApplicationLayerTest):
 		return next((x for x in links if x.rel == rel_name))
 
 	@WithMockDSTrans
-	def test_unathenticated_ping(self):
+	def test_unauthenticated_ping(self):
 		result = ping(get_current_request())
 		assert_that(result, has_property('links', has_length(greater_than_or_equal_to(6))))
 		__traceback_info__ = result.links
@@ -368,7 +368,9 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that(handshake_link.target, ends_with('/dataserver2/logon.handshake'))
 		assert_that(create_link.target, ends_with('/dataserver2/account.create'))
 		assert_that(create_link.target_mime_type, is_('application/vnd.nextthought.user'))
-		to_external_representation(result, EXT_FORMAT_JSON, name='wsgi')
+		external = to_external_object(result)
+
+                assert_that(external, has_entry('AuthenticatedUsername', None))
 
 	@WithMockDSTrans
 	def test_authenticated_ping(self):
@@ -383,6 +385,7 @@ class TestLogonViews(ApplicationLayerTest):
 		get_current_request().registry.registerUtility(Policy())
 
 		result = ping(get_current_request())
+                
 		assert_that(result, has_property('links', has_length(greater_than_or_equal_to(3))))
 
 		__traceback_info__ = result.links
@@ -397,6 +400,9 @@ class TestLogonViews(ApplicationLayerTest):
 		external = to_external_object(result)
 		assert_that(external, has_entry('Links', has_length(len_links + 1)))
 		assert_that(external['Links'], has_item(has_entry('rel', 'force-edit-profile')))
+
+                # Our external object also has the AuthenticatedUsername we expect
+                assert_that(external, has_entry('AuthenticatedUsername', 'jason.madden@nextthought.com'))
 
 		# and we can decrease again
 		user_link_provider.delete_link(user, 'force-edit-profile')

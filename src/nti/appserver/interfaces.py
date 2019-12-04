@@ -156,6 +156,8 @@ class ILogonPong(interface.Interface):
     Marker interface for a Pong class
     """
 
+    AuthenticatedUsername = interface.Attribute(u"The username if authenticated")
+
 
 class IUserViewTokenCreator(interface.Interface):
     """
