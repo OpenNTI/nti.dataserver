@@ -371,7 +371,7 @@ class TestLogonViews(ApplicationLayerTest):
 		external = to_external_object(result)
 
                 assert_that(external, has_entry('AuthenticatedUsername', None))
-                assert_that(external, has_entry('_AuthenticatedUserId', None))
+                assert_that(external, has_entry('AuthenticatedUserId', None))
 
 	@WithMockDSTrans
 	def test_authenticated_ping(self):
