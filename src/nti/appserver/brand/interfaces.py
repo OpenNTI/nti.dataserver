@@ -54,6 +54,7 @@ class ISiteBrandImage(ILastModified, ICreated):
 
     source = TextLine(title=u"a relative url to the source image",
                       required=False)
+    source.setTaggedValue('_ext_excluded_out', True)
 
     filename = TextLine(title=u"the uploaded filename",
                         required=False)
