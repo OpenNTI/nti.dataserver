@@ -101,7 +101,6 @@ class TestExternalization(ApplicationLayerTest):
         assert_that(logo[MIMETYPE],
                     is_(SiteBrandImage.mime_type))
         assert_that(logo[LAST_MODIFIED], not_none())
-        assert_that(logo['source'], is_(logo_image.source))
         assert_that(logo['filename'], is_(u'filename.png'))
         assert_that(logo['href'], is_(u'/site-assets/bucket_site_name/logo'))
 
@@ -112,7 +111,6 @@ class TestExternalization(ApplicationLayerTest):
                     is_(SiteBrandImage.mime_type))
         assert_that(full_logo[CREATED_TIME], not_none())
         assert_that(full_logo[LAST_MODIFIED], not_none())
-        assert_that(full_logo['source'], is_(full_logo_image.source))
         assert_that(full_logo['filename'], none())
 
         icon = assets.get('icon')
@@ -122,7 +120,6 @@ class TestExternalization(ApplicationLayerTest):
                     is_(SiteBrandImage.mime_type))
         assert_that(icon[CREATED_TIME], not_none())
         assert_that(icon[LAST_MODIFIED], not_none())
-        assert_that(icon['source'], is_(icon_image.source))
         assert_that(icon['filename'], none())
 
         # Logo props are not copied to other empty image fields
@@ -138,10 +135,6 @@ class TestExternalization(ApplicationLayerTest):
                                            'brand_color', color,
                                            "theme", has_entries(**theme),
                                            "assets", has_properties("logo",
-                                                                    has_properties("source", is_(logo_image.source),
-                                                                                   "filename", is_(logo_image.filename)),
-                                                                    "full_logo",
-                                                                    has_properties("source", is_(full_logo_image.source)),
+                                                                    has_properties("filename", is_(logo_image.filename)),
                                                                     "icon",
-                                                                    has_properties("source", is_(icon_image.source),
-                                                                                   "filename", none()))))
+                                                                    has_properties("filename", none()))))
