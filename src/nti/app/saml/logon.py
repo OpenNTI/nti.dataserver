@@ -80,7 +80,7 @@ def sls_view(request):
 class SAMLLogoutResponseProvider(object):
     """
     A saml logout response provider that bounces the user through the saml SLO
-    endpoint if they are authetnicated via saml. Sites that use SAML authentication
+    endpoint if they are authenticated via saml. Sites that use SAML authentication
     should register this in their site.
     """
 
@@ -241,7 +241,7 @@ class AssertionUserFactory(object):
     def __init__(self, request, unused_info):
         self.request = request
 
-    def create_user(self, user_info, factory=None):
+    def create_user(self, user_info, factory=None, ext_values=None):
         username = user_info.username
 
         if username is None:
@@ -270,7 +270,8 @@ class AssertionUserFactory(object):
                                            idurl=None,
                                            iface=None,
                                            user_factory=factory,
-                                           realname=realname)
+                                           realname=realname,
+                                           ext_values=ext_values)
         interface.alsoProvides(user, IRecreatableUser)
         if email_found:  # trusted source
             force_email_verification(user)
