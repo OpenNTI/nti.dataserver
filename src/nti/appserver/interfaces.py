@@ -741,15 +741,17 @@ class ITrustedTopLevelContainerContextProvider(IIterable):
         """
 
 
-class IHierarchicalContextProvider(IIterable):
+class IHierarchicalContextProvider(interface.Interface):
     """
     An adapter interface that returns the hierarchical
     path to the adapted object.
     """
 
-    def __len__():
+    def get_context_paths(context=None):
         """
-        Return the number of items.
+        Return an iterable of paths to the adapted object. If a
+        context (book, course) is supplied, all returned paths
+        are based on that context.
         """
 
 

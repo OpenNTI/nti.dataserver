@@ -109,13 +109,14 @@ def _dedupe_bundles_from_hierarchy(hierarchy_contexts):
     return results
 
 
-def get_hierarchy_context(obj, user):
+def get_hierarchy_context(obj, user, context=None):
     """
     Return all hierarchical contexts for a given object and user.
     """
     results = []
-    for hierarchy_contexts in component.subscribers((obj, user),
-                                                    IHierarchicalContextProvider):
+    for provider in component.subscribers((obj, user),
+                                          IHierarchicalContextProvider):
+        hierarchy_contexts = provider.get_context_paths(context=context)
         if hierarchy_contexts:
             results.extend(hierarchy_contexts)
     return _dedupe_bundles_from_hierarchy(results)
