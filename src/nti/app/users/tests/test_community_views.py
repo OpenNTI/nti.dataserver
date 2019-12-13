@@ -760,25 +760,19 @@ class TestCommunityViews(ApplicationLayerTest):
         res = res.json_body
         avatar_url = res.get('avatarURL')
         assert_that(avatar_url, not_none())
-        self.testapp.get(avatar_url)
-        blurred_url = res.get('blurredAvatarURL')
-        assert_that(blurred_url, not_none())
-        self.testapp.get(blurred_url)
 
         # SVG image results in duplicate URLs
         res = self.testapp.put_json(comm_href, {'avatarURL': svg_image_data})
         res = res.json_body
         avatar_url = res.get('avatarURL')
         assert_that(avatar_url, not_none())
-        assert_that(res, has_entries('backgroundURL', none(),
-                                     'blurredAvatarURL', is_(avatar_url)))
+        assert_that(res, has_entries('backgroundURL', none()))
 
         # Cannot blur GIF so blurred URL is empty again
         res = self.testapp.put_json(comm_href, {'avatarURL': gif_image_data})
         res = res.json_body
         assert_that(res, has_entries('avatarURL', not_none(),
-                                     'backgroundURL', none(),
-                                     'blurredAvatarURL', none()))
+                                     'backgroundURL', none()))
 
         # Reset and pass in url
         self.testapp.put_json(comm_href, {'avatarURL': png_image_data})
@@ -786,8 +780,7 @@ class TestCommunityViews(ApplicationLayerTest):
         res = self.testapp.put_json(comm_href, {'avatarURL': image_url})
         res = res.json_body
         assert_that(res, has_entries('avatarURL', is_(image_url),
-                                     'backgroundURL', none(),
-                                     'blurredAvatarURL', none()))
+                                     'backgroundURL', none()))
 
 
     @time_monotonically_increases
