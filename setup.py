@@ -206,9 +206,6 @@ setup(
         # 'cryptography', # oauthlib
         'cssselect',  # Used by pyquery
         'cython',
-        # Adds support for detecting aborts to transactions which
-        # otherwise only detect failed commits
-        'dm.transaction.aborthook',
         # support for defining and evolving classes based on schemas
         # pulls in dm.reuse
         'dm.zope.schema',
