@@ -15,7 +15,13 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+from zope import interface
+
+from zope.event import notify
+
 from nti.app.authentication import get_remote_user
+
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
 
@@ -31,7 +37,8 @@ from nti.app.users import REL_MY_MEMBERSHIP
 from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 from nti.app.users.views.view_mixins import EntityActivityViewMixin
 
-from nti.appserver.ugd_edit_views import UGDDeleteView
+from nti.coremetadata.interfaces import IDeactivatedDynamicSharingTargetFriendsList
+from nti.coremetadata.interfaces import DeactivatedDynamicSharingTargetFriendsListEvent
 
 from nti.dataserver import authorization as nauth
 
@@ -43,6 +50,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.metadata.index import IX_MIMETYPE
 
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -73,10 +81,10 @@ def exit_dfl_view(context, request):
              request_method='DELETE',
              context=IDynamicSharingTargetFriendsList,
              permission=nauth.ACT_DELETE)
-class DFLDeleteView(UGDDeleteView):
+class DFLDeleteView(AbstractAuthenticatedView):
 
-    def _do_delete_object(self, theObject):
-        members = list(theObject)  # resolve all members
+    def __call__(self):
+        members = list(self.context)  # resolve all members
         if members:
             raise_json_error(self.request,
                              hexc.HTTPForbidden,
@@ -85,7 +93,14 @@ class DFLDeleteView(UGDDeleteView):
                                  'code': "DFLGroupIsNotEmpty"
                              },
                              None)
-        return super(DFLDeleteView, self)._do_delete_object(theObject)
+        logger.info('Deleting dfl (%s) (%s)',
+                    self.context.username,
+                    self.remoteUser)
+        if not IDeactivatedDynamicSharingTargetFriendsList.providedBy(self.context):
+            interface.alsoProvides(self.context, IDeactivatedDynamicSharingTargetFriendsList)
+            notify(ObjectModifiedFromExternalEvent(self.context))
+            notify(DeactivatedDynamicSharingTargetFriendsListEvent(self.context))
+        return hexc.HTTPNoContent()
 
 
 @view_config(route_name='objects.generic.traversal',

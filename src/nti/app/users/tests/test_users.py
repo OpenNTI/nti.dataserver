@@ -46,6 +46,8 @@ from nti.app.testing.request_response import DummyRequest
 
 from nti.dataserver.tests import mock_dataserver
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 
 class TestUsers(ApplicationLayerTest):
 
@@ -144,6 +146,7 @@ class TestUsers(ApplicationLayerTest):
             dfl.creator = ichigo
             ichigo.addContainedObject(dfl)
             dfl.addFriend(aizen)
+            dfl_ntiid = dfl.NTIID
 
         path = '/dataserver2/users/%s/memberships' % self.default_username
         res = self.testapp.get(path, status=200)
@@ -192,6 +195,26 @@ class TestUsers(ApplicationLayerTest):
                                extra_environ=self._make_extra_environ(user=u"rukia"),
                                status=200)
         assert_that(res.json_body, has_entry('Items', has_length(0)))
+
+        # Delete dfl
+        with mock_dataserver.mock_db_trans(self.ds):
+            dfl = find_object_with_ntiid(dfl_ntiid)
+            for user in dfl:
+                dfl.removeFriend(user)
+
+        self.testapp.delete('/dataserver2/Objects/%s' % dfl_ntiid,
+                            extra_environ=self._make_extra_environ(user=u"ichigo"))
+        path = '/dataserver2/users/ichigo/memberships'
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"ichigo"),
+                               status=200)
+        assert_that(res.json_body, has_entry('Items', has_length(1)))
+
+        path = '/dataserver2/users/aizen/memberships'
+        res = self.testapp.get(path,
+                               extra_environ=self._make_extra_environ(user=u"aizen"),
+                               status=200)
+        assert_that(res.json_body, has_entry('Items', has_length(1)))
 
 class TestAvatarViews(ApplicationLayerTest):
 

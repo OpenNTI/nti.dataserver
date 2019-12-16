@@ -44,7 +44,9 @@ from nti.coremetadata.interfaces import IUserLastSeenEvent
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import IUnscopedGlobalCommunity
 from nti.coremetadata.interfaces import IDeactivatedCommunityEvent
+from nti.coremetadata.interfaces import IDynamicSharingTargetFriendsList
 from nti.coremetadata.interfaces import IAutoSubscribeMembershipPredicate
+from nti.coremetadata.interfaces import IDeactivatedDynamicSharingTargetFriendsList
 
 from nti.dataserver.authorization import is_admin
 
@@ -193,6 +195,12 @@ def _community_site_traverse(community, unused_event):
         raise hexc.HTTPNotFound()
 
 
+@component.adapter(IDynamicSharingTargetFriendsList, IBeforeTraverseEvent)
+def _dfl_traverse(dfl, unused_event):
+    if IDeactivatedDynamicSharingTargetFriendsList.providedBy(dfl):
+        raise hexc.HTTPNotFound()
+
+
 @component.adapter(ICommunity, IDeactivatedCommunityEvent)
 def _on_community_deactivated(community, unused_event):
     """
@@ -204,6 +212,15 @@ def _on_community_deactivated(community, unused_event):
     for user in tuple(community):
         user.record_no_longer_dynamic_member(community)
         user.stop_following(community)
+
+@component.adapter(IDynamicSharingTargetFriendsList, IDeactivatedDynamicSharingTargetFriendsList)
+def _on_dfl_deactivated(dfl, unused_event):
+    """
+    When a dfl is deactivated, remove all members from
+    its membership and following. It is much easier to do this.
+    """
+    # DFL currently has to be empty to delete it
+    _on_community_deactivated(dfl, None)
 
 
 @component.adapter(IUser, IBeforeIdRemovedEvent)
