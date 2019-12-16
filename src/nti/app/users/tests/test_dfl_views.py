@@ -36,6 +36,8 @@ from nti.dataserver.users.friends_lists import DynamicFriendsList
 
 from nti.dataserver.users.users import User
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 
 class TestApplicationDFLViews(ApplicationLayerTest):
 
@@ -67,8 +69,6 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 
         # The member is the only one that has the link
         path = '/dataserver2/Objects/' + dfl_ntiid
-        path = str(path)
-        path = urllib_parse.quote(path)
 
         res = testapp.get(path,
                           extra_environ=self._make_extra_environ(member_user_username))
@@ -122,10 +122,7 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 
         # pylint: disable=no-member
         testapp = TestApp(self.app)
-
         path = '/dataserver2/Objects/' + dfl_ntiid
-        path = str(path)
-        path = urllib_parse.quote(path)
 
         # Owner
         res = testapp.get(path,
@@ -150,6 +147,17 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 
         assert_that(res.json_body, has_entry('Links',
                                              has_item(has_entries('rel', 'SuggestedContacts'))))
+
+        # Delete
+        with mock_dataserver.mock_db_trans(self.ds):
+            dfl = find_object_with_ntiid(dfl_ntiid)
+            for user in dfl:
+                dfl.removeFriend(user)
+
+        testapp.delete(path,
+                       extra_environ=self._make_extra_environ(owner_username))
+        testapp.get(path, extra_environ=self._make_extra_environ(owner_username), status=404)
+        testapp.get(path, extra_environ=self._make_extra_environ(member_username), status=404)
 
     @WithSharedApplicationMockDS
     def test_activity_dfl(self):

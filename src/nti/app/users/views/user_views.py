@@ -45,6 +45,8 @@ from nti.appserver.dataserver_pyramid_views import GenericGetView
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
+from nti.coremetadata.interfaces import IDeactivatedEntity
+
 from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.interfaces import IUser
@@ -169,6 +171,8 @@ class UserMembershipsView(AbstractEntityViewMixin):
         memberships = set(context.dynamic_memberships)
         memberships.update(context.friendsLists.values())
         for member in memberships:
+            if IDeactivatedEntity.providedBy(member):
+                continue
             if self.include_member(member):
                 doc_id = intids.queryId(member)
                 if doc_id is not None:
