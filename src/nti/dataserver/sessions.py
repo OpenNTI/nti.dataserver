@@ -111,8 +111,6 @@ class SessionService(object):
         self._watching_sessions = set()
         self._session_watchdog = self._spawn_session_watchdog()
 
-        transactions.add_abort_hooks()
-
     def close(self):
         self.cluster_listener.kill()
         self._session_watchdog.kill()
