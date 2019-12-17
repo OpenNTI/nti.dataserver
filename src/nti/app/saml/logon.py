@@ -347,8 +347,13 @@ def acs_view(request):
                                         success=_make_location(success, state))
 
     except SAMLError as e:
+        # This may encapsulate quite a few errors, one of which is auth failure.
+        # The msg of the error seems to be XML that is not useful for exposing
+        # to the end user. Therefore, we'll just expose a generic
+        # `Authentication failure` message that may not be viable for all error
+        # conditions.
         logger.error("Invalid SAML Assertion")
-        error_msg = text_(repr(e))
+        error_msg = text_('Authentication error')
         failure = _make_location(e.error, e.state)
         return _create_failure_response(request,
                                         failure=failure,
