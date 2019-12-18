@@ -64,12 +64,6 @@ def attach_idp_user_info(event):
         notify(SAMLProviderInfoAttachedEvent(event.idp_id,
                                              event.user,
                                              idp_user_info))
-    else:
-        msg = 'Failed to adapt "%s" to ISAMLProviderUserInfo for user "%s", event "%s"'
-        logger.warn(msg,
-                    event.user_info,
-                    event.user.username,
-                    event)
 
 
 @component.adapter(ISAMLUserAuthenticatedEvent)
