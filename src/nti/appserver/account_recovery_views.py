@@ -224,6 +224,8 @@ class UserAccountRecoveryUtility(object):
 # (token, datetime, ???)
 _KEY_PASSCODE_RESET = __name__ + '.' + u'forgot_passcode_view_key'
 
+RESET_KEY_HOURS = 4
+
 
 @view_config(route_name=REL_FORGOT_PASSCODE,
              request_method='POST',
@@ -279,6 +281,11 @@ def forgot_passcode_view(request):
     if matching_users and len(matching_users) == 1:
         # We got one user.
         matching_user = matching_users[0]
+        now = datetime.datetime.utcnow()
+        delta = datetime.timedelta(hours=RESET_KEY_HOURS)
+        logger.info("Generating password reset token for user (%s) (exp_time=%s)",
+                    matching_user.username,
+                    now + delta)
         recovery_utility = component.getUtility(IUserAccountRecoveryUtility)
         reset_url = recovery_utility.get_password_reset_url(matching_user, request)
         if not reset_url:
@@ -385,7 +392,7 @@ def find_users_with_email(email, unused_dataserver, username=None, match_info=Fa
 def _is_link_expired(token_time):
     now = datetime.datetime.utcnow()
     # JZ - 2.2016 - 4 hour trial run (was 1 hour).
-    delta = datetime.timedelta(hours=-4)
+    delta = datetime.timedelta(hours=-1 * RESET_KEY_HOURS)
     start_boundary = now + delta
     result = token_time < start_boundary
     if result:
@@ -420,6 +427,8 @@ def reset_passcode_view(request):
 
     """
     if request.authenticated_userid:
+        logger.info('Password recovery user is already authenticated (%s)',
+                    request.authenticated_userid)
         raise_json_error(request,
                          hexc.HTTPForbidden,
                          {
@@ -429,6 +438,7 @@ def reset_passcode_view(request):
 
     username = request.params.get('username')
     if not username:
+        logger.info('Password recovery username not supplied')
         raise_json_error(request,
                          hexc.HTTPBadRequest,
                          {
@@ -438,6 +448,7 @@ def reset_passcode_view(request):
 
     token = request.params.get('id')
     if not token:
+        logger.info('Password recovery token not supplied')
         raise_json_error(request,
                          hexc.HTTPBadRequest,
                          {
@@ -452,6 +463,10 @@ def reset_passcode_view(request):
     value = (None, None)
     annotations = IAnnotations(user) if user else {}
     value = annotations.get(_KEY_PASSCODE_RESET, value)
+    if not value[0]:
+        logger.info('Password recovery token not stored for user (%s)', username)
+    if value[0] != token:
+        logger.info('Password recovery tokens do not match (%s)', username)
     if value[0] != token or _is_link_expired(value[1]):
         # expired, no user, bad token
         raise_json_error(request,
