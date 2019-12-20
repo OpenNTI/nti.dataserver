@@ -110,7 +110,6 @@ def ZopeACLAuthorizationPolicy():
     return ACLAuthorizationPolicy(_factory=_ZopeACLAuthorizationPolicy)
 
 
-_marker = object()
 # These functions, particularly the lineage function, is called
 # often during externalization, for many of the same objects, resulting
 # in many duplicate computations of ACLs. These shouldn't be changing
@@ -165,17 +164,17 @@ def get_request_acl_cache(request=None):
 
 def get_cache_acl(obj, cache):
     """
-    Get an ACL for the given object in the given cache.
+    Get an ACL for the given object in the given cache or None.
     """
     cache_key = id(removeAllProxies(obj))
     acl = cache.get(cache_key)
     if acl is None:
         try:
-            acl = ACL(obj, default=_marker)
+            acl = ACL(obj, default=None)
         except AttributeError:
             # Sometimes the ACL providers might fail with this;
             # especially common in test objects
-            acl = _marker
+            pass
         cache[cache_key] = acl
     return acl
 
@@ -193,9 +192,8 @@ def _lineage_that_ensures_acls(obj):
             getattr(location, '__acl__')
             result = location
         except AttributeError:
-            acl = get_cache_acl(obj, cache)
-
-            if acl is _marker:
+            acl = get_cache_acl(location, cache)
+            if acl is None:
                 # Nope. So still return the original object,
                 # which pyramid will inspect and then ignore
                 result = location
@@ -273,6 +271,8 @@ def is_readable(obj, request=None, skip_cache=False):
                                      request,
                                      skip_cache=skip_cache)
 
+
+_marker = object()
 
 def _caching_permission_check(cache_name, permission, obj, request, skip_cache=False):
     """
