@@ -154,9 +154,34 @@ from ZODB.POSException import POSKeyError
 from nti.externalization.proxy import removeAllProxies
 
 
-def _lineage_that_ensures_acls(obj):
-    request = get_current_request() or _Fake()
+def get_request_acl_cache(request=None):
+    """
+    Get the acl cache from the request.
+    """
+    request = request or get_current_request() or _Fake()
     cache = _get_cache(request, '_acl_adding_lineage_cache')
+    return cache
+
+
+def get_cache_acl(obj, cache):
+    """
+    Get an ACL for the given object in the given cache.
+    """
+    cache_key = id(removeAllProxies(obj))
+    acl = cache.get(cache_key)
+    if acl is None:
+        try:
+            acl = ACL(obj, default=_marker)
+        except AttributeError:
+            # Sometimes the ACL providers might fail with this;
+            # especially common in test objects
+            acl = _marker
+        cache[cache_key] = acl
+    return acl
+
+
+def _lineage_that_ensures_acls(obj):
+    cache = get_request_acl_cache()
     for location in _pyramid_lineage(obj):
         result = None
         try:
@@ -168,17 +193,7 @@ def _lineage_that_ensures_acls(obj):
             getattr(location, '__acl__')
             result = location
         except AttributeError:
-            # OK, can we create one?
-            cache_key = id(removeAllProxies(location))
-            acl = cache.get(cache_key)
-            if acl is None:
-                try:
-                    acl = ACL(location, default=_marker)
-                except AttributeError:
-                    # Sometimes the ACL providers might fail with this;
-                    # especially common in test objects
-                    acl = _marker
-                cache[cache_key] = acl
+            acl = get_cache_acl(obj, cache)
 
             if acl is _marker:
                 # Nope. So still return the original object,
