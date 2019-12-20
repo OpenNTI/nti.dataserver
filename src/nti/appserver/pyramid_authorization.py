@@ -110,7 +110,6 @@ def ZopeACLAuthorizationPolicy():
     return ACLAuthorizationPolicy(_factory=_ZopeACLAuthorizationPolicy)
 
 
-_marker = object()
 # These functions, particularly the lineage function, is called
 # often during externalization, for many of the same objects, resulting
 # in many duplicate computations of ACLs. These shouldn't be changing
@@ -165,65 +164,66 @@ def get_request_acl_cache(request=None):
 
 def get_cache_acl(obj, cache):
     """
-    Get an ACL for the given object in the given cache.
+    Get an ACL for the given object in the given cache or None.
     """
-    cache_key = id(removeAllProxies(obj))
-    acl = cache.get(cache_key)
-    if acl is None:
+    result = None
+    try:
+        # Native ACL. Run with it.
+        # Note that as of 1.5a2 this can now be a callable object, which
+        # would permit objects to easily manage their own ACLs using
+        # our ACLProvider machinery and supporting caching on the object
+        # through zope.cachedescriptors
+        getattr(obj, '__acl__')
+        result = obj
+    except AttributeError:
+        cache_key = id(removeAllProxies(obj))
+        acl = cache.get(cache_key)
+        if acl is None:
+            try:
+                acl = ACL(obj, default=None)
+            except AttributeError:
+                # Sometimes the ACL providers might fail with this;
+                # especially common in test objects
+                pass
+            cache[cache_key] = acl
+        if acl is None:
+            # Nope. So still return the original object,
+            # which pyramid will inspect and then ignore
+            result = obj
+        else:
+            # Yes we can. So do so
+            result = ACLProxy(obj, acl)
+    except POSKeyError:  # pragma: no cover
+        # Yikes
+        logger.warn('Cannot access ACL due to broken reference: %s',
+                    type(obj), exc_info=True)
+        # It's highly likely we won't be able to get __parent__ either.
+        # Check that...
         try:
-            acl = ACL(obj, default=_marker)
-        except AttributeError:
-            # Sometimes the ACL providers might fail with this;
-            # especially common in test objects
-            acl = _marker
-        cache[cache_key] = acl
-    return acl
+            getattr(obj, '__parent__')
+        except (POSKeyError, AttributeError):
+            raise
+
+        # Ok, we can still get __parent__, but some sub-object in our __acl__
+        # raised. Now, it could be that our __acl__ was trying to
+        # deny specific rights that we would otherwise inherit
+        # from our parents...we can't know. We also can't know if we're
+        # actually being traversed to find acls, or just to find parents...
+        # for security, we return an object that denies all permissions
+        fake = _Fake()
+        fake.__acl__ = acl_from_aces(ace_denying_all())
+        fake.__parent__ = obj.__parent__
+        result = fake
+    return result
 
 
 def _lineage_that_ensures_acls(obj):
     cache = get_request_acl_cache()
     for location in _pyramid_lineage(obj):
-        result = None
         try:
-            # Native ACL. Run with it.
-            # Note that as of 1.5a2 this can now be a callable object, which
-            # would permit objects to easily manage their own ACLs using
-            # our ACLProvider machinery and supporting caching on the object
-            # through zope.cachedescriptors
-            getattr(location, '__acl__')
-            result = location
-        except AttributeError:
-            acl = get_cache_acl(obj, cache)
-
-            if acl is _marker:
-                # Nope. So still return the original object,
-                # which pyramid will inspect and then ignore
-                result = location
-            else:
-                # Yes we can. So do so
-                result = ACLProxy(location, acl)
-        except POSKeyError:  # pragma: no cover
-            # Yikes
-            logger.warn('Cannot access ACL due to broken reference: %s',
-                        type(obj), exc_info=True)
-            # It's highly likely we won't be able to get __parent__ either.
-            # Check that...
-            try:
-                getattr(location, '__parent__')
-            except (POSKeyError, AttributeError):
-                break
-
-            # Ok, we can still get __parent__, but some sub-object in our __acl__
-            # raised. Now, it could be that our __acl__ was trying to
-            # deny specific rights that we would otherwise inherit
-            # from our parents...we can't know. We also can't know if we're
-            # actually being traversed to find acls, or just to find parents...
-            # for security, we return an object that denies all permissions
-            fake = _Fake()
-            fake.__acl__ = acl_from_aces(ace_denying_all())
-            fake.__parent__ = location.__parent__
-            result = fake
-        yield result
+            yield get_cache_acl(location, cache)
+        except (POSKeyError, AttributeError):
+            break
 
 
 def can_create(obj, request=None, skip_cache=False):
@@ -273,6 +273,8 @@ def is_readable(obj, request=None, skip_cache=False):
                                      request,
                                      skip_cache=skip_cache)
 
+
+_marker = object()
 
 def _caching_permission_check(cache_name, permission, obj, request, skip_cache=False):
     """
