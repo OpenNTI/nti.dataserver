@@ -619,7 +619,7 @@ def _post_fork(unused_arbiter, worker):
     # (opened by the dataservers DidFork listener)
     hub = gevent.hub.get_hub()
     # pylint: disable=protected-access
-    if hub._threadpool is not None and hub._threadpool._size:  # same condition it uses
+    if hub._threadpool is not None and hub._threadpool.size:  # same condition it uses
         hub._threadpool._on_fork()
 
     # Setup our environment variable now that we have actually forked.
