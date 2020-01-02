@@ -53,7 +53,7 @@ from nti.appserver import dataserver_socketio_views
 
 from nti.appserver import interfaces as app_interfaces
 
-from nti.appserver.traversal import ZopeResourceTreeTraverser
+from nti.app.pyramid_zope.traversal import ZopeResourceTreeTraverser
 
 from nti.appserver.utils.chameleon import setupChameleonCache
 

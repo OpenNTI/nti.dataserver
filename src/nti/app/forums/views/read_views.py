@@ -51,8 +51,6 @@ from nti.appserver.dataserver_pyramid_views import GenericGetView
 
 from nti.appserver.pyramid_authorization import is_readable
 
-from nti.appserver.traversal import find_interface
-
 from nti.appserver.ugd_query_views import Operator
 from nti.appserver.ugd_feed_views import AbstractFeedView
 from nti.appserver.ugd_query_views import _combine_predicate
@@ -86,6 +84,8 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.namedfile.interfaces import INamedFile
+
+from nti.traversal.traversal import find_interface
 
 ITEMS = StandardExternalFields.ITEMS
 

@@ -590,23 +590,3 @@ class EnclosureTraversable(object):
 			return self.context.get_enclosure(name)
 		except KeyError:
 			raise LocationError(self.context, name)
-
-# The Zope resource namespace
-
-from zope.publisher.interfaces.browser import IBrowserRequest, IDefaultBrowserLayer
-
-from zope.traversing.namespace import resource as _zresource
-
-class resource(_zresource):
-	"""
-	Handles resource lookup in a way compatible with :mod:`zope.browserresource`.
-	This package registers resources as named adapters from :class:`.IDefaultBrowserLayer`
-	to Interface. We connect the two by making the pyramid request implement
-	the right thing.
-	"""
-
-	def __init__(self, context, request):
-		request = IBrowserRequest(request)
-		if not IDefaultBrowserLayer.providedBy(request):
-			interface.alsoProvides(request, IDefaultBrowserLayer)  # We lie
-		super(resource, self).__init__(context, request)

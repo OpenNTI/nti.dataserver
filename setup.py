@@ -127,7 +127,7 @@ setup(
         # 'setuptools_subversion >= 3.1'
     ],
     install_requires=[
-	'nti.app.pyramid_zope',
+        'nti.app.pyramid_zope',
         'nti.common',
         'nti.containers',
         'nti.contentfragments',

@@ -53,8 +53,6 @@ from nti.appserver.interfaces import IUserViewTokenCreator
 from nti.appserver.interfaces import IPageContainerResource
 from nti.appserver.interfaces import IRootPageContainerResource
 
-from nti.appserver.traversal import find_interface
-
 from nti.appserver.workspaces.interfaces import IService
 from nti.appserver.workspaces.interfaces import IWorkspace
 from nti.appserver.workspaces.interfaces import ICollection
@@ -105,6 +103,8 @@ from nti.ntiids import ntiids
 
 from nti.property.property import alias
 from nti.property.property import LazyOnClass
+
+from nti.traversal.traversal import find_interface
 
 ITEMS = StandardExternalFields.ITEMS
 
