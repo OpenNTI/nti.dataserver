@@ -607,21 +607,6 @@ def _pre_fork(arbiter, worker):
 
 
 def _post_fork(unused_arbiter, worker):
-    # Patch up the thread pool and DNS if needed due to a bug in the fork watcher
-    # that should have done this already; see
-    # https://github.com/SiteSupport/gevent/issues/154
-
-    # This has to happen before anything that might cause
-    # a greenlet switch, such as making a network connection (over TCP, not unix sockets)
-    # If it fails to happen, the symptom is a process hang with a stacktrace showing
-    # a call to select().
-    # We used to do this in init_worker, but that is too late for RelStorage connections
-    # (opened by the dataservers DidFork listener)
-    hub = gevent.hub.get_hub()
-    # pylint: disable=protected-access
-    if hub._threadpool is not None and hub._threadpool.size:  # same condition it uses
-        hub._threadpool._on_fork()
-
     # Setup our environment variable now that we have actually forked.
     os.environ['NTI_WORKER_IDENTIFIER'] = worker._nti_identifier
 
