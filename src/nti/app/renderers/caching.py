@@ -32,11 +32,11 @@ from nti.app.renderers.interfaces import IETagCachedUGDExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.interfaces import ILongerCachedUGDExternalCollection
 
-from nti.appserver import traversal
-from nti.appserver import interfaces as app_interfaces
-
 from nti.dataserver import flagging
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.traversal.traversal import find_interface
+
 
 def default_vary_on(request):
 	vary_on = []
@@ -287,7 +287,7 @@ class _ZopeFileCacheController(_AbstractReliableLastModifiedCacheController):
 		try:
 			return self.context.lastModified
 		except AttributeError:
-			last_mod_parent = traversal.find_interface(self.request.context, nti_interfaces.ILastModified)
+			last_mod_parent = find_interface(self.request.context, nti_interfaces.ILastModified)
 			if last_mod_parent is not None:
 				return last_mod_parent.lastModified
 
