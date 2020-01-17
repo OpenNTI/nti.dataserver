@@ -43,6 +43,7 @@ import transaction
 from zope import component
 from zope import interface
 
+from zope.component.hooks import site
 from zope.component.hooks import getSite
 from zope.component.hooks import setSite
 from zope.component.hooks import setHooks
@@ -239,7 +240,10 @@ def _get_site_for_request(request, parent_site):
 
     """
     site_names = request.possible_site_names
-    found_site = get_site_for_site_names(site_names, site=parent_site)
+    # We want to do this in our ds site in order to get
+    # persistent ISiteMapping objects.
+    with site(parent_site):
+        found_site = get_site_for_site_names(site_names, site=parent_site)
     if found_site is parent_site:
         # This design adds overhead when a site is not found. This should be
         # uncommon during production although common at development time.

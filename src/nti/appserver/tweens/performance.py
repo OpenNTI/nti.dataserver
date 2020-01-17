@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-A tween providing a location for request-aware or request-triggered 
+A tween providing a location for request-aware or request-triggered
 performance instrumentation.
 
 This tween should be installed beneath the `perfmetrics` tween as
