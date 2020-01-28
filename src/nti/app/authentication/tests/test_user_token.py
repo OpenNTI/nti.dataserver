@@ -18,11 +18,15 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
+from zope import interface
+
 from nti.app.authentication.user_token import DefaultIdentifiedUserTokenAuthenticator
+from nti.app.authentication.user_token import DefaultIdentifiedAdminUserTokenAuthenticator
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 
+from nti.dataserver.users.interfaces import IAdminUserToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
 
 from nti.dataserver.users.tokens import UserToken
@@ -55,6 +59,58 @@ class TestUserToken(unittest.TestCase):
         assert_that(token, not_none())
 
         identity = plugin.getIdentityFromToken(token)
+        assert_that(plugin.tokenIsValidForUserid(token, username),
+                    is_(username))
+
+        assert_that(plugin.identityIsValid(identity),
+                    is_(username))
+
+        # Token with future expiration date
+        user_token.expiration_date = datetime.utcnow() + timedelta(seconds=30)
+        assert_that(plugin.tokenIsValidForUserid(token, username),
+                    is_(username))
+        assert_that(plugin.identityIsValid(identity),
+                    is_(username))
+
+        # Token expired
+        user_token.expiration_date = datetime.utcnow() - timedelta(seconds=30)
+        assert_that(plugin.tokenIsValidForUserid(token, username),
+                    is_(none()))
+        assert_that(plugin.identityIsValid(identity),
+                    is_(none()))
+
+        # Token gone
+        container.clear()
+        assert_that(plugin.tokenIsValidForUserid(token, username),
+                    is_(none()))
+        assert_that(plugin.identityIsValid(identity),
+                    is_(none()))
+
+    @WithMockDSTrans
+    def test_admin_tokens(self):
+        username = u'admin_token_username'
+        user = User.create_user(username=username)
+        plugin = DefaultIdentifiedAdminUserTokenAuthenticator()
+        assert_that(plugin.getTokenForUserId(username, 'dne:scope'), none())
+
+        # Create token
+        container = IUserTokenContainer(user, None)
+        assert_that(container, has_length(0))
+        user_token = UserToken(title=u"title",
+                               description=u"desc")
+        token = user_token
+        container.store_token(user_token)
+
+        # Non admin token is not valid
+        identity = plugin.getIdentityFromToken(token)
+        assert_that(plugin.tokenIsValidForUserid(token, username),
+                    none())
+
+        assert_that(plugin.identityIsValid(identity),
+                    none())
+
+        # Admin token is valid
+        interface.alsoProvides(token, IAdminUserToken)
         assert_that(plugin.tokenIsValidForUserid(token, username),
                     is_(username))
 

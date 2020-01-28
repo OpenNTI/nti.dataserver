@@ -22,6 +22,7 @@ from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 from nti.app.authentication import user_can_login
 
 from nti.app.authentication.who_authenticators import KnownUrlTokenBasedAuthenticator
+from nti.app.authentication.who_authenticators import AdminUserTokenBasedAuthenticator
 from nti.app.authentication.who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
 
 from nti.app.authentication.who_basicauth import BasicAuthPlugin
@@ -77,18 +78,19 @@ def create_who_apifactory(secure_cookies=True,
                                    # If we are called too early, outside the site,
                                    # this can raise an exception, but the only place that
                                    # matters, logging, already deals with it (gunicorn.py).
-                                   # Because it's an exception,
-                                   # it prevents
-                                   # any of the
-                                   # caching from
-                                   # kicking in
+                                   # Because it's an exception, it prevents
+                                   # any of the caching from kicking in.
                                    userid_checker=user_can_login)
 
-    # Create a last-resort identifier and authenticator that
+    # Create a identifier and authenticator that
     # can be used only for certain views, here, our
     # known RSS/Atom views. This is clearly not very configurable.
     token_tkt = KnownUrlTokenBasedAuthenticator(cookie_secret,
                                                 allowed_views=token_allowed_views)
+
+    # An identifier and authenticator for admin tokens, which are not
+    # restricted to particular views.
+    admin_token_tkt = AdminUserTokenBasedAuthenticator(cookie_secret)
 
     # For browsers (NOT application browsers), we want to do authentication via a
     # redirect to the login app.
@@ -111,6 +113,7 @@ def create_who_apifactory(secure_cookies=True,
     identifiers.append(('basicauth-interactive', basicauth_interactive))
     identifiers.append(('basicauth', basicauth))
     identifiers.append(('token_tkt', token_tkt))
+    identifiers.append(('admin_token_tkt', admin_token_tkt))
 
     # Confirmation/authentication can come from the cookie (encryption)
     # Or possibly HTTP Basic auth, or in special cases, from the
@@ -118,6 +121,7 @@ def create_who_apifactory(secure_cookies=True,
     authenticators = [('auth_tkt', auth_tkt)]
     authenticators.append(('htpasswd', DataserverGlobalUsersAuthenticatorPlugin()))
     authenticators.append(('token_tkt', token_tkt))
+    authenticators.append(('admin_token_tkt', admin_token_tkt))
 
     # Order matters when multiple plugins accept the classification
     # of the request; the first plugin that returns a result from

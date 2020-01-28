@@ -1116,6 +1116,12 @@ class IUserToken(ICreated, ILastModified, ITitledDescribed, IContained):
                                     required=False)
 
 
+class IAdminUserToken(IUserToken):
+    """
+    A marker interface for a token only used by admins.
+    """
+
+
 class IUserTokenContainer(IShouldHaveTraversablePath,
                           ILastModified,
                           IContainer):

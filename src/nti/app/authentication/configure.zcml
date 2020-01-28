@@ -15,6 +15,9 @@
 	<adapter factory=".user_token.DefaultIdentifiedUserTokenAuthenticator"
 			 for="basestring" />
 
+	<adapter factory=".user_token.DefaultIdentifiedAdminUserTokenAuthenticator"
+             for="basestring" />
+
 	<utility factory=".pluggableauth.DataserverUsersAuthenticatorPlugin"
 			 name="Dataserver Global User Authenticator" />
 

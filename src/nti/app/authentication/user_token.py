@@ -16,7 +16,9 @@ from zope import component
 from zope.intid.interfaces import IIntIds
 
 from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
+from nti.app.authentication.interfaces import IIdentifiedAdminUserTokenAuthenticator
 
+from nti.dataserver.users.interfaces import IAdminUserToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
 
 from nti.dataserver.users.users import User
@@ -143,3 +145,11 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         if valid_username and valid_username == userid:
             return valid_username
         return None
+
+
+@interface.implementer(IIdentifiedAdminUserTokenAuthenticator)
+class DefaultIdentifiedAdminUserTokenAuthenticator(DefaultIdentifiedUserTokenAuthenticator):
+
+    def _get_user_tokens(self, user):
+        result = super(DefaultIdentifiedAdminUserTokenAuthenticator, self)._get_user_tokens(user)
+        return [x for x in result if IAdminUserToken.providedBy(x)]
