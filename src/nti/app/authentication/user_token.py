@@ -95,6 +95,9 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         if user_token:
             return user_token.token
 
+    def _include_token(self, unused_token):
+        return True
+
     def _get_user_tokens(self, user):
         """
         Return all valid tokens for the user.
@@ -102,7 +105,7 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
         result = ()
         if user is not None:
             token_container = IUserTokenContainer(user)
-            result = [x.token for x in token_container.get_valid_tokens()]
+            result = [x.token for x in token_container.get_valid_tokens() if self._include_token(x)]
         return result
 
     def identityIsValid(self, identity):
@@ -150,6 +153,5 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
 @interface.implementer(IIdentifiedAdminUserTokenAuthenticator)
 class DefaultIdentifiedAdminUserTokenAuthenticator(DefaultIdentifiedUserTokenAuthenticator):
 
-    def _get_user_tokens(self, user):
-        result = super(DefaultIdentifiedAdminUserTokenAuthenticator, self)._get_user_tokens(user)
-        return [x for x in result if IAdminUserToken.providedBy(x)]
+    def _include_token(self, token):
+        return IAdminUserToken.providedBy(token)

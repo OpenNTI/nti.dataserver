@@ -89,6 +89,7 @@ class TestUserToken(unittest.TestCase):
     @WithMockDSTrans
     def test_admin_tokens(self):
         username = u'admin_token_username'
+        valid_scope = u'user:scope'
         user = User.create_user(username=username)
         plugin = DefaultIdentifiedAdminUserTokenAuthenticator()
         assert_that(plugin.getTokenForUserId(username, 'dne:scope'), none())
@@ -97,9 +98,12 @@ class TestUserToken(unittest.TestCase):
         container = IUserTokenContainer(user, None)
         assert_that(container, has_length(0))
         user_token = UserToken(title=u"title",
-                               description=u"desc")
-        token = user_token
+                               description=u"desc",
+                               scopes=(valid_scope,))
         container.store_token(user_token)
+
+        token = plugin.getTokenForUserId(username, valid_scope)
+        assert_that(token, not_none())
 
         # Non admin token is not valid
         identity = plugin.getIdentityFromToken(token)
@@ -110,7 +114,7 @@ class TestUserToken(unittest.TestCase):
                     none())
 
         # Admin token is valid
-        interface.alsoProvides(token, IAdminUserToken)
+        interface.alsoProvides(user_token, IAdminUserToken)
         assert_that(plugin.tokenIsValidForUserid(token, username),
                     is_(username))
 

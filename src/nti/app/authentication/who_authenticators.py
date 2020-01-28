@@ -90,6 +90,8 @@ class KnownUrlTokenBasedAuthenticator(object):
 
     def identify(self, environ):
         token = self._get_token(environ)
+        if not token:
+            return
         authenticator = component.getAdapter(self.secret,
 											 self.AUTH_IFACE)
         identity = authenticator.getIdentityFromToken(token)
