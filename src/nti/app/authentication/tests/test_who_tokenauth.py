@@ -26,7 +26,7 @@ from nti.app.authentication.who_tokenauth import TokenAuthPlugin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 
-from nti.dataserver.users.interfaces import IAdminUserToken
+from nti.dataserver.users.interfaces import IAuthToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
 
 from nti.dataserver.users.tokens import UserToken
@@ -105,6 +105,6 @@ class TestTokenAuth(unittest.TestCase):
         assert_that(prin_info, none())
 
         # Now a valid match
-        interface.alsoProvides(user_token, IAdminUserToken)
+        interface.alsoProvides(user_token, IAuthToken)
         prin_info = auth.authenticate(environ, identity)
         assert_that(prin_info, is_(username))

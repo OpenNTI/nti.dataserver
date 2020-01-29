@@ -22,7 +22,7 @@ from nti.app.authentication import user_can_login
 
 from nti.dataserver.users.users import User
 
-from nti.dataserver.users.interfaces import IAdminUserToken
+from nti.dataserver.users.interfaces import IAuthToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
 
 logger = __import__('logging').getLogger(__name__)
@@ -71,8 +71,8 @@ class DataserverUsersAuthenticatorPlugin(object):
 @interface.implementer(IAuthenticatorPlugin)
 class DataserverTokenAuthenticatorPlugin(object):
     """
-    Authenticates bearer tokens. The only tokens accepted must be a restricted type,
-    :class:`nti.dataserver.users.interfaces.IAdminUserToken`.
+    Authenticates bearer tokens. The only tokens accepted must be a
+    :class:`nti.dataserver.users.interfaces.IAuthToken`.
     """
 
     def _valid_token(self, user, target_token):
@@ -80,7 +80,7 @@ class DataserverTokenAuthenticatorPlugin(object):
         if user is not None:
             token_container = IUserTokenContainer(user)
             admin_tokens = [x.token for x in token_container.get_valid_tokens() \
-                            if IAdminUserToken.providedBy(x)]
+                            if IAuthToken.providedBy(x)]
         return target_token in admin_tokens
 
     def authenticateCredentials(self, credentials):

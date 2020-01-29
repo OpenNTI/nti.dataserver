@@ -26,7 +26,7 @@ from nti.app.authentication.user_token import DefaultIdentifiedAdminUserTokenAut
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 
-from nti.dataserver.users.interfaces import IAdminUserToken
+from nti.dataserver.users.interfaces import IAuthToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
 
 from nti.dataserver.users.tokens import UserToken
@@ -113,8 +113,8 @@ class TestUserToken(unittest.TestCase):
         assert_that(plugin.identityIsValid(identity),
                     none())
 
-        # Admin token is valid
-        interface.alsoProvides(user_token, IAdminUserToken)
+        # Auth token is valid
+        interface.alsoProvides(user_token, IAuthToken)
         assert_that(plugin.tokenIsValidForUserid(token, username),
                     is_(username))
 
