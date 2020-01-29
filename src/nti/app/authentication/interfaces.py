@@ -88,13 +88,6 @@ class IIdentifiedUserTokenAuthenticator(IIdentifiedUserTokenCreator,
     pass
 
 
-class IIdentifiedAdminUserTokenAuthenticator(IIdentifiedUserTokenAuthenticator):
-    """
-    A user token authenticator that *only* validates
-    :class:`IAdminUserToken` objects.
-    """
-
-
 class ILogonWhitelist(interface.Interface):
     """
     A container of usernames that are allowed to login (be authenticated).

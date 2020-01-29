@@ -19,7 +19,6 @@ from repoze.who.interfaces import IIdentifier
 from repoze.who.interfaces import IAuthenticator
 
 from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
-from nti.app.authentication.interfaces import IIdentifiedAdminUserTokenAuthenticator
 
 
 logger = __import__('logging').getLogger(__name__)
@@ -32,6 +31,18 @@ class DataserverGlobalUsersAuthenticatorPlugin(object):
         try:
             plugin = component.getUtility(IAuthenticatorPlugin,
                                           name="Dataserver Global User Authenticator")
+            return plugin.authenticateCredentials(identity).id
+        except (KeyError, AttributeError, LookupError):  # pragma: no cover
+            return None
+
+
+@interface.implementer(IAuthenticator)
+class DataserverTokenAuthenticator(object):
+
+    def authenticate(self, unused_environ, identity):
+        try:
+            plugin = component.getUtility(IAuthenticatorPlugin,
+                                          name="Dataserver Token Authenticator")
             return plugin.authenticateCredentials(identity).id
         except (KeyError, AttributeError, LookupError):  # pragma: no cover
             return None
@@ -59,8 +70,6 @@ class KnownUrlTokenBasedAuthenticator(object):
 
     from paste.request import parse_dict_querystring
     parse_dict_querystring = staticmethod(parse_dict_querystring)
-
-    AUTH_IFACE = IIdentifiedUserTokenAuthenticator
 
     def __init__(self, secret, allowed_views=()):
         """
@@ -93,7 +102,7 @@ class KnownUrlTokenBasedAuthenticator(object):
         if not token:
             return
         authenticator = component.getAdapter(self.secret,
-											 self.AUTH_IFACE)
+											 IIdentifiedUserTokenAuthenticator)
         identity = authenticator.getIdentityFromToken(token)
         if identity is not None:
             environ['IDENTITY_TYPE'] = 'token'
@@ -111,26 +120,5 @@ class KnownUrlTokenBasedAuthenticator(object):
 
         environ['AUTH_TYPE'] = 'token'
         authenticator = component.getAdapter(self.secret,
-											 self.AUTH_IFACE)
+											 IIdentifiedUserTokenAuthenticator)
         return authenticator.identityIsValid(identity)
-
-
-@interface.implementer(IAuthenticator,
-                       IIdentifier)
-class AdminUserTokenBasedAuthenticator(KnownUrlTokenBasedAuthenticator):
-    """
-    A :mod:`repoze.who` plugin that acts in the role of identifier
-    (determining who the remote user is claiming to be)
-    as well as authenticator (matching the claimed remote credentials
-    to the real credentials).
-
-    This authenticator only validates and identifies based on
-    :class:`IAdminUserToken` objects. These special, restricted tokens
-    are *not* limited to particular views, but can be used for any
-    authentication or identification.
-    """
-
-    AUTH_IFACE = IIdentifiedAdminUserTokenAuthenticator
-
-    def _get_token(self, environ):
-        return environ.get('X-NTI-ADMIN-TOKEN')
