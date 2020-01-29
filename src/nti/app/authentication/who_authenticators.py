@@ -20,6 +20,7 @@ from repoze.who.interfaces import IAuthenticator
 
 from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
 
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -30,6 +31,18 @@ class DataserverGlobalUsersAuthenticatorPlugin(object):
         try:
             plugin = component.getUtility(IAuthenticatorPlugin,
                                           name="Dataserver Global User Authenticator")
+            return plugin.authenticateCredentials(identity).id
+        except (KeyError, AttributeError, LookupError):  # pragma: no cover
+            return None
+
+
+@interface.implementer(IAuthenticator)
+class DataserverTokenAuthenticator(object):
+
+    def authenticate(self, unused_environ, identity):
+        try:
+            plugin = component.getUtility(IAuthenticatorPlugin,
+                                          name="Dataserver Token Authenticator")
             return plugin.authenticateCredentials(identity).id
         except (KeyError, AttributeError, LookupError):  # pragma: no cover
             return None
@@ -71,7 +84,7 @@ class KnownUrlTokenBasedAuthenticator(object):
         self.secret = secret
         self.allowed_views = allowed_views
 
-    def identify(self, environ):
+    def _get_token(self, environ):
         # Obviously if there is no token we can't identify
         if 'QUERY_STRING' not in environ or 'token' not in environ['QUERY_STRING']:
             return
@@ -82,7 +95,13 @@ class KnownUrlTokenBasedAuthenticator(object):
 
         query_dict = self.parse_dict_querystring(environ)
         token = query_dict['token']
-        authenticator = component.getAdapter(self.secret, 
+        return token
+
+    def identify(self, environ):
+        token = self._get_token(environ)
+        if not token:
+            return
+        authenticator = component.getAdapter(self.secret,
 											 IIdentifiedUserTokenAuthenticator)
         identity = authenticator.getIdentityFromToken(token)
         if identity is not None:
@@ -100,6 +119,6 @@ class KnownUrlTokenBasedAuthenticator(object):
             return
 
         environ['AUTH_TYPE'] = 'token'
-        authenticator = component.getAdapter(self.secret, 
+        authenticator = component.getAdapter(self.secret,
 											 IIdentifiedUserTokenAuthenticator)
         return authenticator.identityIsValid(identity)

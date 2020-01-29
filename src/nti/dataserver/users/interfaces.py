@@ -1116,6 +1116,15 @@ class IUserToken(ICreated, ILastModified, ITitledDescribed, IContained):
                                     required=False)
 
 
+class IAuthToken(IUserToken):
+    """
+    A marker interface for a token that a user can authenticate with (as a
+    "Bearer" token) and used globally. This is distinct from
+    :class:`IUserToken` objects, which may be only be used against a particular
+    set of endpoints.
+    """
+
+
 class IUserTokenContainer(IShouldHaveTraversablePath,
                           ILastModified,
                           IContainer):
