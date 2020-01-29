@@ -1122,6 +1122,11 @@ class IAuthToken(IUserToken):
     "Bearer" token) and used globally. This is distinct from
     :class:`IUserToken` objects, which may be only be used against a particular
     set of endpoints.
+
+    It is important that we *do not* allow general :class:`IUserToken` objects
+    to be used for general authentication. These tokens are limited to a
+    small set of endpoints and their visibility to possible third-parties may
+    be more pronounced.
     """
 
 
