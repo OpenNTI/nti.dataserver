@@ -56,6 +56,7 @@ zope.deferredimport.deprecatedFrom(
 
 import os
 import time
+import base64
 import datetime
 
 from six.moves import urllib_parse
@@ -1326,10 +1327,23 @@ class TestApplication(ApplicationLayerTest):
 			token_val = token.token
 		data_dir = os.getenv('DATASERVER_DATA_DIR')
 		path = os.path.join(data_dir, KEY_LOCATION_FILENAME)
+		encoded_token = base64.b64encode('%s:%s' % (ADMIN_USERNAME, token_val))
 		with open(path, 'r') as f:
 			file_token = f.read()
-		assert_that(file_token, is_(token_val))
+		assert_that(file_token, is_(encoded_token))
 
+		# Validate full authentication
+		testapp = TestApp(self.app)
+		user_path = '/dataserver2/users/%s' % ADMIN_USERNAME
+		headers = {b'HTTP_AUTHORIZATION': 'Bearer %s' % encoded_token}
+		testapp.get(user_path, extra_environ=headers)
+
+		extra_environ = self._make_extra_environ(user=ADMIN_USERNAME)
+		testapp.get(user_path, extra_environ=extra_environ, status=401)
+		with mock_dataserver.mock_db_trans( self.ds ):
+			admin_user = users.User.get_user(ADMIN_USERNAME)
+			admin_user.password = 'temp001'
+		testapp.get(user_path, extra_environ=extra_environ)
 
 class TestUtil(unittest.TestCase):
 

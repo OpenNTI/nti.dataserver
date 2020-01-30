@@ -18,6 +18,7 @@ if 'nti.monkey.patch_gevent_on_import' in sys.modules: # DON'T import this; it s
 import gc
 import os
 import time
+import base64
 import warnings
 
 from datetime import datetime
@@ -285,7 +286,8 @@ def _install_default_admin_user(unused_event):
 		if data_dir:
 			path = os.path.join(data_dir, KEY_LOCATION_FILENAME)
 			with open(path, 'w+') as f:
-				f.write(token_val)
+				encoded_token = base64.b64encode('%s:%s' % (ADMIN_USERNAME, token_val))
+				f.write(encoded_token)
 
 
 def _ugd_odata_views(pyramid_config):

@@ -51,7 +51,7 @@ class DataserverUsersAuthenticatorPlugin(object):
             login = credentials.get('login')
             password = credentials.get('password')
 
-        if not user_can_login(login):
+        if not user_can_login(login) or not password:
             return None
 
         user = User.get_user(login)
