@@ -32,7 +32,7 @@ does_not = is_not
 
 from nose.tools import assert_raises
 
-from nti.testing.matchers import is_empty
+from nti.testing.matchers import is_empty, validly_provides
 from nti.testing.time import time_monotonically_increases
 
 import unittest
@@ -54,8 +54,10 @@ zope.deferredimport.deprecatedFrom(
 	"ConfiguringTestBase",
 	"SharedConfiguringTestBase")
 
+import os
 import time
 import datetime
+
 from six.moves import urllib_parse
 
 import simplejson as json
@@ -71,6 +73,9 @@ from zope.keyreference.interfaces import IKeyReference
 
 import nti.appserver._util
 
+from nti.appserver.application import ADMIN_USERNAME
+from nti.appserver.application import KEY_LOCATION_FILENAME
+
 from nti.contentrange import contentrange
 
 from nti.coremetadata.mixins import ZContainedMixin
@@ -81,6 +86,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver import users
 
+from nti.dataserver.users.interfaces import IAuthToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
 
 from nti.dataserver.users.tokens import UserToken
@@ -1305,6 +1311,24 @@ class TestApplication(ApplicationLayerTest):
 														 'school', school,
 														 'description', description,
 														 'degree', degree ) ) ))
+
+
+	@WithSharedApplicationMockDS
+	def test_default_admin_user(self):
+		with mock_dataserver.mock_db_trans( self.ds ):
+			admin_user = users.User.get_user(ADMIN_USERNAME)
+			assert_that(admin_user, not_none())
+			token_container = IUserTokenContainer(admin_user)
+			assert_that(token_container, has_length(1))
+			assert_that(token_container.get_valid_tokens(), has_length(1))
+			token = token_container.get_valid_tokens()[0]
+			assert_that(token, validly_provides(IAuthToken))
+			token_val = token.token
+		data_dir = os.getenv('DATASERVER_DATA_DIR')
+		path = os.path.join(data_dir, KEY_LOCATION_FILENAME)
+		with open(path, 'r') as f:
+			file_token = f.read()
+		assert_that(file_token, is_(token_val))
 
 
 class TestUtil(unittest.TestCase):

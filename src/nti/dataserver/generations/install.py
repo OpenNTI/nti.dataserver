@@ -329,3 +329,4 @@ def install_username_blacklist(dataserver_folder):
     intids = lsm.getUtility(zope.intid.IIntIds)
     intids.register(user_blacklist)
     lsm.registerUtility(user_blacklist, provided=IUserBlacklistedStorage)
+
