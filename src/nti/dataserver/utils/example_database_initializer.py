@@ -72,8 +72,7 @@ class ExampleDatabaseInitializer(object):
         :return: An iterable of two-tuples of (userid, realname). email will be used
                 as userid
         """
-        USERS = [('admin@nextthought.com', 'Admin'),
-                 ('rusczyk@artofproblemsolving.com', 'Richard Rusczyk'),  # Aops
+        USERS = [('rusczyk@artofproblemsolving.com', 'Richard Rusczyk'),  # Aops
                  ('patrick@artofproblemsolving.com', 'Dave Patrick')]
 
         # Add the ok people
