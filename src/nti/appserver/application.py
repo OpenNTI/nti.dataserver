@@ -18,14 +18,9 @@ if 'nti.monkey.patch_gevent_on_import' in sys.modules: # DON'T import this; it s
 import gc
 import os
 import time
-import base64
 import warnings
 
-from datetime import datetime
-from datetime import timedelta
-
 from zope import component
-from zope import interface
 
 from zope.component.hooks import site
 from zope.component.hooks import setHooks
@@ -69,13 +64,6 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver.interfaces import IDataserver
-
-from nti.dataserver.users import User
-
-from nti.dataserver.users.interfaces import IAuthToken
-from nti.dataserver.users.interfaces import IUserTokenContainer
-
-from nti.dataserver.users.tokens import UserToken
 
 import nti.dictserver.storage
 
@@ -255,39 +243,6 @@ def _sync_host_policies(_):
 	# XXX: JAM: Note: this sync call will move around!
 	from nti.site.hostpolicy import synchronize_host_policies
 	synchronize_host_policies()
-
-
-ADMIN_USERNAME = u'admin@nextthought.com'
-TOKEN_EXPIRATION_IN_DAYS = 30
-KEY_LOCATION_FILENAME = '.admin.key'
-
-
-@component.adapter(IApplicationTransactionOpenedEvent)
-def _install_default_admin_user(unused_event):
-	"""
-	Install an admin user without ordinary credentials. This NT user will
-	have a :class:`nti.dataserver.users.interfaces.IAuthToken` created (with
-	an expiration date) and its value stored on disk for future use.
-	"""
-	# No email, no password
-	admin_user = User.get_user(ADMIN_USERNAME)
-	if admin_user is None:
-		logger.info("Creating admin user (%s)", ADMIN_USERNAME)
-		admin_user = User.create_user(username=ADMIN_USERNAME)
-		token_container = IUserTokenContainer(admin_user)
-		token_expiration = datetime.utcnow() + timedelta(days=TOKEN_EXPIRATION_IN_DAYS)
-		# A non-scoped token
-		user_token = UserToken(title=u"Auth token",
-							   expiration_date=token_expiration)
-		token_container.store_token(user_token)
-		interface.alsoProvides(user_token, IAuthToken)
-		token_val = user_token.token
-		data_dir = os.getenv('DATASERVER_DATA_DIR')
-		if data_dir:
-			path = os.path.join(data_dir, KEY_LOCATION_FILENAME)
-			with open(path, 'w+') as f:
-				encoded_token = base64.b64encode('%s:%s' % (ADMIN_USERNAME, token_val))
-				f.write(encoded_token)
 
 
 def _ugd_odata_views(pyramid_config):

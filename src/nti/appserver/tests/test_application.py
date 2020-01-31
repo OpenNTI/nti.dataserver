@@ -74,9 +74,6 @@ from zope.keyreference.interfaces import IKeyReference
 
 import nti.appserver._util
 
-from nti.appserver.application import ADMIN_USERNAME
-from nti.appserver.application import KEY_LOCATION_FILENAME
-
 from nti.contentrange import contentrange
 
 from nti.coremetadata.mixins import ZContainedMixin
@@ -86,6 +83,9 @@ from nti.dataserver import contenttypes
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver import users
+
+from nti.dataserver.generations.install import ADMIN_USERNAME
+from nti.dataserver.generations.install import KEY_LOCATION_FILENAME
 
 from nti.dataserver.users.interfaces import IAuthToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
