@@ -365,7 +365,8 @@ def install_default_admin_user(root):
     if admin_user is None:
         logger.info("Creating admin user (%s)", ADMIN_USERNAME)
         admin_user = User.create_user(username=ADMIN_USERNAME,
-                                      dataserver=mock_dataserver)
+                                      dataserver=mock_dataserver,
+                                      exempt_username=True)
         token_container = IUserTokenContainer(admin_user)
         token_expiration = datetime.utcnow() + timedelta(days=TOKEN_EXPIRATION_IN_DAYS)
         # A non-scoped token
