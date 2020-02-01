@@ -17,14 +17,13 @@ logger = __import__('logging').getLogger(__name__)
 import unittest
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_property
 import fudge
 
 
 from nti.app.testing.request_response import DummyRequest
-from nti.app.testing.request_response import ByteHeadersResponse
 
 from ..site_policies import guess_site_display_name
+
 
 class TestGuessSiteDisplayName(unittest.TestCase):
 

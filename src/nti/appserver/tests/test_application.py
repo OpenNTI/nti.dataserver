@@ -1316,7 +1316,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_default_admin_user(self):
-		with mock_dataserver.mock_db_trans( self.ds ):
+		with mock_dataserver.mock_db_trans(self.ds):
 			admin_user = users.User.get_user(ADMIN_USERNAME)
 			assert_that(admin_user, not_none())
 			token_container = IUserTokenContainer(admin_user)
@@ -1340,10 +1340,11 @@ class TestApplication(ApplicationLayerTest):
 
 		extra_environ = self._make_extra_environ(user=ADMIN_USERNAME)
 		testapp.get(user_path, extra_environ=extra_environ, status=401)
-		with mock_dataserver.mock_db_trans( self.ds ):
+		with mock_dataserver.mock_db_trans(self.ds):
 			admin_user = users.User.get_user(ADMIN_USERNAME)
 			admin_user.password = 'temp001'
 		testapp.get(user_path, extra_environ=extra_environ)
+
 
 class TestUtil(unittest.TestCase):
 

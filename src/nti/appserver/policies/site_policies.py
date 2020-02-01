@@ -14,9 +14,6 @@ to preserve the names of existing persistent classes as well as the annotation f
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 
-
-__docformat__ = "restructuredtext en"
-
 logger = __import__('logging').getLogger(__name__)
 
 import datetime
@@ -69,6 +66,8 @@ from nti.common.nameparser import human_name as np_human_name
 from nti.contentfragments import censor
 
 from nti.contentfragments.interfaces import ICensoredContentPolicy
+
+from nti.coremetadata.interfaces import IExemptUsernameUser
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
@@ -652,8 +651,9 @@ class GenericSitePolicyEventListener(AbstractSitePolicyEventListener):
 		"""
 		self._censor_usernames(user)
 
-		if (user.username.endswith('@nextthought.com')
-			or username_is_reserved(user.username)):
+		if			(not IExemptUsernameUser.providedBy(user) \
+				and user.username.endswith('@nextthought.com')) \
+			or username_is_reserved(user.username):
 			raise UsernameCannotContainNextthoughtCom(
 					_("That username is not valid. Please choose another."),
 					'Username',

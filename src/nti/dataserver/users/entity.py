@@ -33,6 +33,8 @@ from ZODB.interfaces import IConnection
 
 from ZODB.POSException import ConnectionStateError
 
+from nti.coremetadata.interfaces import IExemptUsernameUser
+
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
@@ -63,7 +65,6 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.ntiids.ntiids import escape_provider
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
-from nti.dataserver.users.common import set_entity_creation_site
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -122,7 +123,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
         return default
 
     @classmethod
-    def create_entity(cls, dataserver=None, **kwargs):
+    def create_entity(cls, dataserver=None, exempt_username=False, **kwargs):
         """
         Creates (and returns) and places in the dataserver a new entity,
         constructed using the keyword arguments given, the same as those
@@ -207,6 +208,10 @@ class Entity(PersistentCreatedModDateTrackingObject):
         # Register an intid for this user that we are creating so that the events that fire before
         # ObjectAdded (which is usually when intids get assigned) can use it.
         component.getUtility(IIntIds).register(user)
+
+        # This should be used sparingly by admin scripts.
+        if exempt_username:
+            interface.alsoProvides(user, IExemptUsernameUser)
         do_notify(WillCreateNewEntityEvent(user, ext_value, preflight_only, meta_data))
 
         if preflight_only:
