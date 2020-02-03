@@ -73,7 +73,9 @@ class _HasLinkMatcher(BaseMatcher):
 has_link = _HasLinkMatcher
 
 from nti.mailer.interfaces import IVERP
-import rfc822
+
+from nti.mailer import parseaddr
+
 from zope import component
 
 class _TrivialVerp(object):
@@ -82,7 +84,7 @@ class _TrivialVerp(object):
 		if '+' not in fromaddr:
 			return ()
 
-		_, addr = rfc822.parseaddr(fromaddr)
+		_, addr = parseaddr(fromaddr)
 		return (addr.split('+', 1)[1].split('@')[0],)
 
 class TestBouncedEmailworkflow(unittest.TestCase):

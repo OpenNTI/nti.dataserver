@@ -9,7 +9,8 @@ actually creating or queuing mail.
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 
-import rfc822
+from nti.mailer import parseaddr
+from nti.mailer import formataddr
 
 from zope import component
 from zope import interface
@@ -62,12 +63,12 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
         if addr.endswith('@nextthought.com'):
             return addr
 
-        realname, addr = rfc822.parseaddr(addr)
+        realname, addr = parseaddr(addr)
         # XXX This blows up if we get a malformed
         # email address
         local, _ = addr.split('@')
         addr = 'dummy.email+' + local + '@nextthought.com'
-        return rfc822.dump_address_pair((realname, addr))
+        return formataddr((realname, addr))
 
     def _should_send_to_addr(self, addr):
         return True
