@@ -386,7 +386,7 @@ class TestLogonViews(ApplicationLayerTest):
 		get_current_request().registry.registerUtility(Policy())
 
 		result = ping(get_current_request())
-                
+
 		assert_that(result, has_property('links', has_length(greater_than_or_equal_to(3))))
 
 		__traceback_info__ = result.links
@@ -607,7 +607,7 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that(_user_created_events, has_length(1))
 		assert_that(_user_created_events[0][0], is_(same_instance(user)))
 		# We created a new user during a request, so that event fired
-		assert_that(eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length(1))
+		assert_that(eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length(2))
 
 		# Can also auth as facebook for the same email address
 		# TODO: Think about that
@@ -657,7 +657,7 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that(_user_created_events[0][0], is_(same_instance(fb_user)))
 
 		# We created a new user during a request, so that event fired
-		assert_that(eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length(1))
+		assert_that(eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length(2))
 
 	@WithMockDSTrans
 	def test_external_takes_realname(self):
