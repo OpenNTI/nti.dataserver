@@ -366,6 +366,7 @@ def install_default_admin_user(root):
         logger.info("Creating admin user (%s)", ADMIN_USERNAME)
         admin_user = User.create_user(username=ADMIN_USERNAME,
                                       dataserver=mock_dataserver,
+                                      external_value={'realname': u"Admin User"},
                                       exempt_username=True)
         token_container = IUserTokenContainer(admin_user)
         token_expiration = datetime.utcnow() + timedelta(days=TOKEN_EXPIRATION_IN_DAYS)
