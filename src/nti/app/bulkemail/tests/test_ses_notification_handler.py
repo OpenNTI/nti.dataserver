@@ -74,7 +74,7 @@ has_link = _HasLinkMatcher
 
 from nti.mailer.interfaces import IVERP
 
-from nti.mailer import parseaddr
+from nti.mailer._compat import parseaddr
 
 from zope import component
 
