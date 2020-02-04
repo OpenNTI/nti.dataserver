@@ -604,7 +604,7 @@ class TestLogonViews(ApplicationLayerTest):
 		# The creation of this user caused events to fire
 		assert_that(eventtesting.getEvents(), has_length(greater_than_or_equal_to(1)))
 
-		assert_that(_user_created_events, has_length(1))
+		assert_that(_user_created_events, has_length(2))
 		assert_that(_user_created_events[0][0], is_(same_instance(user)))
 		# We created a new user during a request, so that event fired
 		assert_that(eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length(2))
@@ -653,7 +653,7 @@ class TestLogonViews(ApplicationLayerTest):
 		# The creation of this user caused events to fire
 		assert_that(eventtesting.getEvents(), has_length(greater_than_or_equal_to(1)))
 
-		assert_that(_user_created_events, has_length(1))
+		assert_that(_user_created_events, has_length(2))
 		assert_that(_user_created_events[0][0], is_(same_instance(fb_user)))
 
 		# We created a new user during a request, so that event fired
