@@ -587,6 +587,7 @@ class TestLogonViews(ApplicationLayerTest):
 
 	@WithMockDSTrans
 	def test_create_openid_from_external(self):
+		eventtesting.clearEvents()
 		user = logon._deal_with_external_account(request=get_current_request(),
 												  username="jason.madden@nextthought.com",
 												  fname="Jason",
@@ -637,6 +638,7 @@ class TestLogonViews(ApplicationLayerTest):
 
 	@WithMockDSTrans
 	def test_create_facebook_from_external(self):
+		eventtesting.clearEvents()
 		fb_user = logon._deal_with_external_account(request=get_current_request(),
 													username="jason.madden@nextthought.com",
 													fname="Jason",
@@ -646,18 +648,17 @@ class TestLogonViews(ApplicationLayerTest):
 													iface=nti_interfaces.IFacebookUser,
 													user_factory=users.FacebookUser.create_user)
 
-
 		assert_that(fb_user, provides(nti_interfaces.IFacebookUser))
 		assert_that(fb_user, has_property('facebook_url', 'http://facebook.com'))
 
 		# The creation of this user caused events to fire
 		assert_that(eventtesting.getEvents(), has_length(greater_than_or_equal_to(1)))
 
-		assert_that(_user_created_events, has_length(2))
+		assert_that(_user_created_events, has_length(1))
 		assert_that(_user_created_events[0][0], is_(same_instance(fb_user)))
 
 		# We created a new user during a request, so that event fired
-		assert_that(eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length(2))
+		assert_that(eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length(1))
 
 	@WithMockDSTrans
 	def test_external_takes_realname(self):
