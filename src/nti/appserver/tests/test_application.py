@@ -1330,7 +1330,9 @@ class TestApplication(ApplicationLayerTest):
 		encoded_token = base64.b64encode('%s:%s' % (ADMIN_USERNAME, token_val))
 		with open(path, 'r') as f:
 			file_token = f.read()
-		assert_that(file_token, is_(encoded_token))
+		assert_that(file_token,
+					is_(encoded_token),
+					(ADMIN_USERNAME, token_val, path))
 
 		# Validate full authentication
 		testapp = TestApp(self.app)
