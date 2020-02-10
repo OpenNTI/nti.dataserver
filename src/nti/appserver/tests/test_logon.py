@@ -329,12 +329,13 @@ class TestLinkProviders(ApplicationLayerTest):
 		self.forbid_link_with_rel(result, REL_INVALID_CONTACT_EMAIL)
 		self.forbid_link_with_rel(result, REL_INVALID_EMAIL)
 
+
 class LogonViewsLayer(ApplicationTestLayer):
-        pass
+	pass
+
 
 class TestLogonViews(ApplicationLayerTest):
-
-        layer = LogonViewsLayer # we use our own layer here b/c our tests manipulate the route registry
+	layer = LogonViewsLayer # we use our own layer here b/c our tests manipulate the route registry
 
 	def setUp(self):
 		super(TestLogonViews, self).setUp()
@@ -370,8 +371,8 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that(create_link.target_mime_type, is_('application/vnd.nextthought.user'))
 		external = to_external_object(result)
 
-                assert_that(external, has_entry('AuthenticatedUsername', None))
-                assert_that(external, has_entry('AuthenticatedUserId', None))
+		assert_that(external, has_entry('AuthenticatedUsername', None))
+		assert_that(external, has_entry('AuthenticatedUserId', None))
 
 	@WithMockDSTrans
 	def test_authenticated_ping(self):
@@ -402,9 +403,9 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that(external, has_entry('Links', has_length(len_links + 1)))
 		assert_that(external['Links'], has_item(has_entry('rel', 'force-edit-profile')))
 
-                # Our external object also has the AuthenticatedUsername we expect
-                assert_that(external, has_entry('AuthenticatedUsername', 'jason.madden@nextthought.com'))
-                assert_that(external, has_entry('AuthenticatedUserId', not_(None)))
+		# Our external object also has the AuthenticatedUsername we expect
+		assert_that(external, has_entry('AuthenticatedUsername', 'jason.madden@nextthought.com'))
+		assert_that(external, has_entry('AuthenticatedUserId', not_(None)))
 
 		# and we can decrease again
 		user_link_provider.delete_link(user, 'force-edit-profile')
@@ -588,6 +589,7 @@ class TestLogonViews(ApplicationLayerTest):
 	@WithMockDSTrans
 	def test_create_openid_from_external(self):
 		eventtesting.clearEvents()
+		del _user_created_events[:]
 		user = logon._deal_with_external_account(request=get_current_request(),
 												  username="jason.madden@nextthought.com",
 												  fname="Jason",
@@ -605,10 +607,10 @@ class TestLogonViews(ApplicationLayerTest):
 		# The creation of this user caused events to fire
 		assert_that(eventtesting.getEvents(), has_length(greater_than_or_equal_to(1)))
 
-		assert_that(_user_created_events, has_length(2))
+		assert_that(_user_created_events, has_length(1))
 		assert_that(_user_created_events[0][0], is_(same_instance(user)))
 		# We created a new user during a request, so that event fired
-		assert_that(eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length(2))
+		assert_that(eventtesting.getEvents(app_interfaces.IUserCreatedWithRequestEvent), has_length(1))
 
 		# Can also auth as facebook for the same email address
 		# TODO: Think about that
@@ -639,6 +641,7 @@ class TestLogonViews(ApplicationLayerTest):
 	@WithMockDSTrans
 	def test_create_facebook_from_external(self):
 		eventtesting.clearEvents()
+		del _user_created_events[:]
 		fb_user = logon._deal_with_external_account(request=get_current_request(),
 													username="jason.madden@nextthought.com",
 													fname="Jason",
