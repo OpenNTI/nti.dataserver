@@ -46,7 +46,7 @@ class User(object):
 	username = 'the_user'
 
 class Profile(object):
-	realname = 'Suzë Schwartz'
+	realname = u'Suzë Schwartz'
 
 @interface.implementer(IPrincipal, IEmailAddressable)
 class Principal(object):
@@ -114,7 +114,7 @@ class TestNextThoughtOnlyEmail(AppLayerTest, _BaseMixin):
 		bcc.email = 'Name <bcc@foo.com>'
 		msg = self._check('jamadden@ou.edu', 'dummy.email+jamadden@nextthought.com',
 						   bcc=bcc)
-		assert_that(msg, has_property('bcc', ['"Name" <dummy.email+bcc@nextthought.com>']))
+		assert_that(msg, has_property('bcc', ['Name <dummy.email+bcc@nextthought.com>']))
 
 	def test_bcc_to_nextthought_no_realname(self):
 		bcc = Principal()
