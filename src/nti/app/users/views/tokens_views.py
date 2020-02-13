@@ -9,12 +9,15 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-logger = __import__('logging').getLogger(__name__)
+from datetime import datetime
+from datetime import timedelta
 
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
+
+from requests.structures import CaseInsensitiveDict
 
 from zope.cachedescriptors.property import Lazy
 
@@ -26,13 +29,11 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
-from nti.app.users.views import VIEW_USER_TOKENS
-
-from nti.dataserver.authorization import ACT_DELETE
+from nti.dataserver.authorization import ACT_DELETE, ACT_NTI_ADMIN
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_CREATE
 
-from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users.tokens import generate_token
 
@@ -42,6 +43,7 @@ from nti.dataserver.users.interfaces import IUserTokenContainer
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+logger = __import__('logging').getLogger(__name__)
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -101,6 +103,83 @@ class UserTokenCreationView(AbstractAuthenticatedView,
 
         self.request.response.status_int = 201
         return self.context.store_token(token)
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context='IDataserverFolder',
+             request_method='POST',
+             name='RefreshToken',
+             permission=ACT_NTI_ADMIN)
+class RefreshTokenView(AbstractAuthenticatedView,
+                       ModeledContentUploadRequestUtilsMixin):
+    """
+    For a token, regenerate the token value and update the expiration
+    date (defaulting in 30 days). This means the existing token value will
+    no longer be valid for authentication.
+    """
+
+    DEFAULT_EXPIRATION_DAYS = 30
+
+    @Lazy
+    def _params(self):
+        return CaseInsensitiveDict(self.readInput())
+
+    @Lazy
+    def _expiration_in_days(self):
+        result = self._params.get('days') \
+              or self.DEFAULT_EXPIRATION_DAYS
+        try:
+            result = int(result)
+        except (TypeError, ValueError):
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Invalid expiration days param"),
+                             },
+                             None)
+        else:
+            if result < 0:
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u"Expiration days must be positive"),
+                                 },
+                                 None)
+        return result
+
+    @Lazy
+    def _token_val(self):
+        return self._params.get('token')
+
+    def get_token(self):
+        result = self.context
+        if IDataserverFolder.providedBy(self.context):
+            container = IUserTokenContainer(self.remoteUser)
+            if not self._token_val:
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 {
+                                     'message': _(u"Must provide a token value."),
+                                 },
+                                 None)
+            token = container.get_token_by_value(self._token_val)
+            if token is None:
+                raise_json_error(self.request,
+                                 hexc.HTTPNotFound,
+                                 {
+                                     'message': _(u"Cannot find token"),
+                                 },
+                                 None)
+            result = token
+        return result
+
+    def __call__(self):
+        days = self._expiration_in_days
+        token = self.get_token()
+        token.token = generate_token()
+        token.expiration_date = datetime.utcnow() + timedelta(days=days)
+        return token
 
 
 @view_config(route_name='objects.generic.traversal',
