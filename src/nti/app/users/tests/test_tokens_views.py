@@ -11,12 +11,9 @@ from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import not_none
 from hamcrest import contains
-from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import has_entries
 from hamcrest import assert_that
-
-from zope import interface
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 

@@ -58,7 +58,7 @@ USER_TOKEN_CONTAINER_KEY = 'tokens'
 
 
 def generate_token():
-    return str(uuid.uuid4())
+    return bytes(uuid.uuid4())
 
 
 @interface.implementer(IUserToken)
@@ -161,6 +161,13 @@ class UserTokenContainer(SchemaConfigured,
         if ntiid:
             for token in self.tokens:
                 if token.ntiid == ntiid:
+                    return token
+        return default
+
+    def get_token_by_value(self, token_value, default=None):
+        if token_value:
+            for token in self.tokens:
+                if token.token == token_value:
                     return token
         return default
 

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-__docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -1316,6 +1315,9 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_default_admin_user(self):
+		"""
+		On dataserver install, we create this user with an auth token.
+		"""
 		with mock_dataserver.mock_db_trans(self.ds):
 			admin_user = users.User.get_user(ADMIN_USERNAME)
 			assert_that(admin_user, not_none())
@@ -1340,6 +1342,54 @@ class TestApplication(ApplicationLayerTest):
 		headers = {b'HTTP_AUTHORIZATION': 'Bearer %s' % encoded_token}
 		testapp.get(user_path, extra_environ=headers)
 
+		def _update_token_exp(days):
+			with mock_dataserver.mock_db_trans(self.ds):
+				admin_user = users.User.get_user(ADMIN_USERNAME)
+				token_container = IUserTokenContainer(admin_user)
+				token = token_container.get_token_by_value(token_val)
+				token.expiration_date = datetime.datetime.utcnow() + datetime.timedelta(days=days)
+
+		# If token expires, we can longer authenticate
+		_update_token_exp(-30)
+		testapp.get(user_path, extra_environ=headers, status=401)
+
+		# Refresh the token, using the existing token for auth
+		_update_token_exp(30)
+		# Bad input
+		testapp.post_json('/dataserver2/RefreshToken', {'days':30},
+						  extra_environ=headers, status=422)
+		testapp.post_json('/dataserver2/RefreshToken', {'token': "dne_token_val"},
+						  extra_environ=headers, status=404)
+		testapp.post_json('/dataserver2/RefreshToken', {'token': token_val, "days": "a"},
+						  extra_environ=headers, status=422)
+		testapp.post_json('/dataserver2/RefreshToken', {'token': token_val, "days": "-1"},
+						  extra_environ=headers, status=422)
+
+		# Good input
+		res = testapp.post_json('/dataserver2/RefreshToken',
+								{'token': token_val, "days": "100"},
+								extra_environ=headers)
+		res = res.json_body
+		new_token_val = res.get('token')
+		new_token_ntiid = res.get('NTIID')
+		assert_that(new_token_val, not_none())
+		assert_that(new_token_ntiid, not_none())
+		assert_that(res.get('expiration_date'), not_none())
+
+		# Existing header now fails
+		testapp.get(user_path, extra_environ=headers, status=401)
+
+		# New one works
+		encoded_token = base64.b64encode('%s:%s' % (ADMIN_USERNAME, new_token_val))
+		headers = {b'HTTP_AUTHORIZATION': 'Bearer %s' % encoded_token}
+		testapp.get(user_path, extra_environ=headers)
+
+		# Default days
+		testapp.post_json('/dataserver2/RefreshToken',
+						  {'token': new_token_val},
+						  extra_environ=headers)
+
+		# Also works if we have a password
 		extra_environ = self._make_extra_environ(user=ADMIN_USERNAME)
 		testapp.get(user_path, extra_environ=extra_environ, status=401)
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -1353,6 +1403,7 @@ class TestUtil(unittest.TestCase):
 	def test_dump_info(self):
 		string = nti.appserver._util.dump_info()
 		assert_that( string, contains_string( 'dump_stacks' ) )
+
 
 class TestAppUtil(ApplicationLayerTest):
 
