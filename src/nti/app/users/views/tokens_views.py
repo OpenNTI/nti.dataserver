@@ -107,7 +107,7 @@ class UserTokenCreationView(AbstractAuthenticatedView,
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
-             context='IDataserverFolder',
+             context=IDataserverFolder,
              request_method='POST',
              name='RefreshToken',
              permission=ACT_NTI_ADMIN)
