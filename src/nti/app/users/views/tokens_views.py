@@ -167,6 +167,8 @@ class RefreshAllAuthTokensView(AbstractAuthenticatedView,
         container = IUserTokenContainer(self.remoteUser)
         tokens = [x for x in container.tokens if IAuthToken.providedBy(x)]
         for token in tokens:
+            if token.__parent__ is None:
+                token.__parent__ = container
             self._update_token(token)
 
         result = LocatedExternalDict()
