@@ -29,14 +29,16 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.app.users import MessageFactory as _
 
-from nti.dataserver.authorization import ACT_DELETE, ACT_NTI_ADMIN
 from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ACT_DELETE
 from nti.dataserver.authorization import ACT_CREATE
+from nti.dataserver.authorization import ACT_NTI_ADMIN
 
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users.tokens import generate_token
 
+from nti.dataserver.users.interfaces import IAuthToken
 from nti.dataserver.users.interfaces import IUserToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
 
@@ -109,10 +111,10 @@ class UserTokenCreationView(AbstractAuthenticatedView,
              renderer='rest',
              context=IDataserverFolder,
              request_method='POST',
-             name='RefreshToken',
+             name='RefreshAllAuthTokens',
              permission=ACT_NTI_ADMIN)
-class RefreshTokenView(AbstractAuthenticatedView,
-                       ModeledContentUploadRequestUtilsMixin):
+class RefreshAllAuthTokensView(AbstractAuthenticatedView,
+                               ModeledContentUploadRequestUtilsMixin):
     """
     For a token, regenerate the token value and update the expiration
     date (defaulting in 30 days). This means the existing token value will
@@ -124,6 +126,13 @@ class RefreshTokenView(AbstractAuthenticatedView,
     @Lazy
     def _params(self):
         return CaseInsensitiveDict(self.readInput())
+
+    def readInput(self, value=None):
+        if self.request.body:
+            values = super(RefreshAllAuthTokensView, self).readInput(value)
+        else:
+            values = self.request.params
+        return CaseInsensitiveDict(values)
 
     @Lazy
     def _expiration_in_days(self):
@@ -148,37 +157,63 @@ class RefreshTokenView(AbstractAuthenticatedView,
                                  None)
         return result
 
+    def _update_token(self, token):
+        days = self._expiration_in_days
+        token.token = generate_token()
+        token.expiration_date = datetime.utcnow() + timedelta(days=days)
+        return token
+
+    def __call__(self):
+        container = IUserTokenContainer(self.remoteUser)
+        tokens = [x for x in container.tokens if IAuthToken.providedBy(x)]
+        for token in tokens:
+            self._update_token(token)
+
+        result = LocatedExternalDict()
+        result.__name__ = self.request.view_name
+        result.__parent__ = self.request.context
+        result[ITEMS] = tokens
+        result[TOTAL] = result[ITEM_COUNT] = len(result[ITEMS])
+        return result
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=IDataserverFolder,
+             request_method='POST',
+             name='RefreshToken',
+             permission=ACT_NTI_ADMIN)
+class RefreshTokenView(RefreshAllAuthTokensView):
+    """
+    Refresh a single token, given by the token val.
+    """
+
     @Lazy
     def _token_val(self):
         return self._params.get('token')
 
     def get_token(self):
-        result = self.context
-        if IDataserverFolder.providedBy(self.context):
-            container = IUserTokenContainer(self.remoteUser)
-            if not self._token_val:
-                raise_json_error(self.request,
-                                 hexc.HTTPUnprocessableEntity,
-                                 {
-                                     'message': _(u"Must provide a token value."),
-                                 },
-                                 None)
-            token = container.get_token_by_value(self._token_val)
-            if token is None:
-                raise_json_error(self.request,
-                                 hexc.HTTPNotFound,
-                                 {
-                                     'message': _(u"Cannot find token"),
-                                 },
-                                 None)
-            result = token
-        return result
+        container = IUserTokenContainer(self.remoteUser)
+        if not self._token_val:
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u"Must provide a token value."),
+                             },
+                             None)
+        token = container.get_token_by_value(self._token_val)
+        if token is None:
+            raise_json_error(self.request,
+                             hexc.HTTPNotFound,
+                             {
+                                 'message': _(u"Cannot find token"),
+                             },
+                             None)
+        return token
 
     def __call__(self):
-        days = self._expiration_in_days
         token = self.get_token()
-        token.token = generate_token()
-        token.expiration_date = datetime.utcnow() + timedelta(days=days)
+        self._update_token(token)
         return token
 
 

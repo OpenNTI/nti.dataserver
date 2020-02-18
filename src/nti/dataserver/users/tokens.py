@@ -140,6 +140,7 @@ class UserTokenContainer(SchemaConfigured,
         if not token.token:
             token.token = generate_token()
         self.tokens.append(token)
+        token.__parent__ = self
         return token
 
     def remove_token(self, token):

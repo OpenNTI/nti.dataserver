@@ -1342,11 +1342,11 @@ class TestApplication(ApplicationLayerTest):
 		headers = {b'HTTP_AUTHORIZATION': 'Bearer %s' % encoded_token}
 		testapp.get(user_path, extra_environ=headers)
 
-		def _update_token_exp(days):
+		def _update_token_exp(days, val=token_val):
 			with mock_dataserver.mock_db_trans(self.ds):
 				admin_user = users.User.get_user(ADMIN_USERNAME)
 				token_container = IUserTokenContainer(admin_user)
-				token = token_container.get_token_by_value(token_val)
+				token = token_container.get_token_by_value(val)
 				token.expiration_date = datetime.datetime.utcnow() + datetime.timedelta(days=days)
 
 		# If token expires, we can longer authenticate
@@ -1362,7 +1362,8 @@ class TestApplication(ApplicationLayerTest):
 						  extra_environ=headers, status=404)
 		testapp.post_json('/dataserver2/RefreshToken', {'token': token_val, "days": "a"},
 						  extra_environ=headers, status=422)
-		testapp.post_json('/dataserver2/RefreshToken', {'token': token_val, "days": "-1"},
+		testapp.post_json('/dataserver2/RefreshToken',
+						  {'token': token_val, "days": "-1"},
 						  extra_environ=headers, status=422)
 
 		# Good input
@@ -1385,9 +1386,24 @@ class TestApplication(ApplicationLayerTest):
 		testapp.get(user_path, extra_environ=headers)
 
 		# Default days
-		testapp.post_json('/dataserver2/RefreshToken',
-						  {'token': new_token_val},
-						  extra_environ=headers)
+		res = testapp.post_json('/dataserver2/RefreshToken',
+						  		{'token': new_token_val},
+						 		extra_environ=headers)
+		res = res.json_body
+		new_token_val = res.get('token')
+
+		# Generic view
+		_update_token_exp(1, val=new_token_val)
+		encoded_token = base64.b64encode('%s:%s' % (ADMIN_USERNAME, new_token_val))
+		headers = {b'HTTP_AUTHORIZATION': 'Bearer %s' % encoded_token}
+		res = testapp.post('/dataserver2/RefreshAllAuthTokens',
+						   extra_environ=headers)
+		res = res.json_body
+		tokens = res.get('Items')
+		assert_that(tokens, has_length(1))
+		token_ext = tokens[0]
+		assert_that(token_ext.get('token'), not_none())
+		assert_that(token_ext.get('EncodedToken'), not_none())
 
 		# Also works if we have a password
 		extra_environ = self._make_extra_environ(user=ADMIN_USERNAME)
