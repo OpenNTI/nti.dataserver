@@ -7,7 +7,6 @@ Views and other functions related to forums and blogs.
 """
 
 from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -75,6 +74,8 @@ from nti.dataserver.contenttypes.forums.summaries import UserTopicParticipationS
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IUserTaggedContent
+
+from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.dataserver.users.users import User
 
@@ -287,13 +288,18 @@ class ForumContentFilteringMixin(object):
         x = getattr(topic, 'headline', topic)
         # get content
         content = []
-        for iface, name, default, method in (
-            (ITitled, 'title', u'', content.append),
-            (IUserTaggedContent, 'tags', (), content.extend),
-            (ContentResolver, 'content', u'', content.append)):
+        for iface, name, default, method in ((ITitled, 'title', u'', content.append),
+                                             (IUserTaggedContent, 'tags', (), content.extend),
+                                             (ContentResolver, 'content', u'', content.append)):
             resolver = iface(x, None)
             value = getattr(resolver, name, None) or default
             method(value)
+        if x.creator:
+            creator = x.creator
+            content.append(creator.username or '')
+            named = IFriendlyNamed(creator, None)
+            content.append(getattr(named, 'realname', '') or '')
+            content.append(getattr(named, 'alias', '') or '')
         # join as one
         content = u' '.join(content)
         return content
