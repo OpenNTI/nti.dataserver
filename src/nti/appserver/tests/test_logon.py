@@ -249,10 +249,11 @@ class TestLinkProviders(ApplicationLayerTest):
 		extra_environ.update({b'HTTP_ORIGIN': b'http://nonwelcomepagetest.nextthought.com'})
 
 		# It should show these links by default.
+		# We no longer provide these links
 		result = self.testapp.get(url, extra_environ=extra_environ)
 		result = result.json_body
-		self.require_link_href_with_rel(result, 'content.initial_welcome_page')
-		self.require_link_href_with_rel(result, 'content.permanent_welcome_page')
+		self.forbid_link_with_rel(result, 'content.initial_welcome_page')
+		self.forbid_link_with_rel(result, 'content.permanent_welcome_page')
 
 		# register DoNotAdvertiseWelcomePageLinksProvider
 		site.registerSubscriptionAdapter(DoNotAdvertiseWelcomePageLinksProvider,
@@ -298,7 +299,7 @@ class TestLinkProviders(ApplicationLayerTest):
 		mock_is_impersonating.is_callable().returns(False)
 		result = self.testapp.get(url, extra_environ=extra_environ).json_body
 		self.require_link_href_with_rel(result, REL_INITIAL_TOS_PAGE)
-		self.require_link_href_with_rel(result, REL_INITIAL_WELCOME_PAGE)
+		self.forbid_link_with_rel(result, REL_INITIAL_WELCOME_PAGE)
 		self.require_link_href_with_rel(result, REL_INVALID_CONTACT_EMAIL)
 		self.require_link_href_with_rel(result, REL_INVALID_EMAIL)
 
