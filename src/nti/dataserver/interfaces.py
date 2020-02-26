@@ -1047,6 +1047,19 @@ class IHighlight(IPresentationPropertyHolder,
                    default=u"plain")
 
 
+class IPinned(interface.Interface):
+    """
+    A marker interface indicating an :class:`IPinnable` object
+    should appear at the top of it's container for higher visibility.
+    """
+
+
+class IPinnable(interface.Interface):
+    """
+    Indicates this object can be pinned or unpinned from it's container.
+    """
+
+
 from nti.contentfragments.schema import TextUnicodeContentFragment
 
 

@@ -5,8 +5,9 @@ Interface definitions for forums. Heavily influenced by Ploneboards.
 
 .. $Id$
 """
-from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 # Disable pylint warnings about undefined variables, because it catches
 # all the __setitem__ and __parent__ in the interfaces.
@@ -43,6 +44,7 @@ from nti.dataserver.interfaces import ACE_ACT_ALLOW
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICreated
+from nti.dataserver.interfaces import IPinnable
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IThreadable
 from nti.dataserver.interfaces import ILastModified
@@ -184,6 +186,7 @@ class ITopic(IContentContainer,
              ILastModified,
              IReportContext,
              IUserGeneratedData,
+             IPinnable,
              IUserTaggedContent,
              ITitledDescribedContent,
              INeverStoredInSharedStream,

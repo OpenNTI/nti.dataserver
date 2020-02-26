@@ -184,7 +184,9 @@ class AbstractPostCreationMixin(object):
 		res = self.testapp.post(publish_url)
 		return res, data
 
-class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMixin, TestBaseMixin):
+class AbstractTestApplicationForumsBase(AppTestBaseMixin,
+										AbstractPostCreationMixin,
+										TestBaseMixin):
 	# : make nosetests only run subclasses of this that set __test__ to True
 	__test__ = False
 
@@ -251,6 +253,7 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 			testapp.get(contents_href, status=200)
 
 			# The forum cannot be liked, favorited, flagged
+			self.forbid_link_with_rel(blog_res.json_body, 'pin')
 			self.forbid_link_with_rel(blog_res.json_body, 'like')
 			self.forbid_link_with_rel(blog_res.json_body, 'flag')
 			self.forbid_link_with_rel(blog_res.json_body, 'favorite')
@@ -258,7 +261,6 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_user_cannot_POST_new_forum_entry_to_pages(self):
 		testapp = self.testapp
-
 		data = self._create_post_data_for_POST()
 
 		# No containerId
@@ -293,10 +295,28 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 
 		flag_href = self.require_link_href_with_rel(res.json_body, 'flag')
 		res2 = self.testapp.post(flag_href)
+		res2 = res2.json_body
 
-		assert_that(res2.json_body['href'], is_(topic_href))
-		self.require_link_href_with_rel(res2.json_body, 'flag.metoo')
-		self.forbid_link_with_rel(res2.json_body, 'flag')
+		assert_that(res2['href'], is_(topic_href))
+		self.require_link_href_with_rel(res2, 'flag.metoo')
+		self.forbid_link_with_rel(res2, 'flag')
+
+		pin_href = self.require_link_href_with_rel(res2, 'pin')
+		self.forbid_link_with_rel(res2, 'unpin')
+
+		self.testapp.post(pin_href)
+		res3 = self.testapp.post(pin_href)
+		res3 = res3.json_body
+
+		self.forbid_link_with_rel(res3, 'pin')
+		unpin_href = self.require_link_href_with_rel(res3, 'unpin')
+
+		self.testapp.post(unpin_href)
+		res4 = self.testapp.post(unpin_href)
+		res4 = res4.json_body
+
+		self.require_link_href_with_rel(res4, 'pin')
+		self.forbid_link_with_rel(res4, 'unpin')
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_user_can_POST_new_forum_entry_with_non_ascii_title(self):
@@ -331,7 +351,6 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		del data['MimeType']
 
 		self._do_test_user_can_POST_new_forum_entry(data)
-
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_user_can_POST_new_forum_entry_mime_type_only(self):
