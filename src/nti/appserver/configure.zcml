@@ -145,6 +145,10 @@
 	<subscriber factory=".rating_views.RatingLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
+    <!-- Pinnable -->
+	<subscriber factory=".pin_views.PinnableLinkDecorator"
+                provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
 	<!-- Other decorators -->
 	<subscriber factory=".ugd_query_views.RepliesLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />

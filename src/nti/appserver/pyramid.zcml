@@ -51,6 +51,7 @@
 	</pyramid:view>
 
 	<pyramid:scan package='._hacks' />
+	<pyramid:scan package='.pin_views' />
 	<pyramid:scan package='.liking_views' />
 	<pyramid:scan package='.rating_views' />
 	<pyramid:scan package='.flagging_views' />

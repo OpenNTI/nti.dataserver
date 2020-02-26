@@ -118,7 +118,7 @@ def _UnFlagView(request):
     """
     Given an :class:`IFlaggable`, make the
     current user unflag the object, and return it. Unlike
-    flagging, this view is protected with 
+    flagging, this view is protected with
     :const:`nti.dataserver.authorization.ACT_MODERATE` permissions.
 
     Registered as a named view, so invoked via the @@unflag syntax.
