@@ -66,6 +66,7 @@ from nti.coremetadata.interfaces import IDeleteLockedCommunity
 from nti.coremetadata.interfaces import DeactivatedCommunityEvent
 from nti.coremetadata.interfaces import ReactivatedCommunityEvent
 
+from nti.dataserver.contenttypes.forums.interfaces import IDefaultForum
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver import authorization as nauth
@@ -75,9 +76,11 @@ from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IPinned
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import IOnlyDefaultForumTopicsCanBePinnedRequest
 
 from nti.dataserver.users import User
 
@@ -637,6 +640,8 @@ class UnhideCommunityMembershipView(AbstractAuthenticatedView):
 class CommunityActivityView(EntityActivityViewMixin,
                             ForumContentFilteringMixin):
 
+    PINNED_SORT = True
+
     def _set_user_and_ntiid(self, *unused_args, **unused_kwargs):
         self.ntiid = u''
         self.user = self.remoteUser
@@ -677,6 +682,31 @@ class CommunityActivityView(EntityActivityViewMixin,
     @property
     def _entity_board(self):
         return ICommunityBoard(self.request.context, None) or {}
+
+    def _get_default_forum_topics(self):
+        forums = [x for x in self._entity_board.values() if IDefaultForum.providedBy(x)]
+        if not forums:
+            return ()
+        # Should only be one
+        forum = forums[0]
+        return set(forum.values())
+
+    def bubble_pinned_items(self, items):
+        """
+        Override the UGD implmentation to ensure only default forum pinned items
+        appear at the top of our result set.
+        """
+        default_forum_topics = self._get_default_forum_topics()
+        def sort_key(obj):
+            # Return True if pinned and in our set
+            return IPinned.providedBy(obj) and obj in default_forum_topics
+
+        result = sorted(items, key=lambda x: not sort_key(x[1]))
+        return result
+
+    def __call__(self):
+        interface.alsoProvides(self.request, IOnlyDefaultForumTopicsCanBePinnedRequest)
+        return super(CommunityActivityView, self).__call__()
 
 
 class CommunityAdminMixin(object):

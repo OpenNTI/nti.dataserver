@@ -118,6 +118,8 @@ class EntityActivityViewMixin(UGDView):
     user must be a member of the given entity.
     """
 
+    PINNED_SORT = True
+
     # pylint: disable=arguments-differ
     def _set_user_and_ntiid(self, *unused_args, **unused_kwargs):
         self.ntiid = u''

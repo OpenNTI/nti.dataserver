@@ -27,8 +27,11 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.dataserver.authorization import ACT_UPDATE
 
+from nti.dataserver.contenttypes.forums.interfaces import IDefaultForum
+
 from nti.dataserver.interfaces import IPinned
 from nti.dataserver.interfaces import IPinnable
+from nti.dataserver.interfaces import IOnlyDefaultForumTopicsCanBePinnedRequest
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
@@ -45,12 +48,26 @@ logger = __import__('logging').getLogger(__name__)
 @component.adapter(IPinnable, IRequest)
 class PinnableLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
+    def _can_decorate_object(self, obj):
+        """
+        This is tightly coupled to the all activity views. If our request
+        is marked appropriately, we only decorate on topics from the default
+        forum in a board.
+        """
+        result = True
+        if IOnlyDefaultForumTopicsCanBePinnedRequest.providedBy(self.request):
+            forum = obj.__parent__
+            result = IDefaultForum.providedBy(forum)
+        return result
+
     def _predicate(self, context, unused_result):
         result = self._is_authenticated \
-             and has_permission(ACT_UPDATE, context, self.request)
+             and has_permission(ACT_UPDATE, context, self.request) \
+             and self._can_decorate_object(context)
         return result
 
     def _do_decorate_external(self, context, result):
+        result['Pinned'] = IPinned.providedBy(context)
         _links = result.setdefault(LINKS, [])
         rel = 'unpin' if IPinned.providedBy(context) else 'pin'
         link = Link(context,

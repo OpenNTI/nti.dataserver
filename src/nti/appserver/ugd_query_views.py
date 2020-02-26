@@ -7,7 +7,6 @@ Views for querying user generated data.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -56,6 +55,7 @@ from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopi
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import IPinned
 from nti.dataserver.interfaces import IBookmark
 from nti.dataserver.interfaces import IThreadable
 from nti.dataserver.interfaces import IUsernameIterable
@@ -534,6 +534,10 @@ class _UGDView(AbstractAuthenticatedView,
 	#: The NTIID of the container whose data we are requesting
 	ntiid = None
 
+	#: Move IPinned items to the top of the result set, regardless of given
+	#: sort order.
+	PINNED_SORT = False
+
 	def __init__( self, request, the_user=None, the_ntiid=None ):
 		super(_UGDView,self).__init__( request )
 		self._set_user_and_ntiid(request, the_user, the_ntiid)
@@ -771,7 +775,7 @@ class _UGDView(AbstractAuthenticatedView,
 		Returns a key function for sorting based on current params
 		"""
 		sort_on, sort_order = self._get_sort_key_order()
-		_sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS[self._DEFAULT_SORT_ON] )
+		_sort_key_function = self.SORT_KEYS.get(sort_on, self.SORT_KEYS[self._DEFAULT_SORT_ON])
 		# heapq needs to have the smallest item first. It doesn't work with reverse sorting.
 		# so in that case we invert the key function
 		if sort_order == 'descending':
@@ -908,6 +912,19 @@ class _UGDView(AbstractAuthenticatedView,
 			merged = tuple( merged )
 			number_items_needed = len( merged )
 		return merged, number_items_needed
+
+	def bubble_pinned_items(self, items):
+		"""
+		For an iterable of items, move the pinned items to the top of the result set.
+		This will essentially retain the defined sort order, while making sure all
+		pinned items appear at the beginning of the result set. This should occur
+		after any filtering occurs. The given sort order should not affect this.
+		"""
+		# Eachs item is a tuple of key, val
+		result = items
+		if self.PINNED_SORT:
+			result = sorted(items, key=lambda x: not IPinned.providedBy(x[1]))
+		return result
 
 	def _sort_filter_batch_objects( self, objects ):
 		"""
@@ -1157,7 +1174,9 @@ class _UGDView(AbstractAuthenticatedView,
 		else:
 			merged = ()
 
-		merged, number_items_needed = self.__do_batch( merged, number_items_needed )
+		# Before batching, bubble pinned items to the top, if necessary.
+		bump_pinned = self.bubble_pinned_items(merged)
+		merged, number_items_needed = self.__do_batch(bump_pinned, number_items_needed)
 		# These may have changed, pull them right before we need them
 		batch_size, batch_start = self._get_batch_size_start()
 		self._batch_tuple_iterable(result, merged, number_items_needed, batch_size, batch_start)

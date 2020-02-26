@@ -22,8 +22,6 @@ from hamcrest import contains_inanyorder
 from hamcrest import greater_than_or_equal_to
 does_not = is_not
 
-from nti.testing.time import time_monotonically_increases
-
 from zope import interface
 from zope import component
 
@@ -45,7 +43,16 @@ from nti.coremetadata.interfaces import ISiteCommunity
 
 from nti.dataserver.authorization import ROLE_SITE_ADMIN_NAME
 
+from nti.dataserver.contenttypes.forums.interfaces import IDefaultForum
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+
+from nti.dataserver.contenttypes.forums.forum import CommunityForum
+
+from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
+
 from nti.dataserver.contenttypes.note import Note
+
+from nti.dataserver.interfaces import IPinned
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -61,6 +68,12 @@ from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import ICommunityPolicyManagementUtility
 
 from nti.dataserver.users.users import User
+
+from nti.ntiids.oids import to_external_ntiid_oid
+
+from nti.testing.matchers import validly_provides
+
+from nti.testing.time import time_monotonically_increases
 
 
 class TestCommunityViews(ApplicationLayerTest):
@@ -244,6 +257,7 @@ class TestCommunityViews(ApplicationLayerTest):
         assert_that(res.json_body, has_entry('Items', has_length(2)))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    @time_monotonically_increases
     def test_activity_community(self):
         with mock_dataserver.mock_db_trans(self.ds):
             c = Community.create_community(username=u'bleach')
@@ -251,6 +265,7 @@ class TestCommunityViews(ApplicationLayerTest):
             user.record_dynamic_membership(c)
             user = self._create_user(u"ichigo", u"temp001")
             user.record_dynamic_membership(c)
+            board = ICommunityBoard(c)
 
             note = Note()
             note.body = [u'bankai']
@@ -258,10 +273,84 @@ class TestCommunityViews(ApplicationLayerTest):
             note.addSharingTarget(c)
             note.containerId = u'mycontainer'
             user.addContainedObject(note)
+            note_ntiid = to_external_ntiid_oid(note)
+
+            default_forum = tuple(board.values())[0]
+            assert_that(default_forum, validly_provides(IDefaultForum))
+
+            # Two topics in default forum, one pinned, one not
+            default_topic = CommunityHeadlineTopic()
+            default_topic.title = u'default pinned one'
+            default_topic.creator = user
+            default_forum[u'Hello'] = default_topic
+            interface.alsoProvides(default_topic, IPinned)
+            default_pinned_topic_ntiid = default_topic.NTIID
+
+            default_topic2 = CommunityHeadlineTopic()
+            default_topic2.title = u'default two'
+            default_topic2.creator = user
+            default_forum[u'Hello2'] = default_topic2
+            default_topic_ntiid2 = default_topic2.NTIID
+
+            default_topic3 = CommunityHeadlineTopic()
+            default_topic3.title = u'default pinned three'
+            default_topic3.creator = user
+            default_forum[u'Hello3'] = default_topic3
+            interface.alsoProvides(default_topic3, IPinned)
+            default_pinned_topic_ntiid3 = default_topic3.NTIID
+
+            # Secondary forum with one pinned topic and one not
+            forum = CommunityForum()
+            forum.title = u'test'
+            board[u'forum2'] = forum
+
+            topic = CommunityHeadlineTopic()
+            topic.title = u'other one'
+            topic.creator = user
+            forum[u'Hello'] = topic
+            topic_ntiid = topic.NTIID
+
+            topic2 = CommunityHeadlineTopic()
+            topic2.title = u'other pinned two'
+            topic2.creator = user
+            forum[u'Hello2'] = topic2
+            interface.alsoProvides(topic2, IPinned)
+            pinned_topic_ntiid = topic2.NTIID
+
+        # We now have 5 topics and one note
+        # - 2 pinned topics in default forum, 1 not pinned
+        # - 1 pinned and 1 not pinned in other forum
 
         path = '/dataserver2/users/bleach/Activity'
-        res = self.testapp.get(path, status=200)
-        assert_that(res.json_body, has_entry('Items', has_length(1)))
+        def _get_item_ntiids(reverse=False, search_term=None):
+            # By default, created time sorts ascending
+            activity_path = '%s?sortOn=createdTime' % path
+            if reverse:
+                activity_path = '%s&sortOrder=descending' % activity_path
+            if search_term:
+                activity_path = '%s&searchTerm=%s' % (activity_path, search_term)
+            res = self.testapp.get(activity_path)
+            items = res.json_body.get('Items')
+            return [x.get('NTIID') for x in items], items
+
+        item_ntiids, unused_items = _get_item_ntiids()
+        assert_that(item_ntiids, has_length(6))
+        # Default sort is last mod, ascending
+        # The pinned default forum items return first no matter what
+        assert_that(item_ntiids, contains(default_pinned_topic_ntiid, default_pinned_topic_ntiid3,
+                                          note_ntiid, default_topic_ntiid2, topic_ntiid, pinned_topic_ntiid))
+
+        # Reverse still has pinned items up top
+        item_ntiids, unused_items = _get_item_ntiids(reverse=True)
+        assert_that(item_ntiids, contains(default_pinned_topic_ntiid3, default_pinned_topic_ntiid,
+                                          pinned_topic_ntiid, topic_ntiid, default_topic_ntiid2, note_ntiid))
+
+        # Filter to only the "other" topics, pinned items not at top
+        item_ntiids, unused_items = _get_item_ntiids(search_term=u'other')
+        assert_that(item_ntiids, has_length(2))
+        # Default sort is last mod, ascending
+        # The pinned default forum items return first no matter what
+        assert_that(item_ntiids, contains(topic_ntiid, pinned_topic_ntiid))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_community_admin(self):

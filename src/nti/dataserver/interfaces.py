@@ -1060,6 +1060,14 @@ class IPinnable(interface.Interface):
     """
 
 
+class IOnlyDefaultForumTopicsCanBePinnedRequest(interface.Interface):
+    """
+    A request marker interface that indicates that only topics from the
+    default forum in a board can be pinned or unpinned. This will influence
+    decorator behavior.
+    """
+
+
 from nti.contentfragments.schema import TextUnicodeContentFragment
 
 
