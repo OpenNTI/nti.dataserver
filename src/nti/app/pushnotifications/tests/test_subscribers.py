@@ -22,9 +22,10 @@ from nti.dataserver.users import Community
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
-from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+
 from nti.dataserver.contenttypes.forums.post import GeneralForumComment
+
 from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
 from nti.dataserver.tests import mock_dataserver

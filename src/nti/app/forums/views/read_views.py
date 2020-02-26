@@ -285,7 +285,7 @@ class ForumContentFilteringMixin(object):
 
     def _get_topic_content(self, topic):
         # process the post
-        x = getattr(topic, 'headline', topic)
+        x = getattr(topic, 'headline', topic) or topic
         # get content
         content = []
         for iface, name, default, method in ((ITitled, 'title', u'', content.append),
@@ -294,7 +294,7 @@ class ForumContentFilteringMixin(object):
             resolver = iface(x, None)
             value = getattr(resolver, name, None) or default
             method(value)
-        if x.creator:
+        if x and x.creator:
             creator = x.creator
             content.append(creator.username or '')
             named = IFriendlyNamed(creator, None)
@@ -349,6 +349,8 @@ class ForumContentsGetView(ForumsContainerContentsGetView,
             fetching all the objects from the database. Why not just
             do a real search?
     """
+
+    PINNED_SORT = True
 
     SORT_KEYS = ForumsContainerContentsGetView.SORT_KEYS.copy()
     SORT_KEYS['PostCount'] = operator.attrgetter('PostCount', 'createdTime')

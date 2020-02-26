@@ -67,6 +67,7 @@ class PinnableLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         return result
 
     def _do_decorate_external(self, context, result):
+        result['Pinned'] = IPinned.providedBy(context)
         _links = result.setdefault(LINKS, [])
         rel = 'unpin' if IPinned.providedBy(context) else 'pin'
         link = Link(context,
