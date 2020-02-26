@@ -78,6 +78,7 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import IOnlyDefaultForumTopicsCanBePinnedRequest
 
 from nti.dataserver.users import User
 
@@ -677,6 +678,10 @@ class CommunityActivityView(EntityActivityViewMixin,
     @property
     def _entity_board(self):
         return ICommunityBoard(self.request.context, None) or {}
+
+    def __call__(self):
+        interface.alsoProvides(self.request, IOnlyDefaultForumTopicsCanBePinnedRequest)
+        return super(CommunityActivityView, self).__call__()
 
 
 class CommunityAdminMixin(object):
