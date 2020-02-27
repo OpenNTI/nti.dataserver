@@ -13,6 +13,8 @@ from hamcrest import contains_string
 
 from nti.testing.base import ConfiguringTestBase
 
+from xml.sax.saxutils import escape
+
 from zope import component
 
 from zope.interface.interfaces import IComponents
@@ -57,11 +59,13 @@ def _config_for_site_with_policy(sitename, brand, display, username, alias, real
                                  com_realname=realname)
     return ZCML_REGISTRATION % (sitename, sitename, site_attrs)
 
+
 def _local_components(sitename):
     return component.getGlobalSiteManager().getUtility(IComponents, name=sitename)
 
+
 def _policy_for_site(sitename):
-    component = _local_components('childsite')
+    component = _local_components(sitename)
 
     return component.getUtility(ICommunitySitePolicyUserEventListener)
 
@@ -98,4 +102,27 @@ class TestLocalSitePolicyZCML(ConfiguringTestBase):
 
         assert_that(str(e.exception),
                     contains_string('com_username must be provided if com_alias or com_realname is specified.'))
+
+    def test_escaped_chars(self):
+        """
+        Test XML escaped characters, probably only applicable for user-input
+        brand name.
+        """
+        brand_name = escape(u'wow&<.,;>')
+        config = _config_for_site_with_policy(u'childsite3',
+                                              brand_name,
+                                              u'Display',
+                                              u'comm.nextthought.com',
+                                              u'Comm',
+                                              u'Site Comm')
+
+        self.configure_string(config)
+
+        policy = _policy_for_site('childsite3')
+
+        assert_that(policy.BRAND, is_(u'wow&<.,;>'))
+        assert_that(policy.DISPLAY_NAME, is_('Display'))
+        assert_that(policy.COM_USERNAME, is_('comm.nextthought.com'))
+        assert_that(policy.COM_ALIAS, is_('Comm'))
+        assert_that(policy.COM_REALNAME, is_('Site Comm'))
 
