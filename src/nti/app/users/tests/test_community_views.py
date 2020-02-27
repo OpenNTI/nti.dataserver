@@ -277,6 +277,7 @@ class TestCommunityViews(ApplicationLayerTest):
 
             default_forum = tuple(board.values())[0]
             assert_that(default_forum, validly_provides(IDefaultForum))
+            default_forum_ntiid = to_external_ntiid_oid(default_forum)
 
             # Two topics in default forum, one pinned, one not
             default_topic = CommunityHeadlineTopic()
@@ -302,7 +303,9 @@ class TestCommunityViews(ApplicationLayerTest):
             # Secondary forum with one pinned topic and one not
             forum = CommunityForum()
             forum.title = u'test'
+            forum.creator = user
             board[u'forum2'] = forum
+            forum_ntiid = to_external_ntiid_oid(forum)
 
             topic = CommunityHeadlineTopic()
             topic.title = u'other one'
@@ -322,35 +325,59 @@ class TestCommunityViews(ApplicationLayerTest):
         # - 1 pinned and 1 not pinned in other forum
 
         path = '/dataserver2/users/bleach/Activity'
-        def _get_item_ntiids(reverse=False, search_term=None):
+        def _get_item_ntiids(activity_path=None, reverse=False, search_term=None):
             # By default, created time sorts ascending
-            activity_path = '%s?sortOn=createdTime' % path
+            if not activity_path:
+                activity_path = path
+            activity_path = '%s?sortOn=createdTime' % activity_path
             if reverse:
                 activity_path = '%s&sortOrder=descending' % activity_path
             if search_term:
                 activity_path = '%s&searchTerm=%s' % (activity_path, search_term)
             res = self.testapp.get(activity_path)
             items = res.json_body.get('Items')
-            return [x.get('NTIID') for x in items], items
+            return [x.get('NTIID') for x in items]
 
-        item_ntiids, unused_items = _get_item_ntiids()
+        item_ntiids = _get_item_ntiids()
         assert_that(item_ntiids, has_length(6))
-        # Default sort is last mod, ascending
+        # Default sort is ascending
         # The pinned default forum items return first no matter what
         assert_that(item_ntiids, contains(default_pinned_topic_ntiid, default_pinned_topic_ntiid3,
                                           note_ntiid, default_topic_ntiid2, topic_ntiid, pinned_topic_ntiid))
 
         # Reverse still has pinned items up top
-        item_ntiids, unused_items = _get_item_ntiids(reverse=True)
+        item_ntiids = _get_item_ntiids(reverse=True)
         assert_that(item_ntiids, contains(default_pinned_topic_ntiid3, default_pinned_topic_ntiid,
                                           pinned_topic_ntiid, topic_ntiid, default_topic_ntiid2, note_ntiid))
 
         # Filter to only the "other" topics, pinned items not at top
-        item_ntiids, unused_items = _get_item_ntiids(search_term=u'other')
+        item_ntiids = _get_item_ntiids(search_term=u'other')
         assert_that(item_ntiids, has_length(2))
-        # Default sort is last mod, ascending
-        # The pinned default forum items return first no matter what
         assert_that(item_ntiids, contains(topic_ntiid, pinned_topic_ntiid))
+
+        # Default forum get contents
+        item_ntiids = _get_item_ntiids(activity_path=u'/dataserver2/Objects/%s/contents' % default_forum_ntiid)
+        assert_that(item_ntiids, has_length(3))
+        # The pinned default forum items return first no matter what
+        assert_that(item_ntiids, contains(default_pinned_topic_ntiid, default_pinned_topic_ntiid3, default_topic_ntiid2))
+
+        # Reverse default forum
+        item_ntiids = _get_item_ntiids(activity_path=u'/dataserver2/Objects/%s/contents' % default_forum_ntiid,
+                                       reverse=True)
+        assert_that(item_ntiids, has_length(3))
+        # The pinned default forum items return first no matter what
+        assert_that(item_ntiids, contains(default_pinned_topic_ntiid3, default_pinned_topic_ntiid, default_topic_ntiid2))
+
+        # Regular forum get contents
+        item_ntiids = _get_item_ntiids(activity_path=u'/dataserver2/Objects/%s/contents' % forum_ntiid)
+        assert_that(item_ntiids, has_length(2))
+        # The pinned default forum items return first no matter what
+        assert_that(item_ntiids, contains(pinned_topic_ntiid, topic_ntiid))
+
+        # Reverse
+        item_ntiids = _get_item_ntiids(activity_path=u'/dataserver2/Objects/%s/contents' % forum_ntiid, reverse=True)
+        assert_that(item_ntiids, has_length(2))
+        assert_that(item_ntiids, contains(pinned_topic_ntiid, topic_ntiid))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_community_admin(self):
