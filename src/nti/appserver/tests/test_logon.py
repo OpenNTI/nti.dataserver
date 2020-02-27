@@ -238,6 +238,8 @@ class TestLinkProviders(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=(u'test001',), testapp=True, default_authenticate=False)
 	def test_do_not_advertise_welcome_page_link_provider(self):
+		# TODO: Need to manually register these links, or else this test
+		# is no longer useful.
 		from z3c.baseregistry.baseregistry import BaseComponents
 		from nti.appserver.policies.sites import BASEADULT
 		site = BaseComponents(BASEADULT, name='nonwelcomepagetest.nextthought.com', bases=(BASEADULT,))
@@ -272,8 +274,8 @@ class TestLinkProviders(ApplicationLayerTest):
 
 		result = self.testapp.get(url, extra_environ=extra_environ)
 		result = result.json_body
-		self.require_link_href_with_rel(result, 'content.initial_welcome_page')
-		self.require_link_href_with_rel(result, 'content.permanent_welcome_page')
+		self.forbid_link_with_rel(result, 'content.initial_welcome_page')
+		self.forbid_link_with_rel(result, 'content.permanent_welcome_page')
 
 
 	@WithSharedApplicationMockDS(users=(u'test001', u'test002@nextthought.com'), testapp=True, default_authenticate=False)
