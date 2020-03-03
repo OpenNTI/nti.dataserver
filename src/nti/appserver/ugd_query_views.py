@@ -534,10 +534,6 @@ class _UGDView(AbstractAuthenticatedView,
 	#: The NTIID of the container whose data we are requesting
 	ntiid = None
 
-	#: Move IPinned items to the top of the result set, regardless of given
-	#: sort order.
-	PINNED_SORT = False
-
 	def __init__( self, request, the_user=None, the_ntiid=None ):
 		super(_UGDView,self).__init__( request )
 		self._set_user_and_ntiid(request, the_user, the_ntiid)
@@ -570,6 +566,12 @@ class _UGDView(AbstractAuthenticatedView,
 		meeting = getattr( obj, 'meeting', None )
 		contributors = getattr( meeting, 'historical_occupant_names', () )
 		return self.transcript_user_filter.intersection( set( contributors ) )
+
+	def _is_pinned(self, obj):
+		return IPinned.providedBy(obj)
+
+	def _is_not_pinned(self, obj):
+		return not self._is_pinned(obj)
 
 	def _set_user_and_ntiid(self, request, the_user, the_ntiid):
 		if request.context:
@@ -726,6 +728,11 @@ class _UGDView(AbstractAuthenticatedView,
 				the_filter = the_filter[0]( self.request )
 
 			predicate = _combine_predicate(the_filter, predicate, operator=operator)
+
+		if 'Pinned' in filter_names:
+			predicate = _combine_predicate(self._is_pinned, predicate, operator=operator)
+		elif 'NotPinned' in filter_names:
+			predicate = _combine_predicate(self._is_not_pinned, predicate, operator=operator)
 
 		shared_with_values = self._get_shared_with()
 		# Now build the predicate we *must* intersect with; we only possibly union
@@ -913,19 +920,6 @@ class _UGDView(AbstractAuthenticatedView,
 			number_items_needed = len( merged )
 		return merged, number_items_needed
 
-	def bubble_pinned_items(self, items):
-		"""
-		For an iterable of items, move the pinned items to the top of the result set.
-		This will essentially retain the defined sort order, while making sure all
-		pinned items appear at the beginning of the result set. This should occur
-		after any filtering occurs. The given sort order should not affect this.
-		"""
-		# Eachs item is a tuple of key, val
-		result = items
-		if self.PINNED_SORT:
-			result = sorted(items, key=lambda x: not IPinned.providedBy(x[1]))
-		return result
-
 	def _sort_filter_batch_objects( self, objects ):
 		"""
 		Sort, filter, and batch (page) the objects collections,
@@ -952,6 +946,10 @@ class _UGDView(AbstractAuthenticatedView,
 
 			* ``TopLevel``: it causes only objects that are not replies to something else
 			  to be returned (this is meaningless on the stream views).
+
+			* ``Pinned``: it causes only objects that are pinned to be returned.
+
+			* ``NotPinned``: it causes only objects that are not pinned to be returned.
 
 			* ``MeOnly``: it causes only things that I have done to be included.
 
@@ -1101,7 +1099,7 @@ class _UGDView(AbstractAuthenticatedView,
 		else:
 			tuple_security_check = security_check
 
-		total_item_count = sum( (len(x) for x in objects if x is not None) )
+		total_item_count = sum((len(x) for x in objects if x is not None))
 
 		pre_filtered = not self._needs_filtered
 		filter_operator = self._get_filter_operator()
@@ -1157,7 +1155,7 @@ class _UGDView(AbstractAuthenticatedView,
 
 		self._update_last_modified_after_sort( objects, result )
 
-		result['FilteredTotalItemCount'] = sum( (len(x) for x in sorted_sublists) ) # this may be an approximation
+		result['FilteredTotalItemCount'] = sum((len(x) for x in sorted_sublists)) # this may be an approximation
 
 		# Apply cross-user security if needed
 		# Do this after all the filtering because it's the most expensive
@@ -1175,8 +1173,7 @@ class _UGDView(AbstractAuthenticatedView,
 			merged = ()
 
 		# Before batching, bubble pinned items to the top, if necessary.
-		bump_pinned = self.bubble_pinned_items(merged)
-		merged, number_items_needed = self.__do_batch(bump_pinned, number_items_needed)
+		merged, number_items_needed = self.__do_batch(merged, number_items_needed)
 		# These may have changed, pull them right before we need them
 		batch_size, batch_start = self._get_batch_size_start()
 		self._batch_tuple_iterable(result, merged, number_items_needed, batch_size, batch_start)

@@ -640,8 +640,6 @@ class UnhideCommunityMembershipView(AbstractAuthenticatedView):
 class CommunityActivityView(EntityActivityViewMixin,
                             ForumContentFilteringMixin):
 
-    PINNED_SORT = True
-
     def _set_user_and_ntiid(self, *unused_args, **unused_kwargs):
         self.ntiid = u''
         self.user = self.remoteUser
@@ -683,7 +681,8 @@ class CommunityActivityView(EntityActivityViewMixin,
     def _entity_board(self):
         return ICommunityBoard(self.request.context, None) or {}
 
-    def _get_default_forum_topics(self):
+    @Lazy
+    def _default_forum_topics(self):
         forums = [x for x in self._entity_board.values() if IDefaultForum.providedBy(x)]
         if not forums:
             return ()
@@ -691,18 +690,11 @@ class CommunityActivityView(EntityActivityViewMixin,
         forum = forums[0]
         return set(forum.values())
 
-    def bubble_pinned_items(self, items):
-        """
-        Override the UGD implmentation to ensure only default forum pinned items
-        appear at the top of our result set.
-        """
-        default_forum_topics = self._get_default_forum_topics()
-        def sort_key(obj):
-            # Return True if pinned and in our set
-            return IPinned.providedBy(obj) and obj in default_forum_topics
+    def _is_pinned(self, obj):
+        return IPinned.providedBy(obj) and obj in self._default_forum_topics
 
-        result = sorted(items, key=lambda x: not sort_key(x[1]))
-        return result
+    def _is_not_pinned(self, obj):
+        return not self._is_pinned(obj)
 
     def __call__(self):
         interface.alsoProvides(self.request, IOnlyDefaultForumTopicsCanBePinnedRequest)
