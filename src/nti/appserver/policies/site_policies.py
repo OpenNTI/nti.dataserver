@@ -528,15 +528,17 @@ class AbstractSitePolicyEventListener(object):
 
 		user_ext = to_external_object(user)
 		informal_username = user_ext.get('NonI18NFirstName', profile.realname) or user.username
-		email_verification_href, _ = generate_verification_email_url(user, request=event.request)
 
 		args = {'user': user,
-				'href' : email_verification_href,
 				'profile': profile,
 				'email': email,
 				'informal_username': informal_username,
 				'support_email': self.SUPPORT_EMAIL,
 				'context': user }
+
+		if not profile.email_verified:
+			email_verification_href, _ = generate_verification_email_url(user, request=event.request)
+			args['verify_href'] = email_verification_href
 
 		# Need to send both HTML and plain text if we send HTML, because
 		# many clients still do not render HTML emails well (e.g., the popup notification on iOS

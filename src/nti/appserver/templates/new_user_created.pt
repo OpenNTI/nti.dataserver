@@ -67,8 +67,8 @@
 			to make learning both social and personal.
 		</p>
 
-		<p>
-			Please verify your email address <a tal:attributes="href options/href">here</a>. Doing so will
+		<p tal:condition="options/verify_href">
+			Please verify your email address <a tal:attributes="href options/verify_href">here</a>. Doing so will
 			help us maintain the security of your account.
 		</p>
 
