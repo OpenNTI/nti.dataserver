@@ -373,8 +373,11 @@ class Entity(PersistentCreatedModDateTrackingObject):
         # Clients may be sending strings; map those to modeled-content.
         about = parsed.get('about')
         if about and isinstance(about, string_types):
-            about = [about, ]
+            about = [about,]
             parsed['about'] = about
+        if not about:
+            # Remove empty strings
+            parsed.pop('about', None)
 
         # Only validate it though, if we are not saved and not forcing a profile
         # update and we are not disabling it (password reset). Once we are saved,
