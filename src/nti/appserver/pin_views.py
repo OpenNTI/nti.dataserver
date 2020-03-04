@@ -62,21 +62,21 @@ class PinnableLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _predicate(self, context, unused_result):
         result = self._is_authenticated \
-             and has_permission(ACT_UPDATE, context, self.request) \
              and self._can_decorate_object(context)
         return result
 
     def _do_decorate_external(self, context, result):
         result['Pinned'] = IPinned.providedBy(context)
-        _links = result.setdefault(LINKS, [])
-        rel = 'unpin' if IPinned.providedBy(context) else 'pin'
-        link = Link(context,
-                    rel=rel,
-                    elements=(rel,))
-        interface.alsoProvides(link, ILocation)
-        link.__name__ = ''
-        link.__parent__ = context
-        _links.append(link)
+        if has_permission(ACT_UPDATE, context, self.request):
+            _links = result.setdefault(LINKS, [])
+            rel = 'unpin' if IPinned.providedBy(context) else 'pin'
+            link = Link(context,
+                        rel=rel,
+                        elements=(rel,))
+            interface.alsoProvides(link, ILocation)
+            link.__name__ = ''
+            link.__parent__ = context
+            _links.append(link)
 
 
 @view_config(route_name='objects.generic.traversal',
