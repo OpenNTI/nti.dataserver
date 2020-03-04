@@ -106,6 +106,7 @@ class _CreatedNamedNTIIDMixin(object):
         # XXX: the creator name must *not* have both a `_` and `-` or these
         # ntiids will not be resolvable.
         creator_name = self._ntiid_creator_username
+        # If None, what do we do here? previously we would ensure we have an OID.
         if creator_name:
             return _make_ntiid(date=_NTIID_DATE,
                                provider=creator_name,

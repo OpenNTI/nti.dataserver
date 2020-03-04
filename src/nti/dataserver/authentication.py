@@ -205,7 +205,7 @@ class _UnauthenticatedPrincipalProvider(object):
 
     def effective_principals(self, request):
         principal = component.getUtility(IUnauthenticatedPrincipal)
-        return (principal, ) if principal else ()
+        return (principal,) if principal else ()
 
 
 @interface.implementer(IAuthenticationPolicy)

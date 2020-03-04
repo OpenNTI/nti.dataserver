@@ -288,7 +288,18 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
             # for new objects (e.g. new style courses)
             # find a creator that is a community in the lineage
             __traceback_info__ = self
-            lineage = ILocationInfo(self).getParents()
+            lineage = []
+            location_info = ILocationInfo(self)
+            try:
+                lineage = location_info.getParents()
+            except TypeError:
+                # Lineage issue, possibly orphaned parent.
+                # Have seen this in race conditions (create topic as a
+                # forum is deleted).
+                # The knock-on effect of this is that this object may no longer
+                # have an NTIID.
+                if self.__parent__ is not None:
+                    lineage = [self.__parent__]
             lineage.insert(0, self)
             for item in lineage:
                 creator = getattr(item, 'creator', None)
