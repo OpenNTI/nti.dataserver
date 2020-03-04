@@ -287,7 +287,9 @@ class _ZopeFileCacheController(_AbstractReliableLastModifiedCacheController):
 		try:
 			return self.context.lastModified
 		except AttributeError:
-			last_mod_parent = find_interface(self.request.context, nti_interfaces.ILastModified)
+			last_mod_parent = find_interface(self.request.context,
+											 nti_interfaces.ILastModified,
+											 strict=False)
 			if last_mod_parent is not None:
 				return last_mod_parent.lastModified
 
