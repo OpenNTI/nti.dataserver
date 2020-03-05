@@ -16,6 +16,7 @@ from pyramid.view import view_config
 
 from zope import interface
 from zope import component
+from zope import lifecycleevent
 
 from zope.location.interfaces import ILocation
 
@@ -87,6 +88,11 @@ class PinnableLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
              name='pin')
 def _PinView(request):
     interface.alsoProvides(request.context, IPinned)
+    try:
+        request.context.updateLastMod()
+    except AttributeError:
+        pass
+    lifecycleevent.modified(request.context)
     return uncached_in_response(request.context)
 
 
@@ -98,4 +104,9 @@ def _PinView(request):
              name='unpin')
 def _UnpinView(request):
     interface.noLongerProvides(request.context, IPinned)
+    try:
+        request.context.updateLastMod()
+    except AttributeError:
+        pass
+    lifecycleevent.modified(request.context)
     return uncached_in_response(request.context)
