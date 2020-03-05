@@ -167,8 +167,11 @@ class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
         on parent container (forum).
         """
         result = super(_TopicACLProvider, self).__acl__
-        # Deny first
+        # Admin privs first then deny PIN for creator
+        # We want admins to always be able to PIN, even if creator.
+        # SiteAdmins and others get PIN permissions in zope.
         result.insert(0, ace_denying(self._created.creator, nauth.ACT_PIN, self))
+        result.insert(0, ace_allowing(nauth.ROLE_ADMIN, ALL_PERMISSIONS, self))
         return result
 
 
