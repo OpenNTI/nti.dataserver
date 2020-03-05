@@ -18,12 +18,13 @@ topic.
 """
 
 from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
+
+from zope.cachedescriptors.property import Lazy
 
 from nti.dataserver import authorization as nauth
 
@@ -157,6 +158,18 @@ class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 
     def _extend_acl_after_creator_and_sharing(self, acl):
         return self._extend_with_admin_privs(acl)
+
+    @Lazy
+    def __acl__(self):
+        """
+        Ensure our creator does not have ACT_PIN permission,
+        Ideally, this eventually moves to checking for ACT_PIN perms
+        on parent container (forum).
+        """
+        result = super(_TopicACLProvider, self).__acl__
+        # Deny first
+        result.insert(0, ace_denying(self._created.creator, nauth.ACT_PIN, self))
+        return result
 
 
 @component.adapter(IPost)

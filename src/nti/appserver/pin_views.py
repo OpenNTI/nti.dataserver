@@ -25,7 +25,7 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.appserver.pyramid_authorization import has_permission
 
-from nti.dataserver.authorization import ACT_UPDATE
+from nti.dataserver.authorization import ACT_PIN
 
 from nti.dataserver.contenttypes.forums.interfaces import IDefaultForum
 
@@ -67,7 +67,7 @@ class PinnableLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, result):
         result['Pinned'] = IPinned.providedBy(context)
-        if has_permission(ACT_UPDATE, context, self.request):
+        if has_permission(ACT_PIN, context, self.request):
             _links = result.setdefault(LINKS, [])
             rel = 'unpin' if IPinned.providedBy(context) else 'pin'
             link = Link(context,
@@ -82,7 +82,7 @@ class PinnableLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=IPinnable,
-             permission=ACT_UPDATE,
+             permission=ACT_PIN,
              request_method='POST',
              name='pin')
 def _PinView(request):
@@ -93,7 +93,7 @@ def _PinView(request):
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=IPinnable,
-             permission=ACT_UPDATE,
+             permission=ACT_PIN,
              request_method='POST',
              name='unpin')
 def _UnpinView(request):
