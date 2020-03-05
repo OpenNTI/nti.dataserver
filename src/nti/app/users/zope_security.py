@@ -67,6 +67,7 @@ class PersistentCommunityRolePermissionManager(AnnotationRolePermissionManager):
                            nauth.ACT_CREATE,
                            nauth.ACT_DELETE,
                            nauth.ACT_SEARCH,
+                           nauth.ACT_PIN,
                            nauth.ACT_LIST,
                            nauth.ACT_UPDATE):
             self.grantPermissionToRole(permission.id, ROLE_COMMUNITY_ADMIN_NAME)
