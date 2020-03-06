@@ -10,9 +10,10 @@
 		</style>
 	</head>
 	<body>
-		<div metal:use-macro="macro:header">
-		</div>
-
+<div class="container">
+	<div metal:use-macro="macro:header">
+	</div>
+	<div class="main">
 		<p>
 			Hi <span tal:content="options/informal_username" class="realname tterm">John</span>,
 		</p>
@@ -43,6 +44,7 @@
 				tal:attributes="href string:mailto:${options/support_email|default}"
 				tal:content="options/support_email">support@nextthought.com</a>.
 		</p>
-
+	</div>
+</div>
 	</body>
 </html>

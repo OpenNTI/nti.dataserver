@@ -28,7 +28,7 @@
     	cinterval = setInterval(timeDec, 1000);
 		</script>
 	</head>
-	<body>
+	<body class="normal-text">
 		<div metal:use-macro="macro:header">
 		</div>
 

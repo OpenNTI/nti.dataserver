@@ -6,73 +6,41 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>NextThought Username Recovery</title>
-		<style metal:use-macro="macro:style">
-			#green-bar {
-			background-color: #89be3c;
-			width: 100%;
-			height: 5px;
-			margin-left: -30px;
-			padding-right: 40px;
-			}
-			#logo-bar {
-			margin-top: 20px;
-			margin-bottom: 30px;
-			}
-			body {
-			margin-left: 30px;
-			margin-right: 0px;
-			font-family: Arial, sans-serif;
-			font-size: 14pt;
-			color: #757474;
-			}
-			a {
-			text-decoration: none;
-			color: #3fb3f6;
-			}
-			.tterm {
-			font-weight: bold;
-			color: #494949;
-			}
-			h1, h2, h3, h4, h5, h6 {
-			font-weight: bold;
-			}
-		</style>
+		<metal:block metal:use-macro="macro:style">
+		</metal:block>
 	</head>
 	<body>
-		<div metal:use-macro="macro:header">
-		<div id="green-bar"></div>
-		<div id="logo-bar">
-			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
-			alt="NextThought Logo" />
-		</div>
-		</div>
-		<p>Hello.</p>
+	<div class="container">
+		<div metal:use-macro="macro:header"></div>
+		<div class="main">
+			<div class="title">Hello.</div>
 
-		<p>
-			You are receiving this notification because you (or
-			someone pretending to be you) requested a reminder of the
-			NextThought username associated with this email address
-			on <a href="http://nextthought.com"
-				  tal:attributes="href request/application_url"
-				  tal:content="request/application_url">http://nextthought.com</a>.
-		</p>
-		<p>
-			<strong>No usernames were found</strong> associated with this
-			email address, but you can create a new free account
-			on <a href="http://nextthought.com"
-				  tal:attributes="href request/application_url"
-				  tal:content="request/application_url">http://nextthought.com</a>.
-		</p>
+			<div class="mp-20">
+				You are receiving this notification because you (or
+				someone pretending to be you) requested a reminder of the
+				NextThought username associated with this email address
+				on <a href="http://nextthought.com"
+					tal:attributes="href request/application_url"
+					tal:content="request/application_url">http://nextthought.com</a>.
+			</div>
+			<p>
+				<strong>No usernames were found</strong> associated with this
+				email address, but you can create a new free account
+				on <a href="http://nextthought.com"
+					tal:attributes="href request/application_url"
+					tal:content="request/application_url">http://nextthought.com</a>.
+			</p>
 
-		<p>
-			If you did not make this request, you can safely
-			disregard this email.
-		</p>
-		<p>
-		For help, you can email us at <a href="mailto:support@nextthought.com"
-                tal:attributes="href string:mailto:${options/support_email|default}"
-                tal:content="options/support_email|default">support@nextthought.com</a>.
-		</p>
-
+			<p>
+				If you did not make this request, you can safely
+				disregard this email.
+			</p>
+			<p>
+			For help, you can email us at <a href="mailto:support@nextthought.com"
+					tal:attributes="href string:mailto:${options/support_email|default}"
+					tal:content="options/support_email|default">support@nextthought.com</a>.
+			</p>
+		</div> <!-- end of main-->
+	</div>
 	</body>
 </html>

@@ -6,178 +6,116 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>NextThought Password Reset</title>
-		<style metal:define-macro="style">
-			#green-bar {
-			background-color: #89be3c;
-			width: 100%;
-			height: 5px;
-			}
-			#logo-bar {
-			margin-top: 20px;
-			margin-bottom: 30px;
-			}
-			.footer{
-			margin-top: 0px;
-			font-size: 12px;
-			text-align: center;
-			line-height: 12pt;
-			}
+		<metal:block metal:define-macro="style">
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" rel="stylesheet">
+		<style>
 			body {
-			margin-right: 0px;
-			font-family: Helvetica, Arial, sans-serif;
-			font-size: 14pt;
-			line-height: 20pt;
-			color: #757474;
+				margin: 0px;
+				background-color: #F9F9F9;
+				color: #494949;
+				font-family: 'Open Sans', sans-serif, Helvetica, Arial;
+				font-size: 16px;
+				line-height: 24px;
 			}
 			.normal-text {
-			margin-left: 30px;
-			margin-right: 0px;
-			font-family: Helvetica, Arial, sans-serif;
-			font-size: 14pt;
-			line-height: 20pt;
-			color: #757474;
+				margin-left: 30px;
+				margin-right: 0px;
+			}
+			#green-bar {
+				background-color: #3FB34F;
+				margin-left:-30px;
+				padding-left:30px;
+			}
+			#logo-bar {
+				margin-top: 20px;
+				margin-bottom: 30px;
+			}
+			.container {
+				max-width: 730px;
+				margin: 20px auto;
+				background-color: #FFFFFF;
+				padding-bottom: 50px;
+			}
+			.container .header,
+			.container .main {
+				margin-left: 60px;
+				margin-right: 60px
+			}
+			.container .header #green-bar {
+				background-color: #3FB34F;
+				margin-left:-60px;
+				padding-right: 120px;
+				padding-left: 0px;
+			}
+			.container .header #logo-bar {
+				margin-top: 47px;
+				margin-bottom: 20px;
+			}
+			.container p {
+				margin-top: 20px;
+				margin-bottom: 20px;
 			}
 			a {
-			text-decoration: none;
-			color: #3fb3f6;
+				text-decoration: none;
+				color: #3FB3F6;
+			}
+			.title {
+				font-size: 26px;
+				line-height: 36px;
+				font-weight: 600;
+				letter-spacing: -0.5px;
+			}
+			.btn-link {
+				width: fit-content;
+				padding: 8px 16px;
+				font-size: 16px;
+				font-weight: 600;
+				line-height: 20px;
+				color: #FFFFFF;
+				background-color: #3FB34F;
+				border-radius: 4px;
+				display: block;
+				text-decoration: none;
+			}
+			.mp-20  {
+				margin-top: 20px;
 			}
 			.tterm, strong {
-			font-weight: bold;
-			color: #494949;
+				font-weight: 600;
+				color: #494949;
 			}
 			.tterm-color {
-			font-weight: bold;
-			color: #3fb3f6;
+				font-weight: 600;
+				color: #3FB3F6;
 			}
-			h1, h2, h3, h4, h5, h6 {
-			font-weight: bold;
-			font-family: Helvetica, Arial, sans-serif;
-			color: #757474;
-			margin-left: 30px;
-			}
-			h1 {
-			font-size: 16pt;
-			}
-			h2 {
-			font-size: 14pt;
-			}
-			body p {
-			margin-right: 30px;
-			margin-left: 30px;
-			font-family: Helvetica, Arial, sans-serif;
-			font-size: 14pt;
-			line-height: 20pt;
-			color: #757474;
-			}
-			.pnormal-text {
-			margin-left: 30px;
-			margin-right: 30px;
-			font-family: Helvetica, Arial, sans-serif;
-			font-size: 14pt;
-			line-height: 20pt;
-			color: #757474;
-			}
+
 			table, th, td {
-		    border-collapse: collapse;
-		    margin-left: 30px;
+				border-collapse: collapse;
+				margin-left: 30px;
 			}
 			table.solid {
-			border-collapse: collapse;
-			width: 100%;
-			margin-left: 30px;
-			margin-right: 30px;
-			border: 1pt solid #EFEFEF;
+				border-collapse: collapse;
+				width: 100%;
+				margin-left: 30px;
+				margin-right: 30px;
+				border: 1pt solid #EFEFEF;
 			}
 			th,td {
-			    padding: 15px;
+				padding: 15px;
 			}
 			td.left_column {
-			text-align: left;
-			width: 35%;
+				text-align: left;
+				width: 35%;
 			}
 			td.right_column {
-			text-align: left;
-			border: 1pt solid #EFEFEF;
+				text-align: left;
+				border: 1pt solid #EFEFEF;
 			}
 			tr.border_bottom td {
-			border-bottom:1pt solid #EFEFEF;
+				border-bottom:1pt solid #EFEFEF;
 			}
 			td.blue {
-			color: #3fb3f6;
-			}
-			.vertical_line {
-			border-left: 1pt solid #EFEFEF;
-			margin-left: 30px;
-			margin-bottom: 30px;
-			}
-			ol,ul {
-			margin-left: 30px;
-			margin-right: 30px;
-			}
-			a.but{
-				background-color:#3fb3f6;
-				border-style:none;
-				outline:none;
-				border-radius:20px;
-				padding:10px 25px;
-				color:white;
-				font-weight:600;
-				letter-spacing:1px;
-				font-size:14px;
-				font-family:"OpenSans", sans-serif;
-				margin-left:5px;
-				margin-right:5px;
-				margin-bottom:15px;
-				text-decoration:none;
-			}
-			.but-cont{
-				margin-bottom:40px;
-				text-align:center;
-			}
-			.topper{
-				margin-top:20px;
-				float: right;
-			}
-			a.outline{
-				background-color:transparent;
-				border-style:2px solid #3fb3f6;
-				border:2px solid #3fb3f6;
-				color:#3fb3f6;
-				text-decoration:none;
-			}
-			a.but:hover{
-				cursor:pointer;
-			}
-			.caption{
-				text-align:center;
-				color:#8c8c8c;
-				font-size:14px;
-				line-height:24px;
-			}
-			.left{
-				color:#8c8c8c;
-				font-size:14px;
-				line-height:24px;
-			}
-			.left strong{
-				color:#3fb3f6;
-			}
-			.caption strong{
-				color:#3fb3f6;
-			}
-			h1.message{
-				color:#9ea9af;
-				font-weight:300;
-				font-style:italic;
-				font-size:21px;
-				line-height:35px;
-				margin-top:35px;
-				margin-bottom:55px;
-				padding:0px;
-			}
-			.course-name{
-				color:#525e65;
-				font-size:16px;
+				color: #3fb3f6;
 			}
 			tr{
 				vertical-align:top;
@@ -217,18 +155,16 @@
 				width: 100%;
 			}
 		</style>
+		</metal:block>
 	</head>
 	<body class="normal-text">
-		<div metal:define-macro="header">
-			<div tal:condition="python: 'nti_site_brand_color' in options"
-			     style="background-color: ${options/nti_site_brand_color};width: 100%; height: 5px;"></div>
-			<div tal:condition="python: 'nti_site_brand_color' not in options"
-                 style="background-color: #89be3c;width: 100%; height: 5px;"></div>
-			<div style="margin-top: 20px; margin-bottom: 30px;">
-				<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" style="max-height:140px;max-width:100%"
+		<div class="header" metal:define-macro="header">
+			<div id="green-bar" style="background-color: ${options/nti_site_brand_color | string:#3FB34F}; width: 100%; height: 3px;"></div>
+			<div id="logo-bar">
+				<img src="https://alpha.nextthought.com/login/resources/images/c468f8ca2998c94992b95dd75fb5bc35.png"
+					 width="41.87" height="40" alt="NextThought Logo"
 				     tal:attributes="src options/nti_site_brand_email_image_url|default;
-				                     alt options/nti_site_brand_name|default"
-					 alt="NextThought Logo" />
+				                     alt options/nti_site_brand_name|default" />
 			</div>
 			<!--! Flash messages -->
 			<div id="errors"
