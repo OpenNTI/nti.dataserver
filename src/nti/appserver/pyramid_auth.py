@@ -18,6 +18,7 @@ from nti.appserver.interfaces import IUserViewTokenCreator
 
 from nti.dataserver.authorization import ROLE_ADMIN
 from nti.dataserver.authorization import ROLE_CONTENT_EDITOR
+from nti.dataserver.authorization import is_admin
 
 from nti.dataserver.authentication import DelegatingImpersonatedAuthenticationPolicy
 
@@ -99,7 +100,7 @@ class NextthoughtDotComAdmin(object):
     """
 
     def __init__(self, context):
-        if context.username.endswith('@nextthought.com'):
+        if is_admin(context):
             self.groups = (ROLE_ADMIN, ROLE_CONTENT_EDITOR)
         else:
             self.groups = ()

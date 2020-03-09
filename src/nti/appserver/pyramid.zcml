@@ -58,6 +58,7 @@
 	<pyramid:scan package='.feedback_views' />
 	<pyramid:scan package='.zope_file_views' />
 	<pyramid:scan package='.account_creation_views' />
+	<pyramid:scan package='.authorization_views' />
 	<pyramid:scan package='nti.appserver.usersearch_views' />
 	<pyramid:scan package="nti.appserver.google_logon_configuration_views" />
 

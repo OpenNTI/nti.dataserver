@@ -69,9 +69,14 @@ sub-types of roles may have a prefix to that, such as ``content-role:``.
 """
 
 from __future__ import print_function, absolute_import, division
+
+import six
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+import contextlib
 
 import functools
 
@@ -94,10 +99,17 @@ from zope.component.hooks import getSite
 
 from zope.container.contained import Contained
 
+from zope.security import checkPermission
+from zope.security import management
+
 from zope.security.permission import Permission
 
 from zope.securitypolicy.interfaces import Allow
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
+from zope.security.management import endInteraction
+from zope.security.management import newInteraction
+from zope.security.management import queryInteraction
 
 from zope.securitypolicy.principalrole import principalRoleManager
 
@@ -108,7 +120,6 @@ from BTrees.OOBTree import OOSet
 from nti.base._compat import text_
 
 from nti.dataserver.interfaces import system_user
-from nti.dataserver.interfaces import IGroupMember
 
 from nti.dataserver.interfaces import SYSTEM_USER_ID
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
@@ -123,6 +134,7 @@ from nti.dataserver.interfaces import IMutableGroupMember
 from nti.dataserver.interfaces import IGroupAwarePrincipal
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+from nti.dataserver.interfaces import IDataserver
 
 from nti.externalization.interfaces import IExternalObject
 
@@ -157,6 +169,7 @@ ACT_IMPERSONATE = Permission('nti.actions.impersonate')
 #: admin
 ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
 ACT_NTI_ADMIN = ACT_COPPA_ADMIN  # alias
+ACT_MANAGE_SITE = Permission('nti.actions.manage.site')
 
 #: sync lib
 ACT_SYNC_LIBRARY = Permission('nti.actions.contentlibrary.sync_library')
@@ -588,14 +601,48 @@ def _participation_for_zope_principal(remote_user):
 # IACLProvider implementations live in authorization_acl
 
 
-def is_admin(user):
+def ds_folder():
+    return component.getUtility(IDataserver).dataserver_folder
+
+
+@interface.implementer(IParticipation)
+class _Participation(object):
+
+    __slots__ = ('interaction', 'principal')
+
+    def __init__(self, principal):
+        self.interaction = None
+        self.principal = principal
+
+
+@contextlib.contextmanager
+def _zope_interaction(username):
+    interaction = queryInteraction()
+    endInteraction()
+    newInteraction(_Participation(IPrincipal(username)))
+    try:
+        yield
+    finally:
+        endInteraction()
+        if interaction is not None:
+            management.thread_local.interaction = interaction
+
+
+def is_admin(user, context=None):
     """
-    Returns whether the user has the `ROLE_ADMIN` role.
+    Returns whether the user has appropriate admin permissions.
     """
-    for _, adapter in component.getAdapters((user,), IGroupMember):
-        if adapter.groups and ROLE_ADMIN in adapter.groups:
-            return True
-    return False
+    username = getattr(user, 'username', user)
+    username = str(username) if isinstance(username, six.text_type) else username
+    if username is None:
+        return False
+
+    context = context or ds_folder()
+
+    # Ensure we have the proper user in the interaction, which
+    # might be different than the authenticated user
+    with _zope_interaction(username):
+        return bool(checkPermission(ACT_NTI_ADMIN.id, context))
 
 
 def is_content_admin(user):

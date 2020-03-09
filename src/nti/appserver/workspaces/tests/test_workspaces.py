@@ -8,6 +8,8 @@ from __future__ import absolute_import
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import fudge
+
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_in
@@ -309,7 +311,9 @@ class TestUserService(ApplicationLayerTest):
                                               'nti.platform.customization.can_change_password')))
 
     @mock_dataserver.WithMockDSTrans
-    def test_external(self):
+    @fudge.patch('nti.dataserver.authorization.is_admin')
+    def test_external(self, is_admin):
+        is_admin.is_callable().returns(True)
         user = User.create_user(dataserver=self.ds,
                                  username=u'sjohnson@nextthought.com')
         service = UserService(user)

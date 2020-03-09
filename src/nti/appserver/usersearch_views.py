@@ -512,6 +512,7 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
             # Site admins can only view users in their site; otherwise fall
             # back to membership intersection
             if      is_site_admin \
+                and not is_admin \
                 and site_admin_utility.can_administer_user(remote_user, x, remote_com_names):
                 return True
 
