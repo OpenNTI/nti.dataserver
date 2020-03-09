@@ -532,6 +532,7 @@ class AbstractSitePolicyEventListener(object):
 		args = {'user': user,
 				'profile': profile,
 				'email': email,
+				'verify_href': '',
 				'informal_username': informal_username,
 				'support_email': self.SUPPORT_EMAIL,
 				'context': user }
