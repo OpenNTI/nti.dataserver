@@ -94,9 +94,9 @@ def configure_authentication_policy(pyramid_config,
 
 @component.adapter(IUser)
 @interface.implementer(IGroupMember)
-class NextthoughtDotComAdmin(object):
+class AdminGroupsProvider(object):
     """
-    Somewhat hackish way to grant the admin role to any account in @nextthought.com
+    Provide role-based groups to administrators for pyramid ACL checks
     """
 
     def __init__(self, context):
