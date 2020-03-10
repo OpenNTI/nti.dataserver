@@ -834,3 +834,17 @@ class IDisplayableTimeProvider(interface.Interface):
         """
         Modify the given datetime object with the preferred timezone.
         """
+
+
+class IPreferredAppHostnameProvider(interface.Interface):
+    """
+    A utility that will supply a preferred hostname for a given site. This
+    may be used in certain functional areas (e.g. digest emails) to ensure
+    the outgoing hostname is something useable (and dns resolvable).
+    """
+
+    def get_preferred_hostname(source_site_name):
+        """
+        Return the preferred host name for a particular given site name input.
+        This may be the same as the input.
+        """
