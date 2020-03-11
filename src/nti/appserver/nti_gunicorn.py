@@ -404,8 +404,6 @@ class _ServerFactory(object):
 
         app_server.environ['nti_worker_identifier'] = getattr(self.worker, '_nti_identifier', None)
 
-        app_server.environ['nti_forwarded_allowed_ips'] = getattr(self.cfg, 'forwarded_allow_ips', None)
-
         # Now, for logging to actually work, we need to replace
         # the handler class with one that sets up the required values in the
         # environment, as per ggevent.
