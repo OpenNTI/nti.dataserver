@@ -190,7 +190,8 @@ class site_tween(object):
         in an actual resolvable site name. To do so, we look up a special
         utility registered to those few instances.
         """
-        if 'HTTP_X_NTI_USE_PREFERRED_HOST_NAME' in request.environ:
+        if      request.client_addr == '127.0.0.1' \
+            and 'HTTP_X_NTI_USE_PREFERRED_HOST_NAME' in request.environ:
             provider = component.queryUtility(IPreferredAppHostnameProvider)
             if provider is None:
                 return

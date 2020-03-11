@@ -41,13 +41,27 @@ class TestZopeSiteTween(unittest.TestCase):
 
 	def test_no_preferred_host_name_header(self):
 		request = DummyRequest.blank(b'/foo/bar/site.js')
+		request.environ['REMOTE_ADDR'] = '127.0.0.1'
 		request.host = 'janux.nextthought.com'
+		self.tween._maybe_update_host_name(request)
+		assert_that(request.host, is_('janux.nextthought.com'))
+
+	def test_no_local_host(self):
+		request = DummyRequest.blank(b'/foo/bar/site.js')
+		request.host = 'janux.nextthought.com'
+		request.environ['HTTP_X_NTI_USE_PREFERRED_HOST_NAME'] = True
+		request.environ['REMOTE_ADDR'] = '192.168.1.1'
+		self.tween._maybe_update_host_name(request)
+		assert_that(request.host, is_('janux.nextthought.com'))
+
+		request.environ.pop('REMOTE_ADDR')
 		self.tween._maybe_update_host_name(request)
 		assert_that(request.host, is_('janux.nextthought.com'))
 
 	def test_no_preferred_host_name_provider(self):
 		request = DummyRequest.blank(b'/foo/bar/site.js')
-		request.environ[b'HTTP_X_NTI_USE_PREFERRED_HOST_NAME'] = True
+		request.environ['HTTP_X_NTI_USE_PREFERRED_HOST_NAME'] = True
+		request.environ['REMOTE_ADDR'] = '127.0.0.1'
 		request.host = 'janux.nextthought.com'
 		self.tween._maybe_update_host_name(request)
 		assert_that(request.host, is_('janux.nextthought.com'))
@@ -61,6 +75,7 @@ class TestZopeSiteTween(unittest.TestCase):
 			request = DummyRequest.blank(b'/foo/bar/site.js')
 			request.environ['HTTP_X_NTI_USE_PREFERRED_HOST_NAME'] = True
 			request.environ['nti.current_site'] = 'janux.nextthought.com'
+			request.environ['REMOTE_ADDR'] = '127.0.0.1'
 			request.host = 'janux.nextthought.com'
 			self.tween._maybe_update_host_name(request)
 			assert_that(request.host, is_(sub_name))
