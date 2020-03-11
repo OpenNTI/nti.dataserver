@@ -184,9 +184,3 @@ class TestConnectionPoolStats(unittest.TestCase):
 
         request.path = None
         assert_that(handler.classify_request(request), is_('_unknown'))
-
-
-
-
-
-

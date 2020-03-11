@@ -29,7 +29,6 @@ After this tween runs, the request has been modified in the following ways.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -55,6 +54,8 @@ from pyramid.threadlocal import manager
 from pyramid.threadlocal import get_current_request
 
 from pyramid.httpexceptions import HTTPBadRequest
+
+from nti.appserver.interfaces import IPreferredAppHostnameProvider
 
 from nti.base._compat import text_
 
@@ -167,6 +168,10 @@ class site_tween(object):
         request.environ['nti.current_site'] = site.__name__
 
         setSite(site)
+
+        # Must occur after we set our site
+        self._maybe_update_host_name(request)
+
         __traceback_info__ = self.handler
         # See comments in the class doc about why we cannot set the Pyramid
         # request/current site
@@ -176,6 +181,26 @@ class site_tween(object):
             return self.handler(request)
         finally:
             clearSite()
+
+    def _maybe_update_host_name(self, request):
+        """
+        Some requests (indicated by the `HTTP_X_NTI_USE_PREFERRED_HOST_NAME`)
+        may be using site names that are not DNS resolvable. In those cases,
+        we want to ensure we are operating under the assumption we're running
+        in an actual resolvable site name. To do so, we look up a special
+        utility registered to those few instances.
+        """
+        if 'HTTP_X_NTI_USE_PREFERRED_HOST_NAME' in request.environ:
+            provider = component.queryUtility(IPreferredAppHostnameProvider)
+            if provider is None:
+                return
+            site_name = request.environ['nti.current_site']
+            preferred_site_name = provider.get_preferred_hostname(site_name)
+            host_parts = request.host.split(':')
+            if len(host_parts) > 1:
+                port = host_parts[-1]
+                preferred_site_name = '%s:%s' % (preferred_site_name, port)
+            request.host = preferred_site_name
 
     def _add_properties_to_request(self, request):
         request.environ['nti.pid'] = os.getpid()  # helpful in debug tracebacks
