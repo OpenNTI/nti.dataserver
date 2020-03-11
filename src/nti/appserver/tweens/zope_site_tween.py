@@ -164,7 +164,9 @@ class site_tween(object):
             result = os.environ['NTI_FORWARDED_ALLOWED_IPS']
         except KeyError:
             result = ()
-        return set(result or ())
+        else:
+            result = result.split(',') if result else ()
+        return set(result)
 
     @Lazy
     def all_forwarded_ips_allowed(self):
