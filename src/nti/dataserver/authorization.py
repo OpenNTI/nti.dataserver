@@ -76,8 +76,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import contextlib
-
 import functools
 
 from zope import component
@@ -100,16 +98,11 @@ from zope.component.hooks import getSite
 from zope.container.contained import Contained
 
 from zope.security import checkPermission
-from zope.security import management
 
 from zope.security.permission import Permission
 
 from zope.securitypolicy.interfaces import Allow
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
-
-from zope.security.management import endInteraction
-from zope.security.management import newInteraction
-from zope.security.management import queryInteraction
 
 from zope.securitypolicy.principalrole import principalRoleManager
 
@@ -119,13 +112,13 @@ from BTrees.OOBTree import OOSet
 
 from nti.base._compat import text_
 
-from nti.dataserver.interfaces import system_user
+from nti.dataserver.authorization_utils import zope_interaction
 
+from nti.dataserver.interfaces import system_user
 from nti.dataserver.interfaces import SYSTEM_USER_ID
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
 from nti.dataserver.interfaces import EVERYONE_GROUP_NAME
 from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
-
 from nti.dataserver.interfaces import IRole
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IGroup
@@ -615,19 +608,6 @@ class _Participation(object):
         self.principal = principal
 
 
-@contextlib.contextmanager
-def _zope_interaction(username):
-    interaction = queryInteraction()
-    endInteraction()
-    newInteraction(_Participation(IPrincipal(username)))
-    try:
-        yield
-    finally:
-        endInteraction()
-        if interaction is not None:
-            management.thread_local.interaction = interaction
-
-
 def is_admin(user, context=None):
     """
     Returns whether the user has appropriate admin permissions.
@@ -641,7 +621,7 @@ def is_admin(user, context=None):
 
     # Ensure we have the proper user in the interaction, which
     # might be different than the authenticated user
-    with _zope_interaction(username):
+    with zope_interaction(username):
         return bool(checkPermission(ACT_NTI_ADMIN.id, context))
 
 
