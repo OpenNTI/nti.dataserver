@@ -69,6 +69,7 @@ class TestCommunityPermissions(ApplicationLayerTest):
         for permission in (nauth.ACT_READ,
                            nauth.ACT_CREATE,
                            nauth.ACT_DELETE,
+                           nauth.ACT_PIN,
                            nauth.ACT_SEARCH,
                            nauth.ACT_LIST,
                            nauth.ACT_UPDATE):
