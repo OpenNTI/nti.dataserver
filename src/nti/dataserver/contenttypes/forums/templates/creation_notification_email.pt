@@ -24,25 +24,32 @@
                 font-size: 14px;
                 line-height: 20px;
             }
+            .header {
+                adding-left: 0px;
+                padding-right: 0px;
+            }
             #green-bar {
-				margin-left:-60px;
-				padding-right: 120px;
-				padding-left: 0px;
-			}
+                padding-right: 0px;
+                padding-left: 0px;
+                margin-left: 0px;
+                margin-right: 0px;
+            }
             #logo-bar {
-				margin-top: 47px;
-				margin-bottom: 20px;
-			}
+                margin-top: 47px;
+                margin-bottom: 20px;
+                padding-left: 60px;
+                padding-right: 60px
+            }
         </style>
     </head>
     <!-- For speed when sending large amounts of emails interactively, all styles are inlined below -->
-    <body style="margin: 0px; background-color: #F9F9F9; color: #494949; font-family: 'Open Sans', sans-serif, Helvetica, Arial;font-size: 16px; line-height: 24px;">
-    <div style="max-width:610px; margin: 0 auto; padding:0 60px 50px 60px; background-color:#FFFFFF">
+    <body style="padding-top: 20px;padding-bottom: 20px;background-color: #F9F9F9; color: #494949; font-family: 'Open Sans', sans-serif, Helvetica, Arial; font-size: 16px; line-height: 24px;">
+    <div style="max-width: 730px; margin: 0 auto; background-color: #FFFFFF; padding-bottom: 50px;">
         <div metal:use-macro="macro:header"></div>
-        <div class="content-cont" style="margin-top: 40px">
+        <div class="content-cont" style="margin-top: 40px;padding-left: 60px;padding-right: 60px;">
 
             <!-- Sender message -->
-            <div class="message-cont" style="margin-top: 25px; margin-left: 0; margin-right: 0;">
+            <div class="message-cont" style="margin-top: 25px; margin-left: 0; margin-right: 0;line-height:20px;">
 
                 <div class="message-header" style="margin-top: 45px; margin-bottom: 24px;">
                     <div id="avatar" tal:attributes='style options/sender_content/avatar_styles'></div>
@@ -75,19 +82,17 @@
                             View
                 </a>
             </div>
-        </div>
-
-        <!-- Help information -->
-        <div class="content-cont" style="margin-top: 40px">
-            <p class="inv-caption" style="color:#757474; font-size:12px; line-height:17px;">
-                If you feel this email was sent in error, or this account was created without your consent, you may email
-                <a href="mailto:support@nextthought.com"
-                    tal:attributes="href string:mailto:${options/support_email|default}"
-                    tal:content="options/support_email"
-                    style="color:#757474;">support@nextthought.com</a>.
-            </p>
+            <!-- Help information -->
+            <div class="content-cont" style="margin-top: 40px">
+                <p class="inv-caption" style="color:#757474; font-size:12px; line-height:17px;">
+                    If you feel this email was sent in error, or this account was created without your consent, you may email
+                    <a href="mailto:support@nextthought.com"
+                        tal:attributes="href string:mailto:${options/support_email|default}"
+                        tal:content="options/support_email"
+                        style="color:#757474;">support@nextthought.com</a>.
+                </p>
+            </div>
         </div>
     </div>
-
 	</body>
 </html>

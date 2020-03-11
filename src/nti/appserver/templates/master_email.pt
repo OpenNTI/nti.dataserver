@@ -10,16 +10,19 @@
 		<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" rel="stylesheet">
 		<style>
 			body {
-				margin: 0px;
 				background-color: #F9F9F9;
 				color: #494949;
 				font-family: 'Open Sans', sans-serif, Helvetica, Arial;
 				font-size: 16px;
 				line-height: 24px;
+				padding-top: 20px;
+				padding-bottom: 20px;
 			}
 			.normal-text {
 				margin-left: 30px;
 				margin-right: 0px;
+				padding-top: 0px;
+				padding-bottom: 0px;
 			}
 			#green-bar {
 				background-color: #3FB34F;
@@ -32,24 +35,30 @@
 			}
 			.container {
 				max-width: 730px;
-				margin: 20px auto;
+				margin: 0 auto;
 				background-color: #FFFFFF;
 				padding-bottom: 50px;
 			}
-			.container .header,
+			.container .header {
+				padding-left: 0px;
+				padding-right: 0px;
+			}
 			.container .main {
-				margin-left: 60px;
-				margin-right: 60px
+				padding-left: 60px;
+				padding-right: 60px
 			}
 			.container .header #green-bar {
 				background-color: #3FB34F;
-				margin-left:-60px;
-				padding-right: 120px;
+				padding-right: 0px;
 				padding-left: 0px;
+				margin-left: 0px;
+				margin-right: 0px;
 			}
 			.container .header #logo-bar {
 				margin-top: 47px;
 				margin-bottom: 20px;
+				padding-left: 60px;
+				padding-right: 60px
 			}
 			.container p {
 				margin-top: 20px;

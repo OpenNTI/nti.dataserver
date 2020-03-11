@@ -6,6 +6,7 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>Notifications</title>
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
 		<style>
 			@media screen and (max-width: 600px){
 				#wrapper{
@@ -33,130 +34,81 @@
 		    		border-collapse: collapse;
 				}
 			}
-			#green-bar {
-				margin-left:-60px;
-				padding-right: 120px;
-				padding-left: 0px;
+            .header {
+				adding-left: 0px;
+				padding-right: 0px;
 			}
-            #logo-bar {
+			#green-bar {
+				padding-right: 0px;
+				padding-left: 0px;
+				margin-left: 0px;
+				margin-right: 0px;
+			}
+			#logo-bar {
 				margin-top: 47px;
 				margin-bottom: 20px;
+                padding-left: 60px;
+				padding-right: 60px
 			}
 		</style>
 	</head>
 	<!-- For speed when sending large amounts of emails interactively, all styles are inlined below -->
-	<body style="margin: 0px; background-color: #F9F9F9; color: #494949; font-family: 'Open Sans', sans-serif, Helvetica, Arial;font-size: 16px; line-height: 24px;">
-	<div style="max-width:610px; margin: 0 auto; padding:0 60px 50px 60px; background-color:#FFFFFF">
+	<body style="padding-top: 20px;padding-bottom: 20px;background-color: #F9F9F9; color: #494949; font-family: 'Open Sans', sans-serif, Helvetica, Arial;font-size: 16px; line-height: 24px;">
+	<div style="max-width: 730px; margin: 0 auto; background-color: #FFFFFF; padding-bottom: 50px;">
 		<div metal:use-macro="macro:header"></div>
-		<table cellspacing="0" cellpadding="0" style='border-collapse:collapse; background:#EEF0F1;
-													  color:#333; font:15px/1.25em "Helvetica Neue", Arial, Helvetica;
-													  margin:0; margin-left:0; padding:0; width:100%'>
-			<tbody>
-				<tr width="100%" style="border-bottom:solid #e2e5e7 1px; color:#6d7d87; display:block;
-										font-size:12px; font-weight:bold; line-height:18px; padding-bottom:0;
-										padding-top:11px; vertical-align:top; width:100%">
-					<td valign="top" align="left" style="border-collapse:collapse; padding:15px; display: block">
-						<!-- White background -->
-						<table style="border-collapse:collapse; background:#fff; margin-left:0; padding:0 18px; width:100%">
-							<tbody>
-							<tr style="border-bottom:solid #e2e5e7 1px; color:#6d7d87; display: table-row;
-										font-size:12px; font-weight:bold; line-height:18px; padding-bottom:0;
-										vertical-align:top; width:100%">
-								<td width="100%" style="border-collapse:collapse; padding:15px; margin-left:0; display: table-cell">
-									<!-- Table with data -->
-									<table style="border-collapse:collapse; margin-left:0; width:100%">
-										<tr style="border-bottom:1px solid #EFEFEF; color:#6d7d87; display:block;
-												   font-size:12px; font-weight:bold; line-height:18px; padding-bottom:0;
-												   padding-top:11px; vertical-align:top; width:100%" valign="top">
-											<td valign="top" align="left" style="border-collapse:collapse; padding:15px; border-bottom-left-radius:4px;
-																				 border-bottom-right-radius:4px; font-size:22px; margin-left:0; padding-left:0;">
-												<span>
-													<!--
-														Use the user's avatar if we have one. Otherwise, generate an
-														avatar showing user's initials.
-													-->
-													<tal:block tal:condition="options/sender_avatar_url" >
-														<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
-															 alt="David Sabatini"
-															 title="David Sabatini"
-															 width="45" height="45"
-															 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
-															 tal:attributes="alt options/sender_name; title options/sender_name; src options/sender_avatar_url"
-															 />
-													</tal:block>
-													<tal:block 	tal:condition="not:options/sender_avatar_url">
-														<div
-															tal:define="sender_avatar_bg_color options/sender_avatar_bg_color"
-															style="font-size: 16px; width: 45px; height: 45px;
-														    		font-weight: bold; color: white; text-align: center;
-														    		display: inline; vertical-align: top; float:left;
-														    		margin-right: 4px; background-size: cover;
-														    		background-position: center center; line-height: 45px;">
-															<div tal:attributes="style python: 'background-color:%s' % sender_avatar_bg_color"
-																tal:content="options/sender_avatar_initials">
-																SJ
-															</div>
-														</div>
-													</tal:block>
-												</span>
-											</td>
-											<td valign="top" align="left" style="border-collapse:collapse; border-bottom-left-radius:4px;
-																				 border-bottom-right-radius:4px; font-size:22px; margin-left:0; padding-left:0;">
-												<table style="border-collapse:collapse; margin-left:0; width:100%">
-													<tr width="100%" style="color:#6d7d87; display: table-row; font-size:12px; font-weight:bold;
-																			line-height:18px; padding-bottom:0; vertical-align:top;
-																			width:100%">
-														<td valign="top" align="left" style="border-collapse:collapse; padding:15px; border-bottom-left-radius:4px;
-																							border-bottom-right-radius:4px; font-size:22px; margin-left:0; padding-left:0;
-																							display: block;">
-															<span style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; padding-left: 8px;"
-																 tal:content="options/sender_name">Sender Name
-															</span>
-															<br>
-															<span style="font: 14px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;
-																		padding-left: 8px;"
-																tal:content="options/context_display_name">Group Name
-															</span>
-														</td>
-													</tr>
-												</table>
-											</td>
-										</tr>
-										<tr style="border-bottom:solid #e2e5e7 1px; color:#6d7d87; display:block; font-size:12px;
-												   font-weight:bold; line-height:18px; padding-bottom:0; padding-top:11px;
-												   vertical-align:top; width:100%" valign="top">
-											<td valign="top" align="left" style="border-collapse:collapse; padding:15px; padding-left:0">
-												<div style="font: 16px/2em 'Helvetica Neue',Arial,Helvetica; color:#a3a3a4;
-															white-space: pre-wrap; word-wrap: break-word; word-break: break-word;">
-													<p style="line-height: 1.4em" tal:content="structure options/body">user email</p>
-												</div>
-											</td>
-										</tr>
-									</table>
-								</td>
-							</tr>
-							<tr style='color:#333; display:block; font-size:12px; font-weight:bold; line-height:18px;
-									   padding-bottom:0; padding-top:11px; vertical-align:top; width:100%; background:#EEF0F1;
-									   font:15px/1.25em "Helvetica Neue", Arial, Helvetica; margin:0; padding:0' valign="top">
-								<td valign="top" align="left" style="border-collapse:collapse; padding:15px; display: block;">
-									<p style="color:#757474; font-family:Helvetica, Arial, sans-serif; font-size:smaller; line-height:12pt;
-											  margin-left:0; margin-right:0; margin-top:0; text-align:center" align="center">
-										<span>This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.</span>
-										<br />
-										If you feel this email was sent in error, or this account was created
-										without your consent, you may email <a style="text-decoration: none; color: #3fb3f6;"
-											href="mailto:support@nextthought.com"
-											tal:attributes="href string:mailto:${options/support_email|default}"
-											tal:content="options/support_email">support@nextthought.com</a>.
-									</p>
-								</td>
-							</tr>
-							</tbody>
-						</table>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+		<div style="padding-left: 60px;padding-right: 60px;">
+			<div style="color: #494949; font-size: 32px; font-weight: 300; text-align: left; margin-top: 30px; padding: 0; margin-bottom: 30px;">
+                You got a new message!
+            </div>
+			<hr style="margin-top:18px; border:1px solid rgba(0,0,0,0.07); border-bottom:0;margin-bottom:20px;">
+			<!-- Use the user's avatar if we have one. Otherwise, generate an avatar showing user's initials. -->
+			<div>
+				<tal:block tal:condition="options/sender_avatar_url" >
+					<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
+							alt="David Sabatini"
+							title="David Sabatini"
+							width="45" height="45"
+							style="display: inline;vertical-align:top;float:left;margin-right:2px;"
+							tal:attributes="alt options/sender_name; title options/sender_name; src options/sender_avatar_url"
+							/>
+				</tal:block>
+				<tal:block 	tal:condition="not:options/sender_avatar_url">
+					<div
+						tal:define="sender_avatar_bg_color options/sender_avatar_bg_color"
+						style="font-size: 16px; width: 45px; height: 45px;
+								font-weight: bold; color: white; text-align: center;
+								display: inline; vertical-align: top; float:left;
+								margin-right: 4px; background-size: cover;
+								background-position: center center; line-height: 45px;">
+						<div tal:attributes="style python: 'background-color:%s' % sender_avatar_bg_color"
+							tal:content="options/sender_avatar_initials">
+							SJ
+						</div>
+					</div>
+				</tal:block>
+				<span style="font-size: 16px; padding-left: 8px;" tal:content="options/sender_name">Sender Name</span>
+				<br>
+				<span style="font-size:14px; color:#a3a3a4; padding-left: 8px;" tal:content="options/context_display_name">Group Name</span>
+			</div>
+
+			<div style="font-size: 16px; white-space: pre-wrap; word-wrap: break-word; word-break: break-word;">
+				<p style="line-height: 1.4em" tal:content="structure options/body">user email</p>
+			</div>
+
+			<hr style="margin-top:18px; border:1px solid rgba(0,0,0,0.07); border-bottom:0;">
+
+			<div style="margin-top: 24px;font-size: 12px;line-height: 17px;">
+				<span i18n:translate="">
+					If you feel this email was sent in error, or this account was created
+					without your consent, you may email us at
+					<a i18n:name="support_email"
+					href="mailto:support@nextthought.com"
+					tal:content="options/support_email|default"
+					tal:attributes="href string:mailto:${options/support_email|default}"
+					style="text-decoration:underline;color: #494949;">support@nextthought.com</a>
+				</span>
+			</div>
+		</div>
 	</div>
 	</body>
 </html>
