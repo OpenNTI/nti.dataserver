@@ -203,6 +203,10 @@ class site_tween(object):
         we want to ensure we are operating under the assumption we're running
         in an actual resolvable site name. To do so, we look up a special
         utility registered to those few instances.
+
+        Additionally, we check if the remote ip is in the gunicorn configured
+        `forwarded_allow_ips`. A wildcard, `*`,  will enable this substitution
+        for all ips.
         """
         if      (   self.all_forwarded_ips_allowed \
                  or request.client_addr in self.forwarded_allowed_ips) \

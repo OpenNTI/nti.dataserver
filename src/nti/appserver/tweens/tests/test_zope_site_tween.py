@@ -13,6 +13,7 @@ from __future__ import absolute_import
 from hamcrest import assert_that
 from hamcrest import is_
 
+import os
 import unittest
 
 from zope import component
@@ -37,6 +38,10 @@ class _TestPreferredHostnameProvider(object):
 class TestZopeSiteTween(unittest.TestCase):
 
 	def setUp(self):
+		os.environ['NTI_FORWARDED_ALLOWED_IPS'] = '*'
+		self.tween = site_tween(object())
+
+	def _reset_tween(self):
 		self.tween = site_tween(object())
 
 	def test_no_preferred_host_name_header(self):
@@ -84,5 +89,31 @@ class TestZopeSiteTween(unittest.TestCase):
 			request.host = 'janux.nextthought.com:8080'
 			self.tween._maybe_update_host_name(request)
 			assert_that(request.host, is_('%s:%s' % (sub_name, '8080')))
+
+			# Change forwarded ips
+			request.host = 'janux.nextthought.com'
+			os.environ['NTI_FORWARDED_ALLOWED_IPS'] = ''
+			self._reset_tween()
+			self.tween._maybe_update_host_name(request)
+			assert_that(request.host, is_('janux.nextthought.com'))
+
+			os.environ['NTI_FORWARDED_ALLOWED_IPS'] = '4.3.2.1'
+			request.environ['REMOTE_ADDR'] = '1.2.3.4'
+			self._reset_tween()
+			self.tween._maybe_update_host_name(request)
+			assert_that(request.host, is_('janux.nextthought.com'))
+
+			os.environ['NTI_FORWARDED_ALLOWED_IPS'] = '1.2.3.4'
+			request.environ['REMOTE_ADDR'] = '1.2.3.4'
+			self._reset_tween()
+			self.tween._maybe_update_host_name(request)
+			assert_that(request.host, is_(sub_name))
+
+			os.environ['NTI_FORWARDED_ALLOWED_IPS'] = '5.6.2.3,1.2.3.4'
+			request.environ['REMOTE_ADDR'] = '1.2.3.4'
+			self._reset_tween()
+			self.tween._maybe_update_host_name(request)
+			assert_that(request.host, is_(sub_name))
 		finally:
 			gsm.unregisterUtility(provider, IPreferredAppHostnameProvider)
+			os.environ.pop('NTI_FORWARDED_ALLOWED_IPS', None)
