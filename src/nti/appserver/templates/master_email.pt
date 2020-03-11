@@ -43,7 +43,8 @@
 				padding-left: 0px;
 				padding-right: 0px;
 			}
-			.container .main {
+			.container .main,
+			.container .footer {
 				padding-left: 60px;
 				padding-right: 60px
 			}
@@ -246,6 +247,21 @@
 			Sincerely, <br />
 			NextThought
 		</p>
+
+		<div class="footer" metal:define-macro="footer">
+			<hr style="margin-top:18px; border:1px solid rgba(0,0,0,0.07); border-bottom:0;"/>
+			<div style="margin-top: 18px;font-size: 12px;line-height: 17px;">
+				<span i18n:translate="">
+					If you feel this email was sent in error, or this account was created
+					without your consent, you may email us at
+					<a i18n:name="support_email"
+					href="mailto:support@nextthought.com"
+					tal:content="options/support_email|default"
+					tal:attributes="href string:mailto:${options/support_email|default}"
+					style="text-decoration:underline;color: #494949;">support@nextthought.com</a>
+				</span>
+			</div>
+		</div>
 
 	</body>
 </html>
