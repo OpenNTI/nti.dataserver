@@ -609,6 +609,7 @@ def _pre_fork(arbiter, worker):
 def _post_fork(unused_arbiter, worker):
     # Setup our environment variable now that we have actually forked.
     os.environ['NTI_WORKER_IDENTIFIER'] = worker._nti_identifier
+    os.environ['NTI_FORWARDED_ALLOWED_IPS'] = getattr(worker.cfg, 'forwarded_allow_ips', None)
 
     # See also
     # https://bitbucket.org/jgehrcke/gipc/src/bbfa4a02c756c81408e15016ad0ef836d1dcbad5/gipc/gipc.py?at=default#cl-217
