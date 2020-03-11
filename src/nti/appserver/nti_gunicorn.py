@@ -404,6 +404,8 @@ class _ServerFactory(object):
 
         app_server.environ['nti_worker_identifier'] = getattr(self.worker, '_nti_identifier', None)
 
+        app_server.environ['nti_forwarded_allowed_ips'] = getattr(self.cfg, 'forwarded_allow_ips', None)
+
         # Now, for logging to actually work, we need to replace
         # the handler class with one that sets up the required values in the
         # environment, as per ggevent.
@@ -609,6 +611,7 @@ def _pre_fork(arbiter, worker):
 def _post_fork(unused_arbiter, worker):
     # Setup our environment variable now that we have actually forked.
     os.environ['NTI_WORKER_IDENTIFIER'] = worker._nti_identifier
+    os.environ['NTI_FORWARDED_ALLOWED_IPS'] = getattr(worker.cfg, 'forwarded_allow_ips', None)
 
     # See also
     # https://bitbucket.org/jgehrcke/gipc/src/bbfa4a02c756c81408e15016ad0ef836d1dcbad5/gipc/gipc.py?at=default#cl-217

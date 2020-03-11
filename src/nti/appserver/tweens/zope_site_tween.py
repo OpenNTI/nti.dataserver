@@ -42,6 +42,8 @@ import transaction
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from zope.component.hooks import site
 from zope.component.hooks import getSite
 from zope.component.hooks import setSite
@@ -153,10 +155,20 @@ class site_tween(object):
 
     """
 
-    __slots__ = ('handler',)
-
     def __init__(self, handler):
         self.handler = handler
+
+    @Lazy
+    def forwarded_allowed_ips(self):
+        try:
+            result = os.environ['NTI_FORWARDED_ALLOWED_IPS']
+        except KeyError:
+            result = ()
+        return set(result or ())
+
+    @Lazy
+    def all_forwarded_ips_allowed(self):
+        return '*' in self.forwarded_allowed_ips
 
     def __call__(self, request):
         # conn.sync() # syncing the conn aborts the transaction.
@@ -190,7 +202,8 @@ class site_tween(object):
         in an actual resolvable site name. To do so, we look up a special
         utility registered to those few instances.
         """
-        if      request.client_addr == '127.0.0.1' \
+        if      (   self.all_forwarded_ips_allowed \
+                 or request.client_addr in self.forwarded_allowed_ips) \
             and 'HTTP_X_NTI_USE_PREFERRED_HOST_NAME' in request.environ:
             provider = component.queryUtility(IPreferredAppHostnameProvider)
             if provider is None:
