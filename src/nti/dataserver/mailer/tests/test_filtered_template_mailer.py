@@ -80,6 +80,7 @@ class _BaseMixin(object):
 													template_args={
 																'user': user,
 																'profile': profile,
+																'verify_href': '',
 																'context': user,
 																'href': token_url,
 																'support_email': 'support_email' },
