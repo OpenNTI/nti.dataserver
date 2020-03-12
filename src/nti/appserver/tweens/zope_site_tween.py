@@ -220,7 +220,7 @@ class site_tween(object):
             if len(host_parts) > 1:
                 port = host_parts[-1]
                 preferred_site_name = '%s:%s' % (preferred_site_name, port)
-            request.host = preferred_site_name
+            request.host = str(preferred_site_name)
 
     def _add_properties_to_request(self, request):
         request.environ['nti.pid'] = os.getpid()  # helpful in debug tracebacks
