@@ -198,7 +198,7 @@ class site_tween(object):
 
     def _maybe_update_host_name(self, request):
         """
-        Some requests (indicated by the `HTTP_X_NTI_USE_PREFERRED_HOST_NAME`)
+        Some requests (indicated by the `X_NTI_USE_PREFERRED_HOST_NAME`)
         may be using site names that are not DNS resolvable. In those cases,
         we want to ensure we are operating under the assumption we're running
         in an actual resolvable site name. To do so, we look up a special
@@ -210,7 +210,7 @@ class site_tween(object):
         """
         if      (   self.all_forwarded_ips_allowed \
                  or request.client_addr in self.forwarded_allowed_ips) \
-            and 'HTTP_X_NTI_USE_PREFERRED_HOST_NAME' in request.environ:
+            and 'X_NTI_USE_PREFERRED_HOST_NAME' in request.headers:
             provider = component.queryUtility(IPreferredAppHostnameProvider)
             if provider is None:
                 return
