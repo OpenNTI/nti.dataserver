@@ -93,12 +93,22 @@ class TestGeventApplicationWorker(AppLayerTest):
 	def test_prefork(self):
 		class MockWorker(object):
 			pass
+		MockConfig = MockWorker
 		mock_worker = MockWorker()
-		nti_gunicorn._pre_fork( 1, mock_worker )
+		mock_worker.cfg = cfg = MockConfig()
+		nti_gunicorn._pre_fork(1, mock_worker)
 		assert_that(mock_worker, has_property('_nti_identifier', '1'))
-		nti_gunicorn._post_fork( 1, mock_worker )
+		nti_gunicorn._post_fork(1, mock_worker)
 		assert_that(os.environ, has_entry('NTI_WORKER_IDENTIFIER', '1'))
 		assert_that(os.environ, has_entry('DATASERVER_ZEO_CLIENT_NAME', 'gunicorn_2'))
+
+		cfg.forwarded_allow_ips = '*'
+		nti_gunicorn._post_fork(1, mock_worker)
+		assert_that(os.environ, has_entry('NTI_FORWARDED_ALLOWED_IPS', '*'))
+
+		cfg.forwarded_allow_ips = ['1.2.3.4', '4.5.6.7']
+		nti_gunicorn._post_fork(1, mock_worker)
+		assert_that(os.environ, has_entry('NTI_FORWARDED_ALLOWED_IPS', '1.2.3.4,4.5.6.7'))
 
 	@fudge.patch('gunicorn.workers.base.WorkerTmp')
 	def test_postfork(self, fudge_tmp):

@@ -65,7 +65,7 @@ class TestCommunityPermissions(ApplicationLayerTest):
         community_rpm = IRolePermissionManager(community)
         permissions = community_rpm.getPermissionsForRole(nauth.ROLE_COMMUNITY_ADMIN_NAME)
         permissions = dict(permissions)
-        assert_that(permissions, has_length(6))
+        assert_that(permissions, has_length(7))
         for permission in (nauth.ACT_READ,
                            nauth.ACT_CREATE,
                            nauth.ACT_DELETE,
