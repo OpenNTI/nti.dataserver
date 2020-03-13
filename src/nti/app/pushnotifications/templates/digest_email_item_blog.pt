@@ -1,7 +1,7 @@
 <!--! -*- mode: nxml -*- -->
 <div metal:use-macro="macro:row">
-	<span metal:fill-slot="content">
+	<span metal:fill-slot="content" style="margin-left:8px;line-height:21px;">
 		<strong tal:content="notable/creator">David Sabatini</strong> tagged you in a thought.<br />
-		<a style="color: #3fb3f6;" href="" tal:attributes="href notable/href" tal:content="notable/display_name">My Thought</a>
+		<a style="color: #3fb3f6;margin-left:10px;line-height:21px;" href="" tal:attributes="href notable/href" tal:content="notable/display_name">My Thought</a>
 	</span>
 </div>
