@@ -18,6 +18,7 @@ from nti.appserver.interfaces import IUserViewTokenCreator
 
 from nti.dataserver.authorization import ROLE_ADMIN
 from nti.dataserver.authorization import ROLE_CONTENT_EDITOR
+from nti.dataserver.authorization import is_admin
 
 from nti.dataserver.authentication import DelegatingImpersonatedAuthenticationPolicy
 
@@ -93,13 +94,13 @@ def configure_authentication_policy(pyramid_config,
 
 @component.adapter(IUser)
 @interface.implementer(IGroupMember)
-class NextthoughtDotComAdmin(object):
+class AdminGroupsProvider(object):
     """
-    Somewhat hackish way to grant the admin role to any account in @nextthought.com
+    Provide role-based groups to administrators for pyramid ACL checks
     """
 
     def __init__(self, context):
-        if context.username.endswith('@nextthought.com'):
+        if is_admin(context):
             self.groups = (ROLE_ADMIN, ROLE_CONTENT_EDITOR)
         else:
             self.groups = ()

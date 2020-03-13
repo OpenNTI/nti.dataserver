@@ -87,6 +87,9 @@
 	<subscriber	factory=".providers._ResolveMeLinkProvider"
 				provides=".interfaces.IUserWorkspaceLinkProvider"/>
 
+    <subscriber factory=".providers._AdminsLinkProvider"
+                provides=".interfaces.IGlobalWorkspaceLinkProvider"/>
+
 	<!-- Externalization -->
 	<adapter factory=".externalization.ServiceExternalizer" />
 

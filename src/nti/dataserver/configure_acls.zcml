@@ -42,6 +42,12 @@
     <permission
         id="nti.actions.pin"
         title="Allow users to pin objects" />
+	<permission
+		id="nti.actions.contentlibrary.sync_library"
+		title="Sync the content library"/>
+	<permission
+		id="nti.actions.manage.site"
+		title="Local site management" />
 
 	<!-- Defining roles and granting permissions to them globally -->
 	<include file="meta.zcml" package="zope.securitypolicy" />
@@ -52,6 +58,29 @@
 	<grant
 		role="nti.roles.moderator"
 		permission="nti.actions.moderate" />
+
+	<!-- Admins have access to most functions -->
+	<role 	id="role:nti.admin"
+			title="A role given to dataserver administrators"
+			description="Provides ability to administrate various dataserver functions"/>
+	<grant
+		role="role:nti.admin"
+		permission="nti.actions.coppa_admin" />
+	<grant
+		role="role:nti.admin"
+		permission="nti.actions.moderate" />
+	<grant
+		role="role:nti.admin"
+		permission="nti.actions.contentedit" />
+	<grant
+		role="role:nti.admin"
+		permission="nti.actions.contentlibrary.sync_library" />
+	<grant
+		role="role:nti.admin"
+		permission="nti.actions.impersonate" />
+	<grant
+		role="role:nti.admin"
+		permission="nti.actions.manage.site" />
 
 	<!-- Site admins.  These have a high level of permissions. -->
 	<role 	id="role:nti.dataserver.site-admin"

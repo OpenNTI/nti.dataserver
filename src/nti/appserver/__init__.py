@@ -14,3 +14,6 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
 # Site Admin Workspace
 SITE_ADMIN = u"SiteAdmin"
+
+# Admin management views
+VIEW_ADMINS = u"Admins"

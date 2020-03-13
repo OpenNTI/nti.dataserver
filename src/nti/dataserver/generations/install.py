@@ -9,13 +9,17 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-generation = 107
+generation = 108
 
 # Allow going forward/backward for testing
 import os
 generation = int(os.getenv('DATASERVER_TEST_GENERATION', generation))
 
 from zope.generations.generations import SchemaManager
+
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
+from nti.dataserver.authorization import ROLE_ADMIN
 
 
 class _DataserverSchemaManager(SchemaManager):
@@ -383,3 +387,7 @@ def install_default_admin_user(root):
             with open(path, 'w+') as f:
                 encoded_token = base64.b64encode('%s:%s' % (ADMIN_USERNAME, token_val))
                 f.write(encoded_token)
+
+        # Permission as admin
+        ds_role_manager = IPrincipalRoleManager(root)
+        ds_role_manager.assignRoleToPrincipal(ROLE_ADMIN.id, 'admin@nextthought.com')

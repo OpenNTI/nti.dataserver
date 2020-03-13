@@ -15,13 +15,22 @@ from zope.location.interfaces import ILocation
 
 from zope.location.location import Location
 
+from nti.appserver import VIEW_ADMINS
+
 from nti.appserver._util import link_belongs_to_user
+
+from nti.appserver.workspaces import IGlobalWorkspaceLinkProvider
 
 from nti.appserver.workspaces.interfaces import IUserWorkspaceLinkProvider
 
+from nti.dataserver.authorization import is_admin
+
+from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUser
 
 from nti.links.links import Link
+
+from nti.traversal.traversal import find_interface
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -62,3 +71,19 @@ class _ResolveMeLinkProvider(object):
         resolve_me_link = Link(user, rel="ResolveSelf", method='GET')
         link_belongs_to_user(resolve_me_link, user)
         return [resolve_me_link]
+
+
+@component.adapter(IUser)
+@interface.implementer(IGlobalWorkspaceLinkProvider)
+class _AdminsLinkProvider(object):
+
+    def __init__(self, user):
+        self.user = user
+
+    def links(self, unused_workspace):
+        if is_admin(self.user):
+            ds2 = find_interface(self.user, IDataserverFolder)
+            link = Link(ds2, rel=VIEW_ADMINS, method='GET',
+                        elements=(VIEW_ADMINS,))
+            return [link]
+        return ()

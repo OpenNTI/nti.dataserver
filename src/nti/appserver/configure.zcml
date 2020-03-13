@@ -368,10 +368,9 @@
 
 	<include package="nti.app.forums" />
 
-	<!-- Hacky temporary stuff -->
-	<adapter name="NextthoughtDotComAdmin"
+	<adapter name="AdminGroupsProvider"
 			 for="nti.dataserver.interfaces.IUser"
-			 factory=".pyramid_auth.NextthoughtDotComAdmin"
+			 factory=".pyramid_auth.AdminGroupsProvider"
 			 provides="nti.dataserver.interfaces.IGroupMember" />
 
 	<utility name="tag"
