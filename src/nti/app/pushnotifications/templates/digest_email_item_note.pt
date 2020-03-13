@@ -1,12 +1,12 @@
 <!--! -*- mode: nxml -*- -->
 <div metal:use-macro="macro:row">
-	<span metal:fill-slot="content" style="margin-left:8px;line-height:21px;">
+	<span metal:fill-slot="content">
 		<strong tal:content="notable/creator">Greg Higgins</strong>
 		<span tal:condition="notable/top_level_note">shared a note.</span>
 		<span tal:condition="not:notable/top_level_note">replied to your note </span>
 		<br />
 		<!--! Notes that consist of just a whiteboard may not have a title or snippet -->
-		<a style="color: #3fb3f6;margin-left:10px;line-height:21px;" href=""
+		<a style="color: #3fb3f6;" href=""
 		   tal:attributes="href notable/href"
 		   tal:content="notable/display_name|notable/snippet|string:View Note">Test save</a>
 

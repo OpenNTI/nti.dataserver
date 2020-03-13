@@ -1,7 +1,7 @@
 <!--! -*- mode: nxml -*- -->
 <div metal:use-macro="macro:row">
 	<span metal:fill-slot="content">
-		<span style="margin-left:8px;line-height:21px;">
+		<span>
 			<tal:block tal:condition="notable/remaining">
 				<strong tal:content="notable/creator|default">Someone</strong> and
 				<tal:block tal:content="notable/remaining">6</tal:block>

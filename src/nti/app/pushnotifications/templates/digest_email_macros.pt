@@ -3,7 +3,7 @@
 	xmlns:tal="http://xml.zope.org/namespaces/tal"
 	xmlns:metal="http://xml.zope.org/namespaces/metal">
 
-	<span style="margin: 0 2px 0 0;" metal:define-macro="creator_icon">
+	<div metal:define-macro="creator_icon">
 		<!--
 			Use the user's avatar if we have one. Otherwise, generate an
 			avatar showing user's initials.
@@ -13,7 +13,7 @@
 				 alt="David Sabatini"
 				 title="David Sabatini"
 				 width="42" height="42"
-				 style="display: inline;vertical-align:top;float:left;margin-right:2px;border-radius: 21px;"
+				 style="border-radius:50%; vertical-align:middle; border-style:none;"
 				 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
 				 />
 		</tal:block>
@@ -33,17 +33,20 @@
 				</div>
 			</div>
 		</tal:block>
-	</span>
+	</div>
 
 	<div style="margin-bottom: 18px;font: 15px/1.25em 'Open Sans', sans-serif, Helvetica, Arial;overflow:hidden;"
 		 metal:define-macro="row"
 		 tal:define="notable view/notable">
 
-		<span style="margin: 0 2px 0 0;"
-			metal:use-macro="macro:creator_icon" />
-
-		<span metal:define-slot="content">NO CONTENT</span>
-
+		<div style="position:relative; padding: 0px 0px 0px 52px;">
+			<div style="position:absolute; left:0; top:0;">
+				<metal:block metal:use-macro="macro:creator_icon"></metal:block>
+			</div>
+			<div style="line-height:21px;min-height:42px">
+				<metal:block metal:define-slot="content">NO CONTENT</metal:block>
+			</div>
+		</div>
 	</div>
 
 
