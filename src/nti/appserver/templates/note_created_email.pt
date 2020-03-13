@@ -9,27 +9,23 @@
 		<metal:block metal:use-macro="macro:style"></metal:block>
 	</head>
 	<body>
-<div class="container">
-	<div metal:use-macro="macro:header"></div>
-	<div class="main">
-		<div class="title">Dear <span tal:content="options/profile/realname | options/profile/alias | options/user" class="realname tterm">John Doe</span>,</div>
+	<div class="container">
+		<div metal:use-macro="macro:header"></div>
+		<div class="main">
+			<div class="title">Dear <span tal:content="options/profile/realname | options/profile/alias | options/user" class="realname tterm">John Doe</span>,</div>
 
-		<p>
-			A new note has been created and shared with you.
-		</p>
+			<p>
+				A new note has been created and shared with you.
+			</p>
 
-		<table tal:replace="structure options/note_table/render" />
+			<table tal:replace="structure options/note_table/render" />
 
-		<p>
-			Sincerely,<br />
-			NextThought
-		</p>
-
-		<p>
-			If you feel this email was sent in error, you may email us at
-			<a href="mailto:support@nextthought.com">support@nextthought.com</a>.
-		</p>
+			<p>
+				Sincerely,<br />
+				NextThought
+			</p>
+		</div>
+		<div metal:use-macro="macro:footer"></div>
 	</div>
-</div>
 	</body>
 </html>

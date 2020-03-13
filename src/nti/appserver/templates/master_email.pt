@@ -24,42 +24,37 @@
 				padding-top: 0px;
 				padding-bottom: 0px;
 			}
-			#green-bar {
+			.normal-text #green-bar {
 				background-color: #3FB34F;
 				margin-left:-30px;
 				padding-left:30px;
 			}
-			#logo-bar {
+			.normal-text #logo-bar {
 				margin-top: 20px;
 				margin-bottom: 30px;
 			}
 			.container {
+				width:100%;
 				max-width: 730px;
 				margin: 0 auto;
 				background-color: #FFFFFF;
 				padding-bottom: 50px;
 			}
 			.container .header {
-				padding-left: 0px;
-				padding-right: 0px;
+				width: 100%;
+			}
+			.container .header #logo-bar {
+				width: calc(100% - 10px);
+				max-width: 610px;
+				padding: 0 5px;
+				margin: 47px auto 20px;
 			}
 			.container .main,
 			.container .footer {
-				padding-left: 60px;
-				padding-right: 60px
-			}
-			.container .header #green-bar {
-				background-color: #3FB34F;
-				padding-right: 0px;
-				padding-left: 0px;
-				margin-left: 0px;
-				margin-right: 0px;
-			}
-			.container .header #logo-bar {
-				margin-top: 47px;
-				margin-bottom: 20px;
-				padding-left: 60px;
-				padding-right: 60px
+				width: calc(100% - 10px);
+				max-width: 610px;
+				padding: 0 5px;
+				margin: 0 auto;
 			}
 			.container p {
 				margin-top: 20px;

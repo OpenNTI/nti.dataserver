@@ -25,74 +25,63 @@
                 line-height: 20px;
             }
             .header {
-                adding-left: 0px;
-                padding-right: 0px;
-            }
-            #green-bar {
-                padding-right: 0px;
-                padding-left: 0px;
-                margin-left: 0px;
-                margin-right: 0px;
-            }
-            #logo-bar {
-                margin-top: 47px;
-                margin-bottom: 20px;
-                padding-left: 60px;
-                padding-right: 60px
+				width: 100%;
+			}
+			#logo-bar {
+				width: calc(100% - 10px);
+				max-width: 610px;
+                padding: 0 5px;
+				margin: 47px auto 20px;
+			}
+			.footer {
+				width: calc(100% - 10px);
+				max-width: 610px;
+                padding: 0 5px;
+				margin: 0 auto;
             }
         </style>
     </head>
     <!-- For speed when sending large amounts of emails interactively, all styles are inlined below -->
     <body style="padding-top: 20px;padding-bottom: 20px;background-color: #F9F9F9; color: #494949; font-family: 'Open Sans', sans-serif, Helvetica, Arial; font-size: 16px; line-height: 24px;">
-    <div style="max-width: 730px; margin: 0 auto; background-color: #FFFFFF; padding-bottom: 50px;">
-        <div metal:use-macro="macro:header"></div>
-        <div class="content-cont" style="margin-top: 40px;padding-left: 60px;padding-right: 60px;">
+        <div class="container" style="width:100%;max-width: 730px; margin: 0 auto; background-color: #FFFFFF; padding-bottom: 50px;">
+            <div metal:use-macro="macro:header"></div>
+            <div class="main" style="width:calc(100% - 10px);max-width: 610px;margin: 0 auto;padding: 0 5px;margin-top: 40px;">
+                <!-- Sender message -->
+                <div class="message-cont" style="margin-top: 25px; margin-left: 0; margin-right: 0;line-height:20px;">
 
-            <!-- Sender message -->
-            <div class="message-cont" style="margin-top: 25px; margin-left: 0; margin-right: 0;line-height:20px;">
+                    <div class="message-header" style="margin-top: 45px; margin-bottom: 24px;">
+                        <div id="avatar" tal:attributes='style options/sender_content/avatar_styles'></div>
+                        <span class="avatar-descriptor" style="margin-left: 10px; color: #757474; font-size: 14px; line-height: 19px;">
+                            A notification from
+                        </span>
+                        <br>
+                        <span class="notification-sender" style="color: #494949; margin-left: 10px;
+                        font-size: 15px; line-height: 22px;" tal:content="options/sender_content/sender">
+                            Steve Johnson
+                        </span>
 
-                <div class="message-header" style="margin-top: 45px; margin-bottom: 24px;">
-                    <div id="avatar" tal:attributes='style options/sender_content/avatar_styles'></div>
-                    <span class="avatar-descriptor" style="margin-left: 10px; color: #757474; font-size: 14px; line-height: 19px;">
-                        A notification from
-                    </span>
-                    <br>
-                    <span class="notification-sender" style="color: #494949; margin-left: 10px;
-                     font-size: 15px; line-height: 22px;" tal:content="options/sender_content/sender">
-                        Steve Johnson
-                    </span>
+                    </div>
 
+                <q class="notification-message" tal:content="options/sender_content/message"
+                    style="font-size:16px; color:#757474;
+                    line-height:24px; font-style: italic;">
+                    Click below to view my notification
+                </q>
                 </div>
 
-              <q class="notification-message" tal:content="options/sender_content/message"
-                  style="font-size:16px; color:#757474;
-                  line-height:24px; font-style: italic;">
-                  Click below to view my notification
-              </q>
+                <!-- view button -->
+                <div class="view-but-cont" style="margin-top:40px; margin-left: 0; margin-right: 0" tal:condition="options/resolve_url">
+                    <a 	href="https://www.nextthought.com" class="but"
+                        tal:attributes="href python: options['resolve_url']"
+                        style='color:white; text-decoration:none; background-color:#3fb3f6; border-radius:4px;
+                            border-style:none; font-size:14px; font-weight:600;
+                            margin-bottom:15px; outline:none; text-align: center; line-height: 19px;
+                            padding: 8px 16px'>
+                                View
+                    </a>
+                </div>
             </div>
-
-            <!-- view button -->
-            <div class="view-but-cont" style="margin-top:40px; margin-left: 0; margin-right: 0" tal:condition="options/resolve_url">
-                <a 	href="https://www.nextthought.com" class="but"
-                    tal:attributes="href python: options['resolve_url']"
-                    style='color:white; text-decoration:none; background-color:#3fb3f6; border-radius:4px;
-                           border-style:none; font-size:14px; font-weight:600;
-                           margin-bottom:15px; outline:none; text-align: center; line-height: 19px;
-                           padding: 8px 16px'>
-                            View
-                </a>
-            </div>
-            <!-- Help information -->
-            <div class="content-cont" style="margin-top: 40px">
-                <p class="inv-caption" style="color:#757474; font-size:12px; line-height:17px;">
-                    If you feel this email was sent in error, or this account was created without your consent, you may email
-                    <a href="mailto:support@nextthought.com"
-                        tal:attributes="href string:mailto:${options/support_email|default}"
-                        tal:content="options/support_email"
-                        style="color:#757474;">support@nextthought.com</a>.
-                </p>
-            </div>
+            <div metal:use-macro="macro:footer"></div>
         </div>
-    </div>
 	</body>
 </html>
