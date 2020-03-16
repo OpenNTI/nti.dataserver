@@ -13,7 +13,7 @@
 				 alt="David Sabatini"
 				 title="David Sabatini"
 				 width="42" height="42"
-				 style="display: inline;vertical-align:top;border-radius: 21px;"
+				 style="display: inline;vertical-align:top;"
 				 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
 				 />
 		</tal:block>
@@ -24,9 +24,9 @@
 			<div class="avatar_initials"
 				style="font-size: 16px; width: 42px; height: 42px;
 			    		font-weight: bold; color: white; text-align: center;
-			    		display: inline; vertical-align: top; 
-			    		margin-right: 2px; background-size: cover;
-			    		background-position: center center; line-height: 42px;border-radius: 21px;">
+			    		display: inline; vertical-align: top; float:left;
+			    		margin-right: 0px; background-size: cover;
+			    		background-position: center center; line-height: 42px;">
 				<div tal:attributes="style python: 'background-color:%s' % notable.creator_avatar_bg_color "
 					tal:content="notable/creator_avatar_initials">
 					SJ
