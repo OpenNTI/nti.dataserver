@@ -37,7 +37,7 @@
 			<hr style="margin-top:10px;margin-bottom:20px; border:1px solid rgba(0,0,0,0.07); border-bottom:0;"/>
 
 			<!-- 'context' is the dict used by the viewlets -->
-			<div style="margin-left: 2px;" tal:define="context notable_group/context">
+			<div tal:define="context notable_group/context">
 				<metal:block tal:content="structure provider:notable_items">
 					Render each notable item.
 				</metal:block>
@@ -46,7 +46,7 @@
 			<div tal:condition="notable_group/remaining"
 					tal:define="remaining notable_group/remaining"
 					style="color: #a3a3a4; font-style: italic; line-height:21px; text-align:left;
-						   padding-top:0px;margin-top:0px;margin-left:51px;">
+						   padding-top:0px;margin-top:0px;margin-left:52px;">
 					And ${remaining} more...
 			</div>
 		</tal:block>
