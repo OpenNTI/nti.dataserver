@@ -71,15 +71,13 @@
 				letter-spacing: -0.5px;
 			}
 			.btn-link {
-				width: fit-content;
 				padding: 8px 16px;
-				font-size: 16px;
+				font-size: 15px;
 				font-weight: 600;
 				line-height: 20px;
 				color: #FFFFFF;
 				background-color: #3FB34F;
 				border-radius: 4px;
-				display: block;
 				text-decoration: none;
 			}
 			.mp-20  {
@@ -166,8 +164,7 @@
 		<div class="header" metal:define-macro="header">
 			<div id="green-bar" style="background-color: ${options/nti_site_brand_color | string:#3FB34F}; width: 100%; height: 3px;"></div>
 			<div id="logo-bar">
-				<!-- For testing, need change to https://assets.nextthought.com/images/nextthought/platform/email/logo_trans_square.png for prod -->
-				<img src="https://s3.amazonaws.com/content.nextthought.com/images/nextthought/platform/email/logo_trans_square.png"
+				<img src="https://assets.nextthought.com/images/nextthought/platform/email/logo_trans_square.png"
 					 width="41.87" height="40" alt="NextThought Logo"
 				     tal:attributes="src options/nti_site_brand_email_image_url|default;
 				                     alt options/nti_site_brand_name|default" />
