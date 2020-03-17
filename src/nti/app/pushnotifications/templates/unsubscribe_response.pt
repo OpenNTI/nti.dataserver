@@ -10,7 +10,7 @@
 		<style metal:use-macro="macro:style">
 		</style>
 	</head>
-	<body>
+	<body class="normal-text">
 		<div metal:use-macro="macro:header">
 		</div>
 

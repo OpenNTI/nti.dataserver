@@ -1,7 +1,8 @@
 <!--! -*- mode: nxml -*- -->
 <div metal:use-macro="macro:row">
-	<span metal:fill-slot="content">
+	<span metal:fill-slot="content" style="line-height:21px;">
 		<strong tal:content="notable/creator">David Foster</strong> commented<br />
+		<span style="line-height:21px;">
 		<a style="color: #3fb3f6;"
 			href=""
 			tal:attributes="href notable/href"
@@ -10,5 +11,6 @@
 			href=""
 			tal:attributes="href notable/__parent__/href"
 			tal:content="notable/__parent__/display_name">Open 9.4 Interpretation Essay</a>.
+		</span>
 	</span>
 </div>

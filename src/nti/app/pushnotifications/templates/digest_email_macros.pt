@@ -12,8 +12,8 @@
 			<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
 				 alt="David Sabatini"
 				 title="David Sabatini"
-				 width="45" height="45"
-				 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
+				 width="42" height="42"
+				 style="display: inline;vertical-align:top;"
 				 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
 				 />
 		</tal:block>
@@ -22,11 +22,11 @@
 				style inheritance.
 			-->
 			<div class="avatar_initials"
-				style="font-size: 16px; width: 45px; height: 45px;
+				style="font-size: 16px; width: 42px; height: 42px;
 			    		font-weight: bold; color: white; text-align: center;
 			    		display: inline; vertical-align: top; float:left;
-			    		margin-right: 4px; background-size: cover;
-			    		background-position: center center; line-height: 45px;">
+			    		margin-right: 0px; background-size: cover;
+			    		background-position: center center; line-height: 42px;">
 				<div tal:attributes="style python: 'background-color:%s' % notable.creator_avatar_bg_color "
 					tal:content="notable/creator_avatar_initials">
 					SJ
@@ -35,16 +35,19 @@
 		</tal:block>
 	</span>
 
-	<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;overflow:hidden;"
+	<div style="margin-bottom: 18px;font: 15px/1.25em 'Open Sans', sans-serif, Helvetica, Arial;overflow:hidden;"
 		 metal:define-macro="row"
 		 tal:define="notable view/notable">
-
-		<span style="margin: 0 2px 0 0;"
-			metal:use-macro="macro:creator_icon" />
-
-		<span metal:define-slot="content">NO CONTENT</span>
-
+		<table style="margin-left: 0px;">
+			<tr style="border-bottom: none;margin:0px;padding:0px;">
+				<td style="margin-left: 0px;padding: 0px;">
+					<tal:block metal:use-macro="macro:creator_icon"></tal:block>
+				</td>
+				<td valign="top" style="margin-left: 0px; padding: 0 0 0 10px;font-size:15px;">
+					<tal:block metal:define-slot="content">NO CONTENT</tal:block>
+				</td>
+			</tr>
+		</table>
 	</div>
-
 
 </html>

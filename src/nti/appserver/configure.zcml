@@ -344,6 +344,12 @@
 		for="zope.interface.Interface"
 		view="zope.interface.Interface"
 		layer="zope.interface.Interface" />
+	<z3c:macro
+		template="templates/master_email.pt"
+		name="footer"
+		for="zope.interface.Interface"
+		view="zope.interface.Interface"
+		layer="zope.interface.Interface" />
 
 	<!-- TALES function namespaces  -->
 	<adapter

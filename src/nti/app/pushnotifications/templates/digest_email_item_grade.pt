@@ -1,18 +1,25 @@
 <!--! -*- mode: nxml -*- -->
-<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
+<div style="margin-bottom: 18px;font: 15px/1.25em 'Open Sans', sans-serif, Helvetica, Arial;"
 	 tal:define="notable view/notable">
-
-	<span style="margin: 0 2px 0 0;">
-		<img src="http://d2ixlfeu83tci.cloudfront.net/images/assignment_ontime_45x45.png"
-			 alt="Grade"
-			 title="Grade"
-			 width="45" height="45"
-			 style="display: inline;vertical-align:top;float:left;margin-right:2px;" />
-	</span>
-
-	You received a grade. <br />
-	<a style="color: #3fb3f6;"
-	   href=""
-	   tal:attributes="href notable/href"
-	   tal:content="notable/assignment_name|default">An assignment</a>
+	<table style="margin-left: 0px;">
+		<tr style="border-bottom: none;margin:0px;padding:0px;">
+			<td style="margin-left: 0px;padding: 0px;">
+				<img src="http://d2ixlfeu83tci.cloudfront.net/images/assignment_ontime_45x45.png"
+					alt="Grade"
+					title="Grade"
+					width="42" height="42"
+					style="display: inline;vertical-align:top;border-radius: 21px" />
+			</td>
+			<td valign="top" style="margin-left: 0px; padding: 0 0 0 10px;font-size:15px;">
+				<span style="line-height:21px;">
+					You received a grade.
+				</span>
+				<br/>
+				<a style="color: #3fb3f6;line-height:21px;"
+					href=""
+					tal:attributes="href notable/href"
+					tal:content="notable/assignment_name|default">An assignment</a>
+			</td>
+		</tr>
+	</table>
 </div>

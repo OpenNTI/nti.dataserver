@@ -55,6 +55,15 @@
             color: red;
             margin-top: 16px;
         }
+		#green-bar {
+			background-color: #3FB34F;
+			margin-left:-30px;
+			padding-left:60px;
+		}
+		#logo-bar {
+			margin-top: 20px;
+			margin-bottom: 30px;
+		}
     </style>
 </head>
 
