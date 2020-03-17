@@ -23,12 +23,18 @@ logger = __import__('logging').getLogger(__name__)
 @contextlib.contextmanager
 def zope_interaction(username):
     interaction = queryInteraction()
+    previous_interaction = getattr(management.thread_local, 'previous_interaction', None)
     endInteraction()
     participation = IParticipation(IPrincipal(username))
     newInteraction(participation)
     try:
         yield
     finally:
-        endInteraction()
         if interaction is not None:
             management.thread_local.interaction = interaction
+        elif hasattr(management.thread_local, 'interaction'):
+            del management.thread_local.interaction
+        if previous_interaction is not None:
+            management.thread_local.previous_interaction = previous_interaction
+        elif hasattr(management.thread_local, 'previous_interaction'):
+            del management.thread_local.previous_interaction
