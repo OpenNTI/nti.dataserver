@@ -13,7 +13,6 @@ from zope.security.interfaces import IParticipation
 
 from zope.security.management import endInteraction
 from zope.security.management import newInteraction
-from zope.security.management import queryInteraction
 
 from nti.dataserver.interfaces import IPrincipal
 

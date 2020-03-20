@@ -37,12 +37,12 @@ class DataserverGlobalUsersAuthenticatorPlugin(object):
 
 
 @interface.implementer(IAuthenticator)
-class DataserverTokenAuthenticator(object):
+class DataserverJWTAuthenticator(object):
 
     def authenticate(self, unused_environ, identity):
         try:
             plugin = component.getUtility(IAuthenticatorPlugin,
-                                          name="Dataserver Token Authenticator")
+                                          name="Dataserver JWT Authenticator")
             return plugin.authenticateCredentials(identity).id
         except (KeyError, AttributeError, LookupError):  # pragma: no cover
             return None

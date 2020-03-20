@@ -255,6 +255,7 @@ setup(
         'pyparsing',  # used by rdflib
         # Pure python PDF reading and manipulation library.
         'pyPDF2',
+        'pyjwt',
         'pyScss',
         # See also z3c.rml for a complete PDF layout and rendering environment, which should
         # work with page templates as well.
