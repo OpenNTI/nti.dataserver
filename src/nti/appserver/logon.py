@@ -191,6 +191,8 @@ REL_LOGIN_LOGOUT = 'logon.logout'  # See :func:`logout`
 REL_LOGIN_NTI_PASSWORD = 'logon.nti.password'  # See :func:`password_logon`
 REL_LOGIN_IMPERSONATE = 'logon.nti.impersonate'  # See :func:`impersonate_user`
 
+REL_LOGIN_JWT = 'logon.nti.jwt'  # See :func:`jwt_logon`
+
 REL_LOGIN_GOOGLE = 'logon.google'
 REL_LOGIN_OPENID = 'logon.openid'  # See :func:`openid_login`
 REL_LOGIN_FACEBOOK = 'logon.facebook'  # See :func:`facebook_oauth1`
@@ -939,6 +941,19 @@ def password_logon(request):
     """
     # Note that this also accepts the authentication cookie, not just the
     # Basic auth
+    return _specified_username_logon(request)
+
+
+@view_config(route_name=REL_LOGIN_JWT,
+             request_method='GET',
+             renderer='rest')
+def jwt_logon(request):
+    """
+    Found at the path in :const:`REL_LOGIN_JWT`, this will log a user in based on the JWT.
+
+    The request parameter `success` can be used to indicate a redirection upon successful logon.
+    Likewise, the parameter `failure` can be used for redirection on a failed attempt.
+    """
     return _specified_username_logon(request)
 
 
