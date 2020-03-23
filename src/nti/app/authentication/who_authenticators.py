@@ -19,10 +19,16 @@ from zope import interface
 
 from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
 from repoze.who.interfaces import IIdentifier
 from repoze.who.interfaces import IAuthenticator
 
 from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
+
+from nti.dataserver.authorization import ROLE_ADMIN
+
+from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users import User
 
@@ -86,6 +92,15 @@ class DataserverJWTAuthenticator(object):
     def remember(self, unused_environ, unused_identity):  # pragma: no cover
         return []
 
+    def _make_admin(self, user):
+        """
+        Assign the NT admin role to this user.
+        """
+        dataserver = component.getUtility(IDataserver)
+        ds_folder = dataserver.root_folder['dataserver2']
+        ds_role_manager = IPrincipalRoleManager(ds_folder)
+        ds_role_manager.assignRoleToPrincipal(ROLE_ADMIN.id, user.username)
+
     def authenticate(self, environ, identity):
         if environ.get('IDENTITY_TYPE') != 'jwt_token':
             return
@@ -104,6 +119,7 @@ class DataserverJWTAuthenticator(object):
             logger.info("Creating user via JWT (%s)",
                         username)
             try:
+                # Create a user without credentials
                 user = User.create_user(username=username,
                                         external_value=identity)
                 result = username
@@ -111,6 +127,9 @@ class DataserverJWTAuthenticator(object):
                 # Overly broad, can we just catch validation errors?
                 logger.exception("Error during JWT provisioning (%s)",
                                  identity)
+
+        if 'admin' in identity and user is not None:
+            self._make_admin(user)
         return result
 
 
