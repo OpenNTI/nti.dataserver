@@ -254,11 +254,11 @@ class TestApplicationLogon(ApplicationLayerTest):
 		payload = {'login': 'jwt_user_admin_iss_login@nextthought.com',
 				   'realname': 'jwt admin',
 				   'email': 'jwt_user_admin_iss_login@nextthought.com',
-				   'admin': 'true',
 				   'create': "true",
 				   'iss': "unused_issuer"}
 		env = get_environ(payload)
 		res = testapp.get('/dataserver2/logon.nti.jwt', extra_environ=env)
+
 		assert_that(res.headers.dict_of_lists()['set-cookie'],
 					 has_length(4))  # username, 3 variations on auth_tkt for domains
 		assert_that(testapp.cookies, has_key('nti.auth_tkt'))
@@ -274,6 +274,17 @@ class TestApplicationLogon(ApplicationLayerTest):
 
 		# Now that we have the cookie, we should be able to request ourself
 		testapp.get('/dataserver2/users/jwt_user_admin_iss_login@nextthought.com')
+
+		res = testapp.get('/dataserver2/logon.ping').json_body
+		self.forbid_link_with_rel(res, 'logon.nti.impersonate')
+
+		# Can upconvert to NT admin
+		payload['admin'] = 'true'
+		env = get_environ(payload)
+		testapp.get('/dataserver2/logon.nti.jwt', extra_environ=env)
+
+		res = testapp.get('/dataserver2/logon.ping').json_body
+		self.require_link_href_with_rel(res, 'logon.nti.impersonate')
 
 
 class TestLinkProviders(ApplicationLayerTest):
