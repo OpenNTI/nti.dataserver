@@ -114,8 +114,7 @@ class DataserverJWTAuthenticator(object):
         if user is not None:
             result = user.username
         elif 'create' in identity:
-            # admin role?
-            # site restrictions etc, mark request
+            # site user restrictions etc, mark request
             logger.info("Creating user via JWT (%s)",
                         username)
             try:
