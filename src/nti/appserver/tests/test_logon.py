@@ -286,6 +286,14 @@ class TestApplicationLogon(ApplicationLayerTest):
 		res = testapp.get('/dataserver2/logon.ping').json_body
 		self.require_link_href_with_rel(res, 'logon.nti.impersonate')
 
+		# Admin status persisted
+		payload.pop('admin')
+		env = get_environ(payload)
+		testapp.get('/dataserver2/logon.nti.jwt', extra_environ=env)
+
+		res = testapp.get('/dataserver2/logon.ping').json_body
+		self.require_link_href_with_rel(res, 'logon.nti.impersonate')
+
 
 class TestLinkProviders(ApplicationLayerTest):
 
