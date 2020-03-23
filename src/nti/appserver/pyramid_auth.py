@@ -58,6 +58,7 @@ def configure_authentication_policy(pyramid_config,
                                     secure_cookies=True,
                                     cookie_secret=DEFAULT_COOKIE_SECRET,
                                     jwt_secret=DEFAULT_JWT_SECRET,
+                                    jwt_issuer=None,
                                     cookie_timeout=ONE_WEEK):
     """
     Create and configure the authentication policy and the things that go with it.
@@ -79,6 +80,7 @@ def configure_authentication_policy(pyramid_config,
                                         cookie_secret=cookie_secret,
                                         cookie_timeout=cookie_timeout,
                                         jwt_secret=jwt_secret,
+                                        jwt_issuer=jwt_issuer,
                                         token_allowed_views=token_allowed_views)
     policy = AuthenticationPolicy(api_factory.default_identifier_name,
                                   cookie_timeout=cookie_timeout,

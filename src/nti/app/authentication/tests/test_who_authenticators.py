@@ -105,28 +105,27 @@ class TestJWTAuthenticator(unittest.TestCase):
 
     layer = SharedConfiguringTestLayer
 
-    def setUp(self):
-        self.jwt_auth = DataserverJWTAuthenticator(secret='jwt_secret')
-
     def test_empty_environ(self):
-        assert_that(self.jwt_auth.authenticate({}, None), is_(none()))
-        assert_that(self.jwt_auth.identify({}), is_(none()))
-        assert_that(self.jwt_auth.identify({'HTTP_AUTHORIZATION': ''}), is_(none()))
+        jwt_auth = DataserverJWTAuthenticator(secret='jwt_secret')
+        assert_that(jwt_auth.authenticate({}, None), is_(none()))
+        assert_that(jwt_auth.identify({}), is_(none()))
+        assert_that(jwt_auth.identify({'HTTP_AUTHORIZATION': ''}), is_(none()))
 
-        assert_that(self.jwt_auth.identify({'HTTP_AUTHORIZATION': 'notbearer'}),
+        assert_that(jwt_auth.identify({'HTTP_AUTHORIZATION': 'notbearer'}),
                     is_(none()))
 
     @WithMockDSTrans
     def test_identify_jwt_token(self):
+        jwt_auth = DataserverJWTAuthenticator(secret='jwt_secret')
         def get_environ(payload, secret='jwt_secret'):
             jwt_token = encode(payload, secret)
             return {'HTTP_AUTHORIZATION': 'Bearer %s' % jwt_token}
 
-        def do_auth(payload):
+        def do_auth(payload, jwt_auth=jwt_auth):
             env = get_environ(payload)
-            identity = self.jwt_auth.identify(env)
+            identity = jwt_auth.identify(env)
             assert_that(identity, not_none())
-            return self.jwt_auth.authenticate(env, identity)
+            return jwt_auth.authenticate(env, identity)
 
         def is_admin(user):
             dataserver = component.getUtility(IDataserver)
@@ -139,7 +138,7 @@ class TestJWTAuthenticator(unittest.TestCase):
             return result
 
         environ = get_environ({}, 'bad_secret')
-        assert_that(self.jwt_auth.identify(environ), none())
+        assert_that(jwt_auth.identify(environ), none())
 
         # No user
         payload = {'login': 'no_user'}
@@ -167,3 +166,17 @@ class TestJWTAuthenticator(unittest.TestCase):
         assert_that(is_admin(user), is_(True))
         assert_that(IUserProfile(user).email, is_('jwtadmin@nextthought.com'))
         assert_that(IUserProfile(user).realname, is_('jwt admin'))
+
+        # Issuer
+        jwt_auth = DataserverJWTAuthenticator(secret='jwt_secret',
+                                              issuer='nti_issuer')
+        payload = {'login': 'jwt_user_admin_iss@nextthought.com',
+                   'realname': 'jwt admin',
+                   'email': 'jwtadmin@nextthought.com',
+                   'admin': 'true',
+                   'create': "true",
+                   'iss': "bad_issuer"}
+        env = get_environ(payload)
+        assert_that(jwt_auth.identify(env), none())
+        payload['iss'] = 'nti_issuer'
+        assert_that(do_auth(payload), is_('jwt_user_admin_iss@nextthought.com'))

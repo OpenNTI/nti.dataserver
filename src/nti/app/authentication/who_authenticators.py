@@ -12,7 +12,7 @@ from __future__ import absolute_import
 
 from jwt import decode
 
-from jwt.exceptions import DecodeError
+from jwt.exceptions import InvalidTokenError
 
 from zope import component
 from zope import interface
@@ -54,7 +54,7 @@ class DataserverGlobalUsersAuthenticatorPlugin(object):
                        IIdentifier)
 class DataserverJWTAuthenticator(object):
 
-    def __init__(self, secret):
+    def __init__(self, secret, issuer=None):
         """
         Creates a combo :class:`.IIdentifier` and :class:`.IAuthenticator`
         using an auth-tkt like token.
@@ -63,6 +63,7 @@ class DataserverJWTAuthenticator(object):
                 auth_tkt secret.
         """
         self.secret = secret
+        self.issuer = issuer
 
     def identify(self, environ):
         auth = environ.get('HTTP_AUTHORIZATION', '')
@@ -77,8 +78,9 @@ class DataserverJWTAuthenticator(object):
                 auth = auth.strip()
                 # This will validate the payload, including the
                 # expiration date. We course also whitelist the issuer here.
-                auth = decode(auth, self.secret, algorithms=JWT_ALGS)
-            except DecodeError:
+                auth = decode(auth, self.secret,
+                              issuer=self.issuer, algorithms=JWT_ALGS)
+            except InvalidTokenError:
                 pass
             else:
                 result = auth

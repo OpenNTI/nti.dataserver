@@ -44,6 +44,7 @@ logger = __import__('logging').getLogger(__name__)
 def create_who_apifactory(secure_cookies=True,
                           cookie_secret='$Id$',
                           jwt_secret='$Id$',
+                          jwt_issuer=None,
                           cookie_timeout=ONE_WEEK,
                           token_allowed_views=('feed.rss', 'feed.atom')):
     """
@@ -89,7 +90,7 @@ def create_who_apifactory(secure_cookies=True,
     token_tkt = KnownUrlTokenBasedAuthenticator(cookie_secret,
                                                 allowed_views=token_allowed_views)
 
-    jwt_auth = DataserverJWTAuthenticator(jwt_secret)
+    jwt_auth = DataserverJWTAuthenticator(jwt_secret, jwt_issuer)
 
     # For browsers (NOT application browsers), we want to do authentication via a
     # redirect to the login app.
