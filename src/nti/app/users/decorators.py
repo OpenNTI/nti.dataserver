@@ -8,8 +8,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import base64
-
 from pyramid.interfaces import IRequest
 
 from zope import component
@@ -37,7 +35,6 @@ from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import IDeleteLockedCommunity
 
-from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_DELETE
 from nti.dataserver.authorization import ACT_UPDATE
 
@@ -51,7 +48,6 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.users.interfaces import IAuthToken
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowMembersLink
@@ -327,17 +323,3 @@ class _UserTokensLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
         _links = result.setdefault(LINKS, [])
         link = Link(context, rel=VIEW_USER_TOKENS, elements=(VIEW_USER_TOKENS,))
         _links.append(link)
-
-
-@component.adapter(IAuthToken)
-@interface.implementer(IExternalMappingDecorator)
-class _AuthTokenEncodedTokenDecorator(AbstractAuthenticatedRequestAwareDecorator):
-
-    def _predicate(self, context, unused_result):
-        result =    self._is_authenticated \
-                and has_permission(ACT_READ, context)
-        return result
-
-    def _do_decorate_external(self, context, result):
-        encoded_token = base64.b64encode('%s:%s' % (self.remoteUser.username, context.token))
-        result['EncodedToken'] = encoded_token

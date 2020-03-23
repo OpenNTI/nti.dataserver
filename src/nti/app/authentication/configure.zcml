@@ -18,9 +18,6 @@
 	<utility factory=".pluggableauth.DataserverUsersAuthenticatorPlugin"
 			 name="Dataserver Global User Authenticator" />
 
-	<utility factory=".pluggableauth.DataserverJWTAuthenticatorPlugin"
-             name="Dataserver JWT Authenticator" />
-
 	<utility factory="nti.app.authentication.saml_plugin.make_saml_client"
 			 provides="nti.app.saml.interfaces.ISAMLClient" />
 

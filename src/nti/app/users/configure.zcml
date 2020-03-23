@@ -29,11 +29,6 @@
     <subscriber handler=".subscribers._on_auto_subscribe_created" />
 
 	<!-- Decorators -->
-	<subscriber factory=".decorators._AuthTokenEncodedTokenDecorator"
-                provides="nti.externalization.interfaces.IExternalMappingDecorator"
-                for="nti.dataserver.users.interfaces.IAuthToken
-                     pyramid.interfaces.IRequest" />
-
 	<subscriber factory=".decorators._UserEmailVerificationLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IUser
