@@ -21,8 +21,8 @@ from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 
 from nti.app.authentication import user_can_login
 
+from nti.app.authentication.who_authenticators import DataserverJWTAuthenticator
 from nti.app.authentication.who_authenticators import KnownUrlTokenBasedAuthenticator
-from nti.app.authentication.who_authenticators import DataserverJWTAuthenticatorPlugin
 from nti.app.authentication.who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
 
 from nti.app.authentication.who_basicauth import BasicAuthPlugin
@@ -32,8 +32,6 @@ from nti.app.authentication.who_classifiers import application_request_classifie
 from nti.app.authentication.who_classifiers import forbidden_or_missing_challenge_decider
 
 from nti.app.authentication.who_redirector import BrowserRedirectorPlugin
-
-from nti.app.authentication.who_jwtauth import JWTAuthPlugin
 
 from nti.appserver.interfaces import IApplicationSettings
 
@@ -45,6 +43,7 @@ logger = __import__('logging').getLogger(__name__)
 
 def create_who_apifactory(secure_cookies=True,
                           cookie_secret='$Id$',
+                          jwt_secret='$Id$',
                           cookie_timeout=ONE_WEEK,
                           token_allowed_views=('feed.rss', 'feed.atom')):
     """
@@ -69,7 +68,6 @@ def create_who_apifactory(secure_cookies=True,
     # but the native string type.
     basicauth = BasicAuthPlugin('NTI')
     basicauth_interactive = ApplicationBasicAuthPlugin('NTI')
-    jwtauth = JWTAuthPlugin('NTI')
 
     auth_tkt = AuthTktCookiePlugin(cookie_secret,
                                    'nti.auth_tkt',
@@ -91,6 +89,8 @@ def create_who_apifactory(secure_cookies=True,
     token_tkt = KnownUrlTokenBasedAuthenticator(cookie_secret,
                                                 allowed_views=token_allowed_views)
 
+    jwt_auth = DataserverJWTAuthenticator(jwt_secret)
+
     # For browsers (NOT application browsers), we want to do authentication via a
     # redirect to the login app.
     try:
@@ -111,7 +111,7 @@ def create_who_apifactory(secure_cookies=True,
     identifiers = [('auth_tkt', auth_tkt)]
     identifiers.append(('basicauth-interactive', basicauth_interactive))
     identifiers.append(('basicauth', basicauth))
-    identifiers.append(('jwtauth', jwtauth))
+    identifiers.append(('jwtauth', jwt_auth))
     identifiers.append(('token_tkt', token_tkt))
 
     # Confirmation/authentication can come from the cookie (encryption)
@@ -119,7 +119,7 @@ def create_who_apifactory(secure_cookies=True,
     # token query param
     authenticators = [('auth_tkt', auth_tkt)]
     authenticators.append(('htpasswd', DataserverGlobalUsersAuthenticatorPlugin()))
-    authenticators.append(('jwt', DataserverJWTAuthenticatorPlugin()))
+    authenticators.append(('jwt', jwt_auth))
     authenticators.append(('token_tkt', token_tkt))
 
     # Order matters when multiple plugins accept the classification
@@ -128,7 +128,6 @@ def create_who_apifactory(secure_cookies=True,
     challengers = [('browser-redirector', redirector)]
     challengers.append(('basicauth-interactive', basicauth_interactive))
     challengers.append(('basicauth', basicauth))
-    challengers.append(('jwtauth', jwtauth))
 
     mdproviders = []
 

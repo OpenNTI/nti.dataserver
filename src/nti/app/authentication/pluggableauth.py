@@ -63,25 +63,3 @@ class DataserverUsersAuthenticatorPlugin(object):
         if user is not None:
             # 1) Better title and description
             return PrincipalInfo(pid, pid, pid, pid)
-
-
-@interface.implementer(IAuthenticatorPlugin)
-class DataserverJWTAuthenticatorPlugin(object):
-    """
-    Authenticates jwt bearer tokens.
-    """
-
-    def authenticateCredentials(self, credentials):
-        """
-        Validate the user and token.
-        """
-        login = credentials.get('login')
-        user = User.get_user(login)
-        if user is None:
-            return None
-        return self.principalInfo(login)
-
-    def principalInfo(self, pid):
-        user = User.get_user(pid)
-        if user is not None:
-            return PrincipalInfo(pid, pid, pid, pid)

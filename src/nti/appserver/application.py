@@ -693,7 +693,8 @@ def createApplication( http_port,
 	pyramid_auth.configure_authentication_policy(
 		pyramid_config,
 		secure_cookies=asbool( settings.get('secure_cookies', True) ),
-		cookie_secret=settings.get('cookie_secret', '$Id$'))
+		cookie_secret=settings.get('cookie_secret', '$Id$'),
+		jwt_secret=settings.get('jwt_secret', '$Id$'))
 
 
 	_logon_account_views(pyramid_config)
