@@ -73,17 +73,16 @@ class DataserverJWTAuthenticator(object):
         except (ValueError, AttributeError):
             return None
         if authmeth.lower() == b'bearer':
-            secret = self._get_secret()
             try:
                 auth = auth.strip()
                 # This will validate the payload, including the
                 # expiration date. We course also whitelist the issuer here.
-                auth = decode(auth, secret, algorithms=JWT_ALGS)
+                auth = decode(auth, self.secret, algorithms=JWT_ALGS)
             except DecodeError:
                 pass
             else:
                 result = auth
-                result['IDENTITY_TYPE'] = 'jwt_token'
+                environ['IDENTITY_TYPE'] = 'jwt_token'
         return result
 
     def forget(self, unused_environ, unused_identity):  # pragma: no cover
