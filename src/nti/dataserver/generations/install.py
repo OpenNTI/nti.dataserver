@@ -17,10 +17,6 @@ generation = int(os.getenv('DATASERVER_TEST_GENERATION', generation))
 
 from zope.generations.generations import SchemaManager
 
-from zope.securitypolicy.interfaces import IPrincipalRoleManager
-
-from nti.dataserver.authorization import ROLE_ADMIN
-
 
 class _DataserverSchemaManager(SchemaManager):
     """
@@ -38,11 +34,6 @@ def evolve(context):
     result = install_main(context)
     install_chat(context)
     return result
-
-import base64
-
-from datetime import datetime
-from datetime import timedelta
 
 from zope import component
 from zope import interface
@@ -85,13 +76,6 @@ from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.metadata.index import install_metadata_catalog
 
 from nti.dataserver.users import index as user_index
-
-from nti.dataserver.users import User
-
-from nti.dataserver.users.interfaces import IAuthToken
-from nti.dataserver.users.interfaces import IUserTokenContainer
-
-from nti.dataserver.users.tokens import UserToken
 
 from nti.dataserver.users.black_list import UserBlacklistedStorage
 
@@ -209,8 +193,6 @@ def install_main(context):
         install_sites_folder(dataserver_folder)
 
         install_username_blacklist(dataserver_folder)
-
-        install_default_admin_user(dataserver_folder)
     return dataserver_folder
 
 
@@ -346,48 +328,3 @@ def install_username_blacklist(dataserver_folder):
     intids = lsm.getUtility(zope.intid.IIntIds)
     intids.register(user_blacklist)
     lsm.registerUtility(user_blacklist, provided=IUserBlacklistedStorage)
-
-
-ADMIN_USERNAME = u'admin@nextthought.com'
-TOKEN_EXPIRATION_IN_DAYS = 30
-KEY_LOCATION_FILENAME = '.admin.key'
-
-
-def install_default_admin_user(root):
-    """
-    Install an admin user without ordinary credentials. This NT user will
-    have a :class:`nti.dataserver.users.interfaces.IAuthToken` created (with
-    an expiration date) and its value stored on disk for future use.
-    """
-    class mock_dataserver(object):
-        pass
-    mock_dataserver.root = root
-    mock_dataserver.shards = root['shards']
-    # No email, no password
-    admin_user = User.get_user(ADMIN_USERNAME,
-                               dataserver=mock_dataserver)
-    if admin_user is None:
-        logger.info("Creating admin user (%s)", ADMIN_USERNAME)
-        admin_user = User.create_user(username=ADMIN_USERNAME,
-                                      dataserver=mock_dataserver,
-                                      external_value={'realname': u"Admin User",
-                                                      'email': u'admin@nextthought.com'},
-                                      exempt_username=True)
-        token_container = IUserTokenContainer(admin_user)
-        token_expiration = datetime.utcnow() + timedelta(days=TOKEN_EXPIRATION_IN_DAYS)
-        # A non-scoped token
-        user_token = UserToken(title=u"Auth token",
-                               expiration_date=token_expiration)
-        token_container.store_token(user_token)
-        interface.alsoProvides(user_token, IAuthToken)
-        token_val = user_token.token
-        data_dir = os.getenv('DATASERVER_DATA_DIR')
-        if data_dir:
-            path = os.path.join(data_dir, KEY_LOCATION_FILENAME)
-            with open(path, 'w+') as f:
-                encoded_token = base64.b64encode('%s:%s' % (ADMIN_USERNAME, token_val))
-                f.write(encoded_token)
-
-        # Permission as admin
-        ds_role_manager = IPrincipalRoleManager(root)
-        ds_role_manager.assignRoleToPrincipal(ROLE_ADMIN.id, 'admin@nextthought.com')

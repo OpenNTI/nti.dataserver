@@ -10,18 +10,32 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from jwt import decode
+
+from jwt.exceptions import InvalidTokenError
+
 from zope import component
 from zope import interface
 
 from zope.pluggableauth.interfaces import IAuthenticatorPlugin
+
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from repoze.who.interfaces import IIdentifier
 from repoze.who.interfaces import IAuthenticator
 
 from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
 
+from nti.dataserver.authorization import ROLE_ADMIN
+
+from nti.dataserver.interfaces import IDataserver
+
+from nti.dataserver.users import User
 
 logger = __import__('logging').getLogger(__name__)
+
+
+JWT_ALGS = ['HS256']
 
 
 @interface.implementer(IAuthenticator)
@@ -36,16 +50,87 @@ class DataserverGlobalUsersAuthenticatorPlugin(object):
             return None
 
 
-@interface.implementer(IAuthenticator)
-class DataserverTokenAuthenticator(object):
+@interface.implementer(IAuthenticator,
+                       IIdentifier)
+class DataserverJWTAuthenticator(object):
 
-    def authenticate(self, unused_environ, identity):
+    def __init__(self, secret, issuer=None):
+        """
+        Creates a combo :class:`.IIdentifier` and :class:`.IAuthenticator`
+        using an auth-tkt like token.
+
+        :param string secret: The encryption secret. May be the same as the
+                auth_tkt secret.
+        """
+        self.secret = secret
+        self.issuer = issuer
+
+    def identify(self, environ):
+        auth = environ.get('HTTP_AUTHORIZATION', '')
+        result = None
         try:
-            plugin = component.getUtility(IAuthenticatorPlugin,
-                                          name="Dataserver Token Authenticator")
-            return plugin.authenticateCredentials(identity).id
-        except (KeyError, AttributeError, LookupError):  # pragma: no cover
+            auth = auth.strip()
+            authmeth, auth = auth.split(b' ', 1)
+        except (ValueError, AttributeError):
             return None
+        if authmeth.lower() == b'bearer':
+            try:
+                auth = auth.strip()
+                # This will validate the payload, including the
+                # expiration date. We course also whitelist the issuer here.
+                auth = decode(auth, self.secret,
+                              issuer=self.issuer, algorithms=JWT_ALGS)
+            except InvalidTokenError:
+                pass
+            else:
+                result = auth
+                environ['IDENTITY_TYPE'] = 'jwt_token'
+        return result
+
+    def forget(self, unused_environ, unused_identity):  # pragma: no cover
+        return []
+
+    def remember(self, unused_environ, unused_identity):  # pragma: no cover
+        return []
+
+    def _make_admin(self, user):
+        """
+        Assign the NT admin role to this user.
+        """
+        dataserver = component.getUtility(IDataserver)
+        ds_folder = dataserver.root_folder['dataserver2']
+        ds_role_manager = IPrincipalRoleManager(ds_folder)
+        ds_role_manager.assignRoleToPrincipal(ROLE_ADMIN.id, user.username)
+
+    def authenticate(self, environ, identity):
+        if environ.get('IDENTITY_TYPE') != 'jwt_token':
+            return
+        try:
+            username = identity['login']
+        except KeyError:
+            return
+
+        result = None
+        user = User.get_user(username)
+        if user is not None:
+            result = user.username
+        elif 'create' in identity:
+            # site user restrictions etc, mark request
+            logger.info("Creating user via JWT (%s)",
+                        username)
+            try:
+                # Create a user without credentials
+                user = User.create_user(username=username,
+                                        external_value=identity)
+                result = username
+            except:
+                # Overly broad, can we just catch validation errors?
+                logger.exception("Error during JWT provisioning (%s)",
+                                 identity)
+
+        if 'admin' in identity and user is not None:
+            self._make_admin(user)
+        return result
 
 
 @interface.implementer(IAuthenticator,

@@ -51,12 +51,14 @@ from nti.app.authentication.who_views import ForbiddenView
 from nti.app.authentication.who_policy import AuthenticationPolicy
 from nti.app.authentication.who_apifactory import create_who_apifactory
 
-DEFAULT_COKIE_SECRET = '$Id$'
+DEFAULT_COOKIE_SECRET = DEFAULT_JWT_SECRET ='$Id$'
 
 
 def configure_authentication_policy(pyramid_config,
                                     secure_cookies=True,
-                                    cookie_secret=DEFAULT_COKIE_SECRET,
+                                    cookie_secret=DEFAULT_COOKIE_SECRET,
+                                    jwt_secret=DEFAULT_JWT_SECRET,
+                                    jwt_issuer=None,
                                     cookie_timeout=ONE_WEEK):
     """
     Create and configure the authentication policy and the things that go with it.
@@ -68,12 +70,17 @@ def configure_authentication_policy(pyramid_config,
     :param str cookie_secret: The value used to encrypt cookies. Must be the same on
             all instances in a given environment, but should be different in different
             environments.
+    :param str jwt_secret: The value used to encrypt cookies. Must be the same on
+            all instances in a given environment, but should be different in different
+            environments.
     """
     # XXX: Should configure this
     token_allowed_views = ('feed.rss', 'feed.atom', 'calendar_feed.ics')
     api_factory = create_who_apifactory(secure_cookies=secure_cookies,
                                         cookie_secret=cookie_secret,
                                         cookie_timeout=cookie_timeout,
+                                        jwt_secret=jwt_secret,
+                                        jwt_issuer=jwt_issuer,
                                         token_allowed_views=token_allowed_views)
     policy = AuthenticationPolicy(api_factory.default_identifier_name,
                                   cookie_timeout=cookie_timeout,

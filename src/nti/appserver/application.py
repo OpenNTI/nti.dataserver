@@ -123,6 +123,7 @@ def _logon_account_views(pyramid_config):
 
 	pyramid_config.add_route(name='logon.ping', pattern='/dataserver2/logon.ping')
 	pyramid_config.add_route(name='logon.handshake', pattern='/dataserver2/logon.handshake')
+	pyramid_config.add_route(name='logon.nti', pattern='/dataserver2/logon.nti')
 	pyramid_config.add_route(name='logon.nti.password', pattern='/dataserver2/logon.nti.password')
 	pyramid_config.add_route(name='logon.nti.impersonate', pattern='/dataserver2/logon.nti.impersonate',
 							 factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory')
@@ -693,7 +694,9 @@ def createApplication( http_port,
 	pyramid_auth.configure_authentication_policy(
 		pyramid_config,
 		secure_cookies=asbool( settings.get('secure_cookies', True) ),
-		cookie_secret=settings.get('cookie_secret', '$Id$'))
+		cookie_secret=settings.get('cookie_secret', '$Id$'),
+		jwt_secret=settings.get('jwt_secret', '$Id$'),
+		jwt_issuer=settings.get('jwt_issuer', None))
 
 
 	_logon_account_views(pyramid_config)

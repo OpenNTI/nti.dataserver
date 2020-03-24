@@ -654,9 +654,7 @@ class GenericSitePolicyEventListener(AbstractSitePolicyEventListener):
 		"""
 		self._censor_usernames(user)
 
-		if			(not IExemptUsernameUser.providedBy(user) \
-				and user.username.endswith('@nextthought.com')) \
-			or username_is_reserved(user.username):
+		if username_is_reserved(user.username):
 			raise UsernameCannotContainNextthoughtCom(
 					_("That username is not valid. Please choose another."),
 					'Username',
