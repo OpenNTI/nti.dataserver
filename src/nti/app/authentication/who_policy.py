@@ -14,7 +14,7 @@ less well in a Zope-ish environment.
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
-        
+
 import time
 from collections import Mapping
 
@@ -91,7 +91,7 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
     # Note that the auth tkt never gets reissued; unlike repoze.who's
     # `login` function, nothing in pyramid ever calls `remember`
     # automatically. The version of auth_tkt that comes with Pyramid
-    # (AuthTktCookieHelper) handles this by reissuing the cooking at
+    # (AuthTktCookieHelper) handles this by reissuing the cookie at
     # `identify` time (actually, it schedules a response callback),
     # and the policy that uses it calls this method from all of
     # `authenticated_userid`, `unauthenticated_userid` and
@@ -192,7 +192,7 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
         res = self.__do_remember(request, principal, **kw)
         # Match what pyramid's AuthTkt policy does
         if hasattr(request, '_authtkt_reissued'):
-            setattr(request, '_authtkt_reissue_revoked', True) 
+            setattr(request, '_authtkt_reissue_revoked', True)
         return res
 
     def __do_remember(self, request, principal, **unused_kw):
@@ -232,7 +232,7 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
             'max_age': str(self._cookie_timeout),
             'tokens': request.environ.get('REMOTE_USER_TOKENS', ()),
         }
-        if (    principal != identity.get('repoze.who.userid')  
+        if (    principal != identity.get('repoze.who.userid')
             # start from scratch for a changed user
             # also from scratch, remembering unconditionally, usually from app code
             or 'identifier' not in identity
