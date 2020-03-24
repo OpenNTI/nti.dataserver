@@ -243,12 +243,12 @@ class TestApplicationLogon(ApplicationLayerTest):
 		testapp = self.testapp
 		# Empty
 		env = {}
-		testapp.get('/dataserver2/logon.nti.jwt', extra_environ=env, status=401)
+		testapp.get('/dataserver2/logon.nti', extra_environ=env, status=401)
 
 		# User dne
 		payload = {'login': 'jwt_user_admin_iss_login@nextthought.com'}
 		env = get_environ(payload)
-		testapp.get('/dataserver2/logon.nti.jwt', extra_environ=env, status=401)
+		testapp.get('/dataserver2/logon.nti', extra_environ=env, status=401)
 
 		# Create admin
 		payload = {'login': 'jwt_user_admin_iss_login@nextthought.com',
@@ -257,7 +257,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 				   'create': "true",
 				   'iss': "unused_issuer"}
 		env = get_environ(payload)
-		res = testapp.get('/dataserver2/logon.nti.jwt', extra_environ=env)
+		res = testapp.get('/dataserver2/logon.nti', extra_environ=env)
 
 		assert_that(res.headers.dict_of_lists()['set-cookie'],
 					 has_length(4))  # username, 3 variations on auth_tkt for domains
@@ -281,7 +281,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 		# Can upconvert to NT admin
 		payload['admin'] = 'true'
 		env = get_environ(payload)
-		testapp.get('/dataserver2/logon.nti.jwt', extra_environ=env)
+		testapp.get('/dataserver2/logon.nti', extra_environ=env)
 
 		res = testapp.get('/dataserver2/logon.ping').json_body
 		self.require_link_href_with_rel(res, 'logon.nti.impersonate')
@@ -289,7 +289,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 		# Admin status persisted
 		payload.pop('admin')
 		env = get_environ(payload)
-		testapp.get('/dataserver2/logon.nti.jwt', extra_environ=env)
+		testapp.get('/dataserver2/logon.nti', extra_environ=env)
 
 		res = testapp.get('/dataserver2/logon.ping').json_body
 		self.require_link_href_with_rel(res, 'logon.nti.impersonate')
