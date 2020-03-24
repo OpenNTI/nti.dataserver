@@ -410,9 +410,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
         # For large lists, an array is more memory efficient then a list,
         # since it uses native storage
-        # Py3 porting issue, long went away?
-        array_type = 'l' if isinstance(self._catalog.family.maxint, long) else 'i'
-        return array(str(array_type), _sorted)
+        return array('l', _sorted)
 
     def iter_notable_intids(self, notable_intids):
         return SafeResultSet(notable_intids, self._intids)
