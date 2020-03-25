@@ -26,6 +26,9 @@ from hamcrest import starts_with
 from hamcrest import contains_string
 from hamcrest import greater_than_or_equal_to
 
+from datetime import datetime
+from datetime import timedelta
+
 from jwt import encode
 
 from nose.tools import assert_raises
@@ -309,6 +312,18 @@ class TestApplicationLogon(ApplicationLayerTest):
 
 		res = testapp.get('/dataserver2/logon.ping').json_body
 		self.require_link_href_with_rel(res, 'logon.nti.impersonate')
+
+		# Expiration
+		testapp.get('/dataserver2/logon.logout')
+		yesterday = datetime.utcnow() - timedelta(days=1)
+		payload['exp'] = yesterday
+		jwt_token = encode(payload, DEFAULT_JWT_SECRET)
+		testapp.get('/dataserver2/logon.nti?jwt=%s' % jwt_token, status=401)
+
+		tomorrow = datetime.utcnow() + timedelta(days=1)
+		payload['exp'] = tomorrow
+		jwt_token = encode(payload, DEFAULT_JWT_SECRET)
+		testapp.get('/dataserver2/logon.nti?jwt=%s' % jwt_token)
 
 
 class TestLinkProviders(ApplicationLayerTest):
