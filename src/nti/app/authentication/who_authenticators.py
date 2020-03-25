@@ -54,6 +54,9 @@ class DataserverGlobalUsersAuthenticatorPlugin(object):
                        IIdentifier)
 class DataserverJWTAuthenticator(object):
 
+    from paste.request import parse_dict_querystring
+    parse_dict_querystring = staticmethod(parse_dict_querystring)
+
     def __init__(self, secret, issuer=None):
         """
         Creates a combo :class:`.IIdentifier` and :class:`.IAuthenticator`
@@ -65,7 +68,7 @@ class DataserverJWTAuthenticator(object):
         self.secret = secret
         self.issuer = issuer
 
-    def identify(self, environ):
+    def _get_auth_token(self, environ):
         auth = environ.get('HTTP_AUTHORIZATION', '')
         result = None
         try:
@@ -74,17 +77,37 @@ class DataserverJWTAuthenticator(object):
         except (ValueError, AttributeError):
             return None
         if authmeth.lower() == b'bearer':
-            try:
-                auth = auth.strip()
-                # This will validate the payload, including the
-                # expiration date. We course also whitelist the issuer here.
-                auth = decode(auth, self.secret,
-                              issuer=self.issuer, algorithms=JWT_ALGS)
-            except InvalidTokenError:
-                pass
-            else:
-                result = auth
-                environ['IDENTITY_TYPE'] = 'jwt_token'
+            result = auth.strip()
+        return result
+
+    def _get_param_token(self, environ):
+        query_dict = self.parse_dict_querystring(environ)
+        try:
+            result = query_dict['jwt']
+        except KeyError:
+            result = None
+        return result
+
+    def _get_jwt_token(self, environ):
+        result = self._get_auth_token(environ)
+        if result is None:
+            result = self._get_param_token(environ)
+        return result
+
+    def identify(self, environ):
+        jwt_token = self._get_jwt_token(environ)
+        if not jwt_token:
+            return
+        try:
+            # This will validate the payload, including the
+            # expiration date. We course also whitelist the issuer here.
+            auth = decode(jwt_token, self.secret,
+                          issuer=self.issuer, algorithms=JWT_ALGS)
+        except InvalidTokenError:
+            result = None
+        else:
+            result = auth
+            environ['IDENTITY_TYPE'] = 'jwt_token'
         return result
 
     def forget(self, unused_environ, unused_identity):  # pragma: no cover

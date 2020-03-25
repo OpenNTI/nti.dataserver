@@ -40,9 +40,9 @@ Identify
 CORS
 ----
 
-Next commes support for for CORS. CORS needs to be outermost so that even 401 errors and
+Next comes support for for CORS. CORS needs to be outermost so that even 401 errors and
 exceptions have the chance to get their responses wrapped::
-  
+
 	[filter:nti_cors]
 	use = egg:nti.dataserver#cors
 

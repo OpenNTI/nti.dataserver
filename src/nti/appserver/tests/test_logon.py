@@ -294,6 +294,22 @@ class TestApplicationLogon(ApplicationLayerTest):
 		res = testapp.get('/dataserver2/logon.ping').json_body
 		self.require_link_href_with_rel(res, 'logon.nti.impersonate')
 
+		payload['admin'] = 'true'
+		env = get_environ(payload)
+		testapp.get('/dataserver2/logon.nti', extra_environ=env)
+
+		# Query param
+		testapp.get('/dataserver2/logon.logout')
+		jwt_token = encode(payload, 'bad_secret')
+		testapp.get('/dataserver2/logon.nti?jwt=%s' % jwt_token, status=401)
+
+		jwt_token = encode(payload, DEFAULT_JWT_SECRET)
+		testapp.get('/dataserver2/logon.nti?jwt=%sdne' % jwt_token, status=401)
+		testapp.get('/dataserver2/logon.nti?jwt=%s' % jwt_token)
+
+		res = testapp.get('/dataserver2/logon.ping').json_body
+		self.require_link_href_with_rel(res, 'logon.nti.impersonate')
+
 
 class TestLinkProviders(ApplicationLayerTest):
 
