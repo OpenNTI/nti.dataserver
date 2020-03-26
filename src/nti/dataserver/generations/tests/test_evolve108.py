@@ -49,7 +49,7 @@ class TestEvolve108(mock_dataserver.DataserverLayerTest):
 
             # Make sure all the nextthought.com users have admin role there
             admin_principals = role_manager.getPrincipalsForRole(ROLE_ADMIN.id)
-            assert_that(admin_principals, has_length(1))
+            assert_that(admin_principals, has_length(0))
 
             do_evolve(context)
 
@@ -60,6 +60,5 @@ class TestEvolve108(mock_dataserver.DataserverLayerTest):
 
             # Make sure all the nextthought.com users have admin role there
             admin_principals = role_manager.getPrincipalsForRole(ROLE_ADMIN.id)
-            assert_that(admin_principals, contains_inanyorder(('admin@nextthought.com', Allow),
-                                                              (admin_1.username, Allow),
+            assert_that(admin_principals, contains_inanyorder((admin_1.username, Allow),
                                                               (admin_2.username, Allow)))
