@@ -7,8 +7,9 @@ from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
-from hamcrest import has_items
 from hamcrest import is_
+from hamcrest import has_item
+from hamcrest import has_items
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -42,11 +43,10 @@ class TestAuthorization(ApplicationLayerTest):
         admin_href = "/dataserver2/Admins"
         res = self.testapp.get(admin_href, extra_environ=admin_environ)
         res = res.json_body
-        assert_that(res, has_entry('Items', has_length(2)))
+        assert_that(res, has_entry('Items', has_length(1)))
         assert_that(res['Items'],
-                    has_items(
+                    has_item(
                         has_entry('Username', is_(initial_admin_username)),
-                        has_entry('Username', is_('admin@nextthought.com')),
                     ))
 
         # Missing user/no user
