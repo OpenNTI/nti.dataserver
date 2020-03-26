@@ -102,8 +102,7 @@ def _user_modified_from_external_event(user, event):
 @component.adapter(IUser, IObjectCreatedEvent)
 def _on_user_created(user, unused_event):
     """
-    Run new user through site community
-    auto-subscribe predicates.
+    Run new user through site community auto-subscribe predicates.
     """
     set_user_creation_site(user)
     # This result set should be relatively small per site

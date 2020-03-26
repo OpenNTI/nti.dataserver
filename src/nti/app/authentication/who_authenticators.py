@@ -17,6 +17,8 @@ from jwt.exceptions import InvalidTokenError
 from zope import component
 from zope import interface
 
+from zope.event import notify
+
 from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
@@ -28,9 +30,15 @@ from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
 
 from nti.dataserver.authorization import ROLE_ADMIN
 
+from nti.dataserver.authorization import is_admin
+
 from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users import User
+
+from nti.dataserver.users.common import remove_user_creation_site
+
+from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -151,8 +159,12 @@ class DataserverJWTAuthenticator(object):
                 logger.exception("Error during JWT provisioning (%s)",
                                  identity)
 
-        if 'admin' in identity and user is not None:
+        if      'admin' in identity \
+            and user is not None \
+            and not is_admin(user):
             self._make_admin(user)
+            remove_user_creation_site(user)
+            notify(ObjectModifiedFromExternalEvent(user))
         return result
 
 
