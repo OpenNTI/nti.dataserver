@@ -22,17 +22,12 @@ from zope import interface
 
 from nti.appserver.policies import censor_policies
 
-from nti.appserver.policies.site_policies import GenericSitePolicyEventListener
-from nti.appserver.policies.site_policies import UsernameCannotContainNextthoughtCom
-
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.chatserver.messageinfo import MessageInfo
 from nti.chatserver.presenceinfo import PresenceInfo
 
 from nti.contentrange import contentrange
-
-from nti.coremetadata.interfaces import IExemptUsernameUser
 
 from nti.dataserver import contenttypes
 
@@ -211,16 +206,6 @@ class TestApplicationCensoring(CensorTestMixin, ApplicationLayerTest):
 			# nti.contentfragments.censor.censor_assign( [bad_val], args[0], 'body' )
 
 			assert_that( args[0], has_property( 'body', only_contains( censored_val ) ) )
-
-	@WithSharedApplicationMockDS
-	def test_exempt_nextthought_usernames(self):
-		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user(external_value={u'realname':'aizen nezai'})
-			policy = GenericSitePolicyEventListener()
-			with self.assertRaises(UsernameCannotContainNextthoughtCom):
-				policy.user_will_create(user, None)
-			interface.alsoProvides(user, IExemptUsernameUser)
-			policy.user_will_create(user, None)
 
 	@WithSharedApplicationMockDS
 	def test_presenceinfo_uses_sites_from_session(self):
