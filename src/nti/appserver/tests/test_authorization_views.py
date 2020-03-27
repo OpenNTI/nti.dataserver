@@ -74,10 +74,9 @@ class TestAuthorization(ApplicationLayerTest):
         res = self.testapp.get(admin_href,
                                extra_environ=admin_environ).json_body
         items = res['Items']
-        assert_that(items, has_length(3))
+        assert_that(items, has_length(2))
         assert_that(res['Items'],
                     has_items(
-                        has_entry('Username', is_(initial_admin_username)),
                         has_entry('Username', is_(regular_username)),
                         has_entry('Username', is_(initial_admin_username)),
                     ))
@@ -109,10 +108,9 @@ class TestAuthorization(ApplicationLayerTest):
         res = self.testapp.get(admin_href, extra_environ=admin_environ)
         res = res.json_body
         items = res['Items']
-        assert_that(items, has_length(3))
+        assert_that(items, has_length(2))
         assert_that(res['Items'],
                     has_items(
-                        has_entry('Username', is_(initial_admin_username)),
                         has_entry('Username', is_(regular_username)),
                         has_entry('Username', is_(initial_admin_username)),
                     ))
