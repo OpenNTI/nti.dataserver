@@ -95,7 +95,7 @@ class TestAuthorization(ApplicationLayerTest):
         res = self.testapp.get(admin_href,
                                extra_environ=admin_environ).json_body
         items = res['Items']
-        assert_that(items, has_length(2))
+        assert_that(items, has_length(1))
 
         # Access
         self.testapp.post(admin_href,
