@@ -20,6 +20,9 @@ from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
 from nti.app.authentication import user_can_login
 
+from nti.dataserver.users.interfaces import IAuthToken
+from nti.dataserver.users.interfaces import IUserTokenContainer
+
 from nti.dataserver.users.users import User
 
 logger = __import__('logging').getLogger(__name__)
@@ -56,6 +59,41 @@ class DataserverUsersAuthenticatorPlugin(object):
             return None
 
         if user.password.checkPassword(password):
+            return self.principalInfo(login)
+
+    def principalInfo(self, pid):
+        user = User.get_user(pid)
+        if user is not None:
+            # 1) Better title and description
+            return PrincipalInfo(pid, pid, pid, pid)
+
+
+@interface.implementer(IAuthenticatorPlugin)
+class DataserverTokenAuthenticatorPlugin(object):
+    """
+    Authenticates bearer tokens. The only tokens accepted must be a
+    :class:`nti.dataserver.users.interfaces.IAuthToken`.
+    """
+
+    def _valid_token(self, user, target_token):
+        admin_tokens = ()
+        if user is not None:
+            token_container = IUserTokenContainer(user)
+            admin_tokens = [x.token for x in token_container.get_valid_tokens() \
+                            if IAuthToken.providedBy(x)]
+        return target_token in admin_tokens
+
+    def authenticateCredentials(self, credentials):
+        """
+        Validate the user and token.
+        """
+        login = credentials.get('login')
+        token = credentials.get('token')
+
+        user = User.get_user(login)
+        if user is None or token is None:
+            return None
+        if self._valid_token(user, token):
             return self.principalInfo(login)
 
     def principalInfo(self, pid):
