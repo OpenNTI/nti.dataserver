@@ -64,6 +64,8 @@ from nti.appserver.workspaces.interfaces import IContainerCollection
 from nti.appserver.workspaces.interfaces import IUserWorkspaceLinkProvider
 from nti.appserver.workspaces.interfaces import IGlobalWorkspaceLinkProvider
 
+from nti.coremetadata.interfaces import IDeactivatedDynamicSharingTargetFriendsList
+
 from nti.dataserver import authorization
 
 from nti.dataserver.authorization_acl import ace_allowing
@@ -105,6 +107,7 @@ from nti.property.property import alias
 from nti.property.property import LazyOnClass
 
 from nti.traversal.traversal import find_interface
+
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -412,6 +415,7 @@ class DynamicFriendsListContainerCollection(_AbstractPseudoMembershipContainer,
         collection.
         """
         return IDynamicSharingTargetFriendsList.providedBy(obj) \
+           and not IDeactivatedDynamicSharingTargetFriendsList.providedBy(obj) \
            and (self.remote_user in obj or self.remote_user == obj.creator) \
            and self.search_include(obj)
 
