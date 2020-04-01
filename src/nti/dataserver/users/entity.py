@@ -123,7 +123,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
         return default
 
     @classmethod
-    def create_entity(cls, dataserver=None, **kwargs):
+    def create_entity(cls, dataserver=None, exempt_username=False, **kwargs):
         """
         Creates (and returns) and places in the dataserver a new entity,
         constructed using the keyword arguments given, the same as those
@@ -209,6 +209,9 @@ class Entity(PersistentCreatedModDateTrackingObject):
         # ObjectAdded (which is usually when intids get assigned) can use it.
         component.getUtility(IIntIds).register(user)
 
+        # This should be used sparingly by admin scripts.
+        if exempt_username:
+            interface.alsoProvides(user, IExemptUsernameUser)
         do_notify(WillCreateNewEntityEvent(user, ext_value, preflight_only, meta_data))
 
         if preflight_only:
