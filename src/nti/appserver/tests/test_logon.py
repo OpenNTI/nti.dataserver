@@ -258,6 +258,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 				   'realname': 'jwt admin',
 				   'email': 'jwt_user_admin_iss_login@nextthought.com',
 				   'create': "true",
+				   'admin': 'true',
 				   'iss': "unused_issuer"}
 		env = get_environ(payload)
 		res = testapp.get('/dataserver2/logon.nti', extra_environ=env)
@@ -279,10 +280,8 @@ class TestApplicationLogon(ApplicationLayerTest):
 		testapp.get('/dataserver2/users/jwt_user_admin_iss_login@nextthought.com')
 
 		res = testapp.get('/dataserver2/logon.ping').json_body
-		self.forbid_link_with_rel(res, 'logon.nti.impersonate')
 
 		# Can upconvert to NT admin
-		payload['admin'] = 'true'
 		env = get_environ(payload)
 		testapp.get('/dataserver2/logon.nti', extra_environ=env)
 
