@@ -178,9 +178,15 @@ class TestPost(ForumLayerTest):
 						is_not(has_key('flattenedSharingTargets')))))
 
 		ext_post = to_external_object(post)
-
 		factory = internalization.find_factory_for(ext_post)
 		new_post = factory()
 		internalization.update_from_external_object(new_post, ext_post)
-
 		assert_that(new_post, is_(post))
+		# Validate encoding
+		body1 = u'Aquí está/están'
+		body2 = u'သင့်ရဲ့ Learning Goal တွေကို ပြန်ပုံဖော်ကြည့်ပါ။ သင် ဘယ် Goal တွေကို အကောင်အထည်ဖော်ပြီးပြီလဲ ?'
+		for body in (body1, body2):
+			ext_post['body'] = [body]
+			factory = internalization.find_factory_for(ext_post)
+			new_post = factory()
+			internalization.update_from_external_object(new_post, ext_post)
