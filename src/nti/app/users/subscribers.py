@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 import time
 
+from perfmetrics import statsd_client
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.threadlocal import get_current_request
@@ -20,6 +22,9 @@ from zope import component
 
 from zope.event import notify
 
+from zope.component.hooks import getSite
+
+from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -61,6 +66,7 @@ from nti.dataserver.users.interfaces import IWillUpdateEntityEvent
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 
+from nti.dataserver.users.utils import get_users_by_site
 from nti.dataserver.users.utils import get_communities_by_site
 from nti.dataserver.users.utils import reindex_email_verification
 
@@ -231,3 +237,29 @@ def _on_user_deletion(user, unused_event=None):
     # This result set should be relatively small per site
     for community in get_communities_by_site() or ():
         user.record_no_longer_dynamic_member(community)
+
+
+@component.adapter(IUser, IObjectAddedEvent)
+def _update_stats_on_user_added(user, unused_event):
+    client = statsd_client()
+    if client is not None:
+        # For newly created users, they should have a creation site,
+        # which is set when an IObjectCreatedEvent triggers.
+        site_name = get_entity_creation_sitename(user)
+        users = get_users_by_site(site_name)
+        user_count = len(users) if user in users else len(users) + 1
+        client.gauge('nti.sites.%s.user_count' % site_name,
+                     user_count)
+
+
+@component.adapter(IUser, IObjectRemovedEvent)
+def _update_stats_on_user_removed(user, unused_event):
+    client = statsd_client()
+    if client is not None:
+        # Here we suppose all users should have a creation site.
+        # should we take care of the change of creation site?
+        site_name = get_entity_creation_sitename(user)
+        users = get_users_by_site(site_name)
+        user_count = len(users) if user not in users else len(users) - 1
+        client.gauge('nti.sites.%s.user_count' % site_name,
+                     user_count)
