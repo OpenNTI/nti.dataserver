@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import itertools
+
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -28,6 +30,7 @@ from nti.app.renderers.interfaces import IUncacheableInResponse
 
 from nti.app.users import MessageFactory as _
 
+from nti.app.users.utils import get_admins
 from nti.app.users.utils import get_site_admins
 from nti.app.users.utils import intids_of_users_by_site
 
@@ -77,13 +80,17 @@ class SiteUsersView(AbstractEntityViewMixin):
         return is_true(self.params.get('filterAdmins', 'False'))
 
     @Lazy
-    def site_admin_intids(self):
+    def admin_intids(self):
         """
         Return a set of site admin intids.
         """
         intids = component.getUtility(IIntIds)
         all_site_admins = get_site_admins()
-        return set(intids.getId(x) for x in all_site_admins or ())
+        admins = get_admins()
+        result = set()
+        for user in itertools.chain(all_site_admins, admins):
+            result.add(intids.getId(user))
+        return result
 
     def get_entity_intids(self, site=None):
         return intids_of_users_by_site(site)
@@ -115,7 +122,7 @@ class SiteUsersView(AbstractEntityViewMixin):
         result = self.mime_type(doc_id) == 'application/vnd.nextthought.user' \
              and super(SiteUsersView, self).search_include(doc_id)
         if result and self.filterAdmins:
-            result = doc_id not in self.site_admin_intids
+            result = doc_id not in self.admin_intids
         return result
 
     def __call__(self):

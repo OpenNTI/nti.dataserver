@@ -49,9 +49,11 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.base._compat import text_
 from nti.base._compat import bytes_
 
+from nti.dataserver.authorization import ROLE_ADMIN
 from nti.dataserver.authorization import ROLE_SITE_ADMIN
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users.common import entity_creation_sitename
 from nti.dataserver.users.common import set_entity_creation_site as set_creation_site
@@ -412,6 +414,27 @@ def get_site_admins(site=None):
         srm = None
     if srm is not None:
         for prin_id, access in srm.getPrincipalsForRole(ROLE_SITE_ADMIN.id):
+            if access == Allow:
+                user = User.get_user(prin_id)
+                if user is not None:
+                    result.append(user)
+    return result
+
+
+def get_admins():
+    """
+    Returns all NT admins.
+    """
+    result = []
+    dataserver = component.getUtility(IDataserver)
+    ds_folder = dataserver.root_folder['dataserver2']
+    try:
+        srm = IPrincipalRoleManager(ds_folder, None)
+    except TypeError:
+        # SiteManagerContainer (tests)
+        srm = None
+    if srm is not None:
+        for prin_id, access in srm.getPrincipalsForRole(ROLE_ADMIN.id):
             if access == Allow:
                 user = User.get_user(prin_id)
                 if user is not None:
