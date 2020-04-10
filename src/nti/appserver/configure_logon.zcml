@@ -94,4 +94,18 @@
 			secretKey="IgsnDiIOYx0GMDVpVCp+Vhw+JS5zFwEH"
 			id="google" />
 
+	<configure zcml:condition="not-have production_env">
+		<!-- TODO: update authorization url when server is available -->
+		<oauth:registerOAuthService
+			authorization_url="http://localhost:6543/google/oauth1"
+			id="google"/>
+	</configure>
+
+	<configure zcml:condition="have production_env">
+		<!-- TODO: update authorization url when server is available -->
+		<oauth:registerOAuthService
+			authorization_url="https://oauth.nextthought.io/google/oauth1"
+			id="google"/>
+	</configure>
+
 </configure>
