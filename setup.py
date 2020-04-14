@@ -155,6 +155,7 @@ setup(
         'nti.traversal',
         'nti.schema',
         'nti.site',
+        'nti.site_license',
         'nti.utils',
         'nti.wref',
         'nti.zodb',
