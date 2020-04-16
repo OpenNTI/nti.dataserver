@@ -32,9 +32,10 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import logging
-logger = logging.getLogger(__name__)
 
-import hashlib
+from nti.common.interfaces import IOAuthService
+
+logger = logging.getLogger(__name__)
 
 from six.moves import urllib_parse
 
@@ -1501,18 +1502,6 @@ def get_openid_configuration():
     return OPENID_CONFIGURATION
 
 
-def redirect_google_oauth2_params(request, state=None, auth_keys=None):
-    if auth_keys is None:
-        auth_keys = component.getUtility(IOAuthKeys, name="google")
-    state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
-    params = {'state': state,
-              'scope': 'openid email profile',
-              'response_type': 'code',
-              'client_id': auth_keys.APIKey,
-              'redirect_uri': _redirect_uri(request)}
-    return params
-
-
 @interface.implementer(IGoogleLogonLookupUtility)
 class DefaultGoogleLogonLookupUtility(object):
     """
@@ -1584,11 +1573,7 @@ def _get_google_hosted_domain():
 
 @view_config(route_name=REL_LOGIN_GOOGLE, request_method='GET')
 def google_oauth1(request, success=None, failure=None, state=None):
-    state = state or hashlib.sha256(os.urandom(1024)).hexdigest()
-    config = get_openid_configuration()
-    params = redirect_google_oauth2_params(request, state)
-    auth_url = config.get("authorization_endpoint", DEFAULT_AUTH_URL)
-
+    params = {}
     hosted_domain = _get_google_hosted_domain()
     if hosted_domain:
         params['hd'] = hosted_domain
@@ -1598,12 +1583,20 @@ def google_oauth1(request, success=None, failure=None, state=None):
         if value:
             request.session['google.' + key] = value
 
-    # save state for validation
-    request.session['google.state'] = state
-
     # redirect
-    target = auth_url[:-1] if auth_url.endswith('/') else auth_url
-    target = '%s?%s' % (target, urllib_parse.urlencode(params))
+    auth_svc = component.getUtility(IOAuthService, name="google")
+    target = auth_svc.authorization_request_uri(
+        client_id=component.getUtility(IOAuthKeys, name="google").APIKey,
+        response_type='code',
+        scope='openid email profile',
+        redirect_uri=_redirect_uri(request),
+        state=state,
+        **params
+    )
+
+    # save state for validation
+    request.session['google.state'] = auth_svc.params['state']
+
     response = hexc.HTTPSeeOther(location=target)
     return response
 
@@ -1652,11 +1645,14 @@ def google_oauth2(request):
     token_url = config.get('token_endpoint', DEFAULT_TOKEN_URL)
 
     try:
+        # Check for redirect url override (e.g. via the OAuth portal)
+        redirect_uri = params.get('_redirect_uri')
+
         data = {'code': code,
                 'client_id': auth_keys.APIKey,
                 'grant_type': 'authorization_code',
                 'client_secret': auth_keys.SecretKey,
-                'redirect_uri': _redirect_uri(request)}
+                'redirect_uri': redirect_uri or _redirect_uri(request)}
         response = requests.post(token_url, data)
         if response.status_code != 200:
             return _create_failure_response(
