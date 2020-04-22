@@ -67,8 +67,6 @@ from nti.contentfragments import censor
 
 from nti.contentfragments.interfaces import ICensoredContentPolicy
 
-from nti.coremetadata.interfaces import IExemptUsernameUser
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import INewUserPlacer
@@ -591,7 +589,8 @@ class AbstractSitePolicyEventListener(object):
 		names.alias = human_name.first + ' ' + human_name.last
 
 	def _censor_usernames(self, user):
-		_censor_usernames(user)
+		# Disabled by default
+		pass
 
 	def _check_age_makes_sense(self, user):
 		profile = IUserProfile(user)
