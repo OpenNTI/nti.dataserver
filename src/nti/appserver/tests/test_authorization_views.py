@@ -43,7 +43,7 @@ class TestAuthorization(ApplicationLayerTest):
         admin_href = "/dataserver2/Admins"
         res = self.testapp.get(admin_href, extra_environ=admin_environ)
         res = res.json_body
-        assert_that(res, has_entry('Items', has_length(1)))
+        assert_that(res, has_entry('Items', has_length(2)))
         assert_that(res['Items'],
                     has_item(
                         has_entry('Username', is_(initial_admin_username)),
@@ -74,7 +74,7 @@ class TestAuthorization(ApplicationLayerTest):
         res = self.testapp.get(admin_href,
                                extra_environ=admin_environ).json_body
         items = res['Items']
-        assert_that(items, has_length(2))
+        assert_that(items, has_length(3))
         assert_that(res['Items'],
                     has_items(
                         has_entry('Username', is_(regular_username)),
@@ -95,7 +95,7 @@ class TestAuthorization(ApplicationLayerTest):
         res = self.testapp.get(admin_href,
                                extra_environ=admin_environ).json_body
         items = res['Items']
-        assert_that(items, has_length(1))
+        assert_that(items, has_length(2))
 
         # Access
         self.testapp.post(admin_href,
@@ -108,7 +108,7 @@ class TestAuthorization(ApplicationLayerTest):
         res = self.testapp.get(admin_href, extra_environ=admin_environ)
         res = res.json_body
         items = res['Items']
-        assert_that(items, has_length(2))
+        assert_that(items, has_length(3))
         assert_that(res['Items'],
                     has_items(
                         has_entry('Username', is_(regular_username)),

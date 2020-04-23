@@ -53,7 +53,6 @@ zope.deferredimport.deprecatedFrom(
 	"ConfiguringTestBase",
 	"SharedConfiguringTestBase")
 
-import os
 import time
 import base64
 import datetime
@@ -84,7 +83,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 
 from nti.dataserver.generations.install import ADMIN_USERNAME
-from nti.dataserver.generations.install import KEY_LOCATION_FILENAME
 
 from nti.dataserver.users.interfaces import IAuthToken
 from nti.dataserver.users.interfaces import IUserTokenContainer
@@ -1327,14 +1325,7 @@ class TestApplication(ApplicationLayerTest):
 			token = token_container.get_valid_tokens()[0]
 			assert_that(token, validly_provides(IAuthToken))
 			token_val = token.token
-		data_dir = os.getenv('DATASERVER_DATA_DIR')
-		path = os.path.join(data_dir, KEY_LOCATION_FILENAME)
 		encoded_token = base64.b64encode('%s:%s' % (ADMIN_USERNAME, token_val))
-		with open(path, 'r') as f:
-			file_token = f.read()
-		assert_that(file_token,
-					is_(encoded_token),
-					(ADMIN_USERNAME, token_val, path))
 
 		# Validate full authentication
 		testapp = TestApp(self.app)
