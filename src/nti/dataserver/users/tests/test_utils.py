@@ -32,7 +32,7 @@ from nti.dataserver.users.common import user_creation_sitename
 from nti.dataserver.users.common import remove_user_creation_site
 
 from nti.dataserver.users.utils import get_users_by_site
-from nti.dataserver.users.utils import get_filtered_users_by_sites
+from nti.dataserver.users.utils import get_filtered_users_by_site
 from nti.dataserver.users.utils import get_users_by_email_in_sites
 from nti.dataserver.users.utils import invalid_emails_for_emails
 from nti.dataserver.users.utils import invalid_emails_for_users
@@ -196,36 +196,36 @@ class TestUtils(unittest.TestCase):
         assert_that(user_creation_sitename(user), is_('bleach.org'))
         lifecycleevent.modified(user)
 
-        results = get_filtered_users_by_sites({'email': None}, 'bleach.org')
+        results = get_filtered_users_by_site({'email': None}, 'bleach.org')
         assert_that(results, has_length(0))
 
-        results = get_filtered_users_by_sites({'email': ()}, 'bleach.org')
+        results = get_filtered_users_by_site({'email': ()}, 'bleach.org')
         assert_that(results, has_length(0))
 
-        results = get_filtered_users_by_sites({'email': ('ichigo@bleach.org',)}, 'bleach.org')
+        results = get_filtered_users_by_site({'email': ('ichigo@bleach.org',)}, 'bleach.org')
         assert_that(results, has_length(1))
 
-        results = get_filtered_users_by_sites({'email': 'ichigo@bleach.org'}, 'bleach.org')
+        results = get_filtered_users_by_site({'email': 'ichigo@bleach.org'}, 'bleach.org')
         assert_that(results, has_length(1))
 
-        results = get_filtered_users_by_sites({'email': ['other_email@bleach.org']}, 'bleach.org')
+        results = get_filtered_users_by_site({'email': ['other_email@bleach.org']}, 'bleach.org')
         assert_that(results, has_length(0))
 
-        results = get_filtered_users_by_sites({'email': 'other_email@bleach.org'}, 'bleach.org')
+        results = get_filtered_users_by_site({'email': 'other_email@bleach.org'}, 'bleach.org')
         assert_that(results, has_length(0))
 
-        results = get_filtered_users_by_sites({'email': ('ichigo@bleach.org',),
-                                               'alias': 'filter_user_alias'},
+        results = get_filtered_users_by_site({'email': ('ichigo@bleach.org',),
+                                              'alias': 'filter_user_alias'},
                                               'bleach.org')
         assert_that(results, has_length(1))
 
-        results = get_filtered_users_by_sites({'email': 'ichigo@bleach.org',
-                                               'alias': 'other_alias'},
+        results = get_filtered_users_by_site({'email': 'ichigo@bleach.org',
+                                              'alias': 'other_alias'},
                                               'bleach.org')
         assert_that(results, has_length(0))
 
-        results = get_filtered_users_by_sites({'email': ('other_email@bleach.org',),
-                                               'alias': 'filter_user_alias'},
+        results = get_filtered_users_by_site({'email': ('other_email@bleach.org',),
+                                              'alias': 'filter_user_alias'},
                                               'bleach.org')
         assert_that(results, has_length(0))
 

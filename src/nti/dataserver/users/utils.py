@@ -362,7 +362,7 @@ def get_users_by_sites(sites=(), include_filter=None):
     return result
 
 
-def get_filtered_users_by_sites(profile_filters, sites=()):
+def get_filtered_users_by_site(profile_filters, site=None):
     """
     Probably needs to be a utility. Would be better if we could
     ensure all possible profile fields are indexed to avoid
@@ -386,19 +386,19 @@ def get_filtered_users_by_sites(profile_filters, sites=()):
             # Currently an intersection only
             result = all(pred(profile) for pred in predicates)
         return result
-    return get_users_by_sites(sites=sites,
-                              include_filter=include_filter)
+    return get_users_by_site(site, include_filter=include_filter)
 
 
 def intids_of_users_by_site(site=None):
     return intids_of_users_by_sites((site or getSite().__name__),)
 
 
-def get_users_by_site(site=None):
+def get_users_by_site(site=None, include_filter=None):
     """
     Get the users using the given site.
     """
-    return get_users_by_sites((site or getSite().__name__),)
+    return get_users_by_sites((site or getSite().__name__),
+                              include_filter=include_filter)
 
 
 def get_entities_by_site(site=None):
