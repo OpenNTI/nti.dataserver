@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 import six
 
+from collections import Iterable
+
 from zope import component
 
 from zope.component.hooks import getSite
@@ -346,7 +348,7 @@ def get_entites_by_sites(sites=()):
     return result
 
 
-def get_users_by_sites(sites=()):
+def get_users_by_sites(sites=(), include_filter=None):
     """
     Get the users using the given sites.
     """
@@ -354,9 +356,38 @@ def get_users_by_sites(sites=()):
     intids = component.getUtility(IIntIds)
     for uid in intids_of_users_by_sites(sites) or ():
         user = intids.queryObject(uid)
-        if IUser.providedBy(user):
+        if      IUser.providedBy(user) \
+            and (include_filter is None or include_filter(user)):
             result.append(user)
     return result
+
+
+def get_filtered_users_by_sites(profile_filters, sites=()):
+    """
+    Probably needs to be a utility. Would be better if we could
+    ensure all possible profile fields are indexed to avoid
+    reifying the user set.
+
+    `profile_filters` is a dict of profile field attributes
+    to an sequence of acceptable field values.
+    """
+    predicates = []
+    for key, val in profile_filters.items():
+        if      isinstance(val, Iterable) \
+            and not isinstance(val, six.string_types):
+            val = set(val)
+            predicates.append(lambda prof, key=key, val=val: getattr(prof, key, '') in val)
+        else:
+            predicates.append(lambda prof, key=key, val=val: getattr(prof, key, '') == val)
+    def include_filter(user):
+        result = True
+        profile = IUserProfile(user, None)
+        if profile is not None and predicates:
+            # Currently an intersection only
+            result = all(pred(profile) for pred in predicates)
+        return result
+    return get_users_by_sites(sites=sites,
+                              include_filter=include_filter)
 
 
 def intids_of_users_by_site(site=None):

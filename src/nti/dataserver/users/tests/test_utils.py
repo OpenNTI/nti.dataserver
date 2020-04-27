@@ -32,6 +32,7 @@ from nti.dataserver.users.common import user_creation_sitename
 from nti.dataserver.users.common import remove_user_creation_site
 
 from nti.dataserver.users.utils import get_users_by_site
+from nti.dataserver.users.utils import get_filtered_users_by_sites
 from nti.dataserver.users.utils import get_users_by_email_in_sites
 from nti.dataserver.users.utils import invalid_emails_for_emails
 from nti.dataserver.users.utils import invalid_emails_for_users
@@ -172,7 +173,7 @@ class TestUtils(unittest.TestCase):
 
         unindex_email_verification(user)
         assert_that(is_email_verified('ichigo@bleach.org'), is_(False))
-        
+
     @WithMockDSTrans
     def test_get_user_by_site(self):
         user = User.create_user(username=u'ichigo@bleach.org',
@@ -181,9 +182,52 @@ class TestUtils(unittest.TestCase):
         set_user_creation_site(user, u'bleach.org')
         assert_that(user_creation_sitename(user), is_('bleach.org'))
         lifecycleevent.modified(user)
-        
+
         results = get_users_by_site('bleach.org')
         assert_that(results, has_length(1))
+
+    @WithMockDSTrans
+    def test_get_filtered_users_by_site(self):
+        user = User.create_user(username=u'filtered_user@bleach.org',
+                                external_value={'email': u"ichigo@bleach.org",
+                                                'alias': u'filter_user_alias'})
+        remove_user_creation_site(user)
+        set_user_creation_site(user, u'bleach.org')
+        assert_that(user_creation_sitename(user), is_('bleach.org'))
+        lifecycleevent.modified(user)
+
+        results = get_filtered_users_by_sites({'email': None}, 'bleach.org')
+        assert_that(results, has_length(0))
+
+        results = get_filtered_users_by_sites({'email': ()}, 'bleach.org')
+        assert_that(results, has_length(0))
+
+        results = get_filtered_users_by_sites({'email': ('ichigo@bleach.org',)}, 'bleach.org')
+        assert_that(results, has_length(1))
+
+        results = get_filtered_users_by_sites({'email': 'ichigo@bleach.org'}, 'bleach.org')
+        assert_that(results, has_length(1))
+
+        results = get_filtered_users_by_sites({'email': ['other_email@bleach.org']}, 'bleach.org')
+        assert_that(results, has_length(0))
+
+        results = get_filtered_users_by_sites({'email': 'other_email@bleach.org'}, 'bleach.org')
+        assert_that(results, has_length(0))
+
+        results = get_filtered_users_by_sites({'email': ('ichigo@bleach.org',),
+                                               'alias': 'filter_user_alias'},
+                                              'bleach.org')
+        assert_that(results, has_length(1))
+
+        results = get_filtered_users_by_sites({'email': 'ichigo@bleach.org',
+                                               'alias': 'other_alias'},
+                                              'bleach.org')
+        assert_that(results, has_length(0))
+
+        results = get_filtered_users_by_sites({'email': ('other_email@bleach.org',),
+                                               'alias': 'filter_user_alias'},
+                                              'bleach.org')
+        assert_that(results, has_length(0))
 
     @WithMockDSTrans
     def test_get_users_by_email_in_sites(self):
@@ -224,16 +268,16 @@ class TestUtils(unittest.TestCase):
                                                   'realname': u'Ichigo Kurosaki',
                                                   'alias': u'Ichigo',
                                                   'email_verified': True})
-        
+
         intids = component.getUtility(IIntIds)
         doc_id = intids.getId(ichigo)
 
         alias = get_entity_alias_from_index(doc_id)
         assert_that(alias, is_('ichigo'))
-        
+
         name = get_entity_realname_from_index(doc_id)
         assert_that(name, is_('ichigo kurosaki'))
-        
+
         name = get_entity_mimetype_from_index(doc_id)
         assert_that(name, is_('application/vnd.nextthought.user'))
 
