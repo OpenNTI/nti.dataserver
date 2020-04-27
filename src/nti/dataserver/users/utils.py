@@ -10,7 +10,7 @@ from __future__ import absolute_import
 
 import six
 
-from collections import Sequence
+from collections import Iterable
 
 from zope import component
 
@@ -353,8 +353,6 @@ def get_users_by_sites(sites=(), include_filter=None):
     Get the users using the given sites.
     """
     result = []
-    if include_filter is None:
-        include_filter = lambda unused_x: True
     intids = component.getUtility(IIntIds)
     for uid in intids_of_users_by_sites(sites) or ():
         user = intids.queryObject(uid)
@@ -374,12 +372,13 @@ def get_filtered_users_by_sites(profile_filters, sites=()):
     to an sequence of acceptable field values.
     """
     predicates = []
-    for key, val in profile_filters:
-        if isinstance(val, Sequence):
+    for key, val in profile_filters.items():
+        if      isinstance(val, Iterable) \
+            and not isinstance(val, six.string_types):
             val = set(val)
-            predicates.append(lambda prof: getattr(prof, key, '') in val)
+            predicates.append(lambda prof, key=key, val=val: getattr(prof, key, '') in val)
         else:
-            predicates.append(lambda prof: getattr(prof, key, '') == val)
+            predicates.append(lambda prof, key=key, val=val: getattr(prof, key, '') == val)
     def include_filter(user):
         result = True
         profile = IUserProfile(user, None)

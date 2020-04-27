@@ -196,40 +196,37 @@ class TestUtils(unittest.TestCase):
         assert_that(user_creation_sitename(user), is_('bleach.org'))
         lifecycleevent.modified(user)
 
-        results = get_filtered_users_by_sites('bleach.org')
-        assert_that(results, has_length(1))
-
-        results = get_filtered_users_by_sites('bleach.org', {})
-        assert_that(results, has_length(1))
-
-        results = get_filtered_users_by_sites('bleach.org', {'email': None})
+        results = get_filtered_users_by_sites({'email': None}, 'bleach.org')
         assert_that(results, has_length(0))
 
-        results = get_filtered_users_by_sites('bleach.org', {'email': ()})
+        results = get_filtered_users_by_sites({'email': ()}, 'bleach.org')
         assert_that(results, has_length(0))
 
-        results = get_filtered_users_by_sites('bleach.org', {'email': ('ichigo@bleach.org',)})
+        results = get_filtered_users_by_sites({'email': ('ichigo@bleach.org',)}, 'bleach.org')
         assert_that(results, has_length(1))
 
-        results = get_filtered_users_by_sites('bleach.org', {'email': 'ichigo@bleach.org'})
+        results = get_filtered_users_by_sites({'email': 'ichigo@bleach.org'}, 'bleach.org')
         assert_that(results, has_length(1))
 
-        results = get_filtered_users_by_sites('bleach.org', {'email': ['other_email@bleach.org']})
+        results = get_filtered_users_by_sites({'email': ['other_email@bleach.org']}, 'bleach.org')
         assert_that(results, has_length(0))
 
-        results = get_filtered_users_by_sites('bleach.org', {'email': 'other_email@bleach.org'})
+        results = get_filtered_users_by_sites({'email': 'other_email@bleach.org'}, 'bleach.org')
         assert_that(results, has_length(0))
 
-        results = get_filtered_users_by_sites('bleach.org', {'email': ('ichigo@bleach.org',),
-                                                             'alias': 'filter_user_alias'})
+        results = get_filtered_users_by_sites({'email': ('ichigo@bleach.org',),
+                                               'alias': 'filter_user_alias'},
+                                              'bleach.org')
         assert_that(results, has_length(1))
 
-        results = get_filtered_users_by_sites('bleach.org', {'email': 'ichigo@bleach.org',
-                                                             'alias': 'other_alias'})
+        results = get_filtered_users_by_sites({'email': 'ichigo@bleach.org',
+                                               'alias': 'other_alias'},
+                                              'bleach.org')
         assert_that(results, has_length(0))
 
-        results = get_filtered_users_by_sites('bleach.org', {'email': ('other_email@bleach.org',),
-                                                             'alias': 'filter_user_alias'})
+        results = get_filtered_users_by_sites({'email': ('other_email@bleach.org',),
+                                               'alias': 'filter_user_alias'},
+                                              'bleach.org')
         assert_that(results, has_length(0))
 
     @WithMockDSTrans
