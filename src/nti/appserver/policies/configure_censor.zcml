@@ -48,11 +48,6 @@
 	<!-- Install a global policy for ICoppaUser. -->
 	<adapter factory=".censor_policies.coppa_user_censor_policy" />
 
-	<!-- All FriendsLists names are censored, all the time -->
-	<subscriber handler=".site_policies._censor_usernames"
-				for="nti.dataserver.interfaces.IFriendsList
-					 zope.lifecycleevent.IObjectCreatedEvent" />
-
 	<!--
 		 Try to catch some fields in profiles as well, when they are
 		 enabled.
