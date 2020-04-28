@@ -107,6 +107,15 @@ class ISiteBrandAssets(ILastModified, ICreated):
                                     title=u'The login app callout',
                                     required=False)
 
+    certificate_logo = Object(ISiteBrandImage,
+                              title=u'The completion certificate logo',
+                              required=False)
+
+    certificate_sidebar_image = Object(ISiteBrandImage,
+                                       title=u'The completion certificate '
+                                             u'sidebar image',
+                                       required=False)
+
     # <>/site-assets/<site>
     root = Object(IDelimitedHierarchyBucket,
                   title=u"asset location",
@@ -134,6 +143,17 @@ class ISiteBrand(IContained, ILastModified, ICreated, IShouldHaveTraversablePath
     theme = Dict(title=u"Arbitrary key/val dict of theme",
                  readonly=False,
                  required=False)
+
+    certificate_label = TextLine(title=u"Certificate label text",
+                                 description=u"Override for the title of the "
+                                             u"completion certificate",
+                                 required=False)
+
+    certificate_brand_color = TextLine(title=u"completion certificate brand color",
+                                 description=u"Override for the brand color of "
+                                             u"the completion certificate",
+                                 required=False)
+
 
 
 class ISiteAssetsFileSystemLocation(interface.Interface):
