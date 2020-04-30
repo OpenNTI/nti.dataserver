@@ -147,6 +147,7 @@ class ISiteBrand(IContained, ILastModified, ICreated, IShouldHaveTraversablePath
     certificate_label = TextLine(title=u"Certificate label text",
                                  description=u"Override for the title of the "
                                              u"completion certificate",
+                                 max_length=40,
                                  required=False)
 
     certificate_brand_color = TextLine(title=u"completion certificate brand color",
