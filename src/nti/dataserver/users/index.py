@@ -35,6 +35,7 @@ from nti.coremetadata.interfaces import IX_TOPICS
 from nti.coremetadata.interfaces import IX_MIMETYPE
 from nti.coremetadata.interfaces import IX_REALNAME
 from nti.coremetadata.interfaces import IX_USERNAME
+from nti.coremetadata.interfaces import IX_AFFILIATION
 from nti.coremetadata.interfaces import IX_DISPLAYNAME
 from nti.coremetadata.interfaces import IX_IS_COMMUNITY
 from nti.coremetadata.interfaces import IX_CONTACT_EMAIL
@@ -122,6 +123,14 @@ class AliasIndex(CaseInsensitiveFieldIndex):
 class RealnameIndex(CaseInsensitiveFieldIndex):
     default_field_name = IX_REALNAME
     default_interface = IFriendlyNamed
+
+    documents_to_values = alias('_rev_index')
+    values_to_documents = alias('_fwd_index')
+
+
+class AffiliationIndex(CaseInsensitiveFieldIndex):
+    default_field_name = IX_AFFILIATION
+    default_interface = IUserProfile
 
     documents_to_values = alias('_rev_index')
     values_to_documents = alias('_fwd_index')
@@ -331,6 +340,7 @@ def create_entity_catalog(catalog=None, family=BTrees.family64):
                         (IX_DISPLAYNAME, DisplaynameIndex),
                         (IX_CONTACT_EMAIL, ContactEmailIndex),
                         (IX_LASTSEEN_TIME, LastSeenTimeIndex),
+                        (IX_AFFILIATION, AffiliationIndex),
                         (IX_REALNAME_PARTS, RealnamePartsIndex),
                         (IX_CONTACT_EMAIL_RECOVERY_HASH, ContactEmailRecoveryHashIndex),
                         (IX_PASSWORD_RECOVERY_EMAIL_HASH, PasswordRecoveryEmailHashIndex)):
