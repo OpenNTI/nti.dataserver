@@ -43,6 +43,8 @@ from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.property.urlproperty import UrlProperty
 
+from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -272,7 +274,7 @@ def unindex_email_invalidation(user, catalog=None, intids=None):
 
 def get_users_by_email(email):
     """
-    Get the users using the given email.
+    Get the users using the given email. This does not pull by site.
     """
     if not email:
         result = ()
@@ -286,6 +288,32 @@ def get_users_by_email(email):
             if IUser.providedBy(user):
                 result.append(user)
     return result
+
+
+def intids_of_users_by_sites(sites=(), catalog_filters=None):
+    """
+    catalog_filters - a dict of key/val filters. Will raise a KeyError
+        if their is not an index for the catalog filer.
+    """
+    if isinstance(sites, six.string_types):
+        sites = sites.split(',')
+    catalog = get_entity_catalog()
+    query = {IX_SITE: {'any_of': sites or ()},
+             IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.user',)}}
+    if catalog_filters:
+        for key, val in catalog_filters.items():
+            idx = catalog[key]
+            if isinstance(idx, CaseInsensitiveAttributeFieldIndex):
+                if isinstance(val, six.string_types):
+                    val = (val, val)
+                # two-tuple min/max type
+                query[key] = val
+            else:
+                if isinstance(val, six.string_types):
+                    val = (val,)
+                query[key] = {'any_of': val}
+    doc_ids = catalog.apply(query)
+    return doc_ids or ()
 
 
 def get_users_by_email_in_sites(email, sites=None):
@@ -303,27 +331,14 @@ def get_users_by_email_in_sites(email, sites=None):
         result = ()
     else:
         result = []
-        catalog = get_entity_catalog()
         intids = component.getUtility(IIntIds)
-        query = {IX_EMAIL: (email, email)}
-        if sites:
-            query[IX_SITE] = {'any_of': sites}
-        doc_ids = catalog.apply(query)
+        doc_ids = intids_of_users_by_sites(sites,
+                                           catalog_filters={'email': email})
         for uid in doc_ids or ():
             user = intids.queryObject(uid)
             if IUser.providedBy(user):
                 result.append(user)
     return result
-
-
-def intids_of_users_by_sites(sites=()):
-    if isinstance(sites, six.string_types):
-        sites = sites.split(',')
-    catalog = get_entity_catalog()
-    query = {IX_SITE: {'any_of': sites or ()},
-             IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.user',)}}
-    doc_ids = catalog.apply(query)
-    return doc_ids or ()
 
 
 def intids_of_entities_by_sites(sites=()):
@@ -348,13 +363,13 @@ def get_entites_by_sites(sites=()):
     return result
 
 
-def get_users_by_sites(sites=(), include_filter=None):
+def get_users_by_sites(sites=(), include_filter=None, catalog_filters=None):
     """
     Get the users using the given sites.
     """
     result = []
     intids = component.getUtility(IIntIds)
-    for uid in intids_of_users_by_sites(sites) or ():
+    for uid in intids_of_users_by_sites(sites, catalog_filters) or ():
         user = intids.queryObject(uid)
         if      IUser.providedBy(user) \
             and (include_filter is None or include_filter(user)):
@@ -364,16 +379,21 @@ def get_users_by_sites(sites=(), include_filter=None):
 
 def get_filtered_users_by_site(profile_filters, site=None):
     """
-    Probably needs to be a utility. Would be better if we could
-    ensure all possible profile fields are indexed to avoid
-    reifying the user set.
+    This probably needs to be a utility.
+
+    Attempts to use any filters as index filters before
+    constructing a reifying filter.
 
     `profile_filters` is a dict of profile field attributes
     to an sequence of acceptable field values.
     """
     predicates = []
+    catalog_filters = {}
+    entity_catalog = get_entity_catalog()
     for key, val in profile_filters.items():
-        if      isinstance(val, Iterable) \
+        if key in entity_catalog:
+            catalog_filters[key] = val
+        elif    isinstance(val, Iterable) \
             and not isinstance(val, six.string_types):
             val = set(val)
             predicates.append(lambda prof, key=key, val=val: getattr(prof, key, '') in val)
@@ -386,19 +406,22 @@ def get_filtered_users_by_site(profile_filters, site=None):
             # Currently an intersection only
             result = all(pred(profile) for pred in predicates)
         return result
-    return get_users_by_site(site, include_filter=include_filter)
+    return get_users_by_site(site,
+                             include_filter=include_filter,
+                             catalog_filters=catalog_filters)
 
 
 def intids_of_users_by_site(site=None):
     return intids_of_users_by_sites((site or getSite().__name__),)
 
 
-def get_users_by_site(site=None, include_filter=None):
+def get_users_by_site(site=None, include_filter=None, catalog_filters=None):
     """
     Get the users using the given site.
     """
     return get_users_by_sites((site or getSite().__name__),
-                              include_filter=include_filter)
+                              include_filter=include_filter,
+                              catalog_filters=catalog_filters)
 
 
 def get_entities_by_site(site=None):
