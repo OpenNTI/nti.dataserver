@@ -196,12 +196,6 @@ class TestUtils(unittest.TestCase):
         assert_that(user_creation_sitename(user), is_('bleach.org'))
         lifecycleevent.modified(user)
 
-        results = get_filtered_users_by_site({'email': None}, 'bleach.org')
-        assert_that(results, has_length(0))
-
-        results = get_filtered_users_by_site({'email': ()}, 'bleach.org')
-        assert_that(results, has_length(0))
-
         results = get_filtered_users_by_site({'email': ('ichigo@bleach.org',)}, 'bleach.org')
         assert_that(results, has_length(1))
 

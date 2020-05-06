@@ -152,19 +152,6 @@ class _AbstractValidationViewBase(TestBaseMixin):
         assert_that( e.exception.json_body, has_entry( 'field', 'email' ) )
 
     @WithMockDSTrans
-    def test_create_censored_username( self ):
-        self.request.content_type = b'application/vnd.nextthought+json'
-        self.request.body = to_json_representation( {'Username': 'FatBastard',
-                                                     'password': 'pass132word',
-                                                     'email': 'foo@bar.com' } )
-
-        with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
-            self.the_view( self.request )
-
-        assert_that( e.exception.json_body, has_entry( 'code', 'FieldContainsCensoredSequence' ) )
-        assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
-
-    @WithMockDSTrans
     def test_create_invalid_username( self ):
         self.request.content_type = 'application/vnd.nextthought+json'
 
@@ -197,37 +184,6 @@ class _AbstractNotDevmodeViewBase(TestBaseMixin):
     # Since they run so much slower due to the mimetype registration
 
     the_view = None
-
-    @WithMockDSTrans
-    def test_create_censored_username( self ):
-        self.request.content_type = 'application/vnd.nextthought+json'
-        self.request.body = to_json_representation( {'Username': 'shpxsnpr'.encode('rot13'),
-                                                     'password': 'pass132word',
-                                                     'email': 'foo@bar.com' } )
-
-
-        with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
-            self.the_view( self.request )
-
-        assert_that( e.exception.json_body, has_entry( 'code', 'FieldContainsCensoredSequence' ) )
-        assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
-        assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
-
-    @WithMockDSTrans
-    def test_create_censored_alias( self ):
-        self.request.content_type = 'application/vnd.nextthought+json'
-        self.request.body = to_json_representation( {'alias': 'shpxsnpr'.encode('rot13'),
-                                                     'Username': 'jamadden',
-                                                     'password': 'pass132word',
-                                                     'email': 'foo@bar.com' } )
-
-
-        with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
-            self.the_view( self.request )
-
-        assert_that( e.exception.json_body, has_entry( 'code', 'FieldContainsCensoredSequence' ) )
-        assert_that( e.exception.json_body, has_entry( 'field', 'alias' ) )
-        assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
 
     @WithMockDSTrans
     def test_create_birthdate_must_be_in_past( self ):

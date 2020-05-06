@@ -296,7 +296,11 @@ def intids_of_users_by_sites(sites=(), catalog_filters=None):
         if their is not an index for the catalog filer.
     """
     if isinstance(sites, six.string_types):
-        sites = sites.split(',')
+        # Probably only in tests, in this case, do not filter
+        if sites != 'dataserver2':
+            sites = sites.split(',')
+        else:
+            sites = None
     catalog = get_entity_catalog()
     query = {IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.user',)}}
     if sites:
@@ -307,6 +311,8 @@ def intids_of_users_by_sites(sites=(), catalog_filters=None):
             if isinstance(idx, CaseInsensitiveAttributeFieldIndex):
                 if isinstance(val, six.string_types):
                     val = (val, val)
+                elif len(val) == 1:
+                    val = (val[0], val[0])
                 # two-tuple min/max type
                 query[key] = val
             else:
