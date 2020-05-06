@@ -50,8 +50,6 @@ from nti.app.pushnotifications.interfaces import INotableDataEmailClassifier
 
 from nti.app.pushnotifications.utils import generate_unsubscribe_url
 
-from nti.app.users.utils import get_members_by_site
-
 from nti.appserver.context_providers import get_trusted_top_level_contexts
 
 from nti.appserver.interfaces import IApplicationSettings
@@ -82,6 +80,8 @@ from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.dataserver.users.users import User
+
+from nti.dataserver.users.utils import get_users_by_site
 
 from nti.externalization.singleton import Singleton
 
@@ -517,7 +517,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		if site_name and site_name == 'dataserver2':
 			return self._dataserver.users_folder.values()
 		elif site_name:
-			return get_members_by_site(site_name)
+			return get_users_by_site()
 
 	def _display_name(self, user):
 		return component.getMultiAdapter((user, self.request), IDisplayNameGenerator)()
