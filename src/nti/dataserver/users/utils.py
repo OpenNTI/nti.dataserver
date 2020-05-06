@@ -298,8 +298,9 @@ def intids_of_users_by_sites(sites=(), catalog_filters=None):
     if isinstance(sites, six.string_types):
         sites = sites.split(',')
     catalog = get_entity_catalog()
-    query = {IX_SITE: {'any_of': sites or ()},
-             IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.user',)}}
+    query = {IX_MIMETYPE: {'any_of': ('application/vnd.nextthought.user',)}}
+    if sites:
+        query[IX_SITE] = {'any_of': sites}
     if catalog_filters:
         for key, val in catalog_filters.items():
             idx = catalog[key]
