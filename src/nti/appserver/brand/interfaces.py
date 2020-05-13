@@ -24,6 +24,7 @@ from nti.coremetadata.interfaces import IShouldHaveTraversablePath
 
 from nti.dataserver.interfaces import ISiteCommunity
 
+from nti.schema.field import Bool
 from nti.schema.field import Dict
 from nti.schema.field import Object
 from nti.schema.field import ValidTextLine
@@ -149,6 +150,9 @@ class ISiteBrand(IContained, ILastModified, ICreated, IShouldHaveTraversablePath
                                              u"completion certificate",
                                  max_length=40,
                                  required=False)
+
+    suppress_certificate_logo = Bool(title=u"Suppress certificate logo",
+                                     default=False)
 
     certificate_brand_color = TextLine(title=u"completion certificate brand color",
                                  description=u"Override for the brand color of "
