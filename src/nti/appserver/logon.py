@@ -175,7 +175,7 @@ REL_INITIAL_TOS_PAGE = u"content.initial_tos_page"
 #: link.
 REL_PERMANENT_TOS_PAGE = u'content.permanent_tos_page'
 
-TOS_URL = 'https://docs.google.com/document/d/e/2PACX-1vRJd0Irh_YFX7Ci9irWLmqrEqddrxSLrDkrJMANlCqQAo-PrLznTjk4G0hfCsjxD8M21Vd54iQ1Rqbn/pub;embedded=True'
+TOS_URL = 'https://docs.google.com/document/d/e/2PACX-1vRJd0Irh_YFX7Ci9irWLmqrEqddrxSLrDkrJMANlCqQAo-PrLznTjk4G0hfCsjxD8M21Vd54iQ1Rqbn/pub?embedded=True'
 PRIVACY_POLICY_URL = 'https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gvacXOStsfmUz5TjyDYYy3CVJ2SmM'
 
 # Link providing the direct link to the

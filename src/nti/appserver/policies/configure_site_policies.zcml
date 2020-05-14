@@ -64,12 +64,12 @@
 	<link:userLink
 		named='nti.appserver.logon.REL_INITIAL_TOS_PAGE'
 		minGeneration='20200312'
-		url='https://docs.google.com/document/d/e/2PACX-1vRJd0Irh_YFX7Ci9irWLmqrEqddrxSLrDkrJMANlCqQAo-PrLznTjk4G0hfCsjxD8M21Vd54iQ1Rqbn/pub;embedded=True'
+		url='https://docs.google.com/document/d/e/2PACX-1vRJd0Irh_YFX7Ci9irWLmqrEqddrxSLrDkrJMANlCqQAo-PrLznTjk4G0hfCsjxD8M21Vd54iQ1Rqbn/pub?embedded=True'
 		mimeType='text/html'/>
 
 	<link:userLink
 		named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
-		url='https://docs.google.com/document/d/e/2PACX-1vRJd0Irh_YFX7Ci9irWLmqrEqddrxSLrDkrJMANlCqQAo-PrLznTjk4G0hfCsjxD8M21Vd54iQ1Rqbn/pub;embedded=True'
+		url='https://docs.google.com/document/d/e/2PACX-1vRJd0Irh_YFX7Ci9irWLmqrEqddrxSLrDkrJMANlCqQAo-PrLznTjk4G0hfCsjxD8M21Vd54iQ1Rqbn/pub?embedded=True'
 		mimeType='text/html'/>
 
 </configure>
