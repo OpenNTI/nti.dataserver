@@ -31,11 +31,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import hashlib
 import logging
-
-from nti.common.interfaces import IOAuthService
-
-logger = logging.getLogger(__name__)
 
 from six.moves import urllib_parse
 
@@ -46,15 +43,9 @@ import simplejson as json
 from openid import oidutil
 oidutil.log = logging.getLogger('openid').info
 
-from persistent import Persistent
-
 from zope import component
 from zope import interface
 from zope import lifecycleevent
-
-from zope.component.hooks import getSite
-
-from zope.container.contained import Contained
 
 from zope.event import notify
 
@@ -93,14 +84,12 @@ from nti.appserver.interfaces import IMissingUser
 from nti.appserver.interfaces import IUserLogonEvent
 from nti.appserver.interfaces import ILogonLinkProvider
 from nti.appserver.interfaces import IImpersonationDecider
-from nti.appserver.interfaces import IGoogleLogonLookupUtility
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 from nti.appserver.interfaces import IUnauthenticatedUserLinkProvider
 from nti.appserver.interfaces import ILogoutForgettingResponseProvider
 from nti.appserver.interfaces import ILogonUsernameFromIdentityURLProvider
 
 from nti.appserver.interfaces import UserLogoutEvent
-from nti.appserver.interfaces import AmbiguousUserLookupError
 from nti.appserver.interfaces import UserCreatedWithRequestEvent
 
 from nti.appserver.link_providers import flag_link_provider
@@ -110,41 +99,27 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.appserver.pyramid_authorization import has_permission
 
-from nti.common.string import is_true
-
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.dataserver.interfaces import IGoogleUser
-
-from nti.dataserver.users.common import user_creation_sitename
-
-from nti.dataserver.users.interfaces import GoogleUserCreatedEvent
 from nti.dataserver.users.interfaces import OpenIDUserCreatedEvent
-from nti.dataserver.users.interfaces import IUsernameGeneratorUtility
 
 from nti.dataserver.users.users import User
 from nti.dataserver.users.users import OpenIdUser
 from nti.dataserver.users.users import FacebookUser
 
-from nti.dataserver.users.utils import get_users_by_email
-from nti.dataserver.users.utils import force_email_verification
-
 from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
-
-from nti.identifiers.interfaces import IUserExternalIdentityContainer
-
-from nti.identifiers.utils import get_user_for_external_id
 
 from nti.links.links import Link
 
 from nti.mimetype import mimetype
 
 from nti.securitypolicy.utils import is_impersonating
+
+logger = logging.getLogger(__name__)
 
 HREF = StandardExternalFields.HREF
 CLASS = StandardExternalFields.CLASS
@@ -194,7 +169,6 @@ REL_LOGIN_IMPERSONATE = 'logon.nti.impersonate'  # See :func:`impersonate_user`
 
 REL_LOGIN = 'logon.nti'  # See :func:`general_logon`
 
-REL_LOGIN_GOOGLE = 'logon.google'
 REL_LOGIN_OPENID = 'logon.openid'  # See :func:`openid_login`
 REL_LOGIN_FACEBOOK = 'logon.facebook'  # See :func:`facebook_oauth1`
 
@@ -1206,8 +1180,8 @@ def openid_login(context, request):
     return _openid_login(context, request, request.params['openid'])
 
 
-def _deal_with_external_account(request, username, fname, lname, email, idurl, iface,
-                                user_factory, realname=None, ext_values=None):
+def deal_with_external_account(request, username, fname, lname, email, idurl, iface,
+                               user_factory, realname=None, ext_values=None):
     """
     Finds or creates an account based on an external authentication.
 
@@ -1265,6 +1239,8 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
         # We manually fire the user_created event. See account_creation_views
         notify(UserCreatedWithRequestEvent(user, request))
     return user
+
+_deal_with_external_account = deal_with_external_account
 
 
 from zlib import crc32
@@ -1459,335 +1435,3 @@ def facebook_oauth2(request):
                                       userid=data['email'],
                                       success=request.session.get('facebook.success'))
     return result
-
-
-# google
-
-
-import os
-import hashlib
-from urlparse import urljoin
-
-from nti.appserver.interfaces import IGoogleLogonSettings
-
-from nti.common.interfaces import IOAuthKeys
-
-OPENID_CONFIGURATION = None
-LOGON_GOOGLE_OAUTH2 = 'logon.google.oauth2'
-DEFAULT_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
-DEFAULT_TOKEN_URL = 'https://www.googleapis.com/oauth2/v4/token'
-DEFAULT_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
-DISCOVERY_DOC_URL = 'https://accounts.google.com/.well-known/openid-configuration'
-
-GOOGLE_OAUTH_EXTERNAL_ID_TYPE = u'google.oauth'
-
-
-def redirect_google_oauth2_uri(request):
-    root = request.route_path('objects.generic.traversal', traverse=())
-    root = root[:-1] if root.endswith('/') else root
-    target = urljoin(request.application_url, root)
-    target = target + '/' if not target.endswith('/') else target
-    target = urljoin(target, LOGON_GOOGLE_OAUTH2)
-    return target
-
-
-_redirect_uri = redirect_google_oauth2_uri
-
-
-def get_openid_configuration():
-    global OPENID_CONFIGURATION
-    if not OPENID_CONFIGURATION:
-        s = requests.get(DISCOVERY_DOC_URL)
-        OPENID_CONFIGURATION = s.json() if s.status_code == 200 else {}
-    return OPENID_CONFIGURATION
-
-
-@interface.implementer(IGoogleLogonLookupUtility)
-class DefaultGoogleLogonLookupUtility(object):
-    """
-    This utility maps the given user identifier as the username.
-    """
-
-    def lookup_user(self, identifier):
-        return User.get_entity(identifier)
-
-    def generate_username(self, identifier):
-        return identifier
-
-
-@interface.implementer(IGoogleLogonLookupUtility)
-class EmailGoogleLogonLookupUtility(object):
-    """
-    This utility maps the given user identifier as the user's email. We
-    Only return users for the given site; thus, a user with accounts in
-    multiple sites with the same email should be able to SSO with their
-    email address.
-    """
-
-    def lookup_user(self, identifier):
-        user = None
-        # XXX: We could query get_users_by_email_sites once we are ensured
-        # all users have a user creation site.
-        users = get_users_by_email(identifier)
-        users = tuple(users)
-        if len(users) > 1:
-            # Multiple users; check if one and only one is tied to our current
-            # site.
-            site_users = []
-            current_site_name = getattr(getSite(), '__name__', '')
-            for user in users:
-                user_site_name = user_creation_sitename(user)
-                if user_site_name == current_site_name:
-                    site_users.append(user)
-            if len(site_users) == 1:
-                # Great; we found the *one* user for this site
-                users = site_users
-            else:
-                # We either have no users for this site or more than one; we
-                # have to raise.
-                logger.warn('Ambiguous users found on google auth (id=%s) (users=%s)',
-                            identifier,
-                            ', '.join(x.username for x in users))
-                raise AmbiguousUserLookupError()
-
-        if users:
-            user = users[0]
-        return user
-
-    def generate_username(self, unused_identifier):
-        """
-        Since we allow a user to be found via email, we must allow for that
-        user's email to be changed while still mapping to the same user object.
-        """
-        username_util = component.getUtility(IUsernameGeneratorUtility)
-        return username_util.generate_username()
-
-
-def _get_google_hosted_domain():
-    hosted_domain = None
-    login_config = component.queryUtility(IGoogleLogonSettings)
-    if login_config is not None:
-        hosted_domain = login_config.hd
-    return hosted_domain
-
-
-@view_config(route_name=REL_LOGIN_GOOGLE, request_method='GET')
-def google_oauth1(request, success=None, failure=None, state=None):
-    params = {}
-    hosted_domain = _get_google_hosted_domain()
-    if hosted_domain:
-        params['hd'] = hosted_domain
-
-    for key, value in (('success', success), ('failure', failure)):
-        value = value or request.params.get(key)
-        if value:
-            request.session['google.' + key] = value
-
-    # redirect
-    auth_svc = component.getUtility(IOAuthService, name="google")
-    target = auth_svc.authorization_request_uri(
-        client_id=component.getUtility(IOAuthKeys, name="google").APIKey,
-        response_type='code',
-        scope='openid email profile',
-        redirect_uri=_redirect_uri(request),
-        state=state,
-        **params
-    )
-
-    # save state for validation
-    request.session['google.state'] = auth_svc.params['state']
-
-    response = hexc.HTTPSeeOther(location=target)
-    return response
-
-
-def _can_create_google_oath_user():
-    """
-    Some sites may not allow google auth account creation.
-    """
-    policy = component.queryUtility(ISitePolicyUserEventListener)
-    return getattr(policy, 'GOOGLE_AUTH_USER_CREATION', True)
-
-
-@view_config(route_name=LOGON_GOOGLE_OAUTH2, request_method='GET')
-def google_oauth2(request):
-    params = request.params
-    auth_keys = component.getUtility(IOAuthKeys, name="google")
-
-    # check for errors
-    if 'error' in params or 'errorCode' in params:
-        error = params.get('error') or params.get('errorCode')
-        return _create_failure_response(request,
-                                        request.session.get('google.failure'),
-                                        error=error)
-
-    # Confirm code
-    if 'code' not in params:
-        return _create_failure_response(request,
-                                        request.session.get('google.failure'),
-                                        error=_(u'Could not find code parameter.'))
-    code = params.get('code')
-
-    # Confirm anti-forgery state token
-    if 'state' not in params:
-        return _create_failure_response(request,
-                                        request.session.get('google.failure'),
-                                        error=_(u'Could not find state parameter.'))
-    params_state = params.get('state')
-    session_state = request.session.get('google.state')
-    if params_state != session_state:
-        return _create_failure_response(request,
-                                        request.session.get('google.failure'),
-                                        error=_(u'Incorrect state values.'))
-
-    # Exchange code for access token and ID token
-    config = get_openid_configuration()
-    token_url = config.get('token_endpoint', DEFAULT_TOKEN_URL)
-
-    try:
-        # Check for redirect url override (e.g. via the OAuth portal)
-        redirect_uri = params.get('_redirect_uri')
-
-        data = {'code': code,
-                'client_id': auth_keys.APIKey,
-                'grant_type': 'authorization_code',
-                'client_secret': auth_keys.SecretKey,
-                'redirect_uri': redirect_uri or _redirect_uri(request)}
-        response = requests.post(token_url, data)
-        if response.status_code != 200:
-            return _create_failure_response(
-                request,
-                request.session.get('google.failure'),
-                error=_('Invalid response while getting access token.'))
-
-        data = response.json()
-        if 'access_token' not in data:
-            return _create_failure_response(request,
-                                            request.session.get('google.failure'),
-                                            error=_(u'Could not find access token.'))
-        if 'id_token' not in data:
-            return _create_failure_response(request,
-                                            request.session.get('google.failure'),
-                                            error=_(u'Could not find id token.'))
-
-        # id_token = data['id_token'] #TODO:Validate id token
-        access_token = data['access_token']
-        logger.debug("Getting user profile")
-        userinfo_url = config.get('userinfo_endpoint', DEFAULT_USERINFO_URL)
-        response = requests.get(userinfo_url, params={
-                                "access_token": access_token})
-        if response.status_code != 200:
-            return _create_failure_response(request,
-                                            request.session.get('google.failure'),
-                                            error=_(u'Invalid access token.'))
-        profile = response.json()
-
-        # Make sure our user is from the correct domain.
-        email = profile['email']
-        hosted_domain = _get_google_hosted_domain()
-        if hosted_domain:
-            domain = email.split('@')[1]
-            if hosted_domain != domain:
-                return _create_failure_response(request,
-                                                request.session.get('google.failure'),
-                                                error=_(u'Invalid domain.'))
-        logon_utility = component.getUtility(IGoogleLogonLookupUtility)
-        user = logon_utility.lookup_user(email)
-        if user is None:
-            if not _can_create_google_oath_user():
-                return _create_failure_response(request,
-                                                error="Cannot create user.")
-            username = logon_utility.generate_username(email)
-            firstName = profile.get('given_name', 'unspecified')
-            lastName = profile.get('family_name', 'unspecified')
-            email_verified = profile.get('email_verified', 'false')
-
-            user = _deal_with_external_account(request,
-                                               username=username,
-                                               fname=firstName,
-                                               lname=lastName,
-                                               email=email,
-                                               idurl=None,
-                                               iface=None,
-                                               user_factory=User.create_user)
-            interface.alsoProvides(user, IGoogleUser)
-            # add external_type / external_id
-            id_container = IUserExternalIdentityContainer(user)
-            id_container.add_external_mapping(GOOGLE_OAUTH_EXTERNAL_ID_TYPE, email)
-            logger.info("Setting Google OAUTH for user (%s) (%s)", user.username, email)
-            notify(ObjectModifiedFromExternalEvent(user))
-
-            notify(GoogleUserCreatedEvent(user, request))
-            if is_true(email_verified):
-                force_email_verification(user)  # trusted source
-            request.environ['nti.request_had_transaction_side_effects'] = 'True'
-
-        response = _create_success_response(request,
-                                            userid=user.username,
-                                            success=request.session.get('google.success'))
-    except Exception as e:
-        logger.exception('Failed to login with google')
-        response = _create_failure_response(request,
-                                            request.session.get('google.failure'),
-                                            error=str(e))
-    return response
-
-
-@component.adapter(pyramid.interfaces.IRequest)
-@interface.implementer(IUnauthenticatedUserLinkProvider)
-class SimpleUnauthenticatedUserGoogleLinkProvider(object):
-
-    rel = REL_LOGIN_GOOGLE
-
-    def __init__(self, request):
-        self.request = request
-
-    def get_links(self):
-        elements = (self.rel,)
-        root = self.request.route_path('objects.generic.traversal',
-                                       traverse=())
-        root = root[:-1] if root.endswith('/') else root
-        return [Link(root, elements=elements, rel=self.rel)]
-
-
-@interface.implementer(ILogonLinkProvider)
-@component.adapter(IMissingUser, pyramid.interfaces.IRequest)
-class SimpleMissingUserGoogleLinkProvider(SimpleUnauthenticatedUserGoogleLinkProvider):
-
-    def __init__(self, user, request):
-        super(SimpleMissingUserGoogleLinkProvider, self).__init__(request)
-        self.user = user
-
-    def __call__(self):
-        links = self.get_links()
-        return links[0] if links else None
-
-
-@interface.implementer(IGoogleLogonLookupUtility)
-class GoogleLogonLookupUtility(Persistent, Contained):
-
-    def __init__(self, lookup_by_email=False):
-        self.lookup_by_email = lookup_by_email
-
-    def lookup_user(self, identifier):
-        if self.lookup_by_email:
-            return User.get_user(identifier)
-        # When a user login a child site, then login its parent or sibling site with the same GMail,
-        # it would create duplicated users with the same GMail, which may cause a different user returned
-        # when login the child site with that gmail.
-        # fix get_user_for_external_id?
-        user = get_user_for_external_id(GOOGLE_OAUTH_EXTERNAL_ID_TYPE, identifier)
-        return user
-
-    def generate_username(self, identifier):
-        if self.lookup_by_email:
-            return identifier
-        username_util = component.getUtility(IUsernameGeneratorUtility)
-        return username_util.generate_username()
-
-
-@interface.implementer(IGoogleLogonSettings)
-class GoogleLogonSettings(Persistent, Contained):
-
-    def __init__(self, hd):
-        self.hd = hd

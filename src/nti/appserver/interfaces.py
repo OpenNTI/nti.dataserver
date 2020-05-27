@@ -36,8 +36,6 @@ from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 
-from nti.schema.field import ValidTextLine
-
 IContactEmailRecovery = IContactEmailRecovery  # BBB
 
 
@@ -654,28 +652,6 @@ class IApplicationSettings(IFullMapping):
     The application settings dictionary.
     """
 
-
-class IGoogleLogonSettings(interface.Interface):
-
-    hd = ValidTextLine(title=u'Valid hosted domain', required=False)
-
-
-class IGoogleLogonLookupUtility(interface.Interface):
-    """
-    A utility to handle a user after google authentication.
-    """
-
-    def lookup_user(identifier):
-        """
-        Returns the user, if available from the given identifier.
-
-        :raises: AmbiguousUserLookupError
-        """
-
-    def generate_username(identifier):
-        """
-        Creates a username if the google entity does not exist in our system.
-        """
 
 class AmbiguousUserLookupError(ValueError):
     """
