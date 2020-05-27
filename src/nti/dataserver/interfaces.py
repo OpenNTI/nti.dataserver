@@ -718,12 +718,6 @@ class IFacebookUser(IUser):
     facebook_url = DecodingValidTextLine(title=u"The user's claimed identity URL")
 
 
-class IGoogleUser(IUser):
-    """
-    A google user.
-    """
-
-
 class ICoppaUser(IUser):
     """
     A marker interface to denote users to whom the United States COPPA

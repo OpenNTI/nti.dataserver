@@ -62,9 +62,6 @@
 	<subscriber factory=".logon.ImpersonationLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
-    <!-- Google logon utilities -->
-    <utility factory=".logon.DefaultGoogleLogonLookupUtility" />
-
 	<!-- All the other logon types are disabled in production -->
 	<configure zcml:condition="have devmode">
 
@@ -86,12 +83,4 @@
 				 name="openid.aops.com" />
 
 	</configure>
-
-	<!-- Google -->
-	<include package="nti.common" file="meta.zcml" />
-	<oauth:registerOAuthKeys
-			apiKey="621475736574-dfgpfgdojhmli7otmhdu4qss4jo9n0b8.apps.googleusercontent.com"
-			secretKey="IgsnDiIOYx0GMDVpVCp+Vhw+JS5zFwEH"
-			id="google" />
-
 </configure>
