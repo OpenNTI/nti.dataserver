@@ -38,7 +38,7 @@ def _follow_entities(user, to_follow=(), follow=None, record=None, addFriend=Non
         if entity:
             found.add(username)
             follow(user, entity)
-            if IDynamicSharingTarget(entity):
+            if IDynamicSharingTarget(entity, None):
                 record(user, entity)
                 addFriend(entity, user)
                 member_of.add(username)
