@@ -1072,6 +1072,7 @@ class IUIReadOnlyProfileSchema(interface.Interface):
     """
     A marker interface for user profiles that should be read only when schemafied externally
     """
+IUIReadOnlyProfileSchema.setTaggedValue('_ext_is_marker_interface', True)
 
 
 class IUserToken(ICreated, ILastModified, ITitledDescribed, IContained):
