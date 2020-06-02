@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -54,6 +53,8 @@ from nti.dataserver import users
 
 from nti.ntiids import ntiids
 
+from nti.dataserver.authorization import is_admin_or_site_admin
+
 from nti.dataserver.tests import mock_dataserver
 
 from nti.app.testing.application_webtest import AppTestBaseMixin
@@ -65,6 +66,7 @@ from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges 
 from nti.appserver.policies.tests import test_application_censoring
 
 from nti.appserver.tests.test_application import TestApp as _TestApp
+
 
 def UQ(val):
 	# Pyramid is much more lenient with safe characters
@@ -301,22 +303,29 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,
 		self.require_link_href_with_rel(res2, 'flag.metoo')
 		self.forbid_link_with_rel(res2, 'flag')
 
-		pin_href = self.require_link_href_with_rel(res2, 'pin')
-		self.forbid_link_with_rel(res2, 'unpin')
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user(self.default_username)
+			user_is_admin = is_admin_or_site_admin(user)
 
-		self.testapp.post(pin_href)
-		res3 = self.testapp.post(pin_href)
-		res3 = res3.json_body
+		if not user_is_admin:
+			self.forbid_link_with_rel(res2, 'pin')
+		else:
+			pin_href = self.require_link_href_with_rel(res2, 'pin')
+			self.forbid_link_with_rel(res2, 'unpin')
 
-		self.forbid_link_with_rel(res3, 'pin')
-		unpin_href = self.require_link_href_with_rel(res3, 'unpin')
+			self.testapp.post(pin_href)
+			res3 = self.testapp.post(pin_href)
+			res3 = res3.json_body
 
-		self.testapp.post(unpin_href)
-		res4 = self.testapp.post(unpin_href)
-		res4 = res4.json_body
+			self.forbid_link_with_rel(res3, 'pin')
+			unpin_href = self.require_link_href_with_rel(res3, 'unpin')
 
-		self.require_link_href_with_rel(res4, 'pin')
-		self.forbid_link_with_rel(res4, 'unpin')
+			self.testapp.post(unpin_href)
+			res4 = self.testapp.post(unpin_href)
+			res4 = res4.json_body
+
+			self.require_link_href_with_rel(res4, 'pin')
+			self.forbid_link_with_rel(res4, 'unpin')
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_user_can_POST_new_forum_entry_with_non_ascii_title(self):
