@@ -1554,6 +1554,12 @@ zope.deferredimport.deprecatedFrom(
     "IWeakRefToMissing",
     "ICachingWeakRef")
 
+
+zope.deferredimport.deprecatedFrom(
+    "Moved to nti.app.products.google.sso.interfaces",
+    "nti.app.products.google.sso.interfaces",
+    "IGoogleUser")
+
 # deprecations
 
 from zope.deprecation import deprecated
