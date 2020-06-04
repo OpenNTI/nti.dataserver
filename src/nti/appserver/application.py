@@ -127,8 +127,6 @@ def _logon_account_views(pyramid_config):
 	pyramid_config.add_route(name='logon.nti.password', pattern='/dataserver2/logon.nti.password')
 	pyramid_config.add_route(name='logon.nti.impersonate', pattern='/dataserver2/logon.nti.impersonate',
 							 factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory')
-	pyramid_config.add_route(name='logon.google', pattern='/dataserver2/logon.google')
-	pyramid_config.add_route(name='logon.google.oauth2', pattern='/dataserver2/logon.google.oauth2')
 
 	pyramid_config.add_route(name=ROUTE_OPENID_RESPONSE, pattern='/dataserver2/' + ROUTE_OPENID_RESPONSE)
 	pyramid_config.add_route(name='logon.openid', pattern='/dataserver2/logon.openid')
