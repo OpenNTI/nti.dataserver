@@ -125,7 +125,6 @@ def user_mention_emailer(event):
     they're offline
     """
 
-    from IPython.terminal.debugger import set_trace; set_trace()
     user = event.target
     change = event.object
     mentionable = IMentionable(change.object, None)
