@@ -63,7 +63,6 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
                 locate(index, catalog, IX_MENTIONED)
                 catalog[IX_MENTIONED] = index
 
-                catalog.updateIndexes()
     finally:
         component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
 
