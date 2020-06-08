@@ -36,3 +36,34 @@ class _IsMentionedDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, result):
         result['isMentioned'] = True
+
+
+@interface.implementer(IExternalObjectDecorator)
+@component.adapter(IMentionable, IRequest)
+class _CanAccessContentDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+    def _predicate(self, context, result):
+        return self._is_authenticated and getattr(context, 'mentions', None)
+
+    def _make_has_access(self, context):
+        security_check = make_sharing_security_check_for_object(context)
+
+        def has_access(user):
+            return bool(security_check(user))
+
+        return has_access
+
+    def _do_decorate_external(self, context, result):
+        has_access = self._make_has_access(context)
+
+        expanded_mentions = []
+        for username in context.mentions:
+            user = User.get_user(username)
+            if user is not None:
+                ext_user = toExternalObject(user, name='summary')
+                ext_user['CanAccessContent'] = has_access(user)
+                expanded_mentions.append(ext_user)
+            else:
+                expanded_mentions.append(username)
+
+        result['mentions'] = expanded_mentions
