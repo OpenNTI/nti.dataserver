@@ -3,4 +3,9 @@
 
     <adapter factory=".adapters.ValidMentionableEntityIterable" />
 
+    <subscriber factory="nti.app.mentions.decorators._IsMentionedDecorator"
+                for="nti.coremetadata.interfaces.IMentionable
+                     pyramid.interfaces.IRequest"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
 </configure>
