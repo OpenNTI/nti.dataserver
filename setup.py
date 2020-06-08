@@ -219,7 +219,7 @@ setup(
         'feedgenerator',
         'futures',
         # We have a branch for this, installed in buildout.cfg
-        'gevent',
+        'gevent[recommended]',
         # pypy has its own greenlet implementation
         'greenlet',
         'gunicorn',
