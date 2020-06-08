@@ -40,6 +40,8 @@ from nti.contentrange import interfaces as rng_interfaces
 
 from nti.contentrange.contentrange import ContentRangeDescription
 
+from nti.coremetadata.interfaces import IMentionable
+
 from nti.property.property import alias
 
 from nti.schema.field import Dict
@@ -376,11 +378,31 @@ class ITargetedStreamChangeEvent(interface.interfaces.IObjectEvent):
         "The specific entity that should see this change")
 
 
+class IStreamChangeAddedEvent(interface.interfaces.IObjectEvent):
+    """
+    An object event wrapping up a :class:`IStreamChangeEvent`, along
+    with a specific entity which has accepted the event.
+    """
+
+    entity = interface.Attribute(
+        "The specific entity that should see this change")
+
+
 from zope.interface.interfaces import ObjectEvent
 
 
 @interface.implementer(ITargetedStreamChangeEvent)
 class TargetedStreamChangeEvent(ObjectEvent):
+
+    target = alias('entity')
+
+    def __init__(self, change, target):
+        ObjectEvent.__init__(self, change)
+        self.entity = target
+
+
+@interface.implementer(IStreamChangeAddedEvent)
+class StreamChangeAddedEvent(ObjectEvent):
 
     target = alias('entity')
 

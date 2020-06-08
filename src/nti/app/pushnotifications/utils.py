@@ -16,9 +16,15 @@ from zope import component
 
 from zope.intid.interfaces import IIntIds
 
+from nti.appserver.context_providers import get_trusted_top_level_contexts
+
 from nti.base._compat import text_
 
+from nti.coremetadata.interfaces import IContainerContext
+
 from nti.dataserver.users.users import User
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -82,4 +88,27 @@ def generate_unsubscribe_url(user, request=None, host_url=None, secret_key=None)
 
     href = '/%s/%s?%s' % (ds2, '@@unsubscribe_digest_email_with_token', params)
     result = urllib_parse.urljoin(host_url, href) if host_url else href
+    return result
+
+
+def get_top_level_context(obj):
+    """
+    Get the top level context for our object.
+    """
+    # Just grab the title since this is what we display. This also
+    # collapses possible different catalog entries into a single
+    # entry, which we want.
+    result = None
+    container_context = IContainerContext(obj, None)
+    if container_context:
+        context_id = container_context.context_id
+        result = find_object_with_ntiid(context_id)
+    if result is None:
+        top_level_contexts = get_trusted_top_level_contexts(obj)
+        result = None
+        if top_level_contexts:
+            top_level_contexts = tuple(top_level_contexts)
+            result = top_level_contexts[0]
+
+    result = getattr(result, 'title', 'General Activity')
     return result

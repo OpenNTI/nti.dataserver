@@ -15,10 +15,25 @@ from hamcrest import has_length
 from hamcrest import has_entries
 from hamcrest import assert_that
 
+from pyramid.threadlocal import get_current_request
+
+from zope import component
+from zope import interface
+
+from nti.app.pushnotifications.subscribers import user_mention_emailer
+
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
+from nti.contentfragments.interfaces import PlainTextContentFragment
+
+from nti.dataserver.interfaces import IStreamChangeEvent
+from nti.dataserver.interfaces import StreamChangeAddedEvent
+
+from nti.dataserver.users import users
 from nti.dataserver.users import Community
+
+from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
@@ -30,13 +45,22 @@ from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
 from nti.dataserver.tests import mock_dataserver
 
+from nti.app.testing.testing import ITestMailDelivery
+
+
 class TestSubscribers(ApplicationLayerTest):
 
-	def _add_comment(self, creator, topic, inReplyTo=None):
+	def _add_comment(self, creator, topic, inReplyTo=None, request=None, mentions=()):
 		comment = GeneralForumComment()
 		comment.creator = creator
+		comment.mentions = mentions
 		if inReplyTo:
 			comment.inReplyTo = inReplyTo
+
+		if request is not None:
+			request.remote_user = creator
+			request.context = comment
+
 		topic[topic.generateId(prefix=u'comment')] = comment
 		return comment
 
@@ -125,3 +149,59 @@ class TestSubscribers(ApplicationLayerTest):
 			self._add_comment(user5, topic, inReplyTo=None)
 			assert_that(_mockMailer._calls, has_length(0))
 
+	@mock_dataserver.WithMockDSTrans
+	@fudge.patch("nti.app.pushnotifications.subscribers._is_user_online")
+	def test_mention_email(self, is_online):
+		is_online.is_callable().returns(True)
+
+		community = Community.create_community(self.ds, username=u"test_demo")
+		user = users.User.create_user(self.ds, username=u'jason.madden@nextthought.com')
+		mouse_user = users.User.create_user(self.ds, username=u'mmouse@nextthought.com')
+		for _user in (user, mouse_user):
+			_user.record_dynamic_membership(community)
+
+		board = ICommunityBoard(community)
+		forum = board[u'Forum']
+
+		topic = CommunityHeadlineTopic()
+		topic.title = u'a test'
+		topic.creator = user
+		forum[u'Hello'] = topic
+		topic.publish()
+
+		mailer = component.getUtility(ITestMailDelivery)
+
+		# With no mentionable, nothing happens
+		change = MockChange()
+		event = StreamChangeAddedEvent(change, user)
+		user_mention_emailer(event)
+		assert_that(mailer.queue, has_length(0))
+
+		# User not mentioned, nothing happens
+		request = get_current_request()
+		mentions = PlainTextContentFragment(u"bojangles@nextthought.com"),
+		comment = self._add_comment(mouse_user, topic, request=request, mentions=mentions)
+		assert_that(comment.isMentionedDirectly(user), is_(False))
+		assert_that(mailer.queue, has_length(0))
+
+		# User online, nothing happens
+		mentions += PlainTextContentFragment(u"jason.madden@nextthought.com"),
+		comment = self._add_comment(mouse_user, topic, request=request, mentions=mentions)
+		assert_that(comment.isMentionedDirectly(user), is_(True))
+		assert_that(mailer.queue, has_length(0))
+
+		# User mentioned and not online, mail sent
+		profile = IUserProfile(user)
+		profile.email = u'jason.madden@nextthought.com'
+		profile.realname = u'Steve'
+
+		is_online.is_callable().returns(False)
+		request = get_current_request()
+		self._add_comment(mouse_user, topic, request=request, mentions=mentions)
+		assert_that(mailer.queue, has_length(1))
+
+
+@interface.implementer(IStreamChangeEvent)
+class MockChange(object):
+	type = "Type"
+	object = None
