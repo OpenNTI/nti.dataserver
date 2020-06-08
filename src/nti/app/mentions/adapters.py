@@ -43,8 +43,13 @@ class ValidMentionableEntityIterable(object):
     def _security_check(self):
         return make_sharing_security_check_for_object(self.context)
 
+    @Lazy
+    def _creator_username(self):
+        creator = getattr(self.context, "creator", None)
+        return getattr(creator, "username", creator)
+
     def _is_creator(self, user):
-        return _lower(user.username) == _lower(getattr(self.context, ".creator", None))
+        return _lower(user.username) == _lower(self._creator_username)
 
     def _predicate(self, user):
         return user is not None \
