@@ -34,6 +34,10 @@ from nti.cabinet.interfaces import ISourceFiler
 
 from nti.cabinet.mixins import SourceProxy
 
+from nti.dataserver.authorization import ACT_READ
+
+from nti.dataserver.authorization_acl import has_permission
+
 from nti.dataserver.interfaces import IDataserver
 
 from nti.namedfile.file import safe_filename
@@ -106,6 +110,25 @@ def make_sharing_security_check(request, remoteUser):
             or _check_dynamic_memberships(remoteUser, x) \
             or _check_shared_with(remoteUser, x) \
             or is_readable(x, remote_request)
+    return security_check
+
+
+def make_sharing_security_check_for_object(o):
+    """
+    Return a callable object of one argument that returns true if the
+    object is readable to the user given as the argument.  See docs for
+    ``make_sharing_security_check``.
+    """
+
+    def security_check(user):
+        # 1. Creator
+        # 2. Dynamic memberships
+        # 3. SharedWith
+        # 4. ACL
+        return _check_creator(user, o) \
+            or _check_dynamic_memberships(user, o) \
+            or _check_shared_with(user, o) \
+            or has_permission(ACT_READ, o, getattr(user, "username", user))
     return security_check
 
 

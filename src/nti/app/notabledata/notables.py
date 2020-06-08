@@ -17,6 +17,8 @@ from pyramid.threadlocal import get_current_request
 
 from nti.app.base.abstract_views import make_sharing_security_check
 
+from nti.coremetadata.interfaces import IMentionable
+
 from nti.dataserver.authentication import dynamic_memberships_that_participate_in_security
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
@@ -132,4 +134,18 @@ class BlogNotableFilter(object):
 
     def is_notable(self, obj, user):
         return  _is_blog(obj) \
+            and (_check_sharing(obj, user) or _check_tagged(obj, user))
+
+
+@interface.implementer(INotableFilter)
+class MentionableNotableFilter(object):
+    """
+    Determines if a mentionable is notable, i.e. mentions the current user.
+    """
+
+    def __init__(self, context):
+        self.context = context
+
+    def is_notable(self, obj, user):
+        return IMentionable.providedBy(obj) \
             and (_check_sharing(obj, user) or _check_tagged(obj, user))

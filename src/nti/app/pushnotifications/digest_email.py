@@ -317,10 +317,12 @@ class DigestEmailCollector(object):
 		# and don't resend if nothing interesting has happened since we last sent
 		# the email...actually, we track the last time we checked; this lets
 		# us be much more efficient in the (somewhat common) case that nothing
-		# changes for the same user.
+		# changes for the same user.  Also, since mentions get their own
+		# email sent immediately, exclude those.
 
 		min_created_time = self.min_created_time(notable_data)
-		notable_intids_since_last_viewed = notable_data.get_notable_intids(min_created_time=min_created_time)
+		notable_intids_since_last_viewed = notable_data.get_notable_intids(min_created_time=min_created_time,
+																		   include_mentions=False)
 		if not notable_intids_since_last_viewed:
 			# Hooray, nothing to do
 			logger.debug("[%s] User %s/%s had 0 notable items since %s",

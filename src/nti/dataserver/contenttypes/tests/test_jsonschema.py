@@ -22,9 +22,9 @@ class TestJsonSchema(DataserverLayerTest):
 
     def test_note(self):
         result = make_schema(INote)
-        assert_that(result, has_entry('Fields', has_length(10)))
+        assert_that(result, has_entry('Fields', has_length(11)))
         fields = result['Fields']
-        assert_that(fields, has_length(10))
+        assert_that(fields, has_length(11))
 
         assert_that(fields, has_entry('title', has_entry('type', 'string')))
 
@@ -49,9 +49,9 @@ class TestJsonSchema(DataserverLayerTest):
                     has_entry('body', 
                               has_entry('base_type', [u'string', u'namedfile', u'media', u'canvas'])))
 
-        for name in ('body', 'sharedWith', 'tags'):
+        for name in ('body', 'sharedWith', 'tags', 'mentions'):
             assert_that(fields, has_entry(name, has_entry('type', 'List')))
 
-        for name in ('sharedWith', 'tags'):
+        for name in ('sharedWith', 'tags', 'mentions'):
             assert_that(fields, 
                         has_entry(name, has_entry('base_type', 'string')))

@@ -36,6 +36,8 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
+from nti.contentfragments.interfaces import PlainTextContentFragment
+
 from nti.contentrange import contentrange
 
 from nti.dataserver import contenttypes
@@ -182,6 +184,76 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
         self._check_notable_data(length=2)
         # TODO Fails, cannot find recursivestream URL for sjohnson?
         # self._check_stream()
+
+    @WithSharedApplicationMockDS(users=(u"bobby", u"hagenrd"),
+                                 testapp=True,
+                                 default_authenticate=True)
+    @time_monotonically_increases
+    @fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+    def test_notable_ugd_mentioned(self, mock_interaction):
+        mock_interaction.is_callable().with_args().returns(True)
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = self._get_user()
+            user1 = self._get_user('bobby')
+            user2 = self._get_user('hagenrd')
+
+            # Note that we index normalized to the minute, so we need to give
+            # these substantially different created times
+            top_n = contenttypes.Note()
+            top_n.applicableRange = contentrange.ContentRangeDescription()
+            _ = top_n.containerId = u'tag:nti:foo'
+            top_n.body = (u"Top",)
+            top_n.createdTime = 100
+            top_n.addSharingTarget(user)
+            top_n.lastModified = 1395693540
+            user1.addContainedObject(top_n)
+
+            top_n_ntiid = to_external_ntiid_oid(top_n)
+
+            reply_n = contenttypes.Note()
+            reply_n.applicableRange = contentrange.ContentRangeDescription()
+            reply_n.containerId = u'tag:nti:foo'
+            reply_n.body = (u'Reply',)
+            reply_n.inReplyTo = top_n
+            reply_n.addReference(top_n)
+            reply_n.createdTime = 200
+            reply_n.mentions = (PlainTextContentFragment(user.username),)
+            reply_n.addSharingTarget(user)
+            reply_n.lastModified = 1395693600
+            user2.addContainedObject(reply_n)
+
+            reply_ext_ntiid = to_external_ntiid_oid(reply_n)
+
+            reply_n = contenttypes.Note()
+            reply_n.applicableRange = contentrange.ContentRangeDescription()
+            reply_n.containerId = u'tag:nti:foo'
+            reply_n.body = (u'Reply2',)
+            reply_n.inReplyTo = top_n
+            reply_n.addReference(top_n)
+            reply_n.createdTime = 300
+            reply_n.mentions = (PlainTextContentFragment(user.username),)
+            reply_n.addSharingTarget(user)
+            reply_n.lastModified = 1395693660
+            user2.addContainedObject(reply_n)
+
+            interface.alsoProvides(reply_n, IDeletedObjectPlaceholder)
+            lifecycleevent.modified(reply_n)
+
+        href = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn/'
+        path = href % (self.extra_environ_default_user, ntiids.ROOT)
+        res = self.testapp.get(path)
+        assert_that(res.json_body, has_entry('lastViewed', 0))
+        assert_that(res.json_body, has_entry('TotalItemCount', 2))
+        assert_that(res.json_body, has_entry('Items', has_length(2)))
+        # They are sorted descending by time by default
+        assert_that(res.json_body, has_entry('Items',
+                                             contains(has_entry('NTIID', reply_ext_ntiid),
+                                                      has_entry('NTIID', top_n_ntiid))))
+        assert_that(res.last_modified.replace(tzinfo=None),
+                    is_(datetime.utcfromtimestamp(1395693600)))
+
+        self._check_notable_data(length=2)
+        self._check_stream()
 
     @WithSharedApplicationMockDS(users=('jason'),
                                  testapp=True,

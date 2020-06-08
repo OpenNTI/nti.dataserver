@@ -44,6 +44,7 @@ from nti.containers.containers import AcquireObjectsOnReadMixin
 from nti.containers.containers import AbstractNTIIDSafeNameChooser
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
+from nti.coremetadata.mixins import MentionableMixin
 from nti.coremetadata.mixins import ZContainedMixin
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
@@ -93,6 +94,7 @@ from nti.wref.interfaces import IWeakRef
 
 
 class _AbstractUnsharedTopic(AcquireObjectsOnReadMixin,
+                             MentionableMixin,
                              CheckingLastModifiedBTreeContainer,
                              ZContainedMixin,
                              Implicit):

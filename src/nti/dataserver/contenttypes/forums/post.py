@@ -22,6 +22,7 @@ from zope.schema.fieldproperty import FieldProperty
 
 from Acquisition import Implicit
 
+from nti.coremetadata.mixins import MentionableMixin
 from nti.coremetadata.mixins import ZContainedMixin
 
 from nti.dataserver.contenttypes.forums import _containerIds_from_parent
@@ -50,6 +51,7 @@ from nti.threadable.threadable import Threadable as ThreadableMixin
 
 @interface.implementer(IPost, IAttributeAnnotatable)
 class Post(ZContainedMixin,
+           MentionableMixin,
            PersistentCreatedModDateTrackingObject,
            AbstractReadableSharedWithMixin,
            Implicit):

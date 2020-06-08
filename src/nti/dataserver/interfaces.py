@@ -1178,6 +1178,7 @@ from nti.namedfile.interfaces import IFileConstrained
 
 class INote(IHighlight,
             IThreadable,
+            IMentionable,
             ITitledContent,
             IUserTaggedContent,
             IModeledContentBody,

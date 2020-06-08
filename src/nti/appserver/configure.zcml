@@ -410,6 +410,7 @@
 	<include package="nti.app.users" />
 	<include package="nti.app.bulkemail" />
 	<include package="nti.app.extractors" />
+	<include package="nti.app.mentions" />
 	<include package="nti.app.notabledata" />
 	<include package="nti.app.contentfile" />
 	<include package="nti.app.contentfolder" />

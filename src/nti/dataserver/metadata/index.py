@@ -16,7 +16,6 @@ import BTrees
 # we get that from superclass
 # pylint: disable=redefined-builtin
 import six
-
 from zope import component
 from zope import interface
 
@@ -29,6 +28,8 @@ from zope.location import locate
 from nti.base._compat import text_
 
 from nti.chatserver.interfaces import IMessageInfo
+
+from nti.coremetadata.interfaces import IMentionable
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
@@ -267,6 +268,48 @@ def TaggedToIndex(family=BTrees.family64):
                                 is_collection=True)
 
 
+class MentionedRawIndex(RawSetIndex):
+    pass
+
+
+class Mentioned(object):
+    """
+    The \"interface\" we adapt to in order to
+    find entities that are mentioned to by the object.
+
+    We take anything that is :class:`.IMentionable`` and look inside the
+    'mentions' sequence defined by it.
+    """
+
+    __slots__ = ('context',)
+
+    def __init__(self, context, unused_default):
+        self.context = IMentionable(context, None)
+
+    @property
+    def mentioned_usernames(self):
+        if self.context is None:
+            return ()
+
+        raw_mentions = self.context.mentions
+        # Most things don't have mentions
+        if not raw_mentions:
+            return ()
+
+        return set(raw_mentions)
+
+
+def MentionedIndex(family=BTrees.family64):
+    """
+    Indexes the usernames of entities mentioned in IMentionable objects.
+    """
+    return NormalizationWrapper(field_name='mentioned_usernames',
+                                normalizer=StringTokenNormalizer(),
+                                index=MentionedRawIndex(family=family),
+                                interface=Mentioned,
+                                is_collection=True)
+
+
 class CreatorOfInReplyToRawIndex(RawValueIndex):
     pass
 
@@ -421,6 +464,7 @@ IX_TOPICS = 'topics'
 IX_CREATOR = 'creator'
 IX_MIMETYPE = 'mimeType'
 IX_TAGGEDTO = 'taggedTo'
+IX_MENTIONED = 'mentioned'
 IX_SHAREDWITH = 'sharedWith'
 IX_CONTAINERID = 'containerId'
 IX_CREATEDTIME = 'createdTime'
@@ -474,6 +518,7 @@ def create_metadata_catalog(catalog=None, family=BTrees.family64):
                         (IX_CREATOR, CreatorIndex),
                         (IX_MIMETYPE, MimeTypeIndex),
                         (IX_TAGGEDTO, TaggedToIndex),
+                        (IX_MENTIONED, MentionedIndex),
                         (IX_SHAREDWITH, SharedWithIndex),
                         (IX_CONTAINERID, ContainerIdIndex),
                         (IX_CREATEDTIME, CreatedTimeIndex),

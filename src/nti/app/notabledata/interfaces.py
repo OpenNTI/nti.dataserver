@@ -71,7 +71,8 @@ class IUserNotableData(IIterable):
         """
 
     def get_notable_intids(min_created_time=None,
-                           max_created_time=None):
+                           max_created_time=None,
+                           include_mentions=True):
         """
         Return a :mod:`BTrees` integer set containing the notable intids for the user.
 
