@@ -23,6 +23,8 @@ from nti.app import pushnotifications as push_pkg
 
 from nti.app.pushnotifications import email_notifications_preference
 
+from nti.app.pushnotifications import MessageFactory as _
+
 from nti.app.pushnotifications.digest_email import _TemplateArgs
 
 from nti.app.pushnotifications.utils import get_top_level_context
@@ -145,7 +147,7 @@ def user_mention_emailer(event):
         template_args['notable'] = notable
 
         notable_context = get_top_level_context(change.object)
-        subject = "%s mentioned you in %s" % (notable.creator, notable_context)
+        subject = _(u"%s mentioned you in %s" % (notable.creator, notable_context))
 
         # TODO: unsubscribe url for mentions
         # template_args['unsubscribe_link'] = generate_unsubscribe_url(request.remote_user, request)
