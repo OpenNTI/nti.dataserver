@@ -279,6 +279,11 @@ class Mentioned(object):
 
     We take anything that is :class:`.IMentionable`` and look inside the
     'mentions' sequence defined by it.
+
+    TODO: This may eventually replace the TaggedTo index in the future,
+     but currently supports only usernames, and does not affect
+     sharing/permissions.  Will need to decide how to handle those issues
+     first.
     """
 
     __slots__ = ('context',)
