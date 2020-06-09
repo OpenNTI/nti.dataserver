@@ -96,7 +96,18 @@ def _stream_preflight(contained):
     if not IEntity.providedBy(creator) or not hasQueryInteraction():
         return None
     try:
-        return getattr(contained, 'sharingTargets')
+        sharing_targets = getattr(contained, 'sharingTargets')
+
+        # Check for additional targets (e.g. from mentions)
+        additional_targets = ISharingTargetEntityIterable(contained, None)
+        if additional_targets is None:
+            return sharing_targets
+
+        if sharing_targets is None:
+            return additional_targets
+
+        # Remove any duplication
+        return set(sharing_targets).union(additional_targets)
     except AttributeError:
         return None
 
