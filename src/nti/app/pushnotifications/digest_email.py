@@ -153,8 +153,8 @@ class _TemplateArgs(object):
 
 	@property
 	def display_name(self):
-		return component.getMultiAdapter((self._primary, self.request),
-										 IDisplayNameGenerator)
+		return component.queryMultiAdapter((self._primary, self.request),
+										   IDisplayNameGenerator)
 
 	@property
 	def creator(self):

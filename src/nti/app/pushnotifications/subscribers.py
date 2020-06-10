@@ -14,6 +14,7 @@ from pyramid.threadlocal import get_current_request
 from zc.displayname.interfaces import IDisplayNameGenerator
 
 from zope import component
+from zope import interface
 
 from zope.intid.interfaces import IIntIds
 
@@ -23,15 +24,20 @@ from nti.app import pushnotifications as push_pkg
 
 from nti.app.pushnotifications import email_notifications_preference
 
-from nti.app.pushnotifications import MessageFactory as _
+from nti.app.pushnotifications.interfaces import IMailTemplateProvider
 
-from nti.app.pushnotifications.digest_email import _TemplateArgs
+from nti.app.pushnotifications import MessageFactory as _
+from nti.app.pushnotifications import digest_email
 
 from nti.app.pushnotifications.utils import get_top_level_context
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
+from nti.contentfragments.interfaces import IPlainTextContentFragment
+
 from nti.coremetadata.interfaces import IMentionable
+
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IStreamChangeAddedEvent
@@ -120,6 +126,50 @@ def _is_user_online(username):
         return False
 
 
+class _AbstractMailTemplateProvider(object):
+
+    template_name = None
+
+    def __init__(self, context):
+        self.context = context
+
+    @property
+    def template(self):
+        return self.template_name
+
+
+@component.adapter(IMentionable)
+@interface.implementer(IMailTemplateProvider)
+class TitledMailTemplateProvider(_AbstractMailTemplateProvider):
+    template_name = u"mention_email"
+
+
+@component.adapter(ICommentPost)
+@interface.implementer(IMailTemplateProvider)
+class UntitledMailTemplateProvider(_AbstractMailTemplateProvider):
+    template_name = u"mention_email_untitled"
+
+
+class _TemplateArgs(digest_email._TemplateArgs):
+
+    @property
+    def snippet(self):
+        if not hasattr(self._primary, "body") \
+                and hasattr(self._primary, "headline") \
+                and hasattr(self._primary.headline, "body"):
+            return self.snippet_of(self._primary.headline.body)
+
+        return self.snippet_of(self._primary.body)
+
+    def snippet_of(self, body):
+        if body and isinstance(body[0], basestring):
+            text = IPlainTextContentFragment(body[0])
+            if len(text) > self.max_snippet_len:
+                text = text[:self.max_snippet_len] + '...'
+            return text
+        return ''
+
+
 @component.adapter(IStreamChangeAddedEvent)
 def user_mention_emailer(event):
     """
@@ -136,17 +186,18 @@ def user_mention_emailer(event):
         logger.debug("Sending offline notification to %s for mention, chg: %s",
                      user.username, change.type)
 
-        base_template = 'mention_email'
+        template_provider = IMailTemplateProvider(mentionable, None)
+        template = template_provider.template if template_provider else 'mention_email'
 
         template_args = {}
         request = get_current_request()
-        notable = _TemplateArgs((change.object,),
+        notable = _TemplateArgs((mentionable,),
                                 request,
                                 remoteUser=request.remote_user,
                                 max_snippet_len=250)
         template_args['notable'] = notable
 
-        notable_context = get_top_level_context(change.object)
+        notable_context = get_top_level_context(mentionable)
         subject = _(u"%s mentioned you in %s" % (notable.creator, notable_context))
 
         # TODO: unsubscribe url for mentions
@@ -160,7 +211,7 @@ def user_mention_emailer(event):
 
         mailer = _mailer()
         mailer.queue_simple_html_text_email(
-            base_template,
+            template,
             package=push_pkg,
             subject=subject,
             recipients=[user],

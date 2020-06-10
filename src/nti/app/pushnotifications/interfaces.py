@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from zope.schema import TextLine
+
 from zope.viewlet.interfaces import IViewletManager
 
 class INotableDataEmailViewletManager(IViewletManager):
@@ -38,3 +40,8 @@ class INotableDataEmailClassifier(interface.Interface):
         of data. If no classification is found, return nothing
         and the object will be ignored.
         """
+
+
+class IMailTemplateProvider(interface.Interface):
+
+    template = TextLine(title=u"Name of the template to use.")

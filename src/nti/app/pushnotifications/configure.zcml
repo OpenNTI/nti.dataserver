@@ -158,6 +158,14 @@
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemFeedback"
 			 zcml:condition="installed nti.app.assessment" />
 
+	<!-- Mention email template providers -->
+	<adapter factory=".subscribers.UntitledMailTemplateProvider"
+			 for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost"/>
+	<adapter factory=".subscribers.UntitledMailTemplateProvider"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlinePost"/>
+	<adapter factory=".subscribers.TitledMailTemplateProvider"
+			 for="nti.coremetadata.interfaces.IMentionable"/>
+
 	<!-- Subscribers -->
 	<!-- Events for ensuring users get a notification when a user replies to something they authored. -->
 	<subscriber handler=".subscribers._threadable_added"
