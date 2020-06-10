@@ -1176,7 +1176,12 @@ class ObjectUnflaggedEvent(interface.interfaces.ObjectEvent):
 from nti.namedfile.interfaces import IFileConstrained
 
 
-class INote(IHighlight, IThreadable, ITitledContent, IModeledContentBody, IFileConstrained):
+class INote(IHighlight,
+            IThreadable,
+            ITitledContent,
+            IUserTaggedContent,
+            IModeledContentBody,
+            IFileConstrained):
     """
     A user-created note attached to other content.
     """

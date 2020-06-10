@@ -76,6 +76,8 @@ class Note(ThreadableMixin, Highlight):
     #: We override the default highlight style to suppress it.
     style = FieldProperty(_style_field)
 
+    tags = FieldProperty(INote['tags'])
+
     # uses the 'body' in the dict, which is compatible with persistent objects
     body = BodyFieldProperty(INote['body'])
 
