@@ -13,4 +13,6 @@
                      pyramid.interfaces.IRequest"
                 provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
+    <subscriber handler=".subscribers._validate_mentions"
+                for="tuple nti.coremetadata.interfaces.IMentionable nti.schema.interfaces.IBeforeSchemaFieldAssignedEvent" />
 </configure>
