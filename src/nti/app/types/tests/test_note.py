@@ -17,6 +17,7 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
+from hamcrest import contains_inanyorder
 from hamcrest import greater_than_or_equal_to
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -55,6 +56,7 @@ class TestNote(ApplicationLayerTest):
                    "applicableRange": {"Class": "ContentRangeDescription",
                                        "MimeType": "application/vnd.nextthought.contentrange.contentrangedescription"},
                    "body": ['ichigo', ext_file],
+                   "tags": ['tag1', 'tag_2'],
                    "title": "bleach"}
 
         data = to_json_representation(ext_obj)
@@ -71,6 +73,9 @@ class TestNote(ApplicationLayerTest):
                                                    'download_url', is_not(none())))))
         assert_that(res.json_body,
                     has_entry('OID', is_not(none())))
+
+        assert_that(res.json_body,
+                    has_entry('tags', contains_inanyorder('tag1', 'tag_2')))
 
         href = res.json_body['href']
         with mock_dataserver.mock_db_trans(self.ds):
