@@ -44,19 +44,22 @@ class TestValidMentionableEntityIterable(AppLayerTest):
         assert_that(set(ISharingTargetEntityIterable(notable)), empty())
 
     @WithMockDSTrans
-    @fudge.patch("nti.app.mentions.adapters.make_sharing_security_check_for_object")
-    def test_valid_mentions(self, make_sec_check):
+    @fudge.patch("nti.app.mentions.adapters.make_sharing_security_check_for_object",
+                 "nti.app.mentions.adapters.User")
+    def test_valid_mentions(self, make_sec_check, user_class):
         def security_check(user):
             return user.username in (u"pluto", u"donald")
 
         make_sec_check.is_callable().returns(security_check)
 
-        self._create_user(u"pluto")
-        self._create_user(u"mickey")
-        self._create_user(u"donald")
+        users = {name: self._create_user(name) for name in (u"goofy",
+                                                            u"pluto",
+                                                            u"mickey",
+                                                            u"donald")}
+        user_class.provides("get_user").calls(lambda name: users.get(name))
 
         notable = Note()
-        notable.mentions = Note.mentions.fromObject([u"one", u"pluto", u"mickey", u"donald"])
+        notable.mentions = Note.mentions.fromObject([u"goofy", u"pluto", u"mickey", u"donald"])
         assert_that(ISharingTargetEntityIterable(notable),
                     contains(has_property(u"username", u"pluto"),
                              has_property(u"username", u"donald")))
