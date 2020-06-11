@@ -40,7 +40,7 @@ from nti.coremetadata.interfaces import IMentionable
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 
 from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import IStreamChangeAddedEvent
+from nti.dataserver.interfaces import IStreamChangeAcceptedByUser
 
 from nti.dataserver.users import User
 
@@ -170,7 +170,7 @@ class _TemplateArgs(digest_email._TemplateArgs):
         return ''
 
 
-@component.adapter(IStreamChangeAddedEvent)
+@component.adapter(IStreamChangeAcceptedByUser)
 def user_mention_emailer(event):
     """
     For incoming changes containing mentions, email the user, assuming

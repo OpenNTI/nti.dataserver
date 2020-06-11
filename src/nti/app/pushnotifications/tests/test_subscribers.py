@@ -28,7 +28,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.contentfragments.interfaces import PlainTextContentFragment
 
 from nti.dataserver.interfaces import IStreamChangeEvent
-from nti.dataserver.interfaces import StreamChangeAddedEvent
+from nti.dataserver.interfaces import StreamChangeAcceptedByUser
 
 from nti.dataserver.users import users
 from nti.dataserver.users import Community
@@ -173,7 +173,7 @@ class TestSubscribers(ApplicationLayerTest):
 
 		# With no mentionable, nothing happens
 		change = MockChange()
-		event = StreamChangeAddedEvent(change, user)
+		event = StreamChangeAcceptedByUser(change, user)
 		user_mention_emailer(event)
 		assert_that(mailer.queue, has_length(0))
 

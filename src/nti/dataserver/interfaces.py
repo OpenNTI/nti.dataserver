@@ -378,7 +378,7 @@ class ITargetedStreamChangeEvent(interface.interfaces.IObjectEvent):
         "The specific entity that should see this change")
 
 
-class IStreamChangeAddedEvent(interface.interfaces.IObjectEvent):
+class IStreamChangeAcceptedByUser(interface.interfaces.IObjectEvent):
     """
     An object event wrapping up a :class:`IStreamChangeEvent`, along
     with a specific entity which has accepted the event.
@@ -401,8 +401,8 @@ class TargetedStreamChangeEvent(ObjectEvent):
         self.entity = target
 
 
-@interface.implementer(IStreamChangeAddedEvent)
-class StreamChangeAddedEvent(ObjectEvent):
+@interface.implementer(IStreamChangeAcceptedByUser)
+class StreamChangeAcceptedByUser(ObjectEvent):
 
     target = alias('entity')
 

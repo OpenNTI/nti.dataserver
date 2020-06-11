@@ -57,7 +57,7 @@ from nti.dataserver.interfaces import IDynamicSharingTarget
 from nti.dataserver.interfaces import ITargetedStreamChangeEvent
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
-from nti.dataserver.interfaces import StreamChangeAddedEvent
+from nti.dataserver.interfaces import StreamChangeAcceptedByUser
 
 from nti.dataserver.users.entity import get_shared_dataserver
 
@@ -839,7 +839,7 @@ class User(Principal):
         """
 
         # Fire the change off to the user
-        notify(StreamChangeAddedEvent(change, self))
+        notify(StreamChangeAcceptedByUser(change, self))
 
         # TODO: Move this out to a listener somewhere
         apnsCon = component.queryUtility(INotificationService)
