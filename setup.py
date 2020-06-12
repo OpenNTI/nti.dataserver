@@ -76,10 +76,14 @@ TESTS_REQUIRE = [
     'tempstorage >= 2.12.2',
     'zope.testing >= 4.1.2',
     'zope.testrunner',
+
     'nti.nose_traceback_info',
     'nti.testing',
     'nti.app.testing',
-    'nti.fakestatsd'
+    'nti.fakestatsd',
+    'nti.assessment',
+    'nti.app.sites.mathcounts',
+    'nti.app.site',
 ]
 
 
@@ -131,6 +135,7 @@ setup(
         'nti.common',
         'nti.containers',
         'nti.contentfragments',
+        'nti.contentlibrary',
         'nti.contentprocessing',
         'nti.coremetadata',
         'nti.datastructures',
@@ -150,16 +155,17 @@ setup(
         'nti.ntiids',
         'nti.property',
         'nti.publishing',
-        'nti.threadable',
-        'nti.transactions',
-        'nti.traversal',
         'nti.schema',
         'nti.site',
         'nti.site_license',
+        'nti.threadable',
+        'nti.transactions',
+        'nti.traversal',
         'nti.utils',
         'nti.wref',
         'nti.zodb',
         'nti.zope_catalog',
+
         'objgraph',
         # Zope Acquisition; used by contentratings implicitly
         # cool concept. Pulls in ExtensionClass (which should only be
