@@ -134,7 +134,8 @@ class zodb_connection_tween(object):
 			for name, db, _ in need_gc:
 				db._a()
 				try:
-					db.pool.map(_print_refs)
+					for conn in db.pool:
+						_print_refs(conn)
 				finally:
 					db._r()
 

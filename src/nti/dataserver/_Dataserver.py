@@ -399,7 +399,9 @@ def _after_database_opened_listener(event):
     # caches the class factory...and we would open a connection
     # to evolve the database. So we must go through and also
     # set those to the right value
-    db.pool.map(lambda conn: setattr(conn._reader, '_factory', db.classFactory))
+    for conn in db.pool:
+        assert callable(conn._reader._factory)
+        conn._reader._factory = db.classFactory
 
 # After a fork, the dataserver has to be re-opened if it existed
 # at the time of fork. (Note that if we are not preloading the app,

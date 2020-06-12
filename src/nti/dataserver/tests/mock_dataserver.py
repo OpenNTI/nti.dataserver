@@ -281,8 +281,9 @@ def reset_db_caches(ds=None):
 	# connections are in use, or multiple machines, or there is cache
 	# pressure. It finds bugs that otherwise would be hidden by
 	# using the same object across transactions when the cache is the same
-	ds.db.pool.map( lambda conn: conn.cacheMinimize() ) # the correct way
-	#ds.db.pool.map( lambda conn: conn._resetCache() ) # the nuclear way
+	for conn in ds.db.pool:
+		conn.cacheMinimize()
+	#ds.db.pool( lambda conn: conn._resetCache() ) # the nuclear way
 	#Connection.resetCaches()
 
 def WithMockDSTrans( func ):

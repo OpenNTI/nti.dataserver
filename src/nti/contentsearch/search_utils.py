@@ -166,10 +166,9 @@ def create_queryobject(username, params, clazz=QueryObject):
                                    modificationTime.endTime)
     sites = get_component_hierarchy_names()
     sites = list(sites) if sites else list()
-    # We want to query for all globally registered objects as well 
+    # We want to query for all globally registered objects as well
     # (global via initialization probably).
     sites.append('dataserver2')
     context[u'site'] = sites
-
     result = clazz(**args)
     return result
