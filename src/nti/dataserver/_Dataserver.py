@@ -400,6 +400,7 @@ def _after_database_opened_listener(event):
     # to evolve the database. So we must go through and also
     # set those to the right value
     for conn in db.pool:
+        assert callable(conn._reader._factory)
         conn._reader._factory = db.classFactory
 
 # After a fork, the dataserver has to be re-opened if it existed
