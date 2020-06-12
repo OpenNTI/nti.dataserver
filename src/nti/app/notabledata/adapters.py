@@ -289,7 +289,17 @@ class UserNotableData(AbstractAuthenticatedView):
         # Subtract any comments that crept in that I don't want
         return self._difference(safely_viewable_intids, self._topic_comment_intids_to_exclude)
 
-    def _add_safely_viewable(self, questionable_intids, safely_viewable_intids):
+    def _is_user_visible(self, questionable_obj):
+        creator = getattr(questionable_obj, "creator", None)
+        return (creator is None
+                or (self.remoteUser.is_accepting_shared_data_from(creator)
+                    and not self.remoteUser.is_muted(questionable_obj)))
+
+    def _add_safely_viewable(self,
+                             questionable_intids,
+                             safely_viewable_intids,
+                             apply_user_visibility=False
+                             ):
         if self._intids_in_time_range is not None:
             questionable_intids = self._intersection(self._intids_in_time_range,
                                                      questionable_intids)
@@ -300,7 +310,9 @@ class UserNotableData(AbstractAuthenticatedView):
                 continue
             questionable_obj = uidutil.queryObject(questionable_uid)
             if questionable_obj is not None \
-                    and security_check(questionable_obj):
+                    and security_check(questionable_obj) \
+                    and (not apply_user_visibility
+                         or self._is_user_visible(questionable_obj)):
                 safely_viewable_intids.add(questionable_uid)
 
     @property
@@ -312,7 +324,9 @@ class UserNotableData(AbstractAuthenticatedView):
         mentioned_intids = catalog[IX_MENTIONED].apply(query)
 
         safely_viewable_intids = catalog.family.IF.LFSet()
-        self._add_safely_viewable(mentioned_intids, safely_viewable_intids)
+        self._add_safely_viewable(mentioned_intids,
+                                  safely_viewable_intids,
+                                  apply_user_visibility=True)
 
         return safely_viewable_intids
 

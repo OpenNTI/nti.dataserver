@@ -71,7 +71,7 @@ def _setup_community(users_map):
 
 class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
-    def _check_stream(self, username=None):
+    def _check_stream(self, username=None, length=None):
         if username:
             extra_environ = self._make_extra_environ(user=username)
             stream_res = self.fetch_user_root_rstream(username=username,
@@ -82,6 +82,11 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
         assert_that(stream_res.json_body,
                     has_entry('Items',
                               has_item(has_entry('RUGDByOthersThatIMightBeInterestedIn', is_true()))))
+
+        if length:
+            assert_that(stream_res.json_body,
+                        has_entry('Items',
+                                  has_length(length)))
 
     def _check_ad_hoc_notable(self, obj, user):
         notable_filter = get_notable_filter(obj)
@@ -254,6 +259,94 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
         self._check_notable_data(length=2)
         self._check_stream()
+
+    @WithSharedApplicationMockDS(users=(u"bobby", "hagenrd"),
+                                 testapp=True,
+                                 default_authenticate=True,
+                                 users_hook=_setup_community)
+    @time_monotonically_increases
+    @fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
+    def test_notable_ugd_user_visible(self, mock_interaction):
+        mock_interaction.is_callable().with_args().returns(True)
+        with mock_dataserver.mock_db_trans(self.ds):
+            com = Community.get_community('TheCommunity', self.ds)
+            user = self._get_user()
+            accepted_user = self._get_user('bobby')
+            ignored_user = self._get_user('hagenrd')
+
+            # Users are accepted as long as they're not ignored
+            user.ignore_shared_data_from(ignored_user)
+
+            # Note that we index normalized to the minute, so we need to give
+            # these substantially different created times
+
+            # No creator
+            top_n = contenttypes.Note()
+            top_n.applicableRange = contentrange.ContentRangeDescription()
+            _ = top_n.containerId = u'tag:nti:foo'
+            top_n.body = (u"Top 1",)
+            top_n.mentions = (PlainTextContentFragment(user.username),)
+            top_n.createdTime = 100
+            top_n.addSharingTarget(com)
+            top_n.lastModified = 1395693540
+            accepted_user.addContainedObject(top_n)
+            top_n.creator = None
+
+            no_creator_ntiid = to_external_ntiid_oid(top_n)
+
+            # Creator ignored
+            top_n = contenttypes.Note()
+            top_n.applicableRange = contentrange.ContentRangeDescription()
+            _ = top_n.containerId = u'tag:nti:foo'
+            top_n.body = (u"Top 2",)
+            top_n.mentions = (PlainTextContentFragment(user.username),)
+            top_n.createdTime = 200
+            top_n.addSharingTarget(com)
+            top_n.lastModified = 1395693600
+            ignored_user.addContainedObject(top_n)
+
+            # User visible
+            top_n = contenttypes.Note()
+            top_n.applicableRange = contentrange.ContentRangeDescription()
+            _ = top_n.containerId = u'tag:nti:foo'
+            top_n.body = (u"Top 3",)
+            top_n.mentions = (PlainTextContentFragment(user.username),)
+            top_n.createdTime = 300
+            top_n.addSharingTarget(com)
+            top_n.lastModified = 1395693660
+            accepted_user.addContainedObject(top_n)
+
+            user_visible_ntiid = to_external_ntiid_oid(top_n)
+
+            # Muted
+            top_n = contenttypes.Note()
+            top_n.applicableRange = contentrange.ContentRangeDescription()
+            _ = top_n.containerId = u'tag:nti:foo'
+            top_n.body = (u"Top 4",)
+            top_n.mentions = (PlainTextContentFragment(user.username),)
+            top_n.createdTime = 500
+            top_n.addSharingTarget(com)
+            top_n.lastModified = 1395693720
+            accepted_user.addContainedObject(top_n)
+            user.mute_conversation(to_external_ntiid_oid(top_n))
+
+        href = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn/'
+        path = href % (self.extra_environ_default_user, ntiids.ROOT)
+        res = self.testapp.get(path)
+        assert_that(res.json_body, has_entry('lastViewed', 0))
+        assert_that(res.json_body, has_entry('TotalItemCount', 2))
+        assert_that(res.json_body, has_entry('Items', has_length(2)))
+        # They are sorted descending by time by default
+        assert_that(res.json_body, has_entry('Items',
+                                             contains(has_entry('NTIID', user_visible_ntiid),
+                                                      has_entry('NTIID', no_creator_ntiid))))
+        assert_that(res.last_modified.replace(tzinfo=None),
+                    is_(datetime.utcfromtimestamp(1395693660)))
+
+        # TODO: Notable filters don't seem to check if data is indirectly
+        #  shared, though UserNotableData does, thus the next lines fail
+        # self._check_notable_data(length=2)
+        # self._check_stream(length=2)
 
     @WithSharedApplicationMockDS(users=('jason'),
                                  testapp=True,

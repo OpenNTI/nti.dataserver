@@ -120,7 +120,7 @@ def _support_email():
 def _is_user_online(username):
     dataserver = component.getUtility(IDataserver)
     try:
-        return bool(dataserver.sessions.get_sessions_by_owner(username))
+        return bool(dataserver.sessions and dataserver.sessions.get_sessions_by_owner(username))
     except KeyError:  # Hmm. session_storage.py reports some inconsistency errors sometimes. Which is bad
         logger.exception("Failed to get all sessions for owner %s", username)
         return False
@@ -193,7 +193,7 @@ def user_mention_emailer(event):
         request = get_current_request()
         notable = _TemplateArgs((mentionable,),
                                 request,
-                                remoteUser=request.remote_user,
+                                remoteUser=user,
                                 max_snippet_len=250)
         template_args['notable'] = notable
 
