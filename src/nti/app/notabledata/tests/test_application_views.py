@@ -345,8 +345,8 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
         # TODO: Notable filters don't seem to check if data is indirectly
         #  shared, though UserNotableData does, thus the next lines fail
-        # self._check_notable_data(length=2)
-        # self._check_stream(length=2)
+        self._check_notable_data(length=2)
+        self._check_stream(length=2)
 
     @WithSharedApplicationMockDS(users=('jason'),
                                  testapp=True,

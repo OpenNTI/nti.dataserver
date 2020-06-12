@@ -148,4 +148,4 @@ class MentionableNotableFilter(object):
 
     def is_notable(self, obj, user):
         return IMentionable.providedBy(obj) \
-            and (_check_sharing(obj, user) or _check_tagged(obj, user))
+            and (obj.isSharedWith(user) or _check_tagged(obj, user))
