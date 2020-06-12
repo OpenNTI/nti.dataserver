@@ -315,6 +315,11 @@ class UserNotableData(AbstractAuthenticatedView):
                          or self._is_user_visible(questionable_obj)):
                 safely_viewable_intids.add(questionable_uid)
 
+    def _remove_deleted(self, current_intids):
+        topics = self._catalog[IX_TOPICS]
+        deleted_intids_extent = topics[TP_DELETED_PLACEHOLDER].getExtent()
+        return current_intids - deleted_intids_extent
+
     @property
     def _mention_notable_intids(self):
         catalog = self._catalog
@@ -328,7 +333,7 @@ class UserNotableData(AbstractAuthenticatedView):
                                   safely_viewable_intids,
                                   apply_user_visibility=True)
 
-        return safely_viewable_intids
+        return self._remove_deleted(safely_viewable_intids)
 
     @CachedProperty('_time_range')
     def _notable_intids(self):
