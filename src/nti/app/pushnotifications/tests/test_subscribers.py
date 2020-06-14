@@ -156,8 +156,9 @@ class TestSubscribers(ApplicationLayerTest):
 
 		community = Community.create_community(self.ds, username=u"test_demo")
 		user = users.User.create_user(self.ds, username=u'jason.madden@nextthought.com')
+		bojangles = users.User.create_user(self.ds, username=u'bojangles@nextthought.com')
 		mouse_user = users.User.create_user(self.ds, username=u'mmouse@nextthought.com')
-		for _user in (user, mouse_user):
+		for _user in (user, mouse_user, bojangles):
 			_user.record_dynamic_membership(community)
 
 		board = ICommunityBoard(community)

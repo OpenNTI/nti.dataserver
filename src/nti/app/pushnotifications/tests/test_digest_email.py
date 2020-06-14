@@ -212,7 +212,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 			assert_that( msg, contains_string( 'http://localhost/NextThoughtWebApp/id/' + oid ) )
 
-	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
+	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data_but_unsubscribed(self, fake_connect):
@@ -222,7 +222,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 		self._do_test_should_not_send_anything(fake_connect)
 
-	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
+	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data_but_not_in_required_community(self, fake_connect):
