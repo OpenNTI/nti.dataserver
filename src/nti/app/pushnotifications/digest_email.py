@@ -49,8 +49,7 @@ from nti.app.pushnotifications import email_notifications_preference
 from nti.app.pushnotifications.interfaces import INotableDataEmailClassifier
 
 from nti.app.pushnotifications.utils import generate_unsubscribe_url
-
-from nti.appserver.context_providers import get_trusted_top_level_contexts
+from nti.app.pushnotifications.utils import get_top_level_context
 
 from nti.appserver.interfaces import IApplicationSettings
 
@@ -60,8 +59,6 @@ from nti.appserver.policies.site_policies import find_site_policy
 from nti.appserver.policies.site_policies import guess_site_display_name
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
-
-from nti.coremetadata.interfaces import IContainerContext
 
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
@@ -88,8 +85,6 @@ from nti.externalization.singleton import Singleton
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
 
-from nti.ntiids.ntiids import find_object_with_ntiid
-
 from nti.ntiids.oids import to_external_ntiid_oid
 
 _ONE_WEEK = 7 * 24 * 60 * 60
@@ -107,11 +102,12 @@ class _TemplateArgs(object):
 	Handles values for presentation per item.
 	"""
 
-	def __init__(self, objs, request, remoteUser=None):
+	def __init__(self, objs, request, remoteUser=None, max_snippet_len=30):
 		self.request = request
 		self._primary = objs[0]
 		self.remaining = len( objs ) - 1
 		self.remoteUser = remoteUser
+		self.max_snippet_len = max_snippet_len
 
 	def __getattr__(self, name):
 		return getattr(self._primary, name)
@@ -144,8 +140,8 @@ class _TemplateArgs(object):
 	def snippet(self):
 		if self._primary.body and isinstance(self._primary.body[0], basestring):
 			text = IPlainTextContentFragment(self._primary.body[0])
-			if len(text) > 30:
-				text = text[:30] + '...'
+			if len(text) > self.max_snippet_len:
+				text = text[:self.max_snippet_len] + '...'
 			return text
 		return ''
 
@@ -157,8 +153,8 @@ class _TemplateArgs(object):
 
 	@property
 	def display_name(self):
-		return component.getMultiAdapter((self._primary, self.request),
-										 IDisplayNameGenerator)
+		return component.queryMultiAdapter((self._primary, self.request),
+										   IDisplayNameGenerator)
 
 	@property
 	def creator(self):
@@ -317,10 +313,12 @@ class DigestEmailCollector(object):
 		# and don't resend if nothing interesting has happened since we last sent
 		# the email...actually, we track the last time we checked; this lets
 		# us be much more efficient in the (somewhat common) case that nothing
-		# changes for the same user.
+		# changes for the same user.  Also, since mentions get their own
+		# email sent immediately, exclude those.
 
 		min_created_time = self.min_created_time(notable_data)
-		notable_intids_since_last_viewed = notable_data.get_notable_intids(min_created_time=min_created_time)
+		notable_intids_since_last_viewed = notable_data.get_notable_intids(min_created_time=min_created_time,
+																		   include_mentions=False)
 		if not notable_intids_since_last_viewed:
 			# Hooray, nothing to do
 			logger.debug("[%s] User %s/%s had 0 notable items since %s",
@@ -355,23 +353,7 @@ class DigestEmailCollector(object):
 		"""
 		Get the top level context for our object.
 		"""
-		# Just grab the title since this is what we display. This also
-		# collapses possible different catalog entries into a single
-		# entry, which we want.
-		result = None
-		container_context = IContainerContext(obj, None)
-		if container_context:
-			context_id = container_context.context_id
-			result = find_object_with_ntiid(context_id)
-		if result is None:
-			top_level_contexts = get_trusted_top_level_contexts(obj)
-			result = None
-			if top_level_contexts:
-				top_level_contexts = tuple(top_level_contexts)
-				result = top_level_contexts[0]
-
-		result = getattr(result, 'title', 'General Activity')
-		return result
+		return get_top_level_context(obj)
 
 	def recipient_to_template_args(self, recipient, request):
 		# Now iterate to get the actual content objects

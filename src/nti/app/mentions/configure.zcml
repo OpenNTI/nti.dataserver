@@ -1,0 +1,18 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope">
+
+    <adapter factory=".adapters.ValidMentionableEntityIterable" />
+
+    <subscriber factory="nti.app.mentions.decorators._IsMentionedDecorator"
+                for="nti.coremetadata.interfaces.IMentionable
+                     pyramid.interfaces.IRequest"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+    <subscriber factory="nti.app.mentions.decorators._CanAccessContentDecorator"
+                for="nti.coremetadata.interfaces.IMentionable
+                     pyramid.interfaces.IRequest"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+    <subscriber handler=".subscribers._validate_mentions"
+                for="tuple nti.coremetadata.interfaces.IMentionable nti.schema.interfaces.IBeforeSchemaFieldAssignedEvent" />
+</configure>

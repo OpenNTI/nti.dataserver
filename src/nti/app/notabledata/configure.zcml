@@ -31,6 +31,10 @@
 		<subscriber factory=".notables.TopLevelNotableFilter"
 					provides="nti.dataserver.interfaces.INotableFilter"
 					for="*" />
+
+		<subscriber factory=".notables.MentionableNotableFilter"
+					provides="nti.dataserver.interfaces.INotableFilter"
+					for="nti.coremetadata.interfaces.IMentionable" />
 	</configure>
 
 </configure>

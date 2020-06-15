@@ -21,6 +21,8 @@ from zope.schema.fieldproperty import FieldProperty
 
 from nti.base.interfaces import IFile
 
+from nti.coremetadata.mixins import MentionableMixin
+
 from nti.coremetadata.schema import BodyFieldProperty
 
 from nti.dataserver.contenttypes.base import _make_getitem
@@ -62,7 +64,7 @@ logger = __import__('logging').getLogger(__name__)
                        IRatable,
                        # provides annotations
                        IAttributeAnnotatable)
-class Note(ThreadableMixin, Highlight):
+class Note(MentionableMixin, ThreadableMixin, Highlight):
     """
     Implementation of a note.
     """

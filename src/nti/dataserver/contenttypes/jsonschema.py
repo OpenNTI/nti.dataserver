@@ -37,7 +37,7 @@ class NoteJsonSchemafier(CoreJsonSchemafier):
     def post_process_field(self, name, field, item_schema):
         super(NoteJsonSchemafier, self).post_process_field(name, field, item_schema)
 
-        if name in ('sharedWith', 'tags'):
+        if name in ('sharedWith', 'tags', 'mentions'):
             item_schema['base_type'] = 'string'
             item_schema['type'] = 'List'
         elif name == 'title':

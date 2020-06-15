@@ -15,7 +15,6 @@ from __future__ import absolute_import
 
 # disable: too many ancestors
 # pylint: disable=I0011,R0901
-
 from zope import schema
 from zope import interface
 
@@ -37,6 +36,7 @@ from nti.contentfragments.schema import PlainTextLine
 
 from nti.contenttypes.reports.interfaces import IReportContext
 
+from nti.coremetadata.interfaces import IMentionable
 from nti.coremetadata.interfaces import IUserDefinedOrderedContent
 
 from nti.dataserver.interfaces import ACE_ACT_DENY
@@ -157,6 +157,7 @@ class IPost(IContained,
             IFileConstrained,
             IUserGeneratedData,
             IUserTaggedContent,
+            IMentionable,
             IModeledContentBody,
             INeverStoredInSharedStream):
     """
@@ -188,6 +189,7 @@ class ITopic(IContentContainer,
              IUserGeneratedData,
              IPinnable,
              IUserTaggedContent,
+             IMentionable,
              ITitledDescribedContent,
              INeverStoredInSharedStream,
              INotModifiedInStreamWhenContainerModified):

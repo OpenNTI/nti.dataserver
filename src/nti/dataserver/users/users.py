@@ -30,6 +30,7 @@ from zope import lifecycleevent
 from zope.cachedescriptors.property import Lazy
 
 from zope.deprecation import deprecated
+from zope.event import notify
 
 from zope.intid.interfaces import IIntIds
 
@@ -56,6 +57,7 @@ from nti.dataserver.interfaces import IDynamicSharingTarget
 from nti.dataserver.interfaces import ITargetedStreamChangeEvent
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+from nti.dataserver.interfaces import StreamChangeAcceptedByUser
 
 from nti.dataserver.users.entity import get_shared_dataserver
 
@@ -835,6 +837,10 @@ class User(Principal):
         Distribute the incoming change to any connected devices/sessions.
         This is an extension point for layers.
         """
+
+        # Fire the change off to the user
+        notify(StreamChangeAcceptedByUser(change, self))
+
         # TODO: Move this out to a listener somewhere
         apnsCon = component.queryUtility(INotificationService)
         # NOTE: At this time, no such component is actually

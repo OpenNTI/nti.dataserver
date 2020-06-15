@@ -38,6 +38,8 @@ from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.dataserver import contenttypes
 
+from nti.dataserver.users import Entity
+
 from nti.dataserver.users.users import User
 
 from nti.dataserver.tests import mock_dataserver
@@ -115,6 +117,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 						is_( not_none() ) )
 			user = self._get_user()
 			jason = self._get_user('jason')
+			timmy = self._get_user('timmy')
 			# And a couple notable notes
 			for i in range(5):
 				top_n = contenttypes.Note()
@@ -131,6 +134,22 @@ class TestApplicationDigest(ApplicationLayerTest):
 				self.note_oids.append(to_external_ntiid_oid(top_n, mask_creator=True))
 				assert_that( ntiids.find_object_with_ntiid(self.note_oids[-1]),
 							 is_( same_instance(top_n)))
+
+			# A note not shared to jason, but mentioning him
+			top_n = contenttypes.Note()
+			top_n.applicableRange = contentrange.ContentRangeDescription()
+			top_n.containerId = self.CONTAINER_ID
+			top_n.body = ("Mentions notable, but not for digest", str(i))
+			top_n.title = IPlainTextContentFragment( "MENTION NOTE" )
+			top_n.createdTime = time.time() + 60
+			top_n.creator = timmy
+			top_n.addSharingTarget(Entity.get_entity('Everyone'))
+			top_n.mentions = contenttypes.Note.mentions.fromObject([jason.username])
+			timmy.addContainedObject( top_n )
+
+			self.note_oids.append(to_external_ntiid_oid(top_n, mask_creator=True))
+			assert_that(ntiids.find_object_with_ntiid(self.note_oids[-1]),
+						is_(same_instance(top_n)))
 
 			# A circled event
 			jason.accept_shared_data_from(user)
@@ -149,10 +168,12 @@ class TestApplicationDigest(ApplicationLayerTest):
 			user_interfaces.IUserProfile( jason ).email = 'jason.madden@nextthought.com'
 			user_interfaces.IUserProfile( jason ).realname = 'Jason Madden'
 			user_interfaces.IUserProfile( user ).realname = 'Steve Johnson'
+			user_interfaces.IUserProfile( timmy ).realname = 'Timmy McTimmers'
 			modified( jason )
 			modified( user )
+			modified( timmy )
 
-	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
+	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data(self, fake_connect):
@@ -179,6 +200,9 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( msg, does_not(contains_string('replied to a note')))
 		assert_that( msg, does_not(contains_string('NO CONTENT')))
 
+		assert_that( msg, does_not(contains_string('Mentions notable, but not for digest')))
+		assert_that( msg, does_not(contains_string('MENTION NOTE')))
+
 		note_oid = self.note_oids[0]
 		note_oid = note_oid[0:note_oid.index('OID')]
 		for oid in note_oid, self.blog_oid:
@@ -188,7 +212,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 			assert_that( msg, contains_string( 'http://localhost/NextThoughtWebApp/id/' + oid ) )
 
-	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
+	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data_but_unsubscribed(self, fake_connect):
@@ -198,7 +222,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 		self._do_test_should_not_send_anything(fake_connect)
 
-	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
+	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data_but_not_in_required_community(self, fake_connect):
@@ -210,7 +234,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		finally:
 			del DevmodeSitePolicyEventListener.COM_USERNAME
 
-	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
+	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data_in_required_community(self, fake_connect):
@@ -221,6 +245,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans(self.ds):
 			everyone = Entity.get_entity('Everyone')
 			everyone._note_member(Entity.get_entity('jason'))
+			everyone._note_member(Entity.get_entity('timmy'))
 
 		try:
 			self._do_test_sends_one(fake_connect)

@@ -39,6 +39,7 @@ from nti.dataserver.metadata.index import IX_TAGGEDTO
 from nti.dataserver.metadata.index import IX_CREATEDTIME
 from nti.dataserver.metadata.index import TP_TOP_LEVEL_CONTENT
 from nti.dataserver.metadata.index import TP_DELETED_PLACEHOLDER
+from nti.dataserver.metadata.index import IX_MENTIONED
 
 from nti.dataserver.metadata.index import get_metadata_catalog
 
@@ -288,8 +289,59 @@ class UserNotableData(AbstractAuthenticatedView):
         # Subtract any comments that crept in that I don't want
         return self._difference(safely_viewable_intids, self._topic_comment_intids_to_exclude)
 
+    def _is_user_visible(self, questionable_obj):
+        creator = getattr(questionable_obj, "creator", None)
+        return (creator is None
+                or (self.remoteUser.is_accepting_shared_data_from(creator)
+                    and not self.remoteUser.is_muted(questionable_obj)))
+
+    def _add_safely_viewable(self,
+                             questionable_intids,
+                             safely_viewable_intids,
+                             apply_user_visibility=False
+                             ):
+        if self._intids_in_time_range is not None:
+            questionable_intids = self._intersection(self._intids_in_time_range,
+                                                     questionable_intids)
+        uidutil = self._intids
+        security_check = self.make_sharing_security_check()
+        for questionable_uid in questionable_intids:
+            if questionable_uid in safely_viewable_intids:
+                continue
+            questionable_obj = uidutil.queryObject(questionable_uid)
+            if questionable_obj is not None \
+                    and security_check(questionable_obj) \
+                    and (not apply_user_visibility
+                         or self._is_user_visible(questionable_obj)):
+                safely_viewable_intids.add(questionable_uid)
+
+    def _remove_deleted(self, current_intids):
+        topics = self._catalog[IX_TOPICS]
+        deleted_intids_extent = topics[TP_DELETED_PLACEHOLDER].getExtent()
+        return current_intids - deleted_intids_extent
+
+    @property
+    def _mention_notable_intids(self):
+        catalog = self._catalog
+
+        # Any items shared with me in which I'm mentioned
+        query = {'any_of': (self.remoteUser.username,)}
+        mentioned_intids = catalog[IX_MENTIONED].apply(query)
+
+        safely_viewable_intids = catalog.family.IF.LFSet()
+        self._add_safely_viewable(mentioned_intids,
+                                  safely_viewable_intids,
+                                  apply_user_visibility=True)
+
+        return self._remove_deleted(safely_viewable_intids)
+
     @CachedProperty('_time_range')
     def _notable_intids(self):
+        return self._catalog.family.IF.union(self._non_mention_notable_intids,
+                                             self._mention_notable_intids)
+
+    @CachedProperty('_time_range')
+    def _non_mention_notable_intids(self):
         # TODO: See about optimizing this query plan. ZCatalog has a
         # CatalogPlanner object that we might could use.
         catalog = self._catalog
@@ -351,19 +403,7 @@ class UserNotableData(AbstractAuthenticatedView):
         ]
         self._notable_storage.add_intids(questionable_intids, safe=False)
         questionable_intids = catalog.family.IF.multiunion(questionable_intids)
-        if self._intids_in_time_range is not None:
-            questionable_intids = self._intersection(self._intids_in_time_range,
-                                                     questionable_intids)
-
-        uidutil = self._intids
-        security_check = self.make_sharing_security_check()
-        for questionable_uid in questionable_intids:
-            if questionable_uid in safely_viewable_intids:
-                continue
-            questionable_obj = uidutil.queryObject(questionable_uid)
-            if      questionable_obj is not None \
-                and security_check(questionable_obj):
-                safely_viewable_intids.add(questionable_uid)
+        self._add_safely_viewable(questionable_intids, safely_viewable_intids)
 
         # 2015-07-11 Subtract any message info
         query = {'any_of': (_MESSAGEINFO_MYMETYPE,)}
@@ -379,9 +419,16 @@ class UserNotableData(AbstractAuthenticatedView):
         # Make sure nothing that's deleted got in
         return (safely_viewable_intids - deleted_intids_extent)
 
-    def get_notable_intids(self, min_created_time=None, max_created_time=None):
+    def get_notable_intids(self, min_created_time=None,
+                           max_created_time=None,
+                           include_mentions=True):
         self._time_range = (min_created_time, max_created_time)
+
+        if not include_mentions:
+            return self._non_mention_notable_intids
+
         return self._notable_intids
+
 
     def __len__(self):
         return len(self.get_notable_intids())
