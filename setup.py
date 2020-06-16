@@ -84,6 +84,9 @@ TESTS_REQUIRE = [
     'nti.assessment',
     'nti.app.sites.mathcounts',
     'nti.app.site',
+    # This provides the HTML ntiid resolver. ``test_ntiid_uses_library``
+    # depends on that.
+    'nti.app.contentlibrary',
 ]
 
 
