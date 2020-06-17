@@ -122,5 +122,5 @@ def _NoteFileConstraints(unused_note):
     result = FileConstraints()
     result.max_file_size = 10485760  # 10 MB
     result.max_files = 10
-    result.max_total_file_size = 52428800 # 50 MB
+    result.max_total_file_size = 26214400 # 25 MB
     return result

@@ -179,7 +179,7 @@ class TestNote(ApplicationLayerTest):
                                  has_length(greater_than_or_equal_to(6))))
 
         # Test validation
-        # Current limits: 10 files, 10mb each, 50mb total
+        # Current limits: 10 files, 10mb each, 25mb total
         ext_files = []
         upload_files = []
         for idx in range(11):
@@ -203,12 +203,12 @@ class TestNote(ApplicationLayerTest):
 
         # Total max file size
         body = ['ichigo']
-        body.extend(ext_files[:7])
+        body.extend(ext_files[:3])
         ext_obj['body'] = body
         data = {'__json__': to_json_representation(ext_obj)}
         new_upload_files = []
         nine_mb_payload = 9485760 * b'x'
-        for upload_file in upload_files[:7]:
+        for upload_file in upload_files[:3]:
             new_upload_files.append((upload_file[0], upload_file[1], nine_mb_payload))
 
         res = self.testapp.post(path,
