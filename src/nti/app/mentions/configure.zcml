@@ -3,6 +3,8 @@
 
     <adapter factory=".adapters.ValidMentionableEntityIterable" />
 
+    <utility factory=".adapters._MentionAttributesProvider"/>
+
     <subscriber factory="nti.app.mentions.decorators._IsMentionedDecorator"
                 for="nti.coremetadata.interfaces.IMentionable
                      pyramid.interfaces.IRequest"

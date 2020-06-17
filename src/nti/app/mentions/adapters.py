@@ -20,6 +20,8 @@ from nti.coremetadata.interfaces import ISharingTargetEntityIterable
 
 from nti.dataserver.users import User
 
+from nti.contentfragments.interfaces import IAllowedAttributeProvider
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -62,3 +64,12 @@ class ValidMentionableEntityIterable(object):
             if self._predicate(user):
                 yield user
 
+
+@interface.implementer(IAllowedAttributeProvider)
+class _MentionAttributesProvider(object):
+    allowed_attributes = [
+        "data-nti-entity-type",
+        "data-nti-entity-mutability",
+        "data-nti-entity-id",
+        "data-nti-entity-username",
+    ]
