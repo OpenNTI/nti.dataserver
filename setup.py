@@ -137,7 +137,7 @@ setup(
         'nti.app.pyramid-zope',
         'nti.common',
         'nti.containers',
-        'nti.contentfragments',
+        'nti.contentfragments >= 1.4.0',
         'nti.contentlibrary',
         'nti.contentprocessing',
         'nti.coremetadata',
