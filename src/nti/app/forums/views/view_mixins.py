@@ -100,13 +100,14 @@ class PostUploadMixin(AuthenticatedViewMixin,
                                  notify=False)
         # Which just verified the validity of the title.
 
-        sources = get_content_files(containedObject)
-        if sources and self.request and self.request.POST:
-            read_multipart_sources(self.request, sources.values())
-        if sources:
+        content_files = get_content_files(containedObject)
+        if content_files and self.request and self.request.POST:
+            # XXX: Is this just used for validation?
+            read_multipart_sources(self.request, content_files)
+        if content_files:
             validate_attachments(self.remoteUser,
                                  containedObject,
-                                 tuple(sources.values()))
+                                 tuple(content_files))
         return containedObject, externalValue
 
     def _find_factory_from_precondition(self, forum):

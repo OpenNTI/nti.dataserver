@@ -11,7 +11,6 @@ from __future__ import absolute_import
 import os
 import re
 from collections import Mapping
-from collections import OrderedDict
 
 from pyramid import httpexceptions as hexc
 
@@ -51,6 +50,7 @@ from nti.namedfile.interfaces import IInternalFileRef
 from nti.dataserver.interfaces import IModeledContentBody
 
 from nti.links import render_link
+
 from nti.links.links import Link
 
 from nti.ntiids.ntiids import TAG_NTC
@@ -73,7 +73,8 @@ def file_contraints(context, user=None, constraint=IFileConstraints):
     return result
 
 
-def validate_sources(user=None, context=None, sources=(), constraint=IFileConstraints):
+def validate_sources(user=None, context=None, sources=(),
+                     constraint=IFileConstraints):
     """
     Validate the specified sources using the :class:`.IFileConstraints`
     derived from the context
@@ -95,6 +96,7 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
                          },
                          None)
 
+    aggregate_size = 0
     for source in sources or ():
         ctx = context if context is not None else source
         validator = file_contraints(ctx, user, constraint)
@@ -103,6 +105,8 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
 
         try:
             size = getattr(source, 'size', None) or source.getSize()
+            if size is not None:
+                aggregate_size += size
             if size is not None and not validator.is_file_size_allowed(size):
                 raise_json_error(get_current_request(),
                                  hexc.HTTPUnprocessableEntity,
@@ -142,6 +146,19 @@ def validate_sources(user=None, context=None, sources=(), constraint=IFileConstr
                                  'field': 'filename'
                              },
                              None)
+
+    if      constraints is not None \
+        and constraints.max_total_file_size \
+        and aggregate_size > constraints.max_total_file_size:
+        raise_json_error(get_current_request(),
+                         hexc.HTTPUnprocessableEntity,
+                         {
+                             'message': _(u'The attached files exceed the total maximum size limit.'),
+                             'code': 'MaxTotalAttachmentFileSizeExceeded',
+                             'field': 'max_total_file_size',
+                             'constraint': constraints.max_total_file_size
+                         },
+                         None)
 
 
 def transfer_data(source, target):
@@ -194,16 +211,21 @@ def read_multipart_sources(request, sources=()):
 
 
 def get_content_files_from_modeled_content_body(context):
+    """
+    return a list of :class:`.IFile' objects from the specified context
+
+    :param context: Source object
+    """
     new_sources = []
     transformed = False
-    result = OrderedDict()
+    result = list()
     for data in context.body or ():
         name = get_context_name(data)
         if name:
             if IContentBaseFile.providedBy(data):
                 transformed = True
                 data = transform_to_blob(data)
-            result[name] = data
+            result.append(data)
         new_sources.append(data)
     if transformed:
         value = context.body.__class__(new_sources)  # list or tuple
@@ -224,12 +246,13 @@ def get_content_files(context, attr="body"):
         # contentfiles to contentblobfiles
         return get_content_files_from_modeled_content_body(context)
     else:
-        result = OrderedDict()
+        result = list()
         sources = getattr(context, attr, None) if attr else context
         for data in sources or ():
+            # We dont check type here...
             name = get_context_name(data)
             if name:
-                result[name] = data
+                result.append(data)
     return result
 
 
@@ -244,7 +267,7 @@ def transfer_internal_content_data(context, attr="body", request=None, ownership
     """
     result = []
     files = get_content_files(context, attr=attr)
-    for target in files.values():
+    for target in files:
 
         # not an internal ref
         if not IInternalFileRef.providedBy(target):

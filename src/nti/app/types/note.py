@@ -58,13 +58,13 @@ def _note_transformer_factory(request, unused_context):
 @component.adapter(IRequest, INote)
 @interface.implementer(IExceptionResponse)
 def _note_transformer(request, context):
-    sources = get_content_files(context)
-    if sources and request and request.POST:
-        read_multipart_sources(request, sources.values())
-    if sources:
+    content_files = get_content_files(context)
+    if content_files and request and request.POST:
+        read_multipart_sources(request, content_files)
+    if content_files:
         validate_attachments(get_remote_user(),
                              context,
-                             sources.values())
+                             content_files)
     return context
 
 
@@ -121,4 +121,6 @@ def validate_attachments(user, context, sources=()):
 def _NoteFileConstraints(unused_note):
     result = FileConstraints()
     result.max_file_size = 10485760  # 10 MB
+    result.max_files = 10
+    result.max_total_file_size = 52428800 # 50 MB
     return result

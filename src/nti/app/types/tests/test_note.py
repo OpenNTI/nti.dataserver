@@ -179,20 +179,44 @@ class TestNote(ApplicationLayerTest):
                                  has_length(greater_than_or_equal_to(6))))
 
         # Test validation
-        ext_file2 = dict(ext_file)
-        ext_file2['name'] = 'ichigo2'
-        ext_file3 = dict(ext_file)
-        ext_file3['name'] = 'ichigo3'
-        ext_obj['body'] = ['ichigo', ext_file, ext_file2, ext_file3]
+        # Current limits: 10 files, 10mb each, 50mb total
+        ext_files = []
+        upload_files = []
+        for idx in range(11):
+            new_filename = 'ichigo%s' % idx
+            new_ext_file = dict(ext_file)
+            new_ext_file['name'] = new_filename
+            ext_files.append(new_ext_file)
+            upload_files.append((new_filename, 'ichigo.txt', bytes(new_filename)))
+        body = ['ichigo']
+        body.extend(ext_files)
+        ext_obj['body'] = body
         data = {'__json__': to_json_representation(ext_obj)}
         res = self.testapp.post(path,
                                 data,
-                                upload_files=[
-                                    ('ichigo', 'ichigo.txt', b'ichigo'),
-                                    ('ichigo2', 'ichigo.txt', b'ichigo2'),
-                                    ('ichigo3', 'ichigo.txt', b'ichigo3')],
+                                upload_files=upload_files,
                                 status=422)
         res = res.json_body
         assert_that(res.get('message'),
                     is_('Maximum number attachments exceeded.'))
         assert_that(res.get('code'), is_('MaxAttachmentsExceeded'))
+
+        # Total max file size
+        body = ['ichigo']
+        body.extend(ext_files[:7])
+        ext_obj['body'] = body
+        data = {'__json__': to_json_representation(ext_obj)}
+        new_upload_files = []
+        nine_mb_payload = 9485760 * b'x'
+        for upload_file in upload_files[:7]:
+            new_upload_files.append((upload_file[0], upload_file[1], nine_mb_payload))
+
+        res = self.testapp.post(path,
+                                data,
+                                upload_files=new_upload_files,
+                                status=422)
+        res = res.json_body
+        assert_that(res.get('message'),
+                    is_('The attached files exceed the total maximum size limit.'))
+        assert_that(res.get('code'), is_('MaxTotalAttachmentFileSizeExceeded'))
+
