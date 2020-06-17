@@ -135,6 +135,7 @@ setup(
     ],
     install_requires=[
         'nti.app.pyramid-zope',
+        'nti.app.client_preferences',
         'nti.common',
         'nti.containers',
         'nti.contentfragments',
