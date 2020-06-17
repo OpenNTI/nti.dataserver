@@ -10,6 +10,8 @@ from hamcrest import assert_that
 from hamcrest import contains
 from hamcrest import empty
 from hamcrest import has_property
+from hamcrest import is_
+from nti.contentfragments.interfaces import IUnicodeContentFragment
 
 from nti.coremetadata.interfaces import ISharingTargetEntityIterable
 from nti.dataserver.contenttypes import Note
@@ -63,3 +65,20 @@ class TestValidMentionableEntityIterable(AppLayerTest):
         assert_that(ISharingTargetEntityIterable(notable),
                     contains(has_property(u"username", u"pluto"),
                              has_property(u"username", u"donald")))
+
+
+class TestMentionAttributesProvider(AppLayerTest):
+
+    def test_additional_allowed_attrs(self):
+        attrs_to_test = ["data-nti-entity-type",
+                         "data-nti-entity-mutability",
+                         "data-nti-entity-id",
+                         "data-nti-entity-username"]
+
+        for attr in attrs_to_test:
+            html = '<html><body><a %s="my_value">Opie Cunningham</a></body></html>' % attr
+            assert_that(IUnicodeContentFragment(html), is_(html))
+
+        html = '<html><body><a invalid_attr="my_value">Opie Cunningham</a></body></html>'
+        exp = '<html><body><a>Opie Cunningham</a></body></html>'
+        assert_that(IUnicodeContentFragment(html), is_(exp))
