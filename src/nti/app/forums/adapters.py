@@ -52,3 +52,7 @@ class _PersonalBlogDisplayNameGenerator(BrowserView):
 
 class _PostFileConstraints(FileConstraints):
     max_file_size = 10485760  # 10 MB
+
+    max_files = 10
+
+    max_total_size = 52428800 # 50 MB
