@@ -21,12 +21,12 @@ from ZODB.FileStorage import FileStorage
 
 from zope import component
 from zope import interface
-from zope.component.hooks import site as currentSite
 from zope.dottedname import resolve as dottedname
-from zope.site import LocalSiteManager, SiteManagerContainer
+
 import zope.testing.cleanup
 
 from nti.site.testing import persistent_site_trans
+from nti.site.testing import uses_independent_db_site
 
 from nti.testing import zodb
 from nti.testing.layers import ZopeComponentLayer
@@ -137,29 +137,30 @@ def _mock_ds_wrapper_for(func,
                          teardown=None,
                          base_storage=None):
 
+    @uses_independent_db_site(db_factory=lambda: current_mock_ds.db)
+    @wraps(func)
+    def install_dataserver_and_run(*args):
+        global current_mock_ds # XXX Make this a layer/class property # pylint:disable=global-statement
+        ds = current_mock_ds
+        component.provideUtility(ds, nti_interfaces.IDataserver)
+        assert component.getUtility(nti_interfaces.IDataserver)
+        try:
+            func(*args)
+        finally:
+            # We're not worried about cleaning up the registration,
+            # the site we registered it in is transient.
+            current_mock_ds = None
+            ds.close()
+            if teardown:
+                teardown()
+
     @wraps(func)
     def f(*args):
         global current_mock_ds # XXX Make this a layer/class property # pylint:disable=global-statement
-        _base_storage = base_storage
-        if callable(_base_storage):
-            _base_storage = _base_storage(*args)
-        # see comments about hooks in WithMockDS
-        ds = factory(base_storage=_base_storage)
+        # XXX: base_storage appears to be unused, always None
+        ds = factory(base_storage=base_storage(*args) if callable(base_storage) else base_storage)
         current_mock_ds = ds
-        sitemanc = SiteManagerContainer()
-        sitemanc.setSiteManager(LocalSiteManager(None))
-
-        with currentSite(sitemanc):
-            assert component.getSiteManager() == sitemanc.getSiteManager()
-            component.provideUtility(ds, nti_interfaces.IDataserver)
-            assert component.getUtility(nti_interfaces.IDataserver)
-            try:
-                func(*args)
-            finally:
-                current_mock_ds = None
-                ds.close()
-                if teardown:
-                    teardown()
+        return install_dataserver_and_run(*args)
 
     return f
 
