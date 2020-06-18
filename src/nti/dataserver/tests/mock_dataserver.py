@@ -137,30 +137,30 @@ def _mock_ds_wrapper_for(func,
                          teardown=None,
                          base_storage=None):
 
-    @uses_independent_db_site(db_factory=lambda: current_mock_ds.db)
-    @wraps(func)
-    def install_dataserver_and_run(*args):
-        global current_mock_ds # XXX Make this a layer/class property # pylint:disable=global-statement
-        ds = current_mock_ds
-        component.provideUtility(ds, nti_interfaces.IDataserver)
-        assert component.getUtility(nti_interfaces.IDataserver)
-        try:
-            func(*args)
-        finally:
-            # We're not worried about cleaning up the registration,
-            # the site we registered it in is transient.
-            current_mock_ds = None
-            ds.close()
-            if teardown:
-                teardown()
-
     @wraps(func)
     def f(*args):
         global current_mock_ds # XXX Make this a layer/class property # pylint:disable=global-statement
         # XXX: base_storage appears to be unused, always None
         ds = factory(base_storage=base_storage(*args) if callable(base_storage) else base_storage)
         current_mock_ds = ds
-        return install_dataserver_and_run(*args)
+
+        @uses_independent_db_site(db_factory=lambda: ds.db)
+        def install_dataserver_and_run(*args):
+            component.provideUtility(ds, nti_interfaces.IDataserver)
+            assert component.getUtility(nti_interfaces.IDataserver)
+            try:
+                func(*args)
+            finally:
+                # We're not worried about cleaning up the registration,
+                # the site we registered it in is transient.
+                ds.close()
+                if teardown:
+                    teardown()
+
+        try:
+            return install_dataserver_and_run(*args)
+        finally:
+            current_mock_ds = None
 
     return f
 
