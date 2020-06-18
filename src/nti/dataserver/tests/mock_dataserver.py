@@ -6,31 +6,42 @@ from __future__ import division
 # pylint:disable=protected-access,broad-except
 
 # Things we do care about, but haven't had time to fix:
-# pylint:disable=ungrouped-imports,wrong-import-order,wrong-import-position
 # pylint:disable=arguments-differ
 
 import warnings
+import tempfile
+import shutil
+import os
+import unittest
+from functools import wraps
 
 import ZODB
-
 from ZODB.DemoStorage import DemoStorage
 from ZODB.FileStorage import FileStorage
 
+from zope import component
+from zope import interface
+from zope.component.hooks import site as currentSite
+from zope.dottedname import resolve as dottedname
+from zope.site import LocalSiteManager, SiteManagerContainer
+import zope.testing.cleanup
+
+from nti.site.testing import persistent_site_trans
+
+from nti.testing import zodb
+from nti.testing.layers import ZopeComponentLayer
+from nti.testing.layers import ConfiguringLayerMixin
+from nti.testing.layers import find_test
+from nti.testing.base import ConfiguringTestBase as _BaseConfiguringTestBase
+from nti.testing.base import SharedConfiguringTestBase as _BaseSharedConfiguringTestBase
 
 import nti.dataserver as dataserver
 from nti.dataserver._Dataserver import Dataserver
 from nti.dataserver.config import _make_connect_databases
-
-from zope import component
-from zope.dottedname import resolve as dottedname
-
 from nti.dataserver import interfaces as nti_interfaces
-from nti.testing.base import ConfiguringTestBase as _BaseConfiguringTestBase
-from nti.testing.base import SharedConfiguringTestBase as _BaseSharedConfiguringTestBase
+from nti.dataserver.tests import mock_redis
 
-from . import mock_redis
-
-from zope import interface
+reset_db_caches = zodb.reset_db_caches # BWC. Used by nti/app/testing/webtest; remove when updated.
 
 class IMockDataserver(nti_interfaces.IDataserver):
     """
@@ -118,23 +129,15 @@ def add_memory_shard(mock_ds, new_shard_name):
 
     installer(current_conn, new_db.database_name)
 
-import nose.tools
-
 current_mock_ds = None
 
-from zope.site import LocalSiteManager, SiteManagerContainer
-from zope.component.hooks import site
-import transaction
-
-import tempfile
-import shutil
-import os
 
 def _mock_ds_wrapper_for(func,
                          factory=MockDataserver,
                          teardown=None,
                          base_storage=None):
 
+    @wraps(func)
     def f(*args):
         global current_mock_ds # XXX Make this a layer/class property # pylint:disable=global-statement
         _base_storage = base_storage
@@ -146,7 +149,7 @@ def _mock_ds_wrapper_for(func,
         sitemanc = SiteManagerContainer()
         sitemanc.setSiteManager(LocalSiteManager(None))
 
-        with site(sitemanc):
+        with currentSite(sitemanc):
             assert component.getSiteManager() == sitemanc.getSiteManager()
             component.provideUtility(ds, nti_interfaces.IDataserver)
             assert component.getUtility(nti_interfaces.IDataserver)
@@ -158,7 +161,7 @@ def _mock_ds_wrapper_for(func,
                 if teardown:
                     teardown()
 
-    return nose.tools.make_decorator(func)(f)
+    return f
 
 def WithMockDS(*args, **kwargs):
     """
@@ -215,9 +218,9 @@ def WithMockDS(*args, **kwargs):
 
 current_transaction = None
 
-from nti.site.site import get_site_for_site_names
 
-class mock_db_trans(object):
+
+class mock_db_trans(persistent_site_trans):
     """
     A context manager that returns a connection. Use
     inside a function decorated with :class:`WithMockDSTrans`
@@ -231,73 +234,25 @@ class mock_db_trans(object):
             that will be made current during execption.
         """
         self.ds = ds or current_mock_ds
-        self._site_cm = None
-        self._site_name = site_name
+        super(mock_db_trans, self).__init__(self.ds.db, site_name)
 
-    def __enter__(self):
-        # See comments in zodb_connection_tween: we need to put the
-        # manager in explicit mode before opening DB connections.
-        transaction.manager.explicit = True
-        transaction.begin()
-        self.conn = conn = self.ds.db.open()
-        assert conn.explicit_transactions
+    def on_connection_opened(self, conn):
+        super(mock_db_trans, self).on_connection_opened(conn)
         global current_transaction # XXX Refactor # pylint:disable=global-statement
         current_transaction = conn
 
-        sitemanc = conn.root()['nti.dataserver']
-        if self._site_name:
-            with site(sitemanc):
-                sitemanc = get_site_for_site_names((self._site_name,))
-
-        self._site_cm = site(sitemanc)
-        self._site_cm.__enter__()
-        assert component.getSiteManager() == sitemanc.getSiteManager()
         component.provideUtility(self.ds, nti_interfaces.IDataserver)
         assert component.getUtility(nti_interfaces.IDataserver)
 
         return conn
 
     def __exit__(self, t, v, tb):
-        result = self._site_cm.__exit__(t, v, tb) # if this raises we're in trouble
         global current_transaction # XXX Refactor  # pylint:disable=global-statement
-        body_raised = t is not None
-        try:
-            try:
-                if not transaction.isDoomed():
-                    transaction.commit()
-                else:
-                    transaction.abort()
-            except Exception:
-                transaction.abort()
-                raise
-            finally:
-                current_transaction = None
-                self.conn.close()
-        except Exception:
-            # Don't let our exception override the original exception
-            if not body_raised:
-                raise
-            logger.exception("Failed to cleanup trans, but body raised exception too")
-
-        reset_db_caches(self.ds)
-        return result
-
-def reset_db_caches(ds=None):
-    ds = ds or current_mock_ds or component.queryUtility(nti_interfaces.IDataserver)
-    if ds is None:
-        return
-    # Now, clean all objects out of the DB cache. This
-    # simulates a real-world scenario where either multiple
-    # connections are in use, or multiple machines, or there is cache
-    # pressure. It finds bugs that otherwise would be hidden by
-    # using the same object across transactions when the cache is the same
-    for conn in ds.db.pool:
-        conn.cacheMinimize()
-    #ds.db.pool(lambda conn: conn._resetCache()) # the nuclear way
-    #Connection.resetCaches()
+        return super(mock_db_trans, self).__exit__(t, v, tb)
 
 def WithMockDSTrans(func):
 
+    @wraps(func)
     def with_mock_ds_trans(*args, **kwargs):
         global current_transaction # XXX Refactor # pylint:disable=global-statement
         global current_mock_ds # XXX Refactor # pylint:disable=global-statement
@@ -325,7 +280,7 @@ def WithMockDSTrans(func):
             # see comments above
             # resetHooks()
 
-    return nose.tools.make_decorator(func)(with_mock_ds_trans)
+    return with_mock_ds_trans
 
 class _TestBaseMixin(object):
     set_up_packages = (dataserver,)
@@ -354,9 +309,6 @@ class SharedConfiguringTestBase(_TestBaseMixin,
     or :func:`WithMockDSTrans`).
     """
 
-from nti.testing.layers import ZopeComponentLayer
-from nti.testing.layers import ConfiguringLayerMixin
-from nti.testing.layers import find_test
 
 class DSInjectorMixin(object):
 
@@ -400,14 +352,14 @@ class DataserverTestLayer(ZopeComponentLayer,
     def testTearDown(cls):
         pass
 
-import unittest
+
 class DataserverLayerTest(_TestBaseMixin,
                           unittest.TestCase):
     layer = DataserverTestLayer
 
 SharedConfiguringTestLayer = DataserverTestLayer # bwc
 
-import zope.testing.cleanup
+
 class NotDevmodeSharedConfiguringTestLayer(ZopeComponentLayer,
                                            ConfiguringLayerMixin,
                                            DSInjectorMixin):
