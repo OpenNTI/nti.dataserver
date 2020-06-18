@@ -75,14 +75,14 @@ class TestCanAccessContentDecorator(BaseDecoratorTest):
         note = Note()
         note.mentions = Note.mentions.fromObject((user.username,))
         external = self._decorate(_CanAccessContentDecorator, note, None)
-        assert_that(external, not_(has_key("UsersMentioned")))
+        assert_that(external, not_(has_key("UserMentions")))
 
     @WithMockDSTrans
     def test_no_mentions(self):
         user = self._create_user(u"b.wyatt")
         note = Note()
         external = self._decorate(_CanAccessContentDecorator, note, user.username)
-        assert_that(external, not_(has_key("UsersMentioned")))
+        assert_that(external, not_(has_key("UserMentions")))
 
     @WithMockDSTrans
     @fudge.patch("nti.app.mentions.decorators.User")
@@ -92,7 +92,7 @@ class TestCanAccessContentDecorator(BaseDecoratorTest):
         note = Note()
         note.mentions = Note.mentions.fromObject((user.username,))
         external = self._decorate(_CanAccessContentDecorator, note, u"l.knope")
-        assert_that(external, has_entry("UsersMentioned", is_empty()))
+        assert_that(external, has_entry("UserMentions", is_empty()))
 
     @WithMockDSTrans
     @fudge.patch("nti.app.mentions.decorators.make_sharing_security_check_for_object")
@@ -102,8 +102,9 @@ class TestCanAccessContentDecorator(BaseDecoratorTest):
         note = Note()
         note.mentions = Note.mentions.fromObject((user.username,))
         external = self._decorate(_CanAccessContentDecorator, note, u"l.knope")
-        assert_that(external, has_entry("UsersMentioned", has_length(1)))
-        assert_that(external["UsersMentioned"][0], has_entry("CanAccessContent", is_(False)))
+        assert_that(external, has_entry("UserMentions", has_length(1)))
+        assert_that(external["UserMentions"][0], has_entry("CanAccessContent", is_(False)))
+        assert_that(external["UserMentions"][0], has_entry("User", has_entry("Username", "b.wyatt")))
 
     @WithMockDSTrans
     @fudge.patch("nti.app.mentions.decorators.make_sharing_security_check_for_object")
@@ -113,6 +114,7 @@ class TestCanAccessContentDecorator(BaseDecoratorTest):
         note = Note()
         note.mentions = Note.mentions.fromObject((user.username,))
         external = self._decorate(_CanAccessContentDecorator, note, u"l.knope")
-        assert_that(external, has_entry("UsersMentioned", has_length(1)))
-        assert_that(external["UsersMentioned"][0], has_entry("CanAccessContent", is_(True)))
+        assert_that(external, has_entry("UserMentions", has_length(1)))
+        assert_that(external["UserMentions"][0], has_entry("CanAccessContent", is_(True)))
+        assert_that(external["UserMentions"][0], has_entry("User", has_entry("Username", "b.wyatt")))
 

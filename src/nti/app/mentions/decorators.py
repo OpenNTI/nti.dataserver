@@ -56,12 +56,13 @@ class _CanAccessContentDecorator(AbstractAuthenticatedRequestAwareDecorator):
     def _do_decorate_external(self, context, result):
         has_access = self._make_has_access(context)
 
-        users_mentioned = []
+        user_mentions = []
         for username in context.mentions:
             user = User.get_user(username)
             if user is not None:
-                ext_user = toExternalObject(user, name='summary')
-                ext_user['CanAccessContent'] = has_access(user)
-                users_mentioned.append(ext_user)
+                mention = {}
+                mention['CanAccessContent'] = has_access(user)
+                mention['User'] = toExternalObject(user, name='summary')
+                user_mentions.append(mention)
 
-        result['UsersMentioned'] = users_mentioned
+        result['UserMentions'] = user_mentions
