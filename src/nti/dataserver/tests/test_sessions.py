@@ -128,7 +128,9 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 
 		self.session_service.queue_message_from_client( session.session_id, b'foobar' )
 		self.session_service.queue_message_to_client( session.session_id, b'foobar' )
-
+		# XXX: This is an ugly hack. Refactor this test to use internally
+		# the mock_db_trans.
+		tx = transaction.get()
 		transaction.commit()
 		transaction.begin()
 		to_client = list(self.session_service.get_messages_to_client( session.session_id ))
@@ -137,6 +139,8 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 		for l in to_client, from_client:
 			assert_that( l, has_length( 1 ) )
 			assert_that( l, contains( 'foobar' ) )
+		# XXX: Continuing the ugly hack, restore the old transaction.
+		transaction.manager.manager._txn = tx
 
 	@WithMockDSTrans
 	def test_clear_disconnect_timeout(self):
@@ -237,5 +241,3 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 
 	def test_session_service_storage(self):
 		assert_that( session_storage.OwnerBasedAnnotationSessionServiceStorage(), verifiably_provides( nti_interfaces.ISessionServiceStorage ) )
-
-
