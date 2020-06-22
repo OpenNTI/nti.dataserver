@@ -140,7 +140,9 @@ def _mock_ds_wrapper_for(func,
     @wraps(func)
     def f(*args):
         global current_mock_ds # XXX Make this a layer/class property # pylint:disable=global-statement
-        # XXX: base_storage appears to be unused, always None
+        # XXX: base_storage appears to be unused, always None.
+        # (It actually does seem to be used by nti.app.testing, but never in this package, so this
+        # could easily bitrot.)
         ds = factory(base_storage=base_storage(*args) if callable(base_storage) else base_storage)
         current_mock_ds = ds
 
@@ -227,7 +229,8 @@ class mock_db_trans(persistent_site_trans):
     inside a function decorated with :class:`WithMockDSTrans`
     or similar.
     """
-    conn = None
+
+    _prev_current_connection = None
 
     def __init__(self, ds=None, site_name=None):
         """
@@ -247,8 +250,13 @@ class mock_db_trans(persistent_site_trans):
 
         return conn
 
+    def __enter__(self):
+        self._prev_current_connection = current_transaction
+        return super(mock_db_trans, self).__enter__()
+
     def __exit__(self, t, v, tb):
         global current_transaction # XXX Refactor  # pylint:disable=global-statement
+        current_transaction = self._prev_current_connection
         return super(mock_db_trans, self).__exit__(t, v, tb)
 
 def WithMockDSTrans(func):
@@ -257,6 +265,8 @@ def WithMockDSTrans(func):
     def with_mock_ds_trans(*args, **kwargs):
         global current_transaction # XXX Refactor # pylint:disable=global-statement
         global current_mock_ds # XXX Refactor # pylint:disable=global-statement
+        prev_mock_ds = current_mock_ds
+        prev_connection = current_transaction
         # Previously, we setHooks() here and resetHooks()
         # in the finally block. Setting is fine, and we do have to have
         # them in place to run the ds, but resetting them here
@@ -275,8 +285,8 @@ def WithMockDSTrans(func):
             with mock_db_trans(ds):
                 func(*args, **kwargs)
         finally:
-            current_mock_ds = None
-            current_transaction = None
+            current_mock_ds = prev_mock_ds
+            current_transaction = prev_connection
             ds.close()
             # see comments above
             # resetHooks()
