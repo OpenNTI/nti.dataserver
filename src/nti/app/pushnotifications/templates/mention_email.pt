@@ -268,10 +268,8 @@
                                             <table cellspacing="0" cellpadding="0" style="font-family: Open Sans, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, Helvetica, Arial, sans-serif; border-collapse: collapse; width: 100%;">
                                                 <tr>
                                                     <td style="font-family: Open Sans, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, Helvetica, Arial, sans-serif;">
-                                                        <img src="https://assets.nextthought.com/images/nextthought/platform/email/logo_trans_square.png"
-                                                             width="41.87" height="40" alt="NextThought Logo"
-                                                             tal:attributes="src options/nti_site_brand_email_image_url|default;
-                                                                             alt options/nti_site_brand_name|default" />
+                                                        <div metal:use-macro="macro:header">
+                                                        </div>
                                                     </td>
                                                     <td class="text-right" style="font-family: Open Sans, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, Helvetica, Arial, sans-serif;" align="right">
                                                         <a href="" class="text-muted-light font-sm" style="color: #bbc8cd; text-decoration: none; font-size: 13px;"
