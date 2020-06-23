@@ -33,6 +33,7 @@ from nti.dataserver.interfaces import IContained
 from nti.dataserver.interfaces import IObjectSharingModifiedEvent
 from nti.dataserver.interfaces import ISharingTargetEntityIterable
 from nti.dataserver.interfaces import INotModifiedInStreamWhenContainerModified
+from nti.dataserver.interfaces import IMentionsUpdateInfo
 
 from nti.dataserver.interfaces import TargetedStreamChangeEvent
 
@@ -96,18 +97,7 @@ def _stream_preflight(contained):
     if not IEntity.providedBy(creator) or not hasQueryInteraction():
         return None
     try:
-        sharing_targets = getattr(contained, 'sharingTargets')
-
-        # Check for additional targets (e.g. from mentions)
-        additional_targets = ISharingTargetEntityIterable(contained, None)
-        if additional_targets is None:
-            return sharing_targets
-
-        if sharing_targets is None:
-            return additional_targets
-
-        # Remove any duplication
-        return set(sharing_targets).union(additional_targets)
+        return getattr(contained, 'sharingTargets')
     except AttributeError:
         return None
 
@@ -139,9 +129,14 @@ def stream_didAddIntIdForContainedObject(contained, _):
     event = Change(Change.CREATED, contained)
     event.creator = contained.creator
 
-    # Then targeted
+    # We also want to notify anyone mentioned that has
+    # access but isn't necessarily shared to directly
     accum = set()
-    for target in creation_targets:
+    mentions_info = component.queryMultiAdapter((contained, set()),
+                                                IMentionsUpdateInfo)
+    event.mentions_info = mentions_info
+    mention_targets = set(mentions_info.new_effective_mentions) if mentions_info else set()
+    for target in (set(creation_targets) | mention_targets):
         _enqueue_change_to_target(target, event, accum)
 
 
@@ -164,6 +159,9 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
         logger.error("Not sending any changes for deleted object %r", obj)
         return
     change.creator = self
+    mentions_info = component.queryMultiAdapter((obj, origSharing),
+                                                IMentionsUpdateInfo)
+    change.mentions_info = mentions_info
 
     seenTargets = set()
     newSharing = set(current_sharing_targets)
@@ -177,8 +175,10 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
         # a MODIFIED notice for this action.
         deleteChange = Change(Change.DELETED, obj)
         deleteChange.creator = self
+        deleteChange.mentions_info = mentions_info
         sharedChange = Change(Change.SHARED, obj)
         sharedChange.creator = self
+        sharedChange.mentions_info = mentions_info
         for shunnedPerson in origSharing - newSharing:
             if obj.isSharedWith(shunnedPerson):
                 # Shared with him indirectly, not directly. We need to be sure
@@ -193,17 +193,45 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
                 # persisted object
                 deleteChange.send_change_notice = True
             _enqueue_change_to_target(shunnedPerson, deleteChange, seenTargets)
-        for lovedPerson in newSharing - origSharing:
+
+        loved_people = get_effective_shared_to_list(mentions_info,
+                                                    origSharing,
+                                                    newSharing)
+        for lovedPerson in loved_people:
             _enqueue_change_to_target(lovedPerson, sharedChange, seenTargets)
-            newSharing.remove(lovedPerson)  # Don't send MODIFIED, send SHARED
+            if lovedPerson in newSharing:
+                newSharing.remove(lovedPerson)  # Don't send MODIFIED, send SHARED
 
     # Deleted events won't change the sharing, so there's
     # no need to look for a union of old and new to send
     # the delete to.
 
     # Now broadcast the change to anyone that's left.
-    for lovedPerson in newSharing:
+    user_to_notify = get_effective_users_to_notify(mentions_info,
+                                                   newSharing)
+    for lovedPerson in user_to_notify:
         _enqueue_change_to_target(lovedPerson, change, seenTargets)
+
+
+def get_effective_users_to_notify(mentions_info, newSharing):
+    # When users are first added, they should be notified,
+    # even if they aren't shared to directly
+    if not mentions_info:
+        return newSharing
+
+    return newSharing | set(mentions_info.mentions_added)
+
+
+def get_effective_shared_to_list(mentions_info, origSharing, newSharing):
+    # If an object already mentions a user that originally has no access,
+    # but then is subsequently added, we notify the user with a change type
+    # of share
+    users_added = newSharing - origSharing
+
+    if not mentions_info:
+        return users_added
+
+    return users_added | set(mentions_info.mentions_shared_to)
 
 
 @component.adapter(IContained, IObjectModifiedEvent)

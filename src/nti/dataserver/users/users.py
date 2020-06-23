@@ -826,6 +826,16 @@ class User(Principal):
         """
         return _NOOPCM
 
+    def _addToStream(self, change):
+        accepted = super(User, self)._addToStream(change)
+
+        if accepted:
+            # Fire the change off to the user, this needs to happen
+            # even for modifications, hence it not being in _acceptIncomingChange
+            notify(StreamChangeAcceptedByUser(change, self))
+
+        return accepted
+
     def _acceptIncomingChange(self, change, direct=True):
         accepted = super(User, self)._acceptIncomingChange(change, direct=direct)
         if accepted:
@@ -837,9 +847,6 @@ class User(Principal):
         Distribute the incoming change to any connected devices/sessions.
         This is an extension point for layers.
         """
-
-        # Fire the change off to the user
-        notify(StreamChangeAcceptedByUser(change, self))
 
         # TODO: Move this out to a listener somewhere
         apnsCon = component.queryUtility(INotificationService)

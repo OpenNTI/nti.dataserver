@@ -14,6 +14,7 @@ from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import has_entries
 from hamcrest import assert_that
+from nti.dataserver.interfaces import IMentionsUpdateInfo
 
 from pyramid.threadlocal import get_current_request
 
@@ -50,9 +51,16 @@ from nti.app.testing.testing import ITestMailDelivery
 
 class TestSubscribers(ApplicationLayerTest):
 
-	def _add_comment(self, creator, topic, inReplyTo=None, request=None, mentions=()):
+	def _add_comment(self,
+					 creator,
+					 topic,
+					 inReplyTo=None,
+					 request=None,
+					 orig_mentions=(),
+					 mentions=()):
 		comment = GeneralForumComment()
 		comment.creator = creator
+		IMentionsUpdateInfo(comment).store_original_data(orig_mentions=orig_mentions)
 		comment.mentions = mentions
 		if inReplyTo:
 			comment.inReplyTo = inReplyTo
@@ -150,8 +158,10 @@ class TestSubscribers(ApplicationLayerTest):
 			assert_that(_mockMailer._calls, has_length(0))
 
 	@mock_dataserver.WithMockDSTrans
-	@fudge.patch("nti.app.pushnotifications.subscribers._is_user_online")
-	def test_mention_email(self, is_online):
+	@fudge.patch("nti.dataserver.activitystream.hasQueryInteraction",
+				 "nti.app.pushnotifications.subscribers._is_user_online")
+	def test_mention_email(self, mock_interaction, is_online):
+		mock_interaction.is_callable().with_args().returns(True)
 		is_online.is_callable().returns(True)
 
 		community = Community.create_community(self.ds, username=u"test_demo")
