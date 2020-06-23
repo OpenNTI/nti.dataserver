@@ -20,6 +20,7 @@ from nti.app.mentions import MessageFactory as _
 
 from nti.coremetadata.interfaces import IMentionable
 
+from nti.dataserver.interfaces import IMentionsUpdateInfo
 from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users import User
@@ -30,7 +31,7 @@ logger = __import__("logging").getLogger(__name__)
 
 
 @component.adapter(tuple, IMentionable, IBeforeSequenceAssignedEvent)
-def _validate_mentions(ext_value, _mentionable, event):
+def _validate_mentions(ext_value, mentionable, event):
     """
     Need to validate that each mentioned items is a valid user (for
     now, though other entities may be supported later.
@@ -53,3 +54,5 @@ def _validate_mentions(ext_value, _mentionable, event):
                                  "value": ext_value,
                              },
                              None)
+
+    IMentionsUpdateInfo(mentionable).store_original_data()

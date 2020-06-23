@@ -2,6 +2,12 @@
 <configure	xmlns="http://namespaces.zope.org/zope">
 
     <adapter factory=".adapters.ValidMentionableEntityIterable" />
+    <adapter factory=".adapters._RequestMentionsUpdateInfo"
+             for="nti.coremetadata.interfaces.IMentionable
+                  set"/>
+
+    <adapter factory=".adapters._RequestMentionsUpdateInfo"
+             for="nti.coremetadata.interfaces.IMentionable"/>
 
     <utility factory=".adapters._MentionAttributesProvider"/>
 

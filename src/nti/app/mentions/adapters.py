@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid.threadlocal import get_current_request
+
 from zope import component
 from zope import interface
 
@@ -15,9 +17,12 @@ from zope.cachedescriptors.property import Lazy
 
 from nti.app.base.abstract_views import make_sharing_security_check_for_object
 
+from nti.coremetadata.interfaces import IEntityContainer
 from nti.coremetadata.interfaces import IMentionable
 from nti.coremetadata.interfaces import ISharingTargetEntityIterable
 
+
+from nti.dataserver.interfaces import IMentionsUpdateInfo
 from nti.dataserver.users import User
 
 from nti.contentfragments.interfaces import IAllowedAttributeProvider
@@ -73,3 +78,102 @@ class _MentionAttributesProvider(object):
         "data-nti-entity-id",
         "data-nti-entity-username",
     ])
+
+
+_unset = object()
+
+
+@interface.implementer(IMentionsUpdateInfo)
+class _RequestMentionsUpdateInfo(object):
+
+    def __init__(self, mentionable, old_shares=_unset):
+        self.context = mentionable
+        self.old_shares = old_shares if old_shares is not _unset else set()
+        self.request = get_current_request()
+
+    def store_original_data(self, orig_mentions=_unset):
+        # Need the previous mentions stored somewhere temporarily
+        # to enable comparison between previous and new values later when
+        # sending notifications (see activitystream.py)
+        if orig_mentions is not _unset:
+            self.request._orig_mentions = orig_mentions
+
+        if self.request is not None:
+            self.request._orig_mentions = getattr(self.context, 'mentions', ())
+
+    @Lazy
+    def new_effective_mentions(self):
+        shared_to = self.mentions_shared_to
+
+        if not self.old_shares:
+            return shared_to
+
+        return self._mentions_added_with_existing_perms(shared_to) | shared_to
+
+    @Lazy
+    def _mentions_added(self):
+        orig_mentions = getattr(self.request, '_orig_mentions', _unset)
+
+        # No previous data should mean the mentions field wasn't changed
+        if orig_mentions is _unset:
+            return set()
+
+        usernames_added = set(self.context.mentions) - set(orig_mentions or ())
+
+        users_added = set()
+        for username in usernames_added:
+            user = User.get_user(username)
+            if user is not None:
+                users_added.add(user)
+
+        return users_added
+
+    def _mentions_added_with_existing_perms(self, shared_to):
+        added_without_share = self._mentions_added - shared_to
+
+        new_permissioned_mentions = set()
+        for user in added_without_share:
+            if self.context.isSharedWith(user):
+                new_permissioned_mentions.add(user)
+
+        return new_permissioned_mentions
+
+    @Lazy
+    def mentions_added(self):
+        shared_to = self.mentions_shared_to
+        return self._mentions_added_with_existing_perms(shared_to)
+
+    def _users_mentioned(self):
+        users_mentioned = list()
+        for username in self.context.mentions:
+            user = User.get_user(username)
+            if user is not None:
+                users_mentioned.append(user)
+        return users_mentioned
+
+    @Lazy
+    def mentions_shared_to(self):
+        new_shares = set(self.context.sharingTargets) - set(self.old_shares)
+
+        user_shared_to = set()
+        for user in self._users_mentioned():
+            if self._was_shared_to(user, self.old_shares, new_shares):
+                user_shared_to.add(user)
+
+        return user_shared_to
+
+    def _was_shared_to(self, user, old_shares, new_shares):
+        return self._is_member_of_any(user, new_shares) \
+            and not self._is_member_of_any(user, old_shares)
+
+    @staticmethod
+    def _is_member_of_any(user, sharing_targets):
+        if user in sharing_targets:
+            return True
+
+        for target in sharing_targets:
+            if user in IEntityContainer(target, ()):
+                return True
+
+        return False
+

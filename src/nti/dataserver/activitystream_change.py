@@ -144,6 +144,10 @@ class Change(PersistentCreatedModDateTrackingObject):
         property(lambda self: self.__dict__.get('_v_send_change_notice', True),  # default to true
                  lambda self, val: setitem(self.__dict__, str('_v_send_change_notice'), val))
 
+    mentions_info = \
+        property(lambda self: self.__dict__.get('_v_mentions_info', None),
+                 lambda self, val: setitem(self.__dict__, str('_v_mentions_info'), val))
+
     __name__ = None
     __parent__ = None
 

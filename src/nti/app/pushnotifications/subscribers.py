@@ -170,6 +170,16 @@ class _TemplateArgs(digest_email._TemplateArgs):
         return ''
 
 
+def _is_newly_mentioned(user, change):
+    mentions_info = getattr(change, 'mentions_info', None)
+
+    if mentions_info is None:
+        return False
+
+    result = user in change.mentions_info.new_effective_mentions
+    return result
+
+
 @component.adapter(IStreamChangeAcceptedByUser)
 def user_mention_emailer(event):
     """
@@ -181,7 +191,7 @@ def user_mention_emailer(event):
     change = event.object
     mentionable = IMentionable(change.object, None)
     if mentionable is not None \
-            and mentionable.isMentionedDirectly(user) \
+            and _is_newly_mentioned(user, change) \
             and not _is_user_online(user.username):
         logger.debug("Sending offline notification to %s for mention, chg: %s",
                      user.username, change.type)

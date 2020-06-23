@@ -53,6 +53,7 @@ from nti.schema.field import ValidTextLine
 from nti.schema.field import ValidSet as Set
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
+from nti.schema.field import UniqueIterable
 
 # pylint: disable=slots-on-old-class
 
@@ -1600,3 +1601,34 @@ class IEnrolledContainer(interface.Interface):
 deprecated('ISectionInfoContainer', 'No longer used')
 class ISectionInfoContainer(interface.Interface):
     pass
+
+
+class IMentionsUpdateInfo(interface.Interface):
+    """
+    An interface exposing metadata about IMentionable updates and how
+    these have changed within a transaction.
+    """
+
+    mentions_shared_to = UniqueIterable(
+        title=u"Mentions Shared To",
+        description=u"The set of mentioned entities the associated object "
+                    u"has been shared to during this transaction.  This "
+                    u"can happen when a user is already mentioned without "
+                    u"access and is then included either directly or indirectly "
+                    u"in the list of entities with access to the associated object.",
+        value_type=Object(IEntity, title=u"An mentioned entity recently shared to"))
+
+    mentions_added = UniqueIterable(
+        title=u"Mentions Added",
+        description=u"The set of entities that have been newly mentioned "
+                    u"in the associated object during this transaction.",
+        value_type=Object(IEntity,
+                          title=u"An mentioned entity recently shared to"))
+
+    new_effective_mentions = UniqueIterable(
+        title=u"New Effective Mentions",
+        description=u"The set of mentioned entities with access to the "
+                    u"associated object that were not previously mentioned or "
+                    u"did not have access. Effectively a union of "
+                    u":attr:`mentions_shared_to` and :attr:`mentions_added`.",
+        value_type=Object(IEntity, title=u"An mentioned entity recently shared to"))
