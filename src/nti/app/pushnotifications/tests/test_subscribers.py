@@ -200,7 +200,7 @@ class TestSubscribers(ApplicationLayerTest):
 		request = get_current_request()
 		self._add_comment(mouse_user, topic, request=request, mentions=mentions)
 		assert_that(mailer.queue, has_length(1))
-
+		from quopri import decodestring
 
 @interface.implementer(IStreamChangeEvent)
 class MockChange(object):

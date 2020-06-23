@@ -162,7 +162,7 @@
 	</head>
 	<body class="normal-text">
 		<div class="header" metal:define-macro="header">
-			<div id="green-bar" style="background-color: ${options/nti_site_brand_color | string:#3FB34F}; width: 100%; height: 3px;"></div>
+			<div id="green-bar" class="brand-color-bar" style="background-color: ${options/nti_site_brand_color | string:#3FB34F}; width: 100%; height: 3px;"></div>
 			<div id="logo-bar">
 				<img src="https://assets.nextthought.com/images/nextthought/platform/email/logo_trans_square.png"
 					 width="41.87" height="40" alt="NextThought Logo"
