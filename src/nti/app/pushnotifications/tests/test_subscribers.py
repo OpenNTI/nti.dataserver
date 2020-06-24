@@ -14,7 +14,6 @@ from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import has_entries
 from hamcrest import assert_that
-from nti.dataserver.interfaces import IMentionsUpdateInfo
 
 from pyramid.threadlocal import get_current_request
 
@@ -60,7 +59,6 @@ class TestSubscribers(ApplicationLayerTest):
 					 mentions=()):
 		comment = GeneralForumComment()
 		comment.creator = creator
-		IMentionsUpdateInfo(comment).store_original_data(orig_mentions=orig_mentions)
 		comment.mentions = mentions
 		if inReplyTo:
 			comment.inReplyTo = inReplyTo

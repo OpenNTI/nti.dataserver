@@ -8,8 +8,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from pyramid.threadlocal import get_current_request
-
 from zope import component
 from zope import interface
 
@@ -21,8 +19,10 @@ from nti.coremetadata.interfaces import IEntityContainer
 from nti.coremetadata.interfaces import IMentionable
 from nti.coremetadata.interfaces import ISharingTargetEntityIterable
 
-
 from nti.dataserver.interfaces import IMentionsUpdateInfo
+
+from nti.dataserver.mentions.interfaces import IPreviousMentions
+
 from nti.dataserver.users import User
 
 from nti.contentfragments.interfaces import IAllowedAttributeProvider
@@ -84,22 +84,11 @@ _unset = object()
 
 
 @interface.implementer(IMentionsUpdateInfo)
-class _RequestMentionsUpdateInfo(object):
+class _MentionsUpdateInfo(object):
 
     def __init__(self, mentionable, old_shares=_unset):
         self.context = mentionable
         self.old_shares = old_shares if old_shares is not _unset else set()
-        self.request = get_current_request()
-
-    def store_original_data(self, orig_mentions=_unset):
-        # Need the previous mentions stored somewhere temporarily
-        # to enable comparison between previous and new values later when
-        # sending notifications (see activitystream.py)
-        if orig_mentions is not _unset:
-            self.request._orig_mentions = orig_mentions
-
-        if self.request is not None:
-            self.request._orig_mentions = getattr(self.context, 'mentions', ())
 
     @Lazy
     def new_effective_mentions(self):
@@ -110,15 +99,21 @@ class _RequestMentionsUpdateInfo(object):
 
         return self._mentions_added_with_existing_perms(shared_to) | shared_to
 
+    def _mentions_at_trans_start(self):
+        prev = IPreviousMentions(self.context)
+
+        # If mentions weren't updated in this transaction,
+        # get the current mentions
+        if not prev.is_modified():
+            return self.context.mentions
+
+        return prev.mentions or ()
+
     @Lazy
     def _mentions_added(self):
-        orig_mentions = getattr(self.request, '_orig_mentions', _unset)
+        orig_mentions = self._mentions_at_trans_start()
 
-        # No previous data should mean the mentions field wasn't changed
-        if orig_mentions is _unset:
-            return set()
-
-        usernames_added = set(self.context.mentions) - set(orig_mentions or ())
+        usernames_added = set(self.context.mentions) - set(orig_mentions)
 
         users_added = set()
         for username in usernames_added:
@@ -156,6 +151,10 @@ class _RequestMentionsUpdateInfo(object):
         new_shares = set(self.context.sharingTargets) - set(self.old_shares)
 
         user_shared_to = set()
+        if not new_shares:
+            return user_shared_to
+
+        # TODO: Could store notified mentions to speed this up
         for user in self._users_mentioned():
             if self._was_shared_to(user, self.old_shares, new_shares):
                 user_shared_to.add(user)

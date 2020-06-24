@@ -1,0 +1,6 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope">
+
+	<adapter factory="nti.dataserver.mentions.adapters._PreviousMentions" />
+
+</configure>
