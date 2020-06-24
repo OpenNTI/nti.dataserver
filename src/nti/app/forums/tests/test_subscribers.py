@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+from hamcrest import assert_that
+from hamcrest import is_
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.contentfragments.interfaces import PlainTextContentFragment
+
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+
+from nti.dataserver.contenttypes.forums.post import GeneralForumComment
+
+from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.users import User
+
+
+class TestSubscribers(ApplicationLayerTest):
+
+    default_community = 'test_comm'
+
+    @staticmethod
+    def _add_comment(creator,
+                     topic,
+                     request=None,
+                     mentions=()):
+        comment = GeneralForumComment()
+        comment.creator = creator
+        comment.mentions = mentions
+
+        if request is not None:
+            request.remote_user = creator
+            request.context = comment
+
+        topic[topic.generateId(prefix=u'comment')] = comment
+        return comment
+
+    @WithSharedApplicationMockDS(users=('topic_owner', 'comment_user'),
+                                 testapp=False,
+                                 default_authenticate=False)
+    def test_reply_notification_if_mentioned(self):
+        with mock_dataserver.mock_db_trans():
+            user2 = self.users[u'topic_owner']
+            user3 = self.users[u'comment_user']
+            community = User.get_entity('test_comm')
+
+            board = ICommunityBoard(community)
+            forum = board[u'Forum']
+
+            topic = CommunityHeadlineTopic()
+            topic.title = u'a test'
+            topic.creator = user2
+            forum[u'Hello'] = topic
+            topic.publish()
+
+            # Top comment
+            self._add_comment(user3, topic)
+            assert_that(user2.notificationCount.value, is_(1))
+
+            # Don't send if the topic author is mentioned, as we
+            # currently prefer that notification
+            mentions = PlainTextContentFragment(user2.username),
+            self._add_comment(user3, topic, mentions=mentions)
+            assert_that(user2.notificationCount.value, is_(1))

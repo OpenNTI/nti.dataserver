@@ -21,6 +21,7 @@ from zope.event import notify
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
+from nti.coremetadata.interfaces import IMentionable
 from nti.coremetadata.interfaces import UserLastSeenEvent
 
 from nti.dataserver.activitystream_change import Change
@@ -100,6 +101,13 @@ def notify_online_author_of_topic_comment(comment, unused_event):
     _notify_online_author_of_comment(comment, topic_author)
 
 
+
+def _is_mentioned(user, comment):
+    if not IMentionable.providedBy(comment):
+        return False
+
+    return comment.isMentionedDirectly(user)
+
 def _notify_online_author_of_comment(comment, topic_author):
     if topic_author == comment.creator:
         return  # not for yourself
@@ -114,7 +122,8 @@ def _notify_online_author_of_comment(comment, topic_author):
     # This also has the effect of sending a socket notification, if needed.
     # Because it is not shared directly with the author, it doesn't go
     # in the shared data
-    if not comment.isSharedDirectlyWith(topic_author):
+    if not comment.isSharedDirectlyWith(topic_author) \
+            and not _is_mentioned(topic_author, comment):
         # pylint: disable=protected-access
         topic_author._noticeChange(change, force=True)
 

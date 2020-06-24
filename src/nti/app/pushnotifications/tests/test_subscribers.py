@@ -125,6 +125,13 @@ class TestSubscribers(ApplicationLayerTest):
 			self._add_comment(user4, topic, inReplyTo=comment1)
 			assert_that(_mockMailer._calls, has_length(0))
 
+			# Don't send if the author is mentioned, as we
+			# currently prefer that notification
+			mock_is_subscribed.is_callable().returns(True)
+			mentions = PlainTextContentFragment(user3.username),
+			self._add_comment(user4, topic, inReplyTo=comment1, mentions=mentions)
+			assert_that(_mockMailer._calls, has_length(0))
+
 			# Success
 			mock_is_subscribed.is_callable().returns(True)
 			self._add_comment(user4, topic, inReplyTo=comment1)

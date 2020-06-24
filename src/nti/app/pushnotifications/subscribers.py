@@ -63,6 +63,13 @@ def _display_name(user, request):
 	return component.getMultiAdapter((user, request), IDisplayNameGenerator)()
 
 
+def _is_mentioned(user, threadable):
+    if not IMentionable.providedBy(threadable):
+        return False
+
+    return threadable.isMentionedDirectly(user)
+
+
 def _threadable_added(threadable, unused_event):
 	inReplyTo = threadable.inReplyTo
 	if not IThreadable.providedBy(inReplyTo):
@@ -72,7 +79,7 @@ def _threadable_added(threadable, unused_event):
 		return
 
 	user = User.get_user(getattr(inReplyTo, 'creator', None))
-	if not _is_subscribed(user):
+	if not _is_subscribed(user) or _is_mentioned(user, threadable):
 		return
 
 	request = get_current_request()
