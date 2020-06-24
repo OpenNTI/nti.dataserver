@@ -20,8 +20,9 @@ from nti.app.mentions import MessageFactory as _
 
 from nti.coremetadata.interfaces import IMentionable
 
-from nti.dataserver.interfaces import IMentionsUpdateInfo
 from nti.dataserver.interfaces import IUser
+
+from nti.dataserver.mentions.interfaces import IPreviousMentions
 
 from nti.dataserver.users import User
 
@@ -55,4 +56,6 @@ def _validate_mentions(ext_value, mentionable, event):
                              },
                              None)
 
-    IMentionsUpdateInfo(mentionable).store_original_data()
+    # Used during modifications to calculate what the newly
+    # added mentions were.
+    IPreviousMentions(mentionable).mentions = mentionable.mentions
