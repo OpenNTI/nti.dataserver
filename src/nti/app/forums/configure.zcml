@@ -46,7 +46,7 @@
 				for="nti.appserver.workspaces.interfaces.IUserWorkspace" />
 
 	<!-- Object updating -->
-	<subscriber handler=".views.match_title_of_post_to_blog" />
+	<subscriber handler=".views._match_topic_attributes_to_post" />
 
 	<!-- Change broadcasting -->
 	<subscriber handler=".subscribers.notify_online_author_of_blog_comment" />

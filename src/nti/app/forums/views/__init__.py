@@ -16,6 +16,8 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
 from zope import component
 
+from zope import lifecycleevent
+
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from Acquisition import aq_base
@@ -43,13 +45,21 @@ zope.deferredimport.defineFrom(
 
 
 @component.adapter(IPost, IObjectModifiedEvent)
-def match_title_of_post_to_blog(post, unused_event):
+def _match_topic_attributes_to_post(post, unused_event):
     """
-    When the main story of a story topic (blog post) is modified, match the titles
+    When the main headline of a headline topic (blog post) is modified,
+    match title and mentions
+
+    When headline posts are created, these are already sync'd to the
+    topic. For mentions his needs to happen on modification as well to
+    ensure users get proper notifications for mentions, since IHeadlinePosts
+    are excluded from user's streams by extending IMutedInStream.
     """
 
     if      IHeadlineTopic.providedBy(post.__parent__) \
         and aq_base(post) is aq_base(post.__parent__.headline) \
         and post.title != post.__parent__.title:
         post.__parent__.title = post.title
+        post.__parent__.mentions = post.mentions
+        lifecycleevent.modified(post.__parent__)
     return
