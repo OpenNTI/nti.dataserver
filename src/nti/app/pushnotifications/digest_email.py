@@ -158,8 +158,8 @@ class _TemplateArgs(object):
 
 	@property
 	def creator(self):
-		names = IFriendlyNamed(self._primary.creator)
-		return names.alias or names.realname
+		return component.queryMultiAdapter((self._primary.creator, self.request),
+										   IDisplayNameGenerator)()
 
 	@property
 	def web_root(self):
