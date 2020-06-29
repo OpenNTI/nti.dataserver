@@ -41,10 +41,10 @@ class TestSubscribers(ApplicationLayerTest):
         return board[forum_name]
 
     @staticmethod
-    def _add_community_topic(forum, topic_name):
+    def _add_community_topic(creator, forum, topic_name):
         topic = CommunityHeadlineTopic()
         topic.title = u'a test'
-        topic.creator = u'sjohnson@nextthought.com'
+        topic.creator = creator
 
         forum[topic_name] = topic
 
@@ -75,7 +75,7 @@ class TestSubscribers(ApplicationLayerTest):
             user3 = self.users[u'comment_user']
             forum = self._get_forum('test_comm')
 
-            topic = self._add_community_topic(forum, u'Hello')
+            topic = self._add_community_topic(user2, forum, u'Hello')
             topic.publish()
 
             # Top comment
@@ -100,8 +100,11 @@ class TestSubscribers(ApplicationLayerTest):
                                  default_authenticate=False)
     def test_topic_mentions_updated(self):
         with mock_dataserver.mock_db_trans():
+            topic_owner = self._create_user('topic_owner')
             forum = self._get_forum('test_comm')
-            topic = self._add_community_topic(forum=forum, topic_name=u'test_topic')
+            topic = self._add_community_topic(topic_owner,
+                                              forum=forum,
+                                              topic_name=u'test_topic')
             post = self._add_community_post(topic, CommunityHeadlinePost())
             assert_that(topic.mentions, has_length(0))
 
