@@ -15,19 +15,25 @@ from zope import interface
 
 from zope.annotation.factory import factory as an_factory
 
+from zope.container.contained import Contained
+
+from zope.location.interfaces import IContained
+
 from nti.coremetadata.interfaces import IMentionable
 
 from nti.dataserver.mentions.interfaces import IPreviousMentions
 
 
 @component.adapter(IMentionable)
-@interface.implementer(IPreviousMentions)
-class _PreviousMentionsAnnotation(Persistent):
+@interface.implementer(IPreviousMentions, IContained)
+class _PreviousMentionsAnnotation(Persistent, Contained):
 
     def __init__(self):
-        self.mentions = None
+        self.mentions = ()
 
     def is_modified(self):
+        if self._p_jar is None:
+            return True
         return self._p_changed
 
 

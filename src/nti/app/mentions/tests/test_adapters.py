@@ -5,19 +5,40 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import six
+import time
+
 import fudge
+from ZODB.interfaces import IConnection
 from hamcrest import assert_that
 from hamcrest import contains
 from hamcrest import empty
 from hamcrest import has_property
 from hamcrest import is_
 from nti.contentfragments.interfaces import IUnicodeContentFragment
+from nti.contentrange import contentrange
 
 from nti.coremetadata.interfaces import ISharingTargetEntityIterable
 from nti.dataserver.contenttypes import Note
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import IMentionsUpdateInfo
+from nti.dataserver.mentions.interfaces import IPreviousMentions
+from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.users import Community
+from nti.externalization.proxy import removeAllProxies
+from zope import component
 
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.layers import AppLayerTest
+from nti.contentfragments.interfaces import PlainTextContentFragment
+
+from nti.contentfragments.interfaces import IPlainTextContentFragment
+
+
+_unset = object()
 
 
 class TestValidMentionableEntityIterable(AppLayerTest):
@@ -82,3 +103,399 @@ class TestMentionAttributesProvider(AppLayerTest):
         html = '<html><body><a invalid_attr="my_value">Opie Cunningham</a></body></html>'
         exp = '<html><body><a>Opie Cunningham</a></body></html>'
         assert_that(IUnicodeContentFragment(html), is_(exp))
+
+
+class TestMentionsUpdateInfo(AppLayerTest):
+
+    CONTAINER_ID = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.the_twentieth_century'
+
+    def _setup_users(self):
+        self.users = dict()
+        tom = self.users['tom'] = self._create_user('tom.findlay')
+        andy = self.users['andy'] = self._create_user('andy.cato')
+        comm = self.users['comm'] = Community.create_community(self.ds, username=u"groove_comm")
+        andy.record_dynamic_membership(comm)
+        tom.record_dynamic_membership(comm)
+        return comm, tom, andy
+
+    @staticmethod
+    def _as_plaintext_tuple(mentions):
+        if not mentions:
+            return ()
+
+        mentions = [PlainTextContentFragment(mention) for mention in mentions]
+
+        return tuple(mentions)
+
+    def _set_mentions(self, mentionable, mentions):
+        if mentions:
+            if isinstance(mentions, six.string_types):
+                mentions = [mentions]
+
+            mentionable.mentions = self._as_plaintext_tuple(mentions)
+
+    @staticmethod
+    def _set_sharing_targets(mentionable, sharing_targets):
+        if sharing_targets:
+            if IEntity.providedBy(sharing_targets):
+                sharing_targets = [sharing_targets]
+
+            for share in sharing_targets:
+                mentionable.addSharingTarget(share)
+
+    def _note(self, creator, mentions=None, sharing_targets=None):
+        mentionable = Note()
+        mentionable.applicableRange = contentrange.ContentRangeDescription()
+        mentionable.containerId = self.CONTAINER_ID
+        mentionable.body = (u"Simple body content", )
+        mentionable.title = IPlainTextContentFragment(u"Test Title")
+        mentionable.createdTime = time.time()
+        mentionable.creator = creator
+
+        self._set_mentions(mentionable, mentions)
+        self._set_sharing_targets(mentionable, sharing_targets)
+
+        return mentionable
+
+    def _get_mentions_info(self, mentionable, old_shares=None, prev_mentions=None):
+        if IEntity.providedBy(old_shares):
+            old_shares = [old_shares]
+
+        old_shares = set(old_shares or ())
+
+        if prev_mentions is not None:
+            self._set_mentions(IPreviousMentions(mentionable), prev_mentions)
+            if prev_mentions == mentionable.mentions:
+                IConnection(mentionable).add(IPreviousMentions(mentionable))
+
+        mentions_info = component.getMultiAdapter((mentionable, old_shares),
+                                                  IMentionsUpdateInfo)
+        return mentions_info
+
+    def _check_mentions(self, mentions_info, added, shared_to):
+        assert_that(mentions_info.mentions_added, is_(added))
+        assert_that(mentions_info.mentions_shared_to, is_(shared_to))
+        assert_that(mentions_info.new_effective_mentions, is_(added | shared_to))
+
+    def _test_mentions_info(self, old_shares, new_shares, old_mentions, new_mentions):
+        comm, tom, andy = [self.users[name] for name in ("comm", "tom", "andy")]
+
+        mentionable = self._note(tom,
+                                 sharing_targets=new_shares,
+                                 mentions=new_mentions)
+        tom.addContainedObject(mentionable)
+
+        mentions_info = self._get_mentions_info(mentionable,
+                                                old_shares=old_shares,
+                                                prev_mentions=old_mentions)
+
+        return mentions_info
+
+    @WithMockDSTrans
+    def test_no_access(self):
+        comm, _, andy = self._setup_users()
+
+        # No Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=(),
+            old_mentions=(), new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # New Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=(),
+            old_mentions=(), new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # Same Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=(),
+            old_mentions=andy.username, new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # Removed Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=(),
+            old_mentions=andy.username, new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+    @WithMockDSTrans
+    def test_new_direct_access(self):
+        comm, _, andy = self._setup_users()
+
+        # No Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=andy,
+            old_mentions=(), new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # New Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=andy,
+            old_mentions=(), new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to={andy})
+
+        # Same Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=andy,
+            old_mentions=andy.username, new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to={andy})
+
+        # Removed Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=andy,
+            old_mentions=andy.username, new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+    @WithMockDSTrans
+    def test_existing_direct_access(self):
+        comm, _, andy = self._setup_users()
+
+        # No Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=andy, new_shares=andy,
+            old_mentions=(), new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # New Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=andy, new_shares=andy,
+            old_mentions=(), new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added={andy},
+                             shared_to=set())
+
+        # Same Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=andy, new_shares=andy,
+            old_mentions=andy.username, new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # Removed Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=andy, new_shares=andy,
+            old_mentions=andy.username, new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+    @WithMockDSTrans
+    def test_removed_direct(self):
+        comm, _, andy = self._setup_users()
+
+        # No Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=andy, new_shares=(),
+            old_mentions=(), new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # New Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=andy, new_shares=(),
+            old_mentions=(), new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # Same Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=andy, new_shares=(),
+            old_mentions=andy.username, new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # Removed Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=andy, new_shares=(),
+            old_mentions=andy.username, new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+    @WithMockDSTrans
+    def test_new_indirect_access(self):
+        comm, _, andy = self._setup_users()
+
+        # No Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=comm,
+            old_mentions=(), new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # New Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=comm,
+            old_mentions=(), new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to={andy})
+
+        # Same Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=comm,
+            old_mentions=andy.username, new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to={andy})
+
+        # Removed Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=(), new_shares=comm,
+            old_mentions=andy.username, new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+    @WithMockDSTrans
+    def test_existing_indirect_access(self):
+        comm, _, andy = self._setup_users()
+
+        # No Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=comm,
+            old_mentions=(), new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # New Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=comm,
+            old_mentions=(), new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added={andy},
+                             shared_to=set())
+
+        # Same Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=comm,
+            old_mentions=andy.username, new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # Removed Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=comm,
+            old_mentions=andy.username, new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+    @WithMockDSTrans
+    def test_removed_indirect(self):
+        comm, _, andy = self._setup_users()
+
+        # No Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=(),
+            old_mentions=(), new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # New Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=(),
+            old_mentions=(), new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # Same Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=(),
+            old_mentions=andy.username, new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # Removed Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=(),
+            old_mentions=andy.username, new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
