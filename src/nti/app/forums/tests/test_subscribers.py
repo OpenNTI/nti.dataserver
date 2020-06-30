@@ -87,27 +87,3 @@ class TestSubscribers(ApplicationLayerTest):
             mentions = PlainTextContentFragment(user2.username),
             self._add_comment(user3, topic, mentions=mentions)
             assert_that(user2.notificationCount.value, is_(1))
-
-    @staticmethod
-    def _add_community_post(topic, post):
-        post.__parent__ = topic
-        post.creator = topic.creator
-        topic.headline = post
-        return post
-
-    @WithSharedApplicationMockDS(users=("leeroy.jenkins",),
-                                 testapp=False,
-                                 default_authenticate=False)
-    def test_topic_mentions_updated(self):
-        with mock_dataserver.mock_db_trans():
-            topic_owner = self._create_user('topic_owner')
-            forum = self._get_forum('test_comm')
-            topic = self._add_community_topic(topic_owner,
-                                              forum=forum,
-                                              topic_name=u'test_topic')
-            post = self._add_community_post(topic, CommunityHeadlinePost())
-            assert_that(topic.mentions, has_length(0))
-
-            post.mentions = (PlainTextContentFragment("leeroy.jenkins"),)
-            lifecycleevent.modified(post)
-            assert_that(topic.mentions, is_(post.mentions))

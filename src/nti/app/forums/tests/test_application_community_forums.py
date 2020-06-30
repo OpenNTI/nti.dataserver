@@ -503,6 +503,37 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 
 		assert_that( board_contents_res2.json_body, has_entry( 'TotalItemCount', 1 ) )
 
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_topic_updates_when_post_updated(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = fixture.testapp
+
+		res, data = self._POST_and_publish_topic_entry()
+		topic_href = res.json_body["href"]
+
+		# Mentions
+		topic_res = self.testapp.get(topic_href)
+		assert_that(topic_res.json_body["mentions"], has_length(0))
+
+		edit_post_href = self.require_link_href_with_rel(res.json_body["headline"], 'edit')
+
+		self.testapp.put_json(edit_post_href, {"mentions": [fixture.user2_username]})
+
+		topic_res = self.testapp.get(topic_href)
+		assert_that(topic_res.json_body["mentions"],
+					is_([fixture.user2_username]))
+
+		# Title
+		topic_res = self.testapp.get(topic_href)
+		assert_that(topic_res.json_body["title"], data["title"])
+
+		updated_title = "{} Updated ".format(data["title"])
+		self.testapp.put_json(edit_post_href, {"title": updated_title})
+
+		topic_res = self.testapp.get(topic_href)
+		assert_that(topic_res.json_body["title"], is_(updated_title))
+
 	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
 	@fudge.patch('nti.asynchronous.scheduled.utils.get_scheduled_queue')
 	@fudge.patch('nti.dataserver.contenttypes.forums.job.send_creation_notification_email')

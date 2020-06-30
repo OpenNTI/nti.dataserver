@@ -57,9 +57,17 @@ def _match_topic_attributes_to_post(post, unused_event):
     """
 
     if      IHeadlineTopic.providedBy(post.__parent__) \
-        and aq_base(post) is aq_base(post.__parent__.headline) \
-        and post.title != post.__parent__.title:
-        post.__parent__.title = post.title
-        post.__parent__.mentions = post.mentions
-        lifecycleevent.modified(post.__parent__)
+        and aq_base(post) is aq_base(post.__parent__.headline):
+
+        modified = False
+        if post.title != post.__parent__.title:
+            modified = True
+            post.__parent__.title = post.title
+
+        if post.mentions != post.__parent__.mentions:
+            modified = True
+            post.__parent__.mentions = post.mentions
+
+        if modified:
+            lifecycleevent.modified(post.__parent__)
     return
