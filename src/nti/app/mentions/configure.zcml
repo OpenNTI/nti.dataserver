@@ -13,6 +13,11 @@
                      pyramid.interfaces.IRequest"
                 provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
+    <subscriber factory="nti.app.mentions.decorators._NewlyMentionedDecorator"
+                for="nti.dataserver.interfaces.IStreamChangeEvent
+                     pyramid.interfaces.IRequest"
+                provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
     <subscriber factory="nti.app.mentions.decorators._CanAccessContentDecorator"
                 for="nti.coremetadata.interfaces.IMentionable
                      pyramid.interfaces.IRequest"
