@@ -237,6 +237,7 @@ setup(
         # PyPy)
         'hiredis ; platform_python_implementation == "CPython"',
         # gevent pure python dns resolving
+        'humanize',
         'idna',
         'isodate',     # ISO8601 date/time/duration parser and formatter
         # Simple helper library for signing data that roundtrips

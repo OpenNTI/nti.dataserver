@@ -198,7 +198,7 @@ class TestNote(ApplicationLayerTest):
                                 status=422)
         res = res.json_body
         assert_that(res.get('message'),
-                    is_('Maximum number attachments exceeded.'))
+                    is_('The maximum number of attachments cannot exceed 10.'))
         assert_that(res.get('code'), is_('MaxAttachmentsExceeded'))
 
         # Total max file size
@@ -217,6 +217,6 @@ class TestNote(ApplicationLayerTest):
                                 status=422)
         res = res.json_body
         assert_that(res.get('message'),
-                    is_('The attached files exceed the total maximum size limit.'))
+                    is_('The cumulative size of the attached files cannot exceed 25 MiB.'))
         assert_that(res.get('code'), is_('MaxTotalAttachmentFileSizeExceeded'))
 
