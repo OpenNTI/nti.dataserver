@@ -41,6 +41,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import IDefaultForum
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
 from nti.dataserver.contenttypes.forums.interfaces import ISendEmailOnForumTypeCreation
@@ -328,3 +329,13 @@ class DefaultForumDecorator(Singleton):
 
     def decorateExternalMapping(self, context, mapping):
         mapping['IsDefaultForum'] = IDefaultForum.providedBy(context)
+
+
+@component.adapter(ICommunityForum)
+@interface.implementer(IExternalObjectDecorator)
+class _CommunityForumDecorator(Singleton):
+
+    def decorateExternalObject(self, original, external):
+        community = find_interface(original, ICommunity, strict=False)
+        if community is not None:
+            external['DefaultSharedToNTIIDs'] = [community.NTIID]
