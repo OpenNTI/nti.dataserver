@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 import os
 import re
+import humanize
+
 from collections import Mapping
 
 from pyramid import httpexceptions as hexc
@@ -86,10 +88,11 @@ def validate_sources(user=None, context=None, sources=(),
     if      constraints is not None \
         and constraints.max_files \
         and len(sources) > constraints.max_files:
+        msg = _(u'The maximum number of attachments cannot exceed {}.'.format(constraints.max_files))
         raise_json_error(get_current_request(),
                          hexc.HTTPUnprocessableEntity,
                          {
-                             'message': _(u'Maximum number attachments exceeded.'),
+                             'message': msg,
                              'code': 'MaxAttachmentsExceeded',
                              'field': 'max_files',
                              'constraint': constraints.max_files
@@ -108,10 +111,12 @@ def validate_sources(user=None, context=None, sources=(),
             if size is not None:
                 aggregate_size += size
             if size is not None and not validator.is_file_size_allowed(size):
+                limit = humanize.naturalsize(validator.max_file_size, binary=True, format='%.f')
+                msg = _(u'The size of an uploaded file cannot exceed {}.'.format(limit))
                 raise_json_error(get_current_request(),
                                  hexc.HTTPUnprocessableEntity,
                                  {
-                                     'message': _(u'The uploaded file is too large.'),
+                                     'message': msg,
                                      'provided_bytes': size,
                                      'max_bytes': validator.max_file_size,
                                      'code': 'MaxFileSizeUploadLimitError',
@@ -150,10 +155,12 @@ def validate_sources(user=None, context=None, sources=(),
     if      constraints is not None \
         and constraints.max_total_file_size \
         and aggregate_size > constraints.max_total_file_size:
+        limit = humanize.naturalsize(validator.max_total_file_size, binary=True, format='%.f')
+        msg = _(u'The cumulative size of the attached files cannot exceed {}.'.format(limit))
         raise_json_error(get_current_request(),
                          hexc.HTTPUnprocessableEntity,
                          {
-                             'message': _(u'The attached files exceed the total maximum size limit.'),
+                             'message': msg,
                              'code': 'MaxTotalAttachmentFileSizeExceeded',
                              'field': 'max_total_file_size',
                              'constraint': constraints.max_total_file_size
