@@ -64,6 +64,12 @@ from nti.ntiids.oids import to_external_ntiid_oid
 logger = __import__('logging').getLogger(__name__)
 
 
+def _get_humanreadable_bytes(size):
+    limit = humanize.naturalsize(size, binary=True, format='%.f')
+    limit = limit.replace('MiB', 'MB')
+    return limit
+
+
 def is_named_source(context):
     return INamedFile.providedBy(context)
 
@@ -111,7 +117,7 @@ def validate_sources(user=None, context=None, sources=(),
             if size is not None:
                 aggregate_size += size
             if size is not None and not validator.is_file_size_allowed(size):
-                limit = humanize.naturalsize(validator.max_file_size, binary=True, format='%.f')
+                limit = _get_humanreadable_bytes(validator.max_file_size)
                 msg = _(u'The size of an uploaded file cannot exceed {}.'.format(limit))
                 raise_json_error(get_current_request(),
                                  hexc.HTTPUnprocessableEntity,
@@ -155,7 +161,7 @@ def validate_sources(user=None, context=None, sources=(),
     if      constraints is not None \
         and constraints.max_total_file_size \
         and aggregate_size > constraints.max_total_file_size:
-        limit = humanize.naturalsize(validator.max_total_file_size, binary=True, format='%.f')
+        limit = _get_humanreadable_bytes(validator.max_total_file_size)
         msg = _(u'The cumulative size of the attached files cannot exceed {}.'.format(limit))
         raise_json_error(get_current_request(),
                          hexc.HTTPUnprocessableEntity,
