@@ -217,6 +217,6 @@ class TestNote(ApplicationLayerTest):
                                 status=422)
         res = res.json_body
         assert_that(res.get('message'),
-                    is_('The cumulative size of the attached files cannot exceed 25 MiB.'))
+                    is_('The cumulative size of the attached files cannot exceed 25 MB.'))
         assert_that(res.get('code'), is_('MaxTotalAttachmentFileSizeExceeded'))
 
