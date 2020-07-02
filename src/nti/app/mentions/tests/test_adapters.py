@@ -134,6 +134,13 @@ class TestMentionsUpdateInfo(AppLayerTest):
 
             mentionable.mentions = self._as_plaintext_tuple(mentions)
 
+    def _set_notified(self, prev_mentions, mentions):
+        if mentions:
+            if isinstance(mentions, six.string_types):
+                mentions = [mentions]
+
+            prev_mentions.notified_mentions = self._as_plaintext_tuple(mentions)
+
     @staticmethod
     def _set_sharing_targets(mentionable, sharing_targets):
         if sharing_targets:
@@ -157,7 +164,11 @@ class TestMentionsUpdateInfo(AppLayerTest):
 
         return mentionable
 
-    def _get_mentions_info(self, mentionable, old_shares=None, prev_mentions=None):
+    def _get_mentions_info(self,
+                           mentionable,
+                           old_shares=None,
+                           prev_mentions=None,
+                           notified_mentions=None):
         if IEntity.providedBy(old_shares):
             old_shares = [old_shares]
 
@@ -168,6 +179,9 @@ class TestMentionsUpdateInfo(AppLayerTest):
             if prev_mentions == mentionable.mentions:
                 IConnection(mentionable).add(IPreviousMentions(mentionable))
 
+        if notified_mentions:
+            self._set_notified(IPreviousMentions(mentionable), notified_mentions)
+
         mentions_info = component.getMultiAdapter((mentionable, old_shares),
                                                   IMentionsUpdateInfo)
         return mentions_info
@@ -177,7 +191,10 @@ class TestMentionsUpdateInfo(AppLayerTest):
         assert_that(mentions_info.mentions_shared_to, is_(shared_to))
         assert_that(mentions_info.new_effective_mentions, is_(added | shared_to))
 
-    def _test_mentions_info(self, old_shares, new_shares, old_mentions, new_mentions):
+    def _test_mentions_info(self,
+                            old_shares, new_shares,
+                            old_mentions, new_mentions,
+                            notified_mentions=None):
         comm, tom, andy = [self.users[name] for name in ("comm", "tom", "andy")]
 
         mentionable = self._note(tom,
@@ -188,6 +205,20 @@ class TestMentionsUpdateInfo(AppLayerTest):
         mentions_info = self._get_mentions_info(mentionable,
                                                 old_shares=old_shares,
                                                 prev_mentions=old_mentions)
+
+        # Regardless of change, do not return a user that
+        # has already been notified
+        notified_mentions = [user.username
+                             for user in mentions_info.new_effective_mentions]
+        notified_mentions_info = \
+            self._get_mentions_info(mentionable,
+                                    old_shares=old_shares,
+                                    prev_mentions=old_mentions,
+                                    notified_mentions=notified_mentions)
+
+        self._check_mentions(notified_mentions_info,
+                             added=set(),
+                             shared_to=set())
 
         return mentions_info
 

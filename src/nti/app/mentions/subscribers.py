@@ -21,10 +21,13 @@ from nti.app.mentions import MessageFactory as _
 from nti.coremetadata.interfaces import IMentionable
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IStreamChangeAcceptedByUser
 
 from nti.dataserver.mentions.interfaces import IPreviousMentions
 
 from nti.dataserver.users import User
+
+from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.schema.interfaces import IBeforeSequenceAssignedEvent
 
@@ -59,3 +62,26 @@ def _validate_mentions(ext_value, mentionable, event):
     # Used during modifications to calculate what the newly
     # added mentions were.
     IPreviousMentions(mentionable).mentions = mentionable.mentions
+
+
+def _is_newly_mentioned(user, change):
+    mentions_info = getattr(change, 'mentions_info', None)
+
+    if mentions_info is None:
+        return False
+
+    return user in change.mentions_info.new_effective_mentions
+
+
+@component.adapter(IStreamChangeAcceptedByUser)
+def _user_notified(event):
+
+    user = event.target
+    change = event.object
+    mentionable = IMentionable(change.object, None)
+    if mentionable is not None \
+            and _is_newly_mentioned(user, change):
+        IPreviousMentions(mentionable).add_notification(user)
+        mentionable_oid = to_external_ntiid_oid(mentionable)
+        logger.info("User %s sent notification of mention for object %s (%s)",
+                    user.username, mentionable_oid, change.type)

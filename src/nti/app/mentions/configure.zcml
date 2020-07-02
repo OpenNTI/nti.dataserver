@@ -25,4 +25,7 @@
 
     <subscriber handler=".subscribers._validate_mentions"
                 for="tuple nti.coremetadata.interfaces.IMentionable nti.schema.interfaces.IBeforeSchemaFieldAssignedEvent" />
+
+    <subscriber handler=".subscribers._user_notified" />
+
 </configure>
