@@ -47,6 +47,8 @@ from nti.dataserver.users import User
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import EmailAddresablePrincipal
 
+from nti.ntiids.oids import to_external_ntiid_oid
+
 from nti.threadable.interfaces import IThreadable
 
 
@@ -200,8 +202,10 @@ def user_mention_emailer(event):
     if mentionable is not None \
             and _is_newly_mentioned(user, change) \
             and not _is_user_online(user.username):
-        logger.debug("Sending offline notification to %s for mention, chg: %s",
-                     user.username, change.type)
+        mentionable_oid = to_external_ntiid_oid(mentionable)
+        logger.info("Sending offline notification to %s for mention, "
+                    "chg: %s, object oid: %s",
+                    user.username, change.type, mentionable_oid)
 
         template_provider = IMailTemplateProvider(mentionable, None)
         template = template_provider.template if template_provider else 'mention_email'

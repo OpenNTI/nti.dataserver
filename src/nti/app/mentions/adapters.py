@@ -89,6 +89,24 @@ class _MentionsUpdateInfo(object):
     def __init__(self, mentionable, old_shares=_unset):
         self.context = mentionable
         self.old_shares = old_shares if old_shares is not _unset else set()
+        self.mentions_modified = self._previous_mentions.is_modified()
+
+    @Lazy
+    def _previous_mentions(self):
+        return IPreviousMentions(self.context)
+
+    @Lazy
+    def _notified_mentions(self):
+        return self._previous_mentions.notified_mentions
+
+    def _not_notified(self, users):
+        result = set()
+        for user in users:
+            username = getattr(user, "username", user)
+            if username not in self._notified_mentions:
+                result.add(user)
+
+        return result
 
     @Lazy
     def new_effective_mentions(self):
@@ -100,14 +118,12 @@ class _MentionsUpdateInfo(object):
         return self._mentions_added_with_existing_perms(shared_to) | shared_to
 
     def _mentions_at_trans_start(self):
-        prev = IPreviousMentions(self.context)
-
         # If mentions weren't updated in this transaction,
         # get the current mentions
-        if not prev.is_modified():
+        if not self.mentions_modified:
             return self.context.mentions
 
-        return prev.mentions or ()
+        return self._previous_mentions.mentions or ()
 
     @Lazy
     def _mentions_added(self):
@@ -116,7 +132,7 @@ class _MentionsUpdateInfo(object):
         usernames_added = set(self.context.mentions) - set(orig_mentions)
 
         users_added = set()
-        for username in usernames_added:
+        for username in self._not_notified(usernames_added):
             user = User.get_user(username)
             if user is not None:
                 users_added.add(user)
@@ -154,16 +170,14 @@ class _MentionsUpdateInfo(object):
         if not new_shares:
             return user_shared_to
 
-        # TODO: Could store notified mentions to speed this up
-        for user in self._users_mentioned():
-            if self._was_shared_to(user, self.old_shares, new_shares):
+        for user in self._not_notified(self._users_mentioned()):
+            if self._was_shared_to(user, new_shares):
                 user_shared_to.add(user)
 
         return user_shared_to
 
-    def _was_shared_to(self, user, old_shares, new_shares):
-        return self._is_member_of_any(user, new_shares) \
-            and not self._is_member_of_any(user, old_shares)
+    def _was_shared_to(self, user, new_shares):
+        return self._is_member_of_any(user, new_shares)
 
     @staticmethod
     def _is_member_of_any(user, sharing_targets):
