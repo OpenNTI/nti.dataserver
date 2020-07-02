@@ -156,14 +156,13 @@ class _MentionsUpdateInfo(object):
 
         # TODO: Could store notified mentions to speed this up
         for user in self._users_mentioned():
-            if self._was_shared_to(user, self.old_shares, new_shares):
+            if self._was_shared_to(user, new_shares):
                 user_shared_to.add(user)
 
         return user_shared_to
 
-    def _was_shared_to(self, user, old_shares, new_shares):
-        return self._is_member_of_any(user, new_shares) \
-            and not self._is_member_of_any(user, old_shares)
+    def _was_shared_to(self, user, new_shares):
+        return self._is_member_of_any(user, new_shares)
 
     @staticmethod
     def _is_member_of_any(user, sharing_targets):

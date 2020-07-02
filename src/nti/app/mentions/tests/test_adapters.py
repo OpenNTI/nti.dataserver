@@ -499,3 +499,46 @@ class TestMentionsUpdateInfo(AppLayerTest):
                              added=set(),
                              shared_to=set())
 
+    @WithMockDSTrans
+    def test_existing_indirect_new_direct_access(self):
+        comm, _, andy = self._setup_users()
+
+        # No Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=(comm,andy),
+            old_mentions=(), new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
+
+        # New Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=(comm,andy),
+            old_mentions=(), new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to={andy})
+
+        # Same Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=(comm,andy),
+            old_mentions=andy.username, new_mentions=andy.username
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to={andy})
+
+        # Removed Mentions
+        mentions_info = self._test_mentions_info(
+            old_shares=comm, new_shares=(comm,andy),
+            old_mentions=andy.username, new_mentions=()
+        )
+
+        self._check_mentions(mentions_info,
+                             added=set(),
+                             shared_to=set())
