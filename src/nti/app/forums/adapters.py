@@ -55,4 +55,4 @@ class _PostFileConstraints(FileConstraints):
 
     max_files = 10
 
-    max_total_size = 26214400 # 25 MB
+    max_total_file_size = 26214400 # 25 MB
