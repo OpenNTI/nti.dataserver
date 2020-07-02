@@ -58,10 +58,9 @@ def _enqueue_change_to_target(target, change, accum=None):
 
     accum = set() if accum is None else accum
 
-    target_key = (target, change.type)
-    if target_key in accum:
+    if target in accum:
         return
-    accum.add(target_key)
+    accum.add(target)
 
     # Fire the change off to the user
     notify(TargetedStreamChangeEvent(change, target))
@@ -72,13 +71,19 @@ def _enqueue_change_to_target(target, change, accum=None):
     # different than what we were doing before, and probably inefficient,
     # and probably needs some normalization.
     for nested_entity in ISharingTargetEntityIterable(target, ()):
-        # NOTE: Because of _get_dynamic_sharing_targets_for_read, there might actually
-        # be duplicate change objects that get eliminated at read time.
-        # But this ensures that the stream gets an object, bumps the notification
-        # count, and sends a real-time notice to connected sockets.
-        # TODO: Can we make it be just the later?
-        # Or remove _get_dynamic_sharing_targets_for_read?
-        _enqueue_change_to_target(nested_entity, change, accum=accum)
+        # Make sure we're not sending a deletion to a user that
+        # still has direct access (e.g. when a DFL they're in is
+        # removed from sharing targets)
+        if change.type != Change.DELETED \
+                or not change.object.isSharedDirectlyWith(nested_entity):
+
+            # NOTE: Because of _get_dynamic_sharing_targets_for_read, there might actually
+            # be duplicate change objects that get eliminated at read time.
+            # But this ensures that the stream gets an object, bumps the notification
+            # count, and sends a real-time notice to connected sockets.
+            # TODO: Can we make it be just the later?
+            # Or remove _get_dynamic_sharing_targets_for_read?
+            _enqueue_change_to_target(nested_entity, change, accum=accum)
 
 
 # TODO: These listeners should probably be registered on something
