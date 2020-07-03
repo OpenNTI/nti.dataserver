@@ -82,7 +82,7 @@ class TestCanAccessContentDecorator(BaseDecoratorTest):
         user = self._create_user(u"b.wyatt")
         note = Note()
         external = self._decorate(_CanAccessContentDecorator, note, user.username)
-        assert_that(external, not_(has_key("UserMentions")))
+        assert_that(external, has_entry("UserMentions", is_empty()))
 
     @WithMockDSTrans
     @fudge.patch("nti.app.mentions.decorators.User")

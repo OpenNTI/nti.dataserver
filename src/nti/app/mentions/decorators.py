@@ -66,7 +66,7 @@ class _NewlyMentionedDecorator(AbstractAuthenticatedRequestAwareDecorator):
 class _CanAccessContentDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _predicate(self, context, result):
-        return self._is_authenticated and getattr(context, 'mentions', None)
+        return self._is_authenticated
 
     def _make_has_access(self, context):
         security_check = make_sharing_security_check_for_object(context)
@@ -77,15 +77,18 @@ class _CanAccessContentDecorator(AbstractAuthenticatedRequestAwareDecorator):
         return has_access
 
     def _do_decorate_external(self, context, result):
+        result['UserMentions'] = user_mentions = []
+
+        if not context.mentions:
+            return
+
         has_access = self._make_has_access(context)
 
-        user_mentions = []
-        for username in context.mentions:
+        for username in context.mentions or ():
             user = User.get_user(username)
             if user is not None:
-                mention = {}
-                mention['CanAccessContent'] = has_access(user)
-                mention['User'] = toExternalObject(user, name='summary')
+                mention = {
+                    'CanAccessContent': has_access(user),
+                    'User': toExternalObject(user, name='summary')
+                }
                 user_mentions.append(mention)
-
-        result['UserMentions'] = user_mentions
