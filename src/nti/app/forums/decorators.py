@@ -339,3 +339,13 @@ class _CommunityForumDecorator(Singleton):
         community = find_interface(original, ICommunity, strict=False)
         if community is not None:
             external['DefaultSharedToNTIIDs'] = [community.NTIID]
+
+
+@component.adapter(ITopic)
+@interface.implementer(IExternalObjectDecorator)
+class _CommunityForumTopicDecorator(Singleton):
+
+    def decorateExternalObject(self, original, external):
+        community = find_interface(original, ICommunity, strict=False)
+        if community is not None:
+            external['ContainerDefaultSharedToNTIIDs'] = [community.NTIID]
