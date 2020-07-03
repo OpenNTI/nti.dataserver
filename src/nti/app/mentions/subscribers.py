@@ -18,10 +18,13 @@ from nti.app.externalization.error import raise_json_error
 
 from nti.app.mentions import MessageFactory as _
 
+from nti.appserver.pyramid_authorization import _clear_caches
+
 from nti.coremetadata.interfaces import IMentionable
 
-from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IObjectSharingModifiedEvent
 from nti.dataserver.interfaces import IStreamChangeAcceptedByUser
+from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.mentions.interfaces import IPreviousMentions
 
@@ -85,3 +88,12 @@ def _user_notified(event):
         mentionable_oid = to_external_ntiid_oid(mentionable)
         logger.info("User %s sent notification of mention for object %s (%s)",
                     user.username, mentionable_oid, change.type)
+
+
+@component.adapter(IMentionable, IObjectSharingModifiedEvent)
+def _clear_acl_caches(_mentionable, _event):
+    # Because the ACL of this object may have already been
+    # cached on access, prior to modification, and we need
+    # the updated acl for checking access for users mentioned
+    # when decorating in `.decorators._CanAccessContentDecorator`
+    _clear_caches()
