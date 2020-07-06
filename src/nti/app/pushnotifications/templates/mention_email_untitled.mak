@@ -7,7 +7,7 @@ ${notable.creator} mentioned you in a recent discussion in "${notable.__parent__
 
 View online: ${notable.href}
 
-If you have any questions, feel free to message us at ${support_email}.
+This message was sent to ${email_to}.  If you have any questions, feel free to message us at ${support_email}.
 
 % if unsubscribe_link:
 You currently receive periodic email updates at ${email_to} for ${site_name} activity.
