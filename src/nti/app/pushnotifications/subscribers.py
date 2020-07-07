@@ -5,9 +5,6 @@
 """
 
 from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
 
 from pyramid.threadlocal import get_current_request
 
@@ -51,15 +48,24 @@ from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.threadable.interfaces import IThreadable
 
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 
 def _mailer():
 	return component.getUtility(ITemplatedMailer)
 
 
-def _is_subscribed(user):
+def _is_subscribed(user, setting_name):
 	with email_notifications_preference(user) as prefs:
-		return prefs.immediate_threadable_reply
+		return getattr(prefs, setting_name)
 
+def _is_subscribed_replies(user):
+	return _is_subscribed(user, "immediate_threadable_reply")
+
+def _is_subscribed_mentions(user):
+	return _is_subscribed(user, "notify_on_mention")
 
 def _display_name(user, request):
 	return component.getMultiAdapter((user, request), IDisplayNameGenerator)()
@@ -81,7 +87,7 @@ def _threadable_added(threadable, unused_event):
 		return
 
 	user = User.get_user(getattr(inReplyTo, 'creator', None))
-	if not _is_subscribed(user) or _is_mentioned(user, threadable):
+	if not _is_subscribed_replies(user) or _is_mentioned(user, threadable):
 		return
 
 	request = get_current_request()
@@ -201,7 +207,8 @@ def user_mention_emailer(event):
     mentionable = IMentionable(change.object, None)
     if mentionable is not None \
             and _is_newly_mentioned(user, change) \
-            and not _is_user_online(user.username):
+            and not _is_user_online(user.username)\
+            and _is_subscribed_mentions(user):
         mentionable_oid = to_external_ntiid_oid(mentionable)
         logger.info("Sending offline notification to %s for mention, "
                     "chg: %s, object oid: %s",

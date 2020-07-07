@@ -200,10 +200,12 @@ class TestSubscribers(ApplicationLayerTest):
 
 	@mock_dataserver.WithMockDSTrans
 	@fudge.patch("nti.dataserver.activitystream.hasQueryInteraction",
-				 "nti.app.pushnotifications.subscribers._is_user_online")
-	def test_mention_email(self, mock_interaction, is_online):
+				 "nti.app.pushnotifications.subscribers._is_user_online",
+				 "nti.app.pushnotifications.subscribers._is_subscribed")
+	def test_mention_email(self, mock_interaction, is_online, is_subscribed):
 		mock_interaction.is_callable().with_args().returns(True)
 		is_online.is_callable().returns(True)
+		is_subscribed.is_callable().returns(False)
 
 		community = Community.create_community(self.ds, username=u"test_demo")
 		user = users.User.create_user(self.ds, username=u'jason.madden@nextthought.com')
@@ -211,6 +213,10 @@ class TestSubscribers(ApplicationLayerTest):
 		mouse_user = users.User.create_user(self.ds, username=u'mmouse@nextthought.com')
 		for _user in (user, mouse_user, bojangles):
 			_user.record_dynamic_membership(community)
+
+		profile = IUserProfile(user)
+		profile.email = u'jason.madden@nextthought.com'
+		profile.realname = u'Steve'
 
 		board = ICommunityBoard(community)
 		forum = board[u'Forum']
@@ -239,12 +245,14 @@ class TestSubscribers(ApplicationLayerTest):
 		assert_that(comment.isMentionedDirectly(user), is_(True))
 		assert_that(mailer.queue, has_length(0))
 
-		# User mentioned and not online, mail sent
-		profile = IUserProfile(user)
-		profile.email = u'jason.madden@nextthought.com'
-		profile.realname = u'Steve'
-
+		# User not subscribed, nothing happens
 		is_online.is_callable().returns(False)
+		comment = self._add_comment(mouse_user, topic, request=request, mentions=mentions)
+		assert_that(comment.isMentionedDirectly(user), is_(True))
+		assert_that(mailer.queue, has_length(0))
+
+		# User mentioned, not online, and subscribed, mail sent
+		is_subscribed.returns(True)
 		request = get_current_request()
 		body_text = u"0123456789" * 26
 		body = (body_text,)
