@@ -8,8 +8,11 @@ from __future__ import absolute_import
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import quopri
+
 import fudge
 
+from hamcrest import contains_string
 from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import has_entries
@@ -20,6 +23,7 @@ from pyramid.threadlocal import get_current_request
 from zope import component
 from zope import interface
 
+from nti.app.pushnotifications.subscribers import _is_user_online
 from nti.app.pushnotifications.subscribers import user_mention_emailer
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
@@ -50,18 +54,53 @@ from nti.app.testing.testing import ITestMailDelivery
 
 class TestSubscribers(ApplicationLayerTest):
 
+	@staticmethod
+	def _add_community_topic(creator,
+							 forum,
+							 topic_name,
+							 request=None,
+							 mentions=None,
+							 post=None):
+		topic = CommunityHeadlineTopic()
+		topic.title = u'a test'
+		topic.creator = creator
+
+		if request is not None:
+			request.remote_user = creator
+			request.context = topic
+
+		if post:
+			if post.title:
+				topic.title = post.title
+			else:
+				post.title = topic.title
+
+			post.__parent__ = topic
+			topic.headline = post
+
+		if mentions:
+			topic.mentions = mentions
+			post.mentions = mentions
+
+		forum[topic_name] = topic
+
+		return topic
+
 	def _add_comment(self,
 					 creator,
 					 topic,
+					 body=None,
 					 inReplyTo=None,
 					 request=None,
-					 orig_mentions=(),
 					 mentions=()):
 		comment = GeneralForumComment()
 		comment.creator = creator
 		comment.mentions = mentions
 		if inReplyTo:
 			comment.inReplyTo = inReplyTo
+
+		if body:
+			comment.body = body
 
 		if request is not None:
 			request.remote_user = creator
@@ -99,10 +138,7 @@ class TestSubscribers(ApplicationLayerTest):
 			board = ICommunityBoard(community)
 			forum = board[u'Forum']
 
-			topic = CommunityHeadlineTopic()
-			topic.title = u'a test'
-			topic.creator = user2
-			forum[u'Hello'] = topic
+			topic = self._add_community_topic(user2, forum, u'Hello')
 			topic.publish()
 
 			named = IFriendlyNamed(user4)
@@ -179,10 +215,7 @@ class TestSubscribers(ApplicationLayerTest):
 		board = ICommunityBoard(community)
 		forum = board[u'Forum']
 
-		topic = CommunityHeadlineTopic()
-		topic.title = u'a test'
-		topic.creator = user
-		forum[u'Hello'] = topic
+		topic = self._add_community_topic(user, forum, u'Hello')
 		topic.publish()
 
 		mailer = component.getUtility(ITestMailDelivery)
@@ -213,9 +246,46 @@ class TestSubscribers(ApplicationLayerTest):
 
 		is_online.is_callable().returns(False)
 		request = get_current_request()
-		self._add_comment(mouse_user, topic, request=request, mentions=mentions)
+		body_text = u"0123456789" * 26
+		body = (body_text,)
+		self._add_comment(mouse_user, topic, body=body, request=request,
+						  mentions=mentions)
 		assert_that(mailer.queue, has_length(1))
-		from quopri import decodestring
+		assert_that(_decode_message(mailer.queue[0]),
+					contains_string("%s..." % (body_text[:250],)))
+
+		# Sent with no body
+		self._add_comment(mouse_user, topic, request=request,
+						  mentions=mentions)
+		assert_that(mailer.queue, has_length(2))
+		assert_that(_decode_message(mailer.queue[1]),
+					contains_string("in \"a test\"\n\n"))
+
+		# Sent with body of headline post from headline topic
+
+		# TypeError: Can't pickle objects in acquisition wrappers.
+		# post = CommunityHeadlinePost()
+		# post.body = body
+		# topic = self._add_community_topic(mouse_user, forum, u'Topic 2',
+		# 								  request=request, post=post,
+		# 								  mentions=mentions)
+		# topic.publish()
+		# assert_that(mailer.queue, has_length(3))
+		# assert_that(_decode_message(mailer.queue[2]),
+		# 			contains_string("%s..." % (body_text[:250],)))
+
+	@fudge.patch("nti.app.pushnotifications.subscribers._get_dataserver")
+	def test_is_user_online_exception(self, get_ds):
+		sessions = fudge.Fake("sessions").provides("get_sessions_by_owner").raises(KeyError())
+		mock_ds = fudge.Fake("dataserver").has_attr(sessions=sessions)
+		get_ds.is_callable().returns(mock_ds)
+		assert_that(_is_user_online(mock_ds), is_(False))
+
+
+def _decode_message(message):
+	msg = quopri.decodestring(message.body)
+	return msg.decode('utf-8', errors='ignore')
+
 
 @interface.implementer(IStreamChangeEvent)
 class MockChange(object):

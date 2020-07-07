@@ -115,10 +115,6 @@ def _threadable_added(threadable, unused_event):
 										text_template_extension=text_template_extension)
 
 
-def _display_name(user, request):
-    return component.getMultiAdapter((user, request), IDisplayNameGenerator)()
-
-
 def _support_email():
     policy = component.getUtility(ISitePolicyUserEventListener)
     support_email = getattr(policy, 'SUPPORT_EMAIL',
@@ -126,8 +122,12 @@ def _support_email():
     return support_email
 
 
+def _get_dataserver():
+    return component.getUtility(IDataserver)
+
+
 def _is_user_online(username):
-    dataserver = component.getUtility(IDataserver)
+    dataserver = _get_dataserver()
     try:
         return bool(dataserver.sessions and dataserver.sessions.get_sessions_by_owner(username))
     except KeyError:  # Hmm. session_storage.py reports some inconsistency errors sometimes. Which is bad
