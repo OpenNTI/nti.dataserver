@@ -249,13 +249,19 @@ def user_mention_emailer(event):
     change = event.object
     mentionable = IMentionable(change.object, None)
     if mentionable is not None \
-            and _is_newly_mentioned(user, change) \
-            and not _is_user_online(user.username)\
-            and _is_subscribed_mentions(user):
-        mentionable_oid = to_external_ntiid_oid(mentionable)
-        logger.info("Sending offline notification to %s for mention, "
-                    "chg: %s, object oid: %s",
-                    user.username, change.type, mentionable_oid)
+            and _is_newly_mentioned(user, change):
+
+        if _is_user_online(user.username):
+            log_mention_notification(user, mentionable, change,
+                                     skip_reason="user is online")
+            return
+
+        if not _is_subscribed_mentions(user):
+            log_mention_notification(user, mentionable, change,
+                                     skip_reason="user not subscribed")
+            return
+
+        log_mention_notification(user, mentionable, change)
 
         template_provider = IMailTemplateProvider(mentionable, None)
         template = template_provider.template if template_provider else 'mention_email'
@@ -289,3 +295,13 @@ def user_mention_emailer(event):
             text_template_extension=".mak",
             template_args=template_args,
             request=request)
+
+
+def log_mention_notification(user, mentionable, change, skip_reason=None):
+    mentionable_oid = to_external_ntiid_oid(mentionable)
+    logger.info("%s offline notification to %s for mention%s, "
+                "chg: %s, object oid: %s",
+                "Skipping" if skip_reason else "Sending",
+                user.username,
+                (" (%s)" % skip_reason) if skip_reason else "",
+                change.type, mentionable_oid)
