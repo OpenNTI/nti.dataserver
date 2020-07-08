@@ -267,7 +267,7 @@ class TestSubscribers(ApplicationLayerTest):
 						  mentions=mentions)
 		assert_that(mailer.queue, has_length(2))
 		assert_that(_decode_message(mailer.queue[1]),
-					contains_string("in \"a test\"\n\n"))
+					contains_string("%s\n\n" % topic.title))
 
 		# Sent with body of headline post from headline topic
 

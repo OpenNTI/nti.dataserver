@@ -8,10 +8,14 @@ from __future__ import print_function, absolute_import, division
 
 from pyramid.threadlocal import get_current_request
 
+from six.moves import urllib_parse
+
 from zc.displayname.interfaces import IDisplayNameGenerator
 
 from zope import component
 from zope import interface
+
+from zope.cachedescriptors.property import Lazy
 
 from zope.intid.interfaces import IIntIds
 
@@ -161,8 +165,14 @@ class TitledMailTemplateProvider(_AbstractMailTemplateProvider):
 
 @component.adapter(ICommentPost)
 @interface.implementer(IMailTemplateProvider)
-class UntitledMailTemplateProvider(_AbstractMailTemplateProvider):
-    template_name = u"mention_email_untitled"
+class CommentMailTemplateProvider(_AbstractMailTemplateProvider):
+    template_name = u"mention_email_comment"
+
+
+def url_with_fragment(url, fragment):
+    url_parts = list(urllib_parse.urlparse(url))
+    url_parts[5] = urllib_parse.quote(fragment)
+    return urllib_parse.urlunparse(url_parts)
 
 
 class _TemplateArgs(digest_email._TemplateArgs):
@@ -183,6 +193,39 @@ class _TemplateArgs(digest_email._TemplateArgs):
                 text = text[:self.max_snippet_len] + '...'
             return text
         return ''
+
+    @Lazy
+    def __parent__(self):
+        return _TemplateArgs((self._primary.__parent__,), self.request)
+
+    def _app_href(self, obj):
+        # Default to the most stable identifier we have. If
+        # we can get an actual OID, use that as it's very specific,
+        # otherwise see if the object has on opinion (which may expose
+        # more details than we'd like...)
+        ntiid = (to_external_ntiid_oid(obj, mask_creator=True)
+                 or getattr(obj, 'NTIID', None))
+        if ntiid:
+            # The clients do not use the prefix.
+            ntiid = ntiid.replace('tag:nextthought.com,2011-10:', '')
+            return self.request.route_url('objects.generic.traversal',
+                                          'id',
+                                          ntiid,
+                                          traverse=()).replace('/dataserver2',
+                                                               self.web_root)
+
+        # TODO: These don't actually do what we want in terms of interacting
+        # with the application...
+        return self.request.resource_url(obj)
+
+    @property
+    def creator_href(self):
+        return self._app_href(self._primary.creator)
+
+    @property
+    def reply_href(self):
+        return url_with_fragment(self._app_href(self._primary),
+                                 "comment")
 
 
 def _is_newly_mentioned(user, change):

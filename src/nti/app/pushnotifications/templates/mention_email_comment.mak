@@ -1,6 +1,10 @@
 Hi ${display_name}!
-
-${notable.creator} mentioned you in a recent discussion in "${notable.__parent__.display_name()}"
+<%
+parent_display_name = notable.__parent__.__parent__.display_name
+provenance_text=('%s / ' % parent_display_name()) if parent_display_name else ""
+%>
+${notable.creator} mentioned you in a comment.
+${provenance_text}${notable.__parent__.display_name()}
 % if notable.snippet:
 "${notable.snippet}"
 % endif
