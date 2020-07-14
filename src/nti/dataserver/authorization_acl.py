@@ -22,6 +22,8 @@ from pyramid.security import Denied as psecDenied
 from nti.dataserver import authorization
 from nti.dataserver import authentication
 
+from nti.dataserver.authorization_utils import zope_interaction
+
 from nti.dataserver.interfaces import ACE_ACT_DENY
 from nti.dataserver.interfaces import ACE_DENY_ALL
 from nti.dataserver.interfaces import ACE_ALLOW_ALL
@@ -54,6 +56,7 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.singleton import Singleton
 
 from nti.property.property import alias
+
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -298,11 +301,13 @@ def has_permission(permission, context, username, **kwargs):
 
     principals = kwargs.get('principals', None)
 
-    if not principals:
-        principals = authentication.effective_principals(username, **kwargs)
+    # Must swap out interaction here for zope permissioning
+    with zope_interaction(username):
+        if not principals:
+            principals = authentication.effective_principals(username, **kwargs)
 
-    result = policy.permits(context, principals, permission)
-    return result
+        result = policy.permits(context, principals, permission)
+        return result
 
 
 def is_writable(context, username, **kwargs):
