@@ -16,14 +16,35 @@ from nti.testing.matchers import validly_provides as verifiably_provides
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
-from zope.authentication.interfaces import IEveryoneGroup
-from zope.interface.verify import verifyObject
 from zope import component
+
+from zope.authentication.interfaces import IEveryoneGroup
+
+from zope.interface.verify import verifyObject
+
+from zope.security.interfaces import IParticipation
+
+from zope.security.management import newInteraction
+from zope.security.management import getInteraction
+from zope.security.management import setSecurityPolicy
+
 from zope.security.permission import Permission
+
+from zope.securitypolicy.interfaces import IPrincipalPermissionManager
+
+from zope.securitypolicy.zopepolicy import ZopeSecurityPolicy
 
 import nti.dataserver.authorization as nauth
 import nti.dataserver.users as users
+
 import nti.dataserver.interfaces as nti_interfaces
+from nti.dataserver.interfaces import IPrincipal
+
+from nti.appserver.pyramid_authorization import ZopeACLAuthorizationPolicy
+from nti.dataserver.authorization_acl import has_permission
+from nti.dataserver.authorization import ACT_READ
+
+from nti.dataserver.contenttypes.note import Note
 
 
 class TestAuthorization(DataserverLayerTest):
@@ -101,7 +122,6 @@ class TestAuthorization(DataserverLayerTest):
 		srtd = sorted(unsorted)
 		assert_that( srtd, is_( [a, b, c, d] ) )
 
-
 	def test_user_adapts_to_principal( self ):
 		u = users.User( 'sjohnson@nextthought.com', 't' )
 		iprin = nti_interfaces.IPrincipal( u )
@@ -127,3 +147,35 @@ class TestAuthorization(DataserverLayerTest):
 		assert_that( nauth.ACT_CREATE, is_not( None ) )
 		assert_that( str(nauth.ACT_CREATE), is_( nauth.ACT_CREATE.id ) )
 		assert_that( repr(nauth.ACT_CREATE), is_( "Permission('nti.actions.create','','')" ) )
+
+	def test_other_user_permissions(self):
+		"""
+		zope permissioning relies on the interaction to determine
+		authorization. Ensure our `has_permission` check for other
+		users properly handles interaction swapping.
+		"""
+		newInteraction(IParticipation(IPrincipal('third_party_perm_user')))
+		new_note = Note()
+		ppm = IPrincipalPermissionManager(new_note)
+		ppm.grantPermissionToPrincipal(ACT_READ.id, 'third_party_perm_user')
+		new_note.creator = 'other_user_creator'
+		policy = ZopeACLAuthorizationPolicy()
+		old_security_policy = setSecurityPolicy(ZopeSecurityPolicy)
+		try:
+			component.provideUtility(policy)
+			result = has_permission(ACT_READ,
+									new_note,
+									"third_party_perm_user",
+									user_factory=lambda s: s)
+			assert_that(bool(result), is_(True), result)
+			result = has_permission(ACT_READ,
+									new_note,
+									"third_party_unpermissioned_user",
+									user_factory=lambda s: s)
+			assert_that(bool(result), is_(False), result)
+			current_user = getInteraction().participations[0].principal.id
+			assert_that(current_user, is_('third_party_perm_user'))
+		finally:
+			setSecurityPolicy(old_security_policy)
+			component.getGlobalSiteManager().unregisterUtility(policy)
+
