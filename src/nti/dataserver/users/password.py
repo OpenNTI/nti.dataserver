@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import gevent
+
 from zope import component
 
 from zope.password.interfaces import IPasswordManager
@@ -44,7 +46,12 @@ class Password(object):
         """
         manager = component.getUtility(IPasswordManager,
                                        name=self.password_manager)
-        result = manager.checkPassword(self.__encoded, password)
+
+        def check_password():
+            return manager.checkPassword(self.__encoded, password)
+
+        pool = gevent.get_hub().threadpool
+        result = pool.spawn(check_password).get()
         return result
 
     def getPassword(self):
