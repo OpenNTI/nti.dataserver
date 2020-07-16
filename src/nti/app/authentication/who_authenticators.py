@@ -43,12 +43,22 @@ JWT_ALGS = ['HS256']
 @interface.implementer(IAuthenticator)
 class DataserverGlobalUsersAuthenticatorPlugin(object):
 
-    def authenticate(self, unused_environ, identity):
+    def authenticate(self, environ, identity):
+        # Cache this since we may end up checking duplicate identities.
+        state = environ.setdefault('nti._dsglobal_auth_plugin_state', [])
+        for prev_identity, result in state:
+            # identity is not hashable, but can be tested for equality
+            if prev_identity == identity:
+                return result
         try:
             plugin = component.getUtility(IAuthenticatorPlugin,
                                           name="Dataserver Global User Authenticator")
-            return plugin.authenticateCredentials(identity).id
+            result = plugin.authenticateCredentials(identity).id
+            # Must copy since this gets modified
+            state.append((dict(identity), result))
+            return result
         except (KeyError, AttributeError, LookupError):  # pragma: no cover
+            state.append((identity, None))
             return None
 
 
