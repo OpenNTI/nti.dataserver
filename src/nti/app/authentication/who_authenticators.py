@@ -23,6 +23,8 @@ from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
+from repoze.who.api import Identity
+
 from repoze.who.interfaces import IIdentifier
 from repoze.who.interfaces import IAuthenticator
 
@@ -44,15 +46,15 @@ JWT_ALGS = ['HS256']
 class DataserverGlobalUsersAuthenticatorPlugin(object):
 
     def authenticate(self, environ, identity):
+        # Must copy since this gets modified. Do so safely to avoid exposing
+        # credentials in logs.
+        identity_copy = Identity(identity)
         # Cache this since we may end up checking duplicate identities.
         state = environ.setdefault('nti._dsglobal_auth_plugin_state', [])
         for prev_identity, result in state:
             # identity is not hashable, but can be tested for equality
-            if prev_identity == identity:
+            if prev_identity == identity_copy:
                 return result
-        # Must copy since this gets modified. Do so safely to avoid exposing
-        # credentials in logs.
-        identity_copy = type(identity)(identity)
         try:
             plugin = component.getUtility(IAuthenticatorPlugin,
                                           name="Dataserver Global User Authenticator")
