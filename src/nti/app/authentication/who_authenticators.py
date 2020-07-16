@@ -50,15 +50,17 @@ class DataserverGlobalUsersAuthenticatorPlugin(object):
             # identity is not hashable, but can be tested for equality
             if prev_identity == identity:
                 return result
+        # Must copy since this gets modified. Do so safely to avoid exposing
+        # credentials in logs.
+        identity_copy = type(identity)(identity)
         try:
             plugin = component.getUtility(IAuthenticatorPlugin,
                                           name="Dataserver Global User Authenticator")
             result = plugin.authenticateCredentials(identity).id
-            # Must copy since this gets modified
-            state.append((dict(identity), result))
+            state.append((identity_copy, result))
             return result
         except (KeyError, AttributeError, LookupError):  # pragma: no cover
-            state.append((identity, None))
+            state.append((identity_copy, None))
             return None
 
 
