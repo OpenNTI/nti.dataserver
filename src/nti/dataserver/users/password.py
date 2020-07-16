@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import gevent
+
 from zope import component
 
 from zope.password.interfaces import IPasswordManager
@@ -44,7 +46,11 @@ class Password(object):
         """
         manager = component.getUtility(IPasswordManager,
                                        name=self.password_manager)
-        result = manager.checkPassword(self.__encoded, password)
+
+        # Depending on our alg, we may be entering a cpu intensive operation
+        # (bcrypt). Push this to our threadpool to free up our worker.
+        pool = gevent.get_hub().threadpool
+        result = pool.apply(manager.checkPassword, (self.__encoded, password))
         return result
 
     def getPassword(self):
