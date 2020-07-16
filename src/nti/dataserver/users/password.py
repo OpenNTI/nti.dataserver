@@ -47,11 +47,8 @@ class Password(object):
         manager = component.getUtility(IPasswordManager,
                                        name=self.password_manager)
 
-        def check_password():
-            return manager.checkPassword(self.__encoded, password)
-
         pool = gevent.get_hub().threadpool
-        result = pool.spawn(check_password).get()
+        result = pool.apply(manager.checkPassword, (self.__encoded, password))
         return result
 
     def getPassword(self):
