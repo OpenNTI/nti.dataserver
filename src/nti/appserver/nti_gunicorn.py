@@ -349,6 +349,10 @@ class _ServerFactory(object):
         # See _PyWSGIWebSocketHandler.get_environ # NOTE: Eliminate this
         app_server.worker = self.worker
 
+        # Patching so that we do not buffer requests
+        if self.worker.cfg.workers > 1:
+            app_server.max_accept = 1
+
         # The worker will provide a Pool based on the
         # worker_connections setting
         assert spawn is not None

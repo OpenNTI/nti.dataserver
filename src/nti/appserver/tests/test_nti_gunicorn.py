@@ -197,6 +197,12 @@ class TestGeventApplicationWorker(AppLayerTest):
 		server = factory( MockSocket(), spawn=spawn )
 
 		assert_that( server.pool, is_( spawn ) )
+		assert_that(server.max_accept, is_(100))
+
+		# If multiple workers, our max_accept is 1
+		cfg.settings['workers'].set(2)
+		server = factory(MockSocket(), spawn=spawn)
+		assert_that(server.max_accept, is_(1))
 
 		worker_greenlet = server.pool.greenlet_class()
 		dummy_request = DummyRequest()
