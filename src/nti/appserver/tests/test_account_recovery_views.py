@@ -20,22 +20,45 @@ from quopri import decodestring
 
 from six.moves import urllib_parse
 
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
-from nti.dataserver import users
-
 from zope import component
 from zope import interface
 from zope.lifecycleevent import modified, added
 
 from nti.app.testing.webtest import TestApp
+
 from nti.app.testing.application_webtest import ApplicationLayerTest
+
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+
 from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import users
+
+from nti.dataserver.users import interfaces as user_interfaces
+
+from nti.dataserver.users.common import set_user_creation_site
+
 from nti.appserver.tests import ITestMailDelivery
 
 
-class TestApplicationUsernameRecovery(ApplicationLayerTest):
+class _RecoveryTestBase(ApplicationLayerTest):
+
+	def _add_user(self, email, site_name=None):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user()
+			username = user.username
+			profile = user_interfaces.IUserProfile(user)
+			added(profile)
+			profile.email = email
+			site_name = site_name or u'dataserver2'
+			set_user_creation_site(user, site_name)
+			modified(user)
+
+		return username
+
+
+class TestApplicationUsernameRecovery(_RecoveryTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_logged_in( self ):
@@ -84,7 +107,42 @@ class TestApplicationUsernameRecovery(ApplicationLayerTest):
 		assert_that( mailer.queue, has_length( 1 ) )
 
 	@WithSharedApplicationMockDS
-	def test_recover_user_found( self ):
+	def test_recover_user_not_found_wrong_site(self):
+		self._add_user(email=u'jason.madden@nextthought.com',
+					   site_name=u'different_site')
+		app = TestApp(self.app)
+
+		path = b'/dataserver2/logon.forgot.username'
+		data = {'email': u'jason.madden@nextthought.com'}
+		app.post(path, data, status=204)
+
+		mailer = component.getUtility(ITestMailDelivery)
+		assert_that(mailer.queue, has_length(1))
+		msg = mailer.queue[0]
+
+		assert_that(msg, has_property('body'))
+		assert_that(decodestring(msg.body),
+					contains_string('No usernames were found'))
+
+	@WithSharedApplicationMockDS
+	def test_recover_user_found_in_site(self):
+		username = self._add_user(email=u'jason.madden@nextthought.com')
+
+		app = TestApp(self.app)
+
+		path = b'/dataserver2/logon.forgot.username'
+		data = {'email': u'jason.madden@nextthought.com',}
+		app.post(path, data, status=204)
+
+		mailer = component.getUtility(ITestMailDelivery)
+		assert_that(mailer.queue, has_length(1))
+		msg = mailer.queue[0]
+
+		assert_that(msg, has_property('body'))
+		assert_that( decodestring(msg.body), contains_string( username ) )
+
+	@WithSharedApplicationMockDS
+	def test_recover_user_found_no_site( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
 			user_username = user.username
@@ -137,7 +195,8 @@ class TestApplicationUsernameRecovery(ApplicationLayerTest):
 		assert_that( decodestring(msg.body), contains_string( user_username ) )
 		assert_that( decodestring(msg.body), contains_string( user2_username ) )
 
-class TestApplicationPasswordRecovery(ApplicationLayerTest):
+
+class TestApplicationPasswordRecovery(_RecoveryTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_logged_in( self ):
@@ -204,7 +263,47 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 		assert_that( mailer.queue, has_length( 1 ) )
 
 	@WithSharedApplicationMockDS
-	def test_recover_user_found( self ):
+	def test_recover_user_not_found_wrong_site( self ):
+		username = self._add_user(email=u'jason.madden@nextthought.com',
+								  site_name=u'different_site')
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.forgot.passcode'
+		data = {'email': u'jason.madden@nextthought.com',
+				'username': username,
+				'success': 'http://localhost/place'}
+		app.post( path, data, status=204 )
+
+		mailer = component.getUtility( ITestMailDelivery )
+		assert_that( mailer.queue, has_length( 1 ) )
+		msg = mailer.queue[0]
+
+		assert_that(msg, has_property('body'))
+		assert_that(decodestring(msg.body),
+					contains_string('reset failed'))
+
+	@WithSharedApplicationMockDS
+	def test_recover_user_found_in_site(self):
+		username = self._add_user(email=u'jason.madden@nextthought.com')
+
+		app = TestApp(self.app)
+
+		path = b'/dataserver2/logon.forgot.passcode'
+		data = {'email': u'jason.madden@nextthought.com',
+				'username': username,
+				'success': 'http://localhost/place'}
+		app.post(path, data, status=204)
+
+		mailer = component.getUtility(ITestMailDelivery)
+		assert_that(mailer.queue, has_length(1))
+		msg = mailer.queue[0]
+
+		assert_that(msg, has_property('body'))
+		assert_that(decodestring(msg.body),
+					contains_string('http://localhost/place?username=' + urllib_parse.quote(username)))
+
+	@WithSharedApplicationMockDS
+	def test_recover_user_found_no_site( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
 			username = user.username
@@ -212,7 +311,6 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 			added( profile )
 			profile.email = u'jason.madden@nextthought.com'
 			modified( user )
-
 
 		app = TestApp( self.app )
 
@@ -297,12 +395,7 @@ class TestApplicationPasswordRecovery(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_found_query_in_url( self ):
-		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user( )
-			username = user.username
-			profile = user_interfaces.IUserProfile( user )
-			profile.email = u'jason.madden@nextthought.com'
-			modified( user )
+		username = self._add_user(email=u'jason.madden@nextthought.com')
 
 		app = TestApp( self.app )
 
