@@ -71,6 +71,14 @@
 	<ext:classObjectFactory factory=".media.EmbeddedAudio" />
 	<ext:classObjectFactory factory=".media.EmbeddedVideo" />
 
+	<!-- EmbeddedLink -->
+    <adapter factory=".embedded.EmbeddedLinkInternalObjectIO" />
+    <adapter factory=".embedded._EmbeddedLinkExporter"
+             for="nti.coremetadata.interfaces.IEmbeddedLink"
+             provides="nti.externalization.interfaces.IInternalObjectExternalizer"
+             name="exporter" />
+    <ext:classObjectFactory factory=".embedded.EmbeddedLink" />
+
 	<!-- Blob file URL storage for canvas images -->
 	<exclude package="zope.file" file="browser.zcml" />
 	<include package="zope.file" />
