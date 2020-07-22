@@ -11,9 +11,11 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from zope import component
+from zope import interface
 
 from pyramid.threadlocal import get_current_request
 
+from nti.app.authentication.interfaces import IAuthenticationValidator
 from nti.app.authentication.interfaces import ILogonWhitelist
 from nti.app.authentication.interfaces import ISiteLogonWhitelist
 
@@ -62,3 +64,11 @@ def user_can_login(username, check_sites=True):
     if result and check_sites:
         result = user_can_login_in_site(user)
     return result
+
+
+@interface.implementer(IAuthenticationValidator)
+class _AuthenticationValidator(object):
+
+    @staticmethod
+    def user_can_login(username, check_sites=True):
+        return user_can_login(username, check_sites=check_sites)

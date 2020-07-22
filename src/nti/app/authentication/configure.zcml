@@ -38,4 +38,6 @@
 
 	<adapter factory=".who_classifiers.application_request_classifier_for_request" />
 
+	<utility factory="._AuthenticationValidator" />
+
 </configure>
