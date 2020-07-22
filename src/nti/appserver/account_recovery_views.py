@@ -23,11 +23,11 @@ from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
-from zope.component.hooks import getSite
-
 from pyramid.view import view_config
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
+from nti.app.authentication import IAuthenticationValidator
 
 from nti.app.externalization.error import raise_json_error
 
@@ -48,8 +48,6 @@ from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import IDoNotValidateProfile
-
-from nti.dataserver.users.common import entity_creation_sitename
 
 from nti.dataserver.users.users import User
 
@@ -341,15 +339,6 @@ from nti.dataserver.users import index as user_index
 from zope.catalog.interfaces import ICatalog
 
 
-def matches_site(site, user):
-    """
-    Creation site must match if a creation site is specified on the user.
-    If no user creation site is specified, it matches all sites.
-    """
-    user_creation_sitename = entity_creation_sitename(user)
-    return not user_creation_sitename or user_creation_sitename == site.__name__
-
-
 def find_users_with_email(email, unused_dataserver, username=None, match_info=False):
     """
     Looks for and returns all users with an email or password recovery
@@ -367,7 +356,8 @@ def find_users_with_email(email, unused_dataserver, username=None, match_info=Fa
     matches = set()
     hashed_email = make_password_recovery_email_hash(email)
     ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
-    current_site = getSite()
+
+    auth_validator = component.getUtility(IAuthenticationValidator)
 
     for match_type, v in (('email', email),
                           ('contact_email', email),
@@ -380,7 +370,7 @@ def find_users_with_email(email, unused_dataserver, username=None, match_info=Fa
         record_type = match_type if match_info else ''
         matches.update(((x, record_type)
                         for x in ent_catalog.searchResults(**{match_type: (v, v)})
-                        if IUser.providedBy(x) and matches_site(current_site, x)))
+                        if IUser.providedBy(x) and auth_validator.user_can_login(x)))
 
     if username:
         username = username.lower()

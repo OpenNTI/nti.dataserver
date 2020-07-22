@@ -41,18 +41,20 @@ from nti.dataserver.users.common import set_user_creation_site
 
 from nti.appserver.tests import ITestMailDelivery
 
+_unset = object()
+
 
 class _RecoveryTestBase(ApplicationLayerTest):
 
-	def _add_user(self, email, site_name=None):
+	def _add_user(self, email, username=None, site_name=None):
 		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user()
+			user = self._create_user(username=username)
 			username = user.username
 			profile = user_interfaces.IUserProfile(user)
 			added(profile)
 			profile.email = email
-			site_name = site_name or u'dataserver2'
-			set_user_creation_site(user, site_name)
+			if site_name is not None:
+				set_user_creation_site(user, site_name)
 			modified(user)
 
 		return username
@@ -108,13 +110,15 @@ class TestApplicationUsernameRecovery(_RecoveryTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_not_found_wrong_site(self):
-		self._add_user(email=u'jason.madden@nextthought.com',
+		self._add_user(username=u"non_admin",
+					   email=u'jason.madden@nextthought.com',
 					   site_name=u'different_site')
 		app = TestApp(self.app)
 
 		path = b'/dataserver2/logon.forgot.username'
 		data = {'email': u'jason.madden@nextthought.com'}
-		app.post(path, data, status=204)
+		extra_env = {'HTTP_ORIGIN': 'http://mathcounts.dev'}
+		app.post(path, data, extra_environ=extra_env, status=204)
 
 		mailer = component.getUtility(ITestMailDelivery)
 		assert_that(mailer.queue, has_length(1))
@@ -126,13 +130,16 @@ class TestApplicationUsernameRecovery(_RecoveryTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_found_in_site(self):
-		username = self._add_user(email=u'jason.madden@nextthought.com')
+		username = self._add_user(username=u"non_admin",
+								  email=u'jason.madden@nextthought.com',
+								  site_name=u'mathcounts.nextthought.com')
 
 		app = TestApp(self.app)
 
 		path = b'/dataserver2/logon.forgot.username'
 		data = {'email': u'jason.madden@nextthought.com',}
-		app.post(path, data, status=204)
+		extra_env = {'HTTP_ORIGIN': 'http://mathcounts.dev'}
+		app.post(path, data, extra_environ=extra_env, status=204)
 
 		mailer = component.getUtility(ITestMailDelivery)
 		assert_that(mailer.queue, has_length(1))
@@ -143,13 +150,9 @@ class TestApplicationUsernameRecovery(_RecoveryTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_found_no_site( self ):
-		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user( )
-			user_username = user.username
-			profile = user_interfaces.IUserProfile( user )
-			added( profile )
-			profile.email = u'jason.madden@nextthought.com'
-			modified( user )
+		user_username = self._add_user(username=u"non_admin",
+									   email=u'jason.madden@nextthought.com',
+									   site_name=None)
 
 		app = TestApp( self.app )
 
@@ -264,7 +267,8 @@ class TestApplicationPasswordRecovery(_RecoveryTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_not_found_wrong_site( self ):
-		username = self._add_user(email=u'jason.madden@nextthought.com',
+		username = self._add_user(username=u"non_admin",
+								  email=u'jason.madden@nextthought.com',
 								  site_name=u'different_site')
 		app = TestApp( self.app )
 
@@ -272,7 +276,8 @@ class TestApplicationPasswordRecovery(_RecoveryTestBase):
 		data = {'email': u'jason.madden@nextthought.com',
 				'username': username,
 				'success': 'http://localhost/place'}
-		app.post( path, data, status=204 )
+		extra_env = {'HTTP_ORIGIN': 'http://mathcounts.dev'}
+		app.post(path, data, extra_environ=extra_env, status=204)
 
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
@@ -284,7 +289,9 @@ class TestApplicationPasswordRecovery(_RecoveryTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_found_in_site(self):
-		username = self._add_user(email=u'jason.madden@nextthought.com')
+		username = self._add_user(username=u"non_admin",
+								  email=u'jason.madden@nextthought.com',
+								  site_name=u'mathcounts.nextthought.com')
 
 		app = TestApp(self.app)
 
@@ -292,7 +299,8 @@ class TestApplicationPasswordRecovery(_RecoveryTestBase):
 		data = {'email': u'jason.madden@nextthought.com',
 				'username': username,
 				'success': 'http://localhost/place'}
-		app.post(path, data, status=204)
+		extra_env = {'HTTP_ORIGIN': 'http://mathcounts.dev'}
+		app.post(path, data, extra_environ=extra_env, status=204)
 
 		mailer = component.getUtility(ITestMailDelivery)
 		assert_that(mailer.queue, has_length(1))
@@ -304,13 +312,9 @@ class TestApplicationPasswordRecovery(_RecoveryTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_found_no_site( self ):
-		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user( )
-			username = user.username
-			profile = user_interfaces.IUserProfile( user )
-			added( profile )
-			profile.email = u'jason.madden@nextthought.com'
-			modified( user )
+		username = self._add_user(username=u"non_admin",
+								  email=u'jason.madden@nextthought.com',
+								  site_name=None)
 
 		app = TestApp( self.app )
 

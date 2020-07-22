@@ -130,3 +130,14 @@ class DefaultSiteLogonWhitelist(object):
         # Is this what we want?
         hierarchy_site_names = get_component_hierarchy_names()
         return site_name in hierarchy_site_names
+
+
+class IAuthenticationValidator(interface.Interface):
+    """
+    Provides methods to validate whether users can login.
+    """
+
+    def user_can_login(username, check_sites):
+        """
+        Return true if the username can login.
+        """
