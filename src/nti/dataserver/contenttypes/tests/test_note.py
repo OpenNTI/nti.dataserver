@@ -59,6 +59,8 @@ from nti.dataserver.contenttypes.canvas import Canvas
 from nti.dataserver.contenttypes.canvas import CanvasPathShape
 from nti.dataserver.contenttypes.canvas import NonpersistentCanvasPathShape
 
+from nti.dataserver.contenttypes.embedded import EmbeddedLink
+
 from nti.dataserver.contenttypes.note import Note as _Note
 
 from nti.dataserver.contenttypes.media import EmbeddedVideo
@@ -463,6 +465,30 @@ class TestNote(DataserverLayerTest):
         assert_that(n.body[0], is_(EmbeddedVideo))
         assert_that(n.body[0].embedURL, is_(m.embedURL))
         assert_that(n.body[0].VideoId, is_(m.VideoId))
+
+    @WithMockDS
+    def test_external_body_with_embedded_link(self):
+        n = Note()
+        m = EmbeddedLink()
+        m.embedURL = u"https://www.youtube.com/watch?v=mRD0-GxqHVo"
+
+        n.body = [m]
+        n.updateLastMod()
+        ext = to_external_object(n)
+        del ext['Last Modified']
+        del ext['CreatedTime']
+        assert_that(ext, has_entries("Class", "Note",
+                                     "body", only_contains(has_entries('Class', u'EmbeddedLink',
+                                                                       'embedURL', m.embedURL,
+                                                                       'CreatedTime', m.createdTime))))
+
+        n = Note()
+        ds = self.ds
+        with mock_dataserver.mock_db_trans(ds):
+            update_from_external_object(n, ext, context=ds)
+
+        assert_that(n.body[0], is_(EmbeddedLink))
+        assert_that(n.body[0].embedURL, is_(m.embedURL))
 
     @WithMockDS
     def test_external_body_with_media_and_text(self):

@@ -980,7 +980,7 @@ from nti.coremetadata.interfaces import IMedia as ICoreMedia
 from nti.coremetadata.interfaces import IEmbeddedLink as ICoreEmbeddedLink
 
 
-class IEmbeddedLink(IThreadable):
+class IEmbeddedLink(ICoreEmbeddedLink, IThreadable):
     pass
 
 
