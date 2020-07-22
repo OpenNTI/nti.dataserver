@@ -977,11 +977,18 @@ from nti.coremetadata.interfaces import IEmbeddedMedia
 from nti.coremetadata.interfaces import IEmbeddedVideo
 from nti.coremetadata.interfaces import IMedia as ICoreMedia
 
+from nti.coremetadata.interfaces import IEmbeddedLink as ICoreEmbeddedLink
+
+
+class IEmbeddedLink(IThreadable):
+    pass
+
 
 class IMedia(ICoreMedia, IThreadable):
     pass
 
 
+IEmbeddedLink = IEmbeddedLink
 IEmbeddedAudio = IEmbeddedAudio
 IEmbeddedMedia = IEmbeddedMedia
 IEmbeddedVideo = IEmbeddedVideo

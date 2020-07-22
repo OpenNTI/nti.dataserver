@@ -76,6 +76,7 @@ class ImageAndRedactionRestrictedContentObjectFilter(SimpleRestrictedContentObje
                   'application/vnd.nextthought.embeddedaudio',
                   'application/vnd.nextthought.embeddedmedia',
                   'application/vnd.nextthought.embeddedvideo',
+                  'application/vnd.nextthought.embeddedlink',
                   'application/vnd.nextthought.forums.ace')
 _ImageAndRedactionRestrictedContentObjectFilter = ImageAndRedactionRestrictedContentObjectFilter
 
