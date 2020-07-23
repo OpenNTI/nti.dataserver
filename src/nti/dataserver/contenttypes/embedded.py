@@ -60,14 +60,13 @@ class _EmbeddedLinkExporter(InterfaceObjectIO):
     _ext_iface_upper_bound = IEmbeddedLink
 
     def toExternalObject(self, **kwargs):
+        # TODO: collapse this with export externalizer in media
         context = self._ext_replacement()
-        [kwargs.pop(x, None) for x in ('name', 'decorate')]
-        adapter = IInternalObjectExternalizer(context, None)
-        if adapter is not None:
-            result = adapter.toExternalObject(decorate=False, **kwargs)
-        else:
-            result = super(_EmbeddedLinkExporter, self).toExternalObject(decorate=False,
-                                                                  **kwargs)
-            decorateMimeType(context, result)
-        [result.pop(x, None) for x in (OID, NTIID)]
+        kwargs.pop('name', None)
+        kwargs['decorate'] = False
+        externalizer = IInternalObjectExternalizer(context, None) or super(_EmbeddedLinkExporter, self)
+        result = externalizer.toExternalObject(**kwargs)
+        decorateMimeType(context, result)
+        for ext_key in (OID, NTIID):
+            result.pop(ext_key, None)
         return result

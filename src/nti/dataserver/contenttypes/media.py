@@ -82,13 +82,11 @@ class _MediaExporter(InterfaceObjectIO):
 
     def toExternalObject(self, **kwargs):
         context = self._ext_replacement()
-        [kwargs.pop(x, None) for x in ('name', 'decorate')]
-        adapter = IInternalObjectExternalizer(context, None)
-        if adapter is not None:
-            result = adapter.toExternalObject(decorate=False, **kwargs)
-        else:
-            result = super(_MediaExporter, self).toExternalObject(decorate=False, 
-                                                                  **kwargs)
-            decorateMimeType(context, result)
-        [result.pop(x, None) for x in (OID, NTIID)]
+        kwargs.pop('name', None)
+        kwargs['decorate'] = False
+        externalizer = IInternalObjectExternalizer(context, None) or super(_MediaExporter, self)
+        result = externalizer.toExternalObject(**kwargs)
+        decorateMimeType(context, result)
+        for ext_key in (OID, NTIID):
+            result.pop(ext_key, None)
         return result
