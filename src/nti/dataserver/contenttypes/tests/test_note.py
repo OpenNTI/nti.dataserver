@@ -47,6 +47,7 @@ from zope.lifecycleevent import IObjectModifiedEvent
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.contentfragments.interfaces import IHTMLContentFragment
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.contentrange.contentrange import ContentRangeDescription
 from nti.contentrange.contentrange import ElementDomContentPointer
@@ -471,6 +472,11 @@ class TestNote(DataserverLayerTest):
         n = Note()
         m = EmbeddedLink()
         m.embedURL = u"https://www.youtube.com/watch?v=mRD0-GxqHVo"
+        m.creator = u'this creator'
+        m.imageURL = u"https://www.youtube.com/watch?v=mRD0-GxqHVo"
+        m.contentMimeType = u'application/pdf'
+        m.title = IPlainTextContentFragment(u'new title')
+        m.description = IPlainTextContentFragment(u'new description')
 
         n.body = [m]
         n.updateLastMod()
@@ -480,15 +486,26 @@ class TestNote(DataserverLayerTest):
         assert_that(ext, has_entries("Class", "Note",
                                      "body", only_contains(has_entries('Class', u'EmbeddedLink',
                                                                        'embedURL', m.embedURL,
-                                                                       'CreatedTime', m.createdTime))))
+                                                                       'imageURL', m.imageURL,
+                                                                        'title', m.title,
+                                                                        'description', m.description,
+                                                                        'Creator', m.creator,
+                                                                        'contentMimeType', m.contentMimeType,
+                                                                        'CreatedTime', m.createdTime))))
 
         n = Note()
         ds = self.ds
         with mock_dataserver.mock_db_trans(ds):
             update_from_external_object(n, ext, context=ds)
 
-        assert_that(n.body[0], is_(EmbeddedLink))
-        assert_that(n.body[0].embedURL, is_(m.embedURL))
+        ext_link = n.body[0]
+        assert_that(ext_link, is_(EmbeddedLink))
+        assert_that(ext_link.embedURL, is_(m.embedURL))
+        assert_that(ext_link.imageURL, is_(m.imageURL))
+        assert_that(ext_link.title, is_(m.title))
+        assert_that(ext_link.description, is_(m.description))
+        assert_that(ext_link.creator, is_(m.creator))
+        assert_that(ext_link.contentMimeType, is_(m.contentMimeType))
 
     @WithMockDS
     def test_external_body_with_media_and_text(self):
