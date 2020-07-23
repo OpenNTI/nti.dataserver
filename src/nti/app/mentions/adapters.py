@@ -73,9 +73,14 @@ class ValidMentionableEntityIterable(object):
 @interface.implementer(IAllowedAttributeProvider)
 class _MentionAttributesProvider(object):
     allowed_attributes = frozenset([
-        "data-nti-entity-type",
-        "data-nti-entity-mutability",
+        "data-nti-entity-contiguous",
+        "data-nti-entity-has-preview",
+        "data-nti-entity-href",
         "data-nti-entity-id",
+        "data-nti-entity-link-preview",
+        "data-nti-entity-link-type",
+        "data-nti-entity-mutability",
+        "data-nti-entity-type",
         "data-nti-entity-username",
     ])
 

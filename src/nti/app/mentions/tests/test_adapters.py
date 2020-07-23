@@ -91,9 +91,14 @@ class TestValidMentionableEntityIterable(AppLayerTest):
 class TestMentionAttributesProvider(AppLayerTest):
 
     def test_additional_allowed_attrs(self):
-        attrs_to_test = ["data-nti-entity-type",
-                         "data-nti-entity-mutability",
+        attrs_to_test = ["data-nti-entity-contiguous",
+                         "data-nti-entity-has-preview",
+                         "data-nti-entity-href",
                          "data-nti-entity-id",
+                         "data-nti-entity-link-preview",
+                         "data-nti-entity-link-type",
+                         "data-nti-entity-mutability",
+                         "data-nti-entity-type",
                          "data-nti-entity-username"]
 
         for attr in attrs_to_test:
