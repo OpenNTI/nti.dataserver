@@ -251,11 +251,6 @@ def user_mention_emailer(event):
     if mentionable is not None \
             and _is_newly_mentioned(user, change):
 
-        if _is_user_online(user.username):
-            log_mention_notification(user, mentionable, change,
-                                     skip_reason="user is online")
-            return
-
         if not _is_subscribed_mentions(user):
             log_mention_notification(user, mentionable, change,
                                      skip_reason="user not subscribed")

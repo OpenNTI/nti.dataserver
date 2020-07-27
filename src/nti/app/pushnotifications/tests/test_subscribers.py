@@ -239,19 +239,13 @@ class TestSubscribers(ApplicationLayerTest):
 		assert_that(comment.isMentionedDirectly(user), is_(False))
 		assert_that(mailer.queue, has_length(0))
 
-		# User online, nothing happens
+		# User not subscribed, nothing happens
 		mentions += PlainTextContentFragment(u"jason.madden@nextthought.com"),
 		comment = self._add_comment(mouse_user, topic, request=request, mentions=mentions)
 		assert_that(comment.isMentionedDirectly(user), is_(True))
 		assert_that(mailer.queue, has_length(0))
 
-		# User not subscribed, nothing happens
-		is_online.is_callable().returns(False)
-		comment = self._add_comment(mouse_user, topic, request=request, mentions=mentions)
-		assert_that(comment.isMentionedDirectly(user), is_(True))
-		assert_that(mailer.queue, has_length(0))
-
-		# User mentioned, not online, and subscribed, mail sent
+		# User mentioned and subscribed, mail sent
 		is_subscribed.returns(True)
 		request = get_current_request()
 		body_text = u"0123456789" * 26
