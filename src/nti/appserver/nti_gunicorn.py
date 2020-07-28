@@ -349,6 +349,14 @@ class _ServerFactory(object):
         # See _PyWSGIWebSocketHandler.get_environ # NOTE: Eliminate this
         app_server.worker = self.worker
 
+        max_accept = os.environ.get('gevent_max_accept', None)
+        if max_accept is not None:
+            logger.info("Setting max_accept to %s", max_accept)
+            app_server.max_accept = max_accept
+        elif self.worker.cfg.workers > 1:
+            logger.info("Setting max_accept to 1")
+            app_server.max_accept = 1
+
         # The worker will provide a Pool based on the
         # worker_connections setting
         assert spawn is not None
