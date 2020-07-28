@@ -39,6 +39,7 @@ from nti.contentfragments.interfaces import IPlainTextContentFragment
 from nti.coremetadata.interfaces import IMentionable
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IStreamChangeAcceptedByUser
@@ -85,15 +86,44 @@ def _is_mentioned(user, threadable):
     return threadable.isMentionedDirectly(user)
 
 
+def _get_topic_author(threadable):
+    """
+    Return author of topic
+    """
+    parent = getattr(threadable, '__parent__', None)
+    if ITopic.providedBy(parent):
+        return getattr(parent, 'creator', None)
+
+    return None
+
+
+def _in_reply_to_author(threadable):
+    """
+    Return the author of the threadable or topic we're replying to, if this
+    is a direct response to a topic
+    """
+    in_reply_to = threadable.inReplyTo
+
+    in_reply_to_author = None
+    if in_reply_to is None:
+        if ICommentPost.providedBy(threadable):
+            in_reply_to_author = _get_topic_author(threadable)
+    elif IThreadable.providedBy(in_reply_to):
+        in_reply_to_author = getattr(in_reply_to, 'creator', None)
+
+    return in_reply_to_author
+
+
 def _threadable_added(threadable, unused_event):
-    inReplyTo = threadable.inReplyTo
-    if not IThreadable.providedBy(inReplyTo):
+    in_reply_to_author = _in_reply_to_author(threadable)
+
+    if not in_reply_to_author:
         return
 
-    if getattr(threadable, 'creator', None) == getattr(inReplyTo, 'creator', None):
+    if getattr(threadable, 'creator', None) == in_reply_to_author:
         return
 
-    user = User.get_user(getattr(inReplyTo, 'creator', None))
+    user = User.get_user(in_reply_to_author)
     if not _is_subscribed_replies(user) or _is_mentioned(user, threadable):
         return
 
@@ -106,7 +136,7 @@ def _threadable_added(threadable, unused_event):
                  'display_name': _display_name(user, request),
                  'since': 0}
 
-    delegate = component.getMultiAdapter((inReplyTo, request),
+    delegate = component.getMultiAdapter((threadable.inReplyTo, request),
                                         IBulkEmailProcessDelegate,
                                         name="digest_email")
     subject = delegate.compute_subject_for_recipient(None)

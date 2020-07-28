@@ -147,16 +147,19 @@ class TestSubscribers(ApplicationLayerTest):
 
 			# Top comment
 			comment1 = self._add_comment(user3, topic, inReplyTo=None)
-			assert_that(_mockMailer._calls, has_length(0))
+			assert_that(_mockMailer._calls, has_length(1))
+			_mockMailer.reset()
 
 			# Same creator with the creator of inReplyTo
 			self._add_comment(user3, topic, inReplyTo=comment1)
 			assert_that(_mockMailer._calls, has_length(0))
 
+			# Not subscribed
 			mock_is_subscribed.is_callable().returns(False)
 			comment3 = self._add_comment(user4, topic, inReplyTo=comment1)
 			assert_that(_mockMailer._calls, has_length(0))
 
+			# No subscription info defaults to not subscribed
 			mock_is_subscribed.is_callable().returns(None)
 			self._add_comment(user4, topic, inReplyTo=comment1)
 			assert_that(_mockMailer._calls, has_length(0))
@@ -196,7 +199,7 @@ class TestSubscribers(ApplicationLayerTest):
 
 			# Top comment other
 			self._add_comment(user5, topic, inReplyTo=None)
-			assert_that(_mockMailer._calls, has_length(0))
+			assert_that(_mockMailer._calls, has_length(1))
 
 	@mock_dataserver.WithMockDSTrans
 	@fudge.patch("nti.dataserver.activitystream.hasQueryInteraction",
