@@ -58,21 +58,24 @@ logger = __import__('logging').getLogger(__name__)
 
 
 def _mailer():
-	return component.getUtility(ITemplatedMailer)
+    return component.getUtility(ITemplatedMailer)
 
 
 def _is_subscribed(user, setting_name):
-	with email_notifications_preference(user) as prefs:
-		return getattr(prefs, setting_name)
+    with email_notifications_preference(user) as prefs:
+        return getattr(prefs, setting_name)
+
 
 def _is_subscribed_replies(user):
-	return _is_subscribed(user, "immediate_threadable_reply")
+    return _is_subscribed(user, "immediate_threadable_reply")
+
 
 def _is_subscribed_mentions(user):
-	return _is_subscribed(user, "notify_on_mention")
+    return _is_subscribed(user, "notify_on_mention")
+
 
 def _display_name(user, request):
-	return component.getMultiAdapter((user, request), IDisplayNameGenerator)()
+    return component.getMultiAdapter((user, request), IDisplayNameGenerator)()
 
 
 def _is_mentioned(user, threadable):
@@ -83,46 +86,46 @@ def _is_mentioned(user, threadable):
 
 
 def _threadable_added(threadable, unused_event):
-	inReplyTo = threadable.inReplyTo
-	if not IThreadable.providedBy(inReplyTo):
-		return
+    inReplyTo = threadable.inReplyTo
+    if not IThreadable.providedBy(inReplyTo):
+        return
 
-	if getattr(threadable, 'creator', None) == getattr(inReplyTo, 'creator', None):
-		return
+    if getattr(threadable, 'creator', None) == getattr(inReplyTo, 'creator', None):
+        return
 
-	user = User.get_user(getattr(inReplyTo, 'creator', None))
-	if not _is_subscribed_replies(user) or _is_mentioned(user, threadable):
-		return
+    user = User.get_user(getattr(inReplyTo, 'creator', None))
+    if not _is_subscribed_replies(user) or _is_mentioned(user, threadable):
+        return
 
-	request = get_current_request()
+    request = get_current_request()
 
-	intids = component.getUtility(IIntIds)
-	intid = intids.getId(threadable)
-	recipient = {'email': EmailAddresablePrincipal(user),
-				 'template_args': [intid],
-				 'display_name': _display_name(user, request),
-				 'since': 0}
+    intids = component.getUtility(IIntIds)
+    intid = intids.getId(threadable)
+    recipient = {'email': EmailAddresablePrincipal(user),
+                 'template_args': [intid],
+                 'display_name': _display_name(user, request),
+                 'since': 0}
 
-	delegate = component.getMultiAdapter((inReplyTo, request),
-										IBulkEmailProcessDelegate,
-										name="digest_email")
-	subject = delegate.compute_subject_for_recipient(None)
-	template_args = delegate.compute_template_args_for_recipient(recipient)
-	template_args['notable_text'] = 'A user has replied to one of your comments.'
+    delegate = component.getMultiAdapter((inReplyTo, request),
+                                        IBulkEmailProcessDelegate,
+                                        name="digest_email")
+    subject = delegate.compute_subject_for_recipient(None)
+    template_args = delegate.compute_template_args_for_recipient(recipient)
+    template_args['notable_text'] = 'A user has replied to one of your comments.'
 
-	# Currently we don't have a link for unsubscribing this email notification.
-	template_args.pop('unsubscribe_link', None)
+    # Currently we don't have a link for unsubscribing this email notification.
+    template_args.pop('unsubscribe_link', None)
 
-	text_template_extension=delegate.text_template_extension
+    text_template_extension=delegate.text_template_extension
 
-	mailer = _mailer()
-	mailer.queue_simple_html_text_email(delegate.template_name,
-										subject=subject,
-										recipients=[user],
-										template_args=template_args,
-										reply_to=None,
-										package=push_pkg,
-										text_template_extension=text_template_extension)
+    mailer = _mailer()
+    mailer.queue_simple_html_text_email(delegate.template_name,
+                                        subject=subject,
+                                        recipients=[user],
+                                        template_args=template_args,
+                                        reply_to=None,
+                                        package=push_pkg,
+                                        text_template_extension=text_template_extension)
 
 
 def _support_email():
