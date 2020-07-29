@@ -42,9 +42,11 @@ from nti.appserver.interfaces import IUserLogoutEvent
 from nti.coremetadata.interfaces import UserLastSeenEvent
 from nti.coremetadata.interfaces import IUserLastSeenEvent
 from nti.coremetadata.interfaces import IDeactivatedCommunity
+from nti.coremetadata.interfaces import IContextLastSeenContainer
 from nti.coremetadata.interfaces import UserLastSeenUpdatedEvent
 from nti.coremetadata.interfaces import IUnscopedGlobalCommunity
 from nti.coremetadata.interfaces import IDeactivatedCommunityEvent
+from nti.coremetadata.interfaces import IUserProcessedContextsEvent
 from nti.coremetadata.interfaces import IDynamicSharingTargetFriendsList
 from nti.coremetadata.interfaces import IAutoSubscribeMembershipPredicate
 from nti.coremetadata.interfaces import IDeactivatedDynamicSharingTargetFriendsList
@@ -233,3 +235,11 @@ def _on_user_deletion(user, unused_event=None):
     # This result set should be relatively small per site
     for community in get_communities_by_site() or ():
         user.record_no_longer_dynamic_member(community)
+
+
+@component.adapter(IUser, IUserProcessedContextsEvent)
+def _on_user_processed_contexts(user, event):
+    container = IContextLastSeenContainer(user, None)
+    if container is not None and event.context_ids:
+        # pylint: disable=too-many-function-args
+        container.extend(event.context_ids, event.timestamp)
