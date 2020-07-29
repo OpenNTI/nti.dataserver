@@ -42,6 +42,7 @@ from nti.appserver.interfaces import IUserLogoutEvent
 from nti.coremetadata.interfaces import UserLastSeenEvent
 from nti.coremetadata.interfaces import IUserLastSeenEvent
 from nti.coremetadata.interfaces import IDeactivatedCommunity
+from nti.coremetadata.interfaces import UserLastSeenUpdatedEvent
 from nti.coremetadata.interfaces import IUnscopedGlobalCommunity
 from nti.coremetadata.interfaces import IDeactivatedCommunityEvent
 from nti.coremetadata.interfaces import IDynamicSharingTargetFriendsList
@@ -152,7 +153,7 @@ def _on_user_logout(user, event):
     _on_user_logon(user, event)
 
 
-LAST_SEEN_UPDATE_BUFFER_IN_SEC = 60
+LAST_SEEN_UPDATE_BUFFER_IN_SEC = 120
 
 
 @component.adapter(IUser, IUserLastSeenEvent)
@@ -164,6 +165,7 @@ def _on_user_lastseen(user, event):
             and user.lastSeenTime + LAST_SEEN_UPDATE_BUFFER_IN_SEC > event.timestamp:
             return
         user.update_last_seen_time(event.timestamp)
+        notify(UserLastSeenUpdatedEvent(user))
 
 
 @component.adapter(IUser, IObjectRemovedEvent)
