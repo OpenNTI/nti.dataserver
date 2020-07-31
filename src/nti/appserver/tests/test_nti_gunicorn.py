@@ -7,12 +7,13 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=protected-access
 # XXX: Rewrap the long lines.
 # pylint: disable=line-too-long
-# XXX: JAM: Temporary.
-# pylint:disable=import-error,wrong-import-order,no-name-in-module,attribute-defined-outside-init
 
 import os
+import unittest
 
 from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
@@ -216,3 +217,103 @@ class TestGeventApplicationWorker(AppLayerTest):
         # cached
         old = worker_greenlet.__thread_name__()
         assert_that(old, is_(same_instance(worker_greenlet.__thread_name__())))
+
+
+class TestWorkerGreenlet(unittest.TestCase):
+
+    def _makeOne(self, request=None):
+        from nti.appserver.nti_gunicorn import make_WorkerGreenlet
+        from gevent import Greenlet
+        class pool(object):
+            greenlet_class = Greenlet
+
+        WorkerGreenlet = make_WorkerGreenlet(pool)
+        WorkerGreenlet.current_request = request
+        WorkerGreenlet.get_current_request = lambda self: self.current_request
+        return WorkerGreenlet()
+
+    def test__thread_name__no_request(self):
+        glet = self._makeOne()
+        result = glet.__thread_name__()
+        assert_that(result, is_(not_none()))
+        # it's not cached.
+        assert_that(result, is_not(same_instance(glet.__thread_name__)))
+        # but it is equal to the formatted info
+        assert_that(result, is_(glet._formatinfo()))
+
+    def test__thread_name__cached_on_request_already(self):
+        class MockRequest(object):
+            _worker_greenlet_cached_thread_name = 'USS Enterprise'
+
+        glet = self._makeOne(MockRequest())
+
+        for _ in range(2):
+            result = glet.__thread_name__()
+            assert_that(result, is_(
+                same_instance(MockRequest._worker_greenlet_cached_thread_name)))
+
+    def test__thread_name__caches_on_request(self):
+        class MockRequest(object):
+            unauthenticated_userid = 'jean.luc.picard'
+            path = '/bridge/ready_room'
+
+        glet = self._makeOne(MockRequest())
+        result = glet.__thread_name__()
+        assert_that(result, is_('/bridge/ready_room:jean.luc.picard'))
+        result2 = glet.__thread_name__()
+        assert_that(result2, is_(result))
+        assert_that(result2, is_(same_instance(result)))
+
+    def _check__thread_name__error_uncached(self, ex):
+        class MockRequest(object):
+            path = '/bridge/captains_chair'
+
+            @property
+            def unauthenticated_userid(self):
+                raise ex
+
+            count = 0
+
+            @property
+            def remote_user(self):
+                self.count += 1
+                return str(self.count)
+
+        glet = self._makeOne(MockRequest())
+        result = glet.__thread_name__()
+        assert_that(result, is_('/bridge/captains_chair:1'))
+        result = glet.__thread_name__()
+        assert_that(result, is_('/bridge/captains_chair:2'))
+
+    def test__thread_name__LookupError_uncached(self):
+        self._check__thread_name__error_uncached(LookupError)
+
+    def test__thread_name__AttributeError_uncached(self):
+        self._check__thread_name__error_uncached(AttributeError)
+
+    def _check__thread_name__recursion(self, attr_name):
+        class MockRequest(object):
+            current_greenlet = None
+            path = '/bridge/science1'
+
+            def access_thread_name(self):
+                return self.current_greenlet.__thread_name__()
+
+        setattr(MockRequest, attr_name, property(lambda self: self.access_thread_name()))
+
+        request = MockRequest()
+        glet = self._makeOne(request)
+        request.current_greenlet = glet
+
+        result = glet.__thread_name__()
+        assert_that(result, is_('/bridge/science1:<recursing>'))
+
+    def test__thread_name__recusion_unauthentictad_userid(self):
+        self._check__thread_name__recursion('unauthenticated_userid')
+
+    def test__thread_name__recusion_remote_user(self):
+        self._check__thread_name__recursion('remote_user')
+
+
+if __name__ == '__main__':
+    unittest.main()
