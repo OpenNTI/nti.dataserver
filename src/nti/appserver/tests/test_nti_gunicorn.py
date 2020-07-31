@@ -4,10 +4,13 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-# disable: accessing protected members, too many methods
-# pylint: disable=W0212,R0904
+# pylint: disable=protected-access
+# XXX: Rewrap the long lines.
+# pylint: disable=line-too-long
+# XXX: JAM: Temporary.
+# pylint:disable=import-error,wrong-import-order,no-name-in-module,attribute-defined-outside-init
 
-logger = __import__('logging').getLogger(__name__)
+import os
 
 from hamcrest import is_
 from hamcrest import has_entry
@@ -17,18 +20,17 @@ from hamcrest import same_instance
 
 import fudge
 
-from cStringIO import StringIO
-
 import gevent.pool
 from gunicorn import config as gconfig
-
-import os
 
 from pyramid.request import Request
 
 from nti.appserver import nti_gunicorn
 
 from nti.app.testing.request_response import ByteHeadersDummyRequest as DummyRequest
+from nti.app.testing.layers import AppLayerTest
+
+logger = __import__('logging').getLogger(__name__)
 
 class MockConfig(object):
     is_ssl = False # added 0.17.1
@@ -43,7 +45,7 @@ class MockConfig(object):
     settings = None
     access_log_format = ''
     workers = 2
-    secure_scheme_headers =  {
+    secure_scheme_headers = {
         "X-FORWARDED-PROTOCOL": "ssl",
         "X-FORWARDED-PROTO": "https",
         "X-FORWARDED-SSL": "on"
@@ -59,13 +61,13 @@ class MockConfig(object):
     max_requests_jitter = 0 # 19.2.1; 0 is default
     errorlog = "-" # 19.2; - is default
 
-    def __init__( self ):
+    def __init__(self):
         self.settings = {}
 
-    def set( self, key, val ):
+    def set(self, key, val):
         self.settings[key] = val
-        if hasattr( self, key ):
-            setattr( self, key, val )
+        if hasattr(self, key):
+            setattr(self, key, val)
 
 
 class MockSocket(object):
@@ -78,15 +80,13 @@ class MockSocket(object):
 
     def setblocking(self, arg):
         return None
-    def fileno( self ):
+    def fileno(self):
         return -1
-    def accept( self ):
+    def accept(self):
         pass
     family = 1
-    cfg_addr = ('',8081)
+    cfg_addr = ('', 8081)
 
-
-from nti.app.testing.layers import AppLayerTest
 
 class TestGeventApplicationWorker(AppLayerTest):
 
@@ -113,7 +113,7 @@ class TestGeventApplicationWorker(AppLayerTest):
     @fudge.patch('gunicorn.workers.base.WorkerTmp')
     def test_postfork(self, fudge_tmp):
         fudge_tmp.is_a_stub()
-        worker = nti_gunicorn.GeventApplicationWorker( None, None, MockSocket(), None, None, MockConfig, logger)
+        worker = nti_gunicorn.GeventApplicationWorker(None, None, MockSocket(), None, None, MockConfig, logger)
         worker._nti_identifier = '3'
         nti_gunicorn._post_fork(1, worker)
 
@@ -122,55 +122,66 @@ class TestGeventApplicationWorker(AppLayerTest):
         fudge_tmp.is_a_stub()
         # 8 frickin arguments!
         #  age, ppid, socket, app, timeout, cfg, log
-        nti_gunicorn.GeventApplicationWorker( None, None, MockSocket(), None, None, MockConfig, logger)
+        nti_gunicorn.GeventApplicationWorker(None, None, MockSocket(), None, None, MockConfig, logger)
 
-    @fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.nti_gunicorn.loadwsgi')
+    @fudge.patch('gunicorn.workers.base.WorkerTmp', 'nti.appserver.nti_gunicorn.loadwsgi')
     def test_environ_parse_in_handler(self, fudge_tmp, fudge_loadwsgi):
+        try:
+            from cStringIO import StringIO as BytesIO
+        except ImportError:
+            # Python 3
+            # XXX: We should probably use BytesIO everywhere, based on what we do
+            # with it below.
+            from io import BytesIO
+
         fudge_tmp.is_a_stub()
         fudge_loadwsgi.is_a_stub()
         global_conf = {}
         #  age, ppid, socket, app, timeout, cfg, log
-        dummy_app = nti_gunicorn.dummy_app_factory( global_conf )
+        dummy_app = nti_gunicorn.dummy_app_factory(global_conf)
         dummy_app.app = dummy_app
         global_conf['__file__'] = ''
         global_conf['http_port'] = '1'
-        worker = nti_gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, MockConfig, logger)
-        server = nti_gunicorn.WebSocketServer( MockSocket(), dummy_app,
-                                               handler_class=nti_gunicorn.GeventApplicationWorker.wsgi_handler )
+        worker = nti_gunicorn.GeventApplicationWorker(None, None, [MockSocket()], dummy_app, None, MockConfig, logger)
+        server = nti_gunicorn.WebSocketServer(MockSocket(), dummy_app,
+                                              handler_class=nti_gunicorn.GeventApplicationWorker.wsgi_handler)
         server.worker = worker
 
         # Be sure that everything (e.g., ssl header parsing) is set up so that the environment comes out as expected
         # First, generate a request to read
-        rqst = Request.blank( '/pages?format=json', environ={b'REQUEST_METHOD': b'DELETE'} )
+        rqst = Request.blank('/pages?format=json', environ={b'REQUEST_METHOD': b'DELETE'})
         rqst.headers['X-FORWARDED-PROTOCOL'] = 'ssl'
-        rfile = StringIO(rqst.as_bytes() + b'\r\n\r\n')
+        rfile = BytesIO(rqst.as_bytes() + b'\r\n\r\n')
 
         # Now create a local handler, as if it was accepting a local connection (as in a proxy environment)
         handler = server.handler_class(None, ('127.0.0.1', 12345), server, rfile) # socket, address, server, rfile
         rline = handler.read_requestline()
-        handler.read_request( rline )
+        handler.read_request(rline)
 
         # Finally, check the resulting environment
         handler.socket = MockSocket()
         environ = handler.get_environ()
 
-        assert_that( environ, has_entry( 'wsgi.url_scheme', 'https' ) )
+        assert_that(environ, has_entry('wsgi.url_scheme', 'https'))
 
-        assert_that( environ, has_entry( 'REQUEST_METHOD', 'DELETE' ) )
-        assert_that( environ, has_entry( 'PATH_INFO', '/pages' ) )
+        assert_that(environ, has_entry('REQUEST_METHOD', 'DELETE'))
+        assert_that(environ, has_entry('PATH_INFO', '/pages'))
 
         # x-forwarded-for is removed in gunicorn 19.x; see MockConfig
         #rqst.headers['X-FORWARDED-FOR'] = '41.74.174.50,10.50.0.102'
-        #assert_that( environ, has_entry( 'REMOTE_ADDR', '41.74.174.50' ) )
+        #assert_that(environ, has_entry('REMOTE_ADDR', '41.74.174.50'))
 
-    @fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.nti_gunicorn.loadwsgi','gevent.socket.socket', 'nti.appserver.nti_gunicorn.get_current_request')
+    @fudge.patch('gunicorn.workers.base.WorkerTmp',
+                 'nti.appserver.nti_gunicorn.loadwsgi',
+                 'gevent.socket.socket',
+                 'nti.appserver.nti_gunicorn.get_current_request')
     def test_init_process(self, fudge_tmp, fudge_loadwsgi, fudge_socket, fudge_get_current_request):
         fudge_tmp.is_a_stub()
         fudge_loadwsgi.is_a_stub()
         fudge_socket.is_a_stub()
         global_conf = {}
         #  age, ppid, socket, app, timeout, cfg, log
-        dummy_app = nti_gunicorn.dummy_app_factory( global_conf )
+        dummy_app = nti_gunicorn.dummy_app_factory(global_conf)
         dummy_app.app = dummy_app
         global_conf['__file__'] = ''
         global_conf['http_port'] = '1'
@@ -178,30 +189,30 @@ class TestGeventApplicationWorker(AppLayerTest):
         cfg = gconfig.Config()
 
         # Default worker_connections config
-        worker = nti_gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
+        worker = nti_gunicorn.GeventApplicationWorker(None, None, [MockSocket()], dummy_app, None, cfg, logger)
         worker.init_process(_call_super=False)
-        assert_that( worker, has_property( 'worker_connections',
-                                            nti_gunicorn.GeventApplicationWorker.PREFERRED_MAX_CONNECTIONS ) )
+        assert_that(worker, has_property('worker_connections',
+                                         nti_gunicorn.GeventApplicationWorker.PREFERRED_MAX_CONNECTIONS))
 
         # Changed config
         dummy_app.app = dummy_app
-        cfg.settings['worker_connections'].set( 300 )
-        worker = nti_gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
+        cfg.settings['worker_connections'].set(300)
+        worker = nti_gunicorn.GeventApplicationWorker(None, None, [MockSocket()], dummy_app, None, cfg, logger)
         worker.init_process(_call_super=False)
-        assert_that( worker, has_property( 'worker_connections', 300 ) )
+        assert_that(worker, has_property('worker_connections', 300))
 
         factory = worker.server_class
-        assert_that( factory, is_( nti_gunicorn._ServerFactory ) )
+        assert_that(factory, is_(nti_gunicorn._ServerFactory))
 
         spawn = gevent.pool.Pool()
-        server = factory( MockSocket(), spawn=spawn )
+        server = factory(MockSocket(), spawn=spawn)
 
-        assert_that( server.pool, is_( spawn ) )
+        assert_that(server.pool, is_(spawn))
 
         worker_greenlet = server.pool.greenlet_class()
         dummy_request = DummyRequest()
-        fudge_get_current_request.is_callable().returns( None ).next_call().returns( dummy_request ).next_call().returns( dummy_request )
+        fudge_get_current_request.is_callable().returns(None).next_call().returns(dummy_request).next_call().returns(dummy_request)
         worker_greenlet.__thread_name__()
         # cached
         old = worker_greenlet.__thread_name__()
-        assert_that( old, is_( same_instance( worker_greenlet.__thread_name__() ) ) )
+        assert_that(old, is_(same_instance(worker_greenlet.__thread_name__())))
