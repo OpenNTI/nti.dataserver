@@ -324,6 +324,79 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
         if _call_super:  # pragma: no cover
             super(GeventApplicationWorker, self).init_process()
 
+
+def make_WorkerGreenlet(pool):
+    """
+    Create the type of greenlet to use in the *pool*
+    """
+    # Top-level function for ease of testing.
+    class WorkerGreenlet(pool.greenlet_class):
+        """
+        See nti.monkey for this. We provide a pretty thread name to the extent
+        possible.
+        """
+
+        # Bind to self for ease of testing.
+        get_current_request = staticmethod(get_current_request)
+
+        __in_thread_name = False
+
+        def __thread_name__(self):
+            # The WorkerGreenlets themselves may be used to handle
+            # multiple distinct requests in the case of HTTP
+            # pipelining. The authentication information may
+            # change between requests (in practice, that *should*
+            # just be a transition between
+            # authenticated/unauthenticated states for the same
+            # user, but in theory it could be any transition, even across
+            # users). Therefore, the request is the best place to cache.
+            # Note that nti.transactions.pyramid_tween can retry requests,
+            # using the same request object and environment.
+            # pylint:disable=protected-access
+            if self.__in_thread_name:
+                # We're recursing. This happens when one of the request properties
+                # calls back into this method, usually from logging.
+                return '<recursing>'
+
+            prequest = self.get_current_request()
+            if not prequest:
+                return self._formatinfo()
+
+            try:
+                return prequest._worker_greenlet_cached_thread_name
+            except AttributeError:
+                pass
+
+            self.__in_thread_name = True
+            try:
+                cache = False
+                try:
+                    uid = prequest.unauthenticated_userid
+                    cache = True
+                except (LookupError, AttributeError):
+                    # In some cases, pyramid tries to turn this into an authenticated
+                    # user id, and if it's too early, we won't be able to use the dataserver
+                    # (InappropriateSiteError)
+                    # The AttributeError comes in due to what appears to be
+                    # a race condition with local ZEO servers and very
+                    # small connection pool sizes with very high request concurrency:
+                    # objects seem to escape from the ZEO connection cache before
+                    # __setstate__ has properly been filled in; typically
+                    # this is the `lookup` attribute on a _LocalAdapterRegistry
+                    # XXX: The above is almost certainly out of date.
+                    uid = prequest.remote_user
+            finally:
+                del self.__in_thread_name
+
+            result = "%s:%s" % (prequest.path, uid or '<NoUser>')
+            if cache:
+                prequest._worker_greenlet_cached_thread_name = result
+
+            return result
+
+    return WorkerGreenlet
+
+
 class _ServerFactory(object):
     """
     Given a worker that has already created the app server, does
@@ -360,47 +433,7 @@ class _ServerFactory(object):
         # The worker will provide a Pool based on the
         # worker_connections setting
         assert spawn is not None
-
-        class WorkerGreenlet(spawn.greenlet_class):
-            """
-            See nti.dataserver for this. We provide a pretty thread name to the extent
-            possible.
-            """
-
-            def __thread_name__(self):
-                # The WorkerGreenlets themselves are cached and reused (XXX: Where?),
-                # but the request we can cache on
-                prequest = get_current_request()
-                if not prequest:
-                    return self._formatinfo()
-
-                try:
-                    return getattr(prequest, '_worker_greenlet_cached_thread_name')
-                except AttributeError:
-                    pass
-                cache = False
-                try:
-                    uid = prequest.unauthenticated_userid
-                    cache = True
-                except (LookupError, AttributeError):  # pragma: no cover
-                    # In some cases, pyramid tries to turn this into an authenticated
-                    # user id, and if it's too early, we won't be able to use the dataserver
-                    # (InappropriateSiteError)
-                    # The AttributeError comes in due to what appears to be
-                    # a race condition with local ZEO servers and very
-                    # small connection pool sizes with very high request concurrency:
-                    # objects seem to escape from the ZEO connection cache before
-                    # __setstate__ has properly been filled in; typically
-                    # this is the `lookup` attribute on a _LocalAdapterRegistry
-                    uid = prequest.remote_user
-
-                result = "%s:%s" % (prequest.path, uid or '')
-                if cache:
-                    setattr(prequest, '_worker_greenlet_cached_thread_name', result)
-
-                return result
-
-        spawn.greenlet_class = WorkerGreenlet
+        spawn.greenlet_class = make_WorkerGreenlet(spawn)
         app_server.set_spawn(spawn)
         # We want to log with the appropriate logger, which
         # has monitoring info attached to it
