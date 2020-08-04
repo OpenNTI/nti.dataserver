@@ -104,9 +104,27 @@ class MimeTypeIndex(ValueIndex):
     default_interface = ValidatingMimeType
 
 
+#: TODO: Before this change, we hade many non-entity objects
+#: (that were adaptable to IEntity objects) inserted into
+#: this particular idex.This needs to be cleaned up.
+class ValidatingUsername(object):
+
+    __slots__ = ('username',)
+
+    def __init__(self, obj, unused_default=None):
+        try:
+            if IEntity.providedBy(obj):
+                self.username = obj.username
+        except (AttributeError, TypeError):
+            pass
+
+    def __reduce__(self):
+        raise TypeError()
+
+
 class UsernameIndex(CaseInsensitiveFieldIndex):
     default_field_name = IX_USERNAME
-    default_interface = IEntity
+    default_interface = ValidatingUsername
 
     documents_to_values = alias('_rev_index')
     values_to_documents = alias('_fwd_index')
