@@ -155,7 +155,7 @@ def _on_user_logout(user, event):
     _on_user_logon(user, event)
 
 
-LAST_SEEN_UPDATE_BUFFER_IN_SEC = 120
+LAST_SEEN_UPDATE_BUFFER_IN_SEC = 300
 
 
 @component.adapter(IUser, IUserLastSeenEvent)
