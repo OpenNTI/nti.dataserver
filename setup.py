@@ -166,6 +166,7 @@ setup(
         'nti.transactions',
         'nti.traversal',
         'nti.utils',
+        'nti.webhooks',
         'nti.wref',
         'nti.zodb',
         'nti.zope_catalog',
