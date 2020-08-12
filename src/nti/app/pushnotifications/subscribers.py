@@ -36,10 +36,12 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
+from nti.coremetadata.interfaces import IUser
+from nti.coremetadata.interfaces import IEntity
 from nti.coremetadata.interfaces import IMentionable
 
-from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IStreamChangeAcceptedByUser
@@ -52,8 +54,6 @@ from nti.mailer.interfaces import EmailAddresablePrincipal
 from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.threadable.interfaces import IThreadable
-
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -110,6 +110,11 @@ def _in_reply_to_author(threadable):
             in_reply_to_author = _get_topic_author(threadable)
     elif IThreadable.providedBy(in_reply_to):
         in_reply_to_author = getattr(in_reply_to, 'creator', None)
+
+    # See if a non-user entity is the creator of this obj
+    if      IEntity.providedBy(in_reply_to_author) \
+        and not IUser.providedBy(in_reply_to_author):
+        return None
     in_reply_to_author = getattr(in_reply_to_author,
                                  'username',
                                  in_reply_to_author)
@@ -128,7 +133,10 @@ def _threadable_added(threadable, unused_event):
         return
 
     user = User.get_user(in_reply_to_author)
-    if not _is_subscribed_replies(user) or _is_mentioned(user, threadable):
+    # User may be deleted or may prefer not to be notified
+    if     user is None \
+        or not _is_subscribed_replies(user) \
+        or _is_mentioned(user, threadable):
         return
 
     request = get_current_request()
