@@ -99,8 +99,8 @@ def _get_topic_author(threadable):
 
 def _in_reply_to_author(threadable):
     """
-    Return the author of the threadable or topic we're replying to, if this
-    is a direct response to a topic
+    Return the author (username) of the threadable or topic we're replying to,
+    if this is a direct response to a topic
     """
     in_reply_to = threadable.inReplyTo
 
@@ -110,7 +110,9 @@ def _in_reply_to_author(threadable):
             in_reply_to_author = _get_topic_author(threadable)
     elif IThreadable.providedBy(in_reply_to):
         in_reply_to_author = getattr(in_reply_to, 'creator', None)
-
+    in_reply_to_author = getattr(in_reply_to_author,
+                                 'username',
+                                 in_reply_to_author)
     return in_reply_to_author
 
 
@@ -120,7 +122,9 @@ def _threadable_added(threadable, unused_event):
     if not in_reply_to_author:
         return
 
-    if getattr(threadable, 'creator', None) == in_reply_to_author:
+    obj_creator = getattr(threadable, 'creator', None)
+    obj_creator = getattr(obj_creator, 'username', obj_creator)
+    if obj_creator == in_reply_to_author:
         return
 
     user = User.get_user(in_reply_to_author)
