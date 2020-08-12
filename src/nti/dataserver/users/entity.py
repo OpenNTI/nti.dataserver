@@ -23,6 +23,8 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.cachedescriptors.property import CachedProperty
 
+from zope.container.contained import notifyContainerModified
+
 from zope.event import notify as do_notify
 
 from zope.intid.interfaces import IIntIds
@@ -234,6 +236,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
         # Must manually fire added event if parent was given
         if kwargs['parent'] is not None:
             lifecycleevent.added(user, kwargs['parent'], user.username)
+            notifyContainerModified(kwargs['parent'])
 
         # Now store it. If there was no parent given or parent was none,
         # this will fire ObjectAdded. If parent was given and is different than root_users,
