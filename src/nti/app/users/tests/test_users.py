@@ -24,6 +24,8 @@ from zope import lifecycleevent
 
 from zope.event import notify
 
+from nti.app.users.subscribers import LAST_SEEN_UPDATE_BUFFER_IN_SEC
+
 from nti.coremetadata.interfaces import UserLastSeenEvent
 
 from nti.dataserver.interfaces import IDataserver
@@ -57,17 +59,17 @@ class TestUsers(ApplicationLayerTest):
         request = DummyRequest()
         t0 = time.time()
         t0_thirty = t0 + 30
-        t0_fiftynine = t0 + 59
-        t0_sixty = t0 + 60
+        t0_buffer_minus_one = t0 + LAST_SEEN_UPDATE_BUFFER_IN_SEC - 1
+        t0_buffer_plus_one = t0 + LAST_SEEN_UPDATE_BUFFER_IN_SEC + 1
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.create_user(username=username)
             notify(UserLastSeenEvent(user, t0, request))
             assert_that(user.lastSeenTime, is_(t0))
-            for small_delta_time in (t0_thirty, t0_fiftynine):
+            for small_delta_time in (t0_thirty, t0_buffer_minus_one):
                 notify(UserLastSeenEvent(user, small_delta_time, request))
                 assert_that(user.lastSeenTime, is_(t0))
-            notify(UserLastSeenEvent(user, t0_sixty, request))
-            assert_that(user.lastSeenTime, is_(t0_sixty))
+            notify(UserLastSeenEvent(user, t0_buffer_plus_one, request))
+            assert_that(user.lastSeenTime, is_(t0_buffer_plus_one))
 
     @WithSharedApplicationMockDSWithChanges
     def test_user_blacklist(self):

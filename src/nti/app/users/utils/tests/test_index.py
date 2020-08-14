@@ -7,6 +7,8 @@ from __future__ import absolute_import
 
 # pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
+import unittest
+
 from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -25,6 +27,7 @@ from nti.dataserver.tests import mock_dataserver
 
 class TestIndex(ApplicationLayerTest):
 
+    @unittest.skip("Context last seen currently not indexed for performance reasons")
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_get_lastseen_records(self):
 
