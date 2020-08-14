@@ -146,8 +146,8 @@ class TestUGDModifyViews(NewRequestLayerTest):
 
 		view()
 
-		# Will update event, 2 modified events
-		assert_that(eventtesting.getEvents(), has_length(3))
+		# Will update event, ObjectWillUpdateFromExternalEvent, 2 modified events
+		assert_that(eventtesting.getEvents(), has_length(4))
 		assert_that(eventtesting.getEvents(IObjectModifiedEvent), has_length(2))
 		mod_event = eventtesting.getEvents(IObjectModifiedEvent)[1]
 		assert_that(mod_event, has_property( 'descriptions',
@@ -169,7 +169,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 		view()
 
 		# One event, for the object we modified has a ripple effect
-		assert_that( eventtesting.getEvents(  ), has_length( 1 ) )
+		assert_that( eventtesting.getEvents(  ), has_length( 2 ) )
 		assert_that( eventtesting.getEvents( IObjectModifiedEvent ), has_length( 1 ) )
 		assert_that( con_obj, has_property( 'lastModified', greater_than( 0 ) ) )
 		assert_that( user.getContainer( con_obj.containerId ), has_property( 'lastModified', greater_than( 0 ) ) )
@@ -209,8 +209,9 @@ class TestUGDModifyViews(NewRequestLayerTest):
 		view.getRemoteUser = lambda: user
 		view() # First time fine
 		# Fires events the first time
-		# ObjectCreated, ObjectAdded, zc...IntIdAdded, zope...IntIdAdded, nti...IntIdAdded, ContainerModified
-		assert_that( eventtesting.getEvents(  ), has_length( 9 ) )
+		# ObjectCreated, ObjectAdded, zc...IntIdAdded, zope...IntIdAdded,
+		# nti...IntIdAdded, ContainerModified, ObjectWillUpdateFromExternalEvent
+		assert_that( eventtesting.getEvents(  ), has_length( 10 ) )
 		assert_that( eventtesting.getEvents( IObjectAddedEvent ), has_length( 1 ) )
 
 		with self.assertRaises(hexc.HTTPConflict):

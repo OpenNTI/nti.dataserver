@@ -28,30 +28,30 @@ class TestJsonSchema(DataserverLayerTest):
 
         assert_that(fields, has_entry('title', has_entry('type', 'string')))
 
-        assert_that(fields, 
+        assert_that(fields,
                     has_entry('inReplyTo', has_entry('type', 'string')))
-        assert_that(fields, 
+        assert_that(fields,
                     has_entry('inReplyTo', has_entry('base_type', 'string')))
 
-        assert_that(fields, 
+        assert_that(fields,
                     has_entry('applicableRange', has_entry('type', 'Object')))
-        assert_that(fields, 
+        assert_that(fields,
                     has_entry('applicableRange',
                               has_entry('base_type', 'application/vnd.nextthought.contentrange.contentrangedescription')))
 
-        assert_that(fields, 
+        assert_that(fields,
                     has_entry('presentationProperties', has_entry('type', 'Dict')))
-        assert_that(fields, 
+        assert_that(fields,
                     has_entry('presentationProperties',
                               has_entry('base_type', 'string')))
 
-        assert_that(fields, 
-                    has_entry('body', 
-                              has_entry('base_type', [u'string', u'namedfile', u'media', u'canvas'])))
+        assert_that(fields,
+                    has_entry('body',
+                              has_entry('base_type', [u'string', u'namedfile', u'media', u'canvas', u'embeddedlink'])))
 
         for name in ('body', 'sharedWith', 'tags', 'mentions'):
             assert_that(fields, has_entry(name, has_entry('type', 'List')))
 
         for name in ('sharedWith', 'tags', 'mentions'):
-            assert_that(fields, 
+            assert_that(fields,
                         has_entry(name, has_entry('base_type', 'string')))
