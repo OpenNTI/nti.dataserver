@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -10,6 +9,7 @@ __docformat__ = "restructuredtext en"
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import contains_inanyorder
 
 from nti.coremetadata.utils import make_schema
 
@@ -47,7 +47,8 @@ class TestJsonSchema(DataserverLayerTest):
 
         assert_that(fields,
                     has_entry('body',
-                              has_entry('base_type', [u'string', u'namedfile', u'media', u'canvas', u'embeddedlink'])))
+                              has_entry('base_type',
+                                        contains_inanyorder(u'string', u'namedfile', u'media', u'embeddedlink', u'canvas'))))
 
         for name in ('body', 'sharedWith', 'tags', 'mentions'):
             assert_that(fields, has_entry(name, has_entry('type', 'List')))
