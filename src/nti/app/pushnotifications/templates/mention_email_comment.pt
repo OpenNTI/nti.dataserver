@@ -149,6 +149,13 @@
                 margin-top: 20px;
         }
 
+        .header #logo-bar {
+            width: calc(100% - 10px);
+            max-width: 610px;
+            padding: 0 5px;
+            margin-top: 20px;
+        }
+
         @media only screen and (max-width: 560px) {
             body {
                 font-size: 14px !important;
