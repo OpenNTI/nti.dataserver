@@ -49,10 +49,6 @@
 				padding: 0 5px;
 				margin: 47px auto 20px;
 			}
-			.container .header #logo-bar img {
-				max-height:40;
-				max-width:100%;
-			}
 			.container .main,
 			.container .footer {
 				width: calc(100% - 10px);
@@ -170,6 +166,7 @@
 			<div id="logo-bar">
 				<img src="https://assets.nextthought.com/images/nextthought/platform/email/logo_trans_square.png"
 					 alt="NextThought Logo"
+					 style="max-height:40px; max-width:100%;"
 				     tal:attributes="src options/nti_site_brand_email_image_url|default;
 				                     alt options/nti_site_brand_name|default" />
 			</div>
