@@ -275,6 +275,11 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 
 def send_notable_email(testapp, before_send=None):
+	with fudge.patch('boto.ses.connect_to_region') as fake_connect:
+		return send_notable_email_connected(testapp, before_send=before_send, fake_connect=fake_connect)
+
+
+def send_notable_email_connected(testapp, before_send=None, fake_connect=None):
 	# Our notables run in a greenlet. Since we are not monkey
 	# patched here, we temporarily override our transaction manager to
 	# be gevent aware.
@@ -284,13 +289,12 @@ def send_notable_email(testapp, before_send=None):
 	old_manager = transaction.manager
 	transaction.manager = manager
 	try:
-		with fudge.patch('boto.ses.connect_to_region') as fake_connect:
-			return send_notable_email_connected(testapp, before_send=before_send, fake_connect=fake_connect)
+		return _do_send_notable_email(testapp, before_send=before_send, fake_connect=fake_connect)
 	finally:
 		transaction.manager = old_manager
 
 
-def send_notable_email_connected(testapp, before_send=None, fake_connect=None):
+def _do_send_notable_email(testapp, before_send=None, fake_connect=None):
 	msgs = []
 	def check_send(msg, fromaddr, to):
 		# Check the title and link to the note
@@ -320,6 +324,7 @@ def send_notable_email_connected(testapp, before_send=None, fake_connect=None):
 	assert_that( res.body, contains_string( 'End Time' ) )
 
 	return msgs
+
 
 class TestUnsubscribeToken( ApplicationLayerTest ):
 
