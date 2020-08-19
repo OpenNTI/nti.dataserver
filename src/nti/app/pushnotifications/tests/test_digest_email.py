@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -274,9 +273,22 @@ class TestApplicationDigest(ApplicationLayerTest):
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
 		assert_that( res.body, contains_string( 'End Time' ) )
 
+
 def send_notable_email(testapp, before_send=None):
-	with fudge.patch('boto.ses.connect_to_region') as fake_connect:
-		return send_notable_email_connected(testapp, before_send=before_send, fake_connect=fake_connect)
+	# Our notables run in a greenlet. Since we are not monkey
+	# patched here, we temporarily override our transaction manager to
+	# be gevent aware.
+	import transaction
+	from gevent._patcher import import_patched
+	manager = import_patched('transaction._manager').module.ThreadTransactionManager()
+	old_manager = transaction.manager
+	transaction.manager = manager
+	try:
+		with fudge.patch('boto.ses.connect_to_region') as fake_connect:
+			return send_notable_email_connected(testapp, before_send=before_send, fake_connect=fake_connect)
+	finally:
+		transaction.manager = old_manager
+
 
 def send_notable_email_connected(testapp, before_send=None, fake_connect=None):
 	msgs = []
