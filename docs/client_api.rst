@@ -9,18 +9,6 @@ NextThought provides a RESTful API for outside parties that need to interact wit
 General
 ~~~~~~~
 
-Environments
-------------
-
-NextThought makes available several production environments as well as several additional environments for development and integration testing.  Generally speaking there are 3 types of environments for every client.
-
-* Alpha : Development and integration
-* Test : Client acceptance and testing
-* Production : Live production
-
-Environment details for a given client integration will be provided at integration time.
-
-
 Authentication
 --------------
 
