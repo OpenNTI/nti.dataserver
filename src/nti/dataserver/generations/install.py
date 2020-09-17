@@ -177,8 +177,8 @@ def install_main(context):
         # The name that many Zope components assume
         root['Application'] = root_folder
         # the connection root doesn't fire events, do so for it
-        lifecycleevent.added(root_folder)
-        lifecycleevent.added(dataserver_folder)
+        lifecycleevent.added(root_folder, root, root_folder.__name__)
+        lifecycleevent.added(dataserver_folder, root, dataserver_folder.__name__)
 
         assert intids.getId(root_folder) is not None
 
