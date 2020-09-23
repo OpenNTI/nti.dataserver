@@ -155,10 +155,8 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 				sleep()
 				self.message = self.websocket.receive()
 
-				# Reduce heartbeat activity from every five seconds to
-				# no more often than half of what's needed to keep the session "alive"
-				# to cut down on database activity
-				# This is tightly coupled to session implementation and lifetime
+				# This is tightly coupled to session implementation and lifetime. We send
+				# pings every 5s.
 				if 	  self.message == b"2::" \
 				  and self.connected \
 				  and self.last_heartbeat_time >= (time.time() - self.HEARTBEAT_LIFETIME):
@@ -182,8 +180,10 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 class _WebSocketPinger(_AbstractWebSocketOperator):
 
 	def __init__( self, *args, **kwargs ):
-		super(_WebSocketPinger,self).__init__( *args )
-		self.ping_sleep = kwargs.get( 'ping_sleep', 30.0 )
+		super(_WebSocketPinger,self).__init__(*args)
+		# Client timeout is currently 60s - this will keep
+		# the client from reconnecting.
+		self.ping_sleep = kwargs.get('ping_sleep', 5.0)
 
 	def _do_ping( self ):
 		try:

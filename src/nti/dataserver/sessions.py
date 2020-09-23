@@ -292,7 +292,7 @@ class SessionService(object):
             result._v_session_service = self
         return result
 
-    #: Sessions without a hearbeat for 2 minutes get cleaned up.
+    #: Sessions without a heartbeat for 2 minutes get cleaned up.
     SESSION_HEARTBEAT_TIMEOUT = 60 * 2
 
     def _is_session_dead(self, session, max_age=SESSION_HEARTBEAT_TIMEOUT):
