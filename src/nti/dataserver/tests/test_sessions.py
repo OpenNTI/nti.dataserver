@@ -150,6 +150,16 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 		self.session_service.clear_disconnect_timeout( session.session_id, 42 )
 		assert_that( self.session_service.get_last_heartbeat_time( session.session_id ), is_( 42 ) )
 
+	@WithMockDSTrans
+	def test_old_sessions_cleaned_up(self):
+		session = self.session_service.create_session(watch_session=False)
+		assert_that(session, is_not(none()))
+		assert_that(self.session_service.get_sessions_by_owner(session.owner),
+				is_([session]))
+		new_session = self.session_service.create_session(watch_session=False)
+		assert_that(new_session, is_not(none()))
+		assert_that(self.session_service.get_sessions_by_owner(new_session.owner),
+				is_([new_session]))
 
 	@WithMockDSTrans
 	def test_get_dead_session(self):

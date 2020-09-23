@@ -264,12 +264,16 @@ class SessionService(object):
             raise ValueError("Neglected to provide owner")
 
         session = session_class(**kwargs)
-        self._session_db.register_session(session)
 
         if drop_old_sessions:
+            # XXX not sure we always want to do this - this will clean up
+            # active and alive sessions, leaving only the newly created
+            # session.
             outstanding = self.get_sessions_by_owner(session.owner)
             if outstanding:
                 self._cleanup_sessions(outstanding)
+
+        self._session_db.register_session(session)
 
         session_id = session.session_id
         if watch_session:
@@ -329,22 +333,18 @@ class SessionService(object):
             s.incr_hits()
         return s
 
-    #: One day old sessions get cleaned up.
-    SESSION_CLEANUP_AGE = 60 * 60 * 24
+    #: All sessions get cleaned up
+    SESSION_CLEANUP_AGE = 0
 
     def _cleanup_sessions(self, sessions):
         """
         Cleanup and notify the given sessions; we only clean up (live or dead)
         sessions if they're a certain age old.
         """
-        # We only want to purge day old sessions to hopefully avoid contention
-        # if the system gets in a bad state (rapid client socket requests,
-        # dataserver swapping, etc). If two conflicting requests are cleaning
-        # up the same sessions, conflicts should be much easier to resolve.
-        one_day_ago = time.time() - self.SESSION_CLEANUP_AGE
+        now = time.time() - self.SESSION_CLEANUP_AGE
         sessions_to_cleanup = []
         for session in sessions:
-            if session.creation_time < one_day_ago:
+            if session.creation_time < now:
                 logger.info('Cleaning up session (%s) (%s)',
                             session.owner, session.session_id)
                 self._session_cleanup(session, send_event=False)
