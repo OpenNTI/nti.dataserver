@@ -202,7 +202,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 		# TODO: Note that our plain-textification is screwing up at paragraph boundaries.
 		assert_that( res.body, contains_string( 'part is HTML</p><p>And spreads across paragraphs.</p><br />'
 												"<div class='canvas'>&lt;CANVAS OBJECT of length 0&gt;") )
-	
+
 	@WithSharedApplicationMockDS
 	def test_flag_moderation_chat_message(self):
 		#"Test moderation of a chat message"
@@ -244,7 +244,6 @@ class TestApplicationFlagging(ApplicationLayerTest):
 		path = UQ( path )
 		testapp.post( path + b'/@@flag', '', extra_environ=self._make_extra_environ() )
 
-
 		# Fetch the page
 		path = b'/dataserver2/@@moderation_admin'
 
@@ -253,7 +252,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, contains_string( 'The first part' ) )
-		assert_that( res.body, contains_string( '12/3/12 12:06 PM' ) )
+		assert_that( res.body, contains_string( '12/3/12 6:06 PM' ) )
 
 		form = res.form
 		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
@@ -263,7 +262,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
-		assert_that( res.body, does_not( contains_string( '12/3/12 12:06 PM' ) ) )
+		assert_that( res.body, does_not( contains_string( '12/3/12 6:06 PM' ) ) )
 
 		with mock_dataserver.mock_db_trans( self.ds ) as conn:
 			msg_info = conn.get( msg_info._p_oid )
