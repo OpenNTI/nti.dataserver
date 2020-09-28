@@ -213,19 +213,19 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
             sessions = []
             recur_limit = sys.getrecursionlimit()
             # The length needs to be pretty big to ensure recursion fails
-            two_days_ago = time.time() - 60 * 60 * 24 * 2
+            too_old = 130
             for val in range(recur_limit * 2):
-                session = self.session_service.create_session( watch_session=False, drop_old_sessions=False )
+                session = self.session_service.create_session(watch_session=False,
+                                                              drop_old_sessions=False)
                 if val % 2 == 0:
-                    # Make every other value a day+ old, so it gets cleaned up.
-                    session.creation_time -= two_days_ago
-                sessions.append( session )
+                    session.creation_time -= too_old
+                sessions.append(session)
                 session.incr_hits()
 
             # Only half are alive now.
-            assert_that( self.session_service.get_sessions_by_owner( session.owner ),
-                     has_length( len( sessions ) / 2 ) )
-            assert_that( called[0], is_( len( sessions ) / 2 ) )
+            assert_that(self.session_service.get_sessions_by_owner(session.owner),
+                        has_length(len(sessions) / 2))
+            assert_that(called[0], is_(len(sessions) / 2))
 
             # Now kill the rest of them, silently
             for session in sessions:
