@@ -55,6 +55,7 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.socketio.interfaces import ISocketSession
 from nti.socketio.interfaces import ISocketIOSocket
+from nti.socketio.interfaces import ISocketSessionSettings
 from nti.socketio.interfaces import ISocketSessionConnectedEvent
 from nti.socketio.interfaces import ISocketSessionDisconnectedEvent
 
@@ -292,10 +293,18 @@ class SessionService(object):
             result._v_session_service = self
         return result
 
-    #: Sessions without a heartbeat for 2 minutes get cleaned up.
-    SESSION_HEARTBEAT_TIMEOUT = 60 * 2
+    @Lazy
+    def session_heartbeat_timeout(self):
+        """
+        Sessions without a heartbeat for 2 minutes get cleaned up.
+        """
+        settings = component.queryUtility(ISocketSessionSettings)
+        result = getattr(settings, 'SessionServerHeartbeatTimeout', 60 * 2)
+        return result
 
-    def _is_session_dead(self, session, max_age=SESSION_HEARTBEAT_TIMEOUT):
+    def _is_session_dead(self, session, max_age=None):
+        if max_age is None:
+            max_age = self.session_heartbeat_timeout
         too_old = time.time() - max_age
         last_heartbeat_time = self.get_last_heartbeat_time(session.session_id,
                                                            session)
@@ -333,15 +342,21 @@ class SessionService(object):
             s.incr_hits()
         return s
 
-    #: All sessions get cleaned up
-    SESSION_CLEANUP_AGE = 0
+    @Lazy
+    def session_cleanup_age(self):
+        """
+        The age at which inactive sessions will be cleaned up.
+        """
+        settings = component.queryUtility(ISocketSessionSettings)
+        result = getattr(settings, 'SessionServerHeartbeatTimeout', 0)
+        return result
 
     def _cleanup_sessions(self, sessions):
         """
         Cleanup and notify the given sessions; we only clean up (live or dead)
         sessions if they're a certain age old.
         """
-        now = time.time() - self.SESSION_CLEANUP_AGE
+        now = time.time() - self.session_cleanup_age
         sessions_to_cleanup = []
         for session in sessions:
             if session.creation_time < now:
@@ -483,7 +498,7 @@ class SessionService(object):
 
     def _put_msg_to_redis(self, queue_name, msg):
         self._redis.pipeline().rpush(queue_name, msg).expire(
-            queue_name, self.SESSION_HEARTBEAT_TIMEOUT * 2).execute()
+            queue_name, self.session_heartbeat_timeout * 2).execute()
 
     def _publish_msg_to_redis(self, channel_name, msg):
         self._redis.publish(channel_name, msg)  # No need to pipeline
@@ -608,7 +623,7 @@ class SessionService(object):
         key_name = self._heartbeat_key(session_id)
         self._redis.pipeline() \
                    .set(key_name, heartbeat_time or time.time()) \
-                   .expire(key_name, self.SESSION_HEARTBEAT_TIMEOUT * 2) \
+                   .expire(key_name, self.session_heartbeat_timeout * 2) \
                    .execute()
 
     def get_last_heartbeat_time(self, session_id, session=None):

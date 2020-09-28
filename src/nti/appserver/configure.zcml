@@ -305,6 +305,9 @@
 		<implements interface="nti.app.renderers.interfaces.IUnModifiedInResponse" />
 	</class>
 
+	<!-- Socket settings -->
+	<utility factory=".socket_settings.SocketSessionSettings" />
+
 	<!-- Forking events -->
 	<!--
 	 Note that if we are not preloading the app, then this doesn't

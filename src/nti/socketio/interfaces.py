@@ -383,3 +383,29 @@ class SocketEventHandlerClientError(StandardError):
     """
     Default convenience implementation of :class:`ISocketEventHandlerClientError`.
     """
+
+
+class ISocketSessionSettings(interface.Interface):
+    """
+    A configuration object to return socket session settings.
+    """
+
+    SessionCleanupAge = Int(title=u"Session cleanup age",
+                            description=u"How old inactive sessions have to be before they are removed",
+                            default=0,
+                            required=False)
+
+    SessionPingFrequency = Int(title=u"Session ping frequency",
+                               description=u"How often the server pings the client",
+                               default=5,
+                               required=False)
+
+    SessionServerHeartbeatUpdateFrequency = Int(title=u"Session heartbeat frequency update",
+                                                description=u"How often the server updates session state when pinged",
+                                                default=60,
+                                                required=False)
+
+    SessionServerHeartbeatTimeout = Int(title=u"Server heartbeat timeout",
+                                        description=u"How long a client is silent (no pings) before we consider them inactive",
+                                        default=120,
+                                        required=False)
