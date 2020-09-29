@@ -15,6 +15,8 @@ import socket
 from zope import component
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
 from ZODB.loglevels import TRACE
 
 import pyramid.interfaces
@@ -23,9 +25,12 @@ import transaction.interfaces
 import geventwebsocket.exceptions
 
 from nti.dataserver.interfaces import IDataserver
+
 from nti.dataserver.sessions import SessionService
 
 from nti.socketio import interfaces
+
+from nti.socketio.interfaces import ISocketSessionSettings
 
 from ._base import sleep
 from ._base import Greenlet
@@ -114,11 +119,18 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 
 class _WebSocketReader(_AbstractWebSocketOperator):
 	message = None
-	HEARTBEAT_LIFETIME = SessionService.SESSION_HEARTBEAT_TIMEOUT // 2
 
 	# Cache of some stuff from the session
 	last_heartbeat_time = 0
 	connected = False
+
+	@Lazy
+	def heartbeat_update_time(self):
+		settings = component.queryUtility(ISocketSessionSettings)
+		result = getattr(settings, 'SessionServerHeartbeatUpdateFrequency', None)
+		if result is None:
+			result = SessionService.session_heartbeat_timeout // 2
+		return result
 
 	def _do_read(self):
 		session = self.get_session()
@@ -159,7 +171,7 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 				# pings every 5s.
 				if 	  self.message == b"2::" \
 				  and self.connected \
-				  and self.last_heartbeat_time >= (time.time() - self.HEARTBEAT_LIFETIME):
+				  and self.last_heartbeat_time >= (time.time() - self.heartbeat_update_time):
 					continue
 
 				if not self.run_loop:
@@ -179,11 +191,14 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 
 class _WebSocketPinger(_AbstractWebSocketOperator):
 
-	def __init__( self, *args, **kwargs ):
+	def __init__(self, ping_sleep=None, *args):
 		super(_WebSocketPinger,self).__init__(*args)
 		# Client timeout is currently 60s - this will keep
 		# the client from reconnecting.
-		self.ping_sleep = kwargs.get('ping_sleep', 5.0)
+		if ping_sleep is None:
+			settings = component.queryUtility(ISocketSessionSettings)
+			ping_sleep = getattr(settings, 'SessionPingFrequency', 5.0)
+		self.ping_sleep = ping_sleep
 
 	def _do_ping( self ):
 		try:
@@ -226,7 +241,7 @@ class WebsocketTransport(BaseTransport):
 		super(WebsocketTransport,self).__init__(request)
 
 
-	def connect(self, session, request_method, ping_sleep=30.0 ):
+	def connect(self, session, request_method, ping_sleep=None):
 		websocket = self.request.environ['wsgi.websocket']
 		websocket.send( session.socket.protocol.make_connect() )
 		self.websocket = websocket
