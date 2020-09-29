@@ -172,7 +172,7 @@ class TestContentFolderViews(ApplicationLayerTest):
                                 'Files', 4))
         assert_that(res.json_body,
                     has_entry('Items',
-                              is_([{'bleach': ['rukia.txt', 'zaraki.txt']}, 
+                              is_([{'bleach': ['rukia.txt', 'zaraki.txt']},
                                    'aizen.txt', 'ichigo.txt'])))
 
     @WithSharedApplicationMockDS(users=True, testapp=True)
@@ -261,8 +261,8 @@ class TestContentFolderViews(ApplicationLayerTest):
         res = self.testapp.get('/dataserver2/ofs/root/aizen', status=200)
         assert_that(res.json_body, has_entry('path', '/aizen'))
 
-        self.testapp.post_json('/dataserver2/ofs/root/@@rename', 
-                               {'name': 'xxx'}, 
+        self.testapp.post_json('/dataserver2/ofs/root/@@rename',
+                               {'name': 'xxx'},
                                status=403)
 
     @WithSharedApplicationMockDS(users=True, testapp=True)
@@ -377,7 +377,7 @@ class TestContentFolderViews(ApplicationLayerTest):
         self.testapp.post('/dataserver2/ofs/root/@@upload',
                           upload_files=[('ichigo.txt', 'ichigo.txt', b'ichigo')],
                           status=422)
-        
+
         constraints.max_file_size = 100
         self.testapp.post('/dataserver2/ofs/root/@@upload',
                           upload_files=[('ichigo.txt', 'ichigo.txt', b'ichigo')],

@@ -191,10 +191,11 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 
 class _WebSocketPinger(_AbstractWebSocketOperator):
 
-	def __init__(self, ping_sleep=None, *args):
+	def __init__(self, *args, **kwargs):
 		super(_WebSocketPinger,self).__init__(*args)
 		# Client timeout is currently 60s - this will keep
 		# the client from reconnecting.
+		ping_sleep = kwargs.get('ping_sleep', None)
 		if ping_sleep is None:
 			settings = component.queryUtility(ISocketSessionSettings)
 			ping_sleep = getattr(settings, 'SessionPingFrequency', 5.0)
