@@ -32,19 +32,19 @@ class SocketSessionSettings(object):
     @Lazy
     def SessionCleanupAge(self):
         result = self._settings.get('session_cleanup_age')
-        return asint(result)
+        return asint(result) if result is not None else result
 
     @Lazy
     def SessionPingFrequency(self):
         result = self._settings.get('session_ping_frequency')
-        return asint(result)
+        return asint(result) if result is not None else result
 
     @Lazy
     def SessionServerHeartbeatUpdateFrequency(self):
         result = self._settings.get('session_reader_heartbeat_update_frequency')
-        return asint(result)
+        return asint(result) if result is not None else result
 
     @Lazy
     def SessionServerHeartbeatTimeout(self):
         result = self._settings.get('session_server_heartbeat_timeout')
-        return asint(result)
+        return asint(result) if result is not None else result

@@ -199,6 +199,8 @@ class _WebSocketPinger(_AbstractWebSocketOperator):
 		if ping_sleep is None:
 			settings = component.queryUtility(ISocketSessionSettings)
 			ping_sleep = getattr(settings, 'SessionPingFrequency', 5.0)
+			if ping_sleep is None:
+				ping_sleep = 5.0
 		self.ping_sleep = ping_sleep
 
 	def _do_ping( self ):

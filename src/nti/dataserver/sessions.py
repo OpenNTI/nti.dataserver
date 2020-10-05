@@ -300,6 +300,8 @@ class SessionService(object):
         """
         settings = component.queryUtility(ISocketSessionSettings)
         result = getattr(settings, 'SessionServerHeartbeatTimeout', 60 * 2)
+        if result is None:
+            result = 60 * 2
         return result
 
     def _is_session_dead(self, session, max_age=None):
@@ -349,6 +351,8 @@ class SessionService(object):
         """
         settings = component.queryUtility(ISocketSessionSettings)
         result = getattr(settings, 'SessionServerHeartbeatTimeout', 0)
+        if result is None:
+            result = 0
         return result
 
     def _cleanup_sessions(self, sessions):
