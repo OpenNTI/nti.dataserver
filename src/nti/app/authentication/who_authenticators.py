@@ -46,10 +46,12 @@ JWT_ALGS = ['HS256']
 class DataserverGlobalUsersAuthenticatorPlugin(object):
 
     def authenticate(self, environ, identity):
-        plugin = component.getUtility(IAuthenticatorPlugin,
+        try:
+            plugin = component.getUtility(IAuthenticatorPlugin,
                                           name="Dataserver Global User Authenticator")
-        result = plugin.authenticateCredentials(identity).id
-        return result
+            return plugin.authenticateCredentials(identity).id
+        except (KeyError, AttributeError, LookupError):  # pragma: no cover
+            return None
 #         # Must copy since this gets modified. Do so safely to avoid exposing
 #         # credentials in logs.
 #         identity_copy = Identity(identity)
