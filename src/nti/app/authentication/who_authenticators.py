@@ -46,24 +46,28 @@ JWT_ALGS = ['HS256']
 class DataserverGlobalUsersAuthenticatorPlugin(object):
 
     def authenticate(self, environ, identity):
-        # Must copy since this gets modified. Do so safely to avoid exposing
-        # credentials in logs.
-        identity_copy = Identity(identity)
-        # Cache this since we may end up checking duplicate identities.
-        state = environ.setdefault('nti._dsglobal_auth_plugin_state', [])
-        for prev_identity, result in state:
-            # identity is not hashable, but can be tested for equality
-            if prev_identity == identity_copy:
-                return result
-        try:
-            plugin = component.getUtility(IAuthenticatorPlugin,
+        plugin = component.getUtility(IAuthenticatorPlugin,
                                           name="Dataserver Global User Authenticator")
-            result = plugin.authenticateCredentials(identity).id
-            state.append((identity_copy, result))
-            return result
-        except (KeyError, AttributeError, LookupError):  # pragma: no cover
-            state.append((identity_copy, None))
-            return None
+        result = plugin.authenticateCredentials(identity).id
+        return result
+#         # Must copy since this gets modified. Do so safely to avoid exposing
+#         # credentials in logs.
+#         identity_copy = Identity(identity)
+#         # Cache this since we may end up checking duplicate identities.
+#         state = environ.setdefault('nti._dsglobal_auth_plugin_state', [])
+#         for prev_identity, result in state:
+#             # identity is not hashable, but can be tested for equality
+#             if prev_identity == identity_copy:
+#                 return result
+#         try:
+#             plugin = component.getUtility(IAuthenticatorPlugin,
+#                                           name="Dataserver Global User Authenticator")
+#             result = plugin.authenticateCredentials(identity).id
+#             state.append((identity_copy, result))
+#             return result
+#         except (KeyError, AttributeError, LookupError):  # pragma: no cover
+#             state.append((identity_copy, None))
+#             return None
 
 
 @interface.implementer(IAuthenticator)
