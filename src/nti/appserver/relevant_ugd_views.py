@@ -32,6 +32,8 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
 
@@ -56,8 +58,8 @@ class _AbstractRelevantUGDView(object):
             the_filter = self.FILTER_NAMES[filter_name]
             if isinstance(the_filter, tuple):
                 the_filter = the_filter[0](self.request)
-            predicate = _combine_predicate(the_filter, 
-										   predicate, 
+            predicate = _combine_predicate(the_filter,
+										   predicate,
 										   operator=operator)
 
         # things shared w/ me and are top level
@@ -67,8 +69,8 @@ class _AbstractRelevantUGDView(object):
             x_sharedWith = getattr(x, 'sharedWith', ())
             if self.user.username in x_sharedWith and top_level(x):
                 return True
-        predicate = _combine_predicate(filter_shared_with, 
-									   predicate, 
+        predicate = _combine_predicate(filter_shared_with,
+									   predicate,
 									   operator=operator)
         return predicate
 
@@ -94,6 +96,14 @@ class _AbstractRelevantUGDView(object):
         contained_objects = self.get_contained(container_ntiid)
         contained_ntiids = set((x.ntiid for x in contained_objects))
         contained_ntiids.add(container_ntiid)
+
+        # We may want to get objects not contained by our context,
+        # but visible by out context.
+        obj = find_object_with_ntiid(container_ntiid)
+        try:
+            contained_ntiids.update(x.ntiid for x in obj)
+        except (TypeError, AttributeError):
+            pass
 
         results = []
         for ntiid in contained_ntiids:
