@@ -102,7 +102,7 @@ class _AbstractRelevantUGDView(object):
         obj = find_object_with_ntiid(container_ntiid)
         try:
             contained_ntiids.update(x.ntiid for x in obj)
-        except (TypeError, AttributeError):
+        except (TypeError, AttributeError, KeyError):
             pass
 
         results = []
