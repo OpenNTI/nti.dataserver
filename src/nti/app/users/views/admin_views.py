@@ -12,6 +12,8 @@ from collections import defaultdict
 
 from datetime import datetime
 
+import csv
+import six
 import isodate
 
 from pyramid import httpexceptions as hexc
@@ -20,8 +22,6 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from requests.structures import CaseInsensitiveDict
-
-import six
 
 from six import string_types
 
@@ -43,6 +43,7 @@ from zope.intid.interfaces import IIntIds
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
+from nti.app.base.abstract_views import get_source
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error
@@ -54,6 +55,7 @@ from nti.app.users import MessageFactory as _
 from nti.app.users import VIEW_USER_UPSERT
 from nti.app.users import VIEW_GRANT_USER_ACCESS
 from nti.app.users import VIEW_RESTRICT_USER_ACCESS
+from nti.app.users import VIEW_LINK_EXTERNAL_IDS_CSV
 
 from nti.app.users.utils import get_site_community
 from nti.app.users.utils import get_members_by_site
@@ -83,6 +85,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IUsersFolder
 from nti.dataserver.interfaces import ISiteCommunity
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
@@ -100,6 +103,7 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.users.utils import get_users_by_site
 from nti.dataserver.users.utils import reindex_email_verification
+from nti.dataserver.users.utils import get_users_by_email_in_sites
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -107,6 +111,7 @@ from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
+from nti.identifiers.utils import get_external_identifiers
 from nti.identifiers.utils import get_user_for_external_id
 
 from nti.ntiids.ntiids import ROOT
@@ -732,6 +737,18 @@ class RemoveGhostContainersView(GetGhostContainersView,
         return result
 
 
+def _set_external_id(user, external_type, external_id):
+    identity_container = IUserExternalIdentityContainer(user)
+    # pylint: disable=too-many-function-args
+    identity_container.add_external_mapping(external_type,
+                                            external_id)
+    notify(ObjectModifiedFromExternalEvent(user))
+    logger.info("Linking user to external id (%s) (external_type=%s) (external_id=%s)",
+                user.username,
+                external_type,
+                external_id)
+
+
 @view_config(name='LinkUserExternalIdentity')
 @view_defaults(route_name='objects.generic.traversal',
                renderer='rest',
@@ -765,17 +782,143 @@ class LinkUserExternalIdentityView(AbstractUpdateView):
             raise_http_error(self.request,
                              _(u"Multiple users mapped to this external identity."),
                              u'DuplicateUserExternalIdentityError')
-
-        identity_container = IUserExternalIdentityContainer(self.context)
-        # pylint: disable=too-many-function-args
-        identity_container.add_external_mapping(self._external_type,
-                                                self._external_id)
-        notify(ObjectModifiedFromExternalEvent(self.context))
-        logger.info("Linking user to external id (%s) (external_type=%s) (external_id=%s)",
-                    self.context.username,
-                    self._external_type,
-                    self._external_id)
+        _set_external_id(self.context, self._external_type, self._external_id)
         return self.context
+
+
+@view_config(route_name='objects.generic.traversal',
+             name=VIEW_LINK_EXTERNAL_IDS_CSV,
+             renderer='rest',
+             request_method='POST',
+             context=IUsersFolder,
+             permission=nauth.ACT_NTI_ADMIN)
+class LinkUserExternalIdentityCSVView(AbstractAuthenticatedView,
+                                      ModeledContentUploadRequestUtilsMixin):
+    """
+    A view to upload a CSV or username/email, external_type, external_id for a
+    set of users in a site.
+
+    For any ambiguous matches or users not found, we'll skip and return that
+    info to the end user in an `Issues` entry.
+
+    We could also have users already tied to an external_id; we currently log it
+    and do not update any info.
+
+    We may have a different external_id for a user. In that case, we log and update
+    the id for the user.
+    """
+
+    def _get_row_val(self, row, key):
+        result = row.get(key)
+        result = result.strip() if result else result
+        return result
+
+    def process_file(self, csv_reader):
+        issues = []
+        processed = []
+        for row in csv_reader:
+            email = ''
+            if 'username' in row:
+                username = self._get_row_val(row, 'username')
+                user = User.get_user(username)
+                if user is None:
+                    issues.append({'username': username,
+                                   'issue': u'Cannot find user'})
+                    continue
+            else:
+                email = self._get_row_val(row, 'email')
+                found_users = get_users_by_email_in_sites(email)
+                if len(found_users) > 1:
+                    usernames = ','.join(x.username for x in found_users)
+                    issues.append({'email': email,
+                                   'usernames': usernames,
+                                   'issue': u'Multiple users found for email'})
+                    continue
+                elif not found_users:
+                    issues.append({'email': email,
+                                   'issue': u'Cannot find user'})
+                    continue
+                user = found_users[0]
+
+            external_type = self._get_row_val(row, 'external_type')
+            external_id = self._get_row_val(row, 'external_id')
+            found_user = get_user_for_external_id(external_type, external_id)
+            # We may have a user already tied to the id.
+            if found_user is not None and found_user != user:
+                # TODO: param flag to force update; do we remove found
+                # user's id then?
+                logger.info('User already tied to external id (%s) (%s) (%s/%s)',
+                            found_user.username,
+                            user.username,
+                            external_type,
+                            external_id)
+                issues.append({'username': user.username,
+                               'email': email,
+                               'external_type': external_type,
+                               'external_id': external_id,
+                               'found_user': found_user.username,
+                               'issue': u'User already tied to external id'})
+                continue
+            # We may be changing ids for a user.
+            user_external_identifiers = get_external_identifiers(user)
+            old_external_id = user_external_identifiers.get(external_type)
+            if old_external_id != external_id:
+                logger.info("Changing external identifier for user (%s) (%s) (old=%s) (new=%s)",
+                            user.username,
+                            external_type,
+                            old_external_id,
+                            external_id)
+            _set_external_id(user, external_type, external_id)
+            processed.append({'username': user.username,
+                              'email': email,
+                              'external_type': external_type,
+                              'external_id': external_id})
+        return processed, issues
+
+    def __call__(self):
+        result = LocatedExternalDict()
+        source = get_source(self.request, 'csv', 'users', 'source')
+        if source is None:
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    'message': _(u'Could not parse csv file.'),
+                    'code': 'InvalidCSVFileCodeError',
+                },
+                None)
+        try:
+            csv_input = source.read()
+            # Read in and split (to handle universal newlines).
+            # XXX: Generalize this?
+            reader = csv.DictReader(csv_input.splitlines())
+        except:
+            logger.exception('Failed to parse csv file')
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    'message': _(u'Could not parse csv file.'),
+                    'code': 'InvalidCSVFileCodeError',
+                },
+                None)
+        fieldnames = reader.fieldnames
+        if      ('username' not in fieldnames and 'email' not in fieldnames) \
+            or 'external_type' not in fieldnames \
+            or 'external_id' not in fieldnames:
+            raise_json_error(
+                self.request,
+                hexc.HTTPUnprocessableEntity,
+                {
+                    'message': _(u'Invalid csv headers: Please include email, external_type, external_id'),
+                    'code': 'InvalidCSVHeadersError',
+                },
+                None)
+
+        processed, issues = self.process_file(reader)
+        result[ITEMS] = processed
+        result['Issues'] = issues
+        return result
 
 
 @view_config(route_name='objects.generic.traversal',

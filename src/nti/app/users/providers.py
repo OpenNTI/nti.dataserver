@@ -5,6 +5,8 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
+from nti.app.users import VIEW_LINK_EXTERNAL_IDS_CSV
+
 from nti.appserver.workspaces.interfaces import IUserWorkspaceLinkProvider
 from nti.appserver.workspaces.interfaces import IGlobalWorkspaceLinkProvider
 
@@ -34,6 +36,11 @@ class _SiteUsersLinkProvider(object):
             users_folder = find_interface(self.user, IUsersFolder)
             lnk = Link(users_folder, rel='SiteUsers', method='GET',
                        elements=('@@SiteUsers',))
+            result.append(lnk)
+            lnk = Link(users_folder,
+                       rel=VIEW_LINK_EXTERNAL_IDS_CSV,
+                       method='POSTs',
+                       elements=('@@%s' % VIEW_LINK_EXTERNAL_IDS_CSV,))
             result.append(lnk)
         return result
 
