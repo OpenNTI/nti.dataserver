@@ -130,7 +130,7 @@ class DataserverJWTAuthenticator(object):
             return
         try:
             # This will validate the payload, including the
-            # expiration date. We course also whitelist the issuer here.
+            # expiration date. We could also whitelist the issuer here.
             auth = decode(jwt_token, self.secret,
                           issuer=self.issuer, algorithms=JWT_ALGS)
         except InvalidTokenError:

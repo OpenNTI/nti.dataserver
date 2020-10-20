@@ -12,11 +12,13 @@ from hamcrest import none
 from hamcrest import is_in
 from hamcrest import is_not
 from hamcrest import has_item
+from hamcrest import has_items
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
+from hamcrest import contains_string
 from hamcrest import contains_inanyorder
 does_not = is_not
 
@@ -42,6 +44,7 @@ from zope.schema.fieldproperty import createFieldProperties
 from nti.app.users import VIEW_USER_UPSERT
 from nti.app.users import VIEW_GRANT_USER_ACCESS
 from nti.app.users import VIEW_RESTRICT_USER_ACCESS
+from nti.app.users import VIEW_LINK_EXTERNAL_IDS_CSV
 
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import get_user_creation_sitename
@@ -81,6 +84,8 @@ from nti.dataserver.users.users import User
 from nti.dataserver.users.utils import is_email_verified
 
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
 from nti.identifiers.utils import get_user_for_external_id
 
@@ -350,19 +355,22 @@ class TestAdminViews(ApplicationLayerTest):
         self.testapp.extra_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
         global_workspace = self._get_workspace(u'Global')
         catalog_workspace = self._get_workspace(u'Catalog')
+        user_workspace = self._get_workspace(self.default_username.lower())
         username = u'ed_brubaker'
         username2 = u'ed_brubaker_duplicate'
         external_type = u'employee id'
         external_id = u'1112345'
         with mock_dataserver.mock_db_trans(self.ds):
             user = self._create_user(username)
-            self._create_user(username2)
+            user2 = self._create_user(username2)
             catalog = get_entity_catalog()
             intids = component.getUtility(IIntIds)
             doc_id = intids.getId(user)
             catalog.index_doc(doc_id, user)
             user_ntiid = to_external_ntiid_oid(user)
             invalid_access_ntiid = to_external_ntiid_oid(user.__parent__)
+            set_user_creation_site(user, 'alpha.nextthought.com')
+            set_user_creation_site(user2, 'alpha.nextthought.com')
 
         # Resolve user can get via external identity
         self.testapp.get('/dataserver2/ResolveUser', status=404)
@@ -397,6 +405,7 @@ class TestAdminViews(ApplicationLayerTest):
                                extra_environ=environ)
 
         user1_environ = self._make_extra_environ(user=username)
+        user1_environ['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
 
         user_update_href = self.require_link_href_with_rel(global_workspace,
                                                            VIEW_USER_UPSERT)
@@ -406,6 +415,9 @@ class TestAdminViews(ApplicationLayerTest):
 
         remove_access_href = self.require_link_href_with_rel(catalog_workspace,
                                                              VIEW_RESTRICT_USER_ACCESS)
+
+        link_external_ids_csv_href = self.require_link_href_with_rel(user_workspace,
+                                                                     VIEW_LINK_EXTERNAL_IDS_CSV)
 
         # Empty update succeeds
         user_update_href_username = '%s?username=%s' % (user_update_href, username)
@@ -542,8 +554,13 @@ class TestAdminViews(ApplicationLayerTest):
                                extra_environ=alpha_environ)
         with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
             user = get_user_for_external_id(new_external_type, new_external_id)
+            created_username2 = user.username
             profile = ICompleteUserProfile(user)
             assert_that(profile, validly_provides(IFakeUserProfile))
+            # Must reset this to alpha or we'll err.
+            user2 = User.get_user(username2)
+            container = IUserExternalIdentityContainer(user2)
+            container.site_name = u'alpha.nextthought.com'
 
         # Profile in mathcounts env is unaffected
         new_first = u'Default'
@@ -560,7 +577,122 @@ class TestAdminViews(ApplicationLayerTest):
                                u'test_field': u'This is a test field.'},
                                extra_environ=environ)
 
-        with mock_dataserver.mock_db_trans(self.ds):
+        # CSV link of external ids
+        # Invalid headers
+        bad_source1 = [u'bad_id,external_type,external_id',]
+        bad_source2 = [u'email,missing_external_type,external_id',]
+        bad_source3 = [u'usernames,external_type,missing_external_id',]
+        for source in (bad_source1, bad_source2, bad_source3):
+            base_source_str = str(u'\n'.join(source))
+            self.testapp.post(link_external_ids_csv_href,
+                              upload_files=[('csv', 'link_external_ids.csv', base_source_str)],
+                              status=422)
+
+        # Current state
+#         username = u'ed_brubaker'
+#         external_type = u'employee id'
+#         external_id = u'1112345'
+#         new_email = u'new_email@gmail.com'
+#
+#         new_email = u'parish@gmail.com'
+#         created_username
+#         new_external_id = '99999'
+#         new_external_type = 'employee id'
+#
+#         new_email = u'alpha@gmail.com'
+#         created_username2
+#         new_external_id = '88888'
+#         new_external_type = 'employee id'
+#
+#         # MC users
+#         username2 = u'ed_brubaker_duplicate'
+#         external_type = u'employee id'
+#         external_id = u'1112345'
+#         new_email = u'default@gmail.com'
+#         new_external_id = '77777'
+#         new_external_type = 'employee id'
+
+        # Can change a single users mapping further down
+        # Can re-use another users ids later in file too
+        # Can match ids of user in another site (new_external_type/new_external_id)
+        usernames_source = [u'username,external_type,external_id',
+                            '%s,%s,%s' % (username, external_type, external_id),
+                            '%s,%s,%s' % (username, external_type, ' new id 1'),
+                            '%s,%s,%s' % ('usernamenotfound', external_type, ' new id 1'),
+                            '%s,%s,%s' % (username2, external_type, ' new id 1'),
+                            '%s,%s,%s' % (username2, external_type, external_id),
+                            '%s,%s,%s' % (created_username, new_external_type, new_external_id)]
+        # u'default@gmail.com' will not be found (mathcounts)
+        emails_source = [u'email,external_type,external_id',
+                         u'missing_email@gmail.com,%s,%s' % (external_type, external_id),
+                         u'parish@gmail.com,%s,%s' % (external_type, ' new id 1'),
+                         u'default@gmail.com,%s,%s' % (external_type, ' new id 1'),
+                         u'alpha@gmail.com,%s,%s' % (external_type, ' new id 1'),
+                         u'alpha@gmail.com,%s,%s' % (external_type, 'new alpha id'),
+                         u'parish@gmail.com,%s,%s' % (new_external_type, new_external_id)]
+        usernames_source = str(u'\n'.join(usernames_source))
+        emails_source = str(u'\n'.join(emails_source))
+
+        self.testapp.post(link_external_ids_csv_href,
+                          upload_files=[('csv', 'link_external_ids.csv', usernames_source)],
+                          extra_environ=user2_environ,
+                          status=403)
+        res = self.testapp.post(link_external_ids_csv_href,
+                                upload_files=[('csv', 'link_external_ids.csv', usernames_source)])
+        res = res.json_body
+        assert_that(res['Issues'], has_items(has_entries('username', 'usernamenotfound',
+                                                         'issue', 'Cannot find user'),
+                                             has_entries('username', username2,
+                                                         'issue', 'User already tied to external id',
+                                                         'found_user', username,
+                                                         'external_id', 'new id 1',
+                                                         'external_type', external_type)))
+        assert_that(res['Items'], has_items(has_entries('username', username,
+                                                        'external_id', 'new id 1',
+                                                        'external_type', external_type),
+                                            has_entries('username', created_username,
+                                                        'external_id', new_external_id,
+                                                        'external_type', new_external_type),
+                                            has_entries('username', username2,
+                                                        'external_id', external_id,
+                                                        'external_type', external_type)))
+        # Now CSV link lookup by emails
+        # A duplicate email for username
+        self.testapp.post_json(user_update_href, {u'external_type': external_type,
+                                                  u'external_id': 'new id 1',
+                                                  u'email': u'parish@gmail.com'})
+        res = self.testapp.post(link_external_ids_csv_href,
+                                upload_files=[('csv', 'link_external_ids.csv', emails_source)])
+        res = res.json_body
+        assert_that(res['Issues'], has_items(has_entries('email', u'missing_email@gmail.com',
+                                                         'issue', 'Cannot find user'),
+                                             has_entries('email', u'default@gmail.com',
+                                                         'issue', 'Cannot find user'),
+                                             has_entries('email', 'alpha@gmail.com',
+                                                         'issue', u'User already tied to external id',
+                                                         u'external_id', u'new id 1',
+                                                         u'external_type', u'employee id',
+                                                         u'found_user', u'ed_brubaker'),
+                                             has_entries('usernames', contains_string('ed_brubaker'),
+                                                         'issue', 'Multiple users found for email',
+                                                         'email', 'parish@gmail.com')))
+        assert_that(res['Items'], has_items(has_entries('username', created_username2,
+                                                        'email', u'alpha@gmail.com',
+                                                        'external_id', 'new alpha id',
+                                                        'external_type', external_type)))
+
+        # Validate external identifiers state
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            user = get_user_for_external_id(new_external_type, 'new alpha id')
+            assert_that(user.username, is_(created_username2))
+            user = get_user_for_external_id(external_type, 'new id 1')
+            assert_that(user.username, is_(username))
+            user = get_user_for_external_id(external_type, external_id)
+            assert_that(user.username, is_(username2))
+            user = get_user_for_external_id(new_external_type, new_external_id)
+            assert_that(user.username, is_(created_username))
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='mathcounts.nextthought.com'):
             user = get_user_for_external_id(new_external_type, new_external_id)
             profile = ICompleteUserProfile(user)
             assert_that(profile, does_not(validly_provides(IFakeUserProfile)))
