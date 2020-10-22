@@ -129,7 +129,7 @@ class _WebSocketReader(_AbstractWebSocketOperator):
 		settings = component.queryUtility(ISocketSessionSettings)
 		result = getattr(settings, 'SessionServerHeartbeatUpdateFrequency', None)
 		if result is None:
-			result = SessionService.session_heartbeat_timeout // 2
+			result = self.session_service.session_heartbeat_timeout // 2
 		return result
 
 	def _do_read(self):
