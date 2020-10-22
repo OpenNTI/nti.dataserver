@@ -144,7 +144,6 @@ class TestWebSocket(ConfiguringTestBase):
 
 		reader = _WebSocketReader( 1, proxy, service, (), socket )
 
-
 		reader._run()
 		assert_that( session, has_property( 'killed', True ) )
 		assert_that( reader, has_property( 'run_loop', False ) )
