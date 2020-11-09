@@ -65,8 +65,9 @@ class TestUnsubscribe(ApplicationLayerTest):
 			user = User.get_user( self.default_username )
 			unsub_url = generate_unsubscribe_url( user )
 		unsubscribeResult = self.testapp.get( unsub_url )
-		
+
 		assert_that(unsubscribeResult.body, contains_string('html'))
+		assert_that(unsubscribeResult.body, contains_string('alt="NextThought"'))
 		assert_that(unsubscribeResult.body, contains_string('You have been unsubscribed.'))
 
 		# Our pref is now false.

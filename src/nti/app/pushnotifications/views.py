@@ -21,6 +21,10 @@ from pyramid import httpexceptions as hexc
 
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
+from zope.component.hooks import getSite
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.pushnotifications import MessageFactory as _
@@ -31,11 +35,11 @@ from nti.app.pushnotifications.utils import validate_signature
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
-from nti.appserver.policies.site_policies import guess_site_display_name
-
 from nti.dataserver.authorization import ACT_READ
 
 from nti.dataserver.interfaces import IDataserverFolder
+
+from nti.dataserver.users.interfaces import IDisplayNameAdapter
 
 from nti.dataserver.users.users import User
 
@@ -78,6 +82,11 @@ class UnsubscribeWithTokenFromEmailSummaryPush( object ):
 
 		return _do_unsubscribe( self.request, user=user )
 
+	@Lazy
+	def _brand_name(self):
+		return component.getMultiAdapter((self.request, getSite()),
+										 IDisplayNameAdapter).displayName
+
 	def __call__(self):
 		request = self.request
 		values = CaseInsensitiveDict(**request.params)
@@ -95,7 +104,8 @@ class UnsubscribeWithTokenFromEmailSummaryPush( object ):
 		template_args = {}
 		template_args['support_email'] = getattr( policy, 'SUPPORT_EMAIL', 'support@nextthought.com' )
 		template_args['error_message'] = None
-		template_args['site_name'] = guess_site_display_name(self.request)
+		template_args['site_name'] = self._brand_name
+		template_args['nti_site_brand_name'] = self._brand_name
 
 		try:
 			self.processUnsubscribe(username, signature, values)

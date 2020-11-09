@@ -182,7 +182,7 @@ class TestSubscribers(ApplicationLayerTest):
 			assert_that(_mockMailer._calls[0][4], is_('.mak'))
 			assert_that(_mockMailer._calls[0][5], has_entries({ 'total_found': 1,
 																'display_name': 'comment_user1',
-																'site_name': 'Example',
+																'site_name': 'NextThought',
 																'notable_text': 'A user has replied to one of your comments.',
 																'email_to': 'comment_user1@example.com (comment_user1)'}))
 
@@ -191,7 +191,7 @@ class TestSubscribers(ApplicationLayerTest):
 			assert_that(_mockMailer._calls[1][2], is_([user4]))
 			assert_that(_mockMailer._calls[1][5], has_entries({ 'total_found': 1,
 																'display_name': 'user4',
-																'site_name': 'Example',
+																'site_name': 'NextThought',
 																'notable_text': 'A user has replied to one of your comments.',
 																'email_to': 'comment_user2@example.com (comment_user2)'}))
 

@@ -7,6 +7,7 @@ from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+import re
 
 from hamcrest import is_
 from hamcrest import has_item
@@ -15,6 +16,7 @@ from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_string
+from hamcrest import matches_regexp
 
 from nti.app.users.utils import generate_mail_verification_pair
 from nti.app.users.utils import get_verification_signature_data
@@ -100,6 +102,10 @@ class TestMailViews(ApplicationLayerTest):
 
         assert_that(result.body, contains_string('html'))
         assert_that(result.body, contains_string('Thank you!'))
+
+        rex = re.compile(u"You will be redirected to.*NextThought.*in.*seconds",
+                         re.DOTALL)
+        assert_that(result.body, matches_regexp(rex))
 
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.get_user(username)
