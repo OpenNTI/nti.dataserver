@@ -53,10 +53,7 @@ from nti.app.pushnotifications.utils import get_top_level_context
 
 from nti.appserver.interfaces import IApplicationSettings
 
-from nti.appserver.brand.utils import get_site_brand_name
-
 from nti.appserver.policies.site_policies import find_site_policy
-from nti.appserver.policies.site_policies import guess_site_display_name
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
@@ -74,6 +71,7 @@ from nti.dataserver.interfaces import IUserDigestEmailMetadata
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 
 from nti.dataserver.users.interfaces import IAvatarURL
+from nti.dataserver.users.interfaces import IDisplayNameAdapter
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.dataserver.users.users import User
@@ -528,6 +526,11 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 						possible_recipient['display_name'] = self._display_name(user)
 						yield possible_recipient
 
+	@Lazy
+	def _site_name(self):
+		return component.getMultiAdapter((self.request, getSite()),
+										 IDisplayNameAdapter).displayName
+
 	def compute_template_args_for_recipient(self, recipient):
 		user = User.get_user(recipient['email'].id, self._dataserver)
 		# XXX If the user disappears, we're screwed.
@@ -545,7 +548,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		since = recipient['since'] or 0
 		when = datetime.datetime.fromtimestamp(since)
 
-		result['site_name'] = guess_site_display_name(self.request)
+		result['site_name'] = self._site_name
 		result['since_when'] = formatter.format(when)
 		result['display_name'] = recipient['display_name']
 
@@ -557,15 +560,9 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		"""
 		Prefer the site brand first, then falling back to a site display name.
 		"""
-		display_name = get_site_brand_name()
-		if display_name:
-			display_name = display_name.strip()
-		else:
-			display_name = guess_site_display_name(self.request)
-
 		subject = _(self._subject,
 					mapping={
-							 'site_name': display_name,
+							 'site_name': self._site_name,
 							 })
 		return translate(subject, context=self.request)
 

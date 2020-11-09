@@ -187,7 +187,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( msg, contains_string('From: %s' % from_addr) )
 		assert_that( msg, contains_string('NOTABLE NOTE'))
 		assert_that( msg, contains_string('shared a note'))
-		assert_that( msg, contains_string("Here's what you may have missed on Localhost since"))
+		assert_that( msg, contains_string("Here's what you may have missed on NextThought since"))
 
 		assert_that( msg, contains_string('NOTABLE BLOG TITLE'))
 		assert_that( msg, contains_string('added you as a contact'))

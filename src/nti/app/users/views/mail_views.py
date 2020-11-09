@@ -25,6 +25,10 @@ from six.moves import urllib_parse
 
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
+from zope.component.hooks import getSite
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.error import raise_json_error as raise_error
@@ -47,8 +51,6 @@ from nti.appserver.interfaces import IApplicationSettings
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
-from nti.appserver.policies.site_policies import guess_site_display_name
-
 from nti.common._compat import sleep
 
 from nti.dataserver import authorization as nauth
@@ -56,6 +58,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserverFolder
 
+from nti.dataserver.users.interfaces import IDisplayNameAdapter
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 
@@ -126,6 +129,11 @@ class VerifyUserEmailView(AbstractAuthenticatedView):
         response.text = result
         return response
 
+    @Lazy
+    def _brand_name(self):
+        return component.getMultiAdapter((self.request, getSite()),
+                                         IDisplayNameAdapter).displayName
+
     def __call__(self):
         request = self.request
         user = self.remoteUser
@@ -159,7 +167,7 @@ class VerifyUserEmailView(AbstractAuthenticatedView):
         template_args['error_message'] = None
         template_args['support_email'] = support_email
         template_args['informal_username'] = informal_username
-        template_args['site_name'] = guess_site_display_name(self.request)
+        template_args['site_name'] = self._brand_name
         template_args['username'] = getattr(user, 'username', '')
 
         try:

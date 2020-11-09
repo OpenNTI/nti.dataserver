@@ -16,6 +16,11 @@
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
+	<!-- Adapters -->
+	<adapter factory=".adapters._SiteNameAdapter"
+			 for="pyramid.interfaces.IRequest zope.component.interfaces.ISite"
+			 provides="nti.dataserver.users.interfaces.IDisplayNameAdapter" />
+
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.ISiteBrand
 		                 .interfaces.ISiteBrandImage
