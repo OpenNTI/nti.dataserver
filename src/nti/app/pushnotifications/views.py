@@ -19,6 +19,8 @@ from pyramid.view import view_config
 
 from pyramid import httpexceptions as hexc
 
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 from zope import component
 
 from zope.cachedescriptors.property import Lazy
@@ -38,8 +40,6 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.dataserver.authorization import ACT_READ
 
 from nti.dataserver.interfaces import IDataserverFolder
-
-from nti.dataserver.users.interfaces import IDisplayNameAdapter
 
 from nti.dataserver.users.users import User
 
@@ -84,8 +84,8 @@ class UnsubscribeWithTokenFromEmailSummaryPush( object ):
 
 	@Lazy
 	def _brand_name(self):
-		return component.getMultiAdapter((self.request, getSite()),
-										 IDisplayNameAdapter).displayName
+		return component.getMultiAdapter((getSite(), self.request),
+										 IDisplayNameGenerator)()
 
 	def __call__(self):
 		request = self.request

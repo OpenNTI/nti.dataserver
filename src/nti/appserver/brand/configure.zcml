@@ -17,9 +17,9 @@
 	<include package="nti.externalization" />
 
 	<!-- Adapters -->
-	<adapter factory=".adapters._SiteNameAdapter"
-			 for="pyramid.interfaces.IRequest zope.component.interfaces.ISite"
-			 provides="nti.dataserver.users.interfaces.IDisplayNameAdapter" />
+	<adapter factory=".adapters._SiteNameGenerator"
+			 for="zope.component.interfaces.ISite pyramid.interfaces.IRequest"
+			 provides="zc.displayname.interfaces.IDisplayNameGenerator" />
 
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.ISiteBrand

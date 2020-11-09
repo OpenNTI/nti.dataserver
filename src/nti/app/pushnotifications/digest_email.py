@@ -71,7 +71,6 @@ from nti.dataserver.interfaces import IUserDigestEmailMetadata
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 
 from nti.dataserver.users.interfaces import IAvatarURL
-from nti.dataserver.users.interfaces import IDisplayNameAdapter
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.dataserver.users.users import User
@@ -528,8 +527,8 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 
 	@Lazy
 	def _site_name(self):
-		return component.getMultiAdapter((self.request, getSite()),
-										 IDisplayNameAdapter).displayName
+		return component.getMultiAdapter((getSite(), self.request),
+										 IDisplayNameGenerator)()
 
 	def compute_template_args_for_recipient(self, recipient):
 		user = User.get_user(recipient['email'].id, self._dataserver)

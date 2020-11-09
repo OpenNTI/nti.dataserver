@@ -23,6 +23,8 @@ from requests.structures import CaseInsensitiveDict
 import six
 from six.moves import urllib_parse
 
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 from zope import component
 
 from zope.cachedescriptors.property import Lazy
@@ -58,7 +60,6 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserverFolder
 
-from nti.dataserver.users.interfaces import IDisplayNameAdapter
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 
@@ -131,8 +132,8 @@ class VerifyUserEmailView(AbstractAuthenticatedView):
 
     @Lazy
     def _brand_name(self):
-        return component.getMultiAdapter((self.request, getSite()),
-                                         IDisplayNameAdapter).displayName
+        return component.getMultiAdapter((getSite(), self.request),
+                                         IDisplayNameGenerator)()
 
     def __call__(self):
         request = self.request
