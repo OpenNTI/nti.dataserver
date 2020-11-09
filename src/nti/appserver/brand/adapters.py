@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 from pyramid.interfaces import IRequest
 
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 from zope import component
 from zope import interface
 
@@ -21,19 +23,17 @@ from nti.appserver.brand.utils import get_site_brand_name
 
 from nti.appserver.policies.site_policies import guess_site_display_name
 
-from nti.dataserver.users.interfaces import IDisplayNameAdapter
 
+@component.adapter(ISite, IRequest)
+@interface.implementer(IDisplayNameGenerator)
+class _SiteNameGenerator(object):
 
-@component.adapter(IRequest, ISite)
-@interface.implementer(IDisplayNameAdapter)
-class _SiteNameAdapter(object):
-
-    def __init__(self, request, site):
+    def __init__(self, site, request):
         self.request = request
         self.site = site
 
     @Lazy
-    def displayName(self):
+    def _displayName(self):
         site_manager = self.site.getSiteManager()
         display_name = get_site_brand_name(site_manager)
         if display_name:
@@ -41,3 +41,6 @@ class _SiteNameAdapter(object):
         else:
             display_name = guess_site_display_name(self.request)
         return display_name
+
+    def __call__(self):
+        return self._displayName
