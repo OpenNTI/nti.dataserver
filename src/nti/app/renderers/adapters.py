@@ -51,9 +51,11 @@ class UserDisplayNameGenerator(object):
 
 
 @interface.implementer(IDisplayNameGenerator)
-@component.adapter(ICommunity, IRequest)
+@component.adapter(ICommunity)
 class CommunityDisplayNameGenerator(UserDisplayNameGenerator):
-    pass
+
+    def __init__(self, context):
+        self.context = context
 
 
 @component.adapter(ITitledContent, IRequest)
