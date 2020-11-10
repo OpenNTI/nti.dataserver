@@ -25,6 +25,7 @@ from zope import interface
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import ITitledContent
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -47,6 +48,12 @@ class UserDisplayNameGenerator(object):
     def __call__(self, unused_maxlength=None):
         names = IFriendlyNamed(self.context)
         return names.alias or names.realname or self.context.username
+
+
+@interface.implementer(IDisplayNameGenerator)
+@component.adapter(ICommunity, IRequest)
+class CommunityDisplayNameGenerator(UserDisplayNameGenerator):
+    pass
 
 
 @component.adapter(ITitledContent, IRequest)
