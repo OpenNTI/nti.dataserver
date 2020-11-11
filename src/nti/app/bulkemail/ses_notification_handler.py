@@ -79,7 +79,7 @@ def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 		if possible_pid:
 			all_pids.add(possible_pid)
 
-		users = find_users_with_email( email_addr, dataserver, match_info=True )
+		users = find_users_with_email(email_addr, dataserver, match_info=True, check_auth=False)
 		if not users:
 			logger.warn( "No users found associated with bounced email %s", email_addr )
 			continue
