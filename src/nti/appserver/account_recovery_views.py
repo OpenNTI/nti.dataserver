@@ -343,7 +343,7 @@ def find_users_with_email(email,
                           unused_dataserver,
                           username=None,
                           match_info=False,
-                          check_auth=True):
+                          require_can_login=True):
     """
     Looks for and returns all users with an email or password recovery
     email hash (or parent/contact email hash) matching the given email.
@@ -355,8 +355,8 @@ def find_users_with_email(email,
     :param bool match_info: If given and True, then the result will be a sequence of
             `tuple` objects, first the user and then the name of the field that matched.
 
-    :param bool check_auth: If given and True, only users allowed to log in
-            will be returned (using the currently registered
+    :param bool require_can_login: If given and True, only users allowed to
+            log in will be returned (using the currently registered
             IAuthenticationValidator, e.g. those allowed to log in to the
             current site)
 
@@ -381,7 +381,7 @@ def find_users_with_email(email,
         matches.update(((x, record_type)
                         for x in ent_catalog.searchResults(**{match_type: (v, v)})
                         if IUser.providedBy(x)
-                        and (not check_auth or auth_validator.user_can_login(x))))
+                        and (not require_can_login or auth_validator.user_can_login(x))))
 
     if username:
         username = username.lower()
