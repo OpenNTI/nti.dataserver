@@ -339,7 +339,11 @@ from nti.dataserver.users import index as user_index
 from zope.catalog.interfaces import ICatalog
 
 
-def find_users_with_email(email, unused_dataserver, username=None, match_info=False):
+def find_users_with_email(email,
+                          unused_dataserver,
+                          username=None,
+                          match_info=False,
+                          require_can_login=True):
     """
     Looks for and returns all users with an email or password recovery
     email hash (or parent/contact email hash) matching the given email.
@@ -350,6 +354,12 @@ def find_users_with_email(email, unused_dataserver, username=None, match_info=Fa
 
     :param bool match_info: If given and True, then the result will be a sequence of
             `tuple` objects, first the user and then the name of the field that matched.
+
+    :param bool require_can_login: If given and True, only users allowed to
+            log in will be returned (using the currently registered
+            IAuthenticationValidator, e.g. those allowed to log in to the
+            current site)
+
     :return: A sequence of the matched user objects.
     """
 
@@ -370,7 +380,8 @@ def find_users_with_email(email, unused_dataserver, username=None, match_info=Fa
         record_type = match_type if match_info else ''
         matches.update(((x, record_type)
                         for x in ent_catalog.searchResults(**{match_type: (v, v)})
-                        if IUser.providedBy(x) and auth_validator.user_can_login(x)))
+                        if IUser.providedBy(x)
+                        and (not require_can_login or auth_validator.user_can_login(x))))
 
     if username:
         username = username.lower()

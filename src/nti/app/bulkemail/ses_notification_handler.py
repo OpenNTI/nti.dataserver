@@ -79,7 +79,10 @@ def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 		if possible_pid:
 			all_pids.add(possible_pid)
 
-		users = find_users_with_email( email_addr, dataserver, match_info=True )
+		users = find_users_with_email(email_addr,
+									  dataserver,
+									  match_info=True,
+									  require_can_login=False)
 		if not users:
 			logger.warn( "No users found associated with bounced email %s", email_addr )
 			continue
@@ -96,16 +99,6 @@ def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 
 			__traceback_info__ = user, match_type, email_addr
 			if match_type == 'email':
-				# Clear it if we can; some types of profiles don't allow that
-				try:
-					profile = IUserProfile(user)
-					profile.email_verified = False
-				except Invalid:
-					# TODO: Should we do something about zope.schema.interfaces.RequiredMissing, in
-					# particular? That means the profile doesn't allow None. But if we can't reset
-					# this address, then we can keep sending email to it, and bouncing,
-					# which tends to make SES angry. I don't know what we could do, though?
-					logger.debug( "Unable to clear invalid email address for %s", user, exc_info=True)
 				_unverify_email(user)
 				flag_link_provider.add_link( user, REL_INVALID_EMAIL )
 			elif match_type == 'password_recovery_email_hash':

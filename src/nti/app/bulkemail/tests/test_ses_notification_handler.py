@@ -37,6 +37,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver import users
 from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.users.common import set_user_creation_site
 from nti.dataserver.users.user_profile import make_password_recovery_email_hash
 
 
@@ -127,6 +128,7 @@ class TestBouncedEmailworkflow(unittest.TestCase):
 
 		u1 = users.User.create_user( username='user1' )
 		user_interfaces.IUserProfile( u1 ).email = 'n@y.com'
+		set_user_creation_site(u1, 'another.site')
 		modified( u1 )
 		u2 = users.User.create_user( username='user2' )
 		user_interfaces.IUserProfile( u2 ).password_recovery_email_hash = make_password_recovery_email_hash( 'n@y.com' )
