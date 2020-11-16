@@ -696,6 +696,21 @@ class CommunityActivityView(EntityActivityViewMixin,
     def _is_not_pinned(self, obj):
         return not self._is_pinned(obj)
 
+    @property
+    def _forums_last_modified(self):
+        forums_last_modified = 0
+
+        for forum in self._entity_board.values():
+            forums_last_modified = max(forums_last_modified, forum.lastModified)
+
+        return forums_last_modified
+
+    def _update_last_modified_after_sort(self, objects, result):
+        # Also take into account the last modified of the forums, to handle
+        # potential deletions
+        result.lastModified = max(self._forums_last_modified, result.lastModified)
+        result['Last Modified'] = result.lastModified
+
     def __call__(self):
         interface.alsoProvides(self.request, IOnlyDefaultForumTopicsCanBePinnedRequest)
         return super(CommunityActivityView, self).__call__()

@@ -20,6 +20,8 @@ from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
 from hamcrest import greater_than_or_equal_to
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 does_not = is_not
 
 from zope import interface
@@ -397,6 +399,45 @@ class TestCommunityViews(ApplicationLayerTest):
                                        not_pinned=True)
         assert_that(item_ntiids, has_length(1))
         assert_that(item_ntiids, contains(topic_ntiid))
+
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    @time_monotonically_increases
+    def test_activity_community_on_delete_caching(self):
+        with mock_dataserver.mock_db_trans(self.ds):
+            c = Community.create_community(username=u'bleach')
+            user = self._create_user(u"ichigo", u"temp001")
+            user.record_dynamic_membership(c)
+            board = ICommunityBoard(c)
+
+            default_forum = tuple(board.values())[0]
+            assert_that(default_forum, validly_provides(IDefaultForum))
+            default_forum_ntiid = to_external_ntiid_oid(default_forum)
+
+            topic_one = CommunityHeadlineTopic()
+            topic_one.title = u'one'
+            topic_one.creator = user
+            topic_one.updateLastMod()
+            default_forum[u'One'] = topic_one
+
+            topic_two = CommunityHeadlineTopic()
+            topic_two.title = u'two'
+            topic_two.creator = user
+            topic_two.updateLastMod()
+            default_forum[u'Two'] = topic_two
+
+        activity_path = '/dataserver2/users/bleach/Activity'
+        res = self.testapp.get(activity_path)
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            default_forum = find_object_with_ntiid(default_forum_ntiid)
+            del default_forum[u'Two']
+
+        activity_path = '/dataserver2/users/bleach/Activity'
+        headers = {'If-Modified-Since': res.headers['Last-Modified']}
+
+        # Ensure the deletion updates the cache and does not send
+        # a 304 Not Modified
+        self.testapp.get(activity_path, headers=headers, status=200)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_community_admin(self):
