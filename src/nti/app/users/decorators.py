@@ -34,6 +34,7 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 
+from nti.coremetadata.interfaces import IDeactivatedUser
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import IDeleteLockedCommunity
 
@@ -136,6 +137,13 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
         result['lastSeenTime'] = context.lastSeenTime
         result['lastLoginTime'] = context.lastLoginTime
         result['CreationSite'] = get_user_creation_sitename(context)
+        if self.remoteUser != context:
+            _links = result.setdefault(LINKS, [])
+            if IDeactivatedUser.providedBy(context):
+                link = Link(context, elements=('@@Restore',), rel="Restore")
+            else:
+                link = Link(context, elements=('@@Deactivate',), rel="Deactivate")
+            _links.append(link)
 
 
 @component.adapter(ICommunity)
