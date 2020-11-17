@@ -115,6 +115,17 @@ class _UserMembershipsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 @component.adapter(IUser)
 @interface.implementer(IExternalMappingDecorator)
+class _UserDeactivatedStatusDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+    def _predicate(self, context, unused_result):
+        return self._is_authenticated and IDeactivatedUser.providedBy(context)
+
+    def _do_decorate_external(self, unused_context, result):
+        result['Deactivated'] = True
+
+
+@component.adapter(IUser)
+@interface.implementer(IExternalMappingDecorator)
 class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
     """
     Decorate external identifiers for the user or administrators.
@@ -140,7 +151,6 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
         if self.remoteUser != context:
             _links = result.setdefault(LINKS, [])
             if IDeactivatedUser.providedBy(context):
-                result['Deactivated'] = True
                 link = Link(context, elements=('@@Restore',), rel="Restore")
             else:
                 link = Link(context, elements=('@@Deactivate',), rel="Deactivate")
