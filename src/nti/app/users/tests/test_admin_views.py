@@ -33,6 +33,8 @@ from zope import lifecycleevent
 
 from zope.component import getGlobalSiteManager
 
+from zope.component.hooks import getSite
+
 from zope.interface.interfaces import IComponents
 
 from zope.intid.interfaces import IIntIds
@@ -40,6 +42,8 @@ from zope.intid.interfaces import IIntIds
 from zope.schema import TextLine
 
 from zope.schema.fieldproperty import createFieldProperties
+
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from nti.app.users import VIEW_USER_UPSERT
 from nti.app.users import VIEW_GRANT_USER_ACCESS
@@ -57,6 +61,8 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.appserver.policies.site_policies import AdultCommunitySitePolicyEventListener
+
+from nti.dataserver.authorization import ROLE_SITE_ADMIN
 
 from nti.dataserver.contenttypes.note import Note
 
@@ -769,6 +775,69 @@ class TestAdminViews(ApplicationLayerTest):
 
         self.testapp.post_json(user_update_href, data, extra_environ=admin_environ)
         self.testapp.post_json(user_update_href, data, extra_environ=admin_environ)
+
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_user_deactivate(self):
+        """
+        Validate user deactivation
+        """
+        test_username = u'test_deactivate_user'
+        test_other_username = u'test_deactivate_other'
+        test_admin_username = u'test_deactivate_admin'
+        test_email = u'%s@gmail.com' % test_username
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = self._create_user(test_username)
+            site_admin = self._create_user(test_admin_username)
+            other_user = self._create_user(test_other_username)
+            IUserProfile(user).email = test_email
+            catalog = get_entity_catalog()
+            intids = component.getUtility(IIntIds)
+            doc_id = intids.getId(user)
+            catalog.index_doc(doc_id, user)
+            set_user_creation_site(user, 'alpha.dev')
+            set_user_creation_site(other_user, 'alpha.dev')
+            set_user_creation_site(site_admin, 'alpha.dev')
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
+            principal_role_manager = IPrincipalRoleManager(getSite())
+            principal_role_manager.assignRoleToPrincipal(ROLE_SITE_ADMIN.id,
+                                                         test_admin_username)
+
+        admin_environ = self._make_extra_environ(user=test_admin_username)
+        admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+        user_environ = self._make_extra_environ(user=test_username)
+        user_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+        other_environ = self._make_extra_environ(user=test_other_username)
+        other_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+
+        resolve_url = '/dataserver2/ResolveUser/%s' % test_username
+        def get_user_res():
+            res = self.testapp.get(resolve_url, extra_environ=admin_environ)
+            res = res.json_body
+            return res['Items'][0]
+        res = get_user_res()
+        deactivate_href = self.require_link_href_with_rel(res, 'Deactivate')
+        self.forbid_link_with_rel(res, 'Restore')
+
+        self.testapp.post(deactivate_href, extra_environ=user_environ, status=403)
+        self.testapp.post(deactivate_href, extra_environ=other_environ, status=403)
+        self.testapp.post(deactivate_href, extra_environ=admin_environ)
+
+        res = get_user_res()
+        self.forbid_link_with_rel(res, 'Deactivate')
+        assert_that(res, has_entry('Deactivated', True))
+        restore_href = self.require_link_href_with_rel(res, 'Restore')
+
+        # User can no longer login
+        self.testapp.post(restore_href, extra_environ=user_environ, status=401)
+        self.testapp.post(restore_href, extra_environ=other_environ, status=403)
+        self.testapp.post(restore_href, extra_environ=admin_environ)
+
+        # Restored, they do authenticate again
+        self.testapp.post(restore_href, extra_environ=user_environ, status=403)
+        self.testapp.post(restore_href, extra_environ=other_environ, status=403)
+        self.testapp.post(restore_href, extra_environ=admin_environ)
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)

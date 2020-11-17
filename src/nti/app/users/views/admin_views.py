@@ -597,14 +597,9 @@ class _UserManagementMixin(object):
             return
         if is_site_admin(self.remoteUser):
             site_admin_utility = component.getUtility(ISiteAdminUtility)
-            if not site_admin_utility.can_administer_user(self.remoteUser,
-                                                          target_user):
-                raise_json_error(self.request,
-                                 hexc.HTTPForbidden,
-                                 {
-                                  'message': _(u'Cannot administer user.'),
-                                  },
-                                 None)
+            if site_admin_utility.can_administer_user(self.remoteUser,
+                                                      target_user):
+                return
         raise hexc.HTTPForbidden()
 
 

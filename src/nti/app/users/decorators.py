@@ -140,6 +140,7 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
         if self.remoteUser != context:
             _links = result.setdefault(LINKS, [])
             if IDeactivatedUser.providedBy(context):
+                result['Deactivated'] = True
                 link = Link(context, elements=('@@Restore',), rel="Restore")
             else:
                 link = Link(context, elements=('@@Deactivate',), rel="Deactivate")
