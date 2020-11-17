@@ -27,6 +27,7 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users.users import User
+from nti.coremetadata.interfaces import IDeactivatedUser
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -60,7 +61,9 @@ def user_can_login_in_site(user):
 def user_can_login(username, check_sites=True):
     whitelist = component.getUtility(ILogonWhitelist)
     user = User.get_user(username)
-    result = username in whitelist and user is not None
+    result = username in whitelist \
+         and user is not None \
+         and not IDeactivatedUser.providedBy(user)
     if result and check_sites:
         result = user_can_login_in_site(user)
     return result

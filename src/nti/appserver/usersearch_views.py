@@ -49,7 +49,7 @@ from nti.base._compat import text_
 
 from nti.common.string import is_false
 
-from nti.coremetadata.interfaces import IDeactivatedEntity
+from nti.coremetadata.interfaces import IDeactivatedCommunity
 
 from nti.dataserver import authorization as nauth
 
@@ -497,7 +497,9 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
                                hex(u64(x._p_oid)))
                 return False
 
-            if IDeactivatedEntity.providedBy(x):
+            # Deactivated communities are not resolvable. We do want users
+            # to be able to see deactivated users though.
+            if IDeactivatedCommunity.providedBy(x):
                 return False
 
             # User can see himself

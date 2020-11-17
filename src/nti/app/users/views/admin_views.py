@@ -76,13 +76,15 @@ from nti.appserver.interfaces import INamedLinkView
 
 from nti.common.string import is_true
 
+from nti.coremetadata.interfaces import IDeactivatedUser
+from nti.coremetadata.interfaces import DeactivatedUserEvent
 from nti.coremetadata.interfaces import IDeleteLockedCommunity
 
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
-from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IUser, ISiteAdminUtility
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUsersFolder
@@ -122,6 +124,7 @@ from nti.site.hostpolicy import get_host_site
 from nti.site.hostpolicy import get_all_host_sites
 
 from nti.zodb.containers import bit64_int_to_time
+from nti.dataserver.authorization import is_site_admin, is_admin
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -585,6 +588,57 @@ class RemoveUserView(DeleteUserView,
                              None)
         self.do_delete(user)
         return hexc.HTTPNoContent()
+
+
+class _UserManagementMixin(object):
+
+    def check_access(self, target_user):
+        if is_admin(self.remoteUser):
+            return
+        if is_site_admin(self.remoteUser):
+            site_admin_utility = component.getUtility(ISiteAdminUtility)
+            if site_admin_utility.can_administer_user(self.remoteUser,
+                                                      target_user):
+                return
+        raise hexc.HTTPForbidden()
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             request_method='POST',
+             name='Deactivate',
+             context=IUser)
+class DeactivateUserView(AbstractAuthenticatedView, _UserManagementMixin):
+
+    def __call__(self):
+        self.check_access(self.context)
+        logger.info('Deactivating user (%s) (%s)',
+                    self.context.username,
+                    self.remoteUser)
+        if not IDeactivatedUser.providedBy(self.context):
+            interface.alsoProvides(self.context, IDeactivatedUser)
+            notify(ObjectModifiedFromExternalEvent(self.context))
+            notify(DeactivatedUserEvent(self.context))
+        return hexc.HTTPNoContent()
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             request_method='POST',
+             name='Restore',
+             context=IUser)
+class ReactivateUseView(AbstractAuthenticatedView, _UserManagementMixin):
+
+    def __call__(self):
+        self.check_access(self.context)
+        logger.info('Restoring user (%s) (%s)',
+                    self.context.username,
+                    self.remoteUser)
+        if IDeactivatedUser.providedBy(self.context):
+            interface.noLongerProvides(self.context, IDeactivatedUser)
+            notify(ObjectModifiedFromExternalEvent(self.context))
+            notify(DeactivatedUserEvent(self.context))
+        return self.context
 
 
 @view_config(name='GhostContainers')
