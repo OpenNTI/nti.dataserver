@@ -37,11 +37,12 @@ class _SiteUsersLinkProvider(object):
             lnk = Link(users_folder, rel='SiteUsers', method='GET',
                        elements=('@@SiteUsers',))
             result.append(lnk)
-            lnk = Link(users_folder,
-                       rel=VIEW_LINK_EXTERNAL_IDS_CSV,
-                       method='POSTs',
-                       elements=('@@%s' % VIEW_LINK_EXTERNAL_IDS_CSV,))
-            result.append(lnk)
+            for rel in (VIEW_LINK_EXTERNAL_IDS_CSV, 'BatchDeactivate', 'BatchActivate'):
+                lnk = Link(users_folder,
+                           rel=rel,
+                           method='POST',
+                           elements=('@@%s' % rel,))
+                result.append(lnk)
         return result
 
 

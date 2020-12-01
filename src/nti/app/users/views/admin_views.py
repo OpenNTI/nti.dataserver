@@ -603,6 +603,60 @@ class _UserManagementMixin(object):
         raise hexc.HTTPForbidden()
 
 
+class AbstractBatchActivationView(AbstractAuthenticatedView,
+                                  ModeledContentUploadRequestUtilsMixin):
+
+    def _update_user(self, user):
+        pass
+
+    def readInput(self, value=None):
+        if self.request.body:
+            result = super(AbstractBatchActivationView, self).readInput(value)
+        else:
+            result = {}
+        return CaseInsensitiveDict(result)
+
+    @Lazy
+    def is_admin(self):
+        return is_admin(self.remoteUser)
+
+    @Lazy
+    def is_site_admin(self):
+        return is_site_admin(self.remoteUser)
+
+    def _parse_usernames(self):
+        params = self.readInput()
+        usernames = params.get('usernames') or ()
+        if isinstance(usernames, six.string_types):
+            usernames = set(urllib_parse.unquote(usernames).split(","))
+        return usernames
+
+    def __call__(self):
+        if not self.is_admin and not self.is_site_admin:
+            raise hexc.HTTPForbidden()
+        result = LocatedExternalDict()
+        result.__name__ = self.request.view_name
+        result.__parent__ = self.request.context
+        items = result[ITEMS] = []
+        missing_users = result['MissingUsers'] = []
+        unmodifiable_users = result['UnmodifiableUsers'] = []
+        usernames = self._parse_usernames(self.readInput())
+        site_admin_utility = component.getUtility(ISiteAdminUtility)
+        for username in usernames:
+            user = User.get_user(username)
+            if user is None:
+                missing_users.append(username)
+            elif    self.is_site_admin \
+                and not site_admin_utility.can_administer_user(self.remoteUser,
+                                                               user):
+                unmodifiable_users.append(username)
+            else:
+                self._update_user(user)
+                items.append(username)
+        result[TOTAL] = result[ITEM_COUNT] = len(items)
+        return result
+
+
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              request_method='POST',
@@ -610,16 +664,29 @@ class _UserManagementMixin(object):
              context=IUser)
 class DeactivateUserView(AbstractAuthenticatedView, _UserManagementMixin):
 
+    def _do_deactivate(self, user):
+        if not IDeactivatedUser.providedBy(user):
+            logger.info('Deactivating user (%s) (%s)',
+                        user.username,
+                        self.remoteUser)
+            interface.alsoProvides(user, IDeactivatedUser)
+            notify(ObjectModifiedFromExternalEvent(user))
+            notify(DeactivatedUserEvent(user))
+
     def __call__(self):
         self.check_access(self.context)
-        logger.info('Deactivating user (%s) (%s)',
-                    self.context.username,
-                    self.remoteUser)
-        if not IDeactivatedUser.providedBy(self.context):
-            interface.alsoProvides(self.context, IDeactivatedUser)
-            notify(ObjectModifiedFromExternalEvent(self.context))
-            notify(DeactivatedUserEvent(self.context))
+        self._do_deactivate(self.context)
         return hexc.HTTPNoContent()
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             request_method='POST',
+             name='BatchDeactivate',
+             context=IUsersFolder)
+class BatchDeactivateUserView(AbstractBatchActivationView):
+
+    _update_user = DeactivateUserView._do_deactivate
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -629,16 +696,29 @@ class DeactivateUserView(AbstractAuthenticatedView, _UserManagementMixin):
              context=IUser)
 class ReactivateUseView(AbstractAuthenticatedView, _UserManagementMixin):
 
+    def _do_reactivate(self, user):
+        logger.info('Restoring user (%s) (%s)',
+                    user.username,
+                    self.remoteUser)
+        if IDeactivatedUser.providedBy(user):
+            interface.noLongerProvides(user, IDeactivatedUser)
+            notify(ObjectModifiedFromExternalEvent(user))
+            notify(DeactivatedUserEvent(user))
+
     def __call__(self):
         self.check_access(self.context)
-        logger.info('Restoring user (%s) (%s)',
-                    self.context.username,
-                    self.remoteUser)
-        if IDeactivatedUser.providedBy(self.context):
-            interface.noLongerProvides(self.context, IDeactivatedUser)
-            notify(ObjectModifiedFromExternalEvent(self.context))
-            notify(DeactivatedUserEvent(self.context))
+        self._do_reactivate(self.context)
         return self.context
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             request_method='POST',
+             name='BatchReactivate',
+             context=IUsersFolder)
+class BatchReactivateUserView(AbstractBatchActivationView):
+
+    _update_user = ReactivateUseView._do_reactivate
 
 
 @view_config(name='GhostContainers')
