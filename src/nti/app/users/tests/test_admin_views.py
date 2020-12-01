@@ -811,8 +811,10 @@ class TestAdminViews(ApplicationLayerTest):
         user_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
         other_environ = self._make_extra_environ(user=test_other_username)
         other_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
-        user_workspace = self._get_workspace(test_admin_username, admin_environ)
+        nt_admin_environ = self._make_extra_environ()
+        nt_admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
 
+        user_workspace = self._get_workspace(test_admin_username, admin_environ)
         batch_deactivate_href = self.require_link_href_with_rel(user_workspace,
                                                                 'BatchDeactivate')
         batch_reactivate_href = self.require_link_href_with_rel(user_workspace,
@@ -859,6 +861,11 @@ class TestAdminViews(ApplicationLayerTest):
         self.testapp.get('/dataserver2/users/%s' % test_other_username,
                          extra_environ=other_environ, status=401)
 
+        res = self.testapp.get('/dataserver2/users/SiteUsers?deactivated=True',
+                               extra_environ=nt_admin_environ)
+        res = res.json_body
+        assert_that(res['ItemCount'], is_(2))
+
         # Batch reactivation
         data = {'usernames': [test_username, 'name_dne']}
         res = self.testapp.post_json(batch_reactivate_href, data,
@@ -871,6 +878,11 @@ class TestAdminViews(ApplicationLayerTest):
                          extra_environ=user_environ)
         self.testapp.get('/dataserver2/users/%s' % test_other_username,
                          extra_environ=other_environ, status=401)
+
+        res = self.testapp.get('/dataserver2/users/SiteUsers?deactivated=True',
+                               extra_environ=nt_admin_environ)
+        res = res.json_body
+        assert_that(res['ItemCount'], is_(1))
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)
