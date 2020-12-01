@@ -11,6 +11,7 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_in
 from hamcrest import is_not
+from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import has_items
 from hamcrest import has_entry
@@ -348,9 +349,9 @@ class TestAdminViews(ApplicationLayerTest):
                     has_entry('Items',
                               has_entry(username, has_length(0))))
 
-    def _get_workspace(self, name):
+    def _get_workspace(self, name, env=None):
         service_doc = '/dataserver2/service'
-        res = self.testapp.get(service_doc)
+        res = self.testapp.get(service_doc, extra_environ=env)
         res = res.json_body
         result = next(x for x in res[ITEMS] if x['Title'] == name)
         return result
@@ -810,6 +811,12 @@ class TestAdminViews(ApplicationLayerTest):
         user_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
         other_environ = self._make_extra_environ(user=test_other_username)
         other_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+        user_workspace = self._get_workspace(test_admin_username, admin_environ)
+
+        batch_deactivate_href = self.require_link_href_with_rel(user_workspace,
+                                                                'BatchDeactivate')
+        batch_reactivate_href = self.require_link_href_with_rel(user_workspace,
+                                                                'BatchReactivate')
 
         resolve_url = '/dataserver2/ResolveUser/%s' % test_username
         def get_user_res():
@@ -838,6 +845,28 @@ class TestAdminViews(ApplicationLayerTest):
         self.testapp.post(restore_href, extra_environ=user_environ, status=403)
         self.testapp.post(restore_href, extra_environ=other_environ, status=403)
         self.testapp.post(restore_href, extra_environ=admin_environ)
+
+        # Batch deactivation
+        data = {'usernames': [test_username, test_other_username, 'name_dne']}
+        res = self.testapp.post_json(batch_deactivate_href, data,
+                                     extra_environ=admin_environ)
+        res = res.json_body
+        assert_that(res.get('Total'), is_(2))
+        assert_that(res.get(ITEMS), contains_inanyorder(test_username, test_other_username))
+        assert_that(res.get('MissingUsers'), contains('name_dne'))
+        self.testapp.get('/dataserver2/service', extra_environ=user_environ, status=401)
+        self.testapp.get('/dataserver2/service', extra_environ=other_environ, status=401)
+
+        # Batch reactivation
+        data = {'usernames': [test_username, 'name_dne']}
+        res = self.testapp.post_json(batch_reactivate_href, data,
+                                     extra_environ=admin_environ)
+        res = res.json_body
+        assert_that(res.get('Total'), is_(1))
+        assert_that(res.get(ITEMS), contains(test_username))
+        assert_that(res.get('MissingUsers'), contains('name_dne'))
+        self.testapp.get('/dataserver2/service', extra_environ=user_environ)
+        self.testapp.get('/dataserver2/service', extra_environ=other_environ, status=401)
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)

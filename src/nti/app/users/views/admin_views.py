@@ -640,7 +640,7 @@ class AbstractBatchActivationView(AbstractAuthenticatedView,
         items = result[ITEMS] = []
         missing_users = result['MissingUsers'] = []
         unmodifiable_users = result['UnmodifiableUsers'] = []
-        usernames = self._parse_usernames(self.readInput())
+        usernames = self._parse_usernames()
         site_admin_utility = component.getUtility(ISiteAdminUtility)
         for username in usernames:
             user = User.get_user(username)
@@ -684,7 +684,8 @@ class DeactivateUserView(AbstractAuthenticatedView, _UserManagementMixin):
              request_method='POST',
              name='BatchDeactivate',
              context=IUsersFolder)
-class BatchDeactivateUserView(AbstractBatchActivationView):
+class BatchDeactivateUserView(AbstractBatchActivationView,
+                              DeactivateUserView):
 
     _update_user = DeactivateUserView._do_deactivate
 
@@ -716,7 +717,8 @@ class ReactivateUseView(AbstractAuthenticatedView, _UserManagementMixin):
              request_method='POST',
              name='BatchReactivate',
              context=IUsersFolder)
-class BatchReactivateUserView(AbstractBatchActivationView):
+class BatchReactivateUserView(AbstractBatchActivationView,
+                              ReactivateUseView):
 
     _update_user = ReactivateUseView._do_reactivate
 
