@@ -854,8 +854,10 @@ class TestAdminViews(ApplicationLayerTest):
         assert_that(res.get('Total'), is_(2))
         assert_that(res.get(ITEMS), contains_inanyorder(test_username, test_other_username))
         assert_that(res.get('MissingUsers'), contains('name_dne'))
-        self.testapp.get('/dataserver2/service', extra_environ=user_environ, status=401)
-        self.testapp.get('/dataserver2/service', extra_environ=other_environ, status=401)
+        self.testapp.get('/dataserver2/users/%s' % test_username,
+                         extra_environ=user_environ, status=401)
+        self.testapp.get('/dataserver2/users/%s' % test_other_username,
+                         extra_environ=other_environ, status=401)
 
         # Batch reactivation
         data = {'usernames': [test_username, 'name_dne']}
@@ -865,8 +867,10 @@ class TestAdminViews(ApplicationLayerTest):
         assert_that(res.get('Total'), is_(1))
         assert_that(res.get(ITEMS), contains(test_username))
         assert_that(res.get('MissingUsers'), contains('name_dne'))
-        self.testapp.get('/dataserver2/service', extra_environ=user_environ)
-        self.testapp.get('/dataserver2/service', extra_environ=other_environ, status=401)
+        self.testapp.get('/dataserver2/users/%s' % test_username,
+                         extra_environ=user_environ)
+        self.testapp.get('/dataserver2/users/%s' % test_other_username,
+                         extra_environ=other_environ, status=401)
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)
