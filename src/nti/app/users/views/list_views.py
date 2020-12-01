@@ -38,6 +38,9 @@ from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 
 from nti.common.string import is_true
 
+from nti.coremetadata.interfaces import IX_TOPICS
+from nti.coremetadata.interfaces import IX_IS_DEACTIVATED
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.authorization import is_admin_or_site_admin
@@ -80,6 +83,11 @@ class SiteUsersView(AbstractEntityViewMixin):
         return is_true(self.params.get('filterAdmins', 'False'))
 
     @Lazy
+    def onlyDeactivatedUsers(self):
+        # pylint: disable=no-member
+        return is_true(self.params.get('deactivated', 'False'))
+
+    @Lazy
     def admin_intids(self):
         """
         Return a set of site admin intids.
@@ -91,6 +99,16 @@ class SiteUsersView(AbstractEntityViewMixin):
         for user in itertools.chain(all_site_admins, admins):
             result.add(intids.getId(user))
         return result
+
+    @Lazy
+    def deactivated_intids(self):
+        """
+        Return a set of site deactivated intids.
+        """
+        catalog = get_entity_catalog()
+        deactivated_idx = catalog[IX_TOPICS][IX_IS_DEACTIVATED]
+        deactivated_ids = catalog.family.IF.Set(deactivated_idx.getIds() or ())
+        return deactivated_ids
 
     def get_entity_intids(self, site=None):
         return intids_of_users_by_site(site)
@@ -123,6 +141,8 @@ class SiteUsersView(AbstractEntityViewMixin):
              and super(SiteUsersView, self).search_include(doc_id)
         if result and self.filterAdmins:
             result = doc_id not in self.admin_intids
+        if result and self.onlyDeactivatedUsers:
+            result = doc_id in self.deactivated_intids
         return result
 
     def __call__(self):
