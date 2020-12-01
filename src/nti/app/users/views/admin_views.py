@@ -653,6 +653,8 @@ class AbstractBatchActivationView(AbstractAuthenticatedView,
             else:
                 self._update_user(user)
                 items.append(username)
+        logger.info("Updated user activation state (missing=%s) (unmodifiable=%s)",
+                    missing_users, unmodifiable_users)
         result[TOTAL] = result[ITEM_COUNT] = len(items)
         return result
 
