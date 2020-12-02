@@ -65,8 +65,8 @@ def user_can_login(user, check_sites=True):
     if not IUser.providedBy(user):
         user = User.get_user(str(user))
     whitelist = component.getUtility(ILogonWhitelist)
-    result = user.username in whitelist \
-         and user is not None \
+    result = user is not None \
+         and user.username in whitelist \
          and not IDeactivatedUser.providedBy(user)
     if result and check_sites:
         result = user_can_login_in_site(user)
