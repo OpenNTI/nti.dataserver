@@ -93,7 +93,8 @@ class DataserverTokenAuthenticatorPlugin(object):
         user = User.get_user(login)
         if user is None or token is None:
             return None
-        if self._valid_token(user, token):
+        if      self._valid_token(user, token) \
+            and user_can_login(user):
             return self.principalInfo(login)
 
     def principalInfo(self, pid):

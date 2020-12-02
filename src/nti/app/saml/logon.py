@@ -23,6 +23,8 @@ from saml2.response import SAMLError
 
 from saml2.saml import NAMEID_FORMAT_PERSISTENT
 
+from nti.app.authentication import user_can_login
+
 from nti.app.saml import ACS
 from nti.app.saml import SLS
 
@@ -341,7 +343,8 @@ def acs_view(request):
                                 ISAMLUserAuthenticatedEvent)
         event.saml_response = saml_response
         notify(event)
-
+        if not user_can_login(user):
+            return _failure_response(request, _(u'User cannot login.'), error, state)
         return _create_success_response(request,
                                         userid=user.username,
                                         success=_make_location(success, state))
