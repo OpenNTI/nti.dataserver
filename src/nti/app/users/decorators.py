@@ -117,11 +117,8 @@ class _UserMembershipsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 @interface.implementer(IExternalMappingDecorator)
 class _UserDeactivatedStatusDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-    def _predicate(self, context, unused_result):
-        return self._is_authenticated and IDeactivatedUser.providedBy(context)
-
-    def _do_decorate_external(self, unused_context, result):
-        result['Deactivated'] = True
+    def _do_decorate_external(self, context, result):
+        result['Deactivated'] = IDeactivatedUser.providedBy(context)
 
 
 @component.adapter(IUser)
