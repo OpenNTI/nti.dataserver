@@ -854,7 +854,9 @@ class TestAdminViews(ApplicationLayerTest):
                                      extra_environ=admin_environ)
         res = res.json_body
         assert_that(res.get('Total'), is_(2))
-        assert_that(res.get(ITEMS), contains_inanyorder(test_username, test_other_username))
+        assert_that(res.get(ITEMS),
+                    contains_inanyorder(has_entry('Username', test_username),
+                                        has_entry('Username', test_other_username)))
         assert_that(res.get('MissingUsers'), contains('name_dne'))
         self.testapp.get('/dataserver2/users/%s' % test_username,
                          extra_environ=user_environ, status=401)
@@ -882,7 +884,7 @@ class TestAdminViews(ApplicationLayerTest):
                                      extra_environ=admin_environ)
         res = res.json_body
         assert_that(res.get('Total'), is_(1))
-        assert_that(res.get(ITEMS), contains(test_username))
+        assert_that(res.get(ITEMS), contains(has_entry('Username', test_username)))
         assert_that(res.get('MissingUsers'), contains('name_dne'))
         self.testapp.get('/dataserver2/users/%s' % test_username,
                          extra_environ=user_environ)
