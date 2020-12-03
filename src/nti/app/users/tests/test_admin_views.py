@@ -866,6 +866,16 @@ class TestAdminViews(ApplicationLayerTest):
         res = res.json_body
         assert_that(res['ItemCount'], is_(2))
 
+        res = self.testapp.get('/dataserver2/users/SiteUsers?deactivated=False',
+                               extra_environ=nt_admin_environ)
+        res = res.json_body
+        assert_that(res['ItemCount'], is_(0))
+
+        res = self.testapp.get('/dataserver2/users/SiteUsers',
+                               extra_environ=nt_admin_environ)
+        res = res.json_body
+        assert_that(res['ItemCount'], is_(2))
+
         # Batch reactivation
         data = {'usernames': [test_username, 'name_dne']}
         res = self.testapp.post_json(batch_reactivate_href, data,
@@ -883,6 +893,16 @@ class TestAdminViews(ApplicationLayerTest):
                                extra_environ=nt_admin_environ)
         res = res.json_body
         assert_that(res['ItemCount'], is_(1))
+
+        res = self.testapp.get('/dataserver2/users/SiteUsers?deactivated=False',
+                               extra_environ=nt_admin_environ)
+        res = res.json_body
+        assert_that(res['ItemCount'], is_(1))
+
+        res = self.testapp.get('/dataserver2/users/SiteUsers',
+                               extra_environ=nt_admin_environ)
+        res = res.json_body
+        assert_that(res['ItemCount'], is_(2))
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)

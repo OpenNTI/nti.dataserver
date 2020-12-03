@@ -43,6 +43,7 @@ from nti.appserver.ugd_query_views import UGDView
 from nti.base._compat import text_
 
 from nti.common.string import is_true
+from nti.common.string import is_false
 
 from nti.coremetadata.interfaces import IX_TOPICS as CM_IX_TOPICS
 from nti.coremetadata.interfaces import IX_IS_DEACTIVATED
@@ -650,6 +651,11 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         return is_true(self.params.get('deactivated', 'False'))
 
     @Lazy
+    def onlyActivatedUsers(self):
+        # pylint: disable=no-member
+        return is_false(self.params.get('deactivated', 'True'))
+
+    @Lazy
     def deactivated_intids(self):
         """
         Return a set of site deactivated intids.
@@ -671,6 +677,8 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
                   or op(alias, self.searchTerm)
         if result and self.onlyDeactivatedUsers:
             result = doc_id in self.deactivated_intids
+        elif result and self.onlyActivatedUsers:
+            result = doc_id not in self.deactivated_intids
         return result
 
     def resolve_entity_ids(self, site=None):
