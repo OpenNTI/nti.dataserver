@@ -123,6 +123,10 @@ class Change(PersistentCreatedModDateTrackingObject):
     #: be used for the enclosed object.
     useSummaryExternalObject = False
 
+    #: If set to `True` (not the default) then when this object
+    #: is externalized, the external object will be decorated.
+    externalObjectDecoration = False
+
     #: If set to a callable object, then before doing any externalization,
     #: we will call this object with the non-None object we hold,
     #: and externalize the results.
@@ -318,5 +322,8 @@ class _ChangeExternalObject(object):
         result['Item'] = None
         if wrapping is not None:
             name = ('summary' if change.useSummaryExternalObject else '')
-            result['Item'] = toExternalObject(wrapping, name=name, **kwargs)
+            kwargs.pop('decorate', None)
+            decorate = change.externalObjectDecoration
+            result['Item'] = toExternalObject(wrapping, name=name, decorate=decorate,
+                                              **kwargs)
         return result
