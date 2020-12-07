@@ -9,7 +9,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-generation = 110
+from zope.authentication.interfaces import IAuthentication
+
+generation = 111
 
 # Allow going forward/backward for testing
 import os
@@ -53,6 +55,8 @@ from zope.component.hooks import site
 from zope.component.interfaces import ISite
 
 import zope.intid
+
+from zope.authentication.interfaces import IAuthentication
 
 from zope.site import LocalSiteManager
 
@@ -211,6 +215,9 @@ def install_main(context):
         install_username_blacklist(dataserver_folder)
 
         install_default_admin_user(dataserver_folder)
+
+        install_zope_authentication(dataserver_folder)
+
     return dataserver_folder
 
 
@@ -347,6 +354,12 @@ def install_username_blacklist(dataserver_folder):
     intids.register(user_blacklist)
     lsm.registerUtility(user_blacklist, provided=IUserBlacklistedStorage)
 
+
+def install_zope_authentication(dataserver_folder):
+    from nti.app.authentication import _DSAuthentication
+
+    lsm = dataserver_folder.getSiteManager()
+    lsm.registerUtility(_DSAuthentication(), provided=IAuthentication)
 
 ADMIN_USERNAME = u'admin@nextthought.com'
 TOKEN_EXPIRATION_IN_DAYS = 30
