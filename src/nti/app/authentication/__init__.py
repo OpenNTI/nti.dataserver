@@ -13,6 +13,13 @@ from __future__ import absolute_import
 from zope import component
 from zope import interface
 
+from zope.authentication.interfaces import IAuthentication
+from zope.authentication.interfaces import PrincipalLookupError
+
+from zope.component import queryNextUtility
+
+from zope.security.interfaces import IPrincipal
+
 from pyramid.threadlocal import get_current_request
 
 from nti.app.authentication.interfaces import IAuthenticationValidator
@@ -79,3 +86,41 @@ class _AuthenticationValidator(object):
     @staticmethod
     def user_can_login(username, check_sites=True):
         return user_can_login(username, check_sites=check_sites)
+
+
+@interface.implementer(IAuthentication)
+class _DSAuthentication(object):
+    # TODO: Need to hook into our `repoze.who` integration,
+    #  at least for authenticate and unauthorized.
+
+    def authenticate(self, request):
+        next_util = queryNextUtility(self, IAuthentication)
+
+        if next_util is not None:
+            return next_util.authenticate(request)
+
+    def unauthenticatedPrincipal(self):
+        next_util = queryNextUtility(self, IAuthentication)
+
+        if next_util is not None:
+            return next_util.unauthenticatedPrincipal()
+
+    def unauthorized(self, id, request):
+        next_util = queryNextUtility(self, IAuthentication)
+
+        if next_util is not None:
+            next_util.unauthorized(id, request)
+
+    def getPrincipal(self, id):
+        user = User.get_user(id)
+        if user is not None:
+            principal = IPrincipal(user, None)
+            if principal:
+                return principal
+
+        next_util = queryNextUtility(self, IAuthentication)
+
+        if next_util is None:
+            raise PrincipalLookupError(id)
+
+        return next_util.getPrincipal(id)
