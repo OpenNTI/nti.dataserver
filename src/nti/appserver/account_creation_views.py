@@ -66,9 +66,12 @@ from nti.appserver.policies.site_policies import find_site_policy
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.authorization_utils import zope_interaction
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
+from nti.dataserver.interfaces import system_user
 
 from nti.dataserver.users.interfaces import IAvatarChoices
 from nti.dataserver.users.interfaces import BlankHumanNameError
@@ -343,20 +346,25 @@ def account_create_view(request):
 
     # TODO: We are hardcoding the factory. Should we do that?
     externalValue = obj_io.read_body_as_external_object(request)
-    new_user = _create_user(request, externalValue)
 
-    # Yay, we created one. Respond with the Created code, and location.
-    request.response.status_int = 201
+    # We need to fire events as a user with permissions on the objects,
+    # e.g. with permissions on the user object created for things like
+    # webhooks
+    with zope_interaction(system_user):
+        new_user = _create_user(request, externalValue)
 
-    # Respond with the location of the new_user
-    __traceback_info__ = new_user
-    assert new_user.__parent__
-    assert new_user.__name__
+        # Yay, we created one. Respond with the Created code, and location.
+        request.response.status_int = 201
 
-    request.response.location = request.resource_url(new_user)
-    logger.debug("Notifying of creation of new user %s", new_user)
-    notify(UserCreatedWithRequestEvent(new_user, request))
-    logon_user_with_request(new_user, request, request.response)
+        # Respond with the location of the new_user
+        __traceback_info__ = new_user
+        assert new_user.__parent__
+        assert new_user.__name__
+
+        request.response.location = request.resource_url(new_user)
+        logger.debug("Notifying of creation of new user %s", new_user)
+        notify(UserCreatedWithRequestEvent(new_user, request))
+        logon_user_with_request(new_user, request, request.response)
 
     # Ensure the user is rendered his full profile;
     # the ordinary detection of user == authenticated_user won't work
