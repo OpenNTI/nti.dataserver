@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from persistent import Persistent
+
 from zope import component
 from zope import interface
 
@@ -17,6 +19,10 @@ from zope.authentication.interfaces import IAuthentication
 from zope.authentication.interfaces import PrincipalLookupError
 
 from zope.component import queryNextUtility
+
+from zope.container.contained import Contained
+
+from zope.location.interfaces import IContained
 
 from zope.security.interfaces import IPrincipal
 
@@ -88,8 +94,8 @@ class _AuthenticationValidator(object):
         return user_can_login(username, check_sites=check_sites)
 
 
-@interface.implementer(IAuthentication)
-class _DSAuthentication(object):
+@interface.implementer(IAuthentication, IContained)
+class _DSAuthentication(Persistent, Contained):
     # TODO: Need to hook into our `repoze.who` integration,
     #  at least for authenticate and unauthorized.
 

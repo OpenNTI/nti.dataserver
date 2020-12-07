@@ -9,8 +9,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from zope.authentication.interfaces import IAuthentication
-
 generation = 111
 
 # Allow going forward/backward for testing
@@ -58,9 +56,13 @@ import zope.intid
 
 from zope.authentication.interfaces import IAuthentication
 
+from zope.location.interfaces import LocationError
+
 from zope.site import LocalSiteManager
 
 from zope.site.folder import Folder, rootFolder
+
+from zope.traversing import api as ztapi
 
 import zc.intid
 
@@ -359,7 +361,13 @@ def install_zope_authentication(dataserver_folder):
     from nti.app.authentication import _DSAuthentication
 
     lsm = dataserver_folder.getSiteManager()
-    lsm.registerUtility(_DSAuthentication(), provided=IAuthentication)
+    try:
+        parent = ztapi.traverse(lsm, 'default')
+    except LocationError:
+        parent = lsm
+
+    dsa = parent['authentication'] = _DSAuthentication()
+    lsm.registerUtility(dsa, provided=IAuthentication)
 
 ADMIN_USERNAME = u'admin@nextthought.com'
 TOKEN_EXPIRATION_IN_DAYS = 30
