@@ -17,6 +17,8 @@ from nti.appserver.interfaces import IApplicationSettings
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
+from nti.coremetadata.interfaces import IDeactivatedEntity
+
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.mailer.interfaces import IMailerPolicy
@@ -61,6 +63,8 @@ class UserEmailValidation(object):
         """
         Returns a bool whether or not the given principal has a valid email.
         """
+        if IDeactivatedEntity.providedBy(self.user):
+            return False
         profile = IUserProfile(self.user, None)
         bounced = profile is not None and profile.email_verified == False
         return not bounced
