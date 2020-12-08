@@ -23,6 +23,8 @@ from nti.mailer.interfaces import IPrincipalEmailValidation
 
 from nti.app.testing.layers  import AppLayerTest
 
+from nti.coremetadata.interfaces import IDeactivatedUser
+
 
 class TestUtils(AppLayerTest):
 
@@ -42,11 +44,17 @@ class TestUtils(AppLayerTest):
 		user.email_verified = None
 		assert_that(validator.is_valid_email(), is_(True))
 
+		interface.alsoProvides(user, IDeactivatedUser)
+		assert_that(validator.is_valid_email(), is_(False))
+		interface.noLongerProvides(user, IDeactivatedUser)
+
 		user.email_verified = True
 		assert_that(validator.is_valid_email(), is_(True))
 
 		user.email_verified = False
 		assert_that(validator.is_valid_email(), is_(False))
+
+		interface.alsoProvides
 
 	def test_policy(self):
 		policy = component.queryUtility(IMailerPolicy)
