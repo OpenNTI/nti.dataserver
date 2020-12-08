@@ -17,6 +17,8 @@ from zope.security.interfaces import IPrincipal
 
 from nti.dataserver.users.interfaces import IUserProfile
 
+from nti.dataserver.users import User as _DSUser
+
 from nti.mailer.interfaces import IMailerPolicy
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import IPrincipalEmailValidation
@@ -53,6 +55,10 @@ class TestUtils(AppLayerTest):
 
 		user.email_verified = False
 		assert_that(validator.is_valid_email(), is_(False))
+
+		ds_user = _DSUser(username=u'bounced_username')
+		validator = IPrincipalEmailValidation(ds_user, None)
+		assert_that(validator, not_none())
 
 	def test_policy(self):
 		policy = component.queryUtility(IMailerPolicy)

@@ -81,6 +81,7 @@ from nti.externalization.singleton import Singleton
 
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
+from nti.mailer.interfaces import IPrincipalEmailValidation
 
 from nti.ntiids.oids import to_external_ntiid_oid
 
@@ -474,7 +475,12 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		return component.getUtility(IDataserver)
 
 	def _accept_user(self, user):
-		return IUser.providedBy(user)
+		result = IUser.providedBy(user)
+		if result:
+			email_validation = IPrincipalEmailValidation(user, None)
+			result = email_validation is None \
+				  or email_validation.is_valid_email()
+		return result
 
 	def _collector_for_user(self, user, factory=DigestEmailCollector):
 		collector = factory(user, self.request)
