@@ -19,6 +19,7 @@
 
 	<utility factory=".utils.DefaultMailerPolicy" />
 
-	<adapter factory=".utils.UserEmailValidation" />
+    <adapter factory=".utils.UserEmailValidation" />
+    <adapter factory=".utils.PrincipalEmailValidation" />
 
 </configure>

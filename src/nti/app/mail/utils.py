@@ -17,6 +17,7 @@ from nti.appserver.interfaces import IApplicationSettings
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
+from nti.coremetadata.interfaces import IUser
 from nti.coremetadata.interfaces import IDeactivatedEntity
 
 from nti.dataserver.users.interfaces import IUserProfile
@@ -54,7 +55,7 @@ class DefaultMailerPolicy(object):
 
 @component.adapter(IPrincipal)
 @interface.implementer(IPrincipalEmailValidation)
-class UserEmailValidation(object):
+class PrincipalEmailValidation(object):
 
     def __init__(self, user):
         self.user = user
@@ -68,3 +69,9 @@ class UserEmailValidation(object):
         profile = IUserProfile(self.user, None)
         bounced = profile is not None and profile.email_verified == False
         return not bounced
+
+
+@component.adapter(IUser)
+@interface.implementer(IPrincipalEmailValidation)
+class UserEmailValidation(PrincipalEmailValidation):
+    pass
