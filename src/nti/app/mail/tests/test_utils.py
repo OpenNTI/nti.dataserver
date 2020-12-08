@@ -54,8 +54,6 @@ class TestUtils(AppLayerTest):
 		user.email_verified = False
 		assert_that(validator.is_valid_email(), is_(False))
 
-		interface.alsoProvides
-
 	def test_policy(self):
 		policy = component.queryUtility(IMailerPolicy)
 		assert_that(policy, not_none())
