@@ -54,15 +54,13 @@ from zope.component.interfaces import ISite
 
 import zope.intid
 
-from zope.authentication.interfaces import IAuthentication
+from zope.app.appsetup.bootstrap import ensureUtility
 
-from zope.location.interfaces import LocationError
+from zope.authentication.interfaces import IAuthentication
 
 from zope.site import LocalSiteManager
 
 from zope.site.folder import Folder, rootFolder
-
-from zope.traversing import api as ztapi
 
 import zc.intid
 
@@ -359,15 +357,10 @@ def install_username_blacklist(dataserver_folder):
 
 def install_zope_authentication(dataserver_folder):
     from nti.app.authentication import _DSAuthentication
-
-    lsm = dataserver_folder.getSiteManager()
-    try:
-        parent = ztapi.traverse(lsm, 'default')
-    except LocationError:
-        parent = lsm
-
-    dsa = parent['authentication'] = _DSAuthentication()
-    lsm.registerUtility(dsa, provided=IAuthentication)
+    ensureUtility(dataserver_folder,
+                  IAuthentication,
+                  'authentication',
+                  _DSAuthentication)
 
 ADMIN_USERNAME = u'admin@nextthought.com'
 TOKEN_EXPIRATION_IN_DAYS = 30
