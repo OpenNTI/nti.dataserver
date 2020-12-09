@@ -427,7 +427,8 @@ def get_filtered_users_by_site(profile_filters, site=None):
 
 
 def intids_of_users_by_site(site=None, filter_deactivated=True):
-    return intids_of_users_by_sites((site or getSite().__name__),)
+    return intids_of_users_by_sites((site or getSite().__name__),
+                                    filter_deactivated=filter_deactivated)
 
 
 def get_users_by_site(site=None, include_filter=None, catalog_filters=None):
