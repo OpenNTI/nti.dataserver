@@ -343,6 +343,7 @@ setup(
         'zc.zlibstorage',
         'zc.zodbdgc',
         'zodbpickle',
+        'zope.app.appsetup',
         'zope.app.broken',     # Improved broken objects
         # simple dependency tracking; re-exported from zope.container
         'zope.app.dependable',
