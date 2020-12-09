@@ -93,7 +93,8 @@ class SiteUsersView(AbstractEntityViewMixin):
         return result
 
     def get_entity_intids(self, site=None):
-        return intids_of_users_by_site(site)
+        # The parent class will handle any deactivated entity filtering.
+        return intids_of_users_by_site(site, filter_deactivated=False)
 
     def get_externalizer(self, user):
         # pylint: disable=no-member

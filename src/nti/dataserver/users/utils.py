@@ -290,7 +290,7 @@ def get_users_by_email(email):
     return result
 
 
-def intids_of_users_by_sites(sites=(), catalog_filters=None):
+def intids_of_users_by_sites(sites=(), catalog_filters=None, filter_deactivated=True):
     """
     catalog_filters - a dict of key/val filters. Will raise a KeyError
         if their is not an index for the catalog filer.
@@ -320,6 +320,10 @@ def intids_of_users_by_sites(sites=(), catalog_filters=None):
                     val = (val,)
                 query[key] = {'any_of': val}
     doc_ids = catalog.apply(query)
+    if filter_deactivated:
+        deactivated_idx = catalog[IX_TOPICS][IX_IS_DEACTIVATED]
+        deactivated_ids = catalog.family.IF.Set(deactivated_idx.getIds() or ())
+        doc_ids = catalog.family.IF.difference(doc_ids, deactivated_ids)
     return doc_ids or ()
 
 
@@ -348,12 +352,16 @@ def get_users_by_email_in_sites(email, sites=None):
     return result
 
 
-def intids_of_entities_by_sites(sites=()):
+def intids_of_entities_by_sites(sites=(), filter_deactivated=True):
     if isinstance(sites, six.string_types):
         sites = sites.split(',')
     catalog = get_entity_catalog()
     query = {IX_SITE: {'any_of': sites or ()}}
     doc_ids = catalog.apply(query)
+    if filter_deactivated:
+        deactivated_idx = catalog[IX_TOPICS][IX_IS_DEACTIVATED]
+        deactivated_ids = catalog.family.IF.Set(deactivated_idx.getIds() or ())
+        doc_ids = catalog.family.IF.difference(doc_ids, deactivated_ids)
     return doc_ids or ()
 
 
