@@ -321,7 +321,9 @@ class _ChangeExternalObject(object):
         result[OID] = toExternalOID(change)
         result['Item'] = None
         if wrapping is not None:
-            name = ('summary' if change.useSummaryExternalObject else '')
+            # For performance reasons, we make this externalization
+            # as lightweight as possible.
+            name = ('summary' if change.useSummaryExternalObject else 'live_notable')
             kwargs.pop('decorate', None)
             decorate = change.externalObjectDecoration
             result['Item'] = toExternalObject(wrapping, name=name, decorate=decorate,
