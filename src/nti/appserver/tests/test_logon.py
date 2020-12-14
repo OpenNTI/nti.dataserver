@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
@@ -61,6 +60,8 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.appserver import logon
 
+from nti.appserver._util import logon_user_with_request
+
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 
 from nti.appserver.logon import REL_INVALID_EMAIL
@@ -95,6 +96,8 @@ from nti.site.site import get_site_for_site_names
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.application_webtest import ApplicationTestLayer
+
+from nti.app.testing.request_response import DummyRequest
 
 from nti.appserver.tests.test_application import TestApp
 from nti.appserver.tests.test_application import WithSharedApplicationMockDS
@@ -272,7 +275,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 
 		# The auth_tkt cookied should not contain any empty username param.
 		# e.g. "username="  The username param is currently being used to signify
-		# we have impesonated someone
+		# we have impersonated someone
 		assert_that(testapp.cookies['nti.auth_tkt'],
 					 not_(contains_string('username="')))
 
@@ -626,6 +629,8 @@ class TestLogonViews(ApplicationLayerTest):
 				interface.implements(pyramid.interfaces.IAuthenticationPolicy)
 				def remember(self, request, who):
 					return [("Policy", who)]
+				def forget(self, request):
+					pass
 				def authenticated_userid(self, request):
 					return 'jason.madden@nextthought.com'
 				def effective_principals(self, request):
