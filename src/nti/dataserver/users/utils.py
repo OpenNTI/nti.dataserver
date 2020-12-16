@@ -378,13 +378,14 @@ def get_entites_by_sites(sites=()):
     return result
 
 
-def get_users_by_sites(sites=(), include_filter=None, catalog_filters=None):
+def get_users_by_sites(sites=(), include_filter=None, catalog_filters=None, filter_deactivated=True):
     """
     Get the users using the given sites.
     """
     result = []
     intids = component.getUtility(IIntIds)
-    for uid in intids_of_users_by_sites(sites, catalog_filters) or ():
+    uids = intids_of_users_by_sites(sites, catalog_filters, filter_deactivated=filter_deactivated)
+    for uid in uids or ():
         user = intids.queryObject(uid)
         if      IUser.providedBy(user) \
             and (include_filter is None or include_filter(user)):
@@ -392,7 +393,7 @@ def get_users_by_sites(sites=(), include_filter=None, catalog_filters=None):
     return result
 
 
-def get_filtered_users_by_site(profile_filters, site=None):
+def get_filtered_users_by_site(profile_filters, site=None, filter_deactivated=True):
     """
     This probably needs to be a utility.
 
@@ -423,7 +424,8 @@ def get_filtered_users_by_site(profile_filters, site=None):
         return result
     return get_users_by_site(site,
                              include_filter=include_filter,
-                             catalog_filters=catalog_filters)
+                             catalog_filters=catalog_filters,
+                             filter_deactivated=filter_deactivated)
 
 
 def intids_of_users_by_site(site=None, filter_deactivated=True):
@@ -431,13 +433,14 @@ def intids_of_users_by_site(site=None, filter_deactivated=True):
                                     filter_deactivated=filter_deactivated)
 
 
-def get_users_by_site(site=None, include_filter=None, catalog_filters=None):
+def get_users_by_site(site=None, include_filter=None, catalog_filters=None, filter_deactivated=True):
     """
     Get the users using the given site.
     """
     return get_users_by_sites((site or getSite().__name__),
                               include_filter=include_filter,
-                              catalog_filters=catalog_filters)
+                              catalog_filters=catalog_filters,
+                              filter_deactivated=filter_deactivated)
 
 
 def get_entities_by_site(site=None):
