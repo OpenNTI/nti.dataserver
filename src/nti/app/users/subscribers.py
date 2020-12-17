@@ -89,8 +89,10 @@ def _user_modified_from_external_event(user, event):
     profile = IUserProfile(user, None)
     email = (event.ext_value or {}).get('email')
     if profile is not None and email:
+        if profile.email != email:
+            # Reset any bounce status
+            profile.email_verified = None
         # change state of email verification
-        profile.email_verified = None
         reindex_email_verification(user)
         set_email_verification_time(user, 0)
         # send email
