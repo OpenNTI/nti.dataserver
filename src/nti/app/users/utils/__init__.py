@@ -261,7 +261,7 @@ def send_email_verification(user, profile, email, request=None, check=True):
     mailer.queue_simple_html_text_email(
                 template,
                 subject=translate(_(u"Email Confirmation")),
-                recipients=[user],
+                recipients=[email],
                 template_args=args,
                 request=request,
                 package=package)
