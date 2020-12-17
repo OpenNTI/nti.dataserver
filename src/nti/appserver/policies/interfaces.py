@@ -65,6 +65,19 @@ class ISitePolicyUserEventListener(interface.Interface):
                                               required=False,
                                               default=u'Welcome to NextThought')
 
+    NEW_USER_CREATED_BY_ADMIN_EMAIL_TEMPLATE_BASE_NAME = \
+        NativeStringLine(title=u'The base template for sending '
+                               u'an email to a newly created user '
+                               u'when created by an admin.',
+                         default='nti.appserver:templates/new_user_created_by_admin',
+                         required=False)
+
+    NEW_USER_CREATED_BY_ADMIN_EMAIL_SUBJECT = \
+        TextLine(title=u'The email subject for new user emails created '
+                       u'by an admin.',
+                 required=False,
+                 default=u'Welcome to NextThought')
+
     NEW_USER_CREATED_BCC = TextLine(title=u'The bcc address for new user emails.',
                                     default=None,
                                     required=False)
@@ -116,6 +129,12 @@ class ISitePolicyUserEventListener(interface.Interface):
         request (after user_created).
         """
 
+    def user_created_by_admin_with_request(user, event):
+        """
+        Called when a user is created by an admin in the scope of an
+        interactive request (after user_created).
+        """
+
     def user_will_create(user, event):
         """
         Called just before a user is created. Do most validation here.
@@ -157,6 +176,14 @@ class INoAccountCreationEmail(interface.Interface):
     upon a new account creation
     """
 INoAccountCreationEmail.setTaggedValue('_ext_is_marker_interface', True)
+
+
+class IRequireSetPassword(interface.Interface):
+    """
+    A marker that indicates if an account needs a password set, e.g.
+    when an admin has created the account with no password
+    """
+IRequireSetPassword.setTaggedValue('_ext_is_marker_interface', True)
 
 
 import zope.deferredimport

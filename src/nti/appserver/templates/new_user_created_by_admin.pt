@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:metal="http://xml.zope.org/namespaces/metal"
+	  xmlns:tal="http://xml.zope.org/namespaces/tal"
+	  xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+	  i18n:domain="nti.dataserver"
+	  i18n:source="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Welcome To NextThought</title>
+		<metal:block metal:use-macro="macro:style"></metal:block>
+	</head>
+	<body>
+	<div class="container">
+		<div metal:use-macro="macro:header"></div>
+		<div class="main">
+			<div class="title" i18n:translate="">
+				Hi <span tal:content="options/profile/realname" i18n:name="name" class="realname tterm">John Doe</span>!
+			</div>
+
+			<div class="mp-20" i18n:translate="">
+				A new account has been created for you at NextThought!
+			</div>
+
+			<div class="mp-20" i18n:translate="">
+				Your username is <span tal:content="options/user/username" class="tterm-color">username</span>
+				<br/>
+				Use the following link to set up your account:
+				<a href="http://nextthought.com"
+				   tal:attributes="href options/set_passcode_url"
+				   tal:content="options/set_passcode_url">http://nextthought.com</a>.
+				As this is a one time link, please use
+				<a href="http://nextthought.com"
+				   tal:attributes="href request/application_url"
+				   tal:content="request/application_url">http://nextthought.com</a>
+				to log in afterward.
+			</div>
+
+			<div class="mp-20">
+				<span i18n:translate="">
+					NextThought offers interactive content and rich features to make learning both social and personal.
+				</span>
+			</div>
+
+			<div tal:condition="options/verify_href">
+				<div class="mp-20" i18n:translate="">
+					Please follow the link below to verify your email address.
+					Doing so will help us maintain the security of your account.
+				</div>
+				<div style="margin-top:15px; padding: 0 auto;">
+					<a href="${options/verify_href}" class="btn-link" target="_blank">Verify Your Email</a>
+				</div>
+				<div style="margin-top: 15px;font-size: 14px;line-height: 20px;">
+					You may copy/paste this link into your browser:<br/>
+					<a href="${options/verify_href}" target="_blank">${options/verify_href}</a>
+				</div>
+			</div>
+
+			<div style="margin-top: 35px">
+				<span i18n:translate="">Sincerely,</span><br/>NextThought
+			</div>
+		</div> <!-- end of main-->
+		<div metal:use-macro="macro:footer"></div>
+	</div>
+	</body>
+</html>

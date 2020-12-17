@@ -345,7 +345,14 @@ class UserLogoutEvent(_UserEventWithRequest):
     pass
 
 
-class IUserCreatedWithRequestEvent(IUserEvent):
+class _WithRequestMixin(interface.Interface):
+
+    request = schema.Object(IRequest,
+                            title=u"The request that completed the creation process.",
+                            description=u"Useful to get IP information and the like.")
+
+
+class IUserCreatedWithRequestEvent(_WithRequestMixin, IUserEvent):
     """
     Fired when a new user account has been created successfully due
     to interactive actions.
@@ -354,13 +361,23 @@ class IUserCreatedWithRequestEvent(IUserEvent):
     user, and after the zope lifecycle events.
     """
 
-    request = schema.Object(IRequest,
-                            title=u"The request that completed the creation process.",
-                            description=u"Useful to get IP information and the like.")
+
+class IUserCreatedByAdminWithRequestEvent(_WithRequestMixin, IUserEvent):
+    """
+    Fired when a new user account has been created successfully by an
+    admin due to interactive actions.
+
+    This is fired after the zope lifecycle events.
+    """
 
 
 @interface.implementer(IUserCreatedWithRequestEvent)
 class UserCreatedWithRequestEvent(_UserEventWithRequest):
+    pass
+
+
+@interface.implementer(IUserCreatedByAdminWithRequestEvent)
+class UserCreatedByAdminWithRequestEvent(_UserEventWithRequest):
     pass
 
 
