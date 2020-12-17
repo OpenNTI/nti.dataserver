@@ -47,17 +47,20 @@ from nti.app.users.utils import generate_verification_email_url
 
 from nti.appserver import MessageFactory as _
 
+from nti.appserver.interfaces import IUserAccountRecoveryUtility
 from nti.appserver.interfaces import IUserLogonEvent
 from nti.appserver.interfaces import IUserCapabilityFilter
 from nti.appserver.interfaces import IUserCreatedWithRequestEvent
+from nti.appserver.interfaces import IUserCreatedByAdminWithRequestEvent
 
 from nti.appserver.interfaces import UserUpgradedEvent
 
 from nti.appserver.policies import PLACEHOLDER_USERNAME
 
-from nti.appserver.policies.interfaces import INoAccountCreationEmail
-from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
+from nti.appserver.policies.interfaces import INoAccountCreationEmail
+from nti.appserver.policies.interfaces import IRequireSetPassword
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.common.emoji import has_emoji_chars
 
@@ -410,6 +413,10 @@ def dispatch_user_will_create_to_site_policy(user, event):
 def dispatch_user_created_with_request_to_site_policy(user, event):
 	_dispatch_to_policy(user, event, 'user_created_with_request')
 
+@component.adapter(IUser, IUserCreatedByAdminWithRequestEvent)
+def dispatch_user_created_by_admin_with_request_to_site_policy(user, event):
+	_dispatch_to_policy(user, event, 'user_created_by_admin_with_request')
+
 @component.adapter(IUser, IUserLogonEvent)
 def dispatch_user_logon_to_site_policy(user, event):
 	_dispatch_to_policy(user, event, 'user_did_logon')
@@ -514,6 +521,51 @@ class AbstractSitePolicyEventListener(object):
 		Uses the self/class attribute ``NEW_USER_CREATED_EMAIL_SUBJECT`` to generate the subject
 		"""
 
+		self._send_new_account_email(user,
+									 event,
+									 self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
+									 self.NEW_USER_CREATED_EMAIL_SUBJECT)
+
+	def _send_email_on_admin_created_account(self, user, event):
+		"""
+		For accounts created by admins, which should be required to
+		provide an email, send an appropriate welcome message
+
+		Uses the self/class attribute ``NEW_USER_CREATED_BY_ADMIN_EMAIL_TEMPLATE_BASE_NAME`` to generate the email text.
+		Uses the self/class attribute ``NEW_USER_CREATED_BY_ADMIN_EMAIL_SUBJECT`` to generate the subject
+		"""
+
+		if not event.request:  # pragma: no cover
+			return
+
+		username = user.username
+		profile = IUserProfile(user)
+		email = getattr(profile, 'email')
+
+		# Currently requires a `success` param passed in the request for
+		# the target of the link to use for directing the user to a login
+		# allowing them to set their initial password
+		recovery_utility = component.getUtility(IUserAccountRecoveryUtility)
+		reset_url = recovery_utility.get_password_reset_url(user, event.request)
+		if not reset_url:
+			logger.error("No recovery url found for username '%s' and email '%s'",
+						 username, email)
+			reset_url = None
+
+		self._send_new_account_email(user,
+									 event,
+									 self.NEW_USER_CREATED_BY_ADMIN_EMAIL_TEMPLATE_BASE_NAME,
+									 self.NEW_USER_CREATED_BY_ADMIN_EMAIL_SUBJECT,
+									 extra_template_args={
+										 'set_passcode_url': reset_url
+									 })
+
+	def _send_new_account_email(self,
+								user,
+								event,
+								base_template,
+								subject,
+								extra_template_args=None):
 		if not event.request:  # pragma: no cover
 			return
 
@@ -539,12 +591,15 @@ class AbstractSitePolicyEventListener(object):
 			email_verification_href, _ = generate_verification_email_url(user, request=event.request)
 			args['verify_href'] = email_verification_href
 
+		if extra_template_args:
+			args.update(extra_template_args)
+
 		# Need to send both HTML and plain text if we send HTML, because
 		# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 		# only works with a text part)
 		component.getUtility(ITemplatedMailer).queue_simple_html_text_email(
-			self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
-			subject=self.NEW_USER_CREATED_EMAIL_SUBJECT,
+			base_template,
+			subject=subject,
 			bcc=self.NEW_USER_CREATED_BCC,
 			recipients=[user],
 			template_args=args,
@@ -646,6 +701,10 @@ class GenericSitePolicyEventListener(AbstractSitePolicyEventListener):
 		request = getattr(event, 'request', None)
 		if not INoAccountCreationEmail.providedBy(request):
 			self._send_email_on_new_account(user, event)
+
+	def user_created_by_admin_with_request(self, user, event):
+		if IRequireSetPassword.providedBy(user):
+			self._send_email_on_admin_created_account(user, event)
 
 	def user_will_create(self, user, event):
 		"""
