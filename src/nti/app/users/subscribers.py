@@ -88,7 +88,7 @@ def _new_user_is_not_blacklisted(user, unused_event):
 def _user_modified_from_external_event(user, event):
     profile = IUserProfile(user, None)
     email = (event.ext_value or {}).get('email')
-    if profile is not None and email and profile.email != email:
+    if profile is not None and email:
         # change state of email verification
         profile.email_verified = None
         reindex_email_verification(user)
