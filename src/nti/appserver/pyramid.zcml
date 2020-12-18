@@ -16,6 +16,17 @@
 					  route_name="stacktraces" />
 	</configure>
 
+	<!-- Create User As Admin Testing -->
+	<!-- Since the path isn't currently exposed, we expose it here
+		 for testing -->
+	<configure zcml:condition="have testmode">
+		<pyramid:route name="account_creation"
+					   pattern="/account_creation" />
+
+		<pyramid:view view=".account_creation_views.create_account_as_admin"
+					  route_name="account_creation" />
+	</configure>
+
 	<!-- Search Traversal -->
 	<include package="nti.app.contentsearch" file="pyramid.zcml" />
 

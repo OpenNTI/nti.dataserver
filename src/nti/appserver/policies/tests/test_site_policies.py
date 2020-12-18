@@ -169,8 +169,11 @@ class TestAdminCreatedUser(ApplicationLayerTest):
 @contextlib.contextmanager
 def _provide_utility(util, iface):
 	gsm = component.getGlobalSiteManager()
+
+	old_util = component.queryUtility(iface)
 	gsm.registerUtility(util, iface)
 	try:
 		yield
 	finally:
 		gsm.unregisterUtility(util, iface)
+		gsm.registerUtility(old_util, iface)

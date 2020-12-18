@@ -52,6 +52,7 @@ from nti.appserver._util import logon_user_with_request
 
 from nti.appserver.interfaces import IUserUpgradedEvent
 from nti.appserver.interfaces import UserCreatedWithRequestEvent
+from nti.appserver.interfaces import UserCreatedByAdminWithRequestEvent
 
 from nti.appserver.link_providers import flag_link_provider
 
@@ -61,6 +62,8 @@ from nti.appserver.policies import PLACEHOLDER_DOB
 from nti.appserver.policies import PLACEHOLDER_EMAIL
 from nti.appserver.policies import PLACEHOLDER_USERNAME
 from nti.appserver.policies import PLACEHOLDER_REALNAME
+
+from nti.appserver.policies.interfaces import IRequireSetPassword
 
 from nti.appserver.policies.site_policies import find_site_policy
 
@@ -314,7 +317,7 @@ def account_create_view(request):
     """
     Creates a new account (i.e., a new user object), if possible and
     such a user does not already exist. This is only allowed for
-    *unauthenticated* requests right now.
+    *unauthenticated* requests in this view.
 
     The act of creating the account, if successful, also logs the user
     in and the appropriate headers are returned with the response.
@@ -372,6 +375,56 @@ def account_create_view(request):
     request._v_nti_render_externalizable_name = 'personal-summary'
     return new_user
 
+
+def create_account_as_admin(request):
+    """
+    Creates a new account (i.e., a new user object), if possible and
+    such a user does not already exist. Security/permissioning needs to
+    be enforced where exposed, as there are currently no checks.
+
+    Currently this view takes no password and, as such, the user is marked
+    with an interface indicating the need for them to set an initial
+    password, which will force an email with a link to do so (see
+    `user_created_by_admin_with_request` on
+    :class:`nti.appserver.policies.site_policies.GenericSitePolicyEventListener`.
+
+    The input to this view is the JSON for a
+    :class:`nti.dataserver.interfaces.IUser` object. Minimally, the
+    ``Username`` and ``email`` fields must be populated; this view
+    ensures they are. The site and the specific User object may impose
+    additional constraints (for example, the ``password`` must conform
+    to the password policy for that user and the present site.)
+    """
+    externalValue = obj_io.read_body_as_external_object(request)
+
+    # Must have email for this view, as we'll need to send the link to the
+    # user to set their initial password.
+    if not externalValue.get('email', None):
+        _raise_error(request,
+                     hexc.HTTPUnprocessableEntity,
+                     {
+                         'field': 'email',
+                         'message': _(u'Missing data'),
+                         'code': 'RequiredMissing'
+                     },
+                     None)
+
+    new_user = _create_user(request, externalValue, require_password=False)
+    interface.alsoProvides(new_user, IRequireSetPassword)
+
+    # Yay, we created one. Respond with the Created code, and location.
+    request.response.status_int = 201
+
+    # Respond with the location of the new_user
+    __traceback_info__ = new_user
+    assert new_user.__parent__
+    assert new_user.__name__
+
+    request.response.location = request.resource_url(new_user)
+    logger.debug("Notifying of creation of new user %s", new_user)
+    notify(UserCreatedByAdminWithRequestEvent(new_user, request))
+
+    return new_user
 
 class AccountCreatePreflightPathAdapter(Contained):
     """
