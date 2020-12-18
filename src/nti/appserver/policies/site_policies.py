@@ -674,6 +674,9 @@ class AbstractSitePolicyEventListener(object):
 	def user_created_with_request(self, user, event):
 		pass
 
+	def user_created_by_admin_with_request(self, user, event):
+		pass
+
 	def user_will_update_new(self, user, event):
 		pass
 
