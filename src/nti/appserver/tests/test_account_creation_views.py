@@ -28,6 +28,9 @@ import fudge
 import unittest
 import itertools
 
+from quopri import decodestring
+
+from six.moves.urllib_parse import quote_plus
 from six.moves.urllib_parse import unquote
 
 from zope import component
@@ -515,6 +518,37 @@ class _AbstractApplicationCreateUserTest(AppTestBaseMixin):
         assert_that( res.json_body, has_entry( 'Username', 'jason@test.nextthought.com' ) )
         return res
 
+    @WithSharedApplicationMockDS
+    def test_create_user_as_admin( self):
+        self._do_test_create_user_as_admin()
+
+    def _do_test_create_user_as_admin( self,
+                                       data=None,
+                                       missing_field=None,
+                                       extra_environ=None):
+        if data is None:
+            data = {'Username': 'jason@test.nextthought.com',
+                    'password': 'pass123word',
+                    'realname': 'Jason Madden',
+                    'email': 'foo@bar.com'}
+
+        app = TestApp( self.app )
+
+        success = quote_plus('https://alpha.nextthought.com/reset')
+        path = b'/account_creation?success=%s' % (success,)
+
+        if missing_field:
+            res = app.post_json( path, data, status=422, extra_environ=extra_environ )
+            assert_that(res.json_body['field'], is_(missing_field))
+        else:
+            res = app.post_json( path, data, extra_environ=extra_environ )
+
+            assert_that( res, has_property( 'status_int', 201 ) )
+            assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
+
+            assert_that( res.json_body, has_entry( 'Username', 'jason@test.nextthought.com' ) )
+        return res
+
 from nti.appserver.tests.test_application import NonDevmodeButAnySiteApplicationTestLayer
 
 class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest, NonDevmodeApplicationLayerTest):
@@ -528,12 +562,50 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest, No
         assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
         return mailer
 
+    @WithSharedApplicationMockDS
+    def test_create_user_by_admin_success( self ):
+        super(TestApplicationCreateUserNonDevmode,self).test_create_user_as_admin()
+        mailer = component.getUtility( ITestMailDelivery )
+        body = decodestring(mailer.queue[0].body)
+        assert_that(body, contains_string('A new account has been created') )
+        return mailer
+
+    def _test_create_user_by_admin_missing_field(self, data, missing_field ):
+        super(TestApplicationCreateUserNonDevmode, self)._do_test_create_user_as_admin(data,
+                                                                                       missing_field)
+
+        mailer = component.getUtility( ITestMailDelivery )
+        assert_that( mailer.queue, has_length(0) )
+        return mailer
+
+    @WithSharedApplicationMockDS
+    def test_create_user_by_admin_no_email( self ):
+        data = {'Username': 'booradley',
+                'realname': 'Arthur Radley'}
+        self._test_create_user_by_admin_missing_field(data,
+                                                      missing_field='email')
+
+    @WithSharedApplicationMockDS
+    def test_create_user_by_admin_no_username( self ):
+        data = {'realname': 'Arthur Radley',
+                'email': 'boo@maycomb.com'}
+        self._test_create_user_by_admin_missing_field(data,
+                                                      missing_field='Username')
+
+
 class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationLayerTest):
 
     @WithSharedApplicationMockDS
     def test_create_user( self ):
         super(TestApplicationCreateUser,self).test_create_user()
         mailer = component.getUtility( ITestMailDelivery )
+        assert_that( mailer.queue, has_length( 0 ) ) # no email in devmode because there is no site policy
+
+    @WithSharedApplicationMockDS
+    def test_create_user_as_admin( self ):
+        mailer = component.getUtility( ITestMailDelivery )
+        del mailer.queue[:]
+        super(TestApplicationCreateUser,self).test_create_user_as_admin()
         assert_that( mailer.queue, has_length( 0 ) ) # no email in devmode because there is no site policy
 
     @WithSharedApplicationMockDS
