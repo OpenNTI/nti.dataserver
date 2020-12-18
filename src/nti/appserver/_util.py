@@ -84,7 +84,6 @@ def logon_user_with_request(user, request, response=None):
     response = response or getattr(request, 'response')
     if response:
         encoded = user.username.encode('utf-8')
-        response.headers.extend(forget(request))
         response.headers.extend(remember(request, encoded))
         response.set_cookie(b'username', encoded)  # the web app likes this
 
