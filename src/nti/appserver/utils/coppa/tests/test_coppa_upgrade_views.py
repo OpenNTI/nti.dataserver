@@ -124,8 +124,11 @@ class TestApplicationCoppaUpgradeViews(ApplicationLayerTest):
         environ = self._make_extra_environ()
         environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
 
+        today = date.today()
+        d = today - timedelta(days=365 * 10)
+
         data = to_json_representation({'Username': 'sjohnson@nextthought.com',
-                                       'birthdate': '2007-11-30',
+                                       'birthdate': d.isoformat(),
                                        'realname': 'Aizen',
                                        'contact_email': 'aizen@bleach.com', })
 
