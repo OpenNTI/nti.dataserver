@@ -17,6 +17,9 @@ import unittest
 from zope import component
 from zope import interface
 
+from nti.app.authentication.interfaces import EveryoneLogonWhitelist
+from nti.app.authentication.interfaces import DefaultSiteLogonWhitelist
+
 from nti.app.authentication.pluggableauth import DataserverTokenAuthenticatorPlugin
 
 from nti.app.authentication.who_authenticators import DataserverTokenAuthenticator
@@ -104,7 +107,20 @@ class TestTokenAuth(unittest.TestCase):
         prin_info = auth.authenticate(environ, identity)
         assert_that(prin_info, none())
 
-        # Now a valid match
+        # Invalid unless user can login
         interface.alsoProvides(user_token, IAuthToken)
         prin_info = auth.authenticate(environ, identity)
-        assert_that(prin_info, is_(username))
+        assert_that(prin_info, none())
+
+        logon_whitelist = EveryoneLogonWhitelist()
+        site_logon_whitelist = DefaultSiteLogonWhitelist()
+        sm = component.getGlobalSiteManager()
+        sm.registerUtility(logon_whitelist)
+        sm.registerUtility(site_logon_whitelist)
+        try:
+            # Now a valid match
+            prin_info = auth.authenticate(environ, identity)
+            assert_that(prin_info, is_(username))
+        finally:
+            sm.unregisterUtility(logon_whitelist)
+            sm.unregisterUtility(site_logon_whitelist)
