@@ -212,8 +212,8 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
         try:
             sessions = []
             recur_limit = sys.getrecursionlimit()
+            too_old = 1080
             # The length needs to be pretty big to ensure recursion fails
-            too_old = 130
             for val in range(recur_limit * 2):
                 session = self.session_service.create_session(watch_session=False,
                                                               drop_old_sessions=False)
@@ -225,7 +225,7 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
             # Only half are alive now.
             assert_that(self.session_service.get_sessions_by_owner(session.owner),
                         has_length(len(sessions) / 2))
-            assert_that(called[0], is_(len(sessions) / 2))
+            assert_that(called[0], is_(len(sessions)))
 
             # Now kill the rest of them, silently
             for session in sessions:
@@ -234,7 +234,7 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 
             # Now we can request them again, get nothing, and not overflow the stack doing so.
             assert_that( self.session_service.get_sessions_by_owner( session.owner ), is_( [] ) )
-            assert_that( called[0], is_( len( sessions ) ) )
+            assert_that(called[0], is_(len(sessions)))
         finally:
             gsm.unregisterHandler(session_disconnected_broadcaster)
 
