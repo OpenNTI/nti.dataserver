@@ -273,7 +273,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 		assert_that(testapp.cookies['nti.auth_tkt'],
 					 contains_string('jwt_user_admin_iss_login%40nextthought.com!'))
 
-		# The auth_tkt cookied should not contain any empty username param.
+		# The auth_tkt cookie should not contain any empty username param.
 		# e.g. "username="  The username param is currently being used to signify
 		# we have impersonated someone
 		assert_that(testapp.cookies['nti.auth_tkt'],

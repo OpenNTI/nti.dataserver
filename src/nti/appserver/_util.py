@@ -20,7 +20,6 @@ from zope.event import notify
 
 from zope.location.interfaces import ILocation
 
-from pyramid.security import forget
 from pyramid.security import remember
 
 from nti.appserver.interfaces import UserLogonEvent
