@@ -376,7 +376,7 @@ def account_create_view(request):
     return new_user
 
 
-def create_account_as_admin(request):
+def create_account_as_admin(request, ext_obj=None):
     """
     Creates a new account (i.e., a new user object), if possible and
     such a user does not already exist. Security/permissioning needs to
@@ -395,7 +395,8 @@ def create_account_as_admin(request):
     additional constraints (for example, the ``password`` must conform
     to the password policy for that user and the present site.)
     """
-    externalValue = obj_io.read_body_as_external_object(request)
+    externalValue = ext_obj if ext_obj is not None \
+        else obj_io.read_body_as_external_object(request)
 
     # Must have email for this view, as we'll need to send the link to the
     # user to set their initial password.
