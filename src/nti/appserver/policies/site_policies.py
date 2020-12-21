@@ -540,7 +540,7 @@ class AbstractSitePolicyEventListener(object):
 
 		username = user.username
 		profile = IUserProfile(user)
-		email = getattr(profile, 'email')
+		email = profile.email
 
 		# Currently requires a `success` param passed in the request for
 		# the target of the link to use for directing the user to a login
