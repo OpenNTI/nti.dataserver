@@ -25,8 +25,6 @@ from zope.annotation.interfaces import IAnnotations
 
 from pyramid.view import view_config
 
-from nti.appserver._util import logon_user_with_request
-
 from nti.appserver.policies.interfaces import IRequireSetPassword
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
@@ -535,9 +533,6 @@ def reset_passcode_view(request):
     # Great, it worked. Kill the annotation so that it CANNOT be used again
     # (otherwise the window of vulnerability is larger than it needs to be)
     del annotations[_KEY_PASSCODE_RESET]
-
-    # Bypass the need to log in again
-    logon_user_with_request(user, request)
 
     # Assuming that works, return the user
     return user
