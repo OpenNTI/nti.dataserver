@@ -461,13 +461,21 @@ class TestApplicationPasswordReset(ApplicationLayerTest):
 		data = {'id': 'not.registered@example.com', 'username': 'somebodyelse', }
 		app.post( path, data, status=404 )
 
+	def _set_reset_code(self, user, token_id, age=None):
+		token_creation_time = (datetime.datetime.utcnow() if age is None
+							   else datetime.datetime.utcnow() - age)
+		IAnnotations(user)[account_recovery_views._KEY_PASSCODE_RESET] = \
+			code = (token_id, token_creation_time)
+		return code
+
 	@WithSharedApplicationMockDS
 	def test_expired_link( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user()
 			username = user.username
-			IAnnotations(user)[account_recovery_views._KEY_PASSCODE_RESET] = \
-				('the_id', datetime.datetime.utcnow() - datetime.timedelta(hours=5))
+			self._set_reset_code(user,
+								 'the_id',
+								 age=datetime.timedelta(hours=5))
 
 		app = TestApp( self.app )
 
@@ -486,12 +494,14 @@ class TestApplicationPasswordReset(ApplicationLayerTest):
 		Users marked with IRequireSetPassword and that have no password set
 		should have extended expiration
 		"""
+		# Initially set creation time to just over 7 days, which should fail
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user(password=None)
 			interface.alsoProvides(user, IRequireSetPassword)
 			username = user.username
-			IAnnotations(user)[account_recovery_views._KEY_PASSCODE_RESET] = \
-				('the_id', datetime.datetime.utcnow() - datetime.timedelta(days=6))
+			self._set_reset_code(user,
+								 'the_id',
+								 age=datetime.timedelta(days=7, seconds=1))
 
 		app = TestApp( self.app )
 
@@ -499,6 +509,20 @@ class TestApplicationPasswordReset(ApplicationLayerTest):
 		data = {'id': 'the_id',
 				'username': username,
 				'password': 'my_new_pwd'}
+		res = app.post( path, data, status=404 )
+		json_body = res.json_body
+
+		assert_that(json_body,
+					has_entry('code',
+							  'InvalidOrMissingOrExpiredResetToken'))
+
+		# Just under 7 days should succeed
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user(username)
+			self._set_reset_code(user,
+								 'the_id',
+								 age=datetime.timedelta(days=6, hours=23))
+
 		res = app.post( path, data, status=200 )
 
 		assert_that(res.headers, has_key('Set-Cookie'))

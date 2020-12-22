@@ -420,18 +420,18 @@ def _get_expiration_lifetime(user):
     return datetime.timedelta(hours=1 * RESET_KEY_HOURS)
 
 
-def _is_link_expired(user, token_time):
+def _is_link_expired(user, token_creation_time):
     now = datetime.datetime.utcnow()
     expiration_lifetime = _get_expiration_lifetime(user)
-    start_boundary = now - expiration_lifetime
-    result = token_time < start_boundary
-    if result:
-        age = now - token_time
+    expiration_date = token_creation_time + expiration_lifetime
+    is_expired = now > expiration_date
+    if is_expired:
+        age = now - token_creation_time
         logger.info('Password recovery link expired (days=%s) (hours=%s) (minutes=%s)',
                     age.days,
                     int(age.seconds / 3600 % 24),
                     int(age.seconds / 60 % 60))
-    return result
+    return is_expired
 
 
 @view_config(route_name=REL_RESET_PASSCODE,
