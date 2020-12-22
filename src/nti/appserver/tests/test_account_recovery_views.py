@@ -10,6 +10,7 @@ from __future__ import absolute_import
 
 from hamcrest import assert_that
 from hamcrest import has_entry
+from hamcrest import has_item
 from hamcrest import has_length
 from hamcrest import contains_string
 from hamcrest import has_property
@@ -499,6 +500,10 @@ class TestApplicationPasswordReset(ApplicationLayerTest):
 				'username': username,
 				'password': 'my_new_pwd'}
 		res = app.post( path, data, status=200 )
+
+		assert_that(res.headers, has_key('Set-Cookie'))
+		assert_that(res.headers.getall('Set-Cookie'),
+					has_item(contains_string('nti.auth_tkt')))
 
 	@WithSharedApplicationMockDS
 	def test_require_no_pass_for_extended_expiry( self ):
