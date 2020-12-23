@@ -210,9 +210,11 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
         gsm = getGlobalSiteManager()
         gsm.registerHandler( session_disconnected_broadcaster )
         try:
+            old_timeout = self.session_service.session_heartbeat_timeout
+            self.session_service.session_heartbeat_timeout = 1000
             sessions = []
             recur_limit = sys.getrecursionlimit()
-            too_old = 1080
+            too_old = 1200
             # The length needs to be pretty big to ensure recursion fails
             for val in range(recur_limit * 2):
                 session = self.session_service.create_session(watch_session=False,
@@ -223,9 +225,10 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
                 session.incr_hits()
 
             # Only half are alive now.
-            assert_that(self.session_service.get_sessions_by_owner(session.owner),
+            current_sessions = self.session_service.get_sessions_by_owner(session.owner)
+            assert_that(current_sessions,
                         has_length(len(sessions) / 2))
-            assert_that(called[0], is_(len(sessions)))
+            assert_that(called[0], is_(len(sessions) / 2))
 
             # Now kill the rest of them, silently
             for session in sessions:
@@ -236,6 +239,7 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
             assert_that( self.session_service.get_sessions_by_owner( session.owner ), is_( [] ) )
             assert_that(called[0], is_(len(sessions)))
         finally:
+            self.session_service.session_heartbeat_timeout = old_timeout
             gsm.unregisterHandler(session_disconnected_broadcaster)
 
     @WithMockDSTrans

@@ -30,7 +30,7 @@ from nti.base.interfaces import IFile
 from nti.externalization.integer_strings import to_external_string
 from nti.externalization.integer_strings import from_external_string
 
-pattern = re.compile(r'(.+)/%s/(.+)(\/.*)?' % CFIO, 
+pattern = re.compile(r'(.+)/%s/(.+)(\/.*)?' % CFIO,
                      re.UNICODE | re.IGNORECASE)
 
 logger = __import__('logging').getLogger(__name__)
@@ -116,7 +116,7 @@ def get_unique_file_name(name, container, now=None):
     now = now or time.time()
     slugified = slugify_filename(name)
     text_noe, ext = os.path.splitext(slugified)
-    now = datetime.fromtimestamp(now).strftime("%H.%M.%S")
+    now = datetime.utcfromtimestamp(now).strftime("%H.%M.%S")
     while True:
         if newtext not in container:
             break

@@ -215,11 +215,20 @@ class TestApplicationDigest(ApplicationLayerTest):
 	@time_monotonically_increases
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data_but_unsubscribed(self, fake_connect):
-		self._fetch_user_url('/@@unsubscribe_digest_email',
+		import transaction
+		from gevent._patcher import import_patched
+		manager = import_patched('transaction._manager').module.ThreadTransactionManager()
+		old_manager = transaction.manager
+		transaction.manager = manager
+		try:
+			self._fetch_user_url('/@@unsubscribe_digest_email',
 							 username='jason',
 							 extra_environ=self._make_extra_environ(username='jason'))
 
-		self._do_test_should_not_send_anything(fake_connect)
+			self._do_test_should_not_send_anything(fake_connect)
+		finally:
+			transaction.manager = old_manager
+			del DevmodeSitePolicyEventListener.COM_USERNAME
 
 	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
@@ -228,9 +237,15 @@ class TestApplicationDigest(ApplicationLayerTest):
 		from nti.appserver.policies.site_policies import DevmodeSitePolicyEventListener
 		assert_that( getattr(DevmodeSitePolicyEventListener(), 'COM_USERNAME', self), is_(none()))
 		DevmodeSitePolicyEventListener.COM_USERNAME = 'Everyone'
+		import transaction
+		from gevent._patcher import import_patched
+		manager = import_patched('transaction._manager').module.ThreadTransactionManager()
+		old_manager = transaction.manager
+		transaction.manager = manager
 		try:
 			self._do_test_should_not_send_anything(fake_connect)
 		finally:
+			transaction.manager = old_manager
 			del DevmodeSitePolicyEventListener.COM_USERNAME
 
 	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
@@ -267,7 +282,6 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 		res = res.form.submit( name='subFormTable.buttons.start' ).follow()
 		assert_that( res.body, contains_string( 'Remaining' ) )
-
 		# Let the spawned greenlet do its thing
 		gevent.joinall(bulk_email_views._BulkEmailView._greenlets)
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
