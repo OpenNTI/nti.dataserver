@@ -25,6 +25,7 @@ from zope.annotation.interfaces import IAnnotations
 
 from pyramid.view import view_config
 
+from nti.appserver.policies.interfaces import IRequireSetPassword
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.app.authentication import IAuthenticationValidator
@@ -228,6 +229,9 @@ _KEY_PASSCODE_RESET = __name__ + '.' + u'forgot_passcode_view_key'
 
 RESET_KEY_HOURS = 4
 
+#: Lifetime for reset keys when used for setting an initial password
+#: on an admin-created account
+SET_INITIAL_PASS_DAYS = 7
 
 @view_config(route_name=REL_FORGOT_PASSCODE,
              request_method='POST',
@@ -404,19 +408,28 @@ def find_users_with_email(email,
     return [x[0] for x in matches] if not match_info else list(matches)
 
 
-def _is_link_expired(token_time):
-    now = datetime.datetime.utcnow()
+def _get_expiration_lifetime(user):
+    # If we're dealing with an initial password being set, via an
+    # admin-created account, allow for a longer expiration
+    if IRequireSetPassword.providedBy(user) and not user.has_password():
+        return datetime.timedelta(days=1 * SET_INITIAL_PASS_DAYS)
+
     # JZ - 2.2016 - 4 hour trial run (was 1 hour).
-    delta = datetime.timedelta(hours=-1 * RESET_KEY_HOURS)
-    start_boundary = now + delta
-    result = token_time < start_boundary
-    if result:
-        age = now - token_time
+    return datetime.timedelta(hours=1 * RESET_KEY_HOURS)
+
+
+def _is_link_expired(user, token_creation_time):
+    now = datetime.datetime.utcnow()
+    expiration_lifetime = _get_expiration_lifetime(user)
+    expiration_date = token_creation_time + expiration_lifetime
+    is_expired = now > expiration_date
+    if is_expired:
+        age = now - token_creation_time
         logger.info('Password recovery link expired (days=%s) (hours=%s) (minutes=%s)',
                     age.days,
                     int(age.seconds / 3600 % 24),
                     int(age.seconds / 60 % 60))
-    return result
+    return is_expired
 
 
 @view_config(route_name=REL_RESET_PASSCODE,
@@ -482,7 +495,11 @@ def reset_passcode_view(request):
         logger.info('Password recovery token not stored for user (%s)', username)
     if value[0] != token:
         logger.info('Password recovery tokens do not match (%s)', username)
-    if value[0] != token or _is_link_expired(value[1]):
+    # If they're marked as IRequireSetPassword and already have a password,
+    # this view should probably act as a reset password
+
+    # So that these folks can use reset password
+    if value[0] != token or _is_link_expired(user, value[1]):
         # expired, no user, bad token
         raise_json_error(request,
                          hexc.HTTPNotFound,
