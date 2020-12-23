@@ -35,6 +35,8 @@ from pyramid.view import view_config
 
 from nti.app.authentication import get_remote_user
 
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.internalization import handle_unicode
 
 from nti.app.renderers.interfaces import IUnModifiedInResponse
@@ -109,51 +111,69 @@ def _is_valid_search(search_term, remote_user):
              context=IDataserverFolder,
              permission=nauth.ACT_SEARCH,
              request_method='GET')
-def _UserSearchView(request):
-    """
-    :param bool no_filter: If given and true, then will return users from all sites
-    if the remoteUser in the request is an admin. Otherwise, only searches users who
-    belong to the community of the site in which the request is being performed.
-    Searching in a site without a community will return users from all sites.
+@interface.implementer(INamedLinkView)
+class UserSearchView(AbstractAuthenticatedView):
 
-    .. note:: This is extremely inefficient.
+    users_only = False
 
-    .. note:: Policies need to be applied to this. For example, one policy
-            is that we should only be able to find users that intersect the set of communities
-            we are in. (To do that efficiently, we need community indexes).
-    """
-    dataserver = request.registry.getUtility(IDataserver)
-    remote_user = get_remote_user(request, dataserver)
-    assert remote_user is not None
+    def item_externalizer(self, remote_user):
+        return _user_externalizer(remote_user)
 
-    partialMatch = request.subpath[0] if request.subpath else ''
-    partialMatch = text_(partialMatch)
-    partialMatch = unquote(partialMatch)
-    partialMatch = partialMatch.lower()
+    def format_results(self, dataserver, remote_user, result):
+        item_externalizer = self.item_externalizer(remote_user)
 
-    # We tend to use this API as a user-resolution service, so
-    # optimize for that case--avoid waking all other users up
-    result = ()
-    if _is_valid_search(partialMatch, remote_user):
-        # NOTE3: We have now stopped allowing this to work for user resolution.
-        # This will probably break many assumptions in the UI about what and when usernames
-        # can be resolved
-        # NOTE2: Going through this API lets some private objects be found
-        # (DynamicFriendsLists, specifically). We should probably lock that down
-        result = _authenticated_search(remote_user, partialMatch, request)
-    elif partialMatch and remote_user:
-        # Even if it's not a valid global search, we still want to
-        # look at things local to the user
-        result = _search_scope_to_remote_user(remote_user, partialMatch)
+        return _format_result(result,
+                              item_externalizer,
+                              dataserver)
 
-    request.response.cache_control.max_age = 120
+    def __call__(self):
+        """
+        :param bool no_filter: If given and true, then will return users from all sites
+        if the remoteUser in the request is an admin. Otherwise, only searches users who
+        belong to the community of the site in which the request is being performed.
+        Searching in a site without a community will return users from all sites.
 
-    # limit to the first MAX_USERSEARCH_RESULTS
-    result = itertools.islice(result, _max_results())
+        .. note:: This is extremely inefficient.
 
-    result = _format_result(result, remote_user, dataserver)
-    return result
-interface.directlyProvides(_UserSearchView, INamedLinkView)
+        .. note:: Policies need to be applied to this. For example, one policy
+                is that we should only be able to find users that intersect the set of communities
+                we are in. (To do that efficiently, we need community indexes).
+        """
+        request = self.request
+        dataserver = request.registry.getUtility(IDataserver)
+        remote_user = get_remote_user(request, dataserver)
+        assert remote_user is not None
+
+        partialMatch = request.subpath[0] if request.subpath else ''
+        partialMatch = text_(partialMatch)
+        partialMatch = unquote(partialMatch)
+        partialMatch = partialMatch.lower()
+
+        # We tend to use this API as a user-resolution service, so
+        # optimize for that case--avoid waking all other users up
+        result = ()
+        if _is_valid_search(partialMatch, remote_user):
+            # NOTE3: We have now stopped allowing this to work for user resolution.
+            # This will probably break many assumptions in the UI about what and when usernames
+            # can be resolved
+            # NOTE2: Going through this API lets some private objects be found
+            # (DynamicFriendsLists, specifically). We should probably lock that down
+            result = _authenticated_search(remote_user,
+                                           partialMatch,
+                                           request,
+                                           users_only=self.users_only)
+        elif partialMatch and remote_user and not self.users_only:
+            # Even if it's not a valid global search, we still want to
+            # look at things local to the user
+            result = _search_scope_to_remote_user(remote_user, partialMatch)
+
+        request.response.cache_control.max_age = 120
+
+        # limit to the first MAX_USERSEARCH_RESULTS
+        result = itertools.islice(result, _max_results())
+
+        result = self.format_results(dataserver, remote_user, result)
+        return result
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -249,7 +269,9 @@ def _ResolveUserView(request):
         # username in the next little bit
         request.response.cache_control.max_age = 600  # ten minutes
 
-    formatted = _format_result(result, remote_user, dataserver)
+    formatted = _format_result(result,
+                               _user_externalizer(remote_user),
+                               dataserver)
     return formatted
 interface.directlyProvides(_ResolveUserView, INamedLinkView)
 
@@ -328,7 +350,7 @@ def _resolve_user(exact_match, remote_user, admin_filter_by_site_community, exte
     return result
 
 
-def _format_result(result, remote_user, dataserver):
+def _ext_type_resolver_for_user(remote_user):
     def _get_ext_type(user_tocheck):
         ext_type = 'summary'
         if user_tocheck == remote_user:
@@ -339,8 +361,21 @@ def _format_result(result, remote_user, dataserver):
             ext_type = 'admin-summary'
         return ext_type
 
-    result = [toExternalObject(user, name=(_get_ext_type(user)))
-              for user in result]
+    return _get_ext_type
+
+
+def _user_externalizer(remote_user):
+    _get_ext_type = _ext_type_resolver_for_user(remote_user)
+
+    def _externalizer(user):
+        return toExternalObject(user, name=(_get_ext_type(user)))
+
+    return _externalizer
+
+
+def _format_result(result, item_externalizer, dataserver):
+
+    result = [item_externalizer(user) for user in result]
 
     # We have no good modification data for this list, due to changing Presence
     # values of users, so caching is limited to etag matches
@@ -357,13 +392,18 @@ def _provide_location(result, dataserver):
     return result
 
 
-def _authenticated_search(remote_user, search_term, request):
+def _authenticated_search(remote_user,
+                          search_term,
+                          request,
+                          users_only=False):
     # Match Users and Communities here. Do not match IFriendsLists, because
     # that would get private objects from other users.
     def _selector(x):
-        result = IUser.providedBy(x) \
-            or (ICommunity.providedBy(x) and x.public)
-        return result
+        result = IUser.providedBy(x)
+        if users_only:
+            return result
+
+        return result or ICommunity.providedBy(x) and x.public
 
     user_search_matcher = IUserSearchPolicy(remote_user)
     result = user_search_matcher.query(search_term,
@@ -378,9 +418,11 @@ def _authenticated_search(remote_user, search_term, request):
     test = _make_visibility_test(remote_user, admin_filter_by_site_community)
     result = {x for x in result if test(x)}  # ensure a set
 
-    # Add locally matching friends lists, etc. These don't need to go through the
-    # filter since they won't be users
-    result.update(_search_scope_to_remote_user(remote_user, search_term))
+    if not users_only:
+        # Add locally matching friends lists, etc. These don't need to go through the
+        # filter since they won't be users
+        result.update(_search_scope_to_remote_user(remote_user, search_term))
+
     return result
 
 
