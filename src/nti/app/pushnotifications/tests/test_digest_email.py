@@ -228,7 +228,6 @@ class TestApplicationDigest(ApplicationLayerTest):
 			self._do_test_should_not_send_anything(fake_connect)
 		finally:
 			transaction.manager = old_manager
-			del DevmodeSitePolicyEventListener.COM_USERNAME
 
 	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
