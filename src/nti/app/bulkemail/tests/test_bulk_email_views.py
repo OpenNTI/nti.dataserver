@@ -219,23 +219,34 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		assert_that( res.body, contains_string( 'Start' ) )
 
 
-		# With some recipients
-		email = 'jason.madden@nextthought.com'
-		process = Process(self.beginRequest())
-		process.add_recipients( [{'email': Recipient(email)}] )
-		process.metadata.startTime = time.time()
-		process.metadata.save()
+		# Our notables run in a greenlet. Since we are not monkey
+		# patched here, we temporarily override our transaction manager to
+		# be gevent aware.
+		import transaction
+		from gevent._patcher import import_patched
+		manager = import_patched('transaction._manager').module.ThreadTransactionManager()
+		old_manager = transaction.manager
+		transaction.manager = manager
+		try:
+			# With some recipients
+			email = 'jason.madden@nextthought.com'
+			process = Process(self.beginRequest())
+			process.add_recipients( [{'email': Recipient(email)}] )
+			process.metadata.startTime = time.time()
+			process.metadata.save()
 
-		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
-		assert_that( res.body, contains_string( 'Remaining' ) )
+			res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
+			assert_that( res.body, contains_string( 'Remaining' ) )
 
-		# Submit the form asking it to resume; follow the resulting GET redirect
-		res = res.form.submit( name='subFormTable.buttons.resume' ).follow()
-		assert_that( res.body, contains_string( 'Remaining' ) )
-		# Let the spawned greenlet do its thing
-		bulk_email_views._BulkEmailView._greenlets[0].join()
-		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
-		assert_that( res.body, contains_string( 'End Time' ) )
+			# Submit the form asking it to resume; follow the resulting GET redirect
+			res = res.form.submit( name='subFormTable.buttons.resume' ).follow()
+			assert_that( res.body, contains_string( 'Remaining' ) )
+			# Let the spawned greenlet do its thing
+			bulk_email_views._BulkEmailView._greenlets[0].join()
+			res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
+			assert_that( res.body, contains_string( 'End Time' ) )
+		finally:
+			transaction.manager = old_manager
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_application_get_template_dne(self):

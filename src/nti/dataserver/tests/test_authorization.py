@@ -24,6 +24,7 @@ from zope.interface.verify import verifyObject
 
 from zope.security.interfaces import IParticipation
 
+from zope.security.management import endInteraction
 from zope.security.management import newInteraction
 from zope.security.management import getInteraction
 from zope.security.management import setSecurityPolicy
@@ -178,4 +179,5 @@ class TestAuthorization(DataserverLayerTest):
 		finally:
 			setSecurityPolicy(old_security_policy)
 			component.getGlobalSiteManager().unregisterUtility(policy)
+			endInteraction()
 
