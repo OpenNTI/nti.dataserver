@@ -21,6 +21,10 @@ from nti.testing.matchers import validly_provides as verifiably_provides
 from six.moves.urllib_parse import quote
 UQ = quote
 
+from calendar import timegm as _calendar_timegm
+
+from datetime import datetime
+
 from zope import interface
 
 from zope.event import notify
@@ -233,9 +237,12 @@ class TestApplicationFlagging(ApplicationLayerTest):
 			notify( chat_interfaces.MessageInfoPostedToRoomEvent( msg_info, msg_info.recipients + [msg_info.creator], room ) )
 			assert_that( chat_transcripts.transcript_for_user_in_room( user, room_id ).get_message( msg_info.ID ),
 						 is_( msg_info ) )
-			msg_info.lastModified = 1354558013.779055 # For the date below
+			# System local time is what we display
+			now = datetime.now()
+			msg_info.lastModified = _calendar_timegm(now.timetuple())
 			msg_info_ext_id = to_external_ntiid_oid( msg_info )
 
+		now_str = now.strftime("%m/%d/%y %-I:%M %p")
 
 		testapp = TestApp( self.app )
 
@@ -252,7 +259,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, contains_string( 'The first part' ) )
-		assert_that( res.body, contains_string( '12/3/12 6:06 PM' ) )
+		assert_that( res.body, contains_string(now_str) )
 
 		form = res.form
 		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
@@ -262,7 +269,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
-		assert_that( res.body, does_not( contains_string( '12/3/12 6:06 PM' ) ) )
+		assert_that( res.body, does_not( contains_string(now_str) ) )
 
 		with mock_dataserver.mock_db_trans( self.ds ) as conn:
 			msg_info = conn.get( msg_info._p_oid )
