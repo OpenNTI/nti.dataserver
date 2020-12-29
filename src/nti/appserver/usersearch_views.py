@@ -105,6 +105,26 @@ def _is_valid_search(search_term, remote_user):
     return remote_user and search_term and len(search_term) >= 3
 
 
+class UserExternalizingMixin(object):
+
+    def format_results(self, dataserver, results):
+        externalized_objects = self.externalize_objects(results)
+        located_results = self.locate_externalized_objects(externalized_objects,
+                                                           dataserver)
+        return located_results
+
+    def externalize_objects(self, results):
+        _get_ext_type = _ext_type_resolver_for_user(self.remoteUser)
+        return [toExternalObject(user, name=(_get_ext_type(user)))
+                for user in results]
+
+    def locate_externalized_objects(self, results, dataserver):
+        # We have no good modification data for this list, due to changing Presence
+        # values of users, so caching is limited to etag matches
+        result = LocatedExternalDict({'Last Modified': 0, 'Items': results})
+        return _provide_location(result, dataserver)
+
+
 @view_config(route_name='objects.generic.traversal',
              name='UserSearch',
              renderer='rest',
@@ -112,19 +132,12 @@ def _is_valid_search(search_term, remote_user):
              permission=nauth.ACT_SEARCH,
              request_method='GET')
 @interface.implementer(INamedLinkView)
-class UserSearchView(AbstractAuthenticatedView):
+class UserSearchView(AbstractAuthenticatedView,
+                     UserExternalizingMixin):
 
-    users_only = False
-
-    def item_externalizer(self, remote_user):
-        return _user_externalizer(remote_user)
-
-    def format_results(self, dataserver, remote_user, result):
-        item_externalizer = self.item_externalizer(remote_user)
-
-        return _format_result(result,
-                              item_externalizer,
-                              dataserver)
+    def filter_result(self, result):
+        # limit to the first MAX_USERSEARCH_RESULTS
+        return itertools.islice(result, _max_results())
 
     def __call__(self):
         """
@@ -160,19 +173,16 @@ class UserSearchView(AbstractAuthenticatedView):
             # (DynamicFriendsLists, specifically). We should probably lock that down
             result = _authenticated_search(remote_user,
                                            partialMatch,
-                                           request,
-                                           users_only=self.users_only)
-        elif partialMatch and remote_user and not self.users_only:
+                                           request)
+        elif partialMatch and remote_user:
             # Even if it's not a valid global search, we still want to
             # look at things local to the user
             result = _search_scope_to_remote_user(remote_user, partialMatch)
 
         request.response.cache_control.max_age = 120
 
-        # limit to the first MAX_USERSEARCH_RESULTS
-        result = itertools.islice(result, _max_results())
-
-        result = self.format_results(dataserver, remote_user, result)
+        result = self.filter_result(result)
+        result = self.format_results(dataserver, result)
         return result
 
 
@@ -219,61 +229,63 @@ def _TraverseToUser(request):
              renderer='rest',
              permission=nauth.ACT_SEARCH,
              request_method='GET')
-def _ResolveUserView(request):
-    """
-    .. note:: This is extremely inefficient.
+@interface.implementer(INamedLinkView)
+class _ResolveUserView(AbstractAuthenticatedView,
+                       UserExternalizingMixin):
 
-    .. note:: Policies need to be applied to this. For example, one policy
-            is that we should only be able to find users that intersect the set of communities
-            we are in. (To do that efficiently, we need community indexes).
-    """
+    def __call__(self):
+        """
+        .. note:: This is extremely inefficient.
 
-    dataserver = request.registry.getUtility(IDataserver)
-    remote_user = get_remote_user(request, dataserver)
-    assert remote_user is not None
+        .. note:: Policies need to be applied to this. For example, one policy
+                is that we should only be able to find users that intersect the set of communities
+                we are in. (To do that efficiently, we need community indexes).
+        """
 
-    exact_match = request.subpath[0] if request.subpath else ''
-    external_type = external_id = None
-    if not exact_match:
-        params = CaseInsensitiveDict(request.params)
-        external_type = params.get("external_type") or params.get("externaltype")
-        external_id = params.get("external_id") or params.get("externalid")
-        if not external_type or not external_id:
-            raise hexc.HTTPNotFound()
-        external_id = text_(external_id)
-        external_id = unquote(external_id)
-        external_type = text_(external_type)
-        external_type = unquote(external_type)
-    exact_match = text_(exact_match)
-    exact_match = unquote(exact_match)
+        request = self.request
+        dataserver = request.registry.getUtility(IDataserver)
+        remote_user = get_remote_user(request, dataserver)
+        assert remote_user is not None
 
-    admin_filter_by_site_community = not is_false(
-                        request.params.get('filter_by_site_community'))
+        exact_match = request.subpath[0] if request.subpath else ''
+        external_type = external_id = None
+        if not exact_match:
+            params = CaseInsensitiveDict(request.params)
+            external_type = params.get("external_type") or params.get("externaltype")
+            external_id = params.get("external_id") or params.get("externalid")
+            if not external_type or not external_id:
+                raise hexc.HTTPNotFound()
+            external_id = text_(external_id)
+            external_id = unquote(external_id)
+            external_type = text_(external_type)
+            external_type = unquote(external_type)
+        exact_match = text_(exact_match)
+        exact_match = unquote(exact_match)
 
-    result = _resolve_user(exact_match, remote_user, admin_filter_by_site_community,
-                           external_type=external_type, external_id=external_id)
-    if result:
-        # If we matched one user entity, see if we can get away without rendering it
-        # TODO: This isn't particularly clean
-        controller = IPreRenderResponseCacheController(result[0])
-        controller(result[0], {'request': request})
-        # special case the remote user being the same user; we don't want to cache
-        # ourself based simply on modification date as that doesn't take into account
-        # dynamic links; we do need to render
-        if result[0] == remote_user:
-            request.response.cache_control.max_age = 0
-            request.response.etag = None
-    else:
-        # Let resolutions that failed be cacheable for a long time.
-        # It's extremely unlikely that someone is going to snag this missing
-        # username in the next little bit
-        request.response.cache_control.max_age = 600  # ten minutes
+        admin_filter_by_site_community = not is_false(
+                            request.params.get('filter_by_site_community'))
 
-    formatted = _format_result(result,
-                               _user_externalizer(remote_user),
-                               dataserver)
-    return formatted
-interface.directlyProvides(_ResolveUserView, INamedLinkView)
+        result = _resolve_user(exact_match, remote_user, admin_filter_by_site_community,
+                               external_type=external_type, external_id=external_id)
+        if result:
+            # If we matched one user entity, see if we can get away without rendering it
+            # TODO: This isn't particularly clean
+            controller = IPreRenderResponseCacheController(result[0])
+            controller(result[0], {'request': request})
+            # special case the remote user being the same user; we don't want to cache
+            # ourself based simply on modification date as that doesn't take into account
+            # dynamic links; we do need to render
+            if result[0] == remote_user:
+                request.response.cache_control.max_age = 0
+                request.response.etag = None
+        else:
+            # Let resolutions that failed be cacheable for a long time.
+            # It's extremely unlikely that someone is going to snag this missing
+            # username in the next little bit
+            request.response.cache_control.max_age = 600  # ten minutes
+
+        formatted = self.format_results(dataserver, result)
+        return formatted
 
 
 @view_config(route_name='objects.generic.traversal',
@@ -364,25 +376,6 @@ def _ext_type_resolver_for_user(remote_user):
     return _get_ext_type
 
 
-def _user_externalizer(remote_user):
-    _get_ext_type = _ext_type_resolver_for_user(remote_user)
-
-    def _externalizer(user):
-        return toExternalObject(user, name=(_get_ext_type(user)))
-
-    return _externalizer
-
-
-def _format_result(result, item_externalizer, dataserver):
-
-    result = [item_externalizer(user) for user in result]
-
-    # We have no good modification data for this list, due to changing Presence
-    # values of users, so caching is limited to etag matches
-    result = LocatedExternalDict({'Last Modified': 0, 'Items': result})
-    return _provide_location(result, dataserver)
-
-
 def _provide_location(result, dataserver):
     interface.alsoProvides(result, IUnModifiedInResponse)
     interface.alsoProvides(result, IContentTypeAware)
@@ -392,18 +385,13 @@ def _provide_location(result, dataserver):
     return result
 
 
-def _authenticated_search(remote_user,
-                          search_term,
-                          request,
-                          users_only=False):
+def _authenticated_search(remote_user, search_term, request):
     # Match Users and Communities here. Do not match IFriendsLists, because
     # that would get private objects from other users.
     def _selector(x):
-        result = IUser.providedBy(x)
-        if users_only:
-            return result
-
-        return result or ICommunity.providedBy(x) and x.public
+        result = IUser.providedBy(x) \
+            or (ICommunity.providedBy(x) and x.public)
+        return result
 
     user_search_matcher = IUserSearchPolicy(remote_user)
     result = user_search_matcher.query(search_term,
@@ -418,11 +406,9 @@ def _authenticated_search(remote_user,
     test = _make_visibility_test(remote_user, admin_filter_by_site_community)
     result = {x for x in result if test(x)}  # ensure a set
 
-    if not users_only:
-        # Add locally matching friends lists, etc. These don't need to go through the
-        # filter since they won't be users
-        result.update(_search_scope_to_remote_user(remote_user, search_term))
-
+    # Add locally matching friends lists, etc. These don't need to go through the
+    # filter since they won't be users
+    result.update(_search_scope_to_remote_user(remote_user, search_term))
     return result
 
 

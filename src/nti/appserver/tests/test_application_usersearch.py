@@ -39,6 +39,8 @@ from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_SCHEMA as R
 
 from nti.appserver.usersearch_views import UserSearchView
 
+from nti.coremetadata.interfaces import IUser
+
 from nti.dataserver.interfaces import ICoppaUser
 
 from nti.dataserver.users import FriendsList
@@ -627,7 +629,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
     @WithSharedApplicationMockDS(users=('user2',),
                                  testapp=True,
                                  default_authenticate=True)
-    def test_users_only(self):
+    def test_usersearch_filter(self):
         with mock_dataserver.mock_db_trans():
             user1 = self.users['sjohnson@nextthought.com']
             user2 = self.users['user2']
@@ -643,7 +645,10 @@ class TestApplicationUserSearch(ApplicationLayerTest):
             user1.addContainedObject(fl)
             fl.addFriend(user2)
 
-        with _users_only():
+        def filter_result(_self, results):
+            return [result for result in results if IUser.providedBy(result)]
+
+        with _usersearch_filter(filter_result):
             res = self.testapp.get('/dataserver2/UserSearch/friends')
             assert_that(res.json_body['Items'], has_length(0))
 
@@ -661,10 +666,10 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
 
 @contextlib.contextmanager
-def _users_only():
-    previous_value = UserSearchView.users_only
-    UserSearchView.users_only = True
+def _usersearch_filter(new_filter):
+    previous_value = UserSearchView.filter_result
+    UserSearchView.filter_result = new_filter
     try:
         yield
     finally:
-        UserSearchView.users_only = previous_value
+        UserSearchView.filter_result = previous_value
