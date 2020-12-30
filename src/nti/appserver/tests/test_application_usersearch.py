@@ -7,6 +7,9 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+
+import contextlib
+
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import all_of
@@ -34,7 +37,13 @@ from webtest import TestApp
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_PREFLIGHT
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_SCHEMA as REL_ACCOUNT_PROFILE
 
+from nti.appserver.usersearch_views import UserSearchView
+
+from nti.coremetadata.interfaces import IUser
+
 from nti.dataserver.interfaces import ICoppaUser
+
+from nti.dataserver.users import FriendsList
 
 from nti.dataserver.users.communities import Community
 
@@ -616,3 +625,51 @@ class TestApplicationUserSearch(ApplicationLayerTest):
         res = testapp.get('/dataserver2/users/' + user2_username,
                           extra_environ=self._make_extra_environ(username=u'sjohnson@nti.com'))
         assert_that(res.json_body, has_entry('Class', 'User'))
+
+    @WithSharedApplicationMockDS(users=('user2',),
+                                 testapp=True,
+                                 default_authenticate=True)
+    def test_usersearch_filter(self):
+        with mock_dataserver.mock_db_trans():
+            user1 = self.users['sjohnson@nextthought.com']
+            user2 = self.users['user2']
+            dfl = DynamicFriendsList(username=u'Friends')
+            IFriendlyNamed(dfl).alias = u"Close Associates"
+            dfl.creator = user1
+            user1.addContainedObject(dfl)
+            dfl.addFriend(user2)
+
+            fl = FriendsList(username=u'StaticFriends')
+            IFriendlyNamed(fl).alias = u"Super Friends"
+            fl.creator = user1
+            user1.addContainedObject(fl)
+            fl.addFriend(user2)
+
+        def filter_result(_self, results):
+            return [result for result in results if IUser.providedBy(result)]
+
+        with _usersearch_filter(filter_result):
+            res = self.testapp.get('/dataserver2/UserSearch/friends')
+            assert_that(res.json_body['Items'], has_length(0))
+
+            res = self.testapp.get('/dataserver2/UserSearch/close')
+            assert_that(res.json_body['Items'], has_length(0))
+
+            res = self.testapp.get('/dataserver2/UserSearch/assoc')
+            assert_that(res.json_body['Items'], has_length(0))
+
+            res = self.testapp.get('/dataserver2/UserSearch/static')
+            assert_that(res.json_body['Items'], has_length(0))
+
+            res = self.testapp.get('/dataserver2/UserSearch/super')
+            assert_that(res.json_body['Items'], has_length(0))
+
+
+@contextlib.contextmanager
+def _usersearch_filter(new_filter):
+    previous_value = UserSearchView.filter_result
+    UserSearchView.filter_result = new_filter
+    try:
+        yield
+    finally:
+        UserSearchView.filter_result = previous_value
