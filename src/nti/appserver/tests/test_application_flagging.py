@@ -242,7 +242,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 			msg_info.lastModified = _calendar_timegm(now.timetuple())
 			msg_info_ext_id = to_external_ntiid_oid( msg_info )
 
-		now_str = now.strftime("%m/%d/%y %-I:%M %p")
+		now_str = now.strftime("%-m/%-d/%y %-I:%M %p")
 
 		testapp = TestApp( self.app )
 
