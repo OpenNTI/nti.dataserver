@@ -201,8 +201,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 		user.streamCache.clear()
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId(user, ntiids.ROOT)
-
-                transaction.doom()
+			transaction.doom()
 
 	@WithMockDS(with_changes=True)
 	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')

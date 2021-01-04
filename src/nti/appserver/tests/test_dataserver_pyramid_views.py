@@ -231,9 +231,13 @@ class TestUGDModifyViews(NewRequestLayerTest):
 		class Lib(object):
 			def pathToNTIID( self, ntiid ): return [NID()] if ntiid == child_ntiid else None
 
-		get_current_request().registry.registerUtility( Lib(), lib_interfaces.IContentPackageLibrary )
-		get_current_request().registry.registerUtility( self.ds, nti_interfaces.IDataserver )
-		cont = _NTIIDsContainerResource( None, None )
-		cont.request = get_current_request()
-
-		assert_that( cont.traverse(child_ntiid, ()), is_( NID ) )
+		try:
+			lib = Lib()
+			get_current_request().registry.registerUtility(lib, lib_interfaces.IContentPackageLibrary)
+			get_current_request().registry.registerUtility(self.ds, nti_interfaces.IDataserver)
+			cont = _NTIIDsContainerResource(None, None)
+			cont.request = get_current_request()
+			assert_that( cont.traverse(child_ntiid, ()), is_( NID ) )
+		finally:
+			get_current_request().registry.unregisterUtility(self.ds, nti_interfaces.IDataserver)
+			get_current_request().registry.unregisterUtility(lib, lib_interfaces.IContentPackageLibrary)
