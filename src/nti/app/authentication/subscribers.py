@@ -12,15 +12,25 @@ from __future__ import absolute_import
 
 import binascii
 
+from pyramid.interfaces import IRequest
+
+from pyramid.request import Request
+
 from zope import component
+
+from zope.app.appsetup.bootstrap import ensureUtility
+
+from zope.authentication.interfaces import IAuthentication
 
 from zope.authentication.loginpassword import LoginPassword
 
 from zope.lifecycleevent import IObjectCreatedEvent
 
-from pyramid.interfaces import IRequest
+from zope.site.interfaces import INewLocalSite
 
-from pyramid.request import Request
+from nti.app.authentication.zope_authentication import _SiteAuthentication
+
+from nti.site.interfaces import IHostPolicySiteManager
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -80,3 +90,13 @@ class BasicAuthLoginPassword(LoginPassword):
     def __init__(self, request):
         username = _decode_username_request(request)
         super(BasicAuthLoginPassword, self).__init__(*username)
+
+
+@component.adapter(IHostPolicySiteManager, INewLocalSite)
+def on_site_created(site_manager, unused_event=None):
+    logger.info('Installing site authentication utility (%s)',
+                site_manager.__parent__.__name__)
+    ensureUtility(site_manager.__parent__,
+                  IAuthentication,
+                  'authentication',
+                  _SiteAuthentication)

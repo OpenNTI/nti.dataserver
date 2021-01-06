@@ -10,6 +10,8 @@
 
 	<subscriber handler=".subscribers._decode_username_request_event" />
 
+	<subscriber handler=".subscribers.on_site_created" />
+
 	<adapter factory=".subscribers.BasicAuthLoginPassword" />
 
 	<adapter factory=".user_token.DefaultIdentifiedUserTokenAuthenticator"
