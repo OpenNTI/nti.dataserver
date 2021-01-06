@@ -15,8 +15,6 @@ from zope import interface
 from zope.authentication.interfaces import IAuthentication
 from zope.authentication.interfaces import PrincipalLookupError
 
-from zope.component import queryNextUtility
-
 from zope.component.hooks import site
 
 from zope.component.interfaces import ISite
@@ -28,14 +26,13 @@ from zope.location.interfaces import IContained
 from zope.security.interfaces import IPrincipal
 
 from nti.app.authentication import IAuthenticationValidator
+from nti.app.authentication import IDataserverAuthentication
 
 from nti.app.users.utils import get_user_creation_sitename
 
 from nti.dataserver.users import User
 
-from nti.site import get_host_site
-
-from nti.site.site import get_component_hierarchy_names
+from nti.site.localutility import queryNextUtility
 
 from nti.traversal.traversal import find_interface
 
@@ -93,20 +90,10 @@ class _SiteAuthentication(Persistent, Contained):
     def _site(self):
         return find_interface(self, ISite)
 
-    @property
-    def _parent_site(self):
-        component_hierarchy_names = get_component_hierarchy_names(site=self._site)
-        parent_site_name = (component_hierarchy_names[1]
-                            if len(component_hierarchy_names) > 1 else None)
-
-        if parent_site_name is None:
-            return None
-
-        return get_host_site(parent_site_name)
-
     def _is_site_user(self, user):
         """
-        Whether the user was created in the current site
+        Whether the user is valid for the current site, e.g. this is their
+        creation site or they have no creation site
         """
         site = get_user_creation_sitename(user)
         result = bool(not site or site == self._site.__name__)
@@ -125,16 +112,13 @@ class _SiteAuthentication(Persistent, Contained):
         return None
 
     def _query_next_util(self):
-        parent_site = self._parent_site
-        if parent_site is not None:
-            # queryNextUtility will not fetch the persisted IAuthentication
-            # util from our parent site, as the PrincipalRegistry registered
-            # globally will be returned instead (it checks our non-persistent
-            # components for any matching util before checking our persistent
-            # parent)
-            next_util = parent_site.getSiteManager().getUtility(IAuthentication)
-        else:
-            next_util = queryNextUtility(self, IAuthentication)
+        next_util = queryNextUtility(self, IAuthentication)
+
+        # IDataserverAuthentication utility isn't site-specific, and will
+        # simply return a principal for any user in the system, which we
+        # don't want.
+        if IDataserverAuthentication.providedBy(next_util):
+            next_util = queryNextUtility(next_util, IAuthentication)
 
         return next_util
 
