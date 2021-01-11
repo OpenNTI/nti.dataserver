@@ -50,11 +50,15 @@ class SiteAuthentication(Persistent, Contained):
         return self._api_factory(request.environ)
 
     def authenticate(self, request):
+        # This method was written with parent sites in mind, but is not
+        # currently in use anywhere.  We should double check the logic
+        # is correct for a given context before using it.
         api = self._getAPI(request)
         identity = api.authenticate()
         if identity is not None:
             principal_id = (
-                identity.get('repoze.who.userid') if identity is not None
+                identity.get('repoze.who.userid')
+                if identity is not None
                 else None)
 
             principal = self._get_validated_principal(principal_id)
@@ -76,7 +80,7 @@ class SiteAuthentication(Persistent, Contained):
         next_util = queryNextUtility(self, IAuthentication)
 
         if next_util is not None:
-            next_util.unauthorized(principal_id, request)
+            return next_util.unauthorized(principal_id, request)
 
     def _auth_validator(self):
         return component.getUtility(IAuthenticationValidator)
