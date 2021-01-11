@@ -31,11 +31,11 @@ from zope.site.interfaces import INewLocalSite
 
 from nti.app.authentication import _DSAuthentication
 
-from nti.app.authentication.subscribers import on_site_created
+from nti.app.authentication.subscribers import install_site_authentication
 
 from nti.app.authentication.tests import AuthenticationLayerTest
 
-from nti.app.authentication.zope_authentication import _SiteAuthentication
+from nti.app.authentication._zope_authentication import SiteAuthentication
 
 from nti.appserver.policies.sites import BASEADULT
 
@@ -74,12 +74,12 @@ class TestZopeAuthentication(AuthenticationLayerTest):
         for bc in SITES:
             bc.__init__(bc.__parent__, name=bc.__name__, bases=bc.__bases__)
             BASE.registerUtility(bc, name=bc.__name__, provided=IComponents)
-        BASE.registerHandler(on_site_created, required=(IHostPolicySiteManager, INewLocalSite))
+        BASE.registerHandler(install_site_authentication, required=(IHostPolicySiteManager, INewLocalSite))
 
     def tearDown(self):
         for bc in SITES:
             BASE.unregisterUtility(bc, name=bc.__name__, provided=IComponents)
-        BASE.registerHandler(on_site_created, (IHostPolicySiteManager, INewLocalSite))
+        BASE.registerHandler(install_site_authentication, (IHostPolicySiteManager, INewLocalSite))
         super(TestZopeAuthentication, self).tearDown()
 
     def get_authentication_utils(self, site):
@@ -133,7 +133,7 @@ class TestZopeAuthentication(AuthenticationLayerTest):
 
             with site(test_base_site):
                 auth = component.getUtility(IAuthentication)
-                assert_that(auth, is_(_SiteAuthentication))
+                assert_that(auth, is_(SiteAuthentication))
                 assert_that(auth.getPrincipal('siteless-one').id, is_('siteless-one'))
                 assert_that(auth.getPrincipal('test-one').id, is_('test-one'))
                 assert_that(calling(auth.getPrincipal).with_args('test-child-one'),
@@ -143,7 +143,7 @@ class TestZopeAuthentication(AuthenticationLayerTest):
 
             with site(test_child_site):
                 auth = component.getUtility(IAuthentication)
-                assert_that(auth, is_(_SiteAuthentication))
+                assert_that(auth, is_(SiteAuthentication))
                 assert_that(auth.getPrincipal('siteless-one').id, is_('siteless-one'))
                 assert_that(auth.getPrincipal('test-one').id, is_('test-one'))
                 assert_that(auth.getPrincipal('test-child-one').id, is_('test-child-one'))
@@ -151,7 +151,7 @@ class TestZopeAuthentication(AuthenticationLayerTest):
                             raises(PrincipalLookupError))
 
     @mock_dataserver.WithMockDS
-    @fudge.patch("nti.app.authentication.zope_authentication._SiteAuthentication._query_next_util")
+    @fudge.patch("nti.app.authentication._zope_authentication.SiteAuthentication._query_next_util")
     def test_get_principal_no_next_util(self, query_next_util):
         # A configuration where the site authentication utility has
         # no utility to delegate to and doesn't find a user itself.
@@ -163,12 +163,12 @@ class TestZopeAuthentication(AuthenticationLayerTest):
             test_base_site = get_site_for_site_names(('test.nextthought.com',))
             with site(test_base_site):
                 auth = component.getUtility(IAuthentication)
-                assert_that(auth, is_(_SiteAuthentication))
+                assert_that(auth, is_(SiteAuthentication))
                 assert_that(calling(auth.getPrincipal).with_args('test-nonuser'),
                             raises(PrincipalLookupError))
 
     @mock_dataserver.WithMockDS
-    @fudge.patch("nti.app.authentication.zope_authentication._SiteAuthentication._query_next_util")
+    @fudge.patch("nti.app.authentication._zope_authentication.SiteAuthentication._query_next_util")
     def test_get_principal_no_next_util(self, query_next_util):
         # A configuration where the site authentication utility has
         # no utility to delegate to and doesn't find a user itself.
@@ -180,6 +180,6 @@ class TestZopeAuthentication(AuthenticationLayerTest):
             test_base_site = get_site_for_site_names(('test.nextthought.com',))
             with site(test_base_site):
                 auth = component.getUtility(IAuthentication)
-                assert_that(auth, is_(_SiteAuthentication))
+                assert_that(auth, is_(SiteAuthentication))
                 assert_that(calling(auth.getPrincipal).with_args('test-nonuser'),
                             raises(PrincipalLookupError))

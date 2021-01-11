@@ -149,3 +149,9 @@ class IDataserverAuthentication(IAuthentication):
     """
     Marker for our base persistent IAuthentication utility
     """
+
+
+class ISiteAuthentication(IAuthentication):
+    """
+    Marker for site-based IAuthentication utilities
+    """

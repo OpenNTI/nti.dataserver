@@ -10,7 +10,7 @@
 
 	<subscriber handler=".subscribers._decode_username_request_event" />
 
-	<subscriber handler=".subscribers.on_site_created" />
+	<subscriber handler=".subscribers.install_site_authentication" />
 
 	<adapter factory=".subscribers.BasicAuthLoginPassword" />
 

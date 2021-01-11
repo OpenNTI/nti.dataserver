@@ -22,7 +22,7 @@ from zope.interface.interfaces import IComponents
 
 from zope.site.interfaces import INewLocalSite
 
-from nti.app.authentication.subscribers import on_site_created
+from nti.app.authentication.subscribers import install_site_authentication
 
 from nti.appserver.policies.sites import BASEADULT
 
@@ -62,12 +62,12 @@ class TestEvolve112(mock_dataserver.DataserverLayerTest):
 
         # We want to test sites that were created prior to this handler
         # being in place, so disable it for the test
-        BASE.unregisterHandler(on_site_created, (IHostPolicySiteManager, INewLocalSite))
+        BASE.unregisterHandler(install_site_authentication, (IHostPolicySiteManager, INewLocalSite))
 
     def tearDown(self):
         for bc in SITES:
             BASE.unregisterUtility(bc, name=bc.__name__, provided=IComponents)
-        BASE.registerHandler(on_site_created, (IHostPolicySiteManager, INewLocalSite))
+        BASE.registerHandler(install_site_authentication, (IHostPolicySiteManager, INewLocalSite))
         super(TestEvolve112, self).tearDown()
 
     def get_authentication_utils(self, site):

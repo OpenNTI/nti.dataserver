@@ -25,7 +25,7 @@ from zope.interface.interfaces import IComponents
 from zope.site.interfaces import INewLocalSite
 
 from nti.app.authentication.subscribers import _decode_username_request
-from nti.app.authentication.subscribers import on_site_created
+from nti.app.authentication.subscribers import install_site_authentication
 
 from nti.appserver.policies.sites import BASEADULT
 
@@ -80,7 +80,7 @@ class TestOnSiteCreation(mock_dataserver.DataserverLayerTest):
         site = TEST_SITE
         site.__init__(site.__parent__, name=site.__name__, bases=site.__bases__)
         BASE.registerUtility(site, name=site.__name__, provided=IComponents)
-        BASE.registerHandler(on_site_created, required=(IHostPolicySiteManager, INewLocalSite))
+        BASE.registerHandler(install_site_authentication, required=(IHostPolicySiteManager, INewLocalSite))
 
     def tearDown(self):
         site = TEST_SITE

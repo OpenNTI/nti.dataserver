@@ -11,10 +11,6 @@ from __future__ import print_function
 from zope import component
 from zope import interface
 
-from zope.app.appsetup.bootstrap import ensureUtility
-
-from zope.authentication.interfaces import IAuthentication
-
 from zope.component.hooks import site as current_site
 
 from nti.coremetadata.interfaces import IDataserver
@@ -54,13 +50,9 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
         assert component.getSiteManager() == ds_folder.getSiteManager(), \
                "Hooks not installed?"
 
-        from nti.app.authentication.zope_authentication import _SiteAuthentication
+        from nti.app.authentication.subscribers import install_site_authentication
         for site in get_all_host_sites():
-            ensureUtility(site,
-                          IAuthentication,
-                          'authentication',
-                          _SiteAuthentication)
-
+            install_site_authentication(site.getSiteManager())
     logger.info('Evolution %s done.', generation)
 
 

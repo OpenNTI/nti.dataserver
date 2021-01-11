@@ -20,17 +20,17 @@ from zope import component
 
 from zope.app.appsetup.bootstrap import ensureUtility
 
-from zope.authentication.interfaces import IAuthentication
-
 from zope.authentication.loginpassword import LoginPassword
 
 from zope.lifecycleevent import IObjectCreatedEvent
 
 from zope.site.interfaces import INewLocalSite
 
-from nti.app.authentication.zope_authentication import _SiteAuthentication
+from nti.app.authentication.interfaces import ISiteAuthentication
 
 from nti.site.interfaces import IHostPolicySiteManager
+
+from ._zope_authentication import SiteAuthentication
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -93,10 +93,10 @@ class BasicAuthLoginPassword(LoginPassword):
 
 
 @component.adapter(IHostPolicySiteManager, INewLocalSite)
-def on_site_created(site_manager, unused_event=None):
+def install_site_authentication(site_manager, unused_event=None):
     logger.info('Installing site authentication utility (%s)',
                 site_manager.__parent__.__name__)
     ensureUtility(site_manager.__parent__,
-                  IAuthentication,
+                  ISiteAuthentication,
                   'authentication',
-                  _SiteAuthentication)
+                  SiteAuthentication)

@@ -28,6 +28,8 @@ from zope.security.interfaces import IPrincipal
 from nti.app.authentication import IAuthenticationValidator
 from nti.app.authentication import IDataserverAuthentication
 
+from nti.app.authentication.interfaces import ISiteAuthentication
+
 from nti.app.users.utils import get_user_creation_sitename
 
 from nti.dataserver.users import User
@@ -37,8 +39,8 @@ from nti.site.localutility import queryNextUtility
 from nti.traversal.traversal import find_interface
 
 
-@interface.implementer(IAuthentication, IContained)
-class _SiteAuthentication(Persistent, Contained):
+@interface.implementer(ISiteAuthentication, IContained)
+class SiteAuthentication(Persistent, Contained):
 
     @property
     def _api_factory(self):
