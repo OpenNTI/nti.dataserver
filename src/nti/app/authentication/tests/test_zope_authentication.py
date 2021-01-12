@@ -27,9 +27,13 @@ from zope.component.hooks import site
 
 from zope.interface.interfaces import IComponents
 
+from zope.location.interfaces import IContained
+
 from zope.site.interfaces import INewLocalSite
 
 from nti.app.authentication import _DSAuthentication
+
+from nti.app.authentication.interfaces import ISiteAuthentication
 
 from nti.app.authentication.subscribers import install_site_authentication
 
@@ -52,6 +56,8 @@ from nti.site.hostpolicy import synchronize_host_policies
 from nti.site.interfaces import IHostPolicySiteManager
 
 from nti.site.site import get_site_for_site_names
+
+from nti.testing.matchers import validly_provides
 
 __docformat__ = "restructuredtext en"
 
@@ -92,6 +98,9 @@ class TestZopeAuthentication(AuthenticationLayerTest):
     def _create_user(self, username, password=u'temp001'):
         return User.create_user(self.ds, username=username,
                                 password=password)
+
+    def test_site_authentication(self):
+        assert_that(SiteAuthentication(), validly_provides(ISiteAuthentication, IContained))
 
     @mock_dataserver.WithMockDS
     def test_get_principal(self):
