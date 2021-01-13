@@ -9,10 +9,14 @@ import fudge
 
 from hamcrest import assert_that
 from hamcrest import has_length
+from hamcrest import is_
+from hamcrest import none
 from hamcrest import not_
 from hamcrest import same_instance
 
 from z3c.baseregistry.baseregistry import BaseComponents
+
+from zope.app.appsetup.bootstrap import ensureUtility
 
 from zope.authentication.interfaces import IAuthentication
 
@@ -77,28 +81,75 @@ class TestEvolve112(mock_dataserver.DataserverLayerTest):
                                     and reg.name == '')]
         return authentication_utils
 
-    @mock_dataserver.WithMockDS
-    def test_do_evolve(self):
+    def install_ds_zope_authentication(self, dataserver_folder):
+        from nti.app.authentication import _DSAuthentication
+        ensureUtility(dataserver_folder,
+                      IAuthentication,
+                      'authentication',
+                      _DSAuthentication)
+
+    def _test_evolve(self, add_ds_util=True):
 
         with mock_db_trans(self.ds) as conn:
             context = fudge.Fake().has_attr(connection=conn)
             synchronize_host_policies()
 
+            ds_folder = self.ds.dataserver_folder
+            if add_ds_util:
+                self.install_ds_zope_authentication(ds_folder)
+
+            ds_utils = self.get_authentication_utils(ds_folder)
+            ds_sm = ds_folder.getSiteManager()
+
+            # Verify expected state
+            if add_ds_util:
+                assert_that(ds_utils, has_length(1))
+                assert_that(ds_sm.get('default', {}).get('authentication'),
+                            not_(none()))
+            else:
+                assert_that(ds_utils, has_length(0))
+                assert_that(ds_sm.get('default', {}).get('authentication'),
+                            is_(none()))
+
             # Verify we don't have the util yet
             test_base_site = get_site_for_site_names(('test.nextthought.com',))
             base_utils = self.get_authentication_utils(test_base_site)
             assert_that(base_utils, has_length(0))
+            test_base_sm = test_base_site.getSiteManager()
+            assert_that(test_base_sm.get('default', {}).get('authentication'),
+                        is_(none()))
 
             test_child_site = get_site_for_site_names(('test-child.nextthought.com',))
             child_utils = self.get_authentication_utils(test_child_site)
             assert_that(child_utils, has_length(0))
+            test_child_sm = test_child_site.getSiteManager()
+            assert_that(test_child_sm.get('default', {}).get('authentication'),
+                        is_(none()))
 
             do_evolve(context)
 
-            # Ensure util was added
+            # Ensure previous dataserver authentication was removed
+            ds_utils = self.get_authentication_utils(ds_folder)
+            assert_that(ds_utils, has_length(0))
+            assert_that(ds_sm.get('default', {}).get('authentication'),
+                        is_(none()))
+
+            # Ensure site util was added
             base_utils = self.get_authentication_utils(test_base_site)
             assert_that(base_utils, has_length(1))
+            assert_that(test_base_sm.get('default', {}).get('authentication'),
+                        not_(none()))
 
             child_utils = self.get_authentication_utils(test_child_site)
             assert_that(child_utils, has_length(1))
             assert_that(child_utils, not_(same_instance(base_utils[0])))
+            assert_that(test_child_sm.get('default', {}).get('authentication'),
+                        not_(none()))
+
+    @mock_dataserver.WithMockDS
+    def test_do_evolve_with_ds_util(self):
+        self._test_evolve(add_ds_util=True)
+
+    @mock_dataserver.WithMockDS
+    def test_do_evolve_no_ds_util(self):
+        self._test_evolve(add_ds_util=False)

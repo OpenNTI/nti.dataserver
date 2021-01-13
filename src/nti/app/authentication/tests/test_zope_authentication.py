@@ -29,9 +29,9 @@ from zope.interface.interfaces import IComponents
 
 from zope.location.interfaces import IContained
 
-from zope.site.interfaces import INewLocalSite
+from zope.principalregistry.principalregistry import PrincipalRegistry
 
-from nti.app.authentication import _DSAuthentication
+from zope.site.interfaces import INewLocalSite
 
 from nti.app.authentication.interfaces import ISiteAuthentication
 
@@ -131,14 +131,22 @@ class TestZopeAuthentication(AuthenticationLayerTest):
 
             # Validate we can only get principals from auth utils in appropriate sites
 
-            #   First, DS site
+            #   First, global registry
             auth = component.getUtility(IAuthentication)
-            assert_that(auth, is_(_DSAuthentication))
-            assert_that(auth.getPrincipal('siteless-one').id, is_('siteless-one'))
-            assert_that(auth.getPrincipal('test-one').id, is_('test-one'))
-            assert_that(auth.getPrincipal('test-child-one').id, is_('test-child-one'))
+            auth.definePrincipal('registered-principal',
+                                 'Registered Principal')
+
+            assert_that(auth, is_(PrincipalRegistry))
             assert_that(calling(auth.getPrincipal).with_args('test-nonuser'),
                         raises(PrincipalLookupError))
+            assert_that(calling(auth.getPrincipal).with_args('siteless-one'),
+                        raises(PrincipalLookupError))
+            assert_that(calling(auth.getPrincipal).with_args('test-one'),
+                        raises(PrincipalLookupError))
+            assert_that(calling(auth.getPrincipal).with_args('test-child-one'),
+                        raises(PrincipalLookupError))
+            assert_that(auth.getPrincipal('registered-principal').id,
+                        is_('registered-principal'))
 
             with site(test_base_site):
                 auth = component.getUtility(IAuthentication)
@@ -149,6 +157,8 @@ class TestZopeAuthentication(AuthenticationLayerTest):
                             raises(PrincipalLookupError))
                 assert_that(calling(auth.getPrincipal).with_args('test-nonuser'),
                             raises(PrincipalLookupError))
+                assert_that(auth.getPrincipal('registered-principal').id,
+                            is_('registered-principal'))
 
             with site(test_child_site):
                 auth = component.getUtility(IAuthentication)
@@ -158,6 +168,8 @@ class TestZopeAuthentication(AuthenticationLayerTest):
                 assert_that(auth.getPrincipal('test-child-one').id, is_('test-child-one'))
                 assert_that(calling(auth.getPrincipal).with_args('test-nonuser'),
                             raises(PrincipalLookupError))
+                assert_that(auth.getPrincipal('registered-principal').id,
+                            is_('registered-principal'))
 
     @mock_dataserver.WithMockDS
     @fudge.patch("nti.app.authentication._zope_authentication.SiteAuthentication._query_next_util")

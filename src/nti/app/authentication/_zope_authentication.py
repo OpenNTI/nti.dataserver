@@ -120,12 +120,6 @@ class SiteAuthentication(Persistent, Contained):
     def _query_next_util(self):
         next_util = queryNextUtility(self, IAuthentication)
 
-        # IDataserverAuthentication utility isn't site-specific, and will
-        # simply return a principal for any user in the system, which we
-        # don't want.
-        if IDataserverAuthentication.providedBy(next_util):
-            next_util = queryNextUtility(next_util, IAuthentication)
-
         return next_util
 
     def getPrincipal(self, principal_id):

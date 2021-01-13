@@ -216,8 +216,6 @@ def install_main(context):
 
         install_default_admin_user(dataserver_folder)
 
-        install_zope_authentication(dataserver_folder)
-
     return dataserver_folder
 
 
@@ -354,13 +352,6 @@ def install_username_blacklist(dataserver_folder):
     intids.register(user_blacklist)
     lsm.registerUtility(user_blacklist, provided=IUserBlacklistedStorage)
 
-
-def install_zope_authentication(dataserver_folder):
-    from nti.app.authentication import _DSAuthentication
-    ensureUtility(dataserver_folder,
-                  IAuthentication,
-                  'authentication',
-                  _DSAuthentication)
 
 ADMIN_USERNAME = u'admin@nextthought.com'
 TOKEN_EXPIRATION_IN_DAYS = 30
