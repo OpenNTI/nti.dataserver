@@ -26,7 +26,6 @@ from zope.location.interfaces import IContained
 from zope.security.interfaces import IPrincipal
 
 from nti.app.authentication import IAuthenticationValidator
-from nti.app.authentication import IDataserverAuthentication
 
 from nti.app.authentication.interfaces import ISiteAuthentication
 

@@ -29,7 +29,6 @@ from zope.security.interfaces import IPrincipal
 from pyramid.threadlocal import get_current_request
 
 from nti.app.authentication.interfaces import IAuthenticationValidator
-from nti.app.authentication.interfaces import IDataserverAuthentication
 from nti.app.authentication.interfaces import ILogonWhitelist
 from nti.app.authentication.interfaces import ISiteLogonWhitelist
 
@@ -95,7 +94,7 @@ class _AuthenticationValidator(object):
         return user_can_login(username, check_sites=check_sites)
 
 
-@interface.implementer(IDataserverAuthentication, IContained)
+@interface.implementer(IAuthentication, IContained)
 class _DSAuthentication(Persistent, Contained):
     # TODO: Need to hook into our `repoze.who` integration,
     #  at least for authenticate and unauthorized.
