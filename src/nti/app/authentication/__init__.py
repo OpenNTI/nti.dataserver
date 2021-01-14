@@ -111,14 +111,14 @@ class _DSAuthentication(Persistent, Contained):
         if next_util is not None:
             return next_util.unauthenticatedPrincipal()
 
-    def unauthorized(self, id, request):
+    def unauthorized(self, principal_id, request):
         next_util = queryNextUtility(self, IAuthentication)
 
         if next_util is not None:
-            next_util.unauthorized(id, request)
+            next_util.unauthorized(principal_id, request)
 
-    def getPrincipal(self, id):
-        user = User.get_user(id)
+    def getPrincipal(self, principal_id):
+        user = User.get_user(principal_id)
         if user is not None:
             principal = IPrincipal(user, None)
             if principal:
@@ -127,6 +127,6 @@ class _DSAuthentication(Persistent, Contained):
         next_util = queryNextUtility(self, IAuthentication)
 
         if next_util is None:
-            raise PrincipalLookupError(id)
+            raise PrincipalLookupError(principal_id)
 
-        return next_util.getPrincipal(id)
+        return next_util.getPrincipal(principal_id)

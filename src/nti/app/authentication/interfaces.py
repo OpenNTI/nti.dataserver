@@ -14,6 +14,8 @@ from __future__ import absolute_import
 
 from zope import interface
 
+from zope.authentication.interfaces import IAuthentication
+
 from nti.site.site import get_component_hierarchy_names
 
 
@@ -141,3 +143,9 @@ class IAuthenticationValidator(interface.Interface):
         """
         Return true if the username can login.
         """
+
+
+class ISiteAuthentication(IAuthentication):
+    """
+    Marker for site-based IAuthentication utilities
+    """
