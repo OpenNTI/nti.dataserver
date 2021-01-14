@@ -26,6 +26,8 @@ from zope.interface.interfaces import IComponents
 
 from zope.site.interfaces import INewLocalSite
 
+from nti.app.authentication import _DSAuthentication
+
 from nti.app.authentication.subscribers import install_site_authentication
 
 from nti.appserver.policies.sites import BASEADULT
@@ -82,7 +84,6 @@ class TestEvolve112(mock_dataserver.DataserverLayerTest):
         return authentication_utils
 
     def install_ds_zope_authentication(self, dataserver_folder):
-        from nti.app.authentication import _DSAuthentication
         ensureUtility(dataserver_folder,
                       IAuthentication,
                       'authentication',
@@ -104,6 +105,7 @@ class TestEvolve112(mock_dataserver.DataserverLayerTest):
             # Verify expected state
             if add_ds_util:
                 assert_that(ds_utils, has_length(1))
+                assert_that(ds_utils[0].component, is_(_DSAuthentication))
                 assert_that(ds_sm.get('default', {}).get('authentication'),
                             not_(none()))
             else:

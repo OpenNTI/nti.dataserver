@@ -15,6 +15,8 @@ from zope.authentication.interfaces import IAuthentication
 
 from zope.component.hooks import site as current_site
 
+from nti.app.authentication import _DSAuthentication
+
 from nti.coremetadata.interfaces import IDataserver
 
 from nti.dataserver.interfaces import IOIDResolver
@@ -40,15 +42,14 @@ class MockDataserver(object):
         return None
 
 
-def remove_authentication_util(site):
+def remove_ds_authentication_util(site):
     sm = site.getSiteManager()
 
-    registered_auths = [reg for reg in sm.registeredUtilities()
-                        if (reg.provided.isOrExtends(IAuthentication))
-                        and reg.name == '']
+    registered_auths = [reg for reg in sm.getUtilitiesFor(IAuthentication)
+                        if not reg[0] and isinstance(reg[1], _DSAuthentication)]
 
     if registered_auths:
-        sm.unregisterUtility(registered_auths[0].component,
+        sm.unregisterUtility(registered_auths[0][1],
                              IAuthentication)
 
     auth = sm.get('default', {}).get('authentication')
@@ -68,7 +69,7 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
         assert component.getSiteManager() == ds_folder.getSiteManager(), \
                "Hooks not installed?"
 
-        remove_authentication_util(ds_folder)
+        remove_ds_authentication_util(ds_folder)
 
         from nti.app.authentication.subscribers import install_site_authentication
         for site in get_all_host_sites():
