@@ -10,6 +10,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from nti.dataserver.utils.base_script import create_context
 from nti.monkey import patch_relstorage_all_except_gevent_on_import
 patch_relstorage_all_except_gevent_on_import.patch()
 
@@ -199,11 +200,14 @@ def create_user(args=None):
         package = 'nti.dataserver'
     config_features = ('devmode',) if args.devmode else ()
 
+    context = create_context(env_dir, with_library=True)
+
     run_with_dataserver(environment_dir=env_dir,
                         xmlconfig_packages=(package,),
                         verbose=args.verbose,
                         minimal_ds=True,
                         config_features=config_features,
+                        context=context,
                         function=lambda: _create_user(_type_map[args.type],
                                                       username,
                                                       password,
