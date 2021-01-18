@@ -5,6 +5,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from nti.dataserver.authorization import ACT_MANAGE_SITE
+from nti.dataserver.authorization_utils import zope_interaction
 from persistent import Persistent
 
 from repoze.who.interfaces import IAPIFactory
@@ -22,6 +24,7 @@ from zope.component.interfaces import ISite
 from zope.container.contained import Contained
 
 from zope.location.interfaces import IContained
+from zope.security import checkPermission
 
 from zope.security.interfaces import IPrincipal
 
@@ -95,6 +98,10 @@ class SiteAuthentication(Persistent, Contained):
     def _site(self):
         return find_interface(self, ISite)
 
+    def _can_admin_site(self, principal_id):
+        with zope_interaction(principal_id):
+            return checkPermission(ACT_MANAGE_SITE.id, self._site)
+
     def _is_site_user(self, user):
         """
         Whether the user is valid for the current site, e.g. this is their
@@ -102,6 +109,7 @@ class SiteAuthentication(Persistent, Contained):
         """
         site = get_user_creation_sitename(user)
         result = bool(not site or site == self._site.__name__)
+        result = result or self._can_admin_site(user.username)
         return result
 
     def _is_valid_user(self, user):

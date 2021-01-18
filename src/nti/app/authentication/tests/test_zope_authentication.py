@@ -7,6 +7,11 @@ from __future__ import print_function
 
 import base64
 
+from nti.dataserver.authorization import ROLE_ADMIN
+from zope.security.management import setSecurityPolicy
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+from zope.securitypolicy.zopepolicy import ZopeSecurityPolicy
+
 if 'encodebytes' in base64.__dict__:  # pragma NO COVER Python >= 3.0
     encodebytes = base64.encodebytes
 else:  # pragma NO COVER Python < 3.0
@@ -133,10 +138,10 @@ class TestZopeAuthentication(AuthenticationLayerTest):
 
         return test_base_site, test_child_site
 
-    @mock_dataserver.WithMockDS
+    @mock_dataserver.WithMockDSTrans
     def test_get_principal(self):
 
-        with mock_db_trans(self.ds):
+        with _security_policy_context(ZopeSecurityPolicy):
             test_base_site, test_child_site = self._setup_sites()
 
             ds_auth = component.getUtility(IAuthentication)
@@ -144,6 +149,15 @@ class TestZopeAuthentication(AuthenticationLayerTest):
 
             # Set up some users in our test sites
             self._create_user('siteless-one')
+
+            # An nti admin should always be returned, even if created
+            # in another site
+            base_user = self._create_user('test-nti-admin')
+            ds_folder = self.ds.dataserver_folder
+            ds_role_manager = IPrincipalRoleManager(ds_folder)
+            ds_role_manager.assignRoleToPrincipal(ROLE_ADMIN.id,
+                                                  base_user.username)
+            set_user_creation_site(base_user, 'nti.nextthought.com')
 
             base_user = self._create_user('test-one')
             set_user_creation_site(base_user, 'test.nextthought.com')
@@ -163,6 +177,8 @@ class TestZopeAuthentication(AuthenticationLayerTest):
                         raises(PrincipalLookupError))
             assert_that(calling(auth.getPrincipal).with_args('siteless-one'),
                         raises(PrincipalLookupError))
+            assert_that(calling(auth.getPrincipal).with_args('test-nti-admin'),
+                        raises(PrincipalLookupError))
             assert_that(calling(auth.getPrincipal).with_args('test-one'),
                         raises(PrincipalLookupError))
             assert_that(calling(auth.getPrincipal).with_args('test-child-one'),
@@ -174,6 +190,7 @@ class TestZopeAuthentication(AuthenticationLayerTest):
                 auth = component.getUtility(IAuthentication)
                 assert_that(auth, is_(SiteAuthentication))
                 assert_that(auth.getPrincipal('siteless-one').id, is_('siteless-one'))
+                assert_that(auth.getPrincipal('test-nti-admin').id, is_('test-nti-admin'))
                 assert_that(auth.getPrincipal('test-one').id, is_('test-one'))
                 assert_that(calling(auth.getPrincipal).with_args('test-child-one'),
                             raises(PrincipalLookupError))
@@ -186,6 +203,7 @@ class TestZopeAuthentication(AuthenticationLayerTest):
                 auth = component.getUtility(IAuthentication)
                 assert_that(auth, is_(SiteAuthentication))
                 assert_that(auth.getPrincipal('siteless-one').id, is_('siteless-one'))
+                assert_that(auth.getPrincipal('test-nti-admin').id, is_('test-nti-admin'))
                 assert_that(auth.getPrincipal('test-one').id, is_('test-one'))
                 assert_that(auth.getPrincipal('test-child-one').id, is_('test-child-one'))
                 assert_that(calling(auth.getPrincipal).with_args('test-nonuser'),
@@ -334,3 +352,12 @@ def _provide_utility(util, provided):
     finally:
         gsm.unregisterUtility(util, provided)
         gsm.registerUtility(old_util, provided)
+
+
+@contextlib.contextmanager
+def _security_policy_context(new_policy):
+    old_security_policy = setSecurityPolicy(new_policy)
+    try:
+        yield
+    finally:
+        setSecurityPolicy(old_security_policy)
