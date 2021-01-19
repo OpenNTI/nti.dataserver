@@ -15,6 +15,8 @@ import logging
 
 from ConfigParser import NoSectionError
 
+import gevent
+
 from six.moves import urllib_parse
 
 import redis
@@ -359,7 +361,6 @@ class MinimalDataserver(object):
 
 
 import functools
-
 from nti.processlifetime import IAfterDatabaseOpenedEvent
 
 
@@ -439,6 +440,11 @@ def _process_did_fork_listener(unused_event):
 
 def close_at_exit():
     ds = component.queryUtility(IDataserver)
+    # In alpha we see many orphaned workers when the server is restarted
+    # using supervisorctl restart. One running theory is that we are deadlocking
+    # in use connections during shutdown. We attempt to wait for the hub to idle here
+    # as a potential fix. https://github.com/NextThought/nti.dataserver/issues/404
+    gevent.idle()
     try:
         if ds:
             ds.close()
