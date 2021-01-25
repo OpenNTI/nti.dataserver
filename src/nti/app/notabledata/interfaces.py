@@ -172,9 +172,6 @@ class IUserNotableDataStorage(interface.Interface):
     Again as a provisional implementation helper, the query API is private.
     """
 
-    # Note no provision for removing yet, can add that when
-    # needed
-
     def store_intid(intid, safe=False):
         """
         Mark the (object referenced by the) given intid to be notable
@@ -186,4 +183,10 @@ class IUserNotableDataStorage(interface.Interface):
         Mark the object itself as notable, possibly taking ownership
         and broadcasting created and added events. If, after that's done if needed,
         the object does not have an intid, an exception is raised.
+        """
+
+    def remove_object(obj):
+        """
+        Remove the object from underlying data stores, in case an object
+        needs to go away.
         """

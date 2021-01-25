@@ -562,6 +562,19 @@ class UserNotableDataStorage(Persistent, Contained):
             raise ValueError("Object does not have intid")
         return self.store_intid(getattr(obj, attribute), safe=safe)
 
+    def remove_object(self, obj):
+        try:
+            self._owned_objects.remove(obj)
+        except ValueError:
+            pass
+        intids = component.queryUtility(IIntIds)
+        intid = intids.queryId(obj)
+        if intid is not None:
+            try:
+                self._safe_intid_set.remove(intid)
+            except KeyError:
+                pass
+
     def add_intids(self, ids, safe=False):
         """
         If we have intids for the given safety level, append them
