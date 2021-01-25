@@ -79,3 +79,6 @@ class TestUserNotableDataStorage(AppLayerTest):
 
             assert_that(calling(data.store_object).with_args(change, take_ownership=True),
                         raises(ValueError))
+
+            data.remove_object(change)
+            assert_that(change in data._owned_objects, is_(False))
