@@ -446,9 +446,10 @@ def close_at_exit():
     # as a potential fix. https://github.com/NextThought/nti.dataserver/issues/404
     gevent.idle()
 
-    # Unfortunately simply idleing the hub doesn't do the trick. we still see
-    # orphans, but executing a print (or something else dropping the GIL?) seems
-    # to make it difficult for orphaned workers. A sleep seems to exhibit the same "fix"
+    # Unfortunately simply idleing the hub doesn't do the trick. we
+    # still see orphans, but executing a print (or something else
+    # dropping the GIL?) seems to make it difficult (impossible?) to
+    # get orphaned workers. A sleep seems to exhibit the same "fix"
     # while being slightly more explicit (but equally nasty)
     import time
     time.sleep(.1)
