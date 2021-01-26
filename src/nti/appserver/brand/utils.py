@@ -22,7 +22,7 @@ def get_site_brand_name(components=None):
     Get the releveant brand name, first preferring the once set on the
     ISiteBrand, falling back to any on the site policy.
     """
-    components = components or component
+    components = components if components is not None else component
     brand = components.queryUtility(ISiteBrand)
     brand_name = getattr(brand, 'brand_name', '')
     if not brand_name:

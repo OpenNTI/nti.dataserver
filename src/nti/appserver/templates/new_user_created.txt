@@ -1,11 +1,11 @@
 Hi ${profile.realname}!
 
-Thank you for creating your new account and welcome to NextThought!
+Thank you for creating your new account and welcome to ${site_name}!
 
 Username: ${user.username}
 Log in at: ${request.application_url}
 
-NextThought offers interactive content and rich features to make
+${site_name} offers interactive content and rich features to make
 learning both social and personal.
 
 % if verify_href:
@@ -15,7 +15,7 @@ learning both social and personal.
 % endif
 
 Sincerely,
-NextThought
+${site_name}
 
 If you feel this email was sent in error, or this account was created
 without your consent, you may email us at ${support_email}.

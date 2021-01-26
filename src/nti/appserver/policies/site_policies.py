@@ -19,8 +19,12 @@ logger = __import__('logging').getLogger(__name__)
 import datetime
 from six.moves import urllib_parse
 
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 from zope import component
 from zope import interface
+
+from zope.component.hooks import getSite
 
 from zope.component.interfaces import IComponents
 
@@ -560,6 +564,10 @@ class AbstractSitePolicyEventListener(object):
 										 'set_passcode_url': reset_url
 									 })
 
+	def _brand_name(self, request):
+		return component.getMultiAdapter((getSite(), request),
+										 IDisplayNameGenerator)()
+
 	def _send_new_account_email(self,
 								user,
 								event,
@@ -585,6 +593,7 @@ class AbstractSitePolicyEventListener(object):
 				'verify_href': '',
 				'informal_username': informal_username,
 				'support_email': self.SUPPORT_EMAIL,
+				'site_name': self._brand_name(event.request),
 				'context': user }
 
 		if not profile.email_verified:
