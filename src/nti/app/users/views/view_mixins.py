@@ -214,52 +214,48 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         """
         return self.readInput()
 
-    @Lazy
-    def _email(self):
+    def get_email(self, vals):
         """
         The email address by which we look up a user.
         """
         # pylint: disable=no-member
-        result = self._params.pop('email', None) \
-              or self._params.pop('mail', None)
+        result = vals.get('email', None) \
+              or vals.get('mail', None)
         if not result and self.REQUIRE_EMAIL:
             raise_http_error(self.request,
                              _(u"Must provide email."),
                              u'NoEmailGiven')
         return result
 
-    @Lazy
-    def _external_id(self):
-        # pylint: disable=no-member
-        result = self._params.pop('id', None) \
-              or self._params.pop('external_id', None) \
-              or self._params.pop('identifier', None)
+    def get_external_id(self, vals):
+        result = vals.get('id', None) \
+              or vals.get('external_id', None) \
+              or vals.get('identifier', None)
         return result and str(result)
 
-    @Lazy
-    def _external_type(self):
-        # pylint: disable=no-member
-        result = self._params.pop('external_type', None)
+    def get_external_type(self, vals):
+        result = vals.get('external_type', None)
         return result and str(result)
 
-    @Lazy
-    def _username(self):
-        # pylint: disable=no-member
-        result = self._params.pop('user', None) \
-              or self._params.pop('username', None)
+    def get_username(self, vals):
+        result = vals.get('user', None) \
+              or vals.get('username', None)
         return result
 
-    def get_user(self):
+    def get_user(self, vals):
         """
         Fetches a user based on the given external_type and external_id (or
         username).
         """
-        user = get_user_for_external_id(self._external_type, self._external_id)
-        if user is None and self._username:
-            user = User.get_user(self._username)
+        external_type = self.get_external_type(vals)
+        external_id = self.get_external_id(vals)
+        username = self.get_username(vals)
+        user = get_user_for_external_id(external_type, external_id)
+        if user is None and username:
+            user = User.get_user(username)
         return user
 
-    def _predicate(self):
+    def _predicate(self, user):
         """
         Only admins and site admins are allowed to update a user, raising
         otherwise.
@@ -268,7 +264,6 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         if result:
             update_utility = IUserUpdateUtility(self.remoteUser, None)
             if update_utility is not None:
-                user = self.get_user()
                 if user is not None:
                     # pylint: disable=too-many-function-args
                     result = update_utility.can_update_user(user)
@@ -279,9 +274,18 @@ class AbstractUpdateView(AbstractAuthenticatedView,
                              factory=hexc.HTTPForbidden)
 
     def __call__(self):
-        self._predicate()
-        # pylint: disable=no-member
-        return self._do_call()
+        batch_users = self._params.get('batch')
+        if batch_users:
+            for params in batch_users:
+                user = self.get_user(params)
+                self._predicate(user)
+                # pylint: disable=no-member
+                return self._do_call(params)
+        else:
+            user = self.get_user(self._params)
+            self._predicate(user)
+            # pylint: disable=no-member
+            return self._do_call(self._params)
 
 
 class GrantAccessViewMixin(AbstractUpdateView):
@@ -298,17 +302,16 @@ class GrantAccessViewMixin(AbstractUpdateView):
 
     DEFAULT_ACCESS_CONTEXT = 'Public'
 
-    @Lazy
-    def _contextual_object(self):
+    def get_contextual_object(self, vals):
         """
         The contextual object that we want to grant access to.
         """
         # pylint: disable=no-member
-        object_id = self._params.get('ntiid') \
-                or self._params.get('objectId') \
-                or self._params.get('object_id')
+        object_id = vals.get('ntiid') \
+                 or vals.get('objectId') \
+                 or vals.get('object_id')
         if not object_id:
-            logger.warn('No ntiid given to update access (%s)', self._params)
+            logger.warn('No ntiid given to update access (%s)', vals)
             raise_http_error(self.request,
                              _(u"Must provide object to grant access to."),
                              u'NoObjectIDGiven')
@@ -321,9 +324,8 @@ class GrantAccessViewMixin(AbstractUpdateView):
                              hexc.HTTPNotFound)
         return result
 
-    @Lazy
-    def _user(self):
-        user = self.get_user()
+    def get_and_validate_user(self, vals):
+        user = self.get_user(vals)
         if user is None:
             raise_http_error(self.request,
                              _(u"User not found."),
@@ -331,45 +333,46 @@ class GrantAccessViewMixin(AbstractUpdateView):
                              hexc.HTTPNotFound)
         return user
 
-    @Lazy
-    def _access_context(self):
+    def get_access_context(self, vals):
         # pylint: disable=no-member
-        access_type = self._params.get('scope') \
-                   or self._params.get('access_context') \
-                   or self._params.get('access_type')
+        access_type = vals.get('scope') \
+                   or vals.get('access_context') \
+                   or vals.get('access_type')
         return access_type
 
-    def _update_access(self, user, context):
+    def _update_access(self, user, context, vals):
         access_provider = IAccessProvider(context, None)
         if access_provider is None:
             logger.warn('Invalid type to update access (%s)', context)
             raise_http_error(self.request,
                              _(u"Cannot grant access to object."),
                              u'ObjectNotAccessible')
-        access_context = self._access_context or self.DEFAULT_ACCESS_CONTEXT
+        access_context = self.get_access_context(vals) or self.DEFAULT_ACCESS_CONTEXT
         result = access_provider.grant_access(user,
                                               access_context=access_context)
         return result
     _grant_access = _update_access
 
-    def _handle_exception(self, exception):
+    def _handle_exception(self, exception, user, context_obj):
         if IGrantAccessException.providedBy(exception):
             logger.error('Error while granting access (%s) (%s)',
-                         self._user,
-                         self._contextual_object)
+                         user,
+                         context_obj)
             raise_http_error(self.request,
                              text_(str(exception) or exception.i18n_message),
                              u'ObjectNotAccessible')
 
-    def _do_call(self):
+    def _do_call(self, vals):
+        user = self.get_and_validate_user(vals)
+        context_obj = self.get_contextual_object(vals)
         try:
-            result = self._update_access(self._user, self._contextual_object)
+            result = self._update_access(user, context_obj, vals)
         except Exception as e:
-            self._handle_exception(e)
+            self._handle_exception(e, user, context_obj)
             raise
         if not result:
             # May already have access
-            result = self._contextual_object
+            result = context_obj
         return result
 
 
@@ -384,16 +387,16 @@ class RemoveAccessViewMixin(GrantAccessViewMixin):
     returns HTTPNoContent
     """
 
-    def _handle_exception(self, exception):
+    def _handle_exception(self, exception, user, context_obj):
         if IRemoveAccessException.providedBy(exception):
             logger.error('Error while removing access (%s) (%s)',
-                         self._user,
-                         self._contextual_object)
+                         user,
+                         context_obj)
             raise_http_error(self.request,
                              text_(str(exception) or exception.i18n_message),
                              u'CannotRestrictAccess')
 
-    def _update_access(self, user, context):
+    def _update_access(self, user, context, vals):
         access_provider = IAccessProvider(context, None)
         if access_provider is None:
             logger.warn('Invalid type to remove access (%s)', context)
@@ -404,11 +407,13 @@ class RemoveAccessViewMixin(GrantAccessViewMixin):
         return result
     _remove_access = _update_access
 
-    def _do_call(self):
+    def _do_call(self, vals):
+        user = self.get_and_validate_user(vals)
+        context_obj = self.get_contextual_object(vals)
         try:
-            self._update_access(self._user, self._contextual_object)
+            self._update_access(user, context_obj, vals)
         except Exception as e:
-            self._handle_exception(e)
+            self._handle_exception(e, user, context_obj)
             raise
         return hexc.HTTPNoContent()
 
@@ -442,106 +447,115 @@ class UserUpsertViewMixin(AbstractUpdateView):
         username_util = component.getUtility(IUsernameGeneratorUtility)
         return username_util.generate_username()
 
-    @Lazy
-    def _first_name(self):
-        # pylint: disable=no-member
-        result = self._params.pop('first', None) \
-              or self._params.pop('firstname', None) \
-              or self._params.pop('first_name', None)
+    def get_first_name(self, vals):
+        result = vals.get('first', None) \
+              or vals.get('firstname', None) \
+              or vals.get('first_name', None)
         return result
 
-    @Lazy
-    def _last_name(self):
-        # pylint: disable=no-member
-        result = self._params.pop('last', None) \
-              or self._params.pop('lastname', None) \
-              or self._params.pop('last_name', None)
+    def get_last_name(self, vals):
+        result = vals.get('last', None) \
+              or vals.get('lastname', None) \
+              or vals.get('last_name', None)
         return result
 
-    @Lazy
-    def _real_name(self):
+    def get_real_name(self, vals):
         # pylint: disable=no-member
-        result = self._params.pop('real', None) \
-              or self._params.pop('realname', None) \
-              or self._params.pop('real_name', None)
+        result = vals.get('real', None) \
+              or vals.get('realname', None) \
+              or vals.get('real_name', None)
         return result
 
-    def _get_real_name(self):
-        result = self._real_name
-        if not self._real_name and self._first_name and self._last_name:
-            result = '%s %s' % (self._first_name, self._last_name)
+    def find_real_name(self, vals):
+        """
+        Find real name from vals, validating if required.
+        """
+        result = self.get_real_name(vals)
+        first_name = self.get_first_name(vals)
+        last_name = self.get_last_name(vals)
+        if not result and first_name and last_name:
+            result = '%s %s' % (first_name, last_name)
         if not result and self.REQUIRE_NAME:
             raise_http_error(self.request,
                              _(u"Must provide real_name."),
                              u'NoRealNameGiven')
         return result
 
-    def create_user(self):
-        username = self._generate_username()
-        realname = self._get_real_name()
+    def create_user(self, vals):
+        username = vals.get('username')
+        if not username:
+            username = self._generate_username()
+        realname = self.find_real_name(vals)
         interface.alsoProvides(self.request, INoAccountCreationEmail)
         notify(UpsertUserPreCreateEvent(self.request))
         # Realname is used if we have it; otherwise first/last are used.
+        email = self.get_email(vals)
+        first_name = self.get_first_name(vals)
+        last_name = self.get_last_name(vals)
         user = _deal_with_external_account(self.request,
                                            username=username,
-                                           fname=self._first_name,
-                                           lname=self._last_name,
-                                           email=self._email,
+                                           fname=first_name,
+                                           lname=last_name,
+                                           email=email,
                                            idurl=None,
                                            iface=None,
                                            user_factory=User.create_user,
                                            realname=realname,
-                                           ext_values=self._params)
-        self.post_user_creation(user)
+                                           ext_values=vals)
+        self.post_user_creation(user, vals)
         if self.is_recreatable_user():
             interface.alsoProvides(user, IRecreatableUser)
         notify(UpsertUserCreatedEvent(user, self.request))
         return user
 
-    def post_user_creation(self, user):
+    def post_user_creation(self, user, vals):
         """
         Subclasses can override this to implement behavior after a user is created.
         """
-        if not self._external_type or not self._external_id:
+        external_type = vals.get('external_type')
+        external_id = vals.get('external_id')
+        if not external_type or not external_id:
             raise_http_error(self.request,
                              _(u"Must provide external_type and external_id."),
                              u'ExternalIdentifiersNotGivenError.')
         identity_container = IUserExternalIdentityContainer(user)
         # pylint: disable=too-many-function-args
-        identity_container.add_external_mapping(self._external_type,
-                                                self._external_id)
+        identity_container.add_external_mapping(external_type,
+                                                external_id)
 
-    def post_user_update(self, user):
+    def post_user_update(self, user, vals):
         """
         Subclasses can override this to implement behavior after a user is updated.
         """
         pass
 
-    def update_user(self, user):
-        realname = self._get_real_name()
+    def update_user(self, user, vals):
+        realname = self.find_real_name(vals)
         if realname is not None:
             friendly_named = IFriendlyNamed(user)
             friendly_named.realname = realname
-        if self._email is not None:
+        email = self.get_email(vals)
+        if email is not None:
             profile = IUserProfile(user)
-            profile.email = self._email
+            profile.email = email
         # This is driven off the COMPLETE_USER_PROFILE_KEY annotation
         # so this profile could be a different implementation for different sites
         profile = IUserProfile(user)
         update_from_external_object(profile,
-                                    self._params)
-        self.post_user_update(user)
+                                    vals)
+        self.post_user_update(user, vals)
 
-    def _do_call(self):
-        user = self.get_user()
+    def _do_call(self, vals):
+        user = self.get_user(vals)
         if user is None:
-            user = self.create_user()
+            user = self.create_user(vals)
 
+        email = self.get_email(vals)
         logger.info('UserUpsert updating user (%s) (%s)',
-                    user.username, self._email)
-        self.update_user(user)
+                    user.username, email)
+        self.update_user(user, vals)
 
-        if self._email:
+        if email:
             # Trusted source for email verification
             profile = IUserProfile(user)
             profile.email_verified = True
