@@ -283,15 +283,23 @@ class AbstractUpdateView(AbstractAuthenticatedView,
 
     def __call__(self):
         if isinstance(self._params, (list,tuple)):
+            # XXX: Any worry about partial commits?
+            # Post user creation error that we catch and handle?
+            result = LocatedExternalDict()
+            result['errors'] = errors = []
             for user_input in self._params:
-                user = self.get_user(user_input)
-                self._predicate(user)
-                # pylint: disable=no-member
-                return self._do_call(user_input)
+                try:
+                    user = self.get_user(user_input)
+                    self._predicate(user)
+                    self._do_call(user_input)
+                except Exception as exc:
+                    msg = text_(str(exc) or exc.i18n_message)
+                    errors.append({'data': user_input,
+                                   'message': msg})
+            return result
         else:
             user = self.get_user(self._params)
             self._predicate(user)
-            # pylint: disable=no-member
             return self._do_call(self._params)
 
 
@@ -370,9 +378,9 @@ class GrantAccessViewMixin(AbstractUpdateView):
                              u'ObjectNotAccessible')
 
     def _do_call(self, vals):
-        user = self.get_and_validate_user(vals)
-        context_obj = self.get_contextual_object(vals)
         try:
+            user = self.get_and_validate_user(vals)
+            context_obj = self.get_contextual_object(vals)
             result = self._update_access(user, context_obj, vals)
         except Exception as e:
             self._handle_exception(e, user, context_obj)
@@ -415,9 +423,9 @@ class RemoveAccessViewMixin(GrantAccessViewMixin):
     _remove_access = _update_access
 
     def _do_call(self, vals):
-        user = self.get_and_validate_user(vals)
-        context_obj = self.get_contextual_object(vals)
         try:
+            user = self.get_and_validate_user(vals)
+            context_obj = self.get_contextual_object(vals)
             self._update_access(user, context_obj, vals)
         except Exception as e:
             self._handle_exception(e, user, context_obj)
@@ -575,6 +583,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
         self.update_user(user, vals)
 
         if email:
+            # XXX: This may longer hold true.
             # Trusted source for email verification
             profile = IUserProfile(user)
             profile.email_verified = True
