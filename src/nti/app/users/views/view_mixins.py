@@ -34,8 +34,11 @@ from nti.app.users import MessageFactory as _
 
 from nti.app.users.views import raise_http_error
 
+from nti.appserver.interfaces import UserCreatedByAdminWithRequestEvent
+
 from nti.appserver.logon import _deal_with_external_account
 
+from nti.appserver.policies.interfaces import IRequireSetPassword
 from nti.appserver.policies.interfaces import INoAccountCreationEmail
 
 from nti.appserver.ugd_query_views import UGDView
@@ -440,6 +443,12 @@ class UserUpsertViewMixin(AbstractUpdateView):
     def is_recreatable_user(self):
         return False
 
+    def get_send_initial_email(self, vals):
+        return is_true(vals.get('initial_email'))
+
+    def do_not_update(self, vals):
+        return is_false(vals.get('update'))
+
     def _generate_username(self):
         """
         Build an (opaque) username for this entity.
@@ -506,6 +515,9 @@ class UserUpsertViewMixin(AbstractUpdateView):
         if self.is_recreatable_user():
             interface.alsoProvides(user, IRecreatableUser)
         notify(UpsertUserCreatedEvent(user, self.request))
+        if self.get_send_initial_email(vals):
+            interface.alsoProvices(user, IRequireSetPassword)
+            notify(UserCreatedByAdminWithRequestEvent(user))
         return user
 
     def post_user_creation(self, user, vals):
@@ -549,6 +561,9 @@ class UserUpsertViewMixin(AbstractUpdateView):
         user = self.get_user(vals)
         if user is None:
             user = self.create_user(vals)
+        elif self.do_not_update(vals):
+            # Update unless they explicitly ask us not to (update=False)
+            return False
 
         email = self.get_email(vals)
         logger.info('UserUpsert updating user (%s) (%s)',
