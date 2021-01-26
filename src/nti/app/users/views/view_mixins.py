@@ -202,18 +202,23 @@ class AbstractUpdateView(AbstractAuthenticatedView,
 
     REQUIRE_EMAIL = False
 
+    inputClass = (list, dict)
+
     def readInput(self, value=None):
         if self.request.body:
             values = super(AbstractUpdateView, self).readInput(value)
         else:
             values = self.request.params
-        result = CaseInsensitiveDict(values)
+        if isinstance(values, (list,tuple)):
+            result = values
+        else:
+            result = CaseInsensitiveDict(values)
         return result
 
     @Lazy
     def _params(self):
         """
-        A case insensitive dict of user input.
+        May be a dict of user input or a list of user inputs.
         """
         return self.readInput()
 
@@ -277,13 +282,12 @@ class AbstractUpdateView(AbstractAuthenticatedView,
                              factory=hexc.HTTPForbidden)
 
     def __call__(self):
-        batch_users = self._params.get('batch')
-        if batch_users:
-            for params in batch_users:
-                user = self.get_user(params)
+        if isinstance(self._params, (list,tuple)):
+            for user_input in self._params:
+                user = self.get_user(user_input)
                 self._predicate(user)
                 # pylint: disable=no-member
-                return self._do_call(params)
+                return self._do_call(user_input)
         else:
             user = self.get_user(self._params)
             self._predicate(user)
