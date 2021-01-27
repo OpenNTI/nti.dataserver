@@ -43,16 +43,22 @@ from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_PREFLIGHT
 
 from nti.appserver.dataserver_pyramid_views import GenericGetView
 
+from nti.appserver.policies.interfaces import IRequireSetPassword
+
 from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.coremetadata.interfaces import IDeactivatedEntity
 
-from nti.dataserver.authorization import ACT_UPDATE
+from nti.dataserver.authorization import ACT_UPDATE, is_admin_or_site_admin
+
+from nti.dataserver.authorization import is_admin
+from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUsersFolder
+from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.entity import Entity
@@ -284,6 +290,45 @@ class UserUpdateView(UGDPutView):
                                  },
                                  None)
         return True
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=IUser,
+             name='AdminUserUpdate',
+             request_method='PUT')
+class AdminUserUpdateView(UserUpdateView):
+    """
+    A limited-use-case place for admins and site admins to update other users.
+
+    These users are only allowed to edit a few fields.
+    """
+    editable_fields = ('email',)
+
+    def readInput(self):
+        result = super(AdminUserUpdateView, self).readInput()
+        return {x:y for x,y in result.items() if x in self.editable_fields}
+
+    def _validate_admin_edit(self):
+        if not IRequireSetPassword.providedBy(self.context):
+            raise_json_error(self.request,
+                             hexc.HTTPUnprocessableEntity,
+                             {
+                                 'message': _(u'Cannot edit user.'),
+                                 'code': 'CannotEditUsererror',
+                             },
+                             None)
+        if not is_admin_or_site_admin(self.remoteUser):
+            raise hexc.HTTPForbidden()
+        if is_site_admin(self.remoteUser):
+            site_admin_utility = component.getUtility(ISiteAdminUtility)
+            if not site_admin_utility.can_administer_user(self.remoteUser,
+                                                          self.context):
+                raise hexc.HTTPForbidden()
+
+    def __call__(self):
+        self._validate_admin_edit()
+        return super(AdminUserUpdateView, self).__call__()
 
 
 @view_config(route_name='objects.generic.traversal',

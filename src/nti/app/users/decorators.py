@@ -68,6 +68,7 @@ from nti.identifiers.utils import get_external_identifiers
 from nti.links.links import Link
 
 from nti.traversal.traversal import find_interface
+from nti.appserver.policies.interfaces import IRequireSetPassword
 
 LINKS = StandardExternalFields.LINKS
 
@@ -152,6 +153,9 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
             else:
                 link = Link(context, elements=('@@Deactivate',), rel="Deactivate")
             _links.append(link)
+            if IRequireSetPassword.providedBy(context):
+                link = Link(context, elements=('@@AdminUserUpdate',), rel="AdminUserUpdate")
+                _links.append(link)
 
 
 @component.adapter(ICommunity)
