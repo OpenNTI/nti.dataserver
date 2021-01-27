@@ -328,7 +328,8 @@ class AdminUserUpdateView(UserUpdateView):
 
     def __call__(self):
         self._validate_admin_edit()
-        return super(AdminUserUpdateView, self).__call__()
+        result = super(AdminUserUpdateView, self).__call__()
+        return result
 
 
 @view_config(route_name='objects.generic.traversal',

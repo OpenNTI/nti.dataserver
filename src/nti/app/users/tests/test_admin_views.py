@@ -60,7 +60,8 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener,\
+    IRequireSetPassword
 
 from nti.appserver.policies.site_policies import AdultCommunitySitePolicyEventListener
 
@@ -787,13 +788,15 @@ class TestAdminViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     @fudge.patch('nti.app.users.utils.admin.is_site_admin',
-                 'nti.app.users.views.view_mixins.is_admin_or_site_admin')
-    def test_user_update_site_admin(self, mock_site_admin, mock_site_admin2):
+                 'nti.app.users.views.view_mixins.is_admin_or_site_admin',
+                 'nti.app.users.decorators.is_admin')
+    def test_user_update_site_admin(self, mock_site_admin, mock_site_admin2, mock_admin):
         """
         Validate site admins can only update users in their site.
         """
         mock_site_admin.is_callable().returns(True)
         mock_site_admin2.is_callable().returns(True)
+        mock_admin.is_callable().returns(True)
         test_site_username = u'test_site_user'
         test_site_admin_username = u'test_site_admin'
         community_name = u'test_site_admin_community'
@@ -851,7 +854,18 @@ class TestAdminViews(ApplicationLayerTest):
             user.record_dynamic_membership(community)
 
         self.testapp.post_json(user_update_href, data, extra_environ=admin_environ)
-        self.testapp.post_json(user_update_href, data, extra_environ=admin_environ)
+        res = self.testapp.post_json(user_update_href, data, extra_environ=admin_environ)
+        self.forbid_link_with_rel(res.json_body, 'AdminUserUpdate')
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = User.get_user(test_site_username)
+            interface.alsoProvides(user, IRequireSetPassword)
+
+        res = self.testapp.post_json(user_update_href, data, extra_environ=admin_environ)
+        update_href = self.require_link_href_with_rel(res.json_body, 'AdminUserUpdate')
+        res = self.testapp.put_json(update_href,
+                                    {'email': 'newemail@gmail.com'})
+        assert_that(res.json_body, has_entry('email', 'newemail@gmail.com'))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_user_deactivate(self):
