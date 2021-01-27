@@ -210,7 +210,7 @@ class AbstractUpdateView(AbstractAuthenticatedView,
         else:
             values = self.request.params
         if isinstance(values, (list,tuple)):
-            result = values
+            result = [CaseInsensitiveDict(x) for x in values]
         else:
             result = CaseInsensitiveDict(values)
         return result
@@ -287,15 +287,18 @@ class AbstractUpdateView(AbstractAuthenticatedView,
             # Post user creation error that we catch and handle?
             result = LocatedExternalDict()
             result['errors'] = errors = []
+            processed_count = 0
             for user_input in self._params:
                 try:
                     user = self.get_user(user_input)
                     self._predicate(user)
                     self._do_call(user_input)
+                    processed_count += 1
                 except Exception as exc:
                     msg = text_(str(exc) or exc.i18n_message)
                     errors.append({'data': user_input,
                                    'message': msg})
+            result['ProcessedCount'] = processed_count
             return result
         else:
             user = self.get_user(self._params)
@@ -455,8 +458,8 @@ class UserUpsertViewMixin(AbstractUpdateView):
     def is_recreatable_user(self):
         return False
 
-    def get_send_initial_email(self, vals):
-        return is_true(vals.get('initial_email'))
+    def should_send_welcome_email(self, vals):
+        return is_true(vals.get('welcome_email'))
 
     def do_not_update(self, vals):
         return is_false(vals.get('update'))
@@ -503,7 +506,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
         return result
 
     def create_user(self, vals):
-        username = vals.get('username')
+        username = self.get_username(vals)
         if not username:
             username = self._generate_username()
         realname = self.find_real_name(vals)
@@ -527,7 +530,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
         if self.is_recreatable_user():
             interface.alsoProvides(user, IRecreatableUser)
         notify(UpsertUserCreatedEvent(user, self.request))
-        if self.get_send_initial_email(vals):
+        if self.should_send_welcome_email(vals):
             interface.alsoProvices(user, IRequireSetPassword)
             notify(UserCreatedByAdminWithRequestEvent(user))
         return user
@@ -536,8 +539,8 @@ class UserUpsertViewMixin(AbstractUpdateView):
         """
         Subclasses can override this to implement behavior after a user is created.
         """
-        external_type = vals.get('external_type')
-        external_id = vals.get('external_id')
+        external_type = self.get_external_type(vals)
+        external_id = self.get_external_id(vals)
         if not external_type or not external_id:
             raise_http_error(self.request,
                              _(u"Must provide external_type and external_id."),
