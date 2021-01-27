@@ -521,7 +521,7 @@ class TestAdminViews(ApplicationLayerTest):
 
         # Successful update
         good_data = bad_data
-        good_data['welcome_email'] = True
+        good_data['require_password'] = True
         good_data['email'] = 'validemail@gmail.com'
         batch_data1 = dict(data1)
         batch_data2 = dict(data2)

@@ -101,7 +101,8 @@ from nti.externalization import update_from_external_object
 
 from nti.externalization.externalization import to_external_object
 
-from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalDict,\
+    LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
@@ -290,24 +291,25 @@ class AbstractUpdateView(AbstractAuthenticatedView,
 
     def __call__(self):
         if isinstance(self._params, (list,tuple)):
-            # Batch processing, catch and store info
-            result = LocatedExternalDict()
-            result['errors'] = errors = []
+            # Batch processing - return appropriate indications of success/failure
+            result = LocatedExternalList()
             processed_count = 0
+            error_count = 0
             for user_data in self._params:
                 try:
                     self._process_user_data(user_data)
                     processed_count += 1
+                    msg = "Success"
                 except Exception as exc:
+                    error_count += 1
                     msg = text_(str(exc) or exc.i18n_message)
-                    errors.append({'data': user_data,
-                                   'message': msg})
-            result['ProcessedCount'] = processed_count
-            result['ErrorCount'] = len(errors)
-            if errors:
+                result.append({"data": dict(user_data),
+                               "message": msg})
+            if error_count:
                 # If errors, we must raise here to avoid any possible
                 # partial state commits. The calling process must give
                 # us a clean data set.
+                result = to_external_object(result)
                 raise_json_error(self.request,
                                  hexc.HTTPUnprocessableEntity,
                                  result,
@@ -472,8 +474,8 @@ class UserUpsertViewMixin(AbstractUpdateView):
     def is_recreatable_user(self):
         return False
 
-    def should_send_welcome_email(self, vals):
-        return is_true(vals.get('welcome_email'))
+    def should_require_password(self, vals):
+        return is_true(vals.get('require_password'))
 
     def do_not_update(self, vals):
         return is_false(vals.get('update'))
@@ -544,7 +546,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
         if self.is_recreatable_user():
             interface.alsoProvides(user, IRecreatableUser)
         notify(UpsertUserCreatedEvent(user, self.request))
-        if self.should_send_welcome_email(vals):
+        if self.should_require_password(vals):
             interface.alsoProvides(user, IRequireSetPassword)
             notify(UserCreatedByAdminWithRequestEvent(user))
         return user

@@ -55,7 +55,7 @@ def raise_json_error(request,
     Attempts to raise an error during processing of a pyramid request.
     We expect the client to specify that they want JSON errors.
 
-    :param v: The detail message. Can be a string or a dictionary. A dictionary
+    :param v: The detail message. Can be a string, list, or dictionary. A dictionary
             may contain the keys `field`, `message` and `code`.
     :param factory: The factory (class) to produce an HTTP exception.
     :param tb: The traceback from `sys.exc_info`.
@@ -74,8 +74,11 @@ def raise_json_error(request,
     if isinstance(v, collections.Mapping):
         # Make sure to translate our message, if we have one.
         v['message'] = message = translate(v.get('message'), context=request)
-    else:
+    elif isinstance(v, six.string_types):
         v = message = translate(v, context=request)
+    else:
+        # We could be given a list of dicts; should we loop and translate message?
+        message = u''
 
     if accept_type == 'application/json':
         try:
