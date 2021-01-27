@@ -303,6 +303,7 @@ class AbstractUpdateView(AbstractAuthenticatedView,
                     errors.append({'data': user_data,
                                    'message': msg})
             result['ProcessedCount'] = processed_count
+            result['ErrorCount'] = len(errors)
             if errors:
                 # If errors, we must raise here to avoid any possible
                 # partial state commits. The calling process must give
@@ -544,7 +545,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
             interface.alsoProvides(user, IRecreatableUser)
         notify(UpsertUserCreatedEvent(user, self.request))
         if self.should_send_welcome_email(vals):
-            interface.alsoProvices(user, IRequireSetPassword)
+            interface.alsoProvides(user, IRequireSetPassword)
             notify(UserCreatedByAdminWithRequestEvent(user))
         return user
 
