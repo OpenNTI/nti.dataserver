@@ -27,6 +27,8 @@ from zope.intid.interfaces import IIntIds
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.externalization.error import raise_json_error
+
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -281,29 +283,38 @@ class AbstractUpdateView(AbstractAuthenticatedView,
                              u'CannotUpdateUserError',
                              factory=hexc.HTTPForbidden)
 
+    def _process_user_data(self, user_data):
+        user = self.get_user(user_data)
+        self._predicate(user)
+        return self._do_call(user_data)
+
     def __call__(self):
         if isinstance(self._params, (list,tuple)):
-            # XXX: Any worry about partial commits?
-            # Post user creation error that we catch and handle?
+            # Batch processing, catch and store info
             result = LocatedExternalDict()
             result['errors'] = errors = []
             processed_count = 0
-            for user_input in self._params:
+            for user_data in self._params:
                 try:
-                    user = self.get_user(user_input)
-                    self._predicate(user)
-                    self._do_call(user_input)
+                    self._process_user_data(user_data)
                     processed_count += 1
                 except Exception as exc:
                     msg = text_(str(exc) or exc.i18n_message)
-                    errors.append({'data': user_input,
+                    errors.append({'data': user_data,
                                    'message': msg})
             result['ProcessedCount'] = processed_count
+            if errors:
+                # If errors, we must raise here to avoid any possible
+                # partial state commits. The calling process must give
+                # us a clean data set.
+                raise_json_error(self.request,
+                                 hexc.HTTPUnprocessableEntity,
+                                 result,
+                                 None)
             return result
         else:
-            user = self.get_user(self._params)
-            self._predicate(user)
-            return self._do_call(self._params)
+            # A single input set - this is currently the most common use-case
+            return self._process_user_data(user_data)
 
 
 class GrantAccessViewMixin(AbstractUpdateView):
