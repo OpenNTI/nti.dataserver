@@ -8,7 +8,7 @@
 	  i18n:source="en">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<title>Welcome To NextThought</title>
+		<title tal:content="string:Welcome to ${options/site_name}">Welcome To NextThought</title>
 		<metal:block metal:use-macro="macro:style"></metal:block>
 	</head>
 	<body>
@@ -20,7 +20,7 @@
 			</div>
 
 			<div class="mp-20" i18n:translate="">
-				A new account has been created for you at NextThought!
+				A new account has been created for you at <span tal:content="options/site_name">NextThought</span>!
 			</div>
 
 			<div class="mp-20" i18n:translate="">
@@ -39,7 +39,7 @@
 
 			<div class="mp-20">
 				<span i18n:translate="">
-					NextThought offers interactive content and rich features to make learning both social and personal.
+					<span tal:content="options/site_name">NextThought</span> offers interactive content and rich features to make learning both social and personal.
 				</span>
 			</div>
 
@@ -58,7 +58,8 @@
 			</div>
 
 			<div style="margin-top: 35px">
-				<span i18n:translate="">Sincerely,</span><br/>NextThought
+				<span i18n:translate="">Sincerely,</span><br/>
+				<span tal:content="options/site_name">NextThought</span>
 			</div>
 		</div> <!-- end of main-->
 		<div metal:use-macro="macro:footer"></div>

@@ -254,6 +254,10 @@
 					tal:attributes="href string:mailto:${options/support_email|default}"
 					style="text-decoration:underline;color: #494949;">support@nextthought.com</a>
 				</span>
+				<br/>
+				<span i18n:translate="" tal:condition="options/nti_site_brand_name">
+					<omitted tal:replace="options/nti_site_brand_name"/> is powered by NextThought
+				</span>
 			</div>
 		</div>
 
