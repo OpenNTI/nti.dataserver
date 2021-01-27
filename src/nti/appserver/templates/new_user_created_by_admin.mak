@@ -14,8 +14,8 @@ learning both social and personal.
 Please verify your email address. Doing so will
 help us maintain the security of your account.
 To verify your email address, use the following link: ${verify_href}
-% endif
 
+% endif
 Sincerely,
 ${site_name}
 
