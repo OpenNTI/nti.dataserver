@@ -12,6 +12,7 @@ from hamcrest import none
 from hamcrest import is_in
 from hamcrest import is_not
 from hamcrest import contains
+from hamcrest import not_none
 from hamcrest import has_item
 from hamcrest import has_items
 from hamcrest import has_entry
@@ -434,11 +435,12 @@ class TestAdminViews(ApplicationLayerTest):
         new_first = u'Ed'
         new_last = u'Brubaker'
         new_email = u'new_email@gmail.com'
-        self.testapp.post_json(user_update_href, {u'first_name': new_first,
-                                                  u'last_name': new_last,
-                                                  u'external_type': external_type,
-                                                  u'external_id': external_id,
-                                                  u'email': new_email})
+        data1 = {u'first_name': new_first,
+                 u'last_name': new_last,
+                 u'external_type': external_type,
+                 u'external_id': external_id,
+                 u'email': new_email}
+        self.testapp.post_json(user_update_href, data1)
         res = self.testapp.get('/dataserver2/users/%s' % username,
                                extra_environ=user1_environ)
         res = res.json_body
@@ -451,12 +453,12 @@ class TestAdminViews(ApplicationLayerTest):
         new_email = u'parish@gmail.com'
         new_external_id = '99999'
         new_external_type = 'employee id'
-        res = self.testapp.post_json(user_update_href,
-                                     {u'first_name': new_first,
-                                      u'last_name': new_last,
-                                      u'external_type': new_external_type,
-                                      u'external_id': new_external_id,
-                                      u'email': new_email})
+        data2 = {u'first_name': new_first,
+                  u'last_name': new_last,
+                  u'external_type': new_external_type,
+                  u'external_id': new_external_id,
+                  u'email': new_email}
+        res = self.testapp.post_json(user_update_href, data2)
         res = res.json_body
         created_username = res.get('Username')
         assert_that(created_username, is_not(new_email))
@@ -471,6 +473,80 @@ class TestAdminViews(ApplicationLayerTest):
                                extra_environ=user2_environ)
         res = res.json_body
         assert_that(res['realname'], is_('%s %s' % (new_first, new_last)))
+        assert_that(res['email'], is_(new_email))
+
+        # Batch user upserts
+        batch_data1 = dict(data1)
+        batch_data2 = dict(data2)
+        batch_data2['real_name'] = "user2 madeupname"
+        bad_data = {'username': 'newusername3',
+                     'external_type': external_type,
+                     'external_id': '78787878',
+                     'realname': "invalidrealname",
+                     'email': "dupeuser@gmail.com"}
+        batch_data = [batch_data1, batch_data2, bad_data]
+
+        # First batch has invalid username
+        res = self.testapp.post_json(user_update_href, batch_data, status=422)
+        res = res.json_body
+        assert_that(res, has_entries('ProcessedCount', 2,
+                                     'ErrorCount', 1,
+                                     'errors', has_item(has_entries('message',
+                                                                   u'Please provide your first and last names.',
+                                                                   'data', not_none()))))
+
+        # Valid user2 info is unchanged
+        res = self.testapp.get('/dataserver2/users/%s' % created_username,
+                               extra_environ=user2_environ)
+        res = res.json_body
+        assert_that(res['realname'], is_('%s %s' % (new_first, new_last)))
+        assert_that(res['email'], is_(new_email))
+
+        # Multiple errors
+        bad_data['realname'] = 'newuser goodname'
+        bad_data['email'] = 'invalidemail'
+        batch_data2['external_type'] = None
+        batch_data1['external_id'] = None
+        res = self.testapp.post_json(user_update_href, batch_data, status=422)
+        res = res.json_body
+        assert_that(res, has_entries('ProcessedCount', 0,
+                                     'ErrorCount', 3,
+                                     'errors', contains_inanyorder(has_entries('message',
+                                                                     u'Must provide external_type and external_id.',
+                                                                     'data', contains_string("'external_type': None")),
+                                                         has_entries('message', u'The email address you have entered is not valid.',
+                                                                     'data', contains_string("'email': u'invalidemail'")),
+                                                         has_entries('message', u'Must provide external_type and external_id.',
+                                                                     'data', contains_string("external_id': None")))))
+
+        # Successful update
+        good_data = bad_data
+        good_data['welcome_email'] = True
+        good_data['email'] = 'validemail@gmail.com'
+        batch_data1 = dict(data1)
+        batch_data2 = dict(data2)
+        batch_data1['real_name'] = "Naomi Ngata"
+        batch_data1['update'] = False
+        batch_data2['real_name'] = "user2 madeupname"
+        batch_data = [batch_data1, good_data, batch_data2]
+        res = self.testapp.post_json(user_update_href, batch_data)
+        res = res.json_body
+        assert_that(res, has_entries('ProcessedCount', 3,
+                                     'ErrorCount', 0,
+                                     'errors', has_length(0)))
+
+        # User1 *is not* updated since we asked it not to
+        res = self.testapp.get('/dataserver2/users/%s' % username,
+                               extra_environ=user1_environ)
+        res = res.json_body
+        assert_that(res['realname'], is_(u'Ed Brubaker'))
+        assert_that(res['email'], is_(u'parish@gmail.com'))
+
+        # User2 was properly updated
+        res = self.testapp.get('/dataserver2/users/%s' % created_username,
+                               extra_environ=user2_environ)
+        res = res.json_body
+        assert_that(res['realname'], is_("user2 madeupname"))
         assert_that(res['email'], is_(new_email))
 
         # Granting/removing access

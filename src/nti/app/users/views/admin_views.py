@@ -900,27 +900,31 @@ class LinkUserExternalIdentityView(AbstractUpdateView):
     """
 
     def _predicate(self):
-        if     not self._external_type \
-            or not self._external_id:
+        external_type = self.get_external_type(self._params)
+        external_id = self.get_external_id(self._params)
+        if     not external_type \
+            or not external_id:
             raise_http_error(self.request,
                              _(u"Require external_type and external_id to link user."),
                             u'CannotLinkUserExternalIdentityError')
 
     def __call__(self):
-        external_user = get_user_for_external_id(self._external_type,
-                                                 self._external_id)
+        external_type = self.get_external_type(self._params)
+        external_id = self.get_external_id(self._params)
+        external_user = get_user_for_external_id(external_type,
+                                                 external_id)
         # pylint: disable=no-member
         if      external_user \
             and external_user != self.context:
             logger.warning("""Mapping user to existing external identity (%s)
                            (existing=%s) (external_type=%s) (external_id=%s)""",
                            self.context.username, external_user.username,
-                           self._external_type,
-                           self._external_id)
+                           external_type,
+                           external_id)
             raise_http_error(self.request,
                              _(u"Multiple users mapped to this external identity."),
                              u'DuplicateUserExternalIdentityError')
-        _set_external_id(self.context, self._external_type, self._external_id)
+        _set_external_id(self.context, external_type, external_id)
         return self.context
 
 
