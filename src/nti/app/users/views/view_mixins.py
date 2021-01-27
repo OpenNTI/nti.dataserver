@@ -314,7 +314,7 @@ class AbstractUpdateView(AbstractAuthenticatedView,
             return result
         else:
             # A single input set - this is currently the most common use-case
-            return self._process_user_data(user_data)
+            return self._process_user_data(self._params)
 
 
 class GrantAccessViewMixin(AbstractUpdateView):
@@ -392,6 +392,7 @@ class GrantAccessViewMixin(AbstractUpdateView):
                              u'ObjectNotAccessible')
 
     def _do_call(self, vals):
+        user = context_obj = None
         try:
             user = self.get_and_validate_user(vals)
             context_obj = self.get_contextual_object(vals)
@@ -437,6 +438,7 @@ class RemoveAccessViewMixin(GrantAccessViewMixin):
     _remove_access = _update_access
 
     def _do_call(self, vals):
+        user = context_obj = None
         try:
             user = self.get_and_validate_user(vals)
             context_obj = self.get_contextual_object(vals)
