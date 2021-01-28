@@ -548,7 +548,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
         notify(UpsertUserCreatedEvent(user, self.request))
         if self.should_require_password(vals):
             interface.alsoProvides(user, IRequireSetPassword)
-            notify(UserCreatedByAdminWithRequestEvent(user))
+            notify(UserCreatedByAdminWithRequestEvent(user, self.request))
         return user
 
     def post_user_creation(self, user, vals):
