@@ -31,6 +31,8 @@
 				provides="nti.appserver.workspaces.interfaces.ICollection"
 				for="nti.appserver.workspaces.interfaces.IUserWorkspace" />
 
+	<subscriber handler=".subscribers._handle_password_changed" />
+
 	<adapter factory=".object_io.SitePolicyUserEventListenerObjectIO"
 			 provides="nti.externalization.interfaces.IInternalObjectIOFinder"
 			 for=".interfaces.ISitePolicyUserEventListener" />
