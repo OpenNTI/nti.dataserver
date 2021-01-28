@@ -19,6 +19,7 @@ from zope.component.hooks import getSite
 from zope.intid.interfaces import IIntIds
 
 from nti.coremetadata.interfaces import ICommunity
+from nti.coremetadata.interfaces import IDeactivatedUser
 
 from nti.dataserver.interfaces import IUser
 
@@ -275,6 +276,8 @@ def unindex_email_invalidation(user, catalog=None, intids=None):
 def get_users_by_email(email):
     """
     Get the users using the given email. This does not pull by site.
+
+    Deactivated users are not return here.
     """
     if not email:
         result = ()
@@ -285,7 +288,7 @@ def get_users_by_email(email):
         doc_ids = catalog[IX_EMAIL].apply((email, email))
         for uid in doc_ids or ():
             user = intids.queryObject(uid)
-            if IUser.providedBy(user):
+            if IUser.providedBy(user) and not IDeactivatedUser.providedBy(user):
                 result.append(user)
     return result
 
@@ -330,6 +333,8 @@ def intids_of_users_by_sites(sites=(), catalog_filters=None, filter_deactivated=
 def get_users_by_email_in_sites(email, sites=None):
     """
     Get the users using the given email in the given site or current site if not provided.
+
+    Deactivated users are not returned here.
     """
     if isinstance(sites, six.string_types):
         sites = sites.split(',')
@@ -347,7 +352,7 @@ def get_users_by_email_in_sites(email, sites=None):
                                            catalog_filters={'email': email})
         for uid in doc_ids or ():
             user = intids.queryObject(uid)
-            if IUser.providedBy(user):
+            if IUser.providedBy(user) and not IDeactivatedUser.providedBy(user):
                 result.append(user)
     return result
 
