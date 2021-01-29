@@ -13,6 +13,8 @@ import warnings
 
 from zope import component
 
+from zope.event import notify
+
 from zope.cachedescriptors.property import cachedIn
 
 from z3c.password.interfaces import IPasswordUtility
@@ -23,6 +25,7 @@ from nti.dataserver.users.entity import Entity
 from nti.dataserver.users.entity import named_entity_ntiid
 
 from nti.dataserver.users.interfaces import _VERBOTEN_PASSWORDS
+from nti.dataserver.users.interfaces import PasswordChangedEvent
 from nti.dataserver.users.interfaces import InsecurePasswordIsForbidden
 from nti.dataserver.users.interfaces import PasswordCannotConsistOfOnlyWhitespace
 
@@ -79,6 +82,8 @@ class Principal(SharingSourceMixin, Entity):  # order matters
 
         self.__dict__['password'] = _Password(np, self.password_manager_name)
         # otherwise, no change
+
+        notify(PasswordChangedEvent(self))
 
     def _del_password(self):
         del self.__dict__['password']

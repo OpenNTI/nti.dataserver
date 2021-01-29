@@ -1156,3 +1156,16 @@ class ICommunityPolicyManagementUtility(interface.Interface):
     max_community_limit = Int(title=u"The maximum number of communities allowed for a site.",
                               description=u"This only counts current, activated communities in a site",
                               required=True)
+
+
+class IPasswordChangedEvent(IObjectEvent):
+    """
+    Fired after an entity's password is changed
+    """
+
+
+@interface.implementer(IPasswordChangedEvent)
+class PasswordChangedEvent(ObjectEvent):
+
+    def __init__(self, entity): # pylint: disable=useless-super-delegation
+        super(PasswordChangedEvent, self).__init__(entity)
