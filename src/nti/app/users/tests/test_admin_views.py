@@ -490,11 +490,11 @@ class TestAdminViews(ApplicationLayerTest):
         # First batch has invalid username
         res = self.testapp.post_json(user_update_href, batch_data, status=422)
         res = res.json_body
-        assert_that(res, has_entries('ProcessedCount', 2,
-                                     'ErrorCount', 1,
-                                     'errors', has_item(has_entries('message',
-                                                                   u'Please provide your first and last names.',
-                                                                   'data', not_none()))))
+        messages = [x.get('message') for x in res]
+        assert_that(messages, has_length(3))
+        assert_that(messages, contains(u'Success',
+                                       u'Success',
+                                       u'Please provide your first and last names.'))
 
         # Valid user2 info is unchanged
         res = self.testapp.get('/dataserver2/users/%s' % created_username,
@@ -510,15 +510,11 @@ class TestAdminViews(ApplicationLayerTest):
         batch_data1['external_id'] = None
         res = self.testapp.post_json(user_update_href, batch_data, status=422)
         res = res.json_body
-        assert_that(res, has_entries('ProcessedCount', 0,
-                                     'ErrorCount', 3,
-                                     'errors', contains_inanyorder(has_entries('message',
-                                                                     u'Must provide external_type and external_id.',
-                                                                     'data', contains_string("'external_type': None")),
-                                                         has_entries('message', u'The email address you have entered is not valid.',
-                                                                     'data', contains_string("'email': u'invalidemail'")),
-                                                         has_entries('message', u'Must provide external_type and external_id.',
-                                                                     'data', contains_string("external_id': None")))))
+        messages = [x.get('message') for x in res]
+        assert_that(messages, has_length(3))
+        assert_that(messages, contains(u'Must provide external_type and external_id.',
+                                       u'Must provide external_type and external_id.',
+                                       u'The email address you have entered is not valid.'))
 
         # Successful update
         good_data = bad_data
@@ -530,18 +526,24 @@ class TestAdminViews(ApplicationLayerTest):
         batch_data1['update'] = False
         batch_data2['real_name'] = "user2 madeupname"
         batch_data = [batch_data1, good_data, batch_data2]
-        res = self.testapp.post_json(user_update_href, batch_data)
+
+        # XXX: Fails, currently requires a `success` param when emailing pw.
+        res = self.testapp.post_json(user_update_href, batch_data, status=422)
+
+        res = self.testapp.post_json('%s?success=http://success_url.com' % user_update_href, batch_data)
         res = res.json_body
-        assert_that(res, has_entries('ProcessedCount', 3,
-                                     'ErrorCount', 0,
-                                     'errors', has_length(0)))
+        messages = [x.get('message') for x in res]
+        assert_that(messages, has_length(3))
+        assert_that(messages, contains(u'Success',
+                                       u'Success',
+                                       u'Success'))
 
         # User1 *is not* updated since we asked it not to
         res = self.testapp.get('/dataserver2/users/%s' % username,
                                extra_environ=user1_environ)
         res = res.json_body
         assert_that(res['realname'], is_(u'Ed Brubaker'))
-        assert_that(res['email'], is_(u'parish@gmail.com'))
+        assert_that(res['email'], is_(u'new_email@gmail.com'))
 
         # User2 was properly updated
         res = self.testapp.get('/dataserver2/users/%s' % created_username,
@@ -576,6 +578,34 @@ class TestAdminViews(ApplicationLayerTest):
         self.testapp.post_json(remove_access_href, missing_access, status=404)
         self.testapp.post_json(remove_access_href, missing_user, status=404)
         self.testapp.post_json(remove_access_href, missing_user2, status=404)
+
+        # Batch grant/remove
+        res = self.testapp.post_json(grant_access_href,
+                               [full_data, invalid_access], status=422)
+        res = res.json_body
+        messages = [x.get('message') for x in res]
+        assert_that(messages, has_length(2))
+        assert_that(messages, contains(u'Success',
+                                       u'Cannot grant access to object.'))
+        res = self.testapp.post_json(grant_access_href,
+                               [full_data, invalid_access, missing_user2, missing_user],
+                               status=422)
+        res = res.json_body
+        messages = [x.get('message') for x in res]
+        assert_that(messages, has_length(4))
+        assert_that(messages, contains(u'Success',
+                                       u'Cannot grant access to object.',
+                                       u'User not found.',
+                                       u'User not found.'))
+        res = self.testapp.post_json(grant_access_href,
+                               [full_data, full_data, full_data, full_data])
+        res = res.json_body
+        messages = [x.get('message') for x in res]
+        assert_that(messages, has_length(4))
+        assert_that(messages, contains(u'Success',
+                                       u'Success',
+                                       u'Success',
+                                       u'Success'))
 
         # Resolving user
         resolve_href = '/dataserver2/ResolveUser/%s' % created_username
