@@ -154,7 +154,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId(user, 'foobar')
 		# Now if there are objects in there, it won't raise.
-		class C(persistent.Persistent):
+		class CA(persistent.Persistent):
 			interface.implements(nti_interfaces.IContained)
 			containerId = 'foobar'
 			id = None
@@ -163,8 +163,8 @@ class TestUGDQueryViews(NewRequestLayerTest):
 			object = ObjectWithInt()
 			__parent__ = None
 			__name__ = None
-		C.object.register()
-		user._addToStream(C())
+		CA.object.register()
+		user._addToStream(CA())
 		view.getObjectsForId(user, 'foobar')
 
 		transaction.doom()
@@ -178,7 +178,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 			view.getObjectsForId(user, ntiids.ROOT)
 		# Any child of the root throws if (1) the root DNE
 		# and (2) the children are empty
-		class C(persistent.Persistent):
+		class CB(persistent.Persistent):
 			object = ObjectWithInt()
 			interface.implements(nti_interfaces.IContained, nti_interfaces.IZContained)
 			containerId = ntiids.make_ntiid(provider='ou', specific='test', nttype='test')
@@ -187,10 +187,10 @@ class TestUGDQueryViews(NewRequestLayerTest):
 			__name__ = None
 			lastModified = 1
 			creator = 'chris.utz@nextthought.com'
-		C.object.register()
-		c1 = C()
+		CB.object.register()
+		c1 = CB()
 		user.addContainedObject(c1)
-		c = C()
+		c = CB()
 		user._addToStream(c)
 		assert_that(user.getContainedObject(c1.containerId, c1.id), is_(c1))
 		# so this will work, as it is not empty
@@ -201,7 +201,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 		user.streamCache.clear()
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId(user, ntiids.ROOT)
-			transaction.doom()
+		transaction.doom()
 
 	@WithMockDS(with_changes=True)
 	@fudge.patch('nti.dataserver.activitystream.hasQueryInteraction')
@@ -329,7 +329,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 			view.getObjectsForId(user, ntiids.ROOT)
 
 		# Now if there are objects in there, it won't raise.
-		class C(persistent.Persistent):
+		class CC(persistent.Persistent):
 			object = None
 			interface.implements(nti_interfaces.IContained, nti_interfaces.IZContained)
 			containerId = child_ntiid
@@ -338,22 +338,22 @@ class TestUGDQueryViews(NewRequestLayerTest):
 			__name__ = None
 			lastModified = 1
 			creator = 'chris.utz@nextthought.com'
-		c = C()
+		c = CC()
 		user.addContainedObject(c)
 		assert_that(user.getContainedObject(c.containerId, c.id), is_(c))
-		assert_that(user.getContainer(C.containerId), has_length(1))
-		view.getObjectsForId(user, C.containerId)
+		assert_that(user.getContainer(CC.containerId), has_length(1))
+		view.getObjectsForId(user, CC.containerId)
 
 		# Then deleting, does not go back to error
 		user.deleteContainedObject(c.containerId, c.id)
-		view.getObjectsForId(user, C.containerId)
+		view.getObjectsForId(user, CC.containerId)
 		# except if we look above it
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId(user, ntiids.ROOT)
 
 		# But if there are changes at the low level, we get them
 		# if we ask at the high level.
-		c = C()
+		c = CC()
 		c.object = ObjectWithInt()
 		c.object.register()
 		user._addToStream(c)
