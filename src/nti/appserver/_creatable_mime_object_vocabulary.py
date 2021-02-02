@@ -42,13 +42,17 @@ deferredimport.deprecatedFrom(
     "_UserCreatableMimeObjectVocabularyFactory")
 
 
-@interface.implementer(IExternalizedObjectFactoryFinder)
-def _user_sensitive_factory_finder(ext_object):
-    vocabulary = None
-    # TODO: This process is probably horribly expensive and should be cached
-    # install zope.testing hook to clean up the cache
+VOCAB_CACHE_ATTR_NAME = '_user_external_obj_vocab'
+
+
+def _get_vocabulary():
     request = get_current_request()
-    if request:
+    if request is None:
+        return
+    # This can be a very hot code path, especially when creating many
+    # objects. Cache the vocab on the request.
+    vocabulary = getattr(request, VOCAB_CACHE_ATTR_NAME, None)
+    if vocabulary is None:
         try:
             auth_user_name = request.authenticated_userid
         except AssertionError:
@@ -65,7 +69,28 @@ def _user_sensitive_factory_finder(ext_object):
                 name = "Creatable External Object Types"
                 factory = component.getUtility(IVocabularyFactory, name)
                 vocabulary = factory(auth_user)
+                setattr(request, VOCAB_CACHE_ATTR_NAME, vocabulary)
+    return vocabulary
 
+
+def _clear_request_cache():
+    request = get_current_request()
+    if request is None:
+        return
+    try:
+        delattr(request, VOCAB_CACHE_ATTR_NAME)
+    except AttributeError:
+        pass
+
+
+import zope.testing.cleanup
+zope.testing.cleanup.addCleanUp(_clear_request_cache)
+
+
+@interface.implementer(IExternalizedObjectFactoryFinder)
+def _user_sensitive_factory_finder(ext_object):
+    # install zope.testing hook to clean up the cache
+    vocabulary = _get_vocabulary()
     factory = default_externalized_object_factory_finder(ext_object)
     if vocabulary is None or factory is None:
         return factory
