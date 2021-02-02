@@ -42,7 +42,7 @@ deferredimport.deprecatedFrom(
     "_UserCreatableMimeObjectVocabularyFactory")
 
 
-VOCAB_CACHE_ATTR_NAME = '_user_external_obj_vocab'
+VOCAB_CACHE_ATTR_NAME = '_v_user_external_obj_vocab'
 
 
 def _get_vocabulary():
@@ -69,6 +69,9 @@ def _get_vocabulary():
                 name = "Creatable External Object Types"
                 factory = component.getUtility(IVocabularyFactory, name)
                 vocabulary = factory(auth_user)
+                # XXX: There is some danger here if the transaction aborts and we
+                # have some modified state during retry that does not line up with
+                # our cached state. This should not be an issue currently.
                 setattr(request, VOCAB_CACHE_ATTR_NAME, vocabulary)
     return vocabulary
 
