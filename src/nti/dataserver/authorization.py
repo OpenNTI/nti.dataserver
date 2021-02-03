@@ -246,6 +246,8 @@ class _AbstractPrincipal(object):
     """
     id = u''
 
+    __slots__ = ('id', '_v_hash', '__dict__', '__weakref__')
+
     def __eq__(self, other):
         try:
             # JAM: XXX: Comparing NTIIDs to our ID is a HACK. Here's the particular
@@ -292,11 +294,16 @@ class _AbstractPrincipal(object):
         # TODO Ordering issues with NTIIDs?
         return self.id < other.id
 
-    def __hash__(self):
-        ntiid = getattr(self, 'NTIID', None)
-        if ntiid:
-            return hash(self.NTIID)
+    def _get_hash(self):
         return hash(self.id)
+
+    def __hash__(self):
+        try:
+            result = self._v_hash
+        except AttributeError:
+            result = self._get_hash()
+            self._v_hash = result
+        return result
 
     def __str__(self):
         return self.id
@@ -313,6 +320,8 @@ class _StringPrincipal(_AbstractPrincipal):
     Allows any string to be an IPrincipal.
     """
     description = u''
+
+    __slots__ = ('title', 'description')
 
     def __init__(self, name):
         super(_StringPrincipal, self).__init__()
@@ -513,6 +522,8 @@ class _UserPrincipal(_AbstractPrincipal):
     Adapter from an :class:`IUser` to an :class:`IPrincipal`.
     """
 
+    __slots__ = ('context', 'NTIID')
+
     def __init__(self, user):
         self.context = user
         self.id = user.username
@@ -530,6 +541,11 @@ class _UserPrincipal(_AbstractPrincipal):
     def __conform__(self, iface):
         if iface.providedBy(self.context):
             return self.context
+
+    def _get_hash(self):
+        if self.NTIID:
+            return hash(self.NTIID)
+        return super(_UserPrincipal, self)._get_hash()
 
 
 @component.adapter(IUser)
@@ -596,16 +612,6 @@ def _participation_for_zope_principal(remote_user):
 
 def ds_folder():
     return component.getUtility(IDataserver).dataserver_folder
-
-
-@interface.implementer(IParticipation)
-class _Participation(object):
-
-    __slots__ = ('interaction', 'principal')
-
-    def __init__(self, principal):
-        self.interaction = None
-        self.principal = principal
 
 
 def is_admin(user, context=None):
