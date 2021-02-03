@@ -123,5 +123,5 @@ class TestWhoPolicy(unittest.TestCase):
         # A real identity gets the callback usernames, Everyone, and
         # Authenticated
         groups = policy._get_groups(identity, request)
-        assert_that(groups, 
-                    contains_inanyorder('fake-principal', Everyone, Authenticated))
+        assert_that(groups,
+                    contains_inanyorder('fake-principal'))

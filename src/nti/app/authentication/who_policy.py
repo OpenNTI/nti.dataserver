@@ -123,6 +123,16 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
         principals.add(component.getUtility(interfaces.IEveryoneGroup))
         return principals
 
+    def _get_groups(self, identity, request):
+        """
+        Overriding this to make sure we aren't duplicating state.
+        The parent class adds the authenticated and everyone principals - which
+        should already be there due to our callback.
+        """
+        if identity is not None:
+            return self._callback(identity, request)
+        return [Everyone]
+
     def effective_principals(self, request):
         # The who policy defines effective principals as lists. Instead, we
         # are returning sets to improve performance (since we may have
@@ -137,11 +147,10 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
         identity = self._get_identity(request)
         if identity is None:
             return frozenset(self._effective_principals_for_no_identity(request))
-
-        res = super(AuthenticationPolicy, self).effective_principals(request)
+        identity = self._get_identity(request)
+        res = self._get_groups(identity, request)
         if res and len(res) > 1:
             self.__do_reissue(request)
-        res.append(component.getUtility(interfaces.IEveryoneGroup))
         return frozenset(res)
 
     def __do_reissue(self, request):
