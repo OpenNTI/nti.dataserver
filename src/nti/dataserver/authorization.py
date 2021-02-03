@@ -319,7 +319,6 @@ class _StringPrincipal(_AbstractPrincipal):
     """
 
     def __init__(self, name):
-        super(_StringPrincipal, self).__init__()
         self.id = name
         self.title = name
         self.description = name
