@@ -298,11 +298,10 @@ class _AbstractPrincipal(object):
 
     def __hash__(self):
         try:
-            result = self._v_hash
+            return self._v_hash
         except AttributeError:
-            result = hash(self.id)
-            self._v_hash = result
-        return result
+            self._v_hash = hash(self.id)
+            return self._v_hash
 
     def __str__(self):
         return self.id
@@ -541,14 +540,14 @@ class _UserPrincipal(_AbstractPrincipal):
 
     def __hash__(self):
         try:
-            result = self._v_hash
+            return self._v_hash
         except AttributeError:
             if self.NTIID:
                 result = hash(self.NTIID)
             else:
                 result = hash(self.id)
             self._v_hash = result
-        return result
+            return self._v_hash
 
 
 @component.adapter(IUser)
