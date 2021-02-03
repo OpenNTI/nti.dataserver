@@ -123,7 +123,7 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
         principals.add(component.getUtility(interfaces.IEveryoneGroup))
         return principals
 
-    def _get_groups(self, identity, request):
+    def _get_effective_principals(self, identity, request):
         """
         Overriding this to make sure we aren't duplicating state.
         The parent class adds the authenticated and everyone principals - which
@@ -148,7 +148,7 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
         if identity is None:
             return frozenset(self._effective_principals_for_no_identity(request))
         identity = self._get_identity(request)
-        res = self._get_groups(identity, request)
+        res = self._get_effective_principals(identity, request)
         if res and len(res) > 1:
             self.__do_reissue(request)
         return frozenset(res)
