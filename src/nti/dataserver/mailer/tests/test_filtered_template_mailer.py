@@ -82,6 +82,7 @@ class _BaseMixin(object):
 																'profile': profile,
 																'verify_href': '',
 																'context': user,
+																'site_name': u'Test Site',
 																'href': token_url,
 																'support_email': 'support_email' },
 													package='nti.appserver',
