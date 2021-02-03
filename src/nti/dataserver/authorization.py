@@ -248,7 +248,7 @@ class _AbstractPrincipal(object):
     Root for all actual :class:`IPrincipal` implementations.
     """
 
-    __slots__ = ('id', '_v_hash', '__dict__', '__weakref__')
+    __slots__ = ('id', 'title', 'description', '_v_hash', '__dict__', '__weakref__')
 
     def __eq__(self, other):
         try:
@@ -317,12 +317,12 @@ class _StringPrincipal(_AbstractPrincipal):
     """
     Allows any string to be an IPrincipal.
     """
-    __slots__ = ('title',)
 
     def __init__(self, name):
         super(_StringPrincipal, self).__init__()
         self.id = name
         self.title = name
+        self.description = name
 StringPrincipal = _StringPrincipal
 
 
