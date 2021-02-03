@@ -131,6 +131,8 @@ from nti.dataserver.interfaces import IDataserver
 
 from nti.externalization.interfaces import IExternalObject
 
+from nti.externalization.persistence import NoPickle
+
 from nti.property.property import alias
 
 # TODO: How does zope normally present these? Side effects of import are Bad
@@ -239,12 +241,14 @@ def _make_group_member_factory(group_type, factory=_PersistentGroupMember):
 # TODO: Should we enforce case-insensitivity here?
 
 
+@NoPickle
 @functools.total_ordering
 class _AbstractPrincipal(object):
     """
     Root for all actual :class:`IPrincipal` implementations.
     """
-    id = u''
+
+    __slots__ = ('id', 'title', 'description', '_v_hash', '__dict__', '__weakref__')
 
     def __eq__(self, other):
         try:
@@ -293,10 +297,11 @@ class _AbstractPrincipal(object):
         return self.id < other.id
 
     def __hash__(self):
-        ntiid = getattr(self, 'NTIID', None)
-        if ntiid:
-            return hash(self.NTIID)
-        return hash(self.id)
+        try:
+            return self._v_hash
+        except AttributeError:
+            self._v_hash = hash(self.id)
+            return self._v_hash
 
     def __str__(self):
         return self.id
@@ -312,12 +317,12 @@ class _StringPrincipal(_AbstractPrincipal):
     """
     Allows any string to be an IPrincipal.
     """
-    description = u''
 
     def __init__(self, name):
         super(_StringPrincipal, self).__init__()
         self.id = name
         self.title = name
+        self.description = name
 StringPrincipal = _StringPrincipal
 
 
@@ -513,6 +518,8 @@ class _UserPrincipal(_AbstractPrincipal):
     Adapter from an :class:`IUser` to an :class:`IPrincipal`.
     """
 
+    __slots__ = ('context', 'NTIID')
+
     def __init__(self, user):
         self.context = user
         self.id = user.username
@@ -530,6 +537,17 @@ class _UserPrincipal(_AbstractPrincipal):
     def __conform__(self, iface):
         if iface.providedBy(self.context):
             return self.context
+
+    def __hash__(self):
+        try:
+            return self._v_hash
+        except AttributeError:
+            if self.NTIID:
+                result = hash(self.NTIID)
+            else:
+                result = hash(self.id)
+            self._v_hash = result
+            return self._v_hash
 
 
 @component.adapter(IUser)
@@ -596,16 +614,6 @@ def _participation_for_zope_principal(remote_user):
 
 def ds_folder():
     return component.getUtility(IDataserver).dataserver_folder
-
-
-@interface.implementer(IParticipation)
-class _Participation(object):
-
-    __slots__ = ('interaction', 'principal')
-
-    def __init__(self, principal):
-        self.interaction = None
-        self.principal = principal
 
 
 def is_admin(user, context=None):
