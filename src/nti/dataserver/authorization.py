@@ -131,6 +131,8 @@ from nti.dataserver.interfaces import IDataserver
 
 from nti.externalization.interfaces import IExternalObject
 
+from nti.externalization.persistence import NoPickle
+
 from nti.property.property import alias
 
 # TODO: How does zope normally present these? Side effects of import are Bad
@@ -239,12 +241,12 @@ def _make_group_member_factory(group_type, factory=_PersistentGroupMember):
 # TODO: Should we enforce case-insensitivity here?
 
 
+@NoPickle
 @functools.total_ordering
 class _AbstractPrincipal(object):
     """
     Root for all actual :class:`IPrincipal` implementations.
     """
-    id = u''
 
     __slots__ = ('id', '_v_hash', '__dict__', '__weakref__')
 
@@ -294,14 +296,11 @@ class _AbstractPrincipal(object):
         # TODO Ordering issues with NTIIDs?
         return self.id < other.id
 
-    def _get_hash(self):
-        return hash(self.id)
-
     def __hash__(self):
         try:
             result = self._v_hash
         except AttributeError:
-            result = self._get_hash()
+            result = hash(self.id)
             self._v_hash = result
         return result
 
@@ -319,9 +318,7 @@ class _StringPrincipal(_AbstractPrincipal):
     """
     Allows any string to be an IPrincipal.
     """
-    description = u''
-
-    __slots__ = ('title', 'description')
+    __slots__ = ('title',)
 
     def __init__(self, name):
         super(_StringPrincipal, self).__init__()
@@ -542,10 +539,16 @@ class _UserPrincipal(_AbstractPrincipal):
         if iface.providedBy(self.context):
             return self.context
 
-    def _get_hash(self):
-        if self.NTIID:
-            return hash(self.NTIID)
-        return super(_UserPrincipal, self)._get_hash()
+    def __hash__(self):
+        try:
+            result = self._v_hash
+        except AttributeError:
+            if self.NTIID:
+                result = hash(self.NTIID)
+            else:
+                result = hash(self.id)
+            self._v_hash = result
+        return result
 
 
 @component.adapter(IUser)
