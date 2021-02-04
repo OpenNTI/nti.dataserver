@@ -347,7 +347,7 @@ def forgot_passcode_view(request):
 def compute_reset_subject(policy, request):
     subject_template = getattr(policy,
                                'PASSWORD_RESET_EMAIL_SUBJECT',
-                               '${site_brand} Password Reset')
+                               '${site_name} Password Reset')
     subject = _(subject_template,
                 mapping={
                     'site_name': _site_brand(request),
