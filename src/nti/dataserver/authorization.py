@@ -245,6 +245,8 @@ class _AbstractPrincipal(object):
     Root for all actual :class:`IPrincipal` implementations.
     """
 
+    id = u''
+
     __slots__ = ('id', 'title', 'description', '_v_hash', '__dict__', '__weakref__')
 
     def __eq__(self, other):
@@ -513,6 +515,8 @@ class _UserPrincipal(_AbstractPrincipal):
     """
     Adapter from an :class:`IUser` to an :class:`IPrincipal`.
     """
+
+    NTIID = u''
 
     __slots__ = ('context', 'NTIID')
 
