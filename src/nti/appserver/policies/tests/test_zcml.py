@@ -51,12 +51,13 @@ def _make_xml_attrs(**kwargs):
     return ' '.join(['%s="%s"' % (name, value) for name, value in kwargs.items() if value is not None])
 
 
-def _config_for_site_with_policy(sitename, brand, display, username, alias, realname):
+def _config_for_site_with_policy(sitename, brand, display, username, alias, realname, default_sender_email):
     site_attrs = _make_xml_attrs(brand=brand,
                                  display_name=display,
                                  com_username=username,
                                  com_alias=alias,
-                                 com_realname=realname)
+                                 com_realname=realname,
+                                 default_sender_email=default_sender_email)
     return ZCML_REGISTRATION % (sitename, sitename, site_attrs)
 
 
@@ -73,12 +74,14 @@ def _policy_for_site(sitename):
 class TestLocalSitePolicyZCML(ConfiguringTestBase):
 
     def test_local_site_policy(self):
+        sender_email = escape(u'Brand <no-reply@brand.com>')
         config = _config_for_site_with_policy(u'childsite',
                                               u'Brand',
                                               u'Display',
                                               u'comm.nextthought.com',
                                               u'Comm',
-                                              u'Site Comm')
+                                              u'Site Comm',
+                                              sender_email)
         self.configure_string(config)
 
         policy = _policy_for_site('childsite')
@@ -88,6 +91,8 @@ class TestLocalSitePolicyZCML(ConfiguringTestBase):
         assert_that(policy.COM_USERNAME, is_('comm.nextthought.com'))
         assert_that(policy.COM_ALIAS, is_('Comm'))
         assert_that(policy.COM_REALNAME, is_('Site Comm'))
+        assert_that(policy.DEFAULT_EMAIL_SENDER,
+                    is_('Brand <no-reply@brand.com>'))
 
     def test_comm_invariant(self):
         config = _config_for_site_with_policy('childsite',
@@ -95,7 +100,8 @@ class TestLocalSitePolicyZCML(ConfiguringTestBase):
                                               'Display',
                                               None,
                                               'Comm',
-                                              'Site Comm')
+                                              'Site Comm',
+                                              None)
 
         with self.assertRaises(ConfigurationError) as e:
             self.configure_string(config)
@@ -114,7 +120,8 @@ class TestLocalSitePolicyZCML(ConfiguringTestBase):
                                               u'Display',
                                               u'comm.nextthought.com',
                                               u'Comm',
-                                              u'Site Comm')
+                                              u'Site Comm',
+                                              None)
 
         self.configure_string(config)
 
