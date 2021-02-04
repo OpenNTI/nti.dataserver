@@ -51,13 +51,13 @@ def _make_xml_attrs(**kwargs):
     return ' '.join(['%s="%s"' % (name, value) for name, value in kwargs.items() if value is not None])
 
 
-def _config_for_site_with_policy(sitename, brand, display, username, alias, realname, default_sender_email):
+def _config_for_site_with_policy(sitename, brand, display, username, alias, realname, default_email_sender):
     site_attrs = _make_xml_attrs(brand=brand,
                                  display_name=display,
                                  com_username=username,
                                  com_alias=alias,
                                  com_realname=realname,
-                                 default_sender_email=default_sender_email)
+                                 default_email_sender=default_email_sender)
     return ZCML_REGISTRATION % (sitename, sitename, site_attrs)
 
 
@@ -74,14 +74,14 @@ def _policy_for_site(sitename):
 class TestLocalSitePolicyZCML(ConfiguringTestBase):
 
     def test_local_site_policy(self):
-        sender_email = escape(u'Brand <no-reply@brand.com>')
+        email_sender = escape(u'Brand <no-reply@brand.com>')
         config = _config_for_site_with_policy(u'childsite',
                                               u'Brand',
                                               u'Display',
                                               u'comm.nextthought.com',
                                               u'Comm',
                                               u'Site Comm',
-                                              sender_email)
+                                              email_sender)
         self.configure_string(config)
 
         policy = _policy_for_site('childsite')
