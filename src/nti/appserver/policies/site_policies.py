@@ -952,11 +952,11 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 
 
 def default_site_policy_factory(policy_factory=None,
-                                brand=None,
-                                display_name=None,
-                                com_username=None,
-                                com_alias=None,
-                                com_realname=None,
+								brand=None,
+								display_name=None,
+								com_username=None,
+								com_alias=None,
+								com_realname=None,
 								default_sender_email=None):
 	"""
 	A factory that creates and initalizes a site policy. If no factory is provided a
