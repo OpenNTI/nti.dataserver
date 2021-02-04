@@ -131,8 +131,6 @@ from nti.dataserver.interfaces import IDataserver
 
 from nti.externalization.interfaces import IExternalObject
 
-from nti.externalization.persistence import NoPickle
-
 from nti.property.property import alias
 
 # TODO: How does zope normally present these? Side effects of import are Bad
@@ -241,7 +239,6 @@ def _make_group_member_factory(group_type, factory=_PersistentGroupMember):
 # TODO: Should we enforce case-insensitivity here?
 
 
-@NoPickle
 @functools.total_ordering
 class _AbstractPrincipal(object):
     """
