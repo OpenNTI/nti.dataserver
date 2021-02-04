@@ -86,7 +86,7 @@ class ISitePolicyUserEventListener(interface.Interface):
                                                                default='password_reset_email')
 
     PASSWORD_RESET_EMAIL_SUBJECT = TextLine(title=u'The subject for password reset emails.',
-                                            default=u'NextThought Password Reset',
+                                            default=u'${site_name} Password Reset',
                                             required=False)
 
     SUPPORT_EMAIL = TextLine(title=u'The support email.',

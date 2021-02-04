@@ -18,10 +18,16 @@ import datetime
 from collections import namedtuple
 from six.moves import urllib_parse
 
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 from zope import component
 from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
+
+from zope.component.hooks import getSite
+
+from zope.i18n import translate
 
 from pyramid.view import view_config
 
@@ -308,9 +314,8 @@ def forgot_passcode_view(request):
         base_template = 'failed_' + base_template
         text_ext = ".txt"
 
-    subject = getattr(policy,
-                      'PASSWORD_RESET_EMAIL_SUBJECT',
-                      'NextThought Password Reset')
+    subject = compute_reset_subject(policy, request)
+
     package = getattr(policy, 'PACKAGE', None)
     support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
 
@@ -337,6 +342,24 @@ def forgot_passcode_view(request):
                                  text_template_extension=text_ext)
 
     return hexc.HTTPNoContent()
+
+
+def compute_reset_subject(policy, request):
+    subject_template = getattr(policy,
+                               'PASSWORD_RESET_EMAIL_SUBJECT',
+                               '${site_brand} Password Reset')
+    subject = _(subject_template,
+                mapping={
+                    'site_name': _site_brand(request),
+                })
+    subject = translate(subject, context=request)
+
+    return subject
+
+
+def _site_brand(request):
+    return component.getMultiAdapter((getSite(), request),
+                                     IDisplayNameGenerator)()
 
 
 from nti.dataserver.users import index as user_index
