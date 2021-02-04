@@ -247,8 +247,6 @@ class _AbstractPrincipal(object):
 
     id = u''
 
-    __slots__ = ('id', 'title', 'description', '_v_hash', '__dict__', '__weakref__')
-
     def __eq__(self, other):
         try:
             # JAM: XXX: Comparing NTIIDs to our ID is a HACK. Here's the particular
@@ -517,8 +515,6 @@ class _UserPrincipal(_AbstractPrincipal):
     """
 
     NTIID = u''
-
-    __slots__ = ('context', 'NTIID')
 
     def __init__(self, user):
         self.context = user
