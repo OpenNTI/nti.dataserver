@@ -44,7 +44,7 @@ class ICreateSitePolicy(interface.Interface):
     com_realname = TextLine(title=u'The realname for the site community',
                             required=False)
 
-    default_sender_email = TextLine(title=u'An optional email sender',
+    default_email_sender = TextLine(title=u'An optional email sender',
                                     required=False)
 
     # If they provide a realname or alias they must also provide a username

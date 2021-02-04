@@ -957,7 +957,7 @@ def default_site_policy_factory(policy_factory=None,
 								com_username=None,
 								com_alias=None,
 								com_realname=None,
-								default_sender_email=None):
+								default_email_sender=None):
 	"""
 	A factory that creates and initalizes a site policy. If no factory is provided a
 	AdultCommunitySitePolicyEventListener or a
@@ -979,8 +979,8 @@ def default_site_policy_factory(policy_factory=None,
 		policy.COM_ALIAS = com_alias
 		policy.COM_REALNAME = com_realname
 
-	if default_sender_email:
-		policy.DEFAULT_EMAIL_SENDER = default_sender_email
+	if default_email_sender:
+		policy.DEFAULT_EMAIL_SENDER = default_email_sender
 
 	return policy
 
