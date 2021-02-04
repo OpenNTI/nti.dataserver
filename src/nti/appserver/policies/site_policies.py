@@ -24,6 +24,8 @@ from zc.displayname.interfaces import IDisplayNameGenerator
 from zope import component
 from zope import interface
 
+from zope.i18n import translate
+
 from zope.component.hooks import getSite
 
 from zope.component.interfaces import IComponents
@@ -514,6 +516,14 @@ class AbstractSitePolicyEventListener(object):
 
 		return self._v_my_package
 
+	def _compute_subject(self, template, request):
+		subject = _(template,
+					mapping={
+						'site_name': self._brand_name(request),
+					})
+		return translate(subject, context=request)
+
+
 	def _send_email_on_new_account(self, user, event):
 		"""
 		For new accounts where we have an email (and of course the request), we send a welcome message.
@@ -525,10 +535,16 @@ class AbstractSitePolicyEventListener(object):
 		Uses the self/class attribute ``NEW_USER_CREATED_EMAIL_SUBJECT`` to generate the subject
 		"""
 
+		if not event.request:  # pragma: no cover
+			return
+
+		subject = self._compute_subject(self.NEW_USER_CREATED_EMAIL_SUBJECT,
+										event.request)
+
 		self._send_new_account_email(user,
 									 event,
 									 self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
-									 self.NEW_USER_CREATED_EMAIL_SUBJECT)
+									 subject)
 
 	def _send_email_on_admin_created_account(self, user, event):
 		"""
@@ -556,10 +572,12 @@ class AbstractSitePolicyEventListener(object):
 						 username, email)
 			reset_url = None
 
+		subject = self._compute_subject(self.NEW_USER_CREATED_BY_ADMIN_EMAIL_SUBJECT,
+										event.request)
 		self._send_new_account_email(user,
 									 event,
 									 self.NEW_USER_CREATED_BY_ADMIN_EMAIL_TEMPLATE_BASE_NAME,
-									 self.NEW_USER_CREATED_BY_ADMIN_EMAIL_SUBJECT,
+									 subject,
 									 extra_template_args={
 										 'set_passcode_url': reset_url
 									 })

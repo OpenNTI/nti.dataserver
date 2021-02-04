@@ -63,7 +63,7 @@ class ISitePolicyUserEventListener(interface.Interface):
 
     NEW_USER_CREATED_EMAIL_SUBJECT = TextLine(title=u'The email subject for new user emails.',
                                               required=False,
-                                              default=u'Welcome to NextThought')
+                                              default=u'Welcome to ${site_name}')
 
     NEW_USER_CREATED_BY_ADMIN_EMAIL_TEMPLATE_BASE_NAME = \
         NativeStringLine(title=u'The base template for sending '
@@ -76,7 +76,7 @@ class ISitePolicyUserEventListener(interface.Interface):
         TextLine(title=u'The email subject for new user emails created '
                        u'by an admin.',
                  required=False,
-                 default=u'Welcome to NextThought')
+                 default=u'Welcome to ${site_name}')
 
     NEW_USER_CREATED_BCC = TextLine(title=u'The bcc address for new user emails.',
                                     default=None,
@@ -86,7 +86,7 @@ class ISitePolicyUserEventListener(interface.Interface):
                                                                default='password_reset_email')
 
     PASSWORD_RESET_EMAIL_SUBJECT = TextLine(title=u'The subject for password reset emails.',
-                                            default=u'NextThought Password Reset',
+                                            default=u'${site_name} Password Reset',
                                             required=False)
 
     SUPPORT_EMAIL = TextLine(title=u'The support email.',

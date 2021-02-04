@@ -7,6 +7,7 @@ from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+import fudge
 
 from hamcrest import assert_that
 from hamcrest import has_entry
@@ -415,8 +416,31 @@ class TestApplicationPasswordRecovery(_RecoveryTestBase):
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
 		assert_that( msg, has_property( 'body' ) )
-		assert_that( decodestring(msg.body),
-                     contains_string( 'http://localhost/place?host=foo&baz=bar&username=' + urllib_parse.quote(username) ) )
+		decoded_body = decodestring(msg.body)
+		assert_that(decoded_body,
+					contains_string( 'http://localhost/place?host=foo&baz=bar&username=' + urllib_parse.quote(username) ))
+		assert_that(decoded_body,
+					contains_string(''))
+
+	@WithSharedApplicationMockDS
+	@fudge.patch('nti.appserver.account_recovery_views._site_brand')
+	def test_branded_subject( self, get_site_brand ):
+		get_site_brand.is_callable().returns("Brand XYZ")
+		username = self._add_user(email=u'jason.madden@nextthought.com')
+
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.forgot.passcode'
+		data = {'email': u'jason.madden@nextthought.com',
+				'username': username,
+				'success': 'http://localhost/place?host=foo&baz=bar'}
+		app.post( path, data, status=204 )
+
+		mailer = component.getUtility( ITestMailDelivery )
+		assert_that( mailer.queue, has_length( 1 ) )
+		subject = mailer.queue[0].subject
+		assert_that(subject,
+					contains_string('Brand XYZ Password Reset'))
 
 from zope.annotation.interfaces import IAnnotations
 from nti.appserver import account_recovery_views

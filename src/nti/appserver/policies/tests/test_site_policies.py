@@ -31,12 +31,17 @@ import re
 import unittest
 
 
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 from zope import component
 from zope import interface
+
+from zope.component.interfaces import ISite
 
 from zope.event import notify
 
 from nti.appserver.interfaces import UserCreatedByAdminWithRequestEvent
+from nti.appserver.interfaces import UserCreatedWithRequestEvent
 
 from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
 from nti.appserver.policies.interfaces import IRequireSetPassword
@@ -105,7 +110,43 @@ class TestGuessSiteDisplayName(unittest.TestCase):
 		assert_that( guess_site_display_name(), is_('Prmia') )
 
 
-class TestAdminCreatedUser(ApplicationLayerTest):
+class IDummyRequest(interface.Interface):
+	"""
+	Use for registration of our SiteNameGenerator
+	"""
+
+class AbstractAdminCreatedUser(ApplicationLayerTest):
+
+	@property
+	def event_factory(self):
+		raise NotImplementedError()
+
+	def site_name_generator(self, site_name):
+		@component.adapter(ISite, IDummyRequest)
+		@interface.implementer(IDisplayNameGenerator)
+		class SiteNameGenerator(object):
+			def __init__(self, *args, **kwargs):
+				pass
+
+			def __call__(self, *args, **kwargs):
+				return site_name
+
+		return SiteNameGenerator
+
+	def generate_user_created_event(self, user, policy, site_name="NTI"):
+		with _provide_adapter(self.site_name_generator(site_name)):
+			with _provide_utility(policy, ICommunitySitePolicyUserEventListener):
+				request = DummyRequest()
+				interface.alsoProvides(request, IDummyRequest)
+				request.GET['success'] = 'https://nextthought.com/reset'
+
+				# Trigger the process that sends the email
+				notify(self.event_factory(user, request))
+
+
+class TestAdminCreatedUser(AbstractAdminCreatedUser):
+
+	event_factory = UserCreatedByAdminWithRequestEvent
 
 	def _query_params(self, url):
 		url_parts = list(urllib_parse.urlparse(url))
@@ -125,16 +166,15 @@ class TestAdminCreatedUser(ApplicationLayerTest):
 
 			from nti.appserver.policies.site_policies import GenericSitePolicyEventListener
 			policy = GenericSitePolicyEventListener()
-
-			with _provide_utility(policy, ICommunitySitePolicyUserEventListener):
-				request = DummyRequest()
-				request.GET['success'] = 'https://nextthought.com/reset'
-				notify(UserCreatedByAdminWithRequestEvent(user, request))
+			self.generate_user_created_event(user, policy)
 
 			assert_that(mailer.queue, has_length(1))
 			msg = decodestring(mailer.queue[0].html)
+
 			assert_that(msg,
 						contains_string("A new account has been created"))
+			assert_that(mailer.queue[0].subject,
+						contains_string("Welcome to NTI"))
 
 			match = re.search('href="(https://nextthought.com/reset[^"]*)"',
 							 msg)
@@ -142,6 +182,16 @@ class TestAdminCreatedUser(ApplicationLayerTest):
 			query_params = self._query_params(match.group(1))
 			assert_that(query_params, has_key("id"))
 			assert_that(query_params, has_key("username"))
+
+			# With updated subject
+			del mailer.queue[:]
+
+			policy.NEW_USER_CREATED_BY_ADMIN_EMAIL_SUBJECT = "Your new ${site_name} account"
+			self.generate_user_created_event(user, policy)
+
+			assert_that(mailer.queue, has_length(1))
+			assert_that(mailer.queue[0].subject,
+						contains_string("Your new NTI account"))
 
 	@WithSharedApplicationMockDS
 	def test_user_is_not_mailed(self):
@@ -161,9 +211,51 @@ class TestAdminCreatedUser(ApplicationLayerTest):
 			with _provide_utility(policy, ICommunitySitePolicyUserEventListener):
 				request = DummyRequest()
 				request.GET['success'] = 'https://nextthought.com/reset'
-				notify(UserCreatedByAdminWithRequestEvent(user, request))
+
+				# Trigger the process, should skip email b/c the user
+				# doesn't provide IRequireSetPassword
+				notify(self.event_factory(user, request))
 
 			assert_that(mailer.queue, has_length(0))
+
+
+class TestUserCreation(AbstractAdminCreatedUser):
+
+	event_factory = UserCreatedWithRequestEvent
+
+	@WithSharedApplicationMockDS
+	def test_user_is_mailed(self):
+		with mock_dataserver.mock_db_trans():
+			mailer = component.getUtility(ITestMailDelivery)
+			del mailer.queue[:]
+
+			user = self._create_user(u"dobby")
+			addr = IEmailAddressable(user, None)
+			addr.email = u'dobby@hogwarts.com'
+
+			interface.alsoProvides(user, IRequireSetPassword)
+
+			from nti.appserver.policies.site_policies import GenericSitePolicyEventListener
+			policy = GenericSitePolicyEventListener()
+			self.generate_user_created_event(user, policy)
+
+			assert_that(mailer.queue, has_length(1))
+			msg = decodestring(mailer.queue[0].html)
+
+			assert_that(msg,
+						contains_string("Thank you for signing up for NTI"))
+			assert_that(mailer.queue[0].subject,
+						contains_string("Welcome to NTI"))
+
+			# With updated subject
+			del mailer.queue[:]
+
+			policy.NEW_USER_CREATED_EMAIL_SUBJECT = "Your new ${site_name} account"
+			self.generate_user_created_event(user, policy)
+
+			assert_that(mailer.queue, has_length(1))
+			assert_that(mailer.queue[0].subject,
+						contains_string("Your new NTI account"))
 
 
 @contextlib.contextmanager
@@ -177,3 +269,14 @@ def _provide_utility(util, iface):
 	finally:
 		gsm.unregisterUtility(util, iface)
 		gsm.registerUtility(old_util, iface)
+
+
+@contextlib.contextmanager
+def _provide_adapter(adapter):
+	gsm = component.getGlobalSiteManager()
+
+	gsm.registerAdapter(adapter)
+	try:
+		yield
+	finally:
+		gsm.unregisterAdapter(adapter)
