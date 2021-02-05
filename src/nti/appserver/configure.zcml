@@ -185,7 +185,8 @@
 	<subscriber factory=".decorators._DeletedObjectPlaceholderDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
-	<!-- Assessment -->
+	<!-- Display names -->
+    <adapter factory="._adapters.StreamChangeEventDisplayNameGenerator" />
 
 	<!-- Events -->
 	<subscriber handler=".application._sync_host_policies" />

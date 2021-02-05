@@ -152,7 +152,7 @@ class _TemplateArgs(object):
 	@property
 	def display_name(self):
 		return component.queryMultiAdapter((self._primary, self.request),
-										   IDisplayNameGenerator)
+										   IDisplayNameGenerator)()
 
 	@property
 	def creator(self):
@@ -452,11 +452,12 @@ class _StreamChangeEventDispatcher(_AbstractClassifier):
 	def classify(self, obj):
 		# What we should do is look for a named adapter based on the
 		# type of the contained object and the change type name
-		# but right now we don't, hardcoding knowledge of the
-		# supported types
+		# but right now we don't.
 		if obj.type == 'Circled':
 			return 'circled'
-		return 'grade'
+		result = INotableDataEmailClassifier(obj.object, None)
+		if result:
+			return result.classify(obj.object)
 
 class _FeedbackClassifier(_AbstractClassifier):
 	classification = 'feedback'
@@ -611,6 +612,7 @@ class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 			if self.request.get('override_to'):
 				possible_recipient['email'].email = self.request.get('override_to')
 			yield possible_recipient
+
 
 class DigestEmailNotableViewletBase(object):
 	"""

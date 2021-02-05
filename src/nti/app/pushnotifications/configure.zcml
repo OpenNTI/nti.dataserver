@@ -145,6 +145,16 @@
 		class=".digest_email.DigestEmailNotableViewletBase"
 		weight="1000" />
 
+	<browser:viewlet
+        name="calendar_event"
+        template="templates/digest_email_item_calendar.pt"
+        view=".digest_email.DigestEmailProcessDelegate"
+        layer="pyramid.interfaces.IRequest"
+        permission="zope.Public"
+        manager=".interfaces.INotableDataEmailViewletManager"
+        class=".digest_email.DigestEmailNotableViewletBase"
+        weight="1001" />
+
 	<!-- The classifiers for grouping objects for the templates -->
 	<adapter factory=".digest_email._NoteClassifier" />
 	<adapter factory=".digest_email._TopicClassifier" />

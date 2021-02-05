@@ -1,0 +1,9 @@
+<!--! -*- mode: nxml -*- -->
+<div metal:use-macro="macro:row">
+    <span metal:fill-slot="content" style="line-height:21px;">
+        <strong tal:content="notable/creator">David Sabatini</strong> created an event. <br />
+        <span style="line-height:21px;">
+            <a style="color: #3fb3f6;" href="" tal:attributes="href notable/href" tal:content="notable/display_name">4.3 Water, Weather, and Climate</a>
+        </span>
+    </span>
+</div>

@@ -12,6 +12,10 @@ from __future__ import absolute_import
 
 import six
 
+from pyramid.interfaces import IRequest
+
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 from ZODB.interfaces import IBroken
 
 from zope import component
@@ -30,7 +34,7 @@ from nti.appserver.interfaces import IIntIdUserSearchPolicy
 from nti.appserver.interfaces import IExternalFieldResource
 from nti.appserver.interfaces import IExternalFieldTraversable
 
-from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IUser, IStreamChangeEvent
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
@@ -518,3 +522,23 @@ class _NoOpUserSearchPolicyAndRealnameStripper(_NoOpUserSearchPolicy, _UserRealn
         if external.get('Username'):
             external['alias'] = external['Username']
         super(_NoOpUserSearchPolicyAndRealnameStripper, self).decorateExternalObject(original, external)
+
+
+@interface.implementer(IDisplayNameGenerator)
+@component.adapter(IStreamChangeEvent, IRequest)
+class StreamChangeEventDisplayNameGenerator(object):
+    """
+    Get the display name for a stream change event by calling into
+    referenced object.
+    """
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, unused_maxlength=None):
+        generator = component.queryMultiAdapter((self.context.object,
+                                                 self.request),
+                                                IDisplayNameGenerator)
+        if generator:
+            return generator()
