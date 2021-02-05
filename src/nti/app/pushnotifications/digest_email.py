@@ -151,8 +151,12 @@ class _TemplateArgs(object):
 
 	@property
 	def display_name(self):
-		return component.queryMultiAdapter((self._primary, self.request),
-										   IDisplayNameGenerator)()
+		generator = component.queryMultiAdapter((self._primary, self.request),
+												IDisplayNameGenerator)
+		result = generator()
+		logger.debug('Notable display_name (%s) (%s) (%s)',
+					self._primary, generator, result)
+		return result
 
 	@property
 	def creator(self):
