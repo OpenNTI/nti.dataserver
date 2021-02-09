@@ -151,6 +151,7 @@ class _TemplateArgs(object):
 
 	@property
 	def display_name(self):
+		# XXX: Some templates rely on this being callable
 		generator = component.queryMultiAdapter((self._primary, self.request),
 												IDisplayNameGenerator)
 		return generator
