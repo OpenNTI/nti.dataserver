@@ -452,7 +452,7 @@ def close_at_exit():
     # get orphaned workers. A sleep seems to exhibit the same "fix"
     # while being slightly more explicit (but equally nasty)
     import time
-    time.sleep(.1)
+    time.sleep(1)
     
     try:
         if ds:
