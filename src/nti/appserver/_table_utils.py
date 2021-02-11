@@ -162,7 +162,7 @@ class AbstractNoteContentProvider(ContentProviderBase):
 		parts = []
 		parts.append( '<div>' )
 		parts.append( self.render_prefix() )
-		for part in self.get_body_parts():
+		for part in self.get_body_parts() or tuple():
 			rendered = self.render_body_part( part )
 			if rendered:
 				parts.append( '<br />' )

@@ -344,3 +344,30 @@ class TestApplicationFlagging(ApplicationLayerTest):
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, does_not( contains_string( data['body'][0] ) ) )
 		assert_that( res.form.fields, does_not( has_key( 'table-note-selected-0-selectedItems' ) ) )
+
+	@WithSharedApplicationMockDS
+	def test_flag_moderation_no_body(self):
+		#"Test how notes are rendered in moderation view"
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+
+			n2 = contenttypes.Note()
+			n2.applicableRange = contentrange.ContentRangeDescription()
+			n2.containerId = u'tag:nti:foo'
+			update_from_external_object( n2,
+										 {'title': 'foo' } )
+			user.addContainedObject( n2 )
+			n2_ext_id = to_external_ntiid_oid( n2 )
+
+		testapp = TestApp( self.app )
+
+		# First, give us something to flag
+		path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n2_ext_id
+		path = UQ( path )
+		testapp.post( path + b'/@@flag', '', extra_environ=self._make_extra_environ() )
+
+
+		path = b'/dataserver2/@@moderation_admin'
+
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
