@@ -288,8 +288,7 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
     # The authentication information in use can actually change
     # during the course of a single request due to authentication (used when broadcasting events)
     # so our cache must be aware of this
-    principals, authn_policy, reg = _get_effective_principals(request,
-                                                              skip_cache=skip_cache)
+    principals, authn_policy, reg = _get_effective_principals(request)
     cache_key = (id(obj), principals)
 
     if not skip_cache:
@@ -325,11 +324,9 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
     return check_value
 
 
-def _get_effective_principals(request, skip_cache=False):
+def _get_effective_principals(request):
     """
     Return the principals as a set, plus the auth policy and registry (optimization)
-
-    :keyword: skip_cache: (default False) use request cache of effective principals.
     """
     # Make sure we return a set here, the membership checks are much, much faster
     # than iteration.
@@ -346,12 +343,22 @@ def _get_effective_principals(request, skip_cache=False):
         pass
     else:
         # This may change within the request (e.g. authentication)
-        if not skip_cache and active_authn_policy is cached_policy:
+        if active_authn_policy is cached_policy:
             return principals, active_authn_policy, reg
 
     principals = active_authn_policy.effective_principals(request)
     request._v_nti_appserver_effective_principals = active_authn_policy, principals
     return principals, active_authn_policy, reg
+
+
+def flush_effective_principals_cache(request):
+    """
+    Flush the request effective principals cache.
+    """
+    try:
+        delattr(request, '_v_nti_appserver_effective_principals')
+    except AttributeError:
+        pass
 
 
 def _has_permission(permission, context, reg, authn_policy, principals):
@@ -370,8 +377,7 @@ def _has_permission(permission, context, reg, authn_policy, principals):
     return authz_policy.permits(context, principals, permission)
 
 
-def has_permission(permission, context, request=None, skip_cache=False):
+def has_permission(permission, context, request=None):
     request = request or get_current_request()
-    principals, authn_policy, reg = _get_effective_principals(request,
-                                                              skip_cache=skip_cache)
+    principals, authn_policy, reg = _get_effective_principals(request)
     return _has_permission(permission, context, reg, authn_policy, principals)
