@@ -98,9 +98,13 @@ class TestPyramidAuthorization(ConfiguringTestBase):  # Not shared, we muck with
 		assert_that(is_readable(withacl, self.request),
 					is_(same_instance(is_readable(withacl, self.request))))
 
-		# Change the userid and get a different answer
+		# Change the userid and get same cached answer
 		self.auth_policy.userid = 'foo'
-		assert_that(is_readable(withacl, self.request), is_false())
-		assert_that(is_writable(withacl, self.request), is_false())
+		assert_that(is_readable(withacl, self.request), is_true())
+		assert_that(is_writable(withacl, self.request), is_true())
 		assert_that(is_readable(withacl, self.request),
 					is_(same_instance(is_readable(withacl, self.request))))
+
+		# Avoid cache
+		assert_that(is_readable(withacl, self.request, skip_cache=True), is_false())
+		assert_that(is_writable(withacl, self.request, skip_cache=True), is_false())
