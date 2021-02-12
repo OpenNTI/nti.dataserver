@@ -111,3 +111,13 @@ class TestPyramidAuthorization(ConfiguringTestBase):  # Not shared, we muck with
 		flush_effective_principals_cache(self.request)
 		assert_that(is_readable(withacl, self.request), is_false())
 		assert_that(is_writable(withacl, self.request), is_false())
+
+		# Unauth user is not cached
+		flush_effective_principals_cache(self.request)
+		self.auth_policy.userid = None
+		assert_that(is_readable(withacl, self.request), is_false())
+		assert_that(is_writable(withacl, self.request), is_false())
+
+		self.auth_policy.userid = 'jason.madden@nextthought.com'
+		assert_that(is_readable(withacl, self.request), is_true())
+		assert_that(is_writable(withacl, self.request), is_true())

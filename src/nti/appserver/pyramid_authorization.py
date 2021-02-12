@@ -347,7 +347,9 @@ def _get_effective_principals(request):
             return principals, active_authn_policy, reg
 
     principals = active_authn_policy.effective_principals(request)
-    request._v_nti_appserver_effective_principals = active_authn_policy, principals
+    if request.authenticated_userid:
+        # Only cache if we have an authenticated user
+        request._v_nti_appserver_effective_principals = active_authn_policy, principals
     return principals, active_authn_policy, reg
 
 
