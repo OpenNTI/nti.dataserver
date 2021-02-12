@@ -26,6 +26,7 @@ from nti.dataserver import authorization_acl as auth_acl
 from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.pyramid_authorization import is_writable
 from nti.appserver.pyramid_authorization import ZopeACLAuthorizationPolicy
+from nti.appserver.pyramid_authorization import flush_effective_principals_cache
 
 from nti.appserver.tests import ConfiguringTestBase
 
@@ -86,7 +87,7 @@ class TestPyramidAuthorization(ConfiguringTestBase):  # Not shared, we muck with
 		assert_that(Child(), bool(self.has_permission('edit')))
 
 	def test_caching(self):
-
+		flush_effective_principals_cache(self.request)
 		class WithACL(object):
 			__acl__ = ((pyramid.security.Allow,
 						self.auth_policy.userid,
@@ -98,9 +99,25 @@ class TestPyramidAuthorization(ConfiguringTestBase):  # Not shared, we muck with
 		assert_that(is_readable(withacl, self.request),
 					is_(same_instance(is_readable(withacl, self.request))))
 
-		# Change the userid and get a different answer
+		# Change the userid and get same cached answer
 		self.auth_policy.userid = 'foo'
-		assert_that(is_readable(withacl, self.request), is_false())
-		assert_that(is_writable(withacl, self.request), is_false())
+		assert_that(is_readable(withacl, self.request), is_true())
+		assert_that(is_writable(withacl, self.request), is_true())
 		assert_that(is_readable(withacl, self.request),
 					is_(same_instance(is_readable(withacl, self.request))))
+
+		# Flush cache
+		flush_effective_principals_cache(self.request)
+		flush_effective_principals_cache(self.request)
+		assert_that(is_readable(withacl, self.request), is_false())
+		assert_that(is_writable(withacl, self.request), is_false())
+
+		# Unauth user is not cached
+		flush_effective_principals_cache(self.request)
+		self.auth_policy.userid = None
+		assert_that(is_readable(withacl, self.request), is_false())
+		assert_that(is_writable(withacl, self.request), is_false())
+
+		self.auth_policy.userid = 'jason.madden@nextthought.com'
+		assert_that(is_readable(withacl, self.request), is_true())
+		assert_that(is_writable(withacl, self.request), is_true())

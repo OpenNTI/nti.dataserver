@@ -334,15 +334,33 @@ def _get_effective_principals(request):
     # ignores the site
     reg = component.getSiteManager()
 
-    authn_policy = reg.queryUtility(IAuthenticationPolicy)
-    if authn_policy is None:
+    active_authn_policy = reg.queryUtility(IAuthenticationPolicy)
+    if active_authn_policy is None or request is None:
         return (psec.Everyone,), None, reg
-
-    if request is not None:
-        principals = authn_policy.effective_principals(request)
+    try:
+        cached_policy, principals = request._v_nti_appserver_effective_principals
+    except AttributeError:
+        pass
     else:
-        principals = (psec.Everyone,)
-    return principals, authn_policy, reg
+        # This may change within the request (e.g. authentication)
+        if active_authn_policy is cached_policy:
+            return principals, active_authn_policy, reg
+
+    principals = active_authn_policy.effective_principals(request)
+    if request.authenticated_userid:
+        # Only cache if we have an authenticated user
+        request._v_nti_appserver_effective_principals = active_authn_policy, principals
+    return principals, active_authn_policy, reg
+
+
+def flush_effective_principals_cache(request):
+    """
+    Flush the request effective principals cache.
+    """
+    try:
+        delattr(request, '_v_nti_appserver_effective_principals')
+    except AttributeError:
+        pass
 
 
 def _has_permission(permission, context, reg, authn_policy, principals):
