@@ -255,7 +255,7 @@
 					style="text-decoration:underline;color: #494949;">support@nextthought.com</a>
 				</span>
 				<br/>
-				<span i18n:translate="" tal:condition="options/nti_site_brand_name">
+				<span i18n:translate="" tal:condition="python: options.get('nti_site_brand_name') and options['nti_site_brand_name']!='NextThought'">
 					<omitted tal:replace="options/nti_site_brand_name"/> is powered by NextThought
 				</span>
 			</div>
