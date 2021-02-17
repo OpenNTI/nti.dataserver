@@ -89,7 +89,7 @@ from nti.site.site import get_component_hierarchy_names
 
 logger = __import__('logging').getLogger(__name__)
 
-MAX_USERSEARCH_RESULTS = 1000
+MAX_USERSEARCH_RESULTS = 50
 
 def _max_results():
     return MAX_USERSEARCH_RESULTS
