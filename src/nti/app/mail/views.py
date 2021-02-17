@@ -70,7 +70,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
         return component.queryUtility(IMailerPolicy)
 
     @property
-    def _get_default_sender(self):
+    def _default_sender(self):
         """
         Get the default sender from :class:`IMailerPolicy`.
         """
@@ -80,7 +80,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 
     @property
     def _no_reply_addr(self):
-        return self._get_default_sender or 'no-reply@nextthought.com'
+        return self._default_sender or 'no-reply@nextthought.com'
 
     @Lazy
     def _sender_reply_addr(self):
