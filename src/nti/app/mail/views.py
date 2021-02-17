@@ -42,6 +42,7 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable
+from nti.mailer.interfaces import IMailerPolicy
 
 AVATAR_BG_COLORS = ["#5E35B1", "#3949AB", "#1E88E5", "#039BE5",
                     "#00ACC1", "#00897B", "#43A047", "#7CB342",
@@ -65,9 +66,21 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
     #: By default, we only email to internal users
     EMAIL_EXTERNALLY_DEFAULT = False
 
+    def _mailer_policy(self):
+        return component.queryUtility(IMailerPolicy)
+
+    @property
+    def _get_default_sender(self):
+        """
+        Get the default sender from :class:`IMailerPolicy`.
+        """
+        policy = self._mailer_policy()
+        return policy is not None \
+               and policy.get_default_sender()
+
     @property
     def _no_reply_addr(self):
-        return 'no-reply@nextthought.com'
+        return self._get_default_sender or 'no-reply@nextthought.com'
 
     @Lazy
     def _sender_reply_addr(self):
