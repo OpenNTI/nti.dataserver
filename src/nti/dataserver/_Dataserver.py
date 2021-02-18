@@ -440,23 +440,19 @@ def _process_did_fork_listener(unused_event):
 
 def close_at_exit():
     ds = component.queryUtility(IDataserver)
-    # In alpha we see many orphaned workers when the server is restarted
-    # using supervisorctl restart. One running theory is that we are deadlocking
-    # in use connections during shutdown. We attempt to wait for the hub to idle here
-    # as a potential fix. https://github.com/NextThought/nti.dataserver/issues/404
-    gevent.idle()
-
-    # Unfortunately simply idleing the hub doesn't do the trick. we
-    # still see orphans, but executing a print (or something else
-    # dropping the GIL?) seems to make it difficult (impossible?) to
-    # get orphaned workers. A sleep seems to exhibit the same "fix"
-    # while being slightly more explicit (but equally nasty)
-    import time
-    time.sleep(1)
+    # In alpha we see many orphaned workers when the server is
+    # restarted using supervisorctl restart. We seem to be deadlocking
+    # when aborting / closing the connections. ``gevent.idle`` and
+    # ``time.sleep`` seemed to help for a while but we still
+    # eventually saw orphans after some number of restarts. We've not
+    # yet identified how to consistently reproduce them.
+    # https://github.com/NextThought/nti.dataserver/issues/404
     
     try:
         if ds:
-            ds.close()
+            # close asynchronously to avoid deadlocks on native locks.
+            # apply waits (gevent friendly) until the function completes
+            gevent.get_hub().threadpool.apply(ds.close)
     except Exception:
         pass
 
