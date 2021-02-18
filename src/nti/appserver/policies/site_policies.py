@@ -631,7 +631,8 @@ class AbstractSitePolicyEventListener(object):
 			recipients=[user],
 			template_args=args,
 			request=event.request,
-			package=self.__find_my_package())
+			package=self.__find_my_package(),
+			text_template_extension=".mak")
 
 	def _set_landing_page_cookie(self, user, event):
 		if self.LANDING_PAGE_NTIID:
