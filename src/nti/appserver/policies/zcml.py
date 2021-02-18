@@ -47,6 +47,9 @@ class ICreateSitePolicy(interface.Interface):
     default_email_sender = TextLine(title=u'An optional email sender',
                                     required=False)
 
+    default_bulk_email_sender = TextLine(title=u'An optional bulk email sender',
+                                         required=False)
+
     # If they provide a realname or alias they must also provide a username
     @interface.invariant
     def comm_username_if_display_name(self):

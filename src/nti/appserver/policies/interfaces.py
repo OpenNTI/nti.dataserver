@@ -50,6 +50,13 @@ class ISitePolicyUserEventListener(interface.Interface):
                                     required=False,
                                     default=None)
 
+    DEFAULT_BULK_EMAIL_SENDER = TextLine(title=u'An optional email sender for bulk email',
+                                         description=u'An email address used to send bulk emails to users'
+                                                     u'such as digest emails, both on behalf of this'
+                                                     u'object as well as from other places. Optional.',
+                                         required=False,
+                                         default=None)
+
     NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for sending '
                                                                        u'an email to a newly created user.',
                                                                  description=u'The asset spec for a template having both text and'

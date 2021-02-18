@@ -14,7 +14,15 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+
+import contextlib
+
+from zope import component
 from zope import interface
+
+import fudge
+
+from fudge.inspector import arg
 
 from hamcrest import assert_that
 from hamcrest import is_
@@ -45,8 +53,10 @@ import time
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-import fudge
-from fudge.inspector import arg
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
+from nti.dataserver.tests import mock_dataserver
+
 
 SEND_QUOTA = {u'GetSendQuotaResponse': {u'GetSendQuotaResult': {u'Max24HourSend': u'50000.0',
 																u'MaxSendRate': u'14.0',
@@ -115,15 +125,13 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		process.add_recipients( [{'email': 'foo@bar'}, {'email': 'biz@baz'}] )
 		assert_that( process.redis.scard(process.names.source_name), is_( 2 ) )
 
-	@WithSharedApplicationMockDS
-	@fudge.patch('nti.mailer._verp._get_signer_secret')
-	def test_process_one_recipient(self, fake_secret):
+	def _test_process_one_recipient(self, fake_secret, expected_sender):
 		process = Process(self.beginRequest())
 		process.subject = 'Subject'
 		fake_sesconn = fudge.Fake()
 		(fake_sesconn.expects( 'send_raw_email' )
-		 	.with_args( arg.any(), Recipient.verp_from, Recipient.email )
-			.returns( {'key': 'val'} ) )
+		 .with_args( arg.any(), expected_sender, Recipient.email )
+		 .returns( {'key': 'val'} ) )
 
 		process.sesconn = fake_sesconn
 		fake_secret.is_callable().returns('abc123')
@@ -136,6 +144,41 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 
 		assert_that( process.redis.scard(process.names.source_name), is_( 0 ) )
 		assert_that( process.redis.scard(process.names.dest_name), is_( 1 ) )
+
+	@WithSharedApplicationMockDS
+	@fudge.patch('nti.mailer._verp._get_signer_secret')
+	def test_process_one_recipient_no_policy_sender(self, fake_secret):
+		expected_sender = Recipient.verp_from
+		with modified_bulk_email_sender_for_site(self.ds, "dataserver2", None):
+			self._test_process_one_recipient(fake_secret, expected_sender)
+
+	@WithSharedApplicationMockDS
+	@fudge.patch('nti.mailer._verp._get_signer_secret')
+	def test_process_one_recipient_policy_sender(self, fake_secret):
+		"""
+		Ensure we get our sender address from the policy
+		"""
+		expected_sender = "Bulk Sender <no-reply+jason.UrcYWQ@bulk.nti.com>"
+		policy_sender = "Bulk Sender <no-reply@bulk.nti.com>"
+		with modified_bulk_email_sender_for_site(self.ds, "dataserver2", policy_sender):
+			self._test_process_one_recipient(fake_secret, expected_sender)
+
+	@WithSharedApplicationMockDS
+	@fudge.patch(
+		'nti.mailer._verp._get_signer_secret',
+		'nti.app.bulkemail.delegate.AbstractBulkEmailProcessDelegate._site_policy')
+	def test_process_one_recipient_sender_fallback(
+			self,
+			fake_secret,
+			site_policy_property):
+		"""
+		Check fallback for sender address when there's no policy
+		"""
+		site_policy_property.is_callable().returns(None)
+		expected_sender = Recipient.verp_from
+		policy_sender = "Bulk Sender <no-reply@bulk.nti.com>"
+		with modified_bulk_email_sender_for_site(self.ds, "dataserver2", policy_sender):
+			self._test_process_one_recipient(fake_secret, expected_sender)
 
 	@WithSharedApplicationMockDS
 	@fudge.patch('nti.mailer._verp._get_signer_secret')
@@ -289,3 +332,19 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		bulk_email_views._BulkEmailView._greenlets[0].join()
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/policy_change_email' )
 		assert_that( res.body, contains_string( 'End Time' ) )
+
+
+@contextlib.contextmanager
+def modified_bulk_email_sender_for_site(ds, site_name, new_email):
+	with mock_dataserver.mock_db_trans(ds, site_name=site_name):
+		policy = component.queryUtility(ISitePolicyUserEventListener)
+		original_sender = getattr(policy, 'DEFAULT_BULK_EMAIL_SENDER', '')
+		policy.DEFAULT_BULK_EMAIL_SENDER = new_email
+	try:
+		yield
+	finally:
+		with mock_dataserver.mock_db_trans(ds, site_name=site_name):
+			policy = component.queryUtility(ISitePolicyUserEventListener)
+			policy.DEFAULT_BULK_EMAIL_SENDER = original_sender
+
+

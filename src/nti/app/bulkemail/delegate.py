@@ -19,6 +19,7 @@ from nti.mailer.interfaces import IVERP
 
 logger = __import__('logging').getLogger(__name__)
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 class AbstractBulkEmailProcessDelegate(object):
     """
@@ -26,7 +27,7 @@ class AbstractBulkEmailProcessDelegate(object):
     """
     text_template_extension = ".txt"
 
-    fromaddr = u'no-reply@alerts.nextthought.com'
+    default_fromaddr = u'no-reply@alerts.nextthought.com'
     subject = u'<No Subject>'
 
     def __init__(self, context, request):
@@ -37,17 +38,28 @@ class AbstractBulkEmailProcessDelegate(object):
     def _verp(self):
         return component.getUtility(IVERP)
 
+    @Lazy
+    def _site_policy(self):
+        return component.getUtility(ISitePolicyUserEventListener)
+
+    @Lazy
+    def _sender_address(self):
+        policy_sender_addr = getattr(self._site_policy,
+                                     'DEFAULT_BULK_EMAIL_SENDER',
+                                     None)
+        return policy_sender_addr or self.default_fromaddr
+
     def compute_fromaddr_for_recipient(self, recipient):
         # pylint: disable=no-member
         return self._verp.realname_from_recipients(
-            self.fromaddr,
+            self._sender_address,
             (recipient['email'],),
             request=self.request)
 
     def compute_sender_for_recipient(self, recipient):
         # pylint: disable=no-member
         return self._verp.verp_from_recipients(
-            self.fromaddr,
+            self._sender_address,
             (recipient['email'],),
             request=self.request)
 
