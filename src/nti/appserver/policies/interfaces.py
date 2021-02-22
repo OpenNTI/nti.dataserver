@@ -108,6 +108,22 @@ class ISitePolicyUserEventListener(interface.Interface):
                                                default=u'Username Reminder',
                                                required=False)
 
+    SITE_INVITATION_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for site invitation emails.',
+                                                                default='site_invitation_email',
+                                                                required=False)
+
+    SITE_INVITATION_EMAIL_SUBJECT = TextLine(title=u'The email subject for site invitation emails.',
+                                             default=u"You're invited to ${site_name}",
+                                             required=False)
+
+    COURSE_INVITATION_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for course invitation emails.',
+                                                                default='course_invitation_email',
+                                                                required=False)
+
+    COURSE_INVITATION_EMAIL_SUBJECT = TextLine(title=u'The email subject for course invitation emails.',
+                                             default=u"You're invited to ${course_name}",
+                                             required=False)
+
     def map_validation_exception(incoming_data, exception):
         """
         Gives a site policy a chance to change an exception being returned
