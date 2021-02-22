@@ -969,14 +969,33 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 	"""
 
 
+def _site_policy_mapping():
+	attrs = ["default_email_sender",
+			 "default_bulk_email_sender",
+			 "course_invitation_email_subject",
+			 "course_invitation_email_template_base_name",
+			 "site_invitation_email_subject",
+			 "site_invitation_email_template_base_name",
+			 "username_recovery_email_subject",
+			 "username_recovery_email_template_base_name",
+			 "support_email",
+			 "password_reset_email_subject",
+			 "password_reset_email_template_base_name",
+			 "new_user_created_bcc",
+			 "new_user_created_by_admin_email_subject",
+			 "new_user_created_by_admin_email_template_base_name",
+			 "new_user_created_email_subject",
+			 "new_user_created_email_template_base_name"]
+
+	return {original: original.upper() for original in attrs}
+
 def default_site_policy_factory(policy_factory=None,
 								brand=None,
 								display_name=None,
 								com_username=None,
 								com_alias=None,
 								com_realname=None,
-								default_email_sender=None,
-								default_bulk_email_sender=None):
+								**kwargs):
 	"""
 	A factory that creates and initalizes a site policy. If no factory is provided a
 	AdultCommunitySitePolicyEventListener or a
@@ -998,11 +1017,10 @@ def default_site_policy_factory(policy_factory=None,
 		policy.COM_ALIAS = com_alias
 		policy.COM_REALNAME = com_realname
 
-	if default_email_sender:
-		policy.DEFAULT_EMAIL_SENDER = default_email_sender
-
-	if default_bulk_email_sender:
-		policy.DEFAULT_BULK_EMAIL_SENDER = default_bulk_email_sender
+	attr_mapping = _site_policy_mapping()
+	for key, value in kwargs.items():
+		if key in attr_mapping and value:
+			setattr(policy, attr_mapping.get(key), value)
 
 	return policy
 
