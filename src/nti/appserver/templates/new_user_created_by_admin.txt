@@ -21,4 +21,4 @@ ${site_name}
 
 If you feel this email was sent in error, you may email us at ${support_email}.
 
-${site_name} is powered by NextThought
+${site_name} is powered by https://nextthought.com
