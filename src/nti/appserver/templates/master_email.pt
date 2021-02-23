@@ -256,7 +256,7 @@
 				</span>
 				<br/>
 				<span i18n:translate="" tal:condition="python: options.get('nti_site_brand_name') and options['nti_site_brand_name']!='NextThought'">
-					<omitted tal:replace="options/nti_site_brand_name"/> is powered by NextThought
+				    <omitted tal:replace="options/nti_site_brand_name"/> is powered by <a href="https://nextthought.com" style="text-decoration:underline;color: #494949;">NextThought</a>
 				</span>
 			</div>
 		</div>
