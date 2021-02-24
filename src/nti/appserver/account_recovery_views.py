@@ -13,6 +13,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 import uuid
 import datetime
 from collections import namedtuple
@@ -228,6 +229,7 @@ class UserAccountRecoveryUtility(object):
         success_redirect_value = urllib_parse.urlunparse(parsed_redirect)
         return success_redirect_value
 
+
 # We store a tuple as an annotation of the user object for
 # password reset, and this is the key
 # (token, datetime, ???)
@@ -285,7 +287,7 @@ def forgot_passcode_view(request):
                                            component.getUtility(IDataserver),
                                            username=username)
 
-    policy = component.getUtility(ISitePolicyUserEventListener)
+    policy = _site_policy()
     base_template = getattr(policy,
                             'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
                             'password_reset_email')
@@ -311,7 +313,7 @@ def forgot_passcode_view(request):
                     username, email_assoc_with_account, matching_users)
         matching_user = None
         reset_url = None
-        base_template = 'failed_' + base_template
+        base_template = failed_pass_recovery_spec(base_template)
         text_ext = ".txt"
 
     subject = compute_reset_subject(policy, request)
@@ -342,6 +344,21 @@ def forgot_passcode_view(request):
                                  text_template_extension=text_ext)
 
     return hexc.HTTPNoContent()
+
+
+def _site_policy():
+    return component.getUtility(ISitePolicyUserEventListener)
+
+
+def failed_pass_recovery_spec(base_template):
+    path, template_name = os.path.split(base_template)
+
+    if path:
+        base_template = os.path.join(path, 'failed_' + template_name)
+    else:
+        base_template = 'failed_' + base_template
+
+    return base_template
 
 
 def compute_reset_subject(policy, request):
