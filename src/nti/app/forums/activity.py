@@ -36,10 +36,14 @@ def store_created_object_in_global_activity(comment, unused_event):
 
 
 def unstore_created_object_from_global_activity(comment, unused_event):
-    storage = IUserActivityStorage(comment.creator, None)
-    # Put these in default storage
-    if storage is not None:
-        storage.deleteEqualContainedObjectFromContainer(comment, '')
+    try:
+        storage = IUserActivityStorage(comment.creator, None)
+    except AttributeError:
+        pass
+    else:
+        # Put these in default storage
+        if storage is not None:
+            storage.deleteEqualContainedObjectFromContainer(comment, '')
 
 
 @interface.implementer(IUserActivityProvider)
