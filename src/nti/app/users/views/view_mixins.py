@@ -21,6 +21,8 @@ from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.catalog.catalog import ResultSet
+
 from zope.event import notify
 
 from zope.intid.interfaces import IIntIds
@@ -101,8 +103,8 @@ from nti.externalization import update_from_external_object
 
 from nti.externalization.externalization import to_external_object
 
-from nti.externalization.interfaces import LocatedExternalDict,\
-    LocatedExternalList
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
@@ -678,8 +680,18 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
     def get_entity_intids(self, site=None):
         raise NotImplementedError
 
-    def get_sorted_entity_intids(self, site=None):
-        doc_ids = self.get_entity_intids(site)
+    def filter_intids(self, entity_ids):
+        # TODO: We could also have a mimetype filter here
+        result = entity_ids
+        if self.onlyDeactivatedUsers:
+            result = self.entity_catalog.family.IF.intersection(entity_ids,
+                                                                self.deactivated_intids)
+        elif self.onlyActivatedUsers:
+            result = self.entity_catalog.family.IF.difference(entity_ids,
+                                                              self.deactivated_intids)
+        return result
+
+    def get_sorted_entity_intids(self, doc_ids):
         # pylint: disable=unsupported-membership-test,no-member
         if self.sortOn and self.sortOn in self.sortMap:
             catalog = self.sortMap.get(self.sortOn)
@@ -729,6 +741,9 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
     def search_include(self, doc_id):
         result = True
         if self.searchTerm:
+            # TODO should we have these in TextIndexes?
+            # If so, we could avoid iterating over the potentially large
+            # set of entity intids.
             op = self.search_prefix_match
             alias = self.alias(doc_id)
             realname = self.realname(doc_id)
@@ -736,35 +751,28 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
             result = op(username, self.searchTerm) \
                   or op(realname, self.searchTerm) \
                   or op(alias, self.searchTerm)
-        if result and self.onlyDeactivatedUsers:
-            result = doc_id in self.deactivated_intids
-        elif result and self.onlyActivatedUsers:
-            result = doc_id not in self.deactivated_intids
         return result
 
-    def resolve_entity_ids(self, site=None):
-        result = []
-        for doc_id in self.get_sorted_entity_intids(site):
-            if self.search_include(doc_id):
-                result.append(doc_id)
-        return result
+    def _batch_selector(self, entity):
+        if self.reify_predicate(entity):
+            return entity
+        return None
 
     def reify_predicate(self, obj):
+        """
+        Subclasses can override this.
+        """
         return obj is not None
-
-    def reify(self, doc_ids):
-        intids = component.getUtility(IIntIds)
-        for doc_id in doc_ids or ():
-            obj = intids.queryObject(doc_id)
-            if self.reify_predicate(obj):
-                yield obj
 
     def _do_call(self, site=None):
         result = LocatedExternalDict()
-        items = self.resolve_entity_ids(site)
-        self._batch_items_iterable(result, items)
-        # reify only the required items
-        result[ITEMS] = self.reify(result[ITEMS])
+        entity_intids = self.get_entity_intids(site)
+        filtered_intids = self.filter_intids(entity_intids)
+        sorted_entity_ids = self.get_sorted_entity_intids(filtered_intids)
+        sorted_entity_ids = (x for x in sorted_entity_ids if self.search_include(x))
+        intids = component.getUtility(IIntIds)
+        rs = ResultSet(sorted_entity_ids, intids)
+        self._batch_items_iterable(result, rs, selector=self._batch_selector)
         # re/sort for numeric values
         if self.sortOn in self._NUMERIC_SORTING:
             # If we are sorting by time, we are indexed normalized to a minute.
@@ -777,6 +785,13 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         result[ITEMS] = [
             self.transformer(x) for x in result[ITEMS]
         ]
-        result[TOTAL] = result['TotalItemCount'] = len(items)
+        # XXX: Since we are using a generator above if we have a search param
+        # we will not know the true count of possible search hits. This may
+        # affect client side paging.
+        try:
+            result[TOTAL] = result['TotalItemCount'] = len(filtered_intids)
+        except TypeError:
+            # We may have a generator here
+            pass
         result[ITEM_COUNT] = len(result[ITEMS])
         return result
