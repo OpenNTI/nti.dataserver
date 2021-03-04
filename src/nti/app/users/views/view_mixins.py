@@ -767,6 +767,8 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
     def _do_call(self, site=None):
         result = LocatedExternalDict()
         entity_intids = self.get_entity_intids(site)
+        # We may have a generator here, we must resolve it before filtering
+        entity_intids = self.entity_catalog.family.IF.Set(entity_intids)
         filtered_intids = self.filter_intids(entity_intids)
         sorted_entity_ids = self.get_sorted_entity_intids(filtered_intids)
         sorted_entity_ids = (x for x in sorted_entity_ids if self.search_include(x))
@@ -788,10 +790,12 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         # XXX: Since we are using a generator above if we have a search param
         # we will not know the true count of possible search hits. This may
         # affect client side paging.
-        try:
+        item_count = len(result[ITEMS])
+        batch_size, batch_start = self._get_batch_size_start()
+        if item_count < batch_size:
+            # We at least do not want to return pages if we do not have any
+            result[TOTAL] = result['TotalItemCount'] = item_count + batch_start
+        else:
             result[TOTAL] = result['TotalItemCount'] = len(filtered_intids)
-        except TypeError:
-            # We may have a generator here
-            pass
         result[ITEM_COUNT] = len(result[ITEMS])
         return result
