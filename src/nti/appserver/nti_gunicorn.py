@@ -24,6 +24,8 @@ from __future__ import absolute_import
 import logging
 logger = logging.getLogger(__name__)
 
+from datetime import datetime
+
 import os
 
 from pyramid.threadlocal import get_current_request
@@ -71,6 +73,12 @@ class GunicornLogger(gunicorn_logger):
         current_site = environ.get('nti.current_site', '-')
         atoms['S'] = current_site
         return atoms
+
+    def now(self):
+        _now = datetime.now()
+        t = _now.strftime("%Y-%m-%d %H:%M:%S")
+        s = "[%s,%d]" % (t, _now.microsecond/1000)
+        return s
 
 
 class GunicornStatsLogger(GunicornLogger, Statsd):
