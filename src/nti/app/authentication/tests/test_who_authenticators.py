@@ -121,11 +121,15 @@ class TestJWTAuthenticator(unittest.TestCase):
             jwt_token = encode(payload, secret)
             return {'HTTP_AUTHORIZATION': 'Bearer %s' % jwt_token}
 
-        def do_auth(payload, jwt_auth=jwt_auth):
+        def do_auth(payload, jwt_auth=jwt_auth, expect_valid=True):
             env = get_environ(payload)
             identity = jwt_auth.identify(env)
-            assert_that(identity, not_none())
-            return jwt_auth.authenticate(env, identity)
+            if expect_valid:
+                assert_that(identity, not_none())
+                return jwt_auth.authenticate(env, identity)
+            else:
+                assert_that(identity, none())
+                return identity
 
         def is_admin(user):
             dataserver = component.getUtility(IDataserver)
@@ -140,12 +144,16 @@ class TestJWTAuthenticator(unittest.TestCase):
         environ = get_environ({}, 'bad_secret')
         assert_that(jwt_auth.identify(environ), none())
 
+        # We require the token's audience match our current site
+        # Our current site is the root site dataserver2
+        audience = 'dataserver2'
+        
         # No user
-        payload = {'login': 'no_user'}
+        payload = {'login': 'no_user', 'aud': audience}
         assert_that(do_auth(payload), none())
 
         # Create
-        payload = {'login': 'jwt_user', 'create': "true"}
+        payload = {'login': 'jwt_user', 'create': "true", 'aud': audience}
         assert_that(do_auth(payload), is_('jwt_user'))
 
         user = User.get_user('jwt_user')
@@ -158,7 +166,8 @@ class TestJWTAuthenticator(unittest.TestCase):
                    'realname': 'jwt admin',
                    'email': 'jwtadmin@nextthought.com',
                    'admin': 'true',
-                   'create': "true"}
+                   'create': "true",
+                   'aud': audience}
         assert_that(do_auth(payload), is_('jwt_user_admin@nextthought.com'))
 
         user = User.get_user('jwt_user_admin@nextthought.com')
@@ -166,6 +175,15 @@ class TestJWTAuthenticator(unittest.TestCase):
         assert_that(is_admin(user), is_(True))
         assert_that(IUserProfile(user).email, is_('jwtadmin@nextthought.com'))
         assert_that(IUserProfile(user).realname, is_('jwt admin'))
+
+        # For bwc we allow no audience, although this should be removed
+        # in a subsequent deployment
+        del payload['aud']
+        assert_that(do_auth(payload), is_('jwt_user_admin@nextthought.com'))
+
+        # But if there is an audience we reject if it doesn't match.
+        payload['aud'] = 'different site'
+        assert_that(do_auth(payload, expect_valid=False), none())
 
         # Issuer
         jwt_auth = DataserverJWTAuthenticator(secret='jwt_secret',
@@ -175,7 +193,8 @@ class TestJWTAuthenticator(unittest.TestCase):
                    'email': 'jwtadmin@nextthought.com',
                    'admin': 'true',
                    'create': "true",
-                   'iss': "bad_issuer"}
+                   'iss': "bad_issuer",
+                   'aud': audience}
         env = get_environ(payload)
         assert_that(jwt_auth.identify(env), none())
         payload['iss'] = 'nti_issuer'
