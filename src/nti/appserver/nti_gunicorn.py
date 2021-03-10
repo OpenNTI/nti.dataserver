@@ -24,6 +24,8 @@ from __future__ import absolute_import
 import logging
 logger = logging.getLogger(__name__)
 
+from datetime import datetime
+
 import os
 
 from pyramid.threadlocal import get_current_request
@@ -71,6 +73,22 @@ class GunicornLogger(gunicorn_logger):
         current_site = environ.get('nti.current_site', '-')
         atoms['S'] = current_site
         return atoms
+
+    def now(self):
+        """
+        Used when generating timestamps for the access log. Our
+        superclass uses the standard Apache access log format but that
+        doesn't include any partial seconds. The difference in
+        precision on these access logs and the other log handlers
+        creates issues when ordering and collating logs with tools
+        like splunk.
+
+        Force the times in gunicorns access logs to be a iso format
+        using space seperator (which is easier when scanning).
+        """
+        _now = datetime.now()
+        s = "[%s]" % _now.isoformat(sep=" ")
+        return s
 
 
 class GunicornStatsLogger(GunicornLogger, Statsd):
