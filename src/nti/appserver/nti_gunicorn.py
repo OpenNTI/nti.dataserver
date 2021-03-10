@@ -75,9 +75,19 @@ class GunicornLogger(gunicorn_logger):
         return atoms
 
     def now(self):
+        """
+        Used when generating timestamps for the access log. Our
+        superclass uses the standard Apache access log format but that
+        doesn't include any partial seconds. The difference in
+        precision on these access logs and the other log handlers
+        creates issues when ordering and collating logs with tools
+        like splunk.
+
+        Force the times in gunicorns access logs to be a iso format
+        using space seperator (which is easier when scanning).
+        """
         _now = datetime.now()
-        t = _now.strftime("%Y-%m-%d %H:%M:%S")
-        s = "[%s,%d]" % (t, _now.microsecond/1000)
+        s = "[%s]" % _now.isoformat(sep=" ")
         return s
 
 
