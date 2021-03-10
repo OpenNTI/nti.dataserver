@@ -36,6 +36,8 @@ from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users import User
 
+from nti.site.site import getSite
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -124,6 +126,9 @@ class DataserverJWTAuthenticator(object):
             result = self._get_param_token(environ)
         return result
 
+    def current_site_name(self):
+        return getSite().__name__
+
     def identify(self, environ):
         jwt_token = self._get_jwt_token(environ)
         if not jwt_token:
@@ -132,8 +137,11 @@ class DataserverJWTAuthenticator(object):
             # This will validate the payload, including the
             # expiration date. We could also whitelist the issuer here.
             auth = decode(jwt_token, self.secret,
-                          issuer=self.issuer, algorithms=JWT_ALGS)
-        except InvalidTokenError:
+                          audience=self.current_site_name(),
+                          issuer=self.issuer,
+                          algorithms=JWT_ALGS)
+        except InvalidTokenError as e:
+            logger.debug('Invalid jwt token provided. %s', e)
             result = None
         else:
             result = auth
