@@ -9,6 +9,11 @@ from hamcrest import contains
 from hamcrest import has_property as has_attr
 from hamcrest import has_entries
 
+try:
+	import cPickle as pickle
+except ImportError:
+	import pickle
+
 from nti.testing.matchers import provides
 from nti.externalization.tests import externalizes
 
@@ -49,6 +54,18 @@ from nti.dataserver.contenttypes.note import Note
 
 
 class TestAuthorization(DataserverLayerTest):
+
+	def _test_pickled_state(self, prin):
+		# A volatile attribute will not get stored
+		prin._v_attribute = 'cached_value'
+		obj = pickle.loads(pickle.dumps(prin))
+		assert_that(hasattr(obj, "_v_attribute"), is_(False))
+
+		# A volatile value in our state will be ignored
+		bad_state = dict(obj.__dict__)
+		bad_state['_v_attribute'] = 'cached_value'
+		obj.__setstate__(bad_state)
+		assert_that(hasattr(obj, "_v_attribute"), is_(False))
 
 	def test_everyone_adapts(self):
 		iprin = nti_interfaces.IPrincipal('system.Everyone')
@@ -91,6 +108,7 @@ class TestAuthorization(DataserverLayerTest):
 		iprin = nti_interfaces.IPrincipal( 'foo@bar' )
 		assert_that( iprin, provides( nti_interfaces.IPrincipal ) )
 		verifyObject( nti_interfaces.IPrincipal, iprin )
+		self._test_pickled_state(iprin)
 
 		#empty-string
 		x = object()
@@ -126,6 +144,7 @@ class TestAuthorization(DataserverLayerTest):
 	def test_user_adapts_to_principal( self ):
 		u = users.User( 'sjohnson@nextthought.com', 't' )
 		iprin = nti_interfaces.IPrincipal( u )
+		self._test_pickled_state(iprin)
 
 		assert_that( iprin, verifiably_provides( nti_interfaces.IPrincipal ) )
 
