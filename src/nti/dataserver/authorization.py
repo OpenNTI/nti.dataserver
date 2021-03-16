@@ -325,18 +325,16 @@ class _AbstractPrincipal(object):
     def __setstate__(self, state):
         """ See IPersistent.
         """
-        idict = getattr(self, '__dict__', None)
-        if state is not None:
-            assert state is not None
-            idict = self.__dict__
-            idict.clear()
-            for k, v in state.items():
-                # May have persisted these
-                if k.startswith('_v_'):
-                    continue
-                # Normally the keys for instance attributes are interned.
-                # Do that here, but only if it is possible to do so.
-                idict[intern(k) if type(k) is str else k] = v
+        assert state is not None
+        idict = self.__dict__
+        idict.clear()
+        for k, v in state.items():
+            # May have persisted these
+            if k.startswith('_v_'):
+                continue
+            # Normally the keys for instance attributes are interned.
+            # Do that here, but only if it is possible to do so.
+            idict[intern(k) if type(k) is str else k] = v
 
 
 @component.adapter(basestring)
