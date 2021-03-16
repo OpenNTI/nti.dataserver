@@ -307,6 +307,41 @@ class _AbstractPrincipal(object):
         return "%s('%s')" % (self.__class__.__name__,
                              text_(self.id).encode('unicode_escape'))
 
+    def __getstate(self):
+        return {k:v for k,v in self.__dict__.items()
+                if not k.startswith('_v_')}
+
+    def __reduce__(self):
+        # Mimic what a persistent.Persistent object does and elide
+        # _v_ attributes so that they don't get saved in ZODB.
+        # This allows us to store things that cannot be pickled in such
+        # attributes.
+        reduction = super(_AbstractPrincipal, self).__reduce__()
+        # (callable, args, state, listiter, dictiter)
+        # We assume the state is always a dict; the last three items
+        # are technically optional and can be missing or None.
+        filtered_state = {k: v for k, v in reduction[2].items()
+                          if not k.startswith('_v_')}
+        reduction = list(reduction)
+        reduction[2] = filtered_state
+        return tuple(reduction)
+
+    def __setstate__(self, state):
+        """ See IPersistent.
+        """
+        idict = getattr(self, '__dict__', None)
+        if state is not None:
+            if idict is None:
+                raise TypeError('No instance dict')
+            idict.clear()
+            for k, v in state.items():
+                # May have persisted these
+                if k.startswith('_v_'):
+                    continue
+                # Normally the keys for instance attributes are interned.
+                # Do that here, but only if it is possible to do so.
+                idict[intern(k) if type(k) is str else k] = v
+
 
 @component.adapter(basestring)
 @interface.implementer(IPrincipal)
