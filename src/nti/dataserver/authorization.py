@@ -307,10 +307,6 @@ class _AbstractPrincipal(object):
         return "%s('%s')" % (self.__class__.__name__,
                              text_(self.id).encode('unicode_escape'))
 
-    def __getstate(self):
-        return {k:v for k,v in self.__dict__.items()
-                if not k.startswith('_v_')}
-
     def __reduce__(self):
         # Mimic what a persistent.Persistent object does and elide
         # _v_ attributes so that they don't get saved in ZODB.
@@ -331,8 +327,8 @@ class _AbstractPrincipal(object):
         """
         idict = getattr(self, '__dict__', None)
         if state is not None:
-            if idict is None:
-                raise TypeError('No instance dict')
+            assert state is not None
+            idict = self.__dict__
             idict.clear()
             for k, v in state.items():
                 # May have persisted these
