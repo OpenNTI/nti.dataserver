@@ -84,7 +84,6 @@ def user_can_login(user, check_sites=True):
     """
     user = _get_user(user)
     whitelist = component.getUtility(ILogonWhitelist)
-    from IPython.terminal.debugger import set_trace; set_trace()
     result = user is not None \
          and user.username in whitelist \
          and not IDeactivatedUser.providedBy(user)
