@@ -103,9 +103,6 @@
 	<include package="nti.app.pushnotifications" file="pyramid.zcml" />
 	<include package="nti.app.vocabularyregistry" file="pyramid.zcml" />
 
-	<!-- Localization -->
-	<include package="nti.app.i18n" file="pyramid.zcml" />
-
 	<!-- Plugin packages -->
 	<include package="z3c.autoinclude" file="meta.zcml" />
 	<includePlugins package="nti.appserver.application.PP_APP" file="pyramid.zcml" />

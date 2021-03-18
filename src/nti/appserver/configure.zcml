@@ -84,8 +84,6 @@
 	<!-- Country resources -->
 	<include package="nti.i18n" />
 
-	<!-- Misc -->
-	<include package="nti.app.i18n" />
 
 	<!-- __________________ -->
 
