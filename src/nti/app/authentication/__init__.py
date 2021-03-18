@@ -73,8 +73,15 @@ def user_can_login_in_site(user):
 
 def _get_user(user):
     try:
-        return user if IUser.providedBy(user) else User.get_user(str(user))
-    except UnicodeEncodeError:
+        if IUser.providedBy(user):
+            return user
+
+        username = user.decode("utf-8") if isinstance(user, bytes) else user
+
+        return User.get_user(username)
+    except UnicodeError:
+        logger.warn("Unable to decode username for login check: %s",
+                    user, exc_info=True)
         return None
 
 

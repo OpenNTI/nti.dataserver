@@ -24,6 +24,15 @@ class TestUserCanLogin(AuthenticationLayerTest):
         assert_that(user_can_login(u"Händel"), is_(False))
 
     @WithMockDSTrans
+    def test_non_ascii_bytes(self):
+        assert_that(user_can_login(u"Händel".encode("utf-8")), is_(False))
+
+    @WithMockDSTrans
+    def test_success_bytes(self):
+        user = User.create_user(username=u"bugs.bunny")
+        assert_that(user_can_login(user.username.encode("utf-8")), is_(True))
+
+    @WithMockDSTrans
     def test_success(self):
         user = User.create_user(username=u"bugs.bunny")
         # previously raised exceptions
