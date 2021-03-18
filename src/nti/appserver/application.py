@@ -55,6 +55,8 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.app.pyramid_zope.traversal import ZopeResourceTreeTraverser
 
+from nti.app.zmi.pyramid import configure_zmi_views
+
 from nti.appserver.utils.chameleon import setupChameleonCache
 
 from nti.appserver.view_predicates import ContextMatchesRemoteUserPredicate
@@ -728,6 +730,10 @@ def createApplication( http_port,
 	_enclosure_views(pyramid_config)
 
 	_patching_restore_views(pyramid_config)
+
+	if xml_conf_machine.hasFeature('zmi'):
+		configure_zmi_views(pyramid_config)
+	
 
 	# Now load the registered pyramid slugs from buildout
 	# XXX: HACK: The easiest way to do this, without

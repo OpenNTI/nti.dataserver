@@ -420,6 +420,8 @@
 	<include package="nti.app.authentication" />
 	<include package="nti.app.pushnotifications" />
 	<include package="nti.app.vocabularyregistry" />
+	
+	<include package="nti.app.zmi" zcml:condition="have zmi" />
 
 	<!-- Plugin packages -->
 	<include package="z3c.autoinclude" file="meta.zcml" />
