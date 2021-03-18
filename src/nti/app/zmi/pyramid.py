@@ -101,7 +101,7 @@ class ZopeViewCaller(object):
     def __init__(self, zview):
         self.view = zview
 
-    def __call__(context, request):
+    def __call__(self, context, request):
         """
         TODO much of this was reversed engineered through trial and error
         over the course of several hours before I found and understood how
