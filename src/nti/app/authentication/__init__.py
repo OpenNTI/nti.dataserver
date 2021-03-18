@@ -71,12 +71,25 @@ def user_can_login_in_site(user):
     return result
 
 
+def _get_user(user):
+    try:
+        if IUser.providedBy(user):
+            return user
+
+        username = user.decode("utf-8") if isinstance(user, bytes) else user
+
+        return User.get_user(username)
+    except UnicodeError:
+        logger.warn("Unable to decode username for login check: %s",
+                    user, exc_info=True)
+        return None
+
+
 def user_can_login(user, check_sites=True):
     """
     Check if the given user (or username) is allowed to login.
     """
-    if not IUser.providedBy(user):
-        user = User.get_user(str(user))
+    user = _get_user(user)
     whitelist = component.getUtility(ILogonWhitelist)
     result = user is not None \
          and user.username in whitelist \
