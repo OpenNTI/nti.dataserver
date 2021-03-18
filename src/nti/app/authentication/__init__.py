@@ -71,13 +71,20 @@ def user_can_login_in_site(user):
     return result
 
 
+def _get_user(user):
+    try:
+        return user if IUser.providedBy(user) else User.get_user(str(user))
+    except UnicodeEncodeError:
+        return None
+
+
 def user_can_login(user, check_sites=True):
     """
     Check if the given user (or username) is allowed to login.
     """
-    if not IUser.providedBy(user):
-        user = User.get_user(str(user))
+    user = _get_user(user)
     whitelist = component.getUtility(ILogonWhitelist)
+    from IPython.terminal.debugger import set_trace; set_trace()
     result = user is not None \
          and user.username in whitelist \
          and not IDeactivatedUser.providedBy(user)
