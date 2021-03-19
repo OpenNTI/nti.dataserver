@@ -87,7 +87,7 @@ def configure_zmi_views(pyramid_config):
         # security check. More to come and investigate here...
         pyramid_config.add_view(view.factory,
                                 name=view.name,
-                                # The first thing we adapt form is our pyramid context
+                                # The first thing we adapt from is our pyramid context
                                 for_=view.required[0],
                                 # TODO Given our custom mapper I'm not sure route is required here?
                                 route_name='objects.generic.traversal',
