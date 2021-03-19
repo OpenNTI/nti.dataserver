@@ -61,7 +61,7 @@ def configure_zmi_views(pyramid_config):
     # least do some filtering based on the adapter we find???
 
     # TODO surely there is a better way to accomplish this
-    sm = component.getSiteManager()
+    sm = component.getGlobalSiteManager()
     toregister = [ v for v in sm.registeredAdapters() if len(v.required) == 2 \
                    and all([x.isOrExtends(y) for x,y \
                             in zip(v.required, [interface.Interface, IDefaultBrowserLayer])])]
