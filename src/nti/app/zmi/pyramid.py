@@ -32,6 +32,9 @@ from zope.publisher.publish import mapply
 
 from zope.publisher.skinnable import setDefaultSkin
 
+from zope.security.adapter import LocatingTrustedAdapterFactory
+from zope.security.adapter import LocatingUntrustedAdapterFactory
+
 from zope.security.checker import canAccess
 
 from nti.base._compat import text_
@@ -57,14 +60,30 @@ def configure_zmi_views(pyramid_config):
     # These are multiadapters from (Interface, IDefaultBrowserLayer) to things
     # that we can ultimately invoke via ``zope.publisher.publish.mapply``.
     # TODO right now we look for any adapters for things that isOrExtend Interface
-    # and IDefaultBrowerLayer. We don't filter any further. Seems like we should at
-    # least do some filtering based on the adapter we find???
+    # and IDefaultBrowerLayer.
 
-    # TODO surely there is a better way to accomplish this
     sm = component.getGlobalSiteManager()
-    toregister = [ v for v in sm.registeredAdapters() if len(v.required) == 2 \
-                   and all([x.isOrExtends(y) for x,y \
-                            in zip(v.required, [interface.Interface, IDefaultBrowserLayer])])]
+
+    def _factory_predicate(factory):
+        """
+        Checking the type of the factory like that should limit this
+        to views that require a permission that isn't public. That may
+        be what we want here.
+        """
+        # TODO that doesn't actually seem to work. We find nothing to register based on this condition.
+        # return type(factory) in (LocatingTrustedAdapterFactory, LocatingUntrustedAdapterFactory)
+        return True
+
+    toregister = [
+        v for v in sm.registeredAdapters()
+        if len(v.required) == 2
+        and _factory_predicate(v.factory)
+        and all(
+            x.isOrExtends(y)
+            for x, y
+            in zip(v.required, [interface.Interface, IDefaultBrowserLayer])
+        )
+    ]
 
     # Now we have a set of zope "views". We need to register them as pyramid views
     logger.info('Will bridge %i zope views to pyramid', len(toregister))
