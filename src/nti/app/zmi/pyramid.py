@@ -9,12 +9,14 @@ TODO This is currently a WIP and not ready for any sort of production
 deployment. If this is the approach we end up going (as oppossed to a
 higher level integration at the wsgi layer) perhaps it makes sense to
 shore up and move to nti.app.pyramid_zope. We are nowhere near that currently.
-
-.. $Id$
 """
 
-#from pyramid.interfaces import IViewMapper
-#from pyramid.interfaces import IViewMapperFactory
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+
+from pyramid.interfaces import IViewMapper
+from pyramid.interfaces import IViewMapperFactory
 
 from zope import component
 from zope import interface
@@ -182,10 +184,10 @@ class ZopeViewCaller(object):
                 request.response.text = text_(result)
         return request.response
 
-#@interface.implementer(IViewMapper)
+@interface.implementer(IViewMapper)
 def _vm(view):
     return ZopeViewCaller(view)
 
-#@interface.implementer(IViewMapperFactory)
+@interface.implementer(IViewMapperFactory)
 def _vmfactory(**kwargs):
     return _vm
