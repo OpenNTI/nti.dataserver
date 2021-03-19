@@ -55,7 +55,7 @@ def configure_zmi_views(pyramid_config):
 
     # Rip through the component registry looking for zope "views".
     # These are multiadapters from (Interface, IDefaultBrowserLayer) to things
-    # that we can ultimately invoke via zope.publisher.publish.mappy.
+    # that we can ultimately invoke via ``zope.publisher.publish.mapply``.
     # TODO right now we look for any adapters for things that isOrExtend Interface
     # and IDefaultBrowerLayer. We don't filter any further. Seems like we should at
     # least do some filtering based on the adapter we find???
