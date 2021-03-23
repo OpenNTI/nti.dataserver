@@ -13,7 +13,7 @@
 
 	<utility
 		component=".sites.BASEADULT"
-		provides="zope.component.interfaces.IComponents"
+		provides="zope.interface.interfaces.IComponents"
 		name="genericadultbase" />
 
 </configure>

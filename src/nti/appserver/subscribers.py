@@ -22,7 +22,7 @@ logger = __import__('logging').getLogger(__name__)
 @component.adapter(INewRequest)
 def requestEventNotify(event):
     """
-    Just like :class:`zope.component.interfaces.IObjectEvent`,
+    Just like :class:`zope.interface.interfaces.IObjectEvent`,
     an :class:`.INewRequest` event wraps an object
     that may be of different types. This subscribers
     does double-dispatch.

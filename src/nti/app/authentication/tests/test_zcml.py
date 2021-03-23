@@ -37,12 +37,12 @@ WHITE_LIST_ZCML_STRING = u"""
     <include package="zope.annotation" />
     <include package="z3c.baseregistry" file="meta.zcml" />
     <include package="." file="meta.zcml" />
-    
+
     <utility
         component="nti.appserver.policies.sites.BASECOPPA"
-        provides="zope.component.interfaces.IComponents"
+        provides="zope.interface.interfaces.IComponents"
         name="mathcounts.nextthought.com" />
-    
+
     <registerIn registry="nti.appserver.policies.sites.BASECOPPA">
         <logon:whitelist
             entities="a b c" />
@@ -60,12 +60,12 @@ SITE_LIST_ZCML_STRING = u"""
     <include package="zope.annotation" />
     <include package="z3c.baseregistry" file="meta.zcml" />
     <include package="." file="meta.zcml" />
-    
+
     <utility
         component="nti.appserver.policies.sites.BASECOPPA"
-        provides="zope.component.interfaces.IComponents"
+        provides="zope.interface.interfaces.IComponents"
         name="mathcounts.nextthought.com" />
-    
+
     <registerIn registry="nti.appserver.policies.sites.BASECOPPA">
         <logon:sitelist
             sites="mathcounts.nextthought.com
@@ -86,7 +86,7 @@ class TestZcml(nti.testing.base.ConfiguringTestBase):
             assert_that(whitelist, has_item('b'))
             assert_that(whitelist, has_item('c'))
             assert_that(whitelist, does_not(has_item('d')))
-            
+
     def test_site_list_registrations(self):
         self.configure_string(SITE_LIST_ZCML_STRING)
         assert_that(MATHCOUNTS.__bases__, is_((component.globalSiteManager,)))

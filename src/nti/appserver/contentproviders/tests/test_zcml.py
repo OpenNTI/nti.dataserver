@@ -35,12 +35,12 @@ ZCML_STRING = u"""
 	<include package="zope.annotation" />
 	<include package="z3c.baseregistry" file="meta.zcml" />
 	<include package="." file="meta.zcml" />
-	
+
 	<utility
 		component="nti.appserver.policies.sites.BASECOPPA"
-		provides="zope.component.interfaces.IComponents"
+		provides="zope.interface.interfaces.IComponents"
 		name="mathcounts.nextthought.com" />
-	
+
 	<cp:pyramidTemplate
 		name='foo.bar'
 		for='* * *'

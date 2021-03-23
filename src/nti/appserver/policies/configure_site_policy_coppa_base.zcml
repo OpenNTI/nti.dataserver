@@ -9,7 +9,7 @@
 
 	<utility
 		component=".sites.BASECOPPA"
-		provides="zope.component.interfaces.IComponents"
+		provides="zope.interface.interfaces.IComponents"
 		name="genericcoppabase" />
 
 	<registerIn registry=".sites.BASECOPPA">

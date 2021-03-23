@@ -50,12 +50,12 @@ ZCML_STRING = u"""
     <include package="zope.annotation" />
     <include package="z3c.baseregistry" file="meta.zcml" />
     <include package="." file="meta.zcml" />
-    
+
     <utility
         component="nti.appserver.policies.sites.BASECOPPA"
-        provides="zope.component.interfaces.IComponents"
+        provides="zope.interface.interfaces.IComponents"
         name="mathcounts.nextthought.com" />
-    
+
     <registerIn registry="nti.appserver.policies.sites.BASECOPPA">
         <link:userLink
             name='foo.bar'
@@ -68,12 +68,12 @@ ZCML_STRING = u"""
             mimeType='text/html'
             for='nti.appserver.link_providers.tests.test_zcml.IMarker' />
     </registerIn>
-    
+
     <utility
         component="nti.appserver.link_providers.tests.test_zcml._MYSITE"
-        provides="zope.component.interfaces.IComponents"
+        provides="zope.interface.interfaces.IComponents"
         name="mytest.nextthought.com" />
-    
+
     <registerIn registry="nti.appserver.link_providers.tests.test_zcml._MYSITE">
         <link:userLink
             named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
@@ -86,8 +86,8 @@ ZCML_STRING = u"""
 """
 
 from z3c.baseregistry.baseregistry import BaseComponents
-_MYSITE = BaseComponents(MATHCOUNTS, 
-                         name='test.components', 
+_MYSITE = BaseComponents(MATHCOUNTS,
+                         name='test.components',
                          bases=(MATHCOUNTS,))
 
 

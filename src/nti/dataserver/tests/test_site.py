@@ -31,7 +31,7 @@ from zope.component.hooks import getSite
 from zope.component.hooks import site as current_site
 
 from zope.component.interfaces import ISite
-from zope.component.interfaces import IComponents
+from zope.interface.interfaces import IComponents
 
 from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
@@ -94,42 +94,42 @@ ZCML_STRING = """
 
         <utility
             component="nti.dataserver.tests.test_site._MYSITE"
-            provides="zope.component.interfaces.IComponents"
+            provides="zope.interface.interfaces.IComponents"
             name="test.components" />
 
         <utility
             component="nti.dataserver.tests.test_site._MYSITE2"
-            provides="zope.component.interfaces.IComponents"
+            provides="zope.interface.interfaces.IComponents"
             name="test.components2" />
 
         <utility
             component="nti.appserver.policies.sites.BASECOPPA"
-            provides="zope.component.interfaces.IComponents"
+            provides="zope.interface.interfaces.IComponents"
             name="genericcoppabase" />
 
         <utility
             component="nti.appserver.policies.sites.BASEADULT"
-            provides="zope.component.interfaces.IComponents"
+            provides="zope.interface.interfaces.IComponents"
             name="genericadultbase" />
 
         <utility
             component="nti.dataserver.tests.test_site.EVAL"
-            provides="zope.component.interfaces.IComponents"
+            provides="zope.interface.interfaces.IComponents"
             name="eval.nextthoughttest.com" />
 
         <utility
             component="nti.dataserver.tests.test_site.EVALALPHA"
-            provides="zope.component.interfaces.IComponents"
+            provides="zope.interface.interfaces.IComponents"
             name="eval-alpha.nextthoughttest.com" />
 
         <utility
             component="nti.dataserver.tests.test_site.DEMO"
-            provides="zope.component.interfaces.IComponents"
+            provides="zope.interface.interfaces.IComponents"
             name="demo.nextthoughttest.com" />
 
         <utility
             component="nti.dataserver.tests.test_site.DEMOALPHA"
-            provides="zope.component.interfaces.IComponents"
+            provides="zope.interface.interfaces.IComponents"
             name="demo-alpha.nextthoughttest.com" />
 
         <registerIn registry="nti.appserver.policies.sites.BASECOPPA">
