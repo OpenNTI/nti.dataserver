@@ -17,6 +17,7 @@ from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
 
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
+from nti.appserver.interfaces import IUnauthenticatedUserLinkProvider
 
 
 class IDeletableLinkProvider(IAuthenticatedUserLinkProvider):

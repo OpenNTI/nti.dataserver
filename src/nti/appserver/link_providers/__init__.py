@@ -15,6 +15,10 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 from zope import component
 
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
+from nti.appserver.interfaces import IUnauthenticatedUserLinkProvider
+
+from nti.dataserver.interfaces import IMissingUser
+from nti.dataserver.interfaces import IUser
 
 
 def safe_links(provider):
@@ -24,10 +28,9 @@ def safe_links(provider):
         return ()
 
 
-def find_providers_and_links(user, request, keeporder=True):
+def _find_providers_and_links(for_, iface, keeporder=True):
     providers = []
-    subscribers = component.subscribers((user, request),
-                                        IAuthenticatedUserLinkProvider)
+    subscribers = component.subscribers(for_, iface)
     for order, provider in enumerate(subscribers):
         rels = set()
         rels.update(getattr(provider, 'rels', ()))
@@ -57,6 +60,16 @@ def find_providers_and_links(user, request, keeporder=True):
     if keeporder:
         result = sorted(result, key=lambda t: t[2])
     return [(p, lnks) for p, lnks, _ in result]
+
+def find_providers_and_links(user, request, keeporder=True):
+    if IUser.providedBy(user):
+        return _find_providers_and_links((user, request),
+                                         IAuthenticatedUserLinkProvider,
+                                         keeporder=keeporder)
+    elif user is None or IMissingUser.providedBy(user):
+        return _find_providers_and_links((request,),
+                                         IUnauthenticatedUserLinkProvider,
+                                         keeporder=keeporder)
 
 
 def unique_link_providers(user, request, with_links=False):

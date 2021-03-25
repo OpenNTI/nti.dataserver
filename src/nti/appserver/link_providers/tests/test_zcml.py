@@ -30,6 +30,7 @@ from pyramid.request import Request
 from nti.appserver.policies.sites import BASECOPPA as MATHCOUNTS
 
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
+from nti.appserver.interfaces import IUnauthenticatedUserLinkProvider
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
@@ -80,6 +81,11 @@ ZCML_STRING = u"""
             url='https://this/link/overrides/the/parent'
             mimeType='text/html'
             for='nti.appserver.link_providers.tests.test_zcml.IMarker' />
+
+        <link:missingUserLink
+            named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
+            url='https://this/link/overrides/the/parent-missinguser'
+            mimeType='text/html' />
     </registerIn>
 
 </configure>
@@ -177,3 +183,26 @@ class TestZcml(nti.testing.base.ConfiguringTestBase):
             assert_that(providers, has_length(1))
             assert_that(providers[0],
                         has_property('url', 'https://this/link/overrides/the/parent'))
+
+    def test_missing_user_registrations(self):
+        self.configure_string(ZCML_STRING)
+        with site(_TrivialSite(_MYSITE)):
+            user = User(u'foo@bar')
+            request = Request.blank('/')
+            
+            assert_that(list(component.subscribers((request,), IUnauthenticatedUserLinkProvider)),
+                        has_length(1))
+            
+            links = list(provide_links(None, request))
+            assert_that(links, has_length(1))
+            # Make sure all our properties got where we wanted them
+            link = links[0]
+            __traceback_info__ = link.__dict__
+            assert_that(link,
+                        has_property('_v_provided_by',
+                                     has_property('url', 'https://this/link/overrides/the/parent-missinguser')))
+
+            providers = list(unique_link_providers(None, request))
+            assert_that(providers, has_length(1))
+            assert_that(providers[0],
+                        has_property('url', 'https://this/link/overrides/the/parent-missinguser'))

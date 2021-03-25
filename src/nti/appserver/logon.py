@@ -150,14 +150,6 @@ REL_INITIAL_TOS_PAGE = u"content.initial_tos_page"
 #: link.
 REL_PERMANENT_TOS_PAGE = u'content.permanent_tos_page'
 
-TOS_URL = 'https://docs.google.com/document/d/e/2PACX-1vRJd0Irh_YFX7Ci9irWLmqrEqddrxSLrDkrJMANlCqQAo-PrLznTjk4G0hfCsjxD8M21Vd54iQ1Rqbn/pub?embedded=True'
-PRIVACY_POLICY_URL = 'https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gvacXOStsfmUz5TjyDYYy3CVJ2SmM'
-
-# Link providing the direct link to the
-# Terms-of-service page in its href
-REL_TOS_URL = 'content.direct_tos_link'
-REL_PRIVACY_POLICY_URL = 'content.direct_privacy_link'
-
 REL_PING = 'logon.ping'  # See :func:`ping`
 REL_HANDSHAKE = 'logon.handshake'  #: See :func:`handshake`
 REL_CONTINUE = 'logon.continue'
@@ -289,8 +281,8 @@ def _links_for_unauthenticated_users(request):
                 links.append(Link(route, rel=rel,
                                   target_mime_type=mimetype.nti_mimetype_from_object(User)))
 
-        for provider in component.subscribers((request,), IUnauthenticatedUserLinkProvider):
-            links.extend(provider.get_links())
+        for _, prov_links in unique_link_providers(None, request, True):
+            links.extend(prov_links)
 
     links = tuple(links) if links else ()
     return links
@@ -536,22 +528,6 @@ class _SimpleExistingUserLinkProvider(object):
             path = self.request.route_path(self.rel,
                                            _query={'username': self.user.username})
             return Link(path, rel=self.rel)
-
-
-@interface.implementer(IAuthenticatedUserLinkProvider)
-@component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
-class _OnlinePolicyLinkProvider (object):
-
-    tos_rel = REL_TOS_URL
-    privacy_rel = REL_PRIVACY_POLICY_URL
-
-    def __init__(self, user, req):
-        self.request = req
-        self.user = user
-
-    def get_links(self):
-        return (Link(target=TOS_URL, rel=self.tos_rel),
-                Link(target=PRIVACY_POLICY_URL, rel=self.privacy_rel))
 
 
 @interface.implementer(IAuthenticatedUserLinkProvider)

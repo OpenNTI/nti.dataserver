@@ -68,6 +68,10 @@
 				   url="https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gvacXOStsfmUz5TjyDYYy3CVJ2SmM"
 				   mimeType="text/html" />
 
+	<link:missingUserLink named=".user_policies.REL_GENERAL_PRIVACY_PAGE"
+			      url="https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gvacXOStsfmUz5TjyDYYy3CVJ2SmM"
+			      mimeType="text/html" />
+
 
 	<!-- Contact email link as needed -->
 	<link:userLink named=".user_policies.REL_CONTACT_EMAIL_SENDS_CONSENT"
