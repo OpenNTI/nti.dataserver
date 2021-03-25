@@ -49,10 +49,6 @@
 
 	<!-- Additional links for logged-in users -->
 
-	<!-- Terms of service and privacy policy direct links -->
-	<subscriber factory=".logon._OnlinePolicyLinkProvider"
-				provides=".interfaces.IAuthenticatedUserLinkProvider" />
-
 	<subscriber factory=".link_providers.flag_link_provider.FlagLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 

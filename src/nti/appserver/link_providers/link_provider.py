@@ -19,6 +19,7 @@ from nti.appserver._util import link_belongs_to_user
 
 from nti.appserver.link_providers.interfaces import IDeletableLinkProvider
 from nti.appserver.link_providers.interfaces import IAuthenticatedUserLinkProvider
+from nti.appserver.link_providers.interfaces import IUnauthenticatedUserLinkProvider
 
 from nti.containers.dicts import LastModifiedDict
 
@@ -48,6 +49,32 @@ def _make_link(user, link_rel, field=None, view_named=None, mime_type=None):
     return link
 make_link = _make_link
 
+@interface.implementer(IUnauthenticatedUserLinkProvider)
+class NoUserLinkProvider(object):
+
+    __slots__ = ('request', '__name__', 'url', 'mime_type')
+
+    def __init__(self, request, name=None, **kwargs):
+        self.request = request
+        self.__name__ = name
+        for k in NoUserLinkProvider.__slots__:
+            if getattr(self, k, None) is None:
+                setattr(self, k, kwargs.pop(k, None))
+        if kwargs:
+            raise TypeError("Unknown keyword args", kwargs)
+
+    def get_links(self):
+        link = self._make_link_with_rel(self.__name__)
+        return (link,)
+
+    def _make_link_with_rel(self, rel):
+        link = Link(self.url, rel=rel, target_mime_type=self.mime_type)
+        link._v_provided_by = self
+        return link
+
+    def __repr__(self):
+        return "<%s %s %s>" % (self.__class__.__name__, 
+                               self.__name__, self.url)
 
 @interface.implementer(IAuthenticatedUserLinkProvider)
 class LinkProvider(object):

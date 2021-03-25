@@ -73,4 +73,48 @@
 		url='https://docs.google.com/document/d/e/2PACX-1vRJd0Irh_YFX7Ci9irWLmqrEqddrxSLrDkrJMANlCqQAo-PrLznTjk4G0hfCsjxD8M21Vd54iQ1Rqbn/pub?embedded=True'
 		mimeType='text/html'/>
 
+	<link:missingUserLink
+	    named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
+	    url='https://docs.google.com/document/d/e/2PACX-1vRJd0Irh_YFX7Ci9irWLmqrEqddrxSLrDkrJMANlCqQAo-PrLznTjk4G0hfCsjxD8M21Vd54iQ1Rqbn/pub?embedded=True'
+	    mimeType='text/html'/>
+
+	<!-- Additional important links for the site -->
+	
+	<!-- About Link (Used to reference related information about the site) -->
+	<link:userLink
+	    name='content.about-site'
+	    url='https://nextthought.com'
+	    mimeType='text/html'/>
+
+	<link:missingUserLink
+	    name='content.about-site'
+	    url='https://nextthought.com'
+	    mimeType='text/html'/>
+
+	<!-- Help Link (Online help for this site) -->
+	<link:userLink
+	    name='content.help-site'
+	    url='https://help.nextthought.com'
+	    mimeType='text/html'/>
+
+	<link:missingUserLink
+	    name='content.help-site'
+	    url='https://help.nextthought.com'
+	    mimeType='text/html'/>
+
+	<!-- Support Link (A support portal if one exists for the site) -->
+	<!-- We don't set this right now and apps prefer the policies SUPPORT_EMAIL as a mailto link.
+	     Sites may opt to override this
+	<link:userLink
+	    named='content.support-site'
+	    url='https://help.nextthought.com/hc/en-us/requests/new'
+	    mimeType='text/html'/>
+
+	<link:missingUserLink
+	    named='content.support-site'
+	    url='https://help.nextthought.com/hc/en-us/requests/new'
+	    mimeType='text/html'/>
+	-->
+
+	
 </configure>

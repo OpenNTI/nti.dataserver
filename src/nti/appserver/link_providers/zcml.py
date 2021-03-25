@@ -30,22 +30,21 @@ from zope.schema import TextLine
 from pyramid.interfaces import IRequest
 
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
+from nti.appserver.interfaces import IUnauthenticatedUserLinkProvider
 
 from nti.appserver.link_providers.link_provider import LinkProvider
 from nti.appserver.link_providers.link_provider import GenerationalLinkProvider
+from nti.appserver.link_providers.link_provider import NoUserLinkProvider
 
 from nti.base._compat import text_
 
+from nti.dataserver.interfaces import IMissingUser
 from nti.dataserver.interfaces import IUser
 
 from nti.schema.field import ValidTextLine
 
-
-class IUserLinkDirective(interface.Interface):
-    """
-    Register a named link provider.
-    """
-
+class _ILinkDirective(interface.Interface):
+    
     name = ValidTextLine(
         title=u"The name of the link.",
         description=u"This literal value will be used as the relationship type of the link. You must provide either this or ``named``",
@@ -57,6 +56,26 @@ class IUserLinkDirective(interface.Interface):
         description=u"You must give this or ``name``.",
         required=False,
         value_type=name)
+
+    mimeType = ValidTextLine(
+        title=u"The mime type expected to be returned by the link",
+        constraint=mimeTypeConstraint,
+        required=False)
+
+class IMissingUserLinkDirective(_ILinkDirective):
+    """
+    Register a named link provider for missing users (unauthenticated)
+    """
+    
+    url = ValidTextLine(  # Because we want to allow putting in just the path portion of the URL allowing for site-relative urls. But those aren't valid by themselves.
+        title=u"A URI to redirect to on GET",
+        description=u"NOTE: This is not enforced to be a complete, valid URL/URI. You are responsible for that.",
+        required=True)
+
+class IUserLinkDirective(_ILinkDirective):
+    """
+    Register a named link provider for a user.
+    """
 
     minGeneration = TextLine(
         title=u"If given, the minimum required value users must have.",
@@ -77,19 +96,35 @@ class IUserLinkDirective(interface.Interface):
         title=u"Path to string constant giving the name of a view.",
         description=u"If given, this will be used as the destination of the link, thus mutually exclusive with ``field``, ``minGeneration`` and ``url``",
         required=False,
-        value_type=name)
-
-    mimeType = ValidTextLine(
-        title=u"The mime type expected to be returned by the link",
-        constraint=mimeTypeConstraint,
-        required=False)
+        value_type=_ILinkDirective['name'])
 
     for_ = GlobalInterface(
         title=u"The subtype of user to apply this to",
         required=False,
         default=IUser)
 
+def registerMissingUserLink(_context,
+                            name=None,
+                            named=None,
+                            url=None,
+                            mimeType=None):
 
+    if name and named:
+        raise ConfigurationError("Pick either name or named, not both")
+    if named:
+        name = named
+    if not name:
+        raise ConfigurationError("Specify either name or named")
+
+    kwargs = dict(name=text_(name),
+                  url=text_(url),
+                  mime_type=text_(mimeType))
+
+    factory = functools.partial(NoUserLinkProvider, **kwargs)
+    subscriber(_context, for_=(IRequest,),
+               factory=factory, provides=IUnauthenticatedUserLinkProvider)
+
+    
 def registerUserLink(_context,
                      name=None,
                      named=None,

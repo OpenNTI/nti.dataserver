@@ -680,10 +680,10 @@ class TestLogonViews(ApplicationLayerTest):
 		users.User.create_user(self.ds, username='zachary.roux@nextthought.com', password='temp001')
 		result = handshake(get_current_request())
 
-		tos_link = self._get_link_by_rel(result.links, 'content.direct_tos_link')
-		assert_that(tos_link.target, equal_to(logon.TOS_URL))
-		privacy_link = self._get_link_by_rel(result.links, 'content.direct_privacy_link')
-		assert_that(privacy_link.target, equal_to(logon.PRIVACY_POLICY_URL))
+		tos_link = self._get_link_by_rel(result.links, 'content.permanent_tos_page')
+		assert_that(tos_link, not_(None))
+		privacy_link = self._get_link_by_rel(result.links, 'content.permanent_general_privacy_page')
+		assert_that(privacy_link, not_(None))
 
 	@WithMockDSTrans
 	def test_create_openid_from_external(self):
