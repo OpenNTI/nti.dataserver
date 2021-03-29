@@ -209,6 +209,33 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
 		assert_that( fresh_metadata, has_property( 'status', 'Completed' ) )
 
+	@WithSharedApplicationMockDS
+	@fudge.test
+	def test_process_loop_invalid_throttle_exc(self):
+
+		process = Process(self.beginRequest())
+		process.subject = 'Subject'
+		fake_client = fudge.Fake()
+		err_response = {
+			"Error": {
+				"Code": "Throttling",
+				"Message": "Invalid throttle message."
+			}
+		}
+		exc = ClientError(err_response, "SendRawEmail")
+		fake_client.expects( 'send_raw_email' ).raises( exc )
+		fake_client.expects('get_send_quota').returns( SEND_QUOTA )
+		process.client = fake_client
+
+		process.add_recipients( [{'email': Recipient()}] )
+
+		process.process_loop()
+
+		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
+		assert_that( process.__dict__, does_not( has_key( 'client' ) ) )
+
+		fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
+		assert_that( fresh_metadata, has_property( 'status', str(exc) ) )
 
 	@WithSharedApplicationMockDS
 	@fudge.test

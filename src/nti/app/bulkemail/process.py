@@ -345,23 +345,30 @@ class DefaultBulkEmailProcessLoop(object):
 			self.throttle.wait_for_token()
 			try:
 				result = self.process_one_recipient()
-			except ClientError as e: #pragma: no cover
+			except ClientError as e:  #pragma: no cover
 				error = e.response.get('Error')
 				code = error.get('Code') if error is not None else None
-				message = error.get('Message') if error is not None else None
-				if code == EC_THROTTLING:
-					if message == SENDING_RATE_EXCEEDED:
-						logger.warn( "Max sending rate exceeded; pausing: %s", e )
-						sleep( 10 ) # arbitrary sleep time
-						continue
-					elif message == MESSAGE_QUOTA_EXCEEDED:
-						logger.warn( "Max daily quota exceeded; stopping process. Resume later. %s", e )
-						self.metadata.status = text_(e)
-						self.metadata.save()
-						return
+				if code != EC_THROTTLING:
+					logger.exception("ClientError while sending email")
+					self.handle_abort(e)
+					return
 
-				logger.exception("ClientError while sending email")
-				self.handle_abort(e)
+				message = error.get('Message') if error is not None else None
+				if message not in (SENDING_RATE_EXCEEDED, MESSAGE_QUOTA_EXCEEDED):
+					# XXX: Unexpected, unhandled.
+					logger.exception("Unhandled throttling error; stopping process.")
+					self.handle_abort(e)
+					return
+
+				if message == SENDING_RATE_EXCEEDED:
+					logger.warn("Max sending rate exceeded; pausing: %s", e)
+					sleep(10)  # arbitrary sleep time
+					continue
+
+				assert message == MESSAGE_QUOTA_EXCEEDED
+				logger.warn( "Max daily quota exceeded; stopping process. Resume later. %s", e )
+				self.metadata.status = text_(e)
+				self.metadata.save()
 				return
 			except (BotoCoreError,Exception) as e:
 				logger.exception("Failed to send email for unknown reason")
