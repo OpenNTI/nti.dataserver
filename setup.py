@@ -206,7 +206,8 @@ setup(
         # deals with several non-ASCII scripts
         'awesome-slugify',
         'bcrypt',
-        'boto',     # amazon
+        'boto',     # amazon - deprecated AWS Python API
+        'boto3',     # supported AWS Python API
         'brownie',     # Common utilities
         'cffi',  # Foreign Function Interface, libffi required
         # rating content objects (1.0-rc3 > 1.0 sadly, so specific)

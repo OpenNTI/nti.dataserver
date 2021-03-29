@@ -98,7 +98,12 @@
 				<td>Process Running?</td><td tal:content="context/processRunning">250</td>
 			</tr>
 			<tr>
-				<td>Burst/Average Send Rate</td><td>${context/throttle/capacity|nothing}/${context/throttle/fill_rate|string:N/A}</td>
+				<td>Burst/Average Send Rate</td>
+				<td tal:define="capacity context/throttle/capacity|nothing;
+                                fill_rate context/throttle/fill_rate|string:N/A">
+					${python:"%.2f" % capacity if capacity else ""}
+					/${python:"%.2f" % fill_rate if isinstance(fill_rate, (int,float)) else "N/A"}
+				</td>
 			</tr>
 
 		</table>

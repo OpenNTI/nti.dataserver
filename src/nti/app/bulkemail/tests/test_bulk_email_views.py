@@ -20,6 +20,8 @@ import contextlib
 from zope import component
 from zope import interface
 
+from botocore.exceptions import ClientError
+
 import fudge
 
 from fudge.inspector import arg
@@ -45,9 +47,6 @@ from nti.mailer.interfaces import IEmailAddressable
 
 from nti.mailer._verp import formataddr
 
-from boto.ses.exceptions import SESDailyQuotaExceededError
-from boto.ses.exceptions import SESError
-
 import time
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -58,11 +57,9 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.dataserver.tests import mock_dataserver
 
 
-SEND_QUOTA = {u'GetSendQuotaResponse': {u'GetSendQuotaResult': {u'Max24HourSend': u'50000.0',
-																u'MaxSendRate': u'14.0',
-																u'SentLast24Hours': u'195.0'},
-										u'ResponseMetadata': {u'RequestId': u'232fb429-b540-11e3-ac39-9575ac162f26'}}}
-
+SEND_QUOTA = {u'Max24HourSend': 50000.0,
+			  u'MaxSendRate': 14.0,
+			  u'SentLast24Hours': 195.0}
 class Process(SiteTransactedBulkEmailProcessLoop,
 			  AbstractBulkEmailProcessDelegate):
 	template_name = "nti.appserver:templates/failed_username_recovery_email"
@@ -74,6 +71,7 @@ class Process(SiteTransactedBulkEmailProcessLoop,
 	def compute_template_args_for_recipient(self, recipient):
 		result = super(Process, self).compute_template_args_for_recipient(recipient)
 		result['support_email'] = 'support_email'
+		result['context'] = self
 		return result
 
 @interface.implementer(IEmailAddressable,
@@ -128,12 +126,14 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 	def _test_process_one_recipient(self, fake_secret, expected_sender):
 		process = Process(self.beginRequest())
 		process.subject = 'Subject'
-		fake_sesconn = fudge.Fake()
-		(fake_sesconn.expects( 'send_raw_email' )
-		 .with_args( arg.any(), expected_sender, Recipient.email )
+		fake_client = fudge.Fake()
+		(fake_client.expects( 'send_raw_email' )
+		 .with_args( RawMessage=arg.any(),
+					 Source=expected_sender,
+					 Destinations=[Recipient.email] )
 		 .returns( {'key': 'val'} ) )
 
-		process.sesconn = fake_sesconn
+		process.client = fake_client
 		fake_secret.is_callable().returns('abc123')
 
 		process.add_recipients( [{'email': Recipient()}] )
@@ -186,12 +186,14 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 
 		process = Process(self.beginRequest())
 		process.subject = 'Subject'
-		fake_sesconn = fudge.Fake()
-		(fake_sesconn.expects( 'send_raw_email' )
-		 	.with_args( arg.any(), Recipient.verp_from, Recipient.email )
+		fake_client = fudge.Fake()
+		(fake_client.expects( 'send_raw_email' )
+		 .with_args( RawMessage=arg.any(),
+					 Source=Recipient.verp_from,
+					 Destinations=[Recipient.email] )
 			.returns( {'key': 'val'} ) )
-		fake_sesconn.expects('get_send_quota').returns( SEND_QUOTA )
-		process.sesconn = fake_sesconn
+		fake_client.expects('get_send_quota').returns( SEND_QUOTA )
+		process.client = fake_client
 		fake_secret.is_callable().returns('abc123')
 
 		process.add_recipients( [{'email': Recipient()}] )
@@ -214,11 +216,17 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 
 		process = Process(self.beginRequest())
 		process.subject = 'Subject'
-		fake_sesconn = fudge.Fake()
-		exc = SESDailyQuotaExceededError( "404", "Reason" )
-		fake_sesconn.expects( 'send_raw_email' ).raises( exc )
-		fake_sesconn.expects('get_send_quota').returns( SEND_QUOTA )
-		process.sesconn = fake_sesconn
+		fake_client = fudge.Fake()
+		err_response = {
+			"Error": {
+				"Code": "Throttling",
+				"Message": "Daily message quota exceeded."
+			}
+		}
+		exc = ClientError(err_response, "SendRawEmail")
+		fake_client.expects( 'send_raw_email' ).raises( exc )
+		fake_client.expects('get_send_quota').returns( SEND_QUOTA )
+		process.client = fake_client
 
 		process.add_recipients( [{'email': Recipient()}] )
 
@@ -231,30 +239,32 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	@fudge.test
-	def test_process_loop_seserror(self):
+	def test_process_loop_clienterror(self):
 
 		process = Process(self.beginRequest())
 		process.subject = 'Subject'
-		fake_sesconn = fudge.Fake()
-		exc = SESError( "404", "Reason" )
-		fake_sesconn.expects( 'send_raw_email' ).raises( exc )
-		fake_sesconn.expects('get_send_quota').returns( SEND_QUOTA )
-		process.sesconn = fake_sesconn
+		fake_client = fudge.Fake()
+		exc = ClientError({}, "SendRawEmail" )
+		fake_client.expects( 'send_raw_email' ).raises( exc )
+		fake_client.expects('get_send_quota').returns( SEND_QUOTA )
+		process.client = fake_client
 
 		process.add_recipients([ {'email': Recipient()}] )
 
 		process.process_loop()
 
 		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
-		assert_that( process.__dict__, does_not( has_key( 'sesconn' ) ) )
+		assert_that( process.__dict__, does_not( has_key( 'client' ) ) )
 
 		fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
 		assert_that( fresh_metadata, has_property( 'status', str(exc) ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	@fudge.patch('boto.ses.connect_to_region')
-	def test_application_get(self, fake_connect):
-		(fake_connect.is_callable().returns_fake()
+	@fudge.patch('boto3.session.Session')
+	def test_application_get(self, fake_session_factory):
+		session = fake_session_factory.is_callable().returns_fake(name='Session')
+		client_factory = session.provides('client').with_args('ses')
+		(client_factory.returns_fake()
 		 .expects( 'send_raw_email' ).returns( 'return' )
 		 .expects('get_send_quota').returns( SEND_QUOTA ))
 		# Initial condition
@@ -302,9 +312,11 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		self.testapp.get( '/dataserver2/@@bulk_email_admin/', status=404 )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	@fudge.patch('boto.ses.connect_to_region')
-	def test_application_policy_change(self, fake_connect):
-		(fake_connect.is_callable().returns_fake()
+	@fudge.patch('boto3.session.Session')
+	def test_application_policy_change(self, fake_session_factory):
+		session = fake_session_factory.is_callable().returns_fake(name='Session')
+		client_factory = session.provides('client').with_args('ses')
+		(client_factory.returns_fake()
 		 .expects( 'send_raw_email' ).returns( 'return' )
 		 .expects('get_send_quota').returns( SEND_QUOTA ))
 
