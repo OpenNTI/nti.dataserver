@@ -49,6 +49,8 @@ from nti.mailer._verp import formataddr
 
 import time
 
+from nti.app.bulkemail.interfaces import ISESQuotaProvider
+
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
@@ -84,6 +86,24 @@ class Recipient(object):
 	def __init__(self, email=None):
 		if email:
 			self.email = email
+
+
+def _fake_quota_provider(max_send_rate=3.0):
+	return fudge.Fake('SESQuotaProvider').has_attr(max_send_rate=max_send_rate)
+
+
+@contextlib.contextmanager
+def _provide_utility(util, iface):
+	gsm = component.getGlobalSiteManager()
+
+	old_util = component.queryUtility(iface)
+	gsm.registerUtility(util, iface)
+	try:
+		yield
+	finally:
+		gsm.unregisterUtility(util, iface)
+		gsm.registerUtility(old_util, iface)
+
 
 class TestBulkEmailProcess(ApplicationLayerTest):
 
@@ -184,107 +204,107 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 	@fudge.patch('nti.mailer._verp._get_signer_secret')
 	def test_process_loop(self, fake_secret):
 
-		process = Process(self.beginRequest())
-		process.subject = 'Subject'
-		fake_client = fudge.Fake()
-		(fake_client.expects( 'send_raw_email' )
-		 .with_args( RawMessage=arg.any(),
-					 Source=Recipient.verp_from,
-					 Destinations=[Recipient.email] )
-			.returns( {'key': 'val'} ) )
-		fake_client.expects('get_send_quota').returns( SEND_QUOTA )
-		process.client = fake_client
-		fake_secret.is_callable().returns('abc123')
+		with _provide_utility(_fake_quota_provider(), ISESQuotaProvider):
+			process = Process(self.beginRequest())
+			process.subject = 'Subject'
+			fake_client = fudge.Fake()
+			(fake_client.expects( 'send_raw_email' )
+			 .with_args( RawMessage=arg.any(),
+						 Source=Recipient.verp_from,
+						 Destinations=[Recipient.email] )
+				.returns( {'key': 'val'} ) )
+			process.client = fake_client
+			fake_secret.is_callable().returns('abc123')
 
-		process.add_recipients( [{'email': Recipient()}] )
+			process.add_recipients( [{'email': Recipient()}] )
 
-		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
-		assert_that( process.redis.scard(process.names.dest_name), is_( 0 ) )
+			assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
+			assert_that( process.redis.scard(process.names.dest_name), is_( 0 ) )
 
-		process.process_loop()
+			process.process_loop()
 
-		assert_that( process.redis.scard(process.names.source_name), is_( 0 ) )
-		assert_that( process.redis.scard(process.names.dest_name), is_( 1 ) )
+			assert_that( process.redis.scard(process.names.source_name), is_( 0 ) )
+			assert_that( process.redis.scard(process.names.dest_name), is_( 1 ) )
 
-		fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
-		assert_that( fresh_metadata, has_property( 'status', 'Completed' ) )
+			fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
+			assert_that( fresh_metadata, has_property( 'status', 'Completed' ) )
 
 	@WithSharedApplicationMockDS
 	@fudge.test
 	def test_process_loop_invalid_throttle_exc(self):
 
-		process = Process(self.beginRequest())
-		process.subject = 'Subject'
-		fake_client = fudge.Fake()
-		err_response = {
-			"Error": {
-				"Code": "Throttling",
-				"Message": "Invalid throttle message."
+		with _provide_utility(_fake_quota_provider(), ISESQuotaProvider):
+			process = Process(self.beginRequest())
+			process.subject = 'Subject'
+			fake_client = fudge.Fake()
+			err_response = {
+				"Error": {
+					"Code": "Throttling",
+					"Message": "Invalid throttle message."
+				}
 			}
-		}
-		exc = ClientError(err_response, "SendRawEmail")
-		fake_client.expects( 'send_raw_email' ).raises( exc )
-		fake_client.expects('get_send_quota').returns( SEND_QUOTA )
-		process.client = fake_client
+			exc = ClientError(err_response, "SendRawEmail")
+			fake_client.expects( 'send_raw_email' ).raises( exc )
+			process.client = fake_client
 
-		process.add_recipients( [{'email': Recipient()}] )
+			process.add_recipients( [{'email': Recipient()}] )
 
-		process.process_loop()
+			process.process_loop()
 
-		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
-		assert_that( process.__dict__, does_not( has_key( 'client' ) ) )
+			assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
+			assert_that( process.__dict__, does_not( has_key( 'client' ) ) )
 
-		fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
-		assert_that( fresh_metadata, has_property( 'status', str(exc) ) )
+			fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
+			assert_that( fresh_metadata, has_property( 'status', str(exc) ) )
 
 	@WithSharedApplicationMockDS
 	@fudge.test
 	def test_process_loop_quota_exceeded(self):
 
-		process = Process(self.beginRequest())
-		process.subject = 'Subject'
-		fake_client = fudge.Fake()
-		err_response = {
-			"Error": {
-				"Code": "Throttling",
-				"Message": "Daily message quota exceeded."
+		with _provide_utility(_fake_quota_provider(), ISESQuotaProvider):
+			process = Process(self.beginRequest())
+			process.subject = 'Subject'
+			fake_client = fudge.Fake()
+			err_response = {
+				"Error": {
+					"Code": "Throttling",
+					"Message": "Daily message quota exceeded."
+				}
 			}
-		}
-		exc = ClientError(err_response, "SendRawEmail")
-		fake_client.expects( 'send_raw_email' ).raises( exc )
-		fake_client.expects('get_send_quota').returns( SEND_QUOTA )
-		process.client = fake_client
+			exc = ClientError(err_response, "SendRawEmail")
+			fake_client.expects( 'send_raw_email' ).raises( exc )
+			process.client = fake_client
 
-		process.add_recipients( [{'email': Recipient()}] )
+			process.add_recipients( [{'email': Recipient()}] )
 
-		process.process_loop()
+			process.process_loop()
 
-		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
+			assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
 
-		fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
-		assert_that( fresh_metadata, has_property( 'status', str(exc) ) )
+			fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
+			assert_that( fresh_metadata, has_property( 'status', str(exc) ) )
 
 	@WithSharedApplicationMockDS
 	@fudge.test
 	def test_process_loop_clienterror(self):
 
-		process = Process(self.beginRequest())
-		process.subject = 'Subject'
-		fake_client = fudge.Fake()
-		exc = ClientError({}, "SendRawEmail" )
-		fake_client.expects( 'send_raw_email' ).raises( exc )
-		fake_client.expects('get_send_quota').returns( SEND_QUOTA )
-		process.client = fake_client
+		with _provide_utility(_fake_quota_provider(), ISESQuotaProvider):
+			process = Process(self.beginRequest())
+			process.subject = 'Subject'
+			fake_client = fudge.Fake()
+			exc = ClientError({}, "SendRawEmail" )
+			fake_client.expects( 'send_raw_email' ).raises( exc )
+			process.client = fake_client
 
-		process.add_recipients([ {'email': Recipient()}] )
+			process.add_recipients([ {'email': Recipient()}] )
 
-		process.process_loop()
+			process.process_loop()
 
-		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
-		assert_that( process.__dict__, does_not( has_key( 'client' ) ) )
+			assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
+			assert_that( process.__dict__, does_not( has_key( 'client' ) ) )
 
-		fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
-		assert_that( fresh_metadata, has_property( 'status', str(exc) ) )
+			fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
+			assert_that( fresh_metadata, has_property( 'status', str(exc) ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@fudge.patch('boto3.session.Session')
@@ -293,7 +313,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		client_factory = session.provides('client').with_args('ses')
 		(client_factory.returns_fake()
 		 .expects( 'send_raw_email' ).returns( 'return' )
-		 .expects('get_send_quota').returns( SEND_QUOTA ))
+		 .provides('get_send_quota').returns( SEND_QUOTA ))
 		# Initial condition
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
 		assert_that( res.body, contains_string( 'Start' ) )
@@ -345,7 +365,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		client_factory = session.provides('client').with_args('ses')
 		(client_factory.returns_fake()
 		 .expects( 'send_raw_email' ).returns( 'return' )
-		 .expects('get_send_quota').returns( SEND_QUOTA ))
+		 .provides('get_send_quota').returns( SEND_QUOTA ))
 
 		# Initial condition
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/policy_change_email' )

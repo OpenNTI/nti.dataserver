@@ -159,3 +159,19 @@ class IBulkEmailProcessDelegate(interface.Interface):
         :meth:`collect_recipients`, return the subject line
         to use.
         """
+
+
+class ISESQuotaProvider(interface.Interface):
+
+    max_send_rate = Number(title=u"Max Send Rate",
+                           description=u"The maximum number of emails that "
+                                       u"Amazon SES can accept from the user's "
+                                       u"account per second.",
+                           required=True)
+
+    def refresh(self):
+        """
+        Refresh the quota driving the other values such as max send rate
+        from SES.  The underlying operation has a static cap of 1/s and can
+        result in throttling exceptions if fetched too frequently .
+        """

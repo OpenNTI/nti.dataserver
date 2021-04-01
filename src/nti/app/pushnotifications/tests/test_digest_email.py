@@ -87,7 +87,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		session = fake_session_factory.is_callable().returns_fake(name='Session')
 		client_factory = session.provides('client').with_args('ses')
 		(client_factory.returns_fake()
-			.expects('get_send_quota').returns( SEND_QUOTA ))
+			.provides('get_send_quota').returns( SEND_QUOTA ))
 		# Initial condition
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
 		assert_that( res.body, contains_string( 'Start' ) )
@@ -273,7 +273,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		client_factory = session.provides('client').with_args('ses')
 		(client_factory.returns_fake()
 			.provides('send_raw_email').calls(check_send)
-			.expects('get_send_quota').returns(SEND_QUOTA))
+			.provides('get_send_quota').returns(SEND_QUOTA))
 
 		self._flush_pipe()
 		self._create_notable_data()
@@ -323,7 +323,7 @@ def _do_send_notable_email(testapp, before_send=None, fake_session_factory=None)
 	client_factory = session.provides('client').with_args('ses')
 	(client_factory.returns_fake()
 		.expects('send_raw_email').calls(check_send)
-		.expects('get_send_quota').returns(SEND_QUOTA))
+		.provides('get_send_quota').returns(SEND_QUOTA))
 
 	if before_send:
 		before_send()

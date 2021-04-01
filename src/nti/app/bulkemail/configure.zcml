@@ -25,4 +25,14 @@
 			 for="* *"
 			 name="test_policy_change_email" />
 
+	<configure zcml:condition="not-have devmode">
+		<utility factory=".utils._SESQuotaProvider"
+				 provides=".interfaces.ISESQuotaProvider" />
+	</configure>
+
+	<configure zcml:condition="have devmode">
+		<utility factory=".utils._DevSESQuotaProvider"
+				 provides=".interfaces.ISESQuotaProvider" />
+	</configure>
+
 </configure>

@@ -19,6 +19,8 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+from nti.app.bulkemail.interfaces import ISESQuotaProvider
+
 from nti.dataserver import authorization as nauth
 
 from nti.mailer.interfaces import ITemplatedMailer
@@ -142,6 +144,9 @@ class _BulkEmailView(object):
 			_BulkEmailView._greenlets.append( greenlet )
 		elif 'subFormTable.buttons.reset' in self.request.POST:
 			process.reset_process()
+		elif 'subFormTable.buttons.refreshSendRate' in self.request.POST:
+			if hasattr(process, 'refresh_quota'):
+				process.refresh_quota()
 
 		# Redisplay the page with a get request to avoid the "re-send this POST?" problem
 		get_path = self.request.path  + (('?' + self.request.query_string) if self.request.query_string else '')
@@ -195,3 +200,21 @@ class _BouncedEmailView(object):
 		# Redisplay the page with a get request to avoid the "re-send this POST?" problem
 		get_path = self.request.path  + (('?' + self.request.query_string) if self.request.query_string else '')
 		return hexc.HTTPFound(location=get_path)
+
+
+@view_config(
+	request_method='POST',
+	route_name='objects.generic.traversal',
+	name='refresh_ses_quota',
+	permission=nauth.ACT_NTI_ADMIN)
+def refresh_ses_quota(_request):
+	quota_provider = component.queryUtility(ISESQuotaProvider)
+
+	if not quota_provider:
+		return hexc.HTTPNotFound()
+
+	quota_provider.refresh()
+
+	return {
+		'MaxSendRate': quota_provider.max_send_rate,
+	}

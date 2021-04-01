@@ -42,6 +42,7 @@ from .interfaces import PreflightError
 from .interfaces import IBulkEmailProcessLoop
 from .interfaces import IBulkEmailProcessMetadata
 from .interfaces import IBulkEmailProcessDelegate
+from .interfaces import ISESQuotaProvider
 
 #: The redis lifetime of the objects used during the sending
 #: process. Should be long enough for the process to complete,
@@ -203,10 +204,14 @@ class DefaultBulkEmailProcessLoop(object):
 
 	@Lazy
 	def max_send_rate(self):
-		try:
-			return self.client.get_send_quota()['MaxSendRate']
-		except Exception:
-			return DEFAULT_SES_SEND_RATE
+		return self._quota_provider.max_send_rate
+
+	def refresh_quota(self):
+		return self._quota_provider.refresh()
+
+	@Lazy
+	def _quota_provider(self):
+		return component.getUtility(ISESQuotaProvider)
 
 	def _aws_session(self):
 		return boto3.session.Session()

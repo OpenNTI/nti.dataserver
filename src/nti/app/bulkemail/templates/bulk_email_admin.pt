@@ -75,44 +75,53 @@
 		</div>
 		</div>
 
-		<table>
-			<tr>
-				<td>Name</td><td tal:content="context/template_name">Template Name</td>
-			</tr>
-			<tr>
-				<td>Status</td><td tal:content="context/status">Completed</td>
-			</tr>
-			<tr tal:condition="context/startTime">
-				<td>Start Time</td><td tal:content="context/startTimeISO">2013-05-05 12:12</td>
-			</tr>
-			<tr tal:condition="context/endTime">
-				<td>End Time</td><td tal:content="context/endTimeISO">2013-05-05 12:12</td>
-			</tr>
-			<tr tal:condition="context/startTime">
-				<td>Remaining</td><td tal:content="context/remaining_count">100</td>
-			</tr>
-			<tr tal:condition="context/startTime">
-				<td>Sent</td><td tal:content="context/delivered_count">250</td>
-			</tr>
-			<tr tal:condition="context/startTime">
-				<td>Process Running?</td><td tal:content="context/processRunning">250</td>
-			</tr>
-			<tr>
-				<td>Burst/Average Send Rate</td>
-				<td tal:define="capacity context/throttle/capacity|nothing;
-                                fill_rate context/throttle/fill_rate|string:N/A">
-					${python:"%.2f" % capacity if capacity else ""}
-					/${python:"%.2f" % fill_rate if isinstance(fill_rate, (int,float)) else "N/A"}
-				</td>
-			</tr>
-
-		</table>
-
 		<form action="" method="post"
 			  enctype="multipart/form-data"
 			  class="edit-form"
 			  name="subFormTable" id="subFormTable">
 
+			<table style="width: 50%">
+				<tr>
+					<td>Name</td><td tal:content="context/template_name" colspan="2">Template Name</td>
+				</tr>
+				<tr>
+					<td>Status</td><td tal:content="context/status" colspan="2">Completed</td>
+				</tr>
+				<tr tal:condition="context/startTime">
+					<td>Start Time</td><td tal:content="context/startTimeISO" colspan="2">2013-05-05 12:12</td>
+				</tr>
+				<tr tal:condition="context/endTime">
+					<td>End Time</td><td tal:content="context/endTimeISO" colspan="2">2013-05-05 12:12</td>
+				</tr>
+				<tr tal:condition="context/startTime">
+					<td>Remaining</td><td tal:content="context/remaining_count" colspan="2">100</td>
+				</tr>
+				<tr tal:condition="context/startTime">
+					<td>Sent</td><td tal:content="context/delivered_count" colspan="2">250</td>
+				</tr>
+				<tr tal:condition="context/startTime">
+					<td>Process Running?</td><td tal:content="context/processRunning" colspan="2">250</td>
+				</tr>
+				<tr>
+					<td style="white-space: nowrap">Burst/Average Send Rate</td>
+					<td style="white-space: nowrap"
+						tal:define="capacity context/throttle/capacity|nothing;
+									fill_rate context/throttle/fill_rate|string:N/A">
+						${python:"%.2f" % capacity if capacity else ""}
+						/${python:"%.2f" % fill_rate if isinstance(fill_rate, (int,float)) else "N/A"}
+					</td>
+					<td style="width: 99%; text-align: right">
+						<tal:block tal:condition="exists:context/refresh_quota">
+							<input id="subFormTable-buttons-refresh-send-rate"
+								   name="subFormTable.buttons.refreshSendRate"
+								   class="submit-widget button-field" value="Refresh"
+								   type="submit"
+							/>
+						</tal:block>
+					</td>
+				</tr>
+
+			</table>
 
 			<table style="width: 50%">
 				<tr tal:condition="not:context/startTime">
