@@ -210,6 +210,54 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		assert_that( fresh_metadata, has_property( 'status', 'Completed' ) )
 
 	@WithSharedApplicationMockDS
+	@fudge.patch('nti.mailer._verp._get_signer_secret')
+	def test_fallback(self, fake_secret):
+
+		process = Process(self.beginRequest())
+		process.subject = 'Subject'
+		fake_client = fudge.Fake()
+		(fake_client.expects( 'send_raw_email' )
+		 .with_args( RawMessage=arg.any(),
+					 Source=Recipient.verp_from,
+					 Destinations=[Recipient.email] )
+			.returns( {'key': 'val'} ) )
+		err_response = {
+			"Error": {
+				"Code": "Throttling",
+				"Message": "Daily message quota exceeded."
+			}
+		}
+		exc = ClientError(err_response, "SendRawEmail")
+		fake_client.expects('get_send_quota').raises(exc)
+		err_response = {
+			"Error": {
+				"Code": "Throttling",
+				"Message": "Rate exceeded"
+			}
+		}
+		exc = ClientError(err_response, "SendRawEmail")
+		fake_client.next_call().raises(exc)
+		process.client = fake_client
+		fake_secret.is_callable().returns('abc123')
+
+		process.add_recipients( [{'email': Recipient()}] )
+
+		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
+		assert_that( process.redis.scard(process.names.dest_name), is_( 0 ) )
+
+		# Expect unhandled ClientError during quota fetch
+		assert_that(calling(process.process_loop), raises(ClientError))
+
+		# Next call should use fallback
+		process.process_loop()
+
+		assert_that( process.redis.scard(process.names.source_name), is_( 0 ) )
+		assert_that( process.redis.scard(process.names.dest_name), is_( 1 ) )
+
+		fresh_metadata = _ProcessMetaData( process.redis, process.names.metadata_name )
+		assert_that( fresh_metadata, has_property( 'status', 'Completed' ) )
+
+	@WithSharedApplicationMockDS
 	@fudge.test
 	def test_process_loop_invalid_throttle_exc(self):
 

@@ -60,6 +60,7 @@ EC_THROTTLING = 'Throttling'
 #: AWS error messages for specific throttling conditions
 MESSAGE_QUOTA_EXCEEDED = 'Daily message quota exceeded.'
 SENDING_RATE_EXCEEDED = 'Maximum sending rate exceeded.'
+RATE_EXCEEDED = 'Rate exceeded'
 
 
 class _ProcessNames(object):
@@ -205,8 +206,19 @@ class DefaultBulkEmailProcessLoop(object):
 	def max_send_rate(self):
 		try:
 			return self.client.get_send_quota()['MaxSendRate']
-		except Exception:
-			return DEFAULT_SES_SEND_RATE
+		except ClientError as e:
+			if self.is_rate_exceeded(e):
+				logger.warn("Max rate exceeded, using default of %s: %s",
+							DEFAULT_SES_SEND_RATE, str(e))
+				return DEFAULT_SES_SEND_RATE
+			raise
+
+	def is_rate_exceeded(self, e):
+		error = e.response.get('Error')
+		code = error.get('Code') if error is not None else None
+		message = error.get('Message') if error is not None else None
+		sending_rate_exceeded = (code == EC_THROTTLING and message == RATE_EXCEEDED)
+		return sending_rate_exceeded
 
 	def _aws_session(self):
 		return boto3.session.Session()
