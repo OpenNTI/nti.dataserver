@@ -40,6 +40,11 @@ class _PolicyChangeProcessDelegate(AbstractBulkEmailProcessDelegate):
         emails.update(contact_email_ix._fwd_index.keys())
         return [{'email': x} for x in emails]
 
+    def compute_template_args_for_recipient(self, recipient):
+        result = super(_PolicyChangeProcessDelegate, self).compute_template_args_for_recipient(recipient)
+        result['view'] = self
+        return result
+
 
 class _PolicyChangeProcessTestingDelegate(_PolicyChangeProcessDelegate):
     """

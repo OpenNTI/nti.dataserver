@@ -51,10 +51,9 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.testing.time import time_monotonically_increases
 
-SEND_QUOTA = {u'GetSendQuotaResponse': {u'GetSendQuotaResult': {u'Max24HourSend': u'50000.0',
-																u'MaxSendRate': u'14.0',
-																u'SentLast24Hours': u'195.0'},
-										u'ResponseMetadata': {u'RequestId': u'232fb429-b540-11e3-ac39-9575ac162f26'}}}
+SEND_QUOTA = {u'Max24HourSend': 50000.0,
+			  u'MaxSendRate': 14.0,
+			  u'SentLast24Hours': 195.0}
 
 from zope.container.contained import Contained
 
@@ -83,11 +82,12 @@ class TestApplicationDigest(ApplicationLayerTest):
 		gevent.joinall(bulk_email_views._BulkEmailView._greenlets)
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	@fudge.patch('boto.ses.connect_to_region')
-	def test_application_get(self, fake_connect):
-		(fake_connect.is_callable().returns_fake())
-		#.expects( 'send_raw_email' ).returns( 'return' )
-		#.expects('get_send_quota').returns( SEND_QUOTA ))
+	@fudge.patch('boto3.session.Session')
+	def test_application_get(self, fake_session_factory):
+		session = fake_session_factory.is_callable().returns_fake(name='Session')
+		client_factory = session.provides('client').with_args('ses')
+		(client_factory.returns_fake()
+			.expects('get_send_quota').returns( SEND_QUOTA ))
 		# Initial condition
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
 		assert_that( res.body, contains_string( 'Start' ) )
@@ -174,13 +174,13 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
-	@fudge.patch('boto.ses.connect_to_region')
-	def test_with_notable_data(self, fake_connect):
-		self._do_test_sends_one(fake_connect)
+	@fudge.patch('boto3.session.Session')
+	def test_with_notable_data(self, fake_session_factory):
+		self._do_test_sends_one(fake_session_factory)
 
-	def _do_test_sends_one(self, fake_connect):
+	def _do_test_sends_one(self, fake_session_factory):
 		from_addr = formataddr(('NextThought', 'no-reply@alerts.nextthought.com'))
-		msgs = send_notable_email_connected(self.testapp, self._create_notable_data, fake_connect)
+		msgs = send_notable_email_connected(self.testapp, self._create_notable_data, fake_session_factory)
 
 		msg = msgs[0]
 		assert_that( msg, contains_string('General Activity'))
@@ -213,8 +213,8 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
-	@fudge.patch('boto.ses.connect_to_region')
-	def test_with_notable_data_but_unsubscribed(self, fake_connect):
+	@fudge.patch('boto3.session.Session')
+	def test_with_notable_data_but_unsubscribed(self, fake_session_factory):
 		import transaction
 		from gevent._patcher import import_patched
 		manager = import_patched('transaction._manager').module.ThreadTransactionManager()
@@ -225,14 +225,14 @@ class TestApplicationDigest(ApplicationLayerTest):
 							 username='jason',
 							 extra_environ=self._make_extra_environ(username='jason'))
 
-			self._do_test_should_not_send_anything(fake_connect)
+			self._do_test_should_not_send_anything(fake_session_factory)
 		finally:
 			transaction.manager = old_manager
 
 	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
-	@fudge.patch('boto.ses.connect_to_region')
-	def test_with_notable_data_but_not_in_required_community(self, fake_connect):
+	@fudge.patch('boto3.session.Session')
+	def test_with_notable_data_but_not_in_required_community(self, fake_session_factory):
 		from nti.appserver.policies.site_policies import DevmodeSitePolicyEventListener
 		assert_that( getattr(DevmodeSitePolicyEventListener(), 'COM_USERNAME', self), is_(none()))
 		DevmodeSitePolicyEventListener.COM_USERNAME = 'Everyone'
@@ -242,15 +242,15 @@ class TestApplicationDigest(ApplicationLayerTest):
 		old_manager = transaction.manager
 		transaction.manager = manager
 		try:
-			self._do_test_should_not_send_anything(fake_connect)
+			self._do_test_should_not_send_anything(fake_session_factory)
 		finally:
 			transaction.manager = old_manager
 			del DevmodeSitePolicyEventListener.COM_USERNAME
 
 	@WithSharedApplicationMockDS(users=('jason', 'timmy'), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
-	@fudge.patch('boto.ses.connect_to_region')
-	def test_with_notable_data_in_required_community(self, fake_connect):
+	@fudge.patch('boto3.session.Session')
+	def test_with_notable_data_in_required_community(self, fake_session_factory):
 		from nti.appserver.policies.site_policies import DevmodeSitePolicyEventListener
 		from nti.dataserver.users.entity import Entity
 		assert_that( getattr(DevmodeSitePolicyEventListener(), 'COM_USERNAME', self), is_(none()))
@@ -261,17 +261,19 @@ class TestApplicationDigest(ApplicationLayerTest):
 			everyone._note_member(Entity.get_entity('timmy'))
 
 		try:
-			self._do_test_sends_one(fake_connect)
+			self._do_test_sends_one(fake_session_factory)
 		finally:
 			del DevmodeSitePolicyEventListener.COM_USERNAME
 
-	def _do_test_should_not_send_anything(self, fake_connect):
-		def check_send(*args):
+	def _do_test_should_not_send_anything(self, fake_session_factory):
+		def check_send(**_kwargs):
 			raise AssertionError("This should not be called")
 
-		(fake_connect.is_callable().returns_fake()
-		 .provides( 'send_raw_email' ).calls(check_send)
-		 .expects('get_send_quota').returns( SEND_QUOTA ))
+		session = fake_session_factory.is_callable().returns_fake(name='Session')
+		client_factory = session.provides('client').with_args('ses')
+		(client_factory.returns_fake()
+			.provides('send_raw_email').calls(check_send)
+			.expects('get_send_quota').returns(SEND_QUOTA))
 
 		self._flush_pipe()
 		self._create_notable_data()
@@ -288,11 +290,11 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 
 def send_notable_email(testapp, before_send=None):
-	with fudge.patch('boto.ses.connect_to_region') as fake_connect:
-		return send_notable_email_connected(testapp, before_send=before_send, fake_connect=fake_connect)
+	with fudge.patch('boto3.session.Session') as fake_session_factory:
+		return send_notable_email_connected(testapp, before_send=before_send, fake_session_factory=fake_session_factory)
 
 
-def send_notable_email_connected(testapp, before_send=None, fake_connect=None):
+def send_notable_email_connected(testapp, before_send=None, fake_session_factory=None):
 	# Our notables run in a greenlet. Since we are not monkey
 	# patched here, we temporarily override our transaction manager to
 	# be gevent aware.
@@ -302,24 +304,26 @@ def send_notable_email_connected(testapp, before_send=None, fake_connect=None):
 	old_manager = transaction.manager
 	transaction.manager = manager
 	try:
-		return _do_send_notable_email(testapp, before_send=before_send, fake_connect=fake_connect)
+		return _do_send_notable_email(testapp, before_send=before_send, fake_session_factory=fake_session_factory)
 	finally:
 		transaction.manager = old_manager
 
 
-def _do_send_notable_email(testapp, before_send=None, fake_connect=None):
+def _do_send_notable_email(testapp, before_send=None, fake_session_factory=None):
 	msgs = []
-	def check_send(msg, fromaddr, to):
+	def check_send(RawMessage=None, Source=None, **_kwargs):
 		# Check the title and link to the note
-		assert_that( fromaddr, contains_string( 'no-reply+' ))
-		msg = quopri.decodestring(msg)
+		assert_that(Source, contains_string('no-reply+'))
+		msg = quopri.decodestring(RawMessage['Data'])
 		msg = msg.decode('utf-8', errors='ignore')
 		msgs.append(msg)
 		return 'return'
 
-	(fake_connect.is_callable().returns_fake()
-	 .expects( 'send_raw_email' ).calls(check_send)
-	 .expects('get_send_quota').returns( SEND_QUOTA ))
+	session = fake_session_factory.is_callable().returns_fake(name='Session')
+	client_factory = session.provides('client').with_args('ses')
+	(client_factory.returns_fake()
+		.expects('send_raw_email').calls(check_send)
+		.expects('get_send_quota').returns(SEND_QUOTA))
 
 	if before_send:
 		before_send()

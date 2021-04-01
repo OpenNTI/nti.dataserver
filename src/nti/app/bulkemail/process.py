@@ -16,11 +16,10 @@ try:
 except ImportError:
 	import pickle
 
-import boto.ses
-from boto.ses.exceptions import SESError
-from boto.ses.exceptions import SESDailyQuotaExceededError
-from boto.ses.exceptions import SESAddressBlacklistedError
-from boto.ses.exceptions import SESMaxSendingRateExceededError
+import boto3
+
+from botocore.exceptions import BotoCoreError
+from botocore.exceptions import ClientError
 
 from zope import component
 from zope import interface
@@ -48,6 +47,21 @@ from .interfaces import IBulkEmailProcessDelegate
 #: process. Should be long enough for the process to complete,
 #: but not too long to avoid clutter
 _TTL = 14 * 24 * 60 * 60 * 60 # two weeks
+
+#: Default for the maximum number of emails we'll send to Amazon SES per
+#: second.  Should only come into play if fetching the quota fails, e.g.
+#: if many bulk processes are kicked off at once.
+DEFAULT_SES_SEND_RATE = 14
+
+#: AWS error code for throttling failures, e.g. exceeding max messages
+#: per second or per day
+EC_THROTTLING = 'Throttling'
+
+#: AWS error messages for specific throttling conditions
+MESSAGE_QUOTA_EXCEEDED = 'Daily message quota exceeded.'
+SENDING_RATE_EXCEEDED = 'Maximum sending rate exceeded.'
+RATE_EXCEEDED = 'Rate exceeded'
+
 
 class _ProcessNames(object):
 	"""
@@ -179,19 +193,39 @@ class DefaultBulkEmailProcessLoop(object):
 		# TODO: These heuristics can be better, especially for the higher
 		# max send rate.
 		# NOTE: We are not handling the daily quota other than by exceptions
-		conn = self.sesconn
 		# Derive a value for the throttle.
-		# For a send-rate of 14, this gives 6, for 5 it gives 2
-		val = conn.get_send_quota()['GetSendQuotaResponse']['GetSendQuotaResult']['MaxSendRate']
-		val = float(val)
-		burst_rate = int(val/2.3)
-		# For send-rate of 14 this gives 4, for 5 it gives 1
-		fill_rate = int(val/3)
+		# For a send-rate of 14, this gives ~6.1, for 5 it gives ~2.2
+		val = self.max_send_rate
+		# Token buckets removed in whole numbers, minimum 1
+		burst_rate = max((val/2.3), 1.0)
+		# For send-rate of 14 this gives ~4.7, for 5 it gives ~1.7
+		fill_rate = (val/3)
 		return PersistentTokenBucket( burst_rate, fill_rate=fill_rate )
 
 	@Lazy
-	def sesconn(self):
-		return boto.ses.connect_to_region( 'us-east-1' )
+	def max_send_rate(self):
+		try:
+			return self.client.get_send_quota()['MaxSendRate']
+		except ClientError as e:
+			if self.is_rate_exceeded(e):
+				logger.warn("Max rate exceeded, using default of %s: %s",
+							DEFAULT_SES_SEND_RATE, str(e))
+				return DEFAULT_SES_SEND_RATE
+			raise
+
+	def is_rate_exceeded(self, e):
+		error = e.response.get('Error')
+		code = error.get('Code') if error is not None else None
+		message = error.get('Message') if error is not None else None
+		sending_rate_exceeded = (code == EC_THROTTLING and message == RATE_EXCEEDED)
+		return sending_rate_exceeded
+
+	def _aws_session(self):
+		return boto3.session.Session()
+
+	@Lazy
+	def client(self):
+		return self._aws_session().client('ses')
 
 	@Lazy
 	def mailer(self):
@@ -279,17 +313,21 @@ class DefaultBulkEmailProcessLoop(object):
 
 				# Now send the email. This might raise SESError or its subclasses. If it does,
 				# sending failed and we exit, having left the recipient still on the source list.
-				# The one exception is if the address is blacklisted, that still counts as
-				# success and we need to take him off the source list
-				try:
-					result = self.sesconn.send_raw_email( msg_string, sender,
-														  pmail_msg.recipients[0] )
-				except SESAddressBlacklistedError as e: #pragma: no cover
-					logger.warn("Blacklisted address: %s", e )
-					result = {'SendEmailResult': 'BlacklistedAddress'}
+				result = self.client.send_raw_email(
+					RawMessage={
+						'Data': msg_string
+					},
+					Source=sender,
+					Destinations=[pmail_msg.recipients[0]])
+
 				# Result will be something like:
-				# {u'SendEmailResponse': {u'ResponseMetadata': {u'RequestId': u'a38159e2-b033-11e2-9c3f-dba8231cfdfd'},
-				#  u'SendEmailResult':   {u'MessageId': u'0000013e51f5c299-5998b51c-ee6e-4b61-b7e8-443895b6dfb4-000000'}}}
+				# { 'ResponseMetadata': {'RetryAttempts': 0, 'HTTPStatusCode': 200,
+				# 					  'RequestId': 'b93196c1-6872-4d94-8f9f-6245571f2461',
+				# 					  'HTTPHeaders': {'date': 'Thu, 25 Mar 2021 05:00:06 GMT',
+				# 									  'x-amzn-requestid': 'b93196c1-6872-4d94-8f9f-6245571f2461',
+				# 									  'content-length': '338', 'content-type': 'text/xml',
+				# 									  'connection': 'keep-alive'}},
+				#   u'MessageId': '011f017867c1071d-edd2eda1-fdec-4a45-b7bf-06d921c5e5e5-000000' }
 
 			# Record the result and remove the need to send again
 			self.redis.srem( self.names.source_name, member )
@@ -317,25 +355,36 @@ class DefaultBulkEmailProcessLoop(object):
 
 		while True:
 			self.throttle.wait_for_token()
-			result = True
 			try:
 				result = self.process_one_recipient()
-			except SESMaxSendingRateExceededError as e: #pragma: no cover
-				logger.warn( "Max sending rate exceeded; pausing: %s", e )
-				sleep( 10 ) # arbitrary sleep time
-			except SESDailyQuotaExceededError as e:
+			except ClientError as e:  #pragma: no cover
+				error = e.response.get('Error')
+				code = error.get('Code') if error is not None else None
+				if code != EC_THROTTLING:
+					logger.exception("ClientError while sending email")
+					self.handle_abort(e)
+					return
+
+				message = error.get('Message') if error is not None else None
+				if message not in (SENDING_RATE_EXCEEDED, MESSAGE_QUOTA_EXCEEDED):
+					# XXX: Unexpected, unhandled.
+					logger.exception("Unhandled throttling error; stopping process.")
+					self.handle_abort(e)
+					return
+
+				if message == SENDING_RATE_EXCEEDED:
+					logger.warn("Max sending rate exceeded; pausing: %s", e)
+					sleep(10)  # arbitrary sleep time
+					continue
+
+				assert message == MESSAGE_QUOTA_EXCEEDED
 				logger.warn( "Max daily quota exceeded; stopping process. Resume later. %s", e )
 				self.metadata.status = text_(e)
 				self.metadata.save()
 				return
-			except (SESError,Exception) as e:
-				logger.exception( "Failed to send email for unknown reason" )
-				self.metadata.status = text_(e)
-				self.metadata.save()
-				try:
-					del self.sesconn
-				except AttributeError:
-					pass
+			except (BotoCoreError,Exception) as e:
+				logger.exception("Failed to send email for unknown reason")
+				self.handle_abort(e)
 				return
 
 			if not result:
@@ -347,6 +396,15 @@ class DefaultBulkEmailProcessLoop(object):
 		self.metadata.save()
 
 		logger.info( "Completed sending %s to %s recipients", self.__name__, num_sent )
+
+	def handle_abort(self, exception):
+		self.metadata.status = text_(exception)
+		self.metadata.save()
+		try:
+			del self.client
+		except AttributeError:
+			pass
+
 
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 
