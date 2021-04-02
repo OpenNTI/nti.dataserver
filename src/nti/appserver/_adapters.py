@@ -34,7 +34,7 @@ from nti.appserver.interfaces import IIntIdUserSearchPolicy
 from nti.appserver.interfaces import IExternalFieldResource
 from nti.appserver.interfaces import IExternalFieldTraversable
 
-from nti.dataserver.interfaces import IUser, IStreamChangeEvent
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
@@ -42,6 +42,7 @@ from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import ITitledContent
 from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import IEnclosedContent
+from nti.dataserver.interfaces import IStreamChangeEvent
 from nti.dataserver.interfaces import ITitledDescribedContent
 from nti.dataserver.interfaces import IShareableModeledContent
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
