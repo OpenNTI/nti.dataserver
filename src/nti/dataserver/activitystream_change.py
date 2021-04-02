@@ -7,7 +7,6 @@ Functions and architecture for general activity streams.
 """
 
 from __future__ import print_function, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -74,7 +73,8 @@ def _weak_ref_to(obj):
 @lru_cache(10000)
 def descriptor_for_type(parent_type, my_type):
     if my_type in SC_CHANGE_TYPE_MAP:
-        return parent_type + SC_CHANGE_TYPE_MAP[my_type]
+        # Order is important here to avoid inconsistent resolution orders
+        return SC_CHANGE_TYPE_MAP[my_type] + parent_type
     return parent_type
 
 

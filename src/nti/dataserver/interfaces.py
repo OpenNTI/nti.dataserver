@@ -293,7 +293,7 @@ IContainerIterable = IContainerIterable
 
 # Changes related to content objects/users
 SC_SHARED = u"Shared"
-SC_CREATED =u"Created"
+SC_CREATED = u"Created"
 SC_DELETED = u"Deleted"
 SC_CIRCLED = u"Circled"
 SC_MODIFIED = u"Modified"
@@ -323,47 +323,35 @@ class IStreamChangeEvent(interface.interfaces.IObjectEvent,
                                  "sub-interface of this interface. However, do not assume that "
                                  "these are the only change types; new ones may be added at any time")
 
-# statically define some names to keep pylint from complaining
+
+class IStreamChangeSharedEvent(IStreamChangeEvent):
+    pass
+IStreamChangeSharedEvent.setTaggedValue('SC_CHANGE_TYPE', SC_SHARED)
+SC_CHANGE_TYPE_MAP[SC_SHARED] = IStreamChangeSharedEvent
 
 
-IStreamChangeSharedEvent = None
-IStreamChangeCircledEvent = None
-IStreamChangeCreatedEvent = None
-IStreamChangeDeletedEvent = None
-IStreamChangeModifiedEvent = None
+class IStreamChangeCircledEvent(IStreamChangeEvent):
+    pass
+IStreamChangeCircledEvent.setTaggedValue('SC_CHANGE_TYPE', SC_CIRCLED)
+SC_CHANGE_TYPE_MAP[SC_CIRCLED] = IStreamChangeCircledEvent
 
 
-def make_stream_change_event_interface(event_name,
-                                       bases=(),
-                                       __module__=None):
-    bases = (IStreamChangeEvent,) + bases
-    if __module__ is None:
-        frame = sys._getframe(1)
-        __module__ = frame.f_globals['__name__']
-
-    tname = str('IStreamChange' + event_name + 'Event')
-    # Due to use of metaclasses, cannot use type()
-    iface = interface.interface.InterfaceClass(tname,
-                                               bases=bases,
-                                               __module__=__module__)
-    iface.setTaggedValue('SC_CHANGE_TYPE', event_name)
-
-    SC_CHANGE_TYPE_MAP[event_name] = iface
-    SC_CHANGE_TYPES.add(event_name)
-    return iface, tname
+class IStreamChangeCreatedEvent(IStreamChangeEvent):
+    pass
+IStreamChangeCreatedEvent.setTaggedValue('SC_CHANGE_TYPE', SC_CREATED)
+SC_CHANGE_TYPE_MAP[SC_CREATED] = IStreamChangeCreatedEvent
 
 
-def _make_stream_subclasses():
-    frame = sys._getframe(1)
-    mod = frame.f_globals['__name__']
-    for name in list(SC_CHANGE_TYPES):
-
-        iface, tname = make_stream_change_event_interface(name, __module__=mod)
-        frame.f_globals[tname] = iface
+class IStreamChangeDeletedEvent(IStreamChangeEvent):
+    pass
+IStreamChangeDeletedEvent.setTaggedValue('SC_CHANGE_TYPE', SC_DELETED)
+SC_CHANGE_TYPE_MAP[SC_DELETED] = IStreamChangeDeletedEvent
 
 
-_make_stream_subclasses()
-del _make_stream_subclasses
+class IStreamChangeModifiedEvent(IStreamChangeEvent):
+    pass
+IStreamChangeModifiedEvent.setTaggedValue('SC_CHANGE_TYPE', SC_MODIFIED)
+SC_CHANGE_TYPE_MAP[SC_MODIFIED] = IStreamChangeModifiedEvent
 
 
 class ITargetedStreamChangeEvent(interface.interfaces.IObjectEvent):
