@@ -324,34 +324,33 @@ class IStreamChangeEvent(interface.interfaces.IObjectEvent,
                                  "these are the only change types; new ones may be added at any time")
 
 
+def ChangeKind(kind):
+    def _(iface):
+        iface.setTaggedValue('SC_CHANGE_TYPE', kind)
+        SC_CHANGE_TYPE_MAP[kind] = iface
+        return iface
+    return _
+
+
+@ChangeKind(SC_SHARED)
 class IStreamChangeSharedEvent(IStreamChangeEvent):
     pass
-IStreamChangeSharedEvent.setTaggedValue('SC_CHANGE_TYPE', SC_SHARED)
-SC_CHANGE_TYPE_MAP[SC_SHARED] = IStreamChangeSharedEvent
 
 
 class IStreamChangeCircledEvent(IStreamChangeEvent):
     pass
-IStreamChangeCircledEvent.setTaggedValue('SC_CHANGE_TYPE', SC_CIRCLED)
-SC_CHANGE_TYPE_MAP[SC_CIRCLED] = IStreamChangeCircledEvent
 
 
 class IStreamChangeCreatedEvent(IStreamChangeEvent):
     pass
-IStreamChangeCreatedEvent.setTaggedValue('SC_CHANGE_TYPE', SC_CREATED)
-SC_CHANGE_TYPE_MAP[SC_CREATED] = IStreamChangeCreatedEvent
 
 
 class IStreamChangeDeletedEvent(IStreamChangeEvent):
     pass
-IStreamChangeDeletedEvent.setTaggedValue('SC_CHANGE_TYPE', SC_DELETED)
-SC_CHANGE_TYPE_MAP[SC_DELETED] = IStreamChangeDeletedEvent
 
 
 class IStreamChangeModifiedEvent(IStreamChangeEvent):
     pass
-IStreamChangeModifiedEvent.setTaggedValue('SC_CHANGE_TYPE', SC_MODIFIED)
-SC_CHANGE_TYPE_MAP[SC_MODIFIED] = IStreamChangeModifiedEvent
 
 
 class ITargetedStreamChangeEvent(interface.interfaces.IObjectEvent):

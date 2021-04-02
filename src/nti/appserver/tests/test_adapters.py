@@ -20,8 +20,6 @@ from zope import interface
 
 from nti.dataserver.activitystream_change import Change
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.request_response import DummyRequest
@@ -49,8 +47,11 @@ class MockChange(Change):
 
 class TestAdapters(ApplicationLayerTest):
 
-    @WithMockDSTrans
     def test_change_display_name(self):
+        """
+        Validate we get our change.context IDisplayNameGenerator instead
+        of the DefaultDisplayNameGenerator that returns `change.__name__`.
+        """
         gsm = component.getGlobalSiteManager()
         gsm.registerAdapter(_change_context_display_name,
                             (ITestChangeContext, IRequest),
