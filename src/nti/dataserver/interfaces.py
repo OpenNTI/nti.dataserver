@@ -1142,7 +1142,7 @@ class IFlaggable(IAnnotatable):
     """
 
 
-class IRatable(IAnnotatable, IUserRatable):
+class IRatable(IUserRatable):
     """
     Marker interface that promises that an implementing object may be
     rated by users using the :class:`contentratings.interfaces.IUserRating` interface.
