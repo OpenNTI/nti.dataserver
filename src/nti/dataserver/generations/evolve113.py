@@ -11,17 +11,15 @@ from __future__ import print_function
 from zope import component
 from zope import interface
 
-from zope.authentication.interfaces import IAuthentication
-
 from zope.component.hooks import site as current_site
 
-from nti.app.authentication import _DSAuthentication
+from zope.component.interfaces import ISite
+
+from zope.generations.utility import findObjectsProviding
 
 from nti.coremetadata.interfaces import IDataserver
 
 from nti.dataserver.interfaces import IOIDResolver
-
-from nti.site import get_all_host_sites
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -54,10 +52,13 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
         assert component.getSiteManager() == ds_folder.getSiteManager(), \
                "Hooks not installed?"
 
-        for site in get_all_host_sites():
-            logger.info("Rebuilding site manager for %s", site.__name__)
+        for site in tuple(findObjectsProviding(conn.root(), ISite)):
             sm = site.getSiteManager()
-            sm.rebuild()
+            try:
+                sm.rebuild()
+                logger.info("Rebuilt site manager for %s", site.__name__)
+            except AttributeError:
+                pass
     logger.info('Evolution %s done.', generation)
 
 
