@@ -78,6 +78,8 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
                 seen.add(reg)
                 reg.rebuild()
                 conn.cacheGC() # keep memory from blowing up
+            if len(seen) % 100 == 0:
+                logger.info("Rebuilt %s registries", len(seen))
     logger.info('Evolution %s done.', generation)
 
 
