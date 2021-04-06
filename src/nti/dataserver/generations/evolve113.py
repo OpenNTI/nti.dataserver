@@ -43,6 +43,26 @@ class MockDataserver(object):
         return None
 
 
+def _rebuild(obj, seen):
+    if ISite.providedBy(obj):
+        obj = obj.getSiteManager()
+    if hasattr(obj, 'rebuild'):
+        obj.rebuild()
+        seen.add(obj.utilities)
+        seen.add(obj.adapters)
+        return
+    if IComponents.providedBy(obj):
+        regs = obj.utilities, obj.adapters
+    else:
+        assert IAdapterRegistry.providedBy(obj)
+        regs = (obj,)
+    for reg in regs:
+        if reg in seen:
+            continue
+        seen.add(reg)
+        reg.rebuild()
+
+
 def do_evolve(context, generation=generation):  # pylint: disable=redefined-outer-name
     conn = context.connection
     ds_folder = conn.root()['nti.dataserver']
@@ -59,27 +79,16 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
         def condition(obj):
             return ISite.providedBy(obj) or IAdapterRegistry.providedBy(obj) or IComponents.providedBy(obj)
 
-        for thing in findObjectsMatching(conn.root(), condition):
-            if ISite.providedBy(thing):
-                thing = thing.getSiteManager()
-            if hasattr(thing, 'rebuild'):
-                thing.rebuild()
-                seen.add(thing.utilities)
-                seen.add(thing.adapters)
+        _rebuild(ds_folder, seen)
+        for folder_name, sub_folder in ds_folder.items():
+            if folder_name == u'Users':
                 continue
-            if IComponents.providedBy(thing):
-                regs = thing.utilities, thing.adapters
-            else:
-                assert IAdapterRegistry.providedBy(thing)
-                regs = (thing,)
-            for reg in regs:
-                if reg in seen:
-                    continue
-                seen.add(reg)
-                reg.rebuild()
+
+            for thing in findObjectsMatching(sub_folder, condition):
+                _rebuild(thing, seen)
                 conn.cacheGC() # keep memory from blowing up
-            if len(seen) % 100 == 0:
-                logger.info("Rebuilt %s registries", len(seen))
+                if len(seen) % 100 == 0:
+                    logger.info("Rebuilt %s registries", len(seen))
     logger.info('Evolution %s done.', generation)
 
 
