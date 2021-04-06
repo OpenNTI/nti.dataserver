@@ -15,7 +15,10 @@ from zope.component.hooks import site as current_site
 
 from zope.component.interfaces import ISite
 
-from zope.generations.utility import findObjectsProviding
+from zope.interface.interfaces import IComponents
+from zope.interface.interfaces import IAdapterRegistry
+
+from zope.generations.utility import findObjectsMatching
 
 from nti.coremetadata.interfaces import IDataserver
 
@@ -52,13 +55,29 @@ def do_evolve(context, generation=generation):  # pylint: disable=redefined-oute
         assert component.getSiteManager() == ds_folder.getSiteManager(), \
                "Hooks not installed?"
 
-        for site in tuple(findObjectsProviding(conn.root(), ISite)):
-            sm = site.getSiteManager()
-            try:
-                sm.rebuild()
-                logger.info("Rebuilt site manager for %s", site.__name__)
-            except AttributeError:
-                pass
+        seen = set()
+        def condition(obj):
+            return ISite.providedBy(obj) or IAdapterRegistry.providedBy(obj) or IComponents.providedBy(obj)
+
+        for thing in findObjectsMatching(conn.root(), condition):
+            if ISite.providedBy(thing):
+                thing = thing.getSiteManager()
+            if hasattr(thing, 'rebuild'):
+                thing.rebuild()
+                seen.add(thing.utilities)
+                seen.add(thing.adapters)
+                continue
+            if IComponents.providedBy(thing):
+                regs = thing.utilities, thing.adapters
+            else:
+                assert IAdapterRegistry.providedBy(thing)
+                regs = (thing,)
+            for reg in regs:
+                if reg in seen:
+                    continue
+                seen.add(reg)
+                reg.rebuild()
+                conn.cacheGC() # keep memory from blowing up
     logger.info('Evolution %s done.', generation)
 
 
