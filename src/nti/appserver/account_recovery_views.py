@@ -159,7 +159,7 @@ def forgot_username_view(request):
     # Need to send both HTML and plain text if we send HTML, because
     # many clients still do not render HTML emails well (e.g., the popup notification on iOS
     # only works with a text part)
-    policy = component.getUtility(ISitePolicyUserEventListener)
+    policy = _site_policy()
     base_template = getattr(policy,
                             'USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME',
                             'username_recovery_email')
@@ -167,7 +167,7 @@ def forgot_username_view(request):
     text_ext = ".mak"
     if not matching_users:
         text_ext = ".txt"
-        base_template = 'failed_' + base_template
+        base_template = failed_recovery_spec(base_template)
 
     subject = getattr(policy,
                       'USERNAME_RECOVERY_EMAIL_SUBJECT',
@@ -313,7 +313,7 @@ def forgot_passcode_view(request):
                     username, email_assoc_with_account, matching_users)
         matching_user = None
         reset_url = None
-        base_template = failed_pass_recovery_spec(base_template)
+        base_template = failed_recovery_spec(base_template)
         text_ext = ".txt"
 
     subject = compute_reset_subject(policy, request)
@@ -350,7 +350,7 @@ def _site_policy():
     return component.getUtility(ISitePolicyUserEventListener)
 
 
-def failed_pass_recovery_spec(base_template):
+def failed_recovery_spec(base_template):
     path, template_name = os.path.split(base_template)
 
     if path:
