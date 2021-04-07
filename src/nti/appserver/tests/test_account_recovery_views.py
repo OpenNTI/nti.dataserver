@@ -132,6 +132,30 @@ class TestApplicationUsernameRecovery(_RecoveryTestBase):
 					contains_string('No usernames were found'))
 
 	@WithSharedApplicationMockDS
+	@fudge.patch('nti.appserver.account_recovery_views._site_policy')
+	def test_recover_user_not_found_alt_template(self, site_policy):
+		# Ensure the proper template is found when no user is found and
+		# the policy has specified a template in a folder
+		fake_policy = fudge.Fake('SitePolicy')
+		fake_policy.has_attr(
+			USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME='templates/username_recovery_email',
+		)
+		site_policy.is_callable().returns(fake_policy)
+		app = TestApp(self.app)
+
+		path = b'/dataserver2/logon.forgot.username'
+		data = {'email': u'not.registered@example.com'}
+		app.post(path, data, status=204)
+
+		mailer = component.getUtility(ITestMailDelivery)
+		assert_that(mailer.queue, has_length(1))
+		msg = mailer.queue[0]
+
+		assert_that(msg, has_property('body'))
+		assert_that(decodestring(msg.body),
+					contains_string('No usernames were found'))
+
+	@WithSharedApplicationMockDS
 	def test_recover_user_found_in_site(self):
 		username = self._add_user(username=u"non_admin",
 								  email=u'jason.madden@nextthought.com',
