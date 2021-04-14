@@ -210,12 +210,12 @@ setup(
         'boto3',     # supported AWS Python API
         'brownie',     # Common utilities
         'cffi',  # Foreign Function Interface, libffi required
-        # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
+        # rating content objects
         # See also collective.subscribe for a different take, useful when we need
         # this stuff globally
         # (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
         # requires small patch to work without acquisition
-        'contentratings',
+        'nti.contentratings',
         # 'cryptography', # oauthlib
         'cssselect',  # Used by pyquery
         'cython',
