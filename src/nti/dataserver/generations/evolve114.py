@@ -13,20 +13,18 @@ from zope import interface
 
 from zope.component.hooks import site as current_site
 
-from zope.intid.interfaces import IIntIds
-
 from zope.location.location import locate
 
-from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
 
 from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
 
-from nti.dataserver.users.index import LastSeenTimeIndex
-from nti.dataserver.users.index import install_entity_catalog
+from nti.dataserver.metadata.index import get_metadata_catalog
 
-generation = 97
+from nti.dataserver.users.index import get_entity_catalog
+
+generation = 114
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -55,39 +53,28 @@ def do_evolve(context, generation=generation): # pylint: disable=redefined-outer
     mock_ds.root = ds_folder
     component.provideUtility(mock_ds, IDataserver)
 
-    count = 0
     with current_site(ds_folder):
         assert component.getSiteManager() == ds_folder.getSiteManager(), \
                 "Hooks not installed?"
-
-        lsm = ds_folder.getSiteManager()
-        intids = lsm.getUtility(IIntIds)
-
-        catalog = install_entity_catalog(ds_folder, intids)
-        if IX_LASTSEEN_TIME not in catalog:
-            index = LastSeenTimeIndex(family=intids.family)
-            intids.register(index)
-            locate(index, catalog, IX_LASTSEEN_TIME)
-            catalog[IX_LASTSEEN_TIME] = index
-
-            users = ds_folder['users']
-            for user in users.values():
-                if not IUser.providedBy(user):
-                    continue
-                doc_id = intids.queryId(user)
-                if doc_id is not None:
-                    # copy last login time
-                    user.lastSeenTime = user.lastLoginTime
-                    # index
-                    index.index_doc(doc_id, user)
-                    count += 1
+        entity_catalog = get_entity_catalog()
+        metadata_catalog = get_metadata_catalog()
+        try:
+            lastseen_index = entity_catalog[IX_LASTSEEN_TIME]
+        except KeyError:
+            pass
+        else:
+            if IX_LASTSEEN_TIME not in metadata_catalog:
+                locate(lastseen_index, metadata_catalog, IX_LASTSEEN_TIME)
+                metadata_catalog[IX_LASTSEEN_TIME] = lastseen_index
+        assert IX_LASTSEEN_TIME in metadata_catalog
 
     component.getGlobalSiteManager().unregisterUtility(mock_ds, IDataserver)
-    logger.info('Evolution %s done. %s object(s) indexed', generation, count)
+    logger.info('Evolution %s done.', generation)
 
 
 def evolve(context):
     """
-    Evolve to generation 97 by adding the "lastSeenTime" index
+    Evolve to generation 114 by moving the last seen index from the inlined
+    entity catalog to the metadata catalog.
     """
     do_evolve(context, generation)

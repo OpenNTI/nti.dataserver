@@ -29,6 +29,8 @@ from nti.base._compat import text_
 
 from nti.chatserver.interfaces import IMessageInfo
 
+from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
+
 from nti.coremetadata.interfaces import IMentionable
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
@@ -465,6 +467,18 @@ def RevSharedWithIndex(family=BTrees.family64):
                                  family=family)
 
 
+class LastSeenTimeRawIndex(RawIntegerValueIndex):
+    pass
+
+
+def LastSeenTimeIndex(family=BTrees.family64):
+    return NormalizationWrapper(field_name='lastSeenTime',
+                                interface=IUser,
+                                index=LastSeenTimeRawIndex(family=family),
+                                normalizer=TimestampToNormalized64BitIntNormalizer())
+
+
+
 IX_TOPICS = 'topics'
 IX_CREATOR = 'creator'
 IX_MIMETYPE = 'mimeType'
@@ -527,6 +541,7 @@ def create_metadata_catalog(catalog=None, family=BTrees.family64):
                         (IX_SHAREDWITH, SharedWithIndex),
                         (IX_CONTAINERID, ContainerIdIndex),
                         (IX_CREATEDTIME, CreatedTimeIndex),
+                        (IX_LASTSEEN_TIME, LastSeenTimeIndex),
                         (IX_LASTMODIFIED, LastModifiedIndex),
                         (IX_REVSHAREDWITH, RevSharedWithIndex),
                         (IX_REPLIES_TO_CREATOR, CreatorOfInReplyToIndex)):
