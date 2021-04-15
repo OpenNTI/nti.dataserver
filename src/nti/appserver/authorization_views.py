@@ -21,7 +21,6 @@ from requests.structures import CaseInsensitiveDict
 from zope import component
 
 from zope.cachedescriptors.property import Lazy
-from zope.component.hooks import getSite
 
 from zope.intid.interfaces import IIntIds
 
@@ -40,6 +39,8 @@ from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 
 from nti.appserver import MessageFactory as _
 
+from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
+
 from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import ROLE_ADMIN
 
@@ -53,7 +54,6 @@ from nti.dataserver.metadata.index import get_metadata_catalog
 from nti.dataserver.users.index import IX_ALIAS
 from nti.dataserver.users.index import IX_REALNAME
 from nti.dataserver.users.index import IX_DISPLAYNAME
-from nti.dataserver.users.index import IX_LASTSEEN_TIME
 from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.users import User
@@ -144,7 +144,7 @@ class AdminGetView(AdminAbstractView,
             IX_REALNAME: get_entity_catalog(),
             IX_DISPLAYNAME: get_entity_catalog(),
             IX_CREATEDTIME: get_metadata_catalog(),
-            IX_LASTSEEN_TIME: get_entity_catalog(),
+            IX_LASTSEEN_TIME: get_metadata_catalog(),
         }
 
     def _do_call(self):

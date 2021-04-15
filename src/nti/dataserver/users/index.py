@@ -39,7 +39,6 @@ from nti.coremetadata.interfaces import IX_AFFILIATION
 from nti.coremetadata.interfaces import IX_DISPLAYNAME
 from nti.coremetadata.interfaces import IX_IS_COMMUNITY
 from nti.coremetadata.interfaces import IX_CONTACT_EMAIL
-from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
 from nti.coremetadata.interfaces import IX_EMAIL_VERIFIED
 from nti.coremetadata.interfaces import IX_INVALID_EMAIL
 from nti.coremetadata.interfaces import IX_IS_DEACTIVATED
@@ -222,17 +221,6 @@ class SiteIndex(ValueIndex):
     default_interface = ValidatingSite
 
 
-class LastSeenTimeRawIndex(RawIntegerValueIndex):
-    pass
-
-
-def LastSeenTimeIndex(family=BTrees.family64):
-    return NormalizationWrapper(field_name='lastSeenTime',
-                                interface=IUser,
-                                index=LastSeenTimeRawIndex(family=family),
-                                normalizer=TimestampToNormalized64BitIntNormalizer())
-
-
 # Note that FilteredSetBase uses a BTrees Set by default,
 # NOT a TreeSet. So updating them when large is quite expensive.
 # You can override clear() to use a TreeSet.
@@ -357,7 +345,6 @@ def create_entity_catalog(catalog=None, family=BTrees.family64):
                         (IX_USERNAME, UsernameIndex),
                         (IX_DISPLAYNAME, DisplaynameIndex),
                         (IX_CONTACT_EMAIL, ContactEmailIndex),
-                        (IX_LASTSEEN_TIME, LastSeenTimeIndex),
                         (IX_AFFILIATION, AffiliationIndex),
                         (IX_REALNAME_PARTS, RealnamePartsIndex),
                         (IX_CONTACT_EMAIL_RECOVERY_HASH, ContactEmailRecoveryHashIndex),
@@ -388,3 +375,10 @@ def install_entity_catalog(site_manager_container, intids=None):
         intids.register(index)
     return catalog
 install_user_catalog = install_entity_catalog  # BWC
+
+
+import zope.deferredimport
+zope.deferredimport.defineFrom(
+    "nti.dataserver.metadata.index",
+    "LastSeenTimeIndex",
+    "LastSeenTimeRawIndex")
