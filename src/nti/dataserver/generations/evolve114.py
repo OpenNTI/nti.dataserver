@@ -63,6 +63,7 @@ def do_evolve(context, generation=generation): # pylint: disable=redefined-outer
         except KeyError:
             pass
         else:
+            del entity_catalog[IX_LASTSEEN_TIME]
             if IX_LASTSEEN_TIME not in metadata_catalog:
                 locate(lastseen_index, metadata_catalog, IX_LASTSEEN_TIME)
                 metadata_catalog[IX_LASTSEEN_TIME] = lastseen_index
