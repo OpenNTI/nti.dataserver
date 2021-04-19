@@ -233,7 +233,7 @@ setup(
         # We have a branch for this, installed in buildout.cfg
         'gevent[recommended]',
         # pypy has its own greenlet implementation
-        'greenlet',
+        'greenlet ; platform_python_implementation=="CPython"',
         'gunicorn',
         # Redis C parser (almost certainly an anti-optimization on
         # PyPy)
