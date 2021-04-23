@@ -336,19 +336,19 @@ def ChangeKind(kind):
 class IStreamChangeSharedEvent(IStreamChangeEvent):
     pass
 
-
+@ChangeKind(SC_CIRCLED)
 class IStreamChangeCircledEvent(IStreamChangeEvent):
     pass
 
-
+@ChangeKind(SC_CREATED)
 class IStreamChangeCreatedEvent(IStreamChangeEvent):
     pass
 
-
+@ChangeKind(SC_DELETED)
 class IStreamChangeDeletedEvent(IStreamChangeEvent):
     pass
 
-
+@ChangeKind(SC_MODIFIED)
 class IStreamChangeModifiedEvent(IStreamChangeEvent):
     pass
 
