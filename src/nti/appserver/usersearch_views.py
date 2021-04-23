@@ -86,6 +86,8 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.site.site import get_component_hierarchy_names
+from nti.appserver.pyramid_authorization import has_permission
+from nti.dataserver.authorization import ACT_UPDATE
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -272,12 +274,16 @@ class _ResolveUserView(AbstractAuthenticatedView,
             # TODO: This isn't particularly clean
             controller = IPreRenderResponseCacheController(result[0])
             controller(result[0], {'request': request})
-            # special case the remote user being the same user; we don't want to cache
-            # ourself based simply on modification date as that doesn't take into account
-            # dynamic links; we do need to render
             if result[0] == remote_user:
+                # Special case the remote user being the same user; we don't want to cache
+                # ourself based simply on modification date as that doesn't take into account
+                # dynamic links; we do need to render
                 request.response.cache_control.max_age = 0
                 request.response.etag = None
+            elif has_permission(ACT_UPDATE, result[0]):
+                # Else if we have update perms on the entity; we want to check
+                # the server and revalidate.
+                request.response.cache_control.max_age = 0
         else:
             # Let resolutions that failed be cacheable for a long time.
             # It's extremely unlikely that someone is going to snag this missing
