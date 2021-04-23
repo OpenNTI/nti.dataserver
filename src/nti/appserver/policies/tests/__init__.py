@@ -14,7 +14,7 @@ from nti.testing.layers import find_test
 
 class PoliciesTestLayer(DataserverTestLayer):
 
-    set_up_packages = ('nti.dataserver', 'nti.appserver.policies')
+    set_up_packages = ('nti.dataserver', 'nti.appserver.policies',)
 
     @classmethod
     def setUp(cls):
@@ -22,9 +22,8 @@ class PoliciesTestLayer(DataserverTestLayer):
 
     @classmethod
     def tearDown(cls):
-        cls.tearDownPackages()
-        zope.testing.cleanup.cleanUp()
-
+        pass
+    
     @classmethod
     def testSetUp(cls, test=None):
         test = test or find_test()

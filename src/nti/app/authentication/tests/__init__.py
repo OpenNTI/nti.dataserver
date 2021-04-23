@@ -14,7 +14,7 @@ from nti.testing.layers import find_test
 
 
 class AuthenticationTestLayer(DataserverTestLayer):
-    set_up_packages = ('nti.dataserver', 'nti.app.authentication')
+    set_up_packages = ('nti.dataserver', 'nti.app.authentication', )
 
     @classmethod
     def setUp(cls):
@@ -22,8 +22,7 @@ class AuthenticationTestLayer(DataserverTestLayer):
 
     @classmethod
     def tearDown(cls):
-        cls.tearDownPackages()
-        zope.testing.cleanup.cleanUp()
+        pass
 
     @classmethod
     def testSetUp(cls, test=None):
