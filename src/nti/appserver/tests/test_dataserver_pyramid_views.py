@@ -26,6 +26,8 @@ import pyramid.httpexceptions as hexc
 
 from nti.dataserver import users
 
+from nti.dataserver.users.interfaces import IPasswordChangedEvent
+
 from nti.coremetadata.mixins import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
@@ -54,20 +56,20 @@ class TestContentType(unittest.TestCase):
 					 is_( 'class' ) )
 
 # def test_user_pseudo_resources_exist():
-# 	user = users.User( 'jason.madden@nextthought.com' )
-# 	# Fake out an ACL for this user since those are required now
-# 	user.__acl__ = (1,)
-# 	class Parent(object):
-# 		request = None
+#	user = users.User( 'jason.madden@nextthought.com' )
+#	# Fake out an ACL for this user since those are required now
+#	user.__acl__ = (1,)
+#	class Parent(object):
+#		request = None
 
 
-# 	def _test( name ):
-# 		p = Parent()
-# 		p.request = pyramid.testing.DummyRequest()
-# 		assert_that( _UserResource( p, user )[name], is_not( none() ) )
+#	def _test( name ):
+#		p = Parent()
+#		p.request = pyramid.testing.DummyRequest()
+#		assert_that( _UserResource( p, user )[name], is_not( none() ) )
 
-# 	for k in ('Objects', 'NTIIDs', 'Library', 'Pages', 'Classes'):
-# 		yield _test, k
+#	for k in ('Objects', 'NTIIDs', 'Library', 'Pages', 'Classes'):
+#		yield _test, k
 
 from zope.keyreference.interfaces import IKeyReference
 
@@ -138,7 +140,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 
 	@WithMockDSTrans
 	def test_put_to_user_fires_events(self):
-		#"If we put to the User, events fire"""
+		"""If we put to the User, events fire"""
 
 		view = _UGDPutView( get_current_request() )
 
@@ -146,8 +148,10 @@ class TestUGDModifyViews(NewRequestLayerTest):
 
 		view()
 
-		# Will update event, ObjectWillUpdateFromExternalEvent, 2 modified events
-		assert_that(eventtesting.getEvents(), has_length(4))
+		# Will update event, ObjectWillUpdateFromExternalEvent, 2 modified events,
+		# PasswordChangeEvent
+		assert_that(eventtesting.getEvents(), has_length(5))
+		assert_that(eventtesting.getEvents(IPasswordChangedEvent), has_length(1))
 		assert_that(eventtesting.getEvents(IObjectModifiedEvent), has_length(2))
 		mod_event = eventtesting.getEvents(IObjectModifiedEvent)[1]
 		assert_that(mod_event, has_property( 'descriptions',
