@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from BTrees.OOBTree import OOTreeSet
+
 from io import BytesIO
 
 from persistent.list import PersistentList
@@ -36,17 +38,10 @@ class BaseContentMixin(object):
     def __init__(self, *args, **kwargs):
         super(BaseContentMixin, self).__init__(*args, **kwargs)
 
-    # associations
-    def _lazy_create_list_for_wref(self):
-        self._p_changed = True
-        result = PersistentList()
-        if self._p_jar:
-            self._p_jar.add(result)
-        return result
-
     @Lazy
     def _associations(self):
-        return self._lazy_create_list_for_wref()
+        self._p_changed = True
+        return PersistentList()
 
     def _clean_unreachable_associations(self):
         """
@@ -56,35 +51,42 @@ class BaseContentMixin(object):
         """
         if not '_associations' in self.__dict__:
             return False
+
+        # Look for _associations that are the old OOTreeSet implementation
+        # and move those to a persistent list. We migrate, and clean in one
+        # pass here. https://github.com/NextThought/nti.dataserver/issues/453
+        if isinstance(self._associations, OOTreeSet):
+            old_associations = self.__dict__['_associations']
+            self.__dict__['_associations'] = PersistentList(wref for wref in old_associations if wref() is not None)
+            self._p_changed = True
+            return True
+        
         len_before = len(self._associations)
         self._associations[:] = [wref for wref in self._associations if wref() is not None]
-        return len(self._associations) != len_before
+        changed = len(self._associations) != len_before
+        if not changed:
+            self._associations._p_changed = False
+        return changed
 
     def add_association(self, context):
         added = False
         wref = IWeakRef(context, None)
         if wref:
-            cleaned = self._clean_unreachable_associations()
+            self._clean_unreachable_associations()
             if wref not in self._associations:
                 self._associations.append(wref)
                 added = True
-            elif not cleaned:                
-                self._p_changed = False
         return added
-
 
     def remove_association(self, context):
         removed = False
         wref = IWeakRef(context, None)
         if wref:
-            cleaned = self._clean_unreachable_associations()
+            self._clean_unreachable_associations()
             if wref in self._associations:
                 self._associations.remove(wref)
                 removed = True
-            elif not cleaned:
-                self._p_changed = False
         return removed
-        
 
     def associations(self):
         for wref in self._associations:

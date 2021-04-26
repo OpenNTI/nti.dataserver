@@ -16,17 +16,24 @@ from hamcrest import not_none
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
+from hamcrest import instance_of
 does_not = is_not
 
 from nti.testing.matchers import verifiably_provides
 
 import unittest
 
+from BTrees.OOBTree import OOTreeSet
+
+from functools import total_ordering
+
 from zope import interface
 
 from zope.mimetype.interfaces import IContentTypeAware
 
 from persistent import Persistent
+
+from persistent.list import PersistentList
 
 from nti.contentfile.interfaces import IS3File
 from nti.contentfile.interfaces import IS3Image
@@ -107,6 +114,63 @@ class TestModel(unittest.TestCase):
 
         assert_that(internal.has_associations(),
                     is_(False))
+
+    def test_migrate_associations(self):
+
+        refs = dict()
+
+        # Note we need total_ordering for this test
+        # because we are testing the migration of the old OOTreeSet structure
+        # If we don't do that this test will fail on PURE_PYTHON
+        # The new implementation doesn't require IWeakRef implementations
+        # to have total ordering.
+        @total_ordering
+        @interface.implementer(IWeakRef)
+        class _WRef(object):
+
+            def __init__(self, key, _refs):
+                self._refs = refs
+                self.key = key
+
+            def __call__(self):
+                return self._refs.get(self.key, None)
+
+            def __eq__(self, other):
+                return self.key == other.key
+
+            def __lt__(self, other):
+                return self.key < other.key
+
+        refs['a'] = 'A'
+        ref = _WRef('a', refs)
+
+        internal = ContentBlobFile()
+        internal.filename = u'ichigo'
+
+        # Setup our associations as if they were the old OOTreeSet
+        assoc_set = OOTreeSet()
+        assoc_set.add(ref)
+        internal.__dict__['_associations'] = assoc_set
+
+        # has_associations and count_associations still works.
+        assert_that(internal.has_associations(),
+                    is_(True))
+        assert_that(internal.count_associations(),
+                    is_(1))
+
+        # Now simulate our existing ref has gone away
+        # and add another association
+        refs.pop('a')
+        refs['b'] = 'B'
+        internal.add_association(_WRef('b', refs))
+
+        # Our dead ref is trimmed away
+        assert_that(internal.count_associations(),
+                    is_(1))
+        assert_that(next(internal.associations()), is_('B'))
+
+        # and our backing structure is a PersistentList
+        assert_that(internal.__dict__['_associations'], instance_of(PersistentList))
 
     def test_file(self):
         ext_obj = {
