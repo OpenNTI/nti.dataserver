@@ -10,10 +10,10 @@ from __future__ import absolute_import
 
 from io import BytesIO
 
+from persistent.list import PersistentList
+
 from zope.cachedescriptors.property import Lazy
 from zope.cachedescriptors.property import CachedProperty
-
-from BTrees.OOBTree import OOTreeSet
 
 from nti.property.property import alias
 
@@ -37,54 +37,54 @@ class BaseContentMixin(object):
         super(BaseContentMixin, self).__init__(*args, **kwargs)
 
     # associations
-
-    def _lazy_create_ootreeset_for_wref(self):
+    def _lazy_create_list_for_wref(self):
         self._p_changed = True
-        result = OOTreeSet()
+        result = PersistentList()
         if self._p_jar:
             self._p_jar.add(result)
         return result
 
-    def discard(self, container, value):
-        try:
-            container.discard(value)
-        except AttributeError:
-            try:
-                container.remove(value)
-            except (KeyError, ValueError):
-                pass
-
-    def _remove_from_named_lazy_set_of_wrefs(self, name, context):
-        self._p_activate()
-        if name in self.__dict__:
-            jar = getattr(self, '_p_jar', None)
-            container = getattr(self, name)
-            if jar is not None:
-                # pylint: disable=protected-access
-                jar.readCurrent(self)
-                container._p_activate()
-                jar.readCurrent(container)
-            wref = IWeakRef(context, None)
-            if wref is not None:
-                # pylint: disable=unused-variable
-                __traceback_info__ = context, wref
-                self.discard(container, wref)
-
     @Lazy
     def _associations(self):
-        return self._lazy_create_ootreeset_for_wref()
+        return self._lazy_create_list_for_wref()
+
+    def _clean_unreachable_associations(self):
+        """
+        Copy trimming weakrefs we can't resolve. As a side effect after this we should be
+        able to perform equality checks for implementations like persistent.wref.WeakRef
+        that require the backing object to still exist
+        """
+        if not '_associations' in self.__dict__:
+            return False
+        len_before = len(self._associations)
+        self._associations[:] = [wref for wref in self._associations if wref() is not None]
+        return len(self._associations) != len_before
 
     def add_association(self, context):
+        added = False
         wref = IWeakRef(context, None)
-        if wref is not None:
-            old = len(self._associations)
-            # pylint: disable=no-member
-            self._associations.add(wref)
-            return len(self._associations) > old
-        return False
+        if wref:
+            cleaned = self._clean_unreachable_associations()
+            if wref not in self._associations:
+                self._associations.append(wref)
+                added = True
+            elif not cleaned:                
+                self._p_changed = False
+        return added
+
 
     def remove_association(self, context):
-        self._remove_from_named_lazy_set_of_wrefs('_associations', context)
+        removed = False
+        wref = IWeakRef(context, None)
+        if wref:
+            cleaned = self._clean_unreachable_associations()
+            if wref in self._associations:
+                self._associations.remove(wref)
+                removed = True
+            elif not cleaned:
+                self._p_changed = False
+        return removed
+        
 
     def associations(self):
         for wref in self._associations:
@@ -102,19 +102,11 @@ class BaseContentMixin(object):
     def count_associations(self):
         result = 0
         if '_associations' in self.__dict__:
-            result = len(list(self.associations()))
+            result = len(self._associations)
         return result
 
     def validate_associations(self):
-        if not '_associations' in self.__dict__:
-            return
-        for wref in list(self._associations):
-            try:
-                obj = wref()
-                if obj is None:
-                    self.discard(self._associations, wref)
-            except Exception:  # pylint: disable=broad-except
-                logger.exception("Error while getting associatied object")
+        self._clean_unreachable_associations()
 
     def clear_associations(self):
         if '_associations' in self.__dict__:
