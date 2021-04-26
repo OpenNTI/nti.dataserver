@@ -60,13 +60,19 @@ class BaseContentMixin(object):
             self.__dict__['_associations'] = PersistentList(wref for wref in old_associations if wref() is not None)
             self._p_changed = True
             return True
-        
+
+        # Grab our current _associations changed state so that we don't
+        # clear it out if it had changed but we pruned nothing
+        _assoc_marked_changed = self._associations._p_changed
         len_before = len(self._associations)
         self._associations[:] = [wref for wref in self._associations if wref() is not None]
-        changed = len(self._associations) != len_before
-        if not changed:
-            self._associations._p_changed = False
-        return changed
+        pruned = len(self._associations) != len_before
+
+        # If we didn't prune things mark _associations changed as false, unless
+        # it had already changed on the way in
+        self._associations._p_changed = _assoc_marked_changed or pruned
+        
+        return pruned
 
     def add_association(self, context):
         added = False
