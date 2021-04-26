@@ -57,6 +57,27 @@ from nti.wref.interfaces import IWeakRef
 
 GIF_DATAURL = 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 
+# Note we need total_ordering for this test
+        # because we are testing the migration of the old OOTreeSet structure
+        # If we don't do that this test will fail on PURE_PYTHON
+        # The new implementation doesn't require IWeakRef implementations
+        # to have total ordering.
+@total_ordering
+@interface.implementer(IWeakRef)
+class _WRef(object):
+
+    def __init__(self, key, _refs):
+        self._refs = _refs
+        self.key = key
+
+    def __call__(self):
+        return self._refs.get(self.key, None)
+
+    def __eq__(self, other):
+        return self.key == other.key
+
+    def __lt__(self, other):
+        return self.key < other.key
 
 class TestModel(unittest.TestCase):
 
@@ -115,37 +136,30 @@ class TestModel(unittest.TestCase):
         assert_that(internal.has_associations(),
                     is_(False))
 
-    def test_migrate_associations(self):
+    def test_associations_maintenance(self):
 
         refs = dict()
-
-        # Note we need total_ordering for this test
-        # because we are testing the migration of the old OOTreeSet structure
-        # If we don't do that this test will fail on PURE_PYTHON
-        # The new implementation doesn't require IWeakRef implementations
-        # to have total ordering.
-        @total_ordering
-        @interface.implementer(IWeakRef)
-        class _WRef(object):
-
-            def __init__(self, key, _refs):
-                self._refs = refs
-                self.key = key
-
-            def __call__(self):
-                return self._refs.get(self.key, None)
-
-            def __eq__(self, other):
-                return self.key == other.key
-
-            def __lt__(self, other):
-                return self.key < other.key
 
         refs['a'] = 'A'
         ref = _WRef('a', refs)
 
+        # Setup storage and database we can use to test
+        # the intricacies or our manual _p_changed manipulation
+        from ZODB.DB import DB
+        from ZODB.DemoStorage import DemoStorage
+        import transaction
+        db = DB(DemoStorage())
+        self.addCleanup(db.close)
+        conn = db.open()
+        self.addCleanup(conn.close)
+
         internal = ContentBlobFile()
         internal.filename = u'ichigo'
+
+        conn.root.key = internal
+        transaction.commit()
+
+        transaction.begin()
 
         # Setup our associations as if they were the old OOTreeSet
         assoc_set = OOTreeSet()
@@ -157,6 +171,9 @@ class TestModel(unittest.TestCase):
                     is_(True))
         assert_that(internal.count_associations(),
                     is_(1))
+
+        transaction.commit()
+        transaction.begin()
 
         # Now simulate our existing ref has gone away
         # and add another association
@@ -171,6 +188,28 @@ class TestModel(unittest.TestCase):
 
         # and our backing structure is a PersistentList
         assert_that(internal.__dict__['_associations'], instance_of(PersistentList))
+
+        transaction.commit()
+
+        transaction.begin()
+
+        # Now force a cleanup that mutates associations
+        refs.pop('b')
+        internal.validate_associations()
+        assert_that(internal.count_associations(),
+                    is_(0))
+
+        assert_that(internal._associations._p_changed, is_(True))
+
+        # Force another one in the same transaction that doesn't do
+        # anything.
+        internal.validate_associations()
+        assert_that(internal.count_associations(),
+                    is_(0))
+
+        # Note we didn't overwrite _p_changed=True
+        assert_that(internal._associations._p_changed, is_(True))
+        transaction.commit()
 
     def test_file(self):
         ext_obj = {
