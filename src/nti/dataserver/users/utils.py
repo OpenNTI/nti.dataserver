@@ -567,19 +567,19 @@ class ImageUrlProperty(UrlProperty):
 
 
 class AvatarUrlProperty(ImageUrlProperty):
-    max_file_size = 524288  # 512 KB
+    max_file_size = 10485760  # 10 MB
     avatar_field_name = 'avatarURL'
     avatar_provider_interface = IAvatarURLProvider
 
 
 class BlurredAvatarUrlProperty(ImageUrlProperty):
-    max_file_size = 524288  # 512 KB
+    max_file_size = 10485760  # 10 MB
     avatar_field_name = 'blurredAvatarURL'
     avatar_provider_interface = IAvatarURLProvider
 
 
 class BackgroundUrlProperty(ImageUrlProperty):
-    max_file_size = 524288  # 512 KB
+    max_file_size = 10485760  # 10 MB
     avatar_field_name = 'backgroundURL'
     avatar_provider_interface = IBackgroundURLProvider
 
