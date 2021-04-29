@@ -15,7 +15,12 @@ nti.monkey.patch_paste_auth_tkt_sha512_on_import.patch()
 
 from zope import component
 
-from repoze.who.api import APIFactory
+from repoze.who import api as who_api
+
+from repoze.who.interfaces import IIdentifier
+from repoze.who.interfaces import IAuthenticator
+from repoze.who.interfaces import IChallenger
+from repoze.who.interfaces import IMetadataProvider
 
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 
@@ -43,6 +48,37 @@ ONE_WEEK = 7 * ONE_DAY
 
 logger = __import__('logging').getLogger(__name__)
 
+_who_verify = who_api.verify
+who_api.verify = lambda plugin, iface: None
+
+class _APIFactory(who_api.APIFactory):
+
+    def __init__(self,
+                 identifiers=(),
+                 authenticators=(),
+                 challengers=(),
+                 mdproviders=(),
+                 request_classifier=None,
+                 challenge_decider=None,
+                 remote_user_key = 'REMOTE_USER',
+                 logger=None,
+                ):
+
+        for supplied, iface in [ (identifiers, IIdentifier),
+                                 (authenticators, IAuthenticator),
+                                 (challengers, IChallenger),
+                                 (mdproviders, IMetadataProvider)]:
+            for name, value in supplied:
+                _who_verify(value, iface)
+
+        super(_APIFactory, self).__init__(identifiers,
+                                          authenticators,
+                                          challengers,
+                                          mdproviders,
+                                          request_classifier,
+                                          challenge_decider,
+                                          remote_user_key,
+                                          logger)
 
 def create_who_apifactory(secure_cookies=True,
                           cookie_secret='$Id$',
@@ -139,13 +175,13 @@ def create_who_apifactory(secure_cookies=True,
 
     mdproviders = []
 
-    api_factory = APIFactory(identifiers,
-                             authenticators,
-                             challengers,
-                             mdproviders,
-                             application_request_classifier,
-                             forbidden_or_missing_challenge_decider,
-                             'REMOTE_USER',  # environment remote user key
-                             None)  # No logger, leads to infinite loops
+    api_factory = _APIFactory(identifiers,
+                              authenticators,
+                              challengers,
+                              mdproviders,
+                              application_request_classifier,
+                              forbidden_or_missing_challenge_decider,
+                              'REMOTE_USER',  # environment remote user key
+                              None)  # No logger, leads to infinite loops
     api_factory.default_identifier_name = 'auth_tkt'
     return api_factory
