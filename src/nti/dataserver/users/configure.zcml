@@ -171,6 +171,9 @@
 			 provides=".interfaces.IBackgroundURLProvider"
 			 name="default" />
 
+    <!-- Principals -->
+    <adapter factory=".adapters._principal_to_user" />
+
 	<!-- Entity profile info -->
 	<!-- Default -->
 	<adapter factory=".interfaces.FriendlyNamedSchemaProvider"
