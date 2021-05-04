@@ -5,9 +5,13 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from nti.dataserver.interfaces import IUser
+from zope import component
+from zope import interface
 
-__docformat__ = "restructuredtext en"
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IPrincipal
+
+from nti.dataserver.users import User
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -17,3 +21,9 @@ def _profile_to_user(profile):
     if IUser.providedBy(parent):
         return parent
     return None
+
+
+@component.adapter(IPrincipal)
+@interface.implementer(IUser)
+def _principal_to_user(prin):
+    return User.get_user(prin.id)

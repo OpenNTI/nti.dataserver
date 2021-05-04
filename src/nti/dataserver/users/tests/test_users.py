@@ -66,6 +66,8 @@ from nti.dataserver.interfaces import SC_MODIFIED
 from nti.dataserver.interfaces import SYSTEM_USER_ID
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
 
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IPrincipal
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import IIntIdIterable
 from nti.dataserver.interfaces import IEntityContainer
@@ -189,6 +191,14 @@ class TestMisc(unittest.TestCase):
 class TestUser(DataserverLayerTest):
 
     layer = mock_dataserver.SharedConfiguringTestLayer
+
+    @WithMockDSTrans
+    def test_principal_adapters(self):
+        user = User.create_user(self.ds, username=u'prin_user')
+        prin = IPrincipal(user)
+        prin2 = IPrincipal('prin_user')
+        assert_that(IUser(prin), is_(user))
+        assert_that(IUser(prin2), is_(user))
 
     @WithMockDSTrans
     def test_type_error(self):

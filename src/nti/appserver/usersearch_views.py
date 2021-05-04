@@ -484,7 +484,7 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
     If filtering by site, they can resolve any user in this site or from any
     parent site.
 
-    Site admins can only see those users they are permissioned to administser.
+    Site admins can only see those users they are permissioned to administer.
 
     Normal users can only resolve those users with intersecting community
     membership.
