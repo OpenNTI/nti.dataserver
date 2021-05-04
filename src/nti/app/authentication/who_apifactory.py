@@ -48,10 +48,17 @@ ONE_WEEK = 7 * ONE_DAY
 
 logger = __import__('logging').getLogger(__name__)
 
+# Monkey patch who_api.verify to noop
 _who_verify = who_api.verify
 who_api.verify = lambda plugin, iface: None
 
 class _APIFactory(who_api.APIFactory):
+    """
+    An APIFactory that, in conjunction with the above monkey patch,
+    validates plugins on factory construction instead of on each invocation
+    of the factory. The zope.interface verification performed by who_api.verify
+    can be as much as 10% overhead on fast requests.
+    """
 
     def __init__(self,
                  identifiers=(),
