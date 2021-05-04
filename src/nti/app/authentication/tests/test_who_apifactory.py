@@ -48,7 +48,7 @@ class TestWhoAPIFactory(unittest.TestCase):
         # Creating our factory validated all our plugins.
         # In the past, calling the factory also validated the plugins,
         # but that happens per request and can be expensive. Validate we don't do
-        # that before.
+        # that anymore.
 
         factory.identifiers = (('bad_plugin', object()), )
 
