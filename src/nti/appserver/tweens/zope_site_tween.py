@@ -180,6 +180,11 @@ class site_tween(object):
 
         site = _get_site_for_request(request, site)
         request.environ['nti.current_site'] = site.__name__
+        # The "proper" way to add properties is with request.set_property, but
+        # this is easier and faster.
+        site_names = (site.__name__,)
+        request.possible_site_names = site_names
+        request.environ['nti.possible_site_names'] = site_names
 
         setSite(site)
 
@@ -225,12 +230,7 @@ class site_tween(object):
     def _add_properties_to_request(self, request):
         request.environ['nti.pid'] = os.getpid()  # helpful in debug tracebacks
         request.environ['nti.node'] = platform.node()
-        names = tuple(_get_possible_site_names(request))
-        request.environ['nti.possible_site_names'] = names
         request.environ['nti.gevent_spawn'] = _gevent_spawn
-        # The "proper" way to add properties is with request.set_property, but
-        # this is easier and faster.
-        request.possible_site_names = names
         request.nti_settings = request.registry.settings  # shortcut
         request.nti_gevent_spawn = _gevent_spawn
         # In [15]: %%timeit
@@ -284,7 +284,7 @@ def _get_site_for_request(request, parent_site):
     configured site by forcing an error.
 
     """
-    site_names = request.possible_site_names
+    site_names = _get_possible_site_names(request)
     # We want to do this in our ds site in order to get
     # persistent ISiteMapping objects.
     with site(parent_site):
