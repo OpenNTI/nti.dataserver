@@ -53,8 +53,6 @@ from nti.app.pushnotifications.utils import get_top_level_context
 
 from nti.appserver.interfaces import IApplicationSettings
 
-from nti.appserver.policies.site_policies import find_site_policy
-
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
@@ -490,15 +488,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		return collector
 
 	def get_process_site(self):
-		policy, site_or_sites = find_site_policy(self.request)
-		if policy is not None:
-			# we found a site (may be empty)
-			result = site_or_sites
-		else:
-			result = site_or_sites[0] if site_or_sites else None
-		# check against current site
-		result = result or getattr(getSite(), '__name__', None)
-		return result
+		return getattr(getSite(), '__name__', None)
 
 	def get_process_site_users(self):
 		site_name = self.get_process_site()
