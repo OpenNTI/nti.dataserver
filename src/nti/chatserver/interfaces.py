@@ -182,7 +182,8 @@ class IMessageInfo(IShareableModeledContent,
     Creator = TextLine(title=u"Message creator",
                        description=u"User that send this message")
 
-    body = Variant((Dict(key_type=TextLine()),  # , value_type=schema.TextLine() ),
+    body = Variant((Dict(key_type=TextLine(),
+                         value_type=TextLine()),
                     CompoundModeledContentBody()),
                    description=u"The body is either a dictionary of string keys and values, or a Note body")
 
