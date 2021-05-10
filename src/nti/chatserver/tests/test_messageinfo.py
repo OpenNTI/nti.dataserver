@@ -113,3 +113,14 @@ class TestMessageInfo(DataserverLayerTest):
         update_from_external_object(m, ext_obj, context=self.ds)
         assert_that(m.Body[0], is_('baz'))
         assert_that(m.Creator, is_('foo'))
+
+    @WithMockDSTrans
+    def test_composing_internalization(self):
+        ext_obj = {u'channel': u'STATE',
+                   u'ContainerId': u'tag:nextthought.com,2011-10:Kaizen808-OID-0x0e3451:5573657273:kEA9kfBFgn4',
+                   u'Class': u'MessageInfo',
+                   u'body': {u'state': u'composing'}}
+        factory = find_factory_for(ext_obj)
+        assert_that(factory, is_(MessageInfoFactory))
+        m = factory()
+        update_from_external_object(m, ext_obj, context=self.ds)
