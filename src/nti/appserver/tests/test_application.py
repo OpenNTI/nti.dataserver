@@ -1499,7 +1499,8 @@ class TestUnrestrictedContentTypes(AppTestBaseMixin, unittest.TestCase):
 		testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data,
 					  extra_environ=self._make_extra_environ() )
 
-		# Even marked as a coppa user we can post it. Expectation is our
+		# Even marked as a coppa user we can post it. Expectation is our environments
+		# actually supporting coppa (legacy MC) will NOT have this flag. 
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = users.User.get_user( 'sjohnson@nextthought.com' )
 			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
