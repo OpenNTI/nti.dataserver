@@ -68,8 +68,6 @@ class AbstractRequestAwareDecorator(object):
         raise NotImplementedError()
 
 
-_REMOTE_USER_CACHE_KEY = '_v_AbstractAuthenticatedRequestAwareDecorator_remoteUser'
-
 class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
     """
     A base class that ensures authenticated requests.
@@ -92,10 +90,10 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
     @Lazy
     def remoteUser(self):
         try:
-            return getattr(self.request, _REMOTE_USER_CACHE_KEY)
+            return self.request._v_AbstractAuthenticatedRequestAwareDecorator_remoteUser
         except AttributeError:
             user = get_remote_user(self.request)
-            setattr(self.request, _REMOTE_USER_CACHE_KEY, user)
+            self.request._v_AbstractAuthenticatedRequestAwareDecorator_remoteUser = user
             return user
 
     @readproperty
