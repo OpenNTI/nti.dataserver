@@ -136,7 +136,6 @@ class PersistentContainedExternal(ContainedExternal,Persistent):
 
 from nti.app.testing.application_webtest import NonDevmodeApplicationTestLayer
 from nti.app.testing.application_webtest import ApplicationLayerTest
-from nti.app.testing.application_webtest import ApplicationTestLayer
 from nti.app.testing.application_webtest import NonDevmodeApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
