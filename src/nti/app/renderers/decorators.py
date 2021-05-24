@@ -3,8 +3,6 @@
 """
 Decorator helpers for :mod:`nti.externalization` that are
 used when externalizing for a remote client.
-
-.. $Id$
 """
 
 from __future__ import division
@@ -70,6 +68,8 @@ class AbstractRequestAwareDecorator(object):
         raise NotImplementedError()
 
 
+_REMOTE_USER_CACHE_KEY = '_v_AbstractAuthenticatedRequestAwareDecorator_remoteUser'
+
 class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
     """
     A base class that ensures authenticated requests.
@@ -78,7 +78,6 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
     :meth:`_predicate`. For convenience and speed (to avoid needing
     to use ``super``) that can also be spelled as
     :attr:`_is_authenticated`
-
     """
 
     # Notice these two methods have the same implementation
@@ -92,7 +91,12 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
 
     @Lazy
     def remoteUser(self):
-        return get_remote_user(self.request)
+        try:
+            return getattr(self.request, _REMOTE_USER_CACHE_KEY)
+        except AttributeError:
+            user = get_remote_user(self.request)
+            setattr(self.request, _REMOTE_USER_CACHE_KEY, user)
+            return user
 
     @readproperty
     def authenticated_userid(self):
