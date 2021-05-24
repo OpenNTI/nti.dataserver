@@ -367,13 +367,14 @@
 	So we cannot do this from the file we ourselves include.
 	(We do, but without also doing it here, we get conflict errors)
 	-->
-	<includeOverrides file="restricted_overrides.zcml" />
-
-	<include package="." file="configure_restricted_contenttypes.zcml" />
+	<configure zcml:condition="not-have all-content-types-available">
+		<includeOverrides file="restricted_overrides.zcml" />
+		<include package="." file="configure_restricted_contenttypes.zcml" />
+	</configure>
 
 	<includeOverrides file="overrides.zcml" />
 
-    <include package=".brand" file="configure.zcml" />
+	<include package=".brand" file="configure.zcml" />
 	<include package=".policies" file="configure.zcml" />
 
 	<include package="nti.app.forums" />
