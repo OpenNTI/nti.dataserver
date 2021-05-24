@@ -31,6 +31,19 @@ does_not = is_not
 
 from nose.tools import assert_raises
 
+from nti.contentlibrary.filesystem import StaticFilesystemLibrary as Library
+
+from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
+
+from nti.app.testing.application_webtest import AppCreatingLayerHelper
+from nti.app.testing.application_webtest import AppTestBaseMixin
+
+from nti.app.testing.layers import PyramidLayerMixin
+
+from nti.testing.layers import GCLayerMixin
+from nti.testing.layers import ZopeComponentLayer
+from nti.testing.layers import ConfiguringLayerMixin
+
 from nti.testing.matchers import is_empty, validly_provides
 from nti.testing.time import time_monotonically_increases
 
@@ -123,6 +136,7 @@ class PersistentContainedExternal(ContainedExternal,Persistent):
 
 from nti.app.testing.application_webtest import NonDevmodeApplicationTestLayer
 from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.application_webtest import ApplicationTestLayer
 from nti.app.testing.application_webtest import NonDevmodeApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
@@ -1418,3 +1432,78 @@ class TestAppUtil(ApplicationLayerTest):
 	def test_database(self):
 		seq = nti.appserver._util.dump_database_cache(gc=True)
 		assert_that( seq, has_item( contains_string( 'Database' ) ) )
+
+
+class UnrestrictedContentTypesApplicationLayer(ZopeComponentLayer,
+									           PyramidLayerMixin,
+									           GCLayerMixin,
+									           ConfiguringLayerMixin,
+									           DSInjectorMixin):
+	features = ('all-content-types-available', )
+	set_up_packages = ()  # None, because configuring the app will do this
+	APP_IN_DEVMODE = True
+	# We have no packages, but we will set up the listeners ourself when
+	# configuring the app
+	configure_events = False
+
+	@classmethod
+	def _setup_library(cls, *unused_args, **unused_kwargs):
+		return Library()
+	
+	@classmethod
+	def _extra_app_settings(cls):
+		return {}
+
+	@classmethod
+	def setUp(cls):
+		zope.testing.cleanup.cleanUp()
+		AppCreatingLayerHelper.appSetUp(cls)
+
+	@classmethod
+	def tearDown(cls):
+		AppCreatingLayerHelper.appTearDown(cls)
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		AppCreatingLayerHelper.appTestSetUp(cls, test)
+
+	@classmethod
+	def testTearDown(cls, test=None):
+		AppCreatingLayerHelper.appTestTearDown(cls, test)
+
+class TestUnrestrictedContentTypes(AppTestBaseMixin, unittest.TestCase):
+
+	layer =	 UnrestrictedContentTypesApplicationLayer
+
+	@WithSharedApplicationMockDS
+	def test_post_restricted_types(self):
+		"""
+		The ``all-content-types-available`` zcml feature bypasses content type
+		restrictions even for restricted Coppa accounts.
+		"""
+		data = {u'Class': 'Canvas',
+				'ContainerId': 'tag:foo:bar',
+				u'MimeType': u'application/vnd.nextthought.canvas',
+				'shapeList': [{u'Class': 'CanvasUrlShape',
+							   u'MimeType': u'application/vnd.nextthought.canvasurlshape',
+							   u'url': u'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+
+
+		json_data = json.dumps( data )
+
+		testapp = TestApp( self.app )
+
+		# As a normal user we can post it
+		testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data,
+					  extra_environ=self._make_extra_environ() )
+
+		# Even marked as a coppa user we can post it. Expectation is our
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user( 'sjohnson@nextthought.com' )
+			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+
+		testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data,
+					  extra_environ=self._make_extra_environ() )
