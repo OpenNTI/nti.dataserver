@@ -44,4 +44,4 @@ class TestAuthenticatedRequestAwareDecorator(unittest.TestCase):
 
         # A new decorator in the same request uses the cached values
         another_decorator = _Decorator(None, request)
-        assert_that(decorator.remoteUser, is_(same_instance(user)))
+        assert_that(another_decorator.remoteUser, is_(same_instance(user)))
