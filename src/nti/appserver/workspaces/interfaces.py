@@ -16,6 +16,8 @@ from zope import deferredimport
 
 from zope.location.interfaces import ILocation
 
+from zope.security.interfaces import IPrincipal
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IContainer
 
@@ -76,6 +78,11 @@ class IService(ILocation):
 
     workspaces = TypedIterable(title=u"The workspaces of this service",
                                value_type=Object(IWorkspace, title=u"Workspaces in the service"))
+
+    principal = Object(IPrincipal,
+                       title=u'The principal',
+                       description=u"the principal of this service",
+                       required=False)
 
 
 class IWorkspaceValidator(interface.Interface):
@@ -169,8 +176,6 @@ class IUserService(IService):
     """
     user_workspace = Object(IUserWorkspace,
                             title=u"The main workspace for the user")
-
-    user = Object(IUser, title=u"The user")
 
 
 deferredimport.initialize()

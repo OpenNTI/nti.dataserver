@@ -25,6 +25,7 @@ from pyramid.interfaces import IRequest
 
 from pyramid.threadlocal import get_current_request
 
+from nti.appserver.workspaces.interfaces import IService
 from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import ICatalogWorkspace
 from nti.appserver.workspaces.interfaces import ICatalogCollection
@@ -149,8 +150,8 @@ class CatalogWorkspace(Contained):
         return len(self.collections)
 
 
-@component.adapter(IUserService)
+@component.adapter(IService)
 @interface.implementer(ICatalogWorkspace)
-def _catalog_workspace(user_service):
-    catalog_workspace = CatalogWorkspace(user_service.user)
+def _catalog_workspace(service):
+    catalog_workspace = CatalogWorkspace(service.principal)
     return catalog_workspace
