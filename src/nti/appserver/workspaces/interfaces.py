@@ -108,6 +108,10 @@ class ICatalogWorkspace(IWorkspace):
     """
     A workspace to provide (possibly) heterogeneous catalog choices for a user.
     """
+    principal = Object(IPrincipal,
+                       title=u'The principal',
+                       description=u"the principal of this workspace",
+                       required=False)
 
 
 class ICatalogWorkspaceLinkProvider(interface.Interface):

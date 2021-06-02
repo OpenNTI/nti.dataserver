@@ -32,12 +32,21 @@ from nti.appserver.workspaces.interfaces import ICatalogCollection
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 from nti.appserver.workspaces.interfaces import IPurchasedCatalogCollectionProvider
 
+from nti.coremetadata.interfaces import IDataserver
+
+from nti.dataserver.authorization import ACT_READ
+
+from nti.dataserver.authorization_acl import ace_allowing
+from nti.dataserver.authorization_acl import acl_from_aces
+
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.property.property import alias
+from nti.property.property import LazyOnClass
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -94,6 +103,18 @@ class PurchasedCatalogCollection(Contained):
 
 
 @interface.implementer(IPathAdapter)
+@component.adapter(IDataserverFolder, IRequest)
+def DataserverCatalogPathAdapter(unused_context, request):
+    from zope.authentication.interfaces import IUnauthenticatedPrincipal
+    user = request.remote_user
+    if user is None:
+        user = component.queryUtility(IUnauthenticatedPrincipal)
+    service = IService(user)
+    workspace = ICatalogWorkspace(service)
+    return workspace
+
+
+@interface.implementer(IPathAdapter)
 @component.adapter(IUser, IRequest)
 def CatalogPathAdapter(context, unused_request):
     service = IUserService(context)
@@ -113,15 +134,18 @@ class CatalogWorkspace(Contained):
     name = alias('__name__', __name__)
     links = ()
 
-    def __init__(self, user):
+    def __init__(self, principal):
         super(CatalogWorkspace, self).__init__()
-        self.__parent__ = user
-        self.user = user
+        if IUser.providedBy(principal):
+            self.__parent__ = principal
+        else:
+            self.__parent__ = component.getUtility(IDataserver).dataserver_folder
+        self.principal = principal
 
     @property
     def links(self):
         result = []
-        for provider in component.subscribers((self.user,), ICatalogWorkspaceLinkProvider):
+        for provider in component.subscribers((self.principal,), ICatalogWorkspaceLinkProvider):
             links = provider.links(self)
             result.extend(links or ())
         return result
@@ -148,6 +172,15 @@ class CatalogWorkspace(Contained):
 
     def __len__(self):
         return len(self.collections)
+
+    @LazyOnClass
+    def __acl__(self):
+        acl = acl_from_aces(
+            ace_allowing(self.principal,
+                         ACT_READ,
+                         CatalogWorkspace)
+        )
+        return acl
 
 
 @component.adapter(IService)
