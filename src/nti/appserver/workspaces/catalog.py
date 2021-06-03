@@ -15,6 +15,8 @@ from requests.structures import CaseInsensitiveDict
 from zope import component
 from zope import interface
 
+from zope.authentication.interfaces import IUnauthenticatedPrincipal
+
 from zope.cachedescriptors.property import Lazy
 
 from zope.container.contained import Contained
@@ -105,7 +107,6 @@ class PurchasedCatalogCollection(Contained):
 @interface.implementer(IPathAdapter)
 @component.adapter(IDataserverFolder, IRequest)
 def DataserverCatalogPathAdapter(unused_context, request):
-    from zope.authentication.interfaces import IUnauthenticatedPrincipal
     user = request.remote_user
     if user is None:
         user = component.queryUtility(IUnauthenticatedPrincipal)
@@ -174,7 +175,6 @@ class CatalogWorkspace(Contained):
     def __len__(self):
         return len(self.collections)
 
-    @LazyOnClass
     def __acl__(self):
         acl = acl_from_aces(
             ace_allowing(self.principal,
