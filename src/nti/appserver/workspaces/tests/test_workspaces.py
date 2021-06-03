@@ -31,6 +31,7 @@ from zope import component
 from zope import interface
 
 from zope.authentication.interfaces import IPrincipal
+from zope.authentication.interfaces import IUnauthenticatedPrincipal
 
 from zope.container.contained import Contained
 
@@ -56,6 +57,7 @@ from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
 from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
 from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
 
+from nti.appserver.workspaces.interfaces import IService
 from nti.appserver.workspaces.interfaces import ICollection
 
 from nti.dataserver.interfaces import IUser
@@ -367,6 +369,24 @@ class TestUserService(ApplicationLayerTest):
         ext_object = toExternalObject(service)
         assert_that(ext_object,
                     has_entry('SiteCommunity', 'community_username'))
+
+    @mock_dataserver.WithMockDSTrans
+    def test_unauth_catalog_workspace(self):
+        unauth_prin = component.getUtility(IUnauthenticatedPrincipal)
+        service = IService(unauth_prin)
+
+        ext_object = toExternalObject(service)
+        __traceback_info__ = ext_object
+        # The global workspace should have a Link
+        workspaces = ext_object['Items']
+        assert_that(workspaces,
+                    has_item(has_entry('Title', 'Global')))
+
+        # Catalog workspace
+        catalog_ws = next(x for x in workspaces if x['Title'] == 'Catalog')
+        assert_that(catalog_ws, not_none())
+        catalog_collections = catalog_ws['Items']
+        assert_that(catalog_collections, greater_than_or_equal_to(2))
 
     @mock_dataserver.WithMockDSTrans
     def test_user_pages_collection_accepts_only_external_types(self):

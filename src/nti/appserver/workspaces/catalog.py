@@ -139,6 +139,7 @@ class CatalogWorkspace(Contained):
         if IUser.providedBy(principal):
             self.__parent__ = principal
         else:
+            # Principals do not have a useful lineage
             self.__parent__ = component.getUtility(IDataserver).dataserver_folder
         self.principal = principal
 
