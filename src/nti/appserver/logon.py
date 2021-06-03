@@ -59,6 +59,8 @@ import pyramid.httpexceptions as hexc
 
 from pyramid import security as sec
 
+from pyramid.interfaces import IRequest
+
 from pyramid.view import view_config
 
 import requests
@@ -334,6 +336,7 @@ def _forgetting(request, redirect_param_name, no_param_class, redirect_value=Non
     return response
 
 
+@component.adapter(IRequest)
 @interface.implementer(IUnauthenticatedUserLinkProvider)
 class ContinueAnonymouslyLinkProvider(object):
 

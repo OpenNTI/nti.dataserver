@@ -47,6 +47,9 @@
 			 for="pyramid.interfaces.IRequest"
 			 name="default"/>
 
+    <subscriber factory=".logon.ContinueAnonymouslyLinkProvider"
+                provides="nti.appserver.interfaces.IUnauthenticatedUserLinkProvider" />
+
 	<!-- Additional links for logged-in users -->
 
 	<subscriber factory=".link_providers.flag_link_provider.FlagLinkProvider"
