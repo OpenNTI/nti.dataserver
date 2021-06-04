@@ -15,6 +15,8 @@ from requests.structures import CaseInsensitiveDict
 from zope import component
 from zope import interface
 
+from zope.authentication.interfaces import IUnauthenticatedPrincipal
+
 from zope.cachedescriptors.property import Lazy
 
 from zope.container.contained import Contained
@@ -25,13 +27,22 @@ from pyramid.interfaces import IRequest
 
 from pyramid.threadlocal import get_current_request
 
+from nti.appserver.workspaces.interfaces import IService
 from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import ICatalogWorkspace
 from nti.appserver.workspaces.interfaces import ICatalogCollection
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 from nti.appserver.workspaces.interfaces import IPurchasedCatalogCollectionProvider
 
+from nti.coremetadata.interfaces import IDataserver
+
+from nti.dataserver.authorization import ACT_READ
+
+from nti.dataserver.authorization_acl import ace_allowing
+from nti.dataserver.authorization_acl import acl_from_aces
+
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
@@ -93,6 +104,17 @@ class PurchasedCatalogCollection(Contained):
 
 
 @interface.implementer(IPathAdapter)
+@component.adapter(IDataserverFolder, IRequest)
+def DataserverCatalogPathAdapter(unused_context, request):
+    user = request.remote_user
+    if user is None:
+        user = component.queryUtility(IUnauthenticatedPrincipal)
+    service = IService(user)
+    workspace = ICatalogWorkspace(service)
+    return workspace
+
+
+@interface.implementer(IPathAdapter)
 @component.adapter(IUser, IRequest)
 def CatalogPathAdapter(context, unused_request):
     service = IUserService(context)
@@ -112,15 +134,19 @@ class CatalogWorkspace(Contained):
     name = alias('__name__', __name__)
     links = ()
 
-    def __init__(self, user):
+    def __init__(self, principal):
         super(CatalogWorkspace, self).__init__()
-        self.__parent__ = user
-        self.user = user
+        if IUser.providedBy(principal):
+            self.__parent__ = principal
+        else:
+            # Principals do not have a useful lineage
+            self.__parent__ = component.getUtility(IDataserver).dataserver_folder
+        self.principal = principal
 
     @property
     def links(self):
         result = []
-        for provider in component.subscribers((self.user,), ICatalogWorkspaceLinkProvider):
+        for provider in component.subscribers((self.principal,), ICatalogWorkspaceLinkProvider):
             links = provider.links(self)
             result.extend(links or ())
         return result
@@ -148,9 +174,17 @@ class CatalogWorkspace(Contained):
     def __len__(self):
         return len(self.collections)
 
+    def __acl__(self):
+        acl = acl_from_aces(
+            ace_allowing(self.principal,
+                         ACT_READ,
+                         CatalogWorkspace)
+        )
+        return acl
 
-@component.adapter(IUserService)
+
+@component.adapter(IService)
 @interface.implementer(ICatalogWorkspace)
-def _catalog_workspace(user_service):
-    catalog_workspace = CatalogWorkspace(user_service.user)
+def _catalog_workspace(service):
+    catalog_workspace = CatalogWorkspace(service.principal)
     return catalog_workspace

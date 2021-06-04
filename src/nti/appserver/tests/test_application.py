@@ -304,6 +304,7 @@ class TestApplication(ApplicationLayerTest):
 		link_rels = [l['rel'] for l in res.json_body['Links']]
 		assert_that( link_rels, has_item( 'account.create' ) )
 		assert_that( link_rels, has_item( 'account.preflight.create' ) )
+		assert_that(link_rels, has_item(u'logon.continue-anonymously'))
 
 	@WithSharedApplicationMockDS
 	def test_logon_ping_demo_site_policy(self):

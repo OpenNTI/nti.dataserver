@@ -804,8 +804,9 @@ class Service(object):
     __parent__ = None
     __name__ = 'service'
 
-    def __init__(self, unused_principal):
+    def __init__(self, principal):
         self.__parent__ = component.getUtility(IDataserver).root
+        self.principal = principal
 
     @Lazy
     def _validator(self):
@@ -849,9 +850,7 @@ class Service(object):
 @interface.implementer(IUserService, IContentTypeAware)
 class UserService(Service):
 
-    def __init__(self, user):
-        super(UserService, self).__init__(user)
-        self.user = user
+    user = alias('principal')
 
     @property
     def user_workspace(self):
@@ -860,9 +859,8 @@ class UserService(Service):
     @Lazy
     def __acl__(self):
         # The user this service doc is for can read it
-        principal = IPrincipal(self.user, self.user)
         acl = acl_from_aces(
-            ace_allowing(principal,
+            ace_allowing(self.principal,
                          authorization.ACT_READ,
                          Service)
         )

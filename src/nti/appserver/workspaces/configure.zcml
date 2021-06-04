@@ -33,6 +33,7 @@
 
 	<!-- Catalog workspace -->
 	<adapter name="Catalog" factory=".catalog.CatalogPathAdapter" />
+	<adapter name="Catalog" factory=".catalog.DataserverCatalogPathAdapter" />
 
     <adapter factory=".catalog._catalog_workspace"
              provides=".interfaces.ICatalogWorkspace" />
