@@ -48,7 +48,6 @@ from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.property.property import alias
-from nti.property.property import LazyOnClass
 
 logger = __import__('logging').getLogger(__name__)
 
