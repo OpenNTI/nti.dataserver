@@ -70,6 +70,7 @@ class PurchasedCatalogCollection(Contained):
 
     def __init__(self, catalog_workspace):
         self.__parent__ = catalog_workspace
+        self.user = IUser(catalog_workspace.principal, None)
 
     @Lazy
     def _params(self):
@@ -86,12 +87,8 @@ class PurchasedCatalogCollection(Contained):
         return result and result.lower()
 
     @property
-    def _user(self):
-        return self._workspace.user
-
-    @property
     def container(self):
-        providers = component.subscribers((self._user,),
+        providers = component.subscribers((self.user,),
                                           IPurchasedCatalogCollectionProvider)
         result = LocatedExternalList()
         for provider in providers:
