@@ -841,3 +841,13 @@ class IPreferredAppHostnameProvider(interface.Interface):
         Return the preferred host name for a particular given site name input.
         This may be the same as the input.
         """
+
+
+class IResolveUserUtility(interface.Interface):
+
+    def resolve_user(self):
+        """
+        Resolve a user with the given parameters, taking into account any
+        visibility restrictions based on the remote user
+        :return:
+        """
