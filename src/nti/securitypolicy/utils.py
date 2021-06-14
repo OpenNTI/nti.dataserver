@@ -16,5 +16,7 @@ def is_impersonating(request):
     # the environ
     environ = getattr(request, 'environ', {})
     identity = environ.get('repoze.who.identity', {})
-    userdata = identity.get('userdata', {})
+    # If currently in an impersonation request, this info will only exist
+    # in the environ
+    userdata = identity.get('userdata', {}) or environ.get('REMOTE_USER_DATA', {})
     return bool('username' in userdata and userdata.get('username'))

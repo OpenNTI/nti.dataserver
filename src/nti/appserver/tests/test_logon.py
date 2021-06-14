@@ -202,6 +202,10 @@ class TestApplicationLogon(ApplicationLayerTest):
 						  extra_environ=self._make_extra_environ())
 		self.require_link_href_with_rel(res.json_body, 'logon.nti.impersonate')
 
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = User.get_user(username=other_user_username)
+			assert_that(user.lastSeenTime, is_(0))
+
 		res = testapp.get('/dataserver2/logon.nti.impersonate',
 						   params={'username': other_user_username},
 						   extra_environ=self._make_extra_environ())
@@ -215,6 +219,11 @@ class TestApplicationLogon(ApplicationLayerTest):
 		assert_that(res.cache_control, has_property('no_cache', '*'))
 		assert_that(res.cache_control, has_property('private', '*'))
 		assert_that(res.cache_control, has_property('no_store', is_true()))
+
+		# Impersonating does not update last seen time
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = User.get_user(username=other_user_username)
+			assert_that(user.lastSeenTime, is_(0))
 
 		# Test that the username cookie comes back correctly 'raw' as well
 		cookie_headers = res.headers.dict_of_lists()['set-cookie']
