@@ -472,6 +472,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
     """
 
     REQUIRE_NAME = False
+    MARK_EMAIL_VERIFIED = True
 
     def is_recreatable_user(self):
         return False
@@ -482,7 +483,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
     def do_not_update(self, vals):
         return is_false(vals.get('update'))
 
-    def _generate_username(self):
+    def _generate_username(self, vals):
         """
         Build an (opaque) username for this entity.
         """
@@ -526,7 +527,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
     def create_user(self, vals):
         username = self.get_username(vals)
         if not username:
-            username = self._generate_username()
+            username = self._generate_username(vals)
         realname = self.find_real_name(vals)
         interface.alsoProvides(self.request, INoAccountCreationEmail)
         notify(UpsertUserPreCreateEvent(self.request))
@@ -603,7 +604,7 @@ class UserUpsertViewMixin(AbstractUpdateView):
                     user.username, email)
         self.update_user(user, vals)
 
-        if email:
+        if email and self.MARK_EMAIL_VERIFIED:
             # XXX: This may longer hold true.
             # Trusted source for email verification
             profile = IUserProfile(user)
