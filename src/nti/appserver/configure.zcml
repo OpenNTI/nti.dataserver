@@ -199,6 +199,10 @@
 
 	<utility factory=".account_recovery_views.UserAccountRecoveryUtility" />
 
+	<!-- Resolve user -->
+	<utility factory=".usersearch_views.ResolveUserUtility"
+	         provides="nti.appserver.interfaces.IResolveUserUtility"/>
+
 	<!-- Individual field updates -->
 	<!-- Normal traversing of the fields namespace, both with and without request -->
 	<adapter factory="._adapters.GenericModeledContentExternalFieldTraverser"

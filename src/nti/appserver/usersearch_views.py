@@ -45,6 +45,7 @@ from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.interfaces import INamedLinkView
+from nti.appserver.interfaces import IResolveUserUtility
 from nti.appserver.interfaces import IUserSearchPolicy
 
 from nti.base._compat import text_
@@ -366,6 +367,22 @@ def _resolve_user(exact_match, remote_user, admin_filter_by_site_community, exte
         if _make_visibility_test(remote_user, admin_filter_by_site_community)(entity):
             result = (entity,)
     return result
+
+
+@interface.implementer(IResolveUserUtility)
+class ResolveUserUtility(object):
+
+    def resolve_user(self,
+                     exact_match,
+                     remote_user,
+                     admin_filter_by_site_community,
+                     external_type=None,
+                     external_id=None):
+        return _resolve_user(exact_match,
+                             remote_user,
+                             admin_filter_by_site_community,
+                             external_type=external_type,
+                             external_id=external_id)
 
 
 def _ext_type_resolver_for_user(remote_user):
