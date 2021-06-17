@@ -13,6 +13,8 @@ from __future__ import absolute_import
 import gevent
 import requests
 
+from requests.exceptions import RequestException
+
 from zope import interface
 
 from pyramid import httpexceptions as hexc
@@ -100,11 +102,7 @@ class _URLMetaDataSafeImageProxy(AbstractAuthenticatedView):
         via_value = (via + ', ' + self._via) if via else self._via
         return str(via_value)
 
-    def __call__(self):
-        url = self.request.params.get('url', None)
-        if not url:
-            raise hexc.HTTPUnprocessableEntity('URL not provided')
-
+    def _do_proxy_image(self, url):
         # It's actually quite difficult to be a proper proxy. We have to take special
         # care with hop-by-hop headers as well as a miriad of other things
         # https://www.mnot.net/blog/2011/07/11/what_proxies_must_do
@@ -115,10 +113,23 @@ class _URLMetaDataSafeImageProxy(AbstractAuthenticatedView):
         proxied_headers['Via'] = self._via_header(via)
 
         r = requests.get(url, headers=proxied_headers, stream=True)
+        r.raise_for_status()
         headers = self._proxiable_headers(r.headers)
         headers['Via'] = self._via_header(r.headers.get('via', None))
 
-        result = Response(status=r.status_code,
-                          app_iter=r.iter_content(chunk_size=1024),
-                          headers=headers)
-        return result
+        return Response(status=r.status_code,
+                        app_iter=r.iter_content(chunk_size=1024),
+                        headers=headers)
+
+    def __call__(self):
+        url = self.request.params.get('url', None)
+        if not url:
+            raise hexc.HTTPUnprocessableEntity('URL not provided')
+
+        # We connect to an external service so guard ourselves with a timeout
+        with gevent.Timeout(3, hexc.HTTPGatewayTimeout):
+            try:
+                return self._do_proxy_image(url)
+            except RequestException as e:
+                logger.debug('RequestException proxying image %s. %s', url, e)
+                raise hexc.HTTPBadGateway()
