@@ -7,6 +7,8 @@ from __future__ import absolute_import
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+from contextlib import contextmanager
+
 import fudge
 
 from hamcrest import assert_that
@@ -16,6 +18,9 @@ from hamcrest import contains_string
 from hamcrest import has_property
 from hamcrest import is_not as does_not
 from hamcrest import has_key
+from hamcrest import starts_with
+
+from pyramid.request import Request
 
 from quopri import decodestring
 
@@ -23,6 +28,9 @@ from six.moves import urllib_parse
 
 from zope import component
 from zope import interface
+
+from zope.annotation import IAttributeAnnotatable
+
 from zope.lifecycleevent import modified, added
 
 from nti.app.testing.webtest import TestApp
@@ -31,12 +39,18 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
+from nti.appserver.account_recovery_views import UserAccountRecoveryUtility
+
+from nti.appserver.interfaces import IApplicationSettings
+
 from nti.appserver.policies.interfaces import IRequireSetPassword
 
 from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
+
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
 from nti.dataserver.users import interfaces as user_interfaces
 
@@ -672,3 +686,64 @@ class TestApplicationPasswordReset(ApplicationLayerTest):
 			user = users.User.get_user( username )
 			annotations = IAnnotations( user )
 			assert_that( annotations, does_not( has_key( account_recovery_views._KEY_PASSCODE_RESET ) ) )
+
+
+class TestAccountRecoveryUtility(DataserverLayerTest):
+
+	def _query_params(self, url):
+		url_parts = list(urllib_parse.urlparse(url))
+		return dict(urllib_parse.parse_qsl(url_parts[4]))
+
+	@staticmethod
+	def _run_FUT(app_url, request_path, settings):
+		util = UserAccountRecoveryUtility()
+		user = fudge.Fake('User').has_attr(username='test_user')
+		interface.alsoProvides(user, IAttributeAnnotatable)
+
+		request = Request.blank(request_path, base_url=app_url)
+
+		with _provide_utility(settings, IApplicationSettings):
+			url = util.get_password_reset_url(user, request)
+
+		return url
+
+	def test_success_param(self):
+		app_url = 'https://nti.com'
+		base_success_url = 'https://nti.com/reset/?existing_param=abc'
+		success_param = urllib_parse.quote_plus(base_success_url)
+		request_path = '/path/?success=%s' % success_param
+		settings = dict(password_reset_url='/login/recover/reset')
+
+		url = self._run_FUT(app_url, request_path, settings)
+
+		assert_that(url, starts_with("%s&username" % base_success_url))
+
+	def test_url_from_application_url(self):
+		app_url = 'https://nti.com'
+		request_path = '/path/'
+
+		url = self._run_FUT(app_url, request_path, {})
+
+		assert_that(url, starts_with("https://nti.com?username"))
+
+	def test_url_from_settings(self):
+		app_url = "https://nti.com"
+		request_path = '/path/'
+		settings = dict(password_reset_url='/login/recover/reset')
+
+		url = self._run_FUT(app_url, request_path, settings)
+
+		assert_that(url, starts_with("https://nti.com/login/recover/reset?username"))
+
+
+@contextmanager
+def _provide_utility(util, iface):
+	gsm = component.getGlobalSiteManager()
+
+	old_util = component.queryUtility(iface)
+	gsm.registerUtility(util, iface)
+	try:
+		yield
+	finally:
+		gsm.unregisterUtility(util, iface)
+		gsm.registerUtility(old_util, iface)

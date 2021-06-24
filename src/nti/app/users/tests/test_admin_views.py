@@ -527,10 +527,7 @@ class TestAdminViews(ApplicationLayerTest):
         batch_data2['real_name'] = "user2 madeupname"
         batch_data = [batch_data1, good_data, batch_data2]
 
-        # XXX: Fails, currently requires a `success` param when emailing pw.
-        res = self.testapp.post_json(user_update_href, batch_data, status=422)
-
-        res = self.testapp.post_json('%s?success=http://success_url.com' % user_update_href, batch_data)
+        res = self.testapp.post_json(user_update_href, batch_data)
         res = res.json_body
         messages = [x.get('message') for x in res]
         assert_that(messages, has_length(3))
