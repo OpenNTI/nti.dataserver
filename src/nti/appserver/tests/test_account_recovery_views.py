@@ -724,7 +724,7 @@ class TestAccountRecoveryUtility(DataserverLayerTest):
 
 		url = self._run_FUT(app_url, request_path, {})
 
-		assert_that(url, starts_with("https://nti.com?username"))
+		assert_that(url, starts_with("https://nti.com/login/recover/reset?username"))
 
 	def test_url_from_settings(self):
 		app_url = "https://nti.com"

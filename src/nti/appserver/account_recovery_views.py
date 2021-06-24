@@ -195,7 +195,9 @@ class UserAccountRecoveryUtility(object):
     @staticmethod
     def app_settings_url(request):
         settings = component.getUtility(IApplicationSettings)
-        password_reset_url = settings.get('password_reset_url') or ''
+        password_reset_url = settings.get('password_reset_url',
+                                          '/login/recover/reset') or ''
+
         app_url = request.application_url + password_reset_url
         return app_url
 
