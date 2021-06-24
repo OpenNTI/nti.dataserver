@@ -40,6 +40,7 @@ from zope.component.interfaces import ISite
 
 from zope.event import notify
 
+from nti.appserver.interfaces import IApplicationSettings
 from nti.appserver.interfaces import UserCreatedByAdminWithRequestEvent
 from nti.appserver.interfaces import UserCreatedWithRequestEvent
 
@@ -138,10 +139,15 @@ class AbstractAdminCreatedUser(ApplicationLayerTest):
 			with _provide_utility(policy, ICommunitySitePolicyUserEventListener):
 				request = DummyRequest()
 				interface.alsoProvides(request, IDummyRequest)
-				request.GET['success'] = 'https://nextthought.com/reset'
 
-				# Trigger the process that sends the email
-				notify(self.event_factory(user, request))
+				settings = component.getUtility(IApplicationSettings)
+				old_reset_url = settings.get('password_reset_url')
+				settings['password_reset_url'] = '/login/recover/reset'
+				try:
+					# Trigger the process that sends the email
+					notify(self.event_factory(user, request))
+				finally:
+					settings['password_reset_url'] = old_reset_url
 
 
 class TestAdminCreatedUser(AbstractAdminCreatedUser):
@@ -176,7 +182,7 @@ class TestAdminCreatedUser(AbstractAdminCreatedUser):
 			assert_that(mailer.queue[0].subject,
 						contains_string("Welcome to NTI"))
 
-			match = re.search('href="(https://nextthought.com/reset[^"]*)"',
+			match = re.search('href="(http://example.com/login/recover/reset[^"]*)"',
 							 msg)
 			assert_that(bool(match), is_(True))
 			query_params = self._query_params(match.group(1))

@@ -48,6 +48,7 @@ from nti.appserver import MessageFactory as _
 from nti.appserver import httpexceptions as hexc
 
 from nti.appserver.interfaces import IUserAccountRecoveryUtility
+from nti.appserver.interfaces import IApplicationSettings
 
 from nti.coremetadata.interfaces import IUsernameSubstitutionPolicy
 
@@ -188,9 +189,15 @@ def forgot_username_view(request):
     return hexc.HTTPNoContent()
 
 
-
 @interface.implementer(IUserAccountRecoveryUtility)
 class UserAccountRecoveryUtility(object):
+
+    @staticmethod
+    def app_settings_url(request):
+        settings = component.getUtility(IApplicationSettings)
+        password_reset_url = settings.get('password_reset_url') or ''
+        app_url = request.application_url + password_reset_url
+        return app_url
 
     def get_password_reset_url(self, user, request):
         if not request:
@@ -198,12 +205,7 @@ class UserAccountRecoveryUtility(object):
 
         success_redirect_value = request.params.get('success')
         if not success_redirect_value:
-            raise_json_error(request,
-                             hexc.HTTPBadRequest,
-                             {
-                                 'message': _(u"Must provide success.")
-                             },
-                             None)
+            success_redirect_value = self.app_settings_url(request)
 
         # We need to generate a token and store the timestamped value,
         # while also invalidating any other tokens we have for this user.
