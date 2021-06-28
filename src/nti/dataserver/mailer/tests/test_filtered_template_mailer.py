@@ -12,11 +12,14 @@ from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
 
-from nti.testing.matchers import validly_provides
-
+from zope import component
 from zope import interface
 
 from zope.publisher.interfaces.browser import IBrowserRequest
+
+from nti.app.testing.layers  import AppLayerTest
+
+from nti.app.testing.testing import ITestMailDelivery
 
 from nti.dataserver.mailer.filtered_template_mailer import ImpersonatedMailer
 from nti.dataserver.mailer.filtered_template_mailer import NextThoughtOnlyMailer
@@ -26,7 +29,7 @@ from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
 
-from nti.app.testing.layers  import AppLayerTest
+from nti.testing.matchers import validly_provides
 
 
 @interface.implementer(IBrowserRequest)
@@ -72,8 +75,10 @@ class _BaseMixin(object):
 			# with no attribute
 			request.environ = extra_environ
 		token_url = 'url_to_verify_email'
-		msg = self.mailer().create_simple_html_text_email(
-													'new_user_created',
+		delivery = component.getUtility(ITestMailDelivery)
+		del delivery.queue[:]
+		self.mailer().queue_simple_html_text_email(
+													'test_new_user_created',
 													subject='Hi there',
 													recipients=[recipient],
 													bcc=bcc,
@@ -85,12 +90,10 @@ class _BaseMixin(object):
 																'site_name': u'Test Site',
 																'href': token_url,
 																'support_email': 'support_email' },
-													package='nti.appserver',
 													request=request)
 
-		msg.sender = 'foo@bar'
-		base_msg = msg.to_message()
-		assert_that(base_msg, has_entry('To', to))
+		msg = delivery.queue[0]
+		assert_that(msg, has_entry('To', to))
 		return msg
 
 	def _check(self, recipient, to, extra_environ=None, **kwargs):
