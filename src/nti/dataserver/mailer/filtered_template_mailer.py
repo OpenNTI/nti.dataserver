@@ -73,6 +73,14 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
     def _should_send_to_addr(self, addr):
         return True
 
+    def queue_simple_html_text_email(self, *args, **kwargs):
+        kwargs['_level'] = kwargs.get('_level', 5) + 1
+
+        kwargs['message_factory'] = self.create_simple_html_text_email
+
+        mailer = self._default_mailer
+        return mailer.queue_simple_html_text_email(*args, **kwargs)
+
     def create_simple_html_text_email(self,
                                       base_template,
                                       subject='',
