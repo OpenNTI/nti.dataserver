@@ -77,7 +77,7 @@ class _BaseMixin(object):
 		token_url = 'url_to_verify_email'
 		delivery = component.getUtility(ITestMailDelivery)
 		del delivery.queue[:]
-		self.mailer().queue_simple_html_text_email(
+		msg = self.mailer().queue_simple_html_text_email(
 													'test_new_user_created',
 													subject='Hi there',
 													recipients=[recipient],
@@ -92,8 +92,8 @@ class _BaseMixin(object):
 																'support_email': 'support_email' },
 													request=request)
 
-		msg = delivery.queue[0]
-		assert_that(msg, has_entry('To', to))
+		queued = delivery.queue[0]
+		assert_that(queued, has_entry('To', to))
 		return msg
 
 	def _check(self, recipient, to, extra_environ=None, **kwargs):
