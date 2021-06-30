@@ -74,7 +74,8 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
         return True
 
     def queue_simple_html_text_email(self, *args, **kwargs):
-        kwargs['_level'] = kwargs.get('_level', 5) + 1
+        # Sub impl defaults to 4, so we add 1 to that.
+        kwargs['_level'] = kwargs.get('_level', 4) + 1
 
         kwargs['message_factory'] = self.create_simple_html_text_email
 
