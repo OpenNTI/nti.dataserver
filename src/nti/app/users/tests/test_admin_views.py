@@ -980,17 +980,21 @@ class TestAdminViews(ApplicationLayerTest):
         self.testapp.get('/dataserver2/users/%s' % test_other_username,
                          extra_environ=other_environ, status=401)
 
+        headers = {'accept': str('application/json')}
         res = self.testapp.get('/dataserver2/users/SiteUsers?deactivated=True',
+                               headers=headers,
                                extra_environ=nt_admin_environ)
         res = res.json_body
         assert_that(res['ItemCount'], is_(2))
 
         res = self.testapp.get('/dataserver2/users/SiteUsers?deactivated=False',
+                               headers=headers,
                                extra_environ=nt_admin_environ)
         res = res.json_body
         assert_that(res['ItemCount'], is_(0))
 
         res = self.testapp.get('/dataserver2/users/SiteUsers',
+                               headers=headers,
                                extra_environ=nt_admin_environ)
         res = res.json_body
         assert_that(res['ItemCount'], is_(2))
@@ -1009,16 +1013,19 @@ class TestAdminViews(ApplicationLayerTest):
                          extra_environ=other_environ, status=401)
 
         res = self.testapp.get('/dataserver2/users/SiteUsers?deactivated=True',
+                               headers=headers,
                                extra_environ=nt_admin_environ)
         res = res.json_body
         assert_that(res['ItemCount'], is_(1))
 
         res = self.testapp.get('/dataserver2/users/SiteUsers?deactivated=False',
+                               headers=headers,
                                extra_environ=nt_admin_environ)
         res = res.json_body
         assert_that(res['ItemCount'], is_(1))
 
         res = self.testapp.get('/dataserver2/users/SiteUsers',
+                               headers=headers,
                                extra_environ=nt_admin_environ)
         res = res.json_body
         assert_that(res['ItemCount'], is_(2))

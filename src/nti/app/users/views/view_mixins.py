@@ -765,28 +765,40 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
             return entity
         return None
 
-    def reify_predicate(self, obj):
+    def reify_predicate(self, obj):  
         """
         Subclasses can override this.
         """
         return obj is not None
 
-    def _do_call(self, site=None):
-        result = LocatedExternalDict()
-        entity_intids = self.get_entity_intids(site)
+    @Lazy
+    def site_name(self):
+        return None
+    
+    @Lazy
+    def filtered_intids(self):
+        entity_intids = self.get_entity_intids(self.site_name)
         # We may have a generator here, we must resolve it before filtering
         entity_intids = self.entity_catalog.family.IF.Set(entity_intids)
         filtered_intids = self.filter_intids(entity_intids)
-        sorted_entity_ids = self.get_sorted_entity_intids(filtered_intids)
+        return filtered_intids
+
+    def _get_result_iter(self):
+        sorted_entity_ids = self.get_sorted_entity_intids(self.filtered_intids)
         sorted_entity_ids = (x for x in sorted_entity_ids if self.search_include(x))
-        intids = component.getUtility(IIntIds)
+        intids=component.getUtility(IIntIds)
         rs = ResultSet(sorted_entity_ids, intids)
+        return rs
+
+    def _do_call(self):
+        result = LocatedExternalDict()
+        rs = self._get_result_iter()
         self._batch_items_iterable(result, rs, selector=self._batch_selector)
         # re/sort for numeric values
         if self.sortOn in self._NUMERIC_SORTING:
             # If we are sorting by time, we are indexed normalized to a minute.
             # We sort here by the actual value to correct this.
-            reverse = self.sortOrder == 'descending'
+            reverse = self.sortOrder=='descending'
             result[ITEMS] = sorted(result[ITEMS],
                                    key=lambda x: getattr(x, self.sortOn, 0),
                                    reverse=reverse)
@@ -798,11 +810,11 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         # we will not know the true count of possible search hits. This may
         # affect client side paging.
         item_count = len(result[ITEMS])
-        batch_size, batch_start = self._get_batch_size_start()
-        if item_count < batch_size:
+        batch_size,batch_start = self._get_batch_size_start()
+        if item_count<batch_size:
             # We at least do not want to return pages if we do not have any
             result[TOTAL] = result['TotalItemCount'] = item_count + batch_start
         else:
-            result[TOTAL] = result['TotalItemCount'] = len(filtered_intids)
+            result[TOTAL] = result['TotalItemCount'] = len(self.filtered_intids)
         result[ITEM_COUNT] = len(result[ITEMS])
         return result

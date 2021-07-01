@@ -62,25 +62,27 @@ class TestListViews(ApplicationLayerTest):
             lifecycleevent.modified(user)
 
         url = '/dataserver2/users/@@site_users'
+        headers = {'accept': str('application/json')}
         self.testapp.get(url,
                          extra_environ=self._make_extra_environ(username='steve@nt.com'),
+                         headers=headers,
                          status=401)
 
         params = {"site": 'othersite.com'}
         self.testapp.get(url, params, status=422)
 
         params = {"site": 'bleach.org', 'sortOn': 'createdTime'}
-        res = self.testapp.get(url, params, status=200)
+        res = self.testapp.get(url, params, status=200, headers=headers)
         assert_that(res.json_body, has_entry('Total', is_(3)))
         assert_that(res.json_body, has_entry('Items', has_length(3)))
 
         params = {"site": 'bleach.org', 'searchTerm': 'ichi'}
-        res = self.testapp.get(url, params, status=200)
+        res = self.testapp.get(url, params, status=200, headers=headers)
         assert_that(res.json_body, has_entry('Total', is_(1)))
         assert_that(res.json_body, has_entry('Items', has_length(1)))
         
         params = {"site": 'bleach.org', 'searchTerm': 'newemail'}
-        res = self.testapp.get(url, params, status=200)
+        res = self.testapp.get(url, params, status=200, headers=headers)
         assert_that(res.json_body, has_entry('Total', is_(1)))
         assert_that(res.json_body, has_entry('Items', has_length(1)))
         assert_that(res.json_body['Items'][0], has_entry('email', 'newemail@gmail.com'))
