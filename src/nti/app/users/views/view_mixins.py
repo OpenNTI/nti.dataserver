@@ -83,6 +83,7 @@ from nti.dataserver.users.index import IX_REALNAME
 from nti.dataserver.users.index import IX_DISPLAYNAME
 from nti.dataserver.users.index import get_entity_catalog
 
+from nti.dataserver.users.utils import get_entity_email_from_index
 from nti.dataserver.users.utils import get_entity_alias_from_index
 from nti.dataserver.users.utils import get_entity_realname_from_index
 from nti.dataserver.users.utils import get_entity_username_from_index
@@ -712,6 +713,9 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
 
     def realname(self, doc_id):
         return get_entity_realname_from_index(doc_id, self.entity_catalog)
+    
+    def email(self, doc_id):
+        return get_entity_email_from_index(doc_id, self.entity_catalog)
 
     def alias(self, doc_id):
         return get_entity_alias_from_index(doc_id, self.entity_catalog)
@@ -749,9 +753,11 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
             alias = self.alias(doc_id)
             realname = self.realname(doc_id)
             username = self.username(doc_id)
+            email = self.email(doc_id)
             result = op(username, self.searchTerm) \
                   or op(realname, self.searchTerm) \
-                  or op(alias, self.searchTerm)
+                  or op(alias, self.searchTerm) \
+                  or op(email, self.searchTerm)
         return result
 
     def _batch_selector(self, entity):

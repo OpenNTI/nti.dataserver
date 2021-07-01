@@ -55,7 +55,7 @@ class TestListViews(ApplicationLayerTest):
             lifecycleevent.modified(user)
 
             user = self._create_user(username=u'aizen@bleach.com',
-                                     external_value={'email': u'aizen@bleach.com',
+                                     external_value={'email': u'newemail@gmail.com',
                                                      'realname': u'aizen sosuke',
                                                      'alias': u'kyoka suigetsu'})
             set_user_creation_site(user, "bleach.org")
@@ -78,3 +78,9 @@ class TestListViews(ApplicationLayerTest):
         res = self.testapp.get(url, params, status=200)
         assert_that(res.json_body, has_entry('Total', is_(1)))
         assert_that(res.json_body, has_entry('Items', has_length(1)))
+        
+        params = {"site": 'bleach.org', 'searchTerm': 'newemail'}
+        res = self.testapp.get(url, params, status=200)
+        assert_that(res.json_body, has_entry('Total', is_(1)))
+        assert_that(res.json_body, has_entry('Items', has_length(1)))
+        assert_that(res.json_body['Items'][0], has_entry('email', 'newemail@gmail.com'))
