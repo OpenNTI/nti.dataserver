@@ -11,10 +11,13 @@ from hamcrest import is_
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import contains_string
 
 import fudge
 
 from zope import lifecycleevent
+
+from zope.event import notify
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -23,6 +26,8 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.users.utils import set_user_creation_site
 
 from nti.dataserver.tests import mock_dataserver
+from nti.identifiers.interfaces import IUserExternalIdentityContainer
+from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
 
 class TestListViews(ApplicationLayerTest):
@@ -60,6 +65,9 @@ class TestListViews(ApplicationLayerTest):
                                                      'alias': u'kyoka suigetsu'})
             set_user_creation_site(user, "bleach.org")
             lifecycleevent.modified(user)
+            identity_container = IUserExternalIdentityContainer(user)
+            identity_container.add_external_mapping('ext id1', 'aaaaaaa')
+            notify(ObjectModifiedFromExternalEvent(user))
 
         url = '/dataserver2/users/@@site_users'
         headers = {'accept': str('application/json')}
@@ -86,3 +94,10 @@ class TestListViews(ApplicationLayerTest):
         assert_that(res.json_body, has_entry('Total', is_(1)))
         assert_that(res.json_body, has_entry('Items', has_length(1)))
         assert_that(res.json_body['Items'][0], has_entry('email', 'newemail@gmail.com'))
+        
+        # CSV
+        params = {"site": 'bleach.org', 'sortOn': 'createdTime'}
+        headers = {'accept': str('text/csv')}
+        res = self.testapp.get(url, params, status=200, headers=headers)
+        assert_that(res.body, contains_string('username,realname,alias,email,createdTime,lastLoginTime,ext id1'))
+        assert_that(res.body, contains_string('aaaaaa'))
