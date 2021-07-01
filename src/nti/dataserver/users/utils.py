@@ -522,6 +522,11 @@ def get_entity_realname_from_index(doc_id, catalog=None):
     return catalog[IX_REALNAME].documents_to_values.get(doc_id)
 
 
+def get_entity_email_from_index(doc_id, catalog=None):
+    catalog = get_entity_catalog() if catalog is None else catalog
+    return catalog[IX_EMAIL].documents_to_values.get(doc_id)
+
+
 def get_entity_alias_from_index(doc_id, catalog=None):
     catalog = get_entity_catalog() if catalog is None else catalog
     return catalog[IX_ALIAS].documents_to_values.get(doc_id)
