@@ -26,8 +26,10 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.users.utils import set_user_creation_site
 
 from nti.dataserver.tests import mock_dataserver
-from nti.identifiers.interfaces import IUserExternalIdentityContainer
+
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
+
+from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
 
 class TestListViews(ApplicationLayerTest):

@@ -786,7 +786,7 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
     def _get_result_iter(self):
         sorted_entity_ids = self.get_sorted_entity_intids(self.filtered_intids)
         sorted_entity_ids = (x for x in sorted_entity_ids if self.search_include(x))
-        intids=component.getUtility(IIntIds)
+        intids = component.getUtility(IIntIds)
         rs = ResultSet(sorted_entity_ids, intids)
         return rs
 

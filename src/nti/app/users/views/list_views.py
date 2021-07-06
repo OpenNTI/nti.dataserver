@@ -20,6 +20,8 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
+from requests.structures import CaseInsensitiveDict
+
 from zope import interface
 from zope import component
 
@@ -30,6 +32,8 @@ from zope.component.hooks import getSite
 from zope.intid.interfaces import IIntIds
 
 from nti.app.externalization.error import raise_json_error
+
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.app.renderers.interfaces import IUncacheableInResponse
 
@@ -65,12 +69,13 @@ from nti.dataserver.users.index import get_entity_catalog
 from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.dataserver.users.interfaces import IProfileDisplayableSupplementalFields
 
+from nti.dataserver.users import User
+
 from nti.identifiers.utils import get_external_identifiers
 
 from nti.mailer.interfaces import IEmailAddressable
 
 from nti.site.site import get_component_hierarchy_names
-
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -161,8 +166,8 @@ class SiteUsersView(AbstractEntityViewMixin):
         result = self._do_call()
         interface.alsoProvides(result, IUncacheableInResponse)
         return result
-
-
+    
+    
 @view_config(name='SiteUsers')
 @view_config(name='site_users')
 @view_defaults(route_name='objects.generic.traversal',
@@ -253,3 +258,43 @@ class SiteUsersCSVView(SiteUsersView):
         response.content_type = 'text/csv; charset=UTF-8'
         response.content_disposition = 'attachment; filename="users_export.csv"'
         return response
+
+
+@view_config(name='SiteUsers')
+@view_config(name='site_users')
+@view_defaults(route_name='objects.generic.traversal',
+               request_method='POST',
+               context=IUsersFolder,
+               accept='text/csv',
+               permission=nauth.ACT_READ)
+class SiteUsersCSVPOSTView(SiteUsersCSVView, ModeledContentUploadRequestUtilsMixin):
+    
+    def readInput(self, value=None):
+        if self.request.body:
+            result = super(SiteUsersCSVPOSTView, self).readInput(value)
+        else:
+            result = {}
+        return CaseInsensitiveDict(result)
+    
+    @Lazy
+    def _params(self):
+        return self.readInput()
+
+    def _get_result_iter(self):
+        usernames = self._params.get('usernames', ())
+        if not usernames:
+            return super(SiteUsersCSVPOSTView, self)._get_result_iter()
+        intids = component.getUtility(IIntIds)
+        result = []
+        for username in usernames:
+            user = User.get_user(username)
+            if user is None:
+                continue
+            user_intid = intids.queryId(user)
+            if user_intid is None:
+                continue
+            # Validate the user is in the original result set
+            if user_intid in self.filtered_intids:
+                result.append(user) 
+        return result
+            
