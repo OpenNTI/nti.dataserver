@@ -103,3 +103,7 @@ class TestListViews(ApplicationLayerTest):
         res = self.testapp.get(url, params, status=200, headers=headers)
         assert_that(res.body, contains_string('username,realname,alias,email,createdTime,lastLoginTime,ext id1'))
         assert_that(res.body, contains_string('aaaaaa'))
+        
+        res = self.testapp.post_json(url, params, status=200, headers=headers)
+        assert_that(res.body, contains_string('username,realname,alias,email,createdTime,lastLoginTime,ext id1'))
+        assert_that(res.body, contains_string('aaaaaa'))
