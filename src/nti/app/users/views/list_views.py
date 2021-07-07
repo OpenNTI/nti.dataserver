@@ -272,11 +272,13 @@ class SiteUsersCSVView(SiteUsersView):
                request_param='format=text/csv')
 class SiteUsersCSVPOSTView(SiteUsersCSVView, ModeledContentUploadRequestUtilsMixin):
     
-    def readInput(self, value=None):
-        if self.request.body:
-            result = super(SiteUsersCSVPOSTView, self).readInput(value)
+    def readInput(self):
+        if self.request.POST:
+            result = {'usernames': self.request.params.getall('usernames') or []}
+        elif self.request.body:
+            result = super(SiteUsersCSVPOSTView, self).readInput()
         else:
-            result = {}
+            result = self.request.params
         return CaseInsensitiveDict(result)
     
     @Lazy

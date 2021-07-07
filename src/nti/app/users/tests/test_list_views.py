@@ -120,3 +120,14 @@ class TestListViews(ApplicationLayerTest):
         assert_that(res.body, does_not(contains_string('ichigo@bleach.com')))
         assert_that(res.body, contains_string('ukia@bleach.com'))
         assert_that(res.body, does_not(contains_string('steve@nt.com')))
+        
+        res = self.testapp.post('%s?format=text/csv&site=bleach.org&sortOn=createdTime' % url,
+                                params=usernames,
+                                content_type='application/x-www-form-urlencoded')
+        assert_that(res.body, contains_string('username,realname,alias,email,createdTime,lastLoginTime'))
+        assert_that(res.body, does_not(contains_string('ext id1')))
+        assert_that(res.body, does_not(contains_string('aaaaaa')))
+        assert_that(res.body, does_not(contains_string('dneusername')))
+        assert_that(res.body, does_not(contains_string('ichigo@bleach.com')))
+        assert_that(res.body, contains_string('ukia@bleach.com'))
+        assert_that(res.body, does_not(contains_string('steve@nt.com')))
