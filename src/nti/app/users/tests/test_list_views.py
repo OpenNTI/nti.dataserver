@@ -8,10 +8,12 @@ from __future__ import absolute_import
 # pylint: disable=protected-access,too-many-public-methods,arguments-differ
 
 from hamcrest import is_
+from hamcrest import is_not
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import contains_string
+does_not = is_not
 
 import fudge
 
@@ -104,6 +106,17 @@ class TestListViews(ApplicationLayerTest):
         assert_that(res.body, contains_string('username,realname,alias,email,createdTime,lastLoginTime,ext id1'))
         assert_that(res.body, contains_string('aaaaaa'))
         
-        res = self.testapp.post_json(url, params, status=200, headers=headers)
+        res = self.testapp.post('%s?format=text/csv&site=bleach.org&sortOn=createdTime' % url)
         assert_that(res.body, contains_string('username,realname,alias,email,createdTime,lastLoginTime,ext id1'))
         assert_that(res.body, contains_string('aaaaaa'))
+        
+        usernames = {'usernames': ['rukia@bleach.com', 'steve@nt.com', 'dneusername']}
+        res = self.testapp.post_json('%s?format=text/csv&site=bleach.org&sortOn=createdTime' % url,
+                                     usernames)
+        assert_that(res.body, contains_string('username,realname,alias,email,createdTime,lastLoginTime'))
+        assert_that(res.body, does_not(contains_string('ext id1')))
+        assert_that(res.body, does_not(contains_string('aaaaaa')))
+        assert_that(res.body, does_not(contains_string('dneusername')))
+        assert_that(res.body, does_not(contains_string('ichigo@bleach.com')))
+        assert_that(res.body, contains_string('ukia@bleach.com'))
+        assert_that(res.body, does_not(contains_string('steve@nt.com')))

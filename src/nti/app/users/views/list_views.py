@@ -268,15 +268,6 @@ class SiteUsersCSVView(SiteUsersView):
                request_method='POST',
                context=IUsersFolder,
                renderer='rest',
-               accept='text/csv',
-               permission=nauth.ACT_READ,
-               request_param=not_('format'))
-@view_config(name='SiteUsers')
-@view_config(name='site_users')
-@view_defaults(route_name='objects.generic.traversal',
-               request_method='POST',
-               context=IUsersFolder,
-               renderer='rest',
                permission=nauth.ACT_READ,
                request_param='format=text/csv')
 class SiteUsersCSVPOSTView(SiteUsersCSVView, ModeledContentUploadRequestUtilsMixin):
