@@ -44,6 +44,8 @@ from nti.coremetadata.interfaces import IMentionable
 
 from nti.property.property import alias
 
+from nti.schema.field import Int
+from nti.schema.field import Bool
 from nti.schema.field import Dict
 from nti.schema.field import Object
 from nti.schema.field import Number
@@ -1626,3 +1628,21 @@ class IMentionsUpdateInfo(interface.Interface):
                     u"did not have access. Effectively a union of "
                     u":attr:`mentions_shared_to` and :attr:`mentions_added`.",
         value_type=Object(IEntity, title=u"An mentioned entity recently shared to"))
+
+
+class ISeatLimit(interface.Interface):
+    """
+    A limit upon the number of allowed users in a context
+    """
+
+    hard_limit = Bool(title=u'Hard Seat Limit',
+                      required=True,
+                      default=False)
+
+    max_seats = Int(title=u'Maximum Number of Seats',
+                    required=False,
+                    default=None)
+
+    used_seats = Int(title=u'Used Seats',
+                     description=u'The current number of seats taken in the site.',
+                     required=True)
