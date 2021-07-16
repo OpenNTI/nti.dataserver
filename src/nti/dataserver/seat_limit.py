@@ -1,11 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Support for flagging modeled content.
-
-.. $Id$
-"""
-
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
