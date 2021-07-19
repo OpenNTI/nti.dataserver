@@ -281,7 +281,7 @@ class RequestEmailVerificationView(AbstractAuthenticatedView,
                 raise_error(self.request,
                             hexc.HTTPUnprocessableEntity,
                             {
-                                'message': _(u"A current request is been processed."),
+                                'message': _(u"A current request is being processed."),
                                 'seconds': MAX_WAIT_TIME_EMAILS - diff_time
                             },
                             None)
