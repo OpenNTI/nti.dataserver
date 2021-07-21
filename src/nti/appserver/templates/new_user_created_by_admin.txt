@@ -1,21 +1,11 @@
-Hi ${profile.realname}!
+Hello ${profile.realname},
 
-A new account has been created for you at ${site_name}!
+${creator} created an account for you with ${site_name} (${request.application_url})!
+Your username is: ${user.username}
 
-Username: ${user.username}
+Log in at ${set_passcode_url} to set your password.
 
-Use the following link to set up your account: ${set_passcode_url}.  As this is
-a one time link, please use ${request.application_url} for logging in afterward.
-
-${site_name} offers interactive content and rich features to make
-learning both social and personal.
-
-% if verify_href:
-Please verify your email address. Doing so will
-help us maintain the security of your account.
-To verify your email address, use the following link: ${verify_href}
-% endif
-
+${verify_text}
 Sincerely,
 ${site_name}
 

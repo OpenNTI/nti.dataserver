@@ -16,31 +16,24 @@
 		<div metal:use-macro="macro:header"></div>
 		<div class="main">
 			<div class="title" i18n:translate="">
-				Hi <span tal:content="options/profile/realname" i18n:name="name" class="realname tterm">John Doe</span>!
+				Hello <span tal:content="options/profile/realname" i18n:name="name" class="realname tterm">John Doe</span>,
 			</div>
 
 			<div class="mp-20" i18n:translate="">
-				A new account has been created for you at <span tal:content="options/site_name">NextThought</span>!
-			</div>
-
-			<div class="mp-20" i18n:translate="">
-				Your username is <span tal:content="options/user/username" class="tterm-color">username</span>
+				<span tal:content="options/creator">An administrator</span> created an account for you with
+				<a href="http://nextthought.com"
+					tal:attributes="href request/application_url">
+					<span tal:content="options/site_name">NextThought</span></a>!
 				<br/>
-				Use the following link to set up your account:
+				Your username is <span tal:content="options/user/username" class="tterm-color">username</span>
+			</div>
+
+			<div class="mp-20" i18n:translate="">
+				Log in at
 				<a href="http://nextthought.com"
 				   tal:attributes="href options/set_passcode_url"
 				   tal:content="options/set_passcode_url">http://nextthought.com</a>.
-				As this is a one time link, please use
-				<a href="http://nextthought.com"
-				   tal:attributes="href request/application_url"
-				   tal:content="request/application_url">http://nextthought.com</a>
-				to log in afterward.
-			</div>
-
-			<div class="mp-20">
-				<span i18n:translate="">
-					<span tal:content="options/site_name">NextThought</span> offers interactive content and rich features to make learning both social and personal.
-				</span>
+				to set your password.
 			</div>
 
 			<div tal:condition="options/verify_href">

@@ -49,6 +49,8 @@ from ZODB.loglevels import TRACE
 from pyramid.path import package_of
 from pyramid.threadlocal import get_current_request
 
+from nti.app.authentication import get_remote_user
+
 from nti.app.users.utils import generate_verification_email_url
 
 from nti.appserver import MessageFactory as _
@@ -574,13 +576,21 @@ class AbstractSitePolicyEventListener(object):
 
 		subject = self._compute_subject(self.NEW_USER_CREATED_BY_ADMIN_EMAIL_SUBJECT,
 										event.request)
+		creator_name = self._creator_name(event.request)
 		self._send_new_account_email(user,
 									 event,
 									 self.NEW_USER_CREATED_BY_ADMIN_EMAIL_TEMPLATE_BASE_NAME,
 									 subject,
 									 extra_template_args={
-										 'set_passcode_url': reset_url
+										 'set_passcode_url': reset_url,
+										 'creator': creator_name,
 									 })
+
+	def _creator_name(self, request):
+		creator = get_remote_user(request=request)
+		creator_name = component.getMultiAdapter((creator, request),
+												 IDisplayNameGenerator)()
+		return creator_name
 
 	def _brand_name(self, request):
 		return component.getMultiAdapter((getSite(), request),
@@ -609,6 +619,7 @@ class AbstractSitePolicyEventListener(object):
 				'profile': profile,
 				'email': email,
 				'verify_href': '',
+				'verify_text': '',
 				'informal_username': informal_username,
 				'support_email': self.SUPPORT_EMAIL,
 				'site_name': self._brand_name(event.request),
@@ -617,6 +628,11 @@ class AbstractSitePolicyEventListener(object):
 		if not profile.email_verified:
 			email_verification_href, _ = generate_verification_email_url(user, request=event.request)
 			args['verify_href'] = email_verification_href
+			args['verify_text'] = (
+				"Please verify your email address. Doing so will\n"
+				"help us maintain the security of your account.\n"
+				"To verify your email address, use the following link: %s\n\n"
+			) % (email_verification_href,)
 
 		if extra_template_args:
 			args.update(extra_template_args)

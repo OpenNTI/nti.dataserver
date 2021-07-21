@@ -520,7 +520,11 @@ class _AbstractApplicationCreateUserTest(AppTestBaseMixin):
 
     @WithSharedApplicationMockDS
     def test_create_user_as_admin( self):
-        self._do_test_create_user_as_admin()
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(external_value={'realname': u'Admin User',
+                                              'email': u'admin@nti.com'})
+
+        self._do_test_create_user_as_admin(extra_environ=self._make_extra_environ())
 
     def _do_test_create_user_as_admin( self,
                                        data=None,
@@ -567,7 +571,7 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest, No
         super(TestApplicationCreateUserNonDevmode,self).test_create_user_as_admin()
         mailer = component.getUtility( ITestMailDelivery )
         body = decodestring(mailer.queue[0].body)
-        assert_that(body, contains_string('A new account has been created') )
+        assert_that(body, contains_string('Admin User created an account for you'))
         return mailer
 
     def _test_create_user_by_admin_missing_field(self, data, missing_field ):
