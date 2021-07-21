@@ -169,7 +169,8 @@
 					 alt="NextThought Logo"
 					 height="40" style="max-width: none"
 				     tal:attributes="src options/nti_site_brand_email_image_url|default;
-				                     alt options/nti_site_brand_name|default" /></a>
+				                     alt options/nti_site_brand_name|default" />
+				           </a>
 			</div>
 			<!--! Flash messages -->
 			<div id="errors"
