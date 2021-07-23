@@ -164,7 +164,7 @@
 		<div class="header" metal:define-macro="header">
 			<div id="green-bar" class="brand-color-bar" style="background-color: ${options/nti_site_brand_color | string:#3FB34F}; width: 100%; height: 3px;"></div>
 			<div id="logo-bar">
-				<a href="https://www.nextthought.com" tal:attributes="href options/nti_site_app_url">
+				<a href="https://www.nextthought.com" tal:attributes="href options/nti_site_app_url|default">
 				<img src="https://assets.nextthought.com/images/nextthought/platform/email/logo_trans_square.png"
 					 alt="NextThought Logo"
 					 height="40" style="max-width: none"
