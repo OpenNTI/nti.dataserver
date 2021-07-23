@@ -68,6 +68,15 @@ def create_context(env_dir=None, with_library=False, context=None,
             xmlconfig.include(context,
                               file=library_zcml,
                               package='nti.appserver')
+         
+    # Always load this one - for asset location   
+    site_assets_zcml = os.path.join(etc, 'site_assets.zcml')
+    if os.path.exists(site_assets_zcml): 
+        site_assets_zcml = os.path.normpath(site_assets_zcml)
+        logger.debug("Loading site_assets settings from %s", site_assets_zcml)
+        xmlconfig.include(context,
+                          package='nti.appserver',
+                          file=site_assets_zcml)
 
     # Include zope.browserpage.meta.zcm for tales:expressiontype
     # before including the products
